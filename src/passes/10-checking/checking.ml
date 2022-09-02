@@ -15,7 +15,7 @@ open Ligo_prim
 type typing_context = Typing_context.t
 type context = Context.t
 
-let type_value_attr : I.Attr.value -> O.Attr.value =
+let type_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
   fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
 let untype_expression = Untyper.untype_expression
 let untype_program = Untyper.untype_program
@@ -651,13 +651,7 @@ fun ~raise ~options c d ->
 let loc = d.location in
 let return ?(loc = loc) c (d : O.declaration_content) = c,Location.wrap ~loc d in
 match Location.unwrap d with
-  | Declaration_type {type_binder ; type_expr; type_attr={public;hidden} } -> (
-    let tv = evaluate_type ~raise c type_expr in
-    let tv = {tv with orig_var = Some type_binder} in
-    let env' = Typing_context.add_type c type_binder tv in
-    return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public;hidden} }
-  )
-  | Declaration_constant { binder = { ascr ; var ; attributes } ; attr ; expr } ->
+  | D_value { binder = { ascr ; var ; attributes } ; attr ; expr } ->
     let av, expr = Ast_core.Combinators.get_type_abstractions expr in
     let env = List.fold av ~f:(fun c v -> Typing_context.add_type_var c v ()) ~init:c in
     let tv = Option.map ~f:(evaluate_type ~raise env) ascr in
@@ -667,11 +661,17 @@ match Location.unwrap d with
     let expr = Ast_typed.Helpers.build_type_abstractions expr (List.rev av) in
     let c = Typing_context.add_value c var expr.type_expression in
     let attr = type_value_attr attr in
-    return c @@ Declaration_constant { binder = { ascr = tv ; var ; attributes } ; expr ; attr }
-  | Declaration_module { module_binder ; module_ ; module_attr = {public ; hidden} } -> (
+    return c @@ D_value { binder = { ascr = tv ; var ; attributes } ; expr ; attr }
+  | D_type {type_binder ; type_expr; type_attr={public;hidden} } -> (
+    let tv = evaluate_type ~raise c type_expr in
+    let tv = {tv with orig_var = Some type_binder} in
+    let env' = Typing_context.add_type c type_binder tv in
+    return env' @@ D_type { type_binder ; type_expr = tv; type_attr={public;hidden} }
+  )
+  | D_module { module_binder ; module_ ; module_attr = {public ; hidden} } -> (
     let module_ctxt, module_ = type_module_expr ~raise ~init_context:c ~options module_ in
     let post_env = Typing_context.add_module c module_binder module_ctxt in
-    return post_env @@ Declaration_module { module_binder; module_; module_attr = {public;hidden}}
+    return post_env @@ D_module { module_binder; module_; module_attr = {public;hidden}}
   )
 
 and type_decl ~raise ~options c : I.decl -> typing_context * O.decl =

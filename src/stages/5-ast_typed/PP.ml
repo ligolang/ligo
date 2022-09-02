@@ -130,7 +130,7 @@ and expression_content ppf (ec: expression_content) =
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
       (Binder.pp type_expression) let_binder
       expression rhs
-      Types.Attr.pp_value attr
+      Types.ValueAttr.pp attr
       expression let_result
   | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
       fprintf ppf "%a" expression let_result
@@ -163,7 +163,11 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
         (tuple_or_record_sep_expr ValueVar.pp) fields
         f body
 
-and declaration ppf (d : declaration) = Types.Declaration.PP.declaration expression type_expression decl ppf (Location.unwrap d)
+and declaration ppf (d : declaration) = match Location.unwrap d with
+    D_value vd  -> Types.ValueDecl.pp expression type_expression_option ppf vd
+  | D_type  td  -> Types.TypeDecl.pp type_expression ppf td
+  | D_module md -> Types.ModuleDecl.pp module_expr ppf md
+
 and decl ppf (Types.Decl d) = declaration ppf d
 and module_expr ppf (me : module_expr) : unit =
     Location.pp_wrap (Module_expr.pp decl) ppf me

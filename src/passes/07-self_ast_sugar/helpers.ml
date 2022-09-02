@@ -175,13 +175,13 @@ and map_module_expr : abs_mapper -> module_expr -> module_expr = fun f m ->
 and map_declaration m : declaration -> declaration = fun d ->
   let aux : declaration_content ->declaration_content = fun x ->
     match x,m with
-    | (Declaration_constant dc, Expression m') -> (
-        let dc = Types.Declaration.Map.declaration_constant (map_expression m') Fun.id dc in
-        (Declaration_constant dc)
+    | (D_value dc, Expression m') -> (
+        let dc = Types.ValueDecl.map (map_expression m') Fun.id dc in
+        (D_value dc)
       )
-    | (Declaration_type dt, Type_expression m') -> (
-        let dt = Types.Declaration.Map.declaration_type (map_type_expression m') dt in
-        (Declaration_type dt)
+    | (D_type dt, Type_expression m') -> (
+        let dt = Types.TypeDecl.map (map_type_expression m') dt in
+        (D_type dt)
       )
     | decl,_ -> decl
   (* | Declaration_type of (type_variable * type_expression) *)

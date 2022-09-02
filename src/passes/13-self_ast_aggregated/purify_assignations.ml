@@ -532,7 +532,7 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
   | E_assign {binder;expression} ->
       let expression = self expression in
       let let_binder = binder in
-      let attr = Attr.{inline = false; no_mutation = false; view = false; public = false; hidden = false; thunk = false} in
+      let attr = ValueAttr.{inline = false; no_mutation = false; view = false; public = false; hidden = false; thunk = false} in
       let rhs = expression in
       (* Todo : Check for correct use *)
       let let_result = return ?returned_effect @@ e_unit () in

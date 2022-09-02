@@ -150,16 +150,16 @@ let rec decompile_expression : O.expression -> I.expression =
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = decompile_type_expression type_expr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map decompile_type_expression_option binder in
     let expr   = decompile_expression expr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = decompile_type_expression type_expr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = decompile_module_expr module_ in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   let return wrap_content : I.module_expr = {me with wrap_content} in

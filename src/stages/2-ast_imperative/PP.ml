@@ -105,7 +105,11 @@ and record ppf kvl =
   fprintf ppf "@[<v>{ %a }@]" (list_sep (fun ppf (l,e)-> Format.fprintf ppf "%a : %a" Label.pp l expression e) (tag " ;")) kvl
 
 
-and declaration ppf (d : declaration) = Types.Declaration.PP.declaration expression type_expression decl ppf (Location.unwrap d)
+and declaration ppf (d : declaration) = match Location.unwrap d with
+    D_value vd  -> Types.ValueDecl.pp expression type_expression_option ppf vd
+  | D_type  td  -> Types.TypeDecl.pp type_expression ppf td
+  | D_module md -> Types.ModuleDecl.pp module_expr ppf md
+
 and decl ppf (Types.Decl d) = declaration ppf d
 
 and module_expr ppf (me : module_expr) : unit =

@@ -201,22 +201,22 @@ and map_module : abs_mapper -> module_ -> module_ = fun m p ->
 
 and map_declaration_content = fun (m: abs_mapper) (x : declaration_content) : declaration_content ->
   match x,m with
-  | Declaration_constant dc, Expression m' -> (
-      let dc = Types.Declaration.Map.declaration_constant (map_expression m') (fun a -> a) dc in
-      Declaration_constant dc
+  | D_value dc, Expression m' -> (
+      let dc = Types.ValueDecl.map (map_expression m') (fun a -> a) dc in
+      D_value dc
     )
-  | Declaration_type dt, Type_expression m' -> (
-      let dt = Types.Declaration.Map.declaration_type (map_type_expression m') dt in
-      Declaration_type dt
+  | D_type dt, Type_expression m' -> (
+      let dt = Types.TypeDecl.map (map_type_expression m') dt in
+      D_type dt
     )
-  | Declaration_module dm, Module m' -> (
+  | D_module dm, Module m' -> (
     let module_ = map_module_expr m' dm.module_ in
     let dm = { dm with module_ } in
-    Declaration_module dm
+    D_module dm
   )
-  | Declaration_module dm, Expression _ -> (
-      let dm = Types.Declaration.Map.declaration_module (map_decl m) dm in
-      Declaration_module dm
+  | D_module dm, Expression _ -> (
+      let dm = Types.ModuleDecl.map (Location.map @@ Module_expr.map (map_decl m)) dm in
+      D_module dm
     )
   | decl,_ -> decl
 
@@ -434,12 +434,11 @@ module Free_variables :
   and get_fv_module : module_ -> VarSet.t = fun p ->
     let aux = fun (Decl x : decl) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr;attr=_} ->
+      | D_value {binder=_; expr;attr=_} ->
         get_fv_expr expr
-      | Declaration_module {module_binder=_;module_;module_attr=_} ->
+      | D_type _t -> VarSet.empty
+      | D_module {module_binder=_;module_;module_attr=_} ->
         get_fv_module_expr module_.wrap_content
-      | Declaration_type _t ->
-        VarSet.empty
     in
     unions @@ List.map ~f:aux p
 

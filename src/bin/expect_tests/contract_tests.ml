@@ -1064,7 +1064,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
   [%expect {|
-    const yunit -> nat =
+    const y: unit -> nat =
       lambda (_#2unit)nat return let _xnat = +1 in
                                  let ()#5unit = let _xnat = +2 in unit in
                                  let ()#4unit = let _xnat = +23 in unit in
@@ -1745,7 +1745,7 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.mligo"];
   [%expect {|
 type storage = (int , int)
-const main(int , storage) -> (list (operation) , storage) =
+const main : (int , storage) -> (list (operation) , storage) =
   lambda (n : (int , storage)) : (list (operation) , storage) return
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
@@ -2111,7 +2111,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const fint -> int =
+    const f: int -> int =
       lambda (nint)int return let fint -> int =
                                 rec (fint -> int => lambda (nint)int return
                               let gen#2[@var]bool = EQ(n , 0) in
@@ -2121,7 +2121,7 @@ let%expect_test _ =
                                 | True unit_proj#4 ->
                                   1) in
                               (f)@(4)
-    const gint -> int -> int -> int =
+    const g: int -> int -> int -> int =
       rec (gint -> int -> int -> int => lambda (fint -> int)int -> int return
       (g)@(let hint -> int =
              rec (hint -> int => lambda (nint)int return let gen#5[@var]bool =
@@ -2430,7 +2430,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-const cunit -> ( operation * address ) =
+const c: unit -> ( operation * address ) =
   lambda (gen#5unit)( operation * address ) return CREATE_CONTRACT(lambda (gen#2
                                                                    ( unit * unit ))
                                                                    ( list (operation) * unit ) return
@@ -2449,7 +2449,7 @@ const foo =
    match gen#8 with
     | ( _a , _b ) ->
     unit
-const cunit -> ( int * string * nat * int * string * nat * int * string * nat * int * string ) =
+const c: unit -> ( int * string * nat * int * string * nat * int * string * nat * int * string ) =
   lambda (gen#6unit)( int * string * nat * int * string * nat * int * string * nat * int * string ) return
   ( 1 ,
     "1" ,

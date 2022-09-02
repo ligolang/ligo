@@ -137,18 +137,18 @@ and compile_declaration aliases (d : AST.declaration) : Aliases.t * AST.declarat
   let return_s aliases wrap_content = aliases, Some {d with wrap_content} in
   let return_n aliases = aliases, None in
   match Location.unwrap d with
-    Declaration_constant {binder;expr;attr} ->
+    D_value {binder;expr;attr} ->
       let expr   = expression aliases expr in
       let binder = Binder.map (Option.map ~f:(type_expression aliases)) binder in
-      return_s aliases @@ AST.Declaration.Declaration_constant {binder;expr;attr}
-  | Declaration_type {type_binder;type_expr;type_attr} ->
+      return_s aliases @@ AST.D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
       let type_expr = type_expression aliases type_expr in
-      return_s aliases @@ AST.Declaration.Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+      return_s aliases @@ AST.D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
       let mod_aliases,path,module_  = compile_module_expr aliases module_ in
       let aliases = Aliases.push aliases module_binder mod_aliases path in
       match module_ with None -> return_n aliases
-      | Some module_ -> return_s aliases @@ AST.Declaration.Declaration_module {module_binder;module_;module_attr}
+      | Some module_ -> return_s aliases @@ AST.D_module {module_binder;module_;module_attr}
 
 and compile_declaration_list aliases (program : AST.program) : Aliases.t * AST.program =
   let aliases,dcl = List.fold_map ~init:aliases ~f:(compile_declaration) program in

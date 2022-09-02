@@ -138,7 +138,7 @@ and unused_declaration ~raise = fun (x : declaration) ->
   let update_annotations annots =
     List.iter ~f:raise.Simple_utils.Trace.warning annots in
   match Location.unwrap x with
-  | Declaration_constant {expr ; _} -> (
+  | D_value {expr ; _} -> (
     let defuse,_ = defuse_neutral in
     let unused = defuse_of_expr defuse expr in
     let warn_var v =
@@ -147,8 +147,8 @@ and unused_declaration ~raise = fun (x : declaration) ->
     let () = update_annotations @@ List.map ~f:warn_var unused in
     ()
   )
-  | Declaration_type _ -> ()
-  | Declaration_module {module_; module_binder=_;module_attr=_} ->
+  | D_type _ -> ()
+  | D_module {module_; module_binder=_;module_attr=_} ->
     let _ = unused_map_module_expr ~raise module_ in
     ()
 

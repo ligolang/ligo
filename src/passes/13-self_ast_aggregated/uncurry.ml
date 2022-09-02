@@ -307,7 +307,7 @@ let uncurry_expression (expr : expression) : expression =
                                               source_type = None } } in
               (* Apply function to tuple: f(x1', x2', ..., xn') *)
               let result = e_a_application (e_a_variable fun_name fun_type) args ret_type in
-              let attr = Attr.{ inline = true ; no_mutation = false ; view = false; public = true ; hidden = false ; thunk = false } in
+              let attr = ValueAttr.{ inline = true ; no_mutation = false ; view = false; public = true ; hidden = false ; thunk = false } in
               (* Construct the let *)
               let result = e_a_let_in {var=fun_name;ascr=rhs.type_expression;attributes=Binder.empty_attribute} rhs result attr in
               let f (var, t) result =

@@ -21,22 +21,19 @@ and type_expression = {
 and ty_expr = type_expression
   [@@deriving eq,compare,yojson,hash]
 
-type attributes = string list
-  [@@deriving eq,compare,yojson,hash]
-let pp_attributes ppf lst =
-  Format.fprintf ppf "%a" Simple_utils.PP_helpers.(list_sep_d String.pp) lst
-(* | Macro_declaration of macro_declaration *)
 module Attr = struct
-  type value = attributes
-  and type_ = attributes
-  and module_ = attributes
+  type t = string list
     [@@deriving eq,compare,yojson,hash]
-  let pp_value = pp_attributes
-  let pp_type  = pp_attributes
-  let pp_module = pp_attributes
+  let pp ppf lst =
+    let attr =
+      List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") lst |> String.concat
+    in Format.fprintf ppf "%s" attr
+
 end
 
-module Declaration=Declaration(Attr)
+module ValueDecl = ValueDecl(Attr)
+module TypeDecl  = TypeDecl(Attr)
+module ModuleDecl= ModuleDecl(Attr)
 
 module Accessor = Accessor(Access_path)
 module Update   = Update(Access_path)
@@ -87,7 +84,11 @@ and expr = expression
 
 
 
-and declaration_content = (expr,ty_expr,decl) Declaration.declaration
+and declaration_content =
+    D_value  of (expr,ty_expr option) ValueDecl.t
+  | D_type   of ty_expr TypeDecl.t
+  | D_module of module_expr ModuleDecl.t
+
 and  declaration = declaration_content Location.wrap
 and  decl = Decl of declaration
   [@@deriving eq,compare,yojson,hash]

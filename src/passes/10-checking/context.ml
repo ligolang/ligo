@@ -129,13 +129,13 @@ module Typing = struct
     | M_struct declarations -> (
       let f : t -> Ast_typed.decl -> t = fun acc (Decl d) ->
         match Location.unwrap d with
-        | Declaration_constant {binder;expr;attr={public;_}} ->
+        | D_value {binder;expr;attr={public;_}} ->
            if public then add_value acc binder.var expr.type_expression
            else acc
-        | Declaration_type {type_binder;type_expr;type_attr={public;_}} ->
+        | D_type {type_binder;type_expr;type_attr={public;_}} ->
            if public then add_type acc type_binder type_expr
            else acc
-        | Declaration_module {module_binder;module_;module_attr={public;_}} ->
+        | D_module {module_binder;module_;module_attr={public;_}} ->
            if public then
              let context = context_of_module_expr ~outer_context:(union acc outer_context) module_ in
              add_module acc module_binder context
@@ -165,9 +165,9 @@ module Typing = struct
                  | Some (env) ->
                     let f : t -> Ast_typed.decl -> t = fun c (Decl d) ->
                       match Location.unwrap d with
-                      | Declaration_constant {binder;expr;attr=_}  -> add_value c binder.var expr.type_expression
-                      | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
-                      | Declaration_module {module_binder;module_;module_attr=_} ->
+                      | D_value {binder;expr;attr=_}  -> add_value c binder.var expr.type_expression
+                      | D_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
+                      | D_module {module_binder;module_;module_attr=_} ->
                          let mod_context = context_of_module_expr ~outer_context:c module_ in
                          add_module c module_binder mod_context
                     in

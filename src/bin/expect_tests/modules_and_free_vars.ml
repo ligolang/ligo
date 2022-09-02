@@ -13,7 +13,7 @@ const bal = ADD(balanc , 1000000mutez)
 const amt = ADD(Tezo.amoun , 1000000mutez)
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
-const main( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
+const main: ( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action , _#3 ) ->
@@ -37,7 +37,7 @@ const bal = ADD(balanc , 1000000mutez)
 const amt = ADD(Tezo.X.Y.amoun , 1000000mutez)
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
-const main( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
+const main: ( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action , _#3 ) ->
@@ -57,7 +57,7 @@ const size = 10const bal = ADD(balanc , 1000000mutez)
 const amt = ADD(Tezo.amoun , 1000000mutez)
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
-const main( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
+const main: ( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action , _#3 ) ->
@@ -87,7 +87,7 @@ module Tezo =
   endconst used = Tezo.X.Y.usedconst unused = Tezo.X.Y.unused
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
-const main( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
+const main: ( sum[Decrement -> unit , Increment -> unit] * tez ) -> ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action , _#3 ) ->

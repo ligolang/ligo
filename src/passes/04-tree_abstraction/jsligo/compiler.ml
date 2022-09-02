@@ -857,7 +857,7 @@ and compile_let_to_declaration ~raise : const:bool -> CST.attributes -> CST.val_
             let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
             List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:expr type_vars
           ) type_params in
-          Location.wrap ~loc:expr.location @@ AST.Declaration.Declaration_constant {binder; attr; expr} in
+          Location.wrap ~loc:expr.location @@ AST.D_value {binder; attr; expr} in
       List.map ~f:aux lst
 
 (*
@@ -1282,7 +1282,7 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    let d = Types.Declaration.Declaration_type {type_binder = compile_type_var name; type_expr; type_attr=attributes} in
+    let d = D_type {type_binder = compile_type_var name; type_expr; type_attr=attributes} in
     [ Location.wrap ~loc:(Location.lift region) d ]
   | SLet {value = {bindings; attributes; _ }; region = _} -> (
     let attributes =
@@ -1334,7 +1334,7 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
       let _loc = Location.lift region_in in
       Location.wrap ~loc @@
         Module_expr.M_struct (compile_namespace ~raise statements) in
-    let d = Types.Declaration.Declaration_module  {module_binder; module_; module_attr=attributes} in
+    let d = D_module  {module_binder; module_; module_attr=attributes} in
     [ Location.wrap ~loc d ]
   | SImport {value = {alias; module_path; _}; region} ->
     let module_binder   = compile_mod_var alias in
@@ -1342,7 +1342,7 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
       let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list module_path in
       m_path ~loc:Location.generated path
     in
-    let d = Types.Declaration.Declaration_module { module_binder; module_ ; module_attr = [] } in
+    let d = D_module { module_binder; module_ ; module_attr = [] } in
     [ Location.wrap ~loc:(Location.lift region) d ]
   | SExport {value = (_, s); _} -> compile_statement_to_declaration ~raise ~export:true s
   | _ ->

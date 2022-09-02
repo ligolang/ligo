@@ -33,7 +33,7 @@ let get_layout : (string list) -> Layout.t option = fun attributes ->
   in
   aux attributes
 
-let compile_exp_attributes : I.Attr.value -> O.Attr.value = fun attributes ->
+let compile_exp_attributes : I.Attr.t -> O.ValueAttr.t = fun attributes ->
   let is_inline attr = String.equal "inline" attr in
   let is_no_mutation attr = String.equal "no_mutation" attr in
   let is_view attr = String.equal "view" attr in
@@ -53,13 +53,13 @@ let compile_exp_attributes : I.Attr.value -> O.Attr.value = fun attributes ->
   let thunk = get_thunk attributes in
   {inline; no_mutation; view; public; hidden; thunk}
 
-let compile_type_attributes : I.Attr.type_ -> O.Attr.type_ = fun attributes ->
+let compile_type_attributes : I.Attr.t -> O.TypeOrModuleAttr.t = fun attributes ->
   let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
   let get_hidden : (string list) -> bool = fun attr -> List.mem attr "hidden" ~equal:String.equal in
   let public = get_public attributes in
   let hidden = get_hidden attributes in
   {public;hidden}
-let compile_module_attributes : I.Attr.type_ -> O.Attr.type_ = compile_type_attributes
+let compile_module_attributes : I.Attr.t -> O.TypeOrModuleAttr.t = compile_type_attributes
 
 let rec compile_type_expression : I.type_expression -> O.type_expression =
   fun te ->
@@ -275,19 +275,19 @@ let rec compile_expression : I.expression -> O.expression =
 and compile_declaration : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = compile_type_expression type_expr in
-    let type_attr = compile_type_attributes type_attr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map compile_type_expression_option binder in
     let expr   = compile_expression expr in
     let attr   = compile_exp_attributes attr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = compile_type_expression type_expr in
+    let type_attr = compile_type_attributes type_attr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = compile_module_expr module_ in
     let module_attr = compile_module_attributes module_attr in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and compile_module_expr : I.module_expr -> O.module_expr = fun me ->
   let return wrap_content : O.module_expr = {me with wrap_content} in

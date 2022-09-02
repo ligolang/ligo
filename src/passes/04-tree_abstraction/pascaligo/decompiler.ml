@@ -714,7 +714,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
   let decl = Location.unwrap decl in
   let wrap_attr attr x = List.fold ~f:(fun acc attr -> CST.D_Attr (attr,acc)) ~init:x attr in
   match decl with
-  | Declaration_type {type_binder;type_expr; type_attr=_} ->
+  | D_type {type_binder;type_expr; type_attr=_} ->
     let kwd_type = Token.ghost_type
     and name = decompile_type_var type_binder
     and kwd_is = Token.ghost_is in
@@ -737,7 +737,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     in
     let type_expr = decompile_type_expr type_expr in
     CST.D_Type (Region.wrap_ghost (CST.{kwd_type; name; kwd_is; type_expr; terminator ; params}))
-  | Declaration_constant {binder; attr; expr} -> (
+  | D_value {binder; attr; expr} -> (
     let attributes = Shared_helpers.decompile_attributes attr in
     let name = decompile_variable binder.var in
     let fun_name = name in
@@ -757,7 +757,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
       let const_decl : CST.const_decl = {kwd_const=Token.ghost_const;pattern = CST.P_Var name;type_params=None;const_type=const_type;equal=Token.ghost_eq;init;terminator} in
       wrap_attr attributes @@ CST.D_Const (Region.wrap_ghost const_decl)
   )
-  | Declaration_module {module_binder;module_;module_attr} -> (
+  | D_module {module_binder;module_;module_attr} -> (
     let module_attr = Shared_helpers.decompile_attributes module_attr in
     let module_decl : CST.module_decl = {
         kwd_module = Token.ghost_module ;

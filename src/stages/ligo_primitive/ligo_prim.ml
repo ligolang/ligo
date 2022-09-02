@@ -50,4 +50,6 @@ module Module_access = Module_access
 module Module_expr = Module_expr
 module Mod_in   = Mod_in
 
-module Declaration(Attr:Declaration.Attr) = Declaration.Make(Attr)
+module ValueDecl (Attr:Declaration.Attr) = Declaration.ValueDecl(Attr)
+module TypeDecl  (Attr:Declaration.Attr) = Declaration.TypeDecl(Attr)
+module ModuleDecl(Attr:Declaration.Attr) = Declaration.ModuleDecl(Attr)

@@ -45,8 +45,8 @@ and type_expression = {
 and ty_expr = type_expression
   [@@deriving eq,compare,yojson,hash]
 
-module Attr = struct
-  type value = {
+module ValueAttr = struct
+  type t = {
     inline: bool ;
     no_mutation: bool;
     (* Some external constant (e.g. `Test.balance`) do not accept any argument. This annotation is used to prevent LIGO interpreter to evaluate (V_Thunk values) and forces inlining in the compiling (15-self_mini_c)
@@ -61,18 +61,12 @@ module Attr = struct
     (* Controls whether it should be inlined at AST level *)
     thunk: bool ;
   } [@@deriving eq,compare,yojson,hash]
-  type type_ = { public: bool ; hidden : bool }
-    [@@deriving eq,compare,yojson,hash]
-  type module_ = type_
-    [@@deriving eq,compare,yojson,hash]
-
   open Format
   let pp_if_set str ppf attr =
-    if attr then
-      fprintf ppf "[@@%s]" str
-    else
-      fprintf ppf ""
-  let pp_value ppf { inline ; no_mutation ; view ; public ; hidden ; thunk } =
+    if attr then fprintf ppf "[@@%s]" str
+    else fprintf ppf ""
+
+  let pp ppf { inline ; no_mutation ; view ; public ; hidden ; thunk } =
     fprintf ppf "%a%a%a%a%a%a"
       (pp_if_set "inline") inline
       (pp_if_set "no_mutation") no_mutation
@@ -81,14 +75,25 @@ module Attr = struct
       (pp_if_set "hidden") hidden
       (pp_if_set "thunk") thunk
 
-  let pp_type ppf { public ; hidden } =
+end
+
+module TypeOrModuleAttr = struct
+  type t = { public: bool ; hidden : bool }
+    [@@deriving eq,compare,yojson,hash]
+
+  open Format
+  let pp_if_set str ppf attr =
+    if attr then fprintf ppf "[@@%s]" str
+    else fprintf ppf ""
+  let pp ppf { public ; hidden } =
     fprintf ppf "%a%a"
       (pp_if_set "private") (not public)
       (pp_if_set "hidden") hidden
-  let pp_module = pp_type
-end
 
-module Declaration=Declaration(Attr)
+end
+module ValueDecl  = ValueDecl(ValueAttr)
+module TypeDecl   = TypeDecl(TypeOrModuleAttr)
+module ModuleDecl = ModuleDecl(TypeOrModuleAttr)
 module Access_label = struct
   type 'a t = Label.t
   let equal _ = Label.equal
@@ -156,7 +161,7 @@ and let_in = {
     let_binder: ty_expr Binder.t ;
     rhs: expression ;
     let_result: expression ;
-    attr: Attr.value ;
+    attr: ValueAttr.t ;
   }
 
 and matching_expr =
@@ -177,7 +182,11 @@ and expression = {
 and expr = expression
   [@@deriving eq,compare,yojson,hash]
 
-and declaration_content = (expr,ty_expr,decl) Declaration.declaration
+and declaration_content =
+    D_value  of (expr,ty_expr option) ValueDecl.t
+  | D_type   of ty_expr TypeDecl.t
+  | D_module of module_expr ModuleDecl.t
+
 and  declaration = declaration_content Location.wrap
 and  decl = Decl of declaration
   [@@deriving eq,compare,yojson,hash]

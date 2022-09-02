@@ -1114,7 +1114,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
           in
           List.fold_right ~f:aux ~init:rhs lst in
       let ast =
-        AST.Declaration.Declaration_type {type_binder= compile_type_var name;
+        D_type {type_binder= compile_type_var name;
                               type_expr; type_attr=[]}
       in return region ast
 
@@ -1127,7 +1127,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
       let expr = compile_expression ~raise init in
       let attributes = Binder.const_attribute in
       let binder : _ Binder.t = {var; ascr; attributes} in
-      let ast = AST.Declaration.Declaration_constant {binder; attr; expr} in
+      let ast = D_value {binder; attr; expr} in
       return region ast
     | _ ->
         raise.error (unsupported_top_level_destructuring region)
@@ -1137,15 +1137,14 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
     let var, ascr, expr = compile_fun_decl (Location.lift region) ~raise value in
     let attributes = Binder.empty_attribute in
     let binder : _ Binder.t = {var; ascr; attributes} in
-    let ast = AST.Declaration.Declaration_constant {binder; attr = compile_attributes attr; expr} in
+    let ast = D_value {binder; attr = compile_attributes attr; expr} in
     return region ast
 
   | D_Module {value; region} ->
     let CST.{name; module_expr; _} = value in
     let module_ = compile_module_expression ~raise module_expr in
     let module_binder = compile_mod_var name in
-    let ast = AST.Declaration.Declaration_module
-                {module_binder; module_; module_attr=[]}
+    let ast = D_module {module_binder; module_; module_attr=[]}
     in return region ast
 
   | D_Directive _ -> []

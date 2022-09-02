@@ -1182,7 +1182,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let aux decl r =
     let ds, defs = r in
     match decl.Location.wrap_content with
-    | Ast_typed.Declaration.Declaration_constant { binder ; expr ; _ } ->
+    | Ast_typed.D_value { binder ; expr ; _ } ->
       let var = binder.var in
       if not (ValueVar.is_generated var) && (Base.String.is_prefix (ValueVar.to_name_exn var) ~prefix:"test") then
         let expr = Ast_typed.(e_a_variable var expr.type_expression) in

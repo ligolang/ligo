@@ -156,17 +156,17 @@ and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun sco
 and compile_declaration scope (d : AST.declaration) : Scope.t * AST.declaration =
   let return scope wrap_content = scope, {d with wrap_content} in
   match Location.unwrap d with
-    Declaration_constant {binder;expr;attr} ->
+    D_value {binder;expr;attr} ->
       let expr   = expression scope expr in
       let binder = Binder.map (Option.map ~f:(type_expression scope)) binder in
-      return scope @@ AST.Declaration.Declaration_constant {binder;expr;attr}
-  | Declaration_type {type_binder;type_expr;type_attr} ->
+      return scope @@ AST.D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
       let type_expr = type_expression scope type_expr in
-      return scope @@ AST.Declaration.Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+      return scope @@ AST.D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
       let mod_scope,module_   = compile_module_expr scope module_ in
       let scope,module_binder = Scope.new_module_var scope module_binder mod_scope in
-      return scope @@ AST.Declaration.Declaration_module {module_binder;module_;module_attr}
+      return scope @@ AST.D_module {module_binder;module_;module_attr}
 
 and compile_program scope (program : AST.program) : Scope.t * AST.program =
   List.fold_map ~init:scope ~f:(compile_declaration) program

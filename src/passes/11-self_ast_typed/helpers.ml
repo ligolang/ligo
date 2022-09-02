@@ -66,9 +66,9 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
     List.fold
       ~f:( fun acc (Decl x) ->
         match x.wrap_content with
-        | Declaration_constant x -> self acc x.expr
-        | Declaration_module x -> fold_expression_in_module_expr self acc x.module_
-        | Declaration_type _ ->  acc
+        | D_value  x -> self acc x.expr
+        | D_module x -> fold_expression_in_module_expr self acc x.module_
+        | D_type   _ ->  acc
       )
       ~init:acc
       decls
@@ -91,12 +91,12 @@ and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
   let aux = fun acc (Decl x) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
-    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; thunk = _ }} -> (
+    | D_value {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; thunk = _ }} -> (
         let res = fold_expression f acc expr in
         return @@ res
     )
-    | Declaration_type _t -> return @@ acc
-    | Declaration_module {module_binder=_;module_ ; module_attr=_} ->
+    | D_type _t -> return @@ acc
+    | D_module {module_binder=_;module_ ; module_attr=_} ->
       let res = fold_expression_in_module_expr f acc module_ in
       return @@ res
   in
@@ -214,14 +214,14 @@ and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
 and map_declaration m = fun (x : declaration) ->
   let return (d : declaration_content) = { x with wrap_content=d} in
   match x.wrap_content with
-  | Declaration_constant {binder; expr ; attr} -> (
+  | D_value {binder; expr ; attr} -> (
       let expr = map_expression m expr in
-      return @@ Declaration_constant {binder; expr ; attr}
+      return @@ D_value {binder; expr ; attr}
   )
-  | Declaration_type t -> return @@ Declaration_type t
-  | Declaration_module {module_binder;module_;module_attr} ->
+  | D_type t -> return @@ D_type t
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = map_expression_in_module_expr m module_ in
-    return @@ Declaration_module {module_binder; module_; module_attr}
+    return @@ D_module {module_binder; module_; module_attr}
 
 and map_decl m (Decl d) = Decl (map_declaration m d)
 and map_module : 'err mapper -> module_ -> module_ = fun m ->
@@ -232,12 +232,12 @@ and map_program : 'err mapper -> program -> program = fun m ->
 
 let fetch_entry_type ~raise : string -> program -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
+    | D_value ({ binder ; expr=_ ; attr=_ } as p) ->
         if ValueVar.is_name binder.var main_fname
         then Some p
         else None
-    | Declaration_type   _
-    | Declaration_module _ ->
+    | D_type   _
+    | D_module _ ->
       None
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
@@ -245,7 +245,7 @@ let fetch_entry_type ~raise : string -> program -> (type_expression * Location.t
     trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
-  let Declaration.{ binder=_ ; expr ; attr=_} = main_decl in
+  let ValueDecl.{ binder=_ ; expr ; attr=_} = main_decl in
   expr.type_expression, expr.location
 
 type contract_type = {
@@ -255,12 +255,12 @@ type contract_type = {
 
 let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun main_fname m ->
   let aux declt = match Location.unwrap declt with
-    | Declaration.Declaration_constant ({ binder ; expr=_ ; attr=_} as p) ->
+    | D_value ({ binder ; expr=_ ; attr=_} as p) ->
        if ValueVar.equal binder.var main_fname
        then Some p
        else None
-    | Declaration_type   _
-    | Declaration_module _ ->
+    | D_type   _
+    | D_module _ ->
       None
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
@@ -268,7 +268,7 @@ let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun ma
     trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
   in
-  let Declaration.{ binder ; expr ; attr=_} = main_decl in
+  let ValueDecl.{ binder ; expr ; attr=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
     match Ast_typed.Combinators.(get_t_pair type1 , get_t_pair type2) with
@@ -286,10 +286,10 @@ let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun ma
 (* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
    [predicate] defines the annotation (or set of annotation) you want to match on
 *)
-let get_shadowed_decl : program -> (Attr.value -> bool) -> Location.t option = fun prg predicate ->
+let get_shadowed_decl : program -> (ValueAttr.t -> bool) -> Location.t option = fun prg predicate ->
   let aux = fun (seen,shadows : ValueVar.t list * Location.t list) (x : declaration) ->
     match Location.unwrap x with
-    | Declaration_constant { binder ; attr ; _} -> (
+    | D_value { binder ; attr ; _} -> (
       match List.find seen ~f:(ValueVar.equal binder.var) with
       | Some x -> (seen , ValueVar.get_location x::shadows)
       | None -> if predicate attr then (binder.var::seen , shadows) else seen,shadows
@@ -303,8 +303,8 @@ let get_shadowed_decl : program -> (Attr.value -> bool) -> Location.t option = f
 let strip_view_annotations : program -> program = fun m ->
   let aux = fun (x:declaration) ->
     match Location.unwrap x with
-    | Declaration_constant ( {attr ; _} as decl ) when attr.view ->
-      { x with wrap_content = Declaration.Declaration_constant { decl with attr = {attr with view = false} } }
+    | D_value ( {attr ; _} as decl ) when attr.view ->
+      { x with wrap_content = D_value { decl with attr = {attr with view = false} } }
     | _ -> x
   in
   List.map ~f:aux m
@@ -326,10 +326,10 @@ let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.pr
       fun (x:declaration) (prg,views:Ast_typed.program * string list) ->
         let continue = x::prg,views in
         match Location.unwrap x with
-        | Declaration_constant ({binder ; _} as decl) -> (
+        | D_value ({binder ; _} as decl) -> (
           match List.find views ~f:(ValueVar.is_name binder.var) with
           | Some found ->
-            let decorated = { x with wrap_content = Declaration.Declaration_constant { decl with attr = {decl.attr with view = true} }} in
+            let decorated = { x with wrap_content = D_value { decl with attr = {decl.attr with view = true} }} in
             decorated::prg, (List.remove_element ~compare:String.compare found views)
           | None -> continue
         )
@@ -429,11 +429,11 @@ module Free_variables :
   and get_fv_module : module_ -> moduleEnv' = fun m ->
     let aux = fun (Decl x) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr ; attr=_} ->
+      | D_value {binder=_; expr ; attr=_} ->
         get_fv_expr expr
-      | Declaration_module {module_binder=_;module_; module_attr=_} ->
+      | D_module {module_binder=_;module_; module_attr=_} ->
         get_fv_module_expr module_
-      | Declaration_type _t ->
+      | D_type _t ->
         {modVarSet=ModVarSet.empty;moduleEnv=VarMap.empty;varSet=VarSet.empty}
     in
     unions @@ List.map ~f:aux m

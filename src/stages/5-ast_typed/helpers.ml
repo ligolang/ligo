@@ -296,18 +296,18 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr
 
 and fold_map_declaration = fun m acc (x : declaration) ->
   match Location.unwrap x with
-  | Declaration_constant {binder ; expr ; attr } -> (
+  | D_value {binder ; expr ; attr } -> (
     let (acc', expr) = fold_map_expression m acc expr in
-    let wrap_content = Types.Declaration.Declaration_constant {binder ; expr ; attr} in
+    let wrap_content = D_value {binder ; expr ; attr} in
     (acc', {x with wrap_content})
   )
-  | Declaration_type t -> (
-    let wrap_content = Types.Declaration.Declaration_type t in
+  | D_type t -> (
+    let wrap_content = D_type t in
     (acc, {x with wrap_content})
   )
-  | Declaration_module {module_binder; module_; module_attr} -> (
+  | D_module {module_binder; module_; module_attr} -> (
     let (acc', module_) = (fold_map_expression_in_module_expr m) acc module_ in
-    let wrap_content = Types.Declaration.Declaration_module {module_binder; module_; module_attr} in
+    let wrap_content = D_module {module_binder; module_; module_attr} in
     (acc', {x with wrap_content})
   )
 
@@ -502,14 +502,14 @@ let get_views : program -> (ValueVar.t * Location.t) list = fun p ->
   let f : declaration -> (ValueVar.t * Location.t) list -> (ValueVar.t * Location.t) list =
     fun {wrap_content=decl ; location=_ } acc ->
       match decl with
-      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder.var, ValueVar.get_location binder.var)::acc
+      | D_value { binder ; expr=_ ; attr } when attr.view -> (binder.var, ValueVar.get_location binder.var)::acc
       | _ -> acc
   in
   List.fold_right ~init:[] ~f p
 
 let fetch_view_type : declaration -> (type_expression * type_expression Binder.t) option = fun declt ->
   match Location.unwrap declt with
-  | Declaration_constant { binder ; expr ; attr } when attr.view -> (
+  | D_value { binder ; expr ; attr } when attr.view -> (
     Some (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
   )
   | _ -> None

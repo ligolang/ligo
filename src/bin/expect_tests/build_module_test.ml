@@ -86,7 +86,7 @@ let%expect_test _ =
     module E =
       Mangled_module_____________________test__contracts__build__E____mligo.
     const toto = ADD(E.toto , C.B.A.toto)
-    const fbrecord[tata -> int , tete -> int , titi -> int , toto -> int] =
+    const fb: record[tata -> int , tete -> int , titi -> int , toto -> int] =
       record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
       lambda (gen#5( int * int ))( list (operation) * int ) return  match
@@ -124,7 +124,7 @@ let%expect_test _ =
       Mangled_module_____________________test__contracts__build__instance____________common__errors____mligo.
     module Storage =
       Mangled_module_____________________test__contracts__build__instance____________common__storage____mligo.
-    const main( unit * string ) -> ( list (operation) * string ) =
+    const main: ( unit * string ) -> ( list (operation) * string ) =
       lambda (gen#2( unit * string ))( list (operation) * string ) return
        match gen#2 with
         | ( _#4 , _#3 ) ->

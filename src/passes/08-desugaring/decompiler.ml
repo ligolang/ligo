@@ -5,8 +5,8 @@ module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 open Ligo_prim
 
-let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
-  let aux : string list -> (unit -> string option) -> I.Attr.value = fun acc is_fun ->
+let decompile_exp_attributes : O.ValueAttr.t -> I.Attr.t = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
+  let aux : string list -> (unit -> string option) -> I.Attr.t = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
     | None -> acc
@@ -21,8 +21,8 @@ let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_
       (fun () -> if thunk then Some "thunk" else None) ;
     ]
 
-let decompile_type_attributes : O.Attr.type_ -> I.Attr.type_ = fun { public ; hidden } ->
-  let aux : string list -> (unit -> string option) -> I.Attr.type_ = fun acc is_fun ->
+let decompile_type_attributes : O.TypeOrModuleAttr.t -> I.Attr.t = fun { public ; hidden } ->
+  let aux : string list -> (unit -> string option) -> I.Attr.t = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
     | None -> acc
@@ -167,19 +167,19 @@ let rec decompile_expression : O.expression -> I.expression =
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = decompile_type_expression type_expr in
-    let type_attr = decompile_type_attributes type_attr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map decompile_type_expression_option binder in
     let expr   = decompile_expression expr in
     let attr   = decompile_exp_attributes attr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = decompile_type_expression type_expr in
+    let type_attr = decompile_type_attributes type_attr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = decompile_module_expr module_ in
     let module_attr = decompile_module_attributes module_attr in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   let return wrap_content : I.module_expr = {me with wrap_content} in

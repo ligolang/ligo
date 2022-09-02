@@ -305,7 +305,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       | Neq ne   -> compile_bin_op C_NEQ ne
     )
   )
-  | ERevApp {value; region} -> 
+  | ERevApp {value; region} ->
     let loc  = Location.lift region in
     let x = self value.arg1 in
     let f = self value.arg2 in
@@ -757,7 +757,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration.Declaration_type  {type_binder=TypeVar.of_input_var ~loc name; type_expr; type_attr=[]}
+    return_1 region @@ D_type  {type_binder=TypeVar.of_input_var ~loc name; type_expr; type_attr=[]}
   )
 
   | Directive _ -> []
@@ -769,7 +769,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let decls = compile_module ~raise module_ in
       m_struct ~loc decls
     in
-    let ast = AST.Declaration.Declaration_module  {module_binder; module_; module_attr=[]}
+    let ast = D_module  {module_binder; module_; module_attr=[]}
     in return_1 region ast
 
   | ModuleAlias {value={alias; binders; _};region} ->
@@ -778,7 +778,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list binders in
       m_path ~loc:Location.generated path (* wrong location *)
     in
-    return_1 region @@ AST.Declaration.Declaration_module { module_binder; module_ ; module_attr = [] }
+    return_1 region @@ D_module { module_binder; module_ ; module_attr = [] }
 
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     let attr = compile_attributes attributes in
@@ -794,7 +794,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
       let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor expr @@ [Access_tuple i]) in
       let lst = snd @@ List.fold_map ~f:aux ~init:Z.zero @@ lst in
-      let aux (binder,attr, expr) =  AST.Declaration.Declaration_constant {binder; attr; expr} in
+      let aux (binder,attr, expr) = D_value {binder; attr; expr} in
       return region @@ List.map ~f:aux lst
     | CST.PRecord record , [] ->
       let attributes = compile_attributes attributes in
@@ -810,7 +810,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
       let aux (field_name,binder) = (binder, attributes, e_accessor expr @@ [Access_record field_name]) in
       let lst = List.map ~f:aux @@ lst in
-      let aux (binder,attr, expr) =  AST.Declaration.Declaration_constant {binder; attr; expr} in
+      let aux (binder,attr, expr) =  D_value {binder; attr; expr} in
       return region @@ List.map ~f:aux lst
     | _,_ ->
       let let_rhs = compile_expression ~raise let_rhs in
@@ -839,7 +839,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let type_vars = List.Ne.map compile_type_var tp.type_vars in
         List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:let_rhs type_vars
       ) type_params in
-      return_1 region @@ AST.Declaration.Declaration_constant {binder;attr;expr=let_rhs}
+      return_1 region @@ D_value {binder;attr;expr=let_rhs}
 
 and compile_module ~raise : CST.ast -> AST.module_  =
   fun t ->

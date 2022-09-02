@@ -263,16 +263,16 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
 and compile_declaration ~raise : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = compile_type_expression ~raise type_expr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map (compile_type_expression_option ~raise) binder in
     let expr   = compile_expression ~raise ~last:true expr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = compile_type_expression ~raise type_expr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = compile_module_expr ~raise module_ in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and compile_module_expr ~raise : I.module_expr -> O.module_expr = fun me ->
   let return wrap_content : O.module_expr = {me with wrap_content} in

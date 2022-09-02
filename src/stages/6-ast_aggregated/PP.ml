@@ -123,7 +123,7 @@ and expression_content ppf (ec: expression_content) =
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
       (Binder.pp type_expression) let_binder
       expression rhs
-      Types.Attr.pp_value attr
+      Types.ValueAttr.pp attr
       expression let_result
   | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
       fprintf ppf "@[<h>%a@]" expression let_result

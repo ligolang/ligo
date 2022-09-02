@@ -55,9 +55,9 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
     List.fold
       ~f:( fun acc (Decl x) ->
         match x.wrap_content with
-        | Declaration_constant x -> self acc x.expr
-        | Declaration_module x -> fold_expression_in_module_expr self acc x.module_
-        | Declaration_type _ ->  acc
+        | D_value  x -> self acc x.expr
+        | D_type   _ ->  acc
+        | D_module x -> fold_expression_in_module_expr self acc x.module_
       )
       ~init:acc
       decls
@@ -136,13 +136,13 @@ let rec map_expression ~raise : ('err,'warn) exp_mapper -> expression -> express
 and map_expression_in_declaration : (expression -> expression) -> declaration -> declaration = fun self xs ->
     let return wrap_content : declaration = { xs with wrap_content } in
     match xs.wrap_content with
-    | Declaration_constant x ->
+    | D_value x ->
       let expr = self x.expr in
-      return (Declaration_constant { x with expr })
-    | Declaration_module x ->
+      return (D_value { x with expr })
+    | D_type   _ -> xs
+    | D_module x ->
       let module_ = map_expression_in_module_expr self x.module_ in
-      return (Declaration_module { x with module_ })
-    | Declaration_type _ -> xs
+      return (D_module { x with module_ })
 
 and map_expression_in_declarations : (expression -> expression) -> program -> program = fun self xs ->
   List.map ~f:(map_expression_in_declaration self) xs
@@ -263,13 +263,13 @@ and fold_map_expression_in_module_expr : type a . (a -> expression -> a * expres
       ~f:( fun acc (Decl x: decl) ->
         let return r wrap_content : a * decl = (r, Decl { x with wrap_content }) in
         match x.wrap_content with
-        | Declaration_constant x ->
+        | D_value x ->
           let res,expr = self acc x.expr in
-          return res (Types.Declaration.Declaration_constant { x with expr })
-        | Declaration_module x ->
+          return res (D_value { x with expr })
+        | D_type _ -> return acc x.wrap_content
+        | D_module x ->
           let res,module_ = fold_map_expression_in_module_expr self acc x.module_ in
-          return res (Types.Declaration.Declaration_module { x with module_ })
-        | Declaration_type _ -> return acc x.wrap_content
+          return res (D_module { x with module_ })
       )
       ~init:acc
       decls

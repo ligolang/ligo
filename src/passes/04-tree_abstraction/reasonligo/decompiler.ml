@@ -630,7 +630,7 @@ and decompile_lambda : (AST.expr, AST.ty_expr option) Lambda.t -> _ =
 and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
   let decl = Location.unwrap decl in
   match decl with
-    Declaration_type {type_binder;type_expr;type_attr=_} ->
+    D_type {type_binder;type_expr;type_attr=_} ->
     let name = decompile_type_var type_binder in
     let params =
       match type_expr.type_content with
@@ -651,7 +651,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     in
     let type_expr = decompile_type_expr type_expr in
     CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
-  | Declaration_constant {binder;attr;expr}-> (
+  | D_value {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
     let pvar = CST.{variable = decompile_variable binder.var ; attributes = var_attributes} in
@@ -676,7 +676,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
       let let_decl = wrap (ghost,None,let_binding,attributes) in
       CST.ConstDecl let_decl
   )
-  | Declaration_module {module_binder;module_; module_attr=_} -> (
+  | D_module {module_binder;module_; module_attr=_} -> (
     let name    = decompile_mod_var module_binder in
     match module_.wrap_content with
     | M_struct prg -> (

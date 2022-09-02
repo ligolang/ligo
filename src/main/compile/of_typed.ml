@@ -78,7 +78,7 @@ let list_declarations (only_ep: bool) (m : Ast_typed.program) : ValueVar.t list 
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_constant {binder;attr;expr} when attr.public ->
+      | D_value {binder;attr;expr} when attr.public ->
         if only_ep then (
           if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content) then
             binder.var::prev else prev
@@ -93,7 +93,7 @@ let list_type_declarations (m : Ast_typed.program) : TypeVar.t list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_type {type_binder;type_attr;_} when type_attr.public -> type_binder::prev
+      | D_type {type_binder;type_attr;_} when type_attr.public -> type_binder::prev
       | _ -> prev)
     ~init:[] m
 
@@ -102,6 +102,6 @@ let list_mod_declarations (m : Ast_typed.program) : ModuleVar.t list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_module {module_binder;module_attr;_} when module_attr.public -> module_binder::prev
+      | D_module {module_binder;module_attr;_} when module_attr.public -> module_binder::prev
       | _ -> prev)
     ~init:[] m

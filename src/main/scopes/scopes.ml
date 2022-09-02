@@ -177,28 +177,28 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       | None -> partials
     in
     match decl.wrap_content with
-    | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> (
+    | D_value { attr = { hidden = true ; _ } ; _ } -> (
       ( i, top_def_map, inner_def_map, scopes , partials )
     )
-    | Declaration_constant { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
+    | D_value { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
       let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,decl.location) partials.bindings expr in
       let inner_def_map = merge_defs new_inner_def_map inner_def_map in
       let def = make_v_def_option_type partials.bindings var ascr (ValueVar.get_location var) expr.location in
       let (i,top_def_map) = add_shadowing_def (i,get_binder_name var) def top_def_map in
       ( i, top_def_map, inner_def_map, scopes , partials )
     )
-    | Declaration_type {type_attr={hidden = true; _} ; _} -> (
+    | D_type {type_attr={hidden = true; _} ; _} -> (
       ( i, top_def_map, inner_def_map, scopes, partials )
     )
-    | Declaration_type {type_binder; type_expr ; type_attr=_} -> (
+    | D_type {type_binder; type_expr ; type_attr=_} -> (
       let def = make_t_def (get_type_binder_name type_binder) decl.location type_expr in
       let (i,top_def_map) = add_shadowing_def (i,get_type_binder_name type_binder) def top_def_map in
       ( i, top_def_map, inner_def_map, scopes, partials )
     )
-    | Declaration_module {module_attr={hidden = true; _} ; _} -> (
+    | D_module {module_attr={hidden = true; _} ; _} -> (
       ( i, top_def_map, inner_def_map, scopes, partials )
     )
-    | Declaration_module {module_binder; module_ ; module_attr=_} -> (
+    | D_module {module_binder; module_ ; module_attr=_} -> (
       let (i,new_outer_def_map,scopes) = module_expr ~options ~env:top_def_map ~scopes i module_ in
       let def = make_m_def (get_mod_binder_name module_binder) decl.location new_outer_def_map in
       let top_def_map = Def_map.add (get_mod_binder_name module_binder) def top_def_map in

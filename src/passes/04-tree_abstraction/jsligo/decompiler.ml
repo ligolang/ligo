@@ -751,7 +751,7 @@ and decompile_matching_cases : _ Match_expr.match_case list -> CST.expr =
 and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
   let decl = Location.unwrap decl in
   match decl with
-    Declaration_type {type_binder;type_expr;type_attr} ->
+    D_type {type_binder;type_expr;type_attr} ->
     let attr = type_attr in
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
@@ -780,7 +780,7 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
       type_
     else
       CST.SExport (Region.wrap_ghost (Token.ghost_export, type_))
-  | Declaration_constant {binder; attr; expr } ->
+  | D_value {binder; attr; expr } ->
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable2 binder.var) in
@@ -800,7 +800,7 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
       const
     else
       CST.SExport (Region.wrap_ghost (Token.ghost_export, const))
-  | Declaration_module {module_binder; module_; module_attr} -> (
+  | D_module {module_binder; module_; module_attr} -> (
     let name = decompile_mod_var module_binder in
     let is_private = List.mem ~equal:Caml.(=) module_attr "private" in
     let attributes = decompile_attributes module_attr in

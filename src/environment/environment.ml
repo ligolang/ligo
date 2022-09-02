@@ -10,7 +10,7 @@ type t = module_
 let pp ppf m = PP.module_ ppf @@ m
 let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.ModuleVar.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
   let module_ = Location.wrap @@ Module_expr.M_struct module_ in
-  let new_d = Location.wrap @@ Declaration.Declaration_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
+  let new_d = Location.wrap @@ D_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
   let new_decl = Decl new_d in
   new_decl :: env
 
@@ -24,7 +24,7 @@ type core = Ast_core.module_
 let add_core_module ?public ?hidden : ModuleVar.t -> Ast_core.module_ -> core -> core =
   fun module_binder module_ env ->
     let module_ = Location.wrap @@ Module_expr.M_struct module_ in
-    let new_d = Location.wrap @@ Ast_core.Declaration.Declaration_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
+    let new_d = Location.wrap @@ Ast_core.D_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
   let new_decl = Ast_core.Decl new_d in
     new_decl :: env
 
@@ -104,7 +104,7 @@ let meta_ligo_types : (TypeVar.t * type_expression) list -> (TypeVar.t * type_ex
 
 let of_list_type : (TypeVar.t * type_expression) list -> t =
   List.map ~f:(fun (type_binder,type_expr) ->
-    let d = Location.wrap @@ Ast_typed.Declaration.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}} in
+    let d = Location.wrap @@ D_type {type_binder;type_expr;type_attr={public=true;hidden=false}} in
     Ast_typed.Decl d)
 
 let default : Protocols.t -> t = function

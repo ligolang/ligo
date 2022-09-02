@@ -65,12 +65,12 @@ let extract_variable_types :
       )
     in
     match decl with
-    | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> prev
-    | Declaration_constant { binder ; expr ; _ } ->
+    | D_value { attr = { hidden = true ; _ } ; _ } -> prev
+    | D_value { binder ; expr ; _ } ->
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
-    | Declaration_type _ -> prev
-    | Declaration_module _ -> prev
+    | D_type _ -> prev
+    | D_module _ -> prev
 
 let generated_flag = "#?generated"
 let get_binder_name : ValueVar.t -> string = fun v ->

@@ -47,7 +47,7 @@ module M (Params : Params) =
         let ast_typed = List.map ~f:(fun decl -> Ast_typed.Decl decl) ast_typed in
         let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
         let module_binder = ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_typed.(Declaration.Declaration_module {module_binder;module_;module_attr={public=true;hidden=true}})
+        Location.wrap Ast_typed.(D_module {module_binder;module_;module_attr={public=true;hidden=true}})
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
@@ -81,7 +81,7 @@ module Infer (Params : Params) = struct
         let ast_typed = List.map ~f:(fun decl -> Ast_core.Decl decl) ast_typed in
         let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
         let module_binder = ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_core.(Declaration.Declaration_module {module_binder;module_;module_attr={public=true;hidden=true}})
+        Location.wrap Ast_core.(D_module {module_binder;module_;module_attr={public=true;hidden=true}})
   end
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =

@@ -87,12 +87,12 @@ let reserved_names_exp ~raise : expression -> expression = fun exp ->
 
 let reserved_names_program ~raise : program -> program = fun m ->
   let aux d = match d with
-    | Location.{wrap_content = Types.Declaration.Declaration_type _; _} -> ()
-    | {wrap_content = Declaration_constant {binder ; expr ; _ }; location = loc } ->
+    | Location.{wrap_content = D_value {binder ; expr ; _ }; location = loc } ->
       check_reserved ~raise ~loc binder ;
       let _ : expression = reserved_names_exp ~raise expr in
       ()
-    | {wrap_content = Declaration_module _ ; _} -> ()
+    | {wrap_content = D_type _; _} -> ()
+    | {wrap_content = D_module _ ; _} -> ()
   in
   List.iter ~f:aux m ;
   m

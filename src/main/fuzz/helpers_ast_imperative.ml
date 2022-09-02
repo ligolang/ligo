@@ -126,21 +126,21 @@ module Fold_helpers(M : Monad) = struct
     ok @@ While_loop.{cond; body}
 
   (* Declaration *)
-  let declaration_type : ('a -> 'b monad) -> 'a Declaration.declaration_type -> 'b Declaration.declaration_type monad
+  let declaration_type : ('a -> 'b monad) -> 'a TypeDecl.t -> 'b TypeDecl.t monad
     = fun g {type_binder; type_expr; type_attr} ->
     let* type_expr = g type_expr in
-    ok @@ Declaration.{type_binder; type_expr; type_attr}
+    ok @@ TypeDecl.{type_binder; type_expr; type_attr}
 
-  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Declaration.declaration_constant -> ('b,'d) Declaration.declaration_constant monad
+  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) ValueDecl.t -> ('b,'d) ValueDecl.t monad
     = fun f g {binder=b; attr; expr} ->
     let* binder = binder g b in
     let* expr   = f expr     in
-    ok @@ Declaration.{binder;attr;expr}
+    ok @@ ValueDecl.{binder;attr;expr}
 
-  let rec declaration_module : ('a -> 'b monad) -> 'a Declaration.declaration_module -> 'b Declaration.declaration_module monad
+  let rec declaration_module : ('a -> 'b monad) -> 'a ModuleDecl.t -> 'b ModuleDecl.t monad
     = fun f {module_binder; module_;module_attr} ->
-    let* module_ = (module_expr f) module_ in
-    ok @@ Declaration.{module_binder;module_;module_attr}
+    let* module_ = f module_ in
+    ok @@ ModuleDecl.{module_binder;module_;module_attr}
 
   and module' : _ -> module_ -> module_ monad
     = fun f prg ->
@@ -279,9 +279,9 @@ module Fold_helpers(M : Monad) = struct
 
   and declaration m : declaration -> declaration monad = fun d ->
     match d.wrap_content,m with
-    | (Declaration_constant dc, Expression m') -> (
+    | (D_value dc, Expression m') -> (
       let* dc = declaration_constant (map_expression m') ok dc in
-      ok ({d with wrap_content=Declaration.Declaration_constant dc})
+      ok ({d with wrap_content=D_value dc})
     )
     | _,_ -> ok @@ d
   and decl m = fun (Decl d : decl) : decl monad ->

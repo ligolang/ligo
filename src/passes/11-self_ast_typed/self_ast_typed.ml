@@ -53,7 +53,7 @@ let all_view ~raise command_line_views main_name prg =
     )
   in
   let () =
-    match Helpers.get_shadowed_decl prg (fun ({ view ; _ } : Ast_typed.Attr.value) -> view) with
+    match Helpers.get_shadowed_decl prg (fun ({ view ; _ } : Ast_typed.ValueAttr.t) -> view) with
     | Some loc -> raise.error (Errors.annotated_declaration_shadowed loc)
     | None -> ()
   in

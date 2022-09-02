@@ -24,9 +24,9 @@ let get_declarations_core (core_prg : Ast_core.program )=
 
 let get_declarations_typed (typed_prg : Ast_typed.program) =
   List.filter_map ~f:Ast_typed.(fun (a : declaration) -> Simple_utils.Location.unwrap a |>
-    (function Declaration_constant a when not a.attr.hidden -> Option.return @@ `Value a.binder.var
-    | Declaration_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
-    | Declaration_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
+    (function D_value a when not a.attr.hidden -> Option.return @@ `Value a.binder.var
+    | D_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
+    | D_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
     | _ -> None)) @@ typed_prg
 
 let pp_declaration ppf = function
@@ -148,7 +148,7 @@ let import_file ~raise ~raw_options state file_name module_name =
     let prg = List.map ~f:(fun d -> Ast_typed.Decl d) prg in
     Simple_utils.Location.wrap (Module_expr.M_struct prg)
   in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration.Declaration_module {module_binder=ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ D_module {module_binder=ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)

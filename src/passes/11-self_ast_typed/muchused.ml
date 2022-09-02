@@ -201,10 +201,10 @@ let rec get_all_declarations (module_name : ModuleVar.t) : module_ ->
   function m ->
     let aux = fun (Decl {wrap_content=x;location} : decl) ->
       match x with
-      | Declaration_constant {binder;expr;_} ->
+      | D_value {binder;expr;_} ->
           let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp binder.var) in
           [(name, expr.type_expression)]
-      | Declaration_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
+      | D_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
           let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp v) in
@@ -221,10 +221,10 @@ let rec muchused_helper (muchuse : muchuse) =
 
 and muchuse_declaration = fun (x : declaration) s ->
   match Location.unwrap x with
-  | Declaration_constant {expr ; binder; _} ->
+  | D_value {expr ; binder; _} ->
       muchuse_union (muchuse_of_expr expr)
         (muchuse_of_binder binder.var expr.type_expression s)
-  | Declaration_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
+  | D_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
       let decls = get_all_declarations module_binder module_ in
       List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
         decls ~init:(muchused_helper s module_)

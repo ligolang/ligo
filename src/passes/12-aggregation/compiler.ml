@@ -138,14 +138,14 @@ end
 module Scope : sig
   type t
   type decl =
-    Value of O.type_expression Binder.t * O.type_expression * O.Attr.value
+    Value of O.type_expression Binder.t * O.type_expression * O.ValueAttr.t
   | Module of ModuleVar.t
   val empty : t
   val pp    : Format.formatter -> t -> unit
   val find_value : t -> ValueVar.t -> Path.t
   val find_type_ : t -> TypeVar.t -> Path.t
   val find_module : t -> ModuleVar.t -> Path.t * t
-  val push_value : t -> O.type_expression Binder.t -> O.type_expression -> O.Attr.value -> Path.t -> t
+  val push_value : t -> O.type_expression Binder.t -> O.type_expression -> O.ValueAttr.t -> Path.t -> t
   val remove_value : t -> ValueVar.t -> t
   val push_type_ : t -> TypeVar.t -> Path.t -> t
   val remove_type_ : t -> TypeVar.t -> t
@@ -164,7 +164,7 @@ end = struct
     name_map : ValueVar.t PathVarMap.t;
     decl_list : decl list}
   and decl =
-    Value of O.type_expression Binder.t * O.type_expression * O.Attr.value
+    Value of O.type_expression Binder.t * O.type_expression * O.ValueAttr.t
   | Module of ModuleVar.t
   let empty = { value = ValueVMap.empty; type_ = TypeVMap.empty; module_ = ModuleVMap.empty ; name_map = PathVarMap.empty; decl_list = [] }
   let rec pp ppf scope =
@@ -211,7 +211,7 @@ end = struct
 end
 
 
-let compile_value_attr : I.Attr.value -> O.Attr.value =
+let compile_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
   fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
 
 let rec compile_type_expression ~raise path scope (type_expression : I.type_expression) : O.type_expression =
@@ -359,7 +359,7 @@ and compile_cases ~raise path scope cases : O.matching_expr =
 
 and compile_declaration ~raise path scope (d : I.declaration) =
   match Location.unwrap d with
-    Declaration_constant {binder;expr;attr} ->
+    D_value {binder;expr;attr} ->
       let expr   = compile_expression ~raise path scope expr in
       let attr = compile_value_attr attr in
       let binder = Binder.map (fun _ -> expr.type_expression) binder in
@@ -368,9 +368,9 @@ and compile_declaration ~raise path scope (d : I.declaration) =
       let binder = { binder with var} in
       scope, fun e ->
         O.e_a_let_in binder expr e attr
-  | Declaration_type _ ->
+  | D_type _ ->
       scope, fun e -> e
-  | Declaration_module {module_binder;module_;module_attr=_} ->
+  | D_module {module_binder;module_;module_attr=_} ->
       let path' = Path.add_to_path path module_binder in
       let mod_scope,decl_list = compile_module_expr ~raise path' scope module_ in
       let scope   = Scope.push_module scope module_binder path' mod_scope in

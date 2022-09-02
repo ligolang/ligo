@@ -766,7 +766,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ Declaration_type {type_binder; type_expr; type_attr=[]}
+    return_1 region @@ D_type {type_binder; type_expr; type_attr=[]}
   | ModuleDecl {value={kwd_module ; name ; module_ ; rbrace ; _};region} ->
     let module_binder = compile_mod_var name in
     let module_ =
@@ -774,14 +774,14 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let decls = compile_module ~raise module_ in
       m_struct ~loc decls
     in
-    return_1 region @@ Declaration_module {module_binder; module_; module_attr=[]}
+    return_1 region @@ D_module {module_binder; module_; module_attr=[]}
   | ModuleAlias {value={alias; binders; _};region} ->
     let module_binder   = compile_mod_var alias in
     let module_ =
       let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list binders in
       m_path ~loc:Location.generated path
     in
-    return_1 region @@ Declaration_module { module_binder; module_ ; module_attr = [] }
+    return_1 region @@ D_module { module_binder; module_ ; module_attr = [] }
   | Directive _ -> []
 
   | ConstDecl {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
@@ -797,7 +797,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
         let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor expr @@ [Access_tuple i]) in
         let lst = snd @@ List.fold_map ~f:aux ~init:Z.zero @@ lst in
-        let aux (binder,attr, expr) : AST.declaration_content = Declaration_constant {binder; attr; expr} in
+        let aux (binder,attr, expr) : AST.declaration_content = D_value {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       | CST.PRecord record ->
         let attributes = compile_attributes attributes in
@@ -813,11 +813,11 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
         let aux (field_name,binder) = (binder, attributes, e_accessor expr @@ [Access_record field_name]) in
         let lst = List.map ~f:aux @@ lst in
-        let aux (binder,attr, expr) : AST.declaration_content =  Declaration_constant {binder; attr; expr} in
+        let aux (binder,attr, expr) : AST.declaration_content =  D_value {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       | _ -> (
         let lst = compile_let_binding ~raise ?kwd_rec attributes let_binding in
-        let aux (binder,attr, expr) : AST.declaration_content =  Declaration_constant {binder; attr; expr} in
+        let aux (binder,attr, expr) : AST.declaration_content =  D_value {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       )
     )
