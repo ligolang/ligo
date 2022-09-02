@@ -144,6 +144,12 @@ let disable_michelson_typechecking =
   let doc  = "Disable Michelson typecking, this might produce ill-typed Michelson code." in
   flag ~doc name no_arg
 
+let only_ep =
+  let open Command.Param in
+  let name = "--only-ep" in
+  let doc  = "Only display declarations that have the type of an entrypoint" in
+  flag ~doc name no_arg
+
 let experimental_disable_optimizations_for_debugging =
   let open Command.Param in
   let name = "--experimental-disable-optimizations-for-debugging" in
@@ -163,6 +169,12 @@ let without_run =
   let open Command.Param in
   let name = "--without-run" in
   let doc  = "disable running of compiled expression." in
+  flag ~doc name no_arg
+
+let no_stdlib =
+  let open Command.Param in
+  let name = "--no-stdlib" in
+  let doc  = "disable stdlib inclusion." in
   flag ~doc name no_arg
 
 let with_types =
@@ -311,9 +323,9 @@ I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let reset_return () = return := Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt no_stdlib michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec
         () =
-    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~no_stdlib ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -322,7 +334,7 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> no_stdlib <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
@@ -339,8 +351,8 @@ let compile_parameter =
   (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_expression =
-  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Raw_options.make ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+  let f syntax expression protocol_version init_file display_format without_run no_stdlib michelson_format show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~without_run ~no_stdlib ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Compile.expression raw_options expression init_file display_format michelson_format
     in
@@ -350,7 +362,7 @@ let compile_expression =
                    expression to a Michelson expression and then \
                    interpreting it using Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> no_stdlib <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_storage =
   let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
@@ -537,8 +549,8 @@ let run_group =
 
 (** Info commands *)
 let list_declarations =
-  let f source_file syntax display_format () =
-    let raw_options = Raw_options.make ~syntax () in
+  let f source_file only_ep syntax display_format () =
+    let raw_options = Raw_options.make ~only_ep ~syntax () in
     return_result ~return @@
     Api.Info.list_declarations raw_options source_file display_format
   in
@@ -546,7 +558,7 @@ let list_declarations =
   let readme () = "This sub-command prints a list of all top-level \
                   declarations (not including types and modules)." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> only_ep <*> syntax <*> display_format)
 
 let measure_contract =
   let f source_file entry_point views syntax protocol_version display_format enable_typed_opt show_warnings warning_as_error project_root warn_unused_rec () =

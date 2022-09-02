@@ -25,7 +25,6 @@ depends: [
   "getopt"
   "tezos-clic"
   "qcheck"
-  "linenoise"
   "terminal_size"
   "pprint"
   "yojson"

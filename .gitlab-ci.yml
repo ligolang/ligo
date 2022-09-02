@@ -5,7 +5,7 @@ variables:
 
 stages:
   - pretooling                      # changelog
-  - build                    # build, test, produces binaries/.deb/doc within docker
+  - build                           # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
@@ -26,14 +26,15 @@ include:
     - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
     - git submodule sync --recursive
     - git submodule update --init --recursive --remote
+
 .nix:
   extends: .submodule-clone
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+
 changelog:
   stage: pretooling
-  extends : .nix
   only:
     - merge_requests
     - dev
@@ -41,9 +42,7 @@ changelog:
     - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - echo $CI_WORKFLOW
-    - nix-build nix -A ligo-changelog
-    - cp -L result/* .
+    - ./scripts/changelog-generation.sh
   artifacts:
     paths:
       - changelog.md
@@ -97,7 +96,6 @@ docker_extract:
     - /^.*-run-dev$/
     - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
-  extends: .nix
   dependencies :
     - docker_build
   script:
@@ -108,8 +106,8 @@ docker_extract:
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
-    - nix-build nix -A ligo-deb
-    - cp -L result/ligo.deb .
+    # Generate ligo.deb
+    - ./scripts/create-package-deb-file.sh
   after_script:
     - docker image rm -f "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
@@ -146,21 +144,6 @@ xrefcheck:
     - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
     - xrefcheck/bin/xrefcheck
   allow_failure: true #TODO could be better if we do not allow failure for realeases
-
-docker:
-  stage: tooling
-  dependencies:
-    - docker_build
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - ':'
-  artifacts:
-    paths:
-      - ligo.tar.gz
 
 .docker-image:
   stage: push
@@ -225,13 +208,22 @@ webide-backend-build-and-push-backend:
 
 .website:
   stage: push
-  extends: .nix
-  dependencies:
-    - docker_extract
-    - to_dos
+  tags:
+    - docker
+  image: node:16.17.0-buster
+  needs:
+    - job: changelog
+      artifacts: true
   script:
-    - nix-build nix -A ligo-website
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
+    - export DOC_PATH=./gitlab-pages/docs
+    - export WEBSITE_PATH=./gitlab-pages/website
+    - cp -f ./changelog.md $DOC_PATH/intro/changelog.md
+    - export LATEST_VERSION=$(ls -1r $WEBSITE_PATH/versioned_docs | sed -n '1p')
+    - echo $LATEST_VERSION
+    - cp -f ./changelog.md $WEBSITE_PATH/versioned_docs/$LATEST_VERSION/intro/changelog.md
+    - npm --prefix $WEBSITE_PATH ci
+    - npm --prefix $WEBSITE_PATH run build
+    - cp -Lr --no-preserve=mode,ownership,timestamps $WEBSITE_PATH/build public
     - touch to-dos.html; cp to-dos.html public/to-dos.html
   artifacts:
     paths:
@@ -242,22 +234,23 @@ pages:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
-      when: always
 
 pages-attempt:
   extends: .website
-  only:
-    - merge_requests
-    - /^.*-run-dev$/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - gitlab-pages/**/*
+      when: on_success
 
 deploy_website_preview:
   stage: deploy
   image: node:12.20.0-buster
   tags:
     - docker
-  dependencies:
-    - pages-attempt
+  needs:
+    - job: pages-attempt
+      artifacts: true
   script: 
     - apt-get update
     - apt-get install -y --no-install-recommends jq

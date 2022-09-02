@@ -1,4 +1,5 @@
 include Ast_aggregated.Types
+open Ligo_prim
 
 module Tezos_protocol = Tezos_protocol_014_PtKathma
 module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
@@ -9,7 +10,7 @@ module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Timestamp
 type mcode = unit Tezos_utils.Michelson.michelson
 type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 
-type mutation = Location.t * Ast_aggregated.expression
+type mutation = Location.t * Ast_aggregated.expression * string
 
 type env_item = {
     item: value_expr ;
@@ -17,12 +18,12 @@ type env_item = {
     inline : bool
   }
 
-and env = (expression_variable * env_item) list
+and env = (ValueVar.t * env_item) list
 
 and func_val = {
-    rec_name : expression_variable option ;
+    rec_name : ValueVar.t option ;
     orig_lambda : Ast_aggregated.expression ;
-    arg_binder : expression_variable ;
+    arg_binder : ValueVar.t ;
     body : Ast_aggregated.expression ;
     env : env ;
   }
@@ -68,16 +69,17 @@ and value_expr = { ast_type : Ast_aggregated.type_expression ;
 
 and gen = { generator : value QCheck.Gen.t ;
             gen_type : Ast_aggregated.type_expression }
-  
+
 and value =
   | V_Ct of constant_val
   | V_List of value list
-  | V_Record of value label_map
+  | V_Record of value Record.t
   | V_Map of (value * value) list
   | V_Set of value list
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
   | V_Michelson_contract of mcode
+  | V_Ast_contract of { main: Ast_aggregated.expression ; views: (ValueVar.t list * Ast_aggregated.expression) option }
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Gen of gen

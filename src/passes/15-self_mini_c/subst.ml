@@ -1,3 +1,4 @@
+open Ligo_prim
 open Mini_c
 
 (* Reference implementation:

@@ -427,7 +427,7 @@ let get_single_tx_result_gas (x : Tezos_raw_protocol.Apply_results.packed_operat
   | _ -> None
 
 let get_consumed_gas x =
-  let fp_to_z (fp : Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.fp) : z =
+  let fp_to_z (fp : Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.fp) : Z.t =
     let open Data_encoding in
     (match Binary.to_bytes_opt Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.z_fp_encoding fp with Some x -> x | None -> failwith "failed decoding gas")
     |> Binary.of_bytes_exn z

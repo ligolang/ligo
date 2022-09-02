@@ -23,6 +23,7 @@ CLI:
 - [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
 - [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
 - [X] login & add-user: CLI prompt for username & password
+- [ ] Better logging during publish (show tarball contents, size, etc. similar to npm publish)
 
 DOCS:
 - [ ] Mention that only gloable ligorc (~/.ligorc) file
@@ -174,8 +175,8 @@ let gzip fname fd =
     let len = min (file_size - !p) buffer_len in
     if len <= 0 then 0 else
     let bytes = Bytes.create len in
-    let len = Caml.Unix.read fd bytes !p len in
-    Bigstringaf.blit_from_bytes bytes ~src_off:!p buf ~dst_off:0 ~len ;
+    let len = Caml.Unix.read fd bytes 0 len in
+    Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len ;
     p := !p + len ; len in
   let flush buf len =
     let str = Bigstringaf.substring buf ~off:0 ~len in
@@ -238,14 +239,17 @@ let tar_gzip ~name ~version dir =
 let publish ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name ; version ; _ } = manifest in
+  let () = Format.printf "Packing tarball... %!" in
   let* gzipped_tarball = tar_gzip project_root ~name ~version in
+  let () = Printf.printf "Done\n%!" in
   let len = Bytes.length gzipped_tarball in
   let sha1 = gzipped_tarball
     |> Digestif.SHA1.digest_bytes ~off:0 ~len
     |> Digestif.SHA1.to_hex in
   let sha512 = gzipped_tarball 
     |> Digestif.SHA512.digest_bytes ~off:0 ~len
-    |> Digestif.SHA512.to_raw_string in 
+    |> Digestif.SHA512.to_raw_string in
+  let () = Printf.printf "Uploading package... %!" in
   http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
 
 let handle_server_response ~name response body =
@@ -253,25 +257,27 @@ let handle_server_response ~name response body =
   let body = Lwt_main.run (Body.to_string body) in
   let code = Response.status response in
   match code with
-    `Conflict -> Error ("Conflict: version already exists", "")
-  | `Created -> Ok ("Package successfully published", "")
-  | `Unauthorized -> Error (Format.sprintf "%s already exists and you don't seem to have access to it." name, "")
+    `Conflict -> Error ("\nConflict: version already exists", "")
+  | `Created -> 
+    let () = Printf.printf "Done\n%!" in
+    Ok ("Package successfully published", "")
+  | `Unauthorized -> Error (Format.sprintf "\n%s already exists and you don't seem to have access to it." name, "")
   | `Bad_gateway
   | `Service_unavailable
-  | `Gateway_timeout -> Error ("Registry seems down. Contact the developers", "")
+  | `Gateway_timeout -> Error ("\nRegistry seems down. Contact the developers", "")
   | _ -> Error (body, "")
 
 let publish ~ligo_registry ~ligorc_path ~project_root =
   let manifest = LigoManifest.read ~project_root in
   let manifest = Result.bind manifest ~f:LigoManifest.validate in
   match manifest with
-    Error e -> Error (Format.sprintf "ERROR: %s" e, "")
+    Error e -> Error (Format.sprintf "\nERROR: %s" e, "")
   | Ok manifest -> 
     let ligorc = LigoRC.read ~ligorc_path in
     let registry_key = LigoRC.registry_key ligo_registry in
     let token = LigoRC.get_token ~registry_key ligorc in 
     (match token with
-      None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
+      None -> Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user", "")
     | Some token ->
       let project_root = Option.value_exn project_root in
       let response, body = Lwt_main.run (publish ~project_root ~token ~ligo_registry ~manifest) in

@@ -1064,8 +1064,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
   [%expect {|
-    const y =
-      lambda (_#2 : unit) return let _x : nat = +1 in let ()#5 : unit = let _x : nat = +2 in unit in let ()#4 : unit = let _x : nat = +23 in unit in let ()#3 : unit = let _x : nat = +42 in unit in _x |}]
+    const yunit -> nat =
+      lambda (_#2unit)nat return let _xnat = +1 in
+                                 let ()#5unit = let _xnat = +2 in unit in
+                                 let ()#4unit = let _xnat = +23 in unit in
+                                 let ()#3unit = let _xnat = +42 in unit in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
@@ -1550,7 +1553,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-1
 Warning: unused variable "action".
 Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-23:
+File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 4-8:
   3 |
   4 | let main (action, store : parameter * storage) : storage =
   5 |   store + 1
@@ -1637,6 +1640,14 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
+    File "../../test/contracts/self_without_entrypoint.ligo", line 8, characters 41-63:
+      7 |   {
+      8 |     const self_contract: contract(int) = Tezos.self("%default") ;
+      9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (int)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
     { parameter int ;
       storage nat ;
       code { CDR ;
@@ -1734,12 +1745,11 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.mligo"];
   [%expect {|
 type storage = (int , int)
-const main : (int , storage) -> (list (operation) , storage) =
+const main(int , storage) -> (list (operation) , storage) =
   lambda (n : (int , storage)) : (list (operation) , storage) return
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
-  (list[] : list (operation) , x)
-const f0 = lambda (_a : string) return true
+  (set[] : list (operation) , x)const f0 = lambda (_a : string) return true
 const f1 = lambda (_a : string) return true
 const f2 = lambda (_a : string) return true
 const letin_nesting =
@@ -1772,8 +1782,7 @@ const main =
   lambda (n : (int , storage)) : (list (operation) , storage) return
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
-  (list[] : list (operation) , x)
-const f0 = lambda (_a : string) return true
+  (set[] : list (operation) , x)const f0 = lambda (_a : string) return true
 const f1 = lambda (_a : string) return true
 const f2 = lambda (_a : string) return true
 const letin_nesting =
@@ -2102,22 +2111,29 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f =
-      lambda (n : int) return let f : int -> int = rec (f:int -> int => lambda (n : int) return let gen#2[@var] = EQ(n ,
-      0) in  match gen#2 with
-              | False unit_proj#3 ->
-                (f)@(C_POLYMORPHIC_SUB(n ,
-                1))
-              | True unit_proj#4 ->
-                1 ) in (f)@(4)
-    const g =
-      rec (g:int -> int -> int -> int => lambda (f : int -> int) return (g)@(let h : int -> int = rec (h:int -> int => lambda (n : int) return let gen#5[@var] = EQ(n ,
-      0) in  match gen#5 with
-              | False unit_proj#6 ->
-                (h)@(C_POLYMORPHIC_SUB(n ,
-                1))
-              | True unit_proj#7 ->
-                1 ) in h) ) |}]
+    const fint -> int =
+      lambda (nint)int return let fint -> int =
+                                rec (fint -> int => lambda (nint)int return
+                              let gen#2[@var]bool = EQ(n , 0) in
+                               match gen#2 with
+                                | False unit_proj#3 ->
+                                  (f)@(C_POLYMORPHIC_SUB(n , 1))
+                                | True unit_proj#4 ->
+                                  1) in
+                              (f)@(4)
+    const gint -> int -> int -> int =
+      rec (gint -> int -> int -> int => lambda (fint -> int)int -> int return
+      (g)@(let hint -> int =
+             rec (hint -> int => lambda (nint)int return let gen#5[@var]bool =
+                                                           EQ(n , 0) in
+                                                          match gen#5 with
+                                                           | False unit_proj#6 ->
+                                                             (h)@(C_POLYMORPHIC_SUB
+                                                                  (n ,
+                                                                   1))
+                                                           | True unit_proj#7 ->
+                                                             1) in
+           h)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
@@ -2153,14 +2169,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;
   [%expect {|
-    const x = 1[@inline][@private]
-    const foo = lambda (a : int) return let test[@var] = C_POLYMORPHIC_ADD(2 ,
-      a)[@inline] in test[@inline][@private]
-    const y = 1[@private]
-    const bar =
-      lambda (b : int) return let test[@var] = lambda (z : int) return C_POLYMORPHIC_ADD(C_POLYMORPHIC_ADD(2 ,
-      b) , z)[@inline] in (test)@(b)[@private]
-    const check = 4[@private] |}]
+    const x[@var] = 1[@inline][@private]
+    const foo[@var] =
+      lambda (aint)int return let test[@var]int =
+                                C_POLYMORPHIC_ADD(2 , a)[@inline][@private] in
+                              test[@inline][@private]const y[@var] = 1[@private]
+    const bar[@var] =
+      lambda (bint)int return let test[@var]int -> int =
+                                lambda (zint)int return C_POLYMORPHIC_ADD
+                                                        (C_POLYMORPHIC_ADD(2 , b) ,
+                                                         z)[@inline][@private] in
+                              (test)@(b)[@private]
+    const check[@var] = 4[@private] |}]
 
 (* literal type "casting" inside modules *)
 let%expect_test _ =
@@ -2325,30 +2345,26 @@ let%expect_test _ =
   [%expect{|
     { "types":
         [ { "type_content":
-              [ "t_constant",
-                { "language": "Michelson", "injection": "unit",
-                  "parameters": [] } ], "type_meta": [ "None", null ],
-            "location": [ "Virtual", "generated" ],
-            "orig_var": [ "None", null ] },
+              [ "T_constant",
+                { "language": "Michelson", "injection": [ "Unit" ],
+                  "parameters": [] } ], "type_meta": null, "orig_var": null,
+            "location": [ "Virtual", "generated" ] },
           { "type_content":
-              [ "t_arrow",
+              [ "T_arrow",
                 { "type1":
                     { "type_content":
-                        [ "t_constant",
-                          { "language": "Michelson", "injection": "unit",
-                            "parameters": [] } ], "type_meta": [ "None", null ],
-                      "location": [ "Virtual", "generated" ],
-                      "orig_var": [ "None", null ] },
+                        [ "T_constant",
+                          { "language": "Michelson", "injection": [ "Unit" ],
+                            "parameters": [] } ], "type_meta": null,
+                      "orig_var": null, "location": [ "Virtual", "generated" ] },
                   "type2":
                     { "type_content":
-                        [ "t_constant",
-                          { "language": "Michelson", "injection": "unit",
-                            "parameters": [] } ], "type_meta": [ "None", null ],
-                      "location": [ "Virtual", "generated" ],
-                      "orig_var": [ "None", null ] } } ],
-            "type_meta": [ "None", null ],
-            "location": [ "Virtual", "generated" ],
-            "orig_var": [ "None", null ] } ],
+                        [ "T_constant",
+                          { "language": "Michelson", "injection": [ "Unit" ],
+                            "parameters": [] } ], "type_meta": null,
+                      "orig_var": null, "location": [ "Virtual", "generated" ] } } ],
+            "type_meta": null, "orig_var": null,
+            "location": [ "Virtual", "generated" ] } ],
       "michelson":
         { "expression":
             [ { "prim": "parameter", "args": [ { "prim": "unit" } ] },
@@ -2414,217 +2430,239 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-const c =
-  lambda (gen#5 : unit) return CREATE_CONTRACT(lambda (gen#2 : ( unit * unit )) return
-   match gen#2 with
-    | ( _#4 , _#3 ) ->
-    ( LIST_EMPTY() , unit ) ,
-  None(unit) , 0mutez , unit)
+const cunit -> ( operation * address ) =
+  lambda (gen#5unit)( operation * address ) return CREATE_CONTRACT(lambda (gen#2
+                                                                   ( unit * unit ))
+                                                                   ( list (operation) * unit ) return
+                                                                    match
+                                                                    gen#2 with
+                                                                    |
+                                                                    ( _#4 , _#3 ) ->
+                                                                    ( LIST_EMPTY
+                                                                    () ,
+                                                                    unit ) ,
+                                                                   None(unit) ,
+                                                                   0mutez ,
+                                                                   unit)
 const foo =
-  let gen#8[@var] = (c)@(unit) in  match gen#8 with
-                                    | ( _a , _b ) ->
-                                    unit
-const c =
-  lambda (gen#6 : unit) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+  let gen#8[@var]( operation * address ) = (c)@(unit) in
+   match gen#8 with
+    | ( _a , _b ) ->
+    unit
+const cunit -> ( int * string * nat * int * string * nat * int * string * nat * int * string ) =
+  lambda (gen#6unit)( int * string * nat * int * string * nat * int * string * nat * int * string ) return
+  ( 1 ,
+    "1" ,
+    +1 ,
+    2 ,
+    "2" ,
+    +2 ,
+    3 ,
+    "3" ,
+    +3 ,
+    4 ,
+    "4" )
 const foo =
-  let gen#10[@var] = (c)@(unit) in  match gen#10 with
-                                     | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                     unit |} ]
+  let gen#10[@var]( int * string * nat * int * string * nat * int * string * nat * int * string ) =
+    (c)@(unit) in
+   match gen#10 with
+    | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+    unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
     let get_balance#8 =
-      fun _u#598 -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-    let get_amount#9 = fun _u#600 -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-    let get_now#10 = fun _u#602 -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-    let get_sender#11 = fun _u#604 -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-    let get_source#12 = fun _u#606 -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-    let get_level#13 = fun _u#608 -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-    let get_self_address#14 = fun _u#610 -> (SELF_ADDRESS())[@inline] in
+      fun _u#602 -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
+    let get_amount#9 = fun _u#604 -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
+    let get_now#10 = fun _u#606 -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+    let get_sender#11 = fun _u#608 -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
+    let get_source#12 = fun _u#610 -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
+    let get_level#13 = fun _u#612 -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
+    let get_self_address#14 = fun _u#614 -> (SELF_ADDRESS())[@inline] in
     let get_chain_id#15 =
-      fun _u#612 -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
+      fun _u#616 -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
     let get_total_voting_power#16 =
-      fun _u#614 -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+      fun _u#618 -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
     let get_min_block_time#17 =
-      fun _u#616 -> (({ DROP ; MIN_BLOCK_TIME })@(L(unit)))[@inline] in
-    let voting_power#18 = fun kh#618 -> (({ VOTING_POWER })@(kh#618))[@inline] in
+      fun _u#620 -> (({ DROP ; MIN_BLOCK_TIME })@(L(unit)))[@inline] in
+    let voting_power#18 = fun kh#622 -> (({ VOTING_POWER })@(kh#622))[@inline] in
     let implicit_account#20 =
-      fun kh#622 -> (IMPLICIT_ACCOUNT(kh#622))[@inline] in
-    let pairing_check#24 = fun l#630 -> (({ PAIRING_CHECK })@(l#630))[@inline] in
-    let set_delegate#26 = fun o#634 -> (SET_DELEGATE(o#634))[@inline] in
+      fun kh#626 -> (IMPLICIT_ACCOUNT(kh#626))[@inline] in
+    let pairing_check#24 = fun l#634 -> (({ PAIRING_CHECK })@(l#634))[@inline] in
+    let set_delegate#26 = fun o#638 -> (SET_DELEGATE(o#638))[@inline] in
     let open_chest#32 =
-      fun ck#650 ->
-      (fun c#651 -> (fun n#652 -> (OPEN_CHEST(ck#650 , c#651 , n#652))))[@inline] in
-    let xor#35 = fun l#661 -> (fun r#662 -> (XOR(l#661 , r#662)))[@inline] in
+      fun ck#654 ->
+      (fun c#655 -> (fun n#656 -> (OPEN_CHEST(ck#654 , c#655 , n#656))))[@inline] in
+    let xor#35 = fun l#665 -> (fun r#666 -> (XOR(l#665 , r#666)))[@inline] in
     let shift_left#36 =
-      fun l#664 -> (fun r#665 -> (LSL(l#664 , r#665)))[@inline] in
+      fun l#668 -> (fun r#669 -> (LSL(l#668 , r#669)))[@inline] in
     let shift_right#37 =
-      fun l#667 -> (fun r#668 -> (LSR(l#667 , r#668)))[@inline] in
-    let length#78 = fun b#798 -> (({ SIZE })@(b#798))[@inline] in
+      fun l#671 -> (fun r#672 -> (LSR(l#671 , r#672)))[@inline] in
+    let length#78 = fun b#802 -> (({ SIZE })@(b#802))[@inline] in
     let concat#79 =
-      fun b1#800 ->
-      (fun b2#801 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#800 , b2#801))))[@inline] in
+      fun b1#804 ->
+      (fun b2#805 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#804 , b2#805))))[@inline] in
     let sub#80 =
-      fun s#803 ->
-      (fun l#804 ->
-       (fun b#805 ->
+      fun s#807 ->
+      (fun l#808 ->
+       (fun b#809 ->
         (({ UNPAIR ;
            UNPAIR ;
            SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#803 ,
-                                                                       l#804) ,
-                                                                  b#805)))))[@inline] in
-    let length#85 = fun b#816 -> (({ SIZE })@(b#816))[@inline] in
-    let concat#86 =
-      fun b1#818 ->
-      (fun b2#819 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#818 , b2#819))))[@inline] in
-    let sub#87 =
-      fun s#821 ->
-      (fun l#822 ->
-       (fun b#823 ->
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#807 ,
+                                                                       l#808) ,
+                                                                  b#809)))))[@inline] in
+    let length#86 = fun b#823 -> (({ SIZE })@(b#823))[@inline] in
+    let concat#87 =
+      fun b1#825 ->
+      (fun b2#826 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#825 , b2#826))))[@inline] in
+    let sub#88 =
+      fun s#828 ->
+      (fun l#829 ->
+       (fun b#830 ->
         (({ UNPAIR ;
            UNPAIR ;
            SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#821 ,
-                                                                       l#822) ,
-                                                                  b#823)))))[@inline] in
-    let blake2b#88 = fun b#825 -> (({ BLAKE2B })@(b#825))[@inline] in
-    let sha256#89 = fun b#827 -> (({ SHA256 })@(b#827))[@inline] in
-    let sha512#90 = fun b#829 -> (({ SHA512 })@(b#829))[@inline] in
-    let sha3#91 = fun b#831 -> (({ SHA3 })@(b#831))[@inline] in
-    let keccak#92 = fun b#833 -> (({ KECCAK })@(b#833))[@inline] in
-    let hash_key#93 = fun k#835 -> (({ HASH_KEY })@(k#835))[@inline] in
-    let check#94 =
-      fun k#837 ->
-      (fun s#838 ->
-       (fun b#839 ->
-        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k#837 , s#838) ,
-                                                       b#839)))))[@inline] in
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#828 ,
+                                                                       l#829) ,
+                                                                  b#830)))))[@inline] in
+    let blake2b#89 = fun b#832 -> (({ BLAKE2B })@(b#832))[@inline] in
+    let sha256#90 = fun b#834 -> (({ SHA256 })@(b#834))[@inline] in
+    let sha512#91 = fun b#836 -> (({ SHA512 })@(b#836))[@inline] in
+    let sha3#92 = fun b#838 -> (({ SHA3 })@(b#838))[@inline] in
+    let keccak#93 = fun b#840 -> (({ KECCAK })@(b#840))[@inline] in
+    let hash_key#94 = fun k#842 -> (({ HASH_KEY })@(k#842))[@inline] in
+    let check#95 =
+      fun k#844 ->
+      (fun s#845 ->
+       (fun b#846 ->
+        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k#844 , s#845) ,
+                                                       b#846)))))[@inline] in
     let assert =
-      fun b#841 ->
-      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b#841))[@inline] in
-    let abs = fun i#847 -> (({ ABS })@(i#847))[@inline] in
-    let is_nat = fun i#849 -> (({ ISNAT })@(i#849))[@inline] in
+      fun b#848 ->
+      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b#848))[@inline] in
+    let abs = fun i#854 -> (({ ABS })@(i#854))[@inline] in
+    let is_nat = fun i#856 -> (({ ISNAT })@(i#856))[@inline] in
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
     let assert_with_error =
-      fun b#857 ->
-      (fun s#858 ->
-       (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#857 , s#858))))[@inline] in
-    let poly_stub_39 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_38 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_37 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_36 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_35 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_34 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_33 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_32 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_31 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_30 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_29 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_28 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_27 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_26 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_25 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_24 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_23 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_22 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_21 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_20 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_19 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_18 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_17 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_16 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_15 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_14 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_13 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_12 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_11 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_10 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_9 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_8 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_7 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_6 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_5 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_4 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_3 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_2 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let poly_stub_1 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
-    let get_total_voting_power#99 =
-      fun _u#878 -> ((poly_stub_39)@(L(unit)))[@inline] in
-    let set_source#102 = fun _a#884 -> ((poly_stub_38)@(L(unit)))[@inline] in
-    let get_storage_of_address#103 =
-      fun _a#886 -> ((poly_stub_37)@(L(unit)))[@inline] in
-    let get_balance#104 = fun _a#888 -> ((poly_stub_36)@(L(unit)))[@inline] in
-    let print#105 = fun _v#890 -> ((poly_stub_35)@(L(unit)))[@inline] in
-    let eprint#106 = fun _v#892 -> ((poly_stub_34)@(L(unit)))[@inline] in
-    let get_voting_power#107 =
-      fun _kh#894 -> ((poly_stub_33)@(L(unit)))[@inline] in
-    let nth_bootstrap_contract#108 =
-      fun _i#896 -> ((poly_stub_32)@(L(unit)))[@inline] in
-    let nth_bootstrap_account#109 =
-      fun _i#898 -> ((poly_stub_31)@(L(unit)))[@inline] in
-    let get_bootstrap_account#110 =
-      fun _n#900 -> ((poly_stub_30)@(L(unit)))[@inline] in
-    let last_originations#112 =
-      fun _u#904 -> ((poly_stub_29)@(L(unit)))[@inline] in
-    let new_account#114 = fun _u#908 -> ((poly_stub_28)@(L(unit)))[@inline] in
-    let bake_until_n_cycle_end#116 =
-      fun _n#912 -> ((poly_stub_27)@(L(unit)))[@inline] in
-    let register_delegate#118 =
-      fun _kh#916 -> ((poly_stub_26)@(L(unit)))[@inline] in
-    let register_constant#119 =
-      fun _m#918 -> ((poly_stub_25)@(L(unit)))[@inline] in
-    let constant_to_michelson_program#121 =
-      fun _s#922 -> ((poly_stub_24)@(L(unit)))[@inline] in
-    let restore_context#122 =
-      fun _u#924 -> ((poly_stub_23)@(L(unit)))[@inline] in
-    let save_context#123 = fun _u#926 -> ((poly_stub_22)@(L(unit)))[@inline] in
-    let drop_context#124 = fun _u#928 -> ((poly_stub_21)@(L(unit)))[@inline] in
-    let set_baker_policy#127 =
-      fun _bp#934 -> ((poly_stub_20)@(L(unit)))[@inline] in
-    let set_baker#128 = fun _a#936 -> ((poly_stub_19)@(L(unit)))[@inline] in
-    let size#129 = fun _c#938 -> ((poly_stub_18)@(L(unit)))[@inline] in
-    let read_contract_from_file#131 =
-      fun _fn#942 -> ((poly_stub_17)@(L(unit)))[@inline] in
-    let chr#132 = fun _n#944 -> ((poly_stub_16)@(L(unit)))[@inline] in
-    let nl#133 = L("NEWLINE")[@inline] in
-    let println#134 = fun _v#947 -> ((poly_stub_15)@(L(unit)))[@inline] in
-    let transfer#135 =
-      fun _a#949 -> (fun _s#950 -> (fun _t#951 -> ((poly_stub_14)@(L(unit)))))[@inline] in
-    let transfer_exn#136 =
-      fun _a#953 -> (fun _s#954 -> (fun _t#955 -> ((poly_stub_13)@(L(unit)))))[@inline] in
-    let reset_state#138 =
-      fun _n#959 -> (fun _l#960 -> ((poly_stub_12)@(L(unit))))[@inline] in
-    let reset_state_at#139 =
-      fun _t#962 -> (fun _n#963 -> (fun _l#964 -> ((poly_stub_11)@(L(unit)))))[@inline] in
-    let save_mutation#142 =
-      fun _s#973 -> (fun _m#974 -> ((poly_stub_10)@(L(unit))))[@inline] in
-    let sign#145 =
-      fun _sk#982 -> (fun _d#983 -> ((poly_stub_9)@(L(unit))))[@inline] in
-    let add_account#146 =
-      fun _s#985 -> (fun _k#986 -> ((poly_stub_8)@(L(unit))))[@inline] in
-    let baker_account#147 =
-      fun _p#988 -> (fun _o#989 -> ((poly_stub_7)@(L(unit))))[@inline] in
-    let create_chest#149 =
-      fun _b#994 -> (fun _n#995 -> ((poly_stub_6)@(L(unit))))[@inline] in
-    let create_chest_key#150 =
-      fun _c#997 -> (fun _n#998 -> ((poly_stub_5)@(L(unit))))[@inline] in
-    let michelson_equal#153 =
-      fun _m1#1008 -> (fun _m2#1009 -> ((poly_stub_4)@(L(unit))))[@inline] in
-    let originate_contract#155 =
-      fun _c#1014 -> (fun _s#1015 -> (fun _t#1016 -> ((poly_stub_3)@(L(unit)))))[@inline] in
-    let compile_contract_from_file#157 =
-      fun _fn#1022 -> (fun _e#1023 -> (fun _v#1024 -> ((poly_stub_2)@(L(unit)))))[@inline] in
-    let originate_from_file#158 =
-      fun _fn#1026 ->
-      (fun _e#1027 ->
-       (fun _v#1028 ->
-        (fun _s#1029 -> (fun _t#1030 -> ((poly_stub_1)@(L(unit)))))))[@inline] in
-    let x#159 = L(54) in let y#160 = x#159 in L(unit) |}]
+      fun b#864 ->
+      (fun s#865 ->
+       (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#864 , s#865))))[@inline] in
+    let poly_stub_39 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_38 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_37 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_36 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_35 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_34 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_33 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_32 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_31 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_30 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_29 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_28 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_27 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_26 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_25 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_24 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_23 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_22 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_21 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_20 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_19 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_18 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_17 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_16 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_15 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_14 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_13 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_12 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_11 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_10 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_9 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_8 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_7 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_6 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_5 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_4 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_3 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_2 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let poly_stub_1 = fun x#876 -> (({ FAILWITH })@(x#876))[@inline] in
+    let get_total_voting_power#100 =
+      fun _u#885 -> ((poly_stub_39)@(L(unit)))[@inline] in
+    let set_source#103 = fun _a#891 -> ((poly_stub_38)@(L(unit)))[@inline] in
+    let get_storage_of_address#104 =
+      fun _a#893 -> ((poly_stub_37)@(L(unit)))[@inline] in
+    let get_balance#105 = fun _a#895 -> ((poly_stub_36)@(L(unit)))[@inline] in
+    let print#106 = fun _v#897 -> ((poly_stub_35)@(L(unit)))[@inline] in
+    let eprint#107 = fun _v#899 -> ((poly_stub_34)@(L(unit)))[@inline] in
+    let get_voting_power#108 =
+      fun _kh#901 -> ((poly_stub_33)@(L(unit)))[@inline] in
+    let nth_bootstrap_contract#109 =
+      fun _i#903 -> ((poly_stub_32)@(L(unit)))[@inline] in
+    let nth_bootstrap_account#110 =
+      fun _i#905 -> ((poly_stub_31)@(L(unit)))[@inline] in
+    let get_bootstrap_account#111 =
+      fun _n#907 -> ((poly_stub_30)@(L(unit)))[@inline] in
+    let last_originations#113 =
+      fun _u#911 -> ((poly_stub_29)@(L(unit)))[@inline] in
+    let new_account#115 = fun _u#915 -> ((poly_stub_28)@(L(unit)))[@inline] in
+    let bake_until_n_cycle_end#117 =
+      fun _n#919 -> ((poly_stub_27)@(L(unit)))[@inline] in
+    let register_delegate#119 =
+      fun _kh#923 -> ((poly_stub_26)@(L(unit)))[@inline] in
+    let register_constant#120 =
+      fun _m#925 -> ((poly_stub_25)@(L(unit)))[@inline] in
+    let constant_to_michelson_program#122 =
+      fun _s#929 -> ((poly_stub_24)@(L(unit)))[@inline] in
+    let restore_context#123 =
+      fun _u#931 -> ((poly_stub_23)@(L(unit)))[@inline] in
+    let save_context#124 = fun _u#933 -> ((poly_stub_22)@(L(unit)))[@inline] in
+    let drop_context#125 = fun _u#935 -> ((poly_stub_21)@(L(unit)))[@inline] in
+    let set_baker_policy#128 =
+      fun _bp#941 -> ((poly_stub_20)@(L(unit)))[@inline] in
+    let set_baker#129 = fun _a#943 -> ((poly_stub_19)@(L(unit)))[@inline] in
+    let size#130 = fun _c#945 -> ((poly_stub_18)@(L(unit)))[@inline] in
+    let read_contract_from_file#132 =
+      fun _fn#949 -> ((poly_stub_17)@(L(unit)))[@inline] in
+    let chr#133 = fun _n#951 -> ((poly_stub_16)@(L(unit)))[@inline] in
+    let nl#134 = L("NEWLINE")[@inline] in
+    let println#135 = fun _v#954 -> ((poly_stub_15)@(L(unit)))[@inline] in
+    let transfer#136 =
+      fun _a#956 -> (fun _s#957 -> (fun _t#958 -> ((poly_stub_14)@(L(unit)))))[@inline] in
+    let transfer_exn#137 =
+      fun _a#960 -> (fun _s#961 -> (fun _t#962 -> ((poly_stub_13)@(L(unit)))))[@inline] in
+    let reset_state#139 =
+      fun _n#966 -> (fun _l#967 -> ((poly_stub_12)@(L(unit))))[@inline] in
+    let reset_state_at#140 =
+      fun _t#969 -> (fun _n#970 -> (fun _l#971 -> ((poly_stub_11)@(L(unit)))))[@inline] in
+    let save_mutation#143 =
+      fun _s#980 -> (fun _m#981 -> ((poly_stub_10)@(L(unit))))[@inline] in
+    let sign#146 =
+      fun _sk#989 -> (fun _d#990 -> ((poly_stub_9)@(L(unit))))[@inline] in
+    let add_account#147 =
+      fun _s#992 -> (fun _k#993 -> ((poly_stub_8)@(L(unit))))[@inline] in
+    let baker_account#148 =
+      fun _p#995 -> (fun _o#996 -> ((poly_stub_7)@(L(unit))))[@inline] in
+    let create_chest#150 =
+      fun _b#1001 -> (fun _n#1002 -> ((poly_stub_6)@(L(unit))))[@inline] in
+    let create_chest_key#151 =
+      fun _c#1004 -> (fun _n#1005 -> ((poly_stub_5)@(L(unit))))[@inline] in
+    let michelson_equal#154 =
+      fun _m1#1015 -> (fun _m2#1016 -> ((poly_stub_4)@(L(unit))))[@inline] in
+    let originate_contract#156 =
+      fun _c#1021 -> (fun _s#1022 -> (fun _t#1023 -> ((poly_stub_3)@(L(unit)))))[@inline] in
+    let compile_contract_from_file#158 =
+      fun _fn#1029 -> (fun _e#1030 -> (fun _v#1031 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+    let originate_from_file#159 =
+      fun _fn#1033 ->
+      (fun _e#1034 ->
+       (fun _v#1035 ->
+        (fun _s#1036 -> (fun _t#1037 -> ((poly_stub_1)@(L(unit)))))))[@inline] in
+    let x#160 = L(54) in let y#161 = x#160 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
@@ -2956,6 +2994,27 @@ Toplevel let declaration are silently change to const declaration.
 44 |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "thunk.mligo" ] ;
+  [%expect{|
+{ parameter string ;
+  storage string ;
+  code { CDR ;
+         SENDER ;
+         PUSH mutez 1000000 ;
+         NONE key_hash ;
+         CREATE_CONTRACT
+           { parameter nat ;
+             storage address ;
+             code { DROP ; SENDER ; NIL operation ; PAIR } } ;
+         PAIR ;
+         SWAP ;
+         NIL operation ;
+         DIG 2 ;
+         CAR ;
+         CONS ;
+         PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "y" ; "--init-file" ; contract "extend_builtin.religo" ] ;
   [%expect{|
 Reasonligo is depreacted, support will be dropped in a few versions.
@@ -3007,4 +3066,16 @@ let%expect_test _ =
      14 |
 
     Constructor "A" not found.
+  |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract_return_type.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/bad_contract_return_type.mligo", line 5, characters 4-8:
+      4 |
+      5 | let main (_,s : paramater * storage) : _return =
+      6 |     [], s, 1tez
+
+    Invalid type for entrypoint "main".
+    An entrypoint must of type "parameter * storage -> operation list * storage".
   |}]
