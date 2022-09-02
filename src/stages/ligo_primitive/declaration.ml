@@ -48,20 +48,8 @@ module Make (Attr : Attr) = struct
     | M_module_path of module_path
     (* FUTURE: Functor ; Apply *)
 
-  type ('e,'dcl) mod_in = {
-    module_binder : Var.ModuleVar.t ;
-    rhs           : 'dcl module_expr Location.wrap;
-    let_result    : 'e ;
-  } [@@deriving eq,compare,yojson,hash]
-
   module Fold = struct
-    let rec mod_in : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp) mod_in -> 'acc
-    = fun f g acc { module_binder=_; rhs ; let_result} ->
-      let acc = Location.fold (module_expr g) acc rhs in
-      let acc = f acc let_result in
-      acc
-
-    and declaration_constant : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp option) declaration_constant -> 'acc
+    let rec declaration_constant : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp option) declaration_constant -> 'acc
     = fun f g acc {binder; attr=_; expr} ->
       let acc = Binder.fold (fun init -> Option.fold ~f:g ~init) acc binder in
       let acc = f acc expr     in
@@ -110,12 +98,6 @@ module Make (Attr : Attr) = struct
       let module_ = Location.map (module_expr map) module_ in
       {module_binder;module_;module_attr}
 
-    and mod_in : ('e_src -> 'e_dst) -> ('dcl_src -> 'dcl_dst) ->
-      ('e_src,'dcl_src) mod_in -> ('e_dst,'dcl_dst) mod_in
-    = fun map_e map_dcl { module_binder; rhs ; let_result} ->
-      let rhs = Location.map (module_expr map_dcl) rhs in
-      let let_result = map_e let_result in
-      { module_binder; rhs ; let_result}
     and module_alias
     = fun ma -> ma
 
@@ -173,12 +155,6 @@ module Make (Attr : Attr) = struct
           (x, (M_struct prg))
         | M_variable _ | M_module_path _ -> (acc,mexp)
 
-    let mod_in :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc ->
-      ('a,'c) mod_in -> 'acc * ('b,'d) mod_in
-    = fun f h acc {module_binder; rhs; let_result} ->
-      let acc,rhs        = Location.fold_map (module_expr h) acc rhs in
-      let acc,let_result = f acc let_result in
-      (acc,{module_binder; rhs; let_result})
   end
   module PP = struct
     let rec declaration_constant ?(print_type = true) f g ppf = fun {binder; attr ; expr} ->
@@ -217,12 +193,6 @@ module Make (Attr : Attr) = struct
       | M_variable x -> Var.ModuleVar.pp ppf x
       | M_module_path path ->
         Simple_utils.PP_helpers.(ne_list_sep (Var.ModuleVar.pp) (tag ".")) ppf path
-
-    let mod_in f h ppf = fun {module_binder; rhs; let_result;} ->
-      Format.fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
-        Var.ModuleVar.pp module_binder
-        (Location.pp_wrap (module_expr h)) rhs
-        f let_result
 
   end
 end

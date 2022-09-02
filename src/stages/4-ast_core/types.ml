@@ -109,7 +109,7 @@ type expression_content =
   | E_type_abstraction of expr Type_abs.t
   | E_let_in of let_in
   | E_type_in of (expr, ty_expr) Type_in.t
-  | E_mod_in of (expr, decl) Declaration.mod_in
+  | E_mod_in of (expr, module_expr) Mod_in.t
   | E_raw_code  of expr Raw_code.t
   (* Variant *)
   | E_constructor of expr Constructor.t (* For user defined constructors *)
@@ -139,12 +139,12 @@ and expr = expression
   [@@deriving eq,compare,yojson,hash]
 
 and declaration_content = (expr,ty_expr,decl) Declaration.declaration
-and  declaration = declaration_content Location.wrap
-and  decl = Decl of declaration
+and declaration = declaration_content Location.wrap
+and decl = Decl of declaration
   [@@deriving eq,compare,yojson,hash]
 
-type module_expr_content = decl Declaration.module_expr
-and  module_expr = module_expr_content Location.wrap
+and module_expr_content = decl Declaration.module_expr
+and module_expr = module_expr_content Location.wrap
   [@@deriving eq,compare,yojson,hash]
 
 type module_ = decl list

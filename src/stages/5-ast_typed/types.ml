@@ -133,7 +133,7 @@ type expression_content =
   | E_lambda of (expr, ty_expr) Lambda.t
   | E_recursive of (expr, ty_expr) Recursive.t
   | E_let_in    of let_in
-  | E_mod_in of (expr, decl) Declaration.mod_in
+  | E_mod_in of (expr, module_expr) Mod_in.t
   | E_raw_code  of expr Raw_code.t
   | E_type_inst of type_inst
   | E_type_abstraction of expr Type_abs.t
@@ -182,7 +182,7 @@ and  declaration = declaration_content Location.wrap
 and  decl = Decl of declaration
   [@@deriving eq,compare,yojson,hash]
 
-type module_expr = decl Declaration.module_expr Location.wrap
+and module_expr = decl Declaration.module_expr Location.wrap
   [@@deriving eq,compare,yojson,hash]
 
 type module_ = decl list

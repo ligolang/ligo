@@ -232,7 +232,7 @@ let rec fold_map_expression : type a . a fold_mapper -> a -> expression -> a * e
       (res, return @@ E_type_in ti)
     )
   | E_mod_in mi -> (
-      let res,mi = Types.Declaration.Fold_map.mod_in self idle init mi in
+      let res,mi = Mod_in.fold_map self idle init mi in
       (res, return @@ E_mod_in mi)
     )
   | E_lambda l -> (

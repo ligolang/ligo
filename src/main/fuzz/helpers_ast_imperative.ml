@@ -159,11 +159,11 @@ module Fold_helpers(M : Monad) = struct
         )
         mexp
 
-  let mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Declaration.mod_in -> ('b,'d) Declaration.mod_in monad
+  let mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Mod_in.t -> ('b,'d) Mod_in.t monad
     = fun f g {module_binder; rhs; let_result} ->
-    let* rhs        = module_expr g rhs in
+    let* rhs        = g rhs in
     let* let_result = f let_result in
-    ok @@ Declaration.{module_binder; rhs; let_result}
+    ok @@ Mod_in.{module_binder; rhs; let_result}
 
 
   type 'err exp_mapper = expression -> expression monad

@@ -89,7 +89,7 @@ and expression_content ppf (ec : expression_content) =
       Types.Attr.pp_value attr
       expression let_result
   | E_type_in   ti -> Type_in.pp expression type_expression ppf ti
-  | E_mod_in    mi -> Types.Declaration.PP.mod_in  expression decl ppf mi
+  | E_mod_in    mi -> Mod_in.pp  expression module_expr ppf mi
   | E_raw_code   r -> Raw_code.pp   expression ppf r
   | E_ascription a -> Ascription.pp expression type_expression ppf a
   | E_module_accessor ma -> Module_access.pp ValueVar.pp ppf ma
@@ -97,5 +97,7 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) = Types.Declaration.PP.declaration expression type_expression decl ppf (Location.unwrap d)
 and decl ppf (Types.Decl d) = declaration ppf d
+and module_expr ppf (me : module_expr) : unit =
+    Location.pp_wrap (Types.Declaration.PP.module_expr decl) ppf me
 
 let program ppf (p : program) = list_sep declaration (tag "@,") ppf p

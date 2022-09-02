@@ -44,6 +44,8 @@ module Map_expr = Map_expr
 module Set_expr = Set_expr
 module List_expr = List_expr
 
+module Mod_in   = Mod_in
+
 module Declaration(Attr:Declaration.Attr) = Declaration.Make(Attr)
 module ModuleVar = Var.ModuleVar
 module Module_access = Module_access
