@@ -1,8 +1,8 @@
 module Location = Simple_utils.Location
 type interpreter_error = Main_errors.all
 
-let target_lang_failwith : Location.t -> (int, string) Tezos_micheline.Micheline.node -> interpreter_error =
-  fun loc e -> `Main_interpret_target_lang_failwith (loc,e)
+let target_lang_failwith : Location.t -> Ligo_interpreter.Types.calltrace -> (int, string) Tezos_micheline.Micheline.node -> interpreter_error =
+  fun loc calltrace e -> `Main_interpret_target_lang_failwith (loc,calltrace, e)
 
 let target_lang_error : Location.t -> Ligo_interpreter.Types.calltrace -> Tezos_error_monad__TzCore.error list -> interpreter_error =
   fun loc calltrace e -> `Main_interpret_target_lang_error (loc,calltrace,e)

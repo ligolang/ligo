@@ -37,6 +37,27 @@ let v_int : Z.t -> value =
 let v_mutez : Z.t -> value =
   fun v -> V_Ct (C_mutez v)
 
+let v_timestamp : Z.t -> value =
+  fun v -> V_Ct (C_timestamp v)
+
+let v_bls12_381_g1 : Bls12_381.G1.t -> value =
+  fun v -> V_Ct (C_bls12_381_g1 v)
+
+let v_bls12_381_g2 : Bls12_381.G2.t -> value =
+  fun v -> V_Ct (C_bls12_381_g2 v)
+
+let v_bls12_381_fr : Bls12_381.Fr.t -> value =
+  fun v -> V_Ct (C_bls12_381_fr v)
+
+let v_key_hash : Tezos_crypto.Signature.public_key_hash -> value =
+  fun v -> V_Ct (C_key_hash v)
+
+let v_key : Tezos_crypto.Signature.public_key -> value =
+  fun v -> V_Ct (C_key v)
+
+let v_signature : Tezos_crypto.Signature.t -> value =
+  fun v -> V_Ct (C_signature v)
+
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
 
