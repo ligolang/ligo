@@ -3,4 +3,4 @@
  (public_name ligo.environment)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils ast_typed stage_common))
+ (libraries simple-utils tezos-utils ast_typed ligo_prim))

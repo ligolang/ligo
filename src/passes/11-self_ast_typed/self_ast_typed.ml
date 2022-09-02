@@ -1,12 +1,13 @@
 module Errors = Errors
 module Helpers = Helpers
+open Ligo_prim
 
-let all_module_passes ~raise ~warn_unused_rec = [
-  Unused.unused_map_module ~raise;
-  Muchused.muchused_map_module ~raise;
-  Helpers.map_module @@ Recursion.check_tail_expression ~raise ;
-  Helpers.map_module @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec ;
-  Helpers.map_module @@ Pattern_matching_simpl.peephole_expression ;
+let all_program_passes ~raise ~warn_unused_rec = [
+  Unused.unused_map_program ~raise;
+  Muchused.muchused_map_program ~raise;
+  Helpers.map_program @@ Recursion.check_tail_expression ~raise ;
+  Helpers.map_program @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec ;
+  Helpers.map_program @@ Pattern_matching_simpl.peephole_expression ;
 ]
 
 let all_expression_passes ~raise ~warn_unused_rec = [
@@ -20,19 +21,19 @@ let contract_passes ~raise = [
   No_nested_big_map.self_typing ~raise ;
 ]
 
-let all_module ~raise ~warn_unused_rec init =
-  List.fold ~f:(|>) (all_module_passes ~raise ~warn_unused_rec) ~init
+let all_program ~raise ~warn_unused_rec init =
+  List.fold ~f:(|>) (all_program_passes ~raise ~warn_unused_rec) ~init
 
 let all_expression ~raise ~warn_unused_rec init =
   List.fold ~f:(|>) (all_expression_passes ~raise ~warn_unused_rec) ~init
 
-let all_contract ~raise main_name prg =
+let all_contract ~raise main_name (prg : Ast_typed.program) =
   let contract_type = Helpers.fetch_contract_type ~raise main_name prg in
   let data : Contract_passes.contract_pass_data = {
     contract_type = contract_type ;
     main_name = main_name ;
     } in
-  let all_p = List.map ~f:(fun pass -> Ast_typed.Helpers.fold_map_module pass data) @@ contract_passes ~raise in
+  let all_p = List.map ~f:(fun pass -> Ast_typed.Helpers.fold_map_program pass data) @@ contract_passes ~raise in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
   let prg = Contract_passes.remove_unused ~raise data prg in
   prg
@@ -46,13 +47,13 @@ let all_view ~raise command_line_views main_name prg =
     | Some command_line_views -> (
       List.iter user_views
         ~f:(fun (x,loc) ->
-          if Option.is_none (List.find ~f:(fun s -> Ast_typed.ValueVar.is_name x s) command_line_views) then
+          if Option.is_none (List.find ~f:(ValueVar.is_name x) command_line_views) then
             Simple_utils.Trace.(raise.warning (`Main_view_ignored loc))
         )
     )
   in
   let () =
-    match Helpers.get_shadowed_decl prg (fun ({ view ; _ } : Ast_typed.known_attributes) -> view) with
+    match Helpers.get_shadowed_decl prg (fun ({ view ; _ } : Ast_typed.Attr.value) -> view) with
     | Some loc -> raise.error (Errors.annotated_declaration_shadowed loc)
     | None -> ()
   in

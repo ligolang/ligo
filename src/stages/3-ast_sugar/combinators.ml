@@ -2,7 +2,11 @@ open Types
 module Option = Simple_utils.Option
 
 module SMap = Simple_utils.Map.String
-open Stage_common.Constant
+open Ligo_prim.Literal_types
+module Label = Ligo_prim.Label
+module Record = Ligo_prim.Record
+module Rows = Ligo_prim.Rows
+module LMap = Record.LMap
 
 (* Helpers for accessing and constructing elements are derived using
    `ppx_woo` (`@@deriving ez`) *)
@@ -46,8 +50,8 @@ let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 [@@map (_type_, ("map", "big_map"))]
 
 let t_record_ez ?loc lst =
-  let lst = List.map ~f:(fun (k, v) -> (Label k, v)) lst in
-  let fields = LMap.of_list lst in
+  let lst = List.map ~f:(fun (k, v) -> (Label.of_string k, v)) lst in
+  let fields = Record.of_list lst in
   make_t ?loc @@ T_record {fields ; attributes=[]}
 let t_record ?loc m  : type_expression =
   let lst = SMap.to_kv_list_rev m in
@@ -58,7 +62,7 @@ let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
                                                           ("1",{associated_type=b ; attributes=[] (* TODO *); decl_pos=1})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
-let t_sum_ez ?loc (lst:((string * ty_expr row_element) list)) : type_expression =
+let t_sum_ez ?loc (lst:((string * ty_expr Rows.row_element) list)) : type_expression =
   let aux prev (k, v) = LMap.add (Label k) v prev in
   let fields = List.fold_left ~f:aux ~init:LMap.empty lst in
   make_t ?loc @@ T_sum {fields ; attributes=[]}
@@ -66,8 +70,8 @@ let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   t_sum_ez ?loc lst
 
-let t_bool ?loc () : type_expression = 
-  let unit : ty_expr row_element = 
+let t_bool ?loc () : type_expression =
+  let unit : ty_expr Rows.row_element =
     { associated_type = t_unit (); attributes = [] ; decl_pos = 0 } in
   t_sum_ez ?loc
   [("True", unit);("False", unit)]
@@ -95,8 +99,8 @@ let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in    ?loc let_binder mut attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder ; rhs ; let_result; attributes; mut }
-let e_let_in_ez ?loc var ?ascr ?const_or_var mut attributes rhs let_result = e_let_in ?loc {var;ascr;attributes={const_or_var}} mut attributes rhs let_result
+let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder ; rhs ; let_result; attributes }
+let e_let_in_ez ?loc var ?ascr ?const_or_var attributes rhs let_result = e_let_in ?loc {var;ascr;attributes={const_or_var}} attributes rhs let_result
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = s; element = a}
@@ -113,7 +117,7 @@ let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
 let e_sequence ?loc expr1 expr2 = make_e ?loc @@ E_sequence {expr1; expr2}
-let e_skip ?loc () = make_e ?loc @@ E_skip
+let e_skip ?loc () = make_e ?loc @@ E_skip ()
 
 let e_list ?loc lst : expression = make_e ?loc @@ E_list lst
 let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
@@ -170,7 +174,7 @@ let extract_list : expression -> (expression list) option = fun e ->
   | E_list lst -> Some lst
   | _ -> None
 
-let extract_record : expression -> ((label * expression) list) option = fun e ->
+let extract_record : expression -> ((Label.t * expression) list) option = fun e ->
   match e.expression_content with
   | E_record lst -> Some (LMap.to_kv_list lst)
   | _ -> None

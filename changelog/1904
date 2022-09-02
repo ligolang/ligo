@@ -1,0 +1,11 @@
+author: er433
+description: '### New functions for testing framework\n\nThere are new functions for
+  doing mutation testing directly from files, that originate a mutated version of
+  the contract and then gives control to the passed function that can do the test:\n-
+  `Test.originate_from_file_and_mutate : string -> string -> string list -> michelson_program
+  -> tez -> (address * michelson_contract * int -> b) -> (b * mutation) option`\n-
+  `Test.originate_from_file_and_mutate_all : string -> string -> string list -> michelson_program
+  -> tez -> (address * michelson_contract * int -> b) -> (b * mutation) list`'
+merge_request: '1904'
+title: 'Testing framework: add support for mutation in `Test.originate_from_file` functions'
+type: added

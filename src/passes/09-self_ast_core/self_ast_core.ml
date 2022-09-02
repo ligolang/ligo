@@ -1,7 +1,7 @@
 let all_expression_mapper = [
 ]
 
-let all_module ~init =
+let all_program ~init =
   let all_p  = List.map ~f:Helpers.map_expression_in_declarations all_expression_mapper in
   List.fold ~init ~f:(|>) all_p
 

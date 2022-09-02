@@ -38,7 +38,7 @@ let cst (raw_options : Raw_options.t) source_file display_format () =
       Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
 
 let ast (raw_options : Raw_options.t) source_file display_format () =
-    format_result ~display_format (Ast_imperative.Formatter.module_format) @@
+    format_result ~display_format (Ast_imperative.Formatter.program_format) @@
       fun ~raise ->
       let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options  = Compiler_options.make ~raw_options ~syntax () in
@@ -47,7 +47,7 @@ let ast (raw_options : Raw_options.t) source_file display_format () =
       Compile.Utils.to_imperative ~raise ~options ~meta c_unit source_file
 
 let ast_sugar (raw_options : Raw_options.t) source_file display_format () =
-    format_result ~display_format (Ast_sugar.Formatter.module_format) @@
+    format_result ~display_format (Ast_sugar.Formatter.program_format) @@
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
@@ -56,12 +56,12 @@ let ast_sugar (raw_options : Raw_options.t) source_file display_format () =
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let sugar = Compile.Utils.to_sugar ~raise ~options ~meta c_unit source_file in
       if self_pass then
-        Self_ast_sugar.all_module sugar
+        Self_ast_sugar.all_program sugar
       else
         sugar
 
 let ast_core (raw_options : Raw_options.t) source_file display_format () =
-    format_result ~display_format (Ast_core.Formatter.module_format) @@
+    format_result ~display_format (Ast_core.Formatter.program_format) @@
     fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
@@ -71,7 +71,7 @@ let ast_core (raw_options : Raw_options.t) source_file display_format () =
       let core = Compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
       if self_pass then
         (*NOTE: this run self_ast_core a second time*)
-        Self_ast_core.all_module ~init:core
+        Self_ast_core.all_program ~init:core
       else
         core
 
@@ -87,7 +87,7 @@ let ast_typed (raw_options : Raw_options.t) source_file display_format () =
       let typed = Build.type_contract ~raise ~options source_file in
       if self_pass then
         Trace.trace ~raise Main_errors.self_ast_typed_tracer
-          @@ Self_ast_typed.all_module ~warn_unused_rec:options.middle_end.warn_unused_rec typed
+          @@ Self_ast_typed.all_program ~warn_unused_rec:options.middle_end.warn_unused_rec typed
       else
         typed
 

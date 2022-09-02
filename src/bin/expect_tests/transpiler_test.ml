@@ -204,7 +204,8 @@ let%expect_test _ =
           | Sell_single (as) -> sell_single (as, s)
           | Transfer_single (at) -> transfer_single (at, s)
           ]
-      ] |}];
+      ] |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "cameligo" ] ;
   [%expect {|
     type card_pattern_id = nat
@@ -710,7 +711,8 @@ let%expect_test _ =
         case nee.nesty. mymap [1]  of [
           Some (s) -> s
         | None -> (failwith ("Should not happen.") : string)
-        ] |}];
+        ] |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "cameligo" ] ;
   [%expect{|
     type pii = int * int
@@ -751,7 +753,8 @@ let%expect_test _ =
            match Map.find_opt 1 nee.nesty.mymap with
              Some s -> s
            | None -> (failwith "Should not happen." : string)
-         end) |}];
+         end) |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
   [%expect{|
 type pii = (int, int);
@@ -1001,7 +1004,8 @@ function foobar (const i : int) is
 function failer (const p : int) is
 {
   if Operator.eq (p, 1) then failwith (42) else skip
-} with p |}];
+} with p |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
 type parameter = Pos of nat | Zero of nat
@@ -1059,7 +1063,8 @@ let failer : int -> int =
      begin
        if (p = 1) then failwith 42 else ();
        p
-     end) |}];
+     end) |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
   [%expect {|
 type parameter = Pos(nat) | Zero(nat);
@@ -1164,7 +1169,8 @@ let%expect_test _ =
               (Operator.sub (n, 1),
                Operator.add (n_1, n_0),
                n_1)
-      ] |}];
+      ] |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
   [%expect {|
     let rec sum : int * int -> int =
@@ -1179,7 +1185,8 @@ let%expect_test _ =
          (n, n_1, n_0) ->
              if (n < 2)
              then n_1
-             else fibo (n - 1) (n_1 + n_0) n_1) |}];
+             else fibo (n - 1) (n_1 + n_0) n_1) |}]
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
   [%expect {|
     let rec sum: (int, int) => int =

@@ -4,14 +4,14 @@ module Errors = Errors
 open Errors
 open Mini_c
 open Simple_utils.Trace
-open Stage_common.Constant
+open Ligo_prim.Literal_types
 
 let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression =
   let open! AST in
   let self = decompile ~raise in
   let return e = (make_e e t) in
   match t.type_content with
-  | tc when (AST.Compare.type_content tc (t_bool ()).type_content) = 0-> (
+  | tc when (AST.compare_type_content tc (t_bool ()).type_content) = 0-> (
         let b =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_bool v in
@@ -20,7 +20,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
   | T_constant { language; injection; parameters } -> (
     let () = Assert.assert_true ~raise
       (corner_case ~loc:__LOC__ ("unsupported language "^language))
-      (String.equal language Stage_common.Backends.michelson)
+      (String.equal language Backend.Michelson.name)
     in
     match injection,parameters with
     | (Unit, []) -> (
@@ -187,7 +187,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     | ((Michelson_pair | Michelson_or),_) ->
       raise.error @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | ((Unit            | Nat                  | Tez             | Bytes    | Bls12_381_g1      | Bls12_381_g2       |
-        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         |
+        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         | Ast_contract       |
         Map             | Big_map              | Set                        | Baker_hash        | Pvss_key           |
         Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Michelson_contract |
         Gen             | String               | Typed_address   | Mutation | List              | Chest              |
@@ -206,16 +206,16 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       return (E_constructor {constructor=Label "None";element=make_e (e_unit ()) (t_unit ())})
     | _ -> raise.error @@ corner_case ~loc:"unspiller" "impossible"
     )
-  | T_sum {layout ; content} ->
-      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_sum ~layout content in
+  | T_sum {layout ; fields} ->
+      let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_sum ~layout fields in
       let (constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in
       let sub = self v tv in
       return (E_constructor {constructor;element=sub})
-  | T_record {layout ; content } ->
-      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_record_or_tuple ~layout content in
+  | T_record {layout ; fields } ->
+      let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
       let lst = Layout.extract_record ~raise ~layout v lst in
       let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
-      let m' = AST.LMap.of_list lst in
+      let m' = Ligo_prim.Record.of_list lst in
       return (E_record m')
   | T_arrow _ ->
       let n =

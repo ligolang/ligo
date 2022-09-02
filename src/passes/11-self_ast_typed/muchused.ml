@@ -1,8 +1,9 @@
+open Ligo_prim
 open Ast_typed
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-module V = ValueVar
+module V = Ligo_prim.ValueVar
 module M = Simple_utils.Map.Make(V)
 
 type muchuse = int M.t * V.t list
@@ -20,7 +21,7 @@ let muchuse_neutral : muchuse = M.empty, []
  *   Dup (lambda 'a 'b) *)
 
 let rec is_dup (t : type_expression) =
-  let open Stage_common.Constant in
+  let open Literal_types in
   match t.type_content with
   | T_constant {injection = (
     Never               |
@@ -49,6 +50,7 @@ let rec is_dup (t : type_expression) =
     Mutation            |
     Tx_rollup_l2_address |
     Michelson_contract  |
+    Ast_contract        |
     Michelson_program   |
     Gen                 |
     (* Externals are dup *)
@@ -67,8 +69,8 @@ let rec is_dup (t : type_expression) =
       is_dup t1 && is_dup t2
   | T_record rows
   | T_sum rows ->
-     let row_types = LMap.to_list rows.content
-                     |> List.map ~f:(fun v -> v.associated_type)
+     let row_types = Record.LMap.to_list rows.fields
+                     |> List.map ~f:(fun (v:row_element) -> v.associated_type)
                      |> List.filter ~f:(fun v -> not (is_dup v)) in
      List.is_empty row_types
   | T_arrow _ -> true
@@ -139,27 +141,27 @@ let rec muchuse_of_expr expr : muchuse =
   | E_matching {matchee;cases} ->
      muchuse_union (muchuse_of_expr matchee) (muchuse_of_cases cases)
   | E_record re ->
-     Stage_common.Types.LMap.fold
-       (fun _ x -> muchuse_union (muchuse_of_expr x)) re muchuse_neutral
+     Record.fold
+       (fun acc x -> muchuse_union (muchuse_of_expr x) acc) muchuse_neutral re
   | E_raw_code {code;_} ->
      muchuse_of_expr code
-  | E_record_accessor {record;_} ->
+  | E_accessor {record;_} ->
      muchuse_of_expr record
-  | E_record_update {record;update;_} ->
+  | E_update {record;update;_} ->
      muchuse_union (muchuse_of_expr record) (muchuse_of_expr update)
   | E_mod_in {let_result;_} ->
      muchuse_of_expr let_result
   | E_type_inst {forall;_} ->
      muchuse_of_expr forall
   | E_module_accessor {module_path;element} ->
-    let pref = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep PP.module_variable (Simple_utils.PP_helpers.tag ".")) module_path in
+    let pref = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep ModuleVar.pp (Simple_utils.PP_helpers.tag ".")) module_path in
     let name = V.of_input_var ~loc:expr.location @@
       pref ^ "." ^ (Format.asprintf "%a" ValueVar.pp element) in
     (M.add name 1 M.empty,[])
   | E_assign { binder=_; expression } ->
     muchuse_of_expr expression
 
-and muchuse_of_lambda t {binder; result} =
+and muchuse_of_lambda t {binder; output_type = _; result} =
   muchuse_of_binder binder.var t (muchuse_of_expr result)
 
 and muchuse_of_cases = function
@@ -172,33 +174,33 @@ and muchuse_of_variant {cases;tv} =
       match get_t_list tv with
       | None -> muchuse_neutral
       | Some tv' ->
-         let get_c_body (case : Ast_typed.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
-         let c_body_lst = Ast_typed.LMap.of_list (List.map ~f:get_c_body cases) in
-         let get_case c =  Ast_typed.LMap.find (Label c) c_body_lst in
+         let get_c_body (case : _ matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+         let c_body_lst = Record.of_list (List.map ~f:get_c_body cases) in
+         let get_case c =  Record.LMap.find (Label c) c_body_lst in
          let match_nil,_ = get_case "Nil" in
          let match_cons,v = get_case "Cons" in
          muchuse_max (muchuse_of_binder v (t_pair tv' tv) (muchuse_of_expr match_cons)) (muchuse_of_expr match_nil)
     end
   | Some ts ->
-     let case_ts ({constructor;_} : matching_content_case) =
-       let row_element = LMap.find constructor ts.content in
+     let case_ts ({constructor;_} : _ matching_content_case) =
+       let row_element = Record.LMap.find constructor ts.fields in
        row_element.associated_type in
      let cases_ts = List.map ~f:case_ts cases in
      muchuse_maxs @@
        Stdlib.List.map2
-         (fun t ({pattern;body;_} : Ast_typed.matching_content_case) ->
+         (fun t ({pattern;body;_} : _ matching_content_case) ->
            muchuse_of_binder pattern t (muchuse_of_expr body))
          cases_ts cases
 
 and muchuse_of_record {body;fields;_} =
-  let typed_vars = LMap.to_list fields in
-  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder b.var (Option.value_exn b.ascr) (c,m))
+  let typed_vars = Record.LMap.to_list fields in
+  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder b.var b.ascr (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
-let rec get_all_declarations (module_name : module_variable) : module_ ->
-                               (expression_variable * type_expression) list =
+let rec get_all_declarations (module_name : ModuleVar.t) : module_ ->
+                               (ValueVar.t * type_expression) list =
   function m ->
-    let aux = fun ({wrap_content=x;location} : declaration) ->
+    let aux = fun (Decl {wrap_content=x;location} : decl) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
           let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp binder.var) in
@@ -214,20 +216,23 @@ let rec get_all_declarations (module_name : module_variable) : module_ ->
 
 let rec muchused_helper (muchuse : muchuse) =
   function m ->
-  let aux = fun (x : declaration_content) s ->
-    match x with
-    | Declaration_constant {expr ; binder; _} ->
-       muchuse_union (muchuse_of_expr expr)
-         (muchuse_of_binder binder.var expr.type_expression s)
-    | Declaration_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
-       let decls = get_all_declarations module_binder module_ in
-       List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
-         decls ~init:(muchused_helper s module_)
-    | _ -> s
-  in
-  let map,muchused = List.fold_right ~f:aux (List.map ~f:Location.unwrap m) ~init:muchuse in
+  let map,muchused = List.fold_right ~f:muchuse_decl m ~init:muchuse in
   (*Put the variable in order : *)
   map,List.rev muchused
+
+and muchuse_declaration = fun (x : declaration) s ->
+  match Location.unwrap x with
+  | Declaration_constant {expr ; binder; _} ->
+      muchuse_union (muchuse_of_expr expr)
+        (muchuse_of_binder binder.var expr.type_expression s)
+  | Declaration_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
+      let decls = get_all_declarations module_binder module_ in
+      List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
+        decls ~init:(muchused_helper s module_)
+  | _ -> s
+
+and muchuse_decl = fun (Decl x) s ->
+  muchuse_declaration x s
 
 let muchused_map_module ~raise : module_ -> module_ = function module_ ->
   let update_annotations annots =
@@ -238,3 +243,19 @@ let muchused_map_module ~raise : module_ -> module_ = function module_ ->
       (V.get_location v, Format.asprintf "%a" V.pp v) in
   let () = update_annotations @@ List.map ~f:warn_var muchused in
   module_
+
+let muchused_helper (muchuse : muchuse) =
+  function m ->
+  let map,muchused = List.fold_right ~f:muchuse_declaration m ~init:muchuse in
+  (*Put the variable in order : *)
+  map,List.rev muchused
+
+let muchused_map_program ~raise : program -> program = function p ->
+  let update_annotations annots =
+    List.iter ~f:raise.Simple_utils.Trace.warning annots in
+  let _,muchused = muchused_helper muchuse_neutral p in
+  let warn_var v =
+    `Self_ast_typed_warning_muchused
+      (V.get_location v, Format.asprintf "%a" V.pp v) in
+  let () = update_annotations @@ List.map ~f:warn_var muchused in
+  p

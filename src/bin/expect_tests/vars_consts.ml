@@ -259,7 +259,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;
   [%expect{|
-    const foo : int -> int -> int =
+    const fooint -> int -> int =
       lambda (x : int) : int -> int return let bar : int -> int =
                                              lambda (y[@var] : int) : int return
                                              ADD(x , y) in
@@ -268,7 +268,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_same_const_var.ligo") ] ;
   [%expect{|
-    const foo : int -> int =
+    const fooint -> int =
       lambda (x : int) : int return let bar : int -> int =
                                       lambda (x[@var] : int) : int return
                                       let ()#2 : unit = x[@var] := ADD(x , 1) in
@@ -278,7 +278,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_var_const.ligo") ] ;
   [%expect{|
-    const foo : int -> int =
+    const fooint -> int =
       lambda (x[@var] : int) : int return let bar : int -> int =
                                             lambda (x : int) : int return x in
                                           (bar)@(42) |}]
@@ -286,17 +286,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "var_loop.ligo") ] ;
   [%expect{|
-    const foo : int -> int =
+    const fooint -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
                                     let ()#5 : unit =
                                       let fun_while_loop#2 =
-                                        rec (fun_while_loop#2:unit -> unit => lambda (()#3 : unit) return
+                                        rec (fun_while_loop#2unit -> unit => lambda (()#3unit)unit return
                                          match AND(LT(i , x) , GT(b , 0)) with
                                           | True () -> let ()#4 : unit =
                                                          i[@var] := ADD(i , 1) in
                                                        (fun_while_loop#2)@(unit)
-                                          | False () -> unit ) in
+                                          | False () -> unit) in
                                       (fun_while_loop#2)@(unit) in
                                     i |}]
 
@@ -321,18 +321,20 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
   [%expect{|
     const foo[@var] =
-      rec (foo:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
-                                                                 | (x[@var],y[@var]) -> {
+      rec (foo : unit -> int => lambda (_#2 : unit) : int return  match (
+                                                                   4 , 5) with
+                                                                   | (x[@var],y[@var]) -> {
 
-                                                                   x[@var] := 2;
-                                                                   {
-                                                                      y[@var] := 3;
-                                                                      C_POLYMORPHIC_ADD(x ,y)
-                                                                   }
-                                                                 } )[@@private]
+                                                                     x[@var] := 2;
+                                                                     {
+                                                                        y[@var] := 3;
+                                                                        C_POLYMORPHIC_ADD(x ,y)
+                                                                     }
+                                                                   })[@@private]
     const bar[@var] =
-      rec (bar:unit -> int => lambda (_#3 : unit) : int return  match (4 , 5) with
-                                                                 | (x,y) ->
-                                                                 let add[@var] = rec (add:unit -> int => lambda (_#4 : unit) : int return C_POLYMORPHIC_ADD(x ,y) )[@@private] in
-                                                                 (add)@(unit) )[@@private] |}]
+      rec (bar : unit -> int => lambda (_#3 : unit) : int return  match (
+                                                                   4 , 5) with
+                                                                   | (x,y) ->
+                                                                   let add[@var] = rec (add : unit -> int => lambda (_#4 : unit) : int return C_POLYMORPHIC_ADD(x ,y))[@@private] in
+                                                                   (add)@(unit))[@@private] |}]
 

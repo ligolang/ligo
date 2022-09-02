@@ -271,6 +271,17 @@ let%expect_test _ =
     - test_mutation_all exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_mutate_from_file.mligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - tester exited with value <fun>.
+    - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 59-64:
+      1 | let main ((p, k) : int * int) : operation list * int = [], p + k
+
+    Replacing by: (p - k).
+    )]. |}]
+
+let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
@@ -718,7 +729,8 @@ let%expect_test _ =
       1 | let test : unit =
       2 |   failwith "I am failing"
 
-    "I am failing" |}]
+    An uncaught error occured:
+    Failwith: "I am failing" |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
@@ -728,7 +740,9 @@ let%expect_test _ =
       2 |     assert false
 
     An uncaught error occured:
-    Failwith: "failed assertion" |}]
+    Failwith: "failed assertion"
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 |}]
 
 let%expect_test _ =
   run_ligo_bad ["run"; "test" ; bad_test "bad_balances_reset.mligo" ] ;
@@ -764,7 +778,8 @@ let%expect_test _ =
       3 |     (failwith "negative" : int)
       4 |   else
 
-    "negative"
+    An uncaught error occured:
+    Failwith: "negative"
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
@@ -804,7 +819,8 @@ let%expect_test _ =
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
-    "Some mutation also passes the tests!"
+    An uncaught error occured:
+    Failwith: "Some mutation also passes the tests!"
     Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 3, characters 29-30:
       2 |     if rounds > 0 then
       3 |         my_rec_fun (rounds - 1)

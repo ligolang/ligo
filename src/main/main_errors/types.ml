@@ -1,3 +1,4 @@
+open Ligo_prim
 module Location = Simple_utils.Location
 
 type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.error]
@@ -52,12 +53,12 @@ type all =
  (* | `Main_interpreter of Interpreter.interpreter_error *)
  | `Main_interpret_test_entry_not_found of string
  | `Main_interpret_target_lang_error of Location.t * Location.t list * Tezos_error_monad__TzCore.error list
- | `Main_interpret_target_lang_failwith of Location.t * (int, string) Tezos_micheline.Micheline.node
+ | `Main_interpret_target_lang_failwith of Location.t * Location.t list * (int, string) Tezos_micheline.Micheline.node
  | `Main_interpret_boostrap_not_enough of Location.t
  | `Main_interpret_meta_lang_eval of Location.t * Location.t list * Ligo_interpreter.Types.value
  | `Main_interpret_meta_lang_failwith of Location.t * Location.t list * Ligo_interpreter.Types.value
  | `Main_interpret_generic of Location.t * string
- | `Main_interpret_literal of Location.t * Ast_typed.literal
+ | `Main_interpret_literal of Location.t * Literal_value.t
  | `Main_interpret_modules_not_supported of Location.t
  | `Main_interpret_not_enough_initial_accounts of Location.t * Memory_proto_alpha.Protocol.Alpha_context.Tez.tez
 
@@ -67,7 +68,7 @@ type all =
  | `Main_decompile_typed of Checking.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
- | `Main_view_not_a_function of Ast_typed.expression_variable
+ | `Main_view_not_a_function of ValueVar.t
  | `Main_view_rule_violated of Location.t
  | `Main_invalid_balance of string
  | `Main_invalid_amount of string

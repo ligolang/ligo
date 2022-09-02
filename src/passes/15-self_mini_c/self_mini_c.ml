@@ -2,6 +2,7 @@ module Errors = Errors
 open Errors
 open Mini_c
 open Simple_utils.Trace
+open Ligo_prim
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
   fun e in_ty out_ty ->
@@ -32,7 +33,7 @@ let map_expression = Helpers.map_expression
 
 (* true if the name names a pure constant -- i.e. if uses will be pure
    assuming arguments are pure *)
-let is_pure_constant : constant' -> bool =
+let is_pure_constant : Constant.constant' -> bool =
   function
   | C_UNIT
   | C_CAR | C_CDR | C_PAIR
@@ -120,6 +121,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_BOOTSTRAP_CONTRACT
   | C_TEST_NTH_BOOTSTRAP_CONTRACT
   | C_TEST_LAST_ORIGINATIONS
+  | C_TEST_MUTATE_CONTRACT
   | C_TEST_MUTATE_VALUE
   | C_TEST_SAVE_MUTATION
   | C_TEST_RUN
@@ -132,6 +134,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_GENERATOR_EVAL
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
   | C_TEST_COMPILE_CONTRACT_FROM_FILE
+  | C_TEST_COMPILE_AST_CONTRACT
   | C_TEST_SET_BIG_MAP
   | C_TEST_CAST_ADDRESS
   | C_TEST_CREATE_CHEST
@@ -200,7 +203,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_fold_right _
     -> false
 
-let occurs_count : expression_variable -> expression -> int =
+let occurs_count : ValueVar.t -> expression -> int =
   fun x e ->
   let fvs = Free_variables.expression [] e in
   Free_variables.mem_count x fvs
@@ -229,7 +232,7 @@ let is_variable : expression -> bool =
   | E_variable _ -> true
   | _ -> false
 
-let should_inline : expression_variable -> expression -> expression -> bool =
+let should_inline : ValueVar.t -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 

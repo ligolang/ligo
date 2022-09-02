@@ -1,6 +1,7 @@
+open Ligo_prim
 open Mini_c
 
-let rec uncurry_lambda (depth : int) (expr : expression) : expression_variable list * expression =
+let rec uncurry_lambda (depth : int) (expr : expression) : ValueVar.t list * expression =
   match expr.content with
   | E_closure { binder; body } when depth > 0 ->
     let (vars, body) = uncurry_lambda (depth - 1) body in
@@ -52,7 +53,7 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
 
 let usages = List.fold_left ~f:combine_usage ~init:Unused
 
-let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
+let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
     if List.mem ~equal:ValueVar.equal vars f
@@ -157,7 +158,7 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
                         type_content = T_function (comb_type arg_types, ret_type) } }
 
 let rec uncurry_in_expression
-    (f : expression_variable) (depth : int) (expr : expression) : expression =
+    (f : ValueVar.t) (depth : int) (expr : expression) : expression =
   let self = uncurry_in_expression f depth in
   let self_list = List.map ~f:self in
   let self_binder vars e =

@@ -1,9 +1,10 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
+open Ligo_prim
 open Ast_typed
 
 module HMap = Simple_utils.Map.Make(struct type t = type_expression
-                                           let compare t1 t2 = Int.compare (Hash.hash_type_expression t1) (Hash.hash_type_expression t2)
+                                           let compare t1 t2 = Int.compare (hash_type_expression t1) (hash_type_expression t2)
                                     end)
 
 module Typing = struct
@@ -30,7 +31,7 @@ module Typing = struct
     Then, in order to convert those maps into a id-sorted list, we can :
     1. Use [merge], and convert the merged map into a (sorted) kv_list. This will remove duplicate eponym types
     2. Use [to_kvi_list], append all the kvi_lists, and sort the resulting kvi_list by id, into a kv_list, this keeps duplicates *)
-    let get_module_types : context -> (type_variable * type_expression) list =
+    let get_module_types : context -> (TypeVar.t * type_expression) list =
       fun ctxt ->
       let rec aux : context -> type_expression TypeMap.kvi_list =
         fun ctxt ->
@@ -63,12 +64,12 @@ module Typing = struct
       fprintf ppf "@[<hv>%a@]" aux l
 
     let value_binding ppf (ev,te) =
-      fprintf ppf "%a => %a" expression_variable ev type_expression te
+      fprintf ppf "%a => %a" ValueVar.pp ev type_expression te
     let type_binding ppf (type_var,type_) =
-      fprintf ppf "%a => %a" type_variable type_var type_expression type_
+      fprintf ppf "%a => %a" TypeVar.pp type_var type_expression type_
 
     let rec module_binding ppf (mod_var,type_) =
-      fprintf ppf "%a => %a" module_variable mod_var context type_
+      fprintf ppf "%a => %a" ModuleVar.pp mod_var context type_
 
     and context ppf {values;types;modules} =
       fprintf ppf "context:@,{[@[<v 2>@,%a; @,%a; @,%a; ]}@]"
@@ -98,35 +99,35 @@ module Typing = struct
 
 
   (* TODO: generate : these are now messy, clean them up. *)
-  let add_value : t -> Ast_typed.expression_variable -> Ast_typed.type_expression -> t = fun c ev te ->
+  let add_value : t -> ValueVar.t -> Ast_typed.type_expression -> t = fun c ev te ->
     let values =  Types.ValueMap.add ev te c.values in
     {c with values}
 
-  let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = fun c tv te ->
+  let add_type : t -> TypeVar.t -> Ast_typed.type_expression -> t = fun c tv te ->
     let types = Types.TypeMap.add c.types tv te in
     {c with types}
 
   (* we represent for_all types as themselves because we don't have typechecking yet *)
-  let add_type_var : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->
+  let add_type_var : t -> TypeVar.t -> unit -> t = fun c tv () ->
     add_type c tv (Ast_typed.t_variable tv ())
 
   (* we use type_var while we don't have kind checking *)
-  let add_kind : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->
+  let add_kind : t -> TypeVar.t -> unit -> t = fun c tv () ->
     add_type_var c tv ()
-  let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te ->
+  let add_module : t -> ModuleVar.t -> t -> t = fun c mv te ->
     let modules = Types.ModuleMap.add c.modules mv te in
     {c with modules}
 
-  let get_value (e:t)  = List.Assoc.find ~equal:Ast_typed.ValueVar.equal @@ Types.ValueMap.to_kv_list e.values
-  let get_type (e:t)   = List.Assoc.find ~equal:Ast_typed.TypeVar.equal @@ Types.TypeMap.to_kv_list e.types
-  let get_module (e:t) = List.Assoc.find ~equal:Ast_typed.ModuleVar.equal @@ Types.ModuleMap.to_kv_list e.modules
+  let get_value (e:t)  = List.Assoc.find ~equal:ValueVar.equal @@ Types.ValueMap.to_kv_list e.values
+  let get_type (e:t)   = List.Assoc.find ~equal:TypeVar.equal @@ Types.TypeMap.to_kv_list e.types
+  let get_module (e:t) = List.Assoc.find ~equal:ModuleVar.equal @@ Types.ModuleMap.to_kv_list e.modules
 
-  let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip @@ Types.TypeMap.to_kv_list types
+  let get_type_vars : t -> TypeVar.t list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip @@ Types.TypeMap.to_kv_list types
 
   let rec context_of_module_expr : outer_context:t -> Ast_typed.module_expr -> t = fun ~outer_context me ->
     match me.wrap_content with
     | M_struct declarations -> (
-      let f : t -> Ast_typed.declaration -> t = fun acc d ->
+      let f : t -> Ast_typed.decl -> t = fun acc (Decl d) ->
         match Location.unwrap d with
         | Declaration_constant {binder;expr;attr={public;_}} ->
            if public then add_value acc binder.var expr.type_expression
@@ -162,7 +163,7 @@ module Typing = struct
   let init ?env () =
     match env with None -> empty
                  | Some (env) ->
-                    let f : t -> Ast_typed.declaration -> t = fun c d ->
+                    let f : t -> Ast_typed.decl -> t = fun c (Decl d) ->
                       match Location.unwrap d with
                       | Declaration_constant {binder;expr;attr=_}  -> add_value c binder.var expr.type_expression
                       | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
@@ -192,14 +193,14 @@ module Typing = struct
     let a = A 42
   Here, for [a], we find a matching type [ty] in the current scope, but we still want to warn the user that type [Mod_a.tx] matches too.
 *)
-  let get_sum: label -> t -> (type_variable * type_variable list * type_expression * type_expression) list =
+  let get_sum: Label.t -> t -> (TypeVar.t * TypeVar.t list * type_expression * type_expression) list =
     fun ctor ctxt ->
         let filter_tsum = fun (var,type_) ->
           let t_params, type_ = Ast_typed.Helpers.destruct_type_abstraction type_ in
           match type_.type_content with
           | T_sum m -> (
-            match LMap.find_opt ctor m.content with
-            | Some {associated_type ; _} -> Some (var,t_params, associated_type , type_)
+            match Record.LMap.find_opt ctor m.fields with
+            | Some ({associated_type ; _}: row_element) -> Some (var,t_params, associated_type , type_)
             | None -> None
           )
           | _ -> None
@@ -214,10 +215,10 @@ module Typing = struct
         let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
         (* Filter out duplicates (this prevents false warnings of "infered type is X but could also be X"
            when a same type is present several times in the context) *)
-        let remove_doubles l : (type_variable * type_variable list * type_expression * type_expression) list =
-          let add_no_dup l elt : (type_variable * type_variable list * type_expression * type_expression) list =
-            let (_tv, _tvs, _te, te) : (type_variable * type_variable list * type_expression * type_expression) = elt in
-            match List.find l ~f:(fun (_tv, _tvs, _te, te') -> Hash.hash_type_expression te = Hash.hash_type_expression te') with
+        let remove_doubles l : (TypeVar.t * TypeVar.t list * type_expression * type_expression) list =
+          let add_no_dup l elt : (TypeVar.t * TypeVar.t list * type_expression * type_expression) list =
+            let (_tv, _tvs, _te, te) : (TypeVar.t * TypeVar.t list * type_expression * type_expression) = elt in
+            match List.find l ~f:(fun (_tv, _tvs, _te, te') -> hash_type_expression te = hash_type_expression te') with
             | Some _ -> l
             | None -> elt :: l
           in
@@ -229,17 +230,15 @@ module Typing = struct
           Some general_type -> [general_type]
         | None -> matching_t_sum
 
-  let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
-    let lst_kv  = LMap.to_kv_list_rev lmap in
+  let get_record : _ Record.t -> t -> (TypeVar.t option * rows) option = fun lmap e ->
+    let lst_kv  = Record.LMap.to_kv_list_rev lmap in
     let rec rec_aux e =
       let aux = fun (_,type_) ->
         match type_.type_content with
         | T_record m -> Simple_utils.Option.(
-            let lst_kv' = LMap.to_kv_list_rev m.content in
+            let lst_kv' = Record.LMap.to_kv_list_rev m.fields in
             let m = map ~f:(fun () -> m) @@ Ast_typed.Misc.assert_list_eq
-                                              ( fun (ka,va) (kb,vb) ->
-                                                let Label ka = ka in
-                                                let Label kb = kb in
+                                              ( fun (ka,(va:row_element)) (kb,vb) ->
                                                 let* () = Ast_typed.Misc.assert_eq ka kb in
                                                 Ast_typed.Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
                                               ) lst_kv lst_kv' in
@@ -259,13 +258,13 @@ end
 
 module Hashes = struct
   module HTBL = Caml.Hashtbl.Make(struct type t = type_expression
-                                         let hash = Hash.hash_type_expression
+                                         let hash = hash_type_expression
                                          let equal t1 t2 = match assert_type_expression_eq (t1, t2) with
                                            | Some _ -> true
                                            | None -> false
                                   end)
 
-  let hashtbl : (module_variable list * type_variable) HTBL.t = HTBL.create 256
+  let hashtbl : (ModuleVar.t list * TypeVar.t) HTBL.t = HTBL.create 256
 
   let context = ref (false, Typing.empty)
   let set_context (t : Typing.t) : unit = context := (false, t)
@@ -284,7 +283,7 @@ module Hashes = struct
       aux [] t ;
       context := (true, t)
 
-  let find_type (t : type_expression) : (module_variable list * type_variable) option =
+  let find_type (t : type_expression) : (ModuleVar.t list * TypeVar.t) option =
     HTBL.find_opt hashtbl t
 end
 
