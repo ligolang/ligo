@@ -14,6 +14,7 @@ let x =
     end in
 
     module D = B in
+    module E = B.C
     
     let b1 = B.y in
     let b2 = B.z in
@@ -27,4 +28,8 @@ let x =
     let c4 = D.C.a2 in
     let c5 = D.C.a3 in
     
+    let e1 = E.a1 in
+    let e2 = E.a2 in
+    let e3 = E.a3 in
+
     42
