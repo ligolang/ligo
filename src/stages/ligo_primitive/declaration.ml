@@ -11,19 +11,7 @@ module ValueDecl (Attr : Attr) = struct
       binder : 't Binder.t;
       expr : 'e ;
       attr : Attr.t;
-    } [@@deriving eq,compare,yojson,hash]
-
-  let fold : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp) t -> 'acc
-  = fun f g acc {binder; attr=_; expr} ->
-    let acc = Binder.fold g acc binder in
-    let acc = f acc expr     in
-    acc
-
-  let map : ('a -> 'b) -> ('c -> 'd) -> ('a,'c) t -> ('b,'d) t
-  = fun map_e map_ty {binder; attr; expr} ->
-    let binder = Binder.map map_ty binder in
-    let expr   = map_e expr     in
-    {binder;attr;expr}
+    } [@@deriving eq,compare,yojson,hash,fold,map]
 
   let fold_map : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) t -> 'acc * ('b,'d) t
   = fun f g acc {binder; attr; expr} ->
@@ -50,17 +38,7 @@ module TypeDecl (Attr:Attr) = struct
       type_binder : Var.TypeVar.t ;
       type_expr : 't ;
       type_attr : Attr.t ;
-    } [@@deriving eq,compare,yojson,hash]
-
-  let fold : ('acc -> 'a -> 'acc) -> 'acc -> ('a) t -> 'acc
-  = fun g acc {type_binder=_; type_expr; type_attr=_} ->
-    let acc = g acc type_expr in
-    acc
-
-  let map : ('a -> 'b) -> ('a) t -> ('b) t
-  = fun g {type_binder; type_expr; type_attr} ->
-    let type_expr = g type_expr in
-    {type_binder; type_expr; type_attr}
+    } [@@deriving eq,compare,yojson,hash,fold,map]
 
   let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
   = fun g acc {type_binder; type_expr; type_attr} ->
@@ -80,17 +58,7 @@ module ModuleDecl (Attr : Attr) = struct
       module_binder : Var.ModuleVar.t ;
       module_ : 'module_expr;
       module_attr : Attr.t
-    } [@@deriving eq,compare,yojson,hash]
-
-  let fold : ('acc -> 'dcl -> 'acc) -> 'acc -> ('dcl) t -> 'acc
-  = fun f acc {module_binder=_;module_;module_attr=_} ->
-    let acc = f acc module_ in
-    acc
-
-  let map : ('dcl_src -> 'dcl_dst) -> ('dcl_src) t -> ('dcl_dst) t
-  = fun map {module_binder; module_; module_attr} ->
-    let module_ = map module_ in
-    {module_binder;module_;module_attr}
+    } [@@deriving eq,compare,yojson,hash,fold,map]
 
   let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc ->
     ('a) t -> 'acc * ('b) t

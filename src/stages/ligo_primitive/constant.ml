@@ -163,7 +163,7 @@ type constant' =
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ
   | C_OPTION_MAP
-[@@deriving eq,compare,yojson,hash, enum, print_constant, only_interpreter_tags, read_constant ]
+[@@deriving eq,compare,yojson,hash, print_constant, only_interpreter_tags, read_constant ]
 
 
 type deprecated = {
@@ -179,22 +179,12 @@ let const_name (Const c) = c
 type 'e t = {
   cons_name: constant' ; (* this is in enum *)
   arguments: 'e list ;
-  } [@@deriving eq,compare,yojson,hash]
+  } [@@deriving eq,compare,yojson,hash, fold, map]
 
 let pp f ppf = fun {cons_name;arguments} ->
   Format.fprintf ppf "@[%a@[<hv 1>(%a)@]@]"
     pp_constant' cons_name
     Simple_utils.PP_helpers.(list_sep_d f) arguments
-
-let fold : ('acc -> 'a ->  'acc) -> 'acc -> 'a t -> 'acc
-= fun f acc {cons_name=_;arguments} ->
-  let acc = List.fold ~f ~init:acc arguments in
-   acc
-
-let map : ('a ->  'b) -> 'a t -> 'b t
-= fun f {cons_name;arguments} ->
-  let arguments = List.map ~f arguments in
-  {cons_name;arguments}
 
 let fold_map : ('acc -> 'a ->  'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 = fun f acc {cons_name;arguments} ->

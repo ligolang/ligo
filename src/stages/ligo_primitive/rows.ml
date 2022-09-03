@@ -36,17 +36,12 @@ type 'a row_element = {
   associated_type : 'a ;
   attributes      : string list ;
   decl_pos        : int ;
-  } [@@deriving eq,compare,yojson,hash]
-
-let map_row_element : ('a -> 'b) -> 'a row_element -> 'b row_element
-= fun g {associated_type ; attributes ; decl_pos}  ->
-  let associated_type = g associated_type in
-  ({associated_type ; attributes ; decl_pos}: 'b row_element)
+  } [@@deriving eq,compare,yojson,hash,fold,map]
 
 type 'a t = {
   fields     : 'a row_element LMap.t;
   attributes : string list ;
-  } [@@deriving eq,compare,yojson,hash]
+  } [@@deriving eq,compare,yojson,hash,fold,map]
 
 module PP = struct
   open Simple_utils.PP_helpers
@@ -84,18 +79,6 @@ module PP = struct
 
 end
 
-
-let fold : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc
-= fun g acc {fields;attributes=_} ->
-  LMap.fold
-  (fun _ {associated_type;attributes=_;decl_pos=_} acc ->
-    g acc associated_type
-  ) acc fields
-
-let map : ('a -> 'b) -> 'a t -> 'b t
-= fun g {fields; attributes} ->
-  let fields = LMap.map (map_row_element g) fields in
-  {fields; attributes}
 
 let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 = fun g acc {fields;attributes} ->
