@@ -1,8 +1,8 @@
 open Types
 open Misc
 
-(* module Formatter = Formatter *)
-(* module Api_helper = Api_helper *)
+module Formatter = Formatter
+module Api_helper = Api_helper
 
 module ModVar = Ast_typed.ModuleVar
 

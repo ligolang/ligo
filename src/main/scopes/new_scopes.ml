@@ -6,6 +6,9 @@ module VVar = AST.ValueVar
 module TVar = AST.TypeVar
 module MVar = AST.ModuleVar
 
+(* module Formatter = Formatter *)
+(* module Api_helper = Api_helper *)
+
 type def_list = (string * def) list
 
 type reference =
@@ -15,9 +18,6 @@ type reference =
 module Free = struct
 
   (* 
-  | E_recursive of (expr, ty_expr) recursive - medium
-  | E_let_in    of let_in - medium
-  | E_type_in of (expr, ty_expr) type_in - medium
   | E_mod_in  of mod_in - tricky
 
   | E_matching of matching_expr - tricky
@@ -111,7 +111,9 @@ module Free = struct
           let defs, refs = expression lamb  in
           let defs', refs' = expression args in
           defs @ defs', refs @ refs'
-        | E_lambda { binder ; result ; _ } ->
+        | E_lambda { binder ; result ; output_type = _ } ->
+          (* TODO: handle input_type *)
+          (* TODO: handle output_type *)
           let def = 
             let binder_name = get_binder_name binder.var in
             let binder_loc =  VVar.get_location binder.var in
@@ -149,6 +151,30 @@ module Free = struct
           let defs_result, refs_result = expression let_result in
           let defs, refs_result = update_references refs_result [def] in
           defs @ defs_rhs @ defs_result, refs_rhs @ refs_result
+        | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
+          (* TODO: handle input_type *)
+          let def_fun =
+            let binder_name = get_binder_name fun_name in
+            let binder_loc =  VVar.get_location fun_name in
+            make_v_def binder_name (Core fun_type) binder_loc (result.location)
+          in
+          let def_par =
+            let binder_name = get_binder_name binder.var in
+            let binder_loc =  VVar.get_location binder.var in
+            make_v_def binder_name Unresolved binder_loc (result.location)
+          in
+          let defs = [def_fun ; def_par] in
+          let defs_result, refs_result = expression result in
+          let defs, refs_result = update_references refs_result defs in
+          defs @ defs_result, refs_result
+        | E_type_in { type_binder ; rhs ; let_result } ->
+          let def =
+            let binder_name = get_type_binder_name type_binder in
+            let binder_loc =  TVar.get_location type_binder in
+            make_t_def binder_name binder_loc rhs
+          in
+          let defs, refs = expression let_result in
+          [def] @ defs, refs
         | _ -> [], []
 
 end
