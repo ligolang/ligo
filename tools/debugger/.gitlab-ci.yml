@@ -26,5 +26,5 @@ ligo-debugger-extension-publish:
   only: [vscode-production]
   when: manual
   script:
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command vsce publish --packagepath *.vsix # uses vsce_pat env variable as personal access token
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command ovsx publish *.vsix # uses ovsx_pat env variable as personal access token
+    - nix develop ./tools/vsce --command vsce publish --packagepath *.vsix # uses vsce_pat env variable as personal access token
+    - nix develop ./tools/vsce --command ovsx publish *.vsix # uses ovsx_pat env variable as personal access token
