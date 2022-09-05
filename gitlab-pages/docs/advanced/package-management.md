@@ -93,7 +93,7 @@ Sample `package.json` with the above information.
 ## Publishing
 
 Ligo packages can be published to a central repository at
-`packages.ligolang.org` with the `ligo publish` command.
+`beta.packages.ligolang.org` with the `ligo publish` command.
 
     ligo publish
 
@@ -103,7 +103,7 @@ Ligo packages can be published to a central repository at
 ## Consuming
 
 To fetch (download) & maintain different versions of external libraries we need a package manager.
-LIGO libraries can be published to [Ligo's own registry](https://packages.ligolang.org) as well as [npm](https://www.npmjs.com/).
+LIGO libraries can be published to [Ligo's own registry](https://beta.packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
 Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
 
 Pre-requites: 
