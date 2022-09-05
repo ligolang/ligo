@@ -1077,3 +1077,6 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 4-5 |}];
+
+  run_ligo_good [ "info"; "get-scope" ; gs "module5.mligo" ; "--format"; "dev" ; "--with-types" ] ;
+  [%expect{| |}];

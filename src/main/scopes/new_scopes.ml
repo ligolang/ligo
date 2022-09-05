@@ -1,15 +1,118 @@
-open Types
-
-module MVar = Ast_typed.ModuleVar
+open New_types
 
 module AST = Ast_core
+
+module VVar = AST.ValueVar
+module TVar = AST.TypeVar
+module MVar = AST.ModuleVar
 
 type def_list = (string * def) list
 
 type reference =
     Variable of AST.expression_variable
-  | Type of AST.type_variable
   | ModuleAccess of AST.module_variable list * AST.expression_variable
+
+module Free = struct
+
+  (* 
+  | E_lambda    of (expr, ty_expr) lambda
+  | E_type_abstraction of expr type_abs
+  | E_recursive of (expr, ty_expr) recursive
+  | E_let_in    of let_in
+  | E_type_in of (expr, ty_expr) type_in
+  | E_mod_in  of mod_in
+  | E_raw_code of expr raw_code
+  | E_constructor of expr constructor
+  | E_matching of matching_expr
+  | E_record of expression_label_map
+  | E_record_accessor of expr record_accessor
+  | E_record_update   of expr record_update
+  | E_ascription      of (expr,ty_expr) ascription
+  | E_assign   of (ex *)
+
+  let rec update_variable_reference : AST.expression_variable -> def list -> bool * def list
+    = fun ev defs ->
+        match defs with
+          [] -> false, []
+        | Variable v::defs when VVar.is_name ev v.name ->
+          let loc = VVar.get_location ev in
+          let references = loc :: v.references in
+          true, Variable { v with references } :: defs
+        | def::defs ->
+          let updated, defs = update_variable_reference ev defs in  
+          updated, def :: defs
+
+  let rec update_module_variable_references : AST.module_variable list -> AST.expression_variable -> def list -> bool * def list
+    = fun mvs ev defs ->
+        match mvs, defs with
+          [], [] -> update_variable_reference ev defs
+        |  _, [] -> false, defs
+        (* | [mv], Module m::defs when MVar.is_name mv m.name -> 
+            let loc = MVar.get_location mv in
+            let references = loc :: m.references in
+            Module { m with references } :: defs *)
+        | mv::mvs, Module ({ mod_case = Def d ; _ } as m)::defs when MVar.is_name mv m.name -> 
+            let loc = MVar.get_location mv in
+            let references = loc :: m.references in
+            let updated, d  = update_module_variable_references mvs ev d in
+            let mod_case = Def d in
+            updated, Module { m with mod_case ; references } :: defs
+        | mv::mvs, Module ({ mod_case = Alias a ; _ } as m)::defs when MVar.is_name mv m.name -> 
+            let loc = MVar.get_location mv in
+            let references = loc :: m.references in
+            let updated, defs = resolve_alias a mvs ev defs in
+            updated, Module { m with references } :: defs
+        | mvs, def::defs ->
+            let updated, defs = update_module_variable_references mvs ev defs in 
+            updated, def :: defs
+    and resolve_alias : string list -> AST.module_variable list -> AST.expression_variable -> def list -> bool * def list
+      = fun aliases mvs ev defs ->
+          match aliases with
+          | [] -> update_module_variable_references mvs ev defs
+          | alias::aliases ->
+              let rec aux = function
+                [] -> false, []
+              | Module ({ name ; mod_case = Def d ; _ } as m)::defs when String.(name = alias) ->
+                  let updated, d = resolve_alias aliases mvs ev d in
+                  let mod_case = Def d in
+                  updated, Module { m with mod_case } :: defs
+              | Module ({ name ; mod_case = Alias a ; _ }) as def::defs when String.(name = alias) -> 
+                let updated, defs = resolve_alias (a @ aliases) mvs ev defs in
+                updated, def :: defs
+              | def::defs -> 
+                  let updated, defs = aux defs in
+                  updated, def :: defs
+              in
+              aux defs
+
+  let rec expression : AST.expression -> def list * reference list
+    = fun e ->
+        match e.expression_content with
+          E_literal _ -> [], []
+        | E_variable ev -> [], [Variable ev]
+        | E_module_accessor m -> [], [ModuleAccess (m.module_path, m.element)]
+        | E_constant { arguments ; _ } ->
+            List.fold_left arguments ~init:([], []) 
+              ~f:(fun (defs, refs) e ->
+                    let d, r = expression e in
+                    defs @ d, refs @ r)
+        | E_application { lamb ; args } ->
+          let d, r = expression lamb  in
+          let d', r' = expression args in
+          d @ d', r @ r'
+        | E_lambda { binder ; result ; _ } ->
+          let def = 
+            let binder_name = get_binder_name binder.var in
+            let binder_loc =  VVar.get_location binder.var in
+            make_v_def binder_name Unresolved binder_loc (result.location)
+          in
+          let d, r = expression result in
+          let defs = [def] @ d in
+          (* update references in defs *)
+          defs, r
+        | _ -> [], []
+
+end
 
 let declaration : AST.declaration -> def list * reference list
   = fun decl ->
@@ -32,9 +135,9 @@ let declaration : AST.declaration -> def list * reference list
         [], []
 
 
-let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def_map * scopes)
+let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
-      Def_map.empty, []
+      [], []
 
 (*
 
