@@ -15,20 +15,14 @@ type reference =
 module Free = struct
 
   (* 
-  | E_lambda    of (expr, ty_expr) lambda
-  | E_type_abstraction of expr type_abs
-  | E_recursive of (expr, ty_expr) recursive
-  | E_let_in    of let_in
-  | E_type_in of (expr, ty_expr) type_in
-  | E_mod_in  of mod_in
-  | E_raw_code of expr raw_code
-  | E_constructor of expr constructor
-  | E_matching of matching_expr
-  | E_record of expression_label_map
-  | E_record_accessor of expr record_accessor
-  | E_record_update   of expr record_update
-  | E_ascription      of (expr,ty_expr) ascription
-  | E_assign   of (ex *)
+  | E_recursive of (expr, ty_expr) recursive - medium
+  | E_let_in    of let_in - medium
+  | E_type_in of (expr, ty_expr) type_in - medium
+  | E_mod_in  of mod_in - tricky
+
+  | E_matching of matching_expr - tricky
+  
+   *)
 
   let rec update_variable_reference : AST.expression_variable -> def list -> bool * def list
     = fun ev defs ->
@@ -85,31 +79,61 @@ module Free = struct
               in
               aux defs
 
+  let update_reference : reference -> def list -> bool * def list
+    = fun r defs ->
+        match r with
+          Variable ev -> update_variable_reference ev defs
+        | ModuleAccess (mvs, ev) -> update_module_variable_references mvs ev defs
+
   let rec expression : AST.expression -> def list * reference list
     = fun e ->
         match e.expression_content with
           E_literal _ -> [], []
+        | E_raw_code _ -> [], []
         | E_variable ev -> [], [Variable ev]
         | E_module_accessor m -> [], [ModuleAccess (m.module_path, m.element)]
         | E_constant { arguments ; _ } ->
-            List.fold_left arguments ~init:([], []) 
-              ~f:(fun (defs, refs) e ->
-                    let d, r = expression e in
-                    defs @ d, refs @ r)
+          List.fold_left arguments ~init:([], []) 
+            ~f:(fun (defs, refs) e ->
+                  let d, r = expression e in
+                  defs @ d, refs @ r)
         | E_application { lamb ; args } ->
-          let d, r = expression lamb  in
-          let d', r' = expression args in
-          d @ d', r @ r'
+          let defs, refs = expression lamb  in
+          let defs', refs' = expression args in
+          defs @ defs', refs @ refs'
         | E_lambda { binder ; result ; _ } ->
           let def = 
             let binder_name = get_binder_name binder.var in
             let binder_loc =  VVar.get_location binder.var in
             make_v_def binder_name Unresolved binder_loc (result.location)
           in
-          let d, r = expression result in
-          let defs = [def] @ d in
-          (* update references in defs *)
-          defs, r
+          let defs, refs = expression result in
+          let defs = [def] @ defs in
+          let defs, refs = List.fold_left refs ~init:(defs, [])
+            ~f:(fun (defs, refs) r ->
+              let updated, defs = update_reference r defs in
+              let refs = if updated then refs else r :: refs in
+              defs, refs
+            ) in
+          defs, refs
+        | E_type_abstraction { result ; _ } -> expression result
+        | E_constructor { element ; _ } -> expression element
+        | E_record_accessor { record ; _ } -> expression record
+        | E_ascription { anno_expr ; _ } -> expression anno_expr 
+        | E_record_update { record ; update ; _ } -> 
+          let defs, refs =  expression record in
+          let defs', refs' = expression update in
+          defs @ defs', refs @ refs'
+        | E_record e_lable_map ->
+          let defs, refs = AST.LMap.fold (fun _ e (defs, refs) -> 
+            let defs', refs' = expression e in
+            defs @ defs', refs @ refs'
+          ) e_lable_map ([], []) in
+          defs, refs
+        | E_assign { binder ; expression = e } ->
+          let refs' = [Variable binder.var] in
+          let defs, refs = expression e in
+          defs, refs @ refs' 
         | _ -> [], []
 
 end
