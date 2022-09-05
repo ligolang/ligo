@@ -299,7 +299,7 @@ test_Snapshots = testGroup "Snapshots collection"
                   , sfStack =
                     [ StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
-                            { leseType = LTConstant (LigoTypeConstant [] "int")
+                            { leseType = LTConstant (LigoTypeConstant [] ("Int" :| []))
                             }
                         }
                     ]
