@@ -207,7 +207,7 @@ readLigoMapper ligoMapper = do
         & unstableNub
         & filter (/= "")
 
-  let allLocs =
+  let exprLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
         mapMaybe ligoInfoToSourceLoc $ getSourceLocations (unContractCode $ cCode extContract)
@@ -215,7 +215,7 @@ readLigoMapper ligoMapper = do
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (allLocs, extendedContract, allFiles)
+  return $! force (exprLocs, extendedContract, allFiles)
 
   where
     ligoInfoToSourceLoc :: LigoIndexedInfo -> Maybe SourceLocation

@@ -46,12 +46,11 @@ import Control.Monad.Except (throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
-import Data.Conduit.Combinators qualified as C
 import Data.Conduit.Lift qualified as CL
 import Data.HashSet qualified as HS
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
-import Duplo (layer, leq, spineTo)
+import Duplo (layer)
 import Fmt (Buildable (..), genericF)
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
@@ -66,7 +65,6 @@ import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
 import Parser (Info)
-import Product (Contains)
 import Range (HasRange (getRange), Range (..))
 import Text.Interpolation.Nyan
 import Unsafe qualified
@@ -360,11 +358,6 @@ runInstrCollect = \case
           statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
           pure $ rangeToLigoRange . getRange <$> statements
       where
-        spineAtPoint
-          :: Contains Range xs
-          => Range -> LIGO xs -> [LIGO xs]
-        spineAtPoint pos = spineTo (\i -> pos `leq` getRange i)
-
         filterAndReverseStatements :: [LIGO Info] -> CollectingEvalOp [LIGO Info]
         filterAndReverseStatements = go []
           where
@@ -459,68 +452,57 @@ runCollectInterpretSnapshots
   -> ContractEnv
   -> CollectorState
   -> Value st
-  -> (InterpretHistory InterpretSnapshot, HashSet LigoRange)
+  -> InterpretHistory InterpretSnapshot
 runCollectInterpretSnapshots act env initSt initStorage =
-  ( -- This is safe because we yield at least two snapshots
-    InterpretHistory $ (Unsafe.fromJust . twoElemFromList) snapshots
-  , ranges
-  )
-  where
-    snapsPipe :: ConduitT () InterpretSnapshot (State (HashSet LigoRange)) ()
-    snapsPipe = do
-      C.yield InterpretSnapshot
-        { isStackFrames = csStackFrames initSt
-        , isStatus = InterpretStarted
-        }
+  -- This is safe because we yield at least two snapshots
+  InterpretHistory $
+  (Unsafe.fromJust . twoElemFromList) $
+  runIdentity $
+  C.sourceToList do
+    C.yield InterpretSnapshot
+      { isStackFrames = csStackFrames initSt
+      , isStatus = InterpretStarted
+      }
 
-      let liftState st = do
-            result <-
-              CL.runRWSC env initSt $ runExceptT act
-            pure (result, st)
+    (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT act
+    case outcome of
+      Left stack ->
+        C.yield InterpretSnapshot
+          { isStatus = InterpretFailed stack
+          , isStackFrames = csStackFrames endState
+          }
 
-      (outcome, endState, _) <- CL.stateC liftState
-      case outcome of
-        Left stack ->
-          C.yield InterpretSnapshot
-            { isStatus = InterpretFailed stack
-            , isStackFrames = csStackFrames endState
-            }
+      Right _ -> do
+        let isStackFrames = either error id do
+              lastSnap <-
+                maybeToRight
+                  "Internal error: No snapshots were recorded while interpreting Michelson code"
+                  do csLastRecordedSnapshot endState
 
-        Right _ -> do
-          let isStackFrames = either error id do
-                lastSnap <-
-                  maybeToRight
-                    "Internal error: No snapshots were recorded while interpreting Michelson code"
-                    do csLastRecordedSnapshot endState
+              case isStatus lastSnap of
+                InterpretRunning (EventExpressionEvaluated (Just val)) -> do
+                  let stackItemWithOpsAndStorage = StackItem
+                        { siLigoDesc = LigoHiddenStackEntry
+                        , siValue = val
+                        }
+                  let oldStorage = StackItem
+                        { siLigoDesc = LigoHiddenStackEntry
+                        , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
+                        }
+                  pure
+                    $ (lastSnap ^. isStackFramesL)
+                        & ix 0 . sfStackL .~ [stackItemWithOpsAndStorage, oldStorage]
+                status ->
+                  throwError
+                    [int||
+                    Internal error:
+                    Expected "Interpret running" status with evaluated expression status.
 
-                case isStatus lastSnap of
-                  InterpretRunning (EventExpressionEvaluated (Just val)) -> do
-                    let stackItemWithOpsAndStorage = StackItem
-                          { siLigoDesc = LigoHiddenStackEntry
-                          , siValue = val
-                          }
-                    let oldStorage = StackItem
-                          { siLigoDesc = LigoHiddenStackEntry
-                          , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
-                          }
-                    pure
-                      $ (lastSnap ^. isStackFramesL)
-                          & ix 0 . sfStackL .~ [stackItemWithOpsAndStorage, oldStorage]
-                  status ->
-                    throwError
-                      [int||
-                      Internal error:
-                      Expected "Interpret running" status with evaluated expression status.
-
-                      Got #{status}|]
-          C.yield InterpretSnapshot
-            { isStatus = InterpretTerminatedOk
-            , ..
-            }
-
-      put $ csRecordedRanges endState
-
-    (snapshots, ranges) = usingState HS.empty $ C.connect snapsPipe C.sinkList
+                    Got #{status}|]
+        C.yield InterpretSnapshot
+          { isStatus = InterpretTerminatedOk
+          , ..
+          }
 
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.
@@ -534,7 +516,7 @@ collectInterpretSnapshots
   -> Value st
   -> ContractEnv
   -> HashMap FilePath (LIGO Info)
-  -> (InterpretHistory InterpretSnapshot, HashSet LigoRange)
+  -> InterpretHistory InterpretSnapshot
 collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts =
   runCollectInterpretSnapshots
     (runInstrCollect (unContractCode cCode) initStack)

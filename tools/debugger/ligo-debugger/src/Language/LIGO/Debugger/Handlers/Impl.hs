@@ -9,7 +9,6 @@ import Unsafe qualified
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
-import Data.HashSet qualified as HS
 import Data.Text qualified as Text
 import Fmt (Builder, blockListF, build, pretty)
 import Fmt.Internal.Core (FromBuilder (fromBuilder))
@@ -46,7 +45,7 @@ import Language.LIGO.Debugger.Handlers.Types
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Common (ligoRangeToSourceLocation)
+import Language.LIGO.Debugger.Common (getStatementLocs)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
@@ -426,7 +425,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
     ligoDebugInfo <- ExceptT $ compileLigoContractDebug entrypoint program
     logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-    (allLocs, someContract, allFiles) <-
+    (exprLocs, someContract, allFiles) <-
       readLigoMapper ligoDebugInfo
       & first [int|m|"Failed to process contract: #{id}|]
       & liftEither
@@ -437,7 +436,9 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
 
     parsedContracts <- parseContracts allFiles
 
-    pure (someContract, allLocs, parsedContracts)
+    let statementLocs = getStatementLocs exprLocs parsedContracts
+
+    pure (someContract, exprLocs <> statementLocs, parsedContracts)
 
   case result of
     Left e -> do
@@ -566,25 +567,24 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         allLocs <- lift getAllLocs
         parsedContracts <- lift getParsedContracts
 
-        let (his, ranges) =
+        let his =
               collectInterpretSnapshots
-              program
-              (fromString entrypoint)
-              contract
-              epc
-              arg
-              storage
-              dummyContractEnv
-              parsedContracts
+                program
+                (fromString entrypoint)
+                contract
+                epc
+                arg
+                storage
+                dummyContractEnv
+                parsedContracts
 
             ds = DebuggerState
               { _dsSnapshots = playInterpretHistory his
               , _dsSources =
                   DebugSource mempty <$>
-                  groupSourceLocations (toList allLocs <> fmap ligoRangeToSourceLocation (HS.toList ranges))
+                  groupSourceLocations (toList allLocs)
               }
 
-        logMessage [int||All snapshots: #{his}|]
         pure $ DAPSessionState ds mempty mempty program
 
 checkArgument :: MonadError DAP.Message m => Text -> Maybe a -> m a

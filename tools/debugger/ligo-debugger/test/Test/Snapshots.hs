@@ -1,38 +1,41 @@
+{-# LANGUAGE NumDecimals #-}
+
 -- | Checking snapshots collection.
 module Test.Snapshots
   ( module Test.Snapshots
   ) where
 
-import Data.Singletons (SingI, sing)
-import Data.Singletons.Decide (decideEquality)
-import Data.Typeable ((:~:) (Refl))
-import Fmt (Buildable, pretty)
-import Morley.Michelson.Typed qualified as T
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (Assertion)
-
-import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate),
-  NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
-  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs)
-import Morley.Debugger.DAP.Types.Morley ()
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
+import Unsafe qualified
 
 import AST (scanContracts)
 import Control.Exception
 import Control.Lens (ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
-import Data.HashSet qualified as HS
 import Data.Map qualified as M
-
-import Morley.Debugger.Core.Breakpoint qualified as N
-import Morley.Debugger.Core.Snapshots qualified as N
-import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
-import Morley.Michelson.Typed (SomeValue)
-import Morley.Util.Lens (postfixLFields)
+import Data.Singletons (SingI, sing)
+import Data.Singletons.Decide (decideEquality)
+import Data.Typeable ((:~:) (Refl))
+import Fmt (Buildable, pretty)
+import Morley.Michelson.Typed qualified as T
 import System.FilePath (combine, dropExtension, makeRelative)
+import System.Timeout (timeout)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.HUnit (Assertion)
 import Test.Util
 import Text.Interpolation.Nyan
+
+import Morley.Debugger.Core
+  (DebugSource (..), DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate),
+  NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
+  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs,
+  twoElemFromList)
+import Morley.Debugger.Core.Breakpoint qualified as N
+import Morley.Debugger.Core.Snapshots qualified as N
+import Morley.Debugger.DAP.Types.Morley ()
+import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
+import Morley.Michelson.Typed (SomeValue)
+import Morley.Util.Lens (postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
@@ -57,12 +60,12 @@ data ContractRunData =
 -- | Make snapshots history for simple contract.
 mkSnapshotsFor
   :: HasCallStack
-  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot, HashSet LigoRange)
+  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
 mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
   result <- compileLigoContractDebug entrypoint file
   ligoMapper <- either throwIO pure result
-  (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles) <-
+  (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
       Left err -> assertFailure $ pretty err
@@ -73,7 +76,9 @@ mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = 
 
   parsedContracts <- parseContracts allFiles
 
-  let (his, ranges) =
+  let statementLocs = getStatementLocs exprLocs parsedContracts
+
+  let his =
         collectInterpretSnapshots
           file
           (fromString entrypoint)
@@ -84,19 +89,27 @@ mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = 
           dummyContractEnv
           parsedContracts
 
-  return (allLocs, his, ranges)
+  return (exprLocs <> statementLocs, his)
+
+withSnapshots
+  :: (Monad m)
+  => (Set SourceLocation, InterpretHistory InterpretSnapshot)
+  -> StateT (DebuggerState InterpretSnapshot) m a
+  -> m a
+withSnapshots (allLocs, his) action = do
+  let st = DebuggerState
+        { _dsSnapshots = playInterpretHistory his
+        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
+        }
+  evalStateT action st
 
 testWithSnapshots
   :: ContractRunData
   -> StateT (DebuggerState InterpretSnapshot) IO ()
   -> Assertion
 testWithSnapshots runData action = do
-  (allLocs, his, ranges) <- mkSnapshotsFor runData
-  let st = DebuggerState
-        { _dsSnapshots = playInterpretHistory his
-        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs <> fmap ligoRangeToSourceLocation (HS.toList ranges))
-        }
-  evalStateT action st
+  locsAndHis <- mkSnapshotsFor runData
+  withSnapshots locsAndHis action
 
 (@?==)
   :: (MonadIO m, MonadReader r m, Eq a, Buildable (TestBuildable a), HasCallStack)
@@ -687,6 +700,32 @@ test_Snapshots = testGroup "Snapshots collection"
               ]
             )
         )
+
+  , testCaseSteps "Execution history is lazy" \step -> do
+      let file = contractsDir </> "infinite_contract.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      (allLocs, his) <- mkSnapshotsFor runData
+
+      let his' = InterpretHistory $
+            (Unsafe.fromJust . twoElemFromList) (take 1000 (toList $ unInterpretHistory his)) <>
+            error "Went too far in execution history"
+
+      let tenSeconds = 10 * 1e6
+
+      step "Evaluating prefix of interpret history"
+      res <-
+        timeout tenSeconds do
+          withSnapshots (allLocs, his') do
+            replicateM_ 3 $ move Forward
+            frozen curSnapshot
+
+      assertBool "Expected history to be evaluated" (isJust res)
   ]
 
 -- | Special options for checking contract.
