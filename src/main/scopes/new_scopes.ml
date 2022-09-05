@@ -20,8 +20,6 @@ module Free = struct
   (* 
   | E_mod_in  of mod_in - tricky
 
-  | E_matching of matching_expr - tricky
-  
    *)
 
   let rec update_variable_reference : AST.expression_variable -> def list -> bool * def list
@@ -175,6 +173,28 @@ module Free = struct
           in
           let defs, refs = expression let_result in
           [def] @ defs, refs
+        | E_matching { matchee ; cases } ->
+          let defs_matchee, refs_matchee = expression matchee in
+          let defs_cases, refs_cases = List.fold_left cases ~init:([], [])
+            ~f:(fun (defs, refs) { pattern ; body } ->
+              let defs_pat = Stage_common.Helpers.fold_pattern (
+                fun defs (p : _ AST.pattern) ->
+                  match p.wrap_content with
+                    P_var binder ->
+                      let def = 
+                        let binder_name = get_binder_name binder.var in
+                        let binder_loc =  VVar.get_location binder.var in
+                        make_v_def binder_name Unresolved binder_loc (body.location)
+                      in
+                      def :: defs
+                  | _ -> defs
+              ) [] pattern in
+              let defs_body, refs_body = expression body in
+              let defs_pat, refs_body = update_references refs_body defs_pat in
+              defs @ defs_pat @ defs_body, refs @ refs_body
+            )
+          in
+          defs_matchee @ defs_cases, refs_matchee @ refs_cases
         | _ -> [], []
 
 end
