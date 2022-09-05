@@ -351,7 +351,7 @@ preprocess
 preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext source do
   $(Log.debug) [i|preprocessing the following contract:\n#{fp}|]
   withLigo source tempSettings
-    (\tempFp -> ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"])
+    (\tempFp -> ["print", "preprocessed", tempFp, "--format", "json"])
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
@@ -361,7 +361,7 @@ preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext 
           bool pure (fixMarkers tempFp) isDirty $ Source fp isDirty newContract)
   where
     fp = srcPath source
-    dir = takeDirectory fp
+    _dir = takeDirectory fp
 
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
