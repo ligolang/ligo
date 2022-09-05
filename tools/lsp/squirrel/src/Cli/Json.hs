@@ -39,6 +39,7 @@ import Data.Function
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
 import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (unpack)
@@ -246,7 +247,7 @@ data LigoTypeContentInner
     LTCConstant
       { _ltciParameters :: [LigoTypeParameter]
       , _ltciLanguage :: Text
-      , _ltciInjection :: Text
+      , _ltciInjection :: NonEmpty Text
       }
   | -- | `"t_variable"`
     LTCVariable
@@ -412,9 +413,8 @@ instance FromJSON LigoTypeFull where
           type_content <- o' .: "type_content"
           _ltfrTypeContent <-
             withArray "type_content" parseManyLigoTypeContent type_content
-          type_meta <- o' .: "type_meta"
-          _ltfrTypeMeta <- parseLigoTypeMeta type_meta
-          _ltfrOrigVar <- o' .: "orig_var" >>= parseOrigVar
+          _ltfrTypeMeta <- o' .: "type_meta"
+          _ltfrOrigVar <- o' .: "orig_var"
           return $ LigoTypeFullResolved {..}
 
       -- TODO: For now we don't know what 'Value's may go into this type,
@@ -436,10 +436,9 @@ instance FromJSON LigoTypeParameter where
     type_content <- o .: "type_content"
     _ltpTypeContent <-
       withArray "type_content" parseManyLigoTypeContent type_content
-    type_meta <- o .: "type_meta"
-    _ltpTypeMeta <- parseLigoTypeMeta type_meta
+    _ltpTypeMeta <- o .: "type_meta"
     _ltpLocation <- parseLigoRange "type_parameter_range" =<< o .: "location"
-    _ltpOrigVar <- o .: "orig_var" >>= parseOrigVar
+    _ltpOrigVar <- o .: "orig_var"
     return LigoTypeParameter {..}
 
 instance ToJSON LigoTypeExpression where
@@ -523,15 +522,6 @@ instance FromJSON LigoByte where
 instance ToJSON LigoByte where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
--- Workarounds
-
-parseOrigVar :: [Value] -> Parser (Maybe Text)
-parseOrigVar = \case
-  [_, Object (KM.toList -> [("name", name)])] -> do
-    name' <- parseJSON @Text name
-    return $ Just name'
-  _ -> return Nothing
-
 -- A workaround since function types are not separated to "core" | "resolved" | "unresolved" and lets consider these as "core" ones
 parseTypeInner :: Value -> Parser LigoTypeFull
 parseTypeInner = withObject "type_inner" $ \o -> do
@@ -613,12 +603,6 @@ parseLigoTypeContent _ = error "number of type content elements is not even and 
 
 parseManyLigoTypeContent :: Array -> Parser [LigoTypeContent]
 parseManyLigoTypeContent = mapM parseLigoTypeContent . group 2 . toList
-
-parseLigoTypeMeta :: [Value] -> Parser (Maybe LigoTypeExpression)
-parseLigoTypeMeta [String "None", Null] = pure Nothing
-parseLigoTypeMeta [String "Some", value] = Just <$> parseJSON @LigoTypeExpression value
-parseLigoTypeMeta _ = do
-  parseFail "number of type meta elements is not 2 and cannot be parsed"
 
 ----------------------------------------------------------------------------
 -- Pretty
@@ -776,7 +760,7 @@ fromLigoTypeFull = enclose . \case
       LTCConstant
         { _ltciParameters
         , _ltciInjection
-        } -> fromLigoConstant _ltciInjection _ltciParameters
+        } -> fromLigoConstant (NE.head _ltciInjection) _ltciParameters
 
       LTCVariable name ->
         fromLigoPrimitive name
