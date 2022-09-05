@@ -85,6 +85,16 @@ module Free = struct
           Variable ev -> update_variable_reference ev defs
         | ModuleAccess (mvs, ev) -> update_module_variable_references mvs ev defs
 
+  let update_references : reference list -> def list -> def list * reference list
+    = fun refs defs ->
+        let defs, refs = List.fold_left refs ~init:(defs, [])
+        ~f:(fun (defs, refs) r ->
+          let updated, defs = update_reference r defs in
+          let refs = if updated then refs else r :: refs in
+          defs, refs
+        ) in
+        defs, refs
+
   let rec expression : AST.expression -> def list * reference list
     = fun e ->
         match e.expression_content with
@@ -109,12 +119,7 @@ module Free = struct
           in
           let defs, refs = expression result in
           let defs = [def] @ defs in
-          let defs, refs = List.fold_left refs ~init:(defs, [])
-            ~f:(fun (defs, refs) r ->
-              let updated, defs = update_reference r defs in
-              let refs = if updated then refs else r :: refs in
-              defs, refs
-            ) in
+          let defs, refs = update_references refs defs in
           defs, refs
         | E_type_abstraction { result ; _ } -> expression result
         | E_constructor { element ; _ } -> expression element
@@ -133,7 +138,17 @@ module Free = struct
         | E_assign { binder ; expression = e } ->
           let refs' = [Variable binder.var] in
           let defs, refs = expression e in
-          defs, refs @ refs' 
+          defs, refs @ refs'
+        | E_let_in { let_binder ; rhs ; let_result ; _ } ->
+          let def = 
+            let binder_name = get_binder_name let_binder.var in
+            let binder_loc =  VVar.get_location let_binder.var in
+            make_v_def binder_name Unresolved binder_loc (rhs.location)
+          in
+          let defs_rhs, refs_rhs = expression rhs in
+          let defs_result, refs_result = expression let_result in
+          let defs, refs_result = update_references refs_result [def] in
+          defs @ defs_rhs @ defs_result, refs_rhs @ refs_result
         | _ -> [], []
 
 end
