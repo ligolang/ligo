@@ -14,13 +14,9 @@ type def_list = (string * def) list
 type reference =
     Variable of AST.expression_variable
   | ModuleAccess of AST.module_variable list * AST.expression_variable
+  | ModuleAlias of AST.module_variable list
 
 module Free = struct
-
-  (* 
-  | E_mod_in  of mod_in - tricky
-
-   *)
 
   let rec update_variable_reference : AST.expression_variable -> def list -> bool * def list
     = fun ev defs ->
@@ -34,11 +30,15 @@ module Free = struct
           let updated, defs = update_variable_reference ev defs in  
           updated, def :: defs
 
-  let rec update_module_variable_references : AST.module_variable list -> AST.expression_variable -> def list -> bool * def list
+  let rec update_module_variable_references : AST.module_variable list -> AST.expression_variable option -> def list -> bool * def list
     = fun mvs ev defs ->
         match mvs, defs with
-          [], [] -> update_variable_reference ev defs
-        |  _, [] -> false, defs
+          _, [] -> false, defs
+        | [], defs -> 
+          begin match ev with
+            Some ev -> update_variable_reference ev defs
+          | None -> true, defs
+          end
         (* | [mv], Module m::defs when MVar.is_name mv m.name -> 
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
@@ -57,7 +57,7 @@ module Free = struct
         | mvs, def::defs ->
             let updated, defs = update_module_variable_references mvs ev defs in 
             updated, def :: defs
-    and resolve_alias : string list -> AST.module_variable list -> AST.expression_variable -> def list -> bool * def list
+    and resolve_alias : string list -> AST.module_variable list -> AST.expression_variable option -> def list -> bool * def list
       = fun aliases mvs ev defs ->
           match aliases with
           | [] -> update_module_variable_references mvs ev defs
@@ -81,7 +81,8 @@ module Free = struct
     = fun r defs ->
         match r with
           Variable ev -> update_variable_reference ev defs
-        | ModuleAccess (mvs, ev) -> update_module_variable_references mvs ev defs
+        | ModuleAccess (mvs, ev) -> update_module_variable_references mvs (Some ev) defs
+        | ModuleAlias mvs -> update_module_variable_references mvs None defs
 
   let update_references : reference list -> def list -> def list * reference list
     = fun refs defs ->
@@ -195,8 +196,34 @@ module Free = struct
             )
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases
-        | _ -> [], []
-
+        | E_mod_in { module_binder ; rhs ; let_result } -> [], []
+    and module_expression : MVar.t -> AST.module_expr -> def list * reference list
+      = fun top m ->
+          match m.wrap_content with
+            M_struct _ -> [], []
+          | M_variable mv -> 
+            let def, reference = 
+              let name = get_mod_binder_name top in
+              let range =  MVar.get_location top in
+              let body_range = MVar.get_location mv in
+              let alias = [get_mod_binder_name mv] in
+              let def = make_m_alias_def ~range ~body_range name alias in
+              let reference = ModuleAlias [mv] in
+              def, reference
+            in
+            [def], [reference]
+          | M_module_path path -> 
+            let mvs = List.Ne.to_list path in
+            let def, reference = 
+              let name = get_mod_binder_name top in
+              let range =  MVar.get_location top in
+              let body_range = m.location in
+              let alias = List.map mvs ~f:get_mod_binder_name in
+              let def = make_m_alias_def ~range ~body_range name alias in
+              let reference = ModuleAlias mvs in
+              def, reference
+            in
+            [def], [reference]
 end
 
 let declaration : AST.declaration -> def list * reference list
