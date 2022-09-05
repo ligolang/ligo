@@ -27,9 +27,7 @@ ligo-build:
   tags: [nix-with-docker]
   script:
     # generate changelog, it's required for building ligo
-    - nix-build nix -A ligo-changelog
-    - cp ./result/changelog.txt .
-    - chmod u+w ./changelog.txt
+    - ./scripts/changelog-generation.sh
     # build intermediate image (Dockerfile declares some build arguments, but we don't need to set any of them)
     - docker build . --target ligo-builder --tag ligo-builder:$CI_JOB_ID
     # build final image
