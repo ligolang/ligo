@@ -38,8 +38,7 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
-        { "include": "#block_comment" },
-        { "include": "#attribute" }
+        { "include": "#block_comment" }, { "include": "#attribute" }
       ]
     },
     "line_comment": {
@@ -69,8 +68,7 @@
     },
     "controlkeywords": {
       "name": "keyword.control.jsligo",
-      "match":
-        "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b",
+      "match": "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b",
       "captures": {}
     },
     "numericliterals": {
@@ -80,8 +78,7 @@
     },
     "operators": {
       "name": "keyword.operator.jsligo",
-      "match":
-        "\\b(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\b",
+      "match": "\\b(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\b",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },
@@ -240,8 +237,7 @@
     },
     "typeas": {
       "begin": "\\b(as)\\b",
-      "end":
-        "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)",
+      "end": "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)",
       "beginCaptures": { "1": { "name": "keyword.other.jsligo" } },
       "endCaptures": {},
       "patterns": [

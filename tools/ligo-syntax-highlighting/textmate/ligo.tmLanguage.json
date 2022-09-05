@@ -55,8 +55,7 @@
     },
     "controlkeywords": {
       "name": "keyword.control.ligo",
-      "match":
-        "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b",
+      "match": "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b",
       "captures": {}
     },
     "function": {
@@ -73,8 +72,7 @@
     },
     "operators": {
       "name": "keyword.operator.ligo",
-      "match":
-        "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\b",
+      "match": "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\b",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },
@@ -107,8 +105,7 @@
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
-      "end":
-        "(?=\\b(type|recursive|module|function|end|const)\\b|;|{|^#|\\[@)",
+      "end": "(?=\\b(type|recursive|module|function|end|const)\\b|;|{|^#|\\[@)",
       "beginCaptures": { "1": { "name": "keyword.other.ligo" } },
       "endCaptures": {},
       "patterns": [
