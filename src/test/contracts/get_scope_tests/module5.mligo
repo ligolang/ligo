@@ -10,6 +10,8 @@ end
 
 module D = A
 
+module G = D.E.F
+
 let x1 = A.B.C.x
 let x2 = A.B.F.x
 let x3 = A.E.C.x

@@ -53,38 +53,43 @@ module Free = struct
             Some ev -> update_variable_reference ev defs
           | None -> true, defs
           end
-        | mv::mvs, Module ({ mod_case = Def d ; _ } as m)::defs when MVar.is_name mv m.name ->
+        | mv::mvs, Module ({ name ; mod_case = Def d ; _ } as m)::defs when MVar.is_name mv name ->
+            (* Format.printf "update_module_variable_references Def %s\n" name; *)
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
             let updated, d  = update_module_variable_references mvs ev d in
             let mod_case = Def d in
             updated, Module { m with mod_case ; references } :: defs
-        | mv::mvs, Module ({ mod_case = Alias a ; _ } as m)::defs when MVar.is_name mv m.name ->
+        | mv::mvs, Module ({ name ; mod_case = Alias a ; _ } as m)::defs when MVar.is_name mv name ->
+          (* Format.printf "update_module_variable_references Alias %s - %s\n" name (String.concat ~sep:"." a); *)
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
-            let () = Format.printf "%a =? %s Here = %s\n" MVar.pp mv m.name (String.concat ~sep:"." a) in
             let updated, defs = resolve_alias a mvs ev defs in
             updated, Module { m with references } :: defs
         | mvs, def::defs ->
+          (* Format.printf "update_module_variable_references :( %s\n" (get_def_name def); *)
             let updated, defs = update_module_variable_references mvs ev defs in
             updated, def :: defs
     and resolve_alias : string list -> AST.module_variable list -> AST.expression_variable option -> def list -> bool * def list
       = fun aliases mvs ev defs ->
+        (* Format.printf "->> resolve_alias %s  \n" (String.concat ~sep:"." aliases); *)
+        (* Format.printf "->> defs - [%s]" (String.concat ~sep:", " (List.map defs ~f:get_def_name)); *)
           match aliases with
           | [] -> update_module_variable_references mvs ev defs
           | alias::aliases ->
-              Format.printf "alias = %s\n" alias;
               let rec aux = function
                 [] -> false, []
               | Module ({ name ; mod_case = Def d ; _ } as m)::defs when String.(name = alias) ->
-                  Format.printf "Found module\n";
+                (* Format.printf "resolve_alias Def %s\n" name; *)
                   let updated, d = resolve_alias aliases mvs ev d in
                   let mod_case = Def d in
                   updated, Module { m with mod_case } :: defs
               | Module ({ name ; mod_case = Alias a ; _ }) as def::defs when String.(name = alias) ->
+                (* Format.printf "resolve_alias Alias %s - %s\n" name (String.concat ~sep:"." a); *)
                 let updated, defs = resolve_alias (a @ aliases) mvs ev defs in
                 updated, def :: defs
               | def::defs ->
+                (* Format.printf "resolve_alias :( %s\n" (get_def_name def); *)
                   let updated, defs = aux defs in
                   updated, def :: defs
               in
@@ -92,6 +97,7 @@ module Free = struct
 
   let update_reference : reference -> def list -> bool * def list
     = fun r defs ->
+      (* Format.printf "\n------------------ %a --------------\n" pp_reference r; *)
         match r with
           Variable ev -> update_variable_reference ev defs
         | ModuleAccess (mvs, ev) -> update_module_variable_references mvs (Some ev) defs
@@ -99,15 +105,12 @@ module Free = struct
 
   let update_references : reference list -> def list -> def list * reference list
     = fun refs defs ->
-        Format.printf "**********************************\n";
         let defs, refs = List.fold_left refs ~init:(defs, [])
         ~f:(fun (defs, refs) r ->
           let updated, defs = update_reference r defs in
-          let () = Format.printf "%a updated = %B\n" pp_reference r updated in
           let refs = if updated then refs else r :: refs in
           defs, refs
         ) in
-        Format.printf "**********************************\n";
         defs, refs
 
   let rec expression : AST.expression -> def list * reference list
@@ -120,12 +123,12 @@ module Free = struct
         | E_constant { arguments ; _ } ->
           List.fold_left arguments ~init:([], [])
             ~f:(fun (defs, refs) e ->
-                  let d, r = expression e in
-                  defs @ d, refs @ r)
+                  let ds, rs = expression e in
+                  ds @ defs, rs @ refs)
         | E_application { lamb ; args } ->
           let defs, refs = expression lamb  in
           let defs', refs' = expression args in
-          defs @ defs', refs @ refs'
+          defs' @ defs, refs' @ refs
         | E_lambda { binder ; result ; output_type = _ } ->
           (* TODO: handle input_type *)
           (* TODO: handle output_type *)
@@ -145,11 +148,11 @@ module Free = struct
         | E_record_update { record ; update ; _ } ->
           let defs, refs =  expression record in
           let defs', refs' = expression update in
-          defs @ defs', refs @ refs'
+          defs' @ defs, refs' @ refs
         | E_record e_lable_map ->
           let defs, refs = AST.LMap.fold (fun _ e (defs, refs) ->
             let defs', refs' = expression e in
-            defs @ defs', refs @ refs'
+            defs' @ defs, refs' @ refs
           ) e_lable_map ([], []) in
           defs, refs
         | E_assign { binder ; expression = e } ->
@@ -165,7 +168,7 @@ module Free = struct
           let defs_rhs, refs_rhs = expression rhs in
           let defs_result, refs_result = expression let_result in
           let defs, refs_result = update_references refs_result [def] in
-          defs @ defs_rhs @ defs_result, refs_rhs @ refs_result
+          defs_result @ defs_rhs @ defs, refs_result @ refs_rhs
         | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
           (* TODO: handle input_type *)
           let def_fun =
@@ -181,7 +184,7 @@ module Free = struct
           let defs = [def_fun ; def_par] in
           let defs_result, refs_result = expression result in
           let defs, refs_result = update_references refs_result defs in
-          defs @ defs_result, refs_result
+          defs_result @ defs, refs_result
         | E_type_in { type_binder ; rhs ; let_result } ->
           let def = type_expression type_binder rhs in
           let defs, refs = expression let_result in
@@ -204,7 +207,7 @@ module Free = struct
               ) [] pattern in
               let defs_body, refs_body = expression body in
               let defs_pat, refs_body = update_references refs_body defs_pat in
-              defs @ defs_pat @ defs_body, refs @ refs_body
+              defs_body @ defs_pat @ defs, refs_body @ refs
             )
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases
@@ -277,7 +280,10 @@ module Free = struct
           let defs, refs = List.fold_left decls ~init:([], [])
             ~f:(fun (defs, refs) decl ->
               let defs', refs' = declaration decl in
-              let defs, refs = update_references (refs @ refs') (defs @ defs') in
+              let defs, refs = update_references (refs' @ refs) (defs' @ defs) in
+              (* Format.printf "^^^^^^^^^^^^^^ defs - [%s]\n" (String.concat ~sep:", " (List.map defs ~f:get_def_name)); *)
+              (* let () = List.iter defs ~f:(fun d -> Format.printf "BBBBBB %s\n" (get_def_name d)) in *)
+              (* let () = List.iter refs ~f:(fun r -> Format.printf "CCCCCC %a\n" pp_reference r) in *)
               defs, refs)
           in
           defs, refs
