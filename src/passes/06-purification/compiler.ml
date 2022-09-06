@@ -4,7 +4,7 @@ module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
 open Simple_utils.Trace
-module VMap = Simple_utils.Map.Make(Ligo_prim.ValueVar)
+module VMap = Simple_utils.Map.Make(Ligo_prim.Value_var)
 open Ligo_prim
 
 let rec add_to_end (expression: O.expression) to_add =
@@ -47,7 +47,7 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
       let arr = Arrow.map self arr in
       return @@ T_arrow arr
     | I.T_variable type_variable -> return @@ T_variable type_variable
-    | I.T_app {type_operator;arguments=[l;r]} when TypeVar.equal Literal_types.v_michelson_or type_operator ->
+    | I.T_app {type_operator;arguments=[l;r]} when Type_var.equal Literal_types.v_michelson_or type_operator ->
       let (l, l_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let (r, r_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let (l,r) = Pair.map ~f:(compile_type_expression ~raise) (l,r) in
@@ -56,7 +56,7 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
         (Label "M_right", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_sum { fields = O.LMap.of_list sum ; attributes = [] }
-    | I.T_app {type_operator;arguments=[l;r]} when TypeVar.equal Literal_types.v_michelson_pair type_operator ->
+    | I.T_app {type_operator;arguments=[l;r]} when Type_var.equal Literal_types.v_michelson_pair type_operator ->
       let (l, l_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let (r, r_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let (l,r) = Pair.map ~f:(compile_type_expression ~raise) (l,r) in
@@ -195,7 +195,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let step = compile_expression ~raise ~last incr in
       let for_body = compile_expression ~raise ~last f_body in
 
-      let rec_func = ValueVar.fresh ~name:"fun_for_loop" () in
+      let rec_func = Value_var.fresh ~name:"fun_for_loop" () in
       let recursive_call arg = O.e_application (O.e_variable rec_func) arg in
 
       (* Modify the body loop*)
@@ -225,7 +225,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       | Map -> C_MAP_ITER | Set -> C_SET_ITER | List -> C_LIST_ITER | Any -> C_ITER
       in
 
-      let args    = ValueVar.fresh ~name:"args" () in
+      let args    = Value_var.fresh ~name:"args" () in
       let k,v = fe_binder in
       let pattern : O.type_expression option Pattern.t = match v with
         | Some v -> Location.wrap @@ Pattern.P_tuple [Location.wrap @@ Pattern.P_var {var=k;ascr=None;attributes={const_or_var=None}}; Location.wrap @@ Pattern.P_var {var=v;ascr=None;attributes={const_or_var=None}}]
@@ -244,14 +244,14 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let cond = compile_expression ~raise ~last cond in
       let body = compile_expression ~raise ~last body in
 
-      let rec_func = ValueVar.fresh ~name:"fun_while_loop" () in
+      let rec_func = Value_var.fresh ~name:"fun_while_loop" () in
       let recursive_call = O.e_application (O.e_variable rec_func) (O.e_unit ()) in
       let continue_expr  = add_to_end body recursive_call in
       let stop_expr      = (O.e_unit ()) in
       let loop = O.e_recursive rec_func (O.t_arrow (O.t_unit ()) (O.t_unit ())) @@
         {
           binder={
-            var=ValueVar.fresh ~name:"()" ();
+            var=Value_var.fresh ~name:"()" ();
             ascr=O.t_unit ();
             attributes={const_or_var=None}};
           output_type=O.t_unit ();

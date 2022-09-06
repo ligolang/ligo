@@ -8,7 +8,7 @@ type type_meta = ast_core_type_expression option
   [@@deriving eq,compare,yojson,hash]
 
 and type_content =
-  | T_variable    of TypeVar.t
+  | T_variable    of Type_var.t
   | T_constant    of type_injection
   | T_sum         of rows
   | T_record      of rows
@@ -39,7 +39,7 @@ and row_element = ty_expr Rows.row_element_mini_c
 and type_expression = {
     type_content: type_content;
     type_meta: type_meta [@eq.ignore] [@hash.ignore] ;
-    orig_var: TypeVar.t option [@eq.ignore] [@hash.ignore] ;
+    orig_var: Type_var.t option [@eq.ignore] [@hash.ignore] ;
     location: Location.t [@eq.ignore] [@hash.ignore] ;
   }
 and ty_expr = type_expression
@@ -91,9 +91,9 @@ module TypeOrModuleAttr = struct
       (pp_if_set "hidden") hidden
 
 end
-module ValueDecl  = ValueDecl(ValueAttr)
-module TypeDecl   = TypeDecl(TypeOrModuleAttr)
-module ModuleDecl = ModuleDecl(TypeOrModuleAttr)
+module Value_decl  = Value_decl(ValueAttr)
+module Type_decl   = Type_decl(TypeOrModuleAttr)
+module Module_decl = Module_decl(TypeOrModuleAttr)
 module Access_label = struct
   type 'a t = Label.t
   let equal _ = Label.equal
@@ -111,7 +111,7 @@ module Update   = Update(Access_label)
 
 type 'e matching_content_case = {
     constructor : Label.t ;
-    pattern : ValueVar.t ;
+    pattern : Value_var.t ;
     body : 'e ;
   }
 
@@ -131,7 +131,7 @@ type 'e matching_content_record = {
 
 type expression_content =
   (* Base *)
-  | E_variable of ValueVar.t
+  | E_variable of Value_var.t
   | E_literal of Literal_value.t
   | E_constant of expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
   | E_application of expr Application.t
@@ -149,7 +149,7 @@ type expression_content =
   | E_record of expr Record.t
   | E_accessor of expr Accessor.t
   | E_update   of expr Update.t
-  | E_module_accessor of ValueVar.t Module_access.t
+  | E_module_accessor of Value_var.t Module_access.t
   | E_assign   of (expr,ty_expr) Assign.t
 
 and type_inst = {
@@ -183,9 +183,9 @@ and expr = expression
   [@@deriving eq,compare,yojson,hash]
 
 and declaration_content =
-    D_value  of (expr,ty_expr option) ValueDecl.t
-  | D_type   of ty_expr TypeDecl.t
-  | D_module of module_expr ModuleDecl.t
+    D_value  of (expr,ty_expr option) Value_decl.t
+  | D_type   of ty_expr Type_decl.t
+  | D_module of module_expr Module_decl.t
 
 and  declaration = declaration_content Location.wrap
 and  decl = declaration

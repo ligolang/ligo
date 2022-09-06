@@ -5,22 +5,22 @@ open Ligo_prim
 let fold_map_expression = Helpers.fold_map_expression
 
 let to_name_safe v =
-  fst (ValueVar.internal_get_name_and_counter v)
+  fst (Value_var.internal_get_name_and_counter v)
 let poly_counter = ref 0
 let poly_counter_reset () = poly_counter := 0
 let poly_name v = poly_counter := ! poly_counter + 1 ;
-                  ValueVar.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
+                  Value_var.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
 
 module Instance = struct
   (* This is a polymorphic instance of the polymorphic function (or value) lid *)
-  type t = { vid : ValueVar.t ; type_instances : AST.type_expression list ; type_ : AST.type_expression }
+  type t = { vid : Value_var.t ; type_instances : AST.type_expression list ; type_ : AST.type_expression }
   let pp ppf { vid ; type_instances ; type_ } =
     Format.fprintf ppf "{ vid = %a ; type_ = %a ; type_instances = [ %a ] }"
-      ValueVar.pp vid AST.PP.type_expression type_ (PP_helpers.list_sep_d AST.PP.type_expression) type_instances
+      Value_var.pp vid AST.PP.type_expression type_ (PP_helpers.list_sep_d AST.PP.type_expression) type_instances
 end
 
 module Data = struct
-   module LIMap = Simple_utils.Map.Make(ValueVar)
+   module LIMap = Simple_utils.Map.Make(Value_var)
 
    type t = (Instance.t list) LIMap.t
    let empty : t = LIMap.empty
@@ -28,15 +28,15 @@ module Data = struct
    let pp ppf instances =
       let f (lid, instances_of_lid) =
          Format.fprintf ppf "{ lid = %a ~> %a }"
-            ValueVar.pp lid
+            Value_var.pp lid
             (PP_helpers.list_sep_d Instance.pp) instances_of_lid
       in
       List.iter (LIMap.to_kv_list instances) ~f
 
-   let instances_lookup (ev : ValueVar.t) (data : t) =
+   let instances_lookup (ev : Value_var.t) (data : t) =
       Option.value ~default:[] @@ LIMap.find_opt ev data
 
-   let instance_lookup_opt (lid : ValueVar.t) (type_instances' : AST.type_expression list) (type_' : AST.type_expression) (data : t) =
+   let instance_lookup_opt (lid : Value_var.t) (type_instances' : AST.type_expression list) (type_' : AST.type_expression) (data : t) =
       let aux { Instance.vid ; type_instances ; type_ } =
          if AST.equal_type_expression type_ type_' &&
             List.equal (fun t1 t2 -> AST.equal_type_expression t1 t2) type_instances type_instances' then
@@ -45,7 +45,7 @@ module Data = struct
       in
       List.find_map ~f:aux @@ Option.value ~default:[] (LIMap.find_opt lid data)
 
-   let instance_add (lid : ValueVar.t) (instance : Instance.t) (data : t) =
+   let instance_add (lid : Value_var.t) (instance : Instance.t) (data : t) =
       let lid_instances = instance :: (Option.value ~default:[] @@ LIMap.find_opt lid data) in
       LIMap.add lid lid_instances data
 end
@@ -174,7 +174,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
       let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
       let data, let_result = self data let_result in
       let binder_instances = Data.instances_lookup let_binder.var data in
-      let build_let (lid : ValueVar.t) Instance.{ vid ; type_instances ; type_ } (data, let_result) =
+      let build_let (lid : Value_var.t) Instance.{ vid ; type_instances ; type_ } (data, let_result) =
         let let_binder = vid in
         let table = List.zip_exn type_vars type_instances in
         let data, rhs = match rhs.expression_content with

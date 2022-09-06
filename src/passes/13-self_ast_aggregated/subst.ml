@@ -14,9 +14,9 @@ open Ast_aggregated
    Below, this bug is fixed by adopting the other order choice for
    replace (as well as subst).  *)
 
-let replace_var : ValueVar.t -> ValueVar.t -> ValueVar.t -> ValueVar.t =
+let replace_var : Value_var.t -> Value_var.t -> Value_var.t -> Value_var.t =
   fun v x y ->
-  if ValueVar.equal v x
+  if Value_var.equal v x
   then y
   else v
 
@@ -24,12 +24,12 @@ let replace_var : ValueVar.t -> ValueVar.t -> ValueVar.t -> ValueVar.t =
 
    But only replace the _free_ x.
 *)
-let rec replace : expression -> ValueVar.t -> ValueVar.t -> expression =
+let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
   fun e x y ->
   let replace e = replace e x y in
   let return expression_content = { e with expression_content } in
   let replace_var v = replace_var v x y in
-  let (=) = ValueVar.equal in
+  let (=) = Value_var.equal in
   match e.expression_content with
   | E_variable z ->
     let z = replace_var z in
@@ -91,19 +91,19 @@ let rec replace : expression -> ValueVar.t -> ValueVar.t -> expression =
    body, implements substitution on a binder (pair of bound variable
    and body) *)
 let subst_binder : type body.
-  (body:body -> x:ValueVar.t -> expr:expression -> body) ->
-  (body -> ValueVar.t -> ValueVar.t -> body) ->
-  body:(ValueVar.t * body) -> x:ValueVar.t -> expr:expression -> (ValueVar.t * body) =
+  (body:body -> x:Value_var.t -> expr:expression -> body) ->
+  (body -> Value_var.t -> Value_var.t -> body) ->
+  body:(Value_var.t * body) -> x:Value_var.t -> expr:expression -> (Value_var.t * body) =
   fun subst replace ~body:(y, body) ~x ~expr ->
     (* if x is shadowed, binder doesn't change *)
-    if ValueVar.equal x y
+    if Value_var.equal x y
     then (y, body)
     (* else, if no capture, subst in binder *)
-    else if not (List.mem ~equal:ValueVar.equal (Free_variables.expression expr) y)
+    else if not (List.mem ~equal:Value_var.equal (Free_variables.expression expr) y)
     then (y, subst ~body ~x ~expr)
     (* else, avoid capture and subst in binder *)
     else
-      let fresh = ValueVar.fresh_like y in
+      let fresh = Value_var.fresh_like y in
       let body = replace body y fresh in
       (fresh, subst ~body ~x ~expr)
 
@@ -111,22 +111,22 @@ let subst_binder : type body.
    body, implements substitution on a binder (pair of bound variable
    and body) *)
 let subst_binders : type body.
-  (body:body -> x:ValueVar.t -> expr:expression -> body) ->
-  (body -> ValueVar.t -> ValueVar.t -> body) ->
-  body:(ValueVar.t list * body) -> x:ValueVar.t -> expr:expression -> (ValueVar.t list * body) =
+  (body:body -> x:Value_var.t -> expr:expression -> body) ->
+  (body -> Value_var.t -> Value_var.t -> body) ->
+  body:(Value_var.t list * body) -> x:Value_var.t -> expr:expression -> (Value_var.t list * body) =
   fun subst replace ~body:(ys, body) ~x ~expr ->
     (* if x is shadowed, binder doesn't change *)
-    if List.mem ~equal:ValueVar.equal ys x
+    if List.mem ~equal:Value_var.equal ys x
     then (ys, body)
     (* else, if no capture, subst in binder *)
     else
       let fvs = Free_variables.expression expr in
       let f (fs, body) y =
-        if not (List.mem ~equal:ValueVar.equal fvs y)
+        if not (List.mem ~equal:Value_var.equal fvs y)
         then (y :: fs, body)
          (* else, avoid capture and subst in binder *)
         else
-          let fresh = ValueVar.fresh_like y in
+          let fresh = Value_var.fresh_like y in
           let body = replace body y fresh in
           (fresh :: fs, body) in
       let ys, body = List.fold ~f ~init:([], body) ys in
@@ -136,7 +136,7 @@ let subst_binders : type body.
 (**
    Computes `body[x := expr]`.
 **)
-let rec subst_expression : body:expression -> x:ValueVar.t -> expr:expression -> expression =
+let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -> expression =
   fun ~body ~x ~expr ->
   let self body = subst_expression ~body ~x ~expr in
   let return_id = body in
@@ -149,7 +149,7 @@ let rec subst_expression : body:expression -> x:ValueVar.t -> expr:expression ->
       (fun (x, body) y z -> (replace_var x y z, replace body y z)) in
   match body.expression_content with
   | E_variable x' ->
-     if ValueVar.equal x' x
+     if Value_var.equal x' x
      then expr
      else return_id
   | E_lambda { binder = { var ; ascr ; attributes } ; output_type ; result } ->

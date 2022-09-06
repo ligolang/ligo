@@ -1,11 +1,11 @@
 type 'e t = {
-  type_binder : Var.TypeVar.t;
+  type_binder : Var.Type_var.t;
   result : 'e ;
   } [@@deriving eq,compare,yojson,hash,fold,map]
 
 let pp f ppf = fun {type_binder;result} ->
   Format.fprintf ppf "Λ %a -> @;@[%a@]"
-    Var.TypeVar.pp type_binder
+    Var.Type_var.pp type_binder
     f result
 
 let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t

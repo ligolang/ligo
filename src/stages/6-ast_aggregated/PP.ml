@@ -47,7 +47,7 @@ open Format
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_variable        tv -> TypeVar.pp ppf tv
+  | T_variable        tv -> Type_var.pp ppf tv
   | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (Record.LMap.to_kv_list_rev m.fields)
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
   | T_arrow            a -> Arrow.pp      type_expression ppf a
@@ -64,7 +64,7 @@ and type_injection ppf {language;injection;parameters} =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
   fprintf ppf "%s%a" (Literal_types.to_string injection) (list_sep_d_par type_expression) parameters
-and bool ppf : unit = fprintf ppf "%a" TypeVar.pp Literal_types.v_bool
+and bool ppf : unit = fprintf ppf "%a" Type_var.pp Literal_types.v_bool
 and option ppf (te : type_expression) : unit =
   let t = Combinators.get_t_option te in
   (match t with
@@ -80,7 +80,7 @@ and type_expression ppf (te : type_expression) : unit =
 let rec type_content_orig : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_variable        tv -> TypeVar.pp ppf tv
+  | T_variable        tv -> Type_var.pp ppf tv
   | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (Record.LMap.to_kv_list_rev m.fields)
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
   | T_arrow            a -> Arrow.pp      type_expression ppf a
@@ -107,7 +107,7 @@ let rec expression ppf (e : expression) =
 and expression_content ppf (ec: expression_content) =
   match ec with
   | E_literal     l -> Literal_value.pp   ppf l
-  | E_variable    n -> ValueVar.pp        ppf n
+  | E_variable    n -> Value_var.pp        ppf n
   | E_application a -> Application.pp expression ppf a
   | E_constructor c -> Constructor.pp expression ppf c
   | E_constant    c -> Constant.pp expression ppf c
@@ -142,7 +142,7 @@ and option_inline ppf inline =
 
 and matching_variant_case : (formatter -> expression -> unit) -> formatter -> expression matching_content_case -> unit =
   fun f ppf {constructor=c; pattern; body} ->
-  fprintf ppf "@[<v 2>| %a %a ->@ %a@]" Label.pp c ValueVar.pp pattern f body
+  fprintf ppf "@[<v 2>| %a %a ->@ %a@]" Label.pp c Value_var.pp pattern f body
 
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_variant {cases ; tv=_} ->
@@ -151,7 +151,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
       let fields = Rows.LMap.map (fun b -> b.Binder.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
-        (tuple_or_record_sep_expr ValueVar.pp) fields
+        (tuple_or_record_sep_expr Value_var.pp) fields
         f body
 
 let program ppf : expression program -> unit = fun prg ->

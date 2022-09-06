@@ -8,16 +8,16 @@ module AST = Ast_typed
 module Scope : sig
   type t
   val empty : t
-  val new_module_var  : t -> ModuleVar.t -> t  -> t * ModuleVar.t
-  val get_module_var  : t -> ModuleVar.t -> t * ModuleVar.t
+  val new_module_var  : t -> Module_var.t -> t  -> t * Module_var.t
+  val get_module_var  : t -> Module_var.t -> t * Module_var.t
 end =
 struct
-  module MMap = Simple_utils.Map.Make(ModuleVar)
-  type t = {module_ : (ModuleVar.t * t) MMap.t}
+  module MMap = Simple_utils.Map.Make(Module_var)
+  type t = {module_ : (Module_var.t * t) MMap.t}
   let empty = {module_ = MMap.empty}
   let new_module_var map var mod_scope =
     let var' = match MMap.find_opt var map.module_ with
-      Some (v,_) -> ModuleVar.fresh_like ~loc:(ModuleVar.get_location var) v
+      Some (v,_) -> Module_var.fresh_like ~loc:(Module_var.get_location var) v
     | None -> var in
     let module_ = MMap.add var (var',mod_scope) map.module_ in
     {module_}, var'
@@ -25,7 +25,7 @@ struct
   let get_module_var map var =
     (* The default value is for variable coming from other files *)
     Option.value ~default:(var,empty) @@ MMap.find_opt var map.module_
-    |> fun (v,m) -> (m,ModuleVar.(set_location @@ get_location var) v)
+    |> fun (v,m) -> (m,Module_var.(set_location @@ get_location var) v)
 
 end
 

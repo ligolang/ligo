@@ -3,14 +3,14 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 
 type type_content =
-  | T_variable        of TypeVar.t
+  | T_variable        of Type_var.t
   | T_sum             of ty_expr non_linear_rows
   | T_record          of ty_expr non_linear_rows
   | T_tuple           of ty_expr list
   | T_arrow           of ty_expr Arrow.t
   | T_annoted         of (ty_expr * string)
   | T_app             of ty_expr Type_app.t
-  | T_module_accessor of TypeVar.t Module_access.t
+  | T_module_accessor of Type_var.t Module_access.t
   | T_singleton       of Literal_value.t
   | T_abstraction     of ty_expr Abstraction.t
   | T_for_all         of ty_expr Abstraction.t
@@ -45,9 +45,9 @@ let pp ppf lst =
 
 end
 
-module ValueDecl = ValueDecl(Attr)
-module TypeDecl  = TypeDecl(Attr)
-module ModuleDecl= ModuleDecl(Attr)
+module Value_decl = Value_decl(Attr)
+module Type_decl  = Type_decl(Attr)
+module Module_decl= Module_decl(Attr)
 
 
 module Accessor = Accessor(Access_path)
@@ -55,7 +55,7 @@ module Update   = Update(Access_path)
 
 type expression_content =
   (* Base *)
-  | E_variable of ValueVar.t
+  | E_variable of Value_var.t
   | E_literal of Literal_value.t
   | E_constant of expr constant (* For language constants, like (Cons hd tl) or (plus i j) *)
   | E_application of expr Application.t
@@ -75,7 +75,7 @@ type expression_content =
   | E_update   of expr Update.t
   (* Advanced *)
   | E_ascription of (expr, ty_expr) Ascription.t
-  | E_module_accessor of ValueVar.t Module_access.t
+  | E_module_accessor of Value_var.t Module_access.t
   (* Sugar *)
   | E_cond of expr Conditional.t
   | E_sequence of expr Sequence.t
@@ -104,9 +104,9 @@ and expr = expression
   [@@deriving eq,compare,yojson,hash]
 
 and declaration_content =
-    D_value  of (expr,ty_expr option) ValueDecl.t
-  | D_type   of ty_expr TypeDecl.t
-  | D_module of module_expr ModuleDecl.t
+    D_value  of (expr,ty_expr option) Value_decl.t
+  | D_type   of ty_expr Type_decl.t
+  | D_module of module_expr Module_decl.t
 
 and  declaration = declaration_content Location.wrap
 and  decl = declaration

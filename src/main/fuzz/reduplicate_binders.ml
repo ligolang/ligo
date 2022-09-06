@@ -15,7 +15,7 @@ open Ast_aggregated
 let rec reduplicate ~raise : expression -> expression =
   fun exp ->
   let self = reduplicate ~raise in
-  let remove_counter v = if ValueVar.is_generated v then v else ValueVar.(of_input_var ~loc:(get_location v) (to_name_exn v)) in
+  let remove_counter v = if Value_var.is_generated v then v else Value_var.(of_input_var ~loc:(get_location v) (to_name_exn v)) in
   let return expression_content : expression =
     { exp with expression_content } in
   let binder_remove_counter = fun Binder.{var; ascr; attributes} ->

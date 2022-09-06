@@ -31,7 +31,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = TypeVar.fresh ~name:(Literal_types.to_string injection) () in
+    let type_operator = Type_var.fresh ~name:(Literal_types.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_singleton l ->
     return @@ I.T_singleton l
@@ -174,7 +174,7 @@ and untype_module_expr : O.module_expr -> I.module_expr =
       return (M_module_path path)
     | M_variable v ->
       return (M_variable v)
-and untype_declaration_constant : (O.expression -> I.expression) -> _ O.ValueDecl.t -> _ I.ValueDecl.t =
+and untype_declaration_constant : (O.expression -> I.expression) -> _ O.Value_decl.t -> _ I.Value_decl.t =
   fun untype_expression {binder;expr;attr} ->
     let ty = untype_type_expression expr.O.type_expression in
     let var = binder.var in
@@ -184,13 +184,13 @@ and untype_declaration_constant : (O.expression -> I.expression) -> _ O.ValueDec
     let attr = untype_value_attr attr in
     {binder;attr;expr;}
 
-and untype_declaration_type : _ O.TypeDecl.t -> _ I.TypeDecl.t =
+and untype_declaration_type : _ O.Type_decl.t -> _ I.Type_decl.t =
   fun {type_binder; type_expr; type_attr={public;hidden}} ->
     let type_expr = untype_type_expression type_expr in
     let type_attr = ({public;hidden}: I.TypeOrModuleAttr.t) in
     {type_binder; type_expr; type_attr}
 
-and untype_declaration_module : _ O.ModuleDecl.t -> _ I.ModuleDecl.t =
+and untype_declaration_module : _ O.Module_decl.t -> _ I.Module_decl.t =
   fun {module_binder; module_; module_attr={public;hidden}} ->
     let module_ = untype_module_expr module_ in
     let module_attr = ({public;hidden}: I.TypeOrModuleAttr.t) in

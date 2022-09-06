@@ -58,7 +58,7 @@ let build_contract ~raise :
   ?constants:string list ->
   ?tezos_context:_ ->
   Stacking.compiled_expression ->
-  (ValueVar.t * Stacking.compiled_expression) list -> _ Michelson.michelson  =
+  (Value_var.t * Stacking.compiled_expression) list -> _ Michelson.michelson  =
     fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) ?tezos_context compiled views ->
       let views =
         List.map
@@ -66,7 +66,7 @@ let build_contract ~raise :
             let (view_param_ty, ret_ty) = trace_option ~raise (main_view_not_a_function name) @@ (* remitodo error specific to views*)
               Self_michelson.fetch_views_ty view.expr_ty
             in
-            (ValueVar.to_name_exn name, view_param_ty, ret_ty, view.expr)
+            (Value_var.to_name_exn name, view_param_ty, ret_ty, view.expr)
           )
           views
       in

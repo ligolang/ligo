@@ -233,7 +233,7 @@ and map_program : 'err mapper -> program -> program = fun m ->
 let fetch_entry_type ~raise : string -> program -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | D_value ({ binder ; expr=_ ; attr=_ } as p) ->
-        if ValueVar.is_name binder.var main_fname
+        if Value_var.is_name binder.var main_fname
         then Some p
         else None
     | D_type   _
@@ -245,7 +245,7 @@ let fetch_entry_type ~raise : string -> program -> (type_expression * Location.t
     trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
-  let ValueDecl.{ binder=_ ; expr ; attr=_} = main_decl in
+  let Value_decl.{ binder=_ ; expr ; attr=_} = main_decl in
   expr.type_expression, expr.location
 
 type contract_type = {
@@ -253,10 +253,10 @@ type contract_type = {
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun main_fname m ->
+let fetch_contract_type ~raise : Value_var.t -> program -> contract_type = fun main_fname m ->
   let aux declt = match Location.unwrap declt with
     | D_value ({ binder ; expr=_ ; attr=_} as p) ->
-       if ValueVar.equal binder.var main_fname
+       if Value_var.equal binder.var main_fname
        then Some p
        else None
     | D_type   _
@@ -265,10 +265,10 @@ let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun ma
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
+    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" Value_var.pp main_fname : string)) @@
       main_decl_opt
   in
-  let ValueDecl.{ binder ; expr ; attr=_} = main_decl in
+  let Value_decl.{ binder ; expr ; attr=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
     match Ast_typed.Combinators.(get_t_pair type1 , get_t_pair type2) with
@@ -279,19 +279,19 @@ let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun ma
         Ast_typed.assert_type_expression_eq (storage,storage') in
       (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
       { parameter ; storage }
-    |  _ -> raise.error @@ bad_contract_io main_fname expr (ValueVar.get_location binder.var)
+    |  _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location binder.var)
   )
-  | _ -> raise.error @@ bad_contract_io main_fname expr (ValueVar.get_location binder.var)
+  | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location binder.var)
 
 (* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
    [predicate] defines the annotation (or set of annotation) you want to match on
 *)
 let get_shadowed_decl : program -> (ValueAttr.t -> bool) -> Location.t option = fun prg predicate ->
-  let aux = fun (seen,shadows : ValueVar.t list * Location.t list) (x : declaration) ->
+  let aux = fun (seen,shadows : Value_var.t list * Location.t list) (x : declaration) ->
     match Location.unwrap x with
     | D_value { binder ; attr ; _} -> (
-      match List.find seen ~f:(ValueVar.equal binder.var) with
-      | Some x -> (seen , ValueVar.get_location x::shadows)
+      match List.find seen ~f:(Value_var.equal binder.var) with
+      | Some x -> (seen , Value_var.get_location x::shadows)
       | None -> if predicate attr then (binder.var::seen , shadows) else seen,shadows
     )
     | _ -> seen,shadows
@@ -327,7 +327,7 @@ let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.pr
         let continue = x::prg,views in
         match Location.unwrap x with
         | D_value ({binder ; _} as decl) -> (
-          match List.find views ~f:(ValueVar.is_name binder.var) with
+          match List.find views ~f:(Value_var.is_name binder.var) with
           | Some found ->
             let decorated = { x with wrap_content = D_value { decl with attr = {decl.attr with view = true} }} in
             decorated::prg, (List.remove_element ~compare:String.compare found views)
@@ -341,18 +341,18 @@ let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.pr
 
 module Free_variables :
   sig
-    val expression : expression -> (ModuleVar.t list * ValueVar.t list)
+    val expression : expression -> (Module_var.t list * Value_var.t list)
   end
   = struct
-  module VarSet    = Caml.Set.Make(ValueVar)
-  module ModVarSet = Caml.Set.Make(ModuleVar)
-  module VarMap    = Caml.Map.Make(ModuleVar)
+  module VarSet    = Caml.Set.Make(Value_var)
+  module ModVarSet = Caml.Set.Make(Module_var)
+  module VarMap    = Caml.Map.Make(Module_var)
 
   type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
   and moduleEnv = moduleEnv' VarMap.t
 
   let rec merge =fun {modVarSet=x1;moduleEnv=y1;varSet=z1} {modVarSet=x2;moduleEnv=y2;varSet=z2} ->
-    let aux : ModuleVar.t -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
+    let aux : Module_var.t -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
       fun _ a b -> Some (merge a b)
     in
       {modVarSet=ModVarSet.union x1 x2;moduleEnv=VarMap.union aux y1 y2;varSet=VarSet.union z1 z2}

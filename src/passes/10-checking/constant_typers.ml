@@ -233,13 +233,13 @@ type t = typer CTMap.t
 
 module Constant_types = struct
 
-  let a_var = TypeVar.of_input_var "'a"
-  let b_var = TypeVar.of_input_var "'b"
-  let c_var = TypeVar.of_input_var "'c"
+  let a_var = Type_var.of_input_var "'a"
+  let b_var = Type_var.of_input_var "'b"
+  let c_var = Type_var.of_input_var "'c"
 
   (* Helpers *)
   let for_all binder f =
-    let binder = TypeVar.of_input_var ("'" ^ binder) in
+    let binder = Type_var.of_input_var ("'" ^ binder) in
     t_for_all binder Type (f (t_variable binder ()))
 
   let (^->) arg ret = t_arrow arg ret ()

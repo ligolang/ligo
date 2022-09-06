@@ -1,11 +1,11 @@
 type 'ty_exp t = {
-  type_operator : Var.TypeVar.t ;
+  type_operator : Var.Type_var.t ;
   arguments     : 'ty_exp list ;
 } [@@deriving eq,compare,yojson,hash,fold,map]
 
 let pp g ppf ({type_operator ; arguments}: 'a t) : unit =
   Format.fprintf ppf "%a%a"
-    Var.TypeVar.pp type_operator
+    Var.Type_var.pp type_operator
     Simple_utils.PP_helpers.(list_sep_d_par g) arguments
 
 

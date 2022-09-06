@@ -13,9 +13,9 @@ let type_improve t =
       [] -> (t_variable element ())
     | _ ->
       let open Simple_utils.PP_helpers in
-      let x = Format.asprintf "%a" (list_sep ModuleVar.pp (tag ".")) module_path in
-      let y = Format.asprintf "%a" TypeVar.pp element in
-      (t_variable (TypeVar.of_input_var (x^"."^y)) ())
+      let x = Format.asprintf "%a" (list_sep Module_var.pp (tag ".")) module_path in
+      let y = Format.asprintf "%a" Type_var.pp element in
+      (t_variable (Type_var.of_input_var (x^"."^y)) ())
   in
   match t.type_content with
   | T_constant { parameters ; _ } when List.length parameters = 0 -> t
@@ -48,16 +48,16 @@ let type_improve t =
   type_mapper ~f:type_improve t
 
 type typer_error = [
-  | `Typer_missing_funarg_annotation of ValueVar.t
-  | `Typer_unbound_module_variable of ModuleVar.t * Location.t
-  | `Typer_unbound_type_variable of TypeVar.t * Location.t
-  | `Typer_unbound_variable of ValueVar.t * Location.t
+  | `Typer_missing_funarg_annotation of Value_var.t
+  | `Typer_unbound_module_variable of Module_var.t * Location.t
+  | `Typer_unbound_type_variable of Type_var.t * Location.t
+  | `Typer_unbound_variable of Value_var.t * Location.t
   | `Typer_match_missing_case of Label.t list * Label.t list * Location.t
   | `Typer_match_extra_case of Label.t list * Label.t list * Location.t
   | `Typer_unbound_constructor of Label.t * Location.t
-  | `Typer_type_app_wrong_arity of TypeVar.t option * int * int * Location.t
+  | `Typer_type_app_wrong_arity of Type_var.t option * int * int * Location.t
   | `Typer_michelson_or_no_annotation of Label.t * Location.t
-  | `Typer_constant_declaration_tracer of Location.t * ValueVar.t * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
+  | `Typer_constant_declaration_tracer of Location.t * Value_var.t * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
   | `Typer_match_error of Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_should_be_a_function_type of Ast_typed.type_expression * Ast_core.expression
   | `Typer_bad_record_access of Label.t * Ast_typed.expression * Location.t
@@ -106,23 +106,23 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_missing_funarg_annotation (v) ->
       Format.fprintf f
         "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
-          Snippet.pp (ValueVar.get_location v)
-          ValueVar.pp v
+          Snippet.pp (Value_var.get_location v)
+          Value_var.pp v
     | `Typer_unbound_module_variable (mv,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Module \"%a\" not found. @]"
         Snippet.pp loc
-        ModuleVar.pp mv
+        Module_var.pp mv
     | `Typer_unbound_type_variable (tv,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Type \"%a\" not found. @]"
         Snippet.pp loc
-        TypeVar.pp tv
+        Type_var.pp tv
     | `Typer_unbound_variable (v,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Variable \"%a\" not found. @]"
         Snippet.pp loc
-        ValueVar.pp v
+        Value_var.pp v
     | `Typer_match_missing_case (m, v, loc) ->
       let missing = List.fold_left ~f:(fun all o ->
         match List.find ~f:(Label.equal o) v with
@@ -172,10 +172,10 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         Label.pp c
     | `Typer_type_app_wrong_arity (op_opt,e,a,loc) ->
-      let aux : Format.formatter -> TypeVar.t option -> unit =
+      let aux : Format.formatter -> Type_var.t option -> unit =
         fun ppf operator_opt ->
           match operator_opt with
-          | Some v -> Format.fprintf ppf " %a" TypeVar.pp v
+          | Some v -> Format.fprintf ppf " %a" Type_var.pp v
           | None -> ()
       in
       Format.fprintf f
@@ -347,14 +347,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_missing_funarg_annotation v ->
     let message = Format.asprintf "Missing type annotation for argument" in
     let content = `Assoc [
-      ("value", ValueVar.to_yojson v );
+      ("value", Value_var.to_yojson v );
       ("message", `String message );
-      ("location", Location.to_yojson @@ ValueVar.get_location v); ] in
+      ("location", Location.to_yojson @@ Value_var.get_location v); ] in
     json_error ~stage ~content
   | `Typer_unbound_module_variable (mv,loc) ->
     let message = `String "unbound module" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" ModuleVar.pp mv in
+    let value = Format.asprintf "%a" Module_var.pp mv in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
@@ -364,7 +364,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_unbound_type_variable (tv,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" TypeVar.pp tv in
+    let value = Format.asprintf "%a" Type_var.pp tv in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
@@ -374,7 +374,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_unbound_variable (v,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" ValueVar.pp v in
+    let value = Format.asprintf "%a" Value_var.pp v in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
@@ -433,7 +433,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_type_app_wrong_arity (op, e, a, loc) ->
     let message = `String "Wrong arity in type application" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let op = Option.value_map ~default:`Null ~f:TypeVar.to_yojson op in
+    let op = Option.value_map ~default:`Null ~f:Type_var.to_yojson op in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
@@ -456,7 +456,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let message = `String "Typing constant declaration" in
     let value = `String (Format.asprintf "%a" Ast_core.PP.expression ae) in
     let loc = Location.to_yojson loc in
-    let name = ValueVar.to_yojson name in
+    let name = Value_var.to_yojson name in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
@@ -470,7 +470,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_constant_declaration_tracer (loc,name,_,None,err) ->
     let message = `String "Typing constant declaration" in
     let loc = Location.to_yojson loc in
-    let name = ValueVar.to_yojson name in
+    let name = Value_var.to_yojson name in
     let content = `Assoc [
       ("message", message);
       ("location", loc);

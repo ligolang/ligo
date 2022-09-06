@@ -10,7 +10,7 @@ type contract_pass_data = Contract_passes.contract_pass_data
    also maintained.
 *)
 
-module V = ValueVar
+module V = Value_var
 module M = Simple_utils.Map.Make(V)
 
 (* A map recording if a variable is being used * a list of unused variables. *)

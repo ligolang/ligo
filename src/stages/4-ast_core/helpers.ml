@@ -21,13 +21,13 @@ let destruct_for_alls (t : type_expression) =
 module Free_type_variables = struct
   open Ligo_prim
 
-  module VarSet = Caml.Set.Make(TypeVar)
+  module VarSet = Caml.Set.Make(Type_var)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty
       ~f:(fun y1 y2 -> VarSet.union y1 y2)
 
-  let rec map_type_expression : TypeVar.t list -> type_expression -> VarSet.t = fun type_env te ->
+  let rec map_type_expression : Type_var.t list -> type_expression -> VarSet.t = fun type_env te ->
     let self = map_type_expression type_env in
     match te.type_content with
     | T_sum { fields ; _ } ->
@@ -41,7 +41,7 @@ module Free_type_variables = struct
     | T_app { arguments ; _ } ->
        let arguments = List.map ~f:self arguments in
        unions arguments
-    | T_variable v when List.mem type_env v ~equal:(fun v1 v2 -> TypeVar.compare v1 v2 = 0) -> VarSet.empty
+    | T_variable v when List.mem type_env v ~equal:(fun v1 v2 -> Type_var.compare v1 v2 = 0) -> VarSet.empty
     | T_variable _ -> VarSet.empty
     | T_module_accessor _ -> VarSet.empty
        (* self element *)
@@ -53,6 +53,6 @@ module Free_type_variables = struct
        let v = self type_ in
        VarSet.remove ty_binder v
 
-  let type_expression : TypeVar.t list -> type_expression -> TypeVar.t list = fun type_env t ->
+  let type_expression : Type_var.t list -> type_expression -> Type_var.t list = fun type_env t ->
     VarSet.fold (fun v r -> v :: r) (map_type_expression type_env t) []
 end

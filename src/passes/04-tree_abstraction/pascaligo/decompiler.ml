@@ -84,9 +84,9 @@ let decompile_variable_abs (type a) (module X:X_var with type t = a): a -> CST.v
     else
       Wrap.ghost var
 
-let decompile_variable = decompile_variable_abs (module ValueVar)
-let decompile_type_var = decompile_variable_abs (module TypeVar)
-let decompile_mod_var = decompile_variable_abs (module ModuleVar)
+let decompile_variable = decompile_variable_abs (module Value_var)
+let decompile_type_var = decompile_variable_abs (module Type_var)
+let decompile_mod_var = decompile_variable_abs (module Module_var)
 
 let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   let return te = te in
@@ -416,7 +416,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
       let module_expr = decompile_module_expression rhs in
       let module_decl : CST.module_decl = {
         kwd_module = Token.ghost_module ;
-        name = Wrap.ghost (ModuleVar.to_name_exn module_binder) ;
+        name = Wrap.ghost (Module_var.to_name_exn module_binder) ;
         kwd_is = Token.ghost_is ;
         module_expr ;
         terminator ;
@@ -667,7 +667,7 @@ and decompile_to_data_decl : _ Binder.t -> AST.expression -> AST.attributes -> C
     let const_decl : CST.const_decl = {kwd_const=Token.ghost_const; pattern ;type_params = None;const_type;equal=Token.ghost_eq;init;terminator} in
     wrap_attr @@ CST.D_Const (Region.wrap_ghost const_decl)
 
-and decompile_to_lhs : ValueVar.t -> _ Access_path.t -> CST.expr = fun var access ->
+and decompile_to_lhs : Value_var.t -> _ Access_path.t -> CST.expr = fun var access ->
   match List.rev access with
     [] -> E_Var (decompile_variable var)
   | hd :: tl ->
@@ -679,7 +679,7 @@ and decompile_to_lhs : ValueVar.t -> _ Access_path.t -> CST.expr = fun var acces
       CST.E_MapLookup (Region.wrap_ghost @@ mlu)
     | Access_tuple _ | Access_record _ -> decompile_to_path var @@ access
 
-and decompile_to_path : ValueVar.t -> _ Access_path.t -> CST.expr = fun var access ->
+and decompile_to_path : Value_var.t -> _ Access_path.t -> CST.expr = fun var access ->
   let struct_name = decompile_variable var in
   match access with
     [] -> E_Var struct_name
@@ -761,7 +761,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     let module_attr = Shared_helpers.decompile_attributes module_attr in
     let module_decl : CST.module_decl = {
         kwd_module = Token.ghost_module ;
-        name = Wrap.ghost (ModuleVar.to_name_exn module_binder) ;
+        name = Wrap.ghost (Module_var.to_name_exn module_binder) ;
         kwd_is = Token.ghost_is ;
         module_expr = decompile_module_expression module_ ;
         terminator ;
@@ -791,13 +791,13 @@ and decompile_module_expression : AST.module_expr -> CST.module_expr = fun me ->
       | field:: tl' -> (field, tl')
     in
     let module_path = nelist_to_npseq ~sep:Token.ghost_dot @@
-      List.Ne.map (fun (x: ModuleVar.t) -> Wrap.ghost (ModuleVar.to_name_exn x)) (hd,tl')
+      List.Ne.map (fun (x: Module_var.t) -> Wrap.ghost (Module_var.to_name_exn x)) (hd,tl')
     in
-    let field = Wrap.ghost (ModuleVar.to_name_exn field) in
+    let field = Wrap.ghost (Module_var.to_name_exn field) in
     CST.(M_Path (Region.wrap_ghost {module_path ; field ; selector = Token.ghost_dot}))
   )
   | M_variable v ->
-    CST.M_Var (Wrap.ghost (ModuleVar.to_name_exn v))
+    CST.M_Var (Wrap.ghost (Module_var.to_name_exn v))
 
 and decompile_declarations : AST.program -> CST.declaration Utils.nseq =
 fun prg ->

@@ -75,9 +75,9 @@ let pp ppf v =
 
 let _pp ppf v = Format.fprintf ppf "%s#%d" v.name v.counter
 
-let wildcard = 
-  { name      = "_" 
-  ; counter   = 0 
+let wildcard =
+  { name      = "_"
+  ; counter   = 0
   ; location  = Location.dummy
   ; generated = false
   }
@@ -85,6 +85,6 @@ let wildcard =
 end
 
 
-module ModuleVar = Internal ()
-module ValueVar  = Internal ()
-module TypeVar   = Internal ()
+module Module_var = Internal ()
+module Value_var  = Internal ()
+module Type_var   = Internal ()

@@ -75,9 +75,9 @@ let decompile_variable_abs (type a) (module X:X_var with type t = a): a -> CST.v
     else
       wrap @@ var
 
-let decompile_variable = decompile_variable_abs (module ValueVar)
-let decompile_type_var = decompile_variable_abs (module TypeVar)
-let decompile_mod_var  = decompile_variable_abs (module ModuleVar)
+let decompile_variable = decompile_variable_abs (module Value_var)
+let decompile_type_var = decompile_variable_abs (module Type_var)
+let decompile_mod_var  = decompile_variable_abs (module Module_var)
 
 let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   let return te = te in
@@ -130,7 +130,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_path;element} -> (
-    let rec aux : ModuleVar.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
+    let rec aux : Module_var.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
       match lst with
       | module_name::tl ->
         let module_name = decompile_mod_var module_name in
@@ -367,7 +367,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     | M_module_path path -> (
       let alias = name in
       let binders =
-        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" ModuleVar.pp x)) path
+        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" Module_var.pp x)) path
       in
       let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
       let body = decompile_expression let_result in
@@ -449,7 +449,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (ValueVar.of_input_var var) path in
+    let field_path = decompile_to_path (Value_var.of_input_var var) path in
     let field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
     let updates = updates.value.ne_elements in
@@ -522,7 +522,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let ty   = decompile_type_expr type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,Token.ghost_colon,ty))
   | E_module_accessor {module_path;element} -> (
-    let rec aux : ModuleVar.t list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
+    let rec aux : Module_var.t list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
       match lst with
       | module_name::tl ->
         let module_name = decompile_mod_var module_name in
@@ -600,7 +600,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     failwith @@ Format.asprintf "Decompiling a imperative construct to CameLIGO %a"
     AST.PP.expression expr
 
-and decompile_to_path : ValueVar.t -> _ Access_path.t -> CST.path = fun var access ->
+and decompile_to_path : Value_var.t -> _ Access_path.t -> CST.path = fun var access ->
   let struct_name = decompile_variable var in
   match access with
     [] -> CST.Name struct_name
@@ -697,7 +697,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     | M_module_path path -> (
       let alias = name in
       let binders =
-        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" ModuleVar.pp x)) path
+        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" Module_var.pp x)) path
       in
       let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
       CST.ModuleAlias (wrap mod_alias)

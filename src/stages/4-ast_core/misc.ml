@@ -27,8 +27,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
     )
   | E_module_accessor {module_path=maa;element=a}, E_module_accessor {module_path=mab;element=b} -> (
     let open Simple_utils.Option in
-    let* _ = if ValueVar.equal a b then Some () else None in
-    assert_list_eq (fun a b -> if ModuleVar.equal a b then Some () else None) maa mab
+    let* _ = if Value_var.equal a b then Some () else None in
+    assert_list_eq (fun a b -> if Module_var.equal a b then Some () else None) maa mab
   )
   | E_record sma, E_record smb -> (
       let aux _ a b =

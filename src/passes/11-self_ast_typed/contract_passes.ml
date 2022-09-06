@@ -5,18 +5,18 @@ module Ligo_string = Simple_utils.Ligo_string
 
 type contract_pass_data = {
   contract_type : Helpers.contract_type ;
-  main_name : ValueVar.t ;
+  main_name : Value_var.t ;
 }
 
-module VVarSet = Caml.Set.Make(ValueVar)
-module MVarMap = Simple_utils.Map.Make(ModuleVar)
+module VVarSet = Caml.Set.Make(Value_var)
+module MVarMap = Simple_utils.Map.Make(Module_var)
 
 type env = {env:env MVarMap.t;used_var:VVarSet.t}
 let empty_env = {env=MVarMap.empty;used_var=VVarSet.empty}
 let rec pp_env ppf env =
   Format.fprintf ppf "{env: %a;used_var: %a}"
-    (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" ModuleVar.pp k pp_env v)) (MVarMap.to_kv_list env.env)
-    (Simple_utils.PP_helpers.list_sep_d ValueVar.pp) (VVarSet.elements env.used_var)
+    (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" Module_var.pp k pp_env v)) (MVarMap.to_kv_list env.env)
+    (Simple_utils.PP_helpers.list_sep_d Value_var.pp) (VVarSet.elements env.used_var)
 
 
 (* Detect and remove unesed declaration *)
@@ -180,7 +180,7 @@ let remove_unused ~raise : contract_pass_data -> program -> program = fun contra
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = D_value {binder;_}; _} -> not (ValueVar.equal binder.var contract_pass_data.main_name)
+      {Location.wrap_content = D_value {binder;_}; _} -> not (Value_var.equal binder.var contract_pass_data.main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in
@@ -194,9 +194,9 @@ let remove_unused ~raise : contract_pass_data -> program -> program = fun contra
   let _,module_ = get_fv_program env [main_decl] prg_decls in
   module_
 
-let remove_unused_for_views ~raise ~(view_names:ValueVar.t list ) : program -> program = fun prg ->
+let remove_unused_for_views ~raise ~(view_names:Value_var.t list ) : program -> program = fun prg ->
   let view_names = List.rev view_names in
-  let is_view_name var = List.mem view_names var ~equal:ValueVar.equal in
+  let is_view_name var = List.mem view_names var ~equal:Value_var.equal in
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let pred = fun _ -> function

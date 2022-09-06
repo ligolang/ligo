@@ -5,7 +5,7 @@ module Location = Simple_utils.Location
 
 
 type type_content =
-  | T_variable  of TypeVar.t
+  | T_variable  of Type_var.t
   | T_constant  of type_injection
   | T_sum       of rows
   | T_record    of rows
@@ -33,7 +33,7 @@ and type_expression = {
     type_content : type_content;
     source_type : Ast_typed.type_expression option[@compare.ignore] [@hash.ignore] ;
     location : Location.t[@compare.ignore] [@hash.ignore] ;
-    orig_var : TypeVar.t option [@compare.ignore] [@hash.ignore] ;
+    orig_var : Type_var.t option [@compare.ignore] [@hash.ignore] ;
   }
 and type_expression_list = type_expression list
 and ty_expr = type_expression
@@ -89,7 +89,7 @@ module Update   = Update(Access_label)
 
 type 'e matching_content_case = {
     constructor : Label.t ;
-    pattern : ValueVar.t ;
+    pattern : Value_var.t ;
     body : 'e ;
   }
 
@@ -108,7 +108,7 @@ type 'e matching_content_record = {
 
 type expression_content =
   (* Base *)
-  | E_variable of ValueVar.t
+  | E_variable of Value_var.t
   | E_literal of Literal_value.t
   | E_constant of expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
   | E_application of expr Application.t

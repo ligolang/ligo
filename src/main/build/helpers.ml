@@ -52,7 +52,7 @@ let inject_declaration ~options ~raise : Syntax_types.t -> Ast_core.program -> A
     let open Ast_core in
     let expr = Ligo_compile.Utils.core_expression_string ~raise syntax arg in
     let attr = ValueAttr.{ inline = false ; no_mutation = true ; view = false ; public = false ; hidden = false ; thunk = false } in
-    let d = Location.wrap @@ D_value { binder = make_binder (Ligo_prim.ValueVar.of_input_var "cli_arg") ; expr ; attr } in
+    let d = Location.wrap @@ D_value { binder = make_binder (Ligo_prim.Value_var.of_input_var "cli_arg") ; expr ; attr } in
     d::prg
   in
   (Option.value_map Compiler_options.(options.test_framework.cli_expr_inj) ~default:prg ~f:inject_arg_declaration)

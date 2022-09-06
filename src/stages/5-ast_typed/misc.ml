@@ -8,9 +8,9 @@ open Ligo_prim
 (* TODO: does that need to be cleaned-up ? *)
 module Free_variables = struct
 
-  type bindings = ValueVar.t list
-  let mem : bindings -> ValueVar.t -> bool = List.mem ~equal:ValueVar.equal
-  let singleton : ValueVar.t -> bindings = fun s -> [ s ]
+  type bindings = Value_var.t list
+  let mem : bindings -> Value_var.t -> bool = List.mem ~equal:Value_var.equal
+  let singleton : Value_var.t -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
@@ -128,7 +128,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_arrow _, _ -> None
   | T_variable x, T_variable y ->
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
-     if TypeVar.equal x y then Some () else None
+     if Type_var.equal x y then Some () else None
   | T_variable _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
@@ -198,11 +198,11 @@ and assert_literal_eq (a, b : Literal_value.t * Literal_value.t) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
-let get_entry (lst : program) (name : ValueVar.t) : expression option =
+let get_entry (lst : program) (name : Value_var.t) : expression option =
   let aux x =
     match Location.unwrap x with
     | D_value { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ ; thunk = _}} -> (
-      if   (ValueVar.equal name binder.var)
+      if   (Value_var.equal name binder.var)
       then Some expr
       else None
     )

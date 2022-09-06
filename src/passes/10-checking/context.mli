@@ -8,30 +8,30 @@ module Typing : sig
 
   val pp : Format.formatter -> t -> unit
 
-  val add_value    : t -> ValueVar.t -> type_expression -> t
-  val add_type     : t -> TypeVar.t       -> type_expression -> t
-  val add_type_var : t -> TypeVar.t       -> unit            -> t
-  val add_kind     : t -> TypeVar.t       -> unit            -> t
-  val add_module   : t -> ModuleVar.t     -> t               -> t
+  val add_value    : t -> Value_var.t -> type_expression -> t
+  val add_type     : t -> Type_var.t       -> type_expression -> t
+  val add_type_var : t -> Type_var.t       -> unit            -> t
+  val add_kind     : t -> Type_var.t       -> unit            -> t
+  val add_module   : t -> Module_var.t     -> t               -> t
 
-  val get_value  : t -> ValueVar.t -> type_expression option
-  val get_type   : t -> TypeVar.t       -> type_expression option
-  val get_module : t -> ModuleVar.t     -> t option
+  val get_value  : t -> Value_var.t -> type_expression option
+  val get_type   : t -> Type_var.t       -> type_expression option
+  val get_module : t -> Module_var.t     -> t option
 
-  val get_type_vars : t -> TypeVar.t list
+  val get_type_vars : t -> Type_var.t list
 
   val context_of_module_expr : outer_context:t -> Ast_typed.module_expr -> t
 
   val init : ?env:Environment.t -> unit -> t
 
-  val get_record : type_expression Rows.row_element_mini_c Record.t -> t -> (TypeVar.t option * rows) option
-  val get_sum    : Label.t -> t -> (TypeVar.t * TypeVar.t list * type_expression * type_expression) list
+  val get_record : type_expression Rows.row_element_mini_c Record.t -> t -> (Type_var.t option * rows) option
+  val get_sum    : Label.t -> t -> (Type_var.t * Type_var.t list * type_expression * type_expression) list
 end
 
 module Hashes : sig
   val set_context : Typing.t -> unit
   val hash_types : unit -> unit
-  val find_type : type_expression -> (ModuleVar.t list * TypeVar.t) option
+  val find_type : type_expression -> (Module_var.t list * Type_var.t) option
 end
 
 module App : sig

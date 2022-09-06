@@ -76,11 +76,11 @@ let decompile_variable_abs (type a) (module X:X_var with type t = a): a -> CST.v
     else
       Region.wrap_ghost @@ var
 
-let decompile_variable = decompile_variable_abs (module ValueVar)
-let decompile_type_var = decompile_variable_abs (module TypeVar)
-let decompile_mod_var = decompile_variable_abs (module ModuleVar)
-let decompile_variable2 : ValueVar.t -> CST.var_pattern Region.reg = fun var ->
-  let var = Format.asprintf "%a" ValueVar.pp var in
+let decompile_variable = decompile_variable_abs (module Value_var)
+let decompile_type_var = decompile_variable_abs (module Type_var)
+let decompile_mod_var = decompile_variable_abs (module Module_var)
+let decompile_variable2 : Value_var.t -> CST.var_pattern Region.reg = fun var ->
+  let var = Format.asprintf "%a" Value_var.pp var in
   if String.contains var '#' then
     let var = String.split ~on:'#' var in
     Region.wrap_ghost @@ CST.{variable = Region.wrap_ghost ("gen__" ^ (String.concat var)); attributes = []}
@@ -154,7 +154,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_path;element} -> (
-    let rec aux : ModuleVar.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
+    let rec aux : Module_var.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
       match lst with
       | module_name::tl ->
         let module_name = decompile_mod_var module_name in
@@ -488,7 +488,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let ty   = decompile_type_expr type_annotation in
     return_expr @@ [Expr (CST.EAnnot (Region.wrap_ghost @@ (expr,Token.ghost_as,ty)))]
   | E_module_accessor {module_path;element} -> (
-    let rec aux : ModuleVar.t list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
+    let rec aux : Module_var.t list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
       match lst with
       | module_name::tl ->
         let module_name = decompile_mod_var module_name in

@@ -194,7 +194,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   ) *)
   | Prim (_, "lambda", [_; _], _), ((Seq (_, _)) as c) ->
       let open! Ast_aggregated in
-      let arg_binder = ValueVar.fresh () in
+      let arg_binder = Value_var.fresh () in
       (* These are temporal types, need to be patched later: *)
       let t_input = t_unit () in
       let t_output = t_unit () in

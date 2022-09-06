@@ -1,5 +1,5 @@
 type 'e t = {
-  binder : Var.ValueVar.t ;
+  binder : Var.Value_var.t ;
   start  : 'e ;
   final  : 'e ;
   incr   : 'e ;
@@ -8,7 +8,7 @@ type 'e t = {
 
 let pp f ppf = fun {binder; start; final; incr; f_body} ->
   Format.fprintf ppf "for %a from %a to %a by %a do %a"
-    Var.ValueVar.pp binder
+    Var.Value_var.pp binder
     f start
     f final
     f incr

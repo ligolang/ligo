@@ -105,32 +105,32 @@ module O = Ast_aggregated
 open Ligo_prim
 
 module PathVar (M: Map.OrderedType) = struct
-  type t = (ModuleVar.t list * M.t) [@deriving compare]
+  type t = (Module_var.t list * M.t) [@deriving compare]
   let compare (mvla,va) (mvlb,vb) =
-    let c = List.compare ModuleVar.compare mvla mvlb in
+    let c = List.compare Module_var.compare mvla mvlb in
     if c = 0 then M.compare va vb else c
 end
-module PathVarMap = Map.Make(PathVar(ValueVar))
+module PathVarMap = Map.Make(PathVar(Value_var))
 
 (* Define the notion of Path i.e the list of nested module in which we are.
    Variables are stored with the more nested module at the top *)
 module Path : sig
-  type t = ModuleVar.t list
+  type t = Module_var.t list
   val empty       : t
   val equal       : t -> t -> bool
-  val add_to_path : t -> ModuleVar.t -> t
-  val get_from_module_path : ModuleVar.t List.t -> t
+  val add_to_path : t -> Module_var.t -> t
+  val get_from_module_path : Module_var.t List.t -> t
   val append : t -> t -> t
   val pp          : Format.formatter -> t -> unit
 end = struct
-  type t = ModuleVar.t list
+  type t = Module_var.t list
   let empty = []
-  let equal p1 p2 = List.equal (ModuleVar.equal) p1 p2
+  let equal p1 p2 = List.equal (Module_var.equal) p1 p2
   let add_to_path (p : t) s = s :: p
   let get_from_module_path lst = List.rev lst
   let append a b = a @ b
   let pp ppf path =
-    Format.fprintf ppf "[%a]\n%!" (PP_helpers.list_sep_d ModuleVar.pp) path
+    Format.fprintf ppf "[%a]\n%!" (PP_helpers.list_sep_d Module_var.pp) path
 end
 
 (* Store LUTs of the path of each identifier, plus the list of declaration in a module *)
@@ -139,40 +139,40 @@ module Scope : sig
   type t
   type decl =
     Value of O.type_expression Binder.t * O.type_expression * O.ValueAttr.t
-  | Module of ModuleVar.t
+  | Module of Module_var.t
   val empty : t
   val pp    : Format.formatter -> t -> unit
-  val find_value : t -> ValueVar.t -> Path.t
-  val find_type_ : t -> TypeVar.t -> Path.t
-  val find_module : t -> ModuleVar.t -> Path.t * t
+  val find_value : t -> Value_var.t -> Path.t
+  val find_type_ : t -> Type_var.t -> Path.t
+  val find_module : t -> Module_var.t -> Path.t * t
   val push_value : t -> O.type_expression Binder.t -> O.type_expression -> O.ValueAttr.t -> Path.t -> t
-  val remove_value : t -> ValueVar.t -> t
-  val push_type_ : t -> TypeVar.t -> Path.t -> t
-  val remove_type_ : t -> TypeVar.t -> t
-  val push_module : t -> ModuleVar.t -> Path.t -> t -> t
-  val add_path_to_var : t -> Path.t -> ValueVar.t -> t * ValueVar.t
+  val remove_value : t -> Value_var.t -> t
+  val push_type_ : t -> Type_var.t -> Path.t -> t
+  val remove_type_ : t -> Type_var.t -> t
+  val push_module : t -> Module_var.t -> Path.t -> t -> t
+  val add_path_to_var : t -> Path.t -> Value_var.t -> t * Value_var.t
   val get_declarations : t -> decl list
   val clean_declarations : t -> t
 end = struct
-  module ValueVMap = Map.Make(ValueVar)
-  module TypeVMap  = Map.Make(TypeVar)
-  module ModuleVMap = Map.Make(ModuleVar)
+  module ValueVMap = Map.Make(Value_var)
+  module TypeVMap  = Map.Make(Type_var)
+  module ModuleVMap = Map.Make(Module_var)
   type t = {
     value : Path.t ValueVMap.t;
     type_ : Path.t TypeVMap.t ;
     module_ : (Path.t * t) ModuleVMap.t ;
-    name_map : ValueVar.t PathVarMap.t;
+    name_map : Value_var.t PathVarMap.t;
     decl_list : decl list}
   and decl =
     Value of O.type_expression Binder.t * O.type_expression * O.ValueAttr.t
-  | Module of ModuleVar.t
+  | Module of Module_var.t
   let empty = { value = ValueVMap.empty; type_ = TypeVMap.empty; module_ = ModuleVMap.empty ; name_map = PathVarMap.empty; decl_list = [] }
   let rec pp ppf scope =
     Format.fprintf ppf "{value : %a; type_ : %a; module_ : %a; name_map :%a}\n%!"
-      (PP_helpers.list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "(%a -> %a)" ValueVar.pp a Path.pp b)) (ValueVMap.to_kv_list scope.value)
-      (PP_helpers.list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "(%a -> %a)" TypeVar.pp a Path.pp b)) (TypeVMap.to_kv_list scope.type_)
-      (PP_helpers.list_sep_d (fun ppf (a,(b,s)) -> Format.fprintf ppf "(%a -> (%a,%a)" ModuleVar.pp a Path.pp b pp s)) (ModuleVMap.to_kv_list scope.module_)
-      (PP_helpers.list_sep_d (fun ppf ((a,b),s) -> Format.fprintf ppf "(%a,%a) -> %a)" Path.pp a ValueVar.pp b ValueVar.pp s)) (PathVarMap.to_kv_list scope.name_map)
+      (PP_helpers.list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "(%a -> %a)" Value_var.pp a Path.pp b)) (ValueVMap.to_kv_list scope.value)
+      (PP_helpers.list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "(%a -> %a)" Type_var.pp a Path.pp b)) (TypeVMap.to_kv_list scope.type_)
+      (PP_helpers.list_sep_d (fun ppf (a,(b,s)) -> Format.fprintf ppf "(%a -> (%a,%a)" Module_var.pp a Path.pp b pp s)) (ModuleVMap.to_kv_list scope.module_)
+      (PP_helpers.list_sep_d (fun ppf ((a,b),s) -> Format.fprintf ppf "(%a,%a) -> %a)" Path.pp a Value_var.pp b Value_var.pp s)) (PathVarMap.to_kv_list scope.name_map)
 
   let find_value scope v =
     Option.value ~default:Path.empty  (ValueVMap.find_opt v scope.value)
@@ -184,13 +184,13 @@ end = struct
     let value = ValueVMap.add v.var path scope.value in
     let decl_list = Value (v, ty, attr) :: scope.decl_list in
     { scope with value ; decl_list}
-  let remove_value scope (v : ValueVar.t) =
+  let remove_value scope (v : Value_var.t) =
     let value = ValueVMap.remove v scope.value in
     { scope with value }
   let push_type_ scope t path =
     let type_ = TypeVMap.add t path scope.type_ in
     { scope with type_ }
-  let remove_type_ scope (v : TypeVar.t) =
+  let remove_type_ scope (v : Type_var.t) =
     let type_ = TypeVMap.remove v scope.type_ in
     { scope with type_ }
   let push_module scope m path mod_scope =
@@ -206,7 +206,7 @@ end = struct
     match PathVarMap.find_opt (p,v) scope.name_map with
       Some (v) -> scope,v
     | None ->
-        let var = ValueVar.fresh_like v in
+        let var = Value_var.fresh_like v in
         {scope with name_map=PathVarMap.add (p,v) var scope.name_map},var
 end
 

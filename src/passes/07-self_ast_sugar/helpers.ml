@@ -176,11 +176,11 @@ and map_declaration m : declaration -> declaration = fun d ->
   let aux : declaration_content ->declaration_content = fun x ->
     match x,m with
     | (D_value dc, Expression m') -> (
-        let dc = Types.ValueDecl.map (map_expression m') Fun.id dc in
+        let dc = Types.Value_decl.map (map_expression m') Fun.id dc in
         (D_value dc)
       )
     | (D_type dt, Type_expression m') -> (
-        let dt = Types.TypeDecl.map (map_type_expression m') dt in
+        let dt = Types.Type_decl.map (map_type_expression m') dt in
         (D_type dt)
       )
     | decl,_ -> decl

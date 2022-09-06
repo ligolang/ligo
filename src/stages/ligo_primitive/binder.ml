@@ -14,7 +14,7 @@ let empty_attribute = {
     const_or_var = None
   }
 type 'a t = {
-  var  : Var.ValueVar.t ;
+  var  : Var.Value_var.t ;
   ascr : 'a ;
   attributes : binder_attributes ;
   } [@@deriving eq,compare,yojson,hash,fold,map]
@@ -28,7 +28,7 @@ let pp g ppf {var;ascr;attributes={const_or_var}} =
     | Some `Const -> fprintf ppf ""
   in
   Format.fprintf ppf "%a%a%a"
-    Var.ValueVar.pp var
+    Var.Value_var.pp var
     option_const_or_var const_or_var
     g ascr
 

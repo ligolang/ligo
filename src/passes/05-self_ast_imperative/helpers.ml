@@ -202,11 +202,11 @@ and map_module : abs_mapper -> module_ -> module_ = fun m p ->
 and map_declaration_content = fun (m: abs_mapper) (x : declaration_content) : declaration_content ->
   match x,m with
   | D_value dc, Expression m' -> (
-      let dc = Types.ValueDecl.map (map_expression m') (fun a -> a) dc in
+      let dc = Types.Value_decl.map (map_expression m') (fun a -> a) dc in
       D_value dc
     )
   | D_type dt, Type_expression m' -> (
-      let dt = Types.TypeDecl.map (map_type_expression m') dt in
+      let dt = Types.Type_decl.map (map_type_expression m') dt in
       D_type dt
     )
   | D_module dm, Module m' -> (
@@ -215,7 +215,7 @@ and map_declaration_content = fun (m: abs_mapper) (x : declaration_content) : de
     D_module dm
   )
   | D_module dm, Expression _ -> (
-      let dm = Types.ModuleDecl.map (Location.map @@ Module_expr.map (map_decl m)) dm in
+      let dm = Types.Module_decl.map (Location.map @@ Module_expr.map (map_decl m)) dm in
       D_module dm
     )
   | decl,_ -> decl
@@ -334,7 +334,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> (init, return e')
 
 let remove_from var vars =
-  let f v vars = if ValueVar.equal var v then vars else v :: vars in
+  let f v vars = if Value_var.equal var v then vars else v :: vars in
   List.fold_right ~f vars ~init:[]
 
 let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Pattern.t) =
@@ -346,11 +346,11 @@ let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Patter
 
 module Free_variables :
   sig
-    val expression : expression -> ValueVar.t list
+    val expression : expression -> Value_var.t list
   end
   = struct
 
-  module VarSet = Caml.Set.Make(ValueVar)
+  module VarSet = Caml.Set.Make(Value_var)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty ~f:VarSet.union

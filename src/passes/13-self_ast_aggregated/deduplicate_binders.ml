@@ -7,53 +7,53 @@ open Ast_aggregated
 module Scope : sig
   type t
   val empty : t
-  val new_value_var  : t -> ValueVar.t -> t * ValueVar.t
-  val get_value_var  : t -> ValueVar.t -> ValueVar.t
-  val new_type_var   : t -> TypeVar.t -> t * TypeVar.t
-  val get_type_var   : t -> TypeVar.t -> TypeVar.t
+  val new_value_var  : t -> Value_var.t -> t * Value_var.t
+  val get_value_var  : t -> Value_var.t -> Value_var.t
+  val new_type_var   : t -> Type_var.t -> t * Type_var.t
+  val get_type_var   : t -> Type_var.t -> Type_var.t
   val diff           : t -> t -> t
   type swapper = {
-    value   : ValueVar.t -> ValueVar.t;
-    type_   : TypeVar.t       -> TypeVar.t;
+    value   : Value_var.t -> Value_var.t;
+    type_   : Type_var.t       -> Type_var.t;
   }
   val make_swapper : t -> swapper
 end =
 struct
-  module VMap = Simple_utils.Map.Make(ValueVar)
-  module TMap = Simple_utils.Map.Make(TypeVar)
-  type t = {value:ValueVar.t VMap.t;type_:TypeVar.t TMap.t}
+  module VMap = Simple_utils.Map.Make(Value_var)
+  module TMap = Simple_utils.Map.Make(Type_var)
+  type t = {value:Value_var.t VMap.t;type_:Type_var.t TMap.t}
   let empty = {value = VMap.empty;type_ = TMap.empty}
   let new_value_var map var =
     let var' = match VMap.find_opt var map.value with
-      Some (v) -> ValueVar.fresh_like ~loc:(ValueVar.get_location var) v
-    | None -> ValueVar.fresh_like var in
+      Some (v) -> Value_var.fresh_like ~loc:(Value_var.get_location var) v
+    | None -> Value_var.fresh_like var in
     let value = VMap.add var var' map.value in
     {map with value}, var'
 
   let get_value_var map var =
     (* The default value is for variable coming from other files *)
     Option.value ~default:var @@ VMap.find_opt var map.value
-    |> ValueVar.set_location  @@ ValueVar.get_location var
+    |> Value_var.set_location  @@ Value_var.get_location var
 
   let new_type_var (map : t) var =
     let var' = match TMap.find_opt var map.type_ with
-      Some (v) -> TypeVar.fresh_like ~loc:(TypeVar.get_location var) v
-    | None -> TypeVar.fresh_like var in
+      Some (v) -> Type_var.fresh_like ~loc:(Type_var.get_location var) v
+    | None -> Type_var.fresh_like var in
     let type_ = TMap.add var var' map.type_ in
     {map with type_}, var'
 
   let get_type_var (map : t) var =
     (* The default value is for variable coming from other files *)
     Option.value ~default:var @@ TMap.find_opt var map.type_
-    |> TypeVar.set_location @@ TypeVar.get_location var
+    |> Type_var.set_location @@ Type_var.get_location var
   let diff (a:t) (b:t) = {
-    value   = VMap.diff ValueVar.equal  a.value   b.value  ;
-    type_   = TMap.diff TypeVar.equal   a.type_   b.type_  ;
+    value   = VMap.diff Value_var.equal  a.value   b.value  ;
+    type_   = TMap.diff Type_var.equal   a.type_   b.type_  ;
   }
 
   type swapper = {
-    value   : ValueVar.t -> ValueVar.t;
-    type_   : TypeVar.t       -> TypeVar.t;
+    value   : Value_var.t -> Value_var.t;
+    type_   : Type_var.t       -> Type_var.t;
   }
   let make_swapper (scope:t) : swapper =
     let swap_value   = List.map ~f:(fun (k,v) -> v,k) in

@@ -42,7 +42,7 @@ open Literal_types
 
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
 let t_singleton ?loc x = make_t ?loc @@ T_singleton x
-let t_variable_ez ?loc n     : type_expression = t_variable ?loc (TypeVar.of_input_var n)
+let t_variable_ez ?loc n     : type_expression = t_variable ?loc (Type_var.of_input_var n)
 
 let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
 
@@ -130,7 +130,7 @@ let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; argum
 
 let e_constant    ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable    ?loc v = make_e ?loc @@ E_variable v
-let e_variable_ez ?loc v = e_variable ?loc @@ ValueVar.of_input_var ?loc v
+let e_variable_ez ?loc v = e_variable ?loc @@ Value_var.of_input_var ?loc v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_type_abs  ?loc type_binder result : expression = e_type_abstraction ?loc {type_binder;result} ()
@@ -220,7 +220,7 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_assign ?loc binder expression = make_e ?loc @@ E_assign {binder;expression}
-let e_assign_ez ?loc variable expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) expression
+let e_assign_ez ?loc variable expression = e_assign ?loc ({var=Value_var.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) expression
 
 let e_unopt ?loc matchee none_body (var_some,some_body) =
   let attributes = Binder.{const_or_var = None} in

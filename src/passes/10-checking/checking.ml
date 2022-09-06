@@ -457,7 +457,7 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
       let case_exp = { case_exp with location = e.location } in
       return case_exp.expression_content case_exp.type_expression
     | _ ->
-      let matcheevar = ValueVar.fresh () in
+      let matcheevar = Value_var.fresh () in
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       let x = O.E_let_in { let_binder = {var=matcheevar;ascr=matchee'.type_expression;attributes={const_or_var=Some `Var}} ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; hidden = false ; thunk = false } } in
@@ -507,14 +507,14 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
     let expr' = self ~tv_opt:tv ~context:(app_context, context) anno_expr in
     return_e expr'
   | E_module_accessor {module_path; element} -> (
-    let f = fun acc el -> trace_option ~raise (unbound_module_variable el (ModuleVar.get_location el)) (Typing_context.get_module acc el) in
+    let f = fun acc el -> trace_option ~raise (unbound_module_variable el (Module_var.get_location el)) (Typing_context.get_module acc el) in
     let module_env = List.fold ~init:context ~f module_path in
     let tv' = trace_option ~raise (unbound_variable element e.location) @@ Typing_context.get_value module_env element in
     let tc , tv = infer_t_insts ~raise ~options ~loc:e.location app_context (E_module_accessor {module_path; element}, tv') in
     return tc tv
   )
   | E_assign {binder; expression} ->
-    let variable_type = trace_option ~raise (unbound_variable binder.var (ValueVar.get_location binder.var)) @@ Typing_context.get_value context binder.var in
+    let variable_type = trace_option ~raise (unbound_variable binder.var (Value_var.get_location binder.var)) @@ Typing_context.get_value context binder.var in
     let binder = {binder with ascr=variable_type} in
     let expression = self expression in
     let expression_type = expression.type_expression in
@@ -629,7 +629,7 @@ and type_module_expr ~raise ~init_context ~options : I.module_expr -> typing_con
     ctxt, ret
   in
   let access_module ctxt v =
-    trace_option ~raise (unbound_module_variable v (ModuleVar.get_location v)) (Typing_context.get_module ctxt v)
+    trace_option ~raise (unbound_module_variable v (Module_var.get_location v)) (Typing_context.get_module ctxt v)
   in
   match m_expr.wrap_content with
   | M_struct prg ->

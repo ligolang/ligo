@@ -62,9 +62,9 @@ let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term
 
 let pp_env : Format.formatter -> env -> unit = fun ppf env ->
-  let aux : Format.formatter -> ValueVar.t * env_item -> unit = fun ppf ->
+  let aux : Format.formatter -> Value_var.t * env_item -> unit = fun ppf ->
     function (name, {item;no_mutation=_;inline=_}) ->
-                Format.fprintf ppf "%a -> %a" ValueVar.pp name pp_value_expr item in
+                Format.fprintf ppf "%a -> %a" Value_var.pp name pp_value_expr item in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
     (List.length env)
     (list_sep aux (tag "@ "))

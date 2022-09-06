@@ -5,9 +5,9 @@ open Ast_typed
 open Errors
 open Simple_utils.Trace
 
-let var_equal = ValueVar.equal
+let var_equal = Value_var.equal
 
-let rec check_recursive_call ~raise : ValueVar.t -> bool -> expression -> unit = fun n final_path e ->
+let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ()
   | E_constant c  ->
@@ -81,7 +81,7 @@ let show_unused_rec_warning ~raise ~warn_unused_rec fun_name =
   if warn_unused_rec then
     raise.warning
       (`Self_ast_typed_warning_unused_rec
-        (ValueVar.get_location fun_name, Format.asprintf "%a" ValueVar.pp fun_name))
+        (Value_var.get_location fun_name, Format.asprintf "%a" Value_var.pp fun_name))
   else ()
 
 let remove_rec_expression ~raise ~warn_unused_rec : expression -> expression

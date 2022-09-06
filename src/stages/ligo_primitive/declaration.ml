@@ -6,7 +6,7 @@ module type Attr = sig
   val  pp : Format.formatter -> t -> unit
 end
 
-module ValueDecl (Attr : Attr) = struct
+module Value_decl (Attr : Attr) = struct
   type ('e,'t) t = {
       binder : 't Binder.t;
       expr : 'e ;
@@ -24,7 +24,7 @@ module ValueDecl (Attr : Attr) = struct
       if print_type then
         Format.fprintf ppf "%a" (Binder.pp g) b
       else
-        Format.fprintf ppf "%a" Var.ValueVar.pp b.var
+        Format.fprintf ppf "%a" Var.Value_var.pp b.var
     in
     Format.fprintf ppf "@[<2>const %a =@ %a%a@]"
       cond binder
@@ -33,9 +33,9 @@ module ValueDecl (Attr : Attr) = struct
 
 end
 
-module TypeDecl (Attr:Attr) = struct
+module Type_decl (Attr:Attr) = struct
   type 't t = {
-      type_binder : Var.TypeVar.t ;
+      type_binder : Var.Type_var.t ;
       type_expr : 't ;
       type_attr : Attr.t ;
     } [@@deriving eq,compare,yojson,hash,fold,map]
@@ -47,15 +47,15 @@ module TypeDecl (Attr:Attr) = struct
 
   let pp g ppf = fun {type_binder;type_expr; type_attr} ->
     Format.fprintf ppf "@[<2>type %a =@ %a%a@]"
-      Var.TypeVar.pp type_binder
+      Var.Type_var.pp type_binder
       g type_expr
       Attr.pp type_attr
 
 end
 
-module ModuleDecl (Attr : Attr) = struct
+module Module_decl (Attr : Attr) = struct
   type ('module_expr) t = {
-      module_binder : Var.ModuleVar.t ;
+      module_binder : Var.Module_var.t ;
       module_ : 'module_expr;
       module_attr : Attr.t
     } [@@deriving eq,compare,yojson,hash,fold,map]
@@ -68,7 +68,7 @@ module ModuleDecl (Attr : Attr) = struct
 
   let pp h ppf = fun {module_binder;module_;module_attr} ->
     Format.fprintf ppf "@[<2>module %a =@ %a%a@]"
-      Var.ModuleVar.pp module_binder
+      Var.Module_var.pp module_binder
       h module_
       Attr.pp module_attr
 

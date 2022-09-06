@@ -14,13 +14,13 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
     Literal_types.equal a b
   in
   match type_matched.type_content, type_.type_content with
-  | T_variable v, _ when List.mem dom v ~equal:TypeVar.equal -> (
+  | T_variable v, _ when List.mem dom v ~equal:Type_var.equal -> (
      match TMap.find_opt v table with
      | Some t -> trace_option ~raise (not_matching loc t type_) (assert_type_expression_eq (type_, t));
                  table
      | None -> TMap.add v type_ table)
   | T_variable v, T_variable w -> (
-    Assert.assert_true ~raise (not_matching loc type_matched type_) (TypeVar.equal v w);
+    Assert.assert_true ~raise (not_matching loc type_matched type_) (Type_var.equal v w);
     table)
   | T_arrow {type1;type2}, T_arrow {type1=type1_;type2=type2_} ->
      let table = self dom table type1 type1_ in

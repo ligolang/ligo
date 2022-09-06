@@ -20,7 +20,7 @@ let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
 
-let apply_to_entrypoint_contract ~raise ~options : Ast_typed.program -> ValueVar.t -> Ast_aggregated.expression =
+let apply_to_entrypoint_contract ~raise ~options : Ast_typed.program -> Value_var.t -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
   let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
@@ -33,13 +33,13 @@ let apply_to_entrypoint_contract ~raise ~options : Ast_typed.program -> ValueVar
 let apply_to_entrypoint ~raise ~options : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = ValueVar.of_input_var entrypoint in
+  let v = Value_var.of_input_var entrypoint in
   let ty, _ =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg in
   let var_ep = Ast_typed.(e_a_variable v ty) in
   compile_expression_in_context ~raise ~options var_ep aggregated_prg
 
-let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> ValueVar.t -> Ast_typed.program -> Ast_typed.expression -> unit  =
+let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> Value_var.t -> Ast_typed.program -> Ast_typed.expression -> unit  =
     fun c entry contract param ->
   let entry_point = trace_option ~raise main_entrypoint_not_found (Ast_typed.get_entry contract entry) in
   trace ~raise (check_typed_arguments_tracer c) (
@@ -73,7 +73,7 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
     compile_expression_in_context ~raise ~options tuple_view aggregated_prg
 
 (* if only_ep, we only list the declarations with types fiting an entrypoint *)
-let list_declarations (only_ep: bool) (m : Ast_typed.program) : ValueVar.t list =
+let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
@@ -88,7 +88,7 @@ let list_declarations (only_ep: bool) (m : Ast_typed.program) : ValueVar.t list 
       | _ -> prev)
     ~init:[] m
 
-let list_type_declarations (m : Ast_typed.program) : TypeVar.t list =
+let list_type_declarations (m : Ast_typed.program) : Type_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
@@ -97,7 +97,7 @@ let list_type_declarations (m : Ast_typed.program) : TypeVar.t list =
       | _ -> prev)
     ~init:[] m
 
-let list_mod_declarations (m : Ast_typed.program) : ModuleVar.t list =
+let list_mod_declarations (m : Ast_typed.program) : Module_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in

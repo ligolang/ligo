@@ -6,7 +6,7 @@ type collect_type =
   [@@deriving eq,compare,yojson,hash]
 
 type 'e t = {
-  fe_binder : Var.ValueVar.t * Var.ValueVar.t option ;
+  fe_binder : Var.Value_var.t * Var.Value_var.t option ;
   collection : 'e ;
   collection_type : collect_type ;
   fe_body : 'e ;
@@ -14,8 +14,8 @@ type 'e t = {
 
 let option_map ppf (k,v_opt) =
   match v_opt with
-  | None   -> Format.fprintf ppf "%a" Var.ValueVar.pp k
-  | Some v -> Format.fprintf ppf "%a -> %a" Var.ValueVar.pp k Var.ValueVar.pp v
+  | None   -> Format.fprintf ppf "%a" Var.Value_var.pp k
+  | Some v -> Format.fprintf ppf "%a -> %a" Var.Value_var.pp k Var.Value_var.pp v
 
 let pp f ppf = fun {fe_binder; collection; fe_body; _} ->
   Format.fprintf ppf "for each %a in %a do %a"

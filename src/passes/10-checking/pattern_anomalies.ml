@@ -18,7 +18,7 @@ let nil_label  = Label.of_string "#NIL"
 
 let t_unit = AST.t_unit ()
 let wild_binder =
-  let var = ValueVar.wildcard in
+  let var = Value_var.wildcard in
   let attributes = Binder.empty_attribute in
   Binder.{ var ; ascr = None ; attributes }
 

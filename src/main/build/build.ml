@@ -39,13 +39,13 @@ module M (Params : Params) =
         Environment.append ast env
       let add_module_to_env : module_name -> environment -> environment -> environment =
         fun module_name ast_typed_env env ->
-          let module_name = ModuleVar.of_input_var module_name in
+          let module_name = Module_var.of_input_var module_name in
           Environment.add_module ~public:() module_name (Environment.to_module ast_typed_env) env
       let init_env : environment = options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
-        let module_binder = ModuleVar.of_input_var module_binder in
+        let module_binder = Module_var.of_input_var module_binder in
         Location.wrap Ast_typed.(D_module {module_binder;module_;module_attr={public=true;hidden=true}})
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -72,13 +72,13 @@ module Infer (Params : Params) = struct
         Environment.append_core ast env
       let add_module_to_env : module_name -> environment -> environment -> environment =
         fun module_name ast_typed_env env ->
-          let module_name = ModuleVar.of_input_var module_name in
+          let module_name = Module_var.of_input_var module_name in
           Environment.add_core_module ~public:() module_name (Environment.to_core_module ast_typed_env) env
       let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
-        let module_binder = ModuleVar.of_input_var module_binder in
+        let module_binder = Module_var.of_input_var module_binder in
         Location.wrap Ast_core.(D_module {module_binder;module_;module_attr={public=true;hidden=true}})
   end
 
@@ -173,7 +173,7 @@ let build_expression ~raise : options:Compiler_options.t -> Syntax_types.t -> st
 
 let build_aggregated ~raise : options:Compiler_options.t -> string -> Source_input.file_name -> Ast_aggregated.expression =
   fun ~options entry_point file_name ->
-    let entry_point = ValueVar.of_input_var entry_point in
+    let entry_point = Value_var.of_input_var entry_point in
     let typed_prg = build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
     let (parameter_ty, storage_ty) =
@@ -194,10 +194,10 @@ let build_contract ~raise : options:Compiler_options.t -> string -> Source_input
     Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
 
 let build_aggregated_views ~raise :
-  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (ValueVar.t list * Ast_aggregated.expression) option =
+  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Value_var.t list * Ast_aggregated.expression) option =
   fun ~options main_name cli_views source_file ->
     let form =
-      let contract_entry = ValueVar.of_input_var main_name in
+      let contract_entry = Value_var.of_input_var main_name in
       let command_line_views = match cli_views with [] -> None | x -> Some x in
       Ligo_compile.Of_core.View { command_line_views ; contract_entry }
     in
@@ -214,7 +214,7 @@ let build_aggregated_views ~raise :
       Some (view_names, aggregated)
 
 let build_views ~raise :
-  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (ValueVar.t * Stacking.compiled_expression) list =
+  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Value_var.t * Stacking.compiled_expression) list =
   fun ~options main_name cli_views source_file ->
     match build_aggregated_views ~raise ~options main_name cli_views source_file with
     | None -> []

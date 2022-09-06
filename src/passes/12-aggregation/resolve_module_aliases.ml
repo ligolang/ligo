@@ -2,10 +2,10 @@ open Ligo_prim
 module AST = Ast_typed
 
 module Aliases = struct
-  module MMap = Simple_utils.Map.Make(ModuleVar)
-  type t = {inside : (t * ModuleVar.t list option) MMap.t}
+  module MMap = Simple_utils.Map.Make(Module_var)
+  type t = {inside : (t * Module_var.t list option) MMap.t}
   let rec pp ppf {inside} =
-    Format.fprintf ppf "%a" (PP_helpers.list_sep_d (fun ppf (k,(t,v)) -> Format.fprintf ppf "%a => (%a,%a)" ModuleVar.pp k pp t PP_helpers.(option (list_sep_d ModuleVar.pp)) v )) @@ MMap.to_kv_list inside
+    Format.fprintf ppf "%a" (PP_helpers.list_sep_d (fun ppf (k,(t,v)) -> Format.fprintf ppf "%a => (%a,%a)" Module_var.pp k pp t PP_helpers.(option (list_sep_d Module_var.pp)) v )) @@ MMap.to_kv_list inside
   let empty = {inside = MMap.empty}
   let push aliases mvar path mod_aliases =
     {inside = MMap.add mvar (path,mod_aliases) aliases.inside}
@@ -164,7 +164,7 @@ and compile_module aliases (m : AST.module_) : Aliases.t * AST.module_ =
   let dcl = List.filter_opt dcl in
   aliases,dcl
 
-and compile_module_expr : Aliases.t -> AST.module_expr -> Aliases.t * ModuleVar.t list option * AST.module_expr option =
+and compile_module_expr : Aliases.t -> AST.module_expr -> Aliases.t * Module_var.t list option * AST.module_expr option =
   fun aliases mexpr ->
     match mexpr.wrap_content with
     | M_struct prg -> (

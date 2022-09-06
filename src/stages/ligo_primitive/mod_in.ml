@@ -1,5 +1,5 @@
   type ('e,'dcl) t = {
-    module_binder : Var.ModuleVar.t ;
+    module_binder : Var.Module_var.t ;
     rhs           : 'dcl;
     let_result    : 'e ;
   } [@@deriving eq,compare,yojson,hash,fold,map]
@@ -13,6 +13,6 @@ let fold_map :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -
 
 let pp f h ppf = fun {module_binder; rhs; let_result;} ->
   Format.fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
-    Var.ModuleVar.pp module_binder
+    Var.Module_var.pp module_binder
     h rhs
     f let_result

@@ -94,10 +94,10 @@ let rec build_type_abstractions e = function
               type_expression = Combinators.t_for_all abs_var Type e.type_expression }
 
 (* These tables are used during inference / for substitution *)
-module TMap = Simple_utils.Map.Make(TypeVar)
+module TMap = Simple_utils.Map.Make(Type_var)
 
 (* Free type variables in a type *)
-module VarSet = Caml.Set.Make(TypeVar)
+module VarSet = Caml.Set.Make(Type_var)
 let rec get_fv_type_expression : type_expression -> VarSet.t = fun u ->
   let self = get_fv_type_expression in
   match u.type_content with
@@ -130,25 +130,25 @@ let rec get_fv_type_expression : type_expression -> VarSet.t = fun u ->
 let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   let self = subst_type ~fv in
   match u.type_content with
-  | T_variable v' when TypeVar.equal v v' -> t
+  | T_variable v' when Type_var.equal v v' -> t
   | T_arrow {type1;type2} ->
      let type1 = self v t type1 in
      let type2 = self v t type2 in
      { u with type_content = T_arrow {type1;type2} }
   | T_abstraction {ty_binder;kind;type_} when (VarSet.mem ty_binder fv) ->
-     let ty_binder' = TypeVar.fresh () in
+     let ty_binder' = Type_var.fresh () in
      let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
      let ty_binder = ty_binder' in
      self v t { u with type_content = T_abstraction {ty_binder;kind;type_} }
-  | T_abstraction {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
+  | T_abstraction {ty_binder;kind;type_} when not (Type_var.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_abstraction {ty_binder;kind;type_} }
   | T_for_all {ty_binder;kind;type_} when (VarSet.mem ty_binder fv) ->
-     let ty_binder' = TypeVar.fresh () in
+     let ty_binder' = Type_var.fresh () in
      let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
      let ty_binder = ty_binder' in
      self v t { u with type_content = T_for_all {ty_binder;kind;type_} }
-  | T_for_all {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
+  | T_for_all {ty_binder;kind;type_} when not (Type_var.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_for_all {ty_binder;kind;type_} }
   | T_constant {language;injection;parameters} ->
@@ -473,12 +473,12 @@ end (* of module IdMap *)
 *)
 let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
   let add_if_shadowed_t_sum :
-    TypeVar.t -> (TypeVar.t * type_expression) list * bool -> type_expression -> (TypeVar.t * type_expression) list * bool =
+    Type_var.t -> (Type_var.t * type_expression) list * bool -> type_expression -> (Type_var.t * type_expression) list * bool =
     fun shadower_tv (accu, is_top) te ->
       let ret x = (x, false) in
       match (te.type_content, te.orig_var) with
       | T_sum _, Some tv -> (
-          if (TypeVar.equal tv shadower_tv) && (not is_top)
+          if (Type_var.equal tv shadower_tv) && (not is_top)
           then ret ((tv, te) :: accu)
           else ret accu
         )
@@ -486,7 +486,7 @@ let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
       | _ -> ret accu
 
   in
-  let (nested_t_sums, _) : (TypeVar.t * type_expression) list * bool =
+  let (nested_t_sums, _) : (Type_var.t * type_expression) list * bool =
     fold_type_expression
     te
     ~init:(tsum_list, true)
@@ -495,11 +495,11 @@ let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
   (tv, te) :: nested_t_sums
 
 (* get_views [p] looks for top-level declaration annotated with [@view] in program [p] and return declaration data *)
-let get_views : program -> (ValueVar.t * Location.t) list = fun p ->
-  let f : declaration -> (ValueVar.t * Location.t) list -> (ValueVar.t * Location.t) list =
+let get_views : program -> (Value_var.t * Location.t) list = fun p ->
+  let f : declaration -> (Value_var.t * Location.t) list -> (Value_var.t * Location.t) list =
     fun {wrap_content=decl ; location=_ } acc ->
       match decl with
-      | D_value { binder ; expr=_ ; attr } when attr.view -> (binder.var, ValueVar.get_location binder.var)::acc
+      | D_value { binder ; expr=_ ; attr } when attr.view -> (binder.var, Value_var.get_location binder.var)::acc
       | _ -> acc
   in
   List.fold_right ~init:[] ~f p

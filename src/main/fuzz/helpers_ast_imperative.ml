@@ -126,21 +126,21 @@ module Fold_helpers(M : Monad) = struct
     ok @@ While_loop.{cond; body}
 
   (* Declaration *)
-  let declaration_type : ('a -> 'b monad) -> 'a TypeDecl.t -> 'b TypeDecl.t monad
+  let declaration_type : ('a -> 'b monad) -> 'a Type_decl.t -> 'b Type_decl.t monad
     = fun g {type_binder; type_expr; type_attr} ->
     let* type_expr = g type_expr in
-    ok @@ TypeDecl.{type_binder; type_expr; type_attr}
+    ok @@ Type_decl.{type_binder; type_expr; type_attr}
 
-  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) ValueDecl.t -> ('b,'d) ValueDecl.t monad
+  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Value_decl.t -> ('b,'d) Value_decl.t monad
     = fun f g {binder=b; attr; expr} ->
     let* binder = binder g b in
     let* expr   = f expr     in
-    ok @@ ValueDecl.{binder;attr;expr}
+    ok @@ Value_decl.{binder;attr;expr}
 
-  let rec declaration_module : ('a -> 'b monad) -> 'a ModuleDecl.t -> 'b ModuleDecl.t monad
+  let rec declaration_module : ('a -> 'b monad) -> 'a Module_decl.t -> 'b Module_decl.t monad
     = fun f {module_binder; module_;module_attr} ->
     let* module_ = f module_ in
-    ok @@ ModuleDecl.{module_binder;module_;module_attr}
+    ok @@ Module_decl.{module_binder;module_;module_attr}
 
   and module' : _ -> module_ -> module_ monad
     = fun f prg ->

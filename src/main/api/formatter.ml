@@ -6,11 +6,11 @@ let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file ;
-    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" ValueVar.pp decl) decls
+    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" Value_var.pp decl) decls
 
 let declarations_jsonformat (source_file,decls) : json =
   (* Use to_name instead of to_yojson for compality with IDE *)
-  let json_decl = List.map ~f:(fun decl -> `String (ValueVar.to_name_exn decl)) decls in
+  let json_decl = List.map ~f:(fun decl -> `String (Value_var.to_name_exn decl)) decls in
   `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
 
 let declarations_format : 'a format = {

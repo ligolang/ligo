@@ -4,7 +4,7 @@ open Ast_aggregated
 
 (* Utilities *)
 
-let rec uncurry_lambda (depth : int) (expr : expression) : ValueVar.t list * expression =
+let rec uncurry_lambda (depth : int) (expr : expression) : Value_var.t list * expression =
   match expr.expression_content with
   | E_lambda { binder; result } when depth > 0 ->
     let (vars, result) = uncurry_lambda (depth - 1) result in
@@ -32,7 +32,7 @@ let curried_depth_in_lambda (rhs : expression) : int =
 
 let isvar f x : bool =
   match x.expression_content with
-  | E_variable x -> ValueVar.equal f x
+  | E_variable x -> Value_var.equal f x
   | _ -> false
 
 (* Finding the usage of a function in an expression: we will look for
@@ -56,16 +56,16 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
 
 let usages = List.fold_left ~f:combine_usage ~init:Unused
 
-let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
+let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
-    if List.mem ~equal:ValueVar.equal vars f
+    if List.mem ~equal:Value_var.equal vars f
     then Unused
     else usage_in_expr f e in
   match expr.expression_content with
   (* interesting cases: *)
   | E_variable x ->
-    if ValueVar.equal f x
+    if Value_var.equal f x
     (* if f was only used in applications we won't get here *)
     then Other
     else Unused
@@ -144,7 +144,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
 
   let (vars, body) = uncurry_lambda depth expr in
-  let binder = ValueVar.fresh () in
+  let binder = Value_var.fresh () in
 
   let labels = uncurried_labels depth in
   let rows = uncurried_rows depth arg_types in
@@ -173,11 +173,11 @@ let uncurry_rhs (depth : int) (expr : expression) =
   (binder, result, arg_types, record_type, ret_type)
 
 let rec uncurry_in_expression ~raise
-    (f : ValueVar.t) (depth : int) (expr : expression) :
+    (f : Value_var.t) (depth : int) (expr : expression) :
   expression =
   let self = uncurry_in_expression ~raise f depth in
   let self_binder vars e =
-    if List.mem ~equal:ValueVar.equal vars f
+    if List.mem ~equal:Value_var.equal vars f
     then e
     else uncurry_in_expression ~raise f depth e in
   let return e' = { expr with expression_content = e' } in
@@ -281,7 +281,7 @@ let uncurry_expression (expr : expression) : expression =
               (* Uncurry calls inside the expression *)
               let result = uncurry_in_expression ~raise fun_name depth result in
               (* Generate binders for each argument: x1', ..., xn' *)
-              let binder_types = List.map ~f:(fun t -> (ValueVar.fresh (), t)) arg_types in
+              let binder_types = List.map ~f:(fun t -> (Value_var.fresh (), t)) arg_types in
               (* An variable for each function argument *)
               let args = List.map ~f:(fun (b, t) -> e_a_variable b t) binder_types in
               (* Generate tupled argument (x1', ..., xn') *)

@@ -11,12 +11,12 @@ open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
+let empty_message = e_lambda_ez (Value_var.of_input_var "arguments")
   ~ascr:(t_bytes ()) (Some (t_list (t_operation ())))
   empty_op_list
-let empty_message2 = e_lambda_ez (ValueVar.of_input_var "arguments")
+let empty_message2 = e_lambda_ez (Value_var.of_input_var "arguments")
   ~ascr:(t_bytes ()) (Some (t_list (t_operation ())))
- ( e_let_in_ez (ValueVar.of_input_var "foo") ~ascr:(t_unit ()) [] (e_unit ()) empty_op_list)
+ ( e_let_in_ez (Value_var.of_input_var "foo") ~ascr:(t_unit ()) [] (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message

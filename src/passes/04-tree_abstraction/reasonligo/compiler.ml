@@ -30,9 +30,9 @@ open Predefined.Tree_abstraction
 let r_split = Location.r_split
 
 let quote_var var = "'"^var
-let compile_variable var = let (var,loc) = r_split var in ValueVar.of_input_var ~loc var
-let compile_type_var var  = let (var,loc) = r_split var in TypeVar.of_input_var ~loc var
-let compile_mod_var var = let (var,loc) = r_split var in ModuleVar.of_input_var ~loc var
+let compile_variable var = let (var,loc) = r_split var in Value_var.of_input_var ~loc var
+let compile_type_var var  = let (var,loc) = r_split var in Type_var.of_input_var ~loc var
+let compile_mod_var var = let (var,loc) = r_split var in Module_var.of_input_var ~loc var
 let compile_attributes (attributes : string Region.reg list) : Let_in.attributes =
   List.map ~f:(fst <@ r_split) attributes
 
@@ -161,27 +161,27 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
     self type_expr
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = TypeVar.of_input_var ~loc name in
+    let v = Type_var.of_input_var ~loc name in
     return @@ t_variable ~loc v
   | TString _s -> raise.error @@ unsupported_string_singleton te
   | TInt _s -> raise.error @@ unsupported_string_singleton te
   | TModA ma -> (
     let (ma, loc) = r_split ma in
     let module_name = compile_mod_var ma.module_name in
-    let rec aux : ModuleVar.t list -> CST.type_expr -> AST.type_expression = fun acc exp ->
+    let rec aux : Module_var.t list -> CST.type_expr -> AST.type_expression = fun acc exp ->
       match exp with
       | TVar v ->
         let accessed_el = compile_type_var v in
         t_module_accessor ~loc acc accessed_el
       | TModA ma ->
-        aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
+        aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
       | _ -> raise.error (expected_access_to_variable (CST.type_expr_to_region ma.field))
     in
     return @@ aux [module_name] ma.field
   )
   | TArg var ->
     let (name,loc) = r_split var in
-    let v = TypeVar.of_input_var ~loc (quote_var name.name.value) in
+    let v = Type_var.of_input_var ~loc (quote_var name.name.value) in
     return @@ t_variable ~loc v
 
 
@@ -379,7 +379,7 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
       (match constants var with
         Some const -> return @@ e_constant ~loc const []
        | None -> (
-         let rec aux : ModuleVar.t list -> CST.expr -> AST.expression = fun acc exp ->
+         let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
            match exp with
            | EVar v ->
               let accessed_el = compile_variable v in
@@ -387,17 +387,17 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
            | EProj proj ->
               let (proj, _) = r_split proj in
               let (var, _) = r_split proj.struct_name in
-              let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
+              let moda  = e_module_accessor ~loc acc (Value_var.of_input_var var) in
               let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
               return @@ e_accessor ~loc moda sels
            | EModA ma ->
-              aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
+              aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
            | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
          in
-         aux [ModuleVar.of_input_var ma.module_name.value] ma.field)
+         aux [Module_var.of_input_var ma.module_name.value] ma.field)
       )
     else
-      let rec aux : ModuleVar.t list -> CST.expr -> AST.expression = fun acc exp ->
+      let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
         match exp with
         | EVar v ->
           let accessed_el = compile_variable v in
@@ -405,14 +405,14 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
         | EProj proj ->
           let (proj, _) = r_split proj in
           let (var, _) = r_split proj.struct_name in
-          let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
+          let moda  = e_module_accessor ~loc acc (Value_var.of_input_var var) in
           let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
           return @@ e_accessor ~loc moda sels
         | EModA ma ->
-          aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
+          aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
         | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
       in
-      aux [ModuleVar.of_input_var ma.module_name.value] ma.field
+      aux [Module_var.of_input_var ma.module_name.value] ma.field
   )
   | EUpdate update ->
     let (update, _loc) = r_split update in
@@ -450,9 +450,9 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
         let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.Ascription.anno_expr) @@ get_e_annotation e  in
         let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda @@ (get_first_non_annotation expr).expression_content in
         let lhs_type = Option.map ~f:(Utils.uncurry t_arrow) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
-        let fun_type = trace_option ~raise (untyped_recursive_fun @@ ValueVar.get_location fun_binder) @@ lhs_type in
+        let fun_type = trace_option ~raise (untyped_recursive_fun @@ Value_var.get_location fun_binder) @@ lhs_type in
         let lambda = Lambda.map Fun.id (fun x -> Option.value_exn x) lambda in
-        e_recursive ~loc:(ValueVar.get_location fun_binder) fun_binder fun_type lambda
+        e_recursive ~loc:(Value_var.get_location fun_binder) fun_binder fun_type lambda
     | None -> expr
     in
     let expr = Option.value_map ~default:expr ~f:(fun tp ->
@@ -583,8 +583,8 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b : _ Binder.t =
       let var = match var with
-        | "_" -> ValueVar.fresh ~loc ()
-        | var -> ValueVar.of_input_var ~loc var
+        | "_" -> Value_var.fresh ~loc ()
+        | var -> Value_var.of_input_var ~loc var
       in
       { var ; ascr = None ; attributes }
     in
@@ -716,7 +716,7 @@ and compile_parameter ~raise : CST.pattern -> type_expression option Binder.t * 
     PConstr _ ->raise.error @@ unsupported_pattern_type pattern
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
-    return_1 ~ascr:(t_unit ~loc ()) @@ ValueVar.fresh ~loc ()
+    return_1 ~ascr:(t_unit ~loc ()) @@ Value_var.fresh ~loc ()
   | PVar {value={variable; attributes}; _} ->
     let var = compile_variable variable in
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
@@ -724,7 +724,7 @@ and compile_parameter ~raise : CST.pattern -> type_expression option Binder.t * 
     return_1 ~attributes var
   | PTuple tuple ->
     let (tuple, _loc) = r_split tuple in
-    let var = ValueVar.fresh () in
+    let var = Value_var.fresh () in
     let aux pattern (binder_lst, fun_) =
       let (binder,fun_') = compile_parameter ~raise pattern in
       (binder :: binder_lst, fun_' <@ fun_)
@@ -761,7 +761,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let aux : CST.type_var Region.reg -> AST.type_expression -> AST.type_expression =
           fun param type_ ->
             let (param,loc) = r_split param in
-            let ty_binder = TypeVar.of_input_var ~loc (quote_var param.name.value) in
+            let ty_binder = Type_var.of_input_var ~loc (quote_var param.name.value) in
             t_abstraction ~loc:(Location.lift region) ty_binder Type type_
         in
         List.fold_right ~f:aux ~init:rhs lst
