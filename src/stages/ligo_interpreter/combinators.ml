@@ -37,6 +37,27 @@ let v_int : Z.t -> value =
 let v_mutez : Z.t -> value =
   fun v -> V_Ct (C_mutez v)
 
+let v_timestamp : Z.t -> value =
+  fun v -> V_Ct (C_timestamp v)
+
+let v_bls12_381_g1 : Bls12_381.G1.t -> value =
+  fun v -> V_Ct (C_bls12_381_g1 v)
+
+let v_bls12_381_g2 : Bls12_381.G2.t -> value =
+  fun v -> V_Ct (C_bls12_381_g2 v)
+
+let v_bls12_381_fr : Bls12_381.Fr.t -> value =
+  fun v -> V_Ct (C_bls12_381_fr v)
+
+let v_key_hash : Tezos_crypto.Signature.public_key_hash -> value =
+  fun v -> V_Ct (C_key_hash v)
+
+let v_key : Tezos_crypto.Signature.public_key -> value =
+  fun v -> V_Ct (C_key v)
+
+let v_signature : Tezos_crypto.Signature.t -> value =
+  fun v -> V_Ct (C_signature v)
+
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
 
@@ -266,7 +287,8 @@ let tag_value : value -> int = function
   | V_Mutation _ -> 7
   | V_Func_val _ -> 8
   | V_Michelson_contract _ -> 9
-  | V_Gen _ -> 10
+  | V_Ast_contract _ -> 10
+  | V_Gen _ -> 11
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
@@ -306,9 +328,10 @@ let rec compare_value (v : value) (v' : value) : int =
     | c -> c
   )
   | V_Michelson_contract c, V_Michelson_contract c' -> Caml.compare c c'
+  | V_Ast_contract { main ; views = _ }, V_Ast_contract { main = main' ; views = _ } -> Caml.compare main main'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
   | V_Gen v, V_Gen v' -> Caml.compare v v'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

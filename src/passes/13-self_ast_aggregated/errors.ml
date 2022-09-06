@@ -13,6 +13,9 @@ type self_ast_aggregated_error = [
   | `Self_ast_aggregated_emit_tag_not_literal of Location.t
   | `Self_ast_aggregated_unmatched_entrypoint of Location.t
   | `Self_ast_aggregated_corner_case of string
+  | `Self_ast_aggregated_bad_single_arity of (Constant.constant' * Ast_aggregated.expression)
+  | `Self_ast_aggregated_bad_map_param_type of (Constant.constant' * Ast_aggregated.expression)
+  | `Self_ast_aggregated_bad_set_param_type of (Constant.constant' * Ast_aggregated.expression)
 ] [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -59,6 +62,18 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Internal error: %s @]"
         desc
+    | `Self_ast_aggregated_bad_single_arity (c, e) ->
+      Format.fprintf f
+        "@[<hv>%a@ Ill-formed \"%a\" expression@.One function argument is expected. @]"
+        Snippet.pp e.location Constant.pp_constant' c
+    | `Self_ast_aggregated_bad_map_param_type (c,e) ->
+      Format.fprintf f
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
+        Snippet.pp e.location Constant.pp_constant' c
+    | `Self_ast_aggregated_bad_set_param_type (c,e) ->
+      Format.fprintf f
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
+        Snippet.pp e.location Constant.pp_constant' c
   )
 
 let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
@@ -154,4 +169,34 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
        ("description", description);
        ]
     in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_bad_single_arity (c, e) ->
+    let message = `String "constant expects one parameters" in
+    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_bad_map_param_type (c,e) ->
+    let message = `String "constant expects a list of pair as parameter" in
+    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_bad_set_param_type (c,e) ->
+    let message = `String "constant expects a list as parameter" in
+    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+      ("value", value);
+    ] in
     json_error ~stage ~content

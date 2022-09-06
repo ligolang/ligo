@@ -56,9 +56,10 @@ let build_contract ~raise :
   ?has_env_comments:bool ->
   ?disable_typecheck:bool ->
   ?constants:string list ->
+  ?tezos_context:_ ->
   Stacking.compiled_expression ->
   (ValueVar.t * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) compiled views ->
+    fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) ?tezos_context compiled views ->
       let views =
         List.map
           ~f:(fun (name, view) ->
@@ -85,9 +86,11 @@ let build_contract ~raise :
         let contract' =
           Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract)
             (Memory_proto_alpha.prims_of_strings contract) in
-        let environment = Proto_alpha_utils.Memory_proto_alpha.dummy_environment () in
         (* Parse constants *)
         let constants = List.map ~f:(parse_constant ~raise) constants in
+        let environment = match tezos_context with
+          | None -> Proto_alpha_utils.Memory_proto_alpha.dummy_environment ()
+          | Some tezos_context -> { tezos_context ; identities = [] } in
         (* Update the Tezos context by registering the global constants *)
         let tezos_context = List.fold_left constants ~init:environment.tezos_context
                     ~f:(fun ctxt cnt ->

@@ -51,6 +51,8 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Michelson_contract code ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
+  | V_Ast_contract { main ; views = _ } ->
+    Format.fprintf ppf "%a" Ast_aggregated.PP.expression main
   | V_Mutation (l, _, s) ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." Snippet.pp l s
   | V_Gen _ ->

@@ -50,6 +50,7 @@ let rec is_dup (t : type_expression) =
     Mutation            |
     Tx_rollup_l2_address |
     Michelson_contract  |
+    Ast_contract        |
     Michelson_program   |
     Gen                 |
     (* Externals are dup *)

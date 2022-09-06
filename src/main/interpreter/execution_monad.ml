@@ -52,11 +52,13 @@ module Command = struct
     | Get_last_originations : unit -> LT.value t
     | Get_last_events : string * LT.type_expression -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
-    | Compile_contract_from_file : string * string * string list -> LT.value t
+    | Compile_contract_from_file : string * string * string list * Z.t option -> LT.value t
     | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
-    | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Run_Michelson : Location.t * LT.calltrace * (execution_trace, string) Tezos_micheline.Micheline.node * Ast_aggregated.type_expression * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Compile_contract : Location.t * LT.value -> LT.value t
+    | Compile_ast_contract : Location.t * LT.value -> LT.value t
     | Decompile : LT.mcode * LT.mcode * Ast_aggregated.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_aggregated.type_expression -> LT.value t
     | Check_storage_address : Location.t * Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression -> unit t
@@ -245,15 +247,12 @@ module Command = struct
       | _ -> raise.error @@ Errors.generic_error Location.generated
                               "Trying to measure a non-contract"
     )
-    | Compile_contract_from_file (source_file, entry_point, views) ->
+    | Compile_contract_from_file (source_file, entry_point, views, _mutation) ->
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
-      let contract_code =
-        Michelson_backend.compile_contract ~raise ~options source_file entry_point views in
-      let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
-      let contract = LT.V_Michelson_contract contract_code in
-      (contract, ctxt)
+      let main, views = Michelson_backend.compile_contract_file ~raise ~options source_file entry_point views in
+      (LT.V_Ast_contract { main ; views }, ctxt)
     | Read_contract_from_file (loc, calltrace, source_file) ->
       (try
         let s = In_channel.(with_file source_file ~f:input_all) in
@@ -277,7 +276,7 @@ module Command = struct
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in
       let options = Michelson_backend.make_options ~raise ~param:input_ty (Some ctxt) in
       let runres = Ligo_run.Of_michelson.run_function ~raise ~options func_code.expr func_code.expr_ty arg_code in
-      let (expr_ty,expr) = match runres with | Success x -> x | Fail x -> raise.error @@ Errors.target_lang_failwith loc x in
+      let (expr_ty,expr) = match runres with | Success x -> x | Fail x -> raise.error @@ Errors.target_lang_failwith loc [] x in
       let expr, expr_ty =
         clean_locations expr, clean_locations expr_ty in
       let ret = LT.V_Michelson (Ty_code { code = expr ; code_ty = expr_ty ; ast_ty = f.body.type_expression }) in
@@ -285,29 +284,35 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v expr_ty in
       (LT.V_Michelson (Ty_code value), ctxt)
-    | Compile_contract (loc, v, _ty_expr) ->
-       let compiled_expr, compiled_expr_ty = match v with
+    | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) -> (
+      match Michelson_backend.run_michelson_func ~raise ~options ~loc ctxt func func_ty value value_ty with
+      | Ok v -> (v, ctxt)
+      | Error data -> (
+        let data_t = Michelson_backend.compile_type ~raise func_ty in
+        let data_opt = to_option @@ Michelson_to_value.decompile_to_untyped_value ~bigmaps:[] (clean_locations data_t) (clean_locations data) in
+        match data_opt with
+        | Some data -> raise.error @@ Errors.meta_lang_eval loc calltrace data
+        | None -> raise.error @@ Errors.target_lang_failwith loc calltrace data
+      )
+    )
+    | Compile_contract (loc, v) ->
+       let ast_aggregated = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
             let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env in
             let Arrow.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
-            let compiled_expr =
-              Michelson_backend.compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty body in
-            let expr = clean_locations compiled_expr.expr in
-            (* TODO-er: check the ignored second component: *)
-            let expr_ty = clean_locations compiled_expr.expr_ty in            (expr, expr_ty)
+            Michelson_backend.build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body
          | _ ->
             raise.error @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
-        let (param_ty, storage_ty) =
-        match Self_michelson.fetch_contract_ty_inputs compiled_expr_ty with
-        | Some (param_ty, storage_ty) -> (param_ty, storage_ty)
-        | _ -> raise.error @@ Errors.generic_error loc "Compiled expression has not the correct input of contract" in
-      let open Tezos_utils in
-      let param_ty = clean_locations param_ty in
-      let storage_ty = clean_locations storage_ty in
-      let expr = clean_locations compiled_expr in
-      let contract = Michelson.contract param_ty storage_ty expr [] in
+      (LT.V_Ast_contract { main = ast_aggregated ; views = None }, ctxt)
+    | Compile_ast_contract (loc, v) ->
+       let contract = match v with
+         | LT.V_Ast_contract { main = ast_aggregated ; views } ->
+            let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
+            Michelson_backend.compile_contract_ast ~raise ~options ~tezos_context ast_aggregated views
+         | _ ->
+            raise.error @@ Errors.generic_error loc "Contract does not reduce to an AST contract?" in
       (LT.V_Michelson_contract contract, ctxt)
     | Decompile (code, code_ty, ast_ty) ->
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps code_ty code in
@@ -551,15 +556,3 @@ let bind_fold_right_list f init lst =
     f y x
   in
   List.fold_right ~f:aux ~init:(return init) lst
-
-let rec iter_while f lst =
-  match lst with
-  | [] ->
-     return None
-  | (x :: xs) ->
-     let* b = f x in
-     match b with
-     | None ->
-        iter_while f xs
-     | Some x ->
-        return (Some x)

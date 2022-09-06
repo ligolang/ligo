@@ -8,6 +8,7 @@ module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
 module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 open Ligo_prim
 
+let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 let tez_to_z : Tezos_protocol.Protocol.Tez_repr.t -> Z.t = fun t ->
@@ -100,12 +101,6 @@ let create_chest (payload:Bytes.t) (time:int) : _ =
   let chest_bytes = Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest in
   (chest_bytes, chest_key_bytes)
 
-let compile_contract ~raise ~options source_file entry_point declared_views =
-  let open Ligo_compile in
-  let michelson = Build.build_contract ~raise ~options entry_point source_file in
-  let views = Build.build_views ~raise ~options entry_point declared_views source_file in
-  Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
-
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
   inject_locations (fun _ -> v) (strip_locations x)
@@ -180,17 +175,44 @@ let entrypoint_of_string x =
   | Some x -> x
   | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
-let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
-  let open Ligo_compile in
+let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
     | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; output_type = out_ty ; binder = {var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute} } in_ty out_ty
     | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';output_type=out_ty;binder = {var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute}}} in
   let (parameter, storage) = trace_option ~raise (Errors.generic_error Location.generated "Trying to compile a non-contract?") @@
                                Ast_aggregated.get_t_pair in_ty in
-  let aggregated_exp = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp in
-  let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
-  Of_mini_c.compile_contract ~raise ~options mini_c
+  trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp
+
+let compile_contract_ast ~raise ~options ~tezos_context main views =
+  let open Ligo_compile in
+  let mini_c = Of_aggregated.compile_expression ~raise main in
+  let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
+  let views = match views with
+    | None -> []
+    | Some (view_names, aggregated) ->
+      let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+      let mini_c = trace ~raise Main_errors.self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
+      let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
+                        Mini_c.get_t_tuple mini_c.type_expression in
+      let nb_of_views = List.length view_names in
+      let aux i view =
+        let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
+                      List.nth mini_c_tys i in
+        let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
+        (view, idx) in
+      let views = List.mapi ~f:aux view_names in
+      let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
+      let michelsons = List.map ~f:aux views in
+      let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in
+      michelsons in
+  let contract = Ligo_compile.Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false ~tezos_context main_michelson views in
+  Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
+
+let compile_contract_file ~raise ~options source_file entry_point declared_views =
+  let aggregated = Build.build_aggregated ~raise ~options entry_point source_file in
+  let views = Build.build_aggregated_views ~raise ~options entry_point declared_views source_file in
+  (aggregated, views)
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
@@ -349,6 +371,8 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.error @@ Errors.generic_error loc (Format.asprintf "Expected map or big_map but got %a" Ast_aggregated.PP.type_expression ty)
   | V_Michelson_contract _ ->
      raise.error @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
+  | V_Ast_contract _ ->
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: ast-contract"
   | V_Michelson (Untyped_code _) ->
      raise.error @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
@@ -419,9 +443,6 @@ and make_subst_ast_env_exp ~raise env =
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
          aux ((name, expr, no_mutation, inline) :: acc) tl in
   aux [] env
-
-
-let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
 let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in

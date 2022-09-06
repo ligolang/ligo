@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: '- add a daemon for ligo'
+merge_request: '1882'
+title: 'Add a subcommand `ligo daemon` to be used only by tools like LSP server'
+type: added
