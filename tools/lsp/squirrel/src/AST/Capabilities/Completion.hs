@@ -127,7 +127,7 @@ getPossibleCompletions scope level = do
   let
     cmf = completeModuleField scope pos tree
     cfta = completeFieldTypeAware scope pos tree
-    cfs = completeFromScope scope level
+    cfs = completeFromScope scope level pos tree
     c = cmf <|> cfta <|> cfs
   ci <- completeImport pos source
   return $ mconcat
@@ -252,9 +252,21 @@ completeModuleField scope pos tree@(SomeLIGO dialect nested) = do
       (TypeCompletion . docToText . lppLigoLike dialect <$> extractType decl)
       (DocCompletion "")
 
-completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]
-completeFromScope scope level
-  = Just [asCompletion decl | decl <- scope, decl `fitsLevel` level]
+completeFromScope
+  :: CompletionLIGO xs => Scope -> Maybe Level -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeFromScope scope level pos (SomeLIGO _ nested) = Just
+  [ asCompletion decl
+  | decl <- scope
+  , decl `fitsLevel` level
+  , _sdNamespace decl == currentNamespace
+  ]
+  where
+    nodes = spineTo (leq pos . getRange) nested
+    currentNamespace = AST.Scope.Namespace $ foldr appendNamespace [] nodes
+    appendNamespace node namespace = fromMaybe namespace do
+      BModuleDecl moduleDecl _ <- layer node
+      ModuleName moduleName <- layer moduleDecl
+      pure $ moduleName : namespace
 
 isLikelyConstr :: Text -> Bool
 isLikelyConstr = maybe False (isUpper . fst) . Text.uncons
