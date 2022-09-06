@@ -12,12 +12,10 @@ module AST.Capabilities.Completion
   , withCompleterM
   ) where
 
-import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
-
 import Algebra.Graph.AdjacencyMap qualified as G
+import Control.Applicative ((<|>))
 import Control.Lens (_2, (^?), element)
 import Control.Monad.Reader
-import Control.Applicative
 import Data.Char (isUpper)
 import Data.Bool (bool)
 import Data.Foldable (asum)
@@ -32,11 +30,13 @@ import Data.Text qualified as Text
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
+import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 import System.FilePath
 import Text.Regex.TDFA ((=~))
 
 import AST.Capabilities.Find
-  ( CanSearch, TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf
+  ( CanSearch, TypeDefinitionRes (..), dereferenceTspec, findModuleDecl, findNodeAtPoint
+  , typeDefinitionOf
   )
 import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
@@ -75,7 +75,6 @@ newtype NameCompletion = NameCompletion { getNameCompletion :: Text } deriving n
 newtype TypeCompletion = TypeCompletion { getTypeCompletion :: Text } deriving newtype (Eq, Show)
 newtype DocCompletion  = DocCompletion  { getDocCompletion  :: Text } deriving newtype (Eq, Show)
 
--- TODO: implement completion for module fields
 data Completion
   = Completion
       (Maybe CompletionItemKind)
@@ -117,7 +116,6 @@ complete = do
       ImportCompletion{} -> True
       otherCompl -> (isSubseqOf (ppToText node) . getNameCompletion . completionName) otherCompl
 
-
 getPossibleCompletions
   :: CompletionLIGO xs
   => Scope -> Maybe Level -> CompleterM xs (Maybe [Completion])
@@ -126,9 +124,11 @@ getPossibleCompletions scope level = do
   tree <- asks ceTree
   source <- asks ceSource
 
-  let cf = completeField scope pos tree
-      cfs = completeFromScope scope level
-      c = cf <|> cfs
+  let
+    cmf = completeModuleField scope pos tree
+    cfta = completeFieldTypeAware scope pos tree
+    cfs = completeFromScope scope level
+    c = cmf <|> cfta <|> cfs
   ci <- completeImport pos source
   return $ mconcat
     [ ci
@@ -196,10 +196,6 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
       Reason -> reasonLIGOKeywords
       Js     -> jsLIGOKeywords
 
-completeField
-  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
-completeField = completeFieldTypeAware
-
 completeFieldTypeAware
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
 completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
@@ -227,6 +223,33 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
       (Just CiField)
       (NameCompletion $ _tfName field)
       (TypeCompletion . docToText . lppLigoLike dialect <$> _tfTspec field)
+      (DocCompletion "")
+
+extractType :: ScopedDecl -> Maybe Type
+extractType ScopedDecl{_sdSpec} = case _sdSpec of
+  TypeSpec _ TypeDeclSpecifics{_tdsInit} -> Just _tdsInit
+  ModuleSpec _ -> Nothing
+  ValueSpec ValueDeclSpecifics{_vdsTspec} -> _tdsInit <$> _vdsTspec
+
+-- TODO: support completing module aliases, such as `module A = B._`, where `_`
+-- is where the cursor is.
+completeModuleField
+  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeModuleField scope pos tree@(SomeLIGO dialect nested) = do
+  ModuleAccess{maPath} <- asum (map layer covers)
+  let lastModuleName = last maPath
+  moduleDecl <- findModuleDecl (getRange $ extract lastModuleName) tree
+  let namespace = _sdNamespace moduleDecl <> AST.Scope.Namespace [_sdName moduleDecl]
+  let decls = filter (\decl -> _sdNamespace decl == namespace) scope
+  pure $ mkCompletion <$> decls
+  where
+    covers = spineTo (leq pos . getRange) nested
+
+    mkCompletion :: ScopedDecl -> Completion
+    mkCompletion decl = Completion
+      (completionKind decl)
+      (NameCompletion $ _sdName decl)
+      (TypeCompletion . docToText . lppLigoLike dialect <$> extractType decl)
       (DocCompletion "")
 
 completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]

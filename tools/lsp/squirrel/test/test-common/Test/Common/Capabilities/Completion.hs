@@ -246,6 +246,14 @@ caseInfos =
         , "./test/contracts/completion/import/innerFolder/inner-includer.ligo"
         ]
     }
+  , TestInfo
+    { tiContract = "modules.mligo"
+    , tiPosition = (8, 26)
+    , tiExpected =
+      [ Completion (Just CiVariable) (NameCompletion "nested") (Just $ TypeCompletion "int") (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
   ]
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
@@ -255,7 +263,6 @@ completionDriver testInfos = do
   where
     makeTestCase graph info =
       testCase (tiContract info) do
-
         let fp = contractsDir </> tiContract info
             pos = uncurry point $ tiPosition info
             contract = fromJust $ lookupContract fp graph

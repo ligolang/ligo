@@ -9,10 +9,12 @@ module AST.Capabilities.Find
   , typeDefinitionAt
   , dereferenceTspec
   , referencesOf
+  , findModuleDecl
   ) where
 
 import Control.Lens (_Just, _2, (^.), (^?))
 import Control.Monad
+import Data.List (find)
 import Data.Maybe (fromMaybe, listToMaybe)
 import Duplo.Lattice
 import Duplo.Pretty
@@ -23,7 +25,9 @@ import AST.Scope.ScopedDecl
   ( Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec
   , _ValueSpec, extractRefName, sdSpec, vdsTspec
   )
-import AST.Skeleton (LIGO, SomeLIGO, nestedLIGO)
+import AST.Skeleton
+  ( Binding (BModuleAlias, BModuleDecl), LIGO, ModuleName, SomeLIGO, nestedLIGO
+  )
 
 import Product
 import Range
@@ -127,3 +131,26 @@ referencesOf
   -> Maybe [Range]
 referencesOf pos tree =
   _sdRefs <$> findScopedDecl pos tree
+
+-- | Given a module name position, attempts to find where its origin
+-- 'ScopedDecl' is. This function will also try to resolve every module alias.
+findModuleDecl :: CanSearch xs => Range -> SomeLIGO xs -> Maybe ScopedDecl
+findModuleDecl pos tree = do
+  decl@ScopedDecl{..} <- findScopedDecl pos tree
+  -- Found a module, but is it an alias or declaration?
+  let spine = spineAtPoint _sdOrigin tree
+  moduleNode <- layer =<< find (maybe False isModule . layer) spine
+  case moduleNode of
+    -- OK, found what we were looking for:
+    BModuleDecl _ _ -> pure decl
+    -- Alias, must resolve it:
+    BModuleAlias _ path -> do
+      (aliasR, _aliasNode) <- match @ModuleName $ last path
+      findModuleDecl (getRange aliasR) tree
+    -- Impossible:
+    _ -> Nothing
+  where
+    isModule = \case
+      BModuleDecl _ _ -> True
+      BModuleAlias _ _ -> True
+      _ -> False
