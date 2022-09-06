@@ -28,7 +28,12 @@ let pp_reference : Format.formatter -> reference -> unit
           List.iter mvs ~f:(fun mv -> Format.fprintf f "%a." MVar.pp mv)
 let pp_references : Format.formatter -> reference list -> unit
   = fun f refs ->
-      List.iter refs ~f:(pp_reference f) 
+      List.iter refs ~f:(pp_reference f)
+
+let get_location_of_module_path : MVar.t list -> Location.t
+  = fun mvs ->
+      List.fold mvs ~init:(Location.dummy)
+        ~f:(fun loc m -> Location.cover loc (MVar.get_location m))
 
 module Free = struct
 
@@ -54,42 +59,34 @@ module Free = struct
           | None -> true, defs
           end
         | mv::mvs, Module ({ name ; mod_case = Def d ; _ } as m)::defs when MVar.is_name mv name ->
-            (* Format.printf "update_module_variable_references Def %s\n" name; *)
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
             let updated, d  = update_module_variable_references mvs ev d in
             let mod_case = Def d in
             updated, Module { m with mod_case ; references } :: defs
         | mv::mvs, Module ({ name ; mod_case = Alias a ; _ } as m)::defs when MVar.is_name mv name ->
-          (* Format.printf "update_module_variable_references Alias %s - %s\n" name (String.concat ~sep:"." a); *)
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
             let updated, defs = resolve_alias a mvs ev defs in
             updated, Module { m with references } :: defs
         | mvs, def::defs ->
-          (* Format.printf "update_module_variable_references :( %s\n" (get_def_name def); *)
             let updated, defs = update_module_variable_references mvs ev defs in
             updated, def :: defs
     and resolve_alias : string list -> AST.module_variable list -> AST.expression_variable option -> def list -> bool * def list
       = fun aliases mvs ev defs ->
-        (* Format.printf "->> resolve_alias %s  \n" (String.concat ~sep:"." aliases); *)
-        (* Format.printf "->> defs - [%s]" (String.concat ~sep:", " (List.map defs ~f:get_def_name)); *)
           match aliases with
           | [] -> update_module_variable_references mvs ev defs
           | alias::aliases ->
               let rec aux = function
                 [] -> false, []
               | Module ({ name ; mod_case = Def d ; _ } as m)::defs when String.(name = alias) ->
-                (* Format.printf "resolve_alias Def %s\n" name; *)
                   let updated, d = resolve_alias aliases mvs ev d in
                   let mod_case = Def d in
                   updated, Module { m with mod_case } :: defs
               | Module ({ name ; mod_case = Alias a ; _ }) as def::defs when String.(name = alias) ->
-                (* Format.printf "resolve_alias Alias %s - %s\n" name (String.concat ~sep:"." a); *)
                 let updated, defs = resolve_alias (a @ aliases) mvs ev defs in
                 updated, def :: defs
               | def::defs ->
-                (* Format.printf "resolve_alias :( %s\n" (get_def_name def); *)
                   let updated, defs = aux defs in
                   updated, def :: defs
               in
@@ -97,7 +94,6 @@ module Free = struct
 
   let update_reference : reference -> def list -> bool * def list
     = fun r defs ->
-      (* Format.printf "\n------------------ %a --------------\n" pp_reference r; *)
         match r with
           Variable ev -> update_variable_reference ev defs
         | ModuleAccess (mvs, ev) -> update_module_variable_references mvs (Some ev) defs
@@ -206,7 +202,7 @@ module Free = struct
             )
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases
-        | E_mod_in { module_binder ; rhs ; let_result } -> 
+        | E_mod_in { module_binder ; rhs ; let_result } ->
           let defs_module, refs_module = module_expression module_binder rhs in
           let defs_result, refs_result = expression let_result in
           defs_result @ defs_module, refs_result @ refs_module
@@ -244,7 +240,7 @@ module Free = struct
             let def, reference =
               let name = get_mod_binder_name top in
               let range =  MVar.get_location top in
-              let body_range = m.location in
+              let body_range = get_location_of_module_path mvs in
               let alias = List.map mvs ~f:get_mod_binder_name in
               let def = make_m_alias_def ~range ~body_range name alias in
               let reference = ModuleAlias mvs in
@@ -279,16 +275,13 @@ module Free = struct
             ~f:(fun (defs, refs) decl ->
               let defs', refs' = declaration decl in
               let defs, refs = update_references (refs' @ refs) (defs' @ defs) in
-              (* Format.printf "^^^^^^^^^^^^^^ defs - [%s]\n" (String.concat ~sep:", " (List.map defs ~f:get_def_name)); *)
-              (* let () = List.iter defs ~f:(fun d -> Format.printf "BBBBBB %s\n" (get_def_name d)) in *)
-              (* let () = List.iter refs ~f:(fun r -> Format.printf "CCCCCC %a\n" pp_reference r) in *)
               defs, refs)
           in
           defs, refs
 end
 
 module Def_map = Types.Def_map
-let rec to_def_map : def list -> Types.def_map 
+let rec to_def_map : def list -> Types.def_map
   = fun defs ->
       let defs = List.rev defs in
       List.fold_left defs ~init:Def_map.empty
@@ -341,8 +334,8 @@ a function on expression will returns def list & references (vars) list
 
 for an expression its free_variable will be references
 
-Initial version only defintions no types
-next add types
-next add scopes
+
+2. next add types
+3. next add scopes
 
 *)
