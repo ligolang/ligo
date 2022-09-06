@@ -10,7 +10,8 @@ DISTRIBUTION_URL_PATTERN_DEB_NEXT="https://ligolang.org/deb/ligo.deb"
 DISTRIBUTION_URL_PATTERN_BINARY_NEXT="https://ligolang.org/bin/linux/ligo"
 
 DISTRIBUTION_URL_GITLAB_ARTIFACT_REGEX_PATTERN_RELEASE="(.*https://gitlab\.com/ligolang/ligo/-/jobs/)[0-9]{10}(/artifacts/raw\/(ligo\.deb|ligo))"
-VERSION_REGEX_PATTERN="[0-9]+\.[0-9]+.[0.9]+"
+VERSION_REGEX_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
+NIX_SHA256_SRI_REGEX_PATTERN='(sha256 = ").*(";)'
 
 DEB_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo.deb"
 BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo"
@@ -18,6 +19,7 @@ BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts
 FILES_PATH_TO_EDIT=(
     "$ROOT_FOLDER/tools/webide/Dockerfile"
     "$ROOT_FOLDER/gitlab-pages/docs/intro/installation.md"
+    "$ROOT_FOLDER/nix/get_ligo.nix"
 )
 
 for VERSION_FOLDER in `ls $ROOT_FOLDER/gitlab-pages/website/versioned_docs/`
@@ -41,3 +43,7 @@ do
 
     "${SED_IN_PLACE_COMMAND[@]}" -E "s|$VERSION_REGEX_PATTERN|$CURRENT_VERSION|g" $filepath
 done
+
+SRI_LIGO_BINARY_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 $(nix-prefetch-url --type sha256 --executable https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo))
+echo $SRI_LIGO_BINARY_HASH
+"${SED_IN_PLACE_COMMAND[@]}" -E "s#$NIX_SHA256_SRI_REGEX_PATTERN#\1$SRI_LIGO_BINARY_HASH\2#" "$ROOT_FOLDER/nix/get_ligo.nix"
