@@ -70,6 +70,7 @@ end
 
 module Big_map = struct
   [@inline] let empty (type k v) : (k, v) big_map = [%external ("BIG_MAP_EMPTY")]
+  [@thunk] [@inline] let literal (type k v) (l : (k * v) list) : (k, v) big_map = [%external ("BIG_MAP_LITERAL", l)]
 
 #if CURRY
   let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
@@ -96,6 +97,7 @@ end
 module Map = struct
   let empty (type k v) : (k, v) map = [%external ("MAP_EMPTY")]
   let size (type k v) (m : (k, v) map) : nat = [%Michelson ({| { SIZE } |} : (k, v) map -> nat)] m
+  [@thunk] [@inline] let literal (type k v) (l : (k * v) list) : (k, v) map = [%external ("MAP_LITERAL", l)]
 
 #if CURRY
   let mem (type k v) (k : k) (m : (k, v) map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) map -> bool)] (k, m)
@@ -129,6 +131,7 @@ module Set = struct
   let empty (type a) : a set = [%external ("SET_EMPTY")]
   let size (type a) (s : a set) : nat = [%Michelson ({| { SIZE } |} : a set -> nat)]  s
   let cardinal (type a) (s : a set) : nat = [%Michelson ({| { SIZE } |} : a set -> nat)] s
+  [@thunk] [@inline] let literal (type a) (l : a list) : a set = [%external ("SET_LITERAL", l)]
 
 #if CURRY
   let mem (type a) (x : a) (s : a set) : bool = [%external ("SET_MEM", x, s)]
