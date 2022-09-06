@@ -147,13 +147,13 @@ module Free = struct
           let defs, refs, tenv = expression tenv lamb  in
           let defs', refs', tenv = expression tenv args in
           defs' @ defs, refs' @ refs, tenv
-        | E_lambda { binder ; result ; output_type = _ } ->
+        | E_lambda { binder = { var ; ascr = core_type ; _ } ; result ; output_type = _ } ->
           (* TODO: handle input_type *)
           (* TODO: handle output_type *)
           let def =
             (* let binder_name = get_binder_name binder.var in *)
-            let binder_loc =  VVar.get_location binder.var in
-            Misc.make_v_def ~with_types tenv.bindings binder.var binder_loc result.location
+            let binder_loc =  VVar.get_location var in
+            Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc result.location
           in
           let defs_result, refs_result, tenv = expression tenv result in
           defs_result @ [def], refs_result, tenv
@@ -175,26 +175,26 @@ module Free = struct
           let refs' = [Variable binder.var] in
           let defs, refs, tenv = expression tenv e in
           defs, refs @ refs', tenv
-        | E_let_in { let_binder ; rhs ; let_result ; _ } ->
+        | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
           let def =
             (* let binder_name = get_binder_name let_binder.var in *)
-            let binder_loc =  VVar.get_location let_binder.var in
-            Misc.make_v_def ~with_types tenv.bindings let_binder.var binder_loc rhs.location
+            let binder_loc =  VVar.get_location var in
+            Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc rhs.location
           in
           let defs_rhs, refs_rhs, tenv = expression tenv rhs in
           let defs_result, refs_result, tenv = expression tenv let_result in
           defs_result @ defs_rhs @ [def], refs_result @ refs_rhs, tenv
-        | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
+        | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
           (* TODO: handle input_type *)
           let def_fun =
             (* let binder_name = get_binder_name fun_name in *)
             let binder_loc =  VVar.get_location fun_name in
-            Misc.make_v_def ~with_types tenv.bindings fun_name binder_loc (result.location)
+            Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings fun_name binder_loc (result.location)
           in
           let def_par =
             (* let binder_name = get_binder_name binder.var in *)
-            let binder_loc =  VVar.get_location binder.var in
-            Misc.make_v_def ~with_types tenv.bindings binder.var binder_loc (result.location)
+            let binder_loc =  VVar.get_location var in
+            Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc (result.location)
           in
           let defs = [def_fun ; def_par] in
           let defs_result, refs_result, tenv = expression tenv result in
@@ -210,11 +210,11 @@ module Free = struct
               let defs_pat = Stage_common.Helpers.fold_pattern (
                 fun defs (p : _ AST.pattern) ->
                   match p.wrap_content with
-                    P_var binder ->
+                    P_var { var ; ascr = core_type ; _ } ->
                       let def =
                         (* let binder_name = get_binder_name binder.var in *)
-                        let binder_loc =  VVar.get_location binder.var in
-                        Misc.make_v_def ~with_types tenv.bindings binder.var binder_loc body.location
+                        let binder_loc =  VVar.get_location var in
+                        Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc body.location
                       in
                       def :: defs
                   | _ -> defs
@@ -269,14 +269,14 @@ module Free = struct
               def, reference
             in
             [def], [reference], tenv
-    and declaration_expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> VVar.t -> AST.expression -> def list * reference list * typing_env
-      = fun ~with_types ~options tenv ev e ->
+    and declaration_expression : with_types:bool -> options:Compiler_options.middle_end -> ?core_type:AST.type_expression -> typing_env -> VVar.t -> AST.expression -> def list * reference list * typing_env
+      = fun ~with_types ~options ?core_type tenv ev e ->
           let defs, refs, tenv = expression ~with_types ~options tenv e in
           (* let name = get_binder_name ev in *)
           let range = VVar.get_location ev in
           let body_range = e.location in
           (* TODO: clean up *)
-          let def = Misc.make_v_def ~with_types tenv.bindings ev range body_range in
+          let def = Misc.make_v_def ~with_types ?core_type tenv.bindings ev range body_range in
           [def] @ defs, refs, tenv
     and declaration : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> def list * reference list * typing_env
       = fun ~with_types ~options tenv decl ->
@@ -285,9 +285,9 @@ module Free = struct
           Declaration_constant { attr        = { hidden ; _ } ; _ }
         | Declaration_module   { module_attr = { hidden ; _ } ; _ }
         | Declaration_type     { type_attr   = { hidden ; _ } ; _ } when hidden -> [], [], tenv
-        | Declaration_constant { binder      = { var ; ascr=_ ; _ } ; expr ; _ } ->
+        | Declaration_constant { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
           (* TODO: use ascr *)
-          declaration_expression ~with_types ~options tenv var expr
+          declaration_expression ~with_types ~options ?core_type tenv var expr
         | Declaration_type     { type_binder ; type_expr ; _ } ->
           let def = type_expression type_binder type_expr in
           [def], [], tenv
@@ -372,8 +372,6 @@ a function on expression will returns def list & references (vars) list
 for an expression its free_variable will be references
 
 
-2. next add types
-3. next handle core types 
 4. next add scopes
 5. Add comments
 
