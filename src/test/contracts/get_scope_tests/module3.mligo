@@ -14,7 +14,7 @@ let x =
     end in
 
     module D = B in
-    module E = B.C
+    module E = B.C in
     
     let b1 = B.y in
     let b2 = B.z in

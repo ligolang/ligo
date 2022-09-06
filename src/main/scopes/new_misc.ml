@@ -89,7 +89,6 @@ let make_def_id name =
 let resolve_if :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> type_case =
   fun ~with_types bindings var ->
-    Format.printf "resolve_if \n";
     if with_types then (
       let t_opt = Bindings_map.find_opt var bindings in
       match t_opt with
