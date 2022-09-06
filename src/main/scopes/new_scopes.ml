@@ -9,6 +9,31 @@ module MVar = AST.ModuleVar
 (* module Formatter = Formatter *)
 (* module Api_helper = Api_helper *)
 
+module Misc = New_misc
+
+type typing_env = { type_env : Environment.t  ; bindings : Misc.bindings_map }
+
+let update_typing_env : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> typing_env
+  = fun ~with_types ~options tenv decl ->
+      match with_types with
+        true ->
+          begin
+            Format.printf "\nAAAAAAAAAAAAAAAAAAAAAA\n %a \nAAAAAAAAAAAAAAAAAAAAAA\n" Environment.pp tenv.type_env;
+            let typed_prg = Simple_utils.Trace.to_option @@
+              Checking.type_declaration ~options ~env:tenv.type_env decl in
+              match typed_prg with
+              | Some decl ->
+                let module AST = Ast_typed in
+                Format.printf "\n--------------------------\n %a \n Successfully typed decl\n" AST.PP.declaration decl;
+                let bindings = Misc.extract_variable_types tenv.bindings decl.wrap_content in
+                let type_env = Environment.add_declaration decl tenv.type_env in
+                { type_env ; bindings }
+              | None -> 
+                Format.printf "\n--------------------------\n %a \n Failed to typed decl\n" (AST.PP.declaration AST.PP.expression AST.PP.type_expression AST.PP.e_attributes AST.PP.t_attributes AST.PP.m_attributes) decl;
+                tenv
+          end
+      | false -> tenv
+
 type def_list = (string * def) list
 
 type reference =
@@ -109,8 +134,9 @@ module Free = struct
         ) in
         defs, refs
 
-  let rec expression : AST.expression -> def list * reference list
-    = fun e ->
+  let rec expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.expression -> def list * reference list
+    = fun ~with_types ~options tenv e ->
+        let expression = expression ~with_types ~options tenv in
         match e.expression_content with
           E_literal _ -> [], []
         | E_raw_code _ -> [], []
@@ -129,9 +155,9 @@ module Free = struct
           (* TODO: handle input_type *)
           (* TODO: handle output_type *)
           let def =
-            let binder_name = get_binder_name binder.var in
+            (* let binder_name = get_binder_name binder.var in *)
             let binder_loc =  VVar.get_location binder.var in
-            make_v_def binder_name Unresolved binder_loc (result.location)
+            Misc.make_v_def ~with_types tenv.bindings binder.var binder_loc result.location
           in
           let defs_result, refs_result = expression result in
           defs_result @ [def], refs_result
@@ -155,9 +181,9 @@ module Free = struct
           defs, refs @ refs'
         | E_let_in { let_binder ; rhs ; let_result ; _ } ->
           let def =
-            let binder_name = get_binder_name let_binder.var in
+            (* let binder_name = get_binder_name let_binder.var in *)
             let binder_loc =  VVar.get_location let_binder.var in
-            make_v_def binder_name Unresolved binder_loc (rhs.location)
+            Misc.make_v_def ~with_types tenv.bindings let_binder.var binder_loc rhs.location
           in
           let defs_rhs, refs_rhs = expression rhs in
           let defs_result, refs_result = expression let_result in
@@ -165,14 +191,14 @@ module Free = struct
         | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
           (* TODO: handle input_type *)
           let def_fun =
-            let binder_name = get_binder_name fun_name in
+            (* let binder_name = get_binder_name fun_name in *)
             let binder_loc =  VVar.get_location fun_name in
-            make_v_def binder_name (Core fun_type) binder_loc (result.location)
+            Misc.make_v_def ~with_types tenv.bindings fun_name binder_loc (result.location)
           in
           let def_par =
-            let binder_name = get_binder_name binder.var in
+            (* let binder_name = get_binder_name binder.var in *)
             let binder_loc =  VVar.get_location binder.var in
-            make_v_def binder_name Unresolved binder_loc (result.location)
+            Misc.make_v_def ~with_types tenv.bindings binder.var binder_loc (result.location)
           in
           let defs = [def_fun ; def_par] in
           let defs_result, refs_result = expression result in
@@ -190,9 +216,9 @@ module Free = struct
                   match p.wrap_content with
                     P_var binder ->
                       let def =
-                        let binder_name = get_binder_name binder.var in
+                        (* let binder_name = get_binder_name binder.var in *)
                         let binder_loc =  VVar.get_location binder.var in
-                        make_v_def binder_name Unresolved binder_loc (body.location)
+                        Misc.make_v_def ~with_types tenv.bindings binder.var binder_loc body.location
                       in
                       def :: defs
                   | _ -> defs
@@ -203,7 +229,7 @@ module Free = struct
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases
         | E_mod_in { module_binder ; rhs ; let_result } ->
-          let defs_module, refs_module = module_expression module_binder rhs in
+          let defs_module, refs_module = module_expression ~with_types ~options tenv module_binder rhs in
           let defs_result, refs_result = expression let_result in
           defs_result @ defs_module, refs_result @ refs_module
     and type_expression : TVar.t -> AST.type_expression -> def
@@ -214,11 +240,11 @@ module Free = struct
             make_t_def binder_name binder_loc t
           in
           def
-    and module_expression : MVar.t -> AST.module_expr -> def list * reference list
-      = fun top m ->
+    and module_expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> MVar.t -> AST.module_expr -> def list * reference list
+      = fun ~with_types ~options tenv top m ->
           match m.wrap_content with
             M_struct decls ->
-              let defs, refs = declarations decls in
+              let defs, refs = declarations ~with_types ~options tenv decls in
               let range = MVar.get_location top in
               let body_range = m.location in
               let name = get_mod_binder_name top in
@@ -247,33 +273,36 @@ module Free = struct
               def, reference
             in
             [def], [reference]
-    and declaration_expression : VVar.t -> AST.expression -> def list * reference list
-      = fun ev e ->
-          let defs, refs = expression e in
-          let name = get_binder_name ev in
+    and declaration_expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> VVar.t -> AST.expression -> def list * reference list
+      = fun ~with_types ~options tenv ev e ->
+          let defs, refs = expression ~with_types ~options tenv e in
+          (* let name = get_binder_name ev in *)
           let range = VVar.get_location ev in
           let body_range = e.location in
-          let def = make_v_def name Unresolved range body_range in
+          (* TODO: clean up *)
+          let def = Misc.make_v_def ~with_types tenv.bindings ev range body_range in
           [def] @ defs, refs
-    and declaration : AST.declaration -> def list * reference list
-      = fun decl ->
+    and declaration : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> def list * reference list
+      = fun ~with_types ~options tenv decl ->
+        let tenv = update_typing_env ~with_types ~options tenv decl in
         match decl.wrap_content with
           Declaration_constant { attr        = { hidden ; _ } ; _ }
         | Declaration_module   { module_attr = { hidden ; _ } ; _ }
         | Declaration_type     { type_attr   = { hidden ; _ } ; _ } when hidden -> [], []
         | Declaration_constant { binder      = { var ; ascr=_ ; _ } ; expr ; _ } ->
           (* TODO: use ascr *)
-          declaration_expression var expr
+          declaration_expression ~with_types ~options tenv var expr
         | Declaration_type     { type_binder ; type_expr ; _ } ->
           let def = type_expression type_binder type_expr in
           [def], []
         | Declaration_module   { module_binder ; module_ ; _ } ->
-          module_expression module_binder module_
-    and declarations : _ AST.declarations' -> def list * reference list
-      = fun decls ->
+          (* let tenv = update_typing_env ~with_types ~options tenv decl in  *)
+          module_expression ~with_types ~options tenv module_binder module_
+    and declarations : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> _ AST.declarations' -> def list * reference list
+      = fun ~with_types ~options tenv decls ->
           let defs, refs = List.fold_left decls ~init:([], [])
             ~f:(fun (defs, refs) decl ->
-              let defs', refs' = declaration decl in
+              let defs', refs' = declaration ~with_types ~options tenv decl in
               let defs, refs = update_references (refs' @ refs) (defs' @ defs) in
               defs, refs)
           in
@@ -289,7 +318,18 @@ let rec to_def_map : def list -> Types.def_map
           match def with
             Variable v ->
               let def_name = Misc.make_def_id v.name in
-              let def = Types.Variable v in
+              let t = match v.t with 
+                New_types.Unresolved -> Types.Unresolved 
+              | Core t -> Types.Core t
+              | Resolved t -> Types.Resolved t
+              in
+              let def = Types.Variable {
+                name  = v.name ;
+                range = v.range ;
+                body_range = v.body_range ;
+                t ;
+                references = v.references ;
+              } in
               Def_map.add def_name def def_map
           | Type t ->
               let def_name = Misc.make_def_id t.name in
@@ -320,7 +360,8 @@ let rec to_def_map : def list -> Types.def_map
         )
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
-      let defs, _refs = Free.declarations prg in
+      let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
+      let defs, _refs = Free.declarations ~with_types ~options tenv prg in
       let def_map = to_def_map defs in
       let () = Format.printf "----------------------------------\n" in
       let () = Format.printf "%a\n" PP.definitions def_map in
@@ -336,6 +377,8 @@ for an expression its free_variable will be references
 
 
 2. next add types
-3. next add scopes
+3. next handle core types 
+4. next add scopes
+5. Add comments
 
 *)

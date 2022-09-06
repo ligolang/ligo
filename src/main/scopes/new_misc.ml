@@ -1,7 +1,4 @@
-open Types
-
-type tenv = Environment.t
-
+open New_types
 
 module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t
@@ -89,23 +86,10 @@ let make_def_id name =
   let c, () = !counter, incr counter in
   name ^ "#" ^ (string_of_int c)
 
-let add_shadowing_def : string -> def -> def_map -> def_map =  fun name def env ->
-  match get_def_name def with
-  | x when String.equal x generated_flag -> env
-  | _ ->
-    let definition_id = make_def_id name in
-    let shadow = Def_map.filter
-      (fun _ s_def -> match def, s_def with
-        | Variable _ , Variable _ | Type _ , Type _ | Module _, Module _
-          -> not @@ String.equal (get_def_name s_def) name
-        | _ -> true )
-      env in
-    let env = Def_map.add definition_id def shadow in
-    env
-
 let resolve_if :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> type_case =
   fun ~with_types bindings var ->
+    Format.printf "resolve_if \n";
     if with_types then (
       let t_opt = Bindings_map.find_opt var bindings in
       match t_opt with

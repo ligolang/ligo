@@ -212,6 +212,3 @@ let add_scope (range,env) (scopes:scopes) =
   in
   if replaced then scopes
   else { range ; env } :: scopes
-
-module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
-type bindings_map = Ast_typed.type_expression Bindings_map.t

@@ -18,7 +18,18 @@ module Definitions = struct
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
 
-  type vdef = Types.vdef
+  type type_case =
+    Core of Ast_core.type_expression
+  | Resolved of Ast_typed.type_expression
+  | Unresolved
+
+  type vdef = {
+    name  : string ;
+    range : Location.t ;
+    body_range : Location.t ;
+    t : type_case ;
+    references : Location.t list (* TODO: make this Location set *)
+  }
 
   type tdef = Types.tdef
 
@@ -56,7 +67,7 @@ module Definitions = struct
     | Variable    v -> v.body_range
     | Module      m -> m.body_range
 
-  let make_v_def : string -> Types.type_case -> Location.t -> Location.t -> def =
+  let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
       Variable { name ; range ; body_range ; t ; references = [] }
 
