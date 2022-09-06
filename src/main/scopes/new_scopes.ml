@@ -137,10 +137,8 @@ module Free = struct
             let binder_loc =  VVar.get_location binder.var in
             make_v_def binder_name Unresolved binder_loc (result.location)
           in
-          let defs, refs = expression result in
-          let defs = [def] @ defs in
-          let defs, refs = update_references refs defs in
-          defs, refs
+          let defs_result, refs_result = expression result in
+          defs_result @ [def], refs_result
         | E_type_abstraction { result ; _ } -> expression result
         | E_constructor { element ; _ } -> expression element
         | E_record_accessor { record ; _ } -> expression record
@@ -167,8 +165,7 @@ module Free = struct
           in
           let defs_rhs, refs_rhs = expression rhs in
           let defs_result, refs_result = expression let_result in
-          let defs, refs_result = update_references refs_result [def] in
-          defs_result @ defs_rhs @ defs, refs_result @ refs_rhs
+          defs_result @ defs_rhs @ [def], refs_result @ refs_rhs
         | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
           (* TODO: handle input_type *)
           let def_fun =
@@ -183,7 +180,6 @@ module Free = struct
           in
           let defs = [def_fun ; def_par] in
           let defs_result, refs_result = expression result in
-          let defs, refs_result = update_references refs_result defs in
           defs_result @ defs, refs_result
         | E_type_in { type_binder ; rhs ; let_result } ->
           let def = type_expression type_binder rhs in
@@ -206,12 +202,14 @@ module Free = struct
                   | _ -> defs
               ) [] pattern in
               let defs_body, refs_body = expression body in
-              let defs_pat, refs_body = update_references refs_body defs_pat in
               defs_body @ defs_pat @ defs, refs_body @ refs
             )
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases
-        | E_mod_in { module_binder ; rhs ; let_result } -> [], [] (* TODO: implement this *)
+        | E_mod_in { module_binder ; rhs ; let_result } -> 
+          let defs_module, refs_module = module_expression module_binder rhs in
+          let defs_result, refs_result = expression let_result in
+          defs_result @ defs_module, refs_result @ refs_module
     and type_expression : TVar.t -> AST.type_expression -> def
       = fun tv t ->
           let def =
