@@ -16,6 +16,20 @@ type reference =
   | ModuleAccess of AST.module_variable list * AST.expression_variable
   | ModuleAlias of AST.module_variable list
 
+let pp_reference : Format.formatter -> reference -> unit
+  = fun f r ->
+      let () = Format.fprintf f "\n" in
+      match r with
+        Variable v -> Format.fprintf f "%a" VVar.pp v
+      | ModuleAccess (mvs, v) ->
+          let () = List.iter mvs ~f:(fun mv -> Format.fprintf f "%a." MVar.pp mv) in
+          Format.fprintf f "%a" VVar.pp v
+      | ModuleAlias mvs ->
+          List.iter mvs ~f:(fun mv -> Format.fprintf f "%a." MVar.pp mv)
+let pp_references : Format.formatter -> reference list -> unit
+  = fun f refs ->
+      List.iter refs ~f:(pp_reference f) 
+
 module Free = struct
 
   let rec update_variable_reference : AST.expression_variable -> def list -> bool * def list
@@ -39,10 +53,6 @@ module Free = struct
             Some ev -> update_variable_reference ev defs
           | None -> true, defs
           end
-        (* | [mv], Module m::defs when MVar.is_name mv m.name ->
-            let loc = MVar.get_location mv in
-            let references = loc :: m.references in
-            Module { m with references } :: defs *)
         | mv::mvs, Module ({ mod_case = Def d ; _ } as m)::defs when MVar.is_name mv m.name ->
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
@@ -52,6 +62,7 @@ module Free = struct
         | mv::mvs, Module ({ mod_case = Alias a ; _ } as m)::defs when MVar.is_name mv m.name ->
             let loc = MVar.get_location mv in
             let references = loc :: m.references in
+            let () = Format.printf "%a =? %s Here = %s\n" MVar.pp mv m.name (String.concat ~sep:"." a) in
             let updated, defs = resolve_alias a mvs ev defs in
             updated, Module { m with references } :: defs
         | mvs, def::defs ->
@@ -62,9 +73,11 @@ module Free = struct
           match aliases with
           | [] -> update_module_variable_references mvs ev defs
           | alias::aliases ->
+              Format.printf "alias = %s\n" alias;
               let rec aux = function
                 [] -> false, []
               | Module ({ name ; mod_case = Def d ; _ } as m)::defs when String.(name = alias) ->
+                  Format.printf "Found module\n";
                   let updated, d = resolve_alias aliases mvs ev d in
                   let mod_case = Def d in
                   updated, Module { m with mod_case } :: defs
@@ -86,12 +99,15 @@ module Free = struct
 
   let update_references : reference list -> def list -> def list * reference list
     = fun refs defs ->
+        Format.printf "**********************************\n";
         let defs, refs = List.fold_left refs ~init:(defs, [])
         ~f:(fun (defs, refs) r ->
           let updated, defs = update_reference r defs in
+          let () = Format.printf "%a updated = %B\n" pp_reference r updated in
           let refs = if updated then refs else r :: refs in
           defs, refs
         ) in
+        Format.printf "**********************************\n";
         defs, refs
 
   let rec expression : AST.expression -> def list * reference list
@@ -192,7 +208,7 @@ module Free = struct
             )
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases
-        | E_mod_in { module_binder ; rhs ; let_result } -> [], []
+        | E_mod_in { module_binder ; rhs ; let_result } -> [], [] (* TODO: implement this *)
     and type_expression : TVar.t -> AST.type_expression -> def
       = fun tv t ->
           let def =
@@ -205,17 +221,12 @@ module Free = struct
       = fun top m ->
           match m.wrap_content with
             M_struct decls ->
-              let defs, refs = List.fold_left decls ~init:([], [])
-                ~f:(fun (defs, refs) decl ->
-                  let defs', refs' = declaration decl in
-                  let defs, refs' = update_references refs' defs in
-                  defs @ defs', refs @ refs')
-              in
+              let defs, refs = declarations decls in
               let range = MVar.get_location top in
               let body_range = m.location in
               let name = get_mod_binder_name top in
               let def = make_m_def ~range ~body_range name defs in
-              [def] @ defs, refs
+              [def], refs
           | M_variable mv ->
             let def, reference =
               let name = get_mod_binder_name top in
@@ -261,10 +272,62 @@ module Free = struct
           [def], []
         | Declaration_module   { module_binder ; module_ ; _ } ->
           module_expression module_binder module_
+    and declarations : _ AST.declarations' -> def list * reference list
+      = fun decls ->
+          let defs, refs = List.fold_left decls ~init:([], [])
+            ~f:(fun (defs, refs) decl ->
+              let defs', refs' = declaration decl in
+              let defs, refs = update_references (refs @ refs') (defs @ defs') in
+              defs, refs)
+          in
+          defs, refs
 end
 
+module Def_map = Types.Def_map
+let rec to_def_map : def list -> Types.def_map 
+  = fun defs ->
+      let defs = List.rev defs in
+      List.fold_left defs ~init:Def_map.empty
+        ~f:(fun def_map def ->
+          match def with
+            Variable v ->
+              let def_name = Misc.make_def_id v.name in
+              let def = Types.Variable v in
+              Def_map.add def_name def def_map
+          | Type t ->
+              let def_name = Misc.make_def_id t.name in
+              let def = Types.Type t in
+              Def_map.add def_name def def_map
+          | Module ({ mod_case = Alias a } as m) ->
+              let def_name = Misc.make_def_id m.name in
+              let mod_case = Types.Alias a in
+              let def = Types.Module {
+                name = m.name ;
+                range = m.range ;
+                body_range = m.body_range ;
+                references = m.references ;
+                mod_case ;
+              } in
+              Def_map.add def_name def def_map
+          | Module ({ mod_case = Def d } as m) ->
+              let def_name = Misc.make_def_id m.name in
+              let mod_case = Types.Def (to_def_map d) in
+              let def = Types.Module {
+                name = m.name ;
+                range = m.range ;
+                body_range = m.body_range ;
+                references = m.references ;
+                mod_case ;
+              } in
+              Def_map.add def_name def def_map
+        )
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
+      let defs, _refs = Free.declarations prg in
+      let def_map = to_def_map defs in
+      let () = Format.printf "----------------------------------\n" in
+      let () = Format.printf "%a\n" PP.definitions def_map in
+      let () = Format.printf "----------------------------------\n" in
       [], []
 
 (*

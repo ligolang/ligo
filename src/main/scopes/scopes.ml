@@ -6,6 +6,8 @@ module Api_helper = Api_helper
 
 module ModVar = Ast_typed.ModuleVar
 
+module New = New_scopes
+
 type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
