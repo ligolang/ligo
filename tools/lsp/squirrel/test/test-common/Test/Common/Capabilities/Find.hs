@@ -374,6 +374,143 @@ invariants =
     , driDef = Just (interval 2 4 15)
     , driRefs = [interval 5 18 27]
     }
+
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 17 21)
+    , driRefs = [interval 6 26 30]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 16 19)
+    , driRefs = [interval 20 48 51]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 20 24)
+    , driRefs = [interval 18 7 11]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 22 23)
+    , driRefs = [interval 15 14 15]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 17 21)
+    , driRefs =
+      -- FIXME (LIGO-754): Handle references in lambdas to uncomment these two
+      -- intervals.
+      [ interval 8 26 30, interval 10 26 30, interval 10 35 39 -- interval 10 43 47
+      , interval 17 14 18, interval 20 17 21, interval 20 28 32 -- interval 20 38 42
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 10 14)
+    , driRefs = [interval 6 20 24]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 14 17)
+    , driRefs = [interval 19 65 68]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 15 19)
+    , driRefs = [interval 17 10 14]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 12 13)
+    , driRefs = [interval 16 19 20]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 10 14)
+    , driRefs =
+      [ interval 8 22 26, interval 10 29 33, interval 10 45 49, interval 10 53 57
+      , interval 15 16 20, interval 19 27 31, interval 19 45 49, interval 19 55 59
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 10 14)
+    , driRefs = [interval 6 19 23]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 9 12)
+    , driRefs = [interval 19 47 50]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 13 17)
+    , driRefs = [interval 17 7 11]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 12 13)
+    , driRefs = [interval 16 18 19]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 10 14)
+    , driRefs =
+      [ interval 8 19 23, interval 10 16 20, interval 10 25 29, interval 10 33 37
+      , interval 15 14 18, interval 19 19 23, interval 19 28 32, interval 19 38 42
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 10 14)
+    , driRefs = [interval 6 19 23]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 9 12)
+    , driRefs = [interval 19 52 55]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 13 17)
+    , driRefs = [interval 17 7 11]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 12 13)
+    , driRefs = [interval 16 18 19]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 10 14)
+    , driRefs =
+      -- FIXME (LIGO-754): Handle references in lambdas to uncomment these two
+      -- intervals.
+      [ interval 8 19 23, interval 10 25 29, interval 10 30 34 -- interval 10 39 43
+      , interval 15 14 18, interval 19 23 27, interval 19 31 35 -- interval 19 42 46
+      ]
+    }
   ]
 
 findDefinitionAndGoToReferencesCorrespondence
