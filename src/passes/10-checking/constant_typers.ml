@@ -525,6 +525,10 @@ module Constant_types = struct
                     (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
                     (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
                     (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
+                    (* LITERAL *)
+                    of_type C_MAP_LITERAL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_list (t_pair a b) ^-> t_map a b);
+                    of_type C_BIG_MAP_LITERAL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_list (t_pair a b) ^-> t_big_map a b);
+                    of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
                   ]
 
   let typer_of_type_no_tc t =
