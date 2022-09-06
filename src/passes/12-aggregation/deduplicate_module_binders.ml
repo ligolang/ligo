@@ -172,9 +172,7 @@ and compile_program scope (program : AST.program) : Scope.t * AST.program =
   List.fold_map ~init:scope ~f:(compile_declaration) program
 
 and compile_decl : Scope.t -> AST.decl -> Scope.t * AST.decl =
-  fun s (Decl d) ->
-    let s,d = compile_declaration s d in
-    s,Decl d
+  fun s d -> compile_declaration s d
 
 
 and compile_module scope (m : AST.module_) : Scope.t * AST.module_ =

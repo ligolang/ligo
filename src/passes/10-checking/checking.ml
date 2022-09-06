@@ -675,9 +675,9 @@ match Location.unwrap d with
   )
 
 and type_decl ~raise ~options c : I.decl -> typing_context * O.decl =
-  fun (Decl d) ->
+  fun d ->
     let c,d = type_declaration ~raise ~options c d in
-    c, Decl d
+    c, d
 and type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
   (* This context use all the declaration so you can use private declaration to type the module. It should not be returned*)
   let (_c, lst) =

@@ -1364,7 +1364,7 @@ and compile_namespace ~raise :CST.statements -> AST.module_ = fun statements ->
   let statements = Utils.nsepseq_to_list statements in
   let declarations = List.map ~f:(compile_statement_to_declaration ~raise ~export:false) statements in
   let lst = List.concat declarations in
-  List.map ~f:(fun d -> Decl d) lst
+  lst
 
 let compile_module ~raise : CST.ast -> AST.declaration list =
   fun t ->

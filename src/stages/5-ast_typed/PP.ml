@@ -168,7 +168,7 @@ and declaration ppf (d : declaration) = match Location.unwrap d with
   | D_type  td  -> Types.TypeDecl.pp type_expression ppf td
   | D_module md -> Types.ModuleDecl.pp module_expr ppf md
 
-and decl ppf (Types.Decl d) = declaration ppf d
+and decl ppf d = declaration ppf d
 and module_expr ppf (me : module_expr) : unit =
     Location.pp_wrap (Module_expr.pp decl) ppf me
 

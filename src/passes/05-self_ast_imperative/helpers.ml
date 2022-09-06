@@ -220,7 +220,7 @@ and map_declaration_content = fun (m: abs_mapper) (x : declaration_content) : de
     )
   | decl,_ -> decl
 
-and map_decl m = fun (Decl d) -> (Decl (Location.map (map_declaration_content m) d))
+and map_decl m = Location.map (map_declaration_content m)
 
 let map_program m (p : program) =
   let p = match m with
@@ -432,7 +432,7 @@ module Free_variables :
     | M_module_path _ -> VarSet.empty
 
   and get_fv_module : module_ -> VarSet.t = fun p ->
-    let aux = fun (Decl x : decl) ->
+    let aux = fun (x : decl) ->
       match Location.unwrap x with
       | D_value {binder=_; expr;attr=_} ->
         get_fv_expr expr

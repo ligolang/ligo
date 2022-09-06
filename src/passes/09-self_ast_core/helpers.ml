@@ -53,7 +53,7 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
   match x.wrap_content with
   | Module_expr.M_struct (decls : Ast_core.decl list) ->
     List.fold
-      ~f:( fun acc (Decl x) ->
+      ~f:( fun acc x ->
         match x.wrap_content with
         | D_value  x -> self acc x.expr
         | D_type   _ ->  acc
@@ -151,7 +151,7 @@ and map_expression_in_module_expr : (expression -> expression) -> module_expr ->
   let return wrap_content : module_expr = { x with wrap_content } in
   match x.wrap_content with
   | M_struct decls ->
-    let decls = List.map ~f:(fun (Decl d) -> Decl (map_expression_in_declaration self d)) decls in
+    let decls = List.map ~f:(map_expression_in_declaration self) decls in
     return (M_struct decls)
   | M_module_path _
   | M_variable _ -> x
@@ -260,8 +260,8 @@ and fold_map_expression_in_module_expr : type a . (a -> expression -> a * expres
   match x.wrap_content with
   | M_struct decls ->
     let res,decls = List.fold_map
-      ~f:( fun acc (Decl x: decl) ->
-        let return r wrap_content : a * decl = (r, Decl { x with wrap_content }) in
+      ~f:( fun acc (x: decl) ->
+        let return r wrap_content : a * decl = (r, { x with wrap_content }) in
         match x.wrap_content with
         | D_value x ->
           let res,expr = self acc x.expr in

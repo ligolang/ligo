@@ -152,7 +152,7 @@ and unused_declaration ~raise = fun (x : declaration) ->
     let _ = unused_map_module_expr ~raise module_ in
     ()
 
-and unused_decl ~raise = fun (Decl x) -> (unused_declaration ~raise x)
+and unused_decl ~raise = fun x -> unused_declaration ~raise x
 
 and unused_map_module_expr ~raise : module_expr -> module_expr = function m ->
   let return wrap_content : module_expr = { m with wrap_content } in

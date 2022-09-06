@@ -44,7 +44,6 @@ module M (Params : Params) =
       let init_env : environment = options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
-        let ast_typed = List.map ~f:(fun decl -> Ast_typed.Decl decl) ast_typed in
         let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
         let module_binder = ModuleVar.of_input_var module_binder in
         Location.wrap Ast_typed.(D_module {module_binder;module_;module_attr={public=true;hidden=true}})
@@ -78,7 +77,6 @@ module Infer (Params : Params) = struct
       let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
-        let ast_typed = List.map ~f:(fun decl -> Ast_core.Decl decl) ast_typed in
         let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
         let module_binder = ModuleVar.of_input_var module_binder in
         Location.wrap Ast_core.(D_module {module_binder;module_;module_attr={public=true;hidden=true}})

@@ -845,7 +845,6 @@ and compile_module ~raise : CST.ast -> AST.module_  =
   fun t ->
     let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list t.decl in
     List.concat lst
-    |> List.map ~f:(fun x -> Decl x)
 
 let compile_program ~raise : CST.ast -> AST.program = fun t ->
   nseq_to_list t.decl

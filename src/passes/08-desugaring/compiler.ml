@@ -300,7 +300,7 @@ and compile_module_expr : I.module_expr -> O.module_expr = fun me ->
   | M_module_path mp ->
       return @@ M_module_path mp
 
-and compile_decl : I.decl -> O.decl = fun (Decl d) -> Decl (compile_declaration d)
+and compile_decl : I.decl -> O.decl = fun d -> compile_declaration d
 and compile_module : I.module_ -> O.module_ = fun m ->
   List.map ~f:compile_decl m
 

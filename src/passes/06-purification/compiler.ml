@@ -285,7 +285,7 @@ and compile_module_expr ~raise : I.module_expr -> O.module_expr = fun me ->
   | M_module_path mp ->
       return @@ M_module_path mp
 
-and compile_decl ~raise : I.decl -> O.decl = fun (Decl d) -> Decl (compile_declaration ~raise d)
+and compile_decl ~raise : I.decl -> O.decl = fun d -> compile_declaration ~raise d
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
   List.map ~f:(compile_decl ~raise) m
 

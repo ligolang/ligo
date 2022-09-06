@@ -754,7 +754,7 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       CST.PRecord (wrap inj)
 
 and decompile_module : AST.module_ -> CST.ast = fun prg ->
-  let decl = List.map ~f:(fun (Decl d) -> decompile_declaration d) prg in
+let decl = List.map ~f:(decompile_declaration) prg in
   let decl = List.Ne.of_list decl in
   ({decl;eof=Token.ghost_eof}: CST.ast)
 

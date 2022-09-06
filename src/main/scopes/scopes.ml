@@ -172,7 +172,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     let partials = match typed_prg with
       | Some (decl') ->
         let bindings = extract_variable_types partials.bindings decl'.wrap_content in
-        let type_env = Environment.add_declaration (Decl decl') partials.type_env in
+        let type_env = Environment.add_declaration decl' partials.type_env in
         { type_env ; bindings }
       | None -> partials
     in
@@ -205,7 +205,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       ( i, top_def_map, inner_def_map, scopes, partials )
     )
 
-  and decl = fun (i,top_def_map,inner_def_map,scopes,partials) (Decl decl : Ast_core.decl) ->
+  and decl = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.decl) ->
     declaration (i,top_def_map,inner_def_map,scopes,partials) decl
   and module_ ~options i m =
     let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in

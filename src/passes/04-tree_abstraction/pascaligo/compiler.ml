@@ -1171,7 +1171,6 @@ and compile_declarations ~raise : CST.declaration Utils.nseq -> AST.module_ =
   fun decl ->
     let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list decl
     in List.concat lst
-    |> List.map ~f:(fun x -> Decl x)
 
 let compile_program ~raise : CST.declaration Utils.nseq -> AST.program = fun t ->
   nseq_to_list t

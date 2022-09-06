@@ -833,7 +833,7 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
   )
 
 and decompile_module : AST.module_ -> CST.ast = fun prg ->
-  let decl = List.map ~f:(fun (Decl d) -> decompile_declaration d) prg in
+  let decl = List.map ~f:(decompile_declaration) prg in
   let statements = List.Ne.of_list decl in
   let statements = Utils.nseq_map (fun s -> CST.TopLevel (s, None)) statements in
   (* let statements = ((fst statements, None), List.map ~f:(fun e -> (e, None)) (snd statements)) in *)

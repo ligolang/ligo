@@ -11,11 +11,10 @@ let pp ppf m = PP.module_ ppf @@ m
 let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.ModuleVar.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
   let module_ = Location.wrap @@ Module_expr.M_struct module_ in
   let new_d = Location.wrap @@ D_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
-  let new_decl = Decl new_d in
-  new_decl :: env
+  new_d :: env
 
 let add_declaration decl env = decl :: env
-let append (program : program) env : t = List.fold_left ~f:(fun l m -> Decl m :: l ) ~init:env program
+let append (program : program) env : t = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
 
 let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
 
@@ -25,19 +24,18 @@ let add_core_module ?public ?hidden : ModuleVar.t -> Ast_core.module_ -> core ->
   fun module_binder module_ env ->
     let module_ = Location.wrap @@ Module_expr.M_struct module_ in
     let new_d = Location.wrap @@ Ast_core.D_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
-  let new_decl = Ast_core.Decl new_d in
-    new_decl :: env
+    new_d :: env
 
 let to_module (env:t) : module_ = List.rev env
 
 let to_program (env:t) : program =
-  List.fold_left ~f:(fun l (Decl m) -> m :: l ) ~init:[] env
+  List.fold_left ~f:(fun l m -> m :: l ) ~init:[] env
 
-let append_core (program : S.program) env : core = List.fold_left ~f:(fun l m -> S.Decl m :: l ) ~init:env program
+let append_core (program : S.program) env : core = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
 let init_core p = append_core p []
 let to_core_module env = List.rev env
 let to_core_program (env:core) : S.program =
-  List.fold_left ~f:(fun l (Decl m) -> m :: l ) ~init:[] env
+  List.fold_left ~f:(fun l m -> m :: l ) ~init:[] env
 
 (* This is an stdlib *)
 let star = Kind.Type
@@ -105,8 +103,8 @@ let meta_ligo_types : (TypeVar.t * type_expression) list -> (TypeVar.t * type_ex
 
 let of_list_type : (TypeVar.t * type_expression) list -> t =
   List.map ~f:(fun (type_binder,type_expr) ->
-    let d = Location.wrap @@ D_type {type_binder;type_expr;type_attr={public=true;hidden=false}} in
-    Ast_typed.Decl d)
+    Location.wrap @@ D_type {type_binder;type_expr;type_attr={public=true;hidden=false}}
+  )
 
 let default : Protocols.t -> t = function
   | Protocols.Jakarta -> of_list_type jakarta_types

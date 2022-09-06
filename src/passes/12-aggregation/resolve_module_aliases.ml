@@ -156,9 +156,7 @@ and compile_declaration_list aliases (program : AST.program) : Aliases.t * AST.p
   aliases,dcl
 
 and compile_decl : Aliases.t -> AST.decl -> Aliases.t * AST.decl option =
-  fun s (Decl d) ->
-    let s,d = compile_declaration s d in
-    s,Option.map ~f:(fun x -> AST.Decl x) d
+  fun s d -> compile_declaration s d
 
 
 and compile_module aliases (m : AST.module_) : Aliases.t * AST.module_ =

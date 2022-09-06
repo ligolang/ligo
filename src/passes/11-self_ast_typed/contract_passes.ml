@@ -110,22 +110,22 @@ and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
 
 and get_fv_module (env:env) acc = function
   | [] -> env, acc
-  | Decl ({Location.wrap_content = D_value {binder; expr;attr}; _} as hd) :: tl ->
+  | ({Location.wrap_content = D_value {binder; expr;attr}; _} as hd) :: tl ->
     let binder' = binder in
     if VVarSet.mem binder'.var env.used_var then
       let env = {env with used_var = VVarSet.remove binder'.var env.used_var} in
       let env',expr = get_fv expr in
       let env = merge_env env @@ env' in
-      get_fv_module env (Decl {hd with wrap_content = D_value {binder;expr;attr}} :: acc) tl
+      get_fv_module env ({hd with wrap_content = D_value {binder;expr;attr}} :: acc) tl
     else
       get_fv_module env acc tl
-  | Decl ({Location.wrap_content = D_module {module_binder; module_;module_attr}; _} as hd) :: tl -> (
+  | ({Location.wrap_content = D_module {module_binder; module_;module_attr}; _} as hd) :: tl -> (
     match MVarMap.find_opt module_binder env.env with
     | Some (env') ->
       let new_env,module_ = get_fv_module_expr env' module_ in
       let env = {env with env = MVarMap.remove module_binder env.env} in
       let env = merge_env env new_env in
-      get_fv_module env (Decl {hd with wrap_content=D_module{module_binder;module_;module_attr}} :: acc) tl
+      get_fv_module env ({hd with wrap_content=D_module{module_binder;module_;module_attr}} :: acc) tl
     | None ->
       get_fv_module env acc tl
   )

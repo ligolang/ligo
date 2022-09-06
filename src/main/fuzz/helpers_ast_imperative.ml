@@ -284,9 +284,7 @@ module Fold_helpers(M : Monad) = struct
       ok ({d with wrap_content=D_value dc})
     )
     | _,_ -> ok @@ d
-  and decl m = fun (Decl d : decl) : decl monad ->
-    let* d = declaration m d in
-    ok @@ Decl d
+  and decl m = fun (d : decl) : decl monad -> declaration m d
   and map_module : 'err abs_mapper -> module_ -> module_ monad = fun m ->
    bind_map_list (decl m)
 

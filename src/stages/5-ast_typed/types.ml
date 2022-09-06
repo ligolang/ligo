@@ -188,7 +188,7 @@ and declaration_content =
   | D_module of module_expr ModuleDecl.t
 
 and  declaration = declaration_content Location.wrap
-and  decl = Decl of declaration
+and  decl = declaration
   [@@deriving eq,compare,yojson,hash]
 
 and module_expr = decl Module_expr.t Location.wrap

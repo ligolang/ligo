@@ -770,8 +770,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     wrap_attr module_attr @@ CST.D_Module (Region.wrap_ghost module_decl)
   )
 
-and decompile_decl : AST.decl -> CST.declaration = fun (Decl decl) ->
-  decompile_declaration decl
+and decompile_decl : AST.decl -> CST.declaration = fun d -> decompile_declaration d
 
 and decompile_module: AST.module_ -> CST.declaration Utils.nseq =
 fun m ->

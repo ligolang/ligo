@@ -127,7 +127,7 @@ module Typing = struct
   let rec context_of_module_expr : outer_context:t -> Ast_typed.module_expr -> t = fun ~outer_context me ->
     match me.wrap_content with
     | M_struct declarations -> (
-      let f : t -> Ast_typed.decl -> t = fun acc (Decl d) ->
+      let f : t -> Ast_typed.decl -> t = fun acc d ->
         match Location.unwrap d with
         | D_value {binder;expr;attr={public;_}} ->
            if public then add_value acc binder.var expr.type_expression
@@ -163,7 +163,7 @@ module Typing = struct
   let init ?env () =
     match env with None -> empty
                  | Some (env) ->
-                    let f : t -> Ast_typed.decl -> t = fun c (Decl d) ->
+                    let f : t -> Ast_typed.decl -> t = fun c d ->
                       match Location.unwrap d with
                       | D_value {binder;expr;attr=_}  -> add_value c binder.var expr.type_expression
                       | D_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr

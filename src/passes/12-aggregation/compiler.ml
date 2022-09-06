@@ -381,7 +381,7 @@ and compile_declaration_list ~raise (path : Path.t) scope (program : I.program) 
   let current = List.fold_left ~f:Function.compose ~init:(fun e -> e) current in
   scope, current
 
-and compile_decl ~raise path scope (Decl d : I.decl) =
+and compile_decl ~raise path scope (d : I.decl) =
   compile_declaration ~raise path scope d
 
 and compile_module ~raise (path : Path.t) scope (program : I.module_) : (Scope.t) * (O.expression -> O.expression) =

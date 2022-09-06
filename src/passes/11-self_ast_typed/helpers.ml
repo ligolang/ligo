@@ -64,7 +64,7 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
   match x.wrap_content with
   | M_struct decls ->
     List.fold
-      ~f:( fun acc (Decl x) ->
+      ~f:( fun acc x ->
         match x.wrap_content with
         | D_value  x -> self acc x.expr
         | D_module x -> fold_expression_in_module_expr self acc x.module_
@@ -88,7 +88,7 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a = fun f init m ->
     fold_expression f init body
 
 and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
-  let aux = fun acc (Decl x) ->
+  let aux = fun acc x ->
     let return (d : 'a) = d in
     match Location.unwrap x with
     | D_value {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; thunk = _ }} -> (
@@ -223,7 +223,7 @@ and map_declaration m = fun (x : declaration) ->
     let module_ = map_expression_in_module_expr m module_ in
     return @@ D_module {module_binder; module_; module_attr}
 
-and map_decl m (Decl d) = Decl (map_declaration m d)
+and map_decl m d = map_declaration m d
 and map_module : 'err mapper -> module_ -> module_ = fun m ->
   List.map ~f:(map_decl m)
 
@@ -427,7 +427,7 @@ module Free_variables :
       | M_module_path _ -> {modVarSet=ModVarSet.empty;moduleEnv=VarMap.empty;varSet=VarSet.empty}
 
   and get_fv_module : module_ -> moduleEnv' = fun m ->
-    let aux = fun (Decl x) ->
+    let aux = fun x ->
       match Location.unwrap x with
       | D_value {binder=_; expr ; attr=_} ->
         get_fv_expr expr

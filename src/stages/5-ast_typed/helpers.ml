@@ -311,10 +311,7 @@ and fold_map_declaration = fun m acc (x : declaration) ->
     (acc', {x with wrap_content})
   )
 
-and fold_map_decl = fun m acc (Decl decl) ->
-  let (acc', decl) = fold_map_declaration m acc decl in
-  (acc', Decl decl)
-
+and fold_map_decl m = fold_map_declaration m
 and fold_map_module : 'a fold_mapper -> 'a -> module_ -> 'a * module_ = fun m init ->
   List.fold_map ~f:(fold_map_decl m) ~init
 

@@ -188,9 +188,8 @@ and map_declaration m : declaration -> declaration = fun d ->
   in
   Location.map aux d
 
-and map_decl m = fun (Decl d) ->
-  let d = map_declaration m d in
-  (Decl d)
+and map_decl m = map_declaration m
+
 and map_module : abs_mapper -> module_ -> module_ = fun m p ->
   List.map ~f:(map_decl m) p
 

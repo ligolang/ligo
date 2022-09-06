@@ -200,7 +200,7 @@ and muchuse_of_record {body;fields;_} =
 let rec get_all_declarations (module_name : ModuleVar.t) : module_ ->
                                (ValueVar.t * type_expression) list =
   function m ->
-    let aux = fun (Decl {wrap_content=x;location} : decl) ->
+    let aux = fun ({wrap_content=x;location} : decl) ->
       match x with
       | D_value {binder;expr;_} ->
           let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp binder.var) in
@@ -231,8 +231,7 @@ and muchuse_declaration = fun (x : declaration) s ->
         decls ~init:(muchused_helper s module_)
   | _ -> s
 
-and muchuse_decl = fun (Decl x) s ->
-  muchuse_declaration x s
+and muchuse_decl = fun x s -> muchuse_declaration x s
 
 let muchused_map_module ~raise : module_ -> module_ = function module_ ->
   let update_annotations annots =

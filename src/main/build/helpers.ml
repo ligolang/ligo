@@ -16,7 +16,7 @@ let internalize_typed ?(inner = false) (ds : Ast_typed.program) : Ast_typed.prog
       let attr : ValueAttr.t = { x.attr with inline = true ; hidden = true } in
       D_value { x with attr }
   and declaration ~inner (d : declaration) = Simple_utils.Location.map (f ~inner) d
-  and decl ~inner (Decl d) = Decl (declaration ~inner d)
+  and decl ~inner d = declaration ~inner d
   and module' ~inner = List.map ~f:(decl ~inner) in
 
   List.map ~f:(declaration ~inner) ds
@@ -39,7 +39,7 @@ let internalize_core ?(inner = false) (ds : Ast_core.program) : Ast_core.program
       let attr : ValueAttr.t = { x.attr with inline = true ; hidden = true } in
       D_value { x with attr }
   and declaration ~inner (d : declaration) = Simple_utils.Location.map (f ~inner) d
-  and decl ~inner (Decl d) = Decl (declaration ~inner d)
+  and decl ~inner d = declaration ~inner d
   and module' ~inner = List.map ~f:(decl ~inner) in
 
   List.map ~f:(declaration ~inner) ds

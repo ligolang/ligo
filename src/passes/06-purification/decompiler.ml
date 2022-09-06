@@ -172,7 +172,7 @@ and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   | M_module_path mp ->
       return @@ M_module_path mp
 
-and decompile_decl : O.decl -> I.decl = fun (Decl d) -> Decl (decompile_declaration d)
+and decompile_decl : O.decl -> I.decl = fun d -> decompile_declaration d
 and decompile_module : O.module_ -> I.module_ = fun m ->
   List.map ~f:decompile_decl m
 
