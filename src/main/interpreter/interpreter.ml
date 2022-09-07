@@ -635,9 +635,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     *)
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
-    | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = _ ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = _ } ; V_Func_val { arg_binder = _ ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = _} ]) ->
-       try_or (eval_ligo try_body (loc :: calltrace) try_env)
-         (eval_ligo catch_body (loc :: calltrace) catch_env)
+    | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = try_binder ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = try_lambda } ; V_Func_val { arg_binder = catch_binder ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = catch_lambda } ]) ->
+      let eval_branch arg_binder orig_lambda body calltrace env = 
+        let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
+        let f_env' = Env.extend env arg_binder (in_ty, v_unit ()) in
+        eval_ligo { body with location = loc } (loc :: calltrace) f_env'
+      in
+       try_or (eval_branch try_binder try_lambda try_body calltrace try_env)
+         (eval_branch catch_binder catch_lambda catch_body calltrace catch_env)
     | ( C_TEST_TRY_WITH , _ ) -> fail @@ error_type
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ; mutation ]) ->
       let>> mod_res = Get_mod_res () in

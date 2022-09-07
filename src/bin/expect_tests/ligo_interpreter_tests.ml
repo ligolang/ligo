@@ -6,7 +6,7 @@ let () = Sys.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test_lambda_call exited with value ().
     - test_higher_order1 exited with value ().
@@ -90,8 +90,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
   [%expect {|
+    File "./views_test.mligo", line 15, characters 29-85:
+     14 |   | Success _ ->
+     15 |     let x = Test.get_storage (Test.cast_address addr_c : (address,int) typed_address) in
+     16 |     assert (x = 2)
+    :
     Everything at the top-level was executed.
-    - test exited with value (). |}]
+    - test exited with value ().
+    Run-time warning: cast changing the type of an address. |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ] ;
@@ -165,9 +171,9 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage_from_file.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value (). |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "nesting_modules.mligo" ] ;
@@ -534,7 +540,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_timestamp.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test_sub exited with value (). |}]
 
@@ -718,14 +724,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 1, character 0 to line 2, character 25:
       1 | let test : unit =
       2 |   failwith "I am failing"
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
 
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 1, character 0 to line 2, character 25:
       1 | let test : unit =
       2 |   failwith "I am failing"
 
@@ -755,12 +761,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-16:
+    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 17-18:
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
       3 |   Test.originate f () 0tez
 
-    Invalid type(s).
-    Expected: "( list (operation) * s )", but got: "unit". |}]
+    Invalid type(s)
+    Cannot unify unit with ( list (operation) * unit ). |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
@@ -853,36 +859,33 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 12-20:
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 26-44:
       1 | const foo = (x: {field: int}): {field: int} => {return x};
       2 | const bar = Test.run(foo, {property: "toto"});
       3 |
 
-    These types are not matching:
-     - record[property -> string]
-     - record[field -> int] |}]
+    Invalid type(s)
+    Cannot unify record[property -> string] with record[field -> int]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 12-20:
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 26-32:
       1 | const foo = (x:  {b:int}):  {b:int} => {return x};
       2 | const bar = Test.run(foo, "toto");
 
-    These types are not matching:
-     - string
-     - record[b -> int] |}]
+    Invalid type(s)
+    Cannot unify string with record[b -> int]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 12-20:
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 26-41:
       1 | const foo = (x: int): int => {return x};
       2 | const bar = Test.run(foo, {field: "toto"});
 
-    These types are not matching:
-     - record[field -> string]
-     - int |}]
+    Invalid type(s)
+    Cannot unify record[field -> string] with int. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
@@ -922,6 +925,18 @@ let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 let%expect_test _ =
 run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
+  File "typed_addr_in_bytes_pack.mligo", line 4, character 4 to line 10, character 5:
+    3 |     let (addr, _, _) = Test.originate_from_file "./unit_contract.mligo" "main" ([]: string list) storage 0tez in
+    4 |     let taddr : (unit, unit) typed_address = Test.cast_address addr in
+    5 |     let contr = Test.to_contract taddr in
+    6 |     {
+    7 |         contr = contr ;
+    8 |         addr  = addr  ;
+    9 |         taddr = taddr ;
+   10 |     }
+   11 |
+  :
+  Run-time warning: cast changing the type of an address.
   File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
    14 |     let packed = Bytes.pack (fun() ->
    15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
@@ -934,10 +949,14 @@ let () = Sys.chdir pwd
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
   [%expect {xxx|
-    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, character 2 to line 7, character 5:
       1 | let test =
       2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
       3 |   begin
+      4 |     Test.log x;
+      5 |     assert (x = x);
+      6 |     assert (x = 1)
+      7 |   end
 
     Embedded raw code can only have a functional type |xxx}]
 

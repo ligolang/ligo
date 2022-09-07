@@ -235,7 +235,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      e_a_bool b
   | V_Ct (C_int x) ->
      let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected int but got %a" Ast_aggregated.PP.type_expression ty))
-                 (get_t_int ty) in
+                 (match ty.type_content with T_constant { injection = (Int | External "int"); _} -> Some () | _ -> None) in
      e_a_int x
   | V_Ct (C_nat x) ->
      let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected nat but got %a" Ast_aggregated.PP.type_expression ty))

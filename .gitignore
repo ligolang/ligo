@@ -25,3 +25,4 @@ version.ml
 _esy
 node_modules
 /src/main/build/ligo_lib/loaded.ml
+.ocamlformat

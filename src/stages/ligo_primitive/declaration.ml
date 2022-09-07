@@ -207,7 +207,16 @@ module Make (Attr : Attr) = struct
 
     and declaration ?(print_type = true) f g h ppf = function
       | Declaration_type    ty -> declaration_type g ppf ty
-      | Declaration_constant c -> declaration_constant ~print_type f (Format.pp_print_option g) ppf c
+      | Declaration_constant c -> 
+          declaration_constant
+          ~print_type
+          f
+          (fun ppf ascr_opt ->
+            match ascr_opt with
+            | None -> ()
+            | Some ascr -> Format.fprintf ppf " : %a" g ascr)
+          ppf
+          c
       | Declaration_module   m -> declaration_module h ppf m
 
     and module_expr h ppf = function
