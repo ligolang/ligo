@@ -45,12 +45,16 @@ module Definitions = struct
 
   and def = Variable of vdef | Type of tdef | Module of mdef
 
-  let def_equal a b =
+  let def_compare a b =
     match a , b with
-    | Variable x , Variable y -> String.equal x.name y.name
-    | Type x , Type y -> String.equal x.name y.name
-    | Module x , Module y -> String.equal x.name y.name
-    | (Variable _ | Type _ | Module _) , (Variable _ | Type _ | Module _) -> false
+    | Variable x , Variable y -> String.compare x.name y.name
+    | Type x , Type y -> String.compare x.name y.name
+    | Module x , Module y -> String.compare x.name y.name
+    | Variable _, (Type _ | Module _) -> -1
+    | (Type _ | Module _), Variable _ -> 1
+    | Type _, Module _ -> 1
+    | Module _, Type _ -> -1
+  let def_equal a b = 0 = def_compare a b
 
   let get_def_name = function
     | Variable    d -> d.name
@@ -84,12 +88,37 @@ module Definitions = struct
     fun ~range ~body_range name alias ->
       let mod_case = Alias alias in
       Module { name ; range ; body_range ; mod_case ; references = [] }
+
+  let shadow_defs : def list -> def list
+    = fun defs ->
+        match defs with
+          [] -> []
+        | def::defs ->
+            let shadow_def def' = not @@ def_equal def def' in
+            List.filter defs ~f:shadow_def
 end
 
 include Definitions
 
-type scope = { range : Location.t ; env : def list }
+(* TODO: optimize by using ppx_hash *)
+(* type scope = def list
+module ScopeMap = Simple_utils.Map.Make (struct
+  type t = scope
+  let compare defs1 defs2 
+    = List.compare def_compare defs1 defs2  
+end) *)
+
+type scope = Location.t * (def list)
 type scopes = scope list
+
+let add_defs_to_acope : def list -> scope -> scope
+  = fun defs scope ->
+      let loc, scope_defs = scope in
+      loc, defs @ scope_defs
+
+let add_defs_to_scopes : def list -> scopes -> scopes 
+  = fun defs scopes ->
+      List.map scopes ~f:(add_defs_to_acope defs)
 
 module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t
