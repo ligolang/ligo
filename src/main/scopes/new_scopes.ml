@@ -295,8 +295,8 @@ module Free = struct
           let defs, refs, tenv, scopes = List.fold_left decls ~init:([], [], tenv, [])
             ~f:(fun (defs, refs, tenv, scopes') decl ->
               let defs', refs', tenv, scopes = declaration ~with_types ~options tenv decl in
-              let defs, refs = update_references (refs' @ refs) (defs' @ defs) in
               let scopes = add_defs_to_scopes defs scopes in
+              let defs, refs = update_references (refs' @ refs) (defs' @ defs) in
               defs, refs, tenv, scopes @ scopes')
           in
           defs, refs, tenv, scopes
