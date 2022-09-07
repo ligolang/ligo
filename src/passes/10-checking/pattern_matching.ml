@@ -210,7 +210,7 @@ let rec match_ ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O
       (r.expression_content , Some r.type_expression, r.location)
     in
     let (r,t,location) = List.fold_right ~f:aux ~init:(def,None,Location.generated) leq in
-    O.make_e ~location r (Option.value_exn t)
+    O.make_e ~location r (Option.value_exn ~here:[%here] t)
 
 and consvar ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O.expression =
   fun ~err_loc ms eqs def ->

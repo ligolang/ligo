@@ -15,6 +15,8 @@ module LMap = struct
 
 end
 
+module LSet = Caml.Set.Make(struct type t = Label.t [@@deriving compare] end)
+
 type 'a t = 'a LMap.t
   [@@deriving eq,yojson,hash,map]
 

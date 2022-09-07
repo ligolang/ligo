@@ -500,25 +500,38 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       (* collect type annotation for let function declaration *)
       let let_rhs, rhs_type = List.fold_right ~init:(let_rhs, rhs_type) ~f:(fun (b,fun_) (e,a) ->
         e_lambda ~loc:(Value_var.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+      (* Add polymorphic binder to ascription *)
+      let rhs_type =
+        Option.map rhs_type ~f:(fun rhs_type ->
+          Option.value_map type_params ~default:rhs_type ~f:(fun tp ->
+          let (tp, loc) = r_split tp in
+          let tp = tp.inside in
+          let type_vars = List.Ne.map compile_type_var tp.type_vars in
+          List.Ne.fold_right ~f:(fun tvar t -> t_for_all ~loc tvar Type t) ~init:rhs_type type_vars
+        ))
+      in
       let let_binder   = {let_binder with ascr = rhs_type} in
       (* This handle the recursion *)
       let let_rhs = match kwd_rec with
         Some reg ->
+          (* Hack for type params in recursive position. Remove them! Better fix would be to relax form of lambda *)
           let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ rhs_type in
+          let _, fun_type = destruct_for_alls fun_type in
           let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.Ascription.anno_expr) @@ get_e_annotation e  in
-          let Lambda.{binder;result;output_type=_} = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
-          let Arrow.{type1;type2} = get_t_arrow_exn fun_type in
-          let lambda = Lambda.{binder={binder with ascr = type1};result;output_type = type2} in
+          let lambda = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
+          let Arrow.{type1 = arg_type; type2 = ret_type} = get_t_arrow_exn fun_type in
+          let lambda = Lambda.{ binder = {lambda.binder with ascr = arg_type}; result = lambda.result; output_type = ret_type} in
           e_recursive ~loc:(Location.lift reg#region) let_binder.var fun_type lambda
       | None   -> let_rhs
       in
-      (* This handle polymorphic annotation *)
+      (* This handle polymorphic annotation (slight hack). Better way would be to relax form of let_rhs. *)
       let let_rhs = Option.value_map ~default:let_rhs ~f:(fun tp ->
         let (tp,loc) = r_split tp in
         let tp : CST.type_params = tp.inside in
         let type_vars = List.Ne.map compile_type_var tp.type_vars in
         List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:let_rhs type_vars
-      ) type_params in
+      ) type_params
+      in
       return @@ e_let_in ~loc let_binder let_attr let_rhs @@ fun_ body
   )
   | ETypeIn ti ->
@@ -820,15 +833,26 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       (* collect type annotation for let function declaration *)
       let let_rhs,rhs_type = List.fold_right ~init:(let_rhs,rhs_type) ~f:(fun (b,fun_) (e,a) ->
         e_lambda ~loc:(Value_var.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+      (* Add polymorphic binder to ascription *)
+      let rhs_type =
+        Option.map rhs_type ~f:(fun rhs_type ->
+          Option.value_map type_params ~default:rhs_type ~f:(fun tp ->
+          let (tp, loc) = r_split tp in
+          let tp = tp.inside in
+          let type_vars = List.Ne.map compile_type_var tp.type_vars in
+          List.Ne.fold_right ~f:(fun tvar t -> t_for_all ~loc tvar Type t) ~init:rhs_type type_vars
+        ))
+      in
       let binder   = {binder with ascr = rhs_type} in
       (* This handle the recursion *)
       let let_rhs = match kwd_rec with
         Some reg ->
           let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ rhs_type in
+          let _, fun_type = destruct_for_alls fun_type in
           let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.Ascription.anno_expr) @@ get_e_annotation e  in
-          let Lambda.{binder=b;result;output_type=_} = trace_option ~raise (recursion_on_non_function @@ Location.lift region) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
-          let Arrow.{type1;type2} = get_t_arrow_exn fun_type in
-          let lambda = Lambda.{binder={b with ascr = type1};result;output_type = type2} in
+          let lambda = trace_option ~raise (recursion_on_non_function @@ Location.lift region) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
+          let Arrow.{type1; type2} = get_t_arrow_exn fun_type in
+          let lambda = Lambda.{lambda with binder = {lambda.binder with ascr = type1}; output_type = type2} in
           e_recursive ~loc:(Location.lift reg#region) binder.var fun_type lambda
       | None   -> let_rhs
       in

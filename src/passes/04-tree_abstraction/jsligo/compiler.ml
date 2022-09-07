@@ -852,6 +852,15 @@ and compile_let_to_declaration ~raise : const:bool -> CST.attributes -> CST.val_
       let aux : (type_expression option Binder.t * Types.attributes * CST.type_generics option * expression) -> declaration =
         fun (binder,attr,type_params,expr) ->
           (* This handle polymorphic annotation *)
+          let ascr = 
+            Option.map binder.ascr ~f:(fun rhs_type -> 
+              Option.value_map type_params ~default:rhs_type ~f:(fun tp ->
+              let (tp, loc) = r_split tp in
+              let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
+              List.Ne.fold_right ~f:(fun tvar t -> t_for_all ~loc tvar Type t) ~init:rhs_type type_vars
+            ))
+          in
+          let binder = { binder with ascr } in
           let expr = Option.value_map ~default:expr ~f:(fun tp ->
             let (tp,loc) = r_split tp in
             let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
@@ -1005,6 +1014,15 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
             let e2 = e_let_in ~loc: (Location.lift region) binder attr var expr in
             e_sequence rhs e2
         | _ ->
+          let ascr = 
+            Option.map binder.ascr ~f:(fun rhs_type -> 
+              Option.value_map type_params ~default:rhs_type ~f:(fun (tp : CST.type_generics)  ->
+              let (tp, loc) = r_split tp in
+              let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
+              List.Ne.fold_right ~f:(fun tvar t -> t_for_all ~loc tvar Type t) ~init:rhs_type type_vars
+            ))
+          in
+          let binder = { binder with ascr } in
           (* This handle polymorphic annotation *)
           let rhs = Option.value_map ~default:rhs ~f:(fun (tp : CST.type_generics) ->
             let (tp,loc) = r_split tp in

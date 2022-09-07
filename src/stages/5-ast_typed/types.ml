@@ -1,6 +1,10 @@
 open Ligo_prim
 module Location = Simple_utils.Location
 
+type type_variable       = Type_var.t [@@deriving compare]
+type expression_variable = Value_var.t [@@deriving compare]
+type module_variable     = Module_var.t [@@deriving compare]
+
 type ast_core_type_expression = Ast_core.type_expression
   [@@deriving eq,compare,yojson,hash]
 

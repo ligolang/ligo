@@ -80,8 +80,8 @@ let%expect_test _ =
       6 |   | B => 2
       7 |   }
 
-    Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Invalid type(s)
+    Cannot unify int with string. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
@@ -91,8 +91,8 @@ let%expect_test _ =
      20 |       | Cons ((a,b)) => "invalid"
      21 |       };
 
-    Invalid type(s).
-    Expected: "int", but got: "string". |}]
+    Invalid type(s)
+    Cannot unify string with int. |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
@@ -158,7 +158,7 @@ let%expect_test _ =
       8 |         | Decrement    => s - 1
       9 |         };
 
-    Variant pattern argument is expected of type nat but is of type unit. |}]
+    Pattern not of the expected type nat |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =

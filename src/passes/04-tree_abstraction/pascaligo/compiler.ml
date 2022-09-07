@@ -1078,15 +1078,25 @@ and compile_fun_decl loc ~raise : CST.fun_decl -> Value_var.t * type_expression 
       let lambda : _ Lambda.t = { binder ; output_type = ret_type ; result } in
       (lambda, Option.map ~f:(fun (a,b) -> t_arrow a b) @@ Option.bind_pair (input_type,ret_type))
   in
+  (* This handle polymorphic annotation *)
+  let fun_type = 
+    Option.map fun_type ~f:(fun rhs_type -> 
+      Option.value_map type_params ~default:rhs_type ~f:(fun tp ->
+      let (tp, loc) = r_split tp in
+      let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
+      List.Ne.fold_right ~f:(fun tvar t -> t_for_all ~loc tvar Type t) ~init:rhs_type type_vars
+    ))
+  in
   let func =
     match kwd_recursive with
     | Some reg ->
       let fun_type = trace_option ~raise (untyped_recursive_fun loc) @@ fun_type in
-      let lambda = Lambda.map Fun.id (fun x -> Option.value_exn x) lambda in
+      let _, fun_type = destruct_for_alls fun_type in 
+      let Arrow.{type1; type2} = get_t_arrow_exn fun_type in 
+      let lambda = Lambda.{lambda with binder = {lambda.binder with ascr = type1}; output_type = type2} in
       e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None -> make_e ~loc @@ E_lambda lambda
   in
-  (* This handle polymorphic annotation *)
   let func = Option.value_map ~default:func ~f:(fun tp ->
     let (tp,loc) = r_split tp in
     let tp : CST.type_params = tp.inside in

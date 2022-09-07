@@ -80,7 +80,7 @@ and type_expression ppf (te : type_expression) : unit =
 
 let type_expression_option ppf (te : type_expression option) : unit =
   match te with
-  | Some te -> fprintf ppf ": %a" type_expression te
+  | Some te -> fprintf ppf " : %a" type_expression te
   | None    -> fprintf ppf ""
 
 let rec type_content_orig : formatter -> type_content -> unit =
