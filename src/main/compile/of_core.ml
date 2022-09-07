@@ -4,10 +4,10 @@ open Ligo_prim
 module Location = Simple_utils.Location
 
 type form =
-  | Contract of ValueVar.t
+  | Contract of Value_var.t
   | View of {
       command_line_views : string list option ;      (* views declared as command line arguments if any *)
-      contract_entry : ValueVar.t (* contract main function name                     *)
+      contract_entry : Value_var.t (* contract main function name                     *)
     }
   | Env
 
@@ -37,7 +37,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
   applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
-  let name = ValueVar.of_input_var entry_point in
+  let name = Value_var.of_input_var entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content  = Ast_core.E_variable name ;
       sugar    = None ;
@@ -48,30 +48,30 @@ let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expres
       location = Virtual "generated application" } in
   applied
 
-let list_declarations (m : Ast_core.program) : ValueVar.t list =
+let list_declarations (m : Ast_core.program) : Value_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_core.declaration_content) with
-      | Declaration_constant {binder;_} -> binder.var::prev
+      | D_value {binder;_} -> binder.var::prev
       | _ -> prev)
     ~init:[] m
 
-let list_type_declarations (m : Ast_core.program) : TypeVar.t list =
+let list_type_declarations (m : Ast_core.program) : Type_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_core.declaration_content) with
-      | Declaration_type {type_binder;type_attr;_} when type_attr.public -> type_binder::prev
+      | D_type {type_binder;type_attr;_} when type_attr.public -> type_binder::prev
       | _ -> prev)
     ~init:[] m
 
-let list_mod_declarations (m : Ast_core.program) : ModuleVar.t list =
+let list_mod_declarations (m : Ast_core.program) : Module_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_core.declaration_content) with
-      | Declaration_module {module_binder;_} -> module_binder::prev
+      | D_module {module_binder;_} -> module_binder::prev
       | _ -> prev)
     ~init:[] m
 

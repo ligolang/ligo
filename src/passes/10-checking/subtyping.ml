@@ -119,7 +119,7 @@ let rec lift
        ( Context.drop_until ctx ~pos
        , return @@ T_for_all { ty_binder = tvar'; kind = kind'; type_ } ))
   | T_abstraction { ty_binder = tvar'; kind; type_ } ->
-    let tvar'' = TypeVar.fresh ~loc () in
+    let tvar'' = Type_var.fresh ~loc () in
     let type_ = t_subst_var ~loc type_ ~tvar:tvar' ~tvar':tvar'' in
     let ctx, pos = Context.mark ctx in
     let ctx, type_ =
@@ -221,10 +221,10 @@ let rec unify
        raise.error
        @@ corner_case
             "Cannot occur since injections are consistent and fully applied")
-  | T_variable tvar1, T_variable tvar2 when TypeVar.equal tvar1 tvar2 -> ctx
-  | T_variable tvar1, _ when TypeVar.is_exists tvar1 ->
+  | T_variable tvar1, T_variable tvar2 when Type_var.equal tvar1 tvar2 -> ctx
+  | T_variable tvar1, _ when Type_var.is_exists tvar1 ->
     unify_evar (Exists_var.of_type_var_exn tvar1) type2
-  | _, T_variable tvar2 when TypeVar.is_exists tvar2 ->
+  | _, T_variable tvar2 when Type_var.is_exists tvar2 ->
     unify_evar (Exists_var.of_type_var_exn tvar2) type1
   | ( T_arrow { type1 = type11; type2 = type12 }
     , T_arrow { type1 = type21; type2 = type22 } ) ->
@@ -235,7 +235,7 @@ let rec unify
   | ( T_abstraction { ty_binder = tvar1; kind = kind1; type_ = type1 }
     , T_abstraction { ty_binder = tvar2; kind = kind2; type_ = type2 } )
     when Kind.equal kind1 kind2 ->
-    let tvar = TypeVar.fresh_like ~loc tvar1 in
+    let tvar = Type_var.fresh_like ~loc tvar1 in
     let type1 = t_subst_var ~loc ~tvar:tvar1 ~tvar':tvar type1 in
     let type2 = t_subst_var ~loc ~tvar:tvar2 ~tvar':tvar type2 in
     let ctx, pos = Context.mark ctx in
@@ -295,7 +295,7 @@ let rec subtype
       in
       ( ctx
       , fun hole ->
-          let x = ValueVar.fresh ~name:"_sub" () in
+          let x = Value_var.fresh ~name:"_sub" () in
           let args = f1 (e_variable x type21) in
           let binder : _ Binder.t =
             { var = x
@@ -316,7 +316,7 @@ let rec subtype
     , fun hole ->
         f (e_type_inst { forall = hole; type_ = t_exists ~loc evar } type') )
   | _, T_for_all { ty_binder = tvar; kind; type_ } ->
-    let tvar' = TypeVar.fresh_like ~loc tvar in
+    let tvar' = Type_var.fresh_like ~loc tvar in
     let ctx, pos = Context.mark ctx in
     let ctx, f =
       self
@@ -327,10 +327,10 @@ let rec subtype
     ( Context.drop_until ctx ~pos
     , fun hole ->
         e_type_abstraction { type_binder = tvar'; result = f hole } expected )
-  | T_variable tvar1, T_variable tvar2 when TypeVar.equal tvar1 tvar2 ->
+  | T_variable tvar1, T_variable tvar2 when Type_var.equal tvar1 tvar2 ->
     ctx, fun x -> x
-  | T_variable tvar1, _ when TypeVar.is_exists tvar1 ->
+  | T_variable tvar1, _ when Type_var.is_exists tvar1 ->
     subtype_evar ~mode:Contravariant (Exists_var.of_type_var_exn tvar1) expected
-  | _, T_variable tvar2 when TypeVar.is_exists tvar2 ->
+  | _, T_variable tvar2 when Type_var.is_exists tvar2 ->
     subtype_evar ~mode:Covariant (Exists_var.of_type_var_exn tvar2) received
   | _, _ -> unify ~raise ~loc ~ctx received expected, fun x -> x

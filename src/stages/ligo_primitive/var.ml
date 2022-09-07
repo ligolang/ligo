@@ -53,6 +53,11 @@ module Internal () = struct
     { v with counter; location }
 
 
+  let exists_prefix = "^gen"
+
+  let fresh_exists ?(loc = Location.dummy) () =
+    fresh ~loc ~name:exists_prefix ()
+
   (* should be removed in favor of a lift pass before ast_imperative *)
   let of_input_var ?(loc = Location.dummy) name =
     if String.equal name "_"
@@ -70,10 +75,20 @@ module Internal () = struct
 
 
   (* TODO remove this *)
-  let internal_get_name_and_counter var = var.name, var.counter
+  let internal_get_name_and_counter var = (var.name, var.counter)
+
   let get_location var = var.location
-  let set_location location var = { var with location }
+  let set_location location var = {var with location}
+
   let is_generated var = var.generated
+
+  let is_exists { name; generated; _ } =
+    (* String Hack for existentials. Used to avoid changes to [Ast_typed].
+       Future MR: Add explicit [T_exists] to [Ast_typed] *)
+    (* would be more safe to use a specific fields in the record *)
+    String.is_prefix name ~prefix:exists_prefix && generated
+
+
   let is_name var name = String.equal var.name name
 
   (* PP *)
@@ -87,19 +102,6 @@ module Internal () = struct
   let wildcard = { name = "_"; counter = 0; location = Location.dummy; generated = false }
 end
 
-module ModuleVar = Internal ()
-module ValueVar = Internal ()
-
-module TypeVar = struct
-  include Internal ()
-
-  let exists_prefix = "^gen"
-
-  let is_exists { name; generated; _ } = 
-    (* String Hack for existentials. Used to avoid changes to [Ast_typed].
-       Future MR: Add explicit [T_exists] to [Ast_typed] *)
-    String.is_prefix name ~prefix:exists_prefix && generated
-
-  let fresh_exists ?(loc = Location.dummy) () = 
-    fresh ~loc ~name:exists_prefix ()
-end
+module Module_var = Internal ()
+module Value_var = Internal ()
+module Type_var = Internal ()

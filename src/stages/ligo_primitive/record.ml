@@ -18,7 +18,7 @@ end
 module LSet = Caml.Set.Make(struct type t = Label.t [@@deriving compare] end)
 
 type 'a t = 'a LMap.t
-  [@@deriving eq,yojson,hash]
+  [@@deriving eq,yojson,hash,map]
 
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
 
@@ -35,10 +35,6 @@ let fold : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc
   LMap.fold (
     fun _ a acc -> f acc a
   ) record acc
-
-let map : ('a -> 'b) -> 'a t -> 'b t
-= fun f record ->
-  LMap.map f record
 
 let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 = fun f acc record ->

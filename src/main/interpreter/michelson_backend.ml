@@ -108,10 +108,10 @@ let clean_location_with v x =
 let clean_locations e t =
   clean_location_with () e, clean_location_with () t
 
-let add_ast_env ?(name = ValueVar.fresh ()) env binder body =
+let add_ast_env ?(name = Value_var.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation, inline) (e : expression) =
-    if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
+    if Value_var.compare let_binder binder <> 0 && Value_var.compare let_binder name <> 0 then
       e_a_let_in {var=let_binder;ascr=expr.type_expression;attributes=Binder.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false ; thunk = false}
     else
       e in
@@ -440,7 +440,7 @@ and make_subst_ast_env_exp ~raise env =
   let rec aux acc = function
     | [] -> acc
     | (name, { item ; no_mutation ; inline }) :: tl ->
-         let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
+         let expr = val_to_ast ~raise ~loc:(Value_var.get_location name) item.eval_term item.ast_type in
          aux ((name, expr, no_mutation, inline) :: acc) tl in
   aux [] env
 

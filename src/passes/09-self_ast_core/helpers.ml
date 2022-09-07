@@ -51,17 +51,17 @@ let rec fold_expression ~raise : ('a, 'err, 'warn) folder -> 'a -> expression ->
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
   match x.wrap_content with
-  | Ast_core.Declaration.M_struct (decls : Ast_core.decl list) ->
+  | Module_expr.M_struct (decls : Ast_core.decl list) ->
     List.fold
-      ~f:( fun acc (Decl x) ->
+      ~f:( fun acc x ->
         match x.wrap_content with
-        | Declaration_constant x -> self acc x.expr
-        | Declaration_module x -> fold_expression_in_module_expr self acc x.module_
-        | Declaration_type _ ->  acc
+        | D_value  x -> self acc x.expr
+        | D_type   _ ->  acc
+        | D_module x -> fold_expression_in_module_expr self acc x.module_
       )
       ~init:acc
       decls
-  | Ast_core.Declaration.M_module_path _
+  | M_module_path _
   | M_variable _ -> acc
 
 type ('err,'warn) exp_mapper = raise:('err,'warn) raise -> expression -> expression
@@ -136,13 +136,13 @@ let rec map_expression ~raise : ('err,'warn) exp_mapper -> expression -> express
 and map_expression_in_declaration : (expression -> expression) -> declaration -> declaration = fun self xs ->
     let return wrap_content : declaration = { xs with wrap_content } in
     match xs.wrap_content with
-    | Declaration_constant x ->
+    | D_value x ->
       let expr = self x.expr in
-      return (Declaration_constant { x with expr })
-    | Declaration_module x ->
+      return (D_value { x with expr })
+    | D_type   _ -> xs
+    | D_module x ->
       let module_ = map_expression_in_module_expr self x.module_ in
-      return (Declaration_module { x with module_ })
-    | Declaration_type _ -> xs
+      return (D_module { x with module_ })
 
 and map_expression_in_declarations : (expression -> expression) -> program -> program = fun self xs ->
   List.map ~f:(map_expression_in_declaration self) xs
@@ -151,7 +151,7 @@ and map_expression_in_module_expr : (expression -> expression) -> module_expr ->
   let return wrap_content : module_expr = { x with wrap_content } in
   match x.wrap_content with
   | M_struct decls ->
-    let decls = List.map ~f:(fun (Decl d) -> Decl (map_expression_in_declaration self d)) decls in
+    let decls = List.map ~f:(map_expression_in_declaration self) decls in
     return (M_struct decls)
   | M_module_path _
   | M_variable _ -> x
@@ -232,7 +232,7 @@ let rec fold_map_expression : type a . a fold_mapper -> a -> expression -> a * e
       (res, return @@ E_type_in ti)
     )
   | E_mod_in mi -> (
-      let res,mi = Types.Declaration.Fold_map.mod_in self idle init mi in
+      let res,mi = Mod_in.fold_map self idle init mi in
       (res, return @@ E_mod_in mi)
     )
   | E_lambda l -> (
@@ -260,16 +260,16 @@ and fold_map_expression_in_module_expr : type a . (a -> expression -> a * expres
   match x.wrap_content with
   | M_struct decls ->
     let res,decls = List.fold_map
-      ~f:( fun acc (Decl x: decl) ->
-        let return r wrap_content : a * decl = (r, Decl { x with wrap_content }) in
+      ~f:( fun acc (x: decl) ->
+        let return r wrap_content : a * decl = (r, { x with wrap_content }) in
         match x.wrap_content with
-        | Declaration_constant x ->
+        | D_value x ->
           let res,expr = self acc x.expr in
-          return res (Types.Declaration.Declaration_constant { x with expr })
-        | Declaration_module x ->
+          return res (D_value { x with expr })
+        | D_type _ -> return acc x.wrap_content
+        | D_module x ->
           let res,module_ = fold_map_expression_in_module_expr self acc x.module_ in
-          return res (Types.Declaration.Declaration_module { x with module_ })
-        | Declaration_type _ -> return acc x.wrap_content
+          return res (D_module { x with module_ })
       )
       ~init:acc
       decls

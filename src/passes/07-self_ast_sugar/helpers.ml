@@ -30,7 +30,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   | E_tuple     t -> List.fold ~f:self ~init t
   | E_let_in   li -> Let_in.fold self self_type init li
   | E_type_in  ti -> Type_in.fold self self_type init ti
-  | E_mod_in   mi -> Types.Declaration.Fold.mod_in  self self_type init mi
+  | E_mod_in   mi -> Mod_in.fold self self_type init mi
   | E_cond      c -> Conditional.fold self init c
   | E_recursive r -> Recursive.fold self self_type init r
   | E_sequence  s -> Sequence.fold self init s
@@ -99,7 +99,7 @@ let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
       return @@ E_type_in ti
     )
   | E_mod_in mi -> (
-      let mi = Types.Declaration.Map.mod_in self self_type mi in
+      let mi = Mod_in.map self self_type mi in
       return @@ E_mod_in mi
     )
   | E_lambda l -> (
@@ -175,22 +175,21 @@ and map_module_expr : abs_mapper -> module_expr -> module_expr = fun f m ->
 and map_declaration m : declaration -> declaration = fun d ->
   let aux : declaration_content ->declaration_content = fun x ->
     match x,m with
-    | (Declaration_constant dc, Expression m') -> (
-        let dc = Types.Declaration.Map.declaration_constant (map_expression m') Fun.id dc in
-        (Declaration_constant dc)
+    | (D_value dc, Expression m') -> (
+        let dc = Types.Value_decl.map (map_expression m') Fun.id dc in
+        (D_value dc)
       )
-    | (Declaration_type dt, Type_expression m') -> (
-        let dt = Types.Declaration.Map.declaration_type (map_type_expression m') dt in
-        (Declaration_type dt)
+    | (D_type dt, Type_expression m') -> (
+        let dt = Types.Type_decl.map (map_type_expression m') dt in
+        (D_type dt)
       )
     | decl,_ -> decl
   (* | Declaration_type of (type_variable * type_expression) *)
   in
   Location.map aux d
 
-and map_decl m = fun (Decl d) ->
-  let d = map_declaration m d in
-  (Decl d)
+and map_decl m = map_declaration m
+
 and map_module : abs_mapper -> module_ -> module_ = fun m p ->
   List.map ~f:(map_decl m) p
 
@@ -262,7 +261,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       (res, return @@ E_type_in ti)
     )
   | E_mod_in mi -> (
-      let res,mi = Types.Declaration.Fold_map.mod_in self idle init mi in
+      let res,mi = Mod_in.fold_map self idle init mi in
       (res, return @@ E_mod_in mi)
     )
   | E_lambda l -> (

@@ -165,7 +165,7 @@ let tuple_of_record (m: _ Record.t) =
   List.map ~f:(fun ({associated_type;_}: row_element) -> associated_type) l
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
-  | T_record record -> Some (tuple_of_record record.fields)
+  | T_record struct_ -> Some (tuple_of_record struct_.fields)
   | _ -> None
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
@@ -261,7 +261,7 @@ let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
 let e_a_constructor constructor element t = e_constructor { constructor = (Label constructor) ; element } t
-let e_a_record_accessor record path t = e_accessor {record ; path} t
+let e_a_record_accessor struct_ path t = e_accessor {struct_ ; path} t
 let e_a_record ?(layout=default_layout) r = e_record r (t_record ~layout
   (Record.LMap.map
     (fun t ->
@@ -329,8 +329,8 @@ let get_a_bool (t:expression) =
 let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option =
   match get_t_record_opt t with
   | None -> None
-  | Some record ->
-    match Record.LMap.find_opt label record.fields with
+  | Some struct_ ->
+    match Record.LMap.find_opt label struct_.fields with
     | None -> None
     | Some row_element -> Some row_element.associated_type
 

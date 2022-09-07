@@ -76,7 +76,7 @@ let get_signature
     then
       Format.printf
         "@[Get Signature@.MVar: %a@.Signature: %a@]\n"
-        ModuleVar.pp
+        Module_var.pp
         mvar
         Signature.pp
         sig_;
@@ -195,7 +195,7 @@ let rec evaluate_type ~raise ~(ctx : Context.t) (type_ : I.type_expression)
     return @@ T_for_all { x with type_ }
 
 
-let type_value_attr : I.Attr.value -> O.Attr.value =
+let type_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
  fun { inline; no_mutation; view; public; hidden; thunk } ->
   { inline; no_mutation; view; public; hidden; thunk }
 
@@ -286,7 +286,7 @@ let rec check_expression
     (* TODO: Not keen about this (add alpha equiv in type) *)
     | ( E_type_abstraction { type_binder = tvar; result }
       , T_for_all { ty_binder = tvar'; kind; type_ } )
-      when TypeVar.equal tvar tvar' ->
+      when Type_var.equal tvar tvar' ->
       let ctx, pos = Context.mark ctx in
       let ctx, result =
         check ~ctx:Context.(ctx |:: C_type_var (tvar', kind)) result type_
@@ -295,7 +295,7 @@ let rec check_expression
       , let%bind result = result in
         return @@ E_type_abstraction { type_binder = tvar; result } )
     | _, T_for_all { ty_binder = tvar; kind; type_ } ->
-      let tvar' = TypeVar.fresh_like ~loc tvar in
+      let tvar' = Type_var.fresh_like ~loc tvar in
       let ctx, pos = Context.mark ctx in
       let ctx, result =
         check
@@ -326,17 +326,17 @@ let rec check_expression
       ( ctx
       , let%bind record = Elaboration.all_lmap record in
         return @@ E_record record )
-    | E_update { record; path; update }, T_record row ->
-      let ctx, record = check ~ctx record type_ in
+    | E_update { struct_; path; update }, T_record row ->
+      let ctx, struct_ = check ~ctx struct_ type_ in
       let field_row_elem =
         trace_option ~raise (bad_record_access path loc)
         @@ Record.LMap.find_opt path row.fields
       in
       let ctx, update = check ~ctx update field_row_elem.associated_type in
       ( ctx
-      , let%bind record = record
+      , let%bind struct_ = struct_
         and update = update in
-        return @@ E_update { record; path; update } )
+        return @@ E_update { struct_; path; update } )
     | E_constructor { constructor; element }, T_sum row ->
       (* Find row element *)
       let constructor_row_elem =
@@ -556,8 +556,8 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       , record_type
       , let%bind record = Elaboration.all_lmap record in
         return (E_record record) record_type )
-    | E_accessor { record; path = field } ->
-      let ctx, record_type, record = infer ~ctx record in
+    | E_accessor { struct_; path = field } ->
+      let ctx, record_type, struct_ = infer ~ctx struct_ in
       let row =
         trace_option ~raise (expected_record loc record_type)
         @@ get_t_record (Context.apply ctx record_type)
@@ -569,10 +569,10 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let field_type = field_row_elem.associated_type in
       ( ctx
       , field_type
-      , let%bind record = record in
-        return (E_accessor { record; path = field }) field_type )
-    | E_update { record; path; update } ->
-      let ctx, record_type, record = infer ~ctx record in
+      , let%bind struct_ = struct_ in
+        return (E_accessor { struct_; path = field }) field_type )
+    | E_update { struct_; path; update } ->
+      let ctx, record_type, struct_ = infer ~ctx struct_ in
       let row =
         trace_option ~raise (expected_record loc record_type)
         @@ get_t_record (Context.apply ctx record_type)
@@ -584,9 +584,9 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let ctx, update = check ~ctx update field_row_elem.associated_type in
       ( ctx
       , record_type
-      , let%bind record = record
+      , let%bind struct_ = struct_
         and update = update in
-        return (E_update { record; path; update }) record_type )
+        return (E_update { struct_; path; update }) record_type )
     | E_constructor { constructor = Label label as constructor; _ }
       when String.(label = "M_right" || label = "M_left") ->
       raise.error (michelson_or_no_annotation constructor loc)
@@ -676,7 +676,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let sig_ = get_signature ~raise ~loc ctx module_path' in
       let pp_path ppf path =
         List.Ne.iter
-          (fun mvar -> Format.fprintf ppf "%a." ModuleVar.pp mvar)
+          (fun mvar -> Format.fprintf ppf "%a." Module_var.pp mvar)
           path
       in
       if debug
@@ -685,7 +685,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
           "@[Path: %a@.Element: %a@.Signature: %a@]\n"
           pp_path
           module_path'
-          ValueVar.pp
+          Value_var.pp
           element
           Signature.pp
           sig_;
@@ -701,7 +701,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let type_ =
         trace_option
           ~raise
-          (unbound_variable binder.var (ValueVar.get_location var))
+          (unbound_variable binder.var (Value_var.get_location var))
         @@ Context.get_value ctx binder.var
       in
       let binder = { binder with ascr = type_ } in
@@ -1096,7 +1096,7 @@ and compile_match
     in
     match_expr.expression_content
   | _ ->
-    let var = ValueVar.fresh ~loc ~name:"match_" () in
+    let var = Value_var.fresh ~loc ~name:"match_" () in
     let match_expr =
       Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
     in
@@ -1159,16 +1159,16 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
   in
   let ctx, (sig_item : Signature.item), decl' =
     match decl.wrap_content with
-    | Declaration_type
+    | D_type
         { type_binder; type_expr; type_attr = { public; hidden } } ->
       let type_expr = evaluate_type ~raise ~ctx type_expr in
       let type_expr = { type_expr with orig_var = Some type_binder } in
       ( ctx
       , S_type (type_binder, type_expr)
       , return
-        @@ Declaration_type
+        @@ D_type
              { type_binder; type_expr; type_attr = { public; hidden } } )
-    | Declaration_constant { binder = { ascr; var; attributes }; attr; expr } ->
+    | D_value { binder = { ascr; var; attributes }; attr; expr } ->
       let ctx, pos = Context.mark ctx in
       local_pos := pos :: !local_pos;
       let expr =
@@ -1188,17 +1188,17 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
       , S_value (var, expr_type)
       , let%bind expr = expr in
         return
-        @@ Declaration_constant
+        @@ D_value
              { binder = { ascr = Some expr_type; var; attributes }; expr; attr }
       )
-    | Declaration_module
+    | D_module
         { module_binder; module_; module_attr = { public; hidden } } ->
       let ctx, sig_, module_ = infer_module_expr ~raise ~options ~ctx module_ in
       ( ctx
       , S_module (module_binder, sig_)
       , let%bind module_ = module_ in
         return
-        @@ Declaration_module
+        @@ D_module
              { module_binder; module_; module_attr = { public; hidden } } )
   in
   if debug
@@ -1212,15 +1212,14 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
   ctx, sig_item, decl'
 
 
-and infer_decl ~(raise : raise) ~options ~ctx (Decl decl : I.decl)
+and infer_decl ~(raise : raise) ~options ~ctx (decl : I.decl)
   : Context.t * Signature.item * (O.decl, _, _) Elaboration.t
   =
-  let open Elaboration.Let_syntax in
   let ctx, sig_item, decl = infer_declaration ~raise ~options ~ctx decl in
   ( ctx
   , sig_item
-  , let%bind decl = decl in
-    return (O.Decl decl) )
+  , decl
+  )
 
 
 and infer_module ~raise ~options ~ctx (module_ : I.module_)

@@ -30,7 +30,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   | E_tuple     t -> List.fold ~f:self ~init t
   | E_let_in   li -> Let_in.fold self self_type init li
   | E_type_in  ti -> Type_in.fold self self_type init ti
-  | E_mod_in   mi -> Types.Declaration.Fold.mod_in  self self_type init mi
+  | E_mod_in   mi -> Mod_in.fold  self self_type init mi
   | E_cond      c -> Conditional.fold self init c
   | E_recursive r -> Recursive.fold self self_type init r
   | E_sequence  s -> Sequence.fold self init s
@@ -111,7 +111,7 @@ let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
       return @@ E_type_in ti
     )
   | E_mod_in mi -> (
-      let mi = Types.Declaration.Map.mod_in self self_type mi in
+      let mi = Mod_in.map self self_type mi in
       return @@ E_mod_in mi
     )
   | E_lambda l -> (
@@ -201,26 +201,26 @@ and map_module : abs_mapper -> module_ -> module_ = fun m p ->
 
 and map_declaration_content = fun (m: abs_mapper) (x : declaration_content) : declaration_content ->
   match x,m with
-  | Declaration_constant dc, Expression m' -> (
-      let dc = Types.Declaration.Map.declaration_constant (map_expression m') (fun a -> a) dc in
-      Declaration_constant dc
+  | D_value dc, Expression m' -> (
+      let dc = Types.Value_decl.map (map_expression m') (fun a -> a) dc in
+      D_value dc
     )
-  | Declaration_type dt, Type_expression m' -> (
-      let dt = Types.Declaration.Map.declaration_type (map_type_expression m') dt in
-      Declaration_type dt
+  | D_type dt, Type_expression m' -> (
+      let dt = Types.Type_decl.map (map_type_expression m') dt in
+      D_type dt
     )
-  | Declaration_module dm, Module m' -> (
+  | D_module dm, Module m' -> (
     let module_ = map_module_expr m' dm.module_ in
     let dm = { dm with module_ } in
-    Declaration_module dm
+    D_module dm
   )
-  | Declaration_module dm, Expression _ -> (
-      let dm = Types.Declaration.Map.declaration_module (map_decl m) dm in
-      Declaration_module dm
+  | D_module dm, Expression _ -> (
+      let dm = Types.Module_decl.map (Location.map @@ Module_expr.map (map_decl m)) dm in
+      D_module dm
     )
   | decl,_ -> decl
 
-and map_decl m = fun (Decl d) -> (Decl (Location.map (map_declaration_content m) d))
+and map_decl m = Location.map (map_declaration_content m)
 
 let map_program m (p : program) =
   let p = match m with
@@ -294,7 +294,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       (res, return @@ E_type_in ti)
     )
   | E_mod_in mi -> (
-      let res,mi = Types.Declaration.Fold_map.mod_in self idle init mi in
+      let res,mi = Mod_in.fold_map self idle init mi in
       (res, return @@ E_mod_in mi)
     )
   | E_lambda l -> (
@@ -334,7 +334,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> (init, return e')
 
 let remove_from var vars =
-  let f v vars = if ValueVar.equal var v then vars else v :: vars in
+  let f v vars = if Value_var.equal var v then vars else v :: vars in
   List.fold_right ~f vars ~init:[]
 
 let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Pattern.t) =
@@ -346,11 +346,11 @@ let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Patter
 
 module Free_variables :
   sig
-    val expression : expression -> ValueVar.t list
+    val expression : expression -> Value_var.t list
   end
   = struct
 
-  module VarSet = Caml.Set.Make(ValueVar)
+  module VarSet = Caml.Set.Make(Value_var)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty ~f:VarSet.union
@@ -381,16 +381,16 @@ module Free_variables :
     | E_record m ->
       let res = List.map ~f:(fun (_,v) -> self v) m in
       unions res
-    | E_accessor {record;path} ->
+    | E_accessor {struct_;path} ->
       let aux = function
         | Access_path.Access_tuple _ | Access_record _ -> VarSet.empty
         | Access_map e -> self e in
-      VarSet.union (self record) (unions @@ List.map ~f:aux path)
-    | E_update {record;path;update} ->
+      VarSet.union (self struct_) (unions @@ List.map ~f:aux path)
+    | E_update {struct_;path;update} ->
       let aux = function
         | Access_path.Access_tuple _ | Access_record _ -> VarSet.empty
         | Access_map e -> self e in
-      unions ([self record; self update] @ List.map ~f:aux path)
+      unions ([self struct_; self update] @ List.map ~f:aux path)
     | E_tuple t ->
       unions @@ List.map ~f:self t
     | E_constructor {element;_} ->
@@ -432,14 +432,13 @@ module Free_variables :
     | M_module_path _ -> VarSet.empty
 
   and get_fv_module : module_ -> VarSet.t = fun p ->
-    let aux = fun (Decl x : decl) ->
+    let aux = fun (x : decl) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr;attr=_} ->
+      | D_value {binder=_; expr;attr=_} ->
         get_fv_expr expr
-      | Declaration_module {module_binder=_;module_;module_attr=_} ->
+      | D_type _t -> VarSet.empty
+      | D_module {module_binder=_;module_;module_attr=_} ->
         get_fv_module_expr module_.wrap_content
-      | Declaration_type _t ->
-        VarSet.empty
     in
     unions @@ List.map ~f:aux p
 

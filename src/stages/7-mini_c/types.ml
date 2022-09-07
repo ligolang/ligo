@@ -50,12 +50,12 @@ and type_base =
   | TB_chest_key
   | TB_tx_rollup_l2_address
 
-and environment_element = ValueVar.t * type_expression
+and environment_element = Value_var.t * type_expression
 
 and environment = environment_element list
 
-and var_name = ValueVar.t
-and fun_name = ValueVar.t
+and var_name = Value_var.t
+and fun_name = Value_var.t
 
 type inline = bool
 
@@ -125,7 +125,7 @@ and constant = {
 }
 
 and anon_function = {
-  binder : ValueVar.t ;
+  binder : Value_var.t ;
   body : expression ;
 }
 

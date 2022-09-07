@@ -8,43 +8,41 @@ module Protocols = Protocols
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
 type t = module_
 let pp ppf m = PP.module_ ppf @@ m
-let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.ModuleVar.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
-  let module_ = Location.wrap @@ Declaration.M_struct module_ in
-  let new_d = Location.wrap @@ Declaration.Declaration_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
-  let new_decl = Decl new_d in
-  new_decl :: env
+let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
+  let module_ = Location.wrap @@ Module_expr.M_struct module_ in
+  let new_d = Location.wrap @@ D_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
+  new_d :: env
 
 let add_declaration decl env = decl :: env
-let append (program : program) env : t = List.fold_left ~f:(fun l m -> Decl m :: l ) ~init:env program
+let append (program : program) env : t = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
 
 let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
 
 (* Artefact for build system *)
 type core = Ast_core.module_
-let add_core_module ?public ?hidden : ModuleVar.t -> Ast_core.module_ -> core -> core =
+let add_core_module ?public ?hidden : Module_var.t -> Ast_core.module_ -> core -> core =
   fun module_binder module_ env ->
-    let module_ = Location.wrap @@ Ast_core.Declaration.M_struct module_ in
-    let new_d = Location.wrap @@ Ast_core.Declaration.Declaration_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
-  let new_decl = Ast_core.Decl new_d in
-    new_decl :: env
+    let module_ = Location.wrap @@ Module_expr.M_struct module_ in
+    let new_d = Location.wrap @@ Ast_core.D_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
+    new_d :: env
 
 let to_module (env:t) : module_ = List.rev env
 
 let to_program (env:t) : program =
-  List.fold_left ~f:(fun l (Decl m) -> m :: l ) ~init:[] env
+  List.fold_left ~f:(fun l m -> m :: l ) ~init:[] env
 
-let append_core (program : S.program) env : core = List.fold_left ~f:(fun l m -> S.Decl m :: l ) ~init:env program
+let append_core (program : S.program) env : core = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
 let init_core p = append_core p []
 let to_core_module env = List.rev env
 let to_core_program (env:core) : S.program =
-  List.fold_left ~f:(fun l (Decl m) -> m :: l ) ~init:[] env
+  List.fold_left ~f:(fun l m -> m :: l ) ~init:[] env
 
 (* This is an stdlib *)
 let star = Kind.Type
 (*
   Make sure all the type value laoded in the environment have a `Ast_core` value attached to them (`type_meta` field of `type_expression`)
 *)
-let basic_types : (TypeVar.t * type_expression) list = [
+let basic_types : (Type_var.t * type_expression) list = [
     (v_bool   , t_bool                  ()) ;
     (v_string , t_string                ()) ;
     (v_bytes  , t_bytes                 ()) ;
@@ -54,7 +52,7 @@ let basic_types : (TypeVar.t * type_expression) list = [
     (v_option , t_option_abst           ()) ;
   ]
 
-let michelson_base : (TypeVar.t * type_expression) list = [
+let michelson_base : (Type_var.t * type_expression) list = [
     (v_operation          , t_operation                          ()) ;
     (v_tez                , t_constant     Tez                   []) ;
     (v_address            , t_address                            ()) ;
@@ -92,7 +90,7 @@ let michelson_base : (TypeVar.t * type_expression) list = [
 let base = basic_types @ michelson_base
 let jakarta_types = base
 
-let meta_ligo_types : (TypeVar.t * type_expression) list -> (TypeVar.t * type_expression) list =
+let meta_ligo_types : (Type_var.t * type_expression) list -> (Type_var.t * type_expression) list =
   fun proto_types ->
     proto_types @ [
     (v_test_michelson     , t_constant Michelson_program        []) ;
@@ -103,10 +101,10 @@ let meta_ligo_types : (TypeVar.t * type_expression) list -> (TypeVar.t * type_ex
     (v_gen                , t_abstraction1 Gen star               ) ;
   ]
 
-let of_list_type : (TypeVar.t * type_expression) list -> t =
+let of_list_type : (Type_var.t * type_expression) list -> t =
   List.map ~f:(fun (type_binder,type_expr) ->
-    let d = Location.wrap @@ Ast_typed.Declaration.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}} in
-    Ast_typed.Decl d)
+    Location.wrap @@ D_type {type_binder;type_expr;type_attr={public=true;hidden=false}}
+  )
 
 let default : Protocols.t -> t = function
   | Protocols.Jakarta -> of_list_type jakarta_types

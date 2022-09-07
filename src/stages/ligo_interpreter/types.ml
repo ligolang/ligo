@@ -18,12 +18,12 @@ type env_item = {
     inline : bool
   }
 
-and env = (ValueVar.t * env_item) list
+and env = (Value_var.t * env_item) list
 
 and func_val = {
-    rec_name : ValueVar.t option ;
+    rec_name : Value_var.t option ;
     orig_lambda : Ast_aggregated.expression ;
-    arg_binder : ValueVar.t ;
+    arg_binder : Value_var.t ;
     body : Ast_aggregated.expression ;
     env : env ;
   }
@@ -79,7 +79,7 @@ and value =
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
   | V_Michelson_contract of mcode
-  | V_Ast_contract of { main: Ast_aggregated.expression ; views: (ValueVar.t list * Ast_aggregated.expression) option }
+  | V_Ast_contract of { main: Ast_aggregated.expression ; views: (Value_var.t list * Ast_aggregated.expression) option }
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Gen of gen
