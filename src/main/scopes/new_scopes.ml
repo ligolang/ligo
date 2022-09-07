@@ -153,7 +153,7 @@ module Free = struct
             Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc result.location
           in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
-          defs_result @ [def], refs_result, tenv, scopes
+          defs_result @ [def], refs_result, tenv, add_defs_to_scopes [def] scopes
         | E_type_abstraction { result ; _ } -> expression tenv result
         | E_constructor { element ; _ } -> expression tenv element
         | E_record_accessor { record ; _ } -> expression tenv record
@@ -180,6 +180,7 @@ module Free = struct
           in
           let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
           let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+          let scopes' = add_defs_to_scopes [def] scopes' in
           let scopes = scopes @ scopes' in
           defs_result @ defs_rhs @ [def], refs_result @ refs_rhs, tenv, scopes
         | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
@@ -194,7 +195,7 @@ module Free = struct
           in
           let defs = [def_fun ; def_par] in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
-          defs_result @ defs, refs_result, tenv, scopes
+          defs_result @ defs, refs_result, tenv, add_defs_to_scopes [def_fun ; def_par] scopes
         | E_type_in { type_binder ; rhs ; let_result } ->
           let def = type_expression type_binder rhs in
           let defs, refs, tenv, scopes = expression tenv let_result in
@@ -216,6 +217,7 @@ module Free = struct
                   | _ -> defs
               ) [] pattern in
               let defs_body, refs_body, tenv, scopes = expression tenv body in
+              let scopes = add_defs_to_scopes defs_pat scopes in
               defs_body @ defs_pat @ defs, refs_body @ refs, tenv, scopes @ scopes'
             )
           in
@@ -376,7 +378,7 @@ a function on expression will returns def list & references (vars) list
 for an expression its free_variable will be references
 
 
-4. next add scopes
-5. Add comments
+5. Add unique id's for all defs
+6. Add comments
 
 *)

@@ -118,14 +118,14 @@ let rec flatten_defs defs =
     [def] @ (flatten_defs d) @ flatten_defs defs
   | def::defs -> def :: flatten_defs defs 
 
-let add_defs_to_acope : def list -> scope -> scope
+let add_defs_to_scope : def list -> scope -> scope
   = fun defs scope ->
       let loc, scope_defs = scope in
       loc, (flatten_defs defs) @ scope_defs
 
 let add_defs_to_scopes : def list -> scopes -> scopes 
   = fun defs scopes ->
-      List.map scopes ~f:(add_defs_to_acope defs)
+      List.map scopes ~f:(add_defs_to_scope defs)
 
 module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t
