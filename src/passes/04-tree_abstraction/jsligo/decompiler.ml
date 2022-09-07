@@ -450,15 +450,15 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let record = list_to_nsepseq ~sep:Token.ghost_comma record in
     let record = braced record in
     return_expr @@ [Expr (CST.EObject (Region.wrap_ghost record))]
-  | E_accessor {record; path} ->
+  | E_accessor {struct_; path} ->
     let rec aux : AST.expression -> AST.expression Access_path.t -> AST.expression * AST.expression Access_path.t = fun e acc_path ->
       match e.expression_content with
-      | E_accessor { record ; path } ->
-        aux record (path @ acc_path)
+      | E_accessor { struct_ ; path } ->
+        aux struct_ (path @ acc_path)
       | _ -> e,acc_path
     in
-    let (record,path) = aux record path in
-    let record = decompile_expression_in record in
+    let (struct_,path) = aux struct_ path in
+    let struct_ = decompile_expression_in struct_ in
     let rec proj expr = function
       Access_path.Access_map e :: rest ->
         let e = decompile_expression_in e in
@@ -480,7 +480,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       proj (CST.EProj (Region.wrap_ghost p)) rest
     | [] -> expr
     in
-    let x = proj (e_hd record) path in
+    let x = proj (e_hd struct_) path in
     [Expr x]
   | E_ascription {anno_expr;type_annotation} ->
     let expr = decompile_expression_in anno_expr in
@@ -595,11 +595,11 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr
   (* Update on multiple field of the same record. may be removed by adding sugar *)
-  | E_update {record;path;update} when List.length path > 1 ->
+  | E_update {struct_;path;update} when List.length path > 1 ->
     failwith "Nested updates are not supported in JsLIGO."
-  | E_update {record; path; update} ->
-    let record = decompile_expression_in record in
-    let expr = e_hd record in
+  | E_update {struct_; path; update} ->
+    let struct_ = decompile_expression_in struct_ in
+    let expr = e_hd struct_ in
     let name = match path with
       [Access_record name] -> CST.EVar (Region.wrap_ghost name)
     | _ -> failwith "not supported"

@@ -1,3 +1,10 @@
+module type S = sig
+  type 'a t
+  [@@deriving eq,compare,yojson,hash,fold,map]
+  val pp   : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+  val fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
+end
+
 type 'e access =
   | Access_tuple of X_z.t
   | Access_record of string

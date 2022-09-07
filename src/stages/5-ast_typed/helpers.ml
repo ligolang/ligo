@@ -220,18 +220,18 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res,cases') = fold_map_cases f res cases in
       (res, return @@ E_matching {matchee=e';cases=cases'})
     )
-  | E_accessor {record; path} -> (
-      let (res, record) = self init record in
-      (res, return @@ E_accessor {record; path})
+  | E_accessor {struct_; path} -> (
+      let (res, struct_) = self init struct_ in
+      (res, return @@ E_accessor {struct_; path})
     )
   | E_record m -> (
     let (res,m') = Record.LMap.fold_map ~f:(fun _ e res -> self res e) ~init m in
     (res, return @@ E_record m')
   )
-  | E_update {record; path; update} -> (
-    let (res, record) = self init record in
+  | E_update {struct_; path; update} -> (
+    let (res, struct_) = self init struct_ in
     let (res, update) = self res update in
-    (res, return @@ E_update {record;path;update})
+    (res, return @@ E_update {struct_;path;update})
   )
   | E_constructor c -> (
       let (res,e') = self init c.element in

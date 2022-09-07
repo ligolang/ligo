@@ -288,8 +288,8 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
     in
     return (E_record m') record_type
   )
-  | E_accessor {record;path} ->
-      let e' = self record in
+  | E_accessor {struct_;path} ->
+      let e' = self struct_ in
       let aux (prev:O.expression) (a:Label.t) : O.expression =
           let property = a in
           let r_tv = trace_option ~raise (expected_record e.location @@ get_type prev) @@
@@ -298,26 +298,26 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
             trace_option ~raise (bad_record_access property prev e.location) @@
             Record.LMap.find_opt property r_tv.fields in
           let location = e.location in
-          make_e ~location (E_accessor {record=prev; path=property}) tv.associated_type
+          make_e ~location (E_accessor {struct_=prev; path=property}) tv.associated_type
       in
       let e = aux e' path in
       (* check type annotation of the final accessed element *)
       return_e e
-  | E_update {record; path; update} ->
-    let record = self record in
+  | E_update {struct_; path; update} ->
+    let struct_ = self struct_ in
     let update = self update in
-    let wrapped = get_type record in
+    let wrapped = get_type struct_ in
     let tv =
       match wrapped.type_content with
       | T_record {fields;_} -> (
-          let {associated_type;_} :  O.row_element = trace_option ~raise (bad_record_access path record update.location) @@
+          let {associated_type;_} :  O.row_element = trace_option ~raise (bad_record_access path struct_ update.location) @@
             Record.LMap.find_opt path fields in
           associated_type
       )
       | _ -> failwith (Format.asprintf "Update an expression which is not a record %a" O.PP.type_expression wrapped)
     in
     let () = assert_type_expression_eq ~raise update.location (tv, get_type update) in
-    return (E_update {record; path; update}) wrapped
+    return (E_update {struct_; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda ->
      let (lambda,lambda_type) = type_lambda ~raise ~options ~loc:e.location ~tv_opt (app_context, context) lambda in

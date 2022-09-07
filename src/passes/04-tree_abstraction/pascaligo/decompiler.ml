@@ -113,8 +113,8 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
        let field : CST.field_decl =
          {field_name; field_type = Some (Token.ghost_colon , field_type); attributes=field_attr} in
        Region.wrap_ghost field in
-    let record = List.map ~f:aux fields in
-    let elements = list_to_sepseq ~sep:(Token.ghost_semi) record in
+    let struct_ = List.map ~f:aux fields in
+    let elements = list_to_sepseq ~sep:(Token.ghost_semi) struct_ in
     let attributes = Shared_helpers.decompile_attributes attributes in
     let compound : CST.field_decl CST.reg CST.compound = inject Token.ghost_record elements in
     return @@ t_attr attributes (CST.T_Record (Region.wrap_ghost compound))
@@ -168,8 +168,8 @@ let get_e_variable : AST.expression -> _ = fun expr ->
 let rec get_e_accessor : AST.expression -> _ = fun expr ->
   match expr.expression_content with
     E_variable var -> (var, [])
-  | E_accessor {record;path} ->
-    let (var, lst) = get_e_accessor record in
+  | E_accessor {struct_;path} ->
+    let (var, lst) = get_e_accessor struct_ in
     (var, lst @ path)
   | _ -> failwith @@
     Format.asprintf "%a should be a variable expression"
@@ -462,7 +462,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
       let cases : CST.test_clause CST.case = {kwd_case=Token.ghost_case;expr;kwd_of=Token.ghost_of;opening;lead_vbar;cases;closing} in
       return_inst @@ CST.I_Case (Region.wrap_ghost cases)
   )
-  | E_record record  ->
+  | E_record struct_  ->
     let aux (Label.Label str, expr) =
       let field_name = Wrap.ghost str in
       let field_rhs = decompile_expression expr in
@@ -471,21 +471,21 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
       in
       Region.wrap_ghost field
     in
-    let record = List.map ~f:aux record in
-    let record = list_to_sepseq ~sep:Token.ghost_semi record in
-    let record = inject Token.ghost_record record in
-    return_expr @@ CST.E_Record (Region.wrap_ghost record)
-  | E_accessor {record; path} -> (
+    let struct_ = List.map ~f:aux struct_ in
+    let struct_ = list_to_sepseq ~sep:Token.ghost_semi struct_ in
+    let struct_ = inject Token.ghost_record struct_ in
+    return_expr @@ CST.E_Record (Region.wrap_ghost struct_)
+  | E_accessor {struct_; path} -> (
     let rec aux : AST.expression -> AST.expression Access_path.t -> AST.expression * AST.expression Access_path.t = fun e acc_path ->
       match e.expression_content with
-      | E_accessor { record ; path } ->
-        aux record (path @ acc_path)
+      | E_accessor { struct_ ; path } ->
+        aux struct_ (path @ acc_path)
       | _ -> e,acc_path
     in
-    let (record,path) = aux record path in
+    let (struct_,path) = aux struct_ path in
     match List.rev path with
       Access_map e :: [] ->
-      let (var,lst) = get_e_accessor @@ record in
+      let (var,lst) = get_e_accessor @@ struct_ in
       let map = decompile_to_path var lst in
       let e = decompile_expression e in
       let keys = (Region.wrap_ghost @@ brackets @@ e, []) in
@@ -494,7 +494,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     | Access_map e :: lst ->
       let path = List.rev lst in
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot @@ List.map ~f:decompile_to_selection path in
-      let struct_name = CST.E_Var (decompile_variable @@ get_e_variable record) in
+      let struct_name = CST.E_Var (decompile_variable @@ get_e_variable struct_) in
       let proj = CST.{record_or_tuple = struct_name ; selector=Token.ghost_dot ; field_path} in
       let map = CST.E_Proj (Region.wrap_ghost proj) in
       let e = decompile_expression e in
@@ -503,22 +503,22 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
       return_expr @@ CST.E_MapLookup (Region.wrap_ghost @@ mlu)
     | _ ->
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot @@ List.map ~f:decompile_to_selection path in
-      let record_or_tuple = CST.E_Var (decompile_variable @@ get_e_variable record) in
+      let record_or_tuple = CST.E_Var (decompile_variable @@ get_e_variable struct_) in
       let proj = CST.{record_or_tuple ; selector=Token.ghost_dot ; field_path} in
       return_expr @@ CST.E_Proj (Region.wrap_ghost proj)
   )
-  | E_update {record; path; update} -> (
-    let record = decompile_expression record in
+  | E_update {struct_; path; update} -> (
+    let struct_ = decompile_expression struct_ in
     let update = decompile_expression update in
     let structure =
       let aux = fun (access:AST.expression Access_path.access) ->
         match access with
         | Access_record field -> CST.FieldName (Wrap.ghost field)
         | Access_tuple z -> CST.Component (Wrap.ghost (Z.to_string z , z))
-        | Access_map _ -> failwith "map access in record update"
+        | Access_map _ -> failwith "map access in struct_ update"
       in
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot (List.map ~f:aux path) in
-      CST.( E_Proj (Region.wrap_ghost { record_or_tuple = record ; field_path ; selector = Token.ghost_dot}) )
+      CST.( E_Proj (Region.wrap_ghost { record_or_tuple = struct_ ; field_path ; selector = Token.ghost_dot}) )
     in
     let upd = CST.{ structure ; kwd_with = Token.ghost_with ; update } in
     return_expr @@ CST.E_Update (Region.wrap_ghost upd)

@@ -38,10 +38,10 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
     check_recursive_call_in_matching ~raise n final_path cases
   | E_record elm ->
     List.iter ~f:(check_recursive_call ~raise n false) @@ Record.LMap.to_list elm
-  | E_accessor {record;_} ->
-    check_recursive_call ~raise n false record
-  | E_update {record;update;_} ->
-    check_recursive_call ~raise n false record;
+  | E_accessor {struct_;_} ->
+    check_recursive_call ~raise n false struct_
+  | E_update {struct_;update;_} ->
+    check_recursive_call ~raise n false struct_;
     check_recursive_call ~raise n false update
   | E_module_accessor _
   | E_type_inst _

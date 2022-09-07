@@ -1038,16 +1038,16 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         (Record.LMap.to_kv_list_rev recmap)
       in
       return @@ V_Record (Record.of_list lv')
-    | E_accessor { record ; path} -> (
-      let* record' = eval_ligo record calltrace env in
+    | E_accessor { struct_ ; path} -> (
+      let* record' = eval_ligo struct_ calltrace env in
       match record' with
       | V_Record recmap ->
         let a = Record.LMap.find path recmap in
         return a
       | _ -> failwith "trying to access a non-record"
     )
-    | E_update {record ; path ; update} -> (
-      let* record' = eval_ligo record calltrace env in
+    | E_update {struct_ ; path ; update} -> (
+      let* record' = eval_ligo struct_ calltrace env in
       match record' with
       | V_Record recmap ->
         if Record.LMap.mem path recmap then

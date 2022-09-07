@@ -111,7 +111,7 @@ let tuple_of_record (m: _ Rows.row_element_mini_c Record.t) =
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
-  | T_record record -> Some (tuple_of_record record.fields)
+  | T_record struct_ -> Some (tuple_of_record struct_.fields)
   | _ -> None
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
@@ -159,8 +159,8 @@ let e_mod_in ?loc ?sugar module_binder rhs let_result = e_mod_in ?loc ?sugar { m
 let e_raw_code ?loc ?sugar language code = e_raw_code ?loc ?sugar {language; code} ()
 let e_constructor constructor element : expression = e_constructor {constructor;element} ()
 let e_matching ?loc ?sugar matchee cases : expression = e_matching ?loc ?sugar { matchee ; cases } ()
-let e_record_accessor ?loc ?sugar record path = e_accessor ?loc ?sugar ({record; path} : _ Types.Accessor.t) ()
-let e_record_update ?loc ?sugar record path update = e_update ?loc ?sugar ({record; path; update} : _ Types.Update.t) ()
+let e_record_accessor ?loc ?sugar struct_ path = e_accessor ?loc ?sugar ({struct_; path} : _ Types.Accessor.t) ()
+let e_record_update ?loc ?sugar struct_ path update = e_update ?loc ?sugar ({struct_; path; update} : _ Types.Update.t) ()
 let e_module_accessor ?loc ?sugar module_path element = e_module_accessor ?loc ?sugar {module_path;element} ()
 let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = e_ascription ?loc ?sugar {anno_expr;type_annotation} ()
 let e_lambda_ez   ?loc ?sugar var ?ascr ?const_or_var output_type result         = e_lambda ?loc ?sugar {var;ascr;attributes={const_or_var}} output_type result
@@ -230,8 +230,8 @@ let get_e_tuple = fun t ->
 let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option =
   match get_t_record t with
   | None -> None
-  | Some record ->
-    match Record.LMap.find_opt label record.fields with
+  | Some struct_ ->
+    match Record.LMap.find_opt label struct_.fields with
     | None -> None
     | Some row_element -> Some row_element.associated_type
 

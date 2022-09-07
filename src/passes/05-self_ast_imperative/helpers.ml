@@ -381,16 +381,16 @@ module Free_variables :
     | E_record m ->
       let res = List.map ~f:(fun (_,v) -> self v) m in
       unions res
-    | E_accessor {record;path} ->
+    | E_accessor {struct_;path} ->
       let aux = function
         | Access_path.Access_tuple _ | Access_record _ -> VarSet.empty
         | Access_map e -> self e in
-      VarSet.union (self record) (unions @@ List.map ~f:aux path)
-    | E_update {record;path;update} ->
+      VarSet.union (self struct_) (unions @@ List.map ~f:aux path)
+    | E_update {struct_;path;update} ->
       let aux = function
         | Access_path.Access_tuple _ | Access_record _ -> VarSet.empty
         | Access_map e -> self e in
-      unions ([self record; self update] @ List.map ~f:aux path)
+      unions ([self struct_; self update] @ List.map ~f:aux path)
     | E_tuple t ->
       unions @@ List.map ~f:self t
     | E_constructor {element;_} ->

@@ -241,10 +241,10 @@ module Free_variables :
       let res = Record.map self m in
       let res = Record.LMap.to_list res in
       unions res
-    | E_accessor {record} ->
-      self record
-    | E_update {record;update} ->
-      VarSet.union (self record) (self update)
+    | E_accessor {struct_} ->
+      self struct_
+    | E_update {struct_;update} ->
+      VarSet.union (self struct_) (self update)
     | E_let_in { let_binder ; rhs ; let_result } ->
       let fv2 = (self let_result) in
       let fv2 = VarSet.remove let_binder.var fv2 in

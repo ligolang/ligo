@@ -146,15 +146,15 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_record recd ->
       let recd = Record.map self recd in
       return @@ I.E_record recd
-    | O.E_accessor {record;path} ->
-      let record = self record in
+    | O.E_accessor {struct_;path} ->
+      let struct_ = self struct_ in
       let Label path  = path in
-      return @@ I.E_accessor {record;path=[Access_record path]}
-    | O.E_update {record;path;update} ->
-      let record = self record in
+      return @@ I.E_accessor {struct_;path=[Access_record path]}
+    | O.E_update {struct_;path;update} ->
+      let struct_ = self struct_ in
       let update = self update in
       let Label path  = path in
-      return @@ I.E_update {record;path=[Access_record path];update}
+      return @@ I.E_update {struct_;path=[Access_record path];update}
     | O.E_ascription {anno_expr; type_annotation} ->
       let anno_expr = self anno_expr in
       let type_annotation = decompile_type_expression type_annotation in

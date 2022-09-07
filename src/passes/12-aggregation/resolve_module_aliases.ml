@@ -90,13 +90,13 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
   | E_record record ->
     let record = Record.map self record in
     return @@ E_record record
-  | E_accessor {record;path} ->
-    let record = self record in
-    return @@ E_accessor {record;path}
-  | E_update {record;path;update} ->
-    let record = self record in
+  | E_accessor {struct_;path} ->
+    let struct_ = self struct_ in
+    return @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+    let struct_ = self struct_ in
     let update = self update in
-    return @@ E_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   | E_mod_in  {module_binder; rhs; let_result} ->
     let mod_aliases,path,rhs = compile_module_expr aliases rhs in
     let aliases = Aliases.push aliases module_binder mod_aliases path in

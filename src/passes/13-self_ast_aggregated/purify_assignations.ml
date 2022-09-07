@@ -249,9 +249,9 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
   (* Record *)
   | E_record map ->
     Effect.concat @@ List.map ~f:(fun e -> self e) @@ Record.LMap.to_list map
-  | E_accessor {record;path=_} -> self record
-  | E_update {record;path=_;update} ->
-    let effect = self record in
+  | E_accessor {struct_;path=_} -> self struct_
+  | E_update {struct_;path=_;update} ->
+    let effect = self struct_ in
     let effect = Effect.add effect @@ self update in
     effect
   | E_assign {binder;expression} ->
@@ -521,13 +521,13 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
   | E_record record ->
       let record = Record.map self record in
       return ?returned_effect @@ E_record record
-  | E_accessor {record;path} ->
-      let record = self record in
-      return ?returned_effect @@ E_accessor {record;path}
-  | E_update {record;path;update} ->
-      let record = self record in
+  | E_accessor {struct_;path} ->
+      let struct_ = self struct_ in
+      return ?returned_effect @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+      let struct_ = self struct_ in
       let update = self update in
-      return ?returned_effect @@ E_update {record;path;update}
+      return ?returned_effect @@ E_update {struct_;path;update}
   (* Todo : check if we can replace by morphin directly let () = x := e in into let x = e in *)
   | E_assign {binder;expression} ->
       let expression = self expression in

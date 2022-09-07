@@ -259,17 +259,17 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       (* Note: now returns E_tuple, not pairs, for combs *)
       Layout.record_to_pairs ~raise self return record_t m
     )
-  | E_accessor {record; path} -> (
-    let ty' = compile_type ~raise (get_type record) in
+  | E_accessor {struct_; path} -> (
+    let ty' = compile_type ~raise (get_type struct_) in
     let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "not a record") @@
-      get_t_record_opt (get_type record) in
+      get_t_record_opt (get_type struct_) in
     match record_ty.layout with
     | L_comb ->
       let record_fields = AST.Helpers.kv_list_of_t_record_or_tuple ~layout:record_ty.layout record_ty.fields in
       let i = fst @@ Option.value_exn  (List.findi ~f:(fun _ (label, _) -> 0 = Label.compare path label) record_fields) in
       let n = List.length record_fields in
-      let record = compile_expression ~raise record in
-      return (E_proj (record, i, n))
+      let struct_ = compile_expression ~raise struct_ in
+      return (E_proj (struct_, i, n))
     | _ ->
     let path = Layout.record_access_to_lr ~raise ~layout:record_ty.layout ty' record_ty.fields path in
     let aux = fun pred (ty, lr) ->
@@ -279,15 +279,15 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       in
       return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
     in
-    let record' = compile_expression ~raise record in
-    let expr = List.fold ~f:aux ~init:record' path in
+    let struct_' = compile_expression ~raise struct_ in
+    let expr = List.fold ~f:aux ~init:struct_' path in
     expr
   )
-  | E_update {record; path; update} -> (
+  | E_update {struct_; path; update} -> (
     (* Compile record update to simple constructors &
        projections. This will be optimized to some degree by eta
        contraction in a later pass. *)
-      let ty = get_type record in
+      let ty = get_type struct_ in
       let record_ty =
         trace_option ~raise (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record_opt (ty) in
@@ -295,18 +295,18 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       match record_ty.layout with
       | L_comb ->
         let record_fields = AST.Helpers.kv_list_of_t_record_or_tuple ~layout:record_ty.layout record_ty.fields in
-        let record = self record in
+        let struct_ = self struct_ in
         let update = self update in
         let i = fst @@ Option.value_exn  (List.findi ~f:(fun _ (label, _) -> 0 = Label.compare path label) record_fields) in
         let n = List.length record_fields in
-        return (E_update (record, i, update, n))
+        return (E_update (struct_, i, update, n))
       | _ ->
       let path =
         trace_strong ~raise (corner_case ~loc:__LOC__ "record access") @@
         (fun ~raise:_ -> Layout.record_access_to_lr ~raise ~layout:record_ty.layout ty' record_ty.fields path) in
       let path = List.map ~f:snd path in
       let update = self update in
-      let record = self record in
+      let struct_ = self struct_ in
       let record_var = Value_var.fresh () in
       let car (e : expression) : expression =
         match e.type_expression.type_content with
@@ -336,9 +336,9 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in (record, false, ((record_var, record.type_expression),
+        (E_let_in (struct_, false, ((record_var, struct_.type_expression),
                    build_record_update
-                     (e_var record_var record.type_expression)
+                     (e_var record_var struct_.type_expression)
                      path)))
   )
   | E_constant {cons_name=name; arguments=lst} -> (

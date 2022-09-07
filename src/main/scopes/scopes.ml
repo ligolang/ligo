@@ -89,9 +89,9 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       let (i,all_defs,scopes) = List.fold_left ~f:aux ~init:(i,all_defs,scopes) (Record.LMap.to_list emap) in
       (i,all_defs,env,scopes)
     )
-    | E_update { record ; update ; _ } -> (
+    | E_update { struct_ ; update ; _ } -> (
       (*TODO: here record has a virtual location, check this out.. not normal *)
-      let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,record.location) bindings record in
+      let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,struct_.location) bindings struct_ in
       find_scopes' (i,all_defs,env,scopes,update.location) bindings update
     )
     | E_constant { arguments ; _ } -> (
@@ -106,7 +106,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,lamb.location) bindings lamb in
       find_scopes' (i,all_defs,env,scopes,args.location) bindings args
     )
-    | E_ascription { anno_expr=e;_ } | E_accessor { record=e;_ } | E_constructor { element=e;_ } -> (
+    | E_ascription { anno_expr=e;_ } | E_accessor { struct_=e;_ } | E_constructor { element=e;_ } -> (
       find_scopes' (i,all_defs,env,scopes,e.location) bindings e
     )
     | E_module_accessor _ -> (

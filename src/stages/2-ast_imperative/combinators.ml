@@ -53,7 +53,7 @@ let t__type_ ?loc t : type_expression = t_app ?loc v__type_ [t]
 let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 [@@map (_type_, ("map", "big_map"))]
 
-let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
+let t_record ?loc struct_  : type_expression = make_t ?loc @@ T_record struct_
 let t_record_ez_attr ?loc ?(attr=[]) fields =
   let aux i (name, t_expr, attributes) =
     (Label.of_string name, Rows.{associated_type=t_expr; decl_pos=i; attributes}) in
@@ -167,8 +167,8 @@ let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : 
   let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
-let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
-let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
+let e_accessor ?loc struct_ path      = make_e ?loc @@ E_accessor {struct_; path}
+let e_update ?loc struct_ path update = make_e ?loc @@ E_update {struct_; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 let e_module_accessor ?loc module_path element = make_e ?loc @@ E_module_accessor {module_path;element}
@@ -241,7 +241,7 @@ let e_unopt ?loc matchee none_body (var_some,some_body) =
 
 let get_e_accessor = fun t ->
   match t with
-  | E_accessor {record; path} -> Some (record , path)
+  | E_accessor {struct_; path} -> Some (struct_ , path)
   | _ -> None
 
 let assert_e_accessor = fun t ->

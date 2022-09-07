@@ -104,10 +104,10 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
     usages [self matchee; self_binder (List.map ~f:(fun b -> b.Binder.var) (Record.LMap.to_list fields)) body]
   | E_record fields ->
     usages (List.map ~f:self (Record.LMap.to_list fields))
-  | E_accessor { record; path = _ } ->
-    self record
-  | E_update { record; path = _; update } ->
-    usages [self record; self update]
+  | E_accessor { struct_; path = _ } ->
+    self struct_
+  | E_update { struct_; path = _; update } ->
+    usages [self struct_; self update]
   | E_type_inst { forall; type_ = _} ->
     self forall
   | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
@@ -246,13 +246,13 @@ let rec uncurry_in_expression ~raise
   | E_record fields ->
     let fields = Record.map self fields in
     return (E_record fields)
-  | E_accessor { record; path } ->
-    let record = self record in
-    return (E_accessor { record; path })
-  | E_update { record; path; update } ->
-    let record = self record in
+  | E_accessor { struct_; path } ->
+    let struct_ = self struct_ in
+    return (E_accessor { struct_; path })
+  | E_update { struct_; path; update } ->
+    let struct_ = self struct_ in
     let update = self update in
-    return (E_update { record; path; update })
+    return (E_update { struct_; path; update })
   | E_type_inst {forall;type_} ->
     let forall = self forall in
     return @@ E_type_inst {forall;type_}

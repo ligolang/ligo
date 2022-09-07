@@ -69,17 +69,17 @@ module Fold_helpers(M : Monad) = struct
     ok @@ Recursive.{fun_name;fun_type;lambda}
 
   let accessor : ('a -> 'b monad) -> 'a Accessor.t -> ('b Accessor.t) monad
-    = fun f {record;path=p} ->
-    let* record = f record in
+    = fun f {struct_;path=p} ->
+    let* struct_ = f struct_ in
     let* path   = path f p in
-    ok @@ ({record;path} : 'b Accessor.t)
+    ok @@ ({struct_;path} : 'b Accessor.t)
 
   let update : ('a -> 'b monad) -> 'a Update.t -> ('b Update.t) monad
-    = fun f {record;path=p;update} ->
-    let* record = f record in
+    = fun f {struct_;path=p;update} ->
+    let* struct_ = f struct_ in
     let* path   = path f p in
     let* update = f update in
-    ok @@ ({record;path;update} : 'b Update.t)
+    ok @@ ({struct_;path;update} : 'b Update.t)
 
 
   let sequence : ('a -> 'b monad) -> 'a Sequence.t -> ('b Sequence.t) monad

@@ -208,9 +208,9 @@ module Mutator = struct
       let+ matchee, cases, mutation = combine matchee (self matchee) cases (mutate_cases cases) in
       return @@ E_matching {matchee;cases=cases}, mutation
     )
-    | E_accessor {record; path} -> (
-      let+ record, mutation = self record in
-      return @@ E_accessor {record; path}, mutation
+    | E_accessor {struct_; path} -> (
+      let+ struct_, mutation = self struct_ in
+      return @@ E_accessor {struct_; path}, mutation
     )
     | E_record m -> (
       let ml = Record.LMap.to_kv_list m in
@@ -218,9 +218,9 @@ module Mutator = struct
       let+ m', mutation = combine_list ml mls in
       return @@ E_record (Record.LMap.of_list m'), mutation
     )
-    | E_update {record; path; update} -> (
-      let+ record, update, mutation = combine record (self record) update (self update) in
-      return @@ E_update {record;path;update}, mutation
+    | E_update {struct_; path; update} -> (
+      let+ struct_, update, mutation = combine struct_ (self struct_) update (self update) in
+      return @@ E_update {struct_;path;update}, mutation
     )
     | E_constructor c -> (
       let+ e', mutation = self c.element in

@@ -66,13 +66,13 @@ and get_fv expr =
      let env,exp = List.unzip env_exp in
      let m = Record.of_list @@ List.zip_exn keys exp in
      return (unions env) @@ E_record m
-  | E_update {record;path;update} ->
-     let env_r,record = self record in
+  | E_update {struct_;path;update} ->
+     let env_r,struct_ = self struct_ in
      let env_u,update = self update in
-     return (merge_env env_r env_u) @@ E_update {record;path;update}
-  | E_accessor {record;path} ->
-     let env, record = self record in
-     return env @@ E_accessor {record;path}
+     return (merge_env env_r env_u) @@ E_update {struct_;path;update}
+  | E_accessor {struct_;path} ->
+     let env, struct_ = self struct_ in
+     return env @@ E_accessor {struct_;path}
   | E_let_in { let_binder ; rhs ; let_result ; attr} ->
      let env,let_result = (self let_result) in
      let env = {env with used_var=VVarSet.remove let_binder.var env.used_var} in

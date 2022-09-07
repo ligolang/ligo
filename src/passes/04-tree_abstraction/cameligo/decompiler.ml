@@ -410,38 +410,38 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let record = ne_inject braces record ~attr:[] in
     (* why is the record not empty ? *)
     return_expr @@ CST.ERecord (wrap record)
-  | E_accessor {record; path} ->
+  | E_accessor {struct_; path} ->
     let rec aux : AST.expression -> AST.expression Access_path.t -> AST.expression * AST.expression Access_path.t = fun e acc_path ->
       match e.expression_content with
-      | E_accessor { record ; path } ->
-        aux record (path @ acc_path)
+      | E_accessor { struct_ ; path } ->
+        aux struct_ (path @ acc_path)
       | _ -> e,acc_path
     in
-    let (record,path) = aux record path in
+    let (struct_,path) = aux struct_ path in
     (match List.rev path with
       Access_map e :: [] ->
-      let map = decompile_expression record in
+      let map = decompile_expression struct_ in
       let e = decompile_expression e in
       let arg = e,[map] in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | Access_map e :: lst ->
       let path = List.rev lst in
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot @@ List.map ~f:decompile_to_selection path in
-      let struct_name = decompile_variable @@ get_e_variable record in
+      let struct_name = decompile_variable @@ get_e_variable struct_ in
       let proj : CST.projection = {struct_name;selector=Token.ghost_dot;field_path} in
       let e = decompile_expression e in
       let arg = e,[CST.EProj (wrap proj)] in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | _ ->
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot @@ List.map ~f:decompile_to_selection path in
-       let struct_name = decompile_variable @@ get_e_variable record in
+       let struct_name = decompile_variable @@ get_e_variable struct_ in
       let proj : CST.projection = {struct_name;selector=Token.ghost_dot;field_path} in
       return_expr @@ CST.EProj (wrap proj)
     )
   (* Update on multiple field of the same record. may be removed by adding sugar *)
-  | E_update {record={expression_content=E_update _;_} as record;path;update} ->
-    let record = decompile_expression record in
-    let (record,updates) = match record with
+  | E_update {struct_={expression_content=E_update _;_} as struct_;path;update} ->
+    let struct_ = decompile_expression struct_ in
+    let (struct_,updates) = match struct_ with
       CST.EUpdate {value;_} -> (value.record,value.updates)
     | _ -> failwith @@ Format.asprintf "Inpossible case %a" AST.PP.expression expr
     in
@@ -454,31 +454,31 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let field_assign : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
     let updates = updates.value.ne_elements in
     let updates = wrap @@ ne_inject ~attr:[] braces @@ npseq_cons ~sep:Token.ghost_semi (wrap @@ field_assign) updates in
-    let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
+    let update : CST.update = {lbrace=Token.ghost_lbrace;record=struct_;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
     return_expr @@ CST.EUpdate (wrap @@ update)
-  | E_update {record; path; update} ->
+  | E_update {struct_; path; update} ->
     let rec aux : AST.expression -> AST.expression Access_path.t -> AST.expression * AST.expression Access_path.t = fun e acc_path ->
       match e.expression_content with
-      | E_accessor { record ; path } ->
-        aux record (path @ acc_path)
+      | E_accessor { struct_ ; path } ->
+        aux struct_ (path @ acc_path)
       | _ -> e,acc_path
     in
-    let (record,path) = aux record path in
-    let record = decompile_variable @@ get_e_variable record in
+    let (struct_,path) = aux struct_ path in
+    let struct_ = decompile_variable @@ get_e_variable struct_ in
     let field_expr = decompile_expression update in
     let (struct_name,field_path) = List.Ne.of_list path in
     (match field_path with
       [] ->
       (match struct_name with
         Access_record name ->
-        let record : CST.path = Name record in
+        let record : CST.path = Name struct_ in
         let field_path = CST.Name (wrap name) in
         let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
         return_expr @@ CST.EUpdate (wrap update)
       | Access_tuple i ->
-        let record : CST.path = Name record in
+        let record : CST.path = Name struct_ in
         let field_path = CST.Name (wrap @@ Z.to_string i) in
         let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
@@ -486,7 +486,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         return_expr @@ CST.EUpdate (wrap update)
       | Access_map e ->
         let e = decompile_expression e in
-        let arg = field_expr,[e; CST.EVar record] in
+        let arg = field_expr,[e; CST.EVar struct_] in
         return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"), arg))
       )
     | _ ->
@@ -510,7 +510,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let field_path = list_to_nsepseq ~sep:Token.ghost_dot field_path in
         let field_path : CST.projection = {struct_name; selector=Token.ghost_dot;field_path} in
         let field_path = CST.Path (wrap @@ field_path) in
-        let record : CST.path = Name record in
+        let record : CST.path = Name struct_ in
         let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in

@@ -80,11 +80,11 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
   | E_record r ->
     let r' = Record.map self r in
     return (e_record r' ())
-  | E_accessor {record; path} ->
-      let r' = self record in
+  | E_accessor {struct_; path} ->
+      let r' = self struct_ in
       let Label s = path in
       return (e_record_accessor r' (Label s))
-  | E_update {record=r; path=Label l; update=e} ->
+  | E_update {struct_=r; path=Label l; update=e} ->
     let r' = self r in
     let e = self e in
     return (e_record_update r' (Label l) e)

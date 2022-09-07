@@ -29,8 +29,8 @@ module Free_variables = struct
     | E_application {lamb;args} -> unions @@ List.map ~f:self [ lamb ; args ]
     | E_constructor {element;_} -> self element
     | E_record m -> unions @@ List.map ~f:self @@ Record.LMap.to_list m
-    | E_accessor {record;_} -> self record
-    | E_update {record; update;_} -> union (self record) @@ self update
+    | E_accessor {struct_;_} -> self struct_
+    | E_update {struct_; update;_} -> union (self struct_) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
       let b' = union (singleton let_binder.var) b in

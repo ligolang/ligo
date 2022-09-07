@@ -204,13 +204,13 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
    | E_record lmap ->
       let data, lmap = Record.fold_map self data lmap in
       data, return (E_record lmap)
-   | E_accessor { record ; path } ->
-      let data, record = self data record in
-      data, return (E_accessor { record ; path })
-   | E_update { record ; path ; update } ->
+   | E_accessor { struct_ ; path } ->
+      let data, struct_ = self data struct_ in
+      data, return (E_accessor { struct_ ; path })
+   | E_update { struct_ ; path ; update } ->
+      let data, struct_ = self data struct_ in
       let data, update = self data update in
-      let data, record = self data record in
-      data, return (E_update { record ; path ; update })
+      data, return (E_update { struct_ ; path ; update })
    | E_type_inst _ ->
       let rec aux type_insts (e : AST.expression) = match e.expression_content with
          | E_type_inst {forall; type_} ->

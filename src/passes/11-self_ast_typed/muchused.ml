@@ -145,10 +145,10 @@ let rec muchuse_of_expr expr : muchuse =
        (fun acc x -> muchuse_union (muchuse_of_expr x) acc) muchuse_neutral re
   | E_raw_code {code;_} ->
      muchuse_of_expr code
-  | E_accessor {record;_} ->
-     muchuse_of_expr record
-  | E_update {record;update;_} ->
-     muchuse_union (muchuse_of_expr record) (muchuse_of_expr update)
+  | E_accessor {struct_;_} ->
+     muchuse_of_expr struct_
+  | E_update {struct_;update;_} ->
+     muchuse_union (muchuse_of_expr struct_) (muchuse_of_expr update)
   | E_mod_in {let_result;_} ->
      muchuse_of_expr let_result
   | E_type_inst {forall;_} ->

@@ -29,8 +29,8 @@ module Ascription = Ascription
 module Constructor = Constructor
 module Match_expr = Match_expr
 module Record = Record
-module Accessor (Access:Accessor.Access) = Accessor.Make(Access)
-module Update   (Access:  Update.Access) = Update.Make(Access)
+module Accessor (Path: Access_path.S) = Accessor.Make(Path)
+module Update   (Path: Access_path.S) = Update.Make(Path)
 
 (* Sugar *)
 module Conditional = Conditional

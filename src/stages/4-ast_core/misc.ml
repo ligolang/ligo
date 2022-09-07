@@ -43,7 +43,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
       else None
     )
   | E_update ura, E_update urb -> (
-    match assert_value_eq (ura.record, urb.record) with
+    match assert_value_eq (ura.struct_, urb.struct_) with
     | None -> None
     | Some () ->
       let aux (a, b) =

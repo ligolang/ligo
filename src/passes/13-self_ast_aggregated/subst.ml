@@ -76,13 +76,13 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
   | E_record m ->
      let m = Record.map (fun x -> replace x) m in
      return @@ E_record m
-  | E_accessor { record ; path } ->
-     let record = replace record in
-     return @@ E_accessor { record ; path }
-  | E_update { record ; path ; update } ->
-     let record = replace record in
+  | E_accessor { struct_ ; path } ->
+     let struct_ = replace struct_ in
+     return @@ E_accessor { struct_ ; path }
+  | E_update { struct_ ; path ; update } ->
+     let struct_ = replace struct_ in
      let update = replace update in
-     return @@ E_update { record ; path ; update }
+     return @@ E_update { struct_ ; path ; update }
   | E_assign { binder = { var ; ascr ; attributes } ; expression } ->
      let expression = replace expression in
      return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }
@@ -198,13 +198,13 @@ let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -
   | E_record m ->
      let m = Record.map self m in
      return @@ E_record m
-  | E_accessor { record ; path } ->
-     let record = self record in
-     return @@ E_accessor { record ; path }
-  | E_update { record ; path ; update } ->
-     let record = self record in
+  | E_accessor { struct_ ; path } ->
+     let struct_ = self struct_ in
+     return @@ E_accessor { struct_ ; path }
+  | E_update { struct_ ; path ; update } ->
+     let struct_ = self struct_ in
      let update = self update in
-     return @@ E_update { record ; path ; update }
+     return @@ E_update { struct_ ; path ; update }
   | E_assign { binder = { var ; ascr ; attributes } ; expression } ->
      let expression = self expression in
      return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }

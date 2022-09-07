@@ -157,13 +157,13 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
   | E_record record ->
     let record = Record.map self record in
     return @@ E_record record
-  | E_accessor {record;path} ->
-    let record = self record in
-    return @@ E_accessor {record;path}
-  | E_update {record;path;update} ->
-    let record = self record in
+  | E_accessor {struct_;path} ->
+    let struct_ = self struct_ in
+    return @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+    let struct_ = self struct_ in
     let update = self update in
-    return @@ E_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   | E_assign {binder={var;ascr;attributes};expression} ->
     let var = swaper.value var in
     let ascr = self_type ascr in
@@ -290,13 +290,13 @@ let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e
   | E_record record ->
     let _,record = Record.LMap.unzip @@ Record.LMap.map self record in
     return @@ E_record record
-  | E_accessor {record;path} ->
-    let _,record = self record in
-    return @@ E_accessor {record;path}
-  | E_update {record;path;update} ->
-    let _,record = self record in
+  | E_accessor {struct_;path} ->
+    let _,struct_ = self struct_ in
+    return @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+    let _,struct_ = self struct_ in
     let _,update = self update in
-    return @@ E_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   | E_assign {binder={var;ascr;attributes};expression} ->
     let var = Scope.get_value_var scope var in
     let ascr = self_type ascr in

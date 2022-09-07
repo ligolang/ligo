@@ -39,13 +39,13 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
     let res = Record.fold self init m in
     res
   )
-  | E_update {record;update;path=_} -> (
-    let res = self init record in
+  | E_update {struct_;update;path=_} -> (
+    let res = self init struct_ in
     let res = fold_expression self res update in
     res
   )
-  | E_accessor {record;path=_} -> (
-    let res = self init record in
+  | E_accessor {struct_;path=_} -> (
+    let res = self init struct_ in
     res
   )
   | E_let_in { let_binder = _ ; rhs ; let_result ; attr=_} -> (
@@ -130,18 +130,18 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let cases' = map_cases f cases in
     return @@ E_matching {matchee=e';cases=cases'}
   )
-  | E_accessor {record; path} -> (
-    let record = self record in
-    return @@ E_accessor {record; path}
+  | E_accessor {struct_; path} -> (
+    let struct_ = self struct_ in
+    return @@ E_accessor {struct_; path}
   )
   | E_record m -> (
     let m' = Record.map self m in
     return @@ E_record m'
   )
-  | E_update {record; path; update} -> (
-    let record = self record in
+  | E_update {struct_; path; update} -> (
+    let struct_ = self struct_ in
     let update = self update in
-    return @@ E_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   )
   | E_constructor c -> (
     let e' = self c.element in
@@ -389,10 +389,10 @@ module Free_variables :
       let res = Record.map self m in
       let res = Record.LMap.to_list res in
       unions res
-    | E_update {record;update;path=_} ->
-      merge (self record) (self update)
-    | E_accessor {record;path=_} ->
-      self record
+    | E_update {struct_;update;path=_} ->
+      merge (self struct_) (self update)
+    | E_accessor {struct_;path=_} ->
+      self struct_
     | E_let_in { let_binder ; rhs ; let_result ; attr=_} ->
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
       let fv2 = VarSet.remove let_binder.var fv2 in

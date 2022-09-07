@@ -76,13 +76,13 @@ let rec reduplicate ~raise : expression -> expression =
     | E_record map ->
        let map = Record.map (self) map in
        return (E_record map)
-    | E_accessor { record ; path } ->
-       let record = self record in
-       return (E_accessor { record ; path })
-    | E_update { record ; path ; update } ->
-       let record = self record in
+    | E_accessor { struct_ ; path } ->
+       let struct_ = self struct_ in
+       return (E_accessor { struct_ ; path })
+    | E_update { struct_ ; path ; update } ->
+       let struct_ = self struct_ in
        let update = self update in
-       return (E_update { record ; path ; update })
+       return (E_update { struct_ ; path ; update })
    | E_assign {binder;expression} ->
       let binder = binder_remove_counter binder in
       let expression = self expression in

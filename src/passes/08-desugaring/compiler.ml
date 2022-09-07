@@ -167,8 +167,8 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_record recd ->
       let recd = Record.map self recd in
       return @@ O.E_record recd
-    | I.E_accessor {record;path} ->
-      let record = self record in
+    | I.E_accessor {struct_;path} ->
+      let struct_ = self struct_ in
       let accessor ~loc expr a =
         match (a : _ Access_path.access) with
           Access_tuple  i -> O.e_record_accessor ~loc expr (Label (Z.to_string i))
@@ -177,9 +177,9 @@ let rec compile_expression : I.expression -> O.expression =
           let k = self k in
           O.e_constant ~loc C_MAP_FIND_OPT [k;expr]
       in
-      List.fold ~f:(accessor ~loc:sugar.location) ~init:record path
-    | I.E_update {record;path;update} ->
-      let record = self record in
+      List.fold ~f:(accessor ~loc:sugar.location) ~init:struct_ path
+    | I.E_update {struct_;path;update} ->
+      let struct_ = self struct_ in
       let update = self update in
       let accessor ~loc expr a =
         match (a : _ Access_path.access) with
@@ -205,7 +205,7 @@ let rec compile_expression : I.expression -> O.expression =
         in
         (s',e')
       in
-      let (_,rhs) = List.fold ~f:aux ~init:(record, fun e -> e) path in
+      let (_,rhs) = List.fold ~f:aux ~init:(struct_, fun e -> e) path in
       rhs @@ update
     | I.E_map map -> (
       let map = List.dedup_and_sort ~compare:Caml.compare map in
