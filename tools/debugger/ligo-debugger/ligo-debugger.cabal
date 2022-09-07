@@ -242,6 +242,7 @@ test-suite ligo-debugger-test
     , lens
     , ligo-debugger
     , ligo-squirrel
+    , lorentz
     , morley
     , morley-debugger
     , morley-prelude

@@ -21,6 +21,11 @@ module Test.Util
   , HUnit.testCaseSteps
   , HUnit.assertFailure
   , HUnit.assertBool
+  , goesBetween
+  , stripSuffixHashFromLigoIndexedInfo
+  , stripSuffixHashFromSnapshots
+  , getStackFrameNames
+  , getVariableNamesFromStackFrame
     -- * Common snippets
   , intType
     -- * Helpers for breakpoints
@@ -38,6 +43,8 @@ module Test.Util
   , unexpectedSnapshot
   ) where
 
+import Control.Lens (each)
+import Control.Lens.Prism (_Just)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
 import System.FilePath (takeExtension, (</>))
@@ -52,7 +59,9 @@ import Morley.Debugger.Core.Breakpoint
 import Morley.Debugger.Core.Navigate
   (DebugSource (DebugSource), DebuggerState (..), Direction (Backward, Forward),
   FrozenPredicate (FrozenPredicate), NavigableSnapshot (getExecutedPosition), SourceLocation,
-  curSnapshot, frozen, groupSourceLocations, isAtBreakpoint, moveTill, playInterpretHistory)
+  curSnapshot, frozen, goesAfter, goesBefore, groupSourceLocations, isAtBreakpoint, moveTill,
+  playInterpretHistory)
+import Morley.Michelson.ErrorPos (SrcPos)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
@@ -166,6 +175,11 @@ intType = LTConstant $
     { ltcParameters = []
     , ltcInjection = "Int" :| []
     }
+
+goesBetween
+  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
+  => SrcPos -> SrcPos -> FrozenPredicate (DebuggerState is) m
+goesBetween left right = goesAfter left && goesBefore right
 
 compareWithCurLocation
   :: (MonadState (DebuggerState InterpretSnapshot) m)
@@ -289,7 +303,7 @@ checkSnapshot
   :: (MonadState (DebuggerState InterpretSnapshot) m, MonadIO m)
   => (InterpretSnapshot -> Assertion)
   -> m ()
-checkSnapshot check = frozen curSnapshot >>= liftIO . check
+checkSnapshot check = frozen curSnapshot >>= liftIO . check . stripSuffixHashFromSnapshots
 
 unexpectedSnapshot
   :: HasCallStack => InterpretSnapshot -> Assertion
@@ -308,3 +322,32 @@ pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
 isPermutationOf :: (Ord a) => [a] -> [a] -> Bool
 isPermutationOf xs ys = sort xs == sort ys
 
+stripSuffixHash :: LigoStackEntry -> LigoStackEntry
+stripSuffixHash = \case
+  LigoStackEntry lese@LigoExposedStackEntry{..} -> LigoStackEntry lese
+    { leseDeclaration = stripSuffixHashVariable <$> leseDeclaration
+    }
+  LigoHiddenStackEntry -> LigoHiddenStackEntry
+  where
+    stripSuffixHashVariable :: LigoVariable -> LigoVariable
+    stripSuffixHashVariable var = LigoVariable $ pretty var
+
+getStackFrameNames :: InterpretSnapshot -> [Text]
+getStackFrameNames snap =
+  snap ^.. isStackFramesL . each . sfNameL
+
+-- These functions are needed to strip hashes from variables
+-- E.g. varName#123 -> varName
+
+stripSuffixHashFromLigoIndexedInfo :: LigoIndexedInfo -> LigoIndexedInfo
+stripSuffixHashFromLigoIndexedInfo indexedInfo =
+  indexedInfo & liiEnvironmentL . _Just . each %~ stripSuffixHash
+
+getVariableNamesFromStackFrame :: StackFrame -> [Text]
+getVariableNamesFromStackFrame stackFrame = maybe unknownVariable pretty <$> variablesMb
+  where
+    variablesMb = stackFrame ^.. sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
+
+stripSuffixHashFromSnapshots :: InterpretSnapshot -> InterpretSnapshot
+stripSuffixHashFromSnapshots snap =
+  snap & isStackFramesL . each . sfStackL . each . siLigoDescL %~ stripSuffixHash

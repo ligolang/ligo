@@ -56,6 +56,7 @@ test_SourceMapper = testGroup "Reading source mapper"
           Left err -> assertFailure $ pretty err
 
       let metasAndInstrs =
+            map (first stripSuffixHashFromLigoIndexedInfo) $
             filter (hasn't (_1 . _Empty)) $
             toList $ collectMetas (T.unContractCode $ T.cCode contract)
 

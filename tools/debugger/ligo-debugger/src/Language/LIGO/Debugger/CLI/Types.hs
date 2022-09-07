@@ -6,7 +6,7 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, makePrisms, prism)
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:))
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.!=), (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
 import Data.Aeson.Lens (key, nth, values)
@@ -107,13 +107,13 @@ newtype LigoVariable = LigoVariable
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
+-- | Since we have @Maybe LigoVariable@ in @LigoExposedStackEntry@
+-- we need to have some default variable for unknown variables.
+unknownVariable :: Text
+unknownVariable = "?"
+
 instance FromJSON LigoVariable where
-  -- Some variables may look like "varName#123". We want to strip that identifier.
-  parseJSON = withText "variable" \t -> do
-    let suffix = T.takeWhileEnd (/= '#') t
-    if T.all isDigit suffix
-    then pure $ LigoVariable $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') t
-    else pure $ LigoVariable t
+  parseJSON = fmap LigoVariable . parseJSON
 
 instance Buildable LigoVariable where
   -- Here we want to pretty-print monomorphed variables.
@@ -135,7 +135,43 @@ instance Buildable LigoVariable where
       -- "T.any (== '_') functionWithIndex" check in guard above.
       (functionName, _) = first (T.dropEnd 1) $ T.breakOnEnd "_" functionWithIndex
 
-  build (LigoVariable name) = build name
+  build (LigoVariable name) =
+    -- Some variables may look like "varName#123". We want to strip that identifier.
+    if T.all isDigit suffix
+    then build $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') name
+    else build name
+    where
+      suffix = T.takeWhileEnd (/= '#') name
+
+-- | This constant is used in cases when we can't find a name for a stack frame.
+-- E.g. we're going into lambda function or in cycle.
+--
+-- We're using @<internal>@ name because these stack frames are related
+-- to some internal @Michelson@ lambdas that @ligo@ can produce.
+internalStackFrameName :: Text
+internalStackFrameName = "<internal>"
+
+-- | A meta that we embed into @LAMBDA@ values when
+-- interpreting a contract.
+newtype LambdaMeta = LambdaMeta
+  { lmVariables :: NonEmpty LigoVariable
+    -- ^ In this list we store names for stack frames
+    -- that we should create when executing a lambda with this meta.
+    -- The order of these names is reversed (e.g. if it is @["addImpl", "add"]@
+    -- the next stack frames would be created: @["add", "addImpl"]@).
+  } deriving stock (Show, Generic)
+    deriving anyclass (NFData)
+
+makeLensesWith postfixLFields ''LambdaMeta
+
+instance Buildable LambdaMeta where
+  build LambdaMeta{..} =
+    [int||
+    LambdaMeta
+      variables: #{toList lmVariables}|]
+
+instance Default LambdaMeta where
+  def = LambdaMeta (LigoVariable internalStackFrameName :| [])
 
 -- | Reference to type description in the types map.
 --
@@ -281,7 +317,7 @@ makeLensesWith postfixLFields ''LigoExposedStackEntry
 
 instance Buildable LigoExposedStackEntry where
   build (LigoExposedStackEntry decl ty) =
-    let declB = maybe "?" build decl
+    let declB = maybe (build unknownVariable) build decl
     in [int||elem #{declB} of #{ty}|]
 
 instance FromJSON LigoExposedStackEntry where

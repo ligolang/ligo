@@ -246,11 +246,13 @@ instance HasSpecificMessages LIGO where
 
     let builder =
           case isStatus snap of
-            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value))) -> do
-              idx <- createVariables stackItems
-              -- TODO: get the type of "$it" value
-              itVar <- buildVariable LTUnresolved value "$it"
-              insertToIndex idx [itVar]
+            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value)))
+              -- We want to show $it variable only in the top-most stack frame.
+              | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
+                idx <- createVariables stackItems
+                -- TODO: get the type of "$it" value
+                itVar <- buildVariable LTUnresolved value "$it"
+                insertToIndex idx [itVar]
             _ -> createVariables stackItems
 
     let (varReference, variables) = runBuilder builder

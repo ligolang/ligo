@@ -142,6 +142,7 @@ tests:
       - lens
       - ligo-debugger
       - ligo-squirrel
+      - lorentz
       - nyan-interpolation
       - nyan-interpolation-core
       - morley
