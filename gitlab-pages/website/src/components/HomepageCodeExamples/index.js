@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 import Highlight, { defaultProps } from "prism-react-renderer";
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import { useColorMode } from '@docusaurus/theme-common';
-import defaultTheme from 'prism-react-renderer/themes/palenight';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import { useColorMode } from "@docusaurus/theme-common";
+import defaultTheme from "prism-react-renderer/themes/palenight";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 const PASCALIGO_EXAMPLE = `
 type storage is int
@@ -91,7 +91,6 @@ let test_increment =
  let _ = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
  assert (Test.get_storage taddr = initial_storage + 1)
 `;
-
 
 const REASONLIGO_EXAMPLE = `
 type storage = int;
@@ -185,107 +184,120 @@ const _test_increment = () : unit => {
 const test_increment = _test_increment();
 `;
 
-
-function CodeExamples (props) {
+function CodeExamples(props) {
   const {
     siteConfig: {
-      themeConfig: {prism = {}},
+      themeConfig: { prism = {} },
     },
   } = useDocusaurusContext();
   const lightModeTheme = prism.theme || defaultTheme;
   const darkModeTheme = prism.darkTheme || lightModeTheme;
-  const prismTheme = useColorMode().colorMode === "dark" ? darkModeTheme : lightModeTheme;
+  const prismTheme =
+    useColorMode().colorMode === "dark" ? darkModeTheme : lightModeTheme;
 
   return (
-   
-<Tabs
-  defaultValue="jsligo"
-  values={[
-    { label: 'JsLIGO', value: 'jsligo', },
-    { label: 'CameLIGO', value: 'cameligo', },
-    { label: 'PascaLIGO', value: 'pascaligo', },
-    { label: 'ReasonLIGO', value: 'reasonligo', },
-  ]
-}>
-  <TabItem value="jsligo">
-
-<Highlight {...defaultProps} language="jsligo" code={JSLIGO_EXAMPLE} theme={prismTheme}>
-    {({ className, style, tokens, getLineProps, getTokenProps }) => (
-      <pre className={className} style={style}>
-        {tokens.map((line, i) => (
-          <div {...getLineProps({ line, key: i })}>
-            {line.map((token, key) => (
-              <span {...getTokenProps({ token, key })} />
-            ))}
-          </div>
-        ))}
-      </pre>
-    )}
-  </Highlight>
-</TabItem>
-
-    <TabItem value="cameligo">
-
-      <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
-        {({ className, style, tokens, getLineProps, getTokenProps }) => (
-          <pre className={className} style={style}>
-            {tokens.map((line, i) => (
-              <div {...getLineProps({ line, key: i })}>
-                {line.map((token, key) => (
-                  <span {...getTokenProps({ token, key })} />
-                ))}
-              </div>
-            ))}
-          </pre>
-        )}
-      </Highlight>
+    <Tabs
+      defaultValue="jsligo"
+      values={[
+        { label: "JsLIGO", value: "jsligo" },
+        { label: "CameLIGO", value: "cameligo" },
+        { label: "PascaLIGO", value: "pascaligo" },
+        { label: "ReasonLIGO", value: "reasonligo" },
+      ]}
+    >
+      <TabItem value="jsligo">
+        <Highlight
+          {...defaultProps}
+          language="jsligo"
+          code={JSLIGO_EXAMPLE}
+          theme={prismTheme}
+        >
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+            <pre className={className} style={style}>
+              {tokens.map((line, i) => (
+                <div {...getLineProps({ line, key: i })}>
+                  {line.map((token, key) => (
+                    <span {...getTokenProps({ token, key })} />
+                  ))}
+                </div>
+              ))}
+            </pre>
+          )}
+        </Highlight>
       </TabItem>
 
-        <TabItem value="pascaligo">
-          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={prismTheme}>
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-              <pre className={className} style={style}>
-                {tokens.map((line, i) => (
-                  <div {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
-              </pre>
-            )}
-          </Highlight>
-        </TabItem>
-        
-        <TabItem value="reasonligo">
+      <TabItem value="cameligo">
+        <Highlight
+          {...defaultProps}
+          language="cameligo"
+          code={CAMELIGO_EXAMPLE}
+          theme={prismTheme}
+        >
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+            <pre className={className} style={style}>
+              {tokens.map((line, i) => (
+                <div {...getLineProps({ line, key: i })}>
+                  {line.map((token, key) => (
+                    <span {...getTokenProps({ token, key })} />
+                  ))}
+                </div>
+              ))}
+            </pre>
+          )}
+        </Highlight>
+      </TabItem>
 
-        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={prismTheme}>
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-              <pre className={className} style={style}>
-                {tokens.map((line, i) => (
-                  <div {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
-              </pre>
-            )}
-          </Highlight>
-        </TabItem>
-        
+      <TabItem value="pascaligo">
+        <Highlight
+          {...defaultProps}
+          language="pascaligo"
+          code={PASCALIGO_EXAMPLE}
+          theme={prismTheme}
+        >
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+            <pre className={className} style={style}>
+              {tokens.map((line, i) => (
+                <div {...getLineProps({ line, key: i })}>
+                  {line.map((token, key) => (
+                    <span {...getTokenProps({ token, key })} />
+                  ))}
+                </div>
+              ))}
+            </pre>
+          )}
+        </Highlight>
+      </TabItem>
 
-
-  </Tabs>
+      <TabItem value="reasonligo">
+        <Highlight
+          {...defaultProps}
+          language="reasonligo"
+          code={REASONLIGO_EXAMPLE}
+          theme={prismTheme}
+        >
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+            <pre className={className} style={style}>
+              {tokens.map((line, i) => (
+                <div {...getLineProps({ line, key: i })}>
+                  {line.map((token, key) => (
+                    <span {...getTokenProps({ token, key })} />
+                  ))}
+                </div>
+              ))}
+            </pre>
+          )}
+        </Highlight>
+      </TabItem>
+    </Tabs>
   );
-};
+}
 
 export default function HomepageCodeExamples() {
   return (
     <div id="preview">
       <h1>A friendly Smart Contract Language for Tezos</h1>
       <p>Smart contracts were never so easy</p>
-      <CodeExamples /> 
+      <CodeExamples />
     </div>
   );
 }
