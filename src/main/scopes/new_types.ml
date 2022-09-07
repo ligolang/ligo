@@ -13,6 +13,13 @@ let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
   then generated_flag
   else Ast_typed.ModuleVar.to_name_exn v
 
+let counter = ref 0
+let reset_counter () = counter := 0
+
+let make_def_id name =
+  let c, () = !counter, incr counter in
+  name ^ "#" ^ (string_of_int c)
+
 
 module Definitions = struct
   module Location = Simple_utils.Location
@@ -25,18 +32,26 @@ module Definitions = struct
 
   type vdef = {
     name  : string ;
+    uid : string ;
     range : Location.t ;
     body_range : Location.t ;
     t : type_case ;
     references : Location.t list (* TODO: make this Location set *)
   }
 
-  type tdef = Types.tdef
+  type tdef = {
+    name  : string ;
+    uid : string ;
+    range : Location.t ;
+    body_range : Location.t ;
+    content : Ast_core.type_expression ;
+  }
 
   type mod_case = Def of def list | Alias of string list
 
   and mdef = {
     name : string ;
+    uid: string;
     range : Location.t ;
     body_range : Location.t ;
     references : Location.t list ; (* TODO: make this Location set *)
@@ -61,6 +76,11 @@ module Definitions = struct
     | Type        d -> d.name
     | Module      d -> d.name
 
+  let get_def_uid = function
+    | Variable    d -> d.uid
+    | Type        d -> d.uid
+    | Module      d -> d.uid
+
   let get_range = function
     | Type        t -> t.range
     | Variable    v -> v.range
@@ -73,21 +93,25 @@ module Definitions = struct
 
   let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
-      Variable { name ; range ; body_range ; t ; references = [] }
+      let uid = make_def_id name in
+      Variable { name ; range ; body_range ; t ; uid ; references = [] }
 
   let make_t_def : string -> Location.t -> Ast_core.type_expression -> def =
     fun name loc te ->
-      Type { name ; range = loc ; body_range = te.location ; content = te }
+      let uid = make_def_id name in
+      Type { name ; range = loc ; body_range = te.location ; uid ; content = te }
 
   let make_m_def : range:Location.t -> body_range:Location.t -> string -> def list -> def =
     fun ~range ~body_range name members ->
+      let uid = make_def_id name in
       let mod_case = Def members in
-      Module { name ; range ; body_range ; mod_case ; references = [] }
+      Module { name ; range ; body_range ; mod_case ; uid ; references = [] }
 
   let make_m_alias_def : range:Location.t -> body_range:Location.t -> string -> string list -> def =
     fun ~range ~body_range name alias ->
+      let uid = make_def_id name in
       let mod_case = Alias alias in
-      Module { name ; range ; body_range ; mod_case ; references = [] }
+      Module { name ; range ; body_range ; mod_case ; uid ; references = [] }
 
   let shadow_defs : def list -> def list
     = fun defs ->

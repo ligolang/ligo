@@ -174,7 +174,6 @@ module Free = struct
           defs, refs @ refs', tenv, scopes
         | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
           let def =
-            (* let binder_name = get_binder_name let_binder.var in *)
             let binder_loc =  VVar.get_location var in
             Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc rhs.location
           in
@@ -312,7 +311,7 @@ let rec to_def_map : def list -> Types.def_map
         ~f:(fun def_map def ->
           match def with
             Variable v ->
-              let def_name = Misc.make_def_id v.name in
+              let def_name = make_def_id v.name in
               let t = match v.t with 
                 New_types.Unresolved -> Types.Unresolved 
               | Core t -> Types.Core t
@@ -327,11 +326,16 @@ let rec to_def_map : def list -> Types.def_map
               } in
               Def_map.add def_name def def_map
           | Type t ->
-              let def_name = Misc.make_def_id t.name in
-              let def = Types.Type t in
+              let def_name = t.uid in
+              let def = Types.Type {
+                name  = t.name ;
+                range = t.range ;
+                body_range = t.body_range ;
+                content = t.content ;
+              } in
               Def_map.add def_name def def_map
           | Module ({ mod_case = Alias a } as m) ->
-              let def_name = Misc.make_def_id m.name in
+              let def_name = m.uid in
               let mod_case = Types.Alias a in
               let def = Types.Module {
                 name = m.name ;
@@ -342,7 +346,7 @@ let rec to_def_map : def list -> Types.def_map
               } in
               Def_map.add def_name def def_map
           | Module ({ mod_case = Def d } as m) ->
-              let def_name = Misc.make_def_id m.name in
+              let def_name = m.uid in
               let mod_case = Types.Def (to_def_map d) in
               let def = Types.Module {
                 name = m.name ;
@@ -363,7 +367,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
       let () = Format.printf "----------------------------------\n" in
       let () = Format.printf "++++++++++++++++++++++++++++++++++\n" in
       let () = List.iter ~f:(fun (loc, defs) ->
-        let bs = List.map defs ~f:get_def_name in
+        let bs = List.map defs ~f:get_def_uid in
         let bs = String.concat ~sep:", " bs in
         Format.printf "[%s] %a\n" bs Location.pp loc  
       ) scopes in
@@ -377,8 +381,8 @@ a function on expression will returns def list & references (vars) list
 
 for an expression its free_variable will be references
 
-
 5. Add unique id's for all defs
-6. Add comments
+6. Shadow defs
+7. Add comments
 
 *)

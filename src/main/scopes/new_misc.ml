@@ -79,13 +79,6 @@ let rec extract_variable_types :
         List.fold_left ds ~init:prev 
           ~f:(fun prev d -> extract_variable_types prev d.wrap_content))
 
-let counter = ref 0
-let reset_counter () = counter := 0
-
-let make_def_id name =
-  let c, () = !counter, incr counter in
-  name ^ "#" ^ (string_of_int c)
-
 let resolve_if :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> type_case =
   fun ~with_types bindings var ->
