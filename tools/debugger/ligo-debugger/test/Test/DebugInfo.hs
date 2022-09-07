@@ -10,16 +10,16 @@ import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Morley.Michelson.Typed qualified as T
 import Test.Tasty (TestTree, testGroup)
+import Test.Util
 
 import Morley.Debugger.Core (SourceLocation (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Typed.Util (dsGoToValues)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
-import Morley.Michelson.Typed.Util (dsGoToValues)
-import Test.Util
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 
@@ -57,7 +57,7 @@ test_SourceMapper = testGroup "Reading source mapper"
       let file = contractsDir </> "simple-ops.mligo"
       result <- compileLigoContractDebug "main" file
       ligoMapper <- either throwIO pure result
-      (allLocs, T.SomeContract contract, _) <-
+      (exprLocs, T.SomeContract contract, _) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
@@ -132,7 +132,7 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         ]
 
-      (_slSrcPos <$> toList allLocs)
+      (_slSrcPos <$> toList exprLocs)
         @?=
         -- Note: some ranges have the same start position and different
         -- end positions - since we account for only the former, they
