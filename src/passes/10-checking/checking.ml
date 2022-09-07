@@ -431,7 +431,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
     | E_application { lamb; args } ->
       let ctx, lamb_type, lamb = infer lamb in
       let ctx, ret_type, f, args =
-        infer_application ~raise ~loc ~options ~ctx lamb_type args
+        infer_application ~raise ~loc ~options ~ctx (Context.apply ctx lamb_type) args
       in
       ( ctx
       , ret_type
