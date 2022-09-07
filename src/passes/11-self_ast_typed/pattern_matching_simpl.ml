@@ -39,11 +39,13 @@
 let fold_map_expression = Ast_typed.Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
+
+open Ligo_prim
 open Ast_typed
 
 module SimplMap = Simple_utils.Map.Make(ValueVar)
 
-type simpl_map = ((label * expression_variable) list) SimplMap.t
+type simpl_map = ((Label.t * ValueVar.t) list) SimplMap.t
 
 
 let is_generated_partial_match : expression -> bool =
@@ -52,7 +54,7 @@ let is_generated_partial_match : expression -> bool =
     (* This is bad, we probably need some constant for "internally generated failwith" ? *)
     | E_application {lamb= { expression_content = E_variable v ; _ } ; args = e } when String.equal "failwith" (Format.asprintf "%a" ValueVar.pp v)-> (
       match get_a_string e with
-      | Some fw -> String.equal fw (Ligo_string.extract Stage_common.Backends.fw_partial_match)
+      | Some fw -> String.equal fw (Ligo_string.extract Backend.Michelson.fw_partial_match)
       | None -> false
     )
     | _ -> false
@@ -63,10 +65,10 @@ let rec do_while : (expression -> (bool * expression)) -> expression -> expressi
     if has_been_simpl then do_while f exp
     else exp
 
-let make_le : matching_content_variant -> (label * expression_variable) list = fun ml ->
-  List.map ~f:(fun (m:matching_content_case) -> (m.constructor,m.pattern)) ml.cases
+let make_le : _ matching_content_variant -> (Label.t * ValueVar.t) list = fun ml ->
+  List.map ~f:(fun (m:_ matching_content_case) -> (m.constructor,m.pattern)) ml.cases
 
-let substitute_var_in_body : expression_variable -> expression_variable -> expression -> expression =
+let substitute_var_in_body : ValueVar.t -> ValueVar.t -> expression -> expression =
   fun to_subst new_var body ->
     let aux : unit -> expression -> bool * unit * expression =
       fun () exp ->
@@ -93,7 +95,7 @@ let compress_matching : expression -> expression =
             | Some v -> (
               match SimplMap.find_opt v smap with
               | Some le -> (
-                let (fw,no_fw) = List.partition_tf ~f:(fun (case:matching_content_case) -> is_generated_partial_match case.body) cases.cases in
+                let (fw,no_fw) = List.partition_tf ~f:(fun (case: _ matching_content_case) -> is_generated_partial_match case.body) cases.cases in
                 match no_fw, fw with
                 | [{constructor= Label constructor;pattern;body}] , lst when List.length lst >= 1 ->
                   let (_,proj) = List.find_exn ~f:(fun (Label constructor',_) -> String.equal constructor' constructor) le in

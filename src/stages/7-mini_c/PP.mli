@@ -15,4 +15,4 @@ val expression : formatter -> expression -> unit
 val expression_with_type : formatter -> expression -> unit
 val function_ : formatter -> anon_function -> unit
 
-val constant : formatter -> Stage_common.Types.constant' -> unit
+val constant : formatter -> Ligo_prim.Constant.constant' -> unit

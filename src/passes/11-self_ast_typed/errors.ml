@@ -2,26 +2,27 @@ module Snippet  = Simple_utils.Snippet
 module Location = Simple_utils.Location
 module PP       = Ast_typed.PP
 open Simple_utils.Display
+open Ligo_prim
 
 let stage = "self_ast_typed"
 
 type self_ast_typed_error = [
-  | `Self_ast_typed_recursive_call_is_only_allowed_as_the_last_operation of Ast_typed.expression_variable * Location.t
+  | `Self_ast_typed_recursive_call_is_only_allowed_as_the_last_operation of ValueVar.t * Location.t
   | `Self_ast_typed_bad_self_type of Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Self_ast_typed_bad_format_entrypoint_ann of string * Location.t
   | `Self_ast_typed_entrypoint_ann_not_literal of Location.t [@name "entrypoint_annotation_not_literal"]
   | `Self_ast_typed_unmatched_entrypoint of Location.t
   | `Self_ast_typed_nested_bigmap of Location.t
   | `Self_ast_typed_corner_case of string
-  | `Self_ast_typed_bad_contract_io of Ast_typed.expression_variable * Ast_typed.expression
-  | `Self_ast_typed_bad_view_io of Ast_typed.expression_variable * Location.t
-  | `Self_ast_typed_expected_list_operation of Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.expression
+  | `Self_ast_typed_bad_contract_io of ValueVar.t * Ast_typed.expression * Location.t
+  | `Self_ast_typed_bad_view_io of ValueVar.t * Location.t
+  | `Self_ast_typed_expected_list_operation of ValueVar.t * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
-    Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
+    ValueVar.t * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_pair_in of Location.t * [`View | `Contract]
   | `Self_ast_typed_expected_pair_out of Location.t
   | `Self_ast_typed_pattern_matching_anomaly of Location.t
-  | `Self_ast_typed_storage_view_contract of Location.t * Ast_typed.expression_variable * Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression
+  | `Self_ast_typed_storage_view_contract of Location.t * ValueVar.t * ValueVar.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [`In | `Out]
   | `Self_ast_typed_annotated_declaration_shadowed of Location.t
 ] [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
@@ -45,9 +46,9 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid view argument.@.View '%a' has storage type '%a' and contract '%a' has storage type '%a'.@]"
         Snippet.pp loc
-        Ast_typed.PP.expression_variable view_name
+        ValueVar.pp view_name
         Ast_typed.PP.type_expression vt
-        Ast_typed.PP.expression_variable main_name
+        ValueVar.pp main_name
         Ast_typed.PP.type_expression ct
     | `Self_ast_typed_view_io (loc,got,arg) ->
       let s = match arg with
@@ -94,30 +95,30 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Internal error: %s @]"
         desc
-    | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
+    | `Self_ast_typed_bad_contract_io (entrypoint, _, location) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\". @]"
-        Snippet.pp e.location
-        Ast_typed.PP.expression_variable entrypoint
+        Snippet.pp location
+        ValueVar.pp entrypoint
     | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for view \"%a\".@.An view must be a function. @]"
         Snippet.pp loc
-        Ast_typed.PP.expression_variable entrypoint
+        ValueVar.pp entrypoint
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\".@.\
         We expected a list of operations but we got %a@]"
         Snippet.pp e.location
-        PP.expression_variable entrypoint
-        PP.type_expression got
+        ValueVar.pp entrypoint
+        Ast_typed.PP.type_expression got
     | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the function parameter must be the same as the storage type \"%a\" of the return value.@]"
         Snippet.pp e.location
-        PP.expression_variable entrypoint
-        PP.type_expression t1
-        PP.type_expression t2
+        ValueVar.pp entrypoint
+        Ast_typed.PP.type_expression t1
+        Ast_typed.PP.type_expression t2
     | `Self_ast_typed_expected_pair_in (loc,t) ->
       let ep = match t with `View -> "view" | `Contract -> "contract" in
       Format.fprintf f
@@ -151,8 +152,8 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message);
       ("location", Location.to_yojson loc);
-      ("main_name", Ast_typed.ValueVar.to_yojson main_name);
-      ("view_name", Ast_typed.ValueVar.to_yojson view_name);
+      ("main_name", ValueVar.to_yojson main_name);
+      ("view_name", ValueVar.to_yojson view_name);
       ]
     in
     json_error ~stage ~content
@@ -174,7 +175,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Self_ast_typed_recursive_call_is_only_allowed_as_the_last_operation (name,loc) ->
     let message = `String "recursion must be achieved through tail-calls only" in
-    let fn = `String (Format.asprintf "%a" Ast_typed.PP.expression_variable name) in
+    let fn = ValueVar.to_yojson name in
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);
@@ -239,16 +240,16 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
-  | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
+  | `Self_ast_typed_bad_contract_io (entrypoint, e, location) ->
     let message = `String "badly typed contract" in
     let description = `String "unexpected entrypoint type" in
-    let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
+    let entrypoint = ValueVar.to_yojson entrypoint in
     let eptype = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression) in
     let content = `Assoc [
        ("message", message);
        ("description", description);
        ("entrypoint", entrypoint);
-       ("location", Location.to_yojson e.location);
+       ("location", Location.to_yojson location);
        ("type", eptype);
        ]
     in
@@ -256,7 +257,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
     let message = `String "badly typed view" in
     let description = `String "unexpected view type" in
-    let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
+    let entrypoint = ValueVar.to_yojson entrypoint in
     let content = `Assoc [
        ("message", message);
        ("description", description);
@@ -266,10 +267,10 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
-    let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
+    let entrypoint = ValueVar.to_yojson entrypoint in
     let message = `String "badly typed contract" in
     let actual = `String (Format.asprintf "%a"
-      Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=Stage_common.Constant.List;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
+      Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=List;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression got) in
     let content = `Assoc [
        ("message", message);
@@ -281,7 +282,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
-    let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
+    let entrypoint = ValueVar.to_yojson entrypoint in
     let message = `String "badly typed contract" in
     let description = `String "expected storages" in
     let t1 = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t1) in

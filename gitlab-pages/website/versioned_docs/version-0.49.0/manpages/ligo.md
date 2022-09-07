@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo SUBCOMMAND
+```
 
 ### DESCRIPTION
 The LigoLANG compiler

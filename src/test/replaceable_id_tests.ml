@@ -6,6 +6,7 @@ let get_program = get_program "./contracts/replaceable_id.ligo"
 let compile_main ~raise () =
   Test_helpers.compile_main ~raise "./contracts/replaceable_id.ligo" ()
 
+open Ligo_prim
 open Ast_imperative
 
 let empty_op_list =

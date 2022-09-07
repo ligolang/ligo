@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo run evaluate-call SOURCE_FILE PARAMETER_EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command runs a LIGO function on a given argument. The context is initialized from a source file where the function is implemented. The interpretation is done using Michelson's interpreter.

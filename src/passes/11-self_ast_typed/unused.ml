@@ -1,3 +1,4 @@
+open Ligo_prim
 open Ast_typed
 
 type contract_pass_data = Contract_passes.contract_pass_data
@@ -87,11 +88,11 @@ let rec defuse_of_expr defuse expr : defuse =
   | E_matching {matchee;cases} ->
      defuse_union (defuse_of_expr defuse matchee) (defuse_of_cases defuse cases)
   | E_record re ->
-     Stage_common.Types.LMap.fold
-       (fun _ x -> defuse_union (defuse_of_expr defuse x)) re defuse_neutral
-  | E_record_accessor {record;_} ->
+     Record.fold
+       (fun acc x -> defuse_union (defuse_of_expr defuse x) acc) defuse_neutral re
+  | E_accessor {record;_} ->
      defuse_of_expr defuse record
-  | E_record_update {record;update;_} ->
+  | E_update {record;update;_} ->
      defuse_union (defuse_of_expr defuse record) (defuse_of_expr defuse update)
   | E_mod_in {let_result;_} ->
      defuse_of_expr defuse let_result
@@ -103,7 +104,7 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_expr defuse expression
 
 
-and defuse_of_lambda defuse {binder; result} =
+and defuse_of_lambda defuse {binder; output_type = _; result} =
   remove_defined_var_after defuse binder.var defuse_of_expr result
 
 and defuse_of_cases defuse = function
@@ -113,12 +114,12 @@ and defuse_of_cases defuse = function
 and defuse_of_variant defuse {cases;_} =
   defuse_unions defuse @@
     List.map
-      ~f:(fun ({pattern;body;_}: matching_content_case) ->
+      ~f:(fun ({pattern;body;_}: _ matching_content_case) ->
         remove_defined_var_after defuse pattern defuse_of_expr body)
       cases
 
 and defuse_of_record defuse {body;fields;_} =
-  let vars = LMap.to_list fields |> List.map ~f:(fun b -> b.var) in
+  let vars = Record.LMap.to_list fields |> List.map ~f:(fun b -> b.Binder.var) in
   let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
   let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
   let defuse,unused = defuse_of_expr map body in
@@ -131,30 +132,35 @@ let defuse_of_expr defuse expr =
   List.rev unused
 
 let rec unused_map_module ~raise : module_ -> module_ = function m ->
+  let () = List.iter ~f:(unused_decl ~raise) m in
+  m
+and unused_declaration ~raise = fun (x : declaration) ->
   let update_annotations annots =
     List.iter ~f:raise.Simple_utils.Trace.warning annots in
-  let aux = fun (x : declaration) ->
-    match Location.unwrap x with
-    | Declaration_constant {expr ; _} -> (
-      let defuse,_ = defuse_neutral in
-      let unused = defuse_of_expr defuse expr in
-      let warn_var v =
-        `Self_ast_typed_warning_unused
-          (V.get_location v, Format.asprintf "%a" V.pp v) in
-      let () = update_annotations @@ List.map ~f:warn_var unused in
-      ()
-    )
-    | Declaration_type _ -> ()
-    | Declaration_module {module_; module_binder=_;module_attr=_} ->
-      let _ = unused_map_module_expr ~raise module_ in
-      ()
-  in
-  let () = List.iter ~f:aux m in
-  m
+  match Location.unwrap x with
+  | Declaration_constant {expr ; _} -> (
+    let defuse,_ = defuse_neutral in
+    let unused = defuse_of_expr defuse expr in
+    let warn_var v =
+      `Self_ast_typed_warning_unused
+        (V.get_location v, Format.asprintf "%a" V.pp v) in
+    let () = update_annotations @@ List.map ~f:warn_var unused in
+    ()
+  )
+  | Declaration_type _ -> ()
+  | Declaration_module {module_; module_binder=_;module_attr=_} ->
+    let _ = unused_map_module_expr ~raise module_ in
+    ()
+
+and unused_decl ~raise = fun (Decl x) -> (unused_declaration ~raise x)
 
 and unused_map_module_expr ~raise : module_expr -> module_expr = function m ->
-  let return wrap_content = { m with wrap_content } in
+  let return wrap_content : module_expr = { m with wrap_content } in
   match Location.unwrap m with
   | M_struct x -> return @@ M_struct (unused_map_module ~raise x)
   | M_variable _ -> m
   | M_module_path _ -> m
+
+let unused_map_program ~raise : program-> program = function p->
+  let () = List.iter ~f:(unused_declaration ~raise) p in
+  p

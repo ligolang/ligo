@@ -117,13 +117,12 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_6.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_6.mligo", line 1, characters 30-64:
+    File "../../test/contracts/negative/error_typer_6.mligo", line 1, characters 31-42:
       1 | let foo : (int, string) map = (Map.literal [] : (int, bool) map)
       2 | let main (p:int) (storage : int) =
 
     Invalid type(s).
-    Expected: "map (int , string)", but got: "map (int ,
-    bool)". |} ] ;
+    Expected: "( k * v )", but got: "'a". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_7.mligo" ] ;
   [%expect {|
@@ -143,7 +142,7 @@ let%expect_test _ =
      11 |     return [list([]) as list<operation>, newStorage];
 
     Invalid type(s).
-    Expected: "nat", but got: "( storage * nat )". |} ] ;
+    Expected: "nat", but got: "( nat * nat )". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|

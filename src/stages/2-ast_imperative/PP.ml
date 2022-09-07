@@ -2,32 +2,31 @@ open Types
 open Format
 open Simple_utils.PP_helpers
 
-include Stage_common.PP
+open Ligo_prim
 
 let sum_set_t value sep ppf m =
-  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
-  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
+  let lst = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) m in
+  let new_pp ppf (k, Rows.{associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" Label.pp k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let sum_set_t x = sum_set_t x (tag " ,@ ")
 
-let attributes_2 (attr: string list) : string =
-  List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat
+let record_sep_t value sep ppf (m : (Label.t * type_expression Rows.row_element) list) =
+  let attributes_2 (attr: string list) : string =
+    List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat
+  in
+  let lst = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) m in
+  let new_pp ppf (k, Rows.{associated_type; attributes; _}) =
+    let attr = attributes_2 attributes in
+    fprintf ppf "@[<h>%a -> %a %s@]" Label.pp k value associated_type attr
+  in fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let attributes_1 (attr: string list) : string =
   List.map ~f:(fun s -> "[@" ^ s ^ "]") attr |> String.concat
 
-
-let record_sep_t value sep ppf (m : (label * type_expression row_element) list) =
-  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
-  let new_pp ppf (k, {associated_type; attributes; _}) =
-    let attr = attributes_2 attributes in
-    fprintf ppf "@[<h>%a -> %a %s@]" label k value associated_type attr
-  in fprintf ppf "%a" (list_sep new_pp sep) lst
-
-let rec type_content : formatter -> type_expression -> unit =
+let rec type_content : formatter -> type_content -> unit =
   fun ppf te ->
-  match te.type_content with
+  match te with
   | T_sum m -> (
     let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (sum_set_t type_expression) in
     match m.attributes with [] -> fprintf ppf "%a" s m.fields
@@ -43,65 +42,70 @@ let rec type_content : formatter -> type_expression -> unit =
       let attr : string = attributes_1 m.attributes in
       fprintf ppf "({%a} %s)" r m.fields attr
   )
-  | T_variable        tv -> type_variable ppf tv
-  | T_tuple            t -> type_tuple    type_expression ppf t
-  | T_arrow            a -> arrow         type_expression ppf a
+  | T_variable        tv -> TypeVar.pp ppf tv
+  | T_tuple            t -> Rows.PP.type_tuple  type_expression ppf t
+  | T_arrow            a -> Arrow.pp      type_expression ppf a
   | T_annoted  (ty, str) -> fprintf ppf "(%a%%%s)" type_expression ty str
-  | T_app            app -> type_app      type_expression ppf app
-  | T_module_accessor ma -> module_access type_variable ppf ma
-  | T_singleton       x  -> literal       ppf             x
-  | T_abstraction     x  -> abstraction   type_expression ppf x
-  | T_for_all         x  -> for_all       type_expression ppf x
+  | T_app            app -> Type_app.pp      type_expression ppf app
+  | T_module_accessor ma -> Module_access.pp TypeVar.pp ppf ma
+  | T_singleton       x  -> Literal_value.pp            ppf x
+  | T_abstraction     x  -> Abstraction.pp   type_expression ppf x
+  | T_for_all         x  -> Abstraction.pp   type_expression ppf x
 
 and type_expression ppf (te : type_expression) : unit =
-  fprintf ppf "%a" type_content te
+  fprintf ppf "%a" type_content (te.type_content)
+
+and type_expression_annot ppf (te : type_expression) : unit =
+  fprintf ppf " : %a" type_expression te
+
+let type_expression_option ppf (te : type_expression option) : unit =
+  match te with
+  | Some te -> fprintf ppf " : %a" type_expression te
+  | None    -> fprintf ppf ""
 
 let rec expression ppf (e : expression) =
-  fprintf ppf "%a" expression_content e.expression_content
+  fprintf ppf "%a" expression_content @@ e.expression_content
 and expression_content ppf (ec : expression_content) =
   match ec with
-  | E_literal     l -> literal                ppf l
-  | E_variable    n -> expression_variable    ppf n
-  | E_application a -> application expression ppf a
-  | E_constructor c -> constructor expression ppf c
+  | E_literal     l -> Literal_value.pp   ppf l
+  | E_variable    n -> ValueVar.pp        ppf n
+  | E_application a -> Application.pp expression ppf a
+  | E_constructor c -> Constructor.pp expression ppf c
   | E_constant c ->
       fprintf ppf "%a(%a)"
-        constant' (const_name c.cons_name)
+        Constant.pp_constant' ((fun (Constant.Const c) -> c) c.cons_name)
         (list_sep expression (tag " ,")) c.arguments
   | E_record      r -> record ppf r
-  | E_tuple       t -> tuple       expression ppf t
-  | E_accessor    a -> accessor    expression ppf a
-  | E_update      u -> update      expression ppf u
-  | E_lambda      l -> lambda      expression type_expression ppf l
-  | E_type_abstraction e -> type_abs expression ppf e
-  | E_matching    m -> match_exp expression type_expression ppf m
-  | E_recursive  r -> recursive expression type_expression ppf r
-  | E_let_in    li -> let_in  expression type_expression ppf li
-  | E_type_in   ti -> type_in expression type_expression ppf ti
-  | E_mod_in    mi -> mod_in  expression type_expression attributes attributes attributes ppf mi
-  | E_raw_code   r -> raw_code   expression ppf r
-  | E_ascription a -> ascription expression type_expression ppf a
-  | E_module_accessor ma -> module_access expression_variable ppf ma
-  | E_cond       c -> cond       expression ppf c
-  | E_sequence   s -> sequence   expression ppf s
-  | E_skip         -> skip                  ppf ()
-  | E_map        m -> map        expression ppf m
-  | E_big_map    m -> big_map    expression ppf m
-  | E_list       l -> lst        expression ppf l
-  | E_set        s -> set        expression ppf s
-  | E_assign     a -> assign     expression type_expression ppf a
-  | E_for        f -> for_       expression ppf f
-  | E_for_each   f -> for_each   expression ppf f
-  | E_while      w -> while_     expression ppf w
+  | E_tuple       t -> Record.pp_tuple       expression ppf t
+  | E_accessor    a -> Types.Accessor.pp    expression ppf a
+  | E_update      u -> Types.Update.pp      expression ppf u
+  | E_lambda      l -> Lambda.pp      expression type_expression_option ppf l
+  | E_type_abstraction e -> Type_abs.pp expression ppf e
+  | E_matching    m -> Match_expr.pp expression type_expression_option ppf m
+  | E_recursive  r -> Recursive.pp expression type_expression_annot ppf r
+  | E_let_in     li -> Let_in.pp expression type_expression_option ppf li
+  | E_type_in   ti -> Type_in.pp expression type_expression ppf ti
+  | E_mod_in    mi -> Types.Declaration.PP.mod_in  expression decl ppf mi
+  | E_raw_code   r -> Raw_code.pp   expression ppf r
+  | E_ascription a -> Ascription.pp expression type_expression ppf a
+  | E_module_accessor ma -> Module_access.pp ValueVar.pp ppf ma
+  | E_cond       c -> Conditional.pp expression ppf c
+  | E_sequence   s -> Sequence.pp   expression ppf s
+  | E_skip       _ -> Skip.pp                  ppf ()
+  | E_map        m -> Map_expr.pp   expression ppf m
+  | E_big_map    m -> Map_expr.pp   expression ppf m
+  | E_list       l -> Set_expr.pp   expression ppf l
+  | E_set        s -> Set_expr.pp   expression ppf s
+  | E_assign     a -> Assign.pp     expression type_expression_option ppf a
+  | E_for        f -> For_loop.pp   expression ppf f
+  | E_for_each   f -> For_each_loop.pp expression ppf f
+  | E_while      w -> While_loop.pp    expression ppf w
 
 and record ppf kvl =
-  fprintf ppf "@[<v>{ %a }@]" (list_sep (fun ppf (l,e)-> Format.fprintf ppf "%a : %a" label l expression e) (tag " ;")) kvl
+  fprintf ppf "@[<v>{ %a }@]" (list_sep (fun ppf (l,e)-> Format.fprintf ppf "%a : %a" Label.pp l expression e) (tag " ;")) kvl
 
-and attributes ppf attributes =
-  let attr =
-    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat
-  in fprintf ppf "%s" attr
 
-let declaration ppf (d : declaration) = declaration expression type_expression attributes attributes attributes ppf d
+and declaration ppf (d : declaration) = Types.Declaration.PP.declaration expression type_expression decl ppf (Location.unwrap d)
+and decl ppf (Types.Decl d) = declaration ppf d
 
-let module_ ppf (p : module_) = declarations expression type_expression attributes attributes attributes ppf p
+let program ppf (p : program) = list_sep declaration (tag "@,") ppf p

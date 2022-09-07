@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo transpile expression SYNTAX _EXPRESSION SYNTAX
+```
 
 ### DESCRIPTION
 [BETA] This sub-command transpiles a LIGO expression to another syntax. Comments are currently not transpiled. Please use at your own risk.

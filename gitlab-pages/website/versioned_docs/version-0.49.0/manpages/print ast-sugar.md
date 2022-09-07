@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print ast-sugar SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the source file in the AST stage, after desugaring step is applied.

@@ -5,6 +5,7 @@ open Simple_utils.Trace
 open Errors
 open Ast_typed
 open H
+open Ligo_prim
 
 (*
   Each constant has its own type.
@@ -60,10 +61,10 @@ let rec record_comparator ~raise ~test : Location.t -> string -> typer = fun loc
     trace_option ~raise (comparator_composed loc a) @@
     get_t_record a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_record b in
-  let aux a b : type_expression =
+  let aux (a : row_element) (b : row_element) : type_expression =
     comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
-  let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let _ = List.map2_exn ~f:aux (Record.LMap.to_list a_r.fields) (Record.LMap.to_list b_r.fields) in
   t_bool ()
 
 and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
@@ -74,10 +75,10 @@ and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a) @@
     get_t_sum a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_sum b in
-  let aux a b : type_expression =
+  let aux (a : row_element) (b : row_element) : type_expression =
     comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
-  let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let _ = List.map2_exn ~f:aux (Record.LMap.to_list a_r.fields) (Record.LMap.to_list b_r.fields) in
   t_bool ()
 
 and list_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_lst b_lst ->
@@ -227,30 +228,30 @@ let only_on_protocol ~protocol typer : typer = fun ~error ~raise ~options ~loc -
     fun _ _ -> None
 
 
-module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+module CTMap = Simple_utils.Map.Make(struct type t = Constant.constant' let compare x y = Constant.compare_constant' x y end)
 type t = typer CTMap.t
 
 module Constant_types = struct
 
-  let a_var = O.TypeVar.of_input_var "'a"
-  let b_var = O.TypeVar.of_input_var "'b"
-  let c_var = O.TypeVar.of_input_var "'c"
+  let a_var = TypeVar.of_input_var "'a"
+  let b_var = TypeVar.of_input_var "'b"
+  let c_var = TypeVar.of_input_var "'c"
 
   (* Helpers *)
   let for_all binder f =
-    let binder = O.TypeVar.of_input_var ("'" ^ binder) in
+    let binder = TypeVar.of_input_var ("'" ^ binder) in
     t_for_all binder Type (f (t_variable binder ()))
 
   let (^->) arg ret = t_arrow arg ret ()
 
-  let of_type c t =
+  let of_type (c : Constant.constant') t =
     c, any_of [typer_of_ligo_type t]
 
   let of_type_since ~since ~constant c t =
     let _, t = of_type c t in
     c, constant_since_protocol ~since ~constant @@ t
 
-  let of_types c ts =
+  let of_types (c : Constant.constant') ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
 
   let of_types_protocol c ts =
@@ -459,7 +460,6 @@ module Constant_types = struct
                     of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     of_type C_EMIT_EVENT O.(for_all "a" @@ fun a -> t_string () ^-> a ^-> t_operation ());
                     (* TEST *)
-                    of_type C_TEST_COMPILE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_michelson_contract ());
                     of_type C_TEST_SIZE O.(t_michelson_contract () ^-> t_int ());
                     of_type C_TEST_ORIGINATE O.(t_michelson_contract () ^-> t_michelson_code () ^-> t_mutez () ^-> t_address ());
                     of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
@@ -481,6 +481,7 @@ module Constant_types = struct
                     of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
                     of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_bool () ^-> t_gen a);
                     of_type C_TEST_GENERATOR_EVAL O.(for_all "a" @@ fun a -> t_gen a ^-> a);
+                    of_type C_TEST_MUTATE_CONTRACT O.(t_nat () ^-> t_ast_contract () ^-> t_option (t_pair (t_ast_contract ()) (t_mutation ())));
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
                     of_type C_TEST_SAVE_MUTATION O.(t_string () ^-> t_mutation () ^-> t_option (t_string ()));
                     of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
@@ -498,7 +499,9 @@ module Constant_types = struct
                     of_type C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
                     of_type C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
                     of_type C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
-                    of_type C_TEST_COMPILE_CONTRACT_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_contract ());
+                    of_type C_TEST_COMPILE_CONTRACT_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_option (t_nat ()) ^-> t_ast_contract ());
+                    of_type C_TEST_COMPILE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_ast_contract ());
+                    of_type C_TEST_COMPILE_AST_CONTRACT O.(t_ast_contract () ^-> t_michelson_contract ());
                     of_type C_TEST_REGISTER_CONSTANT O.(t_michelson_code () ^-> t_string ());
                     of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
                     of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));
@@ -513,7 +516,7 @@ module Constant_types = struct
                     of_type C_TEST_TRY_WITH O.(for_all "a" @@ fun a -> (t_unit () ^-> a) ^-> (t_unit () ^-> a) ^-> a);
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
-                    of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))));
+                    of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_bytes ()) (t_pair (t_int ()) (t_sapling_state (t_variable a_var ()))))));
                     (* CUSTOM *)
                     (* COMPARATOR *)
                     (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
@@ -522,6 +525,10 @@ module Constant_types = struct
                     (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
                     (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
                     (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
+                    (* LITERAL *)
+                    of_type C_MAP_LITERAL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_list (t_pair a b) ^-> t_map a b);
+                    of_type C_BIG_MAP_LITERAL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_list (t_pair a b) ^-> t_big_map a b);
+                    of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
                   ]
 
   let typer_of_type_no_tc t =
@@ -575,6 +582,6 @@ let constant_typers ~raise ~options loc c =
      let error = ref [] in
      (match typer ~error ~raise ~options ~loc lst tv_opt with
       | Some tv -> tv
-      | None -> raise.error (corner_case @@ Format.asprintf "Cannot type constant %a" PP.constant' c))
+      | None -> raise.error (corner_case @@ Format.asprintf "Cannot type constant %a" Constant.pp_constant' c))
   | _ ->
-     raise.error (corner_case @@ Format.asprintf "Typer not implemented for constant %a" PP.constant' c)
+     raise.error (corner_case @@ Format.asprintf "Typer not implemented for constant %a" Constant.pp_constant' c)

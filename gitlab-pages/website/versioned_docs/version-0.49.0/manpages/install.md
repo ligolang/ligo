@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo install [PACKAGE_NAME]
+```
 
 ### DESCRIPTION
 This command invokes the package manager to install the external packages declared in package.json

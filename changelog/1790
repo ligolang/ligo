@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1790'
+title: 'CLI: add `no-stdlib` flag'
+type: internal
