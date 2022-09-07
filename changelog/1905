@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: Re-implement LIGO's type checker using bidirectional type checking.
+merge_request: '1905'
+title: 'Bidirectional type checking for LIGO'
+type: changed

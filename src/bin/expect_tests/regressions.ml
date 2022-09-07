@@ -10,12 +10,12 @@ let%expect_test _ =
       2 | let rec toto : unit -> int = fun () -> ()
 
     Invalid type(s).
-    Expected: "int", but got: "unit". |}]
+    Expected: "unit", but got: "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; negative "regression_import_scope_B.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/regression_import_scope_B.mligo", line 2, characters 8-9:
+    File "../../test/contracts/negative/regression_import_scope_B.mligo", line 2, characters 8-11:
       1 |
       2 | let b = A.a
       3 |
