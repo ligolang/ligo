@@ -381,8 +381,6 @@ a function on expression will returns def list & references (vars) list
 
 for an expression its free_variable will be references
 
-5. Add unique id's for all defs
-6. Shadow defs
 7. Add comments
 
 *)

@@ -119,7 +119,7 @@ module Definitions = struct
           [] -> []
         | def::defs ->
             let shadow_def def' = not @@ def_equal def def' in
-            List.filter defs ~f:shadow_def
+            def :: List.filter defs ~f:shadow_def
 end
 
 include Definitions
@@ -145,7 +145,7 @@ let rec flatten_defs defs =
 let add_defs_to_scope : def list -> scope -> scope
   = fun defs scope ->
       let loc, scope_defs = scope in
-      loc, (flatten_defs defs) @ scope_defs
+      loc, flatten_defs (shadow_defs (scope_defs @ defs))
 
 let add_defs_to_scopes : def list -> scopes -> scopes 
   = fun defs scopes ->
