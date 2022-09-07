@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: \nBug fix for function application in bidirectional type checking
+merge_request: '1945'
+title: 'Bug Fix: Function Application in Bidirectional Type Checking'
+type: fixed
