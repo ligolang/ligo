@@ -111,10 +111,17 @@ end) *)
 type scope = Location.t * (def list)
 type scopes = scope list
 
+let rec flatten_defs defs =
+  match defs with
+    [] -> []
+  | (Module { mod_case = Def d ; _ } as def) :: defs ->
+    [def] @ (flatten_defs d) @ flatten_defs defs
+  | def::defs -> def :: flatten_defs defs 
+
 let add_defs_to_acope : def list -> scope -> scope
   = fun defs scope ->
       let loc, scope_defs = scope in
-      loc, defs @ scope_defs
+      loc, (flatten_defs defs) @ scope_defs
 
 let add_defs_to_scopes : def list -> scopes -> scopes 
   = fun defs scopes ->
