@@ -15,10 +15,10 @@ module Environment : sig
   val get_opt : Var.t -> t -> type_value option
   val has : Var.t -> t -> bool
   *)
-  val get_i_opt : ValueVar.t -> t -> (type_expression * int) option
+  val get_i_opt : Value_var.t -> t -> (type_expression * int) option
   val of_list : element list -> t
   val to_list : t -> element list
-  val get_names : t -> ValueVar.t list
+  val get_names : t -> Value_var.t list
   val remove : int -> t -> t
   (* val select : ?rev:bool -> ?keep:bool -> expression_variable list -> t -> t *)
   (*
@@ -39,7 +39,7 @@ val concat : t list -> t
 (*
 val get_opt : Var.t -> t -> type_value option
 *)
-val has : ValueVar.t -> t -> bool
+val has : Value_var.t -> t -> bool
 (*
 val get_i : Var.t -> t -> (type_value * int)
 *)
@@ -50,7 +50,7 @@ val get_names : t -> Var.t list
 val remove : int -> t -> t
 
 *)
-val select : ?rev:bool -> ?keep:bool -> ValueVar.t list -> t -> t
+val select : ?rev:bool -> ?keep:bool -> Value_var.t list -> t -> t
 val fold : ('a -> element -> 'a ) -> 'a -> t -> 'a
 val filter : ( element -> bool ) -> t -> t
 

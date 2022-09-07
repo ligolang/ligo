@@ -14,10 +14,10 @@ let empty_attribute = {
     const_or_var = None
   }
 type 'a t = {
-  var  : Var.ValueVar.t ;
+  var  : Var.Value_var.t ;
   ascr : 'a ;
   attributes : binder_attributes ;
-  } [@@deriving eq,compare,yojson,hash]
+  } [@@deriving eq,compare,yojson,hash,fold,map]
 
 let pp g ppf {var;ascr;attributes={const_or_var}} =
   let open Format in
@@ -28,19 +28,9 @@ let pp g ppf {var;ascr;attributes={const_or_var}} =
     | Some `Const -> fprintf ppf ""
   in
   Format.fprintf ppf "%a%a%a"
-    Var.ValueVar.pp var
+    Var.Value_var.pp var
     option_const_or_var const_or_var
     g ascr
-
-let fold : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc
-= fun f acc {var=_; ascr; attributes=_} ->
-  let acc = f acc ascr in
-   acc
-
-let map : ('a -> 'b) -> 'a t -> 'b t
-= fun f {var; ascr; attributes} ->
-  let ascr = f ascr in
-  {var; ascr; attributes}
 
 let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 = fun f acc {var; ascr; attributes} ->

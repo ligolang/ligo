@@ -3,26 +3,26 @@ module Location = Simple_utils.Location
 open Simple_utils.Trace
 open Ast_typed
 open Ligo_prim
-module ValueMap = Simple_utils.Map.Make (ValueVar)
-module TypeMap = Ast_typed.Helpers.IdMap.Make (TypeVar)
-module ModuleMap = Ast_typed.Helpers.IdMap.Make (ModuleVar)
+module ValueMap = Simple_utils.Map.Make (Value_var)
+module TypeMap = Ast_typed.Helpers.IdMap.Make (Type_var)
+module ModuleMap = Ast_typed.Helpers.IdMap.Make (Module_var)
 
 module Exists_var = struct
-  type t = TypeVar.t [@@deriving compare]
+  type t = Type_var.t [@@deriving compare]
 
   module Map = Simple_utils.Map.Make (struct
     type nonrec t = t [@@deriving compare]
   end)
 
   let equal t1 t2 = compare t1 t2 = 0
-  let yojson_of_t t = TypeVar.to_yojson t
-  let loc = TypeVar.get_location
-  let of_type_var tvar = if TypeVar.is_exists tvar then Some tvar else None
-  let pp ppf t = Format.fprintf ppf "%a" TypeVar.pp t
-  let fresh = TypeVar.fresh_exists
+  let yojson_of_t t = Type_var.to_yojson t
+  let loc = Type_var.get_location
+  let of_type_var tvar = if Type_var.is_exists tvar then Some tvar else None
+  let pp ppf t = Format.fprintf ppf "%a" Type_var.pp t
+  let fresh = Type_var.fresh_exists
 
   let of_type_var_exn tvar =
-    if not (TypeVar.is_exists tvar) then failwith "Invalid existential variable";
+    if not (Type_var.is_exists tvar) then failwith "Invalid existential variable";
     tvar
 end
 
@@ -38,19 +38,19 @@ module Signature = struct
 
   let get_value t var =
     find_map t ~f:(function
-      | S_value (var', type_) when ValueVar.equal var var' -> Some type_
+      | S_value (var', type_) when Value_var.equal var var' -> Some type_
       | _ -> None)
 
 
   let get_type t tvar =
     find_map t ~f:(function
-      | S_type (tvar', type_) when TypeVar.equal tvar tvar' -> Some type_
+      | S_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
       | _ -> None)
 
 
   let get_module t mvar =
     find_map t ~f:(function
-      | S_module (mvar', sig_) when ModuleVar.equal mvar mvar' -> Some sig_
+      | S_module (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
       | _ -> None)
 
 
@@ -58,11 +58,11 @@ module Signature = struct
    fun item1 item2 ->
     match item1, item2 with
     | S_value (var1, type1), S_value (var2, type2) ->
-      ValueVar.equal var1 var2 && type_expression_eq (type1, type2)
+      Value_var.equal var1 var2 && type_expression_eq (type1, type2)
     | S_type (tvar1, type1), S_type (tvar2, type2) ->
-      TypeVar.equal tvar1 tvar2 && type_expression_eq (type1, type2)
+      Type_var.equal tvar1 tvar2 && type_expression_eq (type1, type2)
     | S_module (mvar1, sig1), S_module (mvar2, sig2) ->
-      ModuleVar.equal mvar1 mvar2 && equal sig1 sig2
+      Module_var.equal mvar1 mvar2 && equal sig1 sig2
     | _, _ -> false
 
 
@@ -96,11 +96,11 @@ module Signature = struct
     let rec pp_item ppf item =
       match item with
       | S_value (var, type_) ->
-        Format.fprintf ppf "%a : %a" ValueVar.pp var type_expression type_
+        Format.fprintf ppf "%a : %a" Value_var.pp var type_expression type_
       | S_type (tvar, type_) ->
-        Format.fprintf ppf "type %a = %a" TypeVar.pp tvar type_expression type_
+        Format.fprintf ppf "type %a = %a" Type_var.pp tvar type_expression type_
       | S_module (mvar, sig_) ->
-        Format.fprintf ppf "module %a = %a" ModuleVar.pp mvar pp sig_
+        Format.fprintf ppf "module %a = %a" Module_var.pp mvar pp sig_
 
 
     and pp ppf t = Format.fprintf ppf "@[<v>sig@,%a@,end@]" (list ~pp:pp_item) t
@@ -140,11 +140,11 @@ module PP = struct
     list ppf t.items ~pp:(fun ppf item ->
       match item with
       | C_value (evar, type_) ->
-        Format.fprintf ppf "%a : %a" ValueVar.pp evar type_expression type_
+        Format.fprintf ppf "%a : %a" Value_var.pp evar type_expression type_
       | C_type (tvar, type_) ->
-        Format.fprintf ppf "type %a = %a" TypeVar.pp tvar type_expression type_
+        Format.fprintf ppf "type %a = %a" Type_var.pp tvar type_expression type_
       | C_type_var (tvar, kind) ->
-        Format.fprintf ppf "%a :: %a" TypeVar.pp tvar Kind.pp kind
+        Format.fprintf ppf "%a :: %a" Type_var.pp tvar Kind.pp kind
       | C_exists_var (evar, kind) ->
         Format.fprintf ppf "%a ^: %a" Exists_var.pp evar Kind.pp kind
       | C_exists_eq (evar, kind, type_) ->
@@ -159,7 +159,7 @@ module PP = struct
           type_
       | C_marker evar -> Format.fprintf ppf "|>%a" Exists_var.pp evar
       | C_module (mvar, sig_) ->
-        Format.fprintf ppf "module %a = %a" ModuleVar.pp mvar Signature.pp sig_
+        Format.fprintf ppf "module %a = %a" Module_var.pp mvar Signature.pp sig_
       | C_pos _ -> ())
 
 
@@ -171,7 +171,7 @@ module PP = struct
         Format.fprintf
           ppf
           "%a : %a@,%a"
-          ValueVar.pp
+          Value_var.pp
           evar
           type_expression
           type_
@@ -181,7 +181,7 @@ module PP = struct
         Format.fprintf
           ppf
           "%a :: %a@,%a"
-          TypeVar.pp
+          Type_var.pp
           tvar
           Kind.pp
           kind
@@ -215,7 +215,7 @@ module PP = struct
         Format.fprintf
           ppf
           "type %a = %a@,%a"
-          TypeVar.pp
+          Type_var.pp
           tvar
           type_expression
           type_
@@ -266,19 +266,19 @@ let add_signature_item t (sig_item : Signature.item) =
 
 let get_value t evar =
   List.find_map t.items ~f:(function
-    | C_value (evar', type_) when ValueVar.equal evar evar' -> Some type_
+    | C_value (evar', type_) when Value_var.equal evar evar' -> Some type_
     | _ -> None)
 
 
 let get_type t tvar =
   List.find_map t.items ~f:(function
-    | C_type (tvar', type_) when TypeVar.equal tvar tvar' -> Some type_
+    | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
     | _ -> None)
 
 
 let get_module t mvar =
   List.find_map t.items ~f:(function
-    | C_module (mvar', mctx) when ModuleVar.equal mvar mvar' -> Some mctx
+    | C_module (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
     | _ -> None)
 
 
@@ -309,7 +309,7 @@ let get_exists_var t evar =
 
 let get_type_var t tvar =
   List.find_map t.items ~f:(function
-    | C_type_var (tvar', kind) when TypeVar.equal tvar tvar' -> Some kind
+    | C_type_var (tvar', kind) when Type_var.equal tvar tvar' -> Some kind
     | _ -> None)
 
 
@@ -324,11 +324,11 @@ let equal_item : item -> item -> bool =
  fun item1 item2 ->
   match item1, item2 with
   | C_value (x1, type1), C_value (x2, type2) ->
-    ValueVar.equal x1 x2 && compare_type_expression type1 type2 = 0
+    Value_var.equal x1 x2 && compare_type_expression type1 type2 = 0
   | C_type (tvar1, type1), C_type (tvar2, type2) ->
-    TypeVar.equal tvar1 tvar2 && compare_type_expression type1 type2 = 0
+    Type_var.equal tvar1 tvar2 && compare_type_expression type1 type2 = 0
   | C_type_var (tvar1, kind1), C_type_var (tvar2, kind2) ->
-    TypeVar.equal tvar1 tvar2 && Kind.compare kind1 kind2 = 0
+    Type_var.equal tvar1 tvar2 && Kind.compare kind1 kind2 = 0
   | C_exists_var (evar1, kind1), C_exists_var (evar2, kind2) ->
     Exists_var.equal evar1 evar2 && Kind.compare kind1 kind2 = 0
   | C_exists_eq (evar1, kind1, type1), C_exists_eq (evar2, kind2, type2) ->
@@ -337,7 +337,7 @@ let equal_item : item -> item -> bool =
     && compare_type_expression type1 type2 = 0
   | C_marker evar1, C_marker evar2 -> Exists_var.equal evar1 evar2
   | C_module (mvar1, sig1), C_module (mvar2, sig2) ->
-    ModuleVar.equal mvar1 mvar2 && Signature.equal sig1 sig2
+    Module_var.equal mvar1 mvar2 && Signature.equal sig1 sig2
   | C_pos pos1, C_pos pos2 -> pos1 = pos2
   | _, _ -> false
 
@@ -476,7 +476,7 @@ let to_module_map t =
     | _ -> map)
 
 
-let get_signature t ((local_module, path) : ModuleVar.t List.Ne.t) =
+let get_signature t ((local_module, path) : Module_var.t List.Ne.t) =
   let open Option.Let_syntax in
   List.fold path ~init:(get_module t local_module) ~f:(fun sig_ mvar ->
     let%bind sig_ = sig_ in
@@ -504,7 +504,7 @@ let sig_contextual f sig_ =
     we perform a recusive search in the context maps and accumulate the types found.
     Then, in order to convert those maps into a id-sorted list, we can :
     1. Use [merge], and convert the merged map into a (sorted) kv_list. This will remove duplicate eponym types
-    2. Use [to_kvi_list], append all the kvi_lists, and sort the resulting kvi_list by id, into a kv_list, this keeps duplicates     
+    2. Use [to_kvi_list], append all the kvi_lists, and sort the resulting kvi_list by id, into a kv_list, this keeps duplicates
 *)
 let get_module_types : t -> (type_variable * type_expression) list =
  fun ctx ->
@@ -576,7 +576,7 @@ let get_sum
   List.iter module_types ~f:(fun (tvar, type_) ->
     Format.printf
       "@[Type Variable: %a@.Type: %a@]\n"
-      TypeVar.pp
+      Type_var.pp
       tvar
       Ast_typed.PP.type_expression
       type_); *)
@@ -645,7 +645,7 @@ let get_record : _ Record.t -> t -> (type_variable option * rows) option =
     | _ -> None
   in
   (* [find t ~to_type_map ~to_module_map] finds a record type matching [record_type] *)
-  let rec find : type a. (a, (TypeVar.t option * t_sum) option) contextual =
+  let rec find : type a. (a, (Type_var.t option * t_sum) option) contextual =
    fun t ~to_type_map ~to_module_map ->
     match
       to_type_map t
@@ -694,15 +694,13 @@ and signature_of_module : ctx:t -> Ast_typed.module_ -> Signature.t =
 
 
 and signature_item_of_decl : ctx:t -> Ast_typed.decl -> bool * Signature.item =
- fun ~ctx (Decl decl) ->
+ fun ~ctx decl ->
   match Location.unwrap decl with
-  | Declaration_constant { binder = { var; _ }; expr; attr = { public; _ } } ->
+  | D_value { binder = { var; _ }; expr; attr = { public; _ } } ->
     public, S_value (var, expr.type_expression)
-  | Declaration_type
-      { type_binder = tvar; type_expr = type_; type_attr = { public; _ } } ->
+  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } } ->
     public, S_type (tvar, type_)
-  | Declaration_module
-      { module_binder = mvar; module_; module_attr = { public; _ } } ->
+  | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
     let sig_' = signature_of_module_expr ~ctx module_ in
     public, S_module (mvar, sig_')
 
@@ -712,13 +710,13 @@ let init ?env () =
   match env with
   | None -> empty
   | Some env ->
-    Environment.fold env ~init:empty ~f:(fun ctx (Decl decl) ->
+    Environment.fold env ~init:empty ~f:(fun ctx decl ->
       match Location.unwrap decl with
-      | Declaration_constant { binder; expr; attr = _ } ->
+      | D_value { binder; expr; attr = _ } ->
         add_value ctx binder.var expr.type_expression
-      | Declaration_type { type_binder; type_expr; type_attr = _ } ->
+      | D_type { type_binder; type_expr; type_attr = _ } ->
         add_type ctx type_binder type_expr
-      | Declaration_module { module_binder; module_; module_attr = _ } ->
+      | D_module { module_binder; module_; module_attr = _ } ->
         let sig_ = signature_of_module_expr ~ctx module_ in
         add_module ctx module_binder sig_)
 
@@ -742,7 +740,7 @@ end = struct
             | _ ->
               Format.printf
                 "Value %a has non-type type %a"
-                ValueVar.pp
+                Value_var.pp
                 var
                 Ast_typed.PP.type_expression
                 type_;
@@ -753,7 +751,7 @@ end = struct
             | None ->
               Format.printf
                 "Type %a = %a is ill-kinded"
-                TypeVar.pp
+                Type_var.pp
                 tvar
                 Ast_typed.PP.type_expression
                 type_;
@@ -903,7 +901,7 @@ module Hashes = struct
       context := true, t)
 
 
-  let find_type (t : type_expression) : (ModuleVar.t list * TypeVar.t) option =
+  let find_type (t : type_expression) : (Module_var.t list * Type_var.t) option =
     HTBL.find_opt hashtbl t
 end
 
@@ -1023,9 +1021,9 @@ module Elaboration = struct
       E_matching
         { matchee = self matchee; cases = matching_expr_apply ctx cases }
     | E_record expr_label_map -> E_record (Record.map self expr_label_map)
-    | E_accessor { record; path } -> E_accessor { record = self record; path }
-    | E_update { record; path; update } ->
-      E_update { record = self record; path; update = self update }
+    | E_accessor { struct_; path } -> E_accessor { struct_ = self struct_; path }
+    | E_update { struct_; path; update } ->
+      E_update { struct_ = self struct_; path; update = self update }
     | E_module_accessor mod_access -> E_module_accessor mod_access
     | E_assign { binder; expression } ->
       E_assign
@@ -1065,23 +1063,23 @@ module Elaboration = struct
         }
 
 
-  and decl_apply ctx (Decl decl : decl) = Decl (declaration_apply ctx decl)
+  and decl_apply ctx (decl : decl) = (declaration_apply ctx decl)
 
   and declaration_apply ctx decl : declaration =
     let loc = decl.location in
     let return content : declaration = Location.wrap ~loc content in
     match decl.wrap_content with
-    | Declaration_type decl_type -> return @@ Declaration_type decl_type
-    | Declaration_constant { binder; expr; attr } ->
+    | D_type decl_type -> return @@ D_type decl_type
+    | D_value { binder; expr; attr } ->
       return
-      @@ Declaration_constant
+      @@ D_value
            { binder = binder_apply_opt ctx binder
            ; expr = e_apply ctx expr
            ; attr
            }
-    | Declaration_module { module_binder; module_; module_attr } ->
+    | D_module { module_binder; module_; module_attr } ->
       return
-      @@ Declaration_module
+      @@ D_module
            { module_binder
            ; module_ = module_expr_apply ctx module_
            ; module_attr
@@ -1110,7 +1108,7 @@ module Elaboration = struct
     in
     let rec loop type_ =
       match type_.type_content with
-      | T_variable tvar -> if TypeVar.is_exists tvar then fail ()
+      | T_variable tvar -> if Type_var.is_exists tvar then fail ()
       | T_constant inj -> List.iter ~f:loop inj.parameters
       | T_record rows | T_sum rows ->
         Record.LMap.iter
@@ -1159,9 +1157,9 @@ module Elaboration = struct
       matching_expr_pass ~raise cases
     | E_record expr_label_map ->
       Record.LMap.iter (fun _ expr -> self expr) expr_label_map
-    | E_accessor { record; _ } -> self record
-    | E_update { record; update; _ } ->
-      self record;
+    | E_accessor { struct_; _ } -> self struct_
+    | E_update { struct_; update; _ } ->
+      self struct_;
       self update
     | E_module_accessor _mod_access -> ()
     | E_assign { binder; expression } ->
@@ -1192,15 +1190,15 @@ module Elaboration = struct
       expression_pass ~raise body
 
 
-  and decl_pass ~raise (Decl decl : decl) = declaration_pass ~raise decl
+  and decl_pass ~raise (decl : decl) = declaration_pass ~raise decl
 
   and declaration_pass ~raise (decl : declaration) =
     match decl.wrap_content with
-    | Declaration_type decl_type -> type_pass ~raise decl_type.type_expr
-    | Declaration_constant { binder; expr; _ } ->
+    | D_type decl_type -> type_pass ~raise decl_type.type_expr
+    | D_value { binder; expr; _ } ->
       binder_pass_opt ~raise binder;
       expression_pass ~raise expr
-    | Declaration_module { module_; _ } -> module_expr_pass ~raise module_
+    | D_module { module_; _ } -> module_expr_pass ~raise module_
 
 
   and module_pass ~raise module_ = List.iter ~f:(decl_pass ~raise) module_
@@ -1279,7 +1277,7 @@ let decl_enter ~ctx ~in_ =
 
 
 let t_subst t ~tvar ~type_ = Helpers.subst_no_capture_type tvar type_ t
-(* 
+(*
 let t_exists (evar : Exists_var.t) =
   t_variable ~loc:(Exists_var.loc evar) (evar :> type_variable) () *)
 
@@ -1328,7 +1326,7 @@ module Generalization = struct
     let ctxl, ctxr = split_at ctx ~at:(C_pos pos) in
     let ret_type = apply ctxr ret_type in
     let ctxr, tvars = unsolved ctxr in
-    let tvars = Exists_var.Map.map (fun kind -> kind, TypeVar.fresh ()) tvars in
+    let tvars = Exists_var.Map.map (fun kind -> kind, Type_var.fresh ()) tvars in
     (* Add equation for later elaboration for existentials *)
     let ctxr =
       { ctxr with

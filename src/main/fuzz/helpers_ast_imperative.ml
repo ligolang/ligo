@@ -69,17 +69,17 @@ module Fold_helpers(M : Monad) = struct
     ok @@ Recursive.{fun_name;fun_type;lambda}
 
   let accessor : ('a -> 'b monad) -> 'a Accessor.t -> ('b Accessor.t) monad
-    = fun f {record;path=p} ->
-    let* record = f record in
+    = fun f {struct_;path=p} ->
+    let* struct_ = f struct_ in
     let* path   = path f p in
-    ok @@ ({record;path} : 'b Accessor.t)
+    ok @@ ({struct_;path} : 'b Accessor.t)
 
   let update : ('a -> 'b monad) -> 'a Update.t -> ('b Update.t) monad
-    = fun f {record;path=p;update} ->
-    let* record = f record in
+    = fun f {struct_;path=p;update} ->
+    let* struct_ = f struct_ in
     let* path   = path f p in
     let* update = f update in
-    ok @@ ({record;path;update} : 'b Update.t)
+    ok @@ ({struct_;path;update} : 'b Update.t)
 
 
   let sequence : ('a -> 'b monad) -> 'a Sequence.t -> ('b Sequence.t) monad
@@ -126,21 +126,21 @@ module Fold_helpers(M : Monad) = struct
     ok @@ While_loop.{cond; body}
 
   (* Declaration *)
-  let declaration_type : ('a -> 'b monad) -> 'a Declaration.declaration_type -> 'b Declaration.declaration_type monad
+  let declaration_type : ('a -> 'b monad) -> 'a Type_decl.t -> 'b Type_decl.t monad
     = fun g {type_binder; type_expr; type_attr} ->
     let* type_expr = g type_expr in
-    ok @@ Declaration.{type_binder; type_expr; type_attr}
+    ok @@ Type_decl.{type_binder; type_expr; type_attr}
 
-  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Declaration.declaration_constant -> ('b,'d) Declaration.declaration_constant monad
+  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Value_decl.t -> ('b,'d) Value_decl.t monad
     = fun f g {binder=b; attr; expr} ->
     let* binder = binder g b in
     let* expr   = f expr     in
-    ok @@ Declaration.{binder;attr;expr}
+    ok @@ Value_decl.{binder;attr;expr}
 
-  let rec declaration_module : ('a -> 'b monad) -> 'a Declaration.declaration_module -> 'b Declaration.declaration_module monad
+  let rec declaration_module : ('a -> 'b monad) -> 'a Module_decl.t -> 'b Module_decl.t monad
     = fun f {module_binder; module_;module_attr} ->
-    let* module_ = (module_expr f) module_ in
-    ok @@ Declaration.{module_binder;module_;module_attr}
+    let* module_ = f module_ in
+    ok @@ Module_decl.{module_binder;module_;module_attr}
 
   and module' : _ -> module_ -> module_ monad
     = fun f prg ->
@@ -148,7 +148,7 @@ module Fold_helpers(M : Monad) = struct
 
   and module_expr : (decl -> decl monad) ->  module_expr -> module_expr monad =
     fun f mexp ->
-      let open Declaration in
+      let open Module_expr in
       bind_map_location
         (function
         | M_struct prg ->
@@ -159,11 +159,11 @@ module Fold_helpers(M : Monad) = struct
         )
         mexp
 
-  let mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Declaration.mod_in -> ('b,'d) Declaration.mod_in monad
+  let mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Mod_in.t -> ('b,'d) Mod_in.t monad
     = fun f g {module_binder; rhs; let_result} ->
-    let* rhs        = module_expr g rhs in
+    let* rhs        = g rhs in
     let* let_result = f let_result in
-    ok @@ Declaration.{module_binder; rhs; let_result}
+    ok @@ Mod_in.{module_binder; rhs; let_result}
 
 
   type 'err exp_mapper = expression -> expression monad
@@ -279,14 +279,12 @@ module Fold_helpers(M : Monad) = struct
 
   and declaration m : declaration -> declaration monad = fun d ->
     match d.wrap_content,m with
-    | (Declaration_constant dc, Expression m') -> (
+    | (D_value dc, Expression m') -> (
       let* dc = declaration_constant (map_expression m') ok dc in
-      ok ({d with wrap_content=Declaration.Declaration_constant dc})
+      ok ({d with wrap_content=D_value dc})
     )
     | _,_ -> ok @@ d
-  and decl m = fun (Decl d : decl) : decl monad ->
-    let* d = declaration m d in
-    ok @@ Decl d
+  and decl m = fun (d : decl) : decl monad -> declaration m d
   and map_module : 'err abs_mapper -> module_ -> module_ monad = fun m ->
    bind_map_list (decl m)
 

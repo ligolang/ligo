@@ -204,11 +204,11 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr
 
 module Free_variables :
   sig
-    val expression : expression -> ValueVar.t list
+    val expression : expression -> Value_var.t list
   end
   = struct
 
-  module VarSet = Caml.Set.Make(ValueVar)
+  module VarSet = Caml.Set.Make(Value_var)
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty
     ~f:VarSet.union
@@ -241,10 +241,10 @@ module Free_variables :
       let res = Record.map self m in
       let res = Record.LMap.to_list res in
       unions res
-    | E_accessor {record} ->
-      self record
-    | E_update {record;update} ->
-      VarSet.union (self record) (self update)
+    | E_accessor {struct_} ->
+      self struct_
+    | E_update {struct_;update} ->
+      VarSet.union (self struct_) (self update)
     | E_let_in { let_binder ; rhs ; let_result } ->
       let fv2 = (self let_result) in
       let fv2 = VarSet.remove let_binder.var fv2 in

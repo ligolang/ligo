@@ -14,7 +14,7 @@ open Ligo_prim
 (*
   Each constant has its own type.
 
-  LIGO's type-system is currently too weak to express the constant's type. 
+  LIGO's type-system is currently too weak to express the constant's type.
   For instance:
     - "ADD" has a special kind of type of polymorphism. If "ADD" gets two `int`s,
       it will return an `int`. If it gets two `nat`s, it will return a `nat`.
@@ -50,7 +50,7 @@ module Comparable = struct
       (fun ~catch:_ _ -> raise.error (uncomparable_types loc a b))
 
 
-  (* [simple_comparator ~raise loc name] checks 
+  (* [simple_comparator ~raise loc name] checks
      returns type [bool] if argument types are of the form [ t1; t2 ]
      where [t1 = t2] and [t1, t2] in [ address ; bool ; bytes ; chain_id; int; key; key_hash; mutez; nat ; ... ].
   *)
@@ -260,7 +260,7 @@ module Type = struct
 
   module Syntax = struct
     let for_all tvar ?(kind = (Type : Kind.t)) in_ =
-      let tvar = TypeVar.of_input_var ("'" ^ tvar) in
+      let tvar = Type_var.of_input_var ("'" ^ tvar) in
       let result = in_ (O.t_variable tvar ()) in
       { result with for_alls = (tvar, kind) :: result.for_alls }
 
@@ -1578,7 +1578,7 @@ module External_types = struct
          ])
 end
 
-(* 
+(*
 
 let typer_of_type_no_tc t = typer_table_of_ligo_type ~add_tc:false ~fail:false t
 

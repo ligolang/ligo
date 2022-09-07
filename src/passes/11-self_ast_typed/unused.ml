@@ -10,7 +10,7 @@ type contract_pass_data = Contract_passes.contract_pass_data
    also maintained.
 *)
 
-module V = ValueVar
+module V = Value_var
 module M = Simple_utils.Map.Make(V)
 
 (* A map recording if a variable is being used * a list of unused variables. *)
@@ -90,10 +90,10 @@ let rec defuse_of_expr defuse expr : defuse =
   | E_record re ->
      Record.fold
        (fun acc x -> defuse_union (defuse_of_expr defuse x) acc) defuse_neutral re
-  | E_accessor {record;_} ->
-     defuse_of_expr defuse record
-  | E_update {record;update;_} ->
-     defuse_union (defuse_of_expr defuse record) (defuse_of_expr defuse update)
+  | E_accessor {struct_;_} ->
+     defuse_of_expr defuse struct_
+  | E_update {struct_;update;_} ->
+     defuse_union (defuse_of_expr defuse struct_) (defuse_of_expr defuse update)
   | E_mod_in {let_result;_} ->
      defuse_of_expr defuse let_result
   | E_module_accessor _ ->
@@ -138,7 +138,7 @@ and unused_declaration ~raise = fun (x : declaration) ->
   let update_annotations annots =
     List.iter ~f:raise.Simple_utils.Trace.warning annots in
   match Location.unwrap x with
-  | Declaration_constant {expr ; _} -> (
+  | D_value {expr ; _} -> (
     let defuse,_ = defuse_neutral in
     let unused = defuse_of_expr defuse expr in
     let warn_var v =
@@ -147,12 +147,12 @@ and unused_declaration ~raise = fun (x : declaration) ->
     let () = update_annotations @@ List.map ~f:warn_var unused in
     ()
   )
-  | Declaration_type _ -> ()
-  | Declaration_module {module_; module_binder=_;module_attr=_} ->
+  | D_type _ -> ()
+  | D_module {module_; module_binder=_;module_attr=_} ->
     let _ = unused_map_module_expr ~raise module_ in
     ()
 
-and unused_decl ~raise = fun (Decl x) -> (unused_declaration ~raise x)
+and unused_decl ~raise = fun x -> unused_declaration ~raise x
 
 and unused_map_module_expr ~raise : module_expr -> module_expr = function m ->
   let return wrap_content : module_expr = { m with wrap_content } in

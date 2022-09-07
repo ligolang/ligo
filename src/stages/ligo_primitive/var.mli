@@ -21,7 +21,7 @@ module type VAR = sig
    val pp : Format.formatter -> t -> unit
 end
 
-module ValueVar : sig
+module Value_var : sig
    include VAR
    val is_name    : t -> string -> bool
 
@@ -31,13 +31,13 @@ module ValueVar : sig
    val wildcard : t
 end
 
-module TypeVar : sig
+module Type_var : sig
    include VAR
    val is_name          : t -> string -> bool
    val is_exists : t -> bool
    val fresh_exists : ?loc:Location.t -> unit -> t
 end
 
-module ModuleVar : sig
+module Module_var : sig
    include VAR
 end

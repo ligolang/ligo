@@ -12,7 +12,7 @@ let rec get_abstractions acc e =
   | E_constant { cons_name ; arguments = tuple ; _ } ->
      let f b e v =
        match e.expression_content with
-       | E_variable u when Ligo_prim.ValueVar.equal u v -> b
+       | E_variable u when Ligo_prim.Value_var.equal u v -> b
        | _ -> false
      in
      begin match List.fold2 tuple acc ~f ~init:true with

@@ -6,8 +6,8 @@ open Ligo_prim
 
 let get_of m l =
   List.filter_map ~f:(fun v ->
-      match List.find ~f:(ValueVar.equal v) l with
-      | Some d -> Some (ValueVar.get_location d, v)
+      match List.find ~f:(Value_var.equal v) l with
+      | Some d -> Some (Value_var.get_location d, v)
       | None -> None) m
 
 let is_var = fun x -> match x with
@@ -18,10 +18,10 @@ let add_binder b var vars =
   let vars = remove_from var vars in
   if b then var :: vars else vars
 
-let rec capture_expression ~raise : ?vars:ValueVar.t list -> expression -> expression = fun ?(vars = []) e ->
+let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expression = fun ?(vars = []) e ->
   let self = capture_expression ~raise in
   let _ = fold_map_expression
-                 (fun (vars : ValueVar.t list) expr ->
+                 (fun (vars : Value_var.t list) expr ->
                    match expr.expression_content with
                    | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->
                       let fv_expr = Free_variables.expression expr in

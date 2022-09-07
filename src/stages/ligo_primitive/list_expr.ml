@@ -1,5 +1,5 @@
 type 'a t = 'a list
-  [@@deriving eq, compare, yojson, hash, sexp]
+  [@@deriving eq, compare, yojson, hash, sexp, fold, map]
 
 
 let pp f ppf = fun m ->

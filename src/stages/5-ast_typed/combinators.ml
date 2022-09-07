@@ -60,12 +60,12 @@ let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = TypeVar.fresh ~name:"_a" () in
+  let ty_binder = Type_var.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ~type_meta:(Ast_core.t_variable ty_binder ()) ty_binder ()] in
   t_abstraction { ty_binder ; kind ; type_ } ?loc ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
-  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
+  let ty_binder_l = Type_var.fresh ~name:"_l" () in
+  let ty_binder_r = Type_var.fresh ~name:"_r" () in
   let type_ = t_constant name
     [ t_variable ty_binder_l () ;
       t_variable ty_binder_r () ]
@@ -117,7 +117,7 @@ let t_option ?loc ?core typ : type_expression =
   ]
 
 let t_option_abst ?loc ?core () : type_expression =
-  let ty_binder = TypeVar.of_input_var "'a" in
+  let ty_binder = Type_var.of_input_var "'a" in
   t_abstraction { ty_binder ; kind=Type ; type_= (
     t_sum_ez ?loc ?core [
       ("Some", t_variable ty_binder ()) ;

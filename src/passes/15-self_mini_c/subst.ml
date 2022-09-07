@@ -14,7 +14,7 @@ open Mini_c
 
 let replace_var : var_name -> var_name -> var_name -> var_name =
   fun v x y ->
-  if ValueVar.equal v x
+  if Value_var.equal v x
   then y
   else v
 
@@ -123,14 +123,14 @@ let subst_binder : type body.
   body:(var_name * body) -> x:var_name -> expr:expression -> (var_name * body) =
   fun subst replace ~body:(y, body) ~x ~expr ->
     (* if x is shadowed, binder doesn't change *)
-    if ValueVar.equal x y
+    if Value_var.equal x y
     then (y, body)
     (* else, if no capture, subst in binder *)
     else if not (Free_variables.mem (Free_variables.expression [] expr) y)
     then (y, subst ~body ~x ~expr)
     (* else, avoid capture and subst in binder *)
     else
-      let fresh = ValueVar.fresh_like y in
+      let fresh = Value_var.fresh_like y in
       let body = replace body y fresh in
       (fresh, subst ~body ~x ~expr)
 
@@ -179,7 +179,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   let return_id = body in
   match body.content with
   | E_variable x' ->
-     if ValueVar.equal x' x
+     if Value_var.equal x' x
      then expr
      else return_id
   | E_closure { binder; body } -> (
@@ -272,13 +272,13 @@ let%expect_test _ =
   let show_subst ~body ~(x:var_name) ~expr =
     Format.printf "(%a)[%a := %a] =@ %a"
       PP.expression body
-      ValueVar.pp x
+      Value_var.pp x
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = ValueVar.of_input_var "x" in
-  let y = ValueVar.of_input_var "y" in
-  let z = ValueVar.of_input_var "z" in
+  let x = Value_var.of_input_var "x" in
+  let y = Value_var.of_input_var "y" in
+  let z = Value_var.of_input_var "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
@@ -286,7 +286,7 @@ let%expect_test _ =
   let unit = wrap (E_literal Literal_unit) in
 
   (* substituted var *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(var x)
     ~x:x
@@ -296,7 +296,7 @@ let%expect_test _ =
     L(unit) |}] ;
 
   (* other var *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(var y)
     ~x:x
@@ -307,7 +307,7 @@ let%expect_test _ =
   |}] ;
 
   (* closure shadowed *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(lam x (var x))
     ~x:x
@@ -318,7 +318,7 @@ let%expect_test _ =
   |}] ;
 
   (* closure not shadowed *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(lam y (var x))
     ~x:x
@@ -329,7 +329,7 @@ let%expect_test _ =
   |}] ;
 
   (* closure capture-avoidance *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(lam y (app (var x) (var y)))
     ~x:x
@@ -340,7 +340,7 @@ let%expect_test _ =
   |}] ;
 
   (* let-in shadowed (not in rhs) *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in (var x, false, ((x, dummy_type), var x))))
     ~x:x
@@ -351,7 +351,7 @@ let%expect_test _ =
   |}] ;
 
   (* let-in not shadowed *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in (var x, false, ((y, dummy_type), var x))))
     ~x:x
@@ -362,7 +362,7 @@ let%expect_test _ =
   |}] ;
 
   (* let-in capture avoidance *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in (var x, false, ((y, dummy_type),
                            app (var x) (var y)))))
@@ -374,7 +374,7 @@ let%expect_test _ =
   |}] ;
 
   (* iter shadowed *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator (C_ITER, ((x , dummy_type) , var x) , var x)))
     ~x:x
@@ -385,7 +385,7 @@ let%expect_test _ =
   |}] ;
 
   (* iter not shadowed *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator (C_ITER, ((y , dummy_type) , var x) , var x)))
     ~x:x
@@ -396,7 +396,7 @@ let%expect_test _ =
   |}] ;
 
   (* iter capture-avoiding *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator (C_ITER, ((y , dummy_type) , app (var x) (var y)), app (var x) (var y))))
     ~x:x
@@ -407,7 +407,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons shadowed 1 *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -421,7 +421,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons shadowed 2 *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -435,7 +435,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons not shadowed *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -449,7 +449,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons capture avoidance 1 *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -463,7 +463,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons capture avoidance 2 *)
-  TypeVar.reset_counter () ;
+  Type_var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -477,8 +477,8 @@ let%expect_test _ =
   |}] ;
 
   (* old bug *)
-  ValueVar.reset_counter () ;
-  let y0 = ValueVar.fresh ~name:"y" () in
+  Value_var.reset_counter () ;
+  let y0 = Value_var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x

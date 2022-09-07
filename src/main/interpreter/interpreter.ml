@@ -1020,7 +1020,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       )
     | E_lambda {binder; output_type=_; result;} ->
       let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
-      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
@@ -1033,7 +1033,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       eval_literal l
     | E_variable var ->
       let fst (a, _, _) = a in
-      let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" ValueVar.pp var)) in
+      let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" Value_var.pp var)) in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
@@ -1043,16 +1043,16 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         (Record.LMap.to_kv_list_rev recmap)
       in
       return @@ V_Record (Record.of_list lv')
-    | E_accessor { record ; path} -> (
-      let* record' = eval_ligo record calltrace env in
+    | E_accessor { struct_ ; path} -> (
+      let* record' = eval_ligo struct_ calltrace env in
       match record' with
       | V_Record recmap ->
         let a = Record.LMap.find path recmap in
         return a
       | _ -> failwith "trying to access a non-record"
     )
-    | E_update {record ; path ; update} -> (
-      let* record' = eval_ligo record calltrace env in
+    | E_update {struct_ ; path ; update} -> (
+      let* record' = eval_ligo struct_ calltrace env in
       match record' with
       | V_Record recmap ->
         if Record.LMap.mem path recmap then
@@ -1148,7 +1148,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
-      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
                              arg_binder = lambda.binder.var ;
@@ -1177,9 +1177,9 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let aux decl r =
     let ds, defs = r in
     match decl.Location.wrap_content with
-    | Ast_typed.Declaration.Declaration_constant { binder ; expr ; _ } ->
+    | Ast_typed.D_value { binder ; expr ; _ } ->
       let var = binder.var in
-      if not (ValueVar.is_generated var) && (Base.String.is_prefix (ValueVar.to_name_exn var) ~prefix:"test") then
+      if not (Value_var.is_generated var) && (Base.String.is_prefix (Value_var.to_name_exn var) ~prefix:"test") then
         let expr = Ast_typed.(e_a_variable var expr.type_expression) in
         (* TODO: check that variables are unique, as they are ignored *)
         decl :: ds, (binder, expr.type_expression) :: defs
@@ -1191,7 +1191,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
-    let s, _ = ValueVar.internal_get_name_and_counter n.Binder.var in
+    let s, _ = Value_var.internal_get_name_and_counter n.Binder.var in
     Record.LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
@@ -1201,7 +1201,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = ValueVar.internal_get_name_and_counter n.Binder.var in
+      let s, _ = Value_var.internal_get_name_and_counter n.Binder.var in
       match Record.LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in

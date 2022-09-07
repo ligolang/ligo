@@ -74,8 +74,8 @@ val quote : string -> type_expression -> type_expression -> Expression.t -> anon
 val e_int : Expression.t' -> Expression.t
 *)
 val e_unit    : ?loc:Location.t -> unit -> Expression.t
-val e_var_int : ?loc:Location.t -> ValueVar.t -> Expression.t
-val e_let_in  : ?loc:Location.t -> ValueVar.t -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
+val e_var_int : ?loc:Location.t -> Value_var.t -> Expression.t
+val e_let_in  : ?loc:Location.t -> Value_var.t -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
 val e_proj    : ?loc:Location.t -> expression -> type_expression -> int -> int -> expression
 val e_tuple   : ?loc:Location.t -> expression list -> type_expression -> expression
 (*

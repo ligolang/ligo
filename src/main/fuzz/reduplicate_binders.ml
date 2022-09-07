@@ -15,7 +15,7 @@ open Ast_aggregated
 let rec reduplicate ~raise : expression -> expression =
   fun exp ->
   let self = reduplicate ~raise in
-  let remove_counter v = if ValueVar.is_generated v then v else ValueVar.(of_input_var ~loc:(get_location v) (to_name_exn v)) in
+  let remove_counter v = if Value_var.is_generated v then v else Value_var.(of_input_var ~loc:(get_location v) (to_name_exn v)) in
   let return expression_content : expression =
     { exp with expression_content } in
   let binder_remove_counter = fun Binder.{var; ascr; attributes} ->
@@ -76,13 +76,13 @@ let rec reduplicate ~raise : expression -> expression =
     | E_record map ->
        let map = Record.map (self) map in
        return (E_record map)
-    | E_accessor { record ; path } ->
-       let record = self record in
-       return (E_accessor { record ; path })
-    | E_update { record ; path ; update } ->
-       let record = self record in
+    | E_accessor { struct_ ; path } ->
+       let struct_ = self struct_ in
+       return (E_accessor { struct_ ; path })
+    | E_update { struct_ ; path ; update } ->
+       let struct_ = self struct_ in
        let update = self update in
-       return (E_update { record ; path ; update })
+       return (E_update { struct_ ; path ; update })
    | E_assign {binder;expression} ->
       let binder = binder_remove_counter binder in
       let expression = self expression in

@@ -105,7 +105,7 @@ module Elaboration : sig
   val run_expr : (expression, [> error] as 'err, 'wrn) t -> ctx:context -> raise:('err, 'wrn) raise -> expression
   val run_decl : (decl, [> error] as 'err, 'wrn) t -> ctx:context -> raise:('err, 'wrn) raise -> decl
   val run_declaration : (declaration, [> error] as 'err, 'wrn) t -> ctx:context -> raise:('err, 'wrn) raise -> declaration
-  
+
   val run_module : (module_, [> error] as 'err, 'wrn)  t -> ctx:context -> raise:('err, 'wrn) raise -> module_
   val run_program : (program, [> error] as 'err, 'wrn)  t -> ctx:context -> raise:('err, 'wrn) raise -> program
 end

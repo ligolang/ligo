@@ -11,8 +11,8 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_bad_timestamp of (string * expression)
   | `Self_ast_imperative_bad_format_literal of expression
   | `Self_ast_imperative_bad_conversion_bytes of expression
-  | `Self_ast_imperative_vars_captured of (Location.t * ValueVar.t) list
-  | `Self_ast_imperative_const_assigned of (Location.t * ValueVar.t)
+  | `Self_ast_imperative_vars_captured of (Location.t * Value_var.t) list
+  | `Self_ast_imperative_const_assigned of (Location.t * Value_var.t)
   | `Self_ast_imperative_no_shadowing of Location.t
   | `Self_ast_imperative_non_linear_pattern of type_expression option Pattern.t
   | `Self_ast_imperative_non_linear_record of expression
@@ -73,15 +73,15 @@ let error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
         Snippet.pp e.location
     | `Self_ast_imperative_vars_captured vars ->
-       let pp_var ppf ((decl_loc, var) : Location.t * ValueVar.t) =
+       let pp_var ppf ((decl_loc, var) : Location.t * Value_var.t) =
          Format.fprintf ppf
            "@[<hv>%a@ Invalid capture of non-constant variable \"%a\", declared at@.%a@]"
-           Snippet.pp (ValueVar.get_location var) ValueVar.pp var Snippet.pp decl_loc in
+           Snippet.pp (Value_var.get_location var) Value_var.pp var Snippet.pp decl_loc in
        Format.fprintf f "%a" (PP_helpers.list_sep pp_var (PP_helpers.tag "@.")) vars
     | `Self_ast_imperative_const_assigned (loc, var) ->
        Format.fprintf f
          "@[<hv>%a@ Invalid assignment to constant variable \"%a\", declared at@.%a@]"
-         Snippet.pp loc ValueVar.pp var Snippet.pp (ValueVar.get_location var)
+         Snippet.pp loc Value_var.pp var Snippet.pp (Value_var.get_location var)
     | `Self_ast_imperative_no_shadowing l ->
         Format.fprintf f
             "@[<hv>%a@ Cannot redeclare block-scoped variable. @]"
@@ -180,7 +180,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
     json_error ~stage ~content
   | `Self_ast_imperative_vars_captured vars ->
      let message = `String "Invalid capture: declared as a non-constant variable" in
-     let loc ((loc, _v) : Location.t * ValueVar.t) =
+     let loc ((loc, _v) : Location.t * Value_var.t) =
        `String (Format.asprintf "%a" Location.pp loc) in
      let locs = `List (List.map ~f:loc vars) in
      let content = `Assoc [
