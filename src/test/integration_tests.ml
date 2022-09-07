@@ -1123,6 +1123,11 @@ let loop_jsligo ~raise () : unit =
     let input = e_int 100 in
     let expected = e_int 10000 in
     expect_eq ~raise program "counter_nest" input expected
+  in
+  let () =
+    let input = e_variable_ez "testmap" in
+    let expected = e_list [e_pair (e_int 2) (e_int 4) ; e_pair (e_int 1) (e_int 2) ; e_pair (e_int 0) (e_int 1)] in
+    expect_eq ~raise program "entries" input expected
   in ()
 
 let loop2_jsligo ~raise () : unit =

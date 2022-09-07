@@ -478,11 +478,14 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (for_all "a"
           @@ fun a ->
+          for_all "b"
+          @@ fun b ->
           create
             ~mode_annot:[ Checked; Inferred ]
             ~types:
               [ (a @-> t_unit ()) ^-> t_list a ^~> t_unit ()
               ; (a @-> t_unit ()) ^-> t_set a ^~> t_unit ()
+              ; (t_pair a b @-> t_unit ()) ^-> t_map a b ^~> t_unit ()
               ]) )
     ; ( C_FOLD
       , of_type
