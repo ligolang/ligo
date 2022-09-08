@@ -7,8 +7,8 @@ module VVar = Value_var
 module TVar = Type_var
 module MVar = Module_var
 
-(* module Formatter = Formatter *)
-(* module Api_helper = Api_helper *)
+module Formatter = New_formatter
+module Api_helper = Api_helper
 
 module Misc = New_misc
 
@@ -339,7 +339,6 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
       let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
       let scopes = merge_same_scopes scopes in
       let defs = resolve_module_aliases_to_module_ids defs in
-      let () = Format.printf "%a\n%a\n" PP_new.scopes scopes PP_new.definitions defs in
       defs, scopes
 
 (*
