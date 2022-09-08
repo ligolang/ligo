@@ -151,5 +151,18 @@ let add_defs_to_scopes : def list -> scopes -> scopes
   = fun defs scopes ->
       List.map scopes ~f:(add_defs_to_scope defs)
 
+let merge_same_scopes : scopes -> scopes
+  = fun scopes ->
+      let rec aux scopes acc =
+        match scopes with
+          [] -> acc
+        | (loc,scope)::scopes -> 
+            let same, different = List.partition_tf scopes ~f:(fun (_,s) -> List.equal def_equal s scope) in
+            let merged_scope_loc = List.fold_left same ~init:loc ~f:(fun loc (loc',_) -> Location.cover loc loc') in
+            let merged_scope = merged_scope_loc, scope in
+            aux different (merged_scope :: acc)
+      in
+      aux scopes []
+
 module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t

@@ -361,6 +361,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
   = fun ~with_types ~options prg ->
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _refs, _, scopes = Free.declarations ~with_types ~options tenv prg in
+      let scopes = merge_same_scopes scopes in
       let def_map = to_def_map defs in
       let () = Format.printf "----------------------------------\n" in
       let () = Format.printf "%a\n" PP.definitions def_map in
@@ -382,5 +383,6 @@ a function on expression will returns def list & references (vars) list
 for an expression its free_variable will be references
 
 7. Add comments
+8. Add PP for new implementation
 
 *)
