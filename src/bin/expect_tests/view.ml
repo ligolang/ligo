@@ -169,4 +169,12 @@ let%expect_test _ =
              ADD ;
              ADD } } |}]
 
-    
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; contract "views_using_view.test.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_basic exited with value true.
+    - test_not_funny exited with value true.
+    - test_get_storage exited with value true.
+    - test_get_address exited with value true.
+    - test_super_not_funny exited with value true. |}]
