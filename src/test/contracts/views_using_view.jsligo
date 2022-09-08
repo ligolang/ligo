@@ -3,7 +3,7 @@ type storage = int;
 type parameter =
 | ["Default"];
 
-let x = 1
+let x = 0
 
 type return_ = [list <operation>, storage];
 
@@ -20,7 +20,7 @@ let get_storage = ([_,s]:[unit, storage]): storage => x + s;
 let get_address = ([_,_s]:[unit, storage]): address => Tezos.get_sender();
 
 // @view
-let super_not_funny = ([_,s]:[unit, storage]): int => not_funny(unit, s);
+let super_not_funny = ([_,s]:[unit, storage]): storage => not_funny(unit, s) + get_storage(unit,s);
 
 
 const main = ([action, _store] : [parameter, storage]) : return_ => {
