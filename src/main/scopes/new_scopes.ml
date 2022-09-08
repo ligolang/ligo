@@ -307,20 +307,10 @@ end
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
-      let defs, _refs, _, scopes = Free.declarations ~with_types ~options tenv prg in
+      let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
       let scopes = merge_same_scopes scopes in
       (* TODO: resolve module aliases -> module definion ids *)
-      (* let def_map = to_def_map defs in
-      let () = Format.printf "----------------------------------\n" in
-      let () = Format.printf "%a\n" PP.definitions def_map in
-      let () = Format.printf "----------------------------------\n" in
-      let () = Format.printf "++++++++++++++++++++++++++++++++++\n" in
-      let () = List.iter ~f:(fun (loc, defs) ->
-        let bs = List.map defs ~f:get_def_uid in
-        let bs = String.concat ~sep:", " bs in
-        Format.printf "[%s] %a\n" bs Location.pp loc  
-      ) scopes in
-      let () = Format.printf "++++++++++++++++++++++++++++++++++\n" in *)
+      let () = Format.printf "%a\n%a\n" PP_new.scopes scopes PP_new.definitions defs in
       defs, scopes
 
 (*
