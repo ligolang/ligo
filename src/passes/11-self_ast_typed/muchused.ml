@@ -3,7 +3,7 @@ open Ast_typed
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-module V = Ligo_prim.ValueVar
+module V = Ligo_prim.Value_var
 module M = Simple_utils.Map.Make(V)
 
 type muchuse = int M.t * V.t list
@@ -145,18 +145,18 @@ let rec muchuse_of_expr expr : muchuse =
        (fun acc x -> muchuse_union (muchuse_of_expr x) acc) muchuse_neutral re
   | E_raw_code {code;_} ->
      muchuse_of_expr code
-  | E_accessor {record;_} ->
-     muchuse_of_expr record
-  | E_update {record;update;_} ->
-     muchuse_union (muchuse_of_expr record) (muchuse_of_expr update)
+  | E_accessor {struct_;_} ->
+     muchuse_of_expr struct_
+  | E_update {struct_;update;_} ->
+     muchuse_union (muchuse_of_expr struct_) (muchuse_of_expr update)
   | E_mod_in {let_result;_} ->
      muchuse_of_expr let_result
   | E_type_inst {forall;_} ->
      muchuse_of_expr forall
   | E_module_accessor {module_path;element} ->
-    let pref = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep ModuleVar.pp (Simple_utils.PP_helpers.tag ".")) module_path in
+    let pref = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep Module_var.pp (Simple_utils.PP_helpers.tag ".")) module_path in
     let name = V.of_input_var ~loc:expr.location @@
-      pref ^ "." ^ (Format.asprintf "%a" ValueVar.pp element) in
+      pref ^ "." ^ (Format.asprintf "%a" Value_var.pp element) in
     (M.add name 1 M.empty,[])
   | E_assign { binder=_; expression } ->
     muchuse_of_expr expression
@@ -197,18 +197,18 @@ and muchuse_of_record {body;fields;_} =
   List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder b.var b.ascr (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
-let rec get_all_declarations (module_name : ModuleVar.t) : module_ ->
-                               (ValueVar.t * type_expression) list =
+let rec get_all_declarations (module_name : Module_var.t) : module_ ->
+                               (Value_var.t * type_expression) list =
   function m ->
-    let aux = fun (Decl {wrap_content=x;location} : decl) ->
+    let aux = fun ({wrap_content=x;location} : decl) ->
       match x with
-      | Declaration_constant {binder;expr;_} ->
-          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp binder.var) in
+      | D_value {binder;expr;_} ->
+          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" Module_var.pp module_name) ^ "." ^ (Format.asprintf "%a" Value_var.pp binder.var) in
           [(name, expr.type_expression)]
-      | Declaration_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
+      | D_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
-          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp v) in
+          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" Module_var.pp module_name) ^ "." ^ (Format.asprintf "%a" Value_var.pp v) in
           (name, t) in
          recs |> List.map ~f:add_module_name
       | _ -> [] in
@@ -222,17 +222,16 @@ let rec muchused_helper (muchuse : muchuse) =
 
 and muchuse_declaration = fun (x : declaration) s ->
   match Location.unwrap x with
-  | Declaration_constant {expr ; binder; _} ->
+  | D_value {expr ; binder; _} ->
       muchuse_union (muchuse_of_expr expr)
         (muchuse_of_binder binder.var expr.type_expression s)
-  | Declaration_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
+  | D_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
       let decls = get_all_declarations module_binder module_ in
       List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
         decls ~init:(muchused_helper s module_)
   | _ -> s
 
-and muchuse_decl = fun (Decl x) s ->
-  muchuse_declaration x s
+and muchuse_decl = fun x s -> muchuse_declaration x s
 
 let muchused_map_module ~raise : module_ -> module_ = function module_ ->
   let update_annotations annots =

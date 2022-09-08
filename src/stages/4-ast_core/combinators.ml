@@ -30,7 +30,7 @@ type type_content = [%import: Types.type_content]
 open Ligo_prim
 open Ligo_prim.Literal_types
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
-  make_t ?loc ?sugar (T_app {type_operator=TypeVar.of_input_var (Literal_types.to_string type_operator);arguments})
+  make_t ?loc ?sugar (T_app {type_operator=Type_var.of_input_var (Literal_types.to_string type_operator);arguments})
 let t_abstraction ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_abstraction {ty_binder ; kind ; type_})
 let t_for_all ?loc ?sugar ty_binder kind type_ =
@@ -49,12 +49,12 @@ let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type_ 
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc ?sugar name kind : type_expression =
-  let ty_binder = TypeVar.fresh ~name:"_a" () in
+  let ty_binder = Type_var.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ty_binder ()] in
   t_abstraction ?loc ?sugar ty_binder kind type_
 let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression =
-  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
-  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
+  let ty_binder_l = Type_var.fresh ~name:"_l" () in
+  let ty_binder_r = Type_var.fresh ~name:"_r" () in
   let type_ = t_constant name [t_variable ty_binder_l () ; t_variable ty_binder_r ()] in
   t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
@@ -111,7 +111,7 @@ let tuple_of_record (m: _ Rows.row_element_mini_c Record.t) =
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
-  | T_record record -> Some (tuple_of_record record.fields)
+  | T_record struct_ -> Some (tuple_of_record struct_.fields)
   | _ -> None
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
@@ -128,7 +128,7 @@ let ez_e_record (lst : (Label.t * expression) list) : expression =
   let map = List.fold_left ~f:aux ~init:Record.LMap.empty lst in
   e_record map ()
 
-let e_var       ?loc ?sugar n  : expression = e_variable (ValueVar.of_input_var ?loc n) ?loc ?sugar ()
+let e_var       ?loc ?sugar n  : expression = e_variable (Value_var.of_input_var ?loc n) ?loc ?sugar ()
 let e_unit      ?loc ?sugar () : expression = e_literal (Literal_unit) ?loc ?sugar ()
 let e_literal   ?loc ?sugar l  : expression = e_literal l ?loc ?sugar ()
 
@@ -159,8 +159,8 @@ let e_mod_in ?loc ?sugar module_binder rhs let_result = e_mod_in ?loc ?sugar { m
 let e_raw_code ?loc ?sugar language code = e_raw_code ?loc ?sugar {language; code} ()
 let e_constructor constructor element : expression = e_constructor {constructor;element} ()
 let e_matching ?loc ?sugar matchee cases : expression = e_matching ?loc ?sugar { matchee ; cases } ()
-let e_record_accessor ?loc ?sugar record path = e_accessor ?loc ?sugar ({record; path} : _ Types.Accessor.t) ()
-let e_record_update ?loc ?sugar record path update = e_update ?loc ?sugar ({record; path; update} : _ Types.Update.t) ()
+let e_record_accessor ?loc ?sugar struct_ path = e_accessor ?loc ?sugar ({struct_; path} : _ Types.Accessor.t) ()
+let e_record_update ?loc ?sugar struct_ path update = e_update ?loc ?sugar ({struct_; path; update} : _ Types.Update.t) ()
 let e_module_accessor ?loc ?sugar module_path element = e_module_accessor ?loc ?sugar {module_path;element} ()
 let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = e_ascription ?loc ?sugar {anno_expr;type_annotation} ()
 let e_lambda_ez   ?loc ?sugar var ?ascr ?const_or_var output_type result         = e_lambda ?loc ?sugar {var;ascr;attributes={const_or_var}} output_type result
@@ -230,8 +230,8 @@ let get_e_tuple = fun t ->
 let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option =
   match get_t_record t with
   | None -> None
-  | Some record ->
-    match Record.LMap.find_opt label record.fields with
+  | Some struct_ ->
+    match Record.LMap.find_opt label struct_.fields with
     | None -> None
     | Some row_element -> Some row_element.associated_type
 

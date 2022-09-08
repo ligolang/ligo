@@ -74,17 +74,17 @@ module Definitions = struct
     fun name loc m ->
       Module { name ; range = loc ; body_range = Location.dummy ; content = m }
 
-  let add_reference : ValueVar.t -> def_map -> def_map = fun x env ->
+  let add_reference : Value_var.t -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
-      | Variable v -> ValueVar.is_name x v.name
+      | Variable v -> Value_var.is_name x v.name
       | (Type _ | Module _ ) -> false
     in
     match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
       let aux : def option -> def option = fun d_opt ->
         match d_opt with
-        | Some (Variable v) -> Some (Variable { v with references = (ValueVar.get_location x :: v.references) })
+        | Some (Variable v) -> Some (Variable { v with references = (Value_var.get_location x :: v.references) })
         | Some x -> Some x
         | None -> None
       in
@@ -115,5 +115,5 @@ let add_scope (range,env) (scopes:scopes) =
   if replaced then scopes
   else { range ; env } :: scopes
 
-module Bindings_map = Simple_utils.Map.Make (Ligo_prim.ValueVar)
+module Bindings_map = Simple_utils.Map.Make (Ligo_prim.Value_var)
 type bindings_map = Ast_typed.type_expression Bindings_map.t

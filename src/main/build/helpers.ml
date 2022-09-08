@@ -1,22 +1,22 @@
 let internalize_typed ?(inner = false) (ds : Ast_typed.program) : Ast_typed.program =
   let open Ast_typed in
   let rec f ~inner (d : declaration_content) : declaration_content = match d with
-    | Declaration_module { module_binder ; module_ ; module_attr = _ } ->
-      let module_attr = Attr.{ public = inner ; hidden = true } in
+    | D_module { module_binder ; module_ ; module_attr = _ } ->
+      let module_attr = TypeOrModuleAttr.{ public = inner ; hidden = true } in
       let module_ = match module_ with
         | { wrap_content = M_struct x ; _ } ->
-          { module_ with wrap_content = Declaration.M_struct (module' ~inner:true x)}
+          { module_ with wrap_content = Ligo_prim.Module_expr.M_struct (module' ~inner:true x)}
         | _ -> module_
       in
-      Declaration_module { module_binder ; module_ ; module_attr }
-    | Declaration_type { type_binder ; type_expr ; type_attr = _ } ->
-      let type_attr = Attr.{ public = false ; hidden = true } in
-      Declaration_type { type_binder ; type_expr ; type_attr }
-    | Declaration_constant x ->
-      let attr : Attr.value = { x.attr with inline = true ; hidden = true } in
-      Declaration_constant { x with attr }
+      D_module { module_binder ; module_ ; module_attr }
+    | D_type { type_binder ; type_expr ; type_attr = _ } ->
+      let type_attr = TypeOrModuleAttr.{ public = false ; hidden = true } in
+      D_type { type_binder ; type_expr ; type_attr }
+    | D_value x ->
+      let attr : ValueAttr.t = { x.attr with inline = true ; hidden = true } in
+      D_value { x with attr }
   and declaration ~inner (d : declaration) = Simple_utils.Location.map (f ~inner) d
-  and decl ~inner (Decl d) = Decl (declaration ~inner d)
+  and decl ~inner d = declaration ~inner d
   and module' ~inner = List.map ~f:(decl ~inner) in
 
   List.map ~f:(declaration ~inner) ds
@@ -24,22 +24,22 @@ let internalize_typed ?(inner = false) (ds : Ast_typed.program) : Ast_typed.prog
 let internalize_core ?(inner = false) (ds : Ast_core.program) : Ast_core.program =
   let open Ast_core in
   let rec f ~inner (d : declaration_content) : declaration_content = match d with
-    | Declaration_module { module_binder ; module_ ; module_attr = _ } ->
-      let module_attr = Attr.{ public = inner ; hidden = true } in
+    | D_module { module_binder ; module_ ; module_attr = _ } ->
+      let module_attr = TypeOrModuleAttr.{ public = inner ; hidden = true } in
       let module_ = match module_ with
         | { wrap_content = M_struct x ; _ } ->
-          { module_ with wrap_content = Declaration.M_struct (module' ~inner:true x)}
+          { module_ with wrap_content = Ligo_prim.Module_expr.M_struct (module' ~inner:true x)}
         | _ -> module_
       in
-      Declaration_module { module_binder ; module_ ; module_attr }
-    | Declaration_type { type_binder ; type_expr ; type_attr = _ } ->
-      let type_attr = Attr.{ public = false ; hidden = true } in
-      Declaration_type { type_binder ; type_expr ; type_attr }
-    | Declaration_constant x ->
-      let attr : Attr.value = { x.attr with inline = true ; hidden = true } in
-      Declaration_constant { x with attr }
+      D_module { module_binder ; module_ ; module_attr }
+    | D_type { type_binder ; type_expr ; type_attr = _ } ->
+      let type_attr = TypeOrModuleAttr.{ public = false ; hidden = true } in
+      D_type { type_binder ; type_expr ; type_attr }
+    | D_value x ->
+      let attr : ValueAttr.t = { x.attr with inline = true ; hidden = true } in
+      D_value { x with attr }
   and declaration ~inner (d : declaration) = Simple_utils.Location.map (f ~inner) d
-  and decl ~inner (Decl d) = Decl (declaration ~inner d)
+  and decl ~inner d = declaration ~inner d
   and module' ~inner = List.map ~f:(decl ~inner) in
 
   List.map ~f:(declaration ~inner) ds
@@ -51,8 +51,8 @@ let inject_declaration ~options ~raise : Syntax_types.t -> Ast_core.program -> A
   let inject_arg_declaration arg =
     let open Ast_core in
     let expr = Ligo_compile.Utils.core_expression_string ~raise syntax arg in
-    let attr = Attr.{ inline = false ; no_mutation = true ; view = false ; public = false ; hidden = false ; thunk = false } in
-    let d = Location.wrap @@ Declaration.Declaration_constant { binder = make_binder (Ligo_prim.ValueVar.of_input_var "cli_arg") ; expr ; attr } in
+    let attr = ValueAttr.{ inline = false ; no_mutation = true ; view = false ; public = false ; hidden = false ; thunk = false } in
+    let d = Location.wrap @@ D_value { binder = make_binder (Ligo_prim.Value_var.of_input_var "cli_arg") ; expr ; attr } in
     d::prg
   in
   (Option.value_map Compiler_options.(options.test_framework.cli_expr_inj) ~default:prg ~f:inject_arg_declaration)

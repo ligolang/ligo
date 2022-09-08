@@ -12,15 +12,15 @@ let add_binder b var vars =
   let vars = remove_from var vars in
   if b then var :: vars else vars
 
-let rec assign_expression ~raise : ?vars:ValueVar.t list -> expression -> expression  = fun ?(vars = []) e ->
+let rec assign_expression ~raise : ?vars:Value_var.t list -> expression -> expression  = fun ?(vars = []) e ->
   let self = assign_expression ~raise in
   let _ = fold_map_expression
-                (fun (vars : ValueVar.t list) expr ->
+                (fun (vars : Value_var.t list) expr ->
                   match expr.expression_content with
                   | E_assign {binder={var;_};expression=_} -> (
-                    match List.find ~f:(fun v -> ValueVar.equal var v) vars with
-                    | Some (v:ValueVar.t) ->
-                      raise.error @@ const_assigned (ValueVar.get_location v) var
+                    match List.find ~f:(fun v -> Value_var.equal var v) vars with
+                    | Some (v:Value_var.t) ->
+                      raise.error @@ const_assigned (Value_var.get_location v) var
                     | None -> (true, vars, expr)
                   )
                   | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->

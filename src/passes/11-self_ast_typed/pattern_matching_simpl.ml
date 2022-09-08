@@ -43,16 +43,16 @@ let map_expression = Helpers.map_expression
 open Ligo_prim
 open Ast_typed
 
-module SimplMap = Simple_utils.Map.Make(ValueVar)
+module SimplMap = Simple_utils.Map.Make(Value_var)
 
-type simpl_map = ((Label.t * ValueVar.t) list) SimplMap.t
+type simpl_map = ((Label.t * Value_var.t) list) SimplMap.t
 
 
 let is_generated_partial_match : expression -> bool =
   fun exp ->
     match exp.expression_content with
     (* This is bad, we probably need some constant for "internally generated failwith" ? *)
-    | E_application {lamb= { expression_content = E_variable v ; _ } ; args = e } when String.equal "failwith" (Format.asprintf "%a" ValueVar.pp v)-> (
+    | E_application {lamb= { expression_content = E_variable v ; _ } ; args = e } when String.equal "failwith" (Format.asprintf "%a" Value_var.pp v)-> (
       match get_a_string e with
       | Some fw -> String.equal fw (Ligo_string.extract Backend.Michelson.fw_partial_match)
       | None -> false
@@ -65,16 +65,16 @@ let rec do_while : (expression -> (bool * expression)) -> expression -> expressi
     if has_been_simpl then do_while f exp
     else exp
 
-let make_le : _ matching_content_variant -> (Label.t * ValueVar.t) list = fun ml ->
+let make_le : _ matching_content_variant -> (Label.t * Value_var.t) list = fun ml ->
   List.map ~f:(fun (m:_ matching_content_case) -> (m.constructor,m.pattern)) ml.cases
 
-let substitute_var_in_body : ValueVar.t -> ValueVar.t -> expression -> expression =
+let substitute_var_in_body : Value_var.t -> Value_var.t -> expression -> expression =
   fun to_subst new_var body ->
     let aux : unit -> expression -> bool * unit * expression =
       fun () exp ->
         let ret continue exp = (continue,(),exp) in
         match exp.expression_content with
-        | E_variable var when ValueVar.equal var to_subst -> ret true { exp with expression_content = E_variable new_var }
+        | E_variable var when Value_var.equal var to_subst -> ret true { exp with expression_content = E_variable new_var }
         | _ -> ret true exp
     in
     let ((), res) = fold_map_expression aux () body in

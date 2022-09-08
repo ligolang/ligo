@@ -1,38 +1,18 @@
-module type Access = sig
-  type 'a t
-  [@@deriving eq,compare,yojson,hash]
-  val pp   : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
-  val fold : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc
-  val map  : ('a -> 'b) -> 'a t -> 'b t
-  val fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
-end
-module Make(Access : Access) = struct
+module Make(Path : Access_path.S) = struct
   type 'e t = {
-    record: 'e;
-    path: 'e Access.t;
-    } [@@deriving eq,compare,yojson,hash]
+    struct_: 'e;
+    path: 'e Path.t;
+    } [@@deriving eq,compare,yojson,hash,fold,map]
 
-  let pp f ppf = fun ({record;path}: _ t) ->
+  let pp f ppf = fun ({struct_;path}: _ t) ->
     Format.fprintf ppf "%a.%a"
-      f record
-      (Access.pp f) path
-
-  let fold : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc
-  = fun f acc {record;path=p} ->
-    let acc = f acc record in
-    let acc = Access.fold f acc p in
-    acc
-
-  let map : ('a -> 'b) -> 'a t -> 'b t
-  = fun f {record;path=p} ->
-    let record = f record in
-    let path   = Access.map f p in
-    {record;path}
+      f struct_
+      (Path.pp f) path
 
   let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
-  = fun f acc {record;path=p} ->
-    let acc,record = f acc record in
-    let acc,path   = Access.fold_map f acc p in
-    (acc,{record;path})
+  = fun f acc {struct_;path=p} ->
+    let acc,struct_ = f acc struct_ in
+    let acc,path   = Path.fold_map f acc p in
+    (acc,{struct_;path})
 
 end

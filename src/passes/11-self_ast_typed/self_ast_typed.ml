@@ -47,13 +47,13 @@ let all_view ~raise command_line_views main_name prg =
     | Some command_line_views -> (
       List.iter user_views
         ~f:(fun (x,loc) ->
-          if Option.is_none (List.find ~f:(ValueVar.is_name x) command_line_views) then
+          if Option.is_none (List.find ~f:(Value_var.is_name x) command_line_views) then
             Simple_utils.Trace.(raise.warning (`Main_view_ignored loc))
         )
     )
   in
   let () =
-    match Helpers.get_shadowed_decl prg (fun ({ view ; _ } : Ast_typed.Attr.value) -> view) with
+    match Helpers.get_shadowed_decl prg (fun ({ view ; _ } : Ast_typed.ValueAttr.t) -> view) with
     | Some loc -> raise.error (Errors.annotated_declaration_shadowed loc)
     | None -> ()
   in
@@ -69,7 +69,7 @@ let all_view ~raise command_line_views main_name prg =
     match Ast_typed.Helpers.fetch_view_type decl with
     | None -> ()
     | Some (view_type,view_binder) ->
-      (* ValueVar.get_location binder.var *)
+      (* Value_var.get_location binder.var *)
       View_passes.check_view_type ~raise ~err_data:(main_name,view_binder) contract_type view_type
   in
   let () = List.iter ~f prg in

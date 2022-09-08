@@ -70,11 +70,11 @@ let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   t_sum_ez ?loc lst
 
-let t_bool ?loc () : type_expression =
-  let unit : ty_expr Rows.row_element =
-    { associated_type = t_unit (); attributes = [] ; decl_pos = 0 } in
+let t_bool ?loc () : type_expression = 
+  let unit decl_pos : ty_expr Rows.row_element = 
+    { associated_type = t_unit (); attributes = [] ; decl_pos } in
   t_sum_ez ?loc
-  [("True", unit);("False", unit)]
+  [("True", unit 0);("False", unit 1)]
 
 let t_arrow ?loc type1 type2  : type_expression = t_arrow ?loc {type1; type2} ()
 
@@ -107,8 +107,8 @@ let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constru
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
 let e_record ?loc map : expression = make_e ?loc @@ E_record map
-let e_accessor ?loc record path = make_e ?loc @@ E_accessor {record; path}
-let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
+let e_accessor ?loc struct_ path = make_e ?loc @@ E_accessor {struct_; path}
+let e_update ?loc struct_ path update = make_e ?loc @@ E_update {struct_; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
@@ -140,7 +140,7 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let get_e_accessor = fun t ->
   match t with
-  | E_accessor {record; path} -> Some (record, path)
+  | E_accessor {struct_; path} -> Some (struct_, path)
   | _ -> None
 
 let assert_e_accessor = fun t ->
