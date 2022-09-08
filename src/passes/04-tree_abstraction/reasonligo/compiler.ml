@@ -19,14 +19,6 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 
-let built_ins = ["Operator";"Tezos";"List";"Set";"Map";"Big_map";"Bitwise";"Option"]
-let rec compile_pseudomodule_access field = let open CST in match field with
-  | EVar v -> v.value
-  | EModA { value = { module_name ; field ; selector = _ } ; region = _ } -> module_name.value ^ "." ^ compile_pseudomodule_access field
-  | _ -> failwith "Corner case : This couldn't be produce by the parser"
-
-open Predefined.Tree_abstraction
-
 let r_split = Location.r_split
 
 let quote_var var = "'"^var
@@ -229,9 +221,7 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
   match e with
     EVar var -> (
     let (var, loc) = r_split var in
-    match constants var with
-    | Some const -> return @@ e_constant ~loc const []
-    | None -> return @@ e_variable_ez ~loc var
+    return @@ e_variable_ez ~loc var
   )
   | EPar par -> self par.value.inside
   | EUnit the_unit ->
@@ -306,40 +296,9 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
          hd,List.map ~f:snd tl in
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
-    (match constants var with
-      Some const ->
-      let args = List.map ~f:self @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
-    | None ->
-      let func = e_variable_ez ~loc:loc_var var in
-      let args = compile_tuple_expression args in
-      return @@ e_application ~loc func args
-    )
-  (*TODO: move to proper module*)
-  | ECall ({value=(EModA {value={module_name;field=_;selector=_};region=_} as value,args);region} as call) when
-    List.mem ~equal:String.(=) built_ins module_name.value ->
-    let args = match args with
-      | Unit the_unit -> CST.EUnit the_unit,[]
-      | Multiple xs ->
-         let hd,tl = xs.value.inside in
-         hd,List.map ~f:snd tl in
-    let loc = Location.lift region in
-    let var = compile_pseudomodule_access value in
-    (match constants var with
-      Some const ->
-      let args = List.map ~f:self @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
-    | None ->
-      let ((func, args), loc) = r_split call in
-      let args = match args with
-        | Unit the_unit -> CST.EUnit the_unit,[]
-        | Multiple xs ->
-           let hd,tl = xs.value.inside in
-           hd,List.map ~f:snd tl in
-      let func = self func in
-      let args = compile_tuple_expression args in
-      return @@ e_application ~loc func args
-      )
+    let func = e_variable_ez ~loc:loc_var var in
+    let args = compile_tuple_expression args in
+    return @@ e_application ~loc func args
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let args = match args with
@@ -372,47 +331,22 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
     return @@ e_accessor ~loc var sels
   | EModA ma -> (
     let (ma, loc) = r_split ma in
-    (*TODO: move to proper module*)
-    let (module_name', _) = r_split ma.module_name in
-    if List.mem ~equal:String.(=) built_ins module_name' then
-      let var = compile_pseudomodule_access e in
-      (match constants var with
-        Some const -> return @@ e_constant ~loc const []
-       | None -> (
-         let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
-           match exp with
-           | EVar v ->
-              let accessed_el = compile_variable v in
-              return @@ e_module_accessor ~loc acc accessed_el
-           | EProj proj ->
-              let (proj, _) = r_split proj in
-              let (var, _) = r_split proj.struct_name in
-              let moda  = e_module_accessor ~loc acc (Value_var.of_input_var var) in
-              let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
-              return @@ e_accessor ~loc moda sels
-           | EModA ma ->
-              aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
-           | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
-         in
-         aux [Module_var.of_input_var ma.module_name.value] ma.field)
-      )
-    else
-      let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
-        match exp with
-        | EVar v ->
-          let accessed_el = compile_variable v in
-          return @@ e_module_accessor ~loc acc accessed_el
-        | EProj proj ->
-          let (proj, _) = r_split proj in
-          let (var, _) = r_split proj.struct_name in
-          let moda  = e_module_accessor ~loc acc (Value_var.of_input_var var) in
-          let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
-          return @@ e_accessor ~loc moda sels
-        | EModA ma ->
-          aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
-        | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
-      in
-      aux [Module_var.of_input_var ma.module_name.value] ma.field
+    let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
+      match exp with
+      | EVar v ->
+         let accessed_el = compile_variable v in
+         return @@ e_module_accessor ~loc acc accessed_el
+      | EProj proj ->
+         let (proj, _) = r_split proj in
+         let (var, _) = r_split proj.struct_name in
+         let moda  = e_module_accessor ~loc acc (Value_var.of_input_var var) in
+         let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
+         return @@ e_accessor ~loc moda sels
+      | EModA ma ->
+         aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
+      | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
+    in
+    aux [Module_var.of_input_var ma.module_name.value] ma.field
   )
   | EUpdate update ->
     let (update, _loc) = r_split update in

@@ -48,12 +48,16 @@ let type_expression_string ~raise ~options syntax expression init_prog =
   let core_exp          = core_expression_string ~raise syntax expression in
   Of_core.compile_expression ~raise ~options ~init_prog core_exp
 
-let type_program_string ~raise ~options syntax expression =
+let core_program_string ~raise ~options syntax expression =
   let meta          = Of_source.make_meta_from_syntax syntax in
   let c_unit, _     = Of_source.compile_string ~raise ~options:(Compiler_options.(options.frontend)) ~meta expression in
   let imperative    = Of_c_unit.compile_string ~raise ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
   let core          = Of_sugar.compile sugar in
+  core
+
+let type_program_string ~raise ~options syntax expression =
+  let core          = core_program_string ~raise ~options syntax expression in
   let typed         = Of_core.typecheck ~raise ~options Env core in
   typed,core
 

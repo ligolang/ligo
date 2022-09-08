@@ -84,6 +84,8 @@ let michelson_base : (Type_var.t * type_expression) list = [
     (v_external_int       , t_abstraction1 (External "int")           star) ;
     (v_external_ediv      , t_abstraction2 (External "ediv")     star star) ;
     (v_external_u_ediv    , t_abstraction2 (External "u_ediv")     star star) ;
+    (v_external_and       , t_abstraction2 (External "and")     star star) ;
+    (v_external_u_and     , t_abstraction2 (External "u_and")     star star) ;
     (v_tx_rollup_l2_address, t_tx_rollup_l2_address ()             ) ;
 ]
 
