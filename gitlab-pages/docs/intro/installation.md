@@ -43,6 +43,7 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 Try our tap,
 
 ```
+brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
 brew install ligolang/ligo/ligo
 ```
 
