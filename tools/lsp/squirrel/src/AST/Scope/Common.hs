@@ -76,7 +76,7 @@ import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics(..))
 import AST.Skeleton
   ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, TypeName (..)
   , TypeVariableName (..), withNestedLIGO
@@ -151,7 +151,8 @@ class HasLigoClient m => HasScopeForest impl m where
     counter <- newMVar 0
     forAMConcurrently graph \contract -> do
       n <- modifyMVar counter (pure . (succ &&& id))
-      reportProgress $ Progress (n % nContracts) [Log.i|Adding scopes for #{contractFile contract}|]
+      reportProgress $
+        Progress (n % nContracts) [Log.i|Adding scopes for #{contractFile contract}|]
       scopeContract @impl tempSettings contract
 
   scopeContract
@@ -259,7 +260,15 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
     mergeRefs l r = r
       { _sdRefs = unionOrd (_sdRefs r) (_sdRefs l)
       , _sdDoc  = unionOrd (_sdDoc  r) (_sdDoc  l)
+      , _sdSpec = mergeValueSpecs (_sdSpec l) (_sdSpec r)
       }
+
+    -- FromCompiler scope doesn't have correct `_vdsParams`.
+    -- We have to take it from Fallback scope.
+    -- FIXME (LIGO-679)
+    mergeValueSpecs :: DeclarationSpecifics -> DeclarationSpecifics -> DeclarationSpecifics
+    mergeValueSpecs (ValueSpec l) (ValueSpec r) = ValueSpec r{ _vdsParams = _vdsParams l }
+    mergeValueSpecs _ r = r
 
     -- Merge two sets of DeclRefs preferring decls that have a smaller range
     -- (i.e., is more local than the other).

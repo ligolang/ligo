@@ -1,1 +1,0 @@
-# `@obsidians/code-editor`

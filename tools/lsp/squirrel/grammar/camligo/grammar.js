@@ -425,7 +425,7 @@ module.exports = grammar({
       $.data_projection,
       $.module_access,
       $.block_expr,
-      $.michelson_interop,
+      $.code_inj,
     ),
 
     // f a
@@ -550,16 +550,11 @@ module.exports = grammar({
       "end",
     ),
 
-    michelson_interop: $ => seq(
-      '[%Michelson',
-      common.par(
-        seq(
-          field("code", $._expr),
-          ':',
-          field("type", $._type_expr),
-        )
-      ),
-      ']'
+    code_inj: $ => seq(
+      "[%",
+      field("lang", $.Attr),
+      field("code", $._expr),
+      ']',
     ),
 
     /// PREPROCESSOR
@@ -628,7 +623,7 @@ module.exports = grammar({
 
     _till_newline: $ => /[^\n]*\n/,
 
-    attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
+    Attr: $ => /[a-zA-Z][a-zA-Z0-9_:.@%]*/,
 
     String: $ => /\"(\\.|[^"\n])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,

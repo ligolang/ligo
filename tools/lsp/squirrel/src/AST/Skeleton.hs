@@ -17,7 +17,7 @@ module AST.Skeleton
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
   , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
-  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
+  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..), Attr (..)
   , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
   , getLIGO
@@ -69,9 +69,9 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim
-  , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
-  , ModuleName, ModuleAccess, TypeParams, CaseOrDefaultStm
+  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim, Error, Ctor
+  , NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr, ModuleName
+  , ModuleAccess, Attr, TypeParams, CaseOrDefaultStm
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.
@@ -193,7 +193,7 @@ data Expr it
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  | Michelson it it -- (Verbatim) (Type)
+  | CodeInj   it it -- (Attr) (Expr)
   | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
@@ -238,22 +238,22 @@ data MapBinding it
 data FieldAssignment it
   = FieldAssignment [it] it -- [Accessor] (Expr)
   | Spread it -- (Name)
-  | Capture [it] -- [Accessor]
+  | Capture it -- Accessor
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Constant it
-  = Int     Text
-  | Nat     Text
-  | String  Text
-  | Float   Text
-  | Bytes   Text
-  | Tez     Text
+  = CInt     Text
+  | CNat     Text
+  | CString  Text
+  | CFloat   Text
+  | CBytes   Text
+  | CTez     Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Pattern it
   = IsConstr     it (Maybe it) -- (Name) (Maybe (Pattern))
   | IsConstant   it -- (Constant)
-  | IsVar        it -- (Name)
+  | IsVar        it -- (NameDecl)
   | IsCons       it it -- (Pattern) (Pattern)
   | IsAnnot      it it -- (Pattern) (Type) -- Semantically `Var`
   | IsWildcard
@@ -316,6 +316,10 @@ newtype PreprocessorCommand it = PreprocessorCommand Text
   deriving Eq1 via DefaultEq1DeriveForText
 
 newtype FieldName it = FieldName Text
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveForText
+
+newtype Attr it = Attr Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
@@ -399,12 +403,12 @@ instance Eq1 FieldAssignment where
   liftEq _ _ _ = False
 
 instance Eq1 Constant where
-  liftEq _ (Int a) (Int b) = a == b
-  liftEq _ (Nat a) (Nat b) = a == b
-  liftEq _ (String a) (String b) = a == b
-  liftEq _ (Float a) (Float b) = a == b
-  liftEq _ (Bytes a) (Bytes b) = a == b
-  liftEq _ (Tez a) (Tez b) = a == b
+  liftEq _ (CInt a) (CInt b) = a == b
+  liftEq _ (CNat a) (CNat b) = a == b
+  liftEq _ (CString a) (CString b) = a == b
+  liftEq _ (CFloat a) (CFloat b) = a == b
+  liftEq _ (CBytes a) (CBytes b) = a == b
+  liftEq _ (CTez a) (CTez b) = a == b
   liftEq _ _ _ = False
 
 -- FIXME: Missing a lot of comparisons!

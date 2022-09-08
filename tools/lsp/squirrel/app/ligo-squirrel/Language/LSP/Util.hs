@@ -4,6 +4,7 @@ module Language.LSP.Util
   , sendWarning
   , sendInfo
   , reverseUriMap
+  , filePathToNormalizedUri
   ) where
 
 import Control.Lens (dimap)
@@ -28,4 +29,6 @@ reverseUriMap :: S.MonadLsp config m => m (J.NormalizedUri -> J.NormalizedUri)
 reverseUriMap = dimap normalizedUriToFilePath filePathToNormalizedUri <$> S.reverseFileMap
   where
     normalizedUriToFilePath = fromJust . J.uriToFilePath . J.fromNormalizedUri
-    filePathToNormalizedUri = J.toNormalizedUri . J.filePathToUri
+
+filePathToNormalizedUri :: FilePath -> J.NormalizedUri
+filePathToNormalizedUri = J.toNormalizedUri . J.filePathToUri

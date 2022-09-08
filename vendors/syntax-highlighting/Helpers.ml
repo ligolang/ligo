@@ -1,3 +1,12 @@
+let builtin_repo = [
+  "macro";
+  "string";
+  "string_specialchar";
+  "line_comment";
+  "block_comment";
+  "numeric_literals";
+  "attribute";
+]
 
 let macro: Core.pattern = {
   name = "macro";

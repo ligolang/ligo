@@ -5,24 +5,32 @@ module Language.LIGO.Debugger.Handlers.Helpers
   ( module Language.LIGO.Debugger.Handlers.Helpers
   ) where
 
+import AST (LIGO, nestedLIGO, parse)
+import AST.Scope.Common qualified as AST.Common
+import Cli (HasLigoClient)
 import Control.Concurrent.STM (writeTChan)
+import Control.Lens (Each (each))
 import Control.Monad.Except (MonadError, liftEither, throwError)
 import Data.Char qualified as C
+import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI)
-import Data.Text qualified as T
 import Fmt (Buildable (..), Builder, pretty)
 import Fmt.Internal.Core (FromBuilder (..))
+import Log (runNoLoggingT)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSpecificResponse (..), RIO, RioContext (..))
+  (DAPOutputMessage (..), DAPSpecificResponse (..), HasSpecificMessages (LanguageServerStateExt),
+  RIO, RioContext (..))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
 import Morley.Michelson.Typed (Contract' (..), SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
+import ParseTree (pathToSrc)
+import Parser (Info)
 import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.CLI.Call
@@ -36,10 +44,12 @@ instance FromBuilder DAP.Message where
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
-  { lsProgram :: FilePath
-  , lsContract :: SomeContract
-  , lsEntrypoint :: String  -- ^ @main@ method to use
-  , lsAllLocs :: Set SourceLocation
+  { lsProgram :: Maybe FilePath
+  , lsContract :: Maybe SomeContract
+  , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
+  , lsAllLocs :: Maybe (Set SourceLocation)
+  , lsBinaryPath :: Maybe FilePath
+  , lsParsedContracts :: Maybe (HashMap FilePath (LIGO Info))
   }
 
 instance Buildable LigoLanguageServerState where
@@ -89,31 +99,67 @@ withMichelsonEntrypoint contract@T.Contract{} mEntrypoint liftErr cont = do
 
 -- | Try our best to parse and typecheck a value of a certain category.
 parseValue
-  :: (SingI t, MonadIO m, MonadError Text m)
+  :: (SingI t, HasLigoClient m)
   => FilePath
   -> Text
   -> Text
-  -> m (T.Value t)
-parseValue ctxContractPath category val = do
+  -> Text
+  -> m (Either Text (T.Value t))
+parseValue ctxContractPath category val valueType = do
   let src = P.MSName category
-  uvalue <- if
-    | Just michVal <- extractMichelsonValue val ->
-        P.parseExpandValue src michVal
-          & either (throwError . pretty . MD.prettyFirstError) pure
-    | otherwise ->
-        compileLigoExpression src ctxContractPath val >>= \case
-          Right x -> pure x
-          Left err -> throwError [int||
-            Error parsing #{category}:
+  eUvalue <- case valueType of
+    "LIGO" ->
+      compileLigoExpression src ctxContractPath val >>= \case
+        Right x -> pure $ Right x
+        Left err -> pure $ Left [int||
+          Error parsing #{category}:
 
-            #{err}
-           |]
+          #{err}
+          |]
+    "Michelson" -> pure $
+      P.parseExpandValue src val
+        & first (pretty . MD.prettyFirstError)
+    _ -> pure $ Left [int||
+        Expected "LIGO" or "Michelson" in field "valueType" \
+        but got #{valueType}
+      |]
+  case eUvalue of
+    Right uvalue -> pure $
+      typeVerifyTopLevelType mempty uvalue
+        & typeCheckingForDebugger
+        & first (\msg -> [int||Typechecking as #{category} failed: #{msg}|])
+    Left err -> pure $ Left err
 
-  typeVerifyTopLevelType mempty uvalue
-    & typeCheckingForDebugger
-    & either (\msg -> throwError [int||Typechecking as #{category} failed: #{msg}|]) pure
-  where
-    extractMichelsonValue = asum . sequence
-      [ T.stripPrefix "m:"
-      , T.stripPrefix "michelson:"
-      ]
+getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
+getServerState = asks _rcLSState >>= readTVarIO >>= \case
+  Nothing -> error "Language server state is not initialized"
+  Just s -> pure s
+
+getProgram
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext FilePath
+getProgram = fromMaybe (error "Program is not initialized") . lsProgram <$> getServerState
+
+getContract
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext SomeContract
+getContract = fromMaybe (error "Contract is not initialized") . lsContract <$> getServerState
+
+getAllLocs
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext (Set SourceLocation)
+getAllLocs = fromMaybe (error "All locs are not initialized") . lsAllLocs <$> getServerState
+
+getParsedContracts
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext (HashMap FilePath (LIGO Info))
+getParsedContracts = fromMaybe (error "Parsed contracts are not initialized") . lsParsedContracts <$> getServerState
+
+parseContracts :: (MonadIO m) => [FilePath] -> m (HashMap FilePath (LIGO Info))
+parseContracts allFiles = do
+  parsedInfos <- runNoLoggingT do
+    forM allFiles $ pathToSrc >=> parse
+
+  let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
+
+  pure $ HM.fromList $ zip allFiles parsedFiles

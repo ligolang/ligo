@@ -13,6 +13,7 @@ default-extensions:
   - DeriveAnyClass
   - DeriveFoldable
   - DeriveFunctor
+  - DeriveGeneric
   - DeriveTraversable
   - DerivingStrategies
   - DerivingVia
@@ -64,11 +65,15 @@ library:
   source-dirs: src
   dependencies:
   - aeson
-  - bytestring
+  - directory
+  - filepath
   - katip
   - mtl
   - process
   - servant-server
+  - servant-swagger
+  - servant-swagger-ui
+  - swagger2
   - temporary
   - text
   - wai
@@ -99,6 +104,7 @@ tests:
     dependencies:
     - aeson
     - bytestring
+    - filepath
     - http-types
     - hspec
     - hspec-wai

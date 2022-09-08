@@ -2,74 +2,36 @@
 
   nixConfig = {
     flake-registry = "https://github.com/serokell/flake-registry/raw/master/flake-registry.json";
-  };
-
-  inputs = {
-    haskell-nix = {
-      inputs.hackage.follows = "hackage";
-      inputs.stackage.follows = "stackage";
-    };
-    hackage.flake = false;
-    stackage.flake = false;
+#    extra-substituters = "ssh-ng://bunda.aquarius.serokell.team";
   };
 
   outputs =
-    { self, haskell-nix, hackage, stackage, nix-npm-buildpackage, flake-utils, nixpkgs }@inputs:
+    { self, haskell-nix, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
+        haskellPkgs = haskell-nix.legacyPackages."${system}";
         nixpkgsArgs = {
-          overlays = [
-            nix-npm-buildpackage.overlay
-            haskell-nix.overlay
-          ] ++ [
-            (final: prev:
-              let
-                tree-sitter-prebuilt-tarballs = {
-                  x86_64-linux = final.fetchurl {
-                    url =
-                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.20.6/tree-sitter-linux-x64.gz";
-                    sha256 =
-                      "14c4070rxznidcy010i2qzv9hgi764mka8wh185prcicyh7il07p";
-                  };
-                  x86_64-darwin = final.fetchurl {
-                    url =
-                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.20.6/tree-sitter-macos-x64.gz";
-                    sha256 =
-                      "07pzp2hg6ldxq1mri5s5mb3iy59vh109g2m268hlxv97pcn8469p";
-                  };
-                };
-                tree-sitter-prebuilt = builtins.mapAttrs (system: tarball:
-                  final.stdenv.mkDerivation {
-                    name = "tree-sitter-prebuilt";
-                    src = tarball;
-                    phases = [ "unpackPhase" "fixupPhase" ];
-                    unpackPhase =
-                      "mkdir -p $out/bin; zcat $src > $out/bin/tree-sitter; chmod +x $out/bin/tree-sitter";
-                    fixupPhase =
-                      final.lib.optionalString (system != "x86_64-darwin")
-                      "patchelf --set-interpreter ${final.stdenv.glibc}/lib/ld-linux-x86-64.so.2 $out/bin/tree-sitter";
-                  }) tree-sitter-prebuilt-tarballs;
-              in { tree-sitter = tree-sitter-prebuilt.${system}; })
-            (_: _: {
-              inherit grammars;
-            }) # We don't want any overlays (static, cross, etc) applied to grammars
-          ];
+          overlays = [];
           config = { allowUnfree = true; };
           localSystem = system;
         };
 
         pkgs = import nixpkgs nixpkgsArgs;
 
-        grammars = import ./squirrel/grammar { inherit pkgs; };
+        # Grammar for the LSP
+        grammars = import ./squirrel/grammar { pkgs = haskellPkgs; };
 
-        squirrel = pkgs.callPackage ./squirrel { };
+        # Language server itself
+        squirrel = haskellPkgs.callPackage ./squirrel {
+            inherit grammars;
+        };
 
         ligo-bin = pkgs.linkFarm "ligo-bin" [ {
           name = "bin/ligo";
           path = "${../../ligo}";
         } ];
 
-        squirrel-sexp-test = pkgs.stdenv.mkDerivation {
+        squirrel-sexp-test = haskellPkgs.stdenv.mkDerivation {
           name = "squirrel-sexp-test";
           src = ./squirrel;
           buildInputs = [ pkgs.bats squirrel.components.exes.ligo-vet ];
@@ -81,7 +43,7 @@
           '';
         };
 
-        squirrel-grammar-test = pkgs.stdenv.mkDerivation {
+        squirrel-grammar-test = haskellPkgs.stdenv.mkDerivation {
           name = "squirrel-grammar-test";
           HOME = "/tmp";
           src = "${grammars}";
@@ -102,10 +64,14 @@
         # n.b.: If the dependency on ligo is changed for any test, remember to
         # also update the main functions of the respective tests.
         integration-test = squirrel.checks.integration-test.overrideAttrs (oldAttrs: {
+          # 'ligo' binary that is used in these tests need ca-certificates in runtime
+          NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
           buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
         });
 
         lsp-handlers-test = squirrel.checks.lsp-handlers-test.overrideAttrs (oldAttrs: {
+          # 'ligo' binary that is used in these tests need ca-certificates in runtime
+          NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
           buildInputs = [ ligo-bin self.packages.x86_64-linux.squirrel-static ] ++ oldAttrs.buildInputs;
         });
 
@@ -135,13 +101,15 @@
             '';
           });
 
+        # LSP, static version
         squirrel-static = if system == "x86_64-darwin" then {
           components.exes.ligo-squirrel =
             pack squirrel.components.exes.ligo-squirrel;
         } else
-          pkgs.pkgsCross.musl64.callPackage ./squirrel {
+          haskellPkgs.pkgsCross.musl64.callPackage ./squirrel {
             # Use standard build for hpack because it's available in nix binary cache
             inherit (pkgs) hpack;
+            inherit grammars;
           };
 
         exes = builtins.mapAttrs
@@ -158,6 +126,7 @@
           executable = true;
         };
 
+        # all the LSPs for all of the platforms
         ligo-squirrel-combined = pkgs.linkFarm "ligo-squirrel-combined" [
           {
             name = "bin/ligo-squirrel";
@@ -173,10 +142,12 @@
           }
         ];
 
+        # Single-arch vscode ext
         vscode-extension-native = pkgs.callPackage ./vscode-plugin {
           ligo-squirrel = exes.squirrel-static;
         };
 
+        # Multiarch vscode ext
         vscode-extension = pkgs.callPackage ./vscode-plugin {
           ligo-squirrel = ligo-squirrel-combined;
         };
@@ -185,12 +156,19 @@
           inherit vscode-extension-native vscode-extension;
         };
         checks = {
+          # Prints AST in S-expression format, and checks it
           inherit squirrel-sexp-test;
+          # tree-sitter tests
           inherit squirrel-grammar-test;
+          # Checks library component of language-server
           inherit (squirrel.checks) lsp-test;
+          # Library parsing tests
           inherit (squirrel.checks) ligo-contracts-test;
+          # Runs LSP and checks its methods
           inherit lsp-handlers-test;
+          # LSP binary tests
           inherit integration-test;
+          # yeah
           inherit lint;
         };
         defaultPackage = self.packages.${system}.vscode-extension-native;
@@ -199,8 +177,10 @@
         devShell = pkgs.mkShell rec {
           buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
         };
-      }) // {
-        # docker image with the language server
+      }) // rec {
+
+        lsp-docker-image-default = lsp-docker-image {};
+
         lsp-docker-image = { creationDate ? "1970-01-01T00:00:01Z" }: self.legacyPackages.x86_64-linux.dockerTools.buildImage {
           name = "ligo-lsp";
           tag = "latest";

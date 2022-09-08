@@ -4,15 +4,23 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:))
+import Data.Aeson
+  (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:), (.:?))
 import Data.Aeson qualified as Aeson
-import Data.Aeson.Lens qualified as Aeson
+import Data.Aeson.KeyMap qualified as Aeson
+import Data.Aeson.Lens (key, nth, values)
 import Data.Aeson.Types qualified as Aeson
+import Data.Char (isDigit)
+import Data.Default (Default (..))
+import Data.List qualified as L
 import Data.Scientific qualified as Sci
+import Data.Text qualified as T
 import Data.Vector qualified as V
-import Fmt (Buildable (..), blockListF, mapF, nameF, tupleF)
+import Fmt (Buildable (..), blockListF, mapF, nameF, pretty, tupleF)
+import Fmt.Internal.Core (FromBuilder (..))
 import Morley.Micheline.Expression qualified as Micheline
-import Text.Interpolation.Nyan
+import Morley.Util.Lens
+import Text.Interpolation.Nyan (int, rmode')
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -37,15 +45,25 @@ instance Integral a => FromJSON (TextualNumber a) where
 
 -- | Position in a file.
 data LigoPosition = LigoPosition
-  { lpLine :: Word
+  { lpLine :: Int
     -- ^ 1-indexed line number
-  , lpCol  :: Word
+  , lpCol  :: Int
     -- ^ 0-indexed column number
   } deriving stock (Show, Eq, Ord, Generic)
-    deriving anyclass (NFData)
+    deriving anyclass (NFData, Hashable)
 
 instance Buildable LigoPosition where
   build (LigoPosition line col) = [int||#{line}:#{col}|]
+
+instance FromJSON LigoPosition where
+  parseJSON v = do
+    startByte <- maybe (fail "Error parsing LIGO position") pure (v ^? nth 1 . key "start" . key "byte")
+    flip (withObject "startByte") startByte $ \obj -> do
+      lpLine <- obj .: "pos_lnum"
+      column1 <- obj .: "pos_cnum"
+      column0 <- obj .: "pos_bol"
+      let lpCol = column1 - column0
+      pure LigoPosition {..}
 
 -- | Some LIGO location range.
 data LigoRange = LigoRange
@@ -53,7 +71,9 @@ data LigoRange = LigoRange
   , lrStart :: LigoPosition
   , lrEnd   :: LigoPosition
   } deriving stock (Show, Eq, Generic)
-    deriving anyclass (NFData)
+    deriving anyclass (NFData, Hashable)
+
+makeLensesWith postfixLFields ''LigoRange
 
 instance Buildable LigoRange where
   build (LigoRange file start end) = [int||#{file}:#{start}-#{end}|]
@@ -79,7 +99,34 @@ newtype LigoVariable = LigoVariable
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
+instance FromJSON LigoVariable where
+  -- Some variables may look like "varName#123". We want to strip that identifier.
+  parseJSON = withText "variable" \t -> do
+    let suffix = T.takeWhileEnd (/= '#') t
+    if T.all isDigit suffix
+    then pure $ LigoVariable $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') t
+    else pure $ LigoVariable t
+
 instance Buildable LigoVariable where
+  -- Here we want to pretty-print monomorphed variables.
+  -- They have format like "poly_#SomeModule#NestedModule#foo_name_42"
+  -- and we want to pretty-print them like "SomeModule.NestedModule.foo_name$42".
+  build (LigoVariable (T.stripPrefix "poly_" -> Just name))
+    | not (T.null index) && T.all isDigit index && T.any (== '_') functionWithIndex =
+      [int||#{moduleName}#{functionName}$#{index}|]
+    where
+      -- This should be non-empty
+      splitted = T.split (== '#') $ T.dropWhile (== '#') name
+      moduleParts = L.init splitted
+      functionWithIndex = L.last splitted
+      index = T.takeWhileEnd (/= '_') functionWithIndex
+      moduleName
+        | null moduleParts = ""
+        | otherwise = T.intercalate "." moduleParts <> "."
+      -- This @breakOnEnd@ shouldn't crash because of
+      -- "T.any (== '_') functionWithIndex" check in guard above.
+      (functionName, _) = first (T.dropEnd 1) $ T.breakOnEnd "_" functionWithIndex
+
   build (LigoVariable name) = build name
 
 -- | Reference to type description in the types map.
@@ -109,18 +156,20 @@ data LigoType
     deriving anyclass (NFData)
 
 instance FromJSON LigoType where
-  parseJSON = withObject "type" \o -> do
+  -- If value is @Array@ then it is just a '"type_content"' field from a "type" object.
+  parseJSON val@Array{} = parseJSON $ Object $ Aeson.singleton "type_content" val
+  parseJSON val = flip (withObject "type") val \o -> do
     value <- o .: "type_content"
     flip (withArray "type_content") value \lst -> do
       typ <- maybe (fail "Expected list with length 2") pure (lst V.!? 1)
       asum
         [ LTConstant <$> parseJSON typ
         , LTVariable <$> parseJSON typ
-        , flip (withObject "t_record") typ \o' -> do -- "t_record"
-            parsed <- sequence $ parseJSON <$> o'
-            pure $ LTRecord parsed
         , LTApp <$> parseJSON typ
         , LTArrow <$> parseJSON typ
+        , flip (withObject "T_record") typ \o' -> do -- "t_record"
+            parsed <- sequence $ parseJSON <$> o'
+            pure $ LTRecord $ Aeson.toHashMapText parsed
         , pure LTUnresolved
         ]
 
@@ -147,21 +196,22 @@ data LigoTypeConstant = LigoTypeConstant
     -- `"t_constant"` with `"int"`.
     ltcParameters :: [LigoType]
     -- | Type name.
-  , ltcInjection :: Text
+  , ltcInjection :: NonEmpty Text
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeConstant where
-  parseJSON = withObject "t_constant" \o -> do
-    ltcInjection <- o .: "injection"
+  parseJSON = withObject "T_constant" \o -> do
+    injection <- o .: "injection"
     ltcParameters <- o .: "parameters"
+    ltcInjection <- maybe (fail "Expected non-empty injection") pure (nonEmpty injection)
     pure LigoTypeConstant{..}
 
 instance Buildable LigoTypeConstant where
   build LigoTypeConstant{..} =
     if null ltcParameters
-      then build ltcInjection
-      else tupleF ltcParameters <> build ltcInjection
+      then build $ head ltcInjection
+      else tupleF ltcParameters <> build (head ltcInjection)
 
 -- | `"t_variable"`
 newtype LigoTypeVariable = LigoTypeVariable
@@ -172,7 +222,7 @@ newtype LigoTypeVariable = LigoTypeVariable
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeVariable where
-  parseJSON = withObject "t_variable" \o -> do
+  parseJSON = withObject "T_variable" \o -> do
     ltvName <- o .: "name"
     pure LigoTypeVariable{..}
 
@@ -186,7 +236,7 @@ data LigoTypeApp = LigoTypeApp
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeApp where
-  parseJSON = withObject "t_app" \o -> do
+  parseJSON = withObject "T_app" \o -> do
     ltaTypeOperator <- o .: "type_operator" >>= \o' -> o' .: "name"
     ltaArguments <- o .: "arguments"
     pure LigoTypeApp{..}
@@ -204,7 +254,7 @@ data LigoTypeArrow = LigoTypeArrow -- "type2" -> "type1"
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeArrow where
-  parseJSON = withObject "t_arrow" \o -> do
+  parseJSON = withObject "T_arrow" \o -> do
     ltaType1 <- o .: "type1"
     ltaType2 <- o .: "type2"
     pure LigoTypeArrow{..}
@@ -227,7 +277,7 @@ instance Buildable LigoExposedStackEntry where
 instance FromJSON LigoExposedStackEntry where
   parseJSON = withObject "LIGO exposed stack entry" \o -> do
     leseType <- o .: "source_type"
-    leseDeclaration <- LigoVariable <<$>> o .:! "name"
+    leseDeclaration <- o .:! "name"
     return LigoExposedStackEntry{..}
 
 -- | An element of the stack.
@@ -260,11 +310,11 @@ pattern LigoStackEntryVar name ty = LigoStackEntry LigoExposedStackEntry
 
 instance FromJSON LigoStackEntry where
   parseJSON v = case v of
-    Aeson.Null     -> pure LigoHiddenStackEntry
+    Aeson.Null       -> pure LigoHiddenStackEntry
     Aeson.Object o
-      | null o    -> pure LigoHiddenStackEntry
-      | otherwise -> LigoStackEntry <$> parseJSON v
-    other          -> Aeson.unexpected other
+      | Aeson.null o -> pure LigoHiddenStackEntry
+      | otherwise    -> LigoStackEntry <$> parseJSON v
+    other            -> Aeson.unexpected other
 
 type LigoStack = [LigoStackEntry]
 
@@ -306,6 +356,8 @@ data LigoIndexedInfo = LigoIndexedInfo
 
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
+
+makeLensesWith postfixLFields ''LigoIndexedInfo
 
 instance Buildable LigoIndexedInfo where
   build = \case
@@ -359,9 +411,50 @@ instance FromJSON LigoMapper where
     Array types <- o .: "types"
     locations <- mich .: "locations"
     locationsInlined <-
-      forOf (Aeson.values . Aeson.key "environment" . Aeson.values . Aeson.key "source_type") (Array locations) \old -> do
+      forOf (values . key "environment" . values . key "source_type") (Array locations) \old -> do
         TextualNumber index <- parseJSON old
         maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
 
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
+
+data LigoException = LigoException
+  { leMessage :: Text
+  , leDescription :: Text
+  , leLocation :: Maybe LigoPosition
+  }
+  deriving stock (Eq, Show)
+
+instance FromJSON LigoException where
+  parseJSON = withObject "LIGO output" $ \o -> do
+    content <- o .: "content"
+    flip (withObject "Content") content $ \c -> do
+      leMessage <- c .: "message"
+      leDescription <- c .:? "description" .!= ""
+      location <- c .:? "location"
+      leLocation <- maybe (pure Nothing) parseJSON location
+      pure LigoException{..}
+
+instance Default LigoException where
+  def = LigoException "" "" Nothing
+
+instance Exception LigoException where
+  displayException = pretty
+
+instance Buildable LigoException where
+  build (LigoException msg desc loc) =
+    [int||
+        #{msg}
+        #{desc}
+        #{loc}
+    |]
+
+instance FromBuilder LigoException where
+  fromBuilder b = def {leMessage = fromBuilder b}
+
+newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
+
+instance FromJSON EntrypointsList where
+  parseJSON = withObject "list-declarations" \o -> do
+    lst <- o .: "declarations"
+    pure $ EntrypointsList lst

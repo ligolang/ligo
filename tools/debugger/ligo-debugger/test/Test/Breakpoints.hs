@@ -2,7 +2,6 @@ module Test.Breakpoints
   ( module Test.Breakpoints
   ) where
 
-import Control.Lens (has)
 import Test.Tasty (TestTree)
 
 import Morley.Debugger.Core.Breakpoint qualified as N
@@ -14,7 +13,6 @@ import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Language.LIGO.Debugger.Snapshots
 import Test.Snapshots
 import Test.Util
-import Morley.Debugger.Core.Navigate (DebuggerState)
 
 test_test :: [TestTree]
 test_test =
@@ -34,16 +32,9 @@ test_test =
         lift $ step "Visiting 1st breakpoint"
         N.continueUntilBreakpoint N.NextBreak
         N.frozen do
-          isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
+          isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
           -- here and further we don't expect any concrete column number
-          view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
-
-        lift $ step "Visiting 1st breakpoint after expr evaluation"
-        N.continueUntilBreakpoint N.NextBreak
-        N.frozen do
-          -- here and further we don't expect any concrete column number
-          view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
-          isStatus <$> N.curSnapshot @@? has (_InterpretRunning . _EventExpressionEvaluated)
+          view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 2))
 
         lift $ step "Visiting 2nd breakpoint"
         N.continueUntilBreakpoint N.NextBreak
@@ -51,35 +42,36 @@ test_test =
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
           view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 5) (Pos 3))
 
-        lift $ step "Visiting back 1st breakpoint"
-        N.reverseContinue N.NextBreak
-        N.frozen do
-          isStatus <$> N.curSnapshot
-            @@? has (_InterpretRunning . _EventExpressionEvaluated)
-          view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
+        -- TODO: uncomment this when visiting multiple source locations is available in morley-debugger
+
+        -- lift $ step "Visiting 1st breakpoint"
+        -- N.continueUntilBreakpoint N.NextBreak
+        -- N.frozen do
+        --   isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
+        --   -- here and further we don't expect any concrete column number
+        --   view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
+
+        -- lift $ step "Visiting 1st breakpoint after expr evaluation"
+        -- N.continueUntilBreakpoint N.NextBreak
+        -- N.frozen do
+        --   -- here and further we don't expect any concrete column number
+        --   view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
+        --   isStatus <$> N.curSnapshot @@? has (_InterpretRunning . _EventExpressionEvaluated)
+
+        -- lift $ step "Visiting 2nd breakpoint"
+        -- N.continueUntilBreakpoint N.NextBreak
+        -- N.frozen do
+        --   isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
+        --   view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 5) (Pos 3))
+
+        -- lift $ step "Visiting back 1st breakpoint"
+        -- N.reverseContinue N.NextBreak
+        -- N.frozen do
+        --   isStatus <$> N.curSnapshot
+        --     @@? has (_InterpretRunning . _EventExpressionEvaluated)
+        --   view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
 
   , testCaseSteps "Pausing in different contracts" \step -> do
-      -- TODO; remove these functions when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58) is merged
-      let goToNextBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
-          goToNextBreakpoint = do
-            oldPosMb <- N.frozen N.getExecutedPosition
-            N.continueUntilBreakpoint N.NextBreak
-            whenJust oldPosMb \oldPos -> do
-              newPosMb <- N.frozen N.getExecutedPosition
-              whenJust newPosMb \newPos -> do
-                unless (oldPos /= newPos) do
-                  goToNextBreakpoint
-
-      let goToPreviousBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
-          goToPreviousBreakpoint = do
-            oldPosMb <- N.frozen N.getExecutedPosition
-            N.reverseContinue N.NextBreak
-            whenJust oldPosMb \oldPos -> do
-              newPosMb <- N.frozen N.getExecutedPosition
-              whenJust newPosMb \newPos -> do
-                unless (oldPos /= newPos) do
-                  goToPreviousBreakpoint
-
       let modulePath = contractsDir </> "module_contracts"
       let file = modulePath </> "importer.mligo"
       let runData = ContractRunData
@@ -107,7 +99,7 @@ test_test =
         lift $ step "Go to first breakpoint"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 5) (Pos 21)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 5) (Pos 2)))
 
         lift $ step "Go to next breakpoint (switch file)"
         goToNextBreakpoint
@@ -117,17 +109,22 @@ test_test =
         lift $ step "Go to next breakpoint (go to start file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 7) (Pos 23)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 7) (Pos 2)))
 
         lift $ step "Go to next breakpoint (switch file)"
         goToNextBreakpoint
         N.frozen do
           N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 11) (Pos 18)))
 
+        lift $ step "Go to next breakpoint (go to start file)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 8) (Pos 2)))
+
         lift $ step "Go to next breakpoint (more nested file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 4) (Pos 11)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 1) (Pos 2)))
 
         lift $ step "Go to next breakpoint (go back)"
         goToNextBreakpoint
@@ -137,5 +134,5 @@ test_test =
         lift $ step "Go to previous breakpoint"
         goToPreviousBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 4) (Pos 11)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 1) (Pos 2)))
   ]

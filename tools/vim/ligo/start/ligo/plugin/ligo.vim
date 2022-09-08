@@ -1,3 +1,4 @@
+" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.
 if executable('ligo-squirrel')
   if !exists("autocommands_loaded")
     let autocommands_loaded=1

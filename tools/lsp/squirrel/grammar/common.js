@@ -11,5 +11,5 @@ module.exports = common = {
   block: x => seq('{', x, '}'),
   chev: x => seq('<', x, '>'),
 
-  withAttrs: ($, x) => seq(field("attributes", repeat($.attr)), x)
+  withAttrs: ($, x) => seq(field("attributes", repeat(seq(/\[@/, $.Attr, "]"))), x),
 }

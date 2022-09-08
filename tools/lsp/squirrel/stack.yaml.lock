@@ -5,126 +5,126 @@
 
 packages:
 - completed:
-    subdir: lsp-types
     name: lsp-types
-    version: 1.5.0.0
-    git: https://github.com/haskell/lsp.git
+    subdir: lsp-types
     pantry-tree:
-      size: 4160
       sha256: 8700dc38e8aeac889d0ba7ce2a7dd2b8579e26608f64b220f5e790f0633dce24
+      size: 4160
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
+    version: 1.5.0.0
   original:
     subdir: lsp-types
-    git: https://github.com/haskell/lsp.git
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
 - completed:
-    subdir: lsp
     name: lsp
-    version: 1.5.0.0
-    git: https://github.com/haskell/lsp.git
+    subdir: lsp
     pantry-tree:
-      size: 1551
       sha256: 8d13180ceb84b5b0f24ba4df81109dd7300adc5e471579b933a86f5941bbe5c0
+      size: 1551
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
+    version: 1.5.0.0
   original:
     subdir: lsp
-    git: https://github.com/haskell/lsp.git
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
 - completed:
-    subdir: lsp-test
     name: lsp-test
-    version: 0.14.0.3
-    git: https://github.com/haskell/lsp.git
+    subdir: lsp-test
     pantry-tree:
-      size: 2061
       sha256: 415236a1e28d1c93b0f87f0422c86e7becf7be8fc23f557abab628298b0a7b3c
+      size: 2061
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
+    version: 0.14.0.3
   original:
     subdir: lsp-test
-    git: https://github.com/haskell/lsp.git
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
 - completed:
     name: tree-sitter
-    version: 0.9.0.2
-    git: https://github.com/serokell/tree-sitter.git
     pantry-tree:
-      size: 34276
-      sha256: 0d689d5664fc5e21422183dfd9c76d1aeb2ecb63dfb4fc0036bed6f332ad6a41
-    commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
-  original:
+      sha256: 0b89f31225bdd760f25a25e3c700c45e87f1a8f772813e97bd662e193618d0a1
+      size: 34417
+    commit: 59b427b5739c5ae348addcedac31632a663f2a45
     git: https://github.com/serokell/tree-sitter.git
-    commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
+    version: 0.9.0.2
+  original:
+    commit: 59b427b5739c5ae348addcedac31632a663f2a45
+    git: https://github.com/serokell/tree-sitter.git
 - completed:
     name: co-log-core
-    version: 0.3.1.0
-    git: https://github.com/co-log/co-log-core.git
     pantry-tree:
-      size: 872
       sha256: 52ef0d55fb2b4c86357369f48f6dcdef81e80a161917befc9ce15129d8eaec20
+      size: 872
     commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
-  original:
     git: https://github.com/co-log/co-log-core.git
+    version: 0.3.1.0
+  original:
     commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+    git: https://github.com/co-log/co-log-core.git
 - completed:
     name: text-rope
-    version: '0.2'
-    git: https://github.com/Bodigrim/text-rope
     pantry-tree:
-      size: 1431
       sha256: e26b7ce27f67a1a2bf58fe88f817a98722d83cefed2b89e8e1530da2e05e1485
+      size: 1431
     commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
-  original:
     git: https://github.com/Bodigrim/text-rope
-    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
-- completed:
-    hackage: fastsum-0.1.1.1@sha256:ddb41e30396cc091845596130fb441150118086c6f227c0bd5ce30dadf9dad56,2398
-    pantry-tree:
-      size: 431
-      sha256: 45e007bf4395315bf2cdb5b17f1e956739d836a53fa9dd022ea3d0b123ded8f5
+    version: '0.2'
   original:
-    hackage: fastsum-0.1.1.1
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+    git: https://github.com/Bodigrim/text-rope
 - completed:
-    hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
     pantry-tree:
-      size: 761
+      sha256: 294ee5f98315161f27487e56425b8f1d3e59914607d1f467a9844b2befaa576d
+      size: 431
+    hackage: fastsum-0.2.0.0@sha256:7abc9ceddc3dfb67420c927c0e69d9248c9e8d5877f53cd8fb76a63e72ce7ddb,2394
+  original:
+    hackage: fastsum-0.2.0.0
+- completed:
+    pantry-tree:
       sha256: 20b1076bdb121347ccc512a67df697eed34815a8e35279b6b9a0951963b1eba2
+      size: 761
+    hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
   original:
     hackage: stm-containers-1.2
 - completed:
-    hackage: stm-hamt-1.2.0.6@sha256:fba86ccb4b45c5706c19b0e1315ba63dcac3b5d71de945ec001ba921fae80061,3972
     pantry-tree:
+      sha256: 2de07a746d44aebcff4b7b644373ae4aa5a505457b684ca02ae5a74605991d6b
       size: 1009
-      sha256: 1920790535af832b76e7583c33ecf51f8b0b0c3615ef1db1c8ed9be19622c1db
+    hackage: stm-hamt-1.2.0.7@sha256:e8ecba11580ae2ea839cc3b7a25adcce40810aa472b544728790d28804c912ee,3972
   original:
-    hackage: stm-hamt-1.2.0.6
+    hackage: stm-hamt-1.2.0.7
 - completed:
-    hackage: primitive-extras-0.10.1@sha256:be21c87b5ffce1cd6e3cc179ee8667fcc9323e323f21c78c99686773ededbf2f,2957
     pantry-tree:
+      sha256: c3b43cb57ca32200e0199c6b4a3cd23ca04415257c1266d08707f53ac4d89ec5
       size: 1096
-      sha256: bff74e4dff12a92fdca90e5909d4d000051bc13753104ea11b0ab63805309fab
+    hackage: primitive-extras-0.10.1.4@sha256:780726757a8ca5bad6d82e77180fb1ec5a1ba73073b7bd8ccf24cb60e11ab4fe,2959
   original:
-    hackage: primitive-extras-0.10.1
+    hackage: primitive-extras-0.10.1.4
 - completed:
-    hackage: primitive-unlifted-0.1.3.0@sha256:a98f827740f5dcf097d885b3a47c32f4462204449620abc9d51b8c4f8619f9e6,1427
     pantry-tree:
+      sha256: c492e3caeebf476ac0ee1daaedbc2464ef5a530a0b0152a353d64b410c3c1ff3
       size: 420
-      sha256: c882dca2a96b98d02b0d21875b651edb11ac67d90e736c0de7a92c410a19eb7f
+    hackage: primitive-unlifted-0.1.3.1@sha256:3b00ca2c605168dee97d92490a018891e10f73b81ff5e2eeae48ece309d20485,1427
   original:
-    hackage: primitive-unlifted-0.1.3.0
+    hackage: primitive-unlifted-0.1.3.1
 - completed:
     name: duplo
-    version: 0.0.0
-    git: https://github.com/serokell/duplo.git
     pantry-tree:
-      size: 440
       sha256: 4e3f210989108cb1b4a16f43e95b1f613bbf7d04ce207937eadbe41a1262e4e1
+      size: 440
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
-  original:
     git: https://github.com/serokell/duplo.git
+    version: 0.0.0
+  original:
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
+    git: https://github.com/serokell/duplo.git
 snapshots:
 - completed:
-    size: 587546
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/10.yaml
-    sha256: 88b4f81e162ba3adc230a9fcccc4d19ac116377656bab56c7382ca88598b257a
-  original: lts-18.10
+    sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0
+    size: 619163
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/16.yaml
+  original: lts-19.16

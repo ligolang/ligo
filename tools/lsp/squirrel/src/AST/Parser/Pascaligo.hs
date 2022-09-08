@@ -58,7 +58,7 @@ recognise (SomeRawTree dialect rawTree)
         "set_expr"          -> Set       <$> fields "element"
         "patch_instr"       -> Patch     <$> field  "container"  <*> field "expr"
         "update_record"     -> RecordUpd <$> field  "record"     <*> fields "assignment"
-        "michelson_interop" -> Michelson <$> field  "code"       <*> field  "type"
+        "code_inj"          -> CodeInj    <$> field  "lang"      <*> field "code"
         "paren_expr"        -> Paren     <$> field  "expr"
         "ctor_app_expr"     -> Apply     <$> field  "ctor" <*> fields "arguments"
         _                   -> fallthrough
@@ -165,11 +165,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Literal
   , Descent do
       boilerplate' \case
-        ("Int",    i) -> return $ Int i
-        ("Nat",    i) -> return $ Nat i
-        ("Bytes",  i) -> return $ Bytes i
-        ("String", i) -> return $ String i
-        ("Tez",    i) -> return $ Tez i
+        ("Int",    i) -> return $ CInt i
+        ("Nat",    i) -> return $ CNat i
+        ("Bytes",  i) -> return $ CBytes i
+        ("String", i) -> return $ CString i
+        ("Tez",    i) -> return $ CTez i
         _             -> fallthrough
 
     -- Declaration
@@ -282,6 +282,12 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' \case
         ("FieldName", name) -> return $ FieldName name
         _                   -> fallthrough
+
+  -- Attr
+  , Descent $
+      boilerplate' \case
+        ("Attr", attr) -> pure $ Attr attr
+        _              -> fallthrough
 
     -- Err
   , Descent noMatch

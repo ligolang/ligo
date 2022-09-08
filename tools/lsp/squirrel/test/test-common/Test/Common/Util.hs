@@ -26,7 +26,7 @@ import System.FilePath (splitDirectories, takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
 import UnliftIO.Exception (catch, throwIO)
 
-import AST.Includes (Includes, includesGraph, insertPreprocessorRanges)
+import AST.Includes (Includes (..), includesGraph, insertPreprocessorRanges)
 import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
 import AST.Scope
   ( ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo
@@ -99,7 +99,8 @@ parseContractsWithDependenciesScopes
   -> IO (Includes ContractInfo')
 parseContractsWithDependenciesScopes tempSettings =
   runNoLoggingT
-  . addScopes @impl tempSettings noProgress <=< parseContractsWithDependencies tempSettings
+  . addScopes @impl tempSettings noProgress
+  <=< parseContractsWithDependencies tempSettings
 
 parseDirectoryWithScopes
   :: forall impl. ScopeTester impl
