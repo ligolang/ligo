@@ -20,11 +20,9 @@ import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, genericF)
 import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
-import Morley.Debugger.Core.Snapshots (SourceType (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
   (Contract' (..), ContractCode' (ContractCode, unContractCode), CtorEffectsApp (..),
@@ -210,7 +208,7 @@ readLigoMapper ligoMapper = do
   let exprLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
-        mapMaybe ligoInfoToSourceLoc $ getSourceLocations (unContractCode $ cCode extContract)
+        foldMap mentionedSourceLocs $ getSourceLocations (unContractCode $ cCode extContract)
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
@@ -218,17 +216,9 @@ readLigoMapper ligoMapper = do
   return $! force (exprLocs, extendedContract, allFiles)
 
   where
-    ligoInfoToSourceLoc :: LigoIndexedInfo -> Maybe SourceLocation
-    ligoInfoToSourceLoc LigoIndexedInfo{..} = asum
-      [ do
-          ligoRangeToSourceLocation <$> liiLocation
-
-      , do
-          -- TODO: liiEnvironment should also give us source location -
-          -- point to the beginning of the statement
-          _ <- liiEnvironment
-          return $ SourceLocation (SourcePath "??") (SrcPos (Pos 0) (Pos 0))
-      ]
+    mentionedSourceLocs :: LigoIndexedInfo -> [SourceLocation]
+    mentionedSourceLocs LigoIndexedInfo{..} =
+      maybeToList $ ligoRangeToSourceLocation <$> liiLocation
 
     getSourceLocations :: Instr i o -> [EmbeddedLigoMeta]
     getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case

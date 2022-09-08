@@ -46,11 +46,6 @@ infixr 0 ?-
 dummyInstr :: T.Instr a a
 dummyInstr = T.Nested T.Nop
 
--- | Eventually this should be removed, it exists as a temporary
--- measure to make tests pass
-unknownSrcPos :: SrcPos
-unknownSrcPos = SrcPos (Pos 0) (Pos 0)
-
 test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
@@ -137,8 +132,7 @@ test_SourceMapper = testGroup "Reading source mapper"
         -- Note: some ranges have the same start position and different
         -- end positions - since we account for only the former, they
         -- get de-duplicated.
-        [ unknownSrcPos
-        , SrcPos (Pos 1) (Pos 11)
+        [ SrcPos (Pos 1) (Pos 11)
         , SrcPos (Pos 1) (Pos 15)
         , SrcPos (Pos 2) (Pos 11)
         , SrcPos (Pos 2) (Pos 21)

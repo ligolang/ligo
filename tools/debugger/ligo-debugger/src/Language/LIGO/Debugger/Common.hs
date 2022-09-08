@@ -74,10 +74,9 @@ getStatementLocs locs parsedContracts =
       where
         (l, c, _) = _rStart
 
-    -- TODO: deal somehow with these "??"
     ranges = toList locs
       <&> sourceLocationToRange
-      & filter do \Range{..} -> _rFile /= "" && _rFile /= "??"
+      & filter do \Range{..} -> _rFile /= ""
 
     getStatementRanges :: Range -> [Range]
     getStatementRanges range@Range{..} = filterStatements $ spineAtPoint range parsedLigo
