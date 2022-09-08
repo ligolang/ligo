@@ -208,12 +208,12 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     )
   | T_sum {layout ; fields} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_sum ~layout fields in
-      let (constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in
+      let (constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst get_left get_right in
       let sub = self v tv in
       return (E_constructor {constructor;element=sub})
   | T_record {layout ; fields } ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
-      let lst = Layout.extract_record ~raise ~layout v lst in
+      let lst = Layout.extract_record ~raise ~layout v lst get_pair in
       let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
       let m' = Ligo_prim.Record.of_list lst in
       return (E_record m')
