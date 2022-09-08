@@ -894,6 +894,13 @@ and infer_application ~raise ~loc ~options ~ctx lamb_type args
               ~loc
               ~ctx
               parameters
+          | T_constant
+              { injection = External ("and" | "u_and"); parameters; _ } ->
+            Constant_typers.External_types.and_types
+              ~raise
+              ~loc
+              ~ctx
+              parameters
           | _ -> ctx, ret_type)
         (fun ~catch:_ _ -> ctx, ret_type)
     in

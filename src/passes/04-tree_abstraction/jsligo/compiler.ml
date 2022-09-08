@@ -16,12 +16,6 @@ let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
 
 let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
 
-let built_ins = ["Operator";"Tezos";"List";"Set";"Map";"Big_map";"Bitwise";"Option"]
-let rec compile_pseudomodule_access field = let open CST in match field with
-  | EVar v -> v.value
-  | EModA { value = { module_name ; field ; selector = _ } ; region = _ } -> module_name.value ^ "." ^ compile_pseudomodule_access field
-  | _ -> failwith "Corner case : This couldn't be produce by the parser"
-
 open Predefined.Tree_abstraction
 
 let r_split = Location.r_split
@@ -362,9 +356,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   match e with
     EVar var -> (
       let (var, loc) = r_split var in
-      match constants var with
-      | Some const -> return @@ e_constant ~loc const []
-      | None -> return @@ e_variable_ez ~loc var
+      return @@ e_variable_ez ~loc var
   )
   | EPar par -> self par.value.inside
   | EUnit the_unit ->
@@ -543,35 +535,14 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | ECall {value=(EVar var,args);region} ->
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
-    (match constants var with
-      Some const ->
-      let args,args_loc = arguments_to_expr_nseq args in
-      let args = List.map ~f:(fun e -> self e) @@ nseq_to_list args in
-      return @@ e_constant ~loc:(Location.cover loc args_loc) const args
-    | None ->
-      let func = e_variable_ez ~loc:loc_var var in
-      let args = compile_arguments ~raise args in
-      return @@ e_application ~loc func args
-    )
+    let func = e_variable_ez ~loc:loc_var var in
+    let args = compile_arguments ~raise args in
+    return @@ e_application ~loc func args
   | EConstr constr ->
     let ((constr,args_o), loc) = r_split constr in
     let args_o = Option.map ~f:(compile_tuple_expression ~raise <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
-  | ECall ({value=(EModA {value={module_name;field=_;selector=_};region=_} as value,args);region} as call) when List.mem ~equal:String.(=) built_ins module_name.value -> (
-    let args,args_loc = arguments_to_expr_nseq args in
-    let loc = Location.lift region in
-    let var = compile_pseudomodule_access value in
-    match constants var with
-      Some const ->
-      let args = List.map ~f:self @@ nseq_to_list args in
-      return @@ e_constant ~loc:(Location.cover loc args_loc) const args
-    | None ->
-      let ((func, args), loc) = r_split call in
-      let func = self func in
-      let args = compile_arguments ~raise args in
-      return @@ e_application ~loc func args
-  )
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let func = self func in
@@ -631,7 +602,6 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ e_accessor ~loc var [sels]
   | EModA ma -> (
     let (ma, loc) = r_split ma in
-    let (module_name, _) = r_split ma.module_name in
     let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
       match exp with
       | EVar v ->
@@ -641,14 +611,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
          aux (acc @ [Module_var.of_input_var ma.value.module_name.value]) ma.value.field
       | _ -> raise.error (expected_a_variable (CST.expr_to_region ma.field))
     in
-    (*TODO: move to proper module*)
-    if List.mem ~equal:String.equal built_ins module_name then
-      let var = compile_pseudomodule_access e in
-      match constants var with
-        Some const -> return @@ e_constant ~loc const []
-      | None -> aux [Module_var.of_input_var ma.module_name.value] ma.field
-    else
-      aux [Module_var.of_input_var ma.module_name.value] ma.field
+    aux [Module_var.of_input_var ma.module_name.value] ma.field
   )
   | EFun func ->
     let (func, loc) = r_split func in

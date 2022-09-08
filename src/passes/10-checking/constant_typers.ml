@@ -1563,7 +1563,6 @@ module External_types = struct
     let open Type.Syntax in
     of_type (create [ t_nat () ^~> t_int (); t_bls12_381_fr () ^~> t_int () ])
 
-
   let ediv_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type.Syntax in
     of_type
@@ -1579,6 +1578,10 @@ module External_types = struct
            ^-> t_nat ()
            ^~> t_option (t_pair (t_mutez ()) (t_mutez ()))
          ])
+
+  let and_types : (Errors.typer_error, Main_warnings.all) t =
+    let open Type.Syntax in
+    of_type (create [ t_nat () ^-> t_nat () ^~> t_nat (); t_int () ^-> t_nat () ^~> t_nat() ])
 end
 
 (*
