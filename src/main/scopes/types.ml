@@ -1,20 +1,22 @@
+open Ligo_prim
 let generated_flag = "#?generated"
-let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
-  if Ast_typed.ValueVar.is_generated v
+let get_binder_name : Value_var.t -> string = fun v ->
+  if Value_var.is_generated v
   then generated_flag
-  else Ast_typed.ValueVar.to_name_exn v
+  else Value_var.to_name_exn v
 
-let get_type_binder_name : Ast_typed.TypeVar.t -> string = fun v ->
-  if Ast_typed.TypeVar.is_generated v
+let get_type_binder_name : Type_var.t -> string = fun v ->
+  if Type_var.is_generated v
   then generated_flag
-  else Ast_typed.TypeVar.to_name_exn v
-let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
-  if Ast_typed.ModuleVar.is_generated v
+  else Type_var.to_name_exn v
+let get_mod_binder_name : Module_var.t -> string = fun v ->
+  if Module_var.is_generated v
   then generated_flag
-  else Ast_typed.ModuleVar.to_name_exn v
+  else Module_var.to_name_exn v
 
 
 module Definitions = struct
+  open Ligo_prim
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
   module Def_map  = Simple_utils.Map.Make(String)
@@ -104,39 +106,31 @@ module Definitions = struct
       let mod_case = Def members in      
       Module { name ; range ; body_range ; mod_case ; references = [] }
 
-  let make_m_alias_def : range:Location.t -> body_range:Location.t -> string -> string list -> def =
-    fun ~range ~body_range name alias ->
-      let mod_case = Alias alias in
-      Module { name ; range ; body_range ; mod_case ; references = [] }
-
-  let rec add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
+  let add_reference : Value_var.t -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
-      | Variable v -> Ast_core.ValueVar.is_name x v.name
-      | (Type _ | Module _) -> false
+      | Variable v -> Value_var.is_name x v.name
+      | (Type _ | Module _ ) -> false
     in
     match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
       let aux : def option -> def option = fun d_opt ->
         match d_opt with
-        | Some (Variable v) -> Some (Variable { v with references = (Ast_core.ValueVar.get_location x :: v.references) })
-        | Some (Module ({ mod_case=Def d ; _ } as m)) ->
-          let mod_case = Def (add_reference x d) in
-          Some (Module { m with mod_case })
+        | Some (Variable v) -> Some (Variable { v with references = (Value_var.get_location x :: v.references) })
         | Some x -> Some x
         | None -> None
       in
       Def_map.update k aux env
     | None -> env
 
-  let update_module_reference : Ast_core.module_variable list -> def_map -> def_map = fun mvs env ->
+  let update_module_reference : Module_var.t list -> def_map -> def_map = fun mvs env ->
     let rec aux env mv =
       let aux d =
         match d with
         | Module ({ name ; mod_case ; references ; _ } as m)  ->
-            (match Ast_core.ModuleVar.is_name mv name with
+            (match Module_var.is_name mv name with
             | true ->
-              let references = (Ast_core.ModuleVar.get_location mv) :: references in
+              let references = (Module_var.get_location mv) :: references in
               Module { m with references ; mod_case } 
             | false ->
               let mod_case = match mod_case with
@@ -168,10 +162,10 @@ module Definitions = struct
         | None -> [] 
         )
 
-  let add_module_element_reference : Ast_core.module_variable list -> Ast_core.expression_variable -> def_map -> def_map =
+  let add_module_element_reference : Module_var.t list -> Value_var.t -> def_map -> def_map =
     fun mvs element env ->
       let e = get_binder_name element in
-      let e_loc = Ast_core.ValueVar.get_location element in
+      let e_loc = Value_var.get_location element in
       let mvs = List.map mvs ~f:get_mod_binder_name in
       let ms = find_modules_to_update mvs env in
       let rec aux ms env =
@@ -212,3 +206,6 @@ let add_scope (range,env) (scopes:scopes) =
   in
   if replaced then scopes
   else { range ; env } :: scopes
+
+module Bindings_map = Simple_utils.Map.Make (Ligo_prim.Value_var)
+type bindings_map = Ast_typed.type_expression Bindings_map.t

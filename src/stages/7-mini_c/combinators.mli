@@ -1,13 +1,14 @@
 open Types
+open Ligo_prim
 
 module Expression : sig
   type t' = expression_content
   type t = expression
 
-  val get_content : t -> t' 
+  val get_content : t -> t'
   val get_type : t -> type_expression
   (*
-  val is_toplevel : t -> bool 
+  val is_toplevel : t -> bool
 *)
   val make_t :
     ?loc:Location.t ->
@@ -59,9 +60,9 @@ val get_t_operation : type_expression -> type_expression option
 val get_t_sapling_state : type_expression -> Z.t option
 val get_operation : value -> bytes option
 
-val t_int      : ?loc:Location.t -> unit -> type_expression 
-val t_unit     : ?loc:Location.t -> unit -> type_expression 
-val t_nat      : ?loc:Location.t -> unit -> type_expression 
+val t_int      : ?loc:Location.t -> unit -> type_expression
+val t_unit     : ?loc:Location.t -> unit -> type_expression
+val t_nat      : ?loc:Location.t -> unit -> type_expression
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_pair     : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
 val t_union    : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
@@ -73,8 +74,8 @@ val quote : string -> type_expression -> type_expression -> Expression.t -> anon
 val e_int : Expression.t' -> Expression.t
 *)
 val e_unit    : ?loc:Location.t -> unit -> Expression.t
-val e_var_int : ?loc:Location.t -> expression_variable -> Expression.t
-val e_let_in  : ?loc:Location.t -> expression_variable -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
+val e_var_int : ?loc:Location.t -> Value_var.t -> Expression.t
+val e_let_in  : ?loc:Location.t -> Value_var.t -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
 val e_proj    : ?loc:Location.t -> expression -> type_expression -> int -> int -> expression
 val e_tuple   : ?loc:Location.t -> expression list -> type_expression -> expression
 (*

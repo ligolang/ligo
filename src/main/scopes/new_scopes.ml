@@ -1,10 +1,11 @@
+open Ligo_prim
 open New_types
 
 module AST = Ast_core
 
-module VVar = AST.ValueVar
-module TVar = AST.TypeVar
-module MVar = AST.ModuleVar
+module VVar = Value_var
+module TVar = Type_var
+module MVar = Module_var
 
 (* module Formatter = Formatter *)
 (* module Api_helper = Api_helper *)
@@ -33,9 +34,9 @@ let update_typing_env : with_types:bool -> options:Compiler_options.middle_end -
 type def_list = (string * def) list
 
 type reference =
-    Variable of AST.expression_variable
-  | ModuleAccess of AST.module_variable list * AST.expression_variable
-  | ModuleAlias of AST.module_variable list
+    Variable of VVar.t
+  | ModuleAccess of MVar.t list * VVar.t
+  | ModuleAlias of MVar.t list
 
 let pp_reference : Format.formatter -> reference -> unit
   = fun f r ->
@@ -58,7 +59,7 @@ let get_location_of_module_path : MVar.t list -> Location.t
 
 module Free = struct
 
-  let rec update_variable_reference : AST.expression_variable -> def list -> bool * def list
+  let rec update_variable_reference : VVar.t -> def list -> bool * def list
     = fun ev defs ->
         match defs with
           [] -> false, []
@@ -70,7 +71,7 @@ module Free = struct
           let updated, defs = update_variable_reference ev defs in
           updated, def :: defs
 
-  let rec update_module_variable_references : AST.module_variable list -> AST.expression_variable option -> def list -> bool * def list
+  let rec update_module_variable_references : MVar.t list -> VVar.t option -> def list -> bool * def list
     = fun mvs ev defs ->
         match mvs, defs with
           _, [] -> false, defs
@@ -93,7 +94,7 @@ module Free = struct
         | mvs, def::defs ->
             let updated, defs = update_module_variable_references mvs ev defs in
             updated, def :: defs
-    and resolve_alias : string list -> AST.module_variable list -> AST.expression_variable option -> def list -> bool * def list
+    and resolve_alias : string list -> MVar.t list -> VVar.t option -> def list -> bool * def list
       = fun aliases mvs ev defs ->
           match aliases with
           | [] -> update_module_variable_references mvs ev defs
@@ -156,14 +157,14 @@ module Free = struct
           defs_result @ [def], refs_result, tenv, add_defs_to_scopes [def] scopes
         | E_type_abstraction { result ; _ } -> expression tenv result
         | E_constructor { element ; _ } -> expression tenv element
-        | E_record_accessor { record ; _ } -> expression tenv record
+        | E_accessor { struct_ ; _ } -> expression tenv struct_
         | E_ascription { anno_expr ; _ } -> expression tenv anno_expr
-        | E_record_update { record ; update ; _ } ->
-          let defs, refs, tenv, scopes =  expression tenv record in
+        | E_update { struct_ ; update ; _ } ->
+          let defs, refs, tenv, scopes =  expression tenv struct_ in
           let defs', refs', tenv, scopes' = expression tenv update in
           defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
         | E_record e_lable_map ->
-          let defs, refs, tenv, scopes = AST.LMap.fold (fun _ e (defs, refs, tenv, scopes) ->
+          let defs, refs, tenv, scopes = Record.LMap.fold (fun _ e (defs, refs, tenv, scopes) ->
             let defs', refs', tenv, scopes' = expression tenv e in
             defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
           ) e_lable_map ([], [], tenv, []) in
@@ -190,7 +191,7 @@ module Free = struct
           let def_par =
             (* let binder_name = get_binder_name binder.var in *)
             let binder_loc =  VVar.get_location var in
-            Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc (result.location)
+            Misc.make_v_def ~with_types ~core_type tenv.bindings var binder_loc (result.location)
           in
           let defs = [def_fun ; def_par] in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
@@ -203,8 +204,8 @@ module Free = struct
           let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
           let defs_cases, refs_cases, tenv, scopes' = List.fold_left cases ~init:([], [], tenv, [])
             ~f:(fun (defs, refs, tenv, scopes') { pattern ; body } ->
-              let defs_pat = Stage_common.Helpers.fold_pattern (
-                fun defs (p : _ AST.pattern) ->
+              let defs_pat = Pattern.fold_pattern (
+                fun defs (p : _ Pattern.t) ->
                   match p.wrap_content with
                     P_var { var ; ascr = core_type ; _ } ->
                       let def =
@@ -279,19 +280,19 @@ module Free = struct
       = fun ~with_types ~options tenv decl ->
         let tenv = update_typing_env ~with_types ~options tenv decl in
         match decl.wrap_content with
-          Declaration_constant { attr        = { hidden ; _ } ; _ }
-        | Declaration_module   { module_attr = { hidden ; _ } ; _ }
-        | Declaration_type     { type_attr   = { hidden ; _ } ; _ } when hidden -> [], [], tenv, []
-        | Declaration_constant { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
+          D_value { attr        = { hidden ; _ } ; _ }
+        | D_module   { module_attr = { hidden ; _ } ; _ }
+        | D_type     { type_attr   = { hidden ; _ } ; _ } when hidden -> [], [], tenv, []
+        | D_value { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
           (* TODO: use ascr *)
           declaration_expression ~with_types ~options ?core_type tenv var expr
-        | Declaration_type     { type_binder ; type_expr ; _ } ->
+        | D_type     { type_binder ; type_expr ; _ } ->
           let def = type_expression type_binder type_expr in
           [def], [], tenv, []
-        | Declaration_module   { module_binder ; module_ ; _ } ->
+        | D_module   { module_binder ; module_ ; _ } ->
           (* let tenv = update_typing_env ~with_types ~options tenv decl in  *)
           module_expression ~with_types ~options tenv module_binder module_
-    and declarations : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> _ AST.declarations' -> def list * reference list * typing_env * scopes
+    and declarations : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration list -> def list * reference list * typing_env * scopes
       = fun ~with_types ~options tenv decls ->
           let defs, refs, tenv, scopes = List.fold_left decls ~init:([], [], tenv, [])
             ~f:(fun (defs, refs, tenv, scopes') decl ->

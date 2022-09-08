@@ -2,24 +2,25 @@ open Helpers
 open Errors
 open Ast_imperative
 open Simple_utils.Trace
+open Ligo_prim
 
 let is_const = fun x -> match x with
-                      | { const_or_var = Some `Const } -> true
+                      | Binder.{ const_or_var = Some `Const } -> true
                       | _ -> false
 
 let add_binder b var vars =
   let vars = remove_from var vars in
   if b then var :: vars else vars
 
-let rec assign_expression ~raise : ?vars:expression_variable list -> expression -> expression  = fun ?(vars = []) e ->
+let rec assign_expression ~raise : ?vars:Value_var.t list -> expression -> expression  = fun ?(vars = []) e ->
   let self = assign_expression ~raise in
   let _ = fold_map_expression
-                (fun (vars : expression_variable list) expr ->
+                (fun (vars : Value_var.t list) expr ->
                   match expr.expression_content with
                   | E_assign {binder={var;_};expression=_} -> (
-                    match List.find ~f:(fun v -> ValueVar.equal var v) vars with
-                    | Some (v:expression_variable) ->
-                      raise.error @@ const_assigned (ValueVar.get_location v) var
+                    match List.find ~f:(fun v -> Value_var.equal var v) vars with
+                    | Some (v:Value_var.t) ->
+                      raise.error @@ const_assigned (Value_var.get_location v) var
                     | None -> (true, vars, expr)
                   )
                   | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->
@@ -31,7 +32,7 @@ let rec assign_expression ~raise : ?vars:expression_variable list -> expression 
                     let _ = self ~vars let_result in
                     (false, vars, expr)
                   | E_matching {matchee;cases} ->
-                    let f {pattern;body} =
+                    let f Match_expr.{pattern;body} =
                       let all_pattern_vars = get_pattern pattern in
                       let vars = List.fold_right ~f:remove_from all_pattern_vars ~init:vars in
                       let const_pattern_vars = get_pattern ~pred:is_const pattern in

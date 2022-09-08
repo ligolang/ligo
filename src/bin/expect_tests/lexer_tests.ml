@@ -439,16 +439,16 @@ Hint: Insert some space.
 
     run_ligo_good [ "print" ; "ast-typed" ; "../../test/lexer/add_semi.jsligo" ] ;
     [%expect {|
-    const x = 1[@private]
+    const x[@var] : int = 1[@private]
     module Foo =
       struct
-      const y = x[@private]
-      const z = 2
+      const y[@var] : int = x[@private]
+      const z[@var] : int = 2
       module Bar = struct
-                   const w = 1[@private]
+                   const w[@var] : int = 1[@private]
                    end[@private]
       module Do = struct
-                  const r = 1
+                  const r[@var] : int = 1
                   end[@private]
       end |}]
   end

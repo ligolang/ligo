@@ -1,182 +1,206 @@
-[@@@warning "-30-32"]
+open Ligo_prim
+module Location = Simple_utils.Location
 
-include Stage_common.Types
+type type_variable       = Type_var.t [@@deriving compare]
+type expression_variable = Value_var.t [@@deriving compare]
+type module_variable     = Module_var.t [@@deriving compare]
 
 type ast_core_type_expression = Ast_core.type_expression
+  [@@deriving eq,compare,yojson,hash]
 
-type te_lmap = row_element label_map
-and type_meta = ast_core_type_expression option
+type type_meta = ast_core_type_expression option
+  [@@deriving eq,compare,yojson,hash]
 
 and type_content =
-  | T_variable of type_variable
-  | T_constant of type_injection
-  | T_sum      of rows
-  | T_record   of rows
-  | T_arrow    of ty_expr arrow
-  | T_singleton of literal
-  | T_abstraction of ty_expr abstraction
-  | T_for_all of ty_expr abstraction
+  | T_variable    of Type_var.t
+  | T_constant    of type_injection
+  | T_sum         of rows
+  | T_record      of rows
+  | T_arrow       of ty_expr Arrow.t
+  | T_singleton   of Literal_value.t
+  | T_abstraction of ty_expr Abstraction.t
+  | T_for_all     of ty_expr Abstraction.t
 
 and type_injection = {
   language : string ;
-  injection : Stage_common.Constant.t ;
+  injection : Ligo_prim.Literal_types.t ;
   parameters : ty_expr list ;
 }
 
 and rows = {
-  content : row_element label_map;
-  layout : layout ;
+  fields : row_element Record.t ;
+  layout : Layout.t
 }
+
 
 and te_list = type_expression list
 
 and annot_option = string option
 
-and row_element = type_expression row_element_mini_c
+and row_element = ty_expr Rows.row_element_mini_c
 
 
 and type_expression = {
     type_content: type_content;
-    type_meta: type_meta [@hash.ignore] ;
-    orig_var: type_variable option [@hash.ignore] ;
-    location: location [@hash.ignore] ;
+    type_meta: type_meta [@eq.ignore] [@hash.ignore] ;
+    orig_var: Type_var.t option [@eq.ignore] [@hash.ignore] ;
+    location: Location.t [@eq.ignore] [@hash.ignore] ;
   }
 and ty_expr = type_expression
+  [@@deriving eq,compare,yojson,hash]
 
-and expression_variable_list = expression_variable list
-and type_expression_list = type_expression list
+module ValueAttr = struct
+  type t = {
+    inline: bool ;
+    no_mutation: bool;
+    (* Some external constant (e.g. `Test.balance`) do not accept any argument. This annotation is used to prevent LIGO interpreter to evaluate (V_Thunk values) and forces inlining in the compiling (15-self_mini_c)
+      TODO: we should change the type of such constants to be `unit -> 'a` instead of just 'a
+    *)
+    view : bool;
+    public: bool;
+    (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
+      set to true for standard libraries
+    *)
+    hidden: bool;
+    (* Controls whether it should be inlined at AST level *)
+    thunk: bool ;
+  } [@@deriving eq,compare,yojson,hash]
+  open Format
+  let pp_if_set str ppf attr =
+    if attr then fprintf ppf "[@@%s]" str
+    else fprintf ppf ""
 
-and matching_content_case = {
-    constructor : label ;
-    pattern : expression_variable ;
-    body : expression ;
+  let pp ppf { inline ; no_mutation ; view ; public ; hidden ; thunk } =
+    fprintf ppf "%a%a%a%a%a%a"
+      (pp_if_set "inline") inline
+      (pp_if_set "no_mutation") no_mutation
+      (pp_if_set "view") view
+      (pp_if_set "private") (not public)
+      (pp_if_set "hidden") hidden
+      (pp_if_set "thunk") thunk
+
+end
+
+module TypeOrModuleAttr = struct
+  type t = { public: bool ; hidden : bool }
+    [@@deriving eq,compare,yojson,hash]
+
+  open Format
+  let pp_if_set str ppf attr =
+    if attr then fprintf ppf "[@@%s]" str
+    else fprintf ppf ""
+  let pp ppf { public ; hidden } =
+    fprintf ppf "%a%a"
+      (pp_if_set "private") (not public)
+      (pp_if_set "hidden") hidden
+
+end
+module Value_decl  = Value_decl(ValueAttr)
+module Type_decl   = Type_decl(TypeOrModuleAttr)
+module Module_decl = Module_decl(TypeOrModuleAttr)
+module Access_label = struct
+  type 'a t = Label.t
+  let equal _ = Label.equal
+  let compare _ = Label.compare
+  let to_yojson _ = Label.to_yojson
+  let of_yojson _ = Label.of_yojson
+  let hash_fold_t _ = Label.hash_fold_t
+  let pp _ = Label.pp
+  let fold _ = Fun.const
+  let map _ = Fun.id
+  let fold_map _ = fun a b -> a,b
+end
+module Accessor = Accessor(Access_label)
+module Update   = Update(Access_label)
+
+type 'e matching_content_case = {
+    constructor : Label.t ;
+    pattern : Value_var.t ;
+    body : 'e ;
   }
 
-and matching_content_case_list = matching_content_case list
+and 'e matching_content_case_list = 'e matching_content_case list
 
-and matching_content_variant = {
-    cases: matching_content_case_list;
+and 'e matching_content_variant = {
+    cases: 'e matching_content_case_list;
     tv: type_expression;
   }
+  [@@deriving eq,compare,yojson,hash]
 
-and matching_content_record = {
-  fields : (type_expression binder) label_map;
-  body : expression;
+type 'e matching_content_record = {
+  fields : (type_expression Binder.t) Record.LMap.t;
+  body : 'e ;
   tv : type_expression;
-}
+} [@@deriving eq,compare,yojson,hash]
 
-and matching_expr =
-  | Match_variant of matching_content_variant
-  | Match_record of matching_content_record
-
-and type_attribute = { public : bool ; hidden : bool }
-and module_attribute = type_attribute
-
-and program              = module_
-and module_expr          = (expression , ty_expr , known_attributes , type_attribute , module_attribute) module_expr'
-and module_              = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declarations'
-and declaration          = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration'
-and declaration_content  = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration_content'
-and declaration_module   = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration_module'
-and declaration_constant = (expression , ty_expr , known_attributes) declaration_constant'
-and declaration_type     = (ty_expr , type_attribute) declaration_type'
-
-and expression = {
-    expression_content: expression_content ;
-    location: location ;
-    type_expression: type_expression ;
-  }
-
-and expr = expression
-
-and map_kv = {
-    key : expression ;
-    value : expression ;
-  }
-
-and expression_label_map = expression label_map
-and expression_list = expression list
-
-and expression_content =
+type expression_content =
   (* Base *)
-  | E_literal of literal
-  | E_constant of constant (* For language constants, like (Cons hd tl) or (plus i j) *)
-  | E_variable of expression_variable
-  | E_application of application
-  | E_lambda of lambda
-  | E_recursive of recursive
+  | E_variable of Value_var.t
+  | E_literal of Literal_value.t
+  | E_constant of expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
+  | E_application of expr Application.t
+  | E_lambda of (expr, ty_expr) Lambda.t
+  | E_recursive of (expr, ty_expr) Recursive.t
   | E_let_in    of let_in
-  | E_mod_in    of mod_in
-  | E_raw_code  of raw_code
+  | E_mod_in of (expr, module_expr) Mod_in.t
+  | E_raw_code  of expr Raw_code.t
   | E_type_inst of type_inst
-  | E_type_abstraction of expr type_abs
+  | E_type_abstraction of expr Type_abs.t
   (* Variant *)
-  | E_constructor of constructor (* For user defined constructors *)
+  | E_constructor of expr Constructor.t (* For user defined constructors *)
   | E_matching of matching
   (* Record *)
-  | E_record of expression_label_map
-  | E_record_accessor of record_accessor
-  | E_record_update   of record_update
-  | E_module_accessor of expression_variable module_access
-  | E_assign   of (expr,ty_expr) assign
+  | E_record of expr Record.t
+  | E_accessor of expr Accessor.t
+  | E_update   of expr Update.t
+  | E_module_accessor of Value_var.t Module_access.t
+  | E_assign   of (expr,ty_expr) Assign.t
 
 and type_inst = {
     forall: expression ;
     type_: type_expression ;
   }
 
-and constant = {
-    cons_name: constant' ;
-    arguments: expression_list ;
-  }
-
-and application = {
-  lamb: expression ;
-  args: expression ;
-  }
-
-and lambda =  {
-    binder: ty_expr binder ;
-    result: expression ;
-  }
-
 and let_in = {
-    let_binder: ty_expr binder ;
+    let_binder: ty_expr Binder.t ;
     rhs: expression ;
     let_result: expression ;
-    attr: known_attributes ;
+    attr: ValueAttr.t ;
   }
 
-and mod_in = (expression , ty_expr , known_attributes , type_attribute , module_attribute) mod_in'
-
-and raw_code = {
-  language : string;
-  code : expression;
-  }
-
-and recursive = {
-  fun_name : expression_variable;
-  fun_type : type_expression;
-  lambda   : lambda;
-  }
-
-and constructor = {
-    constructor: label;
-    element: expression ;
-  }
-
-and record_accessor = {
-    record: expression ;
-    path: label ;
-  }
-
-and record_update = {
-    record: expression ;
-    path: label ;
-    update: expression ;
-  }
+and matching_expr =
+  | Match_variant of expr matching_content_variant
+  | Match_record of expr matching_content_record
 
 and matching = {
     matchee: expression ;
     cases: matching_expr ;
   }
+
+and expression = {
+    expression_content: expression_content ;
+    location: Location.t ; [@hash.ignore]
+    type_expression: type_expression ;
+  }
+
+and expr = expression
+  [@@deriving eq,compare,yojson,hash]
+
+and declaration_content =
+    D_value  of (expr,ty_expr option) Value_decl.t
+  | D_type   of ty_expr Type_decl.t
+  | D_module of module_expr Module_decl.t
+
+and  declaration = declaration_content Location.wrap
+and  decl = declaration
+  [@@deriving eq,compare,yojson,hash]
+
+and module_expr = decl Module_expr.t Location.wrap
+  [@@deriving eq,compare,yojson,hash]
+
+type module_ = decl list
+  [@@deriving eq,compare,yojson,hash]
+
+type program = declaration list
+  [@@deriving eq,compare,yojson,hash]
+

@@ -1,0 +1,5 @@
+author: JulesGuesnon
+description: Some blocks were cropped on small devices, so I fixed the responsive
+merge_request: '1948'
+title: '[Fix] Website responsive issue'
+type: fixed

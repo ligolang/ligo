@@ -2,6 +2,7 @@ open Types
 module Snippet = Simple_utils.Snippet
 module PP_helpers = Simple_utils.PP_helpers
 open PP_helpers
+open Ligo_prim
 
 let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   match c with
@@ -36,20 +37,22 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     in
     Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
   | V_Record recmap  ->
-    if (Stage_common.Helpers.is_tuple_lmap recmap) then
+    if (Record.is_tuple recmap) then
       let aux : Format.formatter -> value -> unit = fun ppf v ->
         Format.fprintf ppf "%a" pp_value v
       in
-      Format.fprintf ppf "(%a)" (list_sep aux (tag " , ")) (LMap.to_list recmap)
+      Format.fprintf ppf "(%a)" (list_sep aux (tag " , ")) (Record.LMap.to_list recmap)
     else
-      let aux : Format.formatter -> (label * value) -> unit = fun ppf (Label l, v) ->
+      let aux : Format.formatter -> (Label.t * value) -> unit = fun ppf (Label l, v) ->
         Format.fprintf ppf "%s = %a" l pp_value v
       in
-      Format.fprintf ppf "{%a}" (list_sep aux (tag " ; ")) (LMap.to_kv_list recmap)
+      Format.fprintf ppf "{%a}" (list_sep aux (tag " ; ")) (Record.LMap.to_kv_list recmap)
   | V_Michelson (Ty_code { code ; _ } | Untyped_code code) ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Michelson_contract code ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
+  | V_Ast_contract { main ; views = _ } ->
+    Format.fprintf ppf "%a" Ast_aggregated.PP.expression main
   | V_Mutation (l, _, s) ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." Snippet.pp l s
   | V_Gen _ ->
@@ -59,9 +62,9 @@ let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term
 
 let pp_env : Format.formatter -> env -> unit = fun ppf env ->
-  let aux : Format.formatter -> expression_variable * env_item -> unit = fun ppf ->
+  let aux : Format.formatter -> Value_var.t * env_item -> unit = fun ppf ->
     function (name, {item;no_mutation=_;inline=_}) ->
-                Format.fprintf ppf "%a -> %a" ValueVar.pp name pp_value_expr item in
+                Format.fprintf ppf "%a -> %a" Value_var.pp name pp_value_expr item in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
     (List.length env)
     (list_sep aux (tag "@ "))

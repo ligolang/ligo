@@ -2,6 +2,7 @@ open Main_errors
 open Tezos_utils
 open Proto_alpha_utils
 open Trace
+open Ligo_prim
 
 let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
   (* From Tezos changelog on views:
@@ -55,16 +56,17 @@ let build_contract ~raise :
   ?has_env_comments:bool ->
   ?disable_typecheck:bool ->
   ?constants:string list ->
+  ?tezos_context:_ ->
   Stacking.compiled_expression ->
-  (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) compiled views ->
+  (Value_var.t * Stacking.compiled_expression) list -> _ Michelson.michelson  =
+    fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) ?tezos_context compiled views ->
       let views =
         List.map
           ~f:(fun (name, view) ->
             let (view_param_ty, ret_ty) = trace_option ~raise (main_view_not_a_function name) @@ (* remitodo error specific to views*)
               Self_michelson.fetch_views_ty view.expr_ty
             in
-            (Ast_typed.ValueVar.to_name_exn name, view_param_ty, ret_ty, view.expr)
+            (Value_var.to_name_exn name, view_param_ty, ret_ty, view.expr)
           )
           views
       in
@@ -84,9 +86,11 @@ let build_contract ~raise :
         let contract' =
           Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract)
             (Memory_proto_alpha.prims_of_strings contract) in
-        let environment = Proto_alpha_utils.Memory_proto_alpha.dummy_environment () in
         (* Parse constants *)
         let constants = List.map ~f:(parse_constant ~raise) constants in
+        let environment = match tezos_context with
+          | None -> Proto_alpha_utils.Memory_proto_alpha.dummy_environment ()
+          | Some tezos_context -> { tezos_context ; identities = [] } in
         (* Update the Tezos context by registering the global constants *)
         let tezos_context = List.fold_left constants ~init:environment.tezos_context
                     ~f:(fun ctxt cnt ->

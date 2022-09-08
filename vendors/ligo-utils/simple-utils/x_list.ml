@@ -41,7 +41,7 @@ let uncons = function
      Some (hd, tl)
 
 let repeat x n =
-  let rec aux n xs = 
+  let rec aux n xs =
     if n <= 0 then xs
     else aux (n - 1) (x::xs)
   in
@@ -49,10 +49,11 @@ let repeat x n =
 
 module Ne = struct
 
-  type 'a t = 'a * 'a List.t
+  type 'a t = 'a * 'a list
+    [@@deriving eq,compare,yojson,hash]
 
   let unzip ((hd, tl): _ t) =
-    let (a, b) = hd and (la, lb) = List.unzip tl in
+    let (a, b) = hd and (la, lb) = unzip tl in
     (a, la), (b, lb)
   let of_list lst = List.hd_exn lst, List.tl_exn lst (* TODO: Remove *)
   let to_list (hd, tl : _ t) = hd :: tl
@@ -79,14 +80,9 @@ module Ne = struct
     | None -> find_map ~f tl
   let append : 'a t -> 'a t -> 'a t = fun (hd, tl) (hd', tl') ->
     hd, List.append tl @@ hd' :: tl'
-  let compare = fun ?compare:cmp (hd, tl) (hd', tl') ->
-    let cmp = Option.value ~default:Caml.compare cmp in
-    match cmp hd hd' with
-      0 -> compare cmp tl tl'
-    | c -> c
-  
+
   let length = fun (_,tl) -> 1 + List.length tl
-  
+
   (* [head_permute] [lst] : if lst == [A ; B ; C] returns [A ; B ; C] [B ; C ; A] [C ; A ; B] *)
   let head_permute : 'a t -> 'a t t = fun lst ->
     let rec aux (acc: 'a t t) (lst: 'a t) =

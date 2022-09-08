@@ -1,17 +1,19 @@
-let generated_flag = "#?generated"
-let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
-  if Ast_typed.ValueVar.is_generated v
-  then generated_flag
-  else Ast_typed.ValueVar.to_name_exn v
+open Ligo_prim
 
-let get_type_binder_name : Ast_typed.TypeVar.t -> string = fun v ->
-  if Ast_typed.TypeVar.is_generated v
+let generated_flag = "#?generated"
+let get_binder_name : Value_var.t -> string = fun v ->
+  if Value_var.is_generated v
   then generated_flag
-  else Ast_typed.TypeVar.to_name_exn v
-let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
-  if Ast_typed.ModuleVar.is_generated v
+  else Value_var.to_name_exn v
+
+let get_type_binder_name : Type_var.t -> string = fun v ->
+  if Type_var.is_generated v
   then generated_flag
-  else Ast_typed.ModuleVar.to_name_exn v
+  else Type_var.to_name_exn v
+let get_mod_binder_name : Module_var.t -> string = fun v ->
+  if Module_var.is_generated v
+  then generated_flag
+  else Module_var.to_name_exn v
 
 let counter = ref 0
 let reset_counter () = counter := 0
@@ -164,5 +166,5 @@ let merge_same_scopes : scopes -> scopes
       in
       aux scopes []
 
-module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
+module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Value_var.compare end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t

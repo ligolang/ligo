@@ -1,4 +1,5 @@
 open Ast_aggregated
+open Ligo_prim.Constant
 
 let expression : expression -> expression = fun expr ->
   match expr.expression_content with

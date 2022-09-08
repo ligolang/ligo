@@ -24,7 +24,6 @@ let init_vote ~raise () =
       program "main" (e_pair yea (init_storage "basic")) in
   let (_, storage) = trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_pair result in
   let storage' = trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_record storage in
-  let storage' =  List.map ~f:(fun (Ast_core.Label l,v) -> (Label l, v)) storage' in
 (*  let votes = List.assoc (Label "voters") storage' in
   let votes' = extract_map votes in *)
   let yea = List.Assoc.find_exn ~equal:Caml.(=) storage' (Label "yea") in

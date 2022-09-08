@@ -9,7 +9,7 @@ let expression_ppformat ~display_format f runned_result =
     | Fail (fail_res : (int, string) Tezos_micheline.Micheline.node) ->
       Format.printf "failed with: %a" Tezos_utils.Michelson.pp fail_res
     | Success typed ->
-      Ast_core.PP.expression f typed      
+      Ast_core.PP.expression f typed
   )
 
 let expression_jsonformat runned_result : json =
@@ -18,7 +18,7 @@ let expression_jsonformat runned_result : json =
     let failstring = Format.asprintf "%a" Tezos_utils.Michelson.pp fail_res in
     `Assoc [("value", `Null) ; ("failure", `String failstring)]
   | Success typed ->
-    `Assoc [("value", Ast_core.Yojson.expression typed) ; ("failure", `Null)]
+    `Assoc [("value", Ast_core.expression_to_yojson typed) ; ("failure", `Null)]
 
 let expression_format : 'a format = {
   pp = expression_ppformat ;

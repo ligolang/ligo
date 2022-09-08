@@ -6,11 +6,12 @@ let get_program = get_program "./contracts/replaceable_id.ligo"
 let compile_main ~raise () =
   Test_helpers.compile_main ~raise "./contracts/replaceable_id.ligo" ()
 
+open Ligo_prim
 open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
+let empty_message = e_lambda_ez (Value_var.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 

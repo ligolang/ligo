@@ -1,12 +1,13 @@
 module FV = Helpers.Free_variables
 
+open Ligo_prim
 open Ast_typed
 open Errors
 open Simple_utils.Trace
 
-let var_equal = ValueVar.equal
+let var_equal = Value_var.equal
 
-let rec check_recursive_call ~raise : expression_variable -> bool -> expression -> unit = fun n final_path e ->
+let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ()
   | E_constant c  ->
@@ -36,11 +37,11 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
     check_recursive_call ~raise n false matchee;
     check_recursive_call_in_matching ~raise n final_path cases
   | E_record elm ->
-    List.iter ~f:(check_recursive_call ~raise n false) @@ LMap.to_list elm
-  | E_record_accessor {record;_} ->
-    check_recursive_call ~raise n false record
-  | E_record_update {record;update;_} ->
-    check_recursive_call ~raise n false record;
+    List.iter ~f:(check_recursive_call ~raise n false) @@ Record.LMap.to_list elm
+  | E_accessor {struct_;_} ->
+    check_recursive_call ~raise n false struct_
+  | E_update {struct_;update;_} ->
+    check_recursive_call ~raise n false struct_;
     check_recursive_call ~raise n false update
   | E_module_accessor _
   | E_type_inst _
@@ -56,7 +57,7 @@ and check_recursive_call_in_matching ~raise = fun n final_path c ->
   | Match_record {fields = _; body; tv = _} ->
     check_recursive_call ~raise n final_path body
 
-let check_rec_binder_shadowed ~fun_name ~lambda =
+let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
   let _, fv = FV.expression lambda.result in
   let is_binder_shadowed_in_body
     = not @@ List.mem fv fun_name ~equal:var_equal in
@@ -80,7 +81,7 @@ let show_unused_rec_warning ~raise ~warn_unused_rec fun_name =
   if warn_unused_rec then
     raise.warning
       (`Self_ast_typed_warning_unused_rec
-        (ValueVar.get_location fun_name, Format.asprintf "%a" ValueVar.pp fun_name))
+        (Value_var.get_location fun_name, Format.asprintf "%a" Value_var.pp fun_name))
   else ()
 
 let remove_rec_expression ~raise ~warn_unused_rec : expression -> expression

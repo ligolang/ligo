@@ -322,7 +322,7 @@ Given a map from strings to integers, here is how to sum
 all the integers and concatenate all the strings.
 
 
-```jsligo skip
+```jsligo
 let sum_map = (m: map<string, int>): [string, int] => {
   let string_total: string = "";
   let int_total: int = 0;
@@ -334,9 +334,6 @@ let sum_map = (m: map<string, int>): [string, int] => {
   return [string_total, int_total]
 }
 ```
-
-> In the current version of JsLIGO looping over maps is not supported.
-> Use `Map.iter` instead.
 
 You can call the function `sum_map` defined above using the LIGO compiler
 like so:

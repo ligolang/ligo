@@ -3,6 +3,7 @@ open Simple_utils
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 
+open Ligo_prim
 module AST = Ast_aggregated
 
 include AST.Types
@@ -46,6 +47,7 @@ let monad_option error = fun v ->
 
 let wrap_compare_result comp cmpres loc calltrace =
   let open Monad in
+  let open Ligo_prim.Constant in
   match comp with
   | C_EQ -> return (cmpres = 0)
   | C_NEQ -> return (cmpres <> 0)
@@ -126,7 +128,7 @@ let compare_constants c o1 o2 loc calltrace =
 let rec apply_comparison :
     Location.t ->
     calltrace ->
-    AST.constant' ->
+    Ligo_prim.Constant.constant' ->
     value list ->
     value Monad.t =
   fun loc calltrace c operands ->
@@ -179,19 +181,18 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
-let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_file : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_file : Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
+  let open Constant in
   let open Monad in
   let eval_ligo = eval_ligo ~raise ~steps ~options ?source_file in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
-  let error_type = Errors.generic_error loc "Type error." in
+  let error_type = Errors.generic_error loc (Format.asprintf "Type error: evaluating constant %a with types:@.%a@." Ligo_prim.Constant.pp_constant' c (PP_helpers.list_sep_d AST.PP.type_expression) types) in
   let div_by_zero_str = v_string "Dividing by zero" in
-  let return_ct v = return @@ V_Ct v in
-  let return_none () = return @@ v_none () in
-  let return_some v = return @@ v_some v in
+  let nth_type n = trace_option ~raise (Errors.generic_error loc "Could not recover types") @@ List.nth types n in
   let return_contract_exec_exn = function
-    | `Exec_ok gas -> return_ct (C_nat gas)
+    | `Exec_ok gas -> return (v_nat gas)
     | `Exec_failed e -> fail @@ Errors.target_lang_error loc calltrace e
   in
   let return_contract_exec = function
@@ -202,9 +203,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
   in
   ( match (c,operands) with
     (* nullary *)
-    | ( C_NONE , [] ) -> return_none ()
+    | ( C_NONE , [] ) -> return @@ v_none ()
     | ( C_NONE , _  ) -> fail @@ error_type
-    | ( C_UNIT , [] ) -> return @@ V_Ct C_unit
+    | ( C_UNIT , [] ) -> return @@ v_unit ()
     | ( C_UNIT , _  ) -> fail @@ error_type
     | ( C_NIL  , [] ) -> return @@ V_List []
     | ( C_NIL , _  ) -> fail @@ error_type
@@ -213,17 +214,17 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_FALSE , [] ) -> return @@ v_bool false
     | ( C_FALSE , _  ) -> fail @@ error_type
     (* unary *)
-    | ( C_NOT    , [ V_Ct (C_bool a'  ) ] ) -> return_ct @@ C_bool (not a')
+    | ( C_NOT    , [ V_Ct (C_bool a'  ) ] ) -> return @@ v_bool (not a')
     (* TODO-er: fix two complements: *)
-    | ( C_NOT    , [ V_Ct (C_int a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
-    | ( C_NOT    , [ V_Ct (C_nat a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
+    | ( C_NOT    , [ V_Ct (C_int a'   ) ] ) -> return @@ v_int (Z.neg a')
+    | ( C_NOT    , [ V_Ct (C_nat a'   ) ] ) -> return @@ v_int (Z.neg a')
     | ( C_NOT , _  ) -> fail @@ error_type
-    | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.neg a')
-    | ( C_NEG    , [ V_Ct (C_bls12_381_g1 a')    ] ) -> return_ct @@ C_bls12_381_g1 (Bls12_381.G1.negate a')
-    | ( C_NEG    , [ V_Ct (C_bls12_381_g2 a')    ] ) -> return_ct @@ C_bls12_381_g2 (Bls12_381.G2.negate a')
-    | ( C_NEG    , [ V_Ct (C_bls12_381_fr a')    ] ) -> return_ct @@ C_bls12_381_fr (Bls12_381.Fr.negate a')
+    | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return @@ v_int (Z.neg a')
+    | ( C_NEG    , [ V_Ct (C_bls12_381_g1 a')    ] ) -> return @@ v_bls12_381_g1 (Bls12_381.G1.negate a')
+    | ( C_NEG    , [ V_Ct (C_bls12_381_g2 a')    ] ) -> return @@ v_bls12_381_g2 (Bls12_381.G2.negate a')
+    | ( C_NEG    , [ V_Ct (C_bls12_381_fr a')    ] ) -> return @@ v_bls12_381_fr (Bls12_381.Fr.negate a')
     | ( C_NEG , _  ) -> fail @@ error_type
-    | ( C_SOME   , [ v                  ] ) -> return_some v
+    | ( C_SOME   , [ v                  ] ) -> return @@ v_some v
     | ( C_SOME , _  ) -> fail @@ error_type
     | ( C_ADDRESS , [ V_Ct (C_contract { address ; entrypoint=_}) ] ) ->
       return (V_Ct (C_address address))
@@ -259,18 +260,18 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_MAP_FIND , _  ) -> fail @@ error_type
     (* binary *)
     | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison loc calltrace c operands
-    | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return_ct @@ C_int (Z.sub a' b')
+    | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return @@ v_int (Z.sub a' b')
     | ( C_SUB    , [ V_Ct (C_int a' | C_timestamp a') ; V_Ct (C_timestamp b' | C_int b') ] ) ->
       let res = Michelson_backend.Tezos_eq.timestamp_sub a' b' in
-      return_ct @@ C_timestamp res
+      return @@ v_timestamp res
     | ( C_SUB    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
       match Michelson_backend.Tezos_eq.mutez_sub a' b' with
-      | Some res -> return_ct @@ C_mutez res
+      | Some res -> return @@ v_mutez res
       | None -> fail (Errors.meta_lang_eval loc calltrace (v_string "Mutez underflow/overflow"))
     )
     | ( C_SUB_MUTEZ    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
       match Michelson_backend.Tezos_eq.mutez_sub a' b' with
-      | Some res -> return @@ v_some @@ V_Ct (C_mutez res)
+      | Some res -> return @@ v_some @@ v_mutez res
       | None -> return @@ v_none ()
     )
     | ( C_SUB , _  ) -> fail @@ error_type
@@ -279,33 +280,33 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_CONS , _  ) -> fail @@ error_type
     | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_int b  )  ] )
     | ( C_ADD    , [ V_Ct (C_nat a  )  ; V_Ct (C_int b  )  ] )
-    | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.add a b in return_ct (C_int r)
-    | ( C_ADD    , [ V_Ct (C_nat a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.add a b in return_ct (C_nat r)
+    | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.add a b in return (v_int r)
+    | ( C_ADD    , [ V_Ct (C_nat a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.add a b in return (v_nat r)
     | ( C_ADD    , [ V_Ct (C_int a' | C_timestamp a') ; V_Ct (C_timestamp b' | C_int b') ] ) ->
       let res = Michelson_backend.Tezos_eq.timestamp_add a' b' in
-      return_ct @@ C_timestamp res
+      return @@ v_timestamp res
     | ( C_ADD    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
       match Michelson_backend.Tezos_eq.mutez_add a' b' with
-      | Some res -> return_ct @@ C_mutez res
+      | Some res -> return @@ v_mutez res
       | None -> fail (Errors.meta_lang_eval loc calltrace (v_string "Mutez underflow/overflow"))
     )
-    | ( C_ADD    , [ V_Ct (C_bls12_381_g1 a) ; V_Ct (C_bls12_381_g1 b) ] ) -> let r = Bls12_381.G1.(add a b) in return_ct (C_bls12_381_g1 r)
-    | ( C_ADD    , [ V_Ct (C_bls12_381_g2 a) ; V_Ct (C_bls12_381_g2 b) ] ) -> let r = Bls12_381.G2.(add a b) in return_ct (C_bls12_381_g2 r)
-    | ( C_ADD    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(a + b) in return_ct (C_bls12_381_fr r)
+    | ( C_ADD    , [ V_Ct (C_bls12_381_g1 a) ; V_Ct (C_bls12_381_g1 b) ] ) -> let r = Bls12_381.G1.(add a b) in return (v_bls12_381_g1 r)
+    | ( C_ADD    , [ V_Ct (C_bls12_381_g2 a) ; V_Ct (C_bls12_381_g2 b) ] ) -> let r = Bls12_381.G2.(add a b) in return (v_bls12_381_g2 r)
+    | ( C_ADD    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(a + b) in return (v_bls12_381_fr r)
     | ( C_ADD , _  ) -> fail @@ error_type
     | ( C_MUL    , [ V_Ct (C_int a  )  ; V_Ct (C_int b  )  ] )
     | ( C_MUL    , [ V_Ct (C_nat a  )  ; V_Ct (C_int b  )  ] )
-    | ( C_MUL    , [ V_Ct (C_int a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return_ct (C_int r)
-    | ( C_MUL    , [ V_Ct (C_nat a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return_ct (C_nat r)
-    | ( C_MUL    , [ V_Ct (C_nat a  )  ; V_Ct (C_mutez b)  ] ) -> let r = Z.mul a b in return_ct (C_mutez r)
-    | ( C_MUL    , [ V_Ct (C_mutez a)  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return_ct (C_mutez r)
-    | ( C_MUL    , [ V_Ct (C_bls12_381_g1 a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.G1.(mul a b) in return_ct (C_bls12_381_g1 r)
-    | ( C_MUL    , [ V_Ct (C_bls12_381_g2 a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.G2.(mul a b) in return_ct (C_bls12_381_g2 r)
-    | ( C_MUL    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(a * b) in return_ct (C_bls12_381_fr r)
-    | ( C_MUL    , [ V_Ct (C_nat a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(b ** a) in return_ct (C_bls12_381_fr r)
-    | ( C_MUL    , [ V_Ct (C_int a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(b ** a) in return_ct (C_bls12_381_fr r)
-    | ( C_MUL    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_nat b) ] ) -> let r = Bls12_381.Fr.(a ** b) in return_ct (C_bls12_381_fr r)
-    | ( C_MUL    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_int b) ] ) -> let r = Bls12_381.Fr.(a ** b) in return_ct (C_bls12_381_fr r)
+    | ( C_MUL    , [ V_Ct (C_int a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return (v_int r)
+    | ( C_MUL    , [ V_Ct (C_nat a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return (v_nat r)
+    | ( C_MUL    , [ V_Ct (C_nat a  )  ; V_Ct (C_mutez b)  ] ) -> let r = Z.mul a b in return (v_mutez r)
+    | ( C_MUL    , [ V_Ct (C_mutez a)  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return (v_mutez r)
+    | ( C_MUL    , [ V_Ct (C_bls12_381_g1 a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.G1.(mul a b) in return (v_bls12_381_g1 r)
+    | ( C_MUL    , [ V_Ct (C_bls12_381_g2 a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.G2.(mul a b) in return (v_bls12_381_g2 r)
+    | ( C_MUL    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(a * b) in return (v_bls12_381_fr r)
+    | ( C_MUL    , [ V_Ct (C_nat a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(b ** a) in return (v_bls12_381_fr r)
+    | ( C_MUL    , [ V_Ct (C_int a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(b ** a) in return (v_bls12_381_fr r)
+    | ( C_MUL    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_nat b) ] ) -> let r = Bls12_381.Fr.(a ** b) in return (v_bls12_381_fr r)
+    | ( C_MUL    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_int b) ] ) -> let r = Bls12_381.Fr.(a ** b) in return (v_bls12_381_fr r)
     | ( C_MUL , _  ) -> fail @@ error_type
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] )
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] )
@@ -313,28 +314,28 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
-        | Some (res,_) -> return_ct @@ C_int res
+        | Some (res,_) -> return @@ v_int res
         | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV    , [ V_Ct (C_nat a')  ; V_Ct (C_nat b')  ] ) ->
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
-        | Some (res,_) -> return_ct @@ C_nat res
+        | Some (res,_) -> return @@ v_nat res
         | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) ->
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
-        | Some (res,_) -> return_ct @@ C_nat res
+        | Some (res,_) -> return @@ v_nat res
         | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b')  ] ) ->
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
-        | Some (res,_) -> return_ct @@ C_mutez res
+        | Some (res,_) -> return @@ v_mutez res
         | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV , _  ) -> fail @@ error_type
@@ -343,27 +344,27 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) -> (
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       match a with
-      | Some (_,r) -> return_ct @@ C_nat r
+      | Some (_,r) -> return @@ v_nat r
       | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
     )
     | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> (
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       match a with
-      | Some (_,r) -> return_ct @@ C_nat r
+      | Some (_,r) -> return @@ v_nat r
       | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
     )
     | ( C_MOD , _  ) -> fail @@ error_type
-    | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
-    | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (BytesLabels.cat a' b')
+    | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return @@ v_string (a' ^ b')
+    | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return @@ v_bytes  (BytesLabels.cat a' b')
     | ( C_CONCAT , _  ) -> fail @@ error_type
-    | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
-    | ( C_AND    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' && b')
-    | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   ( (a' || b') && (not (a' && b')) )
+    | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return @@ v_bool   (a' || b')
+    | ( C_AND    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return @@ v_bool   (a' && b')
+    | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return @@ v_bool   ( (a' || b') && (not (a' && b')) )
     (* Bitwise operators *)
-    | ( C_AND    , [ V_Ct (C_int a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logand a' b' in return_ct @@ C_nat v
-    | ( C_AND    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logand a' b' in return_ct @@ C_nat v
-    | ( C_OR     , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logor a' b' in return_ct @@ C_nat v
-    | ( C_XOR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logxor a' b' in return_ct @@ C_nat v
+    | ( C_AND    , [ V_Ct (C_int a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logand a' b' in return @@ v_nat v
+    | ( C_AND    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logand a' b' in return @@ v_nat v
+    | ( C_OR     , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logor a' b' in return @@ v_nat v
+    | ( C_XOR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logxor a' b' in return @@ v_nat v
     | ( C_OR , _  ) -> fail @@ error_type
     | ( C_AND , _  ) -> fail @@ error_type
     | ( C_XOR , _  ) -> fail @@ error_type
@@ -371,7 +372,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let v = Michelson_backend.Tezos_eq.nat_shift_left a' b' in
       begin
         match v with
-        | Some v -> return_ct @@ C_nat v
+        | Some v -> return @@ v_nat v
         | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow")
       end
     | ( C_LSL , _  ) -> fail @@ error_type
@@ -379,14 +380,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let v = Michelson_backend.Tezos_eq.nat_shift_right a' b' in
       begin
         match v with
-        | Some v -> return_ct @@ C_nat v
+        | Some v -> return @@ v_nat v
         | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow")
       end
     | ( C_LSR , _  ) -> fail @@ error_type
     | ( C_LIST_EMPTY, []) -> return @@ V_List ([])
     | ( C_LIST_EMPTY , _  ) -> fail @@ error_type
     | ( C_LIST_MAP , [ V_Func_val {arg_binder ; body ; env ; rec_name=_ ; orig_lambda=_}  ; V_List (elts) ] ) ->
-      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let lst_ty = nth_type 1 in
       let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ AST.get_t_list lst_ty in
       let* elts =
         Monad.bind_map_list
@@ -398,7 +399,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       return (V_List elts)
     | ( C_LIST_MAP , _  ) -> fail @@ error_type
     | ( C_MAP_MAP , [ V_Func_val {arg_binder ; body ; env ; rec_name=_ ; orig_lambda=_}  ; V_Map (elts) ] ) ->
-      let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let map_ty = nth_type 1 in
       let* k_ty,v_ty = monad_option (Errors.generic_error map_ty.location "Expected map type") @@ AST.get_t_map map_ty in
       let* elts =
         Monad.bind_map_list
@@ -412,28 +413,28 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       return (V_Map elts)
     | ( C_MAP_MAP , _  ) -> fail @@ error_type
     | ( C_LIST_ITER , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_}  ; V_List (elts) ] ) ->
-      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let lst_ty = nth_type 1 in
       let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ AST.get_t_list lst_ty in
       Monad.bind_fold_list
         (fun _ elt ->
           let env' = Env.extend env arg_binder (ty,elt) in
           eval_ligo body calltrace env'
         )
-        (V_Ct C_unit) elts
+        (v_unit ()) elts
     | ( C_LIST_ITER , _  ) -> fail @@ error_type
     | ( C_MAP_ITER , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_Map (elts) ] ) ->
-      let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let map_ty = nth_type 1 in
       let* k_ty,v_ty = monad_option (Errors.generic_error map_ty.location "Expected map type") @@ AST.get_t_map map_ty in
       Monad.bind_fold_list
         (fun _ kv ->
           let env' = Env.extend env arg_binder ((AST.t_pair k_ty v_ty),v_pair kv) in
           eval_ligo body calltrace env'
         )
-        (V_Ct C_unit) elts
+        (v_unit ()) elts
     | ( C_MAP_ITER , _  ) -> fail @@ error_type
     (* ternary *)
     | ( C_LOOP_LEFT , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_} ; init ] ) -> (
-      let* init_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let init_ty = nth_type 1 in
       let rec aux cur_env =
         let env' = Env.extend env arg_binder (init_ty, cur_env) in
         let* ret = eval_ligo body calltrace env' in
@@ -445,13 +446,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       aux init
     )
     | ( C_LOOP_LEFT , _ ) -> fail @@ error_type
-    | C_LOOP_CONTINUE , [ v ] -> return (v_ctor "##Loop_continue" v)
+    | ( C_LOOP_CONTINUE , [ v ] ) -> return (v_ctor "##Loop_continue" v)
     | ( C_LOOP_CONTINUE , _ ) -> fail @@ error_type
-    | C_LOOP_STOP , [ v ]  -> return (v_ctor "##Loop_stop" v)
+    | ( C_LOOP_STOP , [ v ] ) -> return (v_ctor "##Loop_stop" v)
     | ( C_LOOP_STOP , _ ) -> fail @@ error_type
     | ( C_LIST_FOLD_LEFT , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_}  ; init ; V_List elts ] ) ->
-      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
-      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let acc_ty = nth_type 1 in
+      let lst_ty = nth_type 2 in
       let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ AST.get_t_list lst_ty in
       Monad.bind_fold_list
         (fun prev elt ->
@@ -463,8 +464,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_LIST_FOLD_LEFT , _  ) -> fail @@ error_type
     | ( C_FOLD ,      [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_List elts ; init ] )
     | ( C_LIST_FOLD , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_List elts ; init ] ) ->
-      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let lst_ty = nth_type 1 in
+      let acc_ty = nth_type 2 in
       let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ AST.get_t_list lst_ty in
       Monad.bind_fold_list
         (fun prev elt ->
@@ -475,8 +476,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         init elts
     | ( C_FOLD ,     [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_}  ; V_Set elts ; init ] )
     | ( C_SET_FOLD , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_}  ; V_Set elts ; init ] ) ->
-      let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let set_ty = nth_type 1 in
+      let acc_ty = nth_type 2 in
       let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ AST.get_t_set set_ty in
       Monad.bind_fold_list
         (fun prev elt ->
@@ -489,8 +490,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_LIST_FOLD , _  ) -> fail @@ error_type
     | ( C_SET_FOLD , _  ) -> fail @@ error_type
     | ( C_LIST_FOLD_RIGHT , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_List elts ; init ] ) ->
-      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let lst_ty = nth_type 1 in
+      let acc_ty = nth_type 2 in
       let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ AST.get_t_list lst_ty in
       Monad.bind_fold_right_list
         (fun elt prev ->
@@ -505,8 +506,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_MAP_EMPTY , _  ) -> fail @@ error_type
     | ( C_MAP_FOLD , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_Map kvs ; init ] ) ->
-      let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let map_ty = nth_type 1 in
+      let acc_ty = nth_type 2 in
       let* k_ty,v_ty = monad_option (Errors.generic_error map_ty.location "Expected map type") @@ AST.get_t_map map_ty in
       Monad.bind_fold_list
         (fun prev kv ->
@@ -520,23 +521,22 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_MAP_ADD , _  ) -> fail @@ error_type
     | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
     | ( C_MAP_REMOVE , _  ) -> fail @@ error_type
-    | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
-      | "Some" -> return @@ V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k))
-      | "None" -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
+    | ( C_MAP_UPDATE , [ k ; option ; V_Map kvs] ) -> (match LC.get_option option with
+      | Some (Some v) -> return @@ V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k))
+      | Some None -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
       | _ -> assert false
     )
     | ( C_MAP_UPDATE , _  ) -> fail @@ error_type
-    | ( C_BIG_MAP_GET_AND_UPDATE , [k ; V_Construct (option,v) ; V_Map kvs ] )
-    | ( C_MAP_GET_AND_UPDATE , [k ; V_Construct (option,v) ; V_Map kvs ] ) ->
+    | ( C_BIG_MAP_GET_AND_UPDATE , [k ; option ; V_Map kvs ] )
+    | ( C_MAP_GET_AND_UPDATE , [k ; option ; V_Map kvs ] ) ->
       let old_value = List.Assoc.find ~equal:LC.equal_value kvs k in
-      let old_value = (match old_value with
+      let old_value = match old_value with
         | Some v -> v_some v
-        | None -> v_none ())
-      in
-      (match option with
-      | "Some" -> return @@ v_pair (old_value, V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k)))
-      | "None" -> return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
-      | _ -> assert false)
+        | None -> v_none () in
+      (match LC.get_option option with
+       | Some (Some v) -> return @@ v_pair (old_value, V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k)))
+       | Some None -> return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
+       | None -> assert false)
     | ( C_BIG_MAP_GET_AND_UPDATE , _  )
     | ( C_MAP_GET_AND_UPDATE , _  ) -> fail @@ error_type
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
@@ -544,8 +544,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare:LC.compare_value (v::l))
     | ( C_SET_ADD , _  ) -> fail @@ error_type
     | ( C_SET_FOLD_DESC , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_Set elts ; init ] ) ->
-      let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let set_ty = nth_type 1 in
+      let acc_ty = nth_type 2 in
       let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ AST.get_t_set set_ty in
       Monad.bind_fold_right_list
         (fun prev elt ->
@@ -556,14 +556,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         init elts
     | ( C_SET_FOLD_DESC , _  ) -> fail @@ error_type
     | ( C_SET_ITER , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; V_Set (elts) ] ) ->
-      let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let set_ty = nth_type 1 in
       let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ AST.get_t_set set_ty in
       Monad.bind_fold_list
         (fun _ elt ->
           let env' = Env.extend env arg_binder (ty,elt) in
           eval_ligo body calltrace env'
         )
-        (V_Ct C_unit) elts
+        (v_unit ()) elts
     | ( C_SET_ITER , _  ) -> fail @@ error_type
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem ~equal:LC.equal_value elts v)
     | ( C_SET_MEM , _  ) -> fail @@ error_type
@@ -575,13 +575,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       else return @@ V_Set (List.filter ~f:(fun el -> not (equal_value el v)) elts)
     | ( C_SET_UPDATE , _  ) -> fail @@ error_type
     | ( C_OPTION_MAP , [ V_Func_val {arg_binder ; body ; env ; rec_name=_ ; orig_lambda=_}  ; V_Construct ("Some" , v) ] ) ->
-      let* opt_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let opt_ty = nth_type 1 in
       let* ty = monad_option (Errors.generic_error opt_ty.location "Expected option type") @@ AST.get_t_option opt_ty in
       let* new_v =
         let env' = Env.extend env arg_binder (ty,v) in
         eval_ligo body calltrace env'
       in
-      return (V_Construct ("Some" , new_v))
+      return @@ v_some new_v
     | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
       return v
     | ( C_OPTION_MAP , _  ) -> fail @@ error_type
@@ -635,18 +635,21 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     *)
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
-    | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = _ ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = _ } ; V_Func_val { arg_binder = _ ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = _} ]) ->
-       try_or (eval_ligo try_body (loc :: calltrace) try_env)
-         (eval_ligo catch_body (loc :: calltrace) catch_env)
+    | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = try_binder ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = try_lambda } ; V_Func_val { arg_binder = catch_binder ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = catch_lambda } ]) ->
+      let eval_branch arg_binder orig_lambda body calltrace env = 
+        let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
+        let f_env' = Env.extend env arg_binder (in_ty, v_unit ()) in
+        eval_ligo { body with location = loc } (loc :: calltrace) f_env'
+      in
+       try_or (eval_branch try_binder try_lambda try_body calltrace try_env)
+         (eval_branch catch_binder catch_lambda catch_body calltrace catch_env)
     | ( C_TEST_TRY_WITH , _ ) -> fail @@ error_type
-    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ]) ->
+    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ; mutation ]) ->
       let>> mod_res = Get_mod_res () in
       let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
-      let views = List.map
-                    ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
-                    views
-      in
-      let>> code = Compile_contract_from_file (contract_file,entryp,views) in
+      let views = List.map ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x) views in
+      let* mutation = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_nat_option mutation in
+      let>> code = Compile_contract_from_file (contract_file,entryp,views,mutation) in
       return @@ code
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE , _  ) -> fail @@ error_type
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
@@ -665,11 +668,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_SET_SOURCE , [ addr ] ) ->
       let>> () = Set_source addr in
-      return_ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_SET_SOURCE , _  ) -> fail @@ error_type
     | ( C_TEST_SET_BAKER , [ addr ] ) ->
       let>> () = Set_baker (loc, calltrace, addr) in
-      return_ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_SET_BAKER , _  ) -> fail @@ error_type
     | ( C_TEST_GET_STORAGE_OF_ADDRESS , [ addr ] ) ->
       let>> storage = Get_storage_of_address (loc, calltrace, addr) in
@@ -684,35 +687,34 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         | 2 -> Format.eprintf "%s" v
         | 1 -> Format.printf "%s" v
         | _ -> () in
-      return_ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_PRINT , _  ) -> fail @@ error_type
     | ( C_TEST_TO_STRING , [ v ]) ->
       let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
-      return_ct (C_string s)
+      return (v_string s)
     | ( C_TEST_TO_STRING , _  ) -> fail @@ error_type
     | ( C_TEST_UNESCAPE_STRING , [ V_Ct (C_string s) ]) ->
-      return_ct (C_string (Scanf.unescaped s))
+      return (v_string (Scanf.unescaped s))
     | ( C_TEST_UNESCAPE_STRING , _  ) -> fail @@ error_type
     | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
-       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-       let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
-       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let contract_ty = nth_type 1 in
+       let storage_ty = nth_type 2 in
+       let>> code = Compile_contract (loc, contract) in
        let>> storage = Eval (loc, storage, storage_ty) in
        let>> () = Bootstrap_contract ((Z.to_int z), code, storage, contract_ty) in
-       return_ct C_unit
+       return @@ v_unit ()
     | ( C_TEST_BOOTSTRAP_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_NTH_BOOTSTRAP_CONTRACT , [ V_Ct (C_nat n) ] ) ->
        let n = Z.to_int n in
        let>> address = Nth_bootstrap_contract n in
-       return_ct (C_address address)
+       return (v_address address)
     | ( C_TEST_NTH_BOOTSTRAP_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_STATE_RESET , [ ts_opt ; n ; amts ] ) ->
       let ts_opt =
         let v_opt = trace_option ~raise error_type @@ LC.get_option ts_opt in
-        Option.map v_opt ~f:(fun x -> trace_option ~raise error_type @@ LC.get_timestamp x)
-      in
+        Option.map v_opt ~f:(fun x -> trace_option ~raise error_type @@ LC.get_timestamp x) in
       let>> () = Reset_state (loc,ts_opt,calltrace,n,amts) in
-      return_ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_STATE_RESET , _  ) -> fail @@ error_type
     | ( C_TEST_GET_NTH_BS , [ n ] ) ->
       let>> x = Get_bootstrap (loc,calltrace,n) in
@@ -721,7 +723,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_LAST_ORIGINATIONS , [ _ ] ) ->
       let>> x = Get_last_originations () in
       return x
-
     | ( C_TEST_LAST_ORIGINATIONS , _  ) -> fail @@ error_type
     | ( C_TEST_LAST_EVENTS  , [ V_Ct (C_string tag) ] ) -> (
       let event_payload_type_opt =
@@ -738,16 +739,24 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         fail @@ error_type
     )
     | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
-    | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
+    | ( C_TEST_MUTATE_CONTRACT , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
       let* () = check_value v in
-      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let v = Mutation.mutate_some_value ~raise ?syntax:options.frontend.syntax loc n v value_ty in
+      let v = Mutation.mutate_some_contract ~raise n main in
       match v with
       | None ->
          return (v_none ())
+      | Some (main, m) ->
+         return @@ (v_some (V_Record (Record.LMap.of_list [ (Label "0", V_Ast_contract { main ; views }) ; (Label "1", V_Mutation m) ]))))
+    | ( C_TEST_MUTATE_CONTRACT , _  ) -> fail @@ error_type
+    | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
+      let* () = check_value v in
+      let value_ty = nth_type 1 in
+      match Mutation.mutate_some_value ~raise ?syntax:options.frontend.syntax loc n v value_ty with
+      | None -> return @@ v_none ()
       | Some (e, m) ->
          let* v = eval_ligo e calltrace env in
-         return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
+         return @@ v_some (V_Record (Record.LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))
+    )
     | ( C_TEST_MUTATE_VALUE , _  ) -> fail @@ error_type
     | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _, _) as mutation)) ] ) ->
       let* reg = monad_option (Errors.generic_error loc "Not a valid mutation") @@ Location.get_file loc in
@@ -768,19 +777,18 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
           return (v_none ()))
     | ( C_TEST_SAVE_MUTATION , _  ) -> fail @@ error_type
     | ( C_TEST_TO_CONTRACT , [ addr ] ) ->
-       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
+       let contract_ty = nth_type 0 in
        let>> code = To_contract (loc, addr, None, contract_ty) in
        return code
     | ( C_TEST_TO_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_TO_ENTRYPOINT , [ V_Ct (C_string ent) ; addr ] ) ->
-       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
+       let contract_ty = nth_type 0 in
        let>> code = To_contract (loc, addr, Some ent, contract_ty) in
        return code
     | ( C_TEST_TO_ENTRYPOINT , _  ) -> fail @@ error_type
     | ( C_TEST_TO_TYPED_ADDRESS , [ V_Ct (C_contract { address; _ }) ] ) ->
        let>> () = Check_storage_address (loc, address, expr_ty) in
-       let addr = LT.V_Ct ( C_address address ) in
-       return addr
+       return @@ v_address address
     | ( C_TEST_TO_TYPED_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_RUN , [ V_Func_val f ; v ] ) ->
        let* () = check_value (V_Func_val f) in
@@ -789,18 +797,18 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
        return code
     | ( C_TEST_RUN , _  ) -> fail @@ error_type
     | ( C_TEST_DECOMPILE , [ V_Michelson (Ty_code { code_ty ; code ; ast_ty }) ] ) ->
-      let () =
-          trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "This Michelson value has assigned type '%a', which does not coincide with expected type '%a'." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@
-            AST.Helpers.assert_type_expression_eq ~unforged_tickets:true (ast_ty, expr_ty)
-      in
+      let () = trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "This Michelson value has assigned type '%a', which does not coincide with expected type '%a'." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@ AST.Helpers.assert_type_expression_eq ~unforged_tickets:true (ast_ty, expr_ty) in
       let>> v = Decompile (code, code_ty, expr_ty) in
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_CONTRACT , [ contract ] ) ->
-       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let>> code = Compile_contract (loc, contract) in
        return @@ code
     | ( C_TEST_COMPILE_CONTRACT , _  ) -> fail @@ error_type
+    | ( C_TEST_COMPILE_AST_CONTRACT , [ contract ] ) ->
+       let>> code = Compile_ast_contract (loc, contract) in
+       return @@ code
+    | ( C_TEST_COMPILE_AST_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_SIZE , [ contract ] ) ->
        let>> size = Get_size contract in
        return @@ size
@@ -818,7 +826,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
                    AST.Helpers.assert_type_expression_eq (parameter_ty, parameter_ty') in
       let* () = monad_option (Errors.generic_error loc "Storage in bootstrap contract does not match") @@
                    AST.Helpers.assert_type_expression_eq (storage_ty, storage_ty') in
-      return_ct (C_address address)
+      return (v_address address)
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_RANDOM , [ V_Ct (C_bool small) ] ) ->
       let* gen_type = monad_option (Errors.generic_error loc "Expected typed address") @@ AST.get_t_gen expr_ty in
@@ -832,15 +840,15 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       return v
     | ( C_TEST_GENERATOR_EVAL , _ ) -> fail @@ error_type
     | ( C_TEST_SET_BIG_MAP , [ V_Ct (C_int n) ; V_Map kv ] ) ->
-      let bigmap_ty = List.nth_exn types 1 in
+      let bigmap_ty = nth_type 1 in
       let>> () = Set_big_map (n, kv, bigmap_ty) in
-      return_ct (C_unit)
+      return @@ v_unit ()
     | ( C_TEST_SET_BIG_MAP , _  ) -> fail @@ error_type
     | ( C_TEST_CAST_ADDRESS , [ V_Ct (C_address x) ] ) ->
       let (_, ty) = trace_option ~raise (Errors.generic_error expr_ty.location "Expected typed_address type") @@
                            Ast_aggregated.get_t_typed_address expr_ty in
       let>> () = Add_cast (loc, x, ty) in
-      return_ct (C_address x)
+      return @@ v_address x
     | ( C_TEST_CAST_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_ADD_ACCOUNT , [ V_Ct (C_string sk) ; V_Ct (C_key pk) ] ) ->
       let>> () = Add_account (loc, calltrace, sk, pk) in
@@ -868,7 +876,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_CREATE_CHEST , _  ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
-      return @@ V_Ct (C_bytes chest_key)
+      return @@ v_bytes chest_key
     | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) ->
       let>> vp = Get_voting_power (loc, calltrace, hk) in
@@ -880,7 +888,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
     | ( C_TEST_REGISTER_CONSTANT , [ V_Michelson (Ty_code { code ; _ } | Untyped_code code) ] ) ->
       let>> s = Register_constant (loc, calltrace, code) in
-      return @@ V_Ct (C_string s)
+      return @@ v_string s
     | ( C_TEST_REGISTER_CONSTANT , _ ) -> fail @@ error_type
     | ( C_TEST_CONSTANT_TO_MICHELSON , [ V_Ct (C_string m) ] ) ->
       let>> s = Constant_to_Michelson (loc, calltrace, m) in
@@ -892,15 +900,15 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_REGISTER_FILE_CONSTANTS , _ ) -> fail @@ error_type
     | ( C_TEST_PUSH_CONTEXT , [ V_Ct C_unit ] ) ->
       let>> () = Push_context () in
-      return @@ V_Ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_PUSH_CONTEXT , _ ) -> fail @@ error_type
     | ( C_TEST_POP_CONTEXT , [ V_Ct C_unit ] ) ->
       let>> () = Pop_context () in
-      return @@ V_Ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( C_TEST_DROP_CONTEXT , [ V_Ct C_unit ] ) ->
       let>> () = Drop_context () in
-      return @@ V_Ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_DROP_CONTEXT , _ ) -> fail @@ error_type
     | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string fn) ] ) ->
       let>> contract = Read_contract_from_file (loc, calltrace, fn) in
@@ -910,11 +918,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let>> signature = Sign (loc, calltrace, sk, d) in
       return @@ signature
     | ( C_TEST_SIGN , _ ) -> fail @@ error_type
-    | ( C_TEST_GET_ENTRYPOINT , [ V_Ct (C_contract { address = _ ; entrypoint }) ] ) ->
-       let v = match entrypoint with
-         | None -> v_none ()
-         | Some s -> v_some (v_string s) in
-      return @@ v
+    | ( C_TEST_GET_ENTRYPOINT , [ V_Ct (C_contract { address = _ ; entrypoint }) ] ) -> (
+      match entrypoint with
+      | None -> return @@ v_none ()
+      | Some s -> return @@ v_some (v_string s)
+    )
     | ( C_TEST_GET_ENTRYPOINT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
@@ -935,47 +943,47 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
   )
 
 (*interpreter*)
-and eval_literal : AST.literal -> value Monad.t = function
-  | Literal_unit           -> Monad.return @@ V_Ct (C_unit)
-  | Literal_int i          -> Monad.return @@ V_Ct (C_int i)
-  | Literal_nat n          -> Monad.return @@ V_Ct (C_nat n)
-  | Literal_timestamp i    -> Monad.return @@ V_Ct (C_timestamp i)
-  | Literal_string s       -> Monad.return @@ V_Ct (C_string (Ligo_string.extract s))
-  | Literal_bytes s        -> Monad.return @@ V_Ct (C_bytes s)
-  | Literal_mutez s        -> Monad.return @@ V_Ct (C_mutez s)
+and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
+  | Literal_unit           -> Monad.return @@ v_unit ()
+  | Literal_int i          -> Monad.return @@ v_int i
+  | Literal_nat n          -> Monad.return @@ v_nat n
+  | Literal_timestamp i    -> Monad.return @@ v_timestamp i
+  | Literal_string s       -> Monad.return @@ v_string (Ligo_string.extract s)
+  | Literal_bytes s        -> Monad.return @@ v_bytes s
+  | Literal_mutez s        -> Monad.return @@ v_mutez s
   | Literal_key_hash s     -> (
     match Tezos_crypto.Signature.Public_key_hash.of_b58check s with
-    | Ok kh -> Monad.return @@ V_Ct (C_key_hash kh)
+    | Ok kh -> Monad.return @@ v_key_hash kh
     | Error _ -> Monad.fail @@ Errors.literal Location.generated (Literal_key_hash s)
   )
   | Literal_key s          -> (
     match Tezos_crypto.Signature.Public_key.of_b58check s with
-    | Ok k -> Monad.return @@ V_Ct (C_key k)
+    | Ok k -> Monad.return @@ v_key k
     | Error _ -> Monad.fail @@ Errors.literal Location.generated (Literal_key s)
   )
   | Literal_signature s    -> (
     match Tezos_crypto.Signature.of_b58check s with
-    | Ok s -> Monad.return @@ V_Ct (C_signature s)
+    | Ok s -> Monad.return @@ v_signature s
     | Error _ -> Monad.fail @@ Errors.literal Location.generated (Literal_signature s)
   )
   | Literal_address s      -> (
     match Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s with
-    | Ok t -> Monad.return @@ V_Ct (C_address t)
+    | Ok t -> Monad.return @@ v_address t
     | Error _ -> Monad.fail @@ Errors.literal Location.generated (Literal_address s)
   )
   | Literal_bls12_381_g1 b -> (
     match Bls12_381.G1.of_bytes_opt b with
-    | Some t -> Monad.return @@ V_Ct (C_bls12_381_g1 t)
+    | Some t -> Monad.return @@ v_bls12_381_g1 t
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g1 b)
   )
   | Literal_bls12_381_g2 b -> (
     match Bls12_381.G2.of_bytes_opt b with
-    | Some t -> Monad.return @@ V_Ct (C_bls12_381_g2 t)
+    | Some t -> Monad.return @@ v_bls12_381_g2 t
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g2 b)
   )
   | Literal_bls12_381_fr b -> (
     match Bls12_381.Fr.of_bytes_opt b with
-    | Some t -> Monad.return @@ V_Ct (C_bls12_381_fr t)
+    | Some t -> Monad.return @@ v_bls12_381_fr t
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_fr b)
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
@@ -993,36 +1001,26 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         let* args' = eval_ligo args calltrace env in
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-            let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
+            let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             eval_ligo { body with location = term.location } (term.location :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda} ->
-            let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
+            let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo { body with location = term.location } (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) -> (
             let () = match code with
               | Seq (_, [ Prim (_,"FAILWITH",_,_) ]) -> raise.warning (`Use_meta_ligo term.location)
-              | _ -> ()
-            in
-            let>> ctxt = Get_state () in
-            match Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression with
-            | Ok v -> return v
-            | Error data -> (
-              let { type1 = data_t ; _ } = AST.get_t_arrow_exn f.type_expression in
-              let data_t = Michelson_backend.compile_type ~raise data_t in
-              let data_opt = to_option @@ Michelson_to_value.decompile_to_untyped_value ~bigmaps:[] (clean_locations data_t) (clean_locations data) in
-              match data_opt with
-              | Some data -> fail @@ Errors.meta_lang_eval term.location calltrace data
-              | None -> fail @@ Errors.target_lang_failwith term.location data
-            )
+              | _ -> () in
+            let>> v = Run_Michelson (term.location, calltrace, code, term.type_expression, args', args.type_expression) in
+            return v
           )
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
-    | E_lambda {binder; result;} ->
+    | E_lambda {binder; output_type=_; result;} ->
       let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
-      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
@@ -1035,31 +1033,31 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       eval_literal l
     | E_variable var ->
       let fst (a, _, _) = a in
-      let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" AST.PP.expression_variable var)) in
+      let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" Value_var.pp var)) in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
         (fun (label,(v:AST.expression)) ->
           let* v' = eval_ligo v calltrace env in
           return (label,v'))
-        (LMap.to_kv_list_rev recmap)
+        (Record.LMap.to_kv_list_rev recmap)
       in
-      return @@ V_Record (LMap.of_list lv')
-    | E_record_accessor { record ; path} -> (
-      let* record' = eval_ligo record calltrace env in
+      return @@ V_Record (Record.of_list lv')
+    | E_accessor { struct_ ; path} -> (
+      let* record' = eval_ligo struct_ calltrace env in
       match record' with
       | V_Record recmap ->
-        let a = LMap.find path recmap in
+        let a = Record.LMap.find path recmap in
         return a
       | _ -> failwith "trying to access a non-record"
     )
-    | E_record_update {record ; path ; update} -> (
-      let* record' = eval_ligo record calltrace env in
+    | E_update {struct_ ; path ; update} -> (
+      let* record' = eval_ligo struct_ calltrace env in
       match record' with
       | V_Record recmap ->
-        if LMap.mem path recmap then
+        if Record.LMap.mem path recmap then
           let* field' = eval_ligo update calltrace env in
-          return @@ V_Record (LMap.add path field' recmap)
+          return @@ V_Record (Record.LMap.add path field' recmap)
         else
           failwith "field l does not exist in record"
       | _ -> failwith "this expression isn't a record"
@@ -1107,10 +1105,10 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         let env' = Env.extend env pattern (ty, proj) in
         eval_ligo body calltrace env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
-        let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
-        let cases = LMap.of_list (List.map ~f:ctor_body cases) in
+        let ctor_body (case : _ matching_content_case) = (case.constructor, case.body) in
+        let cases = Record.of_list (List.map ~f:ctor_body cases) in
         let get_case c =
-            (LMap.find (Label c) cases) in
+            (Record.LMap.find (Label c) cases) in
         let match_true  = get_case "True" in
         let match_false = get_case "False" in
         if b then eval_ligo match_true calltrace env
@@ -1118,8 +1116,8 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       | Match_variant {cases ; tv} , V_Construct (matched_c , proj) ->
         let* tv = match AST.get_t_sum_opt tv with
           | Some tv ->
-             let {associated_type; michelson_annotation=_; decl_pos=_} = LMap.find
-                                  (Label matched_c) tv.content in
+             let {associated_type; michelson_annotation=_; decl_pos=_}: row_element = Record.LMap.find
+                                  (Label matched_c) tv.fields in
              return associated_type
           | None ->
              match AST.get_t_option tv with
@@ -1136,21 +1134,21 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         let env' = Env.extend env pattern (tv, proj) in
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
-        let aux : label ->  _ binder -> env -> env =
+        let aux : Label.t ->  _ Binder.t -> env -> env =
           fun l {var;ascr;attributes=_} env ->
-            let iv = match LMap.find_opt l rv with
+            let iv = match Record.LMap.find_opt l rv with
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend env var (Option.value_exn ascr,iv)
+            Env.extend env var (ascr,iv)
         in
-        let env' = LMap.fold aux fields env in
+        let env' = Record.LMap.fold aux fields env in
         eval_ligo body calltrace env'
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" AST.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
-      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
                              arg_binder = lambda.binder.var ;
@@ -1159,7 +1157,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
     | E_raw_code {language ; code} -> (
       let open AST in
       match code.expression_content with
-      | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
+      | E_literal (Literal_string x) when String.equal language Backend.Michelson.name && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
         let ast_ty = get_type code in
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
@@ -1179,9 +1177,9 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let aux decl r =
     let ds, defs = r in
     match decl.Location.wrap_content with
-    | Ast_typed.Declaration_constant { binder ; expr ; _ } ->
+    | Ast_typed.D_value { binder ; expr ; _ } ->
       let var = binder.var in
-      if not (ValueVar.is_generated var) && (Base.String.is_prefix (ValueVar.to_name_exn var) ~prefix:"test") then
+      if not (Value_var.is_generated var) && (Base.String.is_prefix (Value_var.to_name_exn var) ~prefix:"test") then
         let expr = Ast_typed.(e_a_variable var expr.type_expression) in
         (* TODO: check that variables are unique, as they are ignored *)
         decl :: ds, (binder, expr.type_expression) :: defs
@@ -1193,9 +1191,9 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
-    let s, _ = ValueVar.internal_get_name_and_counter n.var in
-    LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
-  let map = List.fold_right lst ~f ~init:LMap.empty in
+    let s, _ = Value_var.internal_get_name_and_counter n.Binder.var in
+    Record.LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
+  let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
@@ -1203,8 +1201,8 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = ValueVar.internal_get_name_and_counter n.var in
-      match LMap.find_opt (Label s) m with
+      let s, _ = Value_var.internal_get_name_and_counter n.Binder.var in
+      match Record.LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in
     List.fold_right ~f ~init:[] @@ lst

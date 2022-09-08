@@ -1,5 +1,6 @@
 module Var = Simple_utils.Var
 open Test_helpers
+open Ligo_prim
 open Ast_imperative
 
 
@@ -25,7 +26,7 @@ let (stranger_addr , stranger_contract) =
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
+let empty_message = e_lambda_ez (Value_var.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 

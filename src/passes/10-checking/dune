@@ -14,4 +14,4 @@
   desugaring 
   syntax_types)
  (preprocess
-  (pps ppx_poly_constructor)))
+  (pps ppx_poly_constructor ppx_compare ppx_let ppx_here)))

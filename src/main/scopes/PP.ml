@@ -43,8 +43,8 @@ let rec definitions : Format.formatter -> def_map -> unit = fun f dm ->
 let rec def_to_yojson : def -> Yojson.Safe.t = function
   | Variable { name ; range ; body_range ; t ; references } ->
     let type_case_to_yojson t = match t with
-      | Core t -> `Assoc [ "core" , Ast_core.Yojson.type_expression t ]
-      | Resolved t -> `Assoc [ "resolved" , Ast_typed.Yojson.type_expression t ]
+      | Core t -> `Assoc [ "core" , Ast_core.type_expression_to_yojson t ]
+      | Resolved t -> `Assoc [ "resolved" , Ast_typed.type_expression_to_yojson t ]
       | Unresolved -> `Assoc [ "unresolved" , `Null ]
     in
     `Assoc [
@@ -59,7 +59,7 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
       ("name", `String name);
       ("range", Location.to_yojson range);
       ("body_range", Location.to_yojson body_range);
-      ("content", Ast_core.Yojson.type_expression content );
+      ("content", Ast_core.type_expression_to_yojson content );
     ]
   | Module { name ; range ; body_range ; mod_case ; references } ->
     ignore (mod_case,references); (* TODO: fix this *)

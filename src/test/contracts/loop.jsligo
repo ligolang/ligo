@@ -40,3 +40,17 @@ let counter_nest = (_n : int) : int => {
   let out : sum_aggregator = aux_nest (initial);
   return out.sum;
 };
+
+const testmap : map <int, int> =
+  Map.literal (list([
+    [0, 1],
+    [1, 2],
+    [2, 4]]));
+
+const entries = (x : map<int, int>) : list<[int,int]> => {
+    let lst = list ([]) ;
+    for (const kv of x) {
+      lst = list([kv, ...lst]);  
+    };
+    return lst
+};

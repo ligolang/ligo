@@ -7,8 +7,8 @@ let%expect_test _ =
       3 | let yy : string = match { a = 1 ; b = 2n ; c = "33" } with
       4 |   | { a = a ;  b = b ; c = c } -> a
 
-    Invalid type(s).
-    Expected: "string", but got: "int". |}] ;
+    Invalid type(s)
+    Cannot unify int with string. |}] ;
 
   run_ligo_good [ "run"; "interpret" ; "( (match (1,2n,\"3\") with | (a,b,c) -> a) : int )" ; "--syntax";"cameligo" ] ;
    [%expect {|

@@ -88,7 +88,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "view_restrictions.mligo" ; "--views" ; "bad_view2" ; "--protocol" ; "jakarta"  ] ;
   [%expect {| 
-    File "../../test/contracts/view_restrictions.mligo", line 17, characters 26-47:
+    File "../../test/contracts/view_restrictions.mligo", line 17, character 2 to line 18, character 3:
      16 | let bad_view2 ((),_: unit * int) : unit contract =
      17 |   let x : unit contract = Tezos.self "%default" in
      18 |   x

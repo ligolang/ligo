@@ -1,4 +1,4 @@
-@import url('/fonts/inter.css');
+@import url("/fonts/inter.css");
 
 /**
  * Any CSS included here will be global. The classic template
@@ -16,8 +16,7 @@
   --ifm-color-primary-lighter: rgb(102, 212, 189);
   --ifm-color-primary-lightest: #92e0d0;
   --blockquote-color: #efefef;
-  --ifm-code-font-size: .9rem;
-  
+  --ifm-code-font-size: 0.9rem;
 
   /* header */
   --ifm-navbar-link-hover-color: #0e74ff;
@@ -25,7 +24,7 @@
   /* footer */
   --ifm-footer-title-color: #fff;
   --ifm-footer-background-color: #0d0f33;
-  --ifm-footer-link-hover-color: hsla(0,0%,100%,.6);
+  --ifm-footer-link-hover-color: hsla(0, 0%, 100%, 0.6);
   --ifm-footer-color: #fff;
 }
 
@@ -55,7 +54,7 @@
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme='dark'] {
+[data-theme="dark"] {
   --color-primary-text: white;
   --blockquote-color: var(--ifm-navbar-background-color);
   --light-blue: var(--ifm-navbar-background-color);
@@ -67,8 +66,9 @@ html {
 }
 
 body {
-  font-family: 'Open Sans', sans-serif;
-  font-family: 'Inter var',SF Pro Text,Roboto,-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif;
+  font-family: "Open Sans", sans-serif;
+  font-family: "Inter var", SF Pro Text, Roboto, -apple-system,
+    BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif;
   font-weight: 400;
   font-size: 1rem;
   color: var(--color-primary-text);
@@ -77,14 +77,13 @@ body {
 
 code {
   /* font-family: 'Source Code Pro', monospace; */
-  font-family: Menlo,Roboto Mono,SFMono-Regular,Segoe UI,Courier,monospace;
+  font-family: Menlo, Roboto Mono, SFMono-Regular, Segoe UI, Courier, monospace;
   margin-left: 2px;
   margin-right: 2px;
   border-radius: 2px;
   border: none;
   outline: none;
 }
-
 
 pre {
   margin: 0px;
@@ -94,7 +93,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: 'DM Sans', sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-weight: bold;
   margin-top: 2rem;
 }
@@ -301,7 +300,7 @@ blockquote {
 }
 
 blockquote code {
-  opacity: 1;  
+  opacity: 1;
 }
 
 a,
@@ -544,7 +543,7 @@ a:hover {
 }
 
 #homePage h1 {
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-weight: bold;
   font-size: 1.875em;
 }
@@ -565,7 +564,7 @@ a:hover {
   list-style-type: none;
 }
 
-#homePage #intro #callToAction ul li a{
+#homePage #intro #callToAction ul li a {
   cursor: pointer;
   font-weight: normal;
   font-size: 2em;
@@ -573,7 +572,7 @@ a:hover {
   padding: 30px 50px;
 }
 
-#homePage #intro #callToAction ul li.secondary a{
+#homePage #intro #callToAction ul li.secondary a {
   margin-top: 1em;
 }
 
@@ -595,9 +594,9 @@ a:hover {
   display: flex;
 }
 
-#homePage #intro #preview  {
+#homePage #intro #preview {
   min-height: 450px;
-  max-width: 400px
+  max-width: 400px;
 }
 
 #homePage #intro #preview p {
@@ -625,7 +624,7 @@ a:hover {
   font-size: 1.25rem;
 }
 
-#partners {  
+#partners {
   background-color: var(--ifm-color-primary);
   color: white;
   font-size: 2.8rem;
@@ -898,7 +897,7 @@ a:hover {
 }
 
 @media (min-width: 1024px) {
-  .row .col { 
+  .row .col {
     padding-left: 3rem;
     padding-right: 3rem;
   }
@@ -910,7 +909,7 @@ a:hover {
   .nav-footer .sitemap {
     max-width: 1400px;
   }
-  #homePage #intro #preview  {
+  #homePage #intro #preview {
     min-width: 700px;
   }
 }
@@ -921,8 +920,19 @@ a:hover {
   }
 }
 
-
 @media (max-width: 1023px) {
+  #homePage {
+    margin-top: 0;
+  }
+
+  #callToAction {
+    margin-top: 24px;
+  }
+
+  #preview {
+    width: 100%;
+  }
+
   .centered {
     flex-direction: column;
     align-items: center;
@@ -951,10 +961,19 @@ a:hover {
   #homePage #intro #callToAction ul {
     display: flex;
     justify-content: space-around;
+    align-items: stretch;
   }
 
   #homePage #intro #callToAction ul li {
-    min-width: 260px;
+    /* min-width: 260px; */
+    font-size: 10px;
+    flex: 1 1 0px;
+  }
+
+  #homePage #intro #callToAction ul li a {
+    height: 100%;
+    display: flex;
+    align-items: center;
   }
 
   #homePage #intro #callToAction ul li.secondary a {
@@ -980,6 +999,18 @@ a:hover {
 }
 
 @media (max-width: 560px) {
+  #homePage {
+    margin-top: 0;
+  }
+
+  #callToAction {
+    margin-top: 24px;
+  }
+
+  #preview {
+    width: 100%;
+  }
+
   #homePage #intro #callToAction ul {
     display: block;
   }
@@ -1009,7 +1040,7 @@ a:hover {
 }
 
 .codeTable {
-  display: grid; 
+  display: grid;
   grid-template-columns: 30% 70%;
   align-items: center;
 }
@@ -1025,15 +1056,13 @@ a:hover {
   padding-right: 1rem;
 }
 
-
-.codeTable >  div:nth-child(4n+1) {
+.codeTable > div:nth-child(4n + 1) {
   background-color: var(--ifm-table-stripe-background);
 }
 
-.codeTable >  div:nth-child(4n+2) {
+.codeTable > div:nth-child(4n + 2) {
   background-color: var(--ifm-table-stripe-background);
 }
-
 
 .codeTable > .example {
   padding-top: var(--ifm-leading);
@@ -1051,7 +1080,7 @@ a:hover {
   width: 100%;
 }
 
-.boolean-example-table .operation{
+.boolean-example-table .operation {
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -1063,9 +1092,9 @@ a:hover {
   align-items: center;
 }
 
-.boolean-example-table >  div:nth-child(6n+1),
-.boolean-example-table >  div:nth-child(6n+2),
-.boolean-example-table >  div:nth-child(6n+3) {
+.boolean-example-table > div:nth-child(6n + 1),
+.boolean-example-table > div:nth-child(6n + 2),
+.boolean-example-table > div:nth-child(6n + 3) {
   background-color: var(--ifm-table-stripe-background);
 }
 

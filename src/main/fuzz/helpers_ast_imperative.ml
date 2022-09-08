@@ -1,4 +1,5 @@
 include Fuzz_shared.Monad
+open Ligo_prim
 open Ast_imperative
 
 module Fold_helpers(M : Monad) = struct
@@ -8,49 +9,50 @@ module Fold_helpers(M : Monad) = struct
   type 'a monad = 'a t
   let ok x = return x
 
-  let constructor : ('a -> 'b monad) -> 'a constructor -> ('b constructor) monad
+  let constructor : ('a -> 'b monad) -> 'a Constructor.t -> ('b Constructor.t) monad
     = fun f {constructor;element} ->
     let* element = f element in
-    ok @@ {constructor; element}
+    ok @@ Constructor.{constructor; element}
 
-  let application : ('a -> 'b monad) -> 'a application -> ('b application) monad
+  let application : ('a -> 'b monad) -> 'a Application.t -> ('b Application.t) monad
     = fun f {lamb;args} ->
     let* lamb = f lamb in
     let* args = f args in
-    ok @@ {lamb; args}
+    ok @@ Application.{lamb; args}
 
-  and binder : ('a -> 'b monad) -> 'a binder -> ('b binder) monad
+  and binder : ('a -> 'b monad) -> 'a Binder.t -> ('b Binder.t) monad
     = fun f {var; ascr; attributes} ->
-    let* ascr = bind_map_option f ascr in
-    ok @@ {var; ascr; attributes}
+    let* ascr = f ascr in
+    ok @@ Binder.{var; ascr; attributes}
 
-  let let_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) let_in -> (('b,'d) let_in) monad
+  let let_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Let_in.t -> (('b,'d) Let_in.t) monad
     = fun f g {let_binder; rhs; let_result; attributes} ->
     let* let_binder = binder g let_binder in
     let* rhs        = f rhs in
     let* let_result = f let_result in
-    ok @@ {let_binder; rhs; let_result; attributes}
+    ok @@ Let_in.{let_binder; rhs; let_result; attributes}
 
-  let type_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) type_in -> (('b,'d) type_in) monad
+  let type_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Type_in.t -> (('b,'d) Type_in.t) monad
     = fun f g {type_binder; rhs; let_result} ->
     let* rhs        = g rhs in
     let* let_result = f let_result in
-    ok @@ {type_binder; rhs; let_result}
+    ok @@ Type_in.{type_binder; rhs; let_result}
 
-  let lambda : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) lambda -> (('b,'d) lambda ) monad
+  let lambda : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Lambda.t -> (('b,'d) Lambda.t ) monad
     = fun f g {binder=b;output_type;result}->
     let* binder = binder g b in
-    let* output_type = bind_map_option g output_type in
+    let* output_type = g output_type in
     let* result = f result in
-    ok @@ {binder;output_type;result}
+    ok @@ Lambda.{binder;output_type;result}
 
-  let type_abs : ('a -> 'b monad) -> 'a type_abs -> ('b type_abs) monad
+  let type_abs : ('a -> 'b monad) -> 'a Type_abs.t -> ('b Type_abs.t) monad
     = fun f {type_binder;result}->
     let* result = f result in
-    ok @@ {type_binder;result}
+    ok @@ Type_abs.{type_binder;result}
 
-  let path : ('a -> 'b monad) -> 'a access list -> ('b access list) monad
+  let path : ('a -> 'b monad) -> 'a Access_path.t -> ('b Access_path.t) monad
     = fun f path ->
+    let open Access_path in
     let aux a = match a with
       | Access_record s -> ok @@ Access_record s
       | Access_tuple  i -> ok @@ Access_tuple  i
@@ -60,117 +62,108 @@ module Fold_helpers(M : Monad) = struct
     in
     bind_map_list aux path
 
-  let recursive : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) recursive -> (('b,'d) recursive) monad
+  let recursive : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Recursive.t -> (('b,'d) Recursive.t) monad
     = fun f g {fun_name;fun_type;lambda=l} ->
     let* fun_type = g fun_type in
     let* lambda = lambda f g l in
-    ok @@ {fun_name;fun_type;lambda}
+    ok @@ Recursive.{fun_name;fun_type;lambda}
 
-  let accessor : ('a -> 'b monad) -> 'a accessor -> ('b accessor) monad
-    = fun f {record;path=p} ->
-    let* record = f record in
+  let accessor : ('a -> 'b monad) -> 'a Accessor.t -> ('b Accessor.t) monad
+    = fun f {struct_;path=p} ->
+    let* struct_ = f struct_ in
     let* path   = path f p in
-    ok @@ ({record;path} : 'b accessor)
+    ok @@ ({struct_;path} : 'b Accessor.t)
 
-  let update : ('a -> 'b monad) -> 'a update -> ('b update) monad
-    = fun f {record;path=p;update} ->
-    let* record = f record in
+  let update : ('a -> 'b monad) -> 'a Update.t -> ('b Update.t) monad
+    = fun f {struct_;path=p;update} ->
+    let* struct_ = f struct_ in
     let* path   = path f p in
     let* update = f update in
-    ok @@ ({record;path;update} : 'b update)
+    ok @@ ({struct_;path;update} : 'b Update.t)
 
 
-  let sequence : ('a -> 'b monad) -> 'a sequence -> ('b sequence) monad
+  let sequence : ('a -> 'b monad) -> 'a Sequence.t -> ('b Sequence.t) monad
     = fun f {expr1;expr2} ->
     let* expr1 = f expr1 in
     let* expr2 = f expr2 in
-    ok @@ {expr1;expr2}
+    ok @@ Sequence.{expr1;expr2}
 
-  let ascription : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) ascription -> (('b,'d) ascription) monad
+  let ascription : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Ascription.t -> (('b,'d) Ascription.t) monad
     = fun f g {anno_expr; type_annotation} ->
     let* anno_expr = f anno_expr in
     let* type_annotation = g type_annotation in
-    ok @@ {anno_expr; type_annotation}
+    ok @@ Ascription.{anno_expr; type_annotation}
 
 
-  let conditional : ('a -> 'b monad) -> 'a conditional -> ('b conditional) monad
+  let conditional : ('a -> 'b monad) -> 'a Conditional.t -> ('b Conditional.t) monad
     = fun f {condition;then_clause;else_clause} ->
     let* condition   = f condition in
     let* then_clause = f then_clause in
     let* else_clause = f else_clause in
-    ok @@ {condition;then_clause;else_clause}
+    ok @@ Conditional.{condition;then_clause;else_clause}
 
-  let assign : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) assign -> ('b,'d) assign monad
+  let assign : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Assign.t -> ('b,'d) Assign.t monad
     = fun f g {binder=b; expression} ->
     let* binder      = binder g b in
     let* expression  = f expression in
-    ok @@ {binder; expression}
+    ok @@ Assign.{binder; expression}
 
-  let for_
+  let for_ : ('a -> 'b monad) -> 'a For_loop.t -> 'b For_loop.t monad
     = fun f {binder; start; final; incr; f_body} ->
     let* f_body = f f_body in
-    ok @@ {binder; start; final; incr; f_body}
+    ok @@ For_loop.{binder; start; final; incr; f_body}
 
-  let for_each
+  let for_each : ('a -> 'b monad) -> 'a For_each_loop.t -> 'b For_each_loop.t monad
     = fun f {fe_binder; collection; fe_body ; collection_type} ->
     let* collection = f collection in
     let* fe_body    = f fe_body in
-    ok @@ {fe_binder; collection; fe_body ; collection_type}
+    ok @@ For_each_loop.{fe_binder; collection; fe_body ; collection_type}
 
-  let while_loop
+  let while_loop : ('a -> 'b monad) -> 'a While_loop.t -> 'b While_loop.t monad
     = fun f {cond; body} ->
     let* cond = f cond in
     let* body = f body in
-    ok @@ {cond; body}
+    ok @@ While_loop.{cond; body}
 
   (* Declaration *)
-  let declaration_type : ('a -> 'b monad) -> ('a,_) declaration_type' -> (('b,_) declaration_type') monad
+  let declaration_type : ('a -> 'b monad) -> 'a Type_decl.t -> 'b Type_decl.t monad
     = fun g {type_binder; type_expr; type_attr} ->
     let* type_expr = g type_expr in
-    ok @@ {type_binder; type_expr; type_attr}
+    ok @@ Type_decl.{type_binder; type_expr; type_attr}
 
-  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_) declaration_constant' -> (('b,'d,_) declaration_constant') monad
+  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Value_decl.t -> ('b,'d) Value_decl.t monad
     = fun f g {binder=b; attr; expr} ->
     let* binder = binder g b in
     let* expr   = f expr     in
-    ok @@ {binder;attr;expr}
+    ok @@ Value_decl.{binder;attr;expr}
 
-  let rec declaration_module : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_,_,_) declaration_module' -> (('b,'d,_,_,_) declaration_module') monad
-    = fun f g {module_binder; module_;module_attr} ->
-    let* module_ = module_expr f g module_ in
-    ok @@ {module_binder;module_;module_attr}
+  let rec declaration_module : ('a -> 'b monad) -> 'a Module_decl.t -> 'b Module_decl.t monad
+    = fun f {module_binder; module_;module_attr} ->
+    let* module_ = f module_ in
+    ok @@ Module_decl.{module_binder;module_;module_attr}
 
-  and module_alias
-    = fun ma ->
-    ok @@ ma
+  and module' : _ -> module_ -> module_ monad
+    = fun f prg ->
+    bind_map_list f prg
 
-  and declaration
-    = fun f g -> function
-                Declaration_type    ty -> let* ty = declaration_type      g ty in ok @@ Declaration_type ty
-              | Declaration_constant c -> let* c  = declaration_constant f g c in ok @@ Declaration_constant c
-              | Declaration_module   m -> let* m  = declaration_module   f g m in ok @@ Declaration_module   m
-
-  and module' : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_,_,_) declarations' -> (('b,'d,_,_,_) declarations') monad
-    = fun f g prg ->
-    bind_map_list (bind_map_location (declaration f g)) prg
-
-  and module_expr : ('e_src -> 'e_dst monad) -> ('ty_src -> 'ty_dst monad) ->  ('e_src,'ty_src,_,_,_) module_expr' -> ('e_dst,'ty_dst,_,_,_) module_expr' monad =
-    fun map_e map_t mexp ->
+  and module_expr : (decl -> decl monad) ->  module_expr -> module_expr monad =
+    fun f mexp ->
+      let open Module_expr in
       bind_map_location
         (function
         | M_struct prg ->
-          let* prg = module' map_e map_t prg in
+          let* prg = module' f prg in
           ok (M_struct prg)
         | M_variable x -> ok (M_variable x)
         | M_module_path path -> ok (M_module_path path)
         )
         mexp
 
-  and mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_,_,_) mod_in' -> (('b,'d,_,_,_) mod_in') monad
+  let mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Mod_in.t -> ('b,'d) Mod_in.t monad
     = fun f g {module_binder; rhs; let_result} ->
-    let* rhs        = (module_expr f g) rhs in
+    let* rhs        = g rhs in
     let* let_result = f let_result in
-    ok @@ {module_binder; rhs; let_result}
+    ok @@ Mod_in.{module_binder; rhs; let_result}
 
 
   type 'err exp_mapper = expression -> expression monad
@@ -205,9 +198,9 @@ module Fold_helpers(M : Monad) = struct
     )
     | E_matching {matchee=e;cases} ->
        let* e' = self e in
-       let aux { pattern ; body } =
+       let aux Match_expr.{ pattern ; body } =
          let* body' = self body in
-         ok { pattern ; body = body'}
+         ok @@ Match_expr.{ pattern ; body = body'}
        in
        let* cases' = bind_map_list aux cases in
        return @@ E_matching {matchee=e';cases=cases'}
@@ -282,18 +275,20 @@ module Fold_helpers(M : Monad) = struct
     | E_while w ->
        let* w = while_loop self w in
        return @@ E_while w
-    | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ as e' -> return e'
+    | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> return e'
 
-  and map_module : 'err abs_mapper -> module_ -> (module_ ) monad = fun m p ->
-    let aux = fun (x : declaration_content) ->
-      match x,m with
-      | (Declaration_constant dc, Expression m') -> (
-        let* dc = declaration_constant (map_expression m') ok dc in
-        ok (Declaration_constant dc)
-      )
-      | decl,_ -> ok decl
-    in
+  and declaration m : declaration -> declaration monad = fun d ->
+    match d.wrap_content,m with
+    | (D_value dc, Expression m') -> (
+      let* dc = declaration_constant (map_expression m') ok dc in
+      ok ({d with wrap_content=D_value dc})
+    )
+    | _,_ -> ok @@ d
+  and decl m = fun (d : decl) : decl monad -> declaration m d
+  and map_module : 'err abs_mapper -> module_ -> module_ monad = fun m ->
+   bind_map_list (decl m)
 
-   bind_map_list (bind_map_location aux) p
+  let map_program : 'err abs_mapper -> program -> program monad = fun m ->
+   bind_map_list (declaration m)
 
 end

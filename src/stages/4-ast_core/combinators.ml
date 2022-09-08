@@ -1,5 +1,4 @@
 open Types
-open Stage_common.Constant
 
 (* Helpers for accessing and constructing elements are derived using
    `ppx_woo` (`@@deriving ez`) *)
@@ -28,8 +27,10 @@ type type_content = [%import: Types.type_content]
       default_get = `Option ;
     } ]
 
+open Ligo_prim
+open Ligo_prim.Literal_types
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
-  make_t ?loc ?sugar (T_app {type_operator=TypeVar.of_input_var (Stage_common.Constant.to_string type_operator);arguments})
+  make_t ?loc ?sugar (T_app {type_operator=Type_var.of_input_var (Literal_types.to_string type_operator);arguments})
 let t_abstraction ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_abstraction {ty_binder ; kind ; type_})
 let t_for_all ?loc ?sugar ty_binder kind type_ =
@@ -48,34 +49,34 @@ let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type_ 
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc ?sugar name kind : type_expression =
-  let ty_binder = TypeVar.fresh ~name:"_a" () in
+  let ty_binder = Type_var.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ty_binder ()] in
   t_abstraction ?loc ?sugar ty_binder kind type_
 let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression =
-  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
-  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
+  let ty_binder_l = Type_var.fresh ~name:"_l" () in
+  let ty_binder_r = Type_var.fresh ~name:"_r" () in
   let type_ = t_constant name [t_variable ty_binder_l () ; t_variable ty_binder_r ()] in
   t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_record ?loc ?sugar ?layout fields  : type_expression = make_t ?loc ?sugar @@ T_record {fields;layout}
-let default_layout = L_tree
+let default_layout = Layout.L_tree
 let make_t_ez_record ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
-  let map = LMap.of_list lst in
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
+  let map = Record.of_list lst in
   t_record ?loc ?sugar ?layout map
 
 let ez_t_record ?loc ?sugar ?(layout=default_layout) lst : type_expression =
-  let m = LMap.of_list lst in
+  let m = Record.of_list lst in
   t_record ?loc ?sugar ~layout m
 let t_pair ?loc ?sugar a b : type_expression =
   ez_t_record ?loc ?sugar [
-    (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
-    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ]
+    (Label.of_int 0,{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
+    (Label.of_int 1,{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ]
 
 let t_sum ?loc ?sugar ?layout fields : type_expression = make_t ?loc ?sugar @@ T_sum {fields;layout}
 let t_sum_ez ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
-  let map = LMap.of_list lst in
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
+  let map = Record.of_list lst in
   t_sum ?loc ?sugar ?layout map
 
 let t_bool ?loc ?sugar ()       : type_expression = t_sum_ez ?loc ?sugar
@@ -85,32 +86,32 @@ let t_arrow ?loc ?sugar param result : type_expression = t_arrow ?loc ?sugar {ty
 let t_shallow_closure ?loc ?sugar param result: type_expression = make_t ?loc ?sugar (T_arrow {type1=param; type2=result})
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
+  | t when (Types.compare_type_content t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 
-let get_t_option (t:type_expression) : type_expression option = 
+let get_t_option (t:type_expression) : type_expression option =
   match t.type_content with
   | T_sum {fields;_} ->
-    let keys = LMap.keys fields in
+    let keys = Record.LMap.keys fields in
     (match keys with
       [Label "Some" ; Label "None"]
     | [Label "None" ; Label "Some"] ->
-      let some = LMap.find (Label "Some") fields in
-      Some some.associated_type 
+      let some = Record.LMap.find (Label "Some") fields in
+      Some some.associated_type
     | _ -> None)
   | _ -> None
 
-let tuple_of_record (m: _ LMap.t) =
+let tuple_of_record (m: _ Rows.row_element_mini_c Record.t) =
   let aux i =
-    let opt = LMap.find_opt (Label (string_of_int i)) m in
+    let opt = Record.LMap.find_opt (Label.of_int i) m in
     Option.bind ~f: (fun opt -> Some (opt,i+1)) opt
   in
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
-  List.map ~f:(fun {associated_type;_} -> associated_type) l
+  List.map ~f:(fun Rows.{associated_type;_} -> associated_type) l
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
-  | T_record record -> Some (tuple_of_record record.fields)
+  | T_record struct_ -> Some (tuple_of_record struct_.fields)
   | _ -> None
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
@@ -122,12 +123,12 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
       )
   | _ -> None
 
-let ez_e_record (lst : (label * expression) list) : expression =
-  let aux prev (k, v) = LMap.add k v prev in
-  let map = List.fold_left ~f:aux ~init:LMap.empty lst in
+let ez_e_record (lst : (Label.t * expression) list) : expression =
+  let aux prev (k, v) = Record.LMap.add k v prev in
+  let map = List.fold_left ~f:aux ~init:Record.LMap.empty lst in
   e_record map ()
 
-let e_var       ?loc ?sugar n  : expression = e_variable (ValueVar.of_input_var ?loc n) ?loc ?sugar ()
+let e_var       ?loc ?sugar n  : expression = e_variable (Value_var.of_input_var ?loc n) ?loc ?sugar ()
 let e_unit      ?loc ?sugar () : expression = e_literal (Literal_unit) ?loc ?sugar ()
 let e_literal   ?loc ?sugar l  : expression = e_literal l ?loc ?sugar ()
 
@@ -158,8 +159,8 @@ let e_mod_in ?loc ?sugar module_binder rhs let_result = e_mod_in ?loc ?sugar { m
 let e_raw_code ?loc ?sugar language code = e_raw_code ?loc ?sugar {language; code} ()
 let e_constructor constructor element : expression = e_constructor {constructor;element} ()
 let e_matching ?loc ?sugar matchee cases : expression = e_matching ?loc ?sugar { matchee ; cases } ()
-let e_record_accessor ?loc ?sugar record path = e_record_accessor ?loc ?sugar ({record; path} : _ record_accessor) ()
-let e_record_update ?loc ?sugar record path update = e_record_update ?loc ?sugar ({record; path; update} : _ record_update) ()
+let e_record_accessor ?loc ?sugar struct_ path = e_accessor ?loc ?sugar ({struct_; path} : _ Types.Accessor.t) ()
+let e_record_update ?loc ?sugar struct_ path update = e_update ?loc ?sugar ({struct_; path; update} : _ Types.Update.t) ()
 let e_module_accessor ?loc ?sugar module_path element = e_module_accessor ?loc ?sugar {module_path;element} ()
 let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = e_ascription ?loc ?sugar {anno_expr;type_annotation} ()
 let e_lambda_ez   ?loc ?sugar var ?ascr ?const_or_var output_type result         = e_lambda ?loc ?sugar {var;ascr;attributes={const_or_var}} output_type result
@@ -200,7 +201,7 @@ let get_e_unit (t:expression) =
 let get_e_pair = fun t ->
   match t with
   | E_record r -> (
-  let lst = LMap.to_kv_list_rev r in
+  let lst = Record.LMap.to_kv_list_rev r in
     match lst with
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] ->
@@ -223,14 +224,14 @@ let get_e_list = fun t ->
 
 let get_e_tuple = fun t ->
   match t with
-  | E_record r -> Some (List.map ~f:snd @@ Helpers.tuple_of_record r)
+  | E_record r -> Some (List.map ~f:snd @@ Record.tuple_of_record r)
   | _ -> None
 
-let get_record_field_type (t : type_expression) (label : label) : type_expression option =
+let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option =
   match get_t_record t with
   | None -> None
-  | Some record ->
-    match LMap.find_opt label record.fields with
+  | Some struct_ ->
+    match Record.LMap.find_opt label struct_.fields with
     | None -> None
     | Some row_element -> Some row_element.associated_type
 
@@ -250,7 +251,7 @@ let get_type_abstractions (e : expression) =
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.expression_content with
   | E_record r -> (
-  let lst = LMap.to_kv_list_rev r in
+  let lst = Record.LMap.to_kv_list_rev r in
     match lst with
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] ->
@@ -259,9 +260,9 @@ let extract_pair : expression -> (expression * expression) option = fun e ->
     )
   | _ -> None
 
-let extract_record : expression -> (label * expression) list option = fun e ->
+let extract_record : expression -> (Label.t * expression) list option = fun e ->
   match e.expression_content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some (Record.LMap.to_kv_list lst)
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->
@@ -275,4 +276,4 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
   in
   Option.all @@ aux e
 
-let make_binder ?(ascr=None) ?(attributes={const_or_var = None}) var = { var ; ascr ; attributes }
+let make_binder ?(ascr=None) ?(attributes=Binder.{const_or_var = None}) var = Binder.{ var ; ascr ; attributes }

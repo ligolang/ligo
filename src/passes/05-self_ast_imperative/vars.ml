@@ -2,25 +2,26 @@ open Helpers
 open Errors
 open Ast_imperative
 open Simple_utils.Trace
+open Ligo_prim
 
 let get_of m l =
   List.filter_map ~f:(fun v ->
-      match List.find ~f:(ValueVar.equal v) l with
-      | Some d -> Some (ValueVar.get_location d, v)
+      match List.find ~f:(Value_var.equal v) l with
+      | Some d -> Some (Value_var.get_location d, v)
       | None -> None) m
 
 let is_var = fun x -> match x with
-                      | { const_or_var = Some `Var } -> true
+                      | Binder.{ const_or_var = Some `Var } -> true
                       | _ -> false
 
 let add_binder b var vars =
   let vars = remove_from var vars in
   if b then var :: vars else vars
 
-let rec capture_expression ~raise : ?vars:expression_variable list -> expression -> expression = fun ?(vars = []) e ->
+let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expression = fun ?(vars = []) e ->
   let self = capture_expression ~raise in
   let _ = fold_map_expression
-                 (fun (vars : expression_variable list) expr ->
+                 (fun (vars : Value_var.t list) expr ->
                    match expr.expression_content with
                    | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->
                       let fv_expr = Free_variables.expression expr in
@@ -36,7 +37,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                       let _ = self ~vars let_result in
                       (false, vars, expr)
                    | E_matching {matchee;cases} ->
-                      let f {pattern;body} =
+                      let f Match_expr.{pattern;body} =
                         let all_pattern_vars = get_pattern pattern in
                         let vars = List.fold_right ~f:remove_from all_pattern_vars ~init:vars in
                         let const_pattern_vars = get_pattern ~pred:is_var pattern in

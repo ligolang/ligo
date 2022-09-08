@@ -3,5 +3,10 @@
  (public_name ligo.ligo_interpreter)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils proto-alpha-utils tezos-utils ast_aggregated
-   stage_common qcheck))
+ (libraries
+  simple-utils
+  proto-alpha-utils
+  tezos-utils
+  ast_aggregated
+  ligo_prim
+  qcheck))

@@ -1,10 +1,11 @@
+open Ligo_prim
 module AST = Ast_typed
 
 module Aliases = struct
-  module MMap = Simple_utils.Map.Make(AST.ModuleVar)
-  type t = {inside : (t * AST.ModuleVar.t list option) MMap.t}
+  module MMap = Simple_utils.Map.Make(Module_var)
+  type t = {inside : (t * Module_var.t list option) MMap.t}
   let rec pp ppf {inside} =
-    Format.fprintf ppf "%a" (PP_helpers.list_sep_d (fun ppf (k,(t,v)) -> Format.fprintf ppf "%a => (%a,%a)" AST.ModuleVar.pp k pp t PP_helpers.(option (list_sep_d AST.ModuleVar.pp)) v )) @@ MMap.to_kv_list inside
+    Format.fprintf ppf "%a" (PP_helpers.list_sep_d (fun ppf (k,(t,v)) -> Format.fprintf ppf "%a => (%a,%a)" Module_var.pp k pp t PP_helpers.(option (list_sep_d Module_var.pp)) v )) @@ MMap.to_kv_list inside
   let empty = {inside = MMap.empty}
   let push aliases mvar path mod_aliases =
     {inside = MMap.add mvar (path,mod_aliases) aliases.inside}
@@ -20,18 +21,12 @@ let rec type_expression : Aliases.t -> AST.type_expression -> AST.type_expressio
   match te.type_content with
     T_variable type_variable ->
     return @@ T_variable type_variable
-  | T_sum {content;layout} ->
-    let content = AST.LMap.map AST.(fun {associated_type;michelson_annotation;decl_pos} ->
-      let associated_type = self associated_type in
-      {associated_type;michelson_annotation;decl_pos}
-    ) content in
-    return @@ T_sum {content;layout}
-  | T_record {content;layout} ->
-    let content = AST.LMap.map AST.(fun {associated_type;michelson_annotation;decl_pos} ->
-      let associated_type = self associated_type in
-      {associated_type;michelson_annotation;decl_pos}
-    ) content in
-    return @@ T_record {content;layout}
+  | T_sum {fields;layout} ->
+    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    return @@ T_sum {fields;layout}
+  | T_record {fields;layout} ->
+    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    return @@ T_record {fields;layout}
   | T_arrow {type1;type2} ->
     let type1 = self type1 in
     let type2 = self type2 in
@@ -64,23 +59,20 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
     let lamb = self lamb in
     let args = self args in
     return @@ E_application {lamb;args}
-  | E_lambda {binder={var;ascr;attributes};result} ->
-    let ascr = Option.map ~f:self_type ascr in
-    let result = self result in
-    return @@ E_lambda {binder={var;ascr;attributes};result}
+  | E_lambda l ->
+    let l = Lambda.map self self_type l in
+    return @@ E_lambda l
   | E_type_abstraction {type_binder;result} ->
     let result = self result in
     return @@ E_type_abstraction {type_binder;result}
-  | E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};result}} ->
-    let fun_type = self_type fun_type in
-    let ascr = Option.map ~f:self_type ascr in
-    let result = self result in
-    return @@ E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};result}}
-  | E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr} ->
-    let ascr = Option.map ~f:self_type ascr in
+  | E_recursive r ->
+    let r = Recursive.map self self_type r in
+    return @@ E_recursive r
+  | E_let_in {let_binder;rhs;let_result;attr} ->
+    let let_binder =  Binder.map self_type let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
-    return @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
+    return @@ E_let_in {let_binder;rhs;let_result;attr}
   | E_type_inst {forall; type_} ->
     let forall = self forall in
     let type_  = self_type type_ in
@@ -96,15 +88,15 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
     let cases = matching_cases aliases cases in
     return @@ E_matching {matchee;cases}
   | E_record record ->
-    let record = AST.LMap.map self record in
+    let record = Record.map self record in
     return @@ E_record record
-  | E_record_accessor {record;path} ->
-    let record = self record in
-    return @@ E_record_accessor {record;path}
-  | E_record_update {record;path;update} ->
-    let record = self record in
+  | E_accessor {struct_;path} ->
+    let struct_ = self struct_ in
+    return @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+    let struct_ = self struct_ in
     let update = self update in
-    return @@ E_record_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   | E_mod_in  {module_binder; rhs; let_result} ->
     let mod_aliases,path,rhs = compile_module_expr aliases rhs in
     let aliases = Aliases.push aliases module_binder mod_aliases path in
@@ -118,10 +110,10 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
         aliases, Option.value ~default:(mvar::module_path) path) in
     let module_path = List.rev module_path in
     return @@ E_module_accessor {module_path;element}
-  | E_assign {binder={var;ascr;attributes};expression} ->
-    let ascr = Option.map ~f:self_type ascr in
+  | E_assign {binder;expression} ->
+    let binder = Binder.map self_type binder in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};expression}
+    return @@ E_assign {binder;expression}
 
 and matching_cases : Aliases.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in
@@ -136,10 +128,7 @@ and matching_cases : Aliases.t -> AST.matching_expr -> AST.matching_expr = fun s
     let tv   = self_type tv in
     return @@ AST.Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = AST.LMap.map AST.(fun {var;ascr;attributes} ->
-      let ascr = Option.map ~f:self_type ascr in
-      {var;ascr;attributes}
-    ) fields in
+    let fields = Record.map (Binder.map self_type) fields in
     let body = self body in
     let tv   = self_type tv in
     return @@ AST.Match_record {fields;body;tv}
@@ -148,30 +137,39 @@ and compile_declaration aliases (d : AST.declaration) : Aliases.t * AST.declarat
   let return_s aliases wrap_content = aliases, Some {d with wrap_content} in
   let return_n aliases = aliases, None in
   match Location.unwrap d with
-    Declaration_constant {binder;expr;attr} ->
+    D_value {binder;expr;attr} ->
       let expr   = expression aliases expr in
-      let binder = Stage_common.Maps.binder (type_expression aliases) binder in
-      return_s aliases @@ AST.Declaration_constant {binder;expr;attr}
-  | Declaration_type {type_binder;type_expr;type_attr} ->
+      let binder = Binder.map (Option.map ~f:(type_expression aliases)) binder in
+      return_s aliases @@ AST.D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
       let type_expr = type_expression aliases type_expr in
-      return_s aliases @@ AST.Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+      return_s aliases @@ AST.D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
       let mod_aliases,path,module_  = compile_module_expr aliases module_ in
       let aliases = Aliases.push aliases module_binder mod_aliases path in
       match module_ with None -> return_n aliases
-      | Some module_ -> return_s aliases @@ AST.Declaration_module {module_binder;module_;module_attr}
+      | Some module_ -> return_s aliases @@ AST.D_module {module_binder;module_;module_attr}
 
 and compile_declaration_list aliases (program : AST.program) : Aliases.t * AST.program =
   let aliases,dcl = List.fold_map ~init:aliases ~f:(compile_declaration) program in
   let dcl = List.filter_opt dcl in
   aliases,dcl
 
-and compile_module_expr : Aliases.t -> AST.module_expr -> Aliases.t * AST.module_variable list option * AST.module_expr option =
+and compile_decl : Aliases.t -> AST.decl -> Aliases.t * AST.decl option =
+  fun s d -> compile_declaration s d
+
+
+and compile_module aliases (m : AST.module_) : Aliases.t * AST.module_ =
+  let aliases,dcl = List.fold_map ~init:aliases ~f:(compile_decl) m in
+  let dcl = List.filter_opt dcl in
+  aliases,dcl
+
+and compile_module_expr : Aliases.t -> AST.module_expr -> Aliases.t * Module_var.t list option * AST.module_expr option =
   fun aliases mexpr ->
     match mexpr.wrap_content with
     | M_struct prg -> (
-      let aliases,prg = compile_declaration_list aliases prg in
-      aliases, None, Some {mexpr with wrap_content=AST.M_struct prg}
+      let aliases,prg = compile_module aliases prg in
+      aliases, None, Some {mexpr with wrap_content=M_struct prg}
     )
     | M_variable v -> (
       let aliases,path = Aliases.get aliases v in

@@ -1,3 +1,4 @@
+open Ligo_prim
 open Simple_utils
 open Trace
 open Helpers
@@ -6,9 +7,9 @@ open Errors
 (**
   check_view_type checks against michelson restriction (usually defined in tezos/src/proto_alpha/lib_protocol/script_ir_translator.ml)
 **)
-let check_view_type ~raise : err_data:(Ast_typed.expression_variable * Ast_typed.type_expression Ast_typed.binder) -> contract_type -> Ast_typed.type_expression -> unit =
+let check_view_type ~raise : err_data:(Value_var.t * Ast_typed.type_expression Binder.t) -> contract_type -> Ast_typed.type_expression -> unit =
   fun ~err_data:(main_name,view_binder) {storage = c_storage ; _} view_ty ->
-    let view_loc = Ast_typed.ValueVar.get_location view_binder.var in
+    let view_loc = Value_var.get_location view_binder.var in
     let arg,v_storage,return =
       match Ast_typed.get_t_arrow view_ty with
       | Some { type1 = tin ; type2  = return } -> (
@@ -22,7 +23,6 @@ let check_view_type ~raise : err_data:(Ast_typed.expression_variable * Ast_typed
       Ast_typed.assert_type_expression_eq (c_storage,v_storage) in
       let type_check err (t: Ast_typed.type_expression) : unit =
       let aux (t: Ast_typed.type_expression) =
-        let open Stage_common.Constant in
         match t.type_content with
         | T_constant { injection = Big_map       ; _ }
         | T_constant { injection = Sapling_state ; _ }

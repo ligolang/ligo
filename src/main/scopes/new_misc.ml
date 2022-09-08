@@ -1,6 +1,7 @@
+open Ligo_prim
 open New_types
 
-module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
+module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Value_var.compare end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t
 
 let rec extract_variable_types :
@@ -20,7 +21,7 @@ let rec extract_variable_types :
       match exp.expression_content with
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _
       | E_type_abstraction _ | E_mod_in _
-      | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
+      | E_record _ | E_accessor _ | E_update _ | E_constant _ -> return []
       | E_type_inst _ -> return [] (* TODO *)
       | E_variable v -> return [(v,exp.type_expression)]
       | E_lambda { binder ; _ } ->
@@ -44,34 +45,34 @@ let rec extract_variable_types :
         | Match_variant {cases ; tv=_} -> (
           match Ast_typed.get_t_sum matchee.type_expression with
             | Some variant_t ->
-              let aux : Ast_typed.matching_content_case -> (Ast_typed.expression_variable * Ast_typed.type_expression) =
+              let aux : _ Ast_typed.matching_content_case -> (Ast_typed.expression_variable * Ast_typed.type_expression) =
                 fun { constructor ; pattern ; _ } ->
-                  let proj_t = (Ast_typed.LMap.find constructor variant_t.content).associated_type in
+                  let proj_t = (Record.LMap.find constructor variant_t.fields).associated_type in
                   (pattern,proj_t)
               in
               return (List.map ~f:aux cases)
             | None -> (
               match Ast_typed.get_t_list matchee.type_expression with
               | Some list_proj ->
-                let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
+                let x = List.find_exn ~f:(fun ({constructor=Label l;_}:_ Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
                 let t = Ast_typed.t_pair list_proj matchee.type_expression in
                 return [(x.pattern,t)]
               | None -> failwith "matched value in the Match_variant: wrong type"
             )
         )
         | Match_record { fields ; _ }  ->
-          let aux = fun Ast_typed.{var;ascr;attributes=_} -> (var, Option.value_exn ~here:[%here] ascr) in
-          return (List.map ~f:aux @@ Ast_typed.LMap.to_list fields)
+          let aux = fun Binder.{var;ascr;attributes=_} -> (var, ascr) in
+          return (List.map ~f:aux @@ Record.LMap.to_list fields)
       )
       | E_module_accessor { element=e ; _ } -> return [(e,exp.type_expression)]
     in
     match decl with
-    | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> prev
-    | Declaration_constant { binder ; expr ; _ } ->
+    | D_value { attr = { hidden = true ; _ } ; _ } -> prev
+    | D_value { binder ; expr ; _ } ->
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
-    | Declaration_type _ -> prev
-    | Declaration_module { module_ ; _ } ->
+    | D_type _ -> prev
+    | D_module { module_ ; _ } ->
       (match module_.wrap_content with
       | M_variable _ -> prev
       | M_module_path _ -> prev
@@ -80,7 +81,7 @@ let rec extract_variable_types :
           ~f:(fun prev d -> extract_variable_types prev d.wrap_content))
 
 let resolve_if :
-  with_types:bool -> bindings_map -> Ast_core.expression_variable -> type_case =
+  with_types:bool -> bindings_map -> Value_var.t -> type_case =
   fun ~with_types bindings var ->
     if with_types then (
       let t_opt = Bindings_map.find_opt var bindings in
@@ -91,7 +92,7 @@ let resolve_if :
     else Unresolved
 
 let make_v_def :
-  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> Ast_core.expression_variable -> Location.t -> Location.t -> def =
+  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> Value_var.t -> Location.t -> Location.t -> def =
   fun ~with_types ?core_type bindings var range body_range ->
     let type_case = match core_type with
       | Some t -> Core t

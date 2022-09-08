@@ -4,6 +4,7 @@ module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 module Raw_options = Compiler_options.Raw_options
+open Ligo_prim
 
 let test (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) @@
@@ -23,7 +24,7 @@ let dry_run (raw_options : Raw_options.t) source_file parameter storage amount b
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
-      let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
+      let entry_point = Value_var.of_input_var entry_point in
       let typed_prg = Build.merge_and_type_libraries ~raise ~options source_file in
       let aggregated_prg = Compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
       let mini_c_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
