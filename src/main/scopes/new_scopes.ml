@@ -303,66 +303,14 @@ module Free = struct
           defs, refs, tenv, scopes
 end
 
-module Def_map = Types.Def_map
-let rec to_def_map : def list -> Types.def_map
-  = fun defs ->
-      let defs = List.rev defs in
-      List.fold_left defs ~init:Def_map.empty
-        ~f:(fun def_map def ->
-          match def with
-            Variable v ->
-              let def_name = make_def_id v.name in
-              let t = match v.t with 
-                New_types.Unresolved -> Types.Unresolved 
-              | Core t -> Types.Core t
-              | Resolved t -> Types.Resolved t
-              in
-              let def = Types.Variable {
-                name  = v.name ;
-                range = v.range ;
-                body_range = v.body_range ;
-                t ;
-                references = v.references ;
-              } in
-              Def_map.add def_name def def_map
-          | Type t ->
-              let def_name = t.uid in
-              let def = Types.Type {
-                name  = t.name ;
-                range = t.range ;
-                body_range = t.body_range ;
-                content = t.content ;
-              } in
-              Def_map.add def_name def def_map
-          | Module ({ mod_case = Alias a } as m) ->
-              let def_name = m.uid in
-              let mod_case = Types.Alias a in
-              let def = Types.Module {
-                name = m.name ;
-                range = m.range ;
-                body_range = m.body_range ;
-                references = m.references ;
-                mod_case ;
-              } in
-              Def_map.add def_name def def_map
-          | Module ({ mod_case = Def d } as m) ->
-              let def_name = m.uid in
-              let mod_case = Types.Def (to_def_map d) in
-              let def = Types.Module {
-                name = m.name ;
-                range = m.range ;
-                body_range = m.body_range ;
-                references = m.references ;
-                mod_case ;
-              } in
-              Def_map.add def_name def def_map
-        )
+
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _refs, _, scopes = Free.declarations ~with_types ~options tenv prg in
       let scopes = merge_same_scopes scopes in
-      let def_map = to_def_map defs in
+      (* TODO: resolve module aliases -> module definion ids *)
+      (* let def_map = to_def_map defs in
       let () = Format.printf "----------------------------------\n" in
       let () = Format.printf "%a\n" PP.definitions def_map in
       let () = Format.printf "----------------------------------\n" in
@@ -372,8 +320,8 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
         let bs = String.concat ~sep:", " bs in
         Format.printf "[%s] %a\n" bs Location.pp loc  
       ) scopes in
-      let () = Format.printf "++++++++++++++++++++++++++++++++++\n" in
-      [], scopes
+      let () = Format.printf "++++++++++++++++++++++++++++++++++\n" in *)
+      defs, scopes
 
 (*
 
@@ -383,9 +331,8 @@ a function on expression will returns def list & references (vars) list
 for an expression its free_variable will be references
 
 7. Add comments
-8. Add PP for new implementation
 9. update schema.json
-10. fix shadowing :( a.local binding b.local modules
 11. validate the output of each and every get-scope test
+12. resolve module alias -> module def id
 
 *)
