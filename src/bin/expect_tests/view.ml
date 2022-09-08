@@ -143,4 +143,30 @@ let%expect_test _ =
 
     This declaration holds an annotation and is later shadowed. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "views_using_view.jsligo" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { DROP ; PUSH int 0 ; NIL operation ; PAIR } ;
+      view "basic" address int { CDR ; PUSH int 0 ; ADD } ;
+      view "not_funny" unit int { PUSH int 0 ; SWAP ; CDR ; DUP 2 ; ADD ; ADD } ;
+      view "get_storage" unit int { CDR ; PUSH int 0 ; ADD } ;
+      view "get_address" unit address { DROP ; SENDER } ;
+      view "super_not_funny"
+           unit
+           int
+           { PUSH int 0 ;
+             SWAP ;
+             CDR ;
+             DUP ;
+             DUP 3 ;
+             ADD ;
+             SWAP ;
+             DUP 3 ;
+             ADD ;
+             DIG 2 ;
+             ADD ;
+             ADD } } |}]
+
     
