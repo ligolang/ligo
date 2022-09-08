@@ -3,10 +3,10 @@ class Ligo < Formula
   homepage "https://ligolang.org/"
 
   # We clone repo explicitely to preserve the information about git submodules
-  url "https://gitlab.com/ligolang/ligo.git", tag: "0.49.0", revision: "d2a2e28af2e0d0bfaac16b585ef92def5cdf57a7"
+  url "https://gitlab.com/ligolang/ligo.git", tag: "0.50.0", revision: "72058014480aeb021be530addcf93ac1386f7f4a"
 
   bottle do
-    root_url "https://github.com/ligolang/homebrew-ligo/releases/download/v#{Ligo.version}"
+    root_url "https://gitlab.com/ligolang/ligo/-/jobs/2959700000/artifacts/raw/ligo"
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]
