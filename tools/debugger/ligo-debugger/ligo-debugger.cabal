@@ -81,10 +81,13 @@ library
     , data-default
     , directory
     , dlist
+    , duplo
     , filepath
     , fmt
+    , hashable
     , lens
     , lens-aeson
+    , ligo-squirrel
     , morley
     , morley-debugger
     , morley-prelude
@@ -231,6 +234,7 @@ test-suite ligo-debugger-test
     , fmt
     , lens
     , ligo-debugger
+    , ligo-squirrel
     , morley
     , morley-debugger
     , morley-prelude
@@ -240,4 +244,5 @@ test-suite ligo-debugger-test
     , tasty
     , tasty-hunit-compat
     , text
+    , unordered-containers
   default-language: Haskell2010

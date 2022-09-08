@@ -147,6 +147,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
   , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
   , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
+  , S.requestHandler J.STextDocumentDocumentHighlight handleDocumentHighlightRequest
   , S.requestHandler J.STextDocumentCompletion handleCompletionRequest
   , S.requestHandler J.STextDocumentSignatureHelp handleSignatureHelpRequest
   , S.requestHandler J.STextDocumentFoldingRange handleFoldingRangeRequest
@@ -199,9 +200,9 @@ handleDidChangeTextDocument notif = do
     notify :: ContractInfo' -> RIO ()
     notify doc = do
       let ver = notif^.J.params.J.textDocument.J.version
-      Diagnostic.collectErrors doc ver
       void $ Document.wccForFilePath (contractFile doc) >>=
         traverseAM (Diagnostic.clearDiagnostics . filePathToNormalizedUri)
+      Diagnostic.collectErrors doc ver
 
 handleDidSaveTextDocument :: S.Handler RIO 'J.TextDocumentDidSave
 handleDidSaveTextDocument notif = do
@@ -291,6 +292,18 @@ handleFindReferencesRequest req respond = do
           Nothing   -> []
     $(Log.debug) [i|Find references request returned #{locations}|]
     respond . Right . J.List $ locations
+
+handleDocumentHighlightRequest :: S.Handler RIO 'J.TextDocumentDocumentHighlight
+handleDocumentHighlightRequest req respond = do
+    let (_, nuri, pos) = getUriPos req
+    tree <- contractTree <$> Document.fetch Document.NormalEffort nuri
+    let locations = case AST.referencesOf pos tree of
+          Just refs -> toLocation <$> refs
+          Nothing -> []
+    $(Log.debug) [i|Document highlight request returned #{locations}|]
+    let defaultKind = Just J.HkRead
+        highlights = (`J.DocumentHighlight` defaultKind) . (^. J.range) <$> locations
+    respond . Right . J.List $ highlights
 
 handleCompletionRequest :: S.Handler RIO 'J.TextDocumentCompletion
 handleCompletionRequest req respond = do

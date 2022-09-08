@@ -8,6 +8,8 @@ module Util
   , findKey
   , mapJsonText
   , traverseJsonText
+  , lazyBytesToText
+  , textToLazyBytes
 
   -- * Debugging utilities
   , validate
@@ -17,10 +19,13 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as KM
 import Data.Aeson.Key qualified as Key
 import Data.Bitraversable (bitraverse)
+import Data.ByteString.Lazy (ByteString)
 import Data.Foldable (foldlM)
 import Data.Functor.Identity (Identity (..))
 import Data.Map.Internal qualified as MI
 import Data.Text (Text)
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Encoding qualified as TL
 import Language.LSP.Types qualified as J
 import Witherable (ordNub)
 
@@ -99,3 +104,11 @@ validate (info :< tree) = info :< fmap (go info) tree
     go info' (info'' :< tree')
       | info'' `leq` info' = info'' :< fmap (go info'') tree'
       | otherwise = error $ show info'' <> " ≰ " <> show info'
+
+-- | Decodes lazy @ByteString@ to strict @Text@.
+lazyBytesToText :: ByteString -> Text
+lazyBytesToText = TL.toStrict . TL.decodeUtf8
+
+-- | Encodes strict @Text@ to lazy @ByteString@.
+textToLazyBytes :: Text -> ByteString
+textToLazyBytes = TL.encodeUtf8 . TL.fromStrict

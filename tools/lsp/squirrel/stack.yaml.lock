@@ -5,126 +5,126 @@
 
 packages:
 - completed:
-    subdir: lsp-types
     name: lsp-types
-    version: 1.5.0.0
-    git: https://github.com/haskell/lsp.git
+    subdir: lsp-types
     pantry-tree:
-      size: 4160
       sha256: 8700dc38e8aeac889d0ba7ce2a7dd2b8579e26608f64b220f5e790f0633dce24
+      size: 4160
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
+    version: 1.5.0.0
   original:
     subdir: lsp-types
-    git: https://github.com/haskell/lsp.git
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
 - completed:
-    subdir: lsp
     name: lsp
-    version: 1.5.0.0
-    git: https://github.com/haskell/lsp.git
+    subdir: lsp
     pantry-tree:
-      size: 1551
       sha256: 8d13180ceb84b5b0f24ba4df81109dd7300adc5e471579b933a86f5941bbe5c0
+      size: 1551
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
+    version: 1.5.0.0
   original:
     subdir: lsp
-    git: https://github.com/haskell/lsp.git
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
 - completed:
-    subdir: lsp-test
     name: lsp-test
-    version: 0.14.0.3
-    git: https://github.com/haskell/lsp.git
+    subdir: lsp-test
     pantry-tree:
-      size: 2061
       sha256: 415236a1e28d1c93b0f87f0422c86e7becf7be8fc23f557abab628298b0a7b3c
+      size: 2061
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
+    version: 0.14.0.3
   original:
     subdir: lsp-test
-    git: https://github.com/haskell/lsp.git
     commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+    git: https://github.com/haskell/lsp.git
 - completed:
     name: tree-sitter
-    version: 0.9.0.2
-    git: https://github.com/serokell/tree-sitter.git
     pantry-tree:
+      sha256: 0b89f31225bdd760f25a25e3c700c45e87f1a8f772813e97bd662e193618d0a1
       size: 34417
-      sha256: e8d89e2f5ef5ead6eb0164ac986fba4ec19ea7f0af805cb39dffc2b8e5283cd4
-    commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
-  original:
+    commit: 59b427b5739c5ae348addcedac31632a663f2a45
     git: https://github.com/serokell/tree-sitter.git
-    commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
+    version: 0.9.0.2
+  original:
+    commit: 59b427b5739c5ae348addcedac31632a663f2a45
+    git: https://github.com/serokell/tree-sitter.git
 - completed:
     name: co-log-core
-    version: 0.3.1.0
-    git: https://github.com/co-log/co-log-core.git
     pantry-tree:
-      size: 872
       sha256: 52ef0d55fb2b4c86357369f48f6dcdef81e80a161917befc9ce15129d8eaec20
+      size: 872
     commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
-  original:
     git: https://github.com/co-log/co-log-core.git
+    version: 0.3.1.0
+  original:
     commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+    git: https://github.com/co-log/co-log-core.git
 - completed:
     name: text-rope
-    version: '0.2'
-    git: https://github.com/Bodigrim/text-rope
     pantry-tree:
-      size: 1431
       sha256: e26b7ce27f67a1a2bf58fe88f817a98722d83cefed2b89e8e1530da2e05e1485
+      size: 1431
     commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
-  original:
     git: https://github.com/Bodigrim/text-rope
+    version: '0.2'
+  original:
     commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+    git: https://github.com/Bodigrim/text-rope
 - completed:
-    hackage: fastsum-0.2.0.0@sha256:7abc9ceddc3dfb67420c927c0e69d9248c9e8d5877f53cd8fb76a63e72ce7ddb,2394
     pantry-tree:
-      size: 431
       sha256: 294ee5f98315161f27487e56425b8f1d3e59914607d1f467a9844b2befaa576d
+      size: 431
+    hackage: fastsum-0.2.0.0@sha256:7abc9ceddc3dfb67420c927c0e69d9248c9e8d5877f53cd8fb76a63e72ce7ddb,2394
   original:
     hackage: fastsum-0.2.0.0
 - completed:
-    hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
     pantry-tree:
-      size: 761
       sha256: 20b1076bdb121347ccc512a67df697eed34815a8e35279b6b9a0951963b1eba2
+      size: 761
+    hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
   original:
     hackage: stm-containers-1.2
 - completed:
-    hackage: stm-hamt-1.2.0.7@sha256:e8ecba11580ae2ea839cc3b7a25adcce40810aa472b544728790d28804c912ee,3972
     pantry-tree:
-      size: 1009
       sha256: 2de07a746d44aebcff4b7b644373ae4aa5a505457b684ca02ae5a74605991d6b
+      size: 1009
+    hackage: stm-hamt-1.2.0.7@sha256:e8ecba11580ae2ea839cc3b7a25adcce40810aa472b544728790d28804c912ee,3972
   original:
     hackage: stm-hamt-1.2.0.7
 - completed:
-    hackage: primitive-extras-0.10.1.4@sha256:780726757a8ca5bad6d82e77180fb1ec5a1ba73073b7bd8ccf24cb60e11ab4fe,2959
     pantry-tree:
-      size: 1096
       sha256: c3b43cb57ca32200e0199c6b4a3cd23ca04415257c1266d08707f53ac4d89ec5
+      size: 1096
+    hackage: primitive-extras-0.10.1.4@sha256:780726757a8ca5bad6d82e77180fb1ec5a1ba73073b7bd8ccf24cb60e11ab4fe,2959
   original:
     hackage: primitive-extras-0.10.1.4
 - completed:
-    hackage: primitive-unlifted-0.1.3.1@sha256:3b00ca2c605168dee97d92490a018891e10f73b81ff5e2eeae48ece309d20485,1427
     pantry-tree:
-      size: 420
       sha256: c492e3caeebf476ac0ee1daaedbc2464ef5a530a0b0152a353d64b410c3c1ff3
+      size: 420
+    hackage: primitive-unlifted-0.1.3.1@sha256:3b00ca2c605168dee97d92490a018891e10f73b81ff5e2eeae48ece309d20485,1427
   original:
     hackage: primitive-unlifted-0.1.3.1
 - completed:
     name: duplo
-    version: 0.0.0
-    git: https://github.com/serokell/duplo.git
     pantry-tree:
-      size: 440
       sha256: 4e3f210989108cb1b4a16f43e95b1f613bbf7d04ce207937eadbe41a1262e4e1
+      size: 440
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
-  original:
     git: https://github.com/serokell/duplo.git
+    version: 0.0.0
+  original:
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
+    git: https://github.com/serokell/duplo.git
 snapshots:
 - completed:
+    sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0
     size: 619163
     url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/16.yaml
-    sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0
   original: lts-19.16

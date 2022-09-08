@@ -30,6 +30,18 @@
     "icon": "logo.png",
     "main": "./out/extension",
     "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "LIGO Debugger",
+            "properties": {
+                "ligoDebugger.ligoBinaryPath": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "ligo",
+                    "description": "Path to the ligo binary, default one is extracted from $PATH variable."
+                }
+            }
+        },
         "breakpoints": [
             {
                 "language": "ligo"

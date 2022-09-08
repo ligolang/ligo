@@ -5,6 +5,8 @@ import {
 	GetContractMetadataResponse,
 	InitializeLoggerArguments,
 	InitializeLoggerResponse,
+	SetLigoBinaryPathArguments,
+	SetLigoBinaryPathResponse,
 	SetProgramPathArguments,
 	SetProgramPathResponse,
 	ValidateEntrypointArguments,
@@ -16,6 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 
 type LigoSpecificRequest
 	= 'initializeLogger'
+	| 'setLigoBinaryPath'
 	| 'setProgramPath'
 	| 'validateEntrypoint'
 	| 'getContractMetadata'
@@ -32,6 +35,7 @@ export default class LigoProtocolClient extends ProtocolClient {
 	}
 
 	sendMsg(command: 'initializeLogger', args: InitializeLoggerArguments): Promise<InitializeLoggerResponse>
+	sendMsg(command: 'setLigoBinaryPath', args: SetLigoBinaryPathArguments) : Promise<SetLigoBinaryPathResponse>
 	sendMsg(command: 'setProgramPath', args: SetProgramPathArguments): Promise<SetProgramPathResponse>
 	sendMsg(command: 'validateEntrypoint', args: ValidateEntrypointArguments): Promise<ValidateEntrypointResponse>
 	sendMsg(command: 'getContractMetadata', args: GetContractMetadataArguments): Promise<GetContractMetadataResponse>

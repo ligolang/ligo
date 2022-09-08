@@ -1,7 +1,7 @@
 {
   "name": "mligo",
   "scopeName": "source.mligo",
-  "fileTypes": [],
+  "fileTypes": [ "mligo" ],
   "patterns": [
     { "include": "#string" },
     { "include": "#block_comment" },

@@ -196,6 +196,110 @@ packages:
   original:
     hackage: ansi-terminal-0.10.3@sha256:e2fbcef5f980dc234c7ad8e2fa433b0e8109132c9e643bc40ea5608cd5697797,3226
 - completed:
+    hackage: fastsum-0.2.0.0@sha256:7abc9ceddc3dfb67420c927c0e69d9248c9e8d5877f53cd8fb76a63e72ce7ddb,2394
+    pantry-tree:
+      size: 431
+      sha256: 294ee5f98315161f27487e56425b8f1d3e59914607d1f467a9844b2befaa576d
+  original:
+    hackage: fastsum-0.2.0.0
+- completed:
+    hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
+    pantry-tree:
+      size: 761
+      sha256: 20b1076bdb121347ccc512a67df697eed34815a8e35279b6b9a0951963b1eba2
+  original:
+    hackage: stm-containers-1.2
+- completed:
+    hackage: stm-hamt-1.2.0.7@sha256:e8ecba11580ae2ea839cc3b7a25adcce40810aa472b544728790d28804c912ee,3972
+    pantry-tree:
+      size: 1009
+      sha256: 2de07a746d44aebcff4b7b644373ae4aa5a505457b684ca02ae5a74605991d6b
+  original:
+    hackage: stm-hamt-1.2.0.7
+- completed:
+    name: tree-sitter
+    version: 0.9.0.2
+    git: https://github.com/serokell/tree-sitter.git
+    pantry-tree:
+      size: 34417
+      sha256: e8d89e2f5ef5ead6eb0164ac986fba4ec19ea7f0af805cb39dffc2b8e5283cd4
+    commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
+  original:
+    git: https://github.com/serokell/tree-sitter.git
+    commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
+- completed:
+    name: duplo
+    version: 0.0.0
+    git: https://github.com/serokell/duplo.git
+    pantry-tree:
+      size: 440
+      sha256: 4e3f210989108cb1b4a16f43e95b1f613bbf7d04ce207937eadbe41a1262e4e1
+    commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
+  original:
+    git: https://github.com/serokell/duplo.git
+    commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
+- completed:
+    subdir: lsp-types
+    name: lsp-types
+    version: 1.5.0.0
+    git: https://github.com/haskell/lsp.git
+    pantry-tree:
+      size: 4160
+      sha256: 8700dc38e8aeac889d0ba7ce2a7dd2b8579e26608f64b220f5e790f0633dce24
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+  original:
+    subdir: lsp-types
+    git: https://github.com/haskell/lsp.git
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+- completed:
+    subdir: lsp
+    name: lsp
+    version: 1.5.0.0
+    git: https://github.com/haskell/lsp.git
+    pantry-tree:
+      size: 1551
+      sha256: 8d13180ceb84b5b0f24ba4df81109dd7300adc5e471579b933a86f5941bbe5c0
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+  original:
+    subdir: lsp
+    git: https://github.com/haskell/lsp.git
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+- completed:
+    subdir: lsp-test
+    name: lsp-test
+    version: 0.14.0.3
+    git: https://github.com/haskell/lsp.git
+    pantry-tree:
+      size: 2061
+      sha256: 415236a1e28d1c93b0f87f0422c86e7becf7be8fc23f557abab628298b0a7b3c
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+  original:
+    subdir: lsp-test
+    git: https://github.com/haskell/lsp.git
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+- completed:
+    name: co-log-core
+    version: 0.3.1.0
+    git: https://github.com/co-log/co-log-core.git
+    pantry-tree:
+      size: 872
+      sha256: 52ef0d55fb2b4c86357369f48f6dcdef81e80a161917befc9ce15129d8eaec20
+    commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+  original:
+    git: https://github.com/co-log/co-log-core.git
+    commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+- completed:
+    name: text-rope
+    version: '0.2'
+    git: https://github.com/Bodigrim/text-rope
+    pantry-tree:
+      size: 1431
+      sha256: e26b7ce27f67a1a2bf58fe88f817a98722d83cefed2b89e8e1530da2e05e1485
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+  original:
+    git: https://github.com/Bodigrim/text-rope
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+- completed:
     hackage: crypto-sodium-0.0.5.0@sha256:05a6cc03c407d62a999bace5fef6ed925395cb11265675052e8f39ce6f95a6ef,5590
     pantry-tree:
       size: 2047

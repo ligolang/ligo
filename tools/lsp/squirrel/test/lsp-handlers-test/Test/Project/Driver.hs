@@ -69,4 +69,4 @@ unit_ignore_paths =
 
 unit_ignore_included :: Assertion
 unit_ignore_included =
-  checkBuildGraph "ignore_included" "include_me.ligo" $ G.vertex "include_me.ligo"
+  checkBuildGraph "ignore_included" "include_me.pligo" $ G.vertex "include_me.pligo"

@@ -72,10 +72,13 @@ library:
     - data-default
     - directory
     - dlist
+    - duplo
     - filepath
     - fmt
+    - hashable
     - lens
     - lens-aeson
+    - ligo-squirrel
     - morley
     - morley-debugger
     - mtl
@@ -131,6 +134,7 @@ tests:
       - fmt
       - lens
       - ligo-debugger
+      - ligo-squirrel
       - nyan-interpolation
       - nyan-interpolation-core
       - morley
@@ -138,6 +142,7 @@ tests:
       - singletons
       - tasty
       - text
+      - unordered-containers
       - HUnit
       - tasty-hunit-compat
 

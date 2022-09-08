@@ -1,6 +1,7 @@
 module Test.Parsers
   ( test_okayContracts
   , test_badContracts
+  , test_contractsWithMissingNodes
   ) where
 
 import AST (Fallback, scanContracts)
@@ -228,6 +229,21 @@ badTests =
     }
   ]
 
+contractsWithMissingNodes :: [TestContracts]
+contractsWithMissingNodes =
+  fmap (TestContract . (</>) (testDir </> "error-recovery"))
+    [ "simple" </> "jsligo" </> "missing_curly_bracket_in_record_decl.jsligo"
+    , "simple" </> "jsligo" </> "lambda_with_missing_arguments.jsligo"
+    , "simple" </> "jsligo" </> "missing_ident_in_type_decl.jsligo"
+    , "simple" </> "jsligo" </> "extra_gt_zwsp.jsligo"
+    , "simple" </> "jsligo" </> "unfinished_code13.jsligo"
+    , "simple" </> "jsligo" </> "unfinished_code12.jsligo"
+    , "simple" </> "jsligo" </> "unfinished_code09.jsligo"
+    , "simple" </> "jsligo" </> "lambda_with_missing_arguments.jsligo"
+    , "simple" </> "jsligo" </> "missing_expr_parenthesesR.jsligo"
+    , "simple" </> "jsligo" </> "switch_with_missing_case_value.jsligo"
+    ]
+
 getContracts :: [TestContracts] -> IO [FilePath]
 getContracts = fmap concat . traverse go
   where
@@ -249,3 +265,10 @@ test_badContracts
   where
     testCases = map makeTestCase <$> getContracts badTests
     makeTestCase contractPath = testCase contractPath (checkFile @Fallback False contractPath)
+
+test_contractsWithMissingNodes :: IO TestTree
+test_contractsWithMissingNodes
+  = testGroup "Trying to parse contracts with missing nodes" <$> testCases
+  where
+    testCases = map makeTestCase <$> getContracts contractsWithMissingNodes
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback True contractPath)

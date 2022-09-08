@@ -134,6 +134,7 @@ library
     , lsp-types
     , mtl
     , process
+    , process-extras
     , regex-tdfa
     , template-haskell
     , temporary
@@ -478,6 +479,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.DocumentLink
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Folding
+      Test.Capabilities.Highlights
       Test.Capabilities.Hover
       Test.Capabilities.PrepareRename
       Test.Capabilities.RangeFormatting

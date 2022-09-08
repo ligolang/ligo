@@ -344,6 +344,7 @@
 	(set-syntax-table (ligo-syntax-table)))
 
 (add-to-list 'auto-mode-alist '("\\.ligo\\'" . ligo-pascal-mode))
+(add-to-list 'auto-mode-alist '("\\.pligo\\'" . ligo-pascal-mode))
 (provide 'ligo-mode)
 (defun mligo-syntax-table ()
 	"Syntax table"
