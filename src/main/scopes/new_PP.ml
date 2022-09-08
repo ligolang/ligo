@@ -88,8 +88,8 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
 and defs_json (defs : def list) : Yojson.Safe.t =
   let get_defs defs =
     let variables, types_modules = List.partition_tf defs ~f:(function Variable _ -> true | Type _ | Module _ -> false) in
-    let types, modules = List.partition_tf defs ~f:(function Type _ -> true | Variable _ | Module _ -> false) in
-    let modules, module_aliases = List.partition_tf defs
+    let types, modules = List.partition_tf types_modules ~f:(function Type _ -> true | Variable _ | Module _ -> false) in
+    let modules, module_aliases = List.partition_tf modules
       ~f:(function Module { mod_case = Def _ ; _ } -> true | Variable _ | Type _ | Module { mod_case = Alias _ ; _ } -> false) in
     [
       ("variables",      `Assoc (List.map ~f:(fun def -> def_to_yojson def) variables))  ;

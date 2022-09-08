@@ -52,7 +52,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
         let all_defs = merge_defs env all_defs in
         find_scopes' (all_defs,env,scopes,let_result.location) partials let_result
       | M_module_path m ->
-        let path,mods,body_range = List.fold ~init:([],[],Location.dummy) ~f:(fun (path,mods,loc) m -> 
+        let _path,mods,_body_range = List.fold ~init:([],[],Location.dummy) ~f:(fun (path,mods,loc) m -> 
           path@[get_mod_binder_name m], mods@[m], Location.cover loc (ModVar.get_location m)) 
           (List.Ne.to_list m) in
         (* let def = make_m_alias_def ~range ~body_range (get_mod_binder_name module_binder) path in *)
@@ -226,8 +226,8 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | D_module {module_attr={hidden = true; _} ; _} -> (
       (  top_def_map, inner_def_map, scopes, partials )
     )
-    | D_module {module_binder; module_ ; module_attr=_} -> (
-      let (new_outer_def_map,scopes) = module_expr ~options ~env:top_def_map ~scopes module_ in
+    | D_module {module_binder=_; module_ ; module_attr=_} -> (
+      let (_new_outer_def_map,scopes) = module_expr ~options ~env:top_def_map ~scopes module_ in
       (* let def = make_m_def (get_mod_binder_name module_binder) decl.location new_outer_def_map in *)
       (* let top_def_map = Def_map.add (get_mod_binder_name module_binder) def top_def_map in *)
       (  top_def_map, inner_def_map, scopes, partials )

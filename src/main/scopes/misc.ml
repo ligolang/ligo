@@ -7,8 +7,7 @@ type tenv = Environment.t
 module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Value_var.compare end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t
 
-let rec extract_variable_types :
-  bindings_map -> Ast_typed.declaration_content -> bindings_map =
+let extract_variable_types : bindings_map -> Ast_typed.declaration_content -> bindings_map =
   fun prev decl ->
     let add env b =
       let aux : Value_var.t *  Ast_typed.type_expression -> Value_var.t * Ast_typed.type_expression = fun (v,t) ->

@@ -335,6 +335,7 @@ let resolve_module_aliases_to_module_ids : def list -> def list
 
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
+      let () = reset_counter () in 
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
       let scopes = merge_same_scopes scopes in
@@ -351,5 +352,6 @@ for an expression its free_variable will be references
 7. Add comments
 9. update schema.json
 11. validate the output of each and every get-scope test
+12. Add scopes.mli & Flatten Free
 
 *)
