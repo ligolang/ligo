@@ -1,0 +1,32 @@
+type storage = int;
+
+type parameter =
+| ["Default"];
+
+let x = 1
+
+type return_ = [list <operation>, storage];
+
+// @view
+let basic = ([_a,s]:[address, storage]): storage => x + s;
+
+// @view
+let not_funny = ([_,s]:[unit, storage]): storage => basic(Tezos.get_sender(),x + s);
+
+// @view
+let get_storage = ([_,s]:[unit, storage]): storage => x + s;
+
+// @view
+let get_address = ([_,_s]:[unit, storage]): address => Tezos.get_sender();
+
+// @view
+let super_not_funny = ([_,s]:[unit, storage]): int => not_funny(unit, s);
+
+
+const main = ([action, _store] : [parameter, storage]) : return_ => {
+ return [
+   (list([]) as list <operation>),    // No operations
+   (match (action, {
+    Default:     ()  => 0}))
+  ]
+};
