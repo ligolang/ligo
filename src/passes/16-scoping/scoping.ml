@@ -5,7 +5,7 @@ module Location    = Simple_utils.Location
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Option      = Simple_utils.Option
-module Var = Stage_common.Types.ValueVar
+module Var = Ligo_prim.ValueVar
 module Errors = Errors
 
 type meta = Mini_c.meta
@@ -96,7 +96,7 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
   else S (int_to_nat (x - 1))
 
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
-  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Mini_c.ValueVar.pp x in
+  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Ligo_prim.ValueVar.pp x in
   (O.E_var (m, int_to_nat idx))
 
 (* probably should use result monad for conformity? but all errors
@@ -116,7 +116,7 @@ let internal_error loc msg =
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
 let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.environment) :
-  (meta, base_type, I.literal, (meta, string) Micheline.node) O.expr =
+  (meta, base_type, Ligo_prim.Literal_value.t, (meta, string) Micheline.node) O.expr =
   let meta : meta =
     { location = expr.location;
       env = [];
@@ -191,7 +191,7 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let e2 = translate_binder e2 env in
     let e3 = translate_binder e3 env in
     E_if_left (meta, e1, e2, e3)
-  | E_let_in (e1, _inline, _thunk, e2) ->
+  | E_let_in (e1, _inline, e2) ->
     let e1 = translate_expression e1 env in
     let e2 = translate_binder e2 env in
     E_let_in (meta, e1, e2)
@@ -358,6 +358,13 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
+    | C_EMIT_EVENT -> (
+      match expr.arguments with
+       | { content = E_literal (Literal_string tag); type_expression = _; location = _ } :: [data] ->
+         let tag = Ligo_string.extract tag in
+         return (O.Type_args (Some tag, [translate_type data.type_expression]), [data])
+       | _ -> None
+    )
     | C_CONTRACT_ENTRYPOINT_OPT ->
       let* a = Mini_c.get_t_option ty in
       let* a = Mini_c.get_t_contract a in

@@ -1,16 +1,17 @@
 open Types
+open Ligo_prim
 
 let v_pair : value * value -> value =
-  fun (a, b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b)])
+  fun (a, b) -> V_Record (Record.of_list [(Label.of_int 0, a) ; (Label.of_int 1, b)])
 
 let v_triple : value * value * value -> value =
-  fun (a, b, c) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b) ; (Label "2", c)])
+  fun (a, b, c) -> V_Record (Record.of_list [(Label.of_int 0, a) ; (Label.of_int 1, b) ; (Label.of_int 2, c)])
 
 let v_record : (string * value) list -> value =
   fun lst ->
     if List.contains_dup ~compare:(fun (l1,_) (l2,_) -> String.compare l1 l2) lst then
       failwith "trying to create a record value with duplicate field" ;
-    V_Record (LMap.of_list (List.map ~f:(fun (l,v) -> (Label l , v)) lst))
+    V_Record (Record.of_list (List.map ~f:(fun (l,v) -> (Label.of_string l , v)) lst))
 
 let v_bool : bool -> value =
   fun b -> V_Ct (C_bool b)
@@ -36,13 +37,34 @@ let v_int : Z.t -> value =
 let v_mutez : Z.t -> value =
   fun v -> V_Ct (C_mutez v)
 
+let v_timestamp : Z.t -> value =
+  fun v -> V_Ct (C_timestamp v)
+
+let v_bls12_381_g1 : Bls12_381.G1.t -> value =
+  fun v -> V_Ct (C_bls12_381_g1 v)
+
+let v_bls12_381_g2 : Bls12_381.G2.t -> value =
+  fun v -> V_Ct (C_bls12_381_g2 v)
+
+let v_bls12_381_fr : Bls12_381.Fr.t -> value =
+  fun v -> V_Ct (C_bls12_381_fr v)
+
+let v_key_hash : Tezos_crypto.Signature.public_key_hash -> value =
+  fun v -> V_Ct (C_key_hash v)
+
+let v_key : Tezos_crypto.Signature.public_key -> value =
+  fun v -> V_Ct (C_key v)
+
+let v_signature : Tezos_crypto.Signature.t -> value =
+  fun v -> V_Ct (C_signature v)
+
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
 
 let v_ctor : string -> value -> value =
   fun ctor value -> V_Construct (ctor, value)
 
-let v_address : Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t -> value =
+let v_address : Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t -> value =
   fun a -> V_Ct (C_address a)
 
 let v_list : value list -> value =
@@ -58,8 +80,8 @@ let extract_pair : value -> (value * value) option =
   fun p ->
     ( match p with
       | V_Record lmap ->
-        let fst = LMap.find (Label "0") lmap in
-        let snd = LMap.find (Label "1") lmap in
+        let fst = Record.LMap.find (Label.of_int 0) lmap in
+        let snd = Record.LMap.find (Label.of_int 1) lmap in
         Some (fst,snd)
       | _ -> None
     )
@@ -83,7 +105,7 @@ let is_bool : value -> bool =
 let counter_of_address : string -> int = fun addr ->
   try (int_of_string addr) with | Failure _ -> -1
 
-let get_address : value -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t option = function
+let get_address : value -> Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t option = function
   | V_Ct ( C_address x ) -> Some x
   | _ -> None
 
@@ -106,7 +128,7 @@ let get_mutez : value -> Z.t option =
   | V_Ct ( C_mutez x) -> Some x
   | _ -> None
 
-let get_nat_option : value -> z option option =
+let get_nat_option : value -> Z.t option option =
   function
   | V_Construct ("Some", V_Ct (C_nat x)) -> Some (Some x)
   | V_Construct ("None", V_Ct C_unit) -> Some (None)
@@ -167,7 +189,7 @@ let get_pair : value -> (value * value) option =
   fun value ->
     match value with
     | V_Record lm -> (
-      let x = LMap.to_kv_list lm in
+      let x = Record.LMap.to_kv_list lm in
       match x with
       | [ (Label "0", x ) ; (Label "1", y) ] -> Some (x,y)
       | _ -> None
@@ -234,9 +256,9 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   | C_string s, C_string s' -> String.compare s s'
   | C_bytes b, C_bytes b' -> Bytes.compare b b'
   | C_mutez m, C_mutez m' -> Z.compare m m'
-  | C_address a, C_address a' -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.compare a a'
+  | C_address a, C_address a' -> Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a'
   | C_contract {address=a;entrypoint=e}, C_contract {address=a';entrypoint=e'} -> (
-     match Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.compare a a' with
+     match Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a' with
        0 -> Option.compare String.compare e e'
      | c -> c
   )
@@ -264,8 +286,8 @@ let tag_value : value -> int = function
   | V_Michelson _ -> 6
   | V_Mutation _ -> 7
   | V_Func_val _ -> 8
-  | V_Thunk _ -> 9
-  | V_Michelson_contract _ -> 10
+  | V_Michelson_contract _ -> 9
+  | V_Ast_contract _ -> 10
   | V_Gen _ -> 11
 
 let rec compare_value (v : value) (v' : value) : int =
@@ -273,11 +295,11 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Ct c, V_Ct c' -> compare_constant_val c c'
   | V_List l, V_List l' -> List.compare compare_value l l'
   | V_Record r, V_Record r' ->
-     let compare (Label l, v) (Label l', v') = match String.compare l l' with
+     let compare (l, v) (l', v') = match Label.compare l l' with
          0 -> compare_value v v'
        | c -> c in
-     let r = LMap.to_kv_list r |> List.sort ~compare in
-     let r' = LMap.to_kv_list r' |> List.sort ~compare in
+     let r  = Record.LMap.to_kv_list r |> List.sort ~compare in
+     let r' = Record.LMap.to_kv_list r' |> List.sort ~compare in
      List.compare compare r r'
   | V_Map m, V_Map m' ->
      let compare (k1, v1) (k2, v2) = match compare_value k1 k2 with
@@ -300,16 +322,16 @@ let rec compare_value (v : value) (v' : value) : int =
     | Untyped_code c, Untyped_code c' -> Caml.compare c c'
     | Ty_code _, Untyped_code _ -> 1
   )
-  | V_Mutation (l, e), V_Mutation (l', e') -> (
+  | V_Mutation (l, e, _), V_Mutation (l', e', _) -> (
     match Location.compare l l' with
       0 -> Caml.compare e e'
     | c -> c
   )
   | V_Michelson_contract c, V_Michelson_contract c' -> Caml.compare c c'
+  | V_Ast_contract { main ; views = _ }, V_Ast_contract { main = main' ; views = _ } -> Caml.compare main main'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
-  | V_Thunk v, V_Thunk v' -> Caml.compare v v'
   | V_Gen v, V_Gen v' -> Caml.compare v v'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

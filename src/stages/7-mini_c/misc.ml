@@ -1,17 +1,18 @@
 open Types
+open Ligo_prim
 
 module Free_variables = struct
 
-  type bindings = expression_variable list
-  let mem : bindings -> expression_variable -> bool = List.mem ~equal:ValueVar.equal
-  let singleton : expression_variable -> bindings = fun s -> [ s ]
-  let mem_count : expression_variable -> bindings -> int =
+  type bindings = ValueVar.t list
+  let mem : bindings -> ValueVar.t -> bool = List.mem ~equal:ValueVar.equal
+  let singleton : ValueVar.t -> bindings = fun s -> [ s ]
+  let mem_count : ValueVar.t -> bindings -> int =
     fun x fvs ->
     List.length (List.filter ~f:(ValueVar.equal x) fvs)
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : expression_variable list -> bindings = fun x -> x
+  let of_list : ValueVar.t list -> bindings = fun x -> x
 
   let rec expression : bindings -> expression -> bindings = fun b e ->
     let self = expression b in
@@ -51,7 +52,7 @@ module Free_variables = struct
                expression (union (singleton l) b) bl ;
                expression (union (singleton r) b) br ;
              ]
-    | E_let_in (expr, _ , _, ((v , _) , body) )->
+    | E_let_in (expr, _ , ((v , _) , body) )->
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]

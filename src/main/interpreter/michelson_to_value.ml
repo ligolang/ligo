@@ -1,13 +1,19 @@
+module L = Layout
 open Simple_utils.Trace
 open Ligo_interpreter.Types
 open Tezos_micheline.Micheline
+open Ligo_prim
 
 let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
+let key_hash_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_bytes s
 let key_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_b58check s
+let key_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option ~raise (Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_bytes_without_validation s
 let signature_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse signature") @@ Tezos_crypto.Signature.of_b58check s
 
@@ -85,8 +91,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   D_string id *)
   | Prim (_, "key_hash", [], _), String (_, n) ->
      V_Ct (C_key_hash (key_hash_of_string ~raise n))
+  | Prim (_, "key_hash", [], _), Bytes (_, b) ->
+     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
   | Prim (_, "key", [], _), String (_, n) ->
      V_Ct (C_key (key_of_string ~raise n))
+  | Prim (_, "key", [], _), Bytes (_, b) ->
+     V_Ct (C_key (key_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
      V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) ->
@@ -112,6 +122,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       V_Ct (C_address c)
   | Prim (_, "address", [], _), String (_, s) ->
       V_Ct (C_address (contract_of_string ~raise s))
+  | Prim (_, "contract", [_], _), String (_, s) ->
+     let (address, entrypoint) = match String.split s ~on:'%' with
+       | [a ; b] -> (contract_of_string ~raise a, Some b)
+       | [a] -> (contract_of_string ~raise a, None)
+       | _ -> raise.error (untranspilable ty value) in
+      V_Ct (C_contract { address ; entrypoint })
   | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
       V_Ct (C_unit)
   | Prim (_, "option", [_], _), Prim (_, "None", [], _) ->
@@ -188,31 +204,32 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
             (Tezos_micheline.Micheline_printer.printable Tezos_protocol.Protocol.Michelson_v1_primitives.string_of_prim c)
       in
       let code_block = make_e (e_string (Ligo_string.verbatim u)) (t_string ()) in
-      let insertion = e_a_raw_code Stage_common.Backends.michelson code_block (t_arrow t_input t_output ()) in
+      let insertion = e_a_raw_code Backend.Michelson.name code_block (t_arrow t_input t_output ()) in
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
-      let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} t_input t_output in
+      let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=t_input;attributes=Binder.empty_attribute};output_type=t_output;result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
-  (* | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
-   *   ignore addr;
-   *   let ty_nat = Prim (xx, "nat", [], []) in
-   *   let v' = decompile_to_mini_c ~raise ~bigmaps ty v in
-   *   let amt' = decompile_to_mini_c ~raise ~bigmaps ty_nat amt in
-   *   D_ticket (v', amt') *)
+  | Prim (loct, "ticket", [ty], _) , Prim (_, "Pair", [String (_,addr);vt;amt], _) ->
+    let ty_nat = Prim (loct, "nat", [], []) in
+    let addr =  V_Ct (C_address (contract_of_string ~raise addr)) in
+    let vt = decompile_to_untyped_value ~raise ~bigmaps ty vt in
+    let amt = decompile_to_untyped_value ~raise ~bigmaps ty_nat amt in
+    let va = Ligo_interpreter.Combinators.v_pair (vt, amt) in
+    Ligo_interpreter.Combinators.v_pair (addr, va)
   | ty, v ->
     raise.error (untranspilable ty v)
 
 let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_aggregated.type_expression) : value =
-  let open Stage_common.Constant in
+  let open Literal_types in
   let open Ligo_interpreter.Combinators in
   let open! Ast_aggregated in
   let self = decompile_value ~raise ~bigmaps in
   match t.type_content with
-  | tc when (Compare.type_content tc (t_bool ()).type_content) = 0 ->
+  | tc when (compare_type_content tc (t_bool ()).type_content) = 0 ->
      v
   | T_constant { language; injection; parameters } -> (
     let () = Assert.assert_true ~raise
       (corner_case ~loc:__LOC__ ("unsupported language "^language))
-      (String.equal language Stage_common.Backends.michelson)
+      (String.equal language Backend.Michelson.name)
     in
     match injection, parameters with
     | (Map, [k_ty;v_ty]) -> (
@@ -253,7 +270,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux lst in
         V_Set lst'
       )
-    | ((               Map           | Big_map             | List                 | Set              |
+    | ((Ast_contract | Map           | Big_map             | List                 | Set              |
         String       | Bytes         | Int                 | Operation            | Nat              | Tez          |
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
@@ -271,16 +288,16 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
       let s' = self s o in
       v_some s'
     )
-  | T_sum {layout ; content} ->
-      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout content in
-      let (Label constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in
+  | T_sum {layout ; fields} ->
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ Rows.row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout fields in
+      let (Label constructor, v, tv) = L.extract_constructor ~raise ~layout v lst in
       let sub = self v tv in
       (V_Construct (constructor, sub))
-  | T_record {layout ; content } ->
-      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout content in
-      let lst = Layout.extract_record ~raise ~layout v lst in
+  | T_record {layout ; fields } ->
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ Rows.row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
+      let lst = L.extract_record ~raise ~layout v lst in
       let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
-      let m' = Ast_aggregated.LMap.of_list lst in
+      let m' = Record.of_list lst in
       (V_Record m')
   | T_arrow {type1;type2} ->
       (* We now patch the types *)
@@ -289,9 +306,9 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
        | E_application {lamb;args=_} ->
           (match lamb.expression_content with
            | E_raw_code {code;language=_} ->
-              let insertion = e_a_raw_code Stage_common.Backends.michelson code (t_arrow type1 type2 ()) in
+              let insertion = e_a_raw_code Backend.Michelson.name code (t_arrow type1 type2 ()) in
               let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
-              let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} type1 type2 in
+              let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=type1;attributes=Binder.empty_attribute};output_type=type2;result=body} type1 type2 in
               V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
            | _ -> v)
        | _ -> v)

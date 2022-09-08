@@ -11,9 +11,7 @@ module Ligo_string = Simple_utils.Ligo_string
 
 module Tree_abstraction = struct
 
-  open Ast_imperative
-
-  let some_const c = Some (Const c)
+  let some_const c = Some (Ligo_prim.Constant.Const c)
 
   (*
     Each front-end has its owns constants.
@@ -43,13 +41,11 @@ module Tree_abstraction = struct
     | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
     | "Tezos.call_view"          -> some_const C_VIEW
     | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
+    | "Tezos.emit"         -> some_const C_EMIT_EVENT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
     | "Tezos.sapling_verify_update" -> some_const C_SAPLING_VERIFY_UPDATE
-
-    (* Options module *)
-    | "Option.map"              -> some_const C_OPTION_MAP
 
     (* Set module *)
     | "Set.literal"    -> some_const C_SET_LITERAL
@@ -86,7 +82,7 @@ module Tree_abstraction = struct
     | _ -> None
 
 
-  let pseudo_module_to_string = function
+  let pseudo_module_to_string (c : Ligo_prim.Constant.constant') = match c with
     | C_ADDRESS                 -> "Tezos.address"
     | C_SELF                    -> "Tezos.self"
     | C_SELF_ADDRESS            -> "Tezos.self_address"
@@ -139,12 +135,12 @@ module Tree_abstraction = struct
     | C_LSL -> "Bitwise.shift_left"
     | C_LSR -> "Bitwise.shift_right"
 
-    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
+    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Ligo_prim.Constant.pp_constant' c
 
 
   let constants x = pseudo_modules x
   let constant_to_string = function
-      | Const x -> pseudo_module_to_string x
+      | Ligo_prim.Constant.Const x -> pseudo_module_to_string x
 end
 
 module Michelson = struct
@@ -164,7 +160,7 @@ module Michelson = struct
   type protocol_type = Environment.Protocols.t
   include Helpers.Michelson
   open Tezos_utils.Michelson
-  open Stage_common.Types
+  open Ligo_prim.Constant
 
   let get_operators (protocol_version: protocol_type) c : predicate option =
     match c , protocol_version with
@@ -268,6 +264,7 @@ module Michelson = struct
       Some (special
         (fun with_args ->  with_args "PUSH")
         )
+    | C_EMIT_EVENT , Kathmandu -> Some (trivial_special "EMIT")
     | _ -> None
 
 end

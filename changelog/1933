@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1933'
+title: Remove C_OPTION_MAP from pseudomodules treatement
+type: internal

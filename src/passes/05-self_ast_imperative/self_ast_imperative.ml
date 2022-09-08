@@ -8,7 +8,6 @@ let all_expression_mapper ~raise ~js_style_no_shadowing = [
   Expression_soundness.linearity ~raise ;
   Expression_soundness.reserved_names_exp ~raise ;
   External.replace ;
-  Deprecated_constants.warn ~raise ;
 ] @
   (if js_style_no_shadowing
   then [ No_shadowing.peephole_expression ~raise ]
@@ -23,13 +22,13 @@ let all_type_expression_mapper ~raise =
   ]
 
 let all_module_mapper ~raise ~js_style_no_shadowing =
-  [ Expression_soundness.reserved_names_mod ~raise ]
+  [ Expression_soundness.reserved_names_program ~raise ]
   @
-    if js_style_no_shadowing then [ No_shadowing.peephole_module ~raise ] else []
+    if js_style_no_shadowing then [ No_shadowing.peephole_program ~raise ] else []
 
-let all_module ~raise ~js_style_no_shadowing =
+let all_program ~raise ~js_style_no_shadowing =
   List.map
-    ~f:(fun el -> Helpers.Module el)
+    ~f:(fun el -> Helpers.Program el)
     (all_module_mapper ~raise ~js_style_no_shadowing)
 
 let all_exp ~raise ~js_style_no_shadowing =
@@ -39,10 +38,10 @@ let all_exp ~raise ~js_style_no_shadowing =
 
 let all_ty ~raise = List.map ~f:(fun el -> Helpers.Type_expression el) @@ all_type_expression_mapper ~raise
 
-let all_module ~raise ~js_style_no_shadowing init =
-  let all_p  = List.map ~f:Helpers.map_module @@ all_exp ~raise ~js_style_no_shadowing in
-  let all_p2 = List.map ~f:Helpers.map_module @@ all_ty ~raise in
-  let all_p3 = List.map ~f:Helpers.map_module @@ all_module ~raise ~js_style_no_shadowing in
+let all_program ~raise ~js_style_no_shadowing init =
+  let all_p  = List.map ~f:Helpers.map_program @@ all_exp ~raise ~js_style_no_shadowing in
+  let all_p2 = List.map ~f:Helpers.map_program @@ all_ty ~raise in
+  let all_p3 = List.map ~f:Helpers.map_program @@ all_program ~raise ~js_style_no_shadowing in
   List.fold ~f:(|>) (all_p @ all_p2 @ all_p3) ~init
 
 let all_expression ~raise ~js_style_no_shadowing init =
@@ -51,7 +50,7 @@ let all_expression ~raise ~js_style_no_shadowing init =
   List.fold ~f:(|>) all_p ~init
 
 let decompile_imperative init =
-  let all_p = List.map ~f:Helpers.map_module @@
+  let all_p = List.map ~f:Helpers.map_program @@
     List.map ~f:(fun el -> Helpers.Expression el) [
   ] in
   List.fold ~f:(|>) all_p ~init

@@ -1,4 +1,5 @@
-include Stage_common.Types
+open Ligo_prim
+module Location = Simple_utils.Location
 
 type 'a annotated = string option * 'a
 
@@ -49,15 +50,14 @@ and type_base =
   | TB_chest_key
   | TB_tx_rollup_l2_address
 
-and environment_element = expression_variable * type_expression
+and environment_element = ValueVar.t * type_expression
 
 and environment = environment_element list
 
-and var_name = expression_variable
-and fun_name = expression_variable
+and var_name = ValueVar.t
+and fun_name = ValueVar.t
 
 type inline = bool
-type thunk = bool
 
 type value =
   | D_unit
@@ -84,19 +84,19 @@ type value =
 and selector = var_name list
 
 and expression_content =
-  | E_literal of Stage_common.Types.literal
+  | E_literal of Literal_value.t
   | E_closure of anon_function
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
-  | E_iterator of Stage_common.Types.constant' * ((var_name * type_expression) * expression) * expression
+  | E_iterator of Constant.constant' * ((var_name * type_expression) * expression) * expression
   | E_fold     of (((var_name * type_expression) * expression) * expression * expression)
   | E_fold_right of (((var_name * type_expression) * expression) * (expression * type_expression) * expression)
   | E_if_bool  of (expression * expression * expression)
   | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
   | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
   | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
-  | E_let_in   of expression * inline * thunk * ((var_name * type_expression) * expression)
+  | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
   | E_tuple of expression list
   | E_let_tuple of expression * (((var_name * type_expression) list) * expression)
   (* E_proj (record, index, field_count): we use the field_count to
@@ -120,12 +120,12 @@ and expression = {
 }
 
 and constant = {
-  cons_name : Stage_common.Types.constant';
+  cons_name : Constant.constant';
   arguments : expression list;
 }
 
 and anon_function = {
-  binder : expression_variable ;
+  binder : ValueVar.t ;
   body : expression ;
 }
 

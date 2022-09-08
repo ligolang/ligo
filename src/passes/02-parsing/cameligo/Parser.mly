@@ -40,6 +40,7 @@ let mk_wild region =
 %on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
 %on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
+%on_error_reduce bin_op(disj_expr_level,REV_APP,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
 %on_error_reduce base_expr(closed_expr)
@@ -705,7 +706,11 @@ lambda_app_type:
 disj_expr_level:
   bin_op(disj_expr_level, "||", conj_expr_level)
 | bin_op(disj_expr_level, "or", conj_expr_level) {
-    ELogic (BoolExpr (Or $1)) }
+    ELogic (BoolExpr (Or $1))
+  }
+| bin_op(disj_expr_level, "|>", conj_expr_level) {
+    ERevApp $1
+  }
 | conj_expr_level { $1 }
 
 bin_op(arg1,op,arg2):

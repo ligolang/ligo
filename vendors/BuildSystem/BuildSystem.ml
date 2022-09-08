@@ -5,14 +5,24 @@ module Formatter = Formatter
 
 open Types
 module List = Simple_utils.List
+module Source_input = struct
+  type file_name = string
+  type raw_input = { id : file_name ; code : string }
+  type code_input = From_file of file_name | Raw of raw_input
+  let id_of_code_input : code_input -> file_name = function
+  | From_file file_name -> file_name
+  | Raw { id ; code = _  } -> id
+end
 
 module type M =
   sig
-    type file_name = string
+    type file_name = Source_input.file_name
+    type raw_input = Source_input.raw_input
+    type code_input = Source_input.code_input
     type module_name = string
     type compilation_unit
     type meta_data
-    val preprocess : file_name -> compilation_unit * meta_data * (file_name * module_name) list
+    val preprocess : code_input -> compilation_unit * meta_data * (file_name * module_name) list
     module AST : sig
       type declaration
       type t = declaration list
@@ -32,6 +42,7 @@ module Make (M : M) =
   struct
 
   type file_name = M.file_name
+  type code_input = M.code_input
   type vertice = M.file_name * M.meta_data * M.compilation_unit * (M.file_name * M.module_name) list
   type graph = G.t * vertice SMap.t
   type error = Errors.t
@@ -40,30 +51,32 @@ module Make (M : M) =
   type 'a build_error = ('a, error) result
 
 
-
-(* Build system *)
-
-  let dependency_graph : file_name -> graph =
-    fun file_name ->
-    let vertices = SMap.empty in
-    let dep_g = G.empty in
-    let rec dfs acc (dep_g,vertices) (file_name,mangled_name) =
-      if not @@ SMap.mem file_name vertices then
-        let c_unit, meta_data, deps = M.preprocess file_name in
-        let vertices = SMap.add file_name (mangled_name,meta_data,c_unit,deps) vertices in
-        let dep_g = G.add_vertex dep_g file_name in
+  let dependency_graph : code_input -> graph =
+    fun code_input ->
+    let rec dfs (acc:M.file_name) (dep_g,vertices) (code_input,mangled_name) =
+      let id = Source_input.id_of_code_input code_input in
+      if not @@ SMap.mem id vertices then
+        let c_unit, meta_data, deps = M.preprocess code_input in
+        let vertices = SMap.add id (mangled_name,meta_data,c_unit,deps) vertices in
+        let dep_g = G.add_vertex dep_g id in
         let dep_g =
           (* Don't add a loop on the first element *)
-          if Node.equal acc file_name then dep_g
-          else G.add_edge dep_g acc file_name
+          if Node.equal acc id then dep_g
+          else G.add_edge dep_g acc id
         in
-        let dep_g,vertices = List.fold ~f:(dfs file_name) ~init:(dep_g,vertices) deps in
+        let dep_g,vertices =
+          let deps = List.map ~f:(fun (x,y) -> Source_input.From_file x, y) deps in
+          List.fold ~f:(dfs id) ~init:(dep_g,vertices) deps
+        in
         (dep_g,vertices)
       else
-        let dep_g = G.add_edge dep_g acc file_name in
+        let dep_g = G.add_edge dep_g acc id in
         (dep_g,vertices)
     in
-    dfs file_name (dep_g,vertices) @@ (file_name,file_name)
+    let vertices = SMap.empty in
+    let dep_g = G.empty in
+    let file_name = Source_input.id_of_code_input code_input in
+    dfs file_name (dep_g,vertices) @@ (code_input,file_name)
 
   let solve_graph : graph -> file_name -> ((file_name * vertice) list,error) result =
     fun (dep_g,vertices) file_name ->
@@ -142,18 +155,20 @@ module Make (M : M) =
     let ast_env = M.AST.add_ast_to_env ast env_with_deps in
     SMap.add file_name (ast,ast_env) asts
 
-  let compile_separate : file_name -> ast build_error =
-    fun main_file_name ->
-      let deps = dependency_graph main_file_name in
+  let compile_separate : code_input -> ast build_error =
+    fun main_code_input ->
+      let deps = dependency_graph main_code_input in
+      let main_file_name = Source_input.id_of_code_input main_code_input in
       match solve_graph deps main_file_name with
         Ok (ordered_deps) ->
         let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) ordered_deps in
         Ok (fst @@ SMap.find main_file_name asts_typed)
       | Error e -> Error e
 
-  let compile_combined : file_name -> ast build_error =
-    fun file_name ->
-      let deps = dependency_graph file_name in
+  let compile_combined : code_input -> ast build_error =
+    fun code_input ->
+      let deps = dependency_graph code_input in
+      let file_name = Source_input.id_of_code_input code_input in
       match solve_graph deps file_name with
         Ok (ordered_deps) ->
         let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) ordered_deps in

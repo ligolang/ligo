@@ -2,6 +2,7 @@ module Errors = Errors
 open Errors
 open Mini_c
 open Simple_utils.Trace
+open Ligo_prim
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
   fun e in_ty out_ty ->
@@ -32,7 +33,7 @@ let map_expression = Helpers.map_expression
 
 (* true if the name names a pure constant -- i.e. if uses will be pure
    assuming arguments are pure *)
-let is_pure_constant : constant' -> bool =
+let is_pure_constant : Constant.constant' -> bool =
   function
   | C_UNIT
   | C_CAR | C_CDR | C_PAIR
@@ -54,10 +55,12 @@ let is_pure_constant : constant' -> bool =
   | C_MAP_EMPTY | C_MAP_LITERAL
   | C_MAP_GET | C_MAP_REMOVE
   | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
+  | C_BIG_MAP_EMPTY
   | C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE
   | C_OPEN_CHEST
   | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
+  | C_EMIT_EVENT
     -> true
   (* unfortunately impure: *)
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
@@ -91,7 +94,6 @@ let is_pure_constant : constant' -> bool =
   (* TODO? *)
   | C_MAP
   | C_BIG_MAP
-  | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_CONTRACT
   | C_CONTRACT_WITH_ERROR
@@ -119,9 +121,8 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_BOOTSTRAP_CONTRACT
   | C_TEST_NTH_BOOTSTRAP_CONTRACT
   | C_TEST_LAST_ORIGINATIONS
+  | C_TEST_MUTATE_CONTRACT
   | C_TEST_MUTATE_VALUE
-  | C_TEST_MUTATION_TEST
-  | C_TEST_MUTATION_TEST_ALL
   | C_TEST_SAVE_MUTATION
   | C_TEST_RUN
   | C_TEST_COMPILE_CONTRACT
@@ -133,6 +134,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_GENERATOR_EVAL
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
   | C_TEST_COMPILE_CONTRACT_FROM_FILE
+  | C_TEST_COMPILE_AST_CONTRACT
   | C_TEST_SET_BIG_MAP
   | C_TEST_CAST_ADDRESS
   | C_TEST_CREATE_CHEST
@@ -154,6 +156,8 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_READ_CONTRACT_FROM_FILE
   | C_TEST_SIGN
   | C_TEST_GET_ENTRYPOINT
+  | C_TEST_LAST_EVENTS
+  | C_TEST_TRY_WITH
     -> false
 
 let rec is_pure : expression -> bool = fun e ->
@@ -170,7 +174,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_if_left (cond, (_, bt), (_, bf))
     -> List.for_all ~f:is_pure [ cond ; bt ; bf ]
 
-  | E_let_in (e1, _, _, (_, e2))
+  | E_let_in (e1, _, (_, e2))
     -> List.for_all ~f:is_pure [ e1 ; e2 ]
 
   | E_tuple exprs
@@ -199,7 +203,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_fold_right _
     -> false
 
-let occurs_count : expression_variable -> expression -> int =
+let occurs_count : ValueVar.t -> expression -> int =
   fun x e ->
   let fvs = Free_variables.expression [] e in
   Free_variables.mem_count x fvs
@@ -228,16 +232,15 @@ let is_variable : expression -> bool =
   | E_variable _ -> true
   | _ -> false
 
-let should_inline : expression_variable -> expression -> expression -> bool =
+let should_inline : ValueVar.t -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_let_in (e1, should_inline_here, is_thunk, ((x, _a), e2)) ->
-    if (is_pure e1 && (should_inline_here || should_inline x e1 e2)) ||
-       is_thunk
+  | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
+    if (is_pure e1 && (should_inline_here || should_inline x e1 e2))
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
       (changed := true ; e2')
@@ -268,7 +271,7 @@ let beta : bool ref -> expression -> expression =
   match e.content with
   | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }; location = _}, e2) ->
     (changed := true ;
-     Expression.make (E_let_in (e2, false, false, ((x, xtv), e1))) tv)
+     Expression.make (E_let_in (e2, false, ((x, xtv), e1))) tv)
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
   | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_expression = _ ; location = _} ]} ->
@@ -288,9 +291,9 @@ let beta : bool ref -> expression -> expression =
     else e
 
   (** (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
-  | E_proj ({ content = E_let_in (e1, inline, thunk, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
+  | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
     changed := true;
-    { e_let_in with content = E_let_in (e1, inline, thunk, ((x, a), ({ e with content = E_proj (e2, i, n) }))) ;
+    { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) ;
                     type_expression = e.type_expression }
 
   (** (let (x, y, ...) = e1 in e2).(i) ↦ (let (x, y, ...) = e1 in e2.(i)) *)
@@ -300,23 +303,23 @@ let beta : bool ref -> expression -> expression =
                        type_expression = e.type_expression }
 
   (** (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
-  | E_let_in ({ content = E_let_in (e1, inline2, thunk2, ((y, b), e2)); _ }, inline1, thunk1, ((x, a), e3)) ->
+  | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3)) ->
     let y' = ValueVar.fresh_like y in
     let e2 = Subst.replace e2 y y' in
     changed := true;
-    {e with content = E_let_in (e1, inline2, thunk2, ((y', b), {e with content = E_let_in (e2, inline1, thunk1, ((x, a), e3))}))}
+    {e with content = E_let_in (e1, inline2, ((y', b), {e with content = E_let_in (e2, inline1, ((x, a), e3))}))}
 
   (** note: E_let_tuple/E_let_in and E_let_in/E_let_tuple conversions
       not implemented yet because they don't seem important (?) *)
 
   (** (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (if e1 or e3 is pure) *)
-  | E_application ({ content = E_let_in (e1, inline, thunk, ((x, a), e2)); _ }, e3) ->
+  | E_application ({ content = E_let_in (e1, inline, ((x, a), e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then
       let x' = ValueVar.fresh_like x in
       let e2 = Subst.replace e2 x x' in
       changed := true;
-      {e with content = E_let_in (e1, inline, thunk, ((x', a), {e with content = E_application (e2, e3)}))}
+      {e with content = E_let_in (e1, inline, ((x', a), {e with content = E_application (e2, e3)}))}
     else e
 
   (** (let (x, y, ...) = e1 in e2)@e3 ↦ let (x, y, ...) = e1 in e2@e3  (if e1 or e3 is pure) *)
@@ -339,7 +342,7 @@ let beta : bool ref -> expression -> expression =
     changed := true;
     List.fold_left
       ~f:(fun body (e, (v, t)) ->
-         { content = E_let_in (e, false, false, ((v, t), body));
+         { content = E_let_in (e, false, ((v, t), body));
            location = Location.generated;
            type_expression = body.type_expression })
       ~init:body (List.zip_exn es vars)

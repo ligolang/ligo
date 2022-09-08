@@ -7,7 +7,7 @@ open Errors
 open Simple_utils.Trace
 
 val type_program     : raise:(typer_error,Main_warnings.all) raise ->
-  options:Compiler_options.middle_end -> ?env:Environment.t -> I.module_ -> O.program
+  options:Compiler_options.middle_end -> ?env:Environment.t -> I.program -> O.program
 val type_declaration : raise:(typer_error,Main_warnings.all) raise ->
   options:Compiler_options.middle_end -> ?env:Environment.t -> I.declaration -> O.declaration
 val type_expression  : raise:(typer_error,Main_warnings.all) raise ->
@@ -15,6 +15,6 @@ val type_expression  : raise:(typer_error,Main_warnings.all) raise ->
 
 
 val untype_expression : O.expression -> I.expression
-val untype_program : O.program -> I.module_
+val untype_program : O.program -> I.program
 
 val assert_type_expression_eq : raise:(typer_error,Main_warnings.all) raise -> Location.t -> O.type_expression * O.type_expression -> unit

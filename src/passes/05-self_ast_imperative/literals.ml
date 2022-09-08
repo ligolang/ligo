@@ -2,6 +2,7 @@ module List = Simple_utils.List
 open Errors
 open Ast_imperative
 open Simple_utils.Trace
+open Ligo_prim
 
 let peephole_expression ~raise : expression -> expression = fun e ->
   let return expression_content = { e with expression_content } in
@@ -29,7 +30,7 @@ let peephole_expression ~raise : expression -> expression = fun e ->
       return l
     )
   | E_constant {cons_name=cst; arguments=lst} as e_const ->
-     let cst = const_name cst in
+     let cst : Constant.constant' = Constant.const_name cst in
      begin match cst with
      | C_BIG_MAP_LITERAL -> (
        let elt =

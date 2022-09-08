@@ -1,6 +1,7 @@
+open Ligo_prim
 open Mini_c
 
-let rec uncurry_lambda (depth : int) (expr : expression) : expression_variable list * expression =
+let rec uncurry_lambda (depth : int) (expr : expression) : ValueVar.t list * expression =
   match expr.content with
   | E_closure { binder; body } when depth > 0 ->
     let (vars, body) = uncurry_lambda (depth - 1) body in
@@ -52,7 +53,7 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
 
 let usages = List.fold_left ~f:combine_usage ~init:Unused
 
-let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
+let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
     if List.mem ~equal:ValueVar.equal vars f
@@ -97,7 +98,7 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages [self e1; self e2; self_binder [v3h; v3t] e3]
   | E_if_left (e1, ((v2, _), e2), ((v3, _), e3)) ->
     usages [self e1; self_binder [v2] e2; self_binder [v3] e3]
-  | E_let_in (e1, _, _, ((v2, _), e2)) ->
+  | E_let_in (e1, _, ((v2, _), e2)) ->
     usages [self e1; self_binder [v2] e2]
   | E_tuple exprs ->
     usages (List.map ~f:self exprs)
@@ -145,7 +146,7 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
            { content = E_variable fresh_var;
              type_expression = arg_type;
              location = Location.generated } in
-         { content = E_let_in (fresh_var_expr, true, false, ((var, arg_type), body));
+         { content = E_let_in (fresh_var_expr, true, ((var, arg_type), body));
            type_expression = body.type_expression;
            location = Location.generated })
       (List.zip_exn (List.zip_exn vars fresh_vars) arg_types)
@@ -157,7 +158,7 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
                         type_content = T_function (comb_type arg_types, ret_type) } }
 
 let rec uncurry_in_expression
-    (f : expression_variable) (depth : int) (expr : expression) : expression =
+    (f : ValueVar.t) (depth : int) (expr : expression) : expression =
   let self = uncurry_in_expression f depth in
   let self_list = List.map ~f:self in
   let self_binder vars e =
@@ -190,10 +191,10 @@ let rec uncurry_in_expression
   | E_closure { binder; body } ->
     let body = self_binder [binder] body in
     return (E_closure { binder; body })
-  | E_let_in (e1, inline, thunk, ((v, t), e2)) ->
+  | E_let_in (e1, inline, ((v, t), e2)) ->
     let e1 = self e1 in
     let e2 = self_binder [v] e2 in
-    return (E_let_in (e1, inline, thunk, ((v, t), e2)))
+    return (E_let_in (e1, inline, ((v, t), e2)))
   | E_raw_michelson _ ->
     return_id
   | E_iterator (c, ((v1, t1), e1), e2) ->
@@ -260,9 +261,9 @@ let uncurry_expression : expression -> expression =
   map_expression
     (fun e ->
        match e.content with
-       | E_let_in (e1, inline, thunk, ((v, _t), e2)) ->
+       | E_let_in (e1, inline, ((v, _t), e2)) ->
          let return e1 e2 =
-           { e with content = E_let_in (e1, inline, thunk, ((v, e1.type_expression), e2)) } in
+           { e with content = E_let_in (e1, inline, ((v, e1.type_expression), e2)) } in
          let depth_in_rhs = curried_depth_in_lambda e1 in
          if depth_in_rhs > 0
          then

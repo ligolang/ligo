@@ -167,7 +167,7 @@ instance FromJSON LigoType where
         , LTVariable <$> parseJSON typ
         , LTApp <$> parseJSON typ
         , LTArrow <$> parseJSON typ
-        , flip (withObject "t_record") typ \o' -> do -- "t_record"
+        , flip (withObject "T_record") typ \o' -> do -- "t_record"
             parsed <- sequence $ parseJSON <$> o'
             pure $ LTRecord $ Aeson.toHashMapText parsed
         , pure LTUnresolved
@@ -196,21 +196,22 @@ data LigoTypeConstant = LigoTypeConstant
     -- `"t_constant"` with `"int"`.
     ltcParameters :: [LigoType]
     -- | Type name.
-  , ltcInjection :: Text
+  , ltcInjection :: NonEmpty Text
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeConstant where
-  parseJSON = withObject "t_constant" \o -> do
-    ltcInjection <- o .: "injection"
+  parseJSON = withObject "T_constant" \o -> do
+    injection <- o .: "injection"
     ltcParameters <- o .: "parameters"
+    ltcInjection <- maybe (fail "Expected non-empty injection") pure (nonEmpty injection)
     pure LigoTypeConstant{..}
 
 instance Buildable LigoTypeConstant where
   build LigoTypeConstant{..} =
     if null ltcParameters
-      then build ltcInjection
-      else tupleF ltcParameters <> build ltcInjection
+      then build $ head ltcInjection
+      else tupleF ltcParameters <> build (head ltcInjection)
 
 -- | `"t_variable"`
 newtype LigoTypeVariable = LigoTypeVariable
@@ -221,7 +222,7 @@ newtype LigoTypeVariable = LigoTypeVariable
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeVariable where
-  parseJSON = withObject "t_variable" \o -> do
+  parseJSON = withObject "T_variable" \o -> do
     ltvName <- o .: "name"
     pure LigoTypeVariable{..}
 
@@ -235,7 +236,7 @@ data LigoTypeApp = LigoTypeApp
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeApp where
-  parseJSON = withObject "t_app" \o -> do
+  parseJSON = withObject "T_app" \o -> do
     ltaTypeOperator <- o .: "type_operator" >>= \o' -> o' .: "name"
     ltaArguments <- o .: "arguments"
     pure LigoTypeApp{..}
@@ -253,7 +254,7 @@ data LigoTypeArrow = LigoTypeArrow -- "type2" -> "type1"
     deriving anyclass (NFData)
 
 instance FromJSON LigoTypeArrow where
-  parseJSON = withObject "t_arrow" \o -> do
+  parseJSON = withObject "T_arrow" \o -> do
     ltaType1 <- o .: "type1"
     ltaType2 <- o .: "type2"
     pure LigoTypeArrow{..}

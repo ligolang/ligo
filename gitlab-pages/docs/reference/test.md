@@ -160,6 +160,22 @@ type typed_address &lt;&apos;param, &apos;s&gt;
 A type for an address of a contract with parameter `'param` and storage
 `'storage`.
 
+
+<SyntaxTitle syntax="pascaligo">
+type unforged_ticket(s) is record [ ticketer : address ; value : s ; amount : nat ]
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type 's unforged_ticket = &#x007b; ticketer : address ; value : 's ; amount : nat &#x007d;
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type unforged_ticket s = &#x007b; ticketer : address , value : s , amount : nat &#x007d;
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type unforged_ticket &lt;s&gt; = &#x007b; ticketer : address , value : s , amount : nat &#x007d;
+</SyntaxTitle>
+
+A type for decompile tickets.
+
 <SyntaxTitle syntax="pascaligo">
 val to_contract&lt;param,storage&gt; : typed_address (param, storage) -> contract (param)
 </SyntaxTitle>
@@ -1043,6 +1059,45 @@ let mutation_test_all : (value: 'a, tester: ('a -> 'b)) => list &lt;[&apos;b, mu
 Given a value to mutate (first argument), it will try all the
 mutations of it, passing each one to the function (second argument).
 In case no failure arises when running the function on a mutation, the
+failure and mutation involved will be added to the list to be
+returned.
+
+<SyntaxTitle syntax="pascaligo">
+val originate_from_file_and_mutate&lt;b&gt; : string -> string -> list string -> michelson_program -> tez -> (address * michelson_contract * int -> b) -> option (b * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_from_file_and_mutate : string -> string -> string list -> michelson_program -> tez -> (address * michelson_contract * int -> 'b) -> ('b * mutation) option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let originate_from_file_and_mutate : (string, string, list (string), michelson_program, tez, ((address, michelson_contract, int) => 'b)) => option ('b, mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let originate_from_file_and_mutate : (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez, (tester: (originated_address: address, code: michelson_contract, size: int) => 'b)) => option&lt;[&apos;b, mutation]&gt;
+</SyntaxTitle>
+
+Given a contract from a file (passed by filepath, entrypoint and
+views), an initial storage and balance, it will originate mutants of
+the contract and pass the result to the function (last argument). On
+the first case of non failure when running the function on a mutation,
+the value and mutation involved will be returned.
+
+<SyntaxTitle syntax="pascaligo">
+val originate_from_file_and_mutate_all&lt;b&gt; : string -> string -> list string -> michelson_program -> tez -> (address * michelson_contract * int -> b) -> list (b * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_from_file_and_mutate_all : string -> string -> string list -> michelson_program -> tez -> (address * michelson_contract * int -> 'b) -> ('b * mutation) list
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let originate_from_file_and_mutate_all : (string, string, list (string), michelson_program, tez, ((address, michelson_contract, int) => 'b)) => list ('b, mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let originate_from_file_and_mutate_all : (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez, (tester: (originated_address: address, code: michelson_contract, size: int) => 'b)) => list&lt;[&apos;b, mutation]&gt;
+</SyntaxTitle>
+
+Given a contract from a file (passed by filepath, entrypoint and
+views), an initial storage and balance, it will originate mutants of
+the contract and pass the result to the function (last argument). In
+case no failure arises when running the function on a mutation, the
 failure and mutation involved will be added to the list to be
 returned.
 

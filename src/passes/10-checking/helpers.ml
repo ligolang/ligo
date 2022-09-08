@@ -13,8 +13,8 @@ let typer_2 ~raise : Location.t -> string -> (type_expression -> type_expression
   | [ a ; b ] -> f a b
   | _ -> raise.error @@ wrong_param_number l s 2 lst
 
-let eq_1 a cst = type_expression_eq (a , cst)
-let eq_2 (a , b) cst = type_expression_eq (a , cst) && type_expression_eq (b , cst)
+let eq_1 a cst = type_expression_eq (a, cst)
+let eq_2 (a , b) cst = eq_1 a cst && eq_1 b cst
 
 (*
   [first_success] ~raise [f] [lst]:

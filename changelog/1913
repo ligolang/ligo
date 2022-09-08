@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1913'
+title: 'Testing framework: implement mutation testing on top of try-catch'
+type: internal

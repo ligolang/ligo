@@ -8,6 +8,7 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> 
   in
   let std = match protocol with
     | Environment.Protocols.Jakarta -> def "JAKARTA"
+    | Environment.Protocols.Kathmandu -> def "KATHMANDU"
   in
   let lib = Ligo_lib.get () in
   test_module ^ func_type ^ std ^ lib
@@ -24,22 +25,28 @@ let stdlib ~options syntax =
 
 let typed ~options (syntax : Syntax_types.t) =
   let open Helpers in
-  let k = build_key ~options syntax in
-  internalize_typed @@
-    match LanguageMap.find_opt k @@ ! std_lib_cache with
-    | None ->
-       let typed, core = stdlib ~options syntax in
-       std_lib_cache := LanguageMap.add k (typed, core) @@ !std_lib_cache;
-       typed
-    | Some (typed, _) -> typed
+  if options.Compiler_options.middle_end.no_stdlib then
+    []
+  else
+    let k = build_key ~options syntax in
+    internalize_typed @@
+      match LanguageMap.find_opt k @@ ! std_lib_cache with
+      | None ->
+         let typed, core = stdlib ~options syntax in
+         std_lib_cache := LanguageMap.add k (typed, core) @@ !std_lib_cache;
+         typed
+      | Some (typed, _) -> typed
 
 let core ~options (syntax : Syntax_types.t) =
   let open Helpers in
-  let k = build_key ~options syntax in
-  internalize_core @@
-    match LanguageMap.find_opt k @@ ! std_lib_cache with
-    | None ->
-       let typed, core = stdlib ~options syntax in
-       std_lib_cache := LanguageMap.add k (typed, core) @@ ! std_lib_cache;
-       core
-    | Some (_, core) -> core
+  if options.Compiler_options.middle_end.no_stdlib then
+    []
+  else
+    let k = build_key ~options syntax in
+    internalize_core @@
+      match LanguageMap.find_opt k @@ ! std_lib_cache with
+      | None ->
+         let typed, core = stdlib ~options syntax in
+         std_lib_cache := LanguageMap.add k (typed, core) @@ ! std_lib_cache;
+         core
+      | Some (_, core) -> core

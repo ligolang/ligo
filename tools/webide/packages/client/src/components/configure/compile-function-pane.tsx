@@ -101,6 +101,7 @@ const CompileFunctionPaneComponent = (props) => {
               dispatch({ ...new ChangeProtocolAction(ev.target.value) })
             }>
             <Option value={protocolType.Jakarta}>Jakarta</Option>
+            <Option value={protocolType.Kathmandu}>Kathmandu</Option>
           </SelectCommand>
           <Label>Select Function to compile</Label>
           <SelectCommand

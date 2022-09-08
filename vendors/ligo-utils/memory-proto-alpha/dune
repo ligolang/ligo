@@ -3,6 +3,6 @@
   (public_name tezos-memory-proto-alpha)
   (libraries
     tezos-protocol-environment
-    tezos-protocol-013-PtJakart
+    tezos-protocol-014-PtKathma
   )
 )

@@ -121,7 +121,7 @@ intType :: LigoType
 intType = LTConstant $
   LigoTypeConstant
     { ltcParameters = []
-    , ltcInjection = "int"
+    , ltcInjection = "Int" :| []
     }
 
 compareWithCurLocation

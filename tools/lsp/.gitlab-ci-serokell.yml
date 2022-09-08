@@ -27,9 +27,7 @@ ligo-build:
   tags: [nix-with-docker]
   script:
     # generate changelog, it's required for building ligo
-    - nix-build nix -A ligo-changelog
-    - cp ./result/changelog.txt .
-    - chmod u+w ./changelog.txt
+    - ./scripts/changelog-generation.sh
     # build intermediate image (Dockerfile declares some build arguments, but we don't need to set any of them)
     - docker build . --target ligo-builder --tag ligo-builder:$CI_JOB_ID
     # build final image
@@ -156,8 +154,7 @@ vscode-extension-publish-checks:
   needs: [ print-nix-version ]
   only: [merge_requests, tooling]
   script:
-    - nix shell -f nix/vsce.nix $FLAKE_FLAGS --command vsce --help
-    - nix shell -f nix/vsce.nix $FLAKE_FLAGS --command ovsx --help
+    - nix flake check ./tools/vsce
 
 # publish vscode extension to the extension marketplace
 vscode-extension-publish:
@@ -166,8 +163,8 @@ vscode-extension-publish:
   only: [vscode-production]
   when: manual
   script:
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
+    - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix develop ./tools/vsce --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
 
 # publish docker image for lsp to the gitlab registry
 lsp-docker-image-publish:

@@ -4,6 +4,8 @@ open Simple_utils
 module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
+open Ligo_prim
+
 module Raw_options = Compiler_options.Raw_options
 
 let no_comment node =
@@ -112,7 +114,7 @@ let parameter (raw_options : Raw_options.t) source_file expression amount balanc
         let Compiler_options.{ entry_point ; _ } = options.frontend in
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
-        let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
+        let entry_point = ValueVar.of_input_var entry_point in
         let app_typed_prg = Build.build_typed ~raise ~options Env source_file in
         let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param app_typed_prg in
@@ -146,7 +148,7 @@ let storage (raw_options : Raw_options.t) source_file expression amount balance 
         let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
-        let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
+        let entry_point = ValueVar.of_input_var entry_point in
         let app_typed_prg = Build.build_typed ~raise ~options Ligo_compile.Of_core.Env source_file in
         let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param app_typed_prg in

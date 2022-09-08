@@ -22,6 +22,7 @@ type ('src, 'dst) printer = Tree.state -> 'src -> 'dst
 
 val print_to_buffer : (CST.t, Buffer.t) printer
 val print_to_string : (CST.t, string) printer
+val print_pattern_to_string : (CST.pattern, string) printer
 
 (* Aliases (preferably use fully qualified,
    e.g. [PrintCST.to_buffer]) *)

@@ -86,6 +86,13 @@ okayTests =
         -- LIGO-477
       , "negative" </> "missing_funarg_annotation.religo"
 
+        -- LIGO-757
+      , "negative" </> "error_reverse_app.mligo"
+      , "negative" </> "error_reverse_app_2.mligo"
+      , "reverse_app.mligo"
+      , "build" </> "common" </> "storage.mligo"
+      , "build" </> "instance" </> "main.mligo"
+
         -- LIGO fails to parse these:
       , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"

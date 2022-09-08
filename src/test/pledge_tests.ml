@@ -1,5 +1,6 @@
 module Var = Simple_utils.Var
 open Test_helpers
+open Ligo_prim
 open Ast_imperative
 
 

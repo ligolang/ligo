@@ -22,6 +22,10 @@ const Tezos = (network: string) => {
       return new TezosToolkit(`https://mainnet.api.tez.ie`);
     case "jakartanet":   
       return new TezosToolkit(`https://jakartanet.ecadinfra.com`);
+    case "ghostnet":   
+      return new TezosToolkit(`https://ghostnet.ecadinfra.com`);
+    case "kathmandunet":   
+      return new TezosToolkit(`https://kathmandunet.ecadinfra.com`);
     default : 
       return new TezosToolkit("empty");
   }

@@ -12,7 +12,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - Success(_) |}]
+    - Success |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ; "--test" ] ;
@@ -62,8 +62,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ; "--test" ] ;
   [%expect{|
-    const test_foo =
-      lambda (x : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat]) return
+    const test_foo[@var] =
+      lambda (xsum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat])string return
        match x with
         | Fail _#3 ->
           "" | Success _#2 ->

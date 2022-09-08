@@ -143,7 +143,7 @@ let%expect_test _ =
      11 |     return [list([]) as list<operation>, newStorage];
 
     Invalid type(s).
-    Expected: "nat", but got: "( storage * nat )". |} ] ;
+    Expected: "nat", but got: "( nat * nat )". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|

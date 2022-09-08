@@ -1,3 +1,4 @@
+open Ligo_prim
 open Mini_c
 
 (* Reference implementation:
@@ -83,11 +84,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v2 = replace_var v2 in
     let bt = replace bt in
     return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-  | E_let_in (e1, inline, thunk, ((v, tv), e2)) ->
+  | E_let_in (e1, inline, ((v, tv), e2)) ->
     let v = replace_var v in
     let e1 = replace e1 in
     let e2 = replace e2 in
-    return @@ E_let_in (e1, inline, thunk, ((v, tv), e2))
+    return @@ E_let_in (e1, inline, ((v, tv), e2))
   | E_tuple exprs ->
     let exprs = List.map ~f:replace exprs in
     return @@ E_tuple exprs
@@ -185,10 +186,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (binder, body) = self_binder1 ~body:(binder, body) in
     return @@ E_closure { binder ; body }
   )
-  | E_let_in (expr, inline, thunk, ((v , tv), body)) -> (
+  | E_let_in (expr, inline, ((v , tv), body)) -> (
     let expr = self expr in
     let (v, body) = self_binder1 ~body:(v, body) in
-    return @@ E_let_in (expr, inline, thunk, ((v , tv) , body))
+    return @@ E_let_in (expr, inline, ((v , tv) , body))
   )
   | E_tuple exprs ->
     let exprs = List.map ~f:self exprs in
@@ -341,7 +342,7 @@ let%expect_test _ =
   (* let-in shadowed (not in rhs) *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, false, ((x, dummy_type), var x))))
+    ~body:(wrap (E_let_in (var x, false, ((x, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -352,7 +353,7 @@ let%expect_test _ =
   (* let-in not shadowed *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, false, ((y, dummy_type), var x))))
+    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -363,7 +364,7 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, false, ((y, dummy_type),
+    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type),
                            app (var x) (var y)))))
     ~x:x
     ~expr:(var y) ;

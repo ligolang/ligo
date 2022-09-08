@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1872'
+title: 'Typer: keep type abstraction after checking'
+type: internal
