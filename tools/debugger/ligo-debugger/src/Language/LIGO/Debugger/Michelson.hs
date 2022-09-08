@@ -203,7 +203,7 @@ readLigoMapper ligoMapper = do
   let allFiles = metaPerInstr ^.. each . liiLocationL . _Just . lrFileL
         -- We want to remove duplicates
         & unstableNub
-        & filter (/= "")
+        & filter (not . isLigoStdLib)
 
   let exprLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set

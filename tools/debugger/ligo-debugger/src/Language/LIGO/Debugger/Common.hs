@@ -5,6 +5,7 @@ module Language.LIGO.Debugger.Common
   , ligoRangeToSourceLocation
   , spineAtPoint
   , getStatementLocs
+  , isLigoStdLib
   ) where
 
 import Unsafe qualified
@@ -76,7 +77,7 @@ getStatementLocs locs parsedContracts =
 
     ranges = toList locs
       <&> sourceLocationToRange
-      & filter do \Range{..} -> _rFile /= ""
+      & filter (not . isLigoStdLib . _rFile)
 
     getStatementRanges :: Range -> [Range]
     getStatementRanges range@Range{..} = filterStatements $ spineAtPoint range parsedLigo
@@ -106,3 +107,11 @@ getStatementLocs locs parsedContracts =
               AST.Let{} -> True
               AST.Seq{} -> True
               _ -> False
+
+-- | LIGO debug output, when optimizations are disabled, may mention locations
+-- referring to LIGO's standard library that defines bindings to every single
+-- Michelson instruction.
+-- LIGO teams says that we should just ignore such locations.
+isLigoStdLib :: FilePath -> Bool
+isLigoStdLib path =
+  path == ""
