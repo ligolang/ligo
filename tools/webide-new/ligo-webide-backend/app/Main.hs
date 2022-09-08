@@ -11,18 +11,18 @@ main =
       (helper <*> parser)
       ( fullDesc
           <> header "LIGO WebIDE backend"
-          <> progDesc "compile LIGO contracts to Tezos"
+          <> progDesc "provide a server interface to the LIGO compiler"
       )
   where
     parser :: Parser (IO ())
     parser = fmap startApp $
       Config
-        <$> strOption
+        <$> (optional (strOption
           ( long "ligo-path"
             <> short 'l'
             <> metavar "STRING"
             <> help "path to LIGO binary"
-          )
+          )))
         <*> option auto
           ( long "port"
             <> short 'p'
@@ -36,3 +36,11 @@ main =
             <> short 'v'
             <> help "print received requests and the responses"
           )
+        <*> (optional (strOption
+          ( long "dockerized-ligo-version"
+          <> short 'd'
+          <> metavar "LIGO_VERSION"
+          <> help "use a LIGO from Docker instead of a \
+                  \LIGO binary. If this is specified, 'ligo-path' \
+                  \will be ignored."
+          )))

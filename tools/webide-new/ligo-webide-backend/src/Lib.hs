@@ -8,7 +8,7 @@ module Lib
 where
 
 import Control.Monad (forM_)
-import Control.Monad.Except (ExceptT)
+import Control.Monad.Except (ExceptT, throwError)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ReaderT, asks, runReaderT)
 import Control.Monad.Trans (lift)
@@ -18,7 +18,8 @@ import Data.Aeson
 import Data.Char (toLower)
 import Data.Proxy (Proxy(Proxy))
 import Data.Swagger.ParamSchema (ToParamSchema)
-import Data.Swagger.Schema (ToSchema)
+import Data.Swagger.Schema
+  (SchemaOptions(..), ToSchema, declareNamedSchema, defaultSchemaOptions, genericDeclareNamedSchema)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
@@ -29,15 +30,15 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (cors, corsRequestHeaders, simpleCorsResourcePolicy)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Servant
-  (Application, Handler(..), JSON, Post, ReqBody, Server, ServerError, hoistServer, serve,
-  (:<|>)((:<|>)), (:>))
+  (Application, Handler(..), JSON, Post, ReqBody, Server, ServerError, err500, errBody, hoistServer,
+  serve, (:<|>)((:<|>)), (:>))
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 import System.Directory (createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.FilePath (takeDirectory, (</>))
 import System.IO.Temp (withSystemTempDirectory)
-import System.Process (readProcessWithExitCode)
+import System.Process (proc, readCreateProcessWithExitCode, shell)
 
 newtype Source = Source {unSource :: Text}
   deriving stock (Eq, Show, Ord, Generic)
@@ -69,7 +70,9 @@ instance FromJSON CompileRequest where
 instance ToJSON CompileRequest where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 1}
 
-instance ToSchema CompileRequest
+instance ToSchema CompileRequest where
+  declareNamedSchema = genericDeclareNamedSchema
+    defaultSchemaOptions {fieldLabelModifier = prepareField 1}
 
 newtype Build = Build Text deriving stock (Show, Generic)
 
@@ -87,9 +90,10 @@ type SwaggeredAPI =
     :<|> API
 
 data Config = Config
-  { cLigoPath :: FilePath
+  { cLigoPath :: Maybe FilePath
   , cPort :: Int
   , cVerbose :: Bool
+  , cDockerizedLigoVersion :: Maybe String
   }
 
 type WebIDEM = KatipT (ReaderT Config (ExceptT ServerError IO))
@@ -135,13 +139,35 @@ compile request =
           createDirectoryIfMissing True (takeDirectory fp)
           Text.writeFile fp (unSource src)
 
-        ligoPath <- lift (asks cLigoPath)
-        (ec, out, err) <- liftIO $
-          readProcessWithExitCode
-            ligoPath
-            ["compile", "contract", fullMainPath]
-            ""
+        (ec, out, err) <- runLigo dirPath ["compile", "contract", fullMainPath]
 
         case ec of
           ExitSuccess -> pure (Build $ Text.pack out)
           ExitFailure _ -> pure (Build $ Text.pack err)
+
+runLigo :: FilePath -> [String] -> WebIDEM (ExitCode, String, String)
+runLigo dirPath commands = do
+  dockerizedLigo <- lift (asks cDockerizedLigoVersion)
+  case dockerizedLigo of
+    Just version ->
+      liftIO
+      $ flip readCreateProcessWithExitCode ""
+      $ shell
+      $ concat [ "docker run --rm -v \""
+               , dirPath
+               , "\":\""
+               , dirPath
+               , "\" -w \""
+               , dirPath
+               , "\" ligolang/ligo:"
+               , version
+               , " "
+               ]
+        ++ unwords commands
+    Nothing -> do
+      mLigoPath <- lift (asks cLigoPath)
+      case mLigoPath of
+        Nothing -> lift $ throwError err500
+          {errBody = "server doesn't have access to LIGO binary."}
+        Just ligoPath ->
+          liftIO $ readCreateProcessWithExitCode (proc ligoPath commands) ""
