@@ -303,13 +303,42 @@ module Free = struct
           defs, refs, tenv, scopes
 end
 
+let resolve_module_aliases_to_module_ids : def list -> def list
+  = fun defs ->
+      let find_mod_def_id ids name =
+        match List.find ids ~f:(fun (name',_) -> String.(name = name')) with
+          Some (_,id) -> id
+        | None -> name
+      in
+      let rec resolve defs mod_def_ids =
+        match defs with
+          [] -> mod_def_ids, defs
+        | Module ({ uid ; name ; mod_case = Def d ; _ } as m)::defs ->
+            let d = List.rev d in 
+            let mod_def_ids, d = resolve d mod_def_ids in
+            let d = List.rev d in
+            let mod_case = Def d in
+            let mod_def_ids, defs = resolve defs ((name, uid) :: mod_def_ids) in
+            mod_def_ids, Module { m with mod_case } :: defs
+        | Module ({ uid ; name ; mod_case = Alias a ; _ } as m)::defs ->
+            let a =  List.map a ~f:(find_mod_def_id mod_def_ids) in
+            let mod_case = Alias a in
+            let mod_def_ids, defs = resolve defs ((name, uid) :: mod_def_ids) in
+            mod_def_ids, Module { m with mod_case } :: defs
+        | def::defs -> 
+            let mod_def_ids, defs = resolve defs mod_def_ids in
+            mod_def_ids, def :: defs
+      in
+      let defs = List.rev defs in
+      let defs = snd (resolve defs []) in
+      List.rev defs
 
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
       let scopes = merge_same_scopes scopes in
-      (* TODO: resolve module aliases -> module definion ids *)
+      let defs = resolve_module_aliases_to_module_ids defs in
       let () = Format.printf "%a\n%a\n" PP_new.scopes scopes PP_new.definitions defs in
       defs, scopes
 
@@ -323,6 +352,5 @@ for an expression its free_variable will be references
 7. Add comments
 9. update schema.json
 11. validate the output of each and every get-scope test
-12. resolve module alias -> module def id
 
 *)
