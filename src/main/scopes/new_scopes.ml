@@ -154,7 +154,8 @@ module Free = struct
             Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc result.location
           in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
-          defs_result @ [def], refs_result, tenv, add_defs_to_scopes [def] scopes
+          let defs, refs_result = update_references refs_result [def] in
+          defs_result @ defs, refs_result, tenv, add_defs_to_scopes [def] scopes
         | E_type_abstraction { result ; _ } -> expression tenv result
         | E_constructor { element ; _ } -> expression tenv element
         | E_accessor { struct_ ; _ } -> expression tenv struct_
@@ -182,19 +183,20 @@ module Free = struct
           let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
           let scopes' = add_defs_to_scopes [def] scopes' in
           let scopes = scopes @ scopes' in
-          defs_result @ defs_rhs @ [def], refs_result @ refs_rhs, tenv, scopes
+          let defs, refs_result = update_references refs_result [def] in
+          defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
         | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
           let def_fun =
             let binder_loc =  VVar.get_location fun_name in
             Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings fun_name binder_loc (result.location)
           in
           let def_par =
-            (* let binder_name = get_binder_name binder.var in *)
             let binder_loc =  VVar.get_location var in
             Misc.make_v_def ~with_types ~core_type tenv.bindings var binder_loc (result.location)
           in
-          let defs = [def_fun ; def_par] in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
+          let defs = [def_fun ; def_par] in
+          let defs, refs_result = update_references refs_result defs in
           defs_result @ defs, refs_result, tenv, add_defs_to_scopes [def_fun ; def_par] scopes
         | E_type_in { type_binder ; rhs ; let_result } ->
           let def = type_expression type_binder rhs in
@@ -209,7 +211,6 @@ module Free = struct
                   match p.wrap_content with
                     P_var { var ; ascr = core_type ; _ } ->
                       let def =
-                        (* let binder_name = get_binder_name binder.var in *)
                         let binder_loc =  VVar.get_location var in
                         Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc body.location
                       in
@@ -218,6 +219,7 @@ module Free = struct
               ) [] pattern in
               let defs_body, refs_body, tenv, scopes = expression tenv body in
               let scopes = add_defs_to_scopes defs_pat scopes in
+              let defs_pat, refs_body = update_references refs_body defs_pat in
               defs_body @ defs_pat @ defs, refs_body @ refs, tenv, scopes @ scopes'
             )
           in
@@ -225,6 +227,7 @@ module Free = struct
         | E_mod_in { module_binder ; rhs ; let_result } ->
           let defs_module, refs_module, tenv, scopes = module_expression ~with_types ~options tenv module_binder rhs in
           let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+          let defs_module, refs_result = update_references refs_result defs_module in
           defs_result @ defs_module, refs_result @ refs_module, tenv, scopes @ scopes'
     and type_expression : TVar.t -> AST.type_expression -> def
       = fun tv t ->
@@ -270,10 +273,8 @@ module Free = struct
     and declaration_expression : with_types:bool -> options:Compiler_options.middle_end -> ?core_type:AST.type_expression -> typing_env -> VVar.t -> AST.expression -> def list * reference list * typing_env * scopes
       = fun ~with_types ~options ?core_type tenv ev e ->
           let defs, refs, tenv, scopes = expression ~with_types ~options tenv e in
-          (* let name = get_binder_name ev in *)
           let range = VVar.get_location ev in
           let body_range = e.location in
-          (* TODO: clean up *)
           let def = Misc.make_v_def ~with_types ?core_type tenv.bindings ev range body_range in
           [def] @ defs, refs, tenv, scopes
     and declaration : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> def list * reference list * typing_env * scopes
@@ -284,13 +285,11 @@ module Free = struct
         | D_module   { module_attr = { hidden ; _ } ; _ }
         | D_type     { type_attr   = { hidden ; _ } ; _ } when hidden -> [], [], tenv, []
         | D_value { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
-          (* TODO: use ascr *)
           declaration_expression ~with_types ~options ?core_type tenv var expr
         | D_type     { type_binder ; type_expr ; _ } ->
           let def = type_expression type_binder type_expr in
           [def], [], tenv, []
         | D_module   { module_binder ; module_ ; _ } ->
-          (* let tenv = update_typing_env ~with_types ~options tenv decl in  *)
           module_expression ~with_types ~options tenv module_binder module_
     and declarations : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration list -> def list * reference list * typing_env * scopes
       = fun ~with_types ~options tenv decls ->
@@ -298,8 +297,8 @@ module Free = struct
             ~f:(fun (defs, refs, tenv, scopes') decl ->
               let defs', refs', tenv, scopes = declaration ~with_types ~options tenv decl in
               let scopes = add_defs_to_scopes defs scopes in
-              let defs, refs = update_references (refs' @ refs) (defs' @ defs) in
-              defs, refs, tenv, scopes @ scopes')
+              let defs, refs = update_references (refs' @ refs) (defs) in
+              defs' @ defs, refs, tenv, scopes @ scopes')
           in
           defs, refs, tenv, scopes
 end
@@ -385,5 +384,8 @@ for an expression its free_variable will be references
 
 7. Add comments
 8. Add PP for new implementation
+9. update schema.json
+10. fix shadowing :( a.local binding b.local modules
+11. validate the output of each and every get-scope test
 
 *)
