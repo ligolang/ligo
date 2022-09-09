@@ -162,7 +162,8 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes = merge_same_scopes scopes in
         let defs', refs', tenv, scopes' = expression tenv args in
         let scopes' = merge_same_scopes scopes' in
-        defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
+        let scopes_final = merge_same_scopes (scopes @ scopes') in
+        defs' @ defs, refs' @ refs, tenv, scopes_final
       | E_lambda { binder = { var ; ascr = core_type ; _ } ; result ; output_type = _ } ->
         let def =
           if VVar.is_generated var then [] else
