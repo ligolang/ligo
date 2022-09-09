@@ -129,7 +129,12 @@ class FileManager {
         if (cb) {
           cb(e, undefined);
         }
-        throw new Error(`Fail to fetch file: <b>${JSON.stringify(e)}</b>.`);
+        if (e.code === "ENOENT") {
+          throw new Error(`Fail to fetch file: "${path}" is not exists.`);
+        } else {
+          console.error(JSON.stringify(e));
+          throw new Error(`Fail to fetch file: ${JSON.stringify(e)}.`);
+        }
       });
   }
 

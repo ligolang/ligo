@@ -5,6 +5,7 @@ import fileOps from "~/base-components/file-ops";
 
 import SolcjsCompiler from "./SolcjsCompiler";
 import soljsonReleases from "./soljsonReleases.json";
+import Api from "~/components/api/api";
 
 class SolcjsChannel extends DockerImageChannel {
   installed() {
@@ -108,19 +109,10 @@ export class CompilerManager {
       `ligo compile contract ${projectManager.mainFilePath}`
     );
 
-    const request = new Request("/api/compile", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fileExtension: mainFileExtension,
-        source: mainFileContent,
-      }),
-    });
-    fetch(request)
-      .then((response) => response.json())
+    Api.compileContract({
+      fileExtension: mainFileExtension,
+      source: mainFileContent,
+    })
       .then(async (data) => {
         CompilerManager.terminal.writeToTerminal(data.replace(/\n/g, "\n\r"));
 
