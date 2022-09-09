@@ -125,14 +125,6 @@ module Definitions = struct
       let mod_case = Alias alias in
       Module { name ; range ; body_range ; mod_case ; uid ; references = [] ; def_type }
 
-  let shadow_defs : def list -> def list
-    = fun defs ->
-        match defs with
-          [] -> []
-        | def::defs ->
-            let shadow_def def' = not @@ def_equal def def' in
-            def :: List.filter defs ~f:shadow_def
-
   let rec filter_local_defs : def list -> def list
     = fun defs ->
         match defs with
@@ -143,37 +135,18 @@ end
 
 include Definitions
 
-(* TODO: optimize by using ppx_hash *)
-(* type scope = def list
-module ScopeMap = Simple_utils.Map.Make (struct
-  type t = scope
-  let compare defs1 defs2 
-    = List.compare def_compare defs1 defs2  
-end) *)
-
 type scope = Location.t * (def list)
 type scopes = scope list
-
-let rec flatten_defs defs =
-  match defs with
-    [] -> []
-  | (Module { mod_case = Def d ; _ } as def) :: defs ->
-    [def] @ (flatten_defs d) @ flatten_defs defs
-  | def::defs -> def :: flatten_defs defs 
 
 let add_defs_to_scope : def list -> scope -> scope
   = fun defs scope ->
       let loc, scope_defs = scope in
-      loc, flatten_defs (shadow_defs (scope_defs @ defs))
+      loc, scope_defs @ defs
 
 let add_defs_to_scopes : def list -> scopes -> scopes 
   = fun defs scopes ->
       List.map scopes ~f:(add_defs_to_scope defs)
-(* TODO : take care of 
-Furthermore, if a module is in scope, then all of its members must be in scope as well. 
-So a module’s members must each be added to the expression, type, and module environments, and 
-each nested member should also be recursively added to these environments.   
-*)
+
 let merge_same_scopes : scopes -> scopes
   = fun scopes ->
       let rec aux scopes acc =
@@ -186,6 +159,31 @@ let merge_same_scopes : scopes -> scopes
             aux different (merged_scope :: acc)
       in
       aux scopes []
+
+let rec flatten_defs defs =
+  match defs with
+    [] -> []
+  | (Module { mod_case = Def d ; _ } as def) :: defs ->
+    [def] @ (flatten_defs (shadow_defs d)) @ flatten_defs defs
+  | def::defs -> def :: flatten_defs defs 
+
+and shadow_defs : def list -> def list
+  = fun defs ->
+      match defs with
+        [] -> []
+      | def::defs ->
+          let shadow_def def' = not @@ def_equal def def' in
+          def :: shadow_defs (List.filter defs ~f:shadow_def)
+
+let fix_shadowing_in_scope : scope -> scope
+  = fun (loc, defs) ->
+      let defs = shadow_defs defs in 
+      let defs = flatten_defs defs in 
+      loc, defs
+
+let fix_shadowing_in_scopes : scopes -> scopes
+  = fun scopes ->
+      List.map scopes ~f:fix_shadowing_in_scope
 
 module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Value_var.compare end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t

@@ -380,6 +380,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
       let () = reset_counter () in
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
+      let scopes = fix_shadowing_in_scopes scopes in
       let defs = resolve_module_aliases_to_module_ids defs in
       defs, scopes
 
@@ -392,7 +393,6 @@ for an expression its free_variable will be references
 
 7. Add comments
 9. update schema.json
-11. validate the output of each and every get-scope test
 12. Add scopes.mli & Flatten Free
-
+13. Unique Location references
 *)
