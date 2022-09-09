@@ -101,6 +101,7 @@ module.exports = {
     ],
 
     "no-await-in-loop": 0,
+    "react/no-unknown-property": [1, { ignore: [ "align" ] }]
   },
   overrides: [
     {

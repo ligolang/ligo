@@ -1,0 +1,38 @@
+webide-backend:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  script:
+    - nix build ./tools/webide-new#packages.x86_64-linux.backend
+
+webide-frontend:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  script:
+    - nix build ./tools/webide-new#packages.x86_64-linux.frontend
+
+
+webide-backend-checks:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  # webide backend tests need docker
+  tags: [nix-with-docker]
+  script:
+    - cd ./tools/webide-new
+    - nix build .#packages.x86_64-linux.ligo-bin --out-link ligo
+    - nix build .#packages.x86_64-linux.tezos-client --out-link tezos-client
+    - export LIGO_PATH=$PWD/ligo/bin/ligo
+    - export TEZOS_CLIENT_PATH=$PWD/tezos-client/bin/tezos-client
+    # These tests need docker, so they cannot be easily run as a flake check :(
+    - nix build .#tests.x86_64-linux.ligo-webide-backend-test
+    - cd ligo-webide-backend && ../result/bin/ligo-webide-backend-test
+
+webide-frontend-checks:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  script:
+    - nix build ./tools/webide-new#checks.x86_64-linux.frontend-tscompile
+    - nix build ./tools/webide-new#checks.x86_64-linux.frontend-tslint
