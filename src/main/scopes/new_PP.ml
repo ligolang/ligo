@@ -15,11 +15,13 @@ let scopes : Format.formatter -> scopes -> unit =
 let rec definitions : Format.formatter -> def list -> unit
   = fun f defs ->
     let defs = List.sort defs ~compare:(fun d1 d2 -> String.compare (get_def_uid d1) (get_def_uid d2)) in
-    let refs ppf = function
-      [] -> Format.fprintf ppf "references: []"
-    | locs ->
-      let locs = List.sort locs ~compare:Location.compare in
-      Format.fprintf ppf "@[<hv 2>references:@ %a@]" PP_helpers.(list_sep Location.pp (tag " ,@ ")) locs
+    let refs ppf locs =
+      let locs = LSet.elements locs in
+      match locs with  
+        [] -> Format.fprintf ppf "references: []"
+      | locs ->
+        let locs = List.sort locs ~compare:Location.compare in
+        Format.fprintf ppf "@[<hv 2>references:@ %a@]" PP_helpers.(list_sep Location.pp (tag " ,@ ")) locs
     in
     let pp_content ppf =
       function
@@ -52,6 +54,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       | Unresolved -> `Assoc [ "unresolved", `Null ]
     in
     let defintion ~name ~range ~body_range ~t ~references =
+      let references = LSet.elements references in
       `Assoc [
         ("name", `String name);
         ("range", Location.to_yojson range);

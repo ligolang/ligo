@@ -775,8 +775,6 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
     Content: Alias: C#6
     references:
-      File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-5 ,
-      File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-5 ,
       File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-5 |} ] ;
 
   run_ligo_good [ "info"; "get-scope" ; gs "module2.mligo" ; "--format"; "dev" ; "--with-types" ] ;
@@ -1078,19 +1076,9 @@ let%expect_test _ =
     Content: Alias: B#8
     references:
       File "../../test/contracts/get_scope_tests/module3.mligo", line 25, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 25, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 25, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 26, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 26, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 26, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 27, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 27, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 27, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 28, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 28, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 28, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 29, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 29, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 29, characters 13-14
 
     (E#10 -> E)
@@ -1099,16 +1087,7 @@ let%expect_test _ =
     Content: Alias: B#8.C#7
     references:
       File "../../test/contracts/get_scope_tests/module3.mligo", line 31, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 31, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 31, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 31, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 32, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 32, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 32, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 32, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 33, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 33, characters 13-14 ,
-      File "../../test/contracts/get_scope_tests/module3.mligo", line 33, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 33, characters 13-14 |}] ;
 
   run_ligo_good [ "info"; "get-scope" ; gs "module4.mligo" ; "--format"; "dev" ; "--with-types" ] ;

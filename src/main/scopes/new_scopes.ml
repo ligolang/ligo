@@ -79,7 +79,7 @@ module Free = struct
           [] -> false, []
         | Variable v::defs when VVar.is_name ev v.name ->
           let loc = VVar.get_location ev in
-          let references = loc :: v.references in
+          let references = LSet.add loc v.references in
           true, Variable { v with references } :: defs
         | def::defs ->
           let updated, defs = update_variable_reference ev defs in
@@ -96,13 +96,13 @@ module Free = struct
           end
         | mv::mvs, Module ({ name ; mod_case = Def d ; _ } as m)::defs when MVar.is_name mv name ->
             let loc = MVar.get_location mv in
-            let references = loc :: m.references in
+            let references = LSet.add loc m.references in
             let updated, d  = update_module_variable_references mvs ev d in
             let mod_case = Def d in
             updated, Module { m with mod_case ; references } :: defs
         | mv::mvs, Module ({ name ; mod_case = Alias a ; _ } as m)::defs when MVar.is_name mv name ->
             let loc = MVar.get_location mv in
-            let references = loc :: m.references in
+            let references = LSet.add loc m.references in
             let updated, defs = resolve_alias a mvs ev defs in
             updated, Module { m with references } :: defs
         | mvs, def::defs ->
@@ -394,5 +394,4 @@ for an expression its free_variable will be references
 7. Add comments
 9. update schema.json
 12. Add scopes.mli & Flatten Free
-13. Unique Location references
 *)

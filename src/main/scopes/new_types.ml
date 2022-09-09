@@ -26,6 +26,7 @@ let make_def_id name =
 module Definitions = struct
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
+  module LSet     = Caml.Set.Make(Location)
 
   type type_case =
     Core of Ast_core.type_expression
@@ -40,7 +41,7 @@ module Definitions = struct
     range : Location.t ;
     body_range : Location.t ;
     t : type_case ;
-    references : Location.t list ; (* TODO: make this Location set *)
+    references : LSet.t ;
     def_type : def_type ;
   }
 
@@ -60,7 +61,7 @@ module Definitions = struct
     uid: string;
     range : Location.t ;
     body_range : Location.t ;
-    references : Location.t list ; (* TODO: make this Location set *)
+    references : LSet.t ;
     mod_case : mod_case ;
     def_type : def_type ;
   }
@@ -106,7 +107,7 @@ module Definitions = struct
   let make_v_def : string -> type_case -> def_type -> Location.t -> Location.t -> def =
     fun name t def_type range body_range ->
       let uid = make_def_id name in
-      Variable { name ; range ; body_range ; t ; uid ; references = [] ; def_type }
+      Variable { name ; range ; body_range ; t ; uid ; references = LSet.empty ; def_type }
 
   let make_t_def : string -> def_type -> Location.t -> Ast_core.type_expression -> def =
     fun name def_type loc te ->
@@ -117,13 +118,13 @@ module Definitions = struct
     fun ~range ~body_range name def_type members ->
       let uid = make_def_id name in
       let mod_case = Def members in
-      Module { name ; range ; body_range ; mod_case ; uid ; references = [] ; def_type }
+      Module { name ; range ; body_range ; mod_case ; uid ; references = LSet.empty ; def_type }
 
   let make_m_alias_def : range:Location.t -> body_range:Location.t -> string -> def_type -> string list -> def =
     fun ~range ~body_range name def_type alias ->
       let uid = make_def_id name in
       let mod_case = Alias alias in
-      Module { name ; range ; body_range ; mod_case ; uid ; references = [] ; def_type }
+      Module { name ; range ; body_range ; mod_case ; uid ; references = LSet.empty ; def_type }
 
   let rec filter_local_defs : def list -> def list
     = fun defs ->
