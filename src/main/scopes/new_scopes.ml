@@ -267,8 +267,10 @@ module Free = struct
           let defs_module, refs_module, tenv, scopes = module_expression ~with_types ~options tenv Local module_binder rhs in
           let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
           let scopes' = merge_same_scopes scopes' in
+          let scopes' = add_defs_to_scopes defs_module scopes' in
           let defs_module, refs_result = update_references refs_result defs_module in
-          defs_result @ defs_module, refs_result @ refs_module, tenv, scopes @ scopes'
+          let defs, refs_result = update_references refs_result (defs_result @ defs_module) in
+          defs, refs_result @ refs_module, tenv, scopes @ scopes'
     and type_expression : TVar.t -> def_type -> AST.type_expression -> def
       = fun tv def_type t ->
           let def =
