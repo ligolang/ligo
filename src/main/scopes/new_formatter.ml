@@ -1,5 +1,8 @@
 open Simple_utils.Display
 
+module Types = New_types
+module PP = New_PP
+
 let scope_ppformat ~display_format f (d,s) =
   match display_format with
   | Human_readable ->
@@ -16,7 +19,7 @@ let scope_format : 'a format = {
 type get_scope_output =
   { errors : Main_errors.all list;
     warns  : Main_warnings.all list;
-    info  : (Types.def_map * Types.scopes) option;
+    info  : (Types.def list * Types.scopes) option;
   }
 
 let error_format = Main_errors.Formatter.error_format
