@@ -11,7 +11,7 @@ type foo = /* @boom */ ["True"] | ["False"]
     (TypeName)
       (sum_type
         (variant
-          (attr)
+          (Attr)
           (ConstrNameType))
         (variant
           (ConstrNameType)))))
@@ -28,7 +28,7 @@ type foo = /* @boom */ | ["True"] | ["False"]
   (type_decl
     (TypeName)
       (sum_type
-        (attr)
+        (Attr)
         (variant (ConstrNameType))
         (variant (ConstrNameType)))))
 
@@ -45,7 +45,7 @@ type foo = | /* @boom */ ["True"] | ["False"]
     (TypeName)
       (sum_type
         (variant
-          (attr)
+          (Attr)
           (ConstrNameType))
         (variant
           (ConstrNameType)))))
@@ -64,7 +64,7 @@ type person = /* @layout:comb */ {
   (type_decl
     (TypeName)
     (record_type
-      (attr)
+      (Attr)
       (field_decl
         (FieldName)
         (TypeName)))))
@@ -84,8 +84,8 @@ type person = {
     (TypeName)
     (record_type
       (field_decl
-        (attr)
-        (attr)
+        (Attr)
+        (Attr)
         (FieldName)
         (TypeName)))))
 
@@ -99,7 +99,7 @@ let decl
 
 (source_file
   (toplevel_binding
-    (attr)
+    (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -114,8 +114,8 @@ let decl twice
 
 (source_file
   (toplevel_binding
-    (attr)
-    (attr)
+    (Attr)
+    (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -142,7 +142,7 @@ let bar = (b : int) : int => {
       (TypeName)
         (block_statement
           (let_binding
-            (attr) (attr)
+            (Attr) (Attr)
             (var_pattern (NameDecl))
             (Int))
           (return_statement (Name))))))
@@ -169,7 +169,7 @@ const bar = (b : int) : int => {
       (TypeName)
       (block_statement
         (const_binding
-          (attr) (attr)
+          (Attr) (Attr)
           (var_pattern (NameDecl))
           (Int))
         (return_statement (Name))))))
@@ -184,7 +184,7 @@ const decl
 
 (source_file
   (toplevel_binding
-    (attr)
+    (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -199,8 +199,8 @@ const decl twice
 
 (source_file
   (toplevel_binding
-    (attr)
-    (attr)
+    (Attr)
+    (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -216,7 +216,7 @@ const fst = (p: [nat, nat]): nat => p[0];
 
 (source_file
   (toplevel_binding
-    (attr)
+    (Attr)
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -242,7 +242,7 @@ type animal =
 (source_file
   (type_decl (TypeName)
   (sum_type
-    (attr)
+    (Attr)
     (variant (ConstrNameType))
     (variant (ConstrNameType))
     (variant (ConstrNameType)))))
@@ -265,7 +265,7 @@ type artist =
   (type_decl
     (TypeName)
     (record_type
-      (attr)
+      (Attr)
       (field_decl (FieldName) (TypeName))
       (field_decl (FieldName) (TypeName))
       (field_decl (FieldName) (TypeName)))))
@@ -285,9 +285,9 @@ type animal =
   (type_decl
     (TypeName)
     (sum_type
-      (variant (attr) (ConstrNameType))
-      (variant (attr) (ConstrNameType))
-      (variant (attr) (ConstrNameType)))))
+      (variant (Attr) (ConstrNameType))
+      (variant (Attr) (ConstrNameType))
+      (variant (Attr) (ConstrNameType)))))
 
 =========
 record type @annot
@@ -305,6 +305,6 @@ type artist = {
   (type_decl
     (TypeName)
     (record_type
-      (field_decl (attr) (FieldName) (TypeName))
-      (field_decl (attr) (FieldName) (TypeName))
-      (field_decl (attr) (FieldName) (TypeName)))))
+      (field_decl (Attr) (FieldName) (TypeName))
+      (field_decl (Attr) (FieldName) (TypeName))
+      (field_decl (Attr) (FieldName) (TypeName)))))

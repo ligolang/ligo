@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.7.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 
@@ -133,8 +133,8 @@ library
     , lens
     , lsp-types
     , mtl
-    , pretty
     , process
+    , process-extras
     , regex-tdfa
     , template-haskell
     , temporary
@@ -215,9 +215,7 @@ executable ligo-squirrel
     , duplo
     , filepath
     , focus
-    , ghc-prim
     , hashable
-    , interpolate
     , katip
     , lens
     , ligo-squirrel
@@ -227,7 +225,6 @@ executable ligo-squirrel
     , stm
     , stm-containers
     , text
-    , transformers
     , unliftio
     , unliftio-core
     , unordered-containers
@@ -283,7 +280,6 @@ executable ligo-vet
   build-depends:
       base
     , duplo
-    , ghc-prim
     , ligo-squirrel
     , mtl
     , optparse-applicative
@@ -369,11 +365,10 @@ test-suite integration-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , base
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel
@@ -456,11 +451,10 @@ test-suite ligo-contracts-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , base
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel
@@ -485,6 +479,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.DocumentLink
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Folding
+      Test.Capabilities.Highlights
       Test.Capabilities.Hover
       Test.Capabilities.PrepareRename
       Test.Capabilities.RangeFormatting
@@ -494,6 +489,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.SignatureHelp
       Test.Capabilities.TypeDefinition
       Test.Common.LSP
+      Test.DirtyFiles
       Test.DisabledFeatures
       Test.Project.Driver
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
@@ -565,10 +561,9 @@ test-suite lsp-handlers-test
     , base
     , data-default
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
+    , interpolate
     , lens
     , ligo-squirrel
     , lsp-test
@@ -667,9 +662,7 @@ test-suite lsp-test
     , algebraic-graphs
     , base
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel

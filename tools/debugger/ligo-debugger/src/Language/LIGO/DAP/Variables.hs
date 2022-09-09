@@ -11,15 +11,19 @@ import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
 import Data.Text qualified as T
 import Fmt (pretty)
+import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuild)
+import Morley.Debugger.Protocol.DAP (Variable)
+import Morley.Debugger.Protocol.DAP qualified as DAP
+import Morley.Michelson.Typed
+  (EntrypointCallT (..), EpAddress (..), SomeConstrainedValue (SomeValue),
+  SomeEntrypointCallT (SomeEpc), Value, Value' (..))
+
 import Language.LIGO.Debugger.CLI.Types
   (LigoExposedStackEntry (LigoExposedStackEntry, leseDeclaration, leseType),
   LigoStackEntry (LigoStackEntry), LigoType (LTApp, LTRecord, LTUnresolved),
   LigoTypeApp (LigoTypeApp, ltaArguments))
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
-import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuild)
-import Morley.Debugger.Protocol.DAP (Variable)
-import Morley.Debugger.Protocol.DAP qualified as DAP
-import Morley.Michelson.Typed (SomeConstrainedValue (SomeValue), Value, Value' (..))
+import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
 --
@@ -56,21 +60,25 @@ insertVars vars = do
   _2 %= M.insert nextIdx vars
   return nextIdx
 
+createVariable :: String -> String -> LigoType -> Maybe String -> Maybe String -> Variable
+createVariable name varText typ menuContext evaluateName = DAP.defaultVariable
+  { DAP.nameVariable = name
+  , DAP.valueVariable = varText
+  , DAP.typeVariable = pretty typ
+  , DAP.__vscodeVariableMenuContextVariable = menuContext
+  , DAP.evaluateNameVariable = evaluateName
+  }
+
 buildVariable :: forall t. LigoType -> Value t -> String -> VariableBuilder Variable
 buildVariable typ v name = do
   let
     varText = pretty $ debugBuild DpmNormal v
     evaluatedText = pretty $ debugBuild DpmEvaluated v
-    var = DAP.defaultVariable
-      { DAP.nameVariable = name
-      , DAP.valueVariable = varText
-      , DAP.typeVariable = pretty typ
-      , DAP.__vscodeVariableMenuContextVariable = case v of
-          VAddress  {} -> Just "address"
-          VContract {} -> Just "contract"
-          _            -> Nothing
-      , DAP.evaluateNameVariable = Just evaluatedText
-      }
+    menuContext = case v of
+      VAddress  {} -> Just "address"
+      VContract {} -> Just "contract"
+      _            -> Nothing
+    var = createVariable name varText typ menuContext (Just evaluatedText)
 
   subVars <- buildSubVars typ v
 
@@ -92,6 +100,15 @@ getInnerTypeFromRecord name = \case
   LTRecord hm -> fromMaybe LTUnresolved (hm HM.!? name)
   _ -> LTUnresolved
 
+getEpAddressChildren :: EpAddress -> [Variable]
+getEpAddressChildren EpAddress{..} =
+  if isDefEpName eaEntrypoint
+  then []
+  else [addr, ep]
+  where
+    addr = createVariable "address" (pretty eaAddress) LTUnresolved Nothing Nothing
+    ep = createVariable "entrypoint" (pretty eaEntrypoint) LTUnresolved Nothing Nothing
+
 buildSubVars :: LigoType -> Value t -> VariableBuilder [Variable]
 buildSubVars typ = \case
   VOption Nothing -> return []
@@ -109,5 +126,8 @@ buildSubVars typ = \case
     forM (toPairs m) \(k, v) -> do
       let name = pretty $ debugBuild DpmNormal k
       buildVariable (getInnerTypeFromRecord name typ) v (T.unpack name)
+  VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
+    pure $ getEpAddressChildren EpAddress{..}
+  VAddress epAddress -> pure $ getEpAddressChildren epAddress
   -- Other value types do not have nested structure
   _ -> return []

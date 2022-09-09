@@ -13,6 +13,9 @@ module Language.LIGO.Debugger.Snapshots
   , collectInterpretSnapshots
 
     -- * Lenses
+  , siLigoDescL
+  , siValueL
+
   , sfNameL
   , sfLocL
   , sfStackL
@@ -34,31 +37,40 @@ module Language.LIGO.Debugger.Snapshots
   , _EventExpressionEvaluated
   ) where
 
-import Control.Lens (Zoom (zoom), makeLensesWith, makePrisms, (.=))
+
+import AST (Binding, Expr, LIGO)
+import AST qualified
+import Control.Lens (At (at), Ixed (ix), Zoom (zoom), makeLensesWith, makePrisms, (%=), (.=), (?=))
+import Control.Lens.Prism (_Just)
+import Control.Monad.Except (throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
 import Data.Conduit.Lift qualified as CL
-import Data.List.NonEmpty qualified as NE
+import Data.HashSet qualified as HS
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
+import Duplo (layer)
 import Fmt (Buildable (..), genericF)
-import Morley.Michelson.Interpret
-  (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailureWithStack, MorleyLogsBuilder, StkEl, initInterpreterState, mkInitStack,
-  runInstrImpl, seValue)
-import Morley.Michelson.Typed as T
-import Morley.Util.Lens (postfixLFields)
-
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, move,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
+import Morley.Debugger.Core.Snapshots (InterpretHistory (..), twoElemFromList)
+import Morley.Michelson.Interpret
+  (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
+  MichelsonFailureWithStack, MorleyLogsBuilder, StkEl, initInterpreterState, mkInitStack,
+  runInstrImpl, seValue)
+import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
+import Morley.Michelson.Typed as T
+import Morley.Util.Lens (postfixLFields)
+import Parser (Info)
+import Range (HasRange (getRange), Range (..))
+import Text.Interpolation.Nyan
+import Unsafe qualified
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
-import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 
 -- | Stack element, likely with an associated variable.
 data StackItem = StackItem
@@ -178,6 +190,16 @@ instance NavigableSnapshot InterpretSnapshot where
 instance NavigableSnapshotWithMethods InterpretSnapshot where
   getCurMethodBlockLevel = length . isStackFrames <$> curSnapshot
 
+-- | An entry for each recursive function or cycle.
+-- It is needed because we want to track which statement snapshots
+-- were already recorded in the current iteration.
+data RecursiveOrCycleEntry = RecursiveOrCycleEntry
+  { roceStart :: LigoRange
+    -- ^ First snapshot in cycle or recursive function
+  , roceRecordedStatements :: HashSet LigoRange
+    -- ^ All statements that were recorded in one iteration
+  }
+
 -- | State at some point of execution, used by Morley interpreter and by
 -- our snapshots collector.
 data CollectorState = CollectorState
@@ -185,10 +207,22 @@ data CollectorState = CollectorState
     -- ^ State of the Morley interpreter.
   , csStackFrames :: NonEmpty StackFrame
     -- ^ Stack frames at this point, top-level frame goes last.
-  } deriving stock (Show)
+  , csLastRecordedSnapshot :: Maybe InterpretSnapshot
+    -- ^ Last recorded snapshot.
+    -- We can pick @[operation] * storage@ value from it.
+  , csParsedFiles :: HashMap FilePath (LIGO Info)
+    -- ^ Parsed contracts.
+  , csRecordedRanges :: HashSet LigoRange
+    -- ^ Ranges of recorded statement snapshots.
+  , csRecursiveOrCycleEntries :: HashMap LigoRange RecursiveOrCycleEntry
+    -- ^ @RecursiveOrCycleEntry@ for each cycle or
+    -- recursive function expression.
+  }
 
+makeLensesWith postfixLFields ''StackItem
 makeLensesWith postfixLFields ''StackFrame
 makeLensesWith postfixLFields ''InterpretSnapshot
+makeLensesWith postfixLFields ''RecursiveOrCycleEntry
 makeLensesWith postfixLFields ''CollectorState
 
 -- | Lens giving an access to the bottom-most frame - which is also
@@ -230,9 +264,16 @@ runInstrCollect = \case
     return newStack
   other -> runInstrImpl runInstrCollect other
   where
+
     -- What is done upon executing instruction.
     preExecutedStage LigoIndexedInfo{..} stack = do
       whenJust liiLocation \loc -> do
+        statements <- getStatements loc
+
+        forM_ statements \statement -> do
+          recordSnapshot statement EventFacedStatement
+          csRecordedRangesL %= HS.insert statement
+
         recordSnapshot loc EventExpressionPreview
 
       whenJust liiEnvironment \env -> do
@@ -241,10 +282,6 @@ runInstrCollect = \case
         -- stack frame. And this is good.
         let stackHere = zipWith StackItem env stack
         csActiveStackFrameL . sfStackL .= stackHere
-
-        -- TODO: record snapshot as soon as there is location associated
-        -- with "environment" LIGO's debug info
-        -- recordSnapshot (instrNo, _) EventFacedStatement
 
     -- What is done right after the instruction is executed.
     postExecutedStage LigoIndexedInfo{..} _oldStack newStack = do
@@ -263,15 +300,18 @@ runInstrCollect = \case
       :: LigoRange
       -> InterpretEvent
       -> CollectingEvalOp ()
-    recordSnapshot loc event = do
+    recordSnapshot loc event = unless (isLigoStdLib $ lrFile loc) do
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
 
-      lift $ C.yield InterpretSnapshot
-        { isStatus = InterpretRunning event
-        , ..
-        }
+      let newSnap = InterpretSnapshot
+            { isStatus = InterpretRunning event
+            , ..
+            }
+
+      csLastRecordedSnapshotL ?= newSnap
+      lift $ C.yield newSnap
 
     -- Leave only information that matters in LIGO.
     refineStack :: Rec StkEl st -> [SomeValue]
@@ -286,29 +326,183 @@ runInstrCollect = \case
         RNil -> []
         stkEl :& st -> stkElValue stkEl : refineStack st
 
+    ligoRangeToRange :: LigoRange -> Range
+    ligoRangeToRange LigoRange{..} = Range
+      { _rStart = toPosition lrStart
+      , _rFinish = toPosition lrEnd
+      , _rFile = lrFile
+      }
+      where
+        toPosition LigoPosition{..} = (Unsafe.fromIntegral lpLine, Unsafe.fromIntegral $ lpCol + 1, 0)
+
+    rangeToLigoRange :: Range -> LigoRange
+    rangeToLigoRange Range{..} = LigoRange
+      { lrStart = toLigoPosition _rStart
+      , lrEnd = toLigoPosition _rFinish
+      , lrFile = _rFile
+      }
+      where
+        toLigoPosition (line, col, _) = LigoPosition (Unsafe.fromIntegral line) (Unsafe.fromIntegral $ col - 1)
+
+    getStatements :: LigoRange -> CollectingEvalOp [LigoRange]
+    getStatements ligoRange
+      | lrFile ligoRange == "" = pure []
+      | otherwise = do
+          let range@Range{..} = ligoRangeToRange ligoRange
+
+          parsedLigo <-
+            fromMaybe
+              (error [int||File #{_rFile} is not parsed for some reason|])
+              <$> use (csParsedFilesL . at _rFile)
+
+          statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
+          pure $ rangeToLigoRange . getRange <$> statements
+      where
+        filterAndReverseStatements :: [LIGO Info] -> CollectingEvalOp [LIGO Info]
+        filterAndReverseStatements = go []
+          where
+            go :: [LIGO Info] -> [LIGO Info] -> CollectingEvalOp [LIGO Info]
+            go acc [] = pure acc
+            go acc (x@(layer -> Just AST.Assign{}) : xs) = decide x acc xs
+            go acc (x@(layer -> Just AST.BConst{}) : xs) = decide x acc xs
+            go acc (x@(layer -> Just AST.BVar{}) : xs) = decide x acc xs
+            go acc (x@(layer -> Just AST.Apply{}) : xs@((layer @Expr -> Just ctor) : _)) =
+              case ctor of
+                AST.Let{} -> decide x acc xs
+                AST.Seq{} -> decide x acc xs
+                _ -> go acc xs
+            go acc (_ : xs) = go acc xs
+
+            decide :: LIGO Info -> [LIGO Info] -> [LIGO Info] -> CollectingEvalOp [LIGO Info]
+            decide x acc xs = do
+              let accept = go (x : acc) xs
+              let deny = go acc xs
+
+              let cycleNode = xs
+                    & find \el ->
+                      case layer @Expr el of
+                        Just AST.ForLoop{} -> containsNode el x
+                        Just AST.WhileLoop{} -> containsNode el x
+                        Just AST.ForOfLoop{} -> containsNode el x
+                        Just AST.ForBox{} -> containsNode el x
+                        _ -> False
+
+              let recNode = xs
+                    & find \el ->
+                      case layer @Binding el of
+                        Just (AST.BFunction isRec _ _ _ _) -> isRec && containsNode el x
+                        _ -> False
+
+              ranges <- use csRecordedRangesL
+              let range = rangeToLigoRange $ getRange x
+
+              -- Here we want to check should we record this statement or not.
+              case cycleNode <|> recNode of
+                -- In this case our statement is present in some recursive function or loop.
+                -- Further we'll call @recursive function or loop@ as @repetitive action@.
+                Just (rangeToLigoRange . getRange -> nodeRange) -> do
+                  recOrCycleEntry <- use $ csRecursiveOrCycleEntriesL . at nodeRange
+                  -- Let's check if we created an entry
+                  -- for repetitive action or not.
+                  case recOrCycleEntry of
+                    -- In this case an entry for repetitive action is present.
+                    -- So, we need to perform some checks and decide
+                    -- should we record this statement or not.
+                    Just entry -> do
+                      if | entry ^. roceStartL == ligoRange -> do
+                            -- Here we are sure that we went on the first expression
+                            -- in repetitive action. It means that we should
+                            -- forget about all recorded statements in this action.
+                            csRecursiveOrCycleEntriesL . at nodeRange . _Just . roceRecordedStatementsL .= HS.singleton range
+                            accept
+
+                         -- Otherwise, we're in a process of repetitive action.
+                         -- Let's check if we recorded this statement or not.
+                         | range `HS.member` (entry ^. roceRecordedStatementsL) -> deny
+                         | otherwise -> do
+                            csRecursiveOrCycleEntriesL . at nodeRange . _Just . roceRecordedStatementsL %= HS.insert range
+                            accept
+
+                    -- In this case we stepped in repetitive action for the first time.
+                    -- It means that we should create an entry for it.
+                    Nothing -> do
+                      let newEntry = RecursiveOrCycleEntry
+                            { roceStart = ligoRange
+                            , roceRecordedStatements = HS.singleton range
+                            }
+                      csRecursiveOrCycleEntriesL . at nodeRange ?= newEntry
+                      accept
+
+                -- In this case our statement is not in repetitive action.
+                -- So, we just need to check that it is not recorded.
+                Nothing ->
+                  if not $ range `HS.member` ranges
+                  then accept
+                  else deny
+              where
+                -- Comparing by ranges because @Eq@ instance behaves
+                -- weird with @LIGO Info@.
+                containsNode :: LIGO Info -> LIGO Info -> Bool
+                containsNode tree node = getRange node `elem` nodes
+                  where
+                    nodes = getRange <$> spineAtPoint (getRange node) tree
 
 runCollectInterpretSnapshots
   :: CollectingEvalOp a
   -> ContractEnv
   -> CollectorState
+  -> Value st
   -> InterpretHistory InterpretSnapshot
-runCollectInterpretSnapshots act env initSt =
-  InterpretHistory $
+runCollectInterpretSnapshots act env initSt initStorage =
   -- This is safe because we yield at least two snapshots
-  NE.fromList $
+  InterpretHistory $
+  (Unsafe.fromJust . twoElemFromList) $
   runIdentity $
-  C.sourceToList $ do
+  C.sourceToList do
     C.yield InterpretSnapshot
       { isStackFrames = csStackFrames initSt
       , isStatus = InterpretStarted
       }
-    (outcome, endState, _) <-
-      CL.runRWSC env initSt $ runExceptT act
-    let endStatus = either InterpretFailed (const InterpretTerminatedOk) outcome
-    C.yield InterpretSnapshot
-      { isStatus = endStatus
-      , isStackFrames = csStackFrames endState
-      }
+
+    (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT act
+    case outcome of
+      Left stack ->
+        C.yield InterpretSnapshot
+          { isStatus = InterpretFailed stack
+          , isStackFrames = csStackFrames endState
+          }
+
+      Right _ -> do
+        let isStackFrames = either error id do
+              lastSnap <-
+                maybeToRight
+                  "Internal error: No snapshots were recorded while interpreting Michelson code"
+                  do csLastRecordedSnapshot endState
+
+              case isStatus lastSnap of
+                InterpretRunning (EventExpressionEvaluated (Just val)) -> do
+                  let stackItemWithOpsAndStorage = StackItem
+                        { siLigoDesc = LigoHiddenStackEntry
+                        , siValue = val
+                        }
+                  let oldStorage = StackItem
+                        { siLigoDesc = LigoHiddenStackEntry
+                        , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
+                        }
+                  pure
+                    $ (lastSnap ^. isStackFramesL)
+                        & ix 0 . sfStackL .~ [stackItemWithOpsAndStorage, oldStorage]
+                status ->
+                  throwError
+                    [int||
+                    Internal error:
+                    Expected "Interpret running" status with evaluated expression status.
+
+                    Got #{status}|]
+        C.yield InterpretSnapshot
+          { isStatus = InterpretTerminatedOk
+          , ..
+          }
 
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.
@@ -321,14 +515,16 @@ collectInterpretSnapshots
   -> Value arg
   -> Value st
   -> ContractEnv
+  -> HashMap FilePath (LIGO Info)
   -> InterpretHistory InterpretSnapshot
-collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env =
+collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts =
   runCollectInterpretSnapshots
-    (runInstrCollect cCode initStack)
+    (runInstrCollect (unContractCode cCode) initStack)
     env
     collSt
+    initStore
   where
-    initStack = mkInitStack (liftCallArg epc param) cParamNotes initStore cStoreNotes
+    initStack = mkInitStack (liftCallArg epc param) initStore
     initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
     collSt = CollectorState
       { csInterpreterState = initSt
@@ -341,6 +537,10 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
             , lrEnd = LigoPosition 1 0
             }
           }
+      , csLastRecordedSnapshot = Nothing
+      , csParsedFiles = parsedContracts
+      , csRecordedRanges = HS.empty
+      , csRecursiveOrCycleEntries = mempty
       }
 
 makePrisms ''InterpretStatus

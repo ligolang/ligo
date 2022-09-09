@@ -6,9 +6,13 @@ module Language.LIGO.Debugger.Michelson
 
 import Unsafe qualified
 
+import Control.Lens (each)
+import Control.Lens.Prism (_Just)
 import Control.Monad.Except (Except, runExcept, throwError)
 import Data.Char (isAsciiUpper, isDigit)
 import Data.Coerce (coerce)
+import Data.DList qualified as DL
+import Data.Data (cast)
 import Data.Default (def)
 import Data.Set qualified as Set
 import Data.Text qualified as Text
@@ -18,17 +22,16 @@ import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
-  (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+  (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
-  (Contract' (..), CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..),
-  SomeMeta (SomeMeta), dfsTraverseInstr, isMichelsonInstr)
+  (Contract' (..), ContractCode' (ContractCode, unContractCode), CtorEffectsApp (..),
+  DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta), dfsFoldInstr,
+  dfsTraverseInstr, isMichelsonInstr)
 import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
-import Morley.Debugger.Core.Snapshots (SourceType(..))
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list
@@ -50,11 +53,11 @@ extractInstructionsIndexes =
   where
     go :: Expression -> State Int [TableEncodingIdx]
     go = \case
-      ExpressionInt _ -> skip
-      ExpressionString _ -> skip
-      ExpressionBytes _ -> skip
-      ExpressionSeq exprs -> addFold exprs
-      ExpressionPrim MichelinePrimAp {mpaPrim, mpaArgs}
+      ExpInt _ _ -> skip
+      ExpString _ _ -> skip
+      ExpBytes _ _ -> skip
+      ExpSeq _ exprs -> addFold exprs
+      ExpPrim _ MichelinePrimAp {mpaPrim, mpaArgs}
         | Set.member (coerce mpaPrim) primInstrs -> addFold mpaArgs
         | otherwise -> modify (+ 1) *> (fold <$> traverse go mpaArgs)
 
@@ -109,7 +112,7 @@ embedInInstr
   -> Either EmbedError (Instr inp out)
 embedInInstr metaTape instr = do
   (resInstr, tapeRest) <- runExcept $ usingStateT metaTape $
-    dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } pure instr
+    dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } instr
   unless (null tapeRest) $
     Left $ RemainingExtraEntries (Unsafe.fromIntegral @Int @Word $ length tapeRest)
   return resInstr
@@ -117,6 +120,14 @@ embedInInstr metaTape instr = do
     isActualInstr = \case
       Seq{} -> False
       i -> isMichelsonInstr i
+
+    -- Sometimes we want to ignore embeding meta for some instructions.
+    shouldIgnoreMeta :: Instr i o -> Bool
+    shouldIgnoreMeta = \case
+      -- We're ignoring @LAMBDA@ instruction here in order
+      -- not to stop on function assignment.
+      LAMBDA{} -> True
+      _ -> False
 
     recursionImpl :: CtorEffectsApp $ StateT [meta] $ Except EmbedError
     recursionImpl = CtorEffectsApp "embed" $ \oldInstr mkNewInstr ->
@@ -137,7 +148,9 @@ embedInInstr metaTape instr = do
           let metasToDrop = michelsonInstrInnerBranches oldInstr
           put $ drop (Unsafe.fromIntegral @Word @Int metasToDrop) rest
 
-          Meta (SomeMeta meta) <$> mkNewInstr
+          if shouldIgnoreMeta oldInstr
+          then mkNewInstr
+          else Meta (SomeMeta meta) <$> mkNewInstr
 
 -- TODO: extract this to Morley
 -- | For Michelson instructions this returns how many sub-instructions this
@@ -168,9 +181,10 @@ michelsonInstrInnerBranches = \case
 --    in switching breakpoints.
 -- 2. A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
 --    wrappers that carry the debug info.
+-- 3. All contract filepaths that would be used in debugging session.
 readLigoMapper
   :: LigoMapper
-  -> Either DecodeError (Set SourceLocation, SomeContract)
+  -> Either DecodeError (Set SourceLocation, SomeContract, [FilePath])
 readLigoMapper ligoMapper = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
@@ -180,31 +194,33 @@ readLigoMapper ligoMapper = do
         lmLocations ligoMapper V.!? unTableEncodingIdx i
 
   SomeContract contract <- fromExpressionToTyped (lmMichelsonCode ligoMapper)
-  extendedContract <- first MetaEmbeddingError $
-    (\code -> SomeContract contract{ cCode = code }) <$>
+  extendedContract@(SomeContract extContract) <- first MetaEmbeddingError $
+    (\code -> SomeContract contract{ cCode = ContractCode code }) <$>
       embedInInstr @EmbeddedLigoMeta
         metaPerInstr
-        (cCode contract)
+        (unContractCode $ cCode contract)
 
-  let allLocs =
+  let allFiles = metaPerInstr ^.. each . liiLocationL . _Just . lrFileL
+        -- We want to remove duplicates
+        & unstableNub
+        & filter (not . isLigoStdLib)
+
+  let exprLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
-        mapMaybe ligoInfoToSourceLoc $ toList $ lmLocations ligoMapper
+        foldMap mentionedSourceLocs $ getSourceLocations (unContractCode $ cCode extContract)
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (allLocs, extendedContract)
+  return $! force (exprLocs, extendedContract, allFiles)
 
   where
-    ligoInfoToSourceLoc :: LigoIndexedInfo -> Maybe SourceLocation
-    ligoInfoToSourceLoc LigoIndexedInfo{..} = asum
-      [ do
-          ligoRangeToSourceLocation <$> liiLocation
+    mentionedSourceLocs :: LigoIndexedInfo -> [SourceLocation]
+    mentionedSourceLocs LigoIndexedInfo{..} =
+      maybeToList $ ligoRangeToSourceLocation <$> liiLocation
 
-      , do
-          -- TODO: liiEnvironment should also give us source location -
-          -- point to the beginning of the statement
-          _ <- liiEnvironment
-          return $ SourceLocation (SourcePath "??") (SrcPos (Pos 0) (Pos 0))
-      ]
+    getSourceLocations :: Instr i o -> [EmbeddedLigoMeta]
+    getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
+      Meta (SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) _ -> DL.singleton meta
+      _ -> mempty

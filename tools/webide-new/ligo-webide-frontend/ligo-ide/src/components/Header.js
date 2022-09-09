@@ -1,17 +1,16 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import { connect } from '@obsidians/redux'
-import { IpcChannel } from '@obsidians/ipc'
+import { connect } from "~/base-components/redux";
+import { IpcChannel } from "~/base-components/ipc";
 
-import headerActions, { Header, NavGuard } from '@obsidians/eth-header'
-// import { networkManager } from '@obsidians/eth-network'
-import { BaseProjectManager } from '@obsidians/workspace'
-import { actions } from '@obsidians/workspace'
-import { createProject } from '../lib/bsn'
-// import keypairManager from '@obsidians/keypair'
+import headerActions, { Header, NavGuard } from "~/ligo-components/eth-header";
+// import { networkManager } from '~/ligo-components/eth-network'
+import { BaseProjectManager, actions } from "~/base-components/workspace";
+import { createProject } from "../lib/bsn";
+// import keypairManager from '~/base-components/keypair'
 
-// import EthSdk from '@obsidians/eth-sdk'
-// import BscSdk from '@obsidians/bsc-sdk'
+// import EthSdk from '~/ligo-components/eth-sdk'
+// import BscSdk from '~/base-components/bsc-sdk'
 
 // keypairManager.kp = EthSdk.kp
 // networkManager.addSdk(EthSdk, EthSdk.networks)
@@ -20,14 +19,14 @@ import { createProject } from '../lib/bsn'
 
 class HeaderWithRedux extends PureComponent {
   state = {
-    interval: null
-  }
+    interval: null,
+  };
 
-  componentDidMount () {
-    actions.history = this.props.history
-    headerActions.history = this.props.history
-    this.refresh()
-    this.navGuard = new NavGuard(this.props.history)
+  componentDidMount() {
+    actions.history = this.props.history;
+    headerActions.history = this.props.history;
+    this.refresh();
+    this.navGuard = new NavGuard(this.props.history);
   }
 
   async refresh() {
@@ -94,42 +93,49 @@ class HeaderWithRedux extends PureComponent {
 
   setCreateProject = () => {
     const cp = async function (params) {
-      return await createProject.call(this, {
-        networkManager: undefined,
-        bsnChannel: new IpcChannel('bsn'),
-        projectChannel: BaseProjectManager.channel
-      }, params)
-    }
-    return process.env.DEPLOY === 'bsn' && cp
-  }
+      return createProject.call(
+        this,
+        {
+          networkManager: undefined,
+          bsnChannel: new IpcChannel("bsn"),
+          projectChannel: BaseProjectManager.channel,
+        },
+        params
+      );
+    };
+    return process.env.DEPLOY === "bsn" && cp;
+  };
 
-  renderLogo () {
+  renderLogo() {
     if (process.env.REACT_APP_LOGO) {
       return (
-        <div className='d-flex align-items-center' style={{ margin: '7px 17px' }}>
-          <img src={require(process.env.REACT_APP_LOGO).default} style={{ background: 'transparent', height: '100%' }}/>
+        <div className="d-flex align-items-center" style={{ margin: "7px 17px" }}>
+          <img
+            src={require(process.env.REACT_APP_LOGO).default}
+            style={{ background: "transparent", height: "100%" }}
+          />
         </div>
-      )
+      );
     }
-    return null
+    return null;
   }
 
-  render () {
-    console.debug('[render] HeaderWithRedux')
-    const { uiState, profile, projects, contracts, accounts, network } = this.props
+  render() {
+    console.debug("[render] HeaderWithRedux");
+    const { uiState, profile, projects, contracts, accounts, network } = this.props;
 
-    const selectedProject = projects.get('selected')?.toJS() || {}
+    const selectedProject = projects.get("selected")?.toJS() || {};
 
     // const networkList = List(networkManager.networks)
     // const networkGroups = networkList.groupBy(n => n.group)
     // const groupedNetworks = this.groupedNetworks(networkGroups)
     // const selectedNetwork = networkList.find(n => n.id === network) || {}
 
-    const browserAccounts = uiState.get('browserAccounts') || []
-    const starred = accounts.getIn([network, 'accounts'])?.toJS() || []
-    const starredContracts = contracts.getIn([network, 'starred'])?.toJS() || []
-    const selectedContract = contracts.getIn([network, 'selected']) || ''
-    const selectedAccount = accounts.getIn([network, 'selected']) || ''
+    const browserAccounts = uiState.get("browserAccounts") || [];
+    const starred = accounts.getIn([network, "accounts"])?.toJS() || [];
+    const starredContracts = contracts.getIn([network, "starred"])?.toJS() || [];
+    const selectedContract = contracts.getIn([network, "selected"]) || "";
+    const selectedAccount = accounts.getIn([network, "selected"]) || "";
 
     return (
       <Header
@@ -146,15 +152,10 @@ class HeaderWithRedux extends PureComponent {
         createProject={this.setCreateProject()}
         logo={this.renderLogo()}
       />
-    )
+    );
   }
 }
 
-export default connect([
-  'uiState',
-  'profile',
-  'projects',
-  'contracts',
-  'accounts',
-  'network',
-])(HeaderWithRedux)
+export default connect(["uiState", "profile", "projects", "contracts", "accounts", "network"])(
+  HeaderWithRedux
+);

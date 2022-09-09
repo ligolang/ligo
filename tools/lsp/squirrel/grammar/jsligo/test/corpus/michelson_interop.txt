@@ -16,12 +16,18 @@ let michelson_add = (n: [nat, nat]): nat =>
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (apply
-        (michelson_interop
-          (Verbatim)
-          (paren_type
-            (fun_type
-              (domain (tuple_type (TypeName) (TypeName)))
-              (TypeName))))
+        (paren_expr
+          (type_as_annotation
+            (code_inj
+              (lang)
+              (Verbatim))
+            (paren_type
+              (fun_type
+                (domain
+                  (tuple_type
+                    (TypeName)
+                    (TypeName)))
+                (TypeName)))))
         (Name)))))
 
 =========

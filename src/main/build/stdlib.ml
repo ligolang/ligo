@@ -16,12 +16,19 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> 
 let stdlib ~options syntax =
   let lib = get_lib Compiler_options.(options.middle_end.protocol_version) syntax ~test_enabled:Compiler_options.(options.middle_end.test) in
   match Simple_utils.Trace.to_stdlib_result @@
-          Ligo_compile.Utils.type_program_string ~options CameLIGO lib with
-  | Ok (s,_w) -> s
+          Ligo_compile.Utils.core_program_string ~options CameLIGO lib with
+  | Ok (core,_w) ->
+     let core = Helpers.internalize_core @@ core in
+     begin match Simple_utils.Trace.to_stdlib_result @@
+             Ligo_compile.Of_core.typecheck ~options Env core with
+     Ok (typed, _w) -> typed, core
+     | Error (e, _w) ->
+        let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
+        failwith ("Error typing the stdlib: " ^ error_msg)
+     end
   | Error (e,_w) ->
      let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
      failwith ("Error compiling the stdlib: " ^ error_msg)
-
 
 let typed ~options (syntax : Syntax_types.t) =
   let open Helpers in
@@ -29,8 +36,7 @@ let typed ~options (syntax : Syntax_types.t) =
     []
   else
     let k = build_key ~options syntax in
-    internalize_typed @@
-      match LanguageMap.find_opt k @@ ! std_lib_cache with
+    match LanguageMap.find_opt k @@ ! std_lib_cache with
       | None ->
          let typed, core = stdlib ~options syntax in
          std_lib_cache := LanguageMap.add k (typed, core) @@ !std_lib_cache;
@@ -43,8 +49,7 @@ let core ~options (syntax : Syntax_types.t) =
     []
   else
     let k = build_key ~options syntax in
-    internalize_core @@
-      match LanguageMap.find_opt k @@ ! std_lib_cache with
+    match LanguageMap.find_opt k @@ ! std_lib_cache with
       | None ->
          let typed, core = stdlib ~options syntax in
          std_lib_cache := LanguageMap.add k (typed, core) @@ ! std_lib_cache;

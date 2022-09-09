@@ -3,7 +3,7 @@
   "foldingStopMarker": "}",
   "name": "ReasonLIGO",
   "scopeName": "source.religo",
-  "fileTypes": [ "religo", "rligo" ],
+  "fileTypes": [ "religo" ],
   "patterns": [
     { "include": "#string" },
     { "include": "#block_comment" },
@@ -12,11 +12,13 @@
     { "include": "#macro" },
     { "include": "#letbinding" },
     { "include": "#typedefinition" },
+    { "include": "#typeannotation" },
     { "include": "#controlkeywords" },
     { "include": "#numericliterals" },
     { "include": "#operators" },
     { "include": "#identifierconstructor" },
-    { "include": "#module" }
+    { "include": "#module" },
+    { "include": "#recordorblock" }
   ],
   "repository": {
     "string": {
@@ -33,12 +35,15 @@
       "end": "\\*\\/",
       "beginCaptures": {},
       "endCaptures": {},
-      "patterns": []
+      "patterns": [ { "include": "#block_comment" } ]
     },
     "line_comment": {
       "name": "comment.block.religo",
-      "match": "\\/\\/.*$",
-      "captures": {}
+      "begin": "\\/\\/",
+      "end": "$",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
     },
     "attribute": {
       "name": "keyword.control.attribute.religo",
@@ -56,7 +61,7 @@
       "captures": {}
     },
     "letbinding": {
-      "match": "\\b(let)\\b\\s*\\b(rec|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "match": "\\b(let)\\b\\s*(\\brec\\b|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {
         "3": { "name": "entity.name.function.religo" },
         "2": { "name": "storage.modifier.religo" },
@@ -70,25 +75,143 @@
     },
     "operators": {
       "name": "keyword.operator.religo",
-      "match":
-        "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+",
+      "match": "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\b",
       "captures": {}
     },
-    "typedefinition": {
-      "name": "entity.name.type.religo",
-      "match": "\\b(type)\\b",
-      "captures": {}
-    },
+    "comma": { "match": "(,)", "captures": {} },
     "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.religo" },
         "1": { "name": "storage.class.religo" }
       }
     },
+    "identifier": {
+      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
+      "captures": {}
+    },
     "identifierconstructor": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\s+",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": { "1": { "name": "variable.other.enummember.religo" } }
+    },
+    "recordorblock": {
+      "begin": "({)",
+      "end": "(})",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#recordfield" },
+        { "include": "#comma" },
+        { "include": "$self" }
+      ]
+    },
+    "recordfield": {
+      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(:)",
+      "end": "(?=,|})",
+      "beginCaptures": { "2": { "name": "keyword.operator.religo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
+    },
+    "typedefinition": {
+      "begin": "\\b(type)\\b",
+      "end": "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)",
+      "beginCaptures": { "1": { "name": "keyword.other.religo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typemodule" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeannotation": {
+      "begin": "(:)",
+      "end": "(?=\\)|}|=|,|=>)",
+      "beginCaptures": { "1": { "name": "keyword.operator.religo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typemodule" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeoperator": {
+      "name": "keyword.operator.religo",
+      "match": "(=>|\\.|\\|)",
+      "captures": {}
+    },
+    "typename": {
+      "name": "entity.name.type.religo",
+      "match": "\\b([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {}
+    },
+    "typevar": {
+      "name": "variable.other.type.religo",
+      "match": "'\\b([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {}
+    },
+    "typeparentheses": {
+      "begin": "(\\()",
+      "end": "(\\))",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typemodule" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typemodule": {
+      "name": "storage.var.religo",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
+      "captures": {}
+    },
+    "typeint": {
+      "name": "constant.numeric.religo",
+      "match": "\\b([0-9]+)\\b",
+      "captures": {}
+    },
+    "typeproduct": {
+      "begin": "({)",
+      "end": "(})",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#identifier" },
+        { "include": "#typeannotation" },
+        { "include": "#comma" }
+      ]
     }
   }
 }

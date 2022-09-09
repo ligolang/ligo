@@ -36,13 +36,10 @@ registerFileWatcher = do
     ligoFilesReg = J.Registration "ligoFileWatcher" J.SWorkspaceDidChangeWatchedFiles ligoFilesOpts
 
     projGlob = T.pack $ "**" </> ligoProjectName
-    -- XXX: We don't care about changes in the file itself for now, but if
-    -- needed in the future, _watchChange should be set to True.
-    -- See also the note in handleProjectFileChanged.
     projWatcher = J.FileSystemWatcher
       { J._globPattern = projGlob
       , J._kind = Just J.WatchKind
-        { J._watchChange = False
+        { J._watchChange = True
         , J._watchCreate = True
         , J._watchDelete = True
         }

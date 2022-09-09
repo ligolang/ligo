@@ -8,7 +8,7 @@ module AST.Capabilities.Format
 import Language.LSP.Types qualified as J
 import UnliftIO.Exception (Handler (..), catches, displayException)
 
-import AST.Scope (Info')
+import AST.Scope (ContractInfo', Info', pattern FindContract)
 import AST.Skeleton (SomeLIGO (..))
 import Cli (HasLigoClient, SomeLigoException, TempSettings, callForFormat)
 import Duplo.Lattice (leq)
@@ -23,12 +23,13 @@ import Range (Range (..), toLspRange)
 formatImpl
   :: (HasLigoClient m, Log m)
   => TempSettings
+  -> Source
   -> Product Info'
   -> m (J.List J.TextEdit)
-formatImpl tempSettings info = do
+formatImpl tempSettings src info = do
   let CodeSource source = getElem info
   let r@Range{_rFile} = getElem info
-  out <- callForFormat tempSettings (Source _rFile source) `catches`
+  out <- callForFormat tempSettings (Source _rFile (srcIsDirty src) source) `catches`
     [ Handler \(_ :: SomeLigoException) -> pure source
     -- Likely LIGO isn't installed or was not found.
     , Handler \(e :: IOError) ->
@@ -39,16 +40,18 @@ formatImpl tempSettings info = do
 formatDocument
   :: (HasLigoClient m, Log m)
   => TempSettings
-  -> SomeLIGO Info'
+  -> ContractInfo'
   -> m (J.List J.TextEdit)
-formatDocument tempSettings (SomeLIGO _lang (extract -> info)) = formatImpl tempSettings info
+formatDocument tempSettings (FindContract src (SomeLIGO _lang (extract -> info)) _) =
+  formatImpl tempSettings src info
 
 formatAt
   :: (HasLigoClient m, Log m)
   => TempSettings
   -> Range
-  -> SomeLIGO Info'
+  -> ContractInfo'
   -> m (J.List J.TextEdit)
-formatAt tempSettings at (SomeLIGO _lang tree) = case spineTo (leq at . getElem) tree of
-  [] -> return $ J.List []
-  node : _ -> formatImpl tempSettings $ extract node
+formatAt tempSettings at (FindContract src (SomeLIGO _lang tree) _) =
+  case spineTo (leq at . getElem) tree of
+    [] -> pure $ J.List []
+    node : _ -> formatImpl tempSettings src $ extract node

@@ -12,25 +12,24 @@ import Algebra.Graph.Class qualified as G (empty)
 import Control.Monad (void)
 import Control.Monad.Reader (runReaderT)
 import Data.Aeson (Value, Result (Success, Error), fromJSON)
-import Data.HashSet qualified as HashSet
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
 import UnliftIO.MVar (newEmptyMVar, newMVar)
 
-import AST (Fallback)
+import AST (Standard)
 import ASTMap qualified
 import Config (Config (..))
 import Log (LogT, i)
 import Log qualified
 import RIO.Document qualified (load)
 import RIO.Registration qualified
-import RIO.Types (Contract (..), RIO (..), RioEnv (..))
+import RIO.Types (OpenDocument (..), RIO (..), RioEnv (..))
 
 newRioEnv :: IO RioEnv
 newRioEnv = do
-  reCache <- ASTMap.empty $ RIO.Document.load @Fallback
-  reOpenDocs <- newMVar HashSet.empty
+  reCache <- ASTMap.empty $ RIO.Document.load @Standard
+  reOpenDocs <- newIO
   reIncludes <- newMVar G.empty
   reTempFiles <- newIO
   reIndexOpts <- newEmptyMVar

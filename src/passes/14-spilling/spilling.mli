@@ -4,6 +4,7 @@ open Errors
 module AST = Ast_aggregated
 module Append_tree = Tree.Append
 module Errors = Errors
+module Layout = Layout
 open Mini_c
 
 val compile_expression : raise:(spilling_error, _) raise -> AST.expression -> Mini_c.expression

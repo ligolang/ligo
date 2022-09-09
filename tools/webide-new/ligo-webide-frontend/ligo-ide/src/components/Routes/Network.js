@@ -1,7 +1,7 @@
-import Network from '@obsidians/eth-network'
+import Network from "~/ligo-components/eth-network";
 
 Network.defaultProps = {
   minerKey: true,
-}
+};
 
-export default Network
+export default Network;

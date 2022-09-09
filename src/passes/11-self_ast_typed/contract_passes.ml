@@ -211,9 +211,13 @@ let remove_unused_for_views ~raise ~(view_names:Value_var.t list ) : program -> 
         {Location.wrap_content = D_value dc; _} when is_view_name dc.binder.var -> Some dc
       | _ -> None)
   in
-  let env = List.fold view_decls ~init:empty_env ~f:(fun env view_decl ->
+  let env,_ = List.fold view_decls ~init:(empty_env, []) ~f:(fun (env, decls) view_decl ->
     let env',_ = get_fv view_decl.expr in
-    merge_env env env'
+    let used_var = List.fold_right decls ~init:env'.used_var 
+      ~f:(fun decl_var used_var -> VVarSet.remove decl_var used_var ) 
+    in
+    let env' = { env' with used_var } in
+    merge_env env env', view_decl.binder.var::decls
   ) in
   let view_decls = List.map view_decls ~f:(fun decl -> Location.wrap (D_value decl)) in
   let _, prg_decls = trace_option ~raise (Errors.corner_case "View not found") @@ Simple_utils.List.uncons prg_decls in

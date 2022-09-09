@@ -32,12 +32,14 @@ import Control.Applicative (Alternative ((<|>)), liftA2)
 import Control.Lens.Operators ((??))
 import Control.Monad.State
 import Data.Aeson.Types hiding (Error)
+import Data.Aeson.KeyMap qualified as KM
 import Data.Char (isUpper, toLower)
 import Data.Foldable (asum, toList)
 import Data.Function
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
 import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (unpack)
@@ -46,7 +48,7 @@ import Language.LSP.Types qualified as J
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
-import AST.Skeleton hiding (String)
+import AST.Skeleton hiding (CString)
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
 import Duplo.Lattice
 import Duplo.Pretty
@@ -245,7 +247,7 @@ data LigoTypeContentInner
     LTCConstant
       { _ltciParameters :: [LigoTypeParameter]
       , _ltciLanguage :: Text
-      , _ltciInjection :: Text
+      , _ltciInjection :: NonEmpty Text
       }
   | -- | `"t_variable"`
     LTCVariable
@@ -258,8 +260,8 @@ data LigoTypeContentInner
       { _ltciTypeOperator :: Text
       , _ltciArguments :: [LigoTypeFull]
       }
-  | -- | `"t_arrow"`, note that the order of its arguments is reversed.
-    LTCArrow -- "type2" -> "type1"
+  | -- | `"t_arrow"`
+    LTCArrow
       { _ltciType2 :: LigoTypeFull
       , _ltciType1 :: LigoTypeFull
       }
@@ -411,9 +413,8 @@ instance FromJSON LigoTypeFull where
           type_content <- o' .: "type_content"
           _ltfrTypeContent <-
             withArray "type_content" parseManyLigoTypeContent type_content
-          type_meta <- o' .: "type_meta"
-          _ltfrTypeMeta <- parseLigoTypeMeta type_meta
-          _ltfrOrigVar <- o' .: "orig_var" >>= parseOrigVar
+          _ltfrTypeMeta <- o' .: "type_meta"
+          _ltfrOrigVar <- o' .: "orig_var"
           return $ LigoTypeFullResolved {..}
 
       -- TODO: For now we don't know what 'Value's may go into this type,
@@ -435,10 +436,9 @@ instance FromJSON LigoTypeParameter where
     type_content <- o .: "type_content"
     _ltpTypeContent <-
       withArray "type_content" parseManyLigoTypeContent type_content
-    type_meta <- o .: "type_meta"
-    _ltpTypeMeta <- parseLigoTypeMeta type_meta
+    _ltpTypeMeta <- o .: "type_meta"
     _ltpLocation <- parseLigoRange "type_parameter_range" =<< o .: "location"
-    _ltpOrigVar <- o .: "orig_var" >>= parseOrigVar
+    _ltpOrigVar <- o .: "orig_var"
     return LigoTypeParameter {..}
 
 instance ToJSON LigoTypeExpression where
@@ -466,7 +466,7 @@ instance FromJSON LigoTypeContentInner where
           pure $ LTCRecord parsed
       , do -- parse record
           parsed <- sequence $ parseJSON <$> o
-          pure $ LTCRecord parsed
+          pure $ LTCRecord $ KM.toHashMapText parsed
       , do
           _ltciParameters <- o .: "parameters"
           _ltciLanguage <- o .: "language"
@@ -521,15 +521,6 @@ instance FromJSON LigoByte where
 
 instance ToJSON LigoByte where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
--- Workarounds
-
-parseOrigVar :: [Value] -> Parser (Maybe Text)
-parseOrigVar = \case
-  [_, Object (HM.toList -> [("name", name)])] -> do
-    name' <- parseJSON @Text name
-    return $ Just name'
-  _ -> return Nothing
 
 -- A workaround since function types are not separated to "core" | "resolved" | "unresolved" and lets consider these as "core" ones
 parseTypeInner :: Value -> Parser LigoTypeFull
@@ -612,12 +603,6 @@ parseLigoTypeContent _ = error "number of type content elements is not even and 
 
 parseManyLigoTypeContent :: Array -> Parser [LigoTypeContent]
 parseManyLigoTypeContent = mapM parseLigoTypeContent . group 2 . toList
-
-parseLigoTypeMeta :: [Value] -> Parser (Maybe LigoTypeExpression)
-parseLigoTypeMeta [String "None", Null] = pure Nothing
-parseLigoTypeMeta [String "Some", value] = Just <$> parseJSON @LigoTypeExpression value
-parseLigoTypeMeta _ = do
-  parseFail "number of type meta elements is not 2 and cannot be parsed"
 
 ----------------------------------------------------------------------------
 -- Pretty
@@ -775,7 +760,7 @@ fromLigoTypeFull = enclose . \case
       LTCConstant
         { _ltciParameters
         , _ltciInjection
-        } -> fromLigoConstant _ltciInjection _ltciParameters
+        } -> fromLigoConstant (NE.head _ltciInjection) _ltciParameters
 
       LTCVariable name ->
         fromLigoPrimitive name
@@ -798,7 +783,7 @@ fromLigoTypeFull = enclose . \case
       LTCArrow {..} -> do
         st <- get
         let mkArrow = TArrow `on` fromLigoTypeFull
-        return $ make' (st, mkArrow _ltciType2 _ltciType1)
+        return $ make' (st, mkArrow _ltciType1 _ltciType2)
 
     fromLigoRecordField
       :: Text

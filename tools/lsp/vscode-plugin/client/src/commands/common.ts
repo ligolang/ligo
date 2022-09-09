@@ -5,24 +5,30 @@ import { execFileSync } from 'child_process';
 
 import { extensions } from '../common'
 
+import * as ex from '../exceptions'
+
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 
-let lastContractPath;
+let lastContractPath: string;
 
 type BinaryInfo = {
   name: string,
   path: string,
 }
 
-function extToDialect(ext : string) {
+export function changeLastContractPath(newPath: string) {
+  lastContractPath = newPath
+}
+
+function extToDialect(ext: string) {
   switch (ext) {
+    case '.pligo':
     case '.ligo': return 'pascaligo'
     case '.mligo': return 'cameligo'
     case '.religo': return 'reasonligo'
     case '.jsligo': return 'jsligo'
     default:
-      console.error('Unknown dialect');
-      return undefined
+      throw new ex.UnknownLigoDialectExtensionException(ext)
   }
 }
 
@@ -41,11 +47,7 @@ export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfigur
     config.update(info.path, binaryPath)
     return binaryPath
   } catch {
-    vscode.window.showWarningMessage(`'${info.name}' binary not found in PATH. You won't be able to compile and deploy contracts
-                                      without providing path to ${info.name} using ${info.path} variable,
-                                      located in VSCode settings`)
-
-    return undefined
+    throw new ex.BinaryNotFoundExtension(info.name)
   }
 }
 
@@ -64,11 +66,16 @@ export type ContractFileData = {
 }
 
 export function getLastContractPath() {
+  if (!vscode.window.activeTextEditor) {
+    throw new ex.NoContractPathException(undefined)
+  }
+
   let path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
+
   if (!extensions.includes(ext)) {
     if (!lastContractPath) {
-      return undefined;
+      throw new ex.NoContractPathException(path)
     }
     path = lastContractPath;
   }
@@ -83,15 +90,9 @@ export async function executeCommand(
   client: LanguageClient,
   commandArgs = CommandRequiredArguments.Path,
   showOutput = true,
-  errorPrefix = undefined,
-): Promise<string | undefined> {
+): Promise<string> {
   const contractInfo = getLastContractPath()
   const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
-
-  if (!ligoPath || ligoPath === '') {
-    vscode.window.showWarningMessage('LIGO executable not found. Aborting ...');
-    return undefined;
-  }
 
   let finalCommand;
   switch (commandArgs) {
@@ -108,24 +109,23 @@ export async function executeCommand(
       finalCommand = command(contractInfo.path, extToDialect(extname(contractInfo.path)));
       break;
     default:
-      console.error('Unknown command')
-      return undefined;
+      throw new ex.UnknownCommandTypeExtension()
   }
   try {
+    if (finalCommand.includes(undefined)) {
+      throw new ex.UserInterruptionException()
+    }
+
     const requestType = new RequestType<null, string | null, void>('indexDirectory')
     const indexDirectory: string | null = await client.sendRequest(requestType, null)
     const result = execFileSync(ligoPath, finalCommand, { cwd: indexDirectory }).toString()
+
     if (showOutput) {
       ligoOutput.appendLine(result)
       ligoOutput.show();
     }
     return result;
   } catch (error) {
-    if (errorPrefix) {
-      ligoOutput.appendLine(errorPrefix)
-    }
-    ligoOutput.appendLine(error.message);
-    ligoOutput.show();
+    throw new ex.ExecutionException(error)
   }
-  return undefined
 }

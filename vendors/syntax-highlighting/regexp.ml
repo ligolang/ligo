@@ -12,14 +12,20 @@ let string_special_char_match: Core.regexp = {
 
 let string_begin: Core.regexp = {
   emacs    = "\\\\\\\"";
-  textmate = "";
+  textmate = "\\\"";
   vim      = ""
 }
 
 let string_end: Core.regexp = {
   emacs    = "\\\\\\\"";
-  textmate = "";
+  textmate = "\\\"";
   vim      = ""
+}
+
+let endline: Core.regexp = {
+  emacs    = "$";
+  textmate = "$";
+  vim      = "$";
 }
 
 let ocaml_line_comment_match: Core.regexp = {

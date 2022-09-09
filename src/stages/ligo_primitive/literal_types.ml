@@ -129,6 +129,8 @@ let to_string = function
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
   | "external_u_ediv"      -> External "u_ediv"
+  | "external_and"         -> External "and"
+  | "external_u_and"       -> External "u_and"
   | "pbt_gen"                  -> Gen
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
@@ -222,4 +224,6 @@ let v_tx_rollup_l2_address : Var.Type_var.t = Var.Type_var.of_input_var (to_stri
 let v_external_int         : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "int")
 let v_external_ediv        : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "ediv")
 let v_external_u_ediv      : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "u_ediv")
+let v_external_and         : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "and")
+let v_external_u_and       : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "u_and")
 let v_gen                  : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ Gen)

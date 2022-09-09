@@ -196,6 +196,7 @@ let highlight_to_opt = function
   | PreProc          -> Some "font-lock-preprocessor-face"
   | Builtin_type     -> Some LigoFontLock.builtin_type.name
   | Type             -> Some "font-lock-type-face"
+  | Type_var         -> Some "font-lock-type-face"
   | StorageClass     -> Some LigoFontLock.storage_class.name
   | Builtin_module   -> Some LigoFontLock.builtin_module.name
   | Structure        -> Some LigoFontLock.structure.name
@@ -293,13 +294,14 @@ module Print = struct
       ()
     
   let print_font_lock fmt syntax repository =
+    let spaces = "[:space:]*" in
     fprintf fmt "(defvar %s-font-lock-defaults\n" syntax;
     fprintf fmt "\t`(\n";
     List.iter (fun i -> 
       match i.Core.kind with 
         Match {match_; match_name} ->
           let regexps, highlights = List.split match_ in
-          let match_regexp = String.concat "" (List.map (fun f -> f.Core.emacs) regexps) in
+          let match_regexp = String.concat spaces (List.map (fun f -> f.Core.emacs) regexps) in
           fprintf fmt "\t\t(,\"%s\"\n" match_regexp;
           (match highlight_to_opt match_name with 
           | Some highlight ->
@@ -329,8 +331,12 @@ module Print = struct
         in
         let all = highlight_opt_to_string " . " meta_name in
         let rec aux regexp_begin highlights counter = function
-          (regexp, highlight) :: rest ->
+        | [(regexp, highlight)] ->
             let regexp = regexp_begin ^ regexp.Core.emacs in
+            let highlights = highlights ^ highlight_opt_to_string (" " ^ string_of_int counter ^ " ") highlight in
+            aux regexp highlights (counter + 1) []
+        | (regexp, highlight) :: rest ->
+            let regexp = regexp_begin ^ regexp.Core.emacs ^ spaces in
             let highlights = highlights ^ highlight_opt_to_string (" " ^ string_of_int counter ^ " ") highlight in
             aux regexp highlights (counter + 1) rest
         | [] -> 
@@ -356,6 +362,7 @@ For debugging.
     fprintf fmt ")\n" *)
   
   let print_pre fmt = 
+    fprintf fmt ";;; THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
     fprintf fmt ";;; ligo-mode.el --- A major mode for editing LIGO source code\n\n";
 
     fprintf fmt ";; Version: 0.2.0\n";
@@ -439,7 +446,10 @@ For debugging.
     fprintf fmt "\t(setq font-lock-defaults '(%s-font-lock-defaults))\n" syntax;
     fprintf fmt "\t(set-syntax-table (%s-syntax-table)))\n\n" syntax;
 
-    
-    fprintf fmt "(add-to-list 'auto-mode-alist '(\"\\\\.%s\\\\'\" . ligo-%s-mode))\n" syntax alt_name;
+    Fun.flip List.iter t.file_types (fun file_type ->
+      fprintf fmt "(add-to-list 'auto-mode-alist '(\"\\\\.%s\\\\'\" . ligo-%s-mode))\n" file_type alt_name);
     fprintf fmt "(provide '%s-mode)\n" syntax
+
+  let print_footer fmt =
+    fprintf fmt "\n;;; ligo-mode.el ends here\n"
 end

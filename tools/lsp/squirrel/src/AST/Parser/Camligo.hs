@@ -61,7 +61,7 @@ recognise (SomeRawTree dialect rawTree)
         "annot_expr"        -> Annot      <$> field  "expr"      <*> field "type"
         "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"
         "unary_op_app"      -> UnOp       <$> field  "negate"    <*> field "arg"
-        "michelson_interop" -> Michelson  <$> field  "code"      <*> field "type"
+        "code_inj"          -> CodeInj    <$> field  "lang"      <*> field "code"
         _                   -> fallthrough
 
     -- QualifiedName
@@ -143,11 +143,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Literal
   , Descent do
       boilerplate' $ \case
-        ("Int",    i) -> return $ Int i
-        ("Nat",    i) -> return $ Nat i
-        ("Bytes",  i) -> return $ Bytes i
-        ("String", i) -> return $ String i
-        ("Tez",    i) -> return $ Tez i
+        ("Int",    i) -> return $ CInt i
+        ("Nat",    i) -> return $ CNat i
+        ("Bytes",  i) -> return $ CBytes i
+        ("String", i) -> return $ CString i
+        ("Tez",    i) -> return $ CTez i
         _             -> fallthrough
 
     -- Verbatim
@@ -250,6 +250,12 @@ recognise (SomeRawTree dialect rawTree)
         ("True", _)          -> return $ Ctor "True"
         ("Unit", _)          -> return $ Ctor "Unit"
         _                    -> fallthrough
+
+  -- Attr
+  , Descent $
+      boilerplate' \case
+        ("Attr", attr) -> pure $ Attr attr
+        _              -> fallthrough
 
   -- Err
   , Descent noMatch

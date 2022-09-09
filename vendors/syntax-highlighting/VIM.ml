@@ -5,6 +5,7 @@ type 'a command = {
   value: 'a;
   contained: bool;
   contained_in: string list;
+  contains: string list;
   next_groups: string list
 }
 
@@ -21,7 +22,6 @@ type match_group = {
 type region_inside = {
   start: string option;
   end_: string option;
-  contains: string list;
   match_groups: match_group list
 }
 
@@ -57,14 +57,17 @@ module Print = struct
       fprintf fmt " "
 
   let rec print_syntax fmt = function
-    Match {group_name; value=regexp; contained; contained_in; next_groups} ->
+    Match {group_name; value=regexp; contained; contained_in; next_groups; contains} ->
       fprintf fmt "syntax match %s \"%s\" " group_name regexp;
       if contained then 
         fprintf fmt "contained ";
       print_list fmt "containedin=" contained_in;
+      print_list fmt "contains=" contains;
       print_list fmt "nextgroup=" next_groups;
+      if next_groups <> [] then
+        fprintf fmt "skipempty skipwhite";
       fprintf fmt "\n"
-  | Region {group_name; value={start; end_; contains; match_groups}; next_groups; contained; contained_in; } ->
+  | Region {group_name; value={start; end_; match_groups}; next_groups; contained; contained_in; contains} ->
       fprintf fmt "syntax region %s " group_name;
       print_match_groups fmt match_groups;
       (match start with 
@@ -78,6 +81,8 @@ module Print = struct
       print_list fmt "containedin=" contained_in;
       print_list fmt "contains=" contains;
       print_list fmt "nextgroup=" next_groups;
+      if next_groups <> [] then
+        fprintf fmt "skipempty skipwhite";
       fprintf fmt "\n"  
 
     and print_match_groups fmt = function 
@@ -114,6 +119,7 @@ module Print = struct
     | PreProc          -> "PreProc"
     | Builtin_type
     | Type             -> "Type"
+    | Type_var         -> "Type"
     | StorageClass     -> "StorageClass"
     | Builtin_module
     | Structure        -> "Structure"
@@ -143,7 +149,6 @@ module Print = struct
 end
 
 module Convert = struct 
-  
   let pattern_to_vim: string list -> Core.pattern -> item list = fun toplevel -> function
     {name; kind = Begin_end {meta_name=highlight; begin_; end_; patterns}} ->
     let rec aux name result (begin_: (Core.regexp * Core.highlight_name option) list) end_ = (
@@ -166,7 +171,6 @@ module Convert = struct
               value = ({                
                 start = (match highlight_start with Some _ -> None | None -> Some start.Core.vim);
                 end_ = (match highlight_end with Some _ -> None | None -> Some end_.Core.vim);
-                contains = patterns;
                 match_groups = 
                   (match highlight_start with 
                     Some _ -> [{
@@ -187,6 +191,7 @@ module Convert = struct
               next_groups = (match rest with [] -> [] | _ -> [name ^ "___"]);
               contained = not (List.mem name toplevel);
               contained_in = [];
+              contains = List.map (fun p -> if p = "$self" then "@top" else p) patterns;
             }) :: 
           result) [] rest
       | (match_, highlight) :: rest, end_ -> 
@@ -201,6 +206,7 @@ module Convert = struct
                 next_groups = [name ^ "___"];
                 contained = not (List.mem name toplevel);
                 contained_in = []; 
+                contains = [];
               })
               :: 
              result
@@ -217,6 +223,7 @@ module Convert = struct
             next_groups = (match rest_e with [] -> [] | _ -> [name ^ "___"]);
             contained = not (List.mem name toplevel);
             contained_in = []; 
+            contains = [];
           })
           :: 
           result
@@ -242,6 +249,7 @@ module Convert = struct
           value = regexp.Core.vim;
           contained = not (List.mem name toplevel);
           contained_in = [];
+          contains = [];
           next_groups = (match rest with _ :: _ -> [name ^ "_"] | _ -> [])
         })]
         @ 
@@ -266,6 +274,11 @@ module Convert = struct
 
   let to_vim: Core.t -> t = fun t ->
     let toplevel = t.syntax_patterns in
+    let language_features = t.Core.language_features in
+    let comments = language_features.comments in
+    let extra_patterns = language_features.extra_patterns in
+    (List.fold_left (fun a c -> (pattern_to_vim toplevel c) @ a ) [] t.repository)
+    @
     [VIMComment "string"]
     @
     (List.map (fun d ->
@@ -274,61 +287,94 @@ module Convert = struct
           value = {
             start        = Some d.Core.vim;
             end_         = Some d.Core.vim;
-            contains     = [];
             match_groups = []
           };
           contained = false;
           contained_in = [];
+          contains = "@Spell" :: extra_patterns.in_strings;
           next_groups = []
         })
-            
-    ) t.language_features.string_delimiters)
+    ) language_features.string_delimiters)
     @
     [Highlight (Link {group_name = "string"; highlight = Core.String})]
     @
-    [VIMComment "comment"]
+    [VIMComment "linecomment"]
     @
-    [Syntax (Match {
-      group_name   = "comment";
-      value        = t.language_features.comments.line_comment.Core.vim;
+    [Syntax (Region {
+      group_name   = "linecomment";
+      value        = {
+        start        = Some comments.line_comment.Core.vim;
+        end_         = Some "$";
+        match_groups = [];
+      };
       contained    = false;
-      contained_in = [];
+      contained_in = ["ALLBUT"; "string"; "blockcomment"];
+      contains     = "@Spell" :: extra_patterns.in_line_comments;
       next_groups  = []
     })]
     @
+    [Highlight (Link {group_name = "linecomment"; highlight = Core.Comment})]
+    @
+    [VIMComment "blockcomment"]
+    @
     [Syntax (Region {
-      group_name   = "comment";
+      group_name   = "blockcomment";
       value        = {
-        start        = Some ((fst t.language_features.comments.block_comment).Core.vim);
-        end_         = Some ((snd t.language_features.comments.block_comment).Core.vim);
-        contains     = [];
+        start        = Some ((fst comments.block_comment).Core.vim);
+        end_         = Some ((snd comments.block_comment).Core.vim);
         match_groups = []
       };
       contained    = false;
-      contained_in = [];
+      contained_in = ["ALLBUT"; "string"; "linecomment"];
+      contains     = "@Spell" :: extra_patterns.in_block_comments;
       next_groups  = []
     })]
-    
     @
-    [Highlight (Link {group_name = "comment"; highlight = Core.Comment})]
-    @
-    (List.fold_left (fun a c -> (pattern_to_vim toplevel c) @ a ) [] t.repository)
-    
+    [Highlight (Link {group_name = "blockcomment"; highlight = Core.Comment})]
 end
-  
-let to_vim: Core.t -> string = fun t ->
-  let v = Convert.to_vim t in
-  let buffer = Buffer.create 100 in
+
+let vim_ftdetect (syntaxes: (string * Core.t) list): string =
+  let buffer = Buffer.create 512 in
   let open Format in
   let fmt = formatter_of_buffer buffer in
+  fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
+  Fun.flip List.iter syntaxes (fun (name, t) ->
+    Fun.flip List.iter t.file_types (fun file_type ->
+      fprintf fmt "au BufNewFile,BufRead *.%s setfiletype %s\n" file_type name));
+  Buffer.contents buffer
+
+let vim_plugin (syntaxes: (string * Core.t) list): string =
+  let buffer = Buffer.create 512 in
+  let open Format in
+  let fmt = formatter_of_buffer buffer in
+  let allow_list = String.concat ", " (List.map (fun (name, _) -> "'" ^ name ^ "'") syntaxes) in
+  fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
+  fprintf fmt "if executable('ligo-squirrel')\n";
+  fprintf fmt "  if !exists(\"autocommands_loaded\")\n";
+  fprintf fmt "    let autocommands_loaded=1\n";
+  fprintf fmt "    augroup ligoRegisterLanguageServer\n";
+  fprintf fmt "      autocmd User lsp_setup\n";
+  fprintf fmt "          \\ call lsp#register_server({\n";
+  fprintf fmt "          \\   'name': 'ligo_lsp',\n";
+  fprintf fmt "          \\   'cmd': {server_info->['ligo-squirrel']},\n";
+  fprintf fmt "          \\   'allowlist': [%s],\n" allow_list;
+  fprintf fmt "          \\ })\n";
+  fprintf fmt "    augroup END\n";
+  fprintf fmt "  endif\n";
+  fprintf fmt "endif\n";
+  Buffer.contents buffer
+
+let vim_syntax (name, t: string * Core.t): string =
+  let v = Convert.to_vim t in
+  let buffer = Buffer.create 8192 in
+  let open Format in
+  let fmt = formatter_of_buffer buffer in
+  fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
   fprintf fmt "if exists(\"b:current_syntax\")\n";
   fprintf fmt "    finish\n";
   fprintf fmt "endif\n";
+  fprintf fmt "\n";
+  fprintf fmt "syntax cluster top contains=TOP\n";
   Print.print fmt v;
-  let name = match Filename.extension t.scope_name with 
-      "" -> t.scope_name
-    | a -> String.sub a 1 (String.length a - 1)
-  in
-  fprintf fmt "\nlet b:current_syntax = \"%s\"" name;
+  fprintf fmt "\nlet b:current_syntax = \"%s\"\n" name;
   Buffer.contents buffer
-

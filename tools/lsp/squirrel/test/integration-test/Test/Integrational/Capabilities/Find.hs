@@ -19,14 +19,12 @@ module Test.Integrational.Capabilities.Find
 import System.FilePath ((</>))
 
 import AST.Scope (Fallback, FromCompiler, Standard)
-import AST.Scope.ScopedDecl (Type (AliasType), TypeDeclSpecifics (..), ValueDeclSpecifics (..))
 
 import Test.Common.Capabilities.Find
-import Test.Common.Util (ScopeTester)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
-import Range (_rFile, interval, point)
+import Range (_rFile, interval)
 
 includeInvariants :: [DefinitionReferenceInvariant]
 includeInvariants =
@@ -100,7 +98,7 @@ test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
 test_findDefinitionAndGoToReferencesCorrespondence =
   testGroup "Find definition and go to references correspondence"
     [ findDefinitionAndGoToReferencesCorrespondence @Standard allVariants
-    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-592) (LIGO-596)
+    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-592) (LIGO-596) (LIGO-679)
     ]
   where
     allVariants = invariants <> includeInvariants
@@ -124,7 +122,8 @@ unit_referenceOfId = do
 unit_definitionOfLeft :: Assertion
 unit_definitionOfLeft = do
   definitionOfLeft @Standard
-  definitionOfLeft @FromCompiler
+  -- FIXME: LIGO-759
+  --definitionOfLeft @FromCompiler
 
 unit_referenceOfLeft :: Assertion
 unit_referenceOfLeft = do
@@ -170,18 +169,20 @@ unit_pascaligo_local_type = do
 -- unit_type_of_camligo_lambda_arg :: Assertion
 -- unit_type_of_camligo_lambda_arg = typeOfCamligoLambdaArg @Standard
 
-localTypeOfGood :: forall impl. ScopeTester impl => Assertion
-localTypeOfGood = do
-  let
-    valueDeclSpec = ValueDeclSpecifics
-      (Just $ interval 1 12 24)
-      Nothing
-      -- string has no type decl
-      (Just $ TypeDeclSpecifics (point 0 0) $ AliasType "string")
-  localTypeOf @impl (contractsDir </> "LIGO-208" </> "good.mligo") (point 3 12) valueDeclSpec
+--localTypeOfGood :: forall impl. ScopeTester impl => Assertion
+--localTypeOfGood = do
+--  let
+--    valueDeclSpec = ValueDeclSpecifics
+--      (Just $ interval 1 12 24)
+--      Nothing
+--      -- string has no type decl
+--      (Just $ TypeDeclSpecifics (point 0 0) $ AliasType "string")
+--  localTypeOf @impl (contractsDir </> "LIGO-208" </> "good.mligo") (point 3 12) valueDeclSpec
 
 unit_local_type_of_good :: Assertion
 unit_local_type_of_good =
   -- No test for FromCompiler: the edge between `good` and `bad` prevents it
   -- from working.
-  localTypeOfGood @Standard
+  -- FIXME: LIGO-758
+  --localTypeOfGood @Standard
+  pure ()

@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1951'
+title: Fix view compilation for the case when a view uses another view
+type: fixed

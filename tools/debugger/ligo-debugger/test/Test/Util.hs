@@ -20,10 +20,19 @@ module Test.Util
   , HUnit.assertBool
     -- * Common snippets
   , intType
+    -- * Helpers for breakpoints
+  , goToNextBreakpoint
+  , goToPreviousBreakpoint
   ) where
 
 import Fmt (Buildable (..), blockListF', pretty)
 import Language.LIGO.Debugger.CLI.Types (LigoType (..), LigoTypeConstant (..))
+import Language.LIGO.Debugger.Snapshots (InterpretSnapshot)
+import Morley.Debugger.Core.Breakpoint
+  (BreakpointSelector (NextBreak), continueUntilBreakpoint, reverseContinue)
+import Morley.Debugger.Core.Navigate
+  (DebuggerState, Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
+  NavigableSnapshot (getExecutedPosition), SourceLocation, frozen, isAtBreakpoint, moveTill)
 import System.FilePath (takeExtension, (</>))
 import Test.Tasty.HUnit qualified as HUnit
 import Text.Interpolation.Nyan
@@ -37,6 +46,7 @@ hasLigoExtension :: FilePath -> Bool
 hasLigoExtension file =
   takeExtension file `elem`
     [ ".ligo"
+    , ".pligo"
     , ".mligo"
     , ".religo"
     , ".jsligo"
@@ -111,5 +121,25 @@ intType :: LigoType
 intType = LTConstant $
   LigoTypeConstant
     { ltcParameters = []
-    , ltcInjection = "int"
+    , ltcInjection = "Int" :| []
     }
+
+compareWithCurLocation
+  :: (MonadState (DebuggerState InterpretSnapshot) m)
+  => SourceLocation -> FrozenPredicate (DebuggerState InterpretSnapshot) m
+compareWithCurLocation oldSrcLoc = FrozenPredicate $
+  getExecutedPosition >>= maybe (pure False) (pure . (/= oldSrcLoc))
+
+goToNextBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
+goToNextBreakpoint = do
+  oldSrcLocMb <- frozen getExecutedPosition
+  void $ case oldSrcLocMb of
+    Just oldSrcLoc -> moveTill Forward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
+    Nothing -> continueUntilBreakpoint NextBreak
+
+goToPreviousBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
+goToPreviousBreakpoint = do
+  oldSrcLocMb <- frozen getExecutedPosition
+  void $ case oldSrcLocMb of
+    Just oldSrcLoc -> moveTill Backward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
+    Nothing -> reverseContinue NextBreak

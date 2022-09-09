@@ -101,6 +101,11 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       | T_base TB_mutez, T_base TB_mutez -> return (t_nat ()) (t_mutez ())
       | T_base TB_mutez, T_base TB_nat -> return (t_mutez ()) (t_mutez ())
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(ediv|u_ediv) application"))
+    | (External ("and" | "u_and"), [ param1; param2 ]) ->
+      (match (compile_type param1).type_content, (compile_type param2).type_content with
+      | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
+      | T_base TB_int, T_base TB_nat -> return (T_base TB_nat)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(ediv|u_ediv) application"))
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
         Ticket                     | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |

@@ -3,10 +3,63 @@ import * as vscode from 'vscode'
 import {
   LanguageClient,
 } from 'vscode-languageclient/node'
+import { ligoOutput } from './commands/common'
 
 import * as lc from './commands/ligoCommands'
 import * as tc from './commands/tezosCommands'
 import * as ui from './ui'
+import * as ex from './exceptions'
+
+function reportException(exception: Error) {
+  if (!(exception instanceof ex.UserInterruptionException)) {
+    vscode.window.showErrorMessage('Exception happened during execution.\n'
+                                   + 'See console (LIGO Compiler) for additional information', 'Ok')
+    ligoOutput.appendLine(exception.message)
+    ligoOutput.show()
+  }
+}
+
+async function executeChooseLigoOption(client) {
+  const possibleOptions = ['Compile contract', 'Compile storage', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
+  const curCommand = await ui.createQuickPickBox(possibleOptions, 'ligo compiler command', 'command')
+  switch (curCommand) {
+    case 'Compile contract':
+      await lc.executeCompileContract(client)
+      break;
+    case 'Compile storage':
+      await lc.executeCompileStorage(client)
+      break;
+    case 'Compile expression':
+      await lc.executeCompileExpression(client)
+      break;
+    case 'Dry run':
+      await lc.executeDryRun(client)
+      break;
+    case 'Evaluate function':
+      await lc.executeEvaluateFunction(client)
+      break;
+    case 'Evaluate value':
+      await lc.executeEvaluateValue(client)
+      break;
+    default:
+      throw new ex.InvalidChoiceException(curCommand, possibleOptions)
+  }
+}
+
+async function executeChooseDeployOptions(client) {
+  const possibleOptions = ['Deploy contract', 'Generate deploy script']
+  const curCommand = await ui.createQuickPickBox(possibleOptions, 'Deployment options', 'command')
+  switch (curCommand) {
+    case 'Deploy contract':
+      await tc.executeDeploy(client)
+      break;
+    case 'Generate deploy script':
+      await tc.executeGenerateDeployScript(client)
+      break;
+    default:
+      throw new ex.InvalidChoiceException(curCommand, possibleOptions)
+  }
+}
 
 const LigoCommands = {
   StartServer: {
@@ -18,7 +71,7 @@ const LigoCommands = {
     },
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.StartServer.name,
-      async () => LigoCommands.StartServer.run(client),
+      async () => LigoCommands.StartServer.run(client).catch(reportException),
     ),
   },
   StopServer: {
@@ -30,7 +83,7 @@ const LigoCommands = {
     },
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.StopServer.name,
-      async () => LigoCommands.StopServer.run(client),
+      async () => LigoCommands.StopServer.run(client).catch(reportException),
     ),
   },
   RestartServer: {
@@ -41,12 +94,12 @@ const LigoCommands = {
     },
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.RestartServer.name,
-      async () => LigoCommands.RestartServer.run(client),
+      async () => LigoCommands.RestartServer.run(client).catch(reportException),
     ),
   },
   CompileContract: {
     name: 'ligo.compileContract',
-    run: lc.executeCompileContract,
+    run: async (client) => lc.executeCompileContract(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.CompileContract.name,
       async () => LigoCommands.CompileContract.run(client),
@@ -54,7 +107,7 @@ const LigoCommands = {
   },
   SilentCompileContract: {
     name: 'ligo.silentCompileContract',
-    run: lc.executeSilentCompileContract,
+    run: async (client, options) => lc.executeSilentCompileContract(client, options),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.SilentCompileContract.name,
       async (
@@ -64,7 +117,7 @@ const LigoCommands = {
   },
   CompileStorage: {
     name: 'ligo.compileStorage',
-    run: lc.executeCompileStorage,
+    run: async (client) => lc.executeCompileStorage(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.CompileStorage.name,
       async () => LigoCommands.CompileStorage.run(client),
@@ -72,7 +125,7 @@ const LigoCommands = {
   },
   CompileExpression: {
     name: 'ligo.compileExpression',
-    run: lc.executeCompileExpression,
+    run: async (client) => lc.executeCompileExpression(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.CompileExpression.name,
       async () => LigoCommands.CompileExpression.run(client),
@@ -80,7 +133,7 @@ const LigoCommands = {
   },
   DryRun: {
     name: 'ligo.dryRun',
-    run: lc.executeDryRun,
+    run: async (client) => lc.executeDryRun(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.DryRun.name,
       async () => LigoCommands.DryRun.run(client),
@@ -88,7 +141,7 @@ const LigoCommands = {
   },
   EvaluateFunction: {
     name: 'ligo.evaluateFunction',
-    run: lc.executeEvaluateFunction,
+    run: async (client) => lc.executeEvaluateFunction(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.EvaluateFunction.name,
       async () => LigoCommands.EvaluateFunction.run(client),
@@ -96,7 +149,7 @@ const LigoCommands = {
   },
   EvaluateValue: {
     name: 'ligo.evaluateValue',
-    run: lc.executeEvaluateValue,
+    run: async (client) => lc.executeEvaluateValue(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.EvaluateValue.name,
       async () => LigoCommands.EvaluateValue.run(client),
@@ -104,7 +157,7 @@ const LigoCommands = {
   },
   Deploy: {
     name: 'ligo.deploy',
-    run: tc.executeDeploy,
+    run: async (client) => tc.executeDeploy(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.Deploy.name,
       async () => LigoCommands.Deploy.run(client),
@@ -112,7 +165,7 @@ const LigoCommands = {
   },
   GenerateDeployScript: {
     name: 'ligo.generateDeployScript',
-    run: tc.executeGenerateDeployScript,
+    run: async (client) => tc.executeGenerateDeployScript(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.GenerateDeployScript.name,
       async () => LigoCommands.GenerateDeployScript.run(client),
@@ -120,32 +173,7 @@ const LigoCommands = {
   },
   ChooseLigoOption: {
     name: 'ligo.chooseOption',
-    run: async (client: LanguageClient) => {
-      const possibleOptions = ['Compile contract', 'Compile storage', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
-      const curCommand = await ui.createQuickPickBox(possibleOptions, 'ligo compiler command', 'command')
-      switch (curCommand) {
-        case 'Compile contract':
-          lc.executeCompileContract(client);
-          break;
-        case 'Compile storage':
-          lc.executeCompileStorage(client);
-          break;
-        case 'Compile expression':
-          lc.executeCompileExpression(client);
-          break;
-        case 'Dry run':
-          lc.executeDryRun(client);
-          break;
-        case 'Evaluate function':
-          lc.executeEvaluateFunction(client);
-          break;
-        case 'Evaluate value':
-          lc.executeEvaluateValue(client);
-          break;
-        default:
-          console.error('Unknown command');
-      }
-    },
+    run: async (client: LanguageClient) => executeChooseLigoOption(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.ChooseLigoOption.name,
       async () => LigoCommands.ChooseLigoOption.run(client),
@@ -153,20 +181,8 @@ const LigoCommands = {
   },
   ChooseDeploymentOption: {
     name: 'tezos.chooseOption',
-    run: async (client: LanguageClient) => {
-      const possibleOptions = ['Deploy contract', 'Generate deploy script']
-      const curCommand = await ui.createQuickPickBox(possibleOptions, 'Deployment options', 'command')
-      switch (curCommand) {
-        case 'Deploy contract':
-          tc.executeDeploy(client);
-          break;
-        case 'Generate deploy script':
-          tc.executeGenerateDeployScript(client);
-          break;
-        default:
-          console.error('Unknown command');
-      }
-    },
+    run:
+      async (client: LanguageClient) => executeChooseDeployOptions(client).catch(reportException),
     register: (client:LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.ChooseDeploymentOption.name,
       async () => LigoCommands.ChooseDeploymentOption.run(client),

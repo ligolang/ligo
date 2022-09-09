@@ -40,7 +40,7 @@ recognise (SomeRawTree dialect rawTree)
         "tuple"             -> Tuple      <$> fields "item"
         "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
-        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"
+        "code_inj"          -> CodeInj    <$> field  "lang"        <*> field    "code"
         "let_in"            -> Let        <$> field  "declaration" <*> field    "body"
         "paren_expr"        -> Paren      <$> field  "expr"
         _                   -> fallthrough
@@ -82,7 +82,7 @@ recognise (SomeRawTree dialect rawTree)
     -- TODO: record
   , Descent do
       boilerplate $ \case
-        "capture"           -> Capture         <$> fields "accessor"
+        "capture"           -> Capture         <$> field "accessor"
         "record_field"      -> FieldAssignment <$> fields "accessor" <*> field "value"
         "record_field_path" -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread"            -> Spread          <$> field "name"
@@ -141,11 +141,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Literal
   , Descent do
       boilerplate' $ \case
-        ("Int",    i) -> return $ Int i
-        ("Nat",    i) -> return $ Nat i
-        ("Bytes",  i) -> return $ Bytes i
-        ("String", i) -> return $ String i
-        ("Tez",    i) -> return $ Tez i
+        ("Int",    i) -> return $ CInt i
+        ("Nat",    i) -> return $ CNat i
+        ("Bytes",  i) -> return $ CBytes i
+        ("String", i) -> return $ CString i
+        ("Tez",    i) -> return $ CTez i
         _             -> fallthrough
 
     -- Declaration
@@ -252,6 +252,12 @@ recognise (SomeRawTree dialect rawTree)
         ("Bool", b)            -> return $ Ctor b
         ("Unit", _)            -> return $ Ctor "Unit"
         _                      -> fallthrough
+
+  -- Attr
+  , Descent $
+      boilerplate' \case
+        ("Attr", attr) -> pure $ Attr attr
+        _              -> fallthrough
 
   -- Err
   , Descent noMatch

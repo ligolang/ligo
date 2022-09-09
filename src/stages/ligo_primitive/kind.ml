@@ -6,5 +6,6 @@ type t =
 
 let rec pp ppf t =
   match t with
-  | Type | Singleton -> Format.fprintf ppf "*"
+  | Type -> Format.fprintf ppf "*"
+  | Singleton -> Format.fprintf ppf "+"
   | Arrow (t1, t2) -> Format.fprintf ppf "%a -> %a" pp t1 pp t2
