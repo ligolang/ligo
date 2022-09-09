@@ -1,6 +1,6 @@
 (library
- (name scopes)
- (public_name ligo.scopes)
+ (name new_scopes)
+ (public_name ligo.new_scopes)
  (instrumentation
   (backend bisect_ppx))
  (preprocess

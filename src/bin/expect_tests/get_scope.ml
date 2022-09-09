@@ -435,18 +435,6 @@ let%expect_test _ =
     Content: : record[bar -> int , foo -> int]
     Module definitions: |} ] ;
 
-
-
-
-
-
-
-
-
-
-
-
-
   run_ligo_good [ "info" ; "get-scope" ; gs "constant.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -492,6 +480,18 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 27-28
     Type definitions:
     Module definitions: |} ] 
+
+
+
+
+
+
+
+
+
+
+
+
 
 let%expect_test _ =
   run_ligo_good [ "info"; "get-scope" ; gs "application.mligo" ; "--format";"dev" ; "--with-types" ] ;
@@ -1272,6 +1272,7 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 11-16
     Content: Alias: D#6.E#4.F#2
     references: [] |}] ;
+
   run_ligo_good [ "info"; "get-scope" ; gs "module_shadowing.mligo" ; "--format"; "dev" ; "--with-types" ] ;
     [%expect{|
       Scopes:
