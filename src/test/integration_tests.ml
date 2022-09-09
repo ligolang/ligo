@@ -795,6 +795,10 @@ let list ~raise () : unit =
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
       (e_list [e_int 3 ; e_int 5 ; e_int 8])
   in
+  let () = expect_eq_evaluate ~raise program "find_x" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_y4" (e_some (e_int 4)) in
+  let () = expect_eq_evaluate ~raise program "find_y6" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_z2" (e_some (e_int 2)) in
   ()
 
 let condition ~raise f : unit =
@@ -1537,6 +1541,10 @@ let mligo_list ~raise () : unit =
   let () = expect_eq_evaluate ~raise program "x" (e_list []) in
   let () = expect_eq_evaluate ~raise program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
   let () = expect_eq_evaluate ~raise program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
+  let () = expect_eq_evaluate ~raise program "find_x" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_y4" (e_some (e_int 4)) in
+  let () = expect_eq_evaluate ~raise program "find_y6" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_z2" (e_some (e_int 2)) in
   let () = expect_eq ~raise program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let () = expect_eq ~raise program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ()
@@ -1581,6 +1589,10 @@ let jsligo_list ~raise () : unit =
   let () = expect_eq_evaluate ~raise program "x" (e_list []) in
   let () = expect_eq_evaluate ~raise program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
   let () = expect_eq_evaluate ~raise program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
+  let () = expect_eq_evaluate ~raise program "find_x" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_y4" (e_some (e_int 4)) in
+  let () = expect_eq_evaluate ~raise program "find_y6" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_z2" (e_some (e_int 2)) in
   let () = expect_eq ~raise program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let () = expect_eq ~raise program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ()
