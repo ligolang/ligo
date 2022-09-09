@@ -10,7 +10,8 @@ let%expect_test _ =
     [ j#3 i#2 a#0  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 12-21
     [ g#4 j#3 i#2 a#0  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 12-25
     [ k#5 g#4 j#3 i#2 a#0  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 4-21
-    [ f#1 a#0  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 2-7
+    [ f#1 a#0  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 2-5
+    [ f#1 a#0  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 6-7
 
     Variable definitions:
     (a#0 -> a)
@@ -129,7 +130,8 @@ let%expect_test _ =
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 1, characters 8-9
     [ j#3 i#2 a#0  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-63
-    [ f#1 a#0  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 2-7
+    [ f#1 a#0  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 2-5
+    [ f#1 a#0  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 6-7
 
     Variable definitions:
     (a#0 -> a)
@@ -269,7 +271,8 @@ let%expect_test _ =
     [ j#3 i#2 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-21
     [ k#4 j#3 i#2 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-10
     [ c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 10-11
-    [ b#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-9
+    [ b#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
+    [ b#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 5-9
 
     Variable definitions:
     (a#0 -> a)
@@ -481,25 +484,14 @@ let%expect_test _ =
     Type definitions:
     Module definitions: |} ] 
 
-
-
-
-
-
-
-
-
-
-
-
-
 let%expect_test _ =
   run_ligo_good [ "info"; "get-scope" ; gs "application.mligo" ; "--format";"dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ j#2 i#1  ] File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-63
+    [ f#0  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 11-12
     [ b#3 f#0  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 16-19
-    [ f#0  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 11-31
+    [ f#0  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 30-31
     [ c#4 f#0  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 35-36
 
     Variable definitions:
@@ -538,15 +530,27 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-59
     Type definitions:
-    Module definitions: |} ]
+    Module definitions:
+ |} ]
+
+
+
+
+
+
+
+
+
+
+
+
 
 let%expect_test _ =
   run_ligo_good [ "info"; "get-scope" ; gs "include.mligo" ; "--format"; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ b#5 a#0  ] File "../../test/contracts/get_scope_tests/include.mligo", line 3, characters 8-9
-    [ x#6 b#5 a#0  ] File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 8-9
-    [ x#6 b#5 a#0  ] File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 12-13
+    [ x#6 b#5 a#0  ] File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 8-13
     [  ] File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 8-9
     [ a#0  ] File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 10-15
     [ c#1 a#0  ] File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 12-17
@@ -1091,7 +1095,8 @@ let%expect_test _ =
   [%expect{|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/module4.mligo", line 2, characters 12-13
-    [ a#0  ] File "../../test/contracts/get_scope_tests/module4.mligo", line 4, character 16 to line 6, character 7
+    [ a#0  ] File "../../test/contracts/get_scope_tests/module4.mligo", line 4, characters 16-17
+    [ a#0  ] File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 4-7
 
     Variable definitions:
     (a#0 -> a)
@@ -1278,7 +1283,8 @@ let%expect_test _ =
       Scopes:
       [  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 2, characters 12-13
       [ D#2 A#1 x#0  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 8, characters 12-13
-      [ x#3 D#2 A#1 x#0  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 10, character 16 to line 13, character 11
+      [ x#3 D#2 A#1 x#0  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 10, characters 16-19
+      [ x#3 D#2 A#1 x#0  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 13, characters 4-11
 
       Variable definitions:
       (x#3 -> x)

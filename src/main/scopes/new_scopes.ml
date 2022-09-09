@@ -154,11 +154,11 @@ module Free = struct
         | E_variable ev -> [], [Variable ev], tenv, [e.location, []]
         | E_module_accessor m -> [], [ModuleAccess (m.module_path, m.element)], tenv, [e.location, []]
         | E_constant { arguments ; _ } ->
-          List.fold_left arguments ~init:([], [], tenv, [])
+          let defs, refs, tenv, scopes = List.fold_left arguments ~init:([], [], tenv, [])
             ~f:(fun (defs, refs, tenv, scopes) e ->
                   let ds, rs, tenv, scopes' = expression tenv e in
-                  let scopes' = merge_same_scopes scopes' in
-                  ds @ defs, rs @ refs, tenv, scopes @ scopes')
+                  ds @ defs, rs @ refs, tenv, scopes @ scopes') in
+          defs, refs, tenv, merge_same_scopes scopes
         | E_application { lamb ; args } ->
           let defs, refs, tenv, scopes = expression tenv lamb  in
           let scopes = merge_same_scopes scopes in
@@ -197,14 +197,12 @@ module Free = struct
           defs, refs @ refs', tenv, scopes
         | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
           if is_rec_fun rhs then
-            (* For recursive functions we don't need to add a def for [let_binder] 
+            (* For recursive functions we don't need to add a def for [let_binder]
                becase it will be added by the [E_recursive] case we just need to extract it
                out of the [defs_rhs] *)
             let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
             let def, defs_rhs = drop_last defs_rhs in
-            let scopes = merge_same_scopes scopes in
             let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-            let scopes' = merge_same_scopes scopes' in
             let scopes' = add_defs_to_scopes [def] scopes' in
             let scopes = scopes @ scopes' in
             let defs, refs_result = update_references refs_result [def] in
@@ -216,9 +214,7 @@ module Free = struct
               [ Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc rhs.location ]
             in
             let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-            let scopes = merge_same_scopes scopes in
             let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-            let scopes' = merge_same_scopes scopes' in
             let scopes' = add_defs_to_scopes defs_binder scopes' in
             let scopes = scopes @ scopes' in
             let defs, refs_result = update_references refs_result defs_binder in
@@ -358,7 +354,7 @@ let resolve_module_aliases_to_module_ids : def list -> def list
         match defs with
           [] -> mod_def_ids, defs
         | Module ({ uid ; name ; mod_case = Def d ; _ } as m)::defs ->
-            let d = List.rev d in 
+            let d = List.rev d in
             let mod_def_ids, d = resolve d mod_def_ids in
             let d = List.rev d in
             let mod_case = Def d in
@@ -369,7 +365,7 @@ let resolve_module_aliases_to_module_ids : def list -> def list
             let mod_case = Alias a in
             let mod_def_ids, defs = resolve defs ((name, uid) :: mod_def_ids) in
             mod_def_ids, Module { m with mod_case } :: defs
-        | def::defs -> 
+        | def::defs ->
             let mod_def_ids, defs = resolve defs mod_def_ids in
             mod_def_ids, def :: defs
       in
@@ -379,7 +375,7 @@ let resolve_module_aliases_to_module_ids : def list -> def list
 
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.module_ -> (def list * scopes)
   = fun ~with_types ~options prg ->
-      let () = reset_counter () in 
+      let () = reset_counter () in
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
       let defs = resolve_module_aliases_to_module_ids defs in
