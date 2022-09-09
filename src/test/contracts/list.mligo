@@ -35,3 +35,15 @@ let map_op (s : int list) : int list =
 let iter_op (s : int list) : unit =
   let do_nothing = fun (_ : int) -> unit
   in List.iter do_nothing s
+
+let find_x = 
+  List.find_opt (fun (_ : int) -> true) x
+
+let find_y4 = 
+  List.find_opt (fun (y_elem : int) -> y_elem = 4) y
+
+let find_y6 = 
+  List.find_opt (fun (y_elem : int) -> y_elem = 6) y
+
+let find_z2 = 
+  List.find_opt (fun (z_elem : int) -> z_elem = 2) z

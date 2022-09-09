@@ -184,6 +184,8 @@ module List = struct
   let fold_left (type a b) (f : b * a -> b) (i : b) (xs : a list) : b = [%external ("LIST_FOLD_LEFT", f, i, xs)]
   let fold_right (type a b) (f : a * b -> b) (xs : a list) (i : b) : b = [%external ("LIST_FOLD_RIGHT", f, xs, i)]
   let cons (type a) (x : a) (xs : a list) : a list = [%external ("CONS", x, xs)]
+  let find_opt (type a) (f : a -> bool) (xs : a list) : a option = 
+    fold_right (fun (a : a * a option) -> if f a.0 then Some a.0 else a.1) xs None
 #endif
 
 #if UNCURRY
@@ -193,6 +195,8 @@ module List = struct
   let fold_left (type a b) ((f, i, xs) : (b * a -> b) * b * a list) : b = [%external ("LIST_FOLD_LEFT", f, i, xs)]
   let fold_right (type a b) ((f, xs, i) : (a * b -> b) * a list * b) : b = [%external ("LIST_FOLD_RIGHT", f, xs, i)]
   let cons (type a) ((x, xs) : a * a list) : a list = [%external ("CONS", x, xs)]
+  let find_opt (type a) ((f, xs) : (a -> bool) * a list) : a option = 
+    fold_right ((fun (a : a * a option) -> if f a.0 then Some a.0 else a.1), xs, None)
 #endif
 
 end
