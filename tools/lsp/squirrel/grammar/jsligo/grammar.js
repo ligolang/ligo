@@ -1,5 +1,7 @@
 const common = require('../common.js')
 
+const withAttrs = ($, x) => seq(field("attributes", repeat($.Attr)), x)
+
 module.exports = grammar({
   name: 'JsLigo',
 
@@ -170,7 +172,7 @@ module.exports = grammar({
       $.ConstrName,
       $.data_projection,
       $.indexing,
-      $.michelson_interop,
+      $.code_inj,
       $.paren_expr,
       $.module_access,
       $.tuple,
@@ -185,14 +187,9 @@ module.exports = grammar({
 
     indexing: $ => prec(5, seq(field("box", $._member_expr), common.brackets(field("index", $._expr)))),
 
-    michelson_interop: $ => seq(
-      '(Michelson',
-        seq(
-          field("code", $.Verbatim),
-          'as',
-          field("type", $._type_expr),
-        ),
-      ')'
+    code_inj: $ => seq(
+      field("lang", $.lang),
+      field("code", $.Verbatim),
     ),
 
     module_access: $ => seq(
@@ -277,9 +274,9 @@ module.exports = grammar({
 
     domain: $ => common.par(common.sepBy(',', seq($._Name, ':', field("type", $._type_expr)))),
 
-    sum_type: $ => common.withAttrs($, seq(optional('|'), common.sepBy1('|', field("variant", $.variant)))),
+    sum_type: $ => withAttrs($, seq(optional('|'), common.sepBy1('|', field("variant", $.variant)))),
 
-    variant: $ => common.withAttrs($, common.brackets(
+    variant: $ => withAttrs($, common.brackets(
       choice(
         field("constructor", $.ConstrNameType),
         seq(field("constructor", $.ConstrNameType), ',', field("ctor_arguments", $.ctor_arguments))
@@ -306,20 +303,20 @@ module.exports = grammar({
 
     module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.TypeName)),
 
-    record_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
+    record_type: $ => withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
 
-    field_decl: $ => common.withAttrs($, choice(
+    field_decl: $ => withAttrs($, choice(
       field("field_name", $.FieldName),
       seq(field("field_name", $.FieldName), ':', field("field_type", $._type_expr))
     )),
 
     app_type: $ => prec(3, seq(field("functor", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
 
-    tuple_type: $ => common.withAttrs($, common.brackets(common.sepBy1(',', field("element", $._type_expr)))),
+    tuple_type: $ => withAttrs($, common.brackets(common.sepBy1(',', field("element", $._type_expr)))),
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
-    toplevel_binding:  $ => common.withAttrs($,
+    toplevel_binding:  $ => withAttrs($,
       seq(
         choice($._Let_kwd, $._Const_kwd),
         field("binding_pattern", $._binding_pattern),
@@ -331,7 +328,7 @@ module.exports = grammar({
       )
     ),
 
-    let_binding: $ => common.withAttrs($,
+    let_binding: $ => withAttrs($,
       seq(
         $._Let_kwd,
         field("binding_pattern", $._binding_pattern),
@@ -343,7 +340,7 @@ module.exports = grammar({
       )
     ),
 
-    const_binding: $ => common.withAttrs($,
+    const_binding: $ => withAttrs($,
       seq(
         $._Const_kwd,
         field("binding_pattern", $._binding_pattern),
@@ -372,7 +369,7 @@ module.exports = grammar({
 
     var_pattern: $ => field("var", $.NameDecl),
 
-    record_pattern: $ => common.withAttrs($, common.block(
+    record_pattern: $ => withAttrs($, common.block(
       common.sepEndBy1(",", field("field", $._record_field_pattern)),
     )),
 
@@ -382,7 +379,7 @@ module.exports = grammar({
       $.record_rest_pattern,
     ),
 
-    record_field_pattern: $ => common.withAttrs($, prec(9, seq(
+    record_field_pattern: $ => withAttrs($, prec(9, seq(
       field("name", $.FieldName),
       ":",
       field("body", $._binding_pattern),
@@ -496,7 +493,8 @@ module.exports = grammar({
 
     _till_newline: $ => /[^\n]*\n/,
 
-    attr: $ => $._js_ligo_attribute,
+    lang: $ => choice($._Name, $._NameCapital),
+    Attr: $ => $._js_ligo_attribute,
 
     String: $ => /\"(\\.|[^"\n])*\"/,
     _Int: $ => /-?([1-9][0-9_]*|0)/,

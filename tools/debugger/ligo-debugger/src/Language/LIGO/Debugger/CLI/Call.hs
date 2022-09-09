@@ -1,145 +1,90 @@
 module Language.LIGO.Debugger.CLI.Call
   ( compileLigoContractDebug
   , compileLigoExpression
-  , BadLigoOutput(..)
-
-    -- * Utilities
-  , runAndReadOutput
-  , ProcessKilledException(..)
+  , getAvailableEntrypoints
   ) where
 
 import Data.Aeson qualified as Aeson
+import Data.Aeson.Lens (AsPrimitive (_String), key)
 import Data.ByteString.Lazy qualified as LBS
-import Fmt (Buildable (..), pretty)
-import System.Exit (ExitCode (..))
+import Data.Text.Encoding qualified as T
+import Data.Typeable (cast)
+import Fmt (pretty)
 import Text.Interpolation.Nyan
-import UnliftIO.Process
-  (CreateProcess (..), StdStream (..), proc, waitForProcess, withCreateProcess)
+import UnliftIO.Exception (handle)
+
+import Cli
+  (HasLigoClient, LigoClientFailureException (..), SomeLigoException (SomeLigoException),
+  callLigoImplBS)
 
 import Morley.Michelson.Parser qualified as MP
 import Morley.Michelson.Untyped qualified as MU
 
 import Language.LIGO.Debugger.CLI.Types
 
-throwLeftWith :: (Exception e', MonadIO m) => (e -> e') -> Either e a -> m a
-throwLeftWith f = either (throwIO . f) pure
+mapLeftM :: (Monad m) => (e -> e') -> Either e a -> m (Either e' a)
+mapLeftM f = pure . first f
 
-data ProcessKilledException = ProcessKilledException
-  { pkeProcessName :: Text
-  , pkeCode        :: Int
-  , pkeMessage     :: Text
-  } deriving stock (Show)
-
-instance Buildable ProcessKilledException where
-  build ProcessKilledException{..} = [int||
-    Running '#{pkeProcessName}' failed with #{pkeCode} code:
-      #{pkeMessage}
-   |]
-
-instance Exception ProcessKilledException where
-  displayException = pretty
-
--- | Runs a process and consumes its stdout.
-runAndReadOutput
-  :: MonadIO m
-  => (LByteString -> r)
-     -- ^ Parsing function.
-     -- It is obliged to read all the data it wants to once @r@ is evaluated
-     -- to WHNF, due to the common concern about lazy IO.
-  -> FilePath
-     -- ^ Command to execute.
-  -> [String]
-     -- ^ Command line arguments to pass.
-  -> m r
-runAndReadOutput readOutput cmd args =
-  liftIO $ withCreateProcess
-    (proc cmd args)
-    { std_out = CreatePipe
-    , std_err = CreatePipe
-    , create_group = True
-      -- ↑ Make sure that spawned process does not automatically receive our SIGINT
-    }
-    \_ mOut mErr pHandler -> case (mOut, mErr) of
-      (Just out, Just err) -> do
-        !res <- readOutput <$> LBS.hGetContents out
-        waitForProcess pHandler >>= \case
-          ExitFailure code -> do
-            !errMsg <- decodeUtf8 <$> LBS.hGetContents err
-            throwIO ProcessKilledException
-              { pkeProcessName = toText cmd
-              , pkeCode = code
-              , pkeMessage = errMsg
-              }
-          ExitSuccess ->
-            return res
-      (_, _) -> error "Unexpectedly process had no output handlers"
-
-
-data BadLigoOutput = BadLigoOutput
-  { bloSource :: Text
-  , bloMessage :: Text
-  } deriving stock (Show)
-
-instance Buildable BadLigoOutput where
-  build BadLigoOutput{..} =
-    [int||
-      Unexpected output of `ligo` from #{bloSource}: #{bloMessage}.
-      Perhaps using the wrong ligo version?
-     |]
-
-instance Exception BadLigoOutput where
-  displayException = pretty
+withLigoException :: (HasLigoClient m) => m (Either LigoException a) -> m (Either LigoException a)
+withLigoException = handle \sle@(SomeLigoException e) -> do
+  case cast @_ @LigoClientFailureException e of
+    Just LigoClientFailureException{..} -> do
+      case Aeson.decodeStrict $ T.encodeUtf8 cfeStderr of
+        Just decoded -> pure $ Left decoded
+        Nothing -> pure $ Left [int||#{displayException sle}|]
+    Nothing -> pure $ Left [int||#{displayException sle}|]
 
 -- | Run ligo to compile the contract with all the necessary debug info.
-compileLigoContractDebug :: (MonadIO m) => String -> FilePath -> m LigoMapper
-compileLigoContractDebug entrypoint file =
-  runAndReadOutput Aeson.eitherDecode
-    "ligo"
+compileLigoContractDebug :: (HasLigoClient m) => String -> FilePath -> m (Either LigoException LigoMapper)
+compileLigoContractDebug entrypoint file = withLigoException $
+  callLigoImplBS Nothing
     [ "compile", "contract"
     , "--no-warn"
+    , "--display-format", "json"
     , "--michelson-format", "json"
     , "--michelson-comments", "location"
     , "--michelson-comments", "env"
     , "-e", entrypoint
+    , "--experimental-disable-optimizations-for-debugging"
+    , "--disable-michelson-typechecking"
     , file
-    ]
-    >>= throwLeftWith (BadLigoOutput "decoding source mapper" . toText)
+    ] Nothing
+    >>= mapLeftM [int|m|Unexpected output of `ligo` from decoding source mapper: #{toText}|] . decodeOutput
+  where
+    decodeOutput :: LBS.ByteString -> Either String LigoMapper
+    decodeOutput bs =
+      maybe (Left "Ligo compile contract: json-output parse error")
+            Aeson.eitherDecode
+            (LBS.fromStrict . T.encodeUtf8 <$> (bs ^? key "json_code" . _String))
 
 -- | Run ligo to compile expression into Michelson in the context of the
 -- given file.
-compileLigoExpression
-  :: MonadIO m
-  => MP.MichelsonSource -> FilePath -> Text -> m (Either Text MU.Value)
-compileLigoExpression valueOrigin ctxFile expr =
-  liftIO $
-  handle (pure . Left . pkeMessage) $ fmap Right $
-  runAndReadOutput
-    (MP.parseExpandValue valueOrigin . decodeUtf8)
-    "ligo"
+compileLigoExpression :: (HasLigoClient m)
+                      => MP.MichelsonSource -> FilePath -> Text -> m (Either LigoException MU.Value)
+compileLigoExpression valueOrigin ctxFile expr = withLigoException $
+  callLigoImplBS Nothing
     [ "compile", "expression"
     , "--no-warn"
+    , "--display-format", "json"
     , "--init-file", ctxFile
     , "auto"  -- `syntax` argument, we can leave `auto` since context file is specified
     , toString expr
-    ]
-    >>= throwLeftWith wrapParseError
+    ] Nothing
+    >>= mapLeftM [int|m|Unexpected output of `ligo` from parsing Michelson value: #{id}|] . decodeOutput
   where
-    wrapParseError :: MP.ParserException -> BadLigoOutput
-    wrapParseError =
-      BadLigoOutput "parsing Michelson value" . pretty @MP.ParserException
+    decodeOutput :: LBS.ByteString -> Either Text MU.Value
+    decodeOutput bs =
+      maybe (Left "Ligo compile expression: json-output parse error")
+      (first pretty . MP.parseExpandValue valueOrigin . decodeUtf8)
+      (LBS.fromStrict . T.encodeUtf8 <$> (bs ^? key "text_code" . _String))
 
-{- TODO: combine ligo calling with the one from LSP and use the shared code
-
-Pros of our code here:
-* Does not perform unnecessary textual conversions,
-  decodes the output on the fly
-  (this seems important, because debug output can be HUGE)
-* Cares about posibility of ligo being killed
-
-Pros of code in LSP:
-* Simpler
-* Does not depend on hardcoded `ligo` executable
-* Accounts stderr properly
-* Other features
-
--}
+getAvailableEntrypoints :: (HasLigoClient m)
+                        => FilePath -> m (Either LigoException EntrypointsList)
+getAvailableEntrypoints file = withLigoException $
+  callLigoImplBS Nothing
+    [ "info", "list-declarations"
+    , "--display-format", "json"
+    , "--only-ep"
+    , file
+    ] Nothing
+    >>= mapLeftM [int|m|Unexpected output of `ligo` from decoding list declarations #{toText}|] . Aeson.eitherDecode

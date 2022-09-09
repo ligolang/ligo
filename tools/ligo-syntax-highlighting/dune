@@ -10,8 +10,6 @@
   LigoSyntaxHighlighting
  )
  (libraries 
-  ligo
-  ligo.lexing.cameligo
   SyntaxHighlighting
   cmdliner
  )

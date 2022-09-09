@@ -1,7 +1,8 @@
 {
+  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "es5",
-    "baseUrl": "src/",
+    "baseUrl": ".",
     "module": "esnext",
     "lib": [
       "dom",
@@ -10,11 +11,10 @@
       "es2017"
     ],
     "allowJs": true,
-    "jsx": "react",
     "sourceMap": true,
     "outDir": "./build",
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -23,11 +23,17 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "rootDir": "src",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "jsx": "react-jsx"
   },
   "include": [
-    "./src",
-    "./test",
-    "./mocks"
+    "./src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
   ]
 }

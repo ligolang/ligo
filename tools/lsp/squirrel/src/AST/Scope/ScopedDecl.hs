@@ -128,12 +128,12 @@ data Parameter
   deriving stock (Eq, Show)
 
 data Constant
-  = Int    Text
-  | Nat    Text
-  | String Text
-  | Float  Text
-  | Bytes  Text
-  | Tez    Text
+  = CInt    Text
+  | CNat    Text
+  | CString Text
+  | CFloat  Text
+  | CBytes  Text
+  | CTez    Text
   deriving stock (Eq, Show)
 
 data Pattern
@@ -218,12 +218,12 @@ instance IsLIGO Parameter where
   toLIGO (ParameterBinding pat typM) = node (LIGO.BParameter (toLIGO pat) (toLIGO <$> typM))
 
 instance IsLIGO Constant where
-  toLIGO (Int i) = node (LIGO.Int i)
-  toLIGO (Nat n) = node (LIGO.Nat n)
-  toLIGO (String s) = node (LIGO.String s)
-  toLIGO (Float f) = node (LIGO.Float f)
-  toLIGO (Bytes b) = node (LIGO.Bytes b)
-  toLIGO (Tez t) = node (LIGO.Tez t)
+  toLIGO (CInt i) = node (LIGO.CInt i)
+  toLIGO (CNat n) = node (LIGO.CNat n)
+  toLIGO (CString s) = node (LIGO.CString s)
+  toLIGO (CFloat f) = node (LIGO.CFloat f)
+  toLIGO (CBytes b) = node (LIGO.CBytes b)
+  toLIGO (CTez t) = node (LIGO.CTez t)
 
 instance IsLIGO Pattern where
   toLIGO (IsConstr name patM) = node (LIGO.IsConstr (node (LIGO.Ctor name)) (toLIGO <$> patM))

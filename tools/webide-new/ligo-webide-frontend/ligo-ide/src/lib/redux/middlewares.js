@@ -1,14 +1,14 @@
-import mapValues from 'lodash/mapValues'
+import mapValues from "lodash/mapValues";
 
-const middlewares = []
-if (process.env.NODE_ENV === 'development') {
-  const { createLogger } = require('redux-logger')
+const middlewares = [];
+if (process.env.NODE_ENV === "development") {
+  const { createLogger } = require("redux-logger");
   middlewares.push(
     createLogger({
       collapsed: true,
-      stateTransformer: state => mapValues(state, s => (s.toJS ? s.toJS() : s))
+      stateTransformer: (state) => mapValues(state, (s) => (s.toJS ? s.toJS() : s)),
     })
-  )
+  );
 }
 
-export default middlewares
+export default middlewares;

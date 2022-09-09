@@ -40,7 +40,7 @@ getUnprocessedDocumentLinks source ligo =
     processBinding :: Binding (LIGO xs) -> m (Maybe J.DocumentLink)
     processBinding = \case
       -- TODO (LIGO-204): Add a case match for BInclude as well.
-      BInclude (match @Constant -> Just (r, String n))
+      BInclude (match @Constant -> Just (r, CString n))
         -> do uri <- toJUri n
               let range = toLspRange $ fillLine $ getRange r
                   fillLine (Range (rsl, _, _) _ f) =

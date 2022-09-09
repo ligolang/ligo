@@ -24,6 +24,7 @@ module JSON = struct
   | Exception         -> "keyword.control." ^ syntax
   | PreProc           -> "meta.preprocessor." ^ syntax
   | Type              -> "entity.name.type." ^ syntax
+  | Type_var          -> "variable.other.type." ^ syntax
   | StorageClass      -> "storage.modifier." ^ syntax
   | Structure         -> "storage.class." ^ syntax
   | Typedef           -> "storage.type." ^ syntax
@@ -38,7 +39,9 @@ module JSON = struct
   | Builtin_function  -> "support.function." ^ syntax 
   | FunctionName      -> "entity.name.function." ^ syntax
 
+  let make_reference r = if r = "$self" then r else "#" ^ r
 
+  let spaces = "\\s*"
   
   let rec capture syntax (i: int * Core.highlight_name) = 
     (string_of_int (fst i), `Assoc [("name", `String (highlight_to_textmate syntax (snd i)))])
@@ -46,7 +49,7 @@ module JSON = struct
   and captures syntax (l: (int * Core.highlight_name) list) = 
     `Assoc (List.map (capture syntax) l)
 
-  and pattern_kind (syntax: string) = function 
+  and pattern_kind (name: string) (syntax: string) = function 
     Core.Begin_end { 
       meta_name;
       begin_; 
@@ -75,8 +78,13 @@ module JSON = struct
           (1, []) 
           end_ 
       in
-      let begin_ = String.concat "" (List.map (fun f -> (fst f).Core.textmate) begin_) in
-      let end_ = String.concat "" (List.map (fun f -> (fst f).Core.textmate) end_) in
+      let begin_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) begin_) in
+      let end_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) end_) in
+      let patterns =
+        let comments = ["line_comment"; "block_comment"] in
+        let special = "string" :: comments in
+        (if List.mem name special then Fun.id else (@) comments) patterns
+      in
       (match meta_name with 
         Some s -> [("name", `String (highlight_to_textmate syntax s))];
       | None -> [])
@@ -86,12 +94,12 @@ module JSON = struct
         ("end", `String end_);
         ("beginCaptures", captures syntax begin_captures);
         ("endCaptures", captures syntax end_captures);
-        ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String ("#" ^ reference))]) patterns))
+        ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String (make_reference reference))]) patterns))
       ]
   | Match {match_; match_name} -> 
     let match_, regexps  = List.split match_ in
     let match_ = List.map (fun f -> f.Core.textmate) match_ in
-    let match_ = String.concat "" match_ in
+    let match_ = String.concat spaces match_ in
     let _, captures_ = List.fold_left (fun (count, captures) cur ->
       match cur with 
         Some c -> (count + 1, (count + 1, c) :: captures)
@@ -105,14 +113,9 @@ module JSON = struct
       ("match", `String match_);      
       ("captures", captures syntax captures_)
     ] 
-  
-  and pattern syntax ({name; kind}: Core.pattern) = 
-    `Assoc ([
-      ("name", `String name);
-    ] @ pattern_kind syntax kind)
 
   and repository syntax r : Yojson.Safe.t = 
-    `Assoc (List.map (fun (i: Core.pattern) -> (i.name, `Assoc (pattern_kind syntax i.kind))) r)
+    `Assoc (List.map (fun (i: Core.pattern) -> (i.name, `Assoc (pattern_kind i.name syntax i.kind))) r)
     
   and language_features: Core.language_features -> Yojson.Safe.t = fun l ->
     `Assoc (
@@ -144,7 +147,7 @@ module JSON = struct
       ("name", `String s.syntax_name);
       ("scopeName", `String s.scope_name);
       ("fileTypes", `List (List.map (fun s -> `String s) s.file_types));
-      ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String ("#" ^ reference))]) s.syntax_patterns));
+      ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String (make_reference reference))]) s.syntax_patterns));
       ("repository", repository syntax s.repository)
     ]),
     language_features s.language_features)
@@ -152,13 +155,14 @@ module JSON = struct
 end
 
 module Validate = struct
-
   let rec check_reference repository r =
     if r = "$self" then 
       ok true
     else 
-      let exists = List.exists (fun (i: Core.pattern) -> i.name = r) repository in 
-      if exists then 
+      let open Helpers in
+      let exists_repo = List.exists (fun (i: Core.pattern) -> i.name = r) repository in
+      let exists_builtin = List.exists (fun (i: string) -> i = r) Helpers.builtin_repo in
+      if exists_repo || exists_builtin then
         ok true
       else 
         error (Core.Referenced_rule_does_not_exist r)
@@ -187,7 +191,9 @@ module Validate = struct
 end
 
 let add_comments s =
+  let open Regexp in
   let language_features = s.Core.language_features in
+  let extra_patterns = language_features.extra_patterns in
   let comments = language_features.comments in
   let line_comment = comments.line_comment in
   let block_comment = comments.block_comment in
@@ -200,15 +206,17 @@ let add_comments s =
           meta_name =      Some Core.Comment;
           begin_ =         [((fst block_comment), None)];
           end_ =           [((snd block_comment), None)];
-          patterns =       [];
+          patterns =       "block_comment" :: extra_patterns.in_block_comments;
         }
       }
       ::
       {
         name = "line_comment";
-        kind = Match {
-          match_name = Some Core.Comment;
-          match_ = [(line_comment, None)]
+        kind = Begin_end {
+          meta_name = Some Core.Comment;
+          begin_ = [(line_comment, None)];
+          end_ = [(endline, None)];
+          patterns = extra_patterns.in_line_comments;
         }
       }
       :: s.repository
@@ -224,7 +232,7 @@ let add_string s =
         meta_name =      Some Core.String;
         begin_ =         [(d, None)];
         end_ =           [(d, None)];
-        patterns =       [];
+        patterns =       language_features.extra_patterns.in_strings;
       }
     }
   ) string_delimiters 

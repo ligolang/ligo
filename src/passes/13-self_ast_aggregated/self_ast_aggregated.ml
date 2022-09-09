@@ -4,27 +4,51 @@ module Helpers = Helpers
 let reset_counter () = Monomorphisation.poly_counter_reset ()
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 
+let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
+  fun e ->
+  match e.expression_content with
+  |  E_lambda { binder = { var = x ; _ } ;
+                result = { expression_content = E_application { lamb ; args } ; _ } } ->
+     begin match Ast_aggregated.get_e_variable args with
+     | Some y when Ligo_prim.Value_var.equal x y -> Some lamb
+     | _ -> None
+     end
+  | _ -> None
+
 let rec get_abstractions acc e =
   let open Ast_aggregated in
   match e.expression_content with
   | E_lambda { binder = { var ; _ } ; result ; _ } ->
      get_abstractions (acc @ [var]) result
+  | E_matching { matchee = { expression_content = E_variable u ; _ } ; cases = Match_record { fields ; body ; _ } }
+       when List.equal Ligo_prim.Value_var.equal [u] acc && Ligo_prim.Record.is_tuple fields ->
+     let acc = Ligo_prim.Record.tuple_of_record fields in
+     let acc = List.map ~f:snd acc in
+     let acc = List.map ~f:(fun { var ; _ } -> var) acc in
+     get_abstractions acc body
   | E_constant { cons_name ; arguments = tuple ; _ } ->
-     let f b e v =
+     let rec f b e v =
        match e.expression_content with
        | E_variable u when Ligo_prim.Value_var.equal u v -> b
+       | E_lambda _ when Option.is_some (eta_reduce e) ->
+          let e = Option.value_exn (eta_reduce e) in
+          f b e v
        | _ -> false
      in
      begin match List.fold2 tuple acc ~f ~init:true with
      | List.Or_unequal_lengths.Unequal_lengths -> None
      | Ok false -> None
-     | Ok true -> Some cons_name
+     | Ok true -> Some (cons_name, List.length tuple)
      end
   | _ -> None
 
 let rec get_applications acc e =
   let open Ast_aggregated in
   match e.expression_content with
+  | E_application { lamb ; args = { expression_content = E_record p ; _ } } ->
+     let acc = Ligo_prim.Record.tuple_of_record p in
+     let acc = List.map ~f:snd acc in
+     get_applications acc lamb
   | E_application { lamb ; args } ->
      get_applications (args :: acc) lamb
   | _ -> acc, e
@@ -36,11 +60,16 @@ let inline_let : bool ref -> Ast_aggregated.expression -> Ast_aggregated.express
      let e2' = Subst.subst_expression ~body:let_result ~x:var ~expr:rhs in
      (changed := true ; e2')
   | E_application _ ->
+    (* This case tries to reduce
+         `(fun x1 -> ... -> fun xn -> CONST(x1, ..., xn)) A1 ... An` to `CONST(A1, ... AN)`
+       It is needed to handle special constants in the stdlib
+     *)
      begin
        let arguments, expr = get_applications [] e in
        match get_abstractions [] expr with
-       | Some cons_name -> { e with expression_content = E_constant { cons_name ; arguments } }
-       | None -> e
+       | Some (cons_name, len) when len = List.length arguments ->
+          (changed := true; { e with expression_content = E_constant { cons_name ; arguments } })
+       | Some _ | None -> e
      end
   | _ -> e
 

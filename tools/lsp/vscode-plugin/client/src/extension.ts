@@ -17,6 +17,7 @@ import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
 import { extensions } from './common'
+import { changeLastContractPath } from './commands/common';
 
 let client: LanguageClient;
 let ligoOptionButton: vscode.StatusBarItem;
@@ -26,6 +27,10 @@ let deployOptionButton: vscode.StatusBarItem;
 // If currently active text window is not an opened file (terminal, explorer, etc.)
 // button will remain in it's previous state
 function updateLigoButton(button: vscode.StatusBarItem) {
+  if (!vscode.window.activeTextEditor) {
+    button.hide()
+    return;
+  }
   const path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
 
@@ -35,6 +40,7 @@ function updateLigoButton(button: vscode.StatusBarItem) {
   }
 
   if (extensions.includes(ext)) {
+    changeLastContractPath(path)
     button.show();
   } else {
     button.hide();

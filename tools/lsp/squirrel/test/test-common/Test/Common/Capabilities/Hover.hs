@@ -6,6 +6,9 @@ module Test.Common.Capabilities.Hover
   , unit_hover_apply_type
   , unit_hover_inferred_simple
   , unit_hover_inferred_recursion
+  , unit_hover_arrow_type
+  , unit_hover_arrow_type_mligo
+  , unit_hover_arrow_type_jsligo
   ) where
 
 import Prelude hiding (lines)
@@ -56,6 +59,24 @@ checkHover fp reference HoverTest{..} = do
         [] -> unless (null htDoc) $ expectationFailure "Expected no documentation, but got some"
         _  -> Just (ppToText htDoc) `shouldBe` find (/= "") doc
     _ -> expectationFailure "Hover definition is not of the expected type"
+
+unit_hover_arrow_type :: forall parser. ScopeTester parser => Assertion
+unit_hover_arrow_type = do
+  fp <- makeAbsolute $ contractsDir </> "arrow-type.ligo"
+  let type' = ArrowType (ApplyType (AliasType "list") [AliasType "int"]) (AliasType "int")
+  checkHover @parser fp (interval 7 3 10){_rFile = fp} (hover' (interval 1 10 17){_rFile = fp} "fold_op" type' Pascal)
+
+unit_hover_arrow_type_mligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_arrow_type_mligo = do
+  fp <- makeAbsolute $ contractsDir </> "arrow-type.mligo"
+  let type' = ArrowType (ApplyType (AliasType "list") [AliasType "int"]) (AliasType "unit")
+  checkHover @parser fp (interval 5 34 41){_rFile = fp} (hover' (interval 1 5 12){_rFile = fp} "iter_op" type' Caml)
+
+unit_hover_arrow_type_jsligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_arrow_type_jsligo = do
+  fp <- makeAbsolute $ contractsDir </> "arrow-type.jsligo"
+  let type' = ArrowType (ApplyType (AliasType "list") [AliasType "int"]) (AliasType "unit")
+  checkHover @parser fp (interval 6 12 19){_rFile = fp} (hover' (interval 1 5 12){_rFile = fp} "iter_op" type' Js)
 
 unit_hover_apply_type :: forall parser. ScopeTester parser => Assertion
 unit_hover_apply_type = do

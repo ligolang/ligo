@@ -196,6 +196,18 @@ let get_pair : value -> (value * value) option =
     )
     | _ -> None
 
+let get_left : value -> value option =
+  fun value ->
+    match value with
+    | V_Construct ("Left", v) -> Some v
+    | _ -> None
+
+let get_right : value -> value option =
+  fun value ->
+    match value with
+    | V_Construct ("Right", v) -> Some v
+    | _ -> None
+
 let get_func : value -> func_val option =
   fun value ->
     match value with

@@ -23,14 +23,6 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 
-let built_ins = ["Operator";"Tezos";"List";"Set";"Map";"Big_map";"Bitwise";"Option"]
-let rec compile_pseudomodule_access field = let open CST in match field with
-  | EVar v -> v.value
-  | EModA { value = { module_name ; field ; selector = _ } ; region = _ } -> module_name.value ^ "." ^ compile_pseudomodule_access field
-  | _ -> failwith "Corner case : This couldn't be produce by the parser"
-
-open Predefined.Tree_abstraction
-
 let r_split = Location.r_split
 
 let quote_var var = "'"^var
@@ -91,6 +83,13 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
         Some z
       | _ -> None
     in
+    let get_t_var_singleton_opt = function
+      | CST.TVar var ->
+         let (name,loc) = r_split var in
+         let v = Type_var.of_input_var name in
+         Some (t_variable ~loc v)
+      | _ -> None
+    in
     let ((operator,args), loc) = r_split app in
     let args = match args with
       | CArg x -> [x]
@@ -133,24 +132,30 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
         match args with
         | [(a : CST.type_expr)] -> (
           let sloc = Location.lift @@ Raw.type_expr_to_region a in
-          let a' =
-            trace_option ~raise (michelson_type_wrong te operator.value) @@
-              get_t_int_singleton_opt a in
-          let singleton = t_singleton ~loc:sloc (Literal_int a') in
-          return @@ t_sapling_state ~loc singleton
-          )
+          begin match get_t_int_singleton_opt a with
+          | Some a' ->
+             let singleton = t_singleton ~loc:sloc (Literal_int a') in
+             return @@ t_sapling_state ~loc singleton
+          | None -> begin match get_t_var_singleton_opt a with
+                    | Some v -> return @@ t_sapling_state ~loc v
+                    | None -> raise.error (michelson_type_wrong te operator.value)
+                    end
+          end)
         | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
       | "sapling_transaction" -> (
         match args with
         | [(a : CST.type_expr)] -> (
           let sloc = Location.lift @@ Raw.type_expr_to_region a in
-          let a' =
-            trace_option ~raise (michelson_type_wrong te operator.value) @@
-              get_t_int_singleton_opt a in
-          let singleton = t_singleton ~loc:sloc (Literal_int a') in
-          return @@ t_sapling_transaction ~loc singleton
-          )
+          begin match get_t_int_singleton_opt a with
+          | Some a' ->
+             let singleton = t_singleton ~loc:sloc (Literal_int a') in
+             return @@ t_sapling_transaction ~loc singleton
+          | None -> begin match get_t_var_singleton_opt a with
+                    | Some v -> return @@ t_sapling_transaction ~loc v
+                    | None -> raise.error (michelson_type_wrong te operator.value)
+                    end
+          end)
         | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
     | _ ->
@@ -237,10 +242,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   match e with
     EVar var -> (
     let (var, loc) = r_split var in
-    match constants var with
-    | Some const ->
-      return @@ e_constant ~loc const []
-    | None -> return @@ e_variable_ez ~loc var
+    return @@ e_variable_ez ~loc var
   )
   | EPar par -> self par.value.inside
   | EUnit the_unit ->
@@ -315,30 +317,9 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | ECall {value=(EVar var,args);region} ->
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
-    (match constants var with
-      Some const ->
-      let args = List.map ~f:self @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
-    | None ->
-      let func = e_variable_ez ~loc:loc_var var in
-      let args = List.map ~f:self @@ nseq_to_list args in
-      return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
-    )
-  (*TODO: move to proper module*)
-  | ECall ({value=(EModA {value={module_name;field=_;selector=_};region=_} as value,args) ;region} as call) when
-    List.mem ~equal:String.(=) built_ins module_name.value ->
-    let loc = Location.lift region in
-    let var = compile_pseudomodule_access value in
-    (match constants var with
-      Some const ->
-      let args = List.map ~f:self @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
-    | None ->
-       let ((func, args), loc) = r_split call in
-       let func = self func in
-       let args = List.map ~f:self @@ nseq_to_list args in
-       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
-      )
+    let func = e_variable_ez ~loc:loc_var var in
+    let args = List.map ~f:self @@ nseq_to_list args in
+    return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let func = self func in
@@ -366,7 +347,6 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ e_accessor ~loc var sels
   | EModA ma -> (
     let (ma, loc) = r_split ma in
-    let (module_name, _) = r_split ma.module_name in
     let rec aux : Module_var.t list -> CST.expr -> AST.expression = fun acc exp ->
       match exp with
       | EVar v ->
@@ -382,14 +362,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
          aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
       | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
     in
-    (*TODO: move to proper module*)
-    if List.mem ~equal:String.(=) built_ins module_name then
-      let var = compile_pseudomodule_access e in
-      match constants var with
-        Some const -> return @@ e_constant ~loc const []
-      | None -> aux [compile_mod_var ma.module_name] ma.field
-    else
-      aux [compile_mod_var ma.module_name] ma.field
+    aux [compile_mod_var ma.module_name] ma.field
   )
   | EUpdate update ->
     let (update, _loc) = r_split update in

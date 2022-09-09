@@ -11,7 +11,6 @@ module Tezos = struct
   let get_chain_id (_u : unit) : chain_id = [%Michelson ({| { DROP ; CHAIN_ID } |} : unit -> chain_id)] ()
   let get_total_voting_power (_u : unit) : nat = [%Michelson ({| { DROP ; TOTAL_VOTING_POWER } |} : unit -> nat)] ()
   let get_min_block_time (_u : unit) : nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ] ()
-  (* [@thunk] let self (type a) (s : string) : a contract = [%external ("SELF", s)] *)
   let voting_power (kh : key_hash) : nat = [%Michelson ({| { VOTING_POWER } |} : key_hash -> nat)] kh
   let address (type a) (c : a contract) : address = [%external ("ADDRESS", c)]
   let implicit_account (kh : key_hash) : unit contract = [%external ("IMPLICIT_ACCOUNT", kh)]
@@ -23,6 +22,9 @@ module Tezos = struct
   let pairing_check (l : (bls12_381_g1 * bls12_381_g2) list) : bool = [%Michelson ({| { PAIRING_CHECK } |} : (bls12_381_g1 * bls12_381_g2) list -> bool)] l
   let constant (type a) (s : string) : a = [%external ("GLOBAL_CONSTANT", s)]
   let set_delegate (o : key_hash option) : operation = [%external ("SET_DELEGATE", o)]
+  [@inline] [@thunk] let self (type a) (s : string) : a contract = [%external ("SELF", s)]
+  [@inline] [@thunk] let constant (type a) (s : string) : a = [%external ("GLOBAL_CONSTANT", s)]
+  [@inline] [@thunk] let sapling_empty_state (type sap_a) : sap_a sapling_state = [%external ("SAPLING_EMPTY_STATE")]
 
 #if CURRY
   let get_contract (type a) (a : address) : (a contract) = [%external ("CONTRACT", a)]
@@ -34,6 +36,13 @@ module Tezos = struct
   let call_view (type a b) (s : string) (x : a) (a : address)  : b option = [%external ("VIEW", s, x, a)]
   let split_ticket (type a) (t : a ticket) (p : nat * nat) : (a ticket * a ticket) option =
       [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
+  [@inline] [@thunk] let create_contract (type p s) (f : p * s -> operation list * s) (kh : key_hash option) (t : tez) (s : s) : (operation * address) =
+      [%external ("CREATE_CONTRACT", f, kh, t, s)]
+  [@inline] [@thunk] let get_entrypoint_opt (type p) (e : string) (a : address) : p contract option = [%external ("CONTRACT_ENTRYPOINT_OPT", e, a)]
+  [@inline] [@thunk] let get_entrypoint (type p) (e : string) (a : address) : p contract = [%external ("CONTRACT_ENTRYPOINT", e, a)]
+  [@inline] [@thunk] let call_view (type a b) (s : string) (v : a) (a : address) : b option = [%external ("VIEW", s, v, a)]
+  [@inline] [@thunk] let emit (type a) (s : string) (v : a) : operation = [%external ("EMIT_EVENT", s, v)]
+  [@inline] [@thunk] let sapling_verify_update (type sap_a) (t : sap_a sapling_transaction) (s : sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%external ("SAPLING_VERIFY_UPDATE", t, s)]
 #endif
 
 #if UNCURRY
@@ -46,23 +55,30 @@ module Tezos = struct
   let call_view (type a b) ((s, x, a) : string * a * address)  : b option = [%external ("VIEW", s, x, a)]
   let split_ticket (type a) ((t, p) : (a ticket) * (nat * nat)) : (a ticket * a ticket) option =
     [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
+  [@inline] [@thunk] let create_contract (type p s) ((f, kh, t, s) : (p * s -> operation list * s) * key_hash option * tez * s) : (operation * address) =
+      [%external ("CREATE_CONTRACT", f, kh, t, s)]
+  [@inline] [@thunk] let get_entrypoint_opt (type p) ((e, a) : string * address) : p contract option = [%external ("CONTRACT_ENTRYPOINT_OPT", e, a)]
+  [@inline] [@thunk] let get_entrypoint (type p) ((e, a) : string * address) : p contract = [%external ("CONTRACT_ENTRYPOINT", e, a)]
+  [@inline] [@thunk] let call_view (type a b) ((s, v, a) : string * a * address) : b option = [%external ("VIEW", s, v, a)]
+  [@inline] [@thunk] let emit (type a) ((s, v) : string * a) : operation = [%external ("EMIT_EVENT", s, v)]
+  [@inline] [@thunk] let sapling_verify_update (type sap_a) ((t, s) : sap_a sapling_transaction * sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%external ("SAPLING_VERIFY_UPDATE", t, s)]
 #endif
 
 end
 
 module Bitwise = struct
 #if CURRY
-  (* let and (type a b) (l : a) (r : b) : (a, b) external_and = [%external ("AND", l, r)] *)
+  let @and (type a b) (l : a) (r : b) : (a, b) external_and = [%Michelson ({| { UNPAIR ; AND } |} : a * b -> (a, b) external_and)] (l, r)
   let xor (l : nat) (r : nat) : nat = [%external ("XOR", l, r)]
-  (* let or (l : nat) (r : nat) : nat = [%external ("OR", l, r)] *)
+  let @or (l : nat) (r : nat) : nat = [%external ("OR", l, r)]
   let shift_left (l : nat) (r : nat) : nat = [%external ("LSL", l, r)]
   let shift_right (l : nat) (r : nat) : nat = [%external ("LSR", l, r)]
 #endif
 
 #if UNCURRY
-  (* let and (type a b) ((l, r) : (a, b)) : (a, b) external_and = [%external ("AND", l, r)] *)
+  let @and (type a b) ((l, r) : (a * b)) : (a, b) external_u_and = [%Michelson ({| { UNPAIR ; AND } |} : a * b -> (a, b) external_u_and)] (l, r)
   let xor ((l, r) : nat * nat) : nat = [%external ("XOR", l, r)]
-  (* let or ((l, r) : nat * nat) : nat = [%external ("OR", l, r)] *)
+  let @or ((l, r) : nat * nat) : nat = [%external ("OR", l, r)]
   let shift_left ((l, r) : nat * nat) : nat = [%external ("LSL", l, r)]
   let shift_right ((l, r) : nat * nat) : nat = [%external ("LSR", l, r)]
 #endif

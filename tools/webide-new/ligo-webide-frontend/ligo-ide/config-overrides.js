@@ -1,8 +1,10 @@
 const os = require('os');
+const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const {
   override,
   addWebpackExternals,
+  addWebpackAlias,
   addWebpackPlugin,
 } = require('customize-cra');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
@@ -92,6 +94,9 @@ function enableTS() {
 }
 
 const overrides = [
+  addWebpackAlias({
+    "~": path.resolve(__dirname, "src/"),
+  }),
   overrideProcessEnv({
     CDN: JSON.stringify(!!process.env.CDN),
     BUILD: JSON.stringify(process.env.BUILD),

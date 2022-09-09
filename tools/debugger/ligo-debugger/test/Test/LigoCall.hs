@@ -2,6 +2,7 @@ module Test.LigoCall
   ( module Test.LigoCall
   ) where
 
+import Control.Exception
 import Test.Tasty (TestTree, testGroup)
 
 import Language.LIGO.Debugger.CLI.Call
@@ -16,19 +17,16 @@ test_Compilation = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
-      res <- compileLigoContractDebug "main" file
+      eitherRes <- compileLigoContractDebug "main" file
+      res <- either throwIO pure eitherRes
       take 15 (toList $ lmLocations res) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
-        , [ LigoMereEnvInfo [LigoHiddenStackEntry]
-          , LigoEmptyLocationInfo
-          ]
+        , [ LigoMereEnvInfo [LigoHiddenStackEntry]          ]
 
-        , [ LigoMereEnvInfo [LigoStackEntryNoVar intType] ]
-        , replicate 3 LigoEmptyLocationInfo
-        , [ LigoMereLocInfo ((2, 11) <-> (2, 17)) ]
-        , [ LigoMereEnvInfo [LigoStackEntryVar "s2" intType] ]
+        , [ LigoMereLocInfo ((1, 10) <-> (1, 14)) ]
 
+        , replicate 6 LigoEmptyLocationInfo
         ]
 
   ]

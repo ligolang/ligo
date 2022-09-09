@@ -12,15 +12,15 @@ function createLogDir(logDir: string): void | undefined {
 }
 
 export interface AfterConfigResolvedInfo {
-		file: string
-		, entrypoint: string | null
-	, logDir: string
+	file: string,
+	entrypoint: string,
+	logDir: string
 }
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
-	private readonly afterConfigResolved: (AfterConfigResolvedInfo) => Promise<void>
+	private readonly afterConfigResolved: (AfterConfigResolvedInfo) => Promise<string>
 
-	constructor(afterConfigResolved: (AfterConfigResolvedInfo) => Promise<void>) {
+	constructor(afterConfigResolved: (AfterConfigResolvedInfo) => Promise<string>) {
 		this.afterConfigResolved = afterConfigResolved
 	}
 
@@ -36,6 +36,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
+				config.entrypoint = '${command:AskForEntrypoint}'
 				config.parameter = "${command:AskForParameter}"
 				config.storage = "${command:AskForStorage}"
 			}
@@ -46,6 +47,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
+		config.entrypoint ??= '${command:AskForEntrypoint}'
 
 		if (config.logDir === '') {
 			config.logDir = undefined
@@ -59,11 +61,11 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				createLogDir(logDir)
 			}
 
-			await this.afterConfigResolved(
+			config.entrypoint = await this.afterConfigResolved(
 				{
-					file: currentFilePath
-					, entrypoint: config.entrypoint
-					, logDir
+					file: currentFilePath,
+					entrypoint: config.entrypoint,
+					logDir
 				}
 			)
 		}

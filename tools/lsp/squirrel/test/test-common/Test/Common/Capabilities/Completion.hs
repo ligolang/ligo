@@ -3,6 +3,7 @@ module Test.Common.Capabilities.Completion
   , caseInfos
   ) where
 
+import Algebra.Graph.AdjacencyMap qualified as G
 import Data.Maybe (fromJust)
 import Language.LSP.Types (CompletionItemKind (..), UInt)
 import System.FilePath ((</>))
@@ -10,7 +11,8 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.Completion
-import AST.Scope (contractTree, lookupContract)
+import AST.Scope.Common
+import Log qualified
 import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
@@ -24,6 +26,7 @@ data TestInfo = TestInfo
   { tiContract :: FilePath
   , tiPosition :: (UInt, UInt)
   , tiExpected :: [Completion]
+  , tiGraph :: Includes FilePath
   }
 
 -- Note: Not all completions will be in the completion list for VSCode. This is
@@ -37,6 +40,7 @@ caseInfos =
     { tiContract = "no-prefix.ligo"
     , tiPosition = (1, 46)
     , tiExpected = []
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "yes-prefix.ligo"
@@ -45,6 +49,7 @@ caseInfos =
       [ Completion (Just CiVariable) (NameCompletion "parameter") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "patch")
       ]
+    , tiGraph = Includes G.empty
     }
 
   , TestInfo
@@ -66,6 +71,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "contains")
       , CompletionKeyword (NameCompletion "function")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "type-attribute.mligo"
@@ -78,6 +84,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "with")
       , CompletionKeyword (NameCompletion "in")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "type-attribute.religo"
@@ -88,6 +95,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "if")
       , CompletionKeyword (NameCompletion "switch")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "type-attribute.jsligo"
@@ -100,6 +108,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "while")
       , CompletionKeyword (NameCompletion "import")
       ]
+    , tiGraph = Includes G.empty
     }
 
   , TestInfo
@@ -108,6 +117,7 @@ caseInfos =
     , tiExpected =
       [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "type-constructor.mligo"
@@ -115,6 +125,7 @@ caseInfos =
     , tiExpected =
       [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "type-constructor.religo"
@@ -122,6 +133,7 @@ caseInfos =
     , tiExpected =
       [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "type-constructor.jsligo"
@@ -129,6 +141,7 @@ caseInfos =
     , tiExpected =
       [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
+    , tiGraph = Includes G.empty
     }
 
   , TestInfo
@@ -138,6 +151,7 @@ caseInfos =
       [ Completion (Just CiField) (NameCompletion "sum") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "struct")
       ]
+    , tiGraph = Includes G.empty
     }
 
   , TestInfo
@@ -156,6 +170,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "const")
       , CompletionKeyword (NameCompletion "contains")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "nested-fields.mligo"
@@ -167,6 +182,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "else")
       , CompletionKeyword (NameCompletion "lsr")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "nested-fields.religo"
@@ -178,6 +194,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "else")
       , CompletionKeyword (NameCompletion "lsr")
       ]
+    , tiGraph = Includes G.empty
     }
   , TestInfo
     { tiContract = "nested-fields.jsligo"
@@ -191,8 +208,8 @@ caseInfos =
       , CompletionKeyword (NameCompletion "else")
       , CompletionKeyword (NameCompletion "const")
       ]
+    , tiGraph = Includes G.empty
     }
-
   , TestInfo
     { tiContract = "incr.mligo"
     , tiPosition = (3, 13)
@@ -201,6 +218,33 @@ caseInfos =
       , CompletionKeyword (NameCompletion "begin")
       , CompletionKeyword (NameCompletion "in")
       ]
+    , tiGraph = Includes G.empty
+    }
+  , TestInfo
+    { tiContract = "import/outer-includer.ligo"
+    , tiPosition = (1, 11)
+    , tiExpected =
+        [ ImportCompletion (NameCompletion "outer-includer2.ligo")
+        , ImportCompletion (NameCompletion "innerFolder/inner-includer.ligo")
+        ]
+    , tiGraph = Includes $ G.vertices
+        [ "./test/contracts/completion/import/outer-includer.ligo"
+        , "./test/contracts/completion/import/outer-includer2.ligo"
+        , "./test/contracts/completion/import/innerFolder/inner-includer.ligo"
+        ]
+    }
+  , TestInfo
+    { tiContract = "import/innerFolder/inner-includer.ligo"
+    , tiPosition = (1, 11)
+    , tiExpected =
+        [ ImportCompletion (NameCompletion "../outer-includer2.ligo")
+        , ImportCompletion (NameCompletion "../outer-includer.ligo")
+        ]
+    , tiGraph = Includes $ G.vertices
+        [ "./test/contracts/completion/import/outer-includer.ligo"
+        , "./test/contracts/completion/import/outer-includer2.ligo"
+        , "./test/contracts/completion/import/innerFolder/inner-includer.ligo"
+        ]
     }
   ]
 
@@ -211,11 +255,13 @@ completionDriver testInfos = do
   where
     makeTestCase graph info =
       testCase (tiContract info) do
+
         let fp = contractsDir </> tiContract info
-            position = uncurry point $ tiPosition info
+            pos = uncurry point $ tiPosition info
             contract = fromJust $ lookupContract fp graph
             tree = contractTree contract
-            results = complete position tree
+            source = _cFile $ _getContract contract
+        results <- Log.runNoLoggingT $ withCompleterM (CompleterEnv pos tree source (tiGraph info)) complete
         case (results, tiExpected info) of
           (Nothing, []) -> pure ()
           (Nothing, _) -> expectationFailure "Expected completion items, but got none"

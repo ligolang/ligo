@@ -234,7 +234,7 @@ instance Pretty1 Expr where
     Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
     Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
-    Michelson c t        -> sexpr "%Michelson" [c, t]
+    CodeInj   l e        -> sexpr "%" [l, e]
     Paren     e          -> "(" <> pp e <> ")"
     SwitchStm s cs       -> sexpr "switch" (s : cs)
     AssignOp  l o r      -> sop l (ppToText o) [r]
@@ -265,16 +265,16 @@ instance Pretty1 FieldAssignment where
   pp1 = \case
     FieldAssignment accessors e -> sexpr ".=" (accessors <> [e])
     Spread n -> sexpr "..." [n]
-    Capture accessors -> sexpr ".=" accessors
+    Capture accessors -> sexpr ".=" [accessors]
 
 instance Pretty1 Constant where
   pp1 = \case
-    Int           z   -> pp z
-    Nat           z   -> pp z
-    String        z   -> pp z
-    Float         z   -> pp z
-    Bytes         z   -> pp z
-    Tez           z   -> pp z
+    CInt           z   -> pp z
+    CNat           z   -> pp z
+    CString        z   -> pp z
+    CFloat         z   -> pp z
+    CBytes         z   -> pp z
+    CTez           z   -> pp z
 
 instance Pretty1 ModuleAccess where
   pp1 = \case
@@ -338,6 +338,10 @@ instance Pretty1 FieldName where
 instance Pretty1 Ctor where
   pp1 = \case
     Ctor         raw -> pp raw
+
+instance Pretty1 Attr where
+  pp1 = \case
+    Attr         raw -> pp raw
 
 instance Pretty1 TField where
   pp1 = \case
@@ -413,8 +417,8 @@ instance LPP1 d PreprocessorCommand where
 instance LPP1 d Verbatim where
   lpp1 = pp
 
---instance LPP1 d LineMarker where
---  lpp1 = pp1
+instance LPP1 d Attr where
+  lpp1 = pp1
 
 -- instances needed to pass instance resolution during compilation
 
@@ -544,12 +548,12 @@ instance LPP1 'Pascal FieldAssignment where
 
 instance LPP1 'Pascal Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z
 
 instance LPP1 'Pascal Pattern where
   lpp1 = \case
@@ -664,12 +668,12 @@ instance LPP1 'Reason FieldAssignment where
 
 instance LPP1 'Reason Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z
 
 instance LPP1 'Reason Pattern where
   lpp1 = \case
@@ -779,7 +783,7 @@ instance LPP1 'Js Expr where
     SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
     Return    e          -> "return " <+> lpp e
     RecordUpd s fs       -> lpp s <+> train "," fs
-    Michelson c t        -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
+    CodeInj   l e        -> "(" <+> l <+> " `" <+> e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where
@@ -797,12 +801,12 @@ instance LPP1 'Js FieldAssignment where
 
 instance LPP1 'Js Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z <+> "as nat"
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z <+> "as tez"
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z <+> "as nat"
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z <+> "as tez"
 
 instance LPP1 'Js Pattern where
   lpp1 = \case
@@ -928,12 +932,12 @@ instance LPP1 'Caml FieldAssignment where
 
 instance LPP1 'Caml Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z
 
 instance LPP1 'Caml Pattern where
   lpp1 = \case

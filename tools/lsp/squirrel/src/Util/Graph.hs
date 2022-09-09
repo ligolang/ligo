@@ -4,6 +4,7 @@ module Util.Graph
   , forAM
   , forAMConcurrently
   , wcc
+  , wccFor
   ) where
 
 import Algebra.Graph.NonEmpty.AdjacencyMap qualified as NEG
@@ -11,6 +12,7 @@ import Algebra.Graph.AdjacencyMap.Algorithm (scc)
 import Algebra.Graph.AdjacencyMap as G
 import Control.Arrow ((&&&), second)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Data.List (find)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Tuple (swap)
@@ -45,7 +47,11 @@ forAMConcurrently :: (MonadUnliftIO m, Ord a, Ord b) => AdjacencyMap a -> (a -> 
 forAMConcurrently = flip traverseAMConcurrently
 
 -- | Finds all weakly connected components of the graph.
-wcc :: forall a. Ord a => AdjacencyMap a -> [AdjacencyMap a]
+wcc :: Ord a => AdjacencyMap a -> [AdjacencyMap a]
 wcc graph =
   let components = fmap NEG.vertexSet $ vertexList $ scc $ overlay (transpose graph) graph
    in fmap (\x -> induce (`Set.member` x) graph) components
+
+-- | Tries to find the WCC such that the given vertex is present.
+wccFor :: Ord a => a -> AdjacencyMap a -> Maybe (AdjacencyMap a)
+wccFor x = find (G.hasVertex x) . wcc

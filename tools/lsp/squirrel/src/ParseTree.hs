@@ -6,7 +6,8 @@
 
 module ParseTree
   ( -- * Tree/Forest
-    ParseTree(..)
+    ParseTree (..)
+  , ParseTreeNode (..)
   , RawInfo
   , RawTree
   , SomeRawTree(..)
@@ -58,13 +59,14 @@ foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
 data Source = Source
   { srcPath :: FilePath
+  , srcIsDirty :: Bool
   , srcText :: Text
   } deriving stock (Eq, Ord)
 
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
 
-deriving anyclass instance ToObject Source
+instance ToObject Source
 
 instance LogItem Source where
   payloadKeys = const $ const AllKeys
@@ -79,7 +81,7 @@ pathToSrc :: Log m => FilePath -> m Source
 pathToSrc p = do
   raw <- liftIO $ BS.readFile p
   -- Is it valid UTF-8?
-  fmap (Source p) $ Text.decodeUtf8' raw & \case
+  fmap (Source p False) $ Text.decodeUtf8' raw & \case
     Left exception -> do
       $(Log.err) [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
       -- Leniently decode the data so we can continue working even with invalid
@@ -93,11 +95,16 @@ pathToSrc p = do
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = (Range, Text)
 
+data ParseTreeNode = ParseTreeNode
+  { ptnName :: Text        -- ^ Name of the node
+  , ptnInfo :: Maybe Text     -- ^ Additional information, stored in the node
+  } deriving stock (Show, Eq)
+
 -- | The tree tree-sitter produces.
 data ParseTree self = ParseTree
-  { ptName     :: Text         -- ^ Name of the node.
-  , ptChildren :: [self]       -- ^ Subtrees.
-  , ptSource   :: ~Text        -- ^ Source of the node.
+  { ptName     :: ParseTreeNode -- ^ Node representation.
+  , ptChildren :: [self]             -- ^ Subtrees.
+  , ptSource   :: ~Text              -- ^ Source of the node.
   }
   deriving stock (Functor, Foldable, Traversable)
 
@@ -114,7 +121,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
   deriving stock (Show)
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
+toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
   $(Log.debug) [Log.i|Reading #{fp}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
@@ -151,14 +158,15 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
           let
             start2D  = nodeStartPoint node
             finish2D = nodeEndPoint   node
-            -- An empty node indicates a missing token, for example, if we have:
-            -- `function idsa (const iff : int) : int is (iff`
-            -- Then tree-sitter will report:
-            -- `(MISSING ")" [0, 45] - [0, 45])`
-            -- But won't indicate an error on the parse tree itself. According to
-            -- https://github.com/tree-sitter/tree-sitter-bash/issues/27#issuecomment-410865045
-            -- we can check for this by testing whether we have an empty node.
-            name     = if start2D == finish2D then "ERROR" else Text.pack ty
+
+            (name, info)
+              | toInteger (nodeIsMissing node) == 1 = ("MISSING", Just (Text.pack ty))
+              -- There are cases when `start2D == finish2D`, but the node is not Missing. We need to
+              -- investigate such cases. To check such problem run trace on missing contracts from
+              -- "test/error-recovery/simple/jsligo" and check cases when `nodeIsMissing` returns `False`,
+              -- but `start2D == finish2D`.
+              | start2D == finish2D = ("ERROR", Nothing)
+              | otherwise = (Text.pack ty, Nothing)
             range = Range
               { _rStart  =
                   ( fromIntegral $ pointRow    start2D + 1
@@ -176,7 +184,7 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
           pure $ fastMake
             (range, "")
             ParseTree
-              { ptName     = name
+              { ptName     = ParseTreeNode name info
               , ptChildren = nodes
               , ptSource   = cutOut range src
               }
