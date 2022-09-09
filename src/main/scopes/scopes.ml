@@ -181,12 +181,12 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
       | E_update { struct_ ; update ; _ } ->
         let defs, refs, tenv, scopes =  expression tenv struct_ in
         let defs', refs', tenv, scopes' = expression tenv update in
-        defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
+        defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
       | E_record e_lable_map ->
         let defs, refs, tenv, scopes = Record.LMap.fold (fun _ e (defs, refs, tenv, scopes) ->
           let defs', refs', tenv, scopes' = expression tenv e in
           let scopes' = merge_same_scopes scopes' in
-          defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
+          defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
         ) e_lable_map ([], [], tenv, []) in
         defs, refs, tenv, scopes
       | E_assign { binder ; expression = e } ->
@@ -202,7 +202,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let def, defs_rhs = drop_last defs_rhs in
         let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
         let scopes' = add_defs_to_scopes [def] scopes' in
-        let scopes = scopes @ scopes' in
+        let scopes = merge_same_scopes scopes @ scopes' in
         let defs, refs_result = update_references refs_result [def] in
         defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
       | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
@@ -214,7 +214,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
         let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
         let scopes' = add_defs_to_scopes defs_binder scopes' in
-        let scopes = scopes @ scopes' in
+        let scopes = merge_same_scopes scopes @ scopes' in
         let defs, refs_result = update_references refs_result defs_binder in
         defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
       | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
@@ -257,7 +257,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
             let scopes' = merge_same_scopes scopes' in
             let scopes' = add_defs_to_scopes defs_pat scopes' in
             let defs_pat, refs_body = update_references refs_body defs_pat in
-            defs_body @ defs_pat @ defs, refs_body @ refs, tenv, scopes @ scopes'
+            defs_body @ defs_pat @ defs, refs_body @ refs, tenv, merge_same_scopes scopes @ scopes'
           )
         in
         defs_matchee @ defs_cases, refs_matchee @ refs_cases, tenv, scopes @ scopes'
@@ -268,7 +268,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes' = add_defs_to_scopes defs_module scopes' in
         let defs_module, refs_result = update_references refs_result defs_module in
         let defs, refs_result = update_references refs_result (defs_result @ defs_module) in
-        defs, refs_result @ refs_module, tenv, scopes @ scopes'
+        defs, refs_result @ refs_module, tenv, merge_same_scopes scopes @ scopes'
   and type_expression : TVar.t -> def_type -> AST.type_expression -> def
     = fun tv def_type t ->
         let def =
