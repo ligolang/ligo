@@ -185,6 +185,54 @@ export default class LocalProjectManager extends BaseProjectManager {
     }
   }
 
+  async getMainContract() {
+    const mainFilePath = this.mainFilePath;
+    const mainFile = await fileOps.readFile(mainFilePath);
+    return this.getContractsRecursively(mainFilePath, mainFile, [
+      [mainFilePath, { unSource: mainFile }],
+    ]);
+  }
+
+  async getContractsRecursively(path, content, existingFiles) {
+    const includeImportRegexp = /^#[ \t]*(include|import)[ \t]*"[^"]*"[ \t]*/gm;
+
+    const imports = [...content.matchAll(includeImportRegexp)];
+    if (imports === null) {
+      return [[path, { unSource: content }]];
+    }
+
+    const importPaths = imports
+      .map((e) => e[0])
+      .map((importString) => {
+        const importPath = importString.match(/"[^"]*"/g);
+        return importPath !== null && importPath.length > 0 ? importPath[0] : "";
+      })
+      .map((e) => e.replace(/"/g, ""))
+      .filter((e) => e !== "");
+
+    const dirPath = path.substring(0, path.lastIndexOf("/"));
+
+    const result = [[path, { unSource: content }]];
+
+    for (let i = 0; i < importPaths.length; i++) {
+      const absImportPath = fileOps.pathHelper.join(dirPath, importPaths[i]);
+      const cycleCheck = existingFiles.find((e) => e[0] === absImportPath);
+      if (cycleCheck) {
+        throw new Error(`Cycle deps beween "${absImportPath}" and "${path}"`);
+      }
+      if ((await fileOps.exists(absImportPath)) && (await fileOps.isFile(absImportPath))) {
+        const importFileContent = await fileOps.readFile(absImportPath);
+        result.push(
+          ...(await this.getContractsRecursively(absImportPath, importFileContent, result))
+        );
+      } else {
+        throw new Error(`Import file "${importPaths[i]}" in "${path}" not found`);
+      }
+    }
+
+    return result;
+  }
+
   async checkSettings() {
     if (!this.project || !this.projectRoot) {
       notification.error("No Project", "Please open a project first.");
