@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1954'
+title: 'Testing framework: perf. fix; compute error_type only when needed'
+type: fixed
