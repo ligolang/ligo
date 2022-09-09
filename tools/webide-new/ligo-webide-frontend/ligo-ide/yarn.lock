@@ -13037,9 +13037,9 @@ rc-resize-observer@^1.0.0:
     rc-util "^5.15.0"
     resize-observer-polyfill "^1.5.1"
 
-"rc-tree@git+ssh://git@gitlab.com:ligolang/react-component-tree.git":
+"rc-tree@git+https://gitlab.com/ligolang/react-component-tree.git":
   version "5.6.6"
-  resolved "git+ssh://git@gitlab.com:ligolang/react-component-tree.git#44e88c8c6692797e8523218d5a903de15e6c8232"
+  resolved "git+https://gitlab.com/ligolang/react-component-tree.git#44e88c8c6692797e8523218d5a903de15e6c8232"
   dependencies:
     "@babel/runtime" "^7.10.1"
     classnames "2.x"
