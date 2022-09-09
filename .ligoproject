@@ -1,3 +1,3 @@
 {
-  "ignorePaths" : [ "./vendors" , "./src" , "./_build" , "./gitlab-pages" , "./_opam" , "./tools", "./git" ]
+  "ignorePaths" : [ "./vendors" , "./src" , "./_build" , "./gitlab-pages" , "./_opam" , "./tools" , "./.git" ]
 }
