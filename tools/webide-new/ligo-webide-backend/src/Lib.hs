@@ -13,8 +13,8 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ReaderT, asks, runReaderT)
 import Control.Monad.Trans (lift)
 import Data.Aeson
-  (FromJSON, ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON, genericToJSON, parseJSON,
-  toJSON)
+  (FromJSON, Options(..), ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON,
+  genericToJSON, parseJSON, toJSON)
 import Data.Char (toLower)
 import Data.Proxy (Proxy(Proxy))
 import Data.Swagger.ParamSchema (ToParamSchema)
@@ -45,16 +45,22 @@ newtype Source = Source {unSource :: Text}
 
 instance FromJSON Source where
   parseJSON = genericParseJSON defaultOptions
+    {unwrapUnaryRecords = True}
 
 instance ToJSON Source where
   toJSON = genericToJSON defaultOptions
+    {unwrapUnaryRecords = True}
 
-instance ToSchema Source
+instance ToSchema Source where
+  declareNamedSchema = genericDeclareNamedSchema
+    defaultSchemaOptions {unwrapUnaryRecords = True}
 
 data CompileRequest = CompileRequest
   { rSources :: [(FilePath, Source)]
   , rMain :: FilePath
-  } deriving stock (Eq, Show, Ord, Generic)
+  , rProtocol :: Maybe Text
+  }
+  deriving stock (Eq, Show, Ord, Generic)
 
 prepareField :: Int -> String -> String
 prepareField n = lowercaseInitial . drop n
@@ -139,7 +145,11 @@ compile request =
           createDirectoryIfMissing True (takeDirectory fp)
           Text.writeFile fp (unSource src)
 
-        (ec, out, err) <- runLigo dirPath ["compile", "contract", fullMainPath]
+        let args = (["compile", "contract", fullMainPath] ++) $
+              case rProtocol request of
+                Nothing -> []
+                Just pr -> ["-p", Text.unpack pr]
+        (ec, out, err) <- runLigo dirPath args
 
         case ec of
           ExitSuccess -> pure (Build $ Text.pack out)
