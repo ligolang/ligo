@@ -27,11 +27,11 @@ let list_declarations (raw_options : Raw_options.t) source_file display_format (
       (source_file, declarations)
 
 let get_scope (raw_options : Raw_options.t) source_file display_format () =
-    New_scopes.Api_helper.format_result ~display_format @@
+    Scopes.Api_helper.format_result ~display_format @@
       fun ~raise ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
       let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
       let Compiler_options.{ with_types ; _ } = options.tools in
       let core_prg = Build.infer_contract ~raise ~options source_file in
-      New_scopes.scopes ~options:options.middle_end ~with_types core_prg
+      Scopes.scopes ~options:options.middle_end ~with_types core_prg

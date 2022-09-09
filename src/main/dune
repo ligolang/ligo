@@ -3,5 +3,5 @@
  (public_name ligo.main)
  (instrumentation
   (backend bisect_ppx))
- (libraries ligo_run ligo_compile decompile main_errors new_scopes
+ (libraries ligo_run ligo_compile decompile main_errors scopes
    compiler_options fuzz))

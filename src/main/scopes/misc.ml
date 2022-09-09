@@ -1,15 +1,15 @@
 open Ligo_prim
-open New_types
+open Types
 
-module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Value_var.compare end )
-type bindings_map = Ast_typed.type_expression Bindings_map.t
+module Bindings_map = Simple_utils.Map.Make (Value_var)
+type bindings_map   = Ast_typed.type_expression Bindings_map.t
 
 let rec extract_variable_types :
   bindings_map -> Ast_typed.declaration_content -> bindings_map =
   fun prev decl ->
     let add env b =
       let aux : Ast_typed.expression_variable *  Ast_typed.type_expression -> Ast_typed.expression_variable * Ast_typed.type_expression = fun (v,t) ->
-        let t' = match t.orig_var with Some t' -> 
+        let t' = match t.orig_var with Some t' ->
           { t with type_content = T_variable t'} | None -> t in
         (v,t')
       in
@@ -76,8 +76,8 @@ let rec extract_variable_types :
       (match module_.wrap_content with
       | M_variable _ -> prev
       | M_module_path _ -> prev
-      | M_struct ds -> 
-        List.fold_left ds ~init:prev 
+      | M_struct ds ->
+        List.fold_left ds ~init:prev
           ~f:(fun prev d -> extract_variable_types prev d.wrap_content))
 
 let resolve_if :

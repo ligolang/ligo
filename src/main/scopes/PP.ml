@@ -1,5 +1,5 @@
 module PP_helpers = Simple_utils.PP_helpers
-open New_types
+open Types
 
 let scopes : Format.formatter -> scopes -> unit =
   fun f s ->
@@ -17,7 +17,7 @@ let rec definitions : Format.formatter -> def list -> unit
     let defs = List.sort defs ~compare:(fun d1 d2 -> String.compare (get_def_uid d1) (get_def_uid d2)) in
     let refs ppf locs =
       let locs = LSet.elements locs in
-      match locs with  
+      match locs with
         [] -> Format.fprintf ppf "references: []"
       | locs ->
         let locs = List.sort locs ~compare:Location.compare in

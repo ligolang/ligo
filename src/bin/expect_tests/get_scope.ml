@@ -270,9 +270,13 @@ let%expect_test _ =
     [ c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-40
     [ j#3 i#2 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-21
     [ k#4 j#3 i#2 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-10
-    [ c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 10-11
-    [ b#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
-    [ b#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 5-9
+    [ m#7 n#6 z#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 7-36
+    [ z#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 10-14
+    [ z#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 15-18
+    [ v#8 z#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 12, characters 10-11
+    [ b#9 v#8 z#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 2-3
+    [ b#9 v#8 z#5 c#1 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 5-9
+    [ y#12 x#11 b#10 a#0  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 16, character 5 to line 17, character 15
 
     Variable definitions:
     (a#0 -> a)
@@ -281,25 +285,25 @@ let%expect_test _ =
     Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 20-21 ,
-      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 5-6
-    (b#5 -> b)
-    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 6-7
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 10-11
-    Content: |resolved: int|
-    references:
-      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 8-9
-    (b#6 -> b)
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 5-6
+    (b#10 -> b)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 3, characters 4-5
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 2 to line 9, character 10
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 2 to line 13, character 10
     Content: |resolved: int|
     references: []
+    (b#9 -> b)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 12, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 12, characters 10-11
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 8-9
     (c#1 -> c)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-40
     Content: |core: ( int * int ) -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5 ,
-      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 2-3
     (i#2 -> i)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-38
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 5, character 4 to line 6, character 11
@@ -318,6 +322,45 @@ let%expect_test _ =
     Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 7-8
+    (m#7 -> m)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 23-24
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 4-36
+    Content: |core: int|
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 18-19 ,
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 35-36
+    (n#6 -> n)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 13-14
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 23-24
+    Content: |core: int|
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 7-8 ,
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 28-29
+    (v#8 -> v)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 10-18
+    Content: |resolved: int|
+    references: []
+    (x#11 -> x)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 15, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 16, character 2 to line 17, character 16
+    Content: |core: int -> unit|
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 17, characters 7-8
+    (y#12 -> y)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 15, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 16, character 2 to line 17, character 16
+    Content: |core: int|
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 16, characters 5-6 ,
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 17, characters 10-11
+    (z#5 -> z)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 23-24
+    Content: |core: int -> int -> int|
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 25-26 ,
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 10-11
     Type definitions:
     Module definitions:
  |} ]

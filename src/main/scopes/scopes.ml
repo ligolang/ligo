@@ -1,5 +1,5 @@
 open Ligo_prim
-open New_types
+open Types
 
 module AST = Ast_core
 
@@ -7,12 +7,12 @@ module VVar = Value_var
 module TVar = Type_var
 module MVar = Module_var
 
-module Formatter = New_formatter
+module Formatter = Formatter
 module Api_helper = Api_helper
 
-module Misc = New_misc
+(* module Misc = Misc *)
 
-module Types = New_types
+(* module Types = Types *)
 module LSet = Types.LSet
 module Location = Simple_utils.Location
 
@@ -21,11 +21,6 @@ type scopes = Types.scopes
 
 type typing_env = { type_env : Environment.t  ; bindings : Misc.bindings_map }
 
-let is_rec_fun : AST.expression -> bool
-  = fun e ->
-      match e.expression_content with
-        E_recursive _ -> true
-      | _ -> false
 let rec drop_last : 'a list -> 'a * 'a list
     = fun xs ->
         match xs with
@@ -198,30 +193,29 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let defs, refs, tenv, scopes = expression tenv e in
         let scopes = merge_same_scopes scopes in
         defs, refs @ refs', tenv, scopes
+      | E_let_in { let_binder = _ ; rhs = ({ expression_content = E_recursive _ ; _ } as rhs) ; let_result ; _ } ->
+        (* For recursive functions we don't need to add a def for [let_binder]
+        becase it will be added by the [E_recursive] case we just need to extract it
+        out of the [defs_rhs] *)
+        let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
+        let def, defs_rhs = drop_last defs_rhs in
+        let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+        let scopes' = add_defs_to_scopes [def] scopes' in
+        let scopes = scopes @ scopes' in
+        let defs, refs_result = update_references refs_result [def] in
+        defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
       | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
-        if is_rec_fun rhs then
-          (* For recursive functions we don't need to add a def for [let_binder]
-              becase it will be added by the [E_recursive] case we just need to extract it
-              out of the [defs_rhs] *)
-          let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-          let def, defs_rhs = drop_last defs_rhs in
-          let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-          let scopes' = add_defs_to_scopes [def] scopes' in
-          let scopes = scopes @ scopes' in
-          let defs, refs_result = update_references refs_result [def] in
-          defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
-        else
-          let defs_binder =
-            if VVar.is_generated var then [] else
-            let binder_loc =  VVar.get_location var in
-            [ Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc rhs.location ]
-          in
-          let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-          let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-          let scopes' = add_defs_to_scopes defs_binder scopes' in
-          let scopes = scopes @ scopes' in
-          let defs, refs_result = update_references refs_result defs_binder in
-          defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
+        let defs_binder =
+          if VVar.is_generated var then [] else
+          let binder_loc =  VVar.get_location var in
+          [ Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc rhs.location ]
+        in
+        let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
+        let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+        let scopes' = add_defs_to_scopes defs_binder scopes' in
+        let scopes = scopes @ scopes' in
+        let defs, refs_result = update_references refs_result defs_binder in
+        defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
       | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
         let def_fun =
           let binder_loc =  VVar.get_location fun_name in
@@ -278,7 +272,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
     = fun tv def_type t ->
         let def =
           let binder_name = get_type_binder_name tv in
-          let binder_loc =  TVar.get_location tv in
+          let binder_loc  = TVar.get_location tv in
           make_t_def binder_name def_type binder_loc t
         in
         def
@@ -326,11 +320,19 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
     = fun ~with_types ~options tenv decl ->
       let tenv = update_typing_env ~with_types ~options tenv decl in
       match decl.wrap_content with
-        D_value { attr        = { hidden ; _ } ; _ }
+        D_value    { attr        = { hidden ; _ } ; _ }
       | D_module   { module_attr = { hidden ; _ } ; _ }
       | D_type     { type_attr   = { hidden ; _ } ; _ } when hidden -> [], [], tenv, []
-      | D_value { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
+      | D_value    { binder      = _ ; expr = ({ expression_content = E_recursive _ ; _ } as expr) ; _ } ->
+        (* For recursive functions we don't need to add a def for [binder]
+        becase it will be added by the [E_recursive] case we just need to extract it
+        out of the [defs_expr] *)
+        let defs_expr, refs_rhs, tenv, scopes = expression ~with_types ~options tenv expr in
+        let def, defs_expr = drop_last defs_expr in
+        defs_expr @ [def], refs_rhs, tenv, scopes
+      | D_value    { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
         declaration_expression ~with_types ~options ?core_type tenv var expr
+
       | D_type     { type_binder ; type_expr ; _ } ->
         let def = type_expression type_binder Global type_expr in
         [def], [], tenv, []
@@ -385,13 +387,3 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
       let scopes = fix_shadowing_in_scopes scopes in
       let defs = resolve_module_aliases_to_module_ids defs in
       defs, scopes
-
-(*
-
-For each declaration there will be a def
-a function on expression will returns def list & references (vars) list
-
-for an expression its free_variable will be references
-
-7. Add comments
-*)

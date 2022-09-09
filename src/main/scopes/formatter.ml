@@ -1,8 +1,5 @@
 open Simple_utils.Display
 
-module Types = New_types
-module PP = New_PP
-
 let scope_ppformat ~display_format f (d,s) =
   match display_format with
   | Human_readable ->
