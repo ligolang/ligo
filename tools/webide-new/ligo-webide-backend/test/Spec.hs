@@ -6,7 +6,7 @@ import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as LBS
 import Data.Maybe (fromMaybe)
 import Data.Text.IO qualified as Text
-import Lib (mkApp, CompileRequest (..), Config (..), Source (..))
+import Lib (CompileRequest(..), Config(..), Source(..), mkApp)
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
 import System.Environment (lookupEnv)
@@ -19,11 +19,15 @@ main = do
   ligoPath <- fromMaybe (error "need to set LIGO_PATH")
           <$> lookupEnv "LIGO_PATH"
   let config = Config
-        { cLigoPath = ligoPath
+        { cLigoPath = Just ligoPath
         , cPort = 8080
         , cVerbose = False
+        , cDockerizedLigoVersion = Nothing
         }
-  hspec (spec config)
+  hspec $ do
+    describe "standard LIGO" (spec config)
+    describe "dockerized LIGO"
+      (spec config {cDockerizedLigoVersion = Just "0.50.0"})
 
 post :: BS.ByteString -> LBS.ByteString -> WaiSession () SResponse
 post path =
