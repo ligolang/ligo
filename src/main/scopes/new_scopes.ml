@@ -52,14 +52,12 @@ let update_typing_env : with_types:bool -> options:Compiler_options.middle_end -
           end
       | false -> tenv
 
-type def_list = (string * def) list
-
 type reference =
     Variable of VVar.t
   | ModuleAccess of MVar.t list * VVar.t
   | ModuleAlias of MVar.t list
 
-let pp_reference : Format.formatter -> reference -> unit
+(* let pp_reference : Format.formatter -> reference -> unit
   = fun f r ->
       let () = Format.fprintf f "\n" in
       match r with
@@ -71,7 +69,7 @@ let pp_reference : Format.formatter -> reference -> unit
           List.iter mvs ~f:(fun mv -> Format.fprintf f "%a." MVar.pp mv)
 let pp_references : Format.formatter -> reference list -> unit
   = fun f refs ->
-      List.iter refs ~f:(pp_reference f)
+      List.iter refs ~f:(pp_reference f) *)
 
 let get_location_of_module_path : MVar.t list -> Location.t
   = fun mvs ->
@@ -396,6 +394,4 @@ a function on expression will returns def list & references (vars) list
 for an expression its free_variable will be references
 
 7. Add comments
-9. update schema.json
-12. Add scopes.mli & Flatten Free
 *)

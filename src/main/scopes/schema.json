@@ -373,17 +373,23 @@
       },
       "required": ["name", "range", "body_range", "t"],
       "additionalProperties": false
-    }
-  },
-  "type": "object",
-  "properties": {
-    "errors": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/error" }
     },
-    "warnings": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/warning" }
+    "modules": {
+      "type": "object",
+      "properties": {
+        "definition": { "$ref": "#/$defs/definition" },
+        "members": { "$ref": "#/$defs" }
+      }
+    },
+    "module_aliases": {
+      "type": "object",
+      "properties": {
+        "definition": { "$ref": "#/$defs/definition" },
+        "alias": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
     },
     "definitions": {
       "type": "object",
@@ -399,10 +405,34 @@
           "properties": {
             ".{1,}": { "$ref": "#/$defs/definition" }
           }
+        },
+        "modules": {
+          "type": "object",
+          "properties": {
+            ".{1,}": { "$ref": "#/$defs/modules" }
+          }
+        },
+        "module_aliases": {
+          "type": "object",
+          "properties": {
+            ".{1,}": { "$ref": "#/$defs/module_aliases" }
+          }
         }
       },
       "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/error" }
     },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
+    },
+    "definitions": { "$ref": "#/$defs/definitions" },
     "scopes": {
       "type": "array",
       "items": {
@@ -416,6 +446,10 @@
             "items": { "type": "string" }
           },
           "type_environment": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "module_environment": {
             "type": "array",
             "items": { "type": "string" }
           }
