@@ -92,10 +92,10 @@ let resolve_if :
     else Unresolved
 
 let make_v_def :
-  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> Value_var.t -> Location.t -> Location.t -> def =
-  fun ~with_types ?core_type bindings var range body_range ->
+  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> def_type -> Value_var.t -> Location.t -> Location.t -> def =
+  fun ~with_types ?core_type bindings def_type var range body_range ->
     let type_case = match core_type with
       | Some t -> Core t
       | None -> resolve_if ~with_types bindings var
     in
-    make_v_def (get_binder_name var) type_case range body_range
+    make_v_def (get_binder_name var) type_case def_type range body_range

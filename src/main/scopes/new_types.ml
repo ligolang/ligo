@@ -32,13 +32,16 @@ module Definitions = struct
   | Resolved of Ast_typed.type_expression
   | Unresolved
 
+  type def_type = Local | Global
+
   type vdef = {
     name  : string ;
     uid : string ;
     range : Location.t ;
     body_range : Location.t ;
     t : type_case ;
-    references : Location.t list (* TODO: make this Location set *)
+    references : Location.t list ; (* TODO: make this Location set *)
+    def_type : def_type ;
   }
 
   type tdef = {
@@ -47,6 +50,7 @@ module Definitions = struct
     range : Location.t ;
     body_range : Location.t ;
     content : Ast_core.type_expression ;
+    def_type : def_type ;
   }
 
   type mod_case = Def of def list | Alias of string list
@@ -58,6 +62,7 @@ module Definitions = struct
     body_range : Location.t ;
     references : Location.t list ; (* TODO: make this Location set *)
     mod_case : mod_case ;
+    def_type : def_type ;
   }
 
   and def = Variable of vdef | Type of tdef | Module of mdef
@@ -93,27 +98,32 @@ module Definitions = struct
     | Variable    v -> v.body_range
     | Module      m -> m.body_range
 
-  let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
-    fun name t range body_range ->
-      let uid = make_def_id name in
-      Variable { name ; range ; body_range ; t ; uid ; references = [] }
+  let get_def_type = function
+    | Type        t -> t.def_type
+    | Variable    v -> v.def_type
+    | Module      m -> m.def_type
 
-  let make_t_def : string -> Location.t -> Ast_core.type_expression -> def =
-    fun name loc te ->
+  let make_v_def : string -> type_case -> def_type -> Location.t -> Location.t -> def =
+    fun name t def_type range body_range ->
       let uid = make_def_id name in
-      Type { name ; range = loc ; body_range = te.location ; uid ; content = te }
+      Variable { name ; range ; body_range ; t ; uid ; references = [] ; def_type }
 
-  let make_m_def : range:Location.t -> body_range:Location.t -> string -> def list -> def =
-    fun ~range ~body_range name members ->
+  let make_t_def : string -> def_type -> Location.t -> Ast_core.type_expression -> def =
+    fun name def_type loc te ->
+      let uid = make_def_id name in
+      Type { name ; range = loc ; body_range = te.location ; uid ; content = te ; def_type }
+
+  let make_m_def : range:Location.t -> body_range:Location.t -> string -> def_type -> def list -> def =
+    fun ~range ~body_range name def_type members ->
       let uid = make_def_id name in
       let mod_case = Def members in
-      Module { name ; range ; body_range ; mod_case ; uid ; references = [] }
+      Module { name ; range ; body_range ; mod_case ; uid ; references = [] ; def_type }
 
-  let make_m_alias_def : range:Location.t -> body_range:Location.t -> string -> string list -> def =
-    fun ~range ~body_range name alias ->
+  let make_m_alias_def : range:Location.t -> body_range:Location.t -> string -> def_type -> string list -> def =
+    fun ~range ~body_range name def_type alias ->
       let uid = make_def_id name in
       let mod_case = Alias alias in
-      Module { name ; range ; body_range ; mod_case ; uid ; references = [] }
+      Module { name ; range ; body_range ; mod_case ; uid ; references = [] ; def_type }
 
   let shadow_defs : def list -> def list
     = fun defs ->
@@ -122,6 +132,13 @@ module Definitions = struct
         | def::defs ->
             let shadow_def def' = not @@ def_equal def def' in
             def :: List.filter defs ~f:shadow_def
+
+  let rec filter_local_defs : def list -> def list
+    = fun defs ->
+        match defs with
+          [] -> []
+        | def::defs when Caml.(get_def_type def = Local) -> filter_local_defs defs
+        | def::defs -> def :: filter_local_defs defs 
 end
 
 include Definitions
@@ -152,7 +169,11 @@ let add_defs_to_scope : def list -> scope -> scope
 let add_defs_to_scopes : def list -> scopes -> scopes 
   = fun defs scopes ->
       List.map scopes ~f:(add_defs_to_scope defs)
-
+(* TODO : take care of 
+Furthermore, if a module is in scope, then all of its members must be in scope as well. 
+So a module’s members must each be added to the expression, type, and module environments, and 
+each nested member should also be recursively added to these environments.   
+*)
 let merge_same_scopes : scopes -> scopes
   = fun scopes ->
       let rec aux scopes acc =

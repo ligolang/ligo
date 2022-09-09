@@ -14,6 +14,20 @@ module Misc = New_misc
 
 type typing_env = { type_env : Environment.t  ; bindings : Misc.bindings_map }
 
+let is_rec_fun : AST.expression -> bool
+  = fun e ->
+      match e.expression_content with
+        E_recursive _ -> true
+      | _ -> false
+let rec drop_last : 'a list -> 'a * 'a list
+    = fun xs ->
+        match xs with
+          [] -> failwith "empty list"
+        | x::[] -> x, []
+        | x::xs ->
+          let last, xs = drop_last xs in
+          last, x :: xs
+
 let update_typing_env : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> typing_env
   = fun ~with_types ~options tenv decl ->
       match with_types with
@@ -143,19 +157,24 @@ module Free = struct
           List.fold_left arguments ~init:([], [], tenv, [])
             ~f:(fun (defs, refs, tenv, scopes) e ->
                   let ds, rs, tenv, scopes' = expression tenv e in
+                  let scopes' = merge_same_scopes scopes' in
                   ds @ defs, rs @ refs, tenv, scopes @ scopes')
         | E_application { lamb ; args } ->
           let defs, refs, tenv, scopes = expression tenv lamb  in
+          let scopes = merge_same_scopes scopes in
           let defs', refs', tenv, scopes' = expression tenv args in
+          let scopes' = merge_same_scopes scopes' in
           defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
         | E_lambda { binder = { var ; ascr = core_type ; _ } ; result ; output_type = _ } ->
           let def =
+            if VVar.is_generated var then [] else
             let binder_loc =  VVar.get_location var in
-            Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc result.location
+            [Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc result.location]
           in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
-          let defs, refs_result = update_references refs_result [def] in
-          defs_result @ defs, refs_result, tenv, add_defs_to_scopes [def] scopes
+          let scopes = merge_same_scopes scopes in
+          let defs, refs_result = update_references refs_result def in
+          defs_result @ defs, refs_result, tenv, add_defs_to_scopes def scopes
         | E_type_abstraction { result ; _ } -> expression tenv result
         | E_constructor { element ; _ } -> expression tenv element
         | E_accessor { struct_ ; _ } -> expression tenv struct_
@@ -167,85 +186,110 @@ module Free = struct
         | E_record e_lable_map ->
           let defs, refs, tenv, scopes = Record.LMap.fold (fun _ e (defs, refs, tenv, scopes) ->
             let defs', refs', tenv, scopes' = expression tenv e in
+            let scopes' = merge_same_scopes scopes' in
             defs' @ defs, refs' @ refs, tenv, scopes @ scopes'
           ) e_lable_map ([], [], tenv, []) in
           defs, refs, tenv, scopes
         | E_assign { binder ; expression = e } ->
           let refs' = [Variable binder.var] in
           let defs, refs, tenv, scopes = expression tenv e in
+          let scopes = merge_same_scopes scopes in
           defs, refs @ refs', tenv, scopes
         | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
-          let def =
-            let binder_loc =  VVar.get_location var in
-            Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc rhs.location
-          in
-          let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-          let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-          let scopes' = add_defs_to_scopes [def] scopes' in
-          let scopes = scopes @ scopes' in
-          let defs, refs_result = update_references refs_result [def] in
-          defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
+          if is_rec_fun rhs then
+            (* For recursive functions we don't need to add a def for [let_binder] 
+               becase it will be added by the [E_recursive] case we just need to extract it
+               out of the [defs_rhs] *)
+            let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
+            let def, defs_rhs = drop_last defs_rhs in
+            let scopes = merge_same_scopes scopes in
+            let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+            let scopes' = merge_same_scopes scopes' in
+            let scopes' = add_defs_to_scopes [def] scopes' in
+            let scopes = scopes @ scopes' in
+            let defs, refs_result = update_references refs_result [def] in
+            defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
+          else
+            let defs_binder =
+              if VVar.is_generated var then [] else
+              let binder_loc =  VVar.get_location var in
+              [ Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc rhs.location ]
+            in
+            let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
+            let scopes = merge_same_scopes scopes in
+            let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+            let scopes' = merge_same_scopes scopes' in
+            let scopes' = add_defs_to_scopes defs_binder scopes' in
+            let scopes = scopes @ scopes' in
+            let defs, refs_result = update_references refs_result defs_binder in
+            defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
         | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
           let def_fun =
             let binder_loc =  VVar.get_location fun_name in
-            Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings fun_name binder_loc (result.location)
+            Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings Local fun_name binder_loc (result.location)
           in
           let def_par =
+            if VVar.is_generated var then [] else
             let binder_loc =  VVar.get_location var in
-            Misc.make_v_def ~with_types ~core_type tenv.bindings var binder_loc (result.location)
+            [Misc.make_v_def ~with_types ~core_type tenv.bindings Local var binder_loc (result.location)]
           in
           let defs_result, refs_result, tenv, scopes = expression tenv result in
-          let defs = [def_fun ; def_par] in
+          let scopes = merge_same_scopes scopes in
+          let defs = def_par @ [def_fun] in
           let defs, refs_result = update_references refs_result defs in
-          defs_result @ defs, refs_result, tenv, add_defs_to_scopes [def_fun ; def_par] scopes
+          defs_result @ defs, refs_result, tenv, add_defs_to_scopes (def_par @ [def_fun]) scopes
         | E_type_in { type_binder ; rhs ; let_result } ->
-          let def = type_expression type_binder rhs in
+          let def = type_expression type_binder Local rhs in
           let defs, refs, tenv, scopes = expression tenv let_result in
+          let scopes = merge_same_scopes scopes in
           [def] @ defs, refs, tenv, scopes
         | E_matching { matchee ; cases } ->
           let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
+          let scopes = merge_same_scopes scopes in
           let defs_cases, refs_cases, tenv, scopes' = List.fold_left cases ~init:([], [], tenv, [])
-            ~f:(fun (defs, refs, tenv, scopes') { pattern ; body } ->
+            ~f:(fun (defs, refs, tenv, scopes) { pattern ; body } ->
               let defs_pat = Pattern.fold_pattern (
                 fun defs (p : _ Pattern.t) ->
                   match p.wrap_content with
                     P_var { var ; ascr = core_type ; _ } ->
                       let def =
                         let binder_loc =  VVar.get_location var in
-                        Misc.make_v_def ~with_types ?core_type tenv.bindings var binder_loc body.location
+                        Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc body.location
                       in
                       def :: defs
                   | _ -> defs
               ) [] pattern in
-              let defs_body, refs_body, tenv, scopes = expression tenv body in
-              let scopes = add_defs_to_scopes defs_pat scopes in
+              let defs_body, refs_body, tenv, scopes' = expression tenv body in
+              let scopes' = merge_same_scopes scopes' in
+              let scopes' = add_defs_to_scopes defs_pat scopes' in
               let defs_pat, refs_body = update_references refs_body defs_pat in
               defs_body @ defs_pat @ defs, refs_body @ refs, tenv, scopes @ scopes'
             )
           in
           defs_matchee @ defs_cases, refs_matchee @ refs_cases, tenv, scopes @ scopes'
         | E_mod_in { module_binder ; rhs ; let_result } ->
-          let defs_module, refs_module, tenv, scopes = module_expression ~with_types ~options tenv module_binder rhs in
+          let defs_module, refs_module, tenv, scopes = module_expression ~with_types ~options tenv Local module_binder rhs in
           let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+          let scopes' = merge_same_scopes scopes' in
           let defs_module, refs_result = update_references refs_result defs_module in
           defs_result @ defs_module, refs_result @ refs_module, tenv, scopes @ scopes'
-    and type_expression : TVar.t -> AST.type_expression -> def
-      = fun tv t ->
+    and type_expression : TVar.t -> def_type -> AST.type_expression -> def
+      = fun tv def_type t ->
           let def =
             let binder_name = get_type_binder_name tv in
             let binder_loc =  TVar.get_location tv in
-            make_t_def binder_name binder_loc t
+            make_t_def binder_name def_type binder_loc t
           in
           def
-    and module_expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> MVar.t -> AST.module_expr -> def list * reference list * typing_env * scopes
-      = fun ~with_types ~options tenv top m ->
+    and module_expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> def_type -> MVar.t -> AST.module_expr -> def list * reference list * typing_env * scopes
+      = fun ~with_types ~options tenv def_type top m ->
           match m.wrap_content with
             M_struct decls ->
               let defs, refs, tenv, scopes = declarations ~with_types ~options tenv decls in
               let range = MVar.get_location top in
               let body_range = m.location in
               let name = get_mod_binder_name top in
-              let def = make_m_def ~range ~body_range name defs in
+              let def = make_m_def ~range ~body_range name def_type defs in
               [def], refs, tenv, scopes
           | M_variable mv ->
             let def, reference =
@@ -253,7 +297,7 @@ module Free = struct
               let range =  MVar.get_location top in
               let body_range = MVar.get_location mv in
               let alias = [get_mod_binder_name mv] in
-              let def = make_m_alias_def ~range ~body_range name alias in
+              let def = make_m_alias_def ~range ~body_range name def_type alias in
               let reference = ModuleAlias [mv] in
               def, reference
             in
@@ -265,7 +309,7 @@ module Free = struct
               let range =  MVar.get_location top in
               let body_range = get_location_of_module_path mvs in
               let alias = List.map mvs ~f:get_mod_binder_name in
-              let def = make_m_alias_def ~range ~body_range name alias in
+              let def = make_m_alias_def ~range ~body_range name def_type alias in
               let reference = ModuleAlias mvs in
               def, reference
             in
@@ -275,7 +319,7 @@ module Free = struct
           let defs, refs, tenv, scopes = expression ~with_types ~options tenv e in
           let range = VVar.get_location ev in
           let body_range = e.location in
-          let def = Misc.make_v_def ~with_types ?core_type tenv.bindings ev range body_range in
+          let def = Misc.make_v_def ~with_types ?core_type tenv.bindings Global ev range body_range in
           [def] @ defs, refs, tenv, scopes
     and declaration : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> def list * reference list * typing_env * scopes
       = fun ~with_types ~options tenv decl ->
@@ -287,16 +331,16 @@ module Free = struct
         | D_value { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
           declaration_expression ~with_types ~options ?core_type tenv var expr
         | D_type     { type_binder ; type_expr ; _ } ->
-          let def = type_expression type_binder type_expr in
+          let def = type_expression type_binder Global type_expr in
           [def], [], tenv, []
         | D_module   { module_binder ; module_ ; _ } ->
-          module_expression ~with_types ~options tenv module_binder module_
+          module_expression ~with_types ~options tenv Global module_binder module_
     and declarations : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.declaration list -> def list * reference list * typing_env * scopes
       = fun ~with_types ~options tenv decls ->
           let defs, refs, tenv, scopes = List.fold_left decls ~init:([], [], tenv, [])
-            ~f:(fun (defs, refs, tenv, scopes') decl ->
-              let defs', refs', tenv, scopes = declaration ~with_types ~options tenv decl in
-              let scopes = add_defs_to_scopes defs scopes in
+            ~f:(fun (defs, refs, tenv, scopes) decl ->
+              let defs', refs', tenv, scopes' = declaration ~with_types ~options tenv decl in
+              let scopes' = add_defs_to_scopes (filter_local_defs defs) scopes' in
               let defs, refs = update_references (refs' @ refs) (defs) in
               defs' @ defs, refs, tenv, scopes @ scopes')
           in
@@ -338,7 +382,6 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> AST.modul
       let () = reset_counter () in 
       let tenv = { type_env = options.init_env ; bindings = Misc.Bindings_map.empty } in
       let defs, _, _, scopes = Free.declarations ~with_types ~options tenv prg in
-      let scopes = merge_same_scopes scopes in
       let defs = resolve_module_aliases_to_module_ids defs in
       defs, scopes
 
