@@ -5,4 +5,4 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 CI_PROJECT_ID=$2
 TAG=$3
 
-echo $(curl -v "${HOST}${CI_PROJECT_ID}/repository/commits/${TAG}")
+echo $(curl -s "${HOST}${CI_PROJECT_ID}/repository/commits/${TAG}")

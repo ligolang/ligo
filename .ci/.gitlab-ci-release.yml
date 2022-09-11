@@ -198,7 +198,8 @@ update-versionned-doc:
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - GITLAB_REF_INFO=$(./.ci/scripts/retrieve_gitlab_reference_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} $RELEASE_VERSION)
     - TAG_HEAD_COMMIT_SHA=$(nix-shell -p jq --run "jq \".id\" <<< ${GITLAB_REF_INFO}")
-    - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION $TAG_HEAD_COMMIT_SHA    
+    - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
+    - ./.ci/scripts/homebrew/create_new_homebrew_version.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} $LAST_TAG_JOB_ID $RELEASE_VERSION
     - git add nix/get_ligo.nix gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
