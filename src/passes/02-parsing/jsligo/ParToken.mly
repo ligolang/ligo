@@ -147,6 +147,7 @@
 (* Virtual tokens *)
 
 %token <string Wrap.t> ZWSP [@recover.expr Token.wrap_zwsp $loc]
+%token <string Wrap.t> ES6FUN [@recover.expr Token.wrap_es6fun $loc]
 
 (* End of File *)
 
