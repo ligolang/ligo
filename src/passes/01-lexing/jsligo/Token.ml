@@ -12,6 +12,7 @@ module SMap = Map.Make (String)
 module Wrap = Lexing_shared.Wrap
 module Attr = Lexing_shared.Attr
 
+
 let sprintf = Printf.sprintf
 
 let wrap = Wrap.wrap
@@ -133,7 +134,8 @@ module T =
 
     (* Virtual tokens *)
 
-    | ZWSP of lexeme Wrap.t  (* Zero-Width SPace *)
+    | ZWSP   of lexeme Wrap.t  (* Zero-Width SPace *)
+    | ES6FUN of lexeme Wrap.t (* indicate an arrow function *)
 
     (* End-Of-File *)
 
@@ -244,7 +246,9 @@ module T =
 
     (* Virtual tokens *)
 
-    | ZWSP _ -> ""
+    | ZWSP _ 
+    | ES6FUN _ -> ""
+    
 
     (* End-Of-File *)
 
@@ -713,6 +717,11 @@ module T =
     let mk_ZWSP region = ZWSP (wrap_zwsp region)
     let ghost_ZWSP     = mk_ZWSP Region.ghost
 
+    let wrap_es6fun      = wrap ""
+    let ghost_es6fun     = wrap_es6fun Region.ghost
+    let mk_ES6FUN region = ES6FUN (wrap_es6fun region)
+    let ghost_ES6FUN     = mk_ES6FUN Region.ghost
+
     (* END-OF-FILE TOKEN *)
 
     let wrap_eof      = wrap ""
@@ -817,6 +826,7 @@ module T =
     (* Virtual tokens *)
 
     | "ZWSP" -> ""
+    | "ES6FUN" -> ""
 
     (* End-Of-File *)
 
@@ -948,7 +958,8 @@ module T =
 
     (* Virtual tokens *)
 
-    | ZWSP t -> t#region, "ZWSP"
+    | ZWSP t   -> t#region, "ZWSP"
+    | ES6FUN t -> t#region, "ES6FUN"
 
     (* End-Of-File *)
 
@@ -1057,10 +1068,11 @@ module T =
     let hex_digits = ["A"; "B"; "C"; "D"; "E"; "F";
                       "a"; "b"; "c"; "d"; "e"; "f"]
 
-    let is_hex = function
-      UIdent t | Ident t ->
-        List.mem hex_digits t#payload ~equal:String.equal
-    | _ -> false
+   let is_hex = function
+     UIdent t | Ident t ->
+       List.mem hex_digits t#payload ~equal:String.equal
+   | _ -> false
+                
 
     let is_sym = function
       MINUS _
@@ -1113,7 +1125,7 @@ module T =
 
     (* String delimiters *)
 
-    let support_string_delimiter c = Char.(c = '"')
+    let support_string_delimiter c = Char.equal c '"'
 
     (* Verbatim strings *)
 
