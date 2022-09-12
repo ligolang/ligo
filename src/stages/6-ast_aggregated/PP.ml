@@ -117,21 +117,21 @@ and expression_content ppf (ec: expression_content) =
   | E_record      m -> Record.pp expression ppf m
   | E_accessor    a -> Types.Accessor.pp    expression ppf a
   | E_update      u -> Types.Update.pp      expression ppf u
-  | E_lambda      l -> Lambda.pp      expression type_expression ppf l
+  | E_lambda      l -> Lambda.pp      expression type_expression_annot ppf l
   | E_type_abstraction e -> Type_abs.pp expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_recursive  r -> Recursive.pp expression type_expression ppf r
+  | E_recursive  r -> Recursive.pp expression type_expression_annot ppf r
   | E_let_in {let_binder; rhs; let_result; attr = { hidden = false ; _ } as attr } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression) let_binder
+      (Binder.pp type_expression_annot) let_binder
       expression rhs
       Types.ValueAttr.pp attr
       expression let_result
   | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
       fprintf ppf "@[<h>%a@]" expression let_result
   | E_raw_code   r -> Raw_code.pp   expression ppf r
-  | E_assign     a -> Assign.pp     expression type_expression ppf a
+  | E_assign     a -> Assign.pp     expression type_expression_annot ppf a
   | E_type_inst ti -> type_inst ppf ti
 
 and type_inst ppf {forall; type_} =

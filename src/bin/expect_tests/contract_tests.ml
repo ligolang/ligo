@@ -1065,10 +1065,11 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
   [%expect {|
     const y : unit -> nat =
-      lambda (_#2unit)nat return let _xnat = +1 in
-                                 let ()#5unit = let _xnat = +2 in unit in
-                                 let ()#4unit = let _xnat = +23 in unit in
-                                 let ()#3unit = let _xnat = +42 in unit in _x |}]
+      lambda (_#2unit)nat return let _x : nat = +1 in
+                                 let ()#5 : unit = let _x : nat = +2 in unit in
+                                 let ()#4 : unit = let _x : nat = +23 in unit in
+                                 let ()#3 : unit = let _x : nat = +42 in unit in
+                                 _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
@@ -2110,9 +2111,9 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
     const f : int -> int =
-      lambda (nint)int return let fint -> int =
+      lambda (nint)int return let f : int -> int =
                                 rec (fint -> int => lambda (nint)int return
-                              let match_#2[@var]bool = EQ(n , 0) in
+                              let match_#2[@var] : bool = EQ(n , 0) in
                                match match_#2 with
                                 | False unit_proj#3 ->
                                   (f)@(C_POLYMORPHIC_SUB(n , 1))
@@ -2121,8 +2122,8 @@ let%expect_test _ =
                               (f)@(4)
     const g : int -> int -> int -> int =
       rec (gint -> int -> int -> int => lambda (fint -> int)int -> int return
-      (g)@(let hint -> int =
-             rec (hint -> int => lambda (nint)int return let match_#5[@var]bool =
+      (g)@(let h : int -> int =
+             rec (hint -> int => lambda (nint)int return let match_#5[@var] : bool =
                                                            EQ(n , 0) in
                                                           match match_#5 with
                                                            | False unit_proj#6 ->
@@ -2169,12 +2170,12 @@ let%expect_test _ =
   [%expect {|
     const x[@var] : int = 1[@inline][@private]
     const foo[@var] : int -> int =
-      lambda (aint)int return let test[@var]int =
+      lambda (aint)int return let test[@var] : int =
                                 C_POLYMORPHIC_ADD(2 , a)[@inline][@private] in
                               test[@inline][@private]
     const y[@var] : int = 1[@private]
     const bar[@var] : int -> int =
-      lambda (bint)int return let test[@var]int -> int =
+      lambda (bint)int return let test[@var] : int -> int =
                                 lambda (zint)int return C_POLYMORPHIC_ADD
                                                         (C_POLYMORPHIC_ADD(2 , b) ,
                                                          z)[@inline][@private] in
@@ -2613,7 +2614,7 @@ const c : unit -> ( operation * address ) =
                                                         ( LIST_EMPTY() ,
                                                           unit )))@(None(unit)))@(0mutez))@(unit)
 const foo : unit =
-  let match_#8[@var]( operation * address ) = (c)@(unit) in
+  let match_#8[@var] : ( operation * address ) = (c)@(unit) in
    match match_#8 with
     | ( _a : operation , _b : address ) ->
     unit
@@ -2631,7 +2632,7 @@ const c : unit -> ( int * string * nat * int * string * nat * int * string * nat
     4 ,
     "4" )
 const foo : unit =
-  let match_#10[@var]( int * string * nat * int * string * nat * int * string * nat * int * string ) =
+  let match_#10[@var] : ( int * string * nat * int * string * nat * int * string * nat * int * string ) =
     (c)@(unit) in
    match match_#10 with
     | ( _i1 : int , _s1 : string , _n1 : nat , _i2 : int , _s2 : string , _n2 : nat , _i3 : int , _s3 : string , _n3 : nat , _i4 : int , _s4 : string ) ->
