@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: \nAdded `List.find_opt` to LIGO's standard library
+merge_request: '1953'
+title: Add `List.find_opt` to LIGO's Standard Library
+type: added

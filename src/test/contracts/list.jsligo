@@ -30,3 +30,15 @@ let iter_op = (s : list <int>) : unit => {
   let do_nothing = (_useless : int):unit => unit;
   List.iter (do_nothing, s);
 };
+
+const find_x : option<int> = 
+  List.find_opt ((_ : int) : bool => true, x);
+
+const find_y4 : option<int> = 
+  List.find_opt ((y_elem : int) : bool => y_elem == 4, y);
+
+const find_y6 : option<int> = 
+  List.find_opt ((y_elem : int) : bool => y_elem == 6, y);
+
+const find_z2 : option<int> = 
+  List.find_opt ((z_elem : int) : bool => z_elem == 2, z);
