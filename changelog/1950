@@ -1,0 +1,8 @@
+author: Laucans
+description: '\nAdd ligo installation through brew package manager. \nBy using \n```\nbrew
+  tap ligolang/ligo https://gitlab.com/ligolang/ligo.git\nbrew install ligolang/ligo/ligo\n```\nYou
+  can also install one of the three last version by targeting the version after \"@\"
+  : \n```\nbrew install ligolang/ligo/ligo@0.49.0\n```'
+merge_request: '1950'
+title: add brew formula into ligo monorepo
+type: added
