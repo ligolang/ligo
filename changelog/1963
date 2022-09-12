@@ -1,0 +1,5 @@
+author: pewulfman
+description: Fixing bug with nested for loops in Pascaligo
+merge_request: '1963'
+title: 'Bugfix : nested for loop doesn''t catch assignation effect correctly'
+type: fixed
