@@ -49,7 +49,8 @@ spec config = with (return (mkApp config)) $ do
       let input =
             CompileRequest
               { rSources = [("main.mligo", Source source)],
-                rMain = "main.mligo"
+                rMain = "main.mligo",
+                rProtocol = Nothing
               }
       response <- post "/compile" (Aeson.encode input)
       expected <- liftIO $ Text.readFile (contractsDir </> "basic/output.tz")
@@ -70,7 +71,8 @@ spec config = with (return (mkApp config)) $ do
                   [ ("dir/types.mligo", typesSource),
                     ("main.mligo", mainSource)
                   ],
-                rMain = "main.mligo"
+                rMain = "main.mligo",
+                rProtocol = Just "jakarta"
               }
       response <- post "/compile" (Aeson.encode input)
       expected <- liftIO $ Text.readFile (contractsDir </> "multifile/output.tz")
