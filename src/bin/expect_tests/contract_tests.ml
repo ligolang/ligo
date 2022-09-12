@@ -2062,7 +2062,7 @@ let%expect_test _ =
      21 |   let contr = Test.to_contract(taddr) in
      22 |   let _r = Test.transfer_to_contract_exn contr (Increment (32)) 1tez  in
 
-    Underspecified type ^gen#263.
+    Underspecified type ^gen#273.
     Please add additional annotations. |}]
 
 (* remove unused declarations *)
@@ -2088,7 +2088,7 @@ let%expect_test _ =
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
     Invalid type(s)
-    Cannot unify option (^gen#257) with string. |}]
+    Cannot unify option (^gen#267) with string. |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =
