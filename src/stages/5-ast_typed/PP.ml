@@ -130,7 +130,7 @@ and expression_content ppf (ec: expression_content) =
   | E_recursive  r -> Recursive.pp expression type_expression ppf r
   | E_let_in {let_binder; rhs; let_result; attr = { hidden = false ; _ } as attr } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression) let_binder
+      (Binder.pp type_expression_annot) let_binder
       expression rhs
       Types.ValueAttr.pp attr
       expression let_result
