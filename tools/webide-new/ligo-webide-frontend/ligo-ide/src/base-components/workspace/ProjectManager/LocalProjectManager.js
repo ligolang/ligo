@@ -188,17 +188,20 @@ export default class LocalProjectManager extends BaseProjectManager {
   async getMainContract() {
     const mainFilePath = this.mainFilePath;
     const mainFile = await fileOps.readFile(mainFilePath);
-    return this.getContractsRecursively(mainFilePath, mainFile, [
-      [mainFilePath, { unSource: mainFile }],
-    ]);
+    const existingPaths = new Set([mainFilePath]);
+    const resultMap = new Map();
+    await this.getContractsRecursively(mainFilePath, mainFile, resultMap, existingPaths);
+    return Array.from(resultMap);
   }
 
-  async getContractsRecursively(path, content, existingFiles) {
+  async getContractsRecursively(path, content, resultMap, existingFiles) {
+    resultMap.set(path, content);
+
     const includeImportRegexp = /^#[ \t]*(include|import)[ \t]*"[^"]*"[ \t]*/gm;
 
     const imports = [...content.matchAll(includeImportRegexp)];
     if (imports === null) {
-      return [[path, { unSource: content }]];
+      return;
     }
 
     const importPaths = imports
@@ -212,25 +215,26 @@ export default class LocalProjectManager extends BaseProjectManager {
 
     const dirPath = path.substring(0, path.lastIndexOf("/"));
 
-    const result = [[path, { unSource: content }]];
-
     for (let i = 0; i < importPaths.length; i++) {
       const absImportPath = fileOps.pathHelper.join(dirPath, importPaths[i]);
-      const cycleCheck = existingFiles.find((e) => e[0] === absImportPath);
+      const cycleCheck = existingFiles.has(absImportPath);
       if (cycleCheck) {
         throw new Error(`Cycle deps beween "${absImportPath}" and "${path}"`);
       }
       if ((await fileOps.exists(absImportPath)) && (await fileOps.isFile(absImportPath))) {
         const importFileContent = await fileOps.readFile(absImportPath);
-        result.push(
-          ...(await this.getContractsRecursively(absImportPath, importFileContent, result))
+        existingFiles.add(absImportPath);
+        await this.getContractsRecursively(
+          absImportPath,
+          importFileContent,
+          resultMap,
+          existingFiles
         );
+        existingFiles.delete(absImportPath);
       } else {
         throw new Error(`Import file "${importPaths[i]}" in "${path}" not found`);
       }
     }
-
-    return result;
   }
 
   async checkSettings() {
