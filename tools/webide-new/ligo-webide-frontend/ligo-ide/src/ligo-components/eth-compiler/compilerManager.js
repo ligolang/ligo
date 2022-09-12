@@ -5,6 +5,7 @@ import fileOps from "~/base-components/file-ops";
 
 import SolcjsCompiler from "./SolcjsCompiler";
 import soljsonReleases from "./soljsonReleases.json";
+import Api from "~/components/api/api";
 
 class SolcjsChannel extends DockerImageChannel {
   installed() {
@@ -81,46 +82,36 @@ export class CompilerManager {
       throw new Error("No Main File.");
     }
 
-    const solcVersion = projectManager.projectSettings.get("compilers.solc");
-    const solcFileName = soljsonReleases[solcVersion];
+    // const solcVersion = projectManager.projectSettings.get("compilers.solc");
+    // const solcFileName = soljsonReleases[solcVersion];
 
     // TODO: use the production proxy temporally
-    const solcUrl = `https://eth.ide.black/solc/${solcFileName}`;
+    // const solcUrl = `https://eth.ide.black/solc/${solcFileName}`;
 
-    const evmVersion = projectManager.projectSettings.get("compilers.evmVersion");
-    const optimizer = projectManager.projectSettings.get("compilers.optimizer");
+    // const evmVersion = projectManager.projectSettings.get("compilers.evmVersion");
+    // const optimizer = projectManager.projectSettings.get("compilers.optimizer");
 
     CompilerManager.button.setState({ building: true });
 
     this.notification = notification.info("Building Project", "Building...", 0);
 
-    const mainFilePath = projectManager.projectSettings.get("main");
-
-    let mainFileExtension;
-    let mainFileContent;
+    let contractFiles = [];
     try {
-      mainFileExtension = projectManager.mainFilePath.split(".").pop();
-      mainFileContent = await projectManager.readFile(projectManager.mainFilePath);
+      contractFiles = await projectManager.getMainContract();
     } catch (e) {
-      throw new Error(`Cannot read the main file <b>${mainFilePath}</b>.`);
+      notification.error("Compilation error", e.message);
+      console.error(e.message);
+      return;
     }
+
     CompilerManager.terminal.writeCmdToTerminal(
       `ligo compile contract ${projectManager.mainFilePath}`
     );
 
-    const request = new Request("/api/compile", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fileExtension: mainFileExtension,
-        source: mainFileContent,
-      }),
-    });
-    fetch(request)
-      .then((response) => response.json())
+    Api.compileContract({
+      sources: contractFiles,
+      main: projectManager.mainFilePath,
+    })
       .then(async (data) => {
         CompilerManager.terminal.writeToTerminal(data.replace(/\n/g, "\n\r"));
 
