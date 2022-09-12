@@ -13,7 +13,8 @@
             "children": { "$ref": "#/$defs/error" },
             "message": { "type": "string" },
             "location": { "$ref": "#/$defs/location" }
-          }
+          },
+          "required": ["message"]
         }
       },
       "required": ["status", "stage", "content"]
@@ -21,6 +22,7 @@
     "warning": {
       "type": "object",
       "status": { "const": "warning" },
+      "stage":  { "type": "string" },
       "content": {
         "type": "object",
         "properties": {
@@ -216,6 +218,17 @@
       "required": ["ty_binder", "type_"],
       "additionalProperties": false
     },
+    "type_injection": {
+      "type": "object",
+      "properties": {
+        "language" :  { "type" : "string" },
+        "injection" : { "type" : "string"},
+        "parameters" : {
+          "type": "array",
+          "items": { "$ref": "#/$defs/type_expression" }
+        }
+      }
+    },
     "type_content": {
       "type": "array",
       "anyOf": [
@@ -280,6 +293,12 @@
           "minItems": 2, "maxItems": 2
         },
         { "prefixItems": [
+            { "const": "t_constant" },
+            { "$ref": "#/$defs/type_injection" }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
             { "const": "t_singleton" },
             { "$ref": "#/$defs/literal" }
           ],
@@ -322,12 +341,14 @@
             }
           ]
         },
-        "location": { "$ref": "#/$defs/location" }
+        "location": { "$ref": "#/$defs/location" },
+        "type_meta": { "$ref": "#/$defs/type_expression" },
+        "orig_var": { "$ref": "#/$defs/location" }
       },
-      "required": ["type_content", "sugar", "location"],
+      "required": ["type_content", "location"],
       "additionalProperties": false
     },
-    "definition": {
+    "variable_definition": {
       "type": "object",
       "properties": {
         "name":  { "type": "string" },
@@ -356,7 +377,17 @@
         "references": {
           "type": "array",
           "items": { "$ref": "#/$defs/location" }
-        },
+        }
+      },
+      "required": ["name", "range", "body_range", "t", "references"],
+      "additionalProperties": false
+    },
+    "type_definition": {
+      "type": "object",
+      "properties": {
+        "name":  { "type": "string" },
+        "range": { "$ref": "#/$defs/location" },
+        "body_range": { "$ref": "#/$defs/location" },
         "content": {
           "anyOf": [
             { "$ref": "#/$defs/type_expr" },
@@ -371,7 +402,7 @@
           ]
         }
       },
-      "required": ["name", "range", "body_range", "t"],
+      "required": ["name", "range", "body_range", "content"],
       "additionalProperties": false
     }
   },
@@ -391,13 +422,13 @@
         "variables": {
           "type": "object",
           "properties": {
-            ".{1,}": { "$ref": "#/$defs/definition" }
+            ".{1,}": { "$ref": "#/$defs/variable_definition" }
           }
         },
         "types": {
           "type": "object",
           "properties": {
-            ".{1,}": { "$ref": "#/$defs/definition" }
+            ".{1,}": { "$ref": "#/$defs/type_definition" }
           }
         }
       },
