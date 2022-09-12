@@ -1,4 +1,4 @@
-class Ligo < Formula
+class LIGO_CLASS_PLACEHOLDER < Formula
   desc "Friendly Smart Contract Language for Tezos"
   homepage "https://ligolang.org/"
 

@@ -11,7 +11,7 @@ GIT_SHA_REFERENCE=$(jq .id <<< ${GITLAB_REF_PAYLOAD} | tr -d "\"")
 
 TEMPLATE_FORMULA_PATH="./template/homebrew-template.rb"
 HOMEBREW_FORMULA_FOLDER_PATH="$ROOT_PATH/HomebrewFormula"
-NEW_FORMULA_PLACE="$HOMEBREW_FORMULA_FOLDER_PATH/$CURRENT_VERSION.rb"
+NEW_FORMULA_PLACE="$HOMEBREW_FORMULA_FOLDER_PATH/ligo@$CURRENT_VERSION.rb"
 LATEST_FORMULA_PLACE="$ROOT_PATH/HomebrewFormula/ligo.rb"
 
 # Place the template to the good place
@@ -21,5 +21,13 @@ cp $TEMPLATE_FORMULA_PATH $NEW_FORMULA_PLACE
 ./fill_template.sh $NEW_FORMULA_PLACE $LAST_TAG_JOB_ID $CURRENT_VERSION $GIT_SHA_REFERENCE
 
 cp $NEW_FORMULA_PLACE $LATEST_FORMULA_PLACE
+
+SED_IN_PLACE_COMMAND=(sed -i)
+if [ "$(uname)" == "Darwin" ]; then
+    # Sed is different in macos. https://stackoverflow.com/questions/7573368/in-place-edits-with-sed-on-os-x 
+    SED_IN_PLACE_COMMAND=(sed -i '')
+fi
+
+"${SED_IN_PLACE_COMMAND[@]}" -E "s#^class LigoAT.* < Formula#class Ligo < Formula#g" "$LATEST_FORMULA_PLACE"
 
 ./remove_deprecated_formula.sh $HOMEBREW_FORMULA_FOLDER_PATH $CURRENT_VERSION 
