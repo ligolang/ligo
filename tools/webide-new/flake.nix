@@ -6,8 +6,67 @@
     nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
     tezos-packaging.url = "github:serokell/tezos-packaging";
   };
-  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils }@inputs:
-  flake-utils.lib.eachSystem [ "x86_64-linux" ] (system :
+  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils, tezos-packaging }@inputs:
+  {
+    nixosModules.default = { config, pkgs, lib, ... }:
+      let system = pkgs.system; in
+      with pkgs.lib; {
+        options.services.ligo-webide-frontend = {
+          enable = mkEnableOption "ligo-webide service";
+
+          serverName = mkOption {
+            type = types.str;
+            default = "localhost";
+            description = ''
+              Name of the nginx virtualhost to use.
+            '';
+          };
+        };
+
+        options.services.ligo-webide = {
+          enable = mkEnableOption "ligo-webide service";
+        };
+
+        config = with pkgs.lib; let
+          frontend-cfg = config.services.ligo-webide-frontend;
+          webide-cfg = config.services.ligo-webide;
+          packages = self.packages.${system};
+        in
+        lib.mkIf webide-cfg.enable {
+          systemd.services.ligo-webide = {
+            after = [ "network.target" ];
+            wantedBy = [ "multi-user.target" ];
+            script =
+              ''
+                ${packages.backend}/bin/ligo-webide-backend --ligo-path ${packages.ligo-bin}/bin/ligo --tezos-client-path ${packages.tezos-client}/bin/tezos-client
+              '';
+
+          };
+
+          services.nginx = {
+            enable = true;
+            # recommendedProxySettings = true;
+            virtualHosts.ligo-webide = {
+              serverName = frontend-cfg.serverName;
+              root = packages.frontend;
+              locations."/" = {
+                index = "index.html";
+                tryFiles = "$uri $uri/ /index.html =404";
+              };
+              locations."~ ^/local(?<route>/static/.*)" = {
+                alias = packages.frontend + "$route";
+              };
+              locations."~ ^/api(?<route>/.*)" = {
+                proxyPass = "http://127.0.0.1:8080$route";
+              };
+            };
+          };
+
+          networking.firewall.allowedTCPPorts = [ 80 443 ];
+
+        };
+      };
+  } // (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system :
     let
       pkgs = import nixpkgs {
         overlays = [ nix-npm-buildpackage.overlays.default haskell-nix.overlay ];
@@ -44,5 +103,5 @@
         frontend-tslint = frontendCheck "yarn run tslint";
       };
     }
-  );
+  ));
 }
