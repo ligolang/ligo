@@ -284,6 +284,11 @@ end
 
 open Compile_type
 
+let is_recursive_lambda : Value_var.t -> _ Lambda.t -> bool =
+  fun name lambda ->
+    let open AST.Helpers in
+    VarSet.mem name (Free_variables.lambda lambda)
+
 let expression_to_variable ~raise : CST.expr -> CST.variable = function
   | EVar var -> var
   | _ as e -> raise.error @@ expected_a_variable (CST.expr_to_region e)
@@ -901,11 +906,13 @@ and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (CS
             | Some lhs_type -> Some lhs_type
             | None ->  Option.map ~f:(Utils.uncurry t_arrow) @@ Option.bind_pair (Binder.get_ascr lambda.binder, lambda.output_type)
           in
-          let fun_type = trace_option ~raise (untyped_recursive_fun name.region) @@ lhs_type in
-          let Lambda.{binder;result;output_type=_} = lambda in
-          let Arrow.{type1;type2} = get_t_arrow_exn fun_type in
-          let lambda = Lambda.{binder=Binder.map (Fn.const type1) binder;result;output_type = type2} in
-          e_recursive ~loc:(Location.lift name.region) fun_binder fun_type lambda
+          if is_recursive_lambda fun_binder lambda then
+            let fun_type = trace_option ~raise (untyped_recursive_fun name.region) @@ lhs_type in
+            let Lambda.{binder;result;output_type=_} = lambda in
+            let Arrow.{type1;type2} = get_t_arrow_exn fun_type in
+            let lambda = Lambda.{binder=Binder.map (Fn.const type1) binder;result;output_type = type2} in
+            e_recursive ~loc:(Location.lift name.region) fun_binder fun_type lambda
+          else make_e ~loc:(Location.lift name.region) @@ E_lambda lambda
         | _ -> expr
         )
       in
