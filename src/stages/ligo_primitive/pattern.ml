@@ -131,3 +131,10 @@ let rec fold_map : ('a -> 'b -> 'a * 'c) -> 'a -> 'b t -> 'a * 'c t =
     | P_record (x,lp) ->
       let acc,lp = List.fold_map ~f:self ~init:acc lp in
       ret acc @@ P_record (x,lp)
+
+let binders t =
+  fold_pattern (fun binders t ->
+    match Location.unwrap t with
+    | P_var binder -> binder :: binders
+    | _ -> binders) [] t
+      
