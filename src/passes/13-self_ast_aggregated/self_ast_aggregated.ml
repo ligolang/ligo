@@ -7,10 +7,10 @@ let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
   fun e ->
   match e.expression_content with
-  |  E_lambda { binder = { var = x ; _ } ;
+  |  E_lambda { binder ;
                 result = { expression_content = E_application { lamb ; args } ; _ } } ->
      begin match Ast_aggregated.get_e_variable args with
-     | Some y when Ligo_prim.Value_var.equal x y -> Some lamb
+     | Some y when Ligo_prim.(Binder.apply (Value_var.equal y)) binder -> Some lamb
      | _ -> None
      end
   | _ -> None
@@ -18,13 +18,13 @@ let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
 let rec get_abstractions acc e =
   let open Ast_aggregated in
   match e.expression_content with
-  | E_lambda { binder = { var ; _ } ; result ; _ } ->
-     get_abstractions (acc @ [var]) result
+  | E_lambda { binder ; result ; _ } ->
+     get_abstractions (acc @ [Ligo_prim.Binder.get_var binder]) result
   | E_matching { matchee = { expression_content = E_variable u ; _ } ; cases = Match_record { fields ; body ; _ } }
        when List.equal Ligo_prim.Value_var.equal [u] acc && Ligo_prim.Record.is_tuple fields ->
      let acc = Ligo_prim.Record.tuple_of_record fields in
      let acc = List.map ~f:snd acc in
-     let acc = List.map ~f:(fun { var ; _ } -> var) acc in
+     let acc = List.map ~f:(Ligo_prim.Binder.get_var) acc in
      get_abstractions acc body
   | E_constant { cons_name ; arguments = tuple ; _ } ->
      let rec f b e v =
@@ -56,8 +56,8 @@ let rec get_applications acc e =
 let inline_let : bool ref -> Ast_aggregated.expression -> Ast_aggregated.expression =
   fun changed e ->
   match e.expression_content with
-  | E_let_in { let_binder = { var ; _ } ; rhs ; let_result ; attr = { thunk = true ; _ } } ->
-     let e2' = Subst.subst_expression ~body:let_result ~x:var ~expr:rhs in
+  | E_let_in { let_binder ; rhs ; let_result ; attr = { thunk = true ; _ } } ->
+     let e2' = Subst.subst_expression ~body:let_result ~x:(Ligo_prim.Binder.get_var let_binder) ~expr:rhs in
      (changed := true ; e2')
   | E_application _ ->
     (* This case tries to reduce

@@ -24,7 +24,7 @@ module Value_decl (Attr : Attr) = struct
       if print_type then
         Format.fprintf ppf "%a" (Binder.pp g) b
       else
-        Format.fprintf ppf "%a" Var.Value_var.pp b.var
+        Format.fprintf ppf "%a" (Binder.pp (fun _ _ -> ())) b
     in
     Format.fprintf ppf "@[<2>const %a =@ %a%a@]"
       cond binder

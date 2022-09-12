@@ -16,7 +16,9 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | E_let_in { let_result ; attr= { hidden = true ; _ } ; _ } -> (
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
-    | E_let_in { let_binder = {var ; ascr ; attributes=_} ; rhs ; let_result ; attr=_} -> (
+    | E_let_in { let_binder ; rhs ; let_result ; attr=_} -> (
+      let var = Binder.get_var let_binder in
+      let ascr = Binder.get_ascr let_binder in
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings rhs in
       let def = make_v_def_option_type bindings var ascr (Value_var.get_location var) rhs.location in
       let (i,env) = add_shadowing_def (i,get_binder_name var) def env in
@@ -36,21 +38,23 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
-    | E_recursive { fun_name ; fun_type ; lambda = { binder = {var;ascr=input_type; attributes=_} ; output_type = _ ; result ; _ } } -> (
+    | E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type = _ ; result ; _ } } -> (
       let (i,env) =
         let def = make_v_def_option_type bindings fun_name (Some fun_type) (Value_var.get_location fun_name) result.location in
         add_shadowing_def (i,get_binder_name fun_name) def env
       in
       let (i,env) =
-        let def = make_v_def_option_type bindings var (Some input_type) (Value_var.get_location var) result.location in
+        let var = Binder.get_var binder in
+        let def = make_v_def_option_type bindings var (Option.return @@ Binder.get_ascr binder) (Value_var.get_location var) result.location in
         add_shadowing_def (i,get_binder_name var) def env
       in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
-    | E_lambda { binder={var;ascr=input_type; attributes=_} ; output_type = _ ; result } -> (
+    | E_lambda { binder ; output_type = _ ; result } -> (
       let (i,env) =
-        let def = make_v_def_option_type bindings var input_type (Value_var.get_location var) result.location in
+        let var = Binder.get_var binder in
+        let def = make_v_def_option_type bindings var (Binder.get_ascr binder) (Value_var.get_location var) result.location in
         add_shadowing_def (i,get_binder_name var) def env
       in
       let all_defs = merge_defs env all_defs in
@@ -68,9 +72,9 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
         let aux (i,env) (p: _ Pattern.t) =
           match p.wrap_content with
           | P_var binder ->
-            let loc = Value_var.get_location binder.var in
-            let proj_def = make_v_def_from_core bindings binder.var loc loc in
-            add_shadowing_def (i,get_binder_name binder.var) proj_def env
+            let loc = Value_var.get_location @@ Binder.get_var binder in
+            let proj_def = make_v_def_from_core bindings (Binder.get_var binder) loc loc in
+            add_shadowing_def (i,get_binder_name @@ Binder.get_var binder) proj_def env
           | _ -> (i,env)
         in
         let (i,env) = Pattern.fold_pattern aux (i,env) pattern in
@@ -125,8 +129,9 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       (i,all_defs,env,scopes)
     )
     | E_assign { binder ; expression ; _ } -> (
-      let def = make_v_def_option_type bindings binder.var binder.ascr (Value_var.get_location binder.var) expression.location in
-      let (i,env) = add_shadowing_def (i, get_binder_name binder.var) def env in
+      let var = Binder.get_var binder in
+      let def = make_v_def_option_type bindings var (Binder.get_ascr binder) (Value_var.get_location var) expression.location in
+      let (i,env) = add_shadowing_def (i, get_binder_name var) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,expression.location) bindings expression
     )
@@ -180,10 +185,11 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | D_value { attr = { hidden = true ; _ } ; _ } -> (
       ( i, top_def_map, inner_def_map, scopes , partials )
     )
-    | D_value { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
+    | D_value { binder ; expr ; _ } -> (
+      let var = Binder.get_var binder in
       let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,decl.location) partials.bindings expr in
       let inner_def_map = merge_defs new_inner_def_map inner_def_map in
-      let def = make_v_def_option_type partials.bindings var ascr (Value_var.get_location var) expr.location in
+      let def = make_v_def_option_type partials.bindings var (Binder.get_ascr binder) (Value_var.get_location var) expr.location in
       let (i,top_def_map) = add_shadowing_def (i,get_binder_name var) def top_def_map in
       ( i, top_def_map, inner_def_map, scopes , partials )
     )

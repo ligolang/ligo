@@ -30,15 +30,15 @@ let extract_variable_types :
           | _ -> failwith "lambda does not have type arrow"
         in
         let in_t = in_t exp.type_expression in
-        return [binder.var,in_t]
+        return [Binder.get_var binder,in_t]
       | E_recursive { fun_name ; fun_type ; lambda = { binder ; _ } } ->
         let in_t = match fun_type.type_content with
           | T_arrow { type1 ; _ } -> type1
           | _ -> failwith "rec fun does not have type arrow"
         in
-        return [ (fun_name , fun_type) ; (binder.var , in_t) ]
+        return [ (fun_name , fun_type) ; (Binder.get_var binder , in_t) ]
       | E_let_in { let_binder ; rhs ; _ } ->
-        return @@ [(let_binder.var,rhs.type_expression)]
+        return @@ [(Binder.get_var let_binder,rhs.type_expression)]
       | E_matching {matchee ; cases } -> (
         match cases with
         | Match_variant {cases ; tv=_} -> (
@@ -60,14 +60,14 @@ let extract_variable_types :
             )
         )
         | Match_record { fields ; _ }  ->
-          let aux = fun Binder.{var;ascr;attributes=_} -> (var, ascr) in
+          let aux = fun b -> (Binder.get_var b, Binder.get_ascr b) in
           return (List.map ~f:aux @@ Record.LMap.to_list fields)
       )
     in
     match decl with
     | D_value { attr = { hidden = true ; _ } ; _ } -> prev
     | D_value { binder ; expr ; _ } ->
-      let prev = add prev [binder.var,expr.type_expression] in
+      let prev = add prev [Binder.get_var binder,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_type _ -> prev
     | D_module _ -> prev

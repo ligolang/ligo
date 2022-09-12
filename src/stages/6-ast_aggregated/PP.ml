@@ -100,6 +100,9 @@ and type_expression_orig ppf (te : type_expression) : unit =
   | Some v ->
      Ast_core.(PP.type_expression ppf (t_variable v ()))
 
+let type_expression_annot ppf (te : type_expression) : unit =
+  fprintf ppf " : %a" type_expression te
+
 let rec expression ppf (e : expression) =
   fprintf ppf "%a"
     expression_content e.expression_content
@@ -149,9 +152,8 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      let fields = Rows.LMap.map (fun b -> b.Binder.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
-        (tuple_or_record_sep_expr Value_var.pp) fields
+        (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
         f body
 
 let program ppf : expression program -> unit = fun prg ->

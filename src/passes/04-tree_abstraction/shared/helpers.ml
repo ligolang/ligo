@@ -2,30 +2,28 @@ open Ligo_prim
 module Region = Simple_utils.Region
 module Attr = Lexing_shared.Attr
 
-let binder_attributes_of_strings (ss : string list) : Binder.binder_attributes =
-  let open Binder in
+let binder_attributes_of_strings (ss : string list) : bool =
   if List.mem ~equal:String.equal ss "var" then
-      var_attribute
+      true
   else if List.mem ~equal:String.equal ss "const" then
-    const_attribute
+    false
   else
-    empty_attribute
+    false
 
 let strings_of_binder_attributes
       (lang : [`CameLIGO | `ReasonLIGO | `PascaLIGO | `JsLIGO ])
-      (attributes : Binder.binder_attributes) : string list =
-  let pureligo {Binder.const_or_var} =
-    match const_or_var with
-                | Some `Var -> ["var"]
-                | _ -> [] in
-  let impureligo {Binder.const_or_var} =
-    match const_or_var with
-                | Some `Var -> ["var"]
-                | Some `Const -> ["const"]
-                | _ -> [] in
+      (binder : _ Binder.t) : string list =
+  let pureligo =
+    if Binder.is_mutable binder then
+      ["var"] else []
+  in
+  let impureligo =
+    if Binder.is_mutable binder then
+      ["var"] else ["const"]
+  in
   match lang with
-  | `CameLIGO | `ReasonLIGO -> pureligo attributes
-  | `PascaLIGO | `JsLIGO -> impureligo attributes
+  | `CameLIGO | `ReasonLIGO -> pureligo
+  | `PascaLIGO | `JsLIGO -> impureligo
 
 let decompile_attributes lst =
   let f : string -> Attr.t Region.reg = fun str ->

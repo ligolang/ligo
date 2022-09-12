@@ -33,7 +33,7 @@ module Free_variables = struct
     | E_update {struct_; update;_} -> union (self struct_) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
-      let b' = union (singleton let_binder.var) b in
+      let b' = union (Binder.apply singleton let_binder) b in
       union
         (expression b' let_result)
         (self rhs)
@@ -46,11 +46,11 @@ module Free_variables = struct
       expression_content b' @@ E_lambda lambda
     | E_module_accessor _ -> empty
     | E_assign {binder;expression=e} ->
-      let b' = union (singleton binder.var) b in
+      let b' = union (Binder.apply singleton binder) b in
       expression b' e
 
   and lambda : bindings -> (expr,ty_expr) Lambda.t -> bindings = fun b l ->
-    let b' = union (singleton l.binder.var) b in
+    let b' = union (Binder.apply singleton l.binder) b in
     expression b' l.result
 
   and expression : bindings -> expression -> bindings = fun b e ->
@@ -63,7 +63,7 @@ module Free_variables = struct
       match m with
       | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
       | Match_record {fields; body; tv = _} ->
-        f (union (List.map ~f:(fun b -> b.var) (Record.LMap.to_list fields)) b) body
+        f (union (List.map ~f:(Binder.get_var) (Record.LMap.to_list fields)) b) body
 
     and matching_expression = fun x -> matching expression x
 
@@ -202,7 +202,7 @@ let get_entry (lst : program) (name : Value_var.t) : expression option =
   let aux x =
     match Location.unwrap x with
     | D_value { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ ; thunk = _}} -> (
-      if   (Value_var.equal name binder.var)
+      if   (Binder.apply (Value_var.equal name) binder)
       then Some expr
       else None
     )

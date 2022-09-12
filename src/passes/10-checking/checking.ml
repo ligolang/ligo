@@ -449,11 +449,12 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         , let%bind result = result in
           return (E_type_abstraction { type_binder = tvar; result }) ret_type ))
     | E_let_in
-        { let_binder = { var; ascr = rhs_ascr; attributes }
+        { let_binder
         ; rhs
         ; let_result
         ; attr
         } ->
+      let rhs_ascr = Binder.get_ascr let_binder in
       let rhs =
         Option.value_map
           rhs_ascr
@@ -464,7 +465,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let rhs_type = Context.apply ctx rhs_type in
       let ctx, res_type, let_result =
         Context.enter ~ctx ~in_:(fun ctx ->
-          infer ~ctx:Context.(ctx |:: C_value (var, rhs_type)) let_result)
+          infer ~ctx:Context.(ctx |:: C_value (Binder.get_var let_binder, rhs_type)) let_result)
       in
       let attr = type_value_attr attr in
       ( ctx
@@ -473,7 +474,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         and let_result = let_result in
         return
           (E_let_in
-             { let_binder = { var; ascr = rhs_type; attributes }
+             { let_binder = Binder.map (Fn.const rhs_type) let_binder
              ; rhs
              ; let_result
              ; attr
@@ -697,14 +698,14 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       ( ctx
       , elt_type
       , return (E_module_accessor { module_path; element }) elt_type )
-    | E_assign { binder = { var; _ } as binder; expression } ->
+    | E_assign { binder; expression } ->
       let type_ =
         trace_option
           ~raise
-          (unbound_variable binder.var (Value_var.get_location var))
-        @@ Context.get_value ctx binder.var
+          (unbound_variable (Binder.get_var binder) (Value_var.get_location @@ Binder.get_var binder))
+        @@ Context.get_value ctx (Binder.get_var binder)
       in
-      let binder = { binder with ascr = type_ } in
+      let binder = Binder.map (Fn.const type_) binder in
       let ctx, expression = check ~ctx expression type_ in
       let ret_type = O.t_unit ~loc () in
       ( ctx
@@ -770,13 +771,12 @@ and check_lambda
   : Context.t * (_ Lambda.t, _, _) Elaboration.t
   =
   let open Elaboration.Let_syntax in
-  let ({ var; ascr = arg_ascr; _ } : _ Binder.t) = binder in
   let result =
     Option.value_map ret_ascr ~default:result ~f:(fun ret_ascr ->
       I.e_ascription ~loc result ret_ascr)
   in
   let ctx, arg_type, f =
-    match arg_ascr with
+    match Binder.get_ascr binder with
     | Some arg_ascr ->
       let arg_ascr = evaluate_type ~raise ~ctx arg_ascr in
       (* TODO: Kinding check for ascription *)
@@ -794,7 +794,7 @@ and check_lambda
     check_expression
       ~raise
       ~options
-      ~ctx:Context.(ctx |:: C_value (var, arg_type))
+      ~ctx:Context.(ctx |:: C_value (Binder.get_var binder, arg_type))
       result
       ret_type
   in
@@ -802,7 +802,7 @@ and check_lambda
   , let%bind result = result in
     return
       Lambda.
-        { binder = { binder with ascr = arg_type }
+        { binder = Binder.map (Fn.const arg_type) binder
         ; result = f result
         ; output_type = ret_type
         } )
@@ -818,7 +818,6 @@ and infer_lambda
   =
   let open Elaboration.Let_syntax in
   let return content type_ = return @@ O.make_e ~location:loc content type_ in
-  let ({ var; ascr = arg_ascr; _ } : _ Binder.t) = binder in
   (* Desugar return ascription to (result : ret_ascr) *)
   let result =
     Option.value_map ret_ascr ~default:result ~f:(fun ret_ascr ->
@@ -826,7 +825,7 @@ and infer_lambda
   in
   Context.Generalization.enter ~ctx ~in_:(fun ctx ->
     let ctx, arg_type =
-      match arg_ascr with
+      match Binder.get_ascr binder with
       | Some arg_ascr -> ctx, evaluate_type ~raise ~ctx arg_ascr
       | None ->
         let evar = Exists_var.fresh ~loc () in
@@ -836,7 +835,7 @@ and infer_lambda
       infer_expression
         ~raise
         ~options
-        ~ctx:Context.(ctx |:: C_value (var, arg_type))
+        ~ctx:Context.(ctx |:: C_value (Binder.get_var binder, arg_type))
         result
     in
     let type_ = O.t_arrow ~loc arg_type ret_type () in
@@ -844,7 +843,7 @@ and infer_lambda
       let%bind result = result in
       return
         (E_lambda
-           { binder = { binder with ascr = arg_type }
+           { binder = Binder.map (Fn.const arg_type) binder
            ; result
            ; output_type = ret_type
            })
@@ -963,9 +962,9 @@ and check_pattern
     | P_unit, O.T_constant { injection = Literal_types.Unit; _ } ->
       ctx, return @@ P_unit
     | P_unit, _ -> fail ()
-    | P_var ({ var; _ } as binder), _ ->
-      ( Context.(ctx |:: C_value (var, type_))
-      , return @@ P_var { binder with ascr = Some type_ } )
+    | P_var binder, _ ->
+      ( Context.(ctx |:: C_value (Binder.get_var binder, type_))
+      , return @@ P_var (Binder.map (Fn.const @@ Some type_) binder ))
     | ( P_list (Cons (hd_pat, tl_pat))
       , O.T_constant
           { injection = Literal_types.List; parameters = [ elt_type ]; _ } ) ->
@@ -1108,11 +1107,7 @@ and compile_match
       Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
     in
     O.E_let_in
-      { let_binder =
-          { var
-          ; ascr = matchee.type_expression
-          ; attributes = { const_or_var = Some `Var }
-          }
+      { let_binder = Binder.make ~mut:true var matchee.type_expression
       ; rhs = matchee
       ; let_result = { match_expr with location = loc }
       ; attr =
@@ -1175,9 +1170,11 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
       , return
         @@ D_type
              { type_binder; type_expr; type_attr = { public; hidden } } )
-    | D_value { binder = { ascr; var; attributes }; attr; expr } ->
+    | D_value { binder; attr; expr } ->
       let ctx, pos = Context.mark ctx in
       local_pos := pos :: !local_pos;
+      let var  = Binder.get_var binder in
+      let ascr = Binder.get_ascr binder in
       let expr =
         Option.value_map ascr ~default:expr ~f:(fun ascr ->
           I.e_ascription ~loc expr ascr)
@@ -1196,7 +1193,7 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
       , let%bind expr = expr in
         return
         @@ D_value
-             { binder = { ascr = Some expr_type; var; attributes }; expr; attr }
+             { binder = Binder.map (Fn.const @@ Some expr_type) binder; expr; attr }
       )
     | D_module
         { module_binder; module_; module_attr = { public; hidden } } ->

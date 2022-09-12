@@ -227,12 +227,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; result} ->
       let fv = self result in
-      VarSet.remove binder.var @@ fv
+      VarSet.remove (Binder.get_var binder) @@ fv
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; result}} ->
       let fv = self result in
-      VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv
+      VarSet.remove fun_name @@ VarSet.remove (Binder.get_var binder) @@ fv
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -247,7 +247,7 @@ module Free_variables :
       VarSet.union (self struct_) (self update)
     | E_let_in { let_binder ; rhs ; let_result } ->
       let fv2 = (self let_result) in
-      let fv2 = VarSet.remove let_binder.var fv2 in
+      let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       VarSet.union (self rhs) fv2
     | E_assign { binder=_; expression } ->
       self expression
@@ -260,7 +260,7 @@ module Free_variables :
         VarSet.remove pattern @@ varSet in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = Record.LMap.values fields |> List.map ~f:(fun b -> b.Binder.var) in
+      let pattern = Record.LMap.values fields |> List.map ~f:Binder.get_var in
       let varSet = get_fv_expr body in
       List.fold_right pattern ~f:VarSet.remove ~init:varSet
 

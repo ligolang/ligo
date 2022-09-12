@@ -35,7 +35,7 @@ let%expect_test _ =
     const main : ( list (( bls12_381_g1 * bls12_381_g2 )) * bool ) -> ( list (operation) * bool ) =
       lambda (gen#2( list (( bls12_381_g1 * bls12_381_g2 )) * bool ))( list (operation) * bool ) return
        match gen#2 with
-        | ( p , s ) ->
+        | ( p : list (( bls12_381_g1 * bls12_381_g2 )) , s : bool ) ->
         ( LIST_EMPTY() , (Tezos.pairing_check)@(p) ) |xxx}]
 
 let%expect_test _ =

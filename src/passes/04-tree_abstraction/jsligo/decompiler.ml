@@ -354,12 +354,12 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       Lambda.map Fun.id Option.return lambda in
     let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=Token.ghost_arrow;body} in
     return_expr @@ [Expr (CST.EFun (Region.wrap_ghost @@ fun_expr))]
-  | E_let_in {let_binder={var;ascr;attributes=_};rhs;let_result;attributes} ->
+  | E_let_in {let_binder;rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let attributes = filter_private attributes in
-    let var = CST.PVar (decompile_variable2 var) in
+    let var = CST.PVar (decompile_variable2 @@ Binder.get_var let_binder) in
     let binders = var in
-    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) ascr in
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr let_binder in
     let expr = decompile_expression_in rhs in
     let expr = e_hd expr in
     let let_binding = CST.{
@@ -572,7 +572,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   (* We should avoid to generate skip instruction*)
   | E_skip _ -> return_expr @@ [Expr (CST.EUnit (Region.wrap_ghost (Token.ghost_lpar,Token.ghost_rpar)))]
   | E_assign {binder;expression} ->
-    let name = decompile_variable binder.var in
+    let name = decompile_variable @@ Binder.get_var binder in
     let evar = CST.EVar name in
     let rhs = decompile_expression_in expression in
     return_expr @@ [Expr (CST.EAssign (evar, {value = CST.Eq; region = Region.ghost}, e_hd rhs))]
@@ -673,9 +673,9 @@ and function_body body =
 
 and decompile_lambda : (AST.expr, AST.ty_expr option) Lambda.t -> _ =
   fun {binder;output_type;result} ->
-    let type_expr = Option.map ~f:decompile_type_expr binder.ascr in
+    let type_expr = Option.map ~f:decompile_type_expr @@ Binder.get_ascr binder in
     let type_expr = Option.value ~default:(TVar {value = "_"; region = Region.ghost}) type_expr in
-    let v = decompile_variable binder.var in
+    let v = decompile_variable @@ Binder.get_var binder in
     let seq = CST.ESeq (Region.wrap_ghost (CST.EAnnot (Region.wrap_ghost (CST.EVar v,Token.ghost_as,type_expr)), [])) in
     let parameters = CST.EPar (Region.wrap_ghost @@ par seq ) in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in
@@ -783,9 +783,9 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
   | D_value {binder; attr; expr } ->
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
-    let var = CST.PVar (decompile_variable2 binder.var) in
+    let var = CST.PVar (decompile_variable2 @@ Binder.get_var binder) in
     let binders = var in
-    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) binder.ascr in
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr binder in
     let expr = decompile_expression_in expr in
     let expr = e_hd expr in
     let binding = CST.({
@@ -867,7 +867,7 @@ let rec decompile_pattern p =
      matching will be handled in a better manner *)
   | P_unit -> Error "no PUnit in JsLIGO CST"
   | P_var v ->
-    let name = { CST.variable = decompile_variable v.var ; attributes = [] } in
+    let name = { CST.variable = decompile_variable @@ Binder.get_var v ; attributes = [] } in
     Ok (CST.PVar (Region.wrap_ghost name))
   | P_tuple lst ->
     let rec aux = function
