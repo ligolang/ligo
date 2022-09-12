@@ -7,6 +7,8 @@ val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 val fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 
 val make : ?mut:bool -> Var.Value_var.t -> 'a -> 'a t
+val set_var : 'a t -> Var.Value_var.t -> 'a t
+
 val get_var : 'a t -> Var.Value_var.t
 val get_ascr : 'a t -> 'a
 
@@ -17,4 +19,3 @@ val equal_var : 'a t -> 'b t -> bool
 val is_mutable : 'a t -> bool
 val make_const : 'a t -> 'a t
 
-val subst_var : 'a t -> Var.Value_var.t -> 'a t

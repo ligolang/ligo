@@ -13,6 +13,7 @@ let make ?(mut=false) var ascr = {
   var ; ascr ; attributes = {mut}
 }
 
+let set_var (b : _ t) (var : Var.Value_var.t) = {b with var}
 let get_var (b : 'a t) = b.var
 let get_ascr (b : 'a t) = b.ascr
 
@@ -23,7 +24,6 @@ let equal_var (a : 'a t) (b : _ t) = Var.Value_var.equal a.var b.var
 let is_mutable (b : _ t) = b.attributes.mut
 let make_const (b : _ t) =  {b with attributes={mut=false}}
 
-let subst_var (b : _ t) (var : Var.Value_var.t) = {b with var}
 
 let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 = fun f acc {var; ascr; attributes} ->

@@ -154,16 +154,16 @@ let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -
      else return_id
   | E_lambda { binder ; output_type ; result } ->
      let var, result = subst_binder1 ~body:(Binder.get_var binder, result) ~x ~expr in
-     let binder = Binder.subst_var binder var in
+     let binder = Binder.set_var binder var in
      return @@ E_lambda { binder ; output_type ; result }
   | E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } } ->
      let fun_name, (var, result) = subst_binder2 ~body:(fun_name, (Binder.get_var binder, result)) ~x ~expr in
-     let binder = Binder.subst_var binder var in
+     let binder = Binder.set_var binder var in
      return @@ E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } }
   | E_let_in { let_binder ; rhs ; let_result ; attr } ->
      let rhs = self rhs in
      let var, let_result = subst_binder1 ~body:(Binder.get_var let_binder, let_result) ~x ~expr in
-     let let_binder = Binder.subst_var let_binder var in
+     let let_binder = Binder.set_var let_binder var in
      return @@ E_let_in { let_binder ; rhs ; let_result ; attr }
   | E_constant {cons_name; arguments} ->
      let arguments = List.map ~f:self arguments in
@@ -193,7 +193,7 @@ let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -
      let binders = List.map fields ~f:(fun (_, b) -> Binder.get_var b) in
      let binders, body = subst_binders subst_expression replace ~body:(binders, body) ~x ~expr in
      let fields = List.zip_exn fields binders in
-     let fields = List.map fields ~f:(fun ((l, b), var) -> (l, Binder.subst_var b var)) in
+     let fields = List.map fields ~f:(fun ((l, b), var) -> (l, Binder.set_var b var)) in
      let fields = Record.LMap.of_list fields in
      return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
   | E_literal _ | E_raw_code _ ->

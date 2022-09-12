@@ -103,7 +103,7 @@ let swap_binder : Scope.swapper -> _ Binder.t -> _ Binder.t = fun swaper binder 
   let self_type = swap_type_expression swaper in
   let var = Binder.apply swaper.value binder in
   let binder = Binder.map self_type binder in
-  let binder = Binder.subst_var binder var in
+  let binder = Binder.set_var binder var in
   binder
 let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper e ->
   let self = swap_expression swaper in
@@ -228,14 +228,14 @@ let binder_new : Scope.t -> _ Binder.t -> Scope.t * _ Binder.t = fun scope binde
   let self_type ?(scope = scope) = type_expression scope in
   let scope,var = Binder.apply (Scope.new_value_var scope) binder in
   let binder = Binder.map self_type binder in
-  let binder = Binder.subst_var binder var in
+  let binder = Binder.set_var binder var in
   scope, binder
 
 let binder_get : Scope.t -> _ Binder.t -> _ Binder.t = fun scope binder ->
   let self_type ?(scope = scope) = type_expression scope in
   let var = Binder.apply (Scope.get_value_var scope) binder in
   let binder = Binder.map self_type binder in
-  Binder.subst_var binder var
+  Binder.set_var binder var
 
 let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e ->
   let self ?(scope = scope) = expression scope in

@@ -365,7 +365,7 @@ and compile_declaration ~raise path scope (d : I.declaration) =
       let binder = Binder.map (fun _ -> expr.type_expression) binder in
       let scope  = Scope.push_value scope binder expr.type_expression attr path in
       let scope,var = Scope.add_path_to_var scope path @@ Binder.get_var binder in
-      let binder = Binder.subst_var binder var in
+      let binder = Binder.set_var binder var in
       scope, fun e ->
         O.e_a_let_in binder expr e attr
   | D_type _ ->
@@ -398,7 +398,7 @@ and compile_module_expr ~raise : Path.t -> Scope.t -> I.module_expr -> (Scope.t)
           Value (binder,ty,attr) ->
             let variable = O.e_a_variable (snd @@ Scope.add_path_to_var scope old_path @@ Binder.get_var binder) ty in
             let _,var = Scope.add_path_to_var scope new_path @@ Binder.get_var binder in
-            fun e -> O.e_a_let_in (Binder.subst_var binder var) variable (f e) attr
+            fun e -> O.e_a_let_in (Binder.set_var binder var) variable (f e) attr
         | Module (var) ->
           let _,scope  = Scope.find_module scope var in
           let old_path = Path.add_to_path old_path var in
