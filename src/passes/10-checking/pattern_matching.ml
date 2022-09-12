@@ -106,21 +106,21 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
         match exp.expression_content with
         | O.E_variable var when Value_var.equal var to_subst ->
           ret true { exp with expression_content = E_variable new_var }
-        | O.E_let_in letin when Value_var.equal letin.let_binder.var to_subst ->
+        | O.E_let_in letin when Binder.apply (Value_var.equal to_subst) letin.let_binder ->
           let rhs = substitute_var_in_body ~raise to_subst new_var letin.rhs in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin}
-        | O.E_assign assign when Value_var.equal assign.binder.var to_subst ->
+        | O.E_assign assign when Binder.apply (Value_var.equal to_subst) assign.binder ->
           let expression = substitute_var_in_body ~raise to_subst new_var assign.expression in
           let assign = { assign with expression } in
           ret false { exp with expression_content = E_assign assign}
-        | O.E_lambda lamb when Value_var.equal lamb.binder.var to_subst -> ret false exp
+        | O.E_lambda lamb when Binder.apply (Value_var.equal to_subst) lamb.binder -> ret false exp
         | O.E_recursive r when Value_var.equal r.fun_name to_subst -> ret false exp
         | O.E_matching m -> (
           let matchee = substitute_var_in_body ~raise to_subst new_var m.matchee in
           let cases = match m.cases with
           | Match_record {fields;body;tv} ->
-            if Record.LMap.exists (fun _ ((v : O.type_expression Binder.t)) -> Value_var.equal v.var to_subst) fields
+            if Record.LMap.exists (fun _ ((b : O.type_expression Binder.t)) -> Binder.apply (Value_var.equal to_subst) b) fields
             then m.cases
             else
               let body = substitute_var_in_body ~raise to_subst new_var body in
@@ -145,7 +145,7 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
     res
 
 let make_var_pattern : Value_var.t -> pattern =
-  fun var -> Location.wrap @@ Pattern.P_var { var ; ascr = None ; attributes = Binder.empty_attribute }
+  fun var -> Location.wrap @@ Pattern.P_var (Binder.make var None)
 
 let rec partition : ('a -> bool) -> 'a list -> 'a list list =
   fun f lst ->
@@ -236,7 +236,7 @@ and var_rule ~raise : err_loc:Location.t -> typed_pattern option -> matchees -> 
         | (phd,_)::ptl -> (
           match phd.wrap_content with
           | P_var b ->
-            let body' = substitute_var_in_body ~raise b.var mhd body in
+            let body' = substitute_var_in_body ~raise (Binder.get_var b) mhd body in
             (ptl , body')
           | P_unit -> (ptl , body)
           |  _ -> raise.error @@ corner_case __LOC__
@@ -263,7 +263,7 @@ and ctor_rule ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O.
           | [(tp,_)] -> (
             let (pattern,_) = List.hd_exn tp in
             match pattern.wrap_content with
-            | P_var x -> x.var
+            | P_var x -> Binder.get_var x
             | P_unit -> Value_var.fresh ~name:"unit_proj" ()
             | _ -> Value_var.fresh ~name:"ctor_proj" ()
           )
@@ -314,22 +314,22 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
           fun i proj_pattern ->
             let l = (Label.of_int i) in
             let field_t = extract_record_type ~raise p l t in
-            let var,attributes = match proj_pattern.wrap_content with
-              | P_var x -> x.var,x.attributes
-              | _ -> Value_var.fresh ~loc:proj_pattern.location ~name:"tuple_proj" (),Binder.empty_attribute
+            let b = match proj_pattern.wrap_content with
+              | P_var x -> Binder.map (Fn.const field_t) x
+              | _ -> Binder.make (Value_var.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()) field_t
             in
-            (l, {var;ascr=field_t;attributes})
+            (l, b)
         in
         List.mapi ~f:aux ps
       | P_record (labels,patterns) , t ->
         let aux : (Label.t * _ Pattern.t)  -> (Label.t * (O.type_expression Binder.t)) =
           fun (l,proj_pattern) ->
-            let var,attributes = match proj_pattern.wrap_content with
-              | P_var x -> x.var,x.attributes
-              | _ -> Value_var.fresh ~loc:proj_pattern.location ~name:"record_proj" (),Binder.empty_attribute
-            in
             let field_t = extract_record_type ~raise p l t in
-            (l , {var;ascr=field_t; attributes})
+            let b = match proj_pattern.wrap_content with
+              | P_var x -> Binder.map (Fn.const field_t) x
+              | _ -> Binder.make (Value_var.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()) field_t
+            in
+            (l, b)
         in
         List.map ~f:aux (List.zip_exn labels patterns)
       | _ -> raise.error @@ corner_case __LOC__
@@ -389,7 +389,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
     let matchee_t = get_pattern_type ~raise eqs in
     let eqs' = List.map ~f:aux eqs in
     let fields = Record.LMap.of_list lb in
-    let new_matchees = List.map ~f:(fun (_,b) -> b.var) lb in
+    let new_matchees = List.map ~f:(Fn.compose Binder.get_var snd) lb in
     let body = match_ ~raise ~err_loc (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body ; tv = snd product_shape } in
     let matchee = O.e_a_variable mhd matchee_t in

@@ -11,16 +11,16 @@ let sap_for_all (b : (Ast_core.type_expression option) Ligo_prim.Binder.t) =
        else
          t
     | _ -> t in
-  let ascr = Option.map ~f b.ascr in
-  { b with ascr }
+  let b = Ligo_prim.Binder.map (Option.map ~f) b in
+  b
 
 (* This pass removes '@' prefix from binders.
    E.g., `let @or = ...` becomes `let or = ...` *)
 let at_prefix (b : (Ast_core.type_expression option) Ligo_prim.Binder.t) =
-  if not (Ligo_prim.Value_var.is_generated b.var) then
-    let name = Ligo_prim.Value_var.to_name_exn b.var in
+  if not (Ligo_prim.Value_var.is_generated @@ Ligo_prim.Binder.get_var b) then
+    let name = Ligo_prim.Value_var.to_name_exn @@ Ligo_prim.Binder.get_var b in
     match String.chop_prefix name ~prefix:"@" with
-    | Some name -> { b with var = Ligo_prim.Value_var.of_input_var name }
+    | Some name -> Ligo_prim.Binder.set_var b @@ Ligo_prim.Value_var.of_input_var name
     | None -> b
   else
     b

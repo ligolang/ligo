@@ -90,11 +90,11 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
   | E_recursive r ->
     let r = Recursive.map self self_type r in
     return @@ E_recursive r
-  | E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr} ->
-    let ascr = self_type ascr in
+  | E_let_in {let_binder;rhs;let_result;attr} ->
+    let let_binder = Binder.map self_type let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
-    return @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
+    return @@ E_let_in {let_binder;rhs;let_result;attr}
   | E_type_inst {forall; type_} ->
     let forall = self forall in
     let type_  = self_type type_ in
@@ -127,10 +127,10 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
   | E_module_accessor {module_path;element} ->
     let _,module_path = List.fold_map ~init:(scope) module_path ~f:(Scope.get_module_var) in
     return @@ E_module_accessor {module_path;element}
-  | E_assign {binder={var;ascr;attributes};expression} ->
-    let ascr = self_type ascr in
+  | E_assign {binder;expression} ->
+    let binder = Binder.map self_type binder in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};expression}
+    return @@ E_assign {binder;expression}
 
 and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in
@@ -145,10 +145,7 @@ and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun sco
     let tv   = self_type tv in
     return @@ AST.Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = Record.map (fun Binder.{var;ascr;attributes} ->
-      let ascr = self_type ascr in
-      Binder.{var;ascr;attributes}
-    ) fields in
+    let fields = Record.map (Binder.map self_type) fields in
     let body = self body in
     let tv   = self_type tv in
     return @@ AST.Match_record {fields;body;tv}

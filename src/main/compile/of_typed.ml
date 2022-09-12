@@ -66,7 +66,7 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
         (* at this point the self-pass on views has been applied, we assume the types are correct *)
         trace_option ~raise main_unknown @@ Ast_typed.get_view_form view_ty in
       let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
-      Label.of_int i, Ast_typed.(e_a_variable view_binder.Binder.var ty)
+      Label.of_int i, Ast_typed.(e_a_variable (Binder.get_var view_binder) ty)
     in
     let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views_info) in
     let aggregated_prg = compile_program ~raise prg in
@@ -81,10 +81,10 @@ let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list
       | D_value {binder;attr;expr} when attr.public ->
         if only_ep then (
           if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content) then
-            binder.var::prev else prev
+            (Binder.get_var binder)::prev else prev
         )
         else
-          binder.var::prev
+          (Binder.get_var binder)::prev
       | _ -> prev)
     ~init:[] m
 

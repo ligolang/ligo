@@ -78,9 +78,11 @@ and type_expression ppf (te : type_expression) : unit =
   else
     fprintf ppf "%a" type_content te.type_content
 
+let type_expression_annot ppf (te : type_expression) : unit =
+  fprintf ppf " : %a" type_expression te
 let type_expression_option ppf (te : type_expression option) : unit =
   match te with
-  | Some te -> fprintf ppf " : %a" type_expression te
+  | Some te -> type_expression_annot ppf te
   | None    -> fprintf ppf ""
 
 let rec type_content_orig : formatter -> type_content -> unit =
@@ -158,9 +160,8 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      let fields = Rows.LMap.map (fun b -> b.Binder.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
-        (tuple_or_record_sep_expr Value_var.pp) fields
+        (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
         f body
 
 and declaration ppf (d : declaration) = match Location.unwrap d with

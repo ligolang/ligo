@@ -61,7 +61,7 @@ let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
   let _, fv = FV.expression lambda.result in
   let is_binder_shadowed_in_body
     = not @@ List.mem fv fun_name ~equal:var_equal in
-  var_equal fun_name lambda.binder.var ||
+  var_equal fun_name (Binder.get_var lambda.binder) ||
   is_binder_shadowed_in_body
 
 let check_tail_expression ~raise : expression -> expression = fun e ->

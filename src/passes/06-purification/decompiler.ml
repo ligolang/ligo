@@ -81,11 +81,10 @@ let rec decompile_expression : O.expression -> I.expression =
     let recs = Recursive.map self self_type recs in
     return @@ I.E_recursive recs
   | O.E_let_in {let_binder;attributes;rhs;let_result} ->
-    let {var;ascr;attributes=var_attributes} : _ Binder.t = let_binder in
-    let ascr = Option.map ~f:decompile_type_expression ascr in
+    let let_binder = Binder.map (Option.map ~f:decompile_type_expression) let_binder in
     let rhs = decompile_expression rhs in
     let let_result = decompile_expression let_result in
-    return @@ I.E_let_in {let_binder={var;ascr;attributes=var_attributes};attributes;rhs;let_result}
+    return @@ I.E_let_in {let_binder;attributes;rhs;let_result}
   | O.E_type_in ti ->
     let ti = Type_in.map self self_type ti in
     return @@ I.E_type_in ti

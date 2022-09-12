@@ -340,8 +340,8 @@ let remove_from var vars =
 let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Pattern.t) =
   Pattern.fold_pattern (fun vars p ->
       match p.wrap_content with
-      | Pattern.P_var {var;attributes;_} when pred attributes ->
-         var :: vars
+      | Pattern.P_var b when pred (Binder.is_mutable b) ->
+        Binder.get_var b :: vars
       | _ -> vars) [] pattern
 
 module Free_variables :
@@ -397,18 +397,18 @@ module Free_variables :
       self element
     | E_application {lamb; args} ->
       VarSet.union (self lamb) (self args)
-    | E_let_in {let_binder = {var;ascr=_;attributes=_}; rhs; let_result;_} ->
-      VarSet.union (self rhs) (VarSet.remove var (self let_result))
+    | E_let_in {let_binder ; rhs; let_result;_} ->
+      VarSet.union (self rhs) (VarSet.remove (Binder.get_var let_binder) (self let_result))
     | E_type_in {let_result;type_binder=_;rhs=_} ->
       self let_result
     | E_mod_in {rhs;let_result;module_binder=_} ->
       VarSet.union (get_fv_module_expr rhs.wrap_content) (self let_result)
-    | E_lambda {binder = {var;ascr=_;attributes=_}; result;output_type=_} ->
-      VarSet.remove var @@ self result
+    | E_lambda {binder; result; output_type=_} ->
+      VarSet.remove (Binder.get_var binder) @@ self result
     | E_type_abstraction {type_binder=_;result} ->
       self result
-    | E_recursive {fun_name; lambda = {binder = {var;ascr=_;attributes=_}; result;_};fun_type=_} ->
-      VarSet.remove fun_name @@ VarSet.remove var @@ self result
+    | E_recursive {fun_name; lambda = {binder; result; _};fun_type=_} ->
+      VarSet.remove fun_name @@ VarSet.remove (Binder.get_var binder) @@ self result
     | E_constant {arguments;cons_name=_} ->
       unions @@ List.map ~f:self arguments
     | E_cond {condition; then_clause; else_clause} ->
@@ -416,7 +416,7 @@ module Free_variables :
     | E_sequence {expr1; expr2} ->
       VarSet.union (self expr1) (self expr2)
     | E_assign {binder; expression} ->
-      unions @@ [VarSet.singleton binder.var; self expression]
+      unions @@ [VarSet.singleton (Binder.get_var binder); self expression]
     | E_for {binder; start; final; incr; f_body} ->
       VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
     | E_for_each {fe_binder = (binder, None); collection; fe_body; collection_type = _} ->

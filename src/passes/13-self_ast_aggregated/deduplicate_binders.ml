@@ -99,6 +99,12 @@ let rec swap_type_expression : Scope.swapper -> type_expression -> type_expressi
     let type_ = self type_ in
     return @@ T_for_all {ty_binder;kind;type_}
 
+let swap_binder : Scope.swapper -> _ Binder.t -> _ Binder.t = fun swaper binder ->
+  let self_type = swap_type_expression swaper in
+  let var = Binder.apply swaper.value binder in
+  let binder = Binder.map self_type binder in
+  let binder = Binder.set_var binder var in
+  binder
 let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper e ->
   let self = swap_expression swaper in
   let self_type = swap_type_expression swaper in
@@ -116,30 +122,27 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let lamb = self lamb in
     let args = self args in
     return @@ E_application {lamb;args}
-  | E_lambda {binder={var;ascr;attributes};output_type;result} ->
-    let var = swaper.value var in
-    let ascr = self_type ascr in
+  | E_lambda {binder;output_type;result} ->
+    let binder = swap_binder swaper binder in
     let output_type = self_type output_type in
     let result = self result in
-    return @@ E_lambda {binder={var;ascr;attributes};output_type;result}
+    return @@ E_lambda {binder;output_type;result}
   | E_type_abstraction {type_binder;result} ->
     let type_binder = swaper.type_ type_binder in
     let result = self result in
     return @@ E_type_abstraction {type_binder;result}
-  | E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};output_type;result}} ->
+  | E_recursive {fun_name;fun_type;lambda={binder;output_type;result}} ->
     let fun_name = swaper.value fun_name in
     let fun_type = self_type fun_type in
-    let var = swaper.value var in
-    let ascr = self_type ascr in
+    let binder = swap_binder swaper binder in
     let output_type = self_type output_type in
     let result = self result in
-    return @@ E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};output_type;result}}
-  | E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr} ->
-    let var = swaper.value var in
-    let ascr = self_type ascr in
+    return @@ E_recursive {fun_name;fun_type;lambda={binder;output_type;result}}
+  | E_let_in {let_binder;rhs;let_result;attr} ->
+    let let_binder = swap_binder swaper let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
-    return @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
+    return @@ E_let_in {let_binder;rhs;let_result;attr}
   | E_type_inst {forall; type_} ->
     let forall = self forall in
     let type_  = self_type type_ in
@@ -164,11 +167,10 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let struct_ = self struct_ in
     let update = self update in
     return @@ E_update {struct_;path;update}
-  | E_assign {binder={var;ascr;attributes};expression} ->
-    let var = swaper.value var in
-    let ascr = self_type ascr in
+  | E_assign {binder;expression} ->
+    let binder = swap_binder swaper binder in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};expression}
+    return @@ E_assign {binder;expression}
 
 and matching_cases : Scope.swapper -> matching_expr -> matching_expr = fun swaper me ->
   let self = swap_expression swaper in
@@ -183,10 +185,7 @@ and matching_cases : Scope.swapper -> matching_expr -> matching_expr = fun swape
     let tv   = self_type tv in
     return @@ Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = Record.map (fun ({var;ascr;attributes} : _ Binder.t) : _ Binder.t ->
-      let ascr = self_type ascr in
-      {var;ascr;attributes}
-    ) fields in
+    let fields = Record.map (Binder.map self_type) fields in
     let body = self body in
     let tv   = self_type tv in
     return @@ Match_record {fields;body;tv}
@@ -225,6 +224,19 @@ let rec type_expression : Scope.t -> type_expression -> type_expression = fun sc
     let type_ = self ~scope type_ in
     return @@ T_for_all {ty_binder;kind;type_}
 
+let binder_new : Scope.t -> _ Binder.t -> Scope.t * _ Binder.t = fun scope binder ->
+  let self_type ?(scope = scope) = type_expression scope in
+  let scope,var = Binder.apply (Scope.new_value_var scope) binder in
+  let binder = Binder.map self_type binder in
+  let binder = Binder.set_var binder var in
+  scope, binder
+
+let binder_get : Scope.t -> _ Binder.t -> _ Binder.t = fun scope binder ->
+  let self_type ?(scope = scope) = type_expression scope in
+  let var = Binder.apply (Scope.get_value_var scope) binder in
+  let binder = Binder.map self_type binder in
+  Binder.set_var binder var
+
 let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e ->
   let self ?(scope = scope) = expression scope in
   let self_type ?(scope = scope) = type_expression scope in
@@ -242,37 +254,33 @@ let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e
     let _,lamb = self lamb in
     let _,args = self args in
     return @@ E_application {lamb;args}
-  | E_lambda {binder={var;ascr;attributes};output_type;result} ->
-    let scope,var = Scope.new_value_var scope var in
-    let ascr = self_type ascr in
+  | E_lambda {binder;output_type;result} ->
+    let scope,binder = binder_new scope binder in
     let output_type = self_type output_type in
     let _,result = self ~scope result in
-    return @@ E_lambda {binder={var;ascr;attributes};output_type;result}
+    return @@ E_lambda {binder;output_type;result}
   | E_type_abstraction {type_binder;result} ->
     (* With current implementation of polymorphism, deshadowing type var breaks stuff *)
     (* let scope,type_binder = Scope.new_type_var scope type_binder in *)
     let _,result = self ~scope result in
     return @@ E_type_abstraction {type_binder;result}
-  | E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};output_type;result}} ->
+  | E_recursive {fun_name;fun_type;lambda={binder;output_type;result}} ->
     let fun_name = Scope.get_value_var scope fun_name in
     let fun_type = self_type fun_type in
-    let scope,var = Scope.new_value_var scope var in
-    let ascr = self_type ascr in
+    let scope,binder = binder_new scope binder in
     let output_type = self_type output_type in
     let _,result = self ~scope result in
-    return @@ E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};output_type;result}}
-  | E_let_in {let_binder={var;ascr;attributes};rhs={expression_content=E_recursive _;} as rhs;let_result;attr} ->
-    let scope,var = Scope.new_value_var scope var in
-    let ascr = self_type ascr in
+    return @@ E_recursive {fun_name;fun_type;lambda={binder;output_type;result}}
+  | E_let_in {let_binder;rhs={expression_content=E_recursive _;} as rhs;let_result;attr} ->
+    let scope,let_binder = binder_new scope let_binder in
     let _,rhs = self ~scope rhs in
     let scope,let_result = self ~scope let_result in
-    return ~scope @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
-  | E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr} ->
-    let scope,var = Scope.new_value_var scope var in
-    let ascr = self_type ascr in
+    return ~scope @@ E_let_in {let_binder;rhs;let_result;attr}
+  | E_let_in {let_binder;rhs;let_result;attr} ->
+    let scope,let_binder = binder_new scope let_binder in
     let _,rhs = self rhs in
     let scope,let_result = self ~scope let_result in
-    return ~scope @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
+    return ~scope @@ E_let_in {let_binder;rhs;let_result;attr}
   | E_type_inst {forall; type_} ->
     let _,forall = self forall in
     let type_  = self_type type_ in
@@ -297,11 +305,10 @@ let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e
     let _,struct_ = self struct_ in
     let _,update = self update in
     return @@ E_update {struct_;path;update}
-  | E_assign {binder={var;ascr;attributes};expression} ->
-    let var = Scope.get_value_var scope var in
-    let ascr = self_type ascr in
+  | E_assign {binder;expression} ->
+    let binder = binder_get scope binder in
     let _,expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};expression}
+    return @@ E_assign {binder;expression}
 
 and matching_cases : Scope.t -> matching_expr -> matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in
@@ -317,11 +324,7 @@ and matching_cases : Scope.t -> matching_expr -> matching_expr = fun scope me ->
     let tv   = self_type tv in
     return @@ Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let scope,fields = Record.fold_map (fun scope ({var;ascr;attributes} : _ Binder.t) ->
-      let scope,var = Scope.new_value_var scope var in
-      let ascr = self_type ascr in
-      scope,({var;ascr;attributes}: _ Binder.t)
-    ) scope fields in
+    let scope,fields = Record.fold_map (binder_new) scope fields in
     let _,body = self ~scope body in
     let tv   = self_type tv in
     return @@ Match_record {fields;body;tv}

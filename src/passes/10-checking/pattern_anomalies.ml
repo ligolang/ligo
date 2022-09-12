@@ -19,8 +19,7 @@ let nil_label  = Label.of_string "#NIL"
 let t_unit = AST.t_unit ()
 let wild_binder =
   let var = Value_var.wildcard in
-  let attributes = Binder.empty_attribute in
-  Binder.{ var ; ascr = None ; attributes }
+  Binder.make var None
 
 type simple_pattern =
     SP_Wildcard of AST.type_expression
