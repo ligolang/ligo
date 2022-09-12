@@ -437,9 +437,9 @@ type myd =
   sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]]
 const t1 : ( sum[Cons -> ( int * int ) , Nil -> unit] * sum[Cons -> ( int * int ) , Nil -> unit] ) -> int =
   lambda (x( sum[Cons -> ( int * int ) , Nil -> unit] * sum[Cons -> ( int * int ) , Nil -> unit] ))int return
-  let frsum[Cons -> ( int * int ) , Nil -> unit] -> int =
+  let fr : sum[Cons -> ( int * int ) , Nil -> unit] -> int =
     lambda (_xsum[Cons -> ( int * int ) , Nil -> unit])int return 1 in
-  let flsum[Cons -> ( int * int ) , Nil -> unit] -> int =
+  let fl : sum[Cons -> ( int * int ) , Nil -> unit] -> int =
     lambda (_xsum[Cons -> ( int * int ) , Nil -> unit])int return 2 in
    match x with
     | ( tuple_proj#16 : sum[Cons -> ( int * int ) , Nil -> unit] , ys : sum[Cons -> ( int * int ) , Nil -> unit] ) ->
@@ -462,15 +462,15 @@ const t2 : sum[Cons -> ( int * int ) , Nil -> unit] -> sum[Cons -> ( int * int )
                                                         | Cons ctor_proj#35 ->
                                                            match ctor_proj#35 with
                                                             | ( a : int , b : int ) ->
-                                                            let old_bint =
+                                                            let old_b : int =
                                                               b in
-                                                            let bint =
+                                                            let b : int =
                                                                match
                                                                 y with
                                                                 | Cons ctor_proj#34 ->
                                                                   ADD(a , b)
                                                                 | Nil unit_proj#33 ->
-                                                                  let fint -> int =
+                                                                  let f : int -> int =
                                                                     lambda (bint)int return
                                                                   ADD
                                                                   (a , b) in
@@ -486,7 +486,7 @@ const t2 : sum[Cons -> ( int * int ) , Nil -> unit] -> sum[Cons -> ( int * int )
                                                                match
                                                                 ctor_proj#30 with
                                                                 | ( _a : int , b : int ) ->
-                                                                let astring =
+                                                                let a : string =
                                                                   "a" in
                                                                 ADD((int@{nat})@(
                                                                     (String.length)@(a)) ,
@@ -518,20 +518,20 @@ const t2_3 : sum[Cons -> ( int * int ) , Nil -> unit] -> sum[Cons -> ( int * int
   sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] -> int return lambda (y
   sum[Cons -> ( int * int ) , Nil -> unit])sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] -> int return lambda (x2
   sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]])int return
-  let t2int =
+  let t2 : int =
      match x with
       | Cons ctor_proj#52 ->
          match ctor_proj#52 with
           | ( a : int , b : int ) ->
-          let old_bint = b in
-          let bint =
+          let old_b : int = b in
+          let b : int =
              match y with
               | Cons ctor_proj#49 ->
                  match ctor_proj#49 with
                   | ( a : int , b : int ) ->
                   ADD(a , b)
               | Nil unit_proj#51 ->
-                let fint -> int = lambda (bint)int return ADD(a , b) in
+                let f : int -> int = lambda (bint)int return ADD(a , b) in
                 (f)@(ADD(b , 1)) in
           ADD(ADD(a , old_b) , b)
       | Nil unit_proj#54 ->
@@ -539,10 +539,11 @@ const t2_3 : sum[Cons -> ( int * int ) , Nil -> unit] -> sum[Cons -> ( int * int
           | Cons ctor_proj#46 ->
              match ctor_proj#46 with
               | ( _a : int , b : int ) ->
-              let astring = "a" in ADD((int@{nat})@((String.length)@(a)) , b)
+              let a : string = "a" in
+              ADD((int@{nat})@((String.length)@(a)) , b)
           | Nil unit_proj#48 ->
             1 in
-  let t3int =
+  let t3 : int =
      match x2 with
       | One ctor_proj#58 ->
          match ctor_proj#58 with
@@ -566,7 +567,7 @@ const t4 : sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a
   lambda (xsum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]])
   sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] -> int return lambda (y
   sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]])int return
-  let match_#63[@var]( sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] * sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] ) =
+  let match_#63[@var] : ( sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] * sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] ) =
     ( x , y ) in
    match match_#63 with
     | ( a : sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] , tuple_proj#64 : sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]] ) ->
@@ -593,12 +594,14 @@ const t4 : sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a
       | One _x ->
         1
 const t5 : int -> int =
-  lambda (xint)int return let match_#79[@var]( int * unit ) = ( x , unit ) in
+  lambda (xint)int return let match_#79[@var] : ( int * unit ) =
+                            ( x , unit ) in
                            match match_#79 with
                             | ( a : int , tuple_proj#80 : unit ) ->
                             a
 const t6 : int -> int =
-  lambda (xint)int return let match_#82[@var]( int * unit ) = ( x , unit ) in
+  lambda (xint)int return let match_#82[@var] : ( int * unit ) =
+                            ( x , unit ) in
                            match match_#82 with
                             | ( gen#4 : int , gen#5 : unit ) ->
                             2
@@ -609,7 +612,7 @@ const t7 : option (int) -> int =
                                            1
 const t8 : option (( int * int )) -> int -> int =
   lambda (xoption (( int * int )))int -> int return lambda (yint)int return
-  let match_#85[@var]( option (( int * int )) * int ) = ( x , y ) in
+  let match_#85[@var] : ( option (( int * int )) * int ) = ( x , y ) in
    match match_#85 with
     | ( tuple_proj#86 : option (( int * int )) , x : int ) ->
      match tuple_proj#86 with
@@ -621,7 +624,7 @@ const t8 : option (( int * int )) -> int -> int =
         x
 const t9 : option (int) -> option (int) -> int =
   lambda (xoption (int))option (int) -> int return lambda (yoption (int))int return
-  let match_#92[@var]( option (int) * option (int) ) = ( x , y ) in
+  let match_#92[@var] : ( option (int) * option (int) ) = ( x , y ) in
    match match_#92 with
     | ( tuple_proj#93 : option (int) , ys : option (int) ) ->
      match tuple_proj#93 with
@@ -639,7 +642,7 @@ const fl : sum[Consi -> option (int) , Nili -> unit] -> int =
 const fo : option (int) -> int = lambda (_xoption (int))int return 2
 const t10 : sum[Consi -> option (int) , Nili -> unit] -> sum[Consi -> option (int) , Nili -> unit] -> int =
   lambda (xsum[Consi -> option (int) , Nili -> unit])sum[Consi -> option (int) , Nili -> unit] -> int return lambda (y
-  sum[Consi -> option (int) , Nili -> unit])int return let match_#103[@var]
+  sum[Consi -> option (int) , Nili -> unit])int return let match_#103[@var] :
                                                        ( sum[Consi -> option (int) , Nili -> unit] * sum[Consi -> option (int) , Nili -> unit] ) =
                                                          ( x , y ) in
                                                         match match_#103 with
@@ -669,7 +672,7 @@ const t10 : sum[Consi -> option (int) , Nili -> unit] -> sum[Consi -> option (in
                                                                     ((fo)@(ctor_proj#120) ,
                                                                     (fo)@(ctor_proj#118))
                                                                     | Some _b ->
-                                                                    let bint =
+                                                                    let b : int =
                                                                     1 in b
                                                                | Nili unit_proj#117 ->
                                                                  (fl)@(tuple_proj#104)
@@ -677,7 +680,7 @@ const t10 : sum[Consi -> option (int) , Nili -> unit] -> sum[Consi -> option (in
                                                              (fl)@(ys)
 const t11 : sum[Consi -> option (int) , Nili -> unit] -> sum[Consi -> option (int) , Nili -> unit] -> int =
   lambda (xsum[Consi -> option (int) , Nili -> unit])sum[Consi -> option (int) , Nili -> unit] -> int return lambda (y
-  sum[Consi -> option (int) , Nili -> unit])int return let match_#122[@var]
+  sum[Consi -> option (int) , Nili -> unit])int return let match_#122[@var] :
                                                        ( sum[Consi -> option (int) , Nili -> unit] * sum[Consi -> option (int) , Nili -> unit] ) =
                                                          ( x , y ) in
                                                         match match_#122 with
@@ -722,7 +725,7 @@ const t11 : sum[Consi -> option (int) , Nili -> unit] -> sum[Consi -> option (in
                                                                     ((fo)@(ctor_proj#138) ,
                                                                     (fo)@(ctor_proj#136))
                                                                     | Some b ->
-                                                                    let aint =
+                                                                    let a : int =
                                                                     1 in
                                                                     ADD
                                                                     (a ,
@@ -768,7 +771,7 @@ const b_empty_a_not : record[a -> option (list (int)) , b -> list (int)] =
   record[a -> Some(CONS(222 , LIST_EMPTY())) , b -> LIST_EMPTY()]
 const t13 : record[a -> option (list (int)) , b -> list (int)] -> record[a -> option (list (int)) , b -> list (int)] -> int =
   lambda (xrecord[a -> option (list (int)) , b -> list (int)])record[a -> option (list (int)) , b -> list (int)] -> int return lambda (y
-  record[a -> option (list (int)) , b -> list (int)])int return let match_#157[@var]
+  record[a -> option (list (int)) , b -> list (int)])int return let match_#157[@var] :
                                                                 ( record[a -> option (list (int)) , b -> list (int)] * record[a -> option (list (int)) , b -> list (int)] ) =
                                                                   ( x , y ) in
                                                                  match

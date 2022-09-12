@@ -92,7 +92,7 @@ let%expect_test _ =
       lambda (gen#5( int * int ))( list (operation) * int ) return  match
                                                                      gen#5 with
                                                                      | ( p : int , s : int ) ->
-                                                                     let sint =
+                                                                     let s : int =
                                                                        ADD
                                                                        (ADD
                                                                         (p ,
