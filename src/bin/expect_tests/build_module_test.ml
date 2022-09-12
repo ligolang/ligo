@@ -91,7 +91,7 @@ let%expect_test _ =
     const main : ( int * int ) -> ( list (operation) * int ) =
       lambda (gen#5( int * int ))( list (operation) * int ) return  match
                                                                      gen#5 with
-                                                                     | ( p , s ) ->
+                                                                     | ( p : int , s : int ) ->
                                                                      let sint =
                                                                        ADD
                                                                        (ADD
@@ -127,7 +127,7 @@ let%expect_test _ =
     const main : ( unit * string ) -> ( list (operation) * string ) =
       lambda (gen#2( unit * string ))( list (operation) * string ) return
        match gen#2 with
-        | ( _#4 , _#3 ) ->
+        | ( _#4 : unit , _#3 : string ) ->
         ( LIST_EMPTY() , CONCAT(Errors.undefined_token , Storage.s) ) |}]
 
 let%expect_test _ =

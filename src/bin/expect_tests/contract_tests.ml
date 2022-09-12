@@ -2609,13 +2609,13 @@ const c : unit -> ( operation * address ) =
                                                       ( unit * unit ))
                                                       ( list (operation) * unit ) return
                                                        match gen#2 with
-                                                        | ( _#4 , _#3 ) ->
+                                                        | ( _#4 : unit , _#3 : unit ) ->
                                                         ( LIST_EMPTY() ,
                                                           unit )))@(None(unit)))@(0mutez))@(unit)
 const foo : unit =
   let match_#8[@var]( operation * address ) = (c)@(unit) in
    match match_#8 with
-    | ( _a , _b ) ->
+    | ( _a : operation , _b : address ) ->
     unit
 const c : unit -> ( int * string * nat * int * string * nat * int * string * nat * int * string ) =
   lambda (gen#6unit)( int * string * nat * int * string * nat * int * string * nat * int * string ) return
@@ -2634,7 +2634,7 @@ const foo : unit =
   let match_#10[@var]( int * string * nat * int * string * nat * int * string * nat * int * string ) =
     (c)@(unit) in
    match match_#10 with
-    | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+    | ( _i1 : int , _s1 : string , _n1 : nat , _i2 : int , _s2 : string , _n2 : nat , _i3 : int , _s3 : string , _n3 : nat , _i4 : int , _s4 : string ) ->
     unit |} ]
 
 (* Module being defined does not type with its own type *)

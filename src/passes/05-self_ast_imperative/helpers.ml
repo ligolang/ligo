@@ -342,7 +342,7 @@ let remove_from var vars =
 let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Pattern.t) =
   Pattern.fold_pattern (fun vars p ->
       match p.wrap_content with
-      | Pattern.P_var {var;attributes;_} when pred attributes ->
-         var :: vars
+      | Pattern.P_var b when pred (Binder.is_mutable b) ->
+        Binder.get_var b :: vars
       | _ -> vars) [] pattern
 

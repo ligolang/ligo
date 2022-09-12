@@ -499,7 +499,7 @@ let get_views : program -> (Value_var.t * Location.t) list = fun p ->
   let f : declaration -> (Value_var.t * Location.t) list -> (Value_var.t * Location.t) list =
     fun {wrap_content=decl ; location=_ } acc ->
       match decl with
-      | D_value { binder ; expr=_ ; attr } when attr.view -> (binder.var, Value_var.get_location binder.var)::acc
+      | D_value { binder ; expr=_ ; attr } when attr.view -> let var = Binder.get_var binder in (var, Value_var.get_location var)::acc
       | _ -> acc
   in
   List.fold_right ~init:[] ~f p

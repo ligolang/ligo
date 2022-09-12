@@ -28,7 +28,7 @@ end = struct
       let aux ({ pattern; body } : _ Match_expr.match_case) =
         let bound =
           Pattern.binders pattern
-          |> List.map ~f:(fun binder -> binder.Binder.var)
+          |> List.map ~f:(Binder.get_var)
         in
         List.fold_right bound ~f:VarSet.remove ~init:(self body)
       in
@@ -51,28 +51,27 @@ end = struct
     | E_tuple t -> unions @@ List.map ~f:self t
     | E_constructor { element; _ } -> self element
     | E_application { lamb; args } -> VarSet.union (self lamb) (self args)
-    | E_let_in
-        { let_binder = { var; ascr = _; attributes = _ }; rhs; let_result; _ }
-      -> VarSet.union (self rhs) (VarSet.remove var (self let_result))
+    | E_let_in { let_binder; rhs; let_result; _ }
+      -> VarSet.union (self rhs) (VarSet.remove (Binder.get_var let_binder) (self let_result))
     | E_type_in { let_result; type_binder = _; rhs = _ } -> self let_result
     | E_mod_in { rhs; let_result; module_binder = _ } ->
       VarSet.union (get_fv_module_expr rhs.wrap_content) (self let_result)
     | E_lambda
-        { binder = { var; ascr = _; attributes = _ }; result; output_type = _ }
-      -> VarSet.remove var @@ self result
+        { binder; result; output_type = _ }
+      -> VarSet.remove (Binder.get_var binder) @@ self result
     | E_type_abstraction { type_binder = _; result } -> self result
     | E_recursive
         { fun_name
-        ; lambda = { binder = { var; ascr = _; attributes = _ }; result; _ }
+        ; lambda = { binder; result; _ }
         ; fun_type = _
-        } -> VarSet.remove fun_name @@ VarSet.remove var @@ self result
+        } -> VarSet.remove fun_name @@ VarSet.remove (Binder.get_var binder) @@ self result
     | E_constant { arguments; cons_name = _ } ->
       unions @@ List.map ~f:self arguments
     | E_cond { condition; then_clause; else_clause } ->
       unions @@ [ self condition; self then_clause; self else_clause ]
     | E_sequence { expr1; expr2 } -> VarSet.union (self expr1) (self expr2)
     | E_assign { binder; expression } ->
-      unions @@ [ VarSet.singleton binder.var; self expression ]
+      unions @@ [ VarSet.singleton (Binder.get_var binder); self expression ]
     | E_for { binder; start; final; incr; f_body } ->
       VarSet.remove binder
       @@ unions [ self start; self final; self incr; self f_body ]
@@ -109,7 +108,7 @@ end = struct
 
   let lambda
     Lambda.
-      { binder = { var; ascr = _; attributes = _ }; result; output_type = _ }
+      { binder; result; output_type = _ }
     =
-    VarSet.remove var @@ get_fv_expr result
+    VarSet.remove (Binder.get_var binder) @@ get_fv_expr result
 end

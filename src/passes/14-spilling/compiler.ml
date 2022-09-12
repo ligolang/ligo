@@ -199,7 +199,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : _ AST.
             (corner_case ~loc:__LOC__ ("missing label in record"))
             Record.(LMap.find_opt l fields)
           in
-          (x.var, t)
+          (Binder.get_var x, t)
         )
         record_fields
     in
@@ -215,7 +215,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : _ AST.
           (corner_case ~loc:__LOC__ ("missing label in record"))
           (Record.LMap.find_opt l fields)
         in
-        let var = x.var in
+        let var = Binder.get_var x in
         return @@ E_let_in (expr, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = Value_var.fresh () in
@@ -242,7 +242,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; hidden = _ ; thunk = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, ((let_binder.var, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, ((Binder.get_var let_binder, rhs'.type_expression), result')))
   | E_literal l -> return @@ E_literal l
   | E_variable name -> return @@ E_variable name
   | E_application {lamb; args} ->
@@ -578,7 +578,7 @@ and compile_lambda ~raise l fun_type =
   let { binder ; output_type =_ ; result } : _ Lambda.t = l in
   let result' = compile_expression ~raise result in
   let fun_type = compile_type ~raise fun_type in
-  let binder = binder.var in
+  let binder = Binder.get_var binder in
   let closure = E_closure { binder; body = result'} in
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
@@ -586,7 +586,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let rec map_lambda : Value_var.t -> type_expression -> AST.expression -> expression * Value_var.t list = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;output_type=_;result} ->
-      let binder   = binder.var in
+      let binder   = Binder.get_var binder in
       let (body,l) = map_lambda  fun_name loop_type result in
       (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
     | _  ->
@@ -596,11 +596,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   and replace_callback ~raise : Value_var.t -> type_expression -> bool -> AST.expression -> expression = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       | E_let_in li ->
-        let shadowed = shadowed || Value_var.equal li.let_binder.var fun_name in
+        let shadowed = shadowed || Binder.apply (Value_var.equal fun_name) li.let_binder in
         let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
         let rhs = compile_expression ~raise li.rhs in
         let ty  = compile_type ~raise li.rhs.type_expression in
-        let let_binder = li.let_binder.var in
+        let let_binder = Binder.get_var li.let_binder in
         e_let_in let_binder ty li.attr.inline rhs let_result
       | E_matching m ->
         let ty = compile_type ~raise e.type_expression in
@@ -715,11 +715,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let (input_type,output_type) = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
   let (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = lambda.binder.var :: binder in
+  let binder = Binder.get_var lambda.binder :: binder in
   let loc = Value_var.get_location fun_name in
   let binder = match binder with hd::[] -> hd | _ -> raise.error @@ unsupported_recursive_function loc fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder.var, input_type), body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Binder.get_var lambda.binder, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->

@@ -17,7 +17,7 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
   ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
-    | ( action , _#3 ) ->
+    | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
         | Decrement unit_proj#4 ->
@@ -42,7 +42,7 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
   ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
-    | ( action , _#3 ) ->
+    | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
         | Decrement unit_proj#4 ->
@@ -64,7 +64,7 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
   ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
-    | ( action , _#3 ) ->
+    | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
         | Decrement unit_proj#4 ->
@@ -95,7 +95,7 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
   ( list (operation) * tez ) =
   lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
-    | ( action , _#3 ) ->
+    | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
         | Decrement unit_proj#4 ->

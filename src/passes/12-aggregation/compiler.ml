@@ -180,9 +180,9 @@ end = struct
     Option.value ~default:Path.empty  (TypeVMap.find_opt t scope.type_)
   let find_module scope m =
     Option.value ~default:(Path.empty,empty)  (ModuleVMap.find_opt m scope.module_)
-  let push_value scope (v : _ Binder.t) ty attr path =
-    let value = ValueVMap.add v.var path scope.value in
-    let decl_list = Value (v, ty, attr) :: scope.decl_list in
+  let push_value scope (b : _ Binder.t) ty attr path =
+    let value = ValueVMap.add (Binder.get_var b) path scope.value in
+    let decl_list = Value (b, ty, attr) :: scope.decl_list in
     { scope with value ; decl_list}
   let remove_value scope (v : Value_var.t) =
     let value = ValueVMap.remove v scope.value in
@@ -267,7 +267,7 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_application {lamb;args}
   | E_lambda {binder;output_type;result} ->
     let binder = Binder.map self_type binder in
-    let scope = Scope.remove_value scope binder.var in
+    let scope = Scope.remove_value scope @@ Binder.get_var binder in
     let output_type = self_type output_type in
     let result = self ~scope result in
     return @@ E_lambda {binder;output_type;result}
@@ -278,7 +278,7 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
   | E_recursive {fun_name;fun_type;lambda={binder;output_type;result}} ->
     let fun_type = self_type fun_type in
     let binder   = Binder.map self_type binder in
-    let scope = Scope.remove_value scope binder.var in
+    let scope = Scope.remove_value scope @@ Binder.get_var binder in
     let scope = Scope.remove_value scope fun_name in
     let output_type = self_type output_type in
     let result   = self ~scope result in
@@ -349,7 +349,7 @@ and compile_cases ~raise path scope cases : O.matching_expr =
     Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
     let scope, fields = Record.fold_map (fun scope' binder ->
-        Scope.remove_value scope' binder.Binder.var,
+        Scope.remove_value scope' @@ Binder.get_var binder,
         Binder.map (compile_type_expression ~raise path scope) binder) scope fields in
     let body   = compile_expression ~raise path scope body in
     let tv     = compile_type_expression ~raise path scope tv in
@@ -364,8 +364,8 @@ and compile_declaration ~raise path scope (d : I.declaration) =
       let attr = compile_value_attr attr in
       let binder = Binder.map (fun _ -> expr.type_expression) binder in
       let scope  = Scope.push_value scope binder expr.type_expression attr path in
-      let scope,var = Scope.add_path_to_var scope path binder.var in
-      let binder = { binder with var} in
+      let scope,var = Scope.add_path_to_var scope path @@ Binder.get_var binder in
+      let binder = Binder.set_var binder var in
       scope, fun e ->
         O.e_a_let_in binder expr e attr
   | D_type _ ->
@@ -396,9 +396,9 @@ and compile_module_expr ~raise : Path.t -> Scope.t -> I.module_expr -> (Scope.t)
       let module_ = List.fold_left ~init:(fun e -> e) dcls ~f:(fun f dcl ->
         match dcl with
           Value (binder,ty,attr) ->
-            let variable = O.e_a_variable (snd @@ Scope.add_path_to_var scope old_path binder.var) ty in
-            let _,var = Scope.add_path_to_var scope new_path binder.var in
-            fun e -> O.e_a_let_in {binder with var} variable (f e) attr
+            let variable = O.e_a_variable (snd @@ Scope.add_path_to_var scope old_path @@ Binder.get_var binder) ty in
+            let _,var = Scope.add_path_to_var scope new_path @@ Binder.get_var binder in
+            fun e -> O.e_a_let_in (Binder.set_var binder var) variable (f e) attr
         | Module (var) ->
           let _,scope  = Scope.find_module scope var in
           let old_path = Path.add_to_path old_path var in

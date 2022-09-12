@@ -164,7 +164,9 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes' = merge_same_scopes scopes' in
         let scopes_final = merge_same_scopes (scopes @ scopes') in
         defs' @ defs, refs' @ refs, tenv, scopes_final
-      | E_lambda { binder = { var ; ascr = core_type ; _ } ; result ; output_type = _ } ->
+      | E_lambda { binder ; result ; output_type = _ } ->
+        let var = Binder.get_var binder in
+        let core_type = Binder.get_ascr binder in
         let def =
           if VVar.is_generated var then [] else
           let binder_loc =  VVar.get_location var in
@@ -190,7 +192,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         ) e_lable_map ([], [], tenv, []) in
         defs, refs, tenv, scopes
       | E_assign { binder ; expression = e } ->
-        let refs' = [Variable binder.var] in
+        let refs' = [Variable (Binder.get_var binder)] in
         let defs, refs, tenv, scopes = expression tenv e in
         let scopes = merge_same_scopes scopes in
         defs, refs @ refs', tenv, scopes
@@ -205,7 +207,9 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes = merge_same_scopes scopes @ scopes' in
         let defs, refs_result = update_references refs_result [def] in
         defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
-      | E_let_in { let_binder = { var ; ascr = core_type ; _ } ; rhs ; let_result ; _ } ->
+      | E_let_in { let_binder ; rhs ; let_result ; _ } ->
+        let var = Binder.get_var let_binder in
+        let core_type = Binder.get_ascr let_binder in
         let defs_binder =
           if VVar.is_generated var then [] else
           let binder_loc =  VVar.get_location var in
@@ -217,12 +221,14 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes = merge_same_scopes scopes @ scopes' in
         let defs, refs_result = update_references refs_result defs_binder in
         defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
-      | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr = core_type ; _ } ; result ; _ } } ->
+      | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
         let def_fun =
           let binder_loc =  VVar.get_location fun_name in
           Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings Local fun_name binder_loc (result.location)
         in
         let def_par =
+          let var = Binder.get_var binder in
+          let core_type = Binder.get_ascr binder in
           if VVar.is_generated var then [] else
           let binder_loc =  VVar.get_location var in
           [Misc.make_v_def ~with_types ~core_type tenv.bindings Local var binder_loc (result.location)]
@@ -245,8 +251,10 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
             let defs_pat = Pattern.fold_pattern (
               fun defs (p : _ Pattern.t) ->
                 match p.wrap_content with
-                  P_var { var ; ascr = core_type ; _ } ->
+                  P_var binder ->
                     let def =
+                      let var = Binder.get_var binder in
+                      let core_type = Binder.get_ascr binder in
                       let binder_loc =  VVar.get_location var in
                       Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc body.location
                     in
@@ -331,9 +339,10 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let defs_expr, refs_rhs, tenv, scopes = expression ~with_types ~options tenv expr in
         let def, defs_expr = drop_last defs_expr in
         defs_expr @ [def], refs_rhs, tenv, scopes
-      | D_value    { binder      = { var ; ascr = core_type ; _ } ; expr ; _ } ->
+      | D_value    { binder ; expr ; _ } ->
+        let var = Binder.get_var binder in
+        let core_type = Binder.get_ascr binder in
         declaration_expression ~with_types ~options ?core_type tenv var expr
-
       | D_type     { type_binder ; type_expr ; _ } ->
         let def = type_expression type_binder Global type_expr in
         [def], [], tenv, []

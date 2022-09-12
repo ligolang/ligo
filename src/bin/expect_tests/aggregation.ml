@@ -137,7 +137,7 @@ let%expect_test _ =
     lambda (gen#2( unit * unit ))( list (operation) * unit ) return  match
                                                                       gen#2 with
                                                                       |
-                                                                      ( _p , _s ) ->
+                                                                      ( _p : unit , _s : unit ) ->
                                                                       ( LIST_EMPTY
                                                                       () ,
                                                                       (other#183)@(+2) ) in

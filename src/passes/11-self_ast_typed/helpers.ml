@@ -233,7 +233,7 @@ and map_program : 'err mapper -> program -> program = fun m ->
 let fetch_entry_type ~raise : string -> program -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | D_value ({ binder ; expr=_ ; attr=_ } as p) ->
-        if Value_var.is_name binder.var main_fname
+        if Value_var.is_name (Binder.get_var binder) main_fname
         then Some p
         else None
     | D_type   _
@@ -256,7 +256,7 @@ type contract_type = {
 let fetch_contract_type ~raise : Value_var.t -> program -> contract_type = fun main_fname m ->
   let aux declt = match Location.unwrap declt with
     | D_value ({ binder ; expr=_ ; attr=_} as p) ->
-       if Value_var.equal binder.var main_fname
+       if Value_var.equal (Binder.get_var binder) main_fname
        then Some p
        else None
     | D_type   _
@@ -279,9 +279,9 @@ let fetch_contract_type ~raise : Value_var.t -> program -> contract_type = fun m
         Ast_typed.assert_type_expression_eq (storage,storage') in
       (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
       { parameter ; storage }
-    |  _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location binder.var)
+    |  _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location @@ Binder.get_var binder)
   )
-  | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location binder.var)
+  | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location @@ Binder.get_var binder)
 
 (* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
    [predicate] defines the annotation (or set of annotation) you want to match on
@@ -290,9 +290,9 @@ let get_shadowed_decl : program -> (ValueAttr.t -> bool) -> Location.t option = 
   let aux = fun (seen,shadows : Value_var.t list * Location.t list) (x : declaration) ->
     match Location.unwrap x with
     | D_value { binder ; attr ; _} -> (
-      match List.find seen ~f:(Value_var.equal binder.var) with
+      match List.find seen ~f:(Value_var.equal (Binder.get_var binder)) with
       | Some x -> (seen , Value_var.get_location x::shadows)
-      | None -> if predicate attr then (binder.var::seen , shadows) else seen,shadows
+      | None -> if predicate attr then ((Binder.get_var binder)::seen , shadows) else seen,shadows
     )
     | _ -> seen,shadows
   in
@@ -327,7 +327,7 @@ let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.pr
         let continue = x::prg,views in
         match Location.unwrap x with
         | D_value ({binder ; _} as decl) -> (
-          match List.find views ~f:(Value_var.is_name binder.var) with
+          match List.find views ~f:(Value_var.is_name @@ Binder.get_var binder) with
           | Some found ->
             let decorated = { x with wrap_content = D_value { decl with attr = {decl.attr with view = true} }} in
             decorated::prg, (List.remove_element ~compare:String.compare found views)
@@ -375,12 +375,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; output_type=_ ; result} ->
       let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
-      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder.var @@ fv}
+      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove (Binder.get_var binder) @@ fv}
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; output_type=_; result};fun_type=_} ->
       let {modVarSet;moduleEnv;varSet=fv} = self result in
-      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv}
+      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove (Binder.get_var binder) @@ fv}
     | E_constructor {constructor=_;element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -395,7 +395,7 @@ module Free_variables :
       self struct_
     | E_let_in { let_binder ; rhs ; let_result ; attr=_} ->
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
-      let fv2 = VarSet.remove let_binder.var fv2 in
+      let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet=fv2}
     | E_mod_in { module_binder; rhs ; let_result } ->
       let {modVarSet;moduleEnv;varSet} = (self let_result) in
@@ -415,7 +415,7 @@ module Free_variables :
         {modVarSet;moduleEnv;varSet=VarSet.remove pattern @@ varSet} in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = Record.LMap.values fields |> List.map ~f:(fun b -> b.Binder.var) in
+      let pattern = Record.LMap.values fields |> List.map ~f:(Binder.get_var) in
       let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
       {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet}
 

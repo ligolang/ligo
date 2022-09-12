@@ -297,12 +297,7 @@ let rec subtype
       , fun hole ->
           let x = Value_var.fresh ~name:"_sub" () in
           let args = f1 (e_variable x type21) in
-          let binder : _ Binder.t =
-            { var = x
-            ; ascr = type21
-            ; attributes = { const_or_var = Some `Const }
-            }
-          in
+          let binder = Binder.make ~mut:false x type21 in
           let result = f2 (e_application { lamb = hole; args } type12) in
           e_a_lambda { binder; result; output_type = type22 } type21 type22 ))
   | T_for_all { ty_binder = tvar; kind; type_ }, _ ->
