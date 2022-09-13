@@ -51,8 +51,8 @@ let reserved_names = (* Part of names in that list would be caught by some synta
     "continue";  "gas"; "hash"; "stop"; "time";
     "continue"; "debugger"; "do";
   ]
-let check_reserved ~raise ~loc binder =
-  match List.find ~f:(Value_var.equal (Binder.get_var binder)) reserved_names with
+let check_reserved ~raise ~loc var =
+  match List.find ~f:(Value_var.equal var) reserved_names with
   | Some v ->
     let str : string = Format.asprintf "%a" Value_var.pp v in
     let loc : Location.t = loc in
@@ -62,16 +62,16 @@ let check_reserved ~raise ~loc binder =
 let reserved_names_exp ~raise : expression -> expression = fun exp ->
   match exp.expression_content with
   | E_let_in {let_binder ; _ } ->
-    check_reserved ~raise ~loc:exp.location let_binder ;
+    check_reserved ~raise ~loc:exp.location @@ Binder.get_var let_binder ;
     exp
   | E_lambda {binder ; _} ->
-    check_reserved ~raise ~loc:exp.location binder ;
+    check_reserved ~raise ~loc:exp.location @@ Param.get_var binder ;
     exp
   | E_matching { cases ; _ } ->
     let rec aux : type_expression option Pattern.t -> unit = fun p ->
       match p.wrap_content with
       | P_unit -> ()
-      | P_var binder -> check_reserved ~raise ~loc:p.location binder
+      | P_var binder -> check_reserved ~raise ~loc:p.location @@ Binder.get_var binder
       | P_list (Cons (p1,p2)) ->
         let () = aux p1 in
         aux p2
@@ -88,7 +88,7 @@ let reserved_names_exp ~raise : expression -> expression = fun exp ->
 let reserved_names_program ~raise : program -> program = fun m ->
   let aux d = match d with
     | Location.{wrap_content = D_value {binder ; expr ; _ }; location = loc } ->
-      check_reserved ~raise ~loc binder ;
+      check_reserved ~raise ~loc @@ Binder.get_var binder ;
       let _ : expression = reserved_names_exp ~raise expr in
       ()
     | {wrap_content = D_type _; _} -> ()
