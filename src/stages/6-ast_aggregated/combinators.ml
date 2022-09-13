@@ -340,3 +340,33 @@ let get_type_abstractions (e : expression) =
   | Some { type_binder ; result } ->
      aux (type_binder :: tv) result in
   aux [] e
+
+(* This function re-builds a term prefixed with E_type_abstraction:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression /\ t1 . ... . /\ tn . e *)
+let build_type_abstractions init =
+  let t_for_all ty_binder kind type_ = t_for_all { ty_binder ; kind ; type_ } () in
+  let f e abs_var = { e with expression_content = E_type_abstraction { type_binder = abs_var ; result = e } ;
+                             type_expression = t_for_all abs_var Type e.type_expression } in
+  List.fold_left ~init ~f
+
+(* This function re-builds a term prefixed with E_type_inst:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression e@{t1}@...@{tn} *)
+let build_type_insts init =
+  let f av forall =
+      let Abstraction.{ ty_binder ; type_ = t ; kind = _ } = Option.value_exn @@ get_t_for_all forall.type_expression in
+      let type_ = t_variable av () in
+      (make_e (E_type_inst {forall ; type_ }) (Helpers.subst_type ty_binder type_ t)) in
+  List.fold_right ~init ~f
+
+(* This function expands a function with a type T_for_all but not with
+   the same amount of E_type_abstraction *)
+let forall_expand (e : expression) =
+  let tvs, _ = Helpers.destruct_for_alls e.type_expression in
+  let evs, e_without_type_abs = get_type_abstractions e in
+  if List.equal Ligo_prim.Type_var.equal tvs evs then
+    e
+  else
+    let e = build_type_insts e_without_type_abs tvs in
+    build_type_abstractions e tvs
