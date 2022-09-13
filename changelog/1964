@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1964'
+title: 'Monomorphisation: forall eta expand in monomorphisation'
+type: fixed
