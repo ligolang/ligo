@@ -83,9 +83,6 @@ okayTests =
       , "negative" </> "polymorphism" </> "error_monad.mligo"
       , "negative" </> "polymorphism" </> "unresolved" </> "contract2.mligo"
 
-        -- LIGO-477
-      , "negative" </> "missing_funarg_annotation.religo"
-
         -- LIGO-757
       , "negative" </> "error_reverse_app.mligo"
       , "negative" </> "error_reverse_app_2.mligo"
