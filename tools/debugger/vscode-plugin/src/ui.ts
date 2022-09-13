@@ -190,6 +190,8 @@ export const getParameterOrStorage = (
 	) => async (_config: any): Promise<Maybe<string>> => {
 
 	const totalSteps = 1;
+	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
+	const switchButtonKey: Maybe<string> = currentFilePath && "switch_button_" + inputBoxType + '_' + currentFilePath;
 
 	class SwitchButton implements vscode.QuickInputButton {
 		public typ: ValueType;
@@ -219,7 +221,6 @@ export const getParameterOrStorage = (
 			throw new Error("Internal error: metadata is not defined at the moment of user input")
 		}
 
-		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
 		let currentKey: Maybe<string> = currentFilePath && "quickpick_" + inputBoxType + '_' + currentFilePath
 		let placeholderExtra: string = ''
 		let michelsonType: string = ''
@@ -278,16 +279,36 @@ export const getParameterOrStorage = (
 					state.ref.currentSwitch = SwitchButton.LigoSwitch;
 					break;
 			}
+
+			if (isDefined(switchButtonKey)) {
+				context.workspaceState.update(switchButtonKey, state.ref.currentSwitch.typ);
+			}
+
 			return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askValue(input, state);
 		} else {
 			state.ref.value = pick;
 		}
 	}
 
+	let switchButton: SwitchButton = SwitchButton.LigoSwitch;
+	if (isDefined(switchButtonKey)) {
+		let switchButtonName: Maybe<ValueType> = context.workspaceState.get<ValueType>(switchButtonKey);
+		if (isDefined(switchButtonName)) {
+			switch(switchButtonName) {
+				case "LIGO":
+					switchButton = SwitchButton.LigoSwitch;
+					break;
+				case "Michelson":
+					switchButton = SwitchButton.MichelsonSwitch;
+					break;
+			}
+		}
+	}
+
 	const result: State =
 		await MultiStepInput.run(
 			(input: MultiStepInput<State>, state) => askValue(input, state),
-			{ currentSwitch: SwitchButton.LigoSwitch }
+			{ currentSwitch: switchButton }
 		) as State;
 
 	if (isDefined(result.value) && isDefined(result.currentSwitch.typ)) {
