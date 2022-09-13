@@ -38,6 +38,15 @@ Or if you want the development version, replace the version above with `next`.
 
 Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
+## MacOS
+
+Try our tap,
+
+```
+brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
+brew install ligolang/ligo/ligo
+```
+
 ## Static Linux binary
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.

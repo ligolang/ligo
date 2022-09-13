@@ -696,8 +696,8 @@ and signature_of_module : ctx:t -> Ast_typed.module_ -> Signature.t =
 and signature_item_of_decl : ctx:t -> Ast_typed.decl -> bool * Signature.item =
  fun ~ctx decl ->
   match Location.unwrap decl with
-  | D_value { binder = { var; _ }; expr; attr = { public; _ } } ->
-    public, S_value (var, expr.type_expression)
+  | D_value { binder; expr; attr = { public; _ } } ->
+    public, S_value (Binder.get_var binder, expr.type_expression)
   | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } } ->
     public, S_type (tvar, type_)
   | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
@@ -713,7 +713,7 @@ let init ?env () =
     Environment.fold env ~init:empty ~f:(fun ctx decl ->
       match Location.unwrap decl with
       | D_value { binder; expr; attr = _ } ->
-        add_value ctx binder.var expr.type_expression
+        add_value ctx (Binder.get_var binder) expr.type_expression
       | D_type { type_binder; type_expr; type_attr = _ } ->
         add_type ctx type_binder type_expr
       | D_module { module_binder; module_; module_attr = _ } ->
@@ -1038,11 +1038,11 @@ module Elaboration = struct
 
 
   and binder_apply ctx (binder : 'a Binder.t) =
-    { binder with ascr = t_apply ctx binder.ascr }
+    Binder.map (t_apply ctx) binder
 
 
   and binder_apply_opt ctx (binder : 'a option Binder.t) =
-    { binder with ascr = Option.map ~f:(t_apply ctx) binder.ascr }
+    Binder.map (Option.map ~f:(t_apply ctx)) binder
 
 
   and matching_expr_apply ctx match_expr =
@@ -1173,10 +1173,10 @@ module Elaboration = struct
     type_pass ~raise output_type
 
 
-  and binder_pass ~raise (binder : _ Binder.t) = type_pass ~raise binder.ascr
+  and binder_pass ~raise (binder : _ Binder.t) = type_pass ~raise @@ Binder.get_ascr binder
 
   and binder_pass_opt ~raise (binder : _ option Binder.t) =
-    Option.iter binder.ascr ~f:(type_pass ~raise)
+    Option.iter (Binder.get_ascr binder) ~f:(type_pass ~raise)
 
 
   and matching_expr_pass ~raise match_expr =

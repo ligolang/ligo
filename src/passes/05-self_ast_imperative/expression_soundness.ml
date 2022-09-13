@@ -18,7 +18,7 @@ let check_linearity_patterns ~raise : expression -> unit = fun exp ->
     let _patterns = List.map ~f:(fun x -> x.pattern) x.cases in
     let rec aux : Value_var.t list -> type_expression option Pattern.t -> Value_var.t list = fun vlst p ->
       match p.wrap_content with
-      | P_var (x : type_expression option Binder.t) -> x.var::vlst
+      | P_var (x : type_expression option Binder.t) -> Binder.get_var x::vlst
       | P_unit -> vlst
       | P_variant (_,p) -> aux vlst p
       | P_list (Cons (p1,p2)) ->
@@ -52,7 +52,7 @@ let reserved_names = (* Part of names in that list would be caught by some synta
     "continue"; "debugger"; "do";
   ]
 let check_reserved ~raise ~loc binder =
-  match List.find ~f:(fun reserved -> Value_var.equal binder.Binder.var reserved) reserved_names with
+  match List.find ~f:(Value_var.equal (Binder.get_var binder)) reserved_names with
   | Some v ->
     let str : string = Format.asprintf "%a" Value_var.pp v in
     let loc : Location.t = loc in

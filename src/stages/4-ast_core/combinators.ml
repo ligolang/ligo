@@ -163,8 +163,8 @@ let e_record_accessor ?loc ?sugar struct_ path = e_accessor ?loc ?sugar ({struct
 let e_record_update ?loc ?sugar struct_ path update = e_update ?loc ?sugar ({struct_; path; update} : _ Types.Update.t) ()
 let e_module_accessor ?loc ?sugar module_path element = e_module_accessor ?loc ?sugar {module_path;element} ()
 let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = e_ascription ?loc ?sugar {anno_expr;type_annotation} ()
-let e_lambda_ez   ?loc ?sugar var ?ascr ?const_or_var output_type result         = e_lambda ?loc ?sugar {var;ascr;attributes={const_or_var}} output_type result
-let e_let_in_ez   ?loc ?sugar var ?ascr ?const_or_var inline rhs let_result = e_let_in ?loc ?sugar {var;ascr;attributes={const_or_var}} rhs let_result inline
+let e_lambda_ez  ?loc var ?ascr ?mut output_type result : expression = e_lambda ?loc (Ligo_prim.Binder.make ?mut var ascr) output_type result
+let e_let_in_ez  ?loc var ?ascr ?mut attributes rhs let_result = e_let_in ?loc (Ligo_prim.Binder.make ?mut var ascr) attributes rhs let_result
 
 (* Constants *)
 let e_some       ?loc ?sugar s        : expression = e_constant ?loc ?sugar C_SOME [s]
@@ -276,4 +276,4 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
   in
   Option.all @@ aux e
 
-let make_binder ?(ascr=None) ?(attributes=Binder.{const_or_var = None}) var = Binder.{ var ; ascr ; attributes }
+let make_binder ?(ascr=None) ?mut var = Binder.make ?mut var ascr

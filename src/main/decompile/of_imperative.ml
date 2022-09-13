@@ -1,5 +1,5 @@
-open Ast_imperative
 open Helpers
+open Ast_imperative
 
 let decompile ~raise (m : program) syntax : _  =
   let syntax = Syntax.of_string_opt ~raise syntax None in

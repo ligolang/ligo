@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: Remove requirement that JsLIGO function parameters must be annotated
+merge_request: '1961'
+title: JsLIGO Remove Parser Requirement for Mandatory Parameter Annotations
+type: changed

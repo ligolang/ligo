@@ -134,7 +134,7 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_of_expr result
   | E_let_in {let_binder;rhs;let_result;_} ->
      muchuse_union (muchuse_of_expr rhs)
-       (muchuse_of_binder let_binder.var rhs.type_expression
+       (muchuse_of_binder (Binder.get_var let_binder) rhs.type_expression
           (muchuse_of_expr let_result))
   | E_recursive {fun_name;lambda;fun_type} ->
      muchuse_of_binder fun_name fun_type (muchuse_of_lambda fun_type lambda)
@@ -162,7 +162,7 @@ let rec muchuse_of_expr expr : muchuse =
     muchuse_of_expr expression
 
 and muchuse_of_lambda t {binder; output_type = _; result} =
-  muchuse_of_binder binder.var t (muchuse_of_expr result)
+  muchuse_of_binder (Binder.get_var binder) t (muchuse_of_expr result)
 
 and muchuse_of_cases = function
   | Match_variant x -> muchuse_of_variant x
@@ -194,7 +194,7 @@ and muchuse_of_variant {cases;tv} =
 
 and muchuse_of_record {body;fields;_} =
   let typed_vars = Record.LMap.to_list fields in
-  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder b.var b.ascr (c,m))
+  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder (Binder.get_var b) (Binder.get_ascr b) (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
 let rec get_all_declarations (module_name : Module_var.t) : module_ ->
@@ -203,7 +203,7 @@ let rec get_all_declarations (module_name : Module_var.t) : module_ ->
     let aux = fun ({wrap_content=x;location} : decl) ->
       match x with
       | D_value {binder;expr;_} ->
-          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" Module_var.pp module_name) ^ "." ^ (Format.asprintf "%a" Value_var.pp binder.var) in
+          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" Module_var.pp module_name) ^ "." ^ (Format.asprintf "%a" Value_var.pp @@ Binder.get_var binder) in
           [(name, expr.type_expression)]
       | D_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
@@ -224,7 +224,7 @@ and muchuse_declaration = fun (x : declaration) s ->
   match Location.unwrap x with
   | D_value {expr ; binder; _} ->
       muchuse_union (muchuse_of_expr expr)
-        (muchuse_of_binder binder.var expr.type_expression s)
+        (muchuse_of_binder (Binder.get_var binder) expr.type_expression s)
   | D_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
       let decls = get_all_declarations module_binder module_ in
       List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))

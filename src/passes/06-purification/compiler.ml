@@ -208,15 +208,12 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let stop_expr      = (O.e_unit ()) in
         let loop = O.e_recursive rec_func (O.t_arrow (O.t_int ()) (O.t_unit ())) @@
           {
-            binder={
-              var=binder;
-              ascr=O.t_int ();
-              attributes={const_or_var=None}};
+            binder= Binder.make binder (O.t_int ());
             output_type=O.t_unit ();
             result=O.e_cond cond continue_expr stop_expr
           } in
         return @@
-          O.E_let_in {let_binder={var=rec_func;ascr=None;attributes={const_or_var=None}}; rhs=loop; let_result=recursive_call start;attributes=[]}
+          O.E_let_in {let_binder=Binder.make rec_func None; rhs=loop; let_result=recursive_call start;attributes=[]}
     | I.E_for_each {fe_binder;collection;collection_type; fe_body} ->
       let body = compile_expression ~raise ~last fe_body in
       let collection = compile_expression ~raise ~last collection in
@@ -228,8 +225,8 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let args    = Value_var.fresh ~name:"args" () in
       let k,v = fe_binder in
       let pattern : O.type_expression option Pattern.t = match v with
-        | Some v -> Location.wrap @@ Pattern.P_tuple [Location.wrap @@ Pattern.P_var {var=k;ascr=None;attributes={const_or_var=None}}; Location.wrap @@ Pattern.P_var {var=v;ascr=None;attributes={const_or_var=None}}]
-        | None -> Location.wrap @@ Pattern.P_var {var=k;ascr=None;attributes={const_or_var=None}}
+        | Some v -> Location.wrap @@ Pattern.P_tuple [Location.wrap @@ Pattern.P_var (Binder.make k None); Location.wrap @@ Pattern.P_var (Binder.make v None)]
+        | None   -> Location.wrap @@ Pattern.P_var (Binder.make k None)
       in
 
       let lambda = O.e_lambda_ez (args) None @@
@@ -250,15 +247,12 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let stop_expr      = (O.e_unit ()) in
       let loop = O.e_recursive rec_func (O.t_arrow (O.t_unit ()) (O.t_unit ())) @@
         {
-          binder={
-            var=Value_var.fresh ~name:"()" ();
-            ascr=O.t_unit ();
-            attributes={const_or_var=None}};
+          binder= Binder.make (Value_var.fresh ~name:"()" ()) (O.t_unit ());
           output_type=O.t_unit ();
           result=O.e_cond cond continue_expr stop_expr
         } in
       return @@
-        O.E_let_in {let_binder={var=rec_func;ascr=None;attributes={const_or_var=None}}; rhs=loop; let_result=recursive_call;attributes=[]}
+        O.E_let_in {let_binder=Binder.make rec_func None; rhs=loop; let_result=recursive_call;attributes=[]}
 
 and compile_declaration ~raise : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in

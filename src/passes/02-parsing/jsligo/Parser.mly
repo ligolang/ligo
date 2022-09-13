@@ -896,13 +896,14 @@ parameters:
 *)
 
 parameter:
-  expr type_annotation {
-    let colon, type_expr = $2 in
-    let start  = expr_to_region $1
-    and stop   = type_expr_to_region type_expr in
-    let region = cover start stop
-    and value  = $1, colon, type_expr
-    in EAnnot {region; value} }
+  expr ioption(type_annotation) {
+    match $2 with
+    | Some (colon, type_expr) ->
+      let start = expr_to_region $1 in
+      let stop = type_expr_to_region type_expr in
+      let region = cover start stop in
+      EAnnot { region; value = $1, colon, type_expr }
+    | None -> $1 }
 
 body:
   braces(statements) { FunctionBody   $1 }

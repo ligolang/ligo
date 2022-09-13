@@ -79,10 +79,10 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_expr defuse result
   | E_let_in {let_binder;rhs;let_result;_} ->
      let defuse,unused = defuse_of_expr defuse rhs in
-     let old_binder = M.find_opt let_binder.var defuse in
-     let defuse, unused' = defuse_of_expr (M.add let_binder.var false defuse) let_result in
-     let unused' = add_if_unused unused' let_binder.var defuse in
-     replace_opt let_binder.var old_binder defuse, unused@unused'
+     let old_binder = M.find_opt (Binder.get_var let_binder) defuse in
+     let defuse, unused' = defuse_of_expr (M.add (Binder.get_var let_binder) false defuse) let_result in
+     let unused' = add_if_unused unused' (Binder.get_var let_binder) defuse in
+     replace_opt (Binder.get_var let_binder) old_binder defuse, unused@unused'
   | E_raw_code {code;_} ->
      defuse_of_expr defuse code
   | E_matching {matchee;cases} ->
@@ -105,7 +105,7 @@ let rec defuse_of_expr defuse expr : defuse =
 
 
 and defuse_of_lambda defuse {binder; output_type = _; result} =
-  remove_defined_var_after defuse binder.var defuse_of_expr result
+  remove_defined_var_after defuse (Binder.get_var binder) defuse_of_expr result
 
 and defuse_of_cases defuse = function
   | Match_variant x -> defuse_of_variant defuse x
@@ -119,7 +119,7 @@ and defuse_of_variant defuse {cases;_} =
       cases
 
 and defuse_of_record defuse {body;fields;_} =
-  let vars = Record.LMap.to_list fields |> List.map ~f:(fun b -> b.Binder.var) in
+  let vars = Record.LMap.to_list fields |> List.map ~f:(Binder.get_var) in
   let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
   let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
   let defuse,unused = defuse_of_expr map body in
