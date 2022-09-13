@@ -26,7 +26,7 @@ class LIGO_CLASS_PLACEHOLDER < Formula
 
   def install
     # ligo version is taken from the environment variable in build-time
-    ENV["LIGO_VERSION"] = LIGO_VERSION_PLACEHOLDER
+    ENV["LIGO_VERSION"] = "LIGO_VERSION_PLACEHOLDER"
     # avoid opam prompts
     ENV["OPAMYES"] = "true"
 
