@@ -468,7 +468,31 @@ class MultiStepInput<S> {
 					...(buttons || [])
 				];
 				input.ignoreFocusOut = ignoreFocusOut;
-				let validating = validate('');
+				let validating = validate(value);
+
+				interface LastValidationResult {
+					value: string,
+					result: boolean
+				}
+
+				let lastValidationResult: Maybe<LastValidationResult> = undefined;
+
+				let emitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
+				emitter.event(async text => {
+					const current = validate(text);
+					validating = current;
+					const validationMessage = await current;
+					if (current === validating) {
+						if (text.trim() === '') {
+							input.validationMessage = null;
+							return;
+						}
+
+						lastValidationResult = { value: text, result: !validationMessage };
+						input.validationMessage = validationMessage;
+					}
+				});
+
 				disposables.push(
 					input.onDidTriggerButton(item => {
 						if (item === vscode.QuickInputButtons.Back) {
@@ -481,31 +505,38 @@ class MultiStepInput<S> {
 						const value = input.value;
 						input.enabled = false;
 						input.busy = true;
-						if (!(await validate(value))) {
-							resolve(value);
+
+						if (isDefined(lastValidationResult)) {
+							if (lastValidationResult.value === value && lastValidationResult.result) {
+								resolve(value);
+							}
+						} else {
+							const result: boolean = !(await validate(value));
+							lastValidationResult = { value, result };
+							if (result) {
+								resolve(value);
+							}
 						}
+
 						input.enabled = true;
 						input.busy = false;
 					}),
 					input.onDidChangeValue(async text => {
-						const current = validate(text);
-						validating = current;
-						const validationMessage = await current;
-						if (current === validating) {
-							input.validationMessage = validationMessage;
-						}
+						emitter.fire(text);
 					}),
 					input.onDidHide(() => {
 						(async () => {
 							reject(InputFlowAction.cancel);
 						})()
 							.catch(reject);
-					})
+					}),
+					emitter
 				);
 				if (this.current) {
 					this.current.dispose();
 				}
 				this.current = input;
+				emitter.fire(value);
 				this.current.show();
 			});
 		} finally {
