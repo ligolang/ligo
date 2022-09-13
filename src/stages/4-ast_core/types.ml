@@ -130,7 +130,11 @@ type expression_content =
   | E_ascription of (expr, ty_expr) Ascription.t
   | E_module_accessor of Value_var.t Module_access.t
   (* Imperative *)
-  | E_assign   of (expr,ty_expr option) Assign.t
+  | E_let_mut_in  of let_in
+  | E_assign   of (expr, ty_expr option) Assign.t
+  | E_for      of expr For_loop.t
+  | E_for_each of expr For_each_loop.t
+  | E_while    of expr While_loop.t
 
 and let_in = {
     let_binder: ty_expr option Binder.t ;

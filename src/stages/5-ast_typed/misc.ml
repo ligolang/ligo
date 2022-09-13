@@ -50,7 +50,7 @@ module Free_variables = struct
       expression b' e
 
   and lambda : bindings -> (expr,ty_expr) Lambda.t -> bindings = fun b l ->
-    let b' = union (Binder.apply singleton l.binder) b in
+    let b' = union (singleton (Param.get_var l.binder)) b in
     expression b' l.result
 
   and expression : bindings -> expression -> bindings = fun b e ->
