@@ -35,7 +35,14 @@ let solve = function
 let cons a b = 
   match a, b with     
     (* let foo = a:int => a *)
-  | (EQ _ | COLON _  as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
+  | (EQ _ as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
+  | (COLON _  as s), Suggestion f  -> 
+    Suggestion (fun c -> 
+      match c with 
+        Some c ->
+          s :: c :: (f None)
+      | None -> s :: (f None))
+
     (* let foo:int => a *)
   | (Let _  | Const _ as l), Suggestion f  -> Solved (l :: (f (Some es6fun_token)))
     (* | Foo, y =>  *)
