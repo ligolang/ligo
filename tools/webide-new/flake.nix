@@ -76,6 +76,7 @@
         # ligo 0.50.0
         "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/2959700000/artifacts/raw/ligo"; hash = "sha256-9AdoS8tUYeqdnCUSRbUxj3dZQLhk9pbEq93hFF6uSEI="; };
       };
+      tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
       frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { };
       backend = pkgs.callPackage ./ligo-webide-backend { };
       frontendCheck = checkPhase:
@@ -92,7 +93,7 @@
         ligo-bin = pkgs.runCommand "ligo-bin" { } ''
           install -Dm777 ${pkgs.fetchurl ligo-binary.${system}} $out/bin/ligo
         '';
-        inherit frontend;
+        inherit frontend tezos-client;
         backend = backend.components.exes.ligo-webide-backend;
       };
       tests = {

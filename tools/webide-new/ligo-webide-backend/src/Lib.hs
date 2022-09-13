@@ -52,10 +52,10 @@ import Servant
 import Servant.Client (BaseUrl(..), Scheme(Https))
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
-import System.Directory (createDirectoryIfMissing)
+import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.FilePath (takeDirectory, (</>))
-import System.IO.Temp (withSystemTempDirectory)
+import System.IO.Temp (withTempDirectory)
 import System.Process (proc, readCreateProcessWithExitCode)
 import Text.Megaparsec (errorBundlePretty)
 
@@ -301,6 +301,7 @@ mkApp config =
       logEnv <- liftIO $ initLogEnv "ligo-webide" (Environment "devel")
       runReaderT (runKatipT logEnv x) config
 
+
 removeExcessWhitespace :: Text -> Text
 removeExcessWhitespace =
   Text.lines >>> map Text.strip >>> Text.intercalate " " >>> Text.strip
@@ -464,9 +465,10 @@ dryRunOperations originationData = do
     (NonEmpty.singleton (OpOriginate originationData))
 
 compile :: CompileRequest -> WebIDEM CompilerResponse
-compile request =
+compile request = do
+  pwd <- liftIO $ getCurrentDirectory
   let (filepaths, sources) = unzip (rSources request)
-   in withSystemTempDirectory "" $ \dirPath -> do
+   in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
         let fullMainPath = dirPath </> rMain request
 
@@ -494,9 +496,10 @@ compile request =
           ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
 
 compileExpression :: CompileExpressionRequest -> WebIDEM CompilerResponse
-compileExpression request =
+compileExpression request = do
+  pwd <- liftIO $ getCurrentDirectory
   let (filepaths, sources) = unzip (cerSources request)
-   in withSystemTempDirectory "" $ \dirPath -> do
+   in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
         let fullMainPath = dirPath </> cerMain request
 
@@ -529,9 +532,10 @@ compileExpression request =
           ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
 
 dryRun :: DryRunRequest -> WebIDEM CompilerResponse
-dryRun request =
+dryRun request = do
+  pwd <- liftIO $ getCurrentDirectory
   let (filepaths, sources) = unzip (drrSources request)
-   in withSystemTempDirectory "" $ \dirPath -> do
+   in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
         let fullMainPath = dirPath </> drrMain request
 
@@ -560,9 +564,10 @@ dryRun request =
           ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
 
 listDeclarations :: ListDeclarationsRequest -> WebIDEM ListDeclarationsResponse
-listDeclarations request =
+listDeclarations request = do
+  pwd <- liftIO $ getCurrentDirectory
   let (filepaths, sources) = unzip (ldrSources request)
-   in withSystemTempDirectory "" $ \dirPath -> do
+   in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
         let fullMainPath = dirPath </> ldrMain request
 
