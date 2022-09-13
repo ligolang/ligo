@@ -176,6 +176,7 @@ export const getEntrypoint = (
 
 		if (isDefined(result.pickedEntrypoint)) {
 			await getContractMetadata(result.pickedEntrypoint);
+			debuggedContract.ref.pickedLigoEntrypoint = result.pickedEntrypoint;
 			return result.pickedEntrypoint;
 		}
 }
@@ -189,9 +190,16 @@ export const getParameterOrStorage = (
 		debuggedContract: Ref<DebuggedContractSession>
 	) => async (_config: any): Promise<Maybe<string>> => {
 
+	if (!isDefined(debuggedContract.ref.pickedLigoEntrypoint)) {
+		throw new Error("Internal error: LIGO entrypoint is not defined");
+	}
+
+	const ligoEntrypoint: string = debuggedContract.ref.pickedLigoEntrypoint;
+
 	const totalSteps = 1;
 	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-	const switchButtonKey: Maybe<string> = currentFilePath && "switch_button_" + inputBoxType + '_' + currentFilePath;
+	const switchButtonKey: Maybe<string> = currentFilePath
+		&& "switch_button_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
 
 	class SwitchButton implements vscode.QuickInputButton {
 		public typ: ValueType;
@@ -223,7 +231,9 @@ export const getParameterOrStorage = (
 			throw new Error("Internal error: metadata is not defined at the moment of user input")
 		}
 
-		let currentKey: Maybe<string> = currentFilePath && "quickpick_" + inputBoxType + '_' + currentFilePath
+		let currentKey: Maybe<string> = currentFilePath
+				&& "quickpick_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
+
 		let placeholderExtra: string = ''
 		let michelsonType: string = ''
 		switch (inputBoxType) {
