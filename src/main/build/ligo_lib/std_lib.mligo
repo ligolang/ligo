@@ -288,6 +288,8 @@ end
   let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
 [@private]
   let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
+[@private]
+  let ignore (type a) (_ : a) : unit = ()
 
 #if CURRY
 [@private]
