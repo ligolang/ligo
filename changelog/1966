@@ -1,0 +1,5 @@
+author: SanderSpies
+description: ''
+merge_request: '1966'
+title: Fix JsLIGO preparser issue with colons.
+type: fixed

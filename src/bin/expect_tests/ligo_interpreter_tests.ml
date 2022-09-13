@@ -190,6 +190,12 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "map_map.jsligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value ["one" -> "foo" ; "two" -> "foo"]. |}]
+
 (* DEPRECATED
 let%expect_test _ =
 run_ligo_good ["run";"test" ; test "bootstrapped_contracts.mligo" ] ;
