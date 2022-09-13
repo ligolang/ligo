@@ -189,70 +189,24 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let expression = self expression in
       return @@ O.E_assign {binder; expression}
     | I.E_for {binder;start;final;incr;f_body} ->
-      (*Make the cond and the step *)
       let final = compile_expression ~raise ~last final in
       let start = compile_expression ~raise ~last start in
-      let step = compile_expression ~raise ~last incr in
-      let for_body = compile_expression ~raise ~last f_body in
-
-      let rec_func = Value_var.fresh ~name:"fun_for_loop" () in
-      let recursive_call arg = O.e_application (O.e_variable rec_func) arg in
-
-      (* Modify the body loop*)
-      let ctrl =
-          O.e_let_in_ez binder [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
-          recursive_call (O.e_variable binder)
-      in
-      let cond = O.e_annotation (O.e_constant (C_LE) [O.e_variable binder ; final]) (O.t_bool ()) in
-      let continue_expr = add_to_end for_body ctrl in
-      let stop_expr      = (O.e_unit ()) in
-        let loop = O.e_recursive rec_func (O.t_arrow (O.t_int ()) (O.t_unit ())) @@
-          {
-            binder= Binder.make binder (O.t_int ());
-            output_type=O.t_unit ();
-            result=O.e_cond cond continue_expr stop_expr
-          } in
-        return @@
-          O.E_let_in {let_binder=Binder.make rec_func None; rhs=loop; let_result=recursive_call start;attributes=[]}
+      let incr = compile_expression ~raise ~last incr in
+      let f_body = compile_expression ~raise ~last f_body in
+      return @@ O.E_for { binder; start; final; incr; f_body }
     | I.E_for_each {fe_binder;collection;collection_type; fe_body} ->
-      let body = compile_expression ~raise ~last fe_body in
+      let fe_body = compile_expression ~raise ~last fe_body in
       let collection = compile_expression ~raise ~last collection in
-      let op_name : Constant.constant' =
-        match collection_type with
-      | Map -> C_MAP_ITER | Set -> C_SET_ITER | List -> C_LIST_ITER | Any -> C_ITER
-      in
-
-      let args    = Value_var.fresh ~name:"args" () in
-      let k,v = fe_binder in
-      let pattern : O.type_expression option Pattern.t = match v with
-        | Some v -> Location.wrap @@ Pattern.P_tuple [Location.wrap @@ Pattern.P_var (Binder.make k None); Location.wrap @@ Pattern.P_var (Binder.make v None)]
-        | None   -> Location.wrap @@ Pattern.P_var (Binder.make k None)
-      in
-
-      let lambda = O.e_lambda_ez (args) None @@
-                  O.e_matching (O.e_variable args) [
-                    {pattern;body}
-                  ] in
-      return @@
-        O.E_constant {cons_name=op_name;arguments=[lambda;collection]}
-
+      return @@ O.E_for_each { fe_binder; collection; collection_type; fe_body }
     | I.E_while {cond;body} ->
-      (* compile while*)
       let cond = compile_expression ~raise ~last cond in
       let body = compile_expression ~raise ~last body in
-
-      let rec_func = Value_var.fresh ~name:"fun_while_loop" () in
-      let recursive_call = O.e_application (O.e_variable rec_func) (O.e_unit ()) in
-      let continue_expr  = add_to_end body recursive_call in
-      let stop_expr      = (O.e_unit ()) in
-      let loop = O.e_recursive rec_func (O.t_arrow (O.t_unit ()) (O.t_unit ())) @@
-        {
-          binder= Binder.make (Value_var.fresh ~name:"()" ()) (O.t_unit ());
-          output_type=O.t_unit ();
-          result=O.e_cond cond continue_expr stop_expr
-        } in
-      return @@
-        O.E_let_in {let_binder=Binder.make rec_func None; rhs=loop; let_result=recursive_call;attributes=[]}
+      return @@ O.E_while { cond; body }
+    | I.E_let_mut_in {let_binder;attributes;rhs;let_result} ->
+      let let_binder = Binder.map self_type_option let_binder in
+      let rhs = self rhs in
+      let let_result = self let_result in
+      return @@ O.E_let_mut_in {let_binder;attributes; rhs; let_result}
 
 and compile_declaration ~raise : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in
