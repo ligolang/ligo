@@ -765,7 +765,11 @@ core_type:
 | "_"                   { TVar    {value="_"; region=$1#region} }
 | type_name             { TVar    $1 }
 | module_access_t       { TModA   $1 }
-| object_type           { TObject $1 }
+| nsepseq(object_type, "|") { 
+    match $1 with 
+      (obj, []) -> TObject obj
+    | _ as u    -> TDisc u
+  }
 | type_ctor_app         { TApp    $1 }
 | attributes type_tuple { TProd   {inside=$2; attributes=$1} }
 | par(type_expr)        { TPar    $1 }
