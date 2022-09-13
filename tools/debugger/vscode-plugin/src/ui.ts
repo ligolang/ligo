@@ -195,9 +195,11 @@ export const getParameterOrStorage = (
 
 	class SwitchButton implements vscode.QuickInputButton {
 		public typ: ValueType;
+		public tooltip: string;
 
-		constructor(public iconPath: vscode.Uri, public tooltip: ValueType) {
-			this.typ = tooltip;
+		constructor(public iconPath: vscode.Uri, typ: ValueType) {
+			this.typ = typ;
+			this.tooltip = "Input in " + typ + " format";
 		}
 
 		static readonly LigoSwitch = new SwitchButton(
