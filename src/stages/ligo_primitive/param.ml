@@ -31,5 +31,5 @@ let fold_map f init { binder; mut_flag } =
   let result, binder = Binder.fold_map f init binder in
   result, { binder; mut_flag }
 
-
+let to_binder { binder; _ } = binder
 

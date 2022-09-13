@@ -594,6 +594,9 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr
+  | E_let_mut_in _ ->
+    failwith @@ Format.asprintf "Decompiling a let mut in to JsLIGO %a"
+    AST.PP.expression expr
   (* Update on multiple field of the same record. may be removed by adding sugar *)
   | E_update {struct_;path;update} when List.length path > 1 ->
     failwith "Nested updates are not supported in JsLIGO."
@@ -673,9 +676,9 @@ and function_body body =
 
 and decompile_lambda : (AST.expr, AST.ty_expr option) Lambda.t -> _ =
   fun {binder;output_type;result} ->
-    let type_expr = Option.map ~f:decompile_type_expr @@ Binder.get_ascr binder in
+    let type_expr = Option.map ~f:decompile_type_expr @@ Param.get_ascr binder in
     let type_expr = Option.value ~default:(TVar {value = "_"; region = Region.ghost}) type_expr in
-    let v = decompile_variable @@ Binder.get_var binder in
+    let v = decompile_variable @@ Param.get_var binder in
     let seq = CST.ESeq (Region.wrap_ghost (CST.EAnnot (Region.wrap_ghost (CST.EVar v,Token.ghost_as,type_expr)), [])) in
     let parameters = CST.EPar (Region.wrap_ghost @@ par seq ) in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in

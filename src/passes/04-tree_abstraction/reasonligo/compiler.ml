@@ -383,7 +383,7 @@ let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise
       Some fun_binder ->
         let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.Ascription.anno_expr) @@ get_e_annotation e  in
         let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda @@ (get_first_non_annotation expr).expression_content in
-        let lhs_type = Option.map ~f:(Utils.uncurry t_arrow) @@ Option.bind_pair (Binder.get_ascr lambda.binder, lambda.output_type) in
+        let lhs_type = Option.map ~f:(Utils.uncurry t_arrow) @@ Option.bind_pair (Param.get_ascr lambda.binder, lambda.output_type) in
         let fun_type = trace_option ~raise (untyped_recursive_fun @@ Value_var.get_location fun_binder) @@ lhs_type in
         let lambda = Lambda.map Fun.id (fun x -> Option.value_exn x) lambda in
         e_recursive ~loc:(Value_var.get_location fun_binder) fun_binder fun_type lambda
@@ -511,16 +511,14 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
   fun p ->
   let open Pattern in
   match unepar p with
-  | PVar {value={variable; attributes}; _} ->
+  | PVar {value={variable; attributes = _}; _} ->
     let (var,loc) = r_split variable in
-    let mut = attributes |> List.map ~f:(fun x -> x.Region.value) |>
-                       Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b : _ Binder.t =
       let var = match var with
         | "_" -> Value_var.fresh ~loc ()
         | var -> Value_var.of_input_var ~loc var
       in
-      Binder.make ~mut var None
+      Binder.make var None
     in
     Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple ->
@@ -631,31 +629,27 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
   | CST.PPar par ->
     let par, _ = r_split par in
     aux par.inside
-  | PVar {value={variable=name;attributes=var_attributes}; _} ->
+  | PVar {value={variable=name;attributes=_}; _} ->
      (*function or const *)
-    let mut = var_attributes |> List.map ~f:(fun x -> x.Region.value) |>
-              Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let fun_binder = compile_variable name in
     let expr = compile_expression ~raise ?fun_rec:(Option.map ~f:(fun _ -> fun_binder) kwd_rec) let_rhs in
-    return_1 @@ (Binder.make ~mut fun_binder lhs_type, attributes, expr)
+    return_1 @@ (Binder.make fun_binder lhs_type, attributes, expr)
   | _ ->raise.error @@ unsupported_pattern_type @@ binders
   in aux binders
 
-and compile_parameter ~raise : CST.pattern -> type_expression option Binder.t * (expression -> expression) =
+and compile_parameter ~raise : CST.pattern -> type_expression option Param.t * (expression -> expression) =
   fun pattern ->
-  let return ?ascr ?mut fun_ var =
-    (Binder.make ?mut var ascr, fun_) in
-  let return_1 ?ascr ?mut var = return ?ascr ?mut (fun e -> e) var in
+  let return ?ascr fun_ var =
+    (Param.make var ascr, fun_) in
+  let return_1 ?ascr var = return ?ascr (fun e -> e) var in
   match pattern with
     PConstr _ ->raise.error @@ unsupported_pattern_type pattern
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ Value_var.fresh ~loc ()
-  | PVar {value={variable; attributes}; _} ->
+  | PVar {value={variable; _}; _} ->
     let var = compile_variable variable in
-    let mut = attributes |> List.map ~f:(fun x -> x.Region.value) |>
-              Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
-    return_1 ~mut var
+    return_1 var
   | PTuple tuple ->
     let (tuple, _loc) = r_split tuple in
     let var = Value_var.fresh () in
@@ -664,8 +658,8 @@ and compile_parameter ~raise : CST.pattern -> type_expression option Binder.t * 
       (binder :: binder_lst, fun_' <@ fun_)
     in
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],(fun e -> e)) @@ npseq_to_list tuple in
-    let expr = fun expr -> e_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
-    let ascr = Option.all @@ List.map ~f:(Binder.get_ascr) binder_lst in
+    let expr = fun expr -> e_param_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:(Param.get_ascr) binder_lst in
     let ascr = Option.map ~f:(t_tuple) ascr in
     return ?ascr expr var
   | PPar par ->
@@ -676,6 +670,44 @@ and compile_parameter ~raise : CST.pattern -> type_expression option Binder.t * 
     let {pattern; type_expr; colon=_} : CST.typed_pattern = tp in
     let ascr = compile_type_expression ~raise type_expr in
     let (binder, exprs) = compile_parameter ~raise pattern in
+    let binder = Param.map (Fn.const @@ Some ascr) binder in
+    (binder,exprs)
+  | _ ->raise.error @@ unsupported_pattern_type pattern
+
+
+and compile_binder ~raise : CST.pattern -> type_expression option Binder.t * (expression -> expression) =
+  fun pattern ->
+  let return ?ascr fun_ var =
+    (Binder.make var ascr, fun_) in
+  let return_1 ?ascr var = return ?ascr (fun e -> e) var in
+  match pattern with
+    PConstr _ ->raise.error @@ unsupported_pattern_type pattern
+  | PUnit the_unit  ->
+    let loc = Location.lift the_unit.region in
+    return_1 ~ascr:(t_unit ~loc ()) @@ Value_var.fresh ~loc ()
+  | PVar {value={variable; _}; _} ->
+    let var = compile_variable variable in
+    return_1 var
+  | PTuple tuple ->
+    let (tuple, _loc) = r_split tuple in
+    let var = Value_var.fresh () in
+    let aux pattern (binder_lst, fun_) =
+      let (binder,fun_') = compile_binder ~raise pattern in
+      (binder :: binder_lst, fun_' <@ fun_)
+    in
+    let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],(fun e -> e)) @@ npseq_to_list tuple in
+    let expr = fun expr -> e_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:(Binder.get_ascr) binder_lst in
+    let ascr = Option.map ~f:(t_tuple) ascr in
+    return ?ascr expr var
+  | PPar par ->
+    compile_binder ~raise par.value.inside
+  | PRecord _ ->raise.error @@ unsupported_pattern_type pattern
+  | PTyped tp ->
+    let (tp, _loc) = r_split tp in
+    let {pattern; type_expr; colon=_} : CST.typed_pattern = tp in
+    let ascr = compile_type_expression ~raise type_expr in
+    let (binder, exprs) = compile_binder ~raise pattern in
     let binder = Binder.map (Fn.const @@ Some ascr) binder in
     (binder,exprs)
   | _ ->raise.error @@ unsupported_pattern_type pattern
@@ -727,7 +759,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let attributes = compile_attributes attributes in
         let matchee = compile_expression ~raise let_rhs in
         let tuple,_loc = r_split tuple in
-        let lst = List.map ~f:(compile_parameter ~raise) @@ npseq_to_list tuple in
+        let lst = List.map ~f:(compile_binder ~raise) @@ npseq_to_list tuple in
         let (lst, exprs) = List.unzip lst in
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
         let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor expr @@ [Access_tuple i]) in
@@ -740,7 +772,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let record,_loc = r_split record in
         let aux ({value={field_name;eq=_;pattern};_}:CST.field_pattern CST.reg) =
           let field_name = field_name.value in
-          let binder,fun_ = compile_parameter ~raise pattern in
+          let binder,fun_ = compile_binder ~raise pattern in
           ((field_name,binder),fun_)
         in
         let lst = List.map ~f:aux @@ npseq_to_list record.ne_elements in

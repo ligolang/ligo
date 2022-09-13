@@ -177,7 +177,7 @@ let get_e_tuple : AST.expression -> _  = fun expr ->
     AST.PP.expression expr
 
 let pattern_type binder =
-  let attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+  let attributes = [] in
   let var : CST.var_pattern = {variable = decompile_variable @@ Binder.get_var binder; attributes = attributes} in
   let pattern : CST.pattern = CST.PVar (wrap var) in
   match Binder.get_ascr binder with
@@ -327,7 +327,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder;rhs;let_result;attributes} ->
-    let var_attributes = let_binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+    let var_attributes = [] in
     let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var let_binder; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
     let type_params, rhs_type = Option.value_map (Binder.get_ascr let_binder) ~default:(None, None)
@@ -583,7 +583,8 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     (* We should avoid to generate skip instruction*)
   | E_skip _ -> return_expr @@ CST.EUnit (wrap (Token.ghost_lpar,Token.ghost_rpar))
   | E_assign {binder;expression} ->
-    let var_attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+    (* No mutable attributes anymore :) *)
+    let var_attributes = [] in
     let p_binder : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var binder; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (p_binder,[]) in
     let type_params, rhs_type = Option.value_map (Binder.get_ascr binder) ~default:(None, None)
@@ -594,6 +595,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let body = decompile_expression (AST.e_unit ()) in
     let lin : CST.let_in = {kwd_let=Token.ghost_let;kwd_rec=None;binding;kwd_in=Token.ghost_in;body;attributes=[]} in
     return_expr @@ CST.ELetIn (wrap lin)
+  | E_let_mut_in _
   | E_for _
   | E_for_each _
   | E_while _ ->
@@ -618,7 +620,7 @@ and decompile_to_selection : _ Access_path.access -> CST.selection = fun access 
     "Can't decompile access_map to selection"
 
 and decompile_lambda : (AST.expr,AST.ty_expr option) Lambda.t -> _ = fun {binder;output_type;result} ->
-    let param_decl = pattern_type binder in
+    let param_decl = pattern_type (Param.to_binder binder) in
     let param = (param_decl, []) in
     let ret_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in
     let result = decompile_expression result in
@@ -652,7 +654,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
   )
   | D_value {binder;attr;expr}-> (
     let attributes : CST.attributes = Shared_helpers.decompile_attributes attr in
-    let var_attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+    let var_attributes = [] in
     let var = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var binder; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
     let type_params, rhs_type = Option.value_map (Binder.get_ascr binder) ~default:(None, None)
@@ -712,7 +714,7 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
     | P_unit -> CST.PUnit (wrap (Token.ghost_lpar, Token.ghost_rpar))
     | P_var v ->
       let name = (decompile_variable @@ Binder.get_var v).value in
-      let attributes = v |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+      let attributes = [] in
       let pvar : CST.var_pattern = {variable = wrap name; attributes } in
       CST.PVar (wrap pvar)
     | P_list pl -> (

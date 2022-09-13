@@ -383,7 +383,7 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
   )
   | E_Fun { value = { parameters; ret_type ; return ; _ } ; region} -> (
     check_no_attributes ~raise (Location.lift region) attr ;
-    let compile_param : CST.param_decl CST.reg -> _ Binder.t  = fun { value = { param_kind ; pattern ; param_type } ; region = _ } ->
+    let compile_param : CST.param_decl CST.reg -> _ Param.t  = fun { value = { param_kind ; pattern ; param_type } ; region = _ } ->
       (* TODO: feels wrong, binders do not have loc in AST *)
       let var =
         match pattern with
@@ -391,12 +391,12 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
         | x -> raise.error (unsuported_pattern_in_function @@ CST.pattern_to_region x)
       in
       let ascr = Option.map ~f:(compile_type_expression ~raise <@ snd) param_type in
-      let mut =
+      let mut_flag : Param.mutable_flag =
         match param_kind with
-        | `Const _kwd -> false
-        | `Var _kwd -> true
+        | `Const _kwd -> Immutable
+        | `Var _kwd -> Mutable
       in
-      Binder.make ~mut var ascr
+      Param.make ~mut_flag var ascr
     in
     let loc = Location.lift region in
     let (lambda, fun_type) =
@@ -413,17 +413,17 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
       | [param] ->
         let expr = e_lambda ~loc param ret_ty body in
         let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b)
-                                (Option.bind_pair (Binder.get_ascr param,ret_ty))
+                                (Option.bind_pair (Param.get_ascr param,ret_ty))
         in (expr, ty_opt)
       | params ->
         let input_tuple_ty =
           (* TODOpoly: polymorphism should give some leeway (using Option.all feels wrong) *)
-          let in_tys_opt = Option.all @@ List.map ~f:Binder.get_ascr params in
+          let in_tys_opt = Option.all @@ List.map ~f:Param.get_ascr params in
           Option.map ~f:t_tuple in_tys_opt
         in
         let binder = Value_var.fresh ~loc ~name:"parameter" () in
         let expr =
-          let body = e_matching_tuple ~loc:loc_par (e_variable binder) params body in
+          let body = e_param_matching_tuple ~loc:loc_par (e_variable binder) params body in
           e_lambda_ez ~loc binder ?ascr:input_tuple_ty ret_ty body
         in
         let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow a b) (Option.bind_pair (input_tuple_ty,ret_ty)) in
@@ -551,15 +551,15 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
   )
   | E_Attr (a,x) -> compile_expression ~raise ~attr:(a::attr) x
 
-and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr option Pattern.t =
-  fun ?(const = false) p ->
+and conv ~raise :  CST.pattern -> AST.ty_expr option Pattern.t =
+  fun p ->
     let open Pattern in
-    let self = conv ~raise ~const in
+    let self = conv ~raise in
     match p with
     | P_Verbatim _ | P_Attr _ -> raise.error (unsupported_pattern_type p)
     | P_Var var -> (
       let var = compile_variable var in
-      let b  = Binder.make ~mut:(not const) var None in
+      let b  = Binder.make var None in
       Location.wrap ~loc:(Value_var.get_location var) (Pattern.P_var b)
     )
     | P_Tuple tuple -> (
@@ -626,7 +626,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr option Pattern.t =
               | x -> raise.error (expected_field_name @@ CST.pattern_to_region x)
             in
             if String.equal label "_" then raise.error (unexpected_wildcard @@ CST.pattern_to_region pun) ;
-            let binder = Binder.make ~mut:(not const) (Value_var.of_input_var ~loc label) None in
+            let binder = Binder.make (Value_var.of_input_var ~loc label) None in
             (Label label , Location.wrap ~loc (P_var binder))
           | Complete { field_lhs; field_rhs ; attributes ; _} ->
             check_no_attributes ~raise field_loc attributes ;
@@ -667,13 +667,13 @@ and compile_matching_expr : type a . raise:('b,'w) raise -> (a-> AST.expression)
     let cases : (CST.pattern * AST.expression) list = List.Ne.to_list cases in
     let aux : (CST.pattern * AST.expression) -> (AST.expression , AST.ty_expr option) Match_expr.match_case =
       fun (raw_pattern, body) ->
-        let pattern = conv ~raise ~const:true raw_pattern in
+        let pattern = conv ~raise raw_pattern in
         { pattern ; body }
     in
     List.map ~f:aux cases
 
-and compile_parameters ~raise : CST.parameters -> (AST.type_expression option Binder.t) list = fun params ->
-  let aux : CST.param_decl CST.reg -> AST.type_expression option Binder.t = fun param ->
+and compile_parameters ~raise : CST.parameters -> (AST.type_expression option Param.t) list = fun params ->
+  let aux : CST.param_decl CST.reg -> AST.type_expression option Param.t = fun param ->
     let (param, _loc) = r_split param in
     let var = match param.pattern with
       | P_Var param -> compile_variable param
@@ -681,10 +681,10 @@ and compile_parameters ~raise : CST.parameters -> (AST.type_expression option Bi
     in
     match param.param_kind with
     | `Var _ ->
-      Binder.make ~mut:true var
+      Param.make ~mut_flag:Mutable var
       @@ Option.map ~f:(compile_type_expression ~raise <@ snd) param.param_type
     | `Const _ ->
-      Binder.make ~mut:false var
+      Param.make ~mut_flag:Immutable var
       @@ Option.map ~f:(compile_type_expression ~raise <@ snd) param.param_type
   in
   let (params, _loc) = r_split params in
@@ -782,10 +782,10 @@ and compile_assignment : loc:Location.t -> last_proj_update:(expression -> expre
         )
     in
     match path with
-    | [] -> e_assign ~loc (Binder.make ~mut:true lhs None) default_rhs
+    | [] -> e_assign ~loc (Binder.make lhs None) default_rhs
     | _ ->
       let init = e_variable ~loc lhs in
-      e_assign ~loc (Binder.make ~mut:true lhs None) (aux (init,Fun.id) path)
+      e_assign ~loc (Binder.make lhs None) (aux (init,Fun.id) path)
 
 and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST.expression  = fun ?next instruction ->
   let return expr = Option.value_map next ~default:expr ~f:(e_sequence expr) in
@@ -815,7 +815,7 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST
     match List.rev path with
     | [] ->
       let rhs = compile_expression ~raise rhs in
-      return @@ e_assign ~loc (Binder.make ~mut:true var None) rhs
+      return @@ e_assign ~loc (Binder.make var None) rhs
     | last_access::path -> (
       let path = List.rev path in
       match last_access with
@@ -906,8 +906,16 @@ and compile_let_destructuring ~raise :
   ?const:bool -> Location.t -> CST.expr -> CST.pattern -> AST.expression -> AST.type_expression option -> AST.expression =
     fun ?(const = false) loc value pattern body ty_opt ->
       let init = compile_expression ~raise value in
-      let pattern = conv ~raise ~const pattern in
-      let match_case = Match_expr.{ pattern ; body } in
+      let pattern = conv ~raise pattern in
+      let wrap body = 
+        if const then body
+        else 
+          let binders = Pattern.binders pattern in
+          List.fold_left binders ~init:body ~f:(fun body binder ->
+            e_let_mut_in ~loc binder [] (e_variable ~loc (Binder.get_var binder)) body 
+            )
+      in
+      let match_case = Match_expr.{ pattern ; body = wrap body } in
       let match_ = e_matching ~loc init [match_case] in
       Option.value_map ty_opt ~default:match_ ~f:(e_annotation ~loc match_)
 
@@ -930,7 +938,7 @@ and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expre
     )
     | pattern ->
       (* not sure what to do with  attributes in that case *)
-      compile_let_destructuring ~raise ~const:true loc cd.init pattern next type_
+      compile_let_destructuring ~raise loc cd.init pattern next type_
   )
   | D_Directive _ -> next
   | D_Fun fun_decl -> (
@@ -1005,13 +1013,13 @@ and compile_fun_decl loc ~raise : CST.fun_decl -> Value_var.t * type_expression 
     match param with
     | binder::[] ->
       let lambda : (_,_ option) Lambda.t = { binder; output_type = ret_type; result } in
-      (lambda , Option.map ~f:(fun (a,b) -> t_arrow a b) @@ Option.bind_pair (Binder.get_ascr binder,ret_type))
+      (lambda , Option.map ~f:(fun (a,b) -> t_arrow a b) @@ Option.bind_pair (Param.get_ascr binder,ret_type))
     | lst ->
-      let lst = Option.all @@ List.map ~f:(Binder.get_ascr) lst in
+      let lst = Option.all @@ List.map ~f:(Param.get_ascr) lst in
       let input_type = Option.map ~f:t_tuple lst in
       let var = Value_var.fresh ~name:"parameters" () in
-      let binder = Binder.make ~mut:false var input_type in
-      let result = e_matching_tuple (e_variable var) param result in
+      let binder = Param.make var input_type in
+      let result = e_param_matching_tuple (e_variable var) param result in
       let lambda : _ Lambda.t = { binder ; output_type = ret_type ; result } in
       (lambda, Option.map ~f:(fun (a,b) -> t_arrow a b) @@ Option.bind_pair (input_type,ret_type))
   in
@@ -1030,7 +1038,7 @@ and compile_fun_decl loc ~raise : CST.fun_decl -> Value_var.t * type_expression 
       let fun_type = trace_option ~raise (untyped_recursive_fun loc) @@ fun_type in
       let _, fun_type = destruct_for_alls fun_type in
       let Arrow.{type1; type2} = get_t_arrow_exn fun_type in
-      let lambda = Lambda.{lambda with binder = Binder.map (Fn.const type1) lambda.binder; output_type = type2} in
+      let lambda = Lambda.{lambda with binder = Param.map (Fn.const type1) lambda.binder; output_type = type2} in
       e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None -> make_e ~loc @@ E_lambda lambda
   in
@@ -1072,7 +1080,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
       let var = compile_variable name in
       let ascr = Option.map ~f:(compile_type_expression ~raise <@ snd) const_type in
       let expr = compile_expression ~raise init in
-      let binder = Binder.make ~mut:false var ascr in
+      let binder = Binder.make var ascr in
       let ast = D_value {binder; attr; expr} in
       return region ast
     | _ ->
