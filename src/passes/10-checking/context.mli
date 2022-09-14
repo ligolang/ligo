@@ -35,8 +35,12 @@ type exists_variable = Exists_var.t
 type t
 and pos
 
+and mutable_flag = Param.mutable_flag =
+  | Mutable
+  | Immutable
+
 and item =
-  | C_value of expression_variable * type_expression
+  | C_value of expression_variable * mutable_flag * type_expression
   | C_type of type_variable * type_expression
   | C_type_var of type_variable * Kind.t
   | C_exists_var of exists_variable * Kind.t
@@ -53,13 +57,22 @@ val join : t -> t -> t
 val ( |@ ) : t -> t -> t
 val pp : Format.formatter -> t -> unit
 val pp_ : pos:pos -> Format.formatter -> t -> unit
-val add_value : t -> expression_variable -> type_expression -> t
+val add_value : t -> expression_variable -> mutable_flag -> type_expression -> t
+val add_mut : t -> expression_variable -> type_expression -> t
+val add_imm : t -> expression_variable -> type_expression -> t
 val add_type : t -> type_variable -> type_expression -> t
 val add_type_var : t -> type_variable -> Kind.t -> t
 val add_exists_var : t -> exists_variable -> Kind.t -> t
 val add_marker : t -> exists_variable -> t
 val add_module : t -> module_variable -> Signature.t -> t
-val get_value : t -> expression_variable -> type_expression option
+
+val get_value
+  :  t
+  -> expression_variable
+  -> (mutable_flag * type_expression) option
+
+val get_imm : t -> expression_variable -> type_expression option
+val get_mut : t -> expression_variable -> type_expression option
 val get_type : t -> type_variable -> type_expression option
 val get_module : t -> module_variable -> Signature.t option
 val get_type_vars : t -> type_variable list
@@ -85,7 +98,8 @@ val get_record
 val get_sum
   :  Label.t
   -> t
-  -> (type_variable * type_variable list * type_expression * type_expression) list
+  -> (type_variable * type_variable list * type_expression * type_expression)
+     list
 
 module Well_formed : sig
   val context : t -> bool
@@ -99,15 +113,42 @@ module Elaboration : sig
   include Monad.S3 with type ('a, 'err, 'wrn) t := ('a, 'err, 'wrn) t
 
   type error = [ `Typer_existential_found of Location.t * type_expression ]
+
   val raise : (('err, 'wrn) raise, 'err, 'wrn) t
 
-  val all_lmap : ('a, 'err, 'wrn) t Rows.LMap.t -> ('a Rows.LMap.t, 'err, 'wrn) t
-  val run_expr : (expression, [> error] as 'err, 'wrn) t -> ctx:context -> raise:('err, 'wrn) raise -> expression
-  val run_decl : (decl, [> error] as 'err, 'wrn) t -> ctx:context -> raise:('err, 'wrn) raise -> decl
-  val run_declaration : (declaration, [> error] as 'err, 'wrn) t -> ctx:context -> raise:('err, 'wrn) raise -> declaration
+  val all_lmap
+    :  ('a, 'err, 'wrn) t Rows.LMap.t
+    -> ('a Rows.LMap.t, 'err, 'wrn) t
 
-  val run_module : (module_, [> error] as 'err, 'wrn)  t -> ctx:context -> raise:('err, 'wrn) raise -> module_
-  val run_program : (program, [> error] as 'err, 'wrn)  t -> ctx:context -> raise:('err, 'wrn) raise -> program
+  val run_expr
+    :  (expression, ([> error ] as 'err), 'wrn) t
+    -> ctx:context
+    -> raise:('err, 'wrn) raise
+    -> expression
+
+  val run_decl
+    :  (decl, ([> error ] as 'err), 'wrn) t
+    -> ctx:context
+    -> raise:('err, 'wrn) raise
+    -> decl
+
+  val run_declaration
+    :  (declaration, ([> error ] as 'err), 'wrn) t
+    -> ctx:context
+    -> raise:('err, 'wrn) raise
+    -> declaration
+
+  val run_module
+    :  (module_, ([> error ] as 'err), 'wrn) t
+    -> ctx:context
+    -> raise:('err, 'wrn) raise
+    -> module_
+
+  val run_program
+    :  (program, ([> error ] as 'err), 'wrn) t
+    -> ctx:context
+    -> raise:('err, 'wrn) raise
+    -> program
 end
 
 val enter
@@ -115,7 +156,10 @@ val enter
   -> in_:(t -> t * type_expression * (expression, 'err, 'wrn) Elaboration.t)
   -> t * type_expression * (expression, 'err, 'wrn) Elaboration.t
 
-val decl_enter : ctx:t -> in_:(t -> t * Signature.t * 'a) -> t * Signature.t * 'a
+val decl_enter
+  :  ctx:t
+  -> in_:(t -> t * Signature.t * 'a)
+  -> t * Signature.t * 'a
 
 module Generalization : sig
   val enter
@@ -129,5 +173,8 @@ val init : ?env:Environment.t -> unit -> t
 module Hashes : sig
   val set_context : t -> unit
   val hash_types : unit -> unit
-  val find_type : type_expression -> (module_variable list * type_variable) option
+
+  val find_type
+    :  type_expression
+    -> (module_variable list * type_variable) option
 end

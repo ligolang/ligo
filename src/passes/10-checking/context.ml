@@ -22,7 +22,8 @@ module Exists_var = struct
   let fresh = Type_var.fresh_exists
 
   let of_type_var_exn tvar =
-    if not (Type_var.is_exists tvar) then failwith "Invalid existential variable";
+    if not (Type_var.is_exists tvar)
+    then failwith "Invalid existential variable";
     tvar
 end
 
@@ -108,6 +109,11 @@ module Signature = struct
 end
 
 type exists_variable = Exists_var.t
+
+type mutable_flag = Param.mutable_flag =
+  | Mutable
+  | Immutable
+
 type pos = int
 
 type t =
@@ -116,7 +122,7 @@ type t =
   }
 
 and item =
-  | C_value of expression_variable * type_expression
+  | C_value of expression_variable * mutable_flag * type_expression
   | C_type of type_variable * type_expression
   | C_type_var of type_variable * Kind.t
   | C_exists_var of exists_variable * Kind.t
@@ -139,8 +145,16 @@ module PP = struct
   let context ppf t =
     list ppf t.items ~pp:(fun ppf item ->
       match item with
-      | C_value (evar, type_) ->
-        Format.fprintf ppf "%a : %a" Value_var.pp evar type_expression type_
+      | C_value (evar, mut_flag, type_) ->
+        Format.fprintf
+          ppf
+          "%a%a : %a"
+          Param.pp_mutable_flag
+          mut_flag
+          Value_var.pp
+          evar
+          type_expression
+          type_
       | C_type (tvar, type_) ->
         Format.fprintf ppf "type %a = %a" Type_var.pp tvar type_expression type_
       | C_type_var (tvar, kind) ->
@@ -167,10 +181,12 @@ module PP = struct
     let rec loop ppf items =
       match items with
       | [] -> Format.fprintf ppf ""
-      | C_value (evar, type_) :: items ->
+      | C_value (evar, mut_flag, type_) :: items ->
         Format.fprintf
           ppf
-          "%a : %a@,%a"
+          "%a%a : %a@,%a"
+          Param.pp_mutable_flag
+          mut_flag
           Value_var.pp
           evar
           type_expression
@@ -250,7 +266,9 @@ let of_list items = { empty with items = List.rev items }
 (* Inifix notations for [add] and [join] *)
 let ( |:: ) = add
 let ( |@ ) = join
-let add_value t evar type_ = t |:: C_value (evar, type_)
+let add_value t evar mut_flag type_ = t |:: C_value (evar, mut_flag, type_)
+let add_imm t evar type_ = t |:: C_value (evar, Immutable, type_)
+let add_mut t evar type_ = t |:: C_value (evar, Mutable, type_)
 let add_type t tvar type_ = t |:: C_type (tvar, type_)
 let add_type_var t tvar kind = t |:: C_type_var (tvar, kind)
 let add_exists_var t evar kind = t |:: C_exists_var (evar, kind)
@@ -259,14 +277,29 @@ let add_module t mvar mctx = t |:: C_module (mvar, mctx)
 
 let add_signature_item t (sig_item : Signature.item) =
   match sig_item with
-  | S_value (var, type_) -> add_value t var type_
+  | S_value (var, type_) -> add_imm t var type_
   | S_type (tvar, type_) -> add_type t tvar type_
   | S_module (mvar, sig_) -> add_module t mvar sig_
 
 
 let get_value t evar =
   List.find_map t.items ~f:(function
-    | C_value (evar', type_) when Value_var.equal evar evar' -> Some type_
+    | C_value (evar', mut_flag, type_) when Value_var.equal evar evar' ->
+      Some (mut_flag, type_)
+    | _ -> None)
+
+
+let get_imm (t : t) (evar : expression_variable) : type_expression option =
+  List.find_map t.items ~f:(function
+    | C_value (evar', Immutable, type_) when Value_var.equal evar evar' ->
+      Some type_
+    | _ -> None)
+
+
+let get_mut t evar =
+  List.find_map t.items ~f:(function
+    | C_value (evar', Mutable, type_) when Value_var.equal evar evar' ->
+      Some type_
     | _ -> None)
 
 
@@ -323,8 +356,10 @@ let get_exists_eq t evar =
 let equal_item : item -> item -> bool =
  fun item1 item2 ->
   match item1, item2 with
-  | C_value (x1, type1), C_value (x2, type2) ->
-    Value_var.equal x1 x2 && compare_type_expression type1 type2 = 0
+  | C_value (x1, mut_flag1, type1), C_value (x2, mut_flag2, type2) ->
+    Value_var.equal x1 x2
+    && Param.compare_mutable_flag mut_flag1 mut_flag2 = 0
+    && compare_type_expression type1 type2 = 0
   | C_type (tvar1, type1), C_type (tvar2, type2) ->
     Type_var.equal tvar1 tvar2 && compare_type_expression type1 type2 = 0
   | C_type_var (tvar1, kind1), C_type_var (tvar2, kind2) ->
@@ -698,8 +733,8 @@ and signature_item_of_decl : ctx:t -> Ast_typed.decl -> bool * Signature.item =
   match Location.unwrap decl with
   | D_value { binder; expr; attr = { public; _ } } ->
     public, S_value (Binder.get_var binder, expr.type_expression)
-  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } } ->
-    public, S_type (tvar, type_)
+  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } }
+    -> public, S_type (tvar, type_)
   | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
     let sig_' = signature_of_module_expr ~ctx module_ in
     public, S_module (mvar, sig_')
@@ -713,7 +748,7 @@ let init ?env () =
     Environment.fold env ~init:empty ~f:(fun ctx decl ->
       match Location.unwrap decl with
       | D_value { binder; expr; attr = _ } ->
-        add_value ctx (Binder.get_var binder) expr.type_expression
+        add_imm ctx (Binder.get_var binder) expr.type_expression
       | D_type { type_binder; type_expr; type_attr = _ } ->
         add_type ctx type_binder type_expr
       | D_module { module_binder; module_; module_attr = _ } ->
@@ -734,7 +769,7 @@ end = struct
         loop t
         &&
         (match item with
-         | C_value (var, type_) ->
+         | C_value (var, _, type_) ->
            (match type_expr type_ ~ctx with
             | Some Type -> true
             | _ ->
@@ -1021,25 +1056,37 @@ module Elaboration = struct
       E_matching
         { matchee = self matchee; cases = matching_expr_apply ctx cases }
     | E_record expr_label_map -> E_record (Record.map self expr_label_map)
-    | E_accessor { struct_; path } -> E_accessor { struct_ = self struct_; path }
+    | E_accessor { struct_; path } ->
+      E_accessor { struct_ = self struct_; path }
     | E_update { struct_; path; update } ->
       E_update { struct_ = self struct_; path; update = self update }
     | E_module_accessor mod_access -> E_module_accessor mod_access
+    | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+      E_let_mut_in
+        { let_binder = binder_apply ctx let_binder
+        ; rhs = self rhs
+        ; let_result = self let_result
+        ; attr
+        }
+    | E_deref var -> E_deref var
+    | E_while while_loop -> E_while (While_loop.map self while_loop)
+    | E_for for_loop -> E_for (For_loop.map self for_loop)
+    | E_for_each for_each_loop ->
+      E_for_each (For_each_loop.map self for_each_loop)
     | E_assign { binder; expression } ->
       E_assign
         { binder = binder_apply ctx binder; expression = self expression }
 
 
   and lambda_apply ctx ({ binder; result; output_type } : _ Lambda.t) =
-    { binder = binder_apply ctx binder
+    { binder = param_apply ctx binder
     ; result = e_apply ctx result
     ; output_type = t_apply ctx output_type
     }
 
 
-  and binder_apply ctx (binder : 'a Binder.t) =
-    Binder.map (t_apply ctx) binder
-
+  and param_apply ctx (param : 'a Param.t) = Param.map (t_apply ctx) param
+  and binder_apply ctx (binder : 'a Binder.t) = Binder.map (t_apply ctx) binder
 
   and binder_apply_opt ctx (binder : 'a option Binder.t) =
     Binder.map (Option.map ~f:(t_apply ctx)) binder
@@ -1063,7 +1110,7 @@ module Elaboration = struct
         }
 
 
-  and decl_apply ctx (decl : decl) = (declaration_apply ctx decl)
+  and decl_apply ctx (decl : decl) = declaration_apply ctx decl
 
   and declaration_apply ctx decl : declaration =
     let loc = decl.location in
@@ -1088,7 +1135,9 @@ module Elaboration = struct
 
   and module_apply ctx module_ : module_ = List.map ~f:(decl_apply ctx) module_
 
-  and program_apply ctx program : program = List.map ~f:(declaration_apply ctx) program
+  and program_apply ctx program : program =
+    List.map ~f:(declaration_apply ctx) program
+
 
   and module_expr_apply ctx (module_expr : module_expr) =
     let loc = module_expr.location in
@@ -1162,18 +1211,40 @@ module Elaboration = struct
       self struct_;
       self update
     | E_module_accessor _mod_access -> ()
+    | E_let_mut_in { let_binder; rhs; let_result; _ } ->
+      binder_pass ~raise let_binder;
+      self rhs;
+      self let_result
+    | E_deref _var -> ()
     | E_assign { binder; expression } ->
       binder_pass ~raise binder;
       self expression
+    | E_for { start; final; incr; f_body; _ } ->
+      self start;
+      self final;
+      self incr;
+      self f_body
+    | E_for_each { collection; fe_body; _ } ->
+      self collection;
+      self fe_body
+    | E_while { cond; body } ->
+      self cond;
+      self body
 
 
   and lambda_pass ~raise { binder; result; output_type } =
-    binder_pass ~raise binder;
+    param_pass ~raise binder;
     expression_pass ~raise result;
     type_pass ~raise output_type
 
 
-  and binder_pass ~raise (binder : _ Binder.t) = type_pass ~raise @@ Binder.get_ascr binder
+  and param_pass ~raise (param : _ Param.t) =
+    type_pass ~raise @@ Param.get_ascr param
+
+
+  and binder_pass ~raise (binder : _ Binder.t) =
+    type_pass ~raise @@ Binder.get_ascr binder
+
 
   and binder_pass_opt ~raise (binder : _ option Binder.t) =
     Option.iter (Binder.get_ascr binder) ~f:(type_pass ~raise)
@@ -1203,7 +1274,9 @@ module Elaboration = struct
 
   and module_pass ~raise module_ = List.iter ~f:(decl_pass ~raise) module_
 
-  and program_pass ~raise program = List.iter ~f:(declaration_pass ~raise) program
+  and program_pass ~raise program =
+    List.iter ~f:(declaration_pass ~raise) program
+
 
   and module_expr_pass ~raise module_expr =
     match module_expr.wrap_content with
@@ -1326,7 +1399,9 @@ module Generalization = struct
     let ctxl, ctxr = split_at ctx ~at:(C_pos pos) in
     let ret_type = apply ctxr ret_type in
     let ctxr, tvars = unsolved ctxr in
-    let tvars = Exists_var.Map.map (fun kind -> kind, Type_var.fresh ()) tvars in
+    let tvars =
+      Exists_var.Map.map (fun kind -> kind, Type_var.fresh ()) tvars
+    in
     (* Add equation for later elaboration for existentials *)
     let ctxr =
       { ctxr with
