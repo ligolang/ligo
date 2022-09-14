@@ -178,3 +178,7 @@ let%expect_test _ =
     - test_get_storage exited with value true.
     - test_get_address exited with value true.
     - test_super_not_funny exited with value true. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "call_view_tuple.mligo" ] ;
+  [%expect {| |}]

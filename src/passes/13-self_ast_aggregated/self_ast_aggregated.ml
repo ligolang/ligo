@@ -42,15 +42,15 @@ let rec get_abstractions acc e =
      end
   | _ -> None
 
-let rec get_applications acc e =
+let rec get_applications ?(first = true) acc e =
   let open Ast_aggregated in
   match e.expression_content with
-  | E_application { lamb ; args = { expression_content = E_record p ; _ } } ->
+  | E_application { lamb ; args = { expression_content = E_record p ; _ } } when first ->
      let acc = Ligo_prim.Record.tuple_of_record p in
      let acc = List.map ~f:snd acc in
      get_applications acc lamb
   | E_application { lamb ; args } ->
-     get_applications (args :: acc) lamb
+     get_applications ~first:false (args :: acc) lamb
   | _ -> acc, e
 
 let inline_let : bool ref -> Ast_aggregated.expression -> Ast_aggregated.expression =
