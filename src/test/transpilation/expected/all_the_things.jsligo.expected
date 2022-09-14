@@ -65,3 +65,17 @@ let transfer =
          (receiver_balance + p.value)), new_tokens);
     return [(list([]) as list<operation>),
      {...s, tokens: new_tokens2, allowances: new_allowances}]}};
+
+const main20 = 
+  ([action, store]: 
+     [parameter,
+      storage]): return_ => 
+    match(action, {Action_A: n => entry_A([n, store]),
+     Action_B: (s: string) => entry_B([s, store])});
+
+const main21 = 
+  ([action, store]: 
+     [parameter,
+      storage]): return_ => 
+    match(action, {Action_A: n => entry_A([n, store]),
+     Action_B: s => entry_B([s, store])});
