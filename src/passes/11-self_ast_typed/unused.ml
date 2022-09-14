@@ -100,12 +100,54 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse, []
   | E_type_inst {forall;_} ->
      defuse_of_expr defuse forall
-  | E_assign { binder=_; expression } ->
-     defuse_of_expr defuse expression
-
+  | E_assign { binder; expression } ->
+    defuse_union
+      (M.add (Binder.get_var binder) true M.empty, [])
+      (defuse_of_expr defuse expression)
+  | E_deref var -> M.add var true defuse, []
+  | E_let_mut_in {let_binder;rhs;let_result;_} ->
+    let defuse,unused = defuse_of_expr defuse rhs in
+    let old_binder = M.find_opt (Binder.get_var let_binder) defuse in
+    let defuse, unused' = defuse_of_expr (M.add (Binder.get_var let_binder) false defuse) let_result in
+    let unused' = add_if_unused unused' (Binder.get_var let_binder) defuse in
+    replace_opt (Binder.get_var let_binder) old_binder defuse, unused@unused'
+  | E_for { binder; start; final; incr; f_body } ->
+    defuse_unions
+      defuse
+      [ defuse_of_expr defuse start
+      ; defuse_of_expr defuse final
+      ; defuse_of_expr defuse incr
+      ; defuse_of_binder defuse binder (fun defuse -> defuse_of_expr defuse f_body) 
+      ]
+  | E_for_each { fe_binder = binder1, binder2; collection; fe_body; _ } ->
+    (* Recover type of binders *)
+    let binders = binder1 :: Option.to_list binder2 in
+    defuse_unions defuse
+      [ defuse_of_expr defuse collection
+      ; defuse_of_binders defuse binders (fun defuse -> defuse_of_expr defuse fe_body)
+      ]
+  | E_while { cond; body } ->
+    defuse_unions defuse
+      [ defuse_of_expr defuse cond
+      ; defuse_of_expr defuse body 
+      ]
 
 and defuse_of_lambda defuse {binder; output_type = _; result} =
-  remove_defined_var_after defuse (Binder.get_var binder) defuse_of_expr result
+  remove_defined_var_after defuse (Param.get_var binder) defuse_of_expr result
+
+and defuse_of_binder defuse binder in_ =
+  let old_binder = M.find_opt binder defuse in
+  let defuse,unused = in_ (M.add binder false defuse)in
+  let unused = add_if_not_generated binder unused (M.find binder defuse) in
+  replace_opt binder old_binder defuse, unused
+
+and defuse_of_binders defuse binders in_ =
+  let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse binders in
+  let binders' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) binders in
+  let defuse,unused = in_ map in
+  let unused = List.fold_left ~f:(fun m v -> add_if_not_generated v m (M.find v defuse)) ~init:unused binders in
+  let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse binders' in
+  (defuse, unused)
 
 and defuse_of_cases defuse = function
   | Match_variant x -> defuse_of_variant defuse x
