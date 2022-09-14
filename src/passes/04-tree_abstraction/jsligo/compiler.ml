@@ -32,11 +32,11 @@ let compile_attributes attributes : string list =
       | None -> attr
     )
 module Compile_type = struct
-  let disc_unions: string list list ref = ref []
+  let disc_unions: (string * bool) list list ref = ref []
 
   let is_discriminated_union (a: CST.switch Region.reg) =
     if Poly.(!disc_unions = []) then 
-      false
+      None
     else (
       let rec switch_fields (check, result) = function 
         (CST.Switch_case {expr = EString (String s); _}) :: remaining ->
@@ -46,19 +46,25 @@ module Compile_type = struct
       in 
       let (check1, values) = switch_fields (true, []) (nseq_to_list a.value.cases) in
       if not(check1) then 
-        false
+        None
       else (
         (* check if length is the same and if one disc_union type is correct *)
-        let length = List.length values in
-        
-
-
-        List.iter ~f:print_endline values;
-        print_endline "uno";
-        List.iter ~f:(fun i -> List.iter ~f:print_endline i) !disc_unions;
-        true
-      )
-    )  
+        let switch_length = List.length values in          
+        let rec find_union (remaining: (string * bool) list list) = 
+          match remaining with 
+            item :: tl when List.length item = switch_length -> 
+              let result = List.fold_left ~f:(fun a x -> a && List.mem (List.map ~f:fst item) x ~equal:String.equal) ~init:true values in 
+              if result then 
+                Some item
+              else 
+                find_union tl
+          | _ :: tl ->
+              find_union tl
+          | [] -> None
+        in
+        find_union !disc_unions
+      ) 
+    )
 
   (*
     `type_compiler_opt` represents an abstractor for a single pattern.
@@ -330,7 +336,6 @@ module Compile_type = struct
           ) ~init:hd tl
         ) 
       in
-      
       let shared_field = match shared_fields with 
         [] -> failwith "no shared fields available"
       | (hd, _) :: _ -> hd
@@ -352,19 +357,23 @@ module Compile_type = struct
             hd :: _ -> hd.value
           | _ -> failwith "should not happen"
           in
-          let ne_elements = (List.hd_exn other, (List.map ~f:(fun l -> (Token.wrap_semi Region.ghost,l)) (List.tl_exn other))) in
-          let obj = CST.TObject {
-            obj with 
-              value = {
-                obj.value with ne_elements
-              }
-          } in
-          let type_expr = self obj in
+          let type_expr = match other with 
+            hd :: tl -> 
+              let ne_elements = (hd, (List.map ~f:(fun l -> (Token.wrap_semi Region.ghost,l)) tl)) in
+              let obj = CST.TObject {
+                obj with 
+                  value = {
+                    obj.value with ne_elements
+                  }
+              } in
+              self obj
+          | [] -> 
+            t_unit ()
+          in
           constructor, type_expr, []
         ) orig_objects
         in 
-        disc_unions := (List.map ~f:(fun (a, _, _) -> a) sum) :: !disc_unions;
-        
+        disc_unions := (List.map ~f:(fun (a, type_expr, _) -> (a, Poly.(type_expr <> AST.t_unit ()))) sum) :: !disc_unions;              
         return @@ t_sum_ez_attr ~loc:Location.dummy ~attr:[] sum
 end
 
@@ -1166,14 +1175,36 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     let initializers' = initializers ~const:true init tl in
     binding initializers'
   | SSwitch s' ->
-    if is_discriminated_union s' then 
-      
-      
-      failwith "todo"
+    let (s, loc)    = r_split s' in
+    (match is_discriminated_union s' with 
+      Some data -> (
+        let matchee, payload = match s'.value.expr with 
+          EProj {value = {expr = (EVar ev as v); _}; _} -> compile_expression ~raise v, ev
+        | _ -> failwith "not supported for a discriminated union..."
+        in
+        (* let matchee = self matchee in *)
+        let cases = List.map ~f:(fun f -> 
+          match f with 
+            Switch_case {expr = EString (String v); statements; _} ->
+              let (_, has_body) = List.find_exn ~f:(fun (f, _) -> Poly.(f = v.value) ) data in
+              let pattern = if has_body then 
+                let arg = Pattern.P_var Binder.{ var = compile_variable payload; ascr = None; attributes = { const_or_var = None } } in
+                Location.wrap (Pattern.P_variant (Label v.value, (Location.wrap ~loc arg)))
+              else (
+                Location.wrap (Pattern.P_variant (Label v.value, (Location.wrap ~loc Pattern.P_unit)))
+              ) in
+              Match_expr.{
+                pattern;
+                body = (match statements with Some statements -> 
+                  compile_statements_to_expression ~raise statements;
+                  | None -> e_unit ())
+              } 
 
-
-    else (
-      let (s, loc)    = r_split s' in
+          | _ -> failwith "should not happen"
+        ) (nseq_to_list s.cases) in
+        expr (e_matching ~loc matchee cases)
+      )
+    | None -> (
       let switch_expr = self_expr s.expr in
 
       let fallthrough = Value_var.fresh ~name:"fallthrough" () in
@@ -1278,7 +1309,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
         ~init:initial
         ~f:(fun acc case ->
               merge_statement_results acc (process_case case))
-    )
+    ))
   | SBreak b ->
     Break (e_unit ~loc:(Location.lift b#region) ())
   | SType ti ->
