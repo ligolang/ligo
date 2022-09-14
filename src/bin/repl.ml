@@ -24,7 +24,7 @@ let get_declarations_core (core_prg : Ast_core.program )=
 
 let get_declarations_typed (typed_prg : Ast_typed.program) =
   List.filter_map ~f:Ast_typed.(fun (a : declaration) -> Simple_utils.Location.unwrap a |>
-    (function D_value a when not a.attr.hidden -> Option.return @@ `Value a.binder.var
+    (function D_value a when not a.attr.hidden -> Option.return @@ `Value (Binder.get_var a.binder)
     | D_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
     | D_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
     | _ -> None)) @@ typed_prg

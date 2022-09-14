@@ -21,10 +21,11 @@ module Fold_helpers(M : Monad) = struct
     ok @@ Application.{lamb; args}
 
   and binder : ('a -> 'b monad) -> 'a Binder.t -> ('b Binder.t) monad
-    = fun f {var; ascr; attributes} ->
+    = fun f binder ->
+    let ascr = Binder.get_ascr binder in
     let* ascr = f ascr in
-    ok @@ Binder.{var; ascr; attributes}
-
+    let binder = Binder.map (Fn.const ascr) binder in
+    ok @@ binder
   let let_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Let_in.t -> (('b,'d) Let_in.t) monad
     = fun f g {let_binder; rhs; let_result; attributes} ->
     let* let_binder = binder g let_binder in

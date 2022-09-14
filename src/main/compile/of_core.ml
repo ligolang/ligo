@@ -53,7 +53,7 @@ let list_declarations (m : Ast_core.program) : Value_var.t list =
     ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_core.declaration_content) with
-      | D_value {binder;_} -> binder.var::prev
+      | D_value {binder;_} -> (Binder.get_var binder)::prev
       | _ -> prev)
     ~init:[] m
 

@@ -9,7 +9,7 @@ open Simple_utils.Trace
 let rec check_block_scope ~raise vars types mods e =
    match e.expression_content with
    | E_let_in {let_binder; rhs; let_result; _} ->
-      let var = let_binder.var in
+      let var = Binder.get_var let_binder in
       if (List.mem ~equal:Value_var.equal vars var) then
          raise.error @@ no_shadowing e.location
       else (
@@ -37,7 +37,7 @@ let peephole_expression ~raise : expression -> expression = fun e ->
 let peephole_program ~raise : program -> program = fun m ->
    let rec aux vars types mods = function
    |  Location.{wrap_content = D_value t; location} :: remaining ->
-         let var = t.binder.var in
+         let var = Binder.get_var t.binder in
          if (List.mem ~equal:Value_var.equal vars var) then
             raise.error @@ no_shadowing location
          else

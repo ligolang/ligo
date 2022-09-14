@@ -34,16 +34,16 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
   | E_variable z ->
     let z = replace_var z in
     return @@ E_variable z
-  | E_lambda { binder = { var ; ascr ; attributes } ; output_type ; result } ->
-     let result = if var = x then result else replace result in
-     return @@ E_lambda { binder = { var ; ascr ; attributes } ; output_type ; result }
-  | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; output_type ; result } } ->
-     let result = if var = x || fun_name = x then result else replace result in
-     return @@ E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; output_type ; result } }
-  | E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr } ->
+  | E_lambda { binder ; output_type ; result } ->
+     let result = if Binder.apply ((=) x) binder then result else replace result in
+     return @@ E_lambda { binder ; output_type ; result }
+  | E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } } ->
+     let result = if Binder.apply ((=) x) binder || fun_name = x then result else replace result in
+     return @@ E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } }
+  | E_let_in { let_binder ; rhs ; let_result ; attr } ->
      let rhs = replace rhs in
-     let let_result = if var = x then let_result else replace let_result in
-     return @@ E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr }
+     let let_result = if Binder.apply ((=) x) let_binder then let_result else replace let_result in
+     return @@ E_let_in { let_binder ; rhs ; let_result ; attr }
   | E_constant {cons_name; arguments} ->
      let arguments = List.map ~f:replace arguments in
      return @@ E_constant {cons_name; arguments}
@@ -68,7 +68,7 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
      return @@ E_matching { matchee ; cases = Match_variant { cases ; tv } }
   | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
      let matchee = replace matchee in
-     let binders = List.map (Record.LMap.to_kv_list fields) ~f:(fun (_, { var ; _ }) -> replace_var var) in
+     let binders = List.map (Record.LMap.to_kv_list fields) ~f:(fun (_, b) -> Binder.apply replace_var b) in
      let body = if List.mem ~equal:(=) binders x then body else replace body in
      return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
   | E_literal _ -> e
@@ -83,9 +83,9 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
      let struct_ = replace struct_ in
      let update = replace update in
      return @@ E_update { struct_ ; path ; update }
-  | E_assign { binder = { var ; ascr ; attributes } ; expression } ->
+  | E_assign { binder ; expression } ->
      let expression = replace expression in
-     return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }
+     return @@ E_assign { binder ; expression }
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
@@ -152,16 +152,19 @@ let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -
      if Value_var.equal x' x
      then expr
      else return_id
-  | E_lambda { binder = { var ; ascr ; attributes } ; output_type ; result } ->
-     let var, result = subst_binder1 ~body:(var, result) ~x ~expr in
-     return @@ E_lambda { binder = { var ; ascr ; attributes } ; output_type ; result }
-  | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; output_type ; result } } ->
-     let fun_name, (var, result) = subst_binder2 ~body:(fun_name, (var, result)) ~x ~expr in
-     return @@ E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; output_type ; result } }
-  | E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr } ->
+  | E_lambda { binder ; output_type ; result } ->
+     let var, result = subst_binder1 ~body:(Binder.get_var binder, result) ~x ~expr in
+     let binder = Binder.set_var binder var in
+     return @@ E_lambda { binder ; output_type ; result }
+  | E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } } ->
+     let fun_name, (var, result) = subst_binder2 ~body:(fun_name, (Binder.get_var binder, result)) ~x ~expr in
+     let binder = Binder.set_var binder var in
+     return @@ E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } }
+  | E_let_in { let_binder ; rhs ; let_result ; attr } ->
      let rhs = self rhs in
-     let var, let_result = subst_binder1 ~body:(var, let_result) ~x ~expr in
-     return @@ E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr }
+     let var, let_result = subst_binder1 ~body:(Binder.get_var let_binder, let_result) ~x ~expr in
+     let let_binder = Binder.set_var let_binder var in
+     return @@ E_let_in { let_binder ; rhs ; let_result ; attr }
   | E_constant {cons_name; arguments} ->
      let arguments = List.map ~f:self arguments in
      return @@ E_constant {cons_name; arguments}
@@ -187,10 +190,10 @@ let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -
   | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
      let matchee = self matchee in
      let fields = Record.LMap.to_kv_list fields in
-     let binders = List.map fields ~f:(fun (_, { var ; _ }) -> var) in
+     let binders = List.map fields ~f:(fun (_, b) -> Binder.get_var b) in
      let binders, body = subst_binders subst_expression replace ~body:(binders, body) ~x ~expr in
      let fields = List.zip_exn fields binders in
-     let fields = List.map fields ~f:(fun ((l, { ascr ; attributes ; _ }), var) -> (l, Binder.{ var ; ascr ; attributes })) in
+     let fields = List.map fields ~f:(fun ((l, b), var) -> (l, Binder.set_var b var)) in
      let fields = Record.LMap.of_list fields in
      return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
   | E_literal _ | E_raw_code _ ->
@@ -205,6 +208,6 @@ let rec subst_expression : body:expression -> x:Value_var.t -> expr:expression -
      let struct_ = self struct_ in
      let update = self update in
      return @@ E_update { struct_ ; path ; update }
-  | E_assign { binder = { var ; ascr ; attributes } ; expression } ->
+  | E_assign { binder ; expression } ->
      let expression = self expression in
-     return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }
+     return @@ E_assign { binder ; expression }

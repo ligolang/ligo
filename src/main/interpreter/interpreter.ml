@@ -636,7 +636,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type ()
     | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = try_binder ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = try_lambda } ; V_Func_val { arg_binder = catch_binder ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = catch_lambda } ]) ->
-      let eval_branch arg_binder orig_lambda body calltrace env = 
+      let eval_branch arg_binder orig_lambda body calltrace env =
         let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
         let f_env' = Env.extend env arg_binder (in_ty, v_unit ()) in
         eval_ligo { body with location = loc } (loc :: calltrace) f_env'
@@ -1021,13 +1021,13 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
     | E_lambda {binder; output_type=_; result;} ->
       let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
       let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
-      return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
+      return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=Binder.get_var binder ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; hidden = _ ; thunk = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~inline ~no_mutation (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env (Binder.get_var let_binder) ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_literal l ->
       eval_literal l
@@ -1135,12 +1135,12 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : Label.t ->  _ Binder.t -> env -> env =
-          fun l {var;ascr;attributes=_} env ->
+          fun l b env ->
             let iv = match Record.LMap.find_opt l rv with
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend env var (ascr,iv)
+            Env.extend env (Binder.get_var b) (Binder.get_ascr b,iv)
         in
         let env' = Record.LMap.fold aux fields env in
         eval_ligo body calltrace env'
@@ -1151,7 +1151,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
-                             arg_binder = lambda.binder.var ;
+                             arg_binder = Binder.get_var lambda.binder ;
                              body = lambda.result ;
                              env = env }
     | E_raw_code {language ; code} -> (
@@ -1178,7 +1178,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
     let ds, defs = r in
     match decl.Location.wrap_content with
     | Ast_typed.D_value { binder ; expr ; _ } ->
-      let var = binder.var in
+      let var = Binder.get_var binder in
       if not (Value_var.is_generated var) && (Base.String.is_prefix (Value_var.to_name_exn var) ~prefix:"test") then
         let expr = Ast_typed.(e_a_variable var expr.type_expression) in
         (* TODO: check that variables are unique, as they are ignored *)
@@ -1191,8 +1191,8 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
-    let s, _ = Value_var.internal_get_name_and_counter n.Binder.var in
-    Record.LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
+    let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
+    Record.LMap.add (Label s) (Ast_typed.e_a_variable (Binder.get_var n) t) r in
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
@@ -1201,7 +1201,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = Value_var.internal_get_name_and_counter n.Binder.var in
+      let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
       match Record.LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in

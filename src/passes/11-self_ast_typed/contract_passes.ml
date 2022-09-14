@@ -45,13 +45,13 @@ and get_fv expr =
      return env @@ E_type_inst {forall;type_}
   | E_lambda {binder ; output_type ; result} ->
      let {env;used_var},result = self result in
-     return {env;used_var=VVarSet.remove binder.var @@ used_var} @@ E_lambda {binder;output_type;result}
+     return {env;used_var=VVarSet.remove (Binder.get_var binder) @@ used_var} @@ E_lambda {binder;output_type;result}
   | E_type_abstraction {type_binder;result} ->
      let env,result = self result in
      return env @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name; lambda = {binder; output_type; result};fun_type} ->
      let {env;used_var},result = self result in
-     return {env;used_var=VVarSet.remove fun_name @@ VVarSet.remove binder.var @@ used_var} @@
+     return {env;used_var=VVarSet.remove fun_name @@ VVarSet.remove (Binder.get_var binder) @@ used_var} @@
        E_recursive {fun_name; lambda = {binder; output_type; result};fun_type}
   | E_constructor {constructor;element} ->
      let env,element = self element in
@@ -75,7 +75,7 @@ and get_fv expr =
      return env @@ E_accessor {struct_;path}
   | E_let_in { let_binder ; rhs ; let_result ; attr} ->
      let env,let_result = (self let_result) in
-     let env = {env with used_var=VVarSet.remove let_binder.var env.used_var} in
+     let env = {env with used_var=VVarSet.remove (Binder.get_var let_binder) env.used_var} in
      let env', rhs = self rhs in
      return (merge_env env env') @@ E_let_in {let_binder; rhs; let_result; attr}
   | E_mod_in { module_binder; rhs ; let_result } ->
@@ -104,7 +104,7 @@ and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
      let envs,cases = List.unzip @@  List.map ~f:aux cases in
      (unions envs), Match_variant {cases;tv}
   | Match_record {fields; body; tv} ->
-     let pattern = Record.LMap.values fields |> List.map ~f:(fun b -> b.Binder.var) in
+     let pattern = Record.LMap.values fields |> List.map ~f:(Binder.get_var) in
      let env,body = get_fv body in
      {env with used_var=List.fold_right pattern ~f:VVarSet.remove ~init:env.used_var}, Match_record {fields;body;tv}
 
@@ -112,8 +112,8 @@ and get_fv_module (env:env) acc = function
   | [] -> env, acc
   | ({Location.wrap_content = D_value {binder; expr;attr}; _} as hd) :: tl ->
     let binder' = binder in
-    if VVarSet.mem binder'.var env.used_var then
-      let env = {env with used_var = VVarSet.remove binder'.var env.used_var} in
+    if VVarSet.mem (Binder.get_var binder') env.used_var then
+      let env = {env with used_var = VVarSet.remove (Binder.get_var binder') env.used_var} in
       let env',expr = get_fv expr in
       let env = merge_env env @@ env' in
       get_fv_module env ({hd with wrap_content = D_value {binder;expr;attr}} :: acc) tl
@@ -156,8 +156,8 @@ and get_fv_program (env:env) acc : program -> _ * program = function
   | [] -> env, acc
   | ({Location.wrap_content = D_value {binder; expr;attr}; _} as hd) :: tl ->
     let binder' = binder in
-    if VVarSet.mem binder'.var env.used_var then
-      let env = {env with used_var = VVarSet.remove binder'.var env.used_var} in
+    if VVarSet.mem (Binder.get_var binder') env.used_var then
+      let env = {env with used_var = VVarSet.remove (Binder.get_var binder') env.used_var} in
       let env',expr = get_fv expr in
       let env = merge_env env @@ env' in
       get_fv_program env ({hd with wrap_content = D_value {binder;expr;attr}} :: acc) tl
@@ -180,7 +180,7 @@ let remove_unused ~raise : contract_pass_data -> program -> program = fun contra
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = D_value {binder;_}; _} -> not (Value_var.equal binder.var contract_pass_data.main_name)
+      {Location.wrap_content = D_value {binder;_}; _} -> not (Value_var.equal (Binder.get_var binder) contract_pass_data.main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in
@@ -200,7 +200,7 @@ let remove_unused_for_views ~raise ~(view_names:Value_var.t list ) : program -> 
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let pred = fun _ -> function
-      {Location.wrap_content = D_value {binder;_}; _} -> (is_view_name binder.var)
+      {Location.wrap_content = D_value {binder;_}; _} -> (is_view_name @@ Binder.get_var binder)
     | _ -> false in
   let idx,_ = trace_option ~raise (Errors.corner_case "View not found") @@ List.findi prg_decls ~f:pred in
   (* Remove the definition after the last view (can't be relevant), mostly remove the test *)
@@ -208,16 +208,16 @@ let remove_unused_for_views ~raise ~(view_names:Value_var.t list ) : program -> 
   let view_decls = List.rev @@ List.filter_map prg_decls
     ~f:(fun decl ->
       match decl with
-        {Location.wrap_content = D_value dc; _} when is_view_name dc.binder.var -> Some dc
+        {Location.wrap_content = D_value dc; _} when is_view_name @@ Binder.get_var dc.binder -> Some dc
       | _ -> None)
   in
   let env,_ = List.fold view_decls ~init:(empty_env, []) ~f:(fun (env, decls) view_decl ->
     let env',_ = get_fv view_decl.expr in
-    let used_var = List.fold_right decls ~init:env'.used_var 
-      ~f:(fun decl_var used_var -> VVarSet.remove decl_var used_var ) 
+    let used_var = List.fold_right decls ~init:env'.used_var
+      ~f:(fun decl_var used_var -> VVarSet.remove decl_var used_var )
     in
     let env' = { env' with used_var } in
-    merge_env env env', view_decl.binder.var::decls
+    merge_env env env', (Binder.get_var view_decl.binder)::decls
   ) in
   let view_decls = List.map view_decls ~f:(fun decl -> Location.wrap (D_value decl)) in
   let _, prg_decls = trace_option ~raise (Errors.corner_case "View not found") @@ Simple_utils.List.uncons prg_decls in

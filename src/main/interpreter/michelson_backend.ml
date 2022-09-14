@@ -112,7 +112,7 @@ let add_ast_env ?(name = Value_var.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation, inline) (e : expression) =
     if Value_var.compare let_binder binder <> 0 && Value_var.compare let_binder name <> 0 then
-      e_a_let_in {var=let_binder;ascr=expr.type_expression;attributes=Binder.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false ; thunk = false}
+      e_a_let_in (Binder.make let_binder expr.type_expression) expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false ; thunk = false}
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -178,8 +178,8 @@ let entrypoint_of_string x =
 let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
-    | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; output_type = out_ty ; binder = {var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute} } in_ty out_ty
-    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';output_type=out_ty;binder = {var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute}}} in
+    | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; output_type = out_ty ; binder =  Binder.make arg_binder in_ty } in_ty out_ty
+    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';output_type=out_ty;binder = Binder.make arg_binder in_ty}} in
   let (parameter, storage) = trace_option ~raise (Errors.generic_error Location.generated "Trying to compile a non-contract?") @@
                                Ast_aggregated.get_t_pair in_ty in
   trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp
@@ -216,7 +216,7 @@ let compile_contract_file ~raise ~options source_file entry_point declared_views
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
-  Ast_aggregated.e_a_lambda {result=typed_exp'; output_type = out_ty ; binder={var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute}} in_ty out_ty
+  Ast_aggregated.e_a_lambda {result=typed_exp'; output_type = out_ty ; binder=Binder.make arg_binder in_ty} in_ty out_ty
 
 let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
                           Ast_aggregated.type_expression ->
@@ -385,7 +385,7 @@ and make_ast_func ~raise ?name env arg body orig =
   let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name:name env arg body in
   let Arrow.{ type1 = in_ty ; type2 = out_ty } = get_t_arrow_exn orig.type_expression in
-  let lambda = Lambda.{ result=typed_exp' ; output_type = out_ty ; binder={var=arg;ascr=in_ty;attributes=Binder.empty_attribute}} in
+  let lambda = Lambda.{ result=typed_exp' ; output_type = out_ty ; binder=Binder.make arg in_ty} in
   let typed_exp' = match name with
     | None -> e_a_lambda lambda in_ty out_ty
     | Some fun_name -> e_a_recursive {fun_name ; fun_type = orig.type_expression ; lambda }
