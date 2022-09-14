@@ -1,4 +1,4 @@
-author: melwyn95
+author: er433 & melwyn95
 description: ''
 merge_request: '1972'
 title: Fix tuple parameters passed to constant functions e.g. `Tezos.call_view`
