@@ -45,9 +45,26 @@ module Free_variables = struct
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
     | E_module_accessor _ -> empty
-    | E_assign {binder;expression=e} ->
-      let b' = union (Binder.apply singleton binder) b in
-      expression b' e
+    | E_let_mut_in { rhs; let_result; _ } ->
+      union (self let_result) (self rhs)
+    | E_assign {expression=e;_} ->
+      expression b e
+    | E_deref _ -> empty
+    | E_for { binder; start; final; incr; f_body } ->
+      let b' = union (singleton binder) b in
+      unions [ self start; self final; expression b' incr; expression b' f_body ]
+    | E_for_each
+        { fe_binder = binder, None; collection; fe_body; collection_type = _ }
+      -> unions [ self collection; expression (union (singleton binder) b) fe_body ]
+    | E_for_each { fe_binder = binder, Some binder'; collection; fe_body; _ } ->
+      let b' = union [ binder; binder' ] b in
+      unions
+        [ self collection
+        ; expression b' fe_body
+        ]
+    | E_while { cond; body } ->
+      union (self cond) (self body)
+    
 
   and lambda : bindings -> (expr,ty_expr) Lambda.t -> bindings = fun b l ->
     let b' = union (singleton (Param.get_var l.binder)) b in
