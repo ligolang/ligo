@@ -181,4 +181,32 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "call_view_tuple.mligo" ] ;
-  [%expect {| |}]
+  [%expect {|
+    { parameter unit ;
+      storage (pair (pair (int %a) (nat %b)) (mutez %c) (address %d)) ;
+      code { CDR ;
+             PUSH int 1 ;
+             SOME ;
+             IF_NONE
+               {}
+               { DROP ;
+                 DUP ;
+                 CDR ;
+                 CDR ;
+                 DUP 2 ;
+                 CAR ;
+                 CAR ;
+                 SENDER ;
+                 PAIR ;
+                 VIEW "foo" unit ;
+                 DROP ;
+                 DUP ;
+                 CDR ;
+                 CDR ;
+                 DUP 2 ;
+                 CAR ;
+                 CDR ;
+                 VIEW "bar" unit ;
+                 IF_NONE {} { DROP } } ;
+             NIL operation ;
+             PAIR } } |}]
