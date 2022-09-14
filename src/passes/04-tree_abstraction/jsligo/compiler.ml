@@ -313,34 +313,29 @@ module Compile_type = struct
       return @@ aux [module_name] ma.field
     | TDisc n ->
       let disc_fields (obj: CST.obj_expr) : (string * string) list = 
-        let lst = npseq_to_list obj.value.ne_elements in
-        List.fold_left ~f:(fun all {value; _} -> 
+        let fields = obj.value.ne_elements in
+        Utils.nsepseq_foldl (fun all ({value; _}: CST.field_decl Region.reg)  -> 
           match value.field_type with 
             TString s -> (value.field_name.value, s.value) :: all
           | _-> all
-        ) ~init:[] lst
+        ) [] fields
       in
-      let orig_objects = npseq_to_list n in
-      let objects = List.map ~f:disc_fields orig_objects in
-      let shared_fields = match objects with 
-        [] -> failwith "should not happen"
-      | hd :: tl -> (
-          List.fold_left ~f:(fun shared_fields item -> 
-            let item_props = item in
-            List.fold_left ~f:(fun all i -> 
-                if (List.mem item_props i ~equal:(fun (a, a_value) (b, b_value) -> String.equal a b && not (String.equal a_value b_value))) then
-                  i :: all
-                else 
-                  all
-            ) ~init:[] shared_fields
-          ) ~init:hd tl
-        ) 
+      let objects = Utils.nsepseq_map disc_fields n in
+      let (hd, tl) = objects in
+      let shared_fields = List.fold_left ~f:(fun shared_fields (_, item) -> 
+        List.fold_left ~f:(fun all i -> 
+            if (List.mem item i ~equal:(fun (a, a_value) (b, b_value) -> String.equal a b && not (String.equal a_value b_value))) then
+              i :: all
+            else 
+              all
+        ) ~init:[] shared_fields
+      ) ~init:hd tl
       in
       let shared_field = match shared_fields with 
-        [] -> failwith "no shared fields available"
+        [] -> failwith "no shared fields" (* raise.error @@ (no_shared_fields n) *)
       | (hd, _) :: _ -> hd
       in
-      let sum = List.map ~f:(
+      let sum = Utils.nsepseq_map (
         fun (obj: CST.obj_expr) ->
           let obj: CST.obj_expr = obj in (* all but the constructor *)
           let constructor, other = List.partition_map (npseq_to_list obj.value.ne_elements) ~f:(fun x ->
@@ -371,8 +366,9 @@ module Compile_type = struct
             t_unit ()
           in
           constructor, type_expr, []
-        ) orig_objects
+        ) n
         in 
+        let sum = npseq_to_list sum in
         disc_unions := (List.map ~f:(fun (a, type_expr, _) -> (a, Poly.(type_expr <> AST.t_unit ()))) sum) :: !disc_unions;              
         return @@ t_sum_ez_attr ~loc:Location.dummy ~attr:[] sum
 end
