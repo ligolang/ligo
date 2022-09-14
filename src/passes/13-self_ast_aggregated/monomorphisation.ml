@@ -171,6 +171,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
       let data, result = self data result in
       data, return (E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } })
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
+      let rhs = AST.Combinators.forall_expand rhs in
       let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
       let data, let_result = self data let_result in
       let binder_instances = Data.instances_lookup (Binder.get_var let_binder) data in

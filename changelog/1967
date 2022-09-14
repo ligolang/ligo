@@ -1,0 +1,6 @@
+author: er433
+description: '### New `ignore` in stdlib\n\nA new function `ignore : type a . a ->
+  unit` allows to ignore values.'
+merge_request: '1967'
+title: 'Stdlib: add ignore'
+type: added
