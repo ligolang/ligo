@@ -27,10 +27,19 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
       res
     )
   | E_recursive r -> Recursive.fold self self_type init r
-  | E_assign    a -> Assign.fold self self_type init a
   | E_type_inst { forall = e; type_ = _} ->
     let res = self init e in
     res
+  | E_let_mut_in { let_binder = _ ; rhs ; let_result ; attr=_} -> (
+    let res = self init rhs in
+    let res = self res let_result in
+    res
+  )
+  | E_deref _ -> init
+  | E_assign a -> Assign.fold self self_type init a
+  | E_for f -> For_loop.fold self init f
+  | E_for_each fe -> For_each_loop.fold self init fe
+  | E_while w -> While_loop.fold self init w
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> 'a = fun f init m ->
   match m with
@@ -104,6 +113,20 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
   | E_assign a ->
     let a = Assign.map self (fun a -> a) a in
     return @@ E_assign a
+  | E_for f ->
+    let f = For_loop.map self f in
+    return @@ E_for f
+  | E_for_each fe ->
+    let fe = For_each_loop.map self fe in
+    return @@ E_for_each fe
+  | E_while w ->
+    let w = While_loop.map self w in
+    return @@ E_while w
+  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+    let rhs = self rhs in
+    let let_result = self let_result in
+    return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+  | E_deref _
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 
@@ -184,8 +207,22 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
     let (res,code) = self init code in
     (res, return @@ E_raw_code { language ; code }))
   | E_assign a ->
-    let (res,a) = Assign.fold_map self idle init a in
-    (res, return @@ E_assign a)
+    let res, a = Assign.fold_map self idle init a in
+    res, return @@ E_assign a
+  | E_for f ->
+    let res, f = For_loop.fold_map self init f in
+    res, return @@ E_for f
+  | E_for_each fe ->
+    let res, fe = For_each_loop.fold_map self init fe in
+    res, return @@ E_for_each fe
+  | E_while w ->
+    let res, w = While_loop.fold_map self init w in
+    res, return @@ E_while w
+  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+    let res, rhs = self init rhs in
+    let res, let_result = self res let_result in
+    res, return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+  | E_deref _
   | E_literal _ | E_variable _ as e' -> (init, return e')
 
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
@@ -227,12 +264,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; result} ->
       let fv = self result in
-      VarSet.remove (Binder.get_var binder) @@ fv
+      VarSet.remove (Param.get_var binder) @@ fv
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; result}} ->
       let fv = self result in
-      VarSet.remove fun_name @@ VarSet.remove (Binder.get_var binder) @@ fv
+      VarSet.remove fun_name @@ VarSet.remove (Param.get_var binder) @@ fv
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -249,8 +286,29 @@ module Free_variables :
       let fv2 = (self let_result) in
       let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       VarSet.union (self rhs) fv2
-    | E_assign { binder=_; expression } ->
+    | E_let_mut_in { rhs; let_result; _ } ->
+      VarSet.union (self let_result) (self rhs)
+    | E_assign {expression;_} ->
       self expression
+    | E_deref _ -> VarSet.empty
+    | E_for { binder; start; final; incr; f_body } ->
+      unions
+        [ self start
+        ; self final
+        ; self incr
+        ; VarSet.remove binder (self f_body)
+        ]
+    | E_for_each
+        { fe_binder = binder, None; collection; fe_body; collection_type = _ }
+      -> unions [ self collection; VarSet.remove binder (self fe_body) ]
+    | E_for_each { fe_binder = binder1, Some binder2; collection; fe_body; _ } ->
+      unions
+        [ self collection
+        ; VarSet.remove binder1 @@ VarSet.remove binder2 @@ self fe_body
+        ]
+    | E_while { cond; body } ->
+      VarSet.union (self cond) (self body)
+
 
   and get_fv_cases : matching_expr -> VarSet.t = fun m ->
     match m with

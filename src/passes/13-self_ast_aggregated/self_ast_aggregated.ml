@@ -1,3 +1,4 @@
+open Ligo_prim
 module Errors = Errors
 module Helpers = Helpers
 
@@ -10,7 +11,7 @@ let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
   |  E_lambda { binder ;
                 result = { expression_content = E_application { lamb ; args } ; _ } } ->
      begin match Ast_aggregated.get_e_variable args with
-     | Some y when Ligo_prim.(Binder.apply (Value_var.equal y)) binder -> Some lamb
+     | Some y when Param.is_imm binder && Value_var.equal (Param.get_var binder) y -> Some lamb
      | _ -> None
      end
   | _ -> None
@@ -19,7 +20,8 @@ let rec get_abstractions acc e =
   let open Ast_aggregated in
   match e.expression_content with
   | E_lambda { binder ; result ; _ } ->
-     get_abstractions (acc @ [Ligo_prim.Binder.get_var binder]) result
+     (* This treatment of params only works bcs of the specific transformation this analysis is used in -- i.e. it is a hack! *)
+     get_abstractions (acc @ [Param.get_var binder]) result
   | E_matching { matchee = { expression_content = E_variable u ; _ } ; cases = Match_record { fields ; body ; _ } }
        when List.equal Ligo_prim.Value_var.equal [u] acc && Ligo_prim.Record.is_tuple fields ->
      let acc = Ligo_prim.Record.tuple_of_record fields in
@@ -87,7 +89,6 @@ let rec thunk e =
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = Helpers.map_expression Polymorphic_replace.expression e in
   let e = if not options.test then Obj_ligo.check_obj_ligo ~raise e else e in
-  let e = Purify_assignations.expression ~raise e in
   let e = Monomorphisation.mono_polymorphic_expr ~raise e in
   let e = Uncurry.uncurry_expression e in
   let e = thunk e in
