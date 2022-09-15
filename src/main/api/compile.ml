@@ -42,8 +42,7 @@ let contract (raw_options : Raw_options.t) source_file display_format michelson_
       in
       let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views ; constants ; file_constants ; _ } = options.backend in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
-      let code = Build.build_contract ~raise ~options entry_point source_file in
-      let views = Build.build_views ~raise ~options entry_point views source_file in
+      let code,views = Build.build_contract ~raise ~options entry_point views source_file in
       let file_constants = read_file_constants ~raise file_constants in
       let constants = constants @ file_constants in
       Ligo_compile.Of_michelson.build_contract ~raise ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version:options.middle_end.protocol_version ~has_env_comments:options.backend.has_env_comments ~disable_typecheck ~constants code views
@@ -115,7 +114,7 @@ let parameter (raw_options : Raw_options.t) source_file expression amount balanc
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
         let entry_point = Value_var.of_input_var entry_point in
-        let app_typed_prg = Build.build_typed ~raise ~options Env source_file in
+        let app_typed_prg = Build.qualified_typed ~raise ~options Env source_file in
         let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param app_typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
@@ -149,7 +148,7 @@ let storage (raw_options : Raw_options.t) source_file expression amount balance 
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
         let entry_point = Value_var.of_input_var entry_point in
-        let app_typed_prg = Build.build_typed ~raise ~options Ligo_compile.Of_core.Env source_file in
+        let app_typed_prg = Build.qualified_typed ~raise ~options Ligo_compile.Of_core.Env source_file in
         let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param app_typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in

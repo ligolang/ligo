@@ -12,7 +12,7 @@ let%expect_test _ =
      11 |     contr
     :
     Everything at the top-level was executed.
-    - test exited with value KT1EMmL4W1wQMgt36Vet6EmGBarD1czMwQMC(None).
+    - test exited with value KT1KD4LM2SpR88dNjniDUb2EXKYDNj1phjkE(None).
     Run-time warning: cast changing the type of an address. |}]
 
 let%expect_test _ =
