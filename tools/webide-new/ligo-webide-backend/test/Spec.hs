@@ -6,9 +6,10 @@ import Data.ByteString qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.Maybe (fromMaybe)
 import Data.Text.IO qualified as Text
+import Data.Text qualified as Text
 import Lib
   (CompileRequest(..), CompileExpressionRequest (..), Config(..), GenerateDeployScriptRequest(..), Source(..),
-  mkApp, CompilerResponse (..), DeployScript (..), DryRunRequest(..))
+  mkApp, CompilerResponse (..), DeployScript (..), DryRunRequest(..), ListDeclarationsRequest (..))
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
 import System.Environment (lookupEnv)
@@ -146,6 +147,22 @@ spec config = with (return (mkApp config)) $ do
               }
       response <- post "/dry-run" (Aeson.encode input)
       expected <- liftIO . fmap CompilerResponse $ Text.readFile (contractsDir </> "basic/dry_run.txt")
+      liftIO $
+        case Aeson.decode (simpleBody response) of
+          Nothing -> expectationFailure ("could not decode response: " ++ show response)
+          Just actual -> actual `shouldBe` expected
+
+  describe "POST /list-declarationss" $ do
+    it "compiles basic single-file input correctly" $ do
+      source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
+      let input =
+            ListDeclarationsRequest
+              { ldrSources = [("main.mligo", Source source)],
+                ldrMain = "main.mligo",
+                ldrOnlyEndpoint = False
+              }
+      response <- post "/list-declarations" (Aeson.encode input)
+      expected <- liftIO $ fmap Text.lines $ Text.readFile (contractsDir </> "basic/list_declarations.txt")
       liftIO $
         case Aeson.decode (simpleBody response) of
           Nothing -> expectationFailure ("could not decode response: " ++ show response)

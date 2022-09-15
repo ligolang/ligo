@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 module Lib
   ( startApp
   , mkApp
@@ -7,6 +8,8 @@ module Lib
   , DryRunRequest (..)
   , DeployScript (..)
   , GenerateDeployScriptRequest (..)
+  , ListDeclarationsRequest (..)
+  , ListDeclarationsResponse
   , Source (..)
   , CompilerResponse (..)
   )
@@ -147,6 +150,9 @@ instance ToSchema CompilerResponse where
 
 instance ToParamSchema CompilerResponse
 
+-- TODO: Figure out how to make this a newtype and generate a Schema for it
+type ListDeclarationsResponse = [Text]
+
 data GenerateDeployScriptRequest = GenerateDeployScriptRequest
   { gdsrName :: Text
   , gdsrSources :: [(FilePath, Source)]
@@ -227,11 +233,29 @@ instance ToSchema DryRunRequest where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {fieldLabelModifier = prepareField 3}
 
+data ListDeclarationsRequest = ListDeclarationsRequest
+  { ldrSources :: [(FilePath, Source)]
+  , ldrMain :: FilePath
+  , ldrOnlyEndpoint :: Bool
+  } deriving stock (Eq, Show, Ord, Generic)
+
+instance FromJSON ListDeclarationsRequest where
+  parseJSON = genericParseJSON
+    defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToJSON ListDeclarationsRequest where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToSchema ListDeclarationsRequest where
+  declareNamedSchema = genericDeclareNamedSchema
+    defaultSchemaOptions {fieldLabelModifier = prepareField 3}
+
 type API =
        "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] CompilerResponse
   :<|> "generate-deploy-script" :> ReqBody '[JSON] GenerateDeployScriptRequest :> Post '[JSON] DeployScript
   :<|> "compile-expression" :> ReqBody '[JSON] CompileExpressionRequest :> Post '[JSON] CompilerResponse
   :<|> "dry-run" :> ReqBody '[JSON] DryRunRequest :> Post '[JSON] CompilerResponse
+  :<|> "list-declarations" :> ReqBody '[JSON] ListDeclarationsRequest :> Post '[JSON] ListDeclarationsResponse
 
 type SwaggeredAPI =
   SwaggerSchemaUI "swagger-ui" "swagger.json"
@@ -270,7 +294,7 @@ mkApp config =
     server :: Server SwaggeredAPI
     server =
       swaggerSchemaUIServer (toSwagger (Proxy @API))
-        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression :<|> dryRun)
+        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression :<|> dryRun :<|> listDeclarations)
 
     hoist :: WebIDEM a -> Handler a
     hoist x = Handler $ do
@@ -535,6 +559,33 @@ dryRun request =
           ExitSuccess -> pure (CompilerResponse $ Text.pack out)
           ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
 
+listDeclarations :: ListDeclarationsRequest -> WebIDEM ListDeclarationsResponse
+listDeclarations request =
+  let (filepaths, sources) = unzip (ldrSources request)
+   in withSystemTempDirectory "" $ \dirPath -> do
+        let fullFilepaths = map (dirPath </>) filepaths
+        let fullMainPath = dirPath </> ldrMain request
+
+        liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
+          createDirectoryIfMissing True (takeDirectory fp)
+          Text.writeFile fp (unSource src)
+
+        (ec, out, err) <- do
+          let commands =
+                [ "info"
+                , "list-declarations"
+                , fullMainPath
+                , "--display-format"
+                , "dev"]
+                 ++["--only-ep" | ldrOnlyEndpoint request]
+           in runLigo dirPath commands
+
+        case ec of
+          ExitSuccess -> do
+            -- TODO: make this more robust
+            pure . tail . Text.lines . Text.strip . Text.pack $ out
+          ExitFailure _ -> lift . throwError $ err400
+           {errBody = LBS.pack err}
 
 data Dialect = CameLIGO | PascaLIGO | JsLIGO
   deriving stock (Eq, Show, Ord, Enum)
