@@ -6,49 +6,42 @@
 
 import { execFileSync } from 'child_process';
 import * as vscode from 'vscode';
+import { ConfigCommand, ConfigField } from './LigoDebugConfigurationProvider';
 
 export type Maybe<T> = T | undefined
 
 // Make from an object reference
 export type Ref<T> = {
-	ref: T
+  ref: T
 }
 
 export function isDefined<T>(x: T | undefined | null): x is T {
-	return x !== null && x !== undefined
+  return x !== null && x !== undefined
 }
 
 // Sometimes we need to manually execute some commands.
 // For example, we want to execute `AskForEntrypoint` command
 // before other commands (like `AskForParameter` or `AskForStorage`).
 export function getCommand(str: Maybe<string>): Maybe<string> {
-	if (isDefined(str)) {
-		const matches = str.match(/^\$\{command:(.*)\}$/);
-		if (isDefined(matches)) {
-			return matches[1];
-		}
-	}
+  if (isDefined(str)) {
+    const matches = str.match(/^\{(.*)\}$/);
+    if (isDefined(matches)) {
+      return matches[1];
+    }
+  }
 }
 
 export interface MichelsonEntrypoints {
-	[entrypoint: string]: string
+  [entrypoint: string]: string
 }
 
 export interface ContractMetadata {
-	parameterMichelsonType: string
-	storageMichelsonType: string
-	michelsonEntrypoints: MichelsonEntrypoints
+  parameterMichelsonType: string
+  storageMichelsonType: string
+  michelsonEntrypoints: MichelsonEntrypoints
 }
 
 export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<ContractMetadata>
-
-export interface DebuggedContractSession {
-	entrypoints?: [string]
-	pickedMichelsonEntrypoint?: string
-	logDir?: string
-	contractMetadata?: ContractMetadata
-	pickedLigoEntrypoint?: string
-}
 
 // Type if input box that initializ
 export type InputBoxType = "parameter" | "storage"
@@ -87,5 +80,35 @@ export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfigur
                                       located in VSCode settings`)
 
     return undefined
+  }
+}
+
+export async function tryExecuteCommand(
+  field: ConfigField,
+  expectedExtractedCommand: ConfigCommand,
+  configItem: string,
+  resultPromise: Promise<Maybe<string>>
+): Promise<string> {
+  const extractedCommand = getCommand(configItem);
+  if (isDefined(extractedCommand)) {
+    if (extractedCommand === expectedExtractedCommand) {
+      const result : Maybe<string> = await resultPromise;
+      if (!isDefined(result)) {
+        // If user decided to close entrypoint quickpick
+        // then we want to stop debugging session immediately.
+        // We can do this by throwing something (tried to throw `Error`
+        // but I see annoying error message in bottom right corner).
+        //
+        // Note: 1000 - 7 is just a random value. We're throwing it
+        // in order not to trigger `vscode` to show error message.
+        throw 1000 - 7;
+      } else {
+        return result;
+      }
+    } else {
+      throw new Error("Expected command for field \"" + field + "\" is \"" + expectedExtractedCommand + "\". Got \"" + extractedCommand + "\"");
+    }
+  } else {
+    return configItem;
   }
 }
