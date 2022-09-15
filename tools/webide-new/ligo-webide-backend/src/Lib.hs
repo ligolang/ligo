@@ -4,10 +4,11 @@ module Lib
   , CompileRequest (..)
   , CompileExpressionRequest (..)
   , Config (..)
+  , DryRunRequest (..)
   , DeployScript (..)
   , GenerateDeployScriptRequest (..)
   , Source (..)
-  , Build (..)
+  , CompilerResponse (..)
   )
 where
 
@@ -52,7 +53,7 @@ import System.Directory (createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.FilePath (takeDirectory, (</>))
 import System.IO.Temp (withSystemTempDirectory)
-import System.Process (proc, readCreateProcessWithExitCode, shell)
+import System.Process (proc, readCreateProcessWithExitCode)
 import Text.Megaparsec (errorBundlePretty)
 
 import Morley.Client
@@ -130,21 +131,21 @@ instance ToSchema CompileRequest where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {fieldLabelModifier = prepareField 1}
 
-newtype Build = Build { unBuild :: Text } deriving stock (Show, Generic, Eq)
+newtype CompilerResponse = CompilerResponse { unCompilerResponse :: Text } deriving stock (Show, Generic, Eq)
 
-instance ToJSON Build where
+instance ToJSON CompilerResponse where
   toJSON = genericToJSON
     defaultOptions {unwrapUnaryRecords = True}
 
-instance FromJSON Build where
+instance FromJSON CompilerResponse where
   parseJSON = genericParseJSON
     defaultOptions {unwrapUnaryRecords = True}
 
-instance ToSchema Build where
+instance ToSchema CompilerResponse where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {unwrapUnaryRecords = True}
 
-instance ToParamSchema Build
+instance ToParamSchema CompilerResponse
 
 data GenerateDeployScriptRequest = GenerateDeployScriptRequest
   { gdsrName :: Text
@@ -158,7 +159,7 @@ data GenerateDeployScriptRequest = GenerateDeployScriptRequest
 
 data DeployScript = DeployScript
   { dsScript :: Text
-  , dsBuild :: Build
+  , dsBuild :: CompilerResponse
   }
   deriving stock (Eq, Show, Generic)
 
@@ -205,10 +206,32 @@ instance ToSchema CompileExpressionRequest where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {fieldLabelModifier = prepareField 3}
 
+data DryRunRequest = DryRunRequest
+  { drrSources :: [(FilePath, Source)]
+  , drrMain :: FilePath
+  , drrParameters :: Text
+  , drrStorage :: Text
+  , drrEntrypoint :: Maybe Text
+  , drrProtocol :: Maybe Text
+  , drrDisplayFormat :: Maybe DisplayFormat
+  } deriving stock (Eq, Show, Ord, Generic)
+
+instance FromJSON DryRunRequest where
+  parseJSON = genericParseJSON
+    defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToJSON DryRunRequest where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToSchema DryRunRequest where
+  declareNamedSchema = genericDeclareNamedSchema
+    defaultSchemaOptions {fieldLabelModifier = prepareField 3}
+
 type API =
-       "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] Build
+       "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] CompilerResponse
   :<|> "generate-deploy-script" :> ReqBody '[JSON] GenerateDeployScriptRequest :> Post '[JSON] DeployScript
-  :<|> "compile-expression" :> ReqBody '[JSON] CompileExpressionRequest :> Post '[JSON] Build
+  :<|> "compile-expression" :> ReqBody '[JSON] CompileExpressionRequest :> Post '[JSON] CompilerResponse
+  :<|> "dry-run" :> ReqBody '[JSON] DryRunRequest :> Post '[JSON] CompilerResponse
 
 type SwaggeredAPI =
   SwaggerSchemaUI "swagger-ui" "swagger.json"
@@ -247,7 +270,7 @@ mkApp config =
     server :: Server SwaggeredAPI
     server =
       swaggerSchemaUIServer (toSwagger (Proxy @API))
-        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression)
+        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression :<|> dryRun)
 
     hoist :: WebIDEM a -> Handler a
     hoist x = Handler $ do
@@ -261,7 +284,7 @@ removeExcessWhitespace =
 generateDeployScript :: GenerateDeployScriptRequest -> WebIDEM DeployScript
 generateDeployScript request = do
   let build :: CompileRequest -> WebIDEM Text
-      build = fmap unBuild . compile
+      build = fmap unCompilerResponse . compile
 
   let buildJSON :: CompileRequest -> WebIDEM Text
       buildJSON = build >=> decodeTextCode
@@ -365,7 +388,7 @@ generateDeployScript request = do
 
   pure $ DeployScript
     { dsScript = script
-    , dsBuild = Build michelsonCode
+    , dsBuild = CompilerResponse michelsonCode
     }
 
 decodeTextCode :: Text -> WebIDEM Text
@@ -416,7 +439,7 @@ dryRunOperations originationData = do
     (AddressAlias alias)
     (NonEmpty.singleton (OpOriginate originationData))
 
-compile :: CompileRequest -> WebIDEM Build
+compile :: CompileRequest -> WebIDEM CompilerResponse
 compile request =
   let (filepaths, sources) = unzip (rSources request)
    in withSystemTempDirectory "" $ \dirPath -> do
@@ -443,10 +466,10 @@ compile request =
            in runLigo dirPath commands2
 
         case ec of
-          ExitSuccess -> pure (Build $ Text.pack out)
-          ExitFailure _ -> pure (Build $ Text.pack err)
+          ExitSuccess -> pure (CompilerResponse $ Text.pack out)
+          ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
 
-compileExpression :: CompileExpressionRequest -> WebIDEM Build
+compileExpression :: CompileExpressionRequest -> WebIDEM CompilerResponse
 compileExpression request =
   let (filepaths, sources) = unzip (cerSources request)
    in withSystemTempDirectory "" $ \dirPath -> do
@@ -478,8 +501,40 @@ compileExpression request =
            in runLigo dirPath commands3
 
         case ec of
-          ExitSuccess -> pure (Build $ Text.pack out)
-          ExitFailure _ -> pure (Build $ Text.pack err)
+          ExitSuccess -> pure (CompilerResponse $ Text.pack out)
+          ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
+
+dryRun :: DryRunRequest -> WebIDEM CompilerResponse
+dryRun request =
+  let (filepaths, sources) = unzip (drrSources request)
+   in withSystemTempDirectory "" $ \dirPath -> do
+        let fullFilepaths = map (dirPath </>) filepaths
+        let fullMainPath = dirPath </> drrMain request
+
+        liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
+          createDirectoryIfMissing True (takeDirectory fp)
+          Text.writeFile fp (unSource src)
+
+        (ec, out, err) <- do
+          let commands = ["run", "dry-run", fullMainPath, Text.unpack (drrParameters request), Text.unpack (drrStorage request)]
+          let commands1 = (commands ++) $ case drrDisplayFormat request of
+                Nothing -> []
+                Just df -> ("--display-format":) $ case df of
+                  DFDev -> ["dev"]
+                  DFHumanReadable -> ["human-readable"]
+                  DFJson -> ["json"]
+          let commands2 = (commands1 ++) $ case drrProtocol request of
+                Nothing -> []
+                Just pr -> ["-p", Text.unpack pr]
+          let commands3 = (commands2 ++) $ case drrEntrypoint request of
+                Nothing -> []
+                Just e -> ["-e", Text.unpack e]
+           in runLigo dirPath commands3
+
+        case ec of
+          ExitSuccess -> pure (CompilerResponse $ Text.pack out)
+          ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
+
 
 data Dialect = CameLIGO | PascaLIGO | JsLIGO
   deriving stock (Eq, Show, Ord, Enum)
@@ -505,18 +560,16 @@ runLigo dirPath commands = do
     Just version ->
       liftIO
       $ flip readCreateProcessWithExitCode ""
-      $ shell
-      $ concat [ "docker run --rm -v \""
-               , dirPath
-               , "\":\""
-               , dirPath
-               , "\" -w \""
-               , dirPath
-               , "\" ligolang/ligo:"
-               , version
-               , " "
-               ]
-        ++ unwords commands
+      $ proc "docker"
+      $ [ "run"
+        , "--rm"
+        , "-v"
+        , dirPath ++ ":" ++ dirPath
+        , "-w"
+        , dirPath
+        , "ligolang/ligo:" ++ version
+        ]
+        ++ commands
     Nothing -> do
       mLigoPath <- lift (asks cLigoPath)
       case mLigoPath of

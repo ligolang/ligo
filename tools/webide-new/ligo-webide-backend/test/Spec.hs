@@ -8,7 +8,7 @@ import Data.Maybe (fromMaybe)
 import Data.Text.IO qualified as Text
 import Lib
   (CompileRequest(..), CompileExpressionRequest (..), Config(..), GenerateDeployScriptRequest(..), Source(..),
-  mkApp, Build (..), DeployScript (..))
+  mkApp, CompilerResponse (..), DeployScript (..), DryRunRequest(..))
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
 import System.Environment (lookupEnv)
@@ -61,7 +61,7 @@ spec config = with (return (mkApp config)) $ do
                 rDisplayFormat = Nothing
               }
       response <- post "/compile" (Aeson.encode input)
-      expected <- liftIO . fmap Build $ Text.readFile (contractsDir </> "basic/output.tz")
+      expected <- liftIO . fmap CompilerResponse $ Text.readFile (contractsDir </> "basic/output.tz")
       liftIO $
         case Aeson.decode (simpleBody response) of
           Nothing -> expectationFailure ("could not decode response: " ++ LBS.unpack (simpleBody response))
@@ -86,7 +86,7 @@ spec config = with (return (mkApp config)) $ do
                 rDisplayFormat = Nothing
               }
       response <- post "/compile" (Aeson.encode input)
-      expected <- liftIO . fmap Build $ Text.readFile (contractsDir </> "multifile/output.tz")
+      expected <- liftIO . fmap CompilerResponse $ Text.readFile (contractsDir </> "multifile/output.tz")
       liftIO $
         case Aeson.decode (simpleBody response) of
           Nothing -> expectationFailure ("could not decode response: " ++ LBS.unpack (simpleBody response))
@@ -125,8 +125,28 @@ spec config = with (return (mkApp config)) $ do
                 cerDisplayFormat = Nothing
               }
       response <- post "/compile-expression" (Aeson.encode input)
-      expected <- liftIO . fmap Build $ Text.readFile (contractsDir </> "basic/compile_expression_output.tz")
+      expected <- liftIO . fmap CompilerResponse $ Text.readFile (contractsDir </> "basic/compile_expression_output.tz")
       liftIO $
         case Aeson.decode (simpleBody response) of
           Nothing -> expectationFailure ("could not decode response: " ++ LBS.unpack (simpleBody response))
+          Just actual -> actual `shouldBe` expected
+
+  describe "POST /dry-run" $ do
+    it "compiles basic single-file input correctly" $ do
+      source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
+      let input =
+            DryRunRequest
+              { drrSources = [("main.mligo", Source source)],
+                drrMain = "main.mligo",
+                drrParameters = "Increment (1)",
+                drrStorage = "0",
+                drrEntrypoint = Nothing,
+                drrProtocol = Nothing,
+                drrDisplayFormat = Nothing
+              }
+      response <- post "/dry-run" (Aeson.encode input)
+      expected <- liftIO . fmap CompilerResponse $ Text.readFile (contractsDir </> "basic/dry_run.txt")
+      liftIO $
+        case Aeson.decode (simpleBody response) of
+          Nothing -> expectationFailure ("could not decode response: " ++ show response)
           Just actual -> actual `shouldBe` expected
