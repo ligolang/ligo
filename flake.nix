@@ -1,14 +1,23 @@
 {
   description = "Nix flake provided by ligo to install bin of the last release";
 
-  outputs = { self, nixpkgs }:
+  inputs = {
+    esy.url = "github:esy/esy";
+  };
+
+  outputs = { self, nixpkgs, esy }:
     let
+      system = "x86_64-linux";
       pkgs = import nixpkgs {
-        system = "x86_64-linux";
+        inherit system;
       };
       ligo = pkgs.callPackage ./nix/get_ligo.nix { };
+      withEsy = pkgs.callPackage ./nix/with_esy.nix { esy = esy.packages.${system}.default; };
     in
     {
-      packages.x86_64-linux.default = ligo;
+      packages.${system} = {
+        default = ligo;
+        inherit ligo withEsy;
+      };
     };
 }
