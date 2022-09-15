@@ -139,17 +139,17 @@ module Scope : sig
   type t
   type decl =
     Value of O.type_expression Binder.t * O.type_expression * O.ValueAttr.t
-  | Module of Module_var.t
+  | Module of Module_var.t * O.ModuleAttr.t
   val empty : t
   val pp    : Format.formatter -> t -> unit
   val find_value : t -> Value_var.t -> Path.t
   val find_type_ : t -> Type_var.t -> Path.t
   val find_module : t -> Module_var.t -> Path.t * t
   val push_value : t -> O.type_expression Binder.t -> O.type_expression -> O.ValueAttr.t -> Path.t -> t
-  val remove_value : t -> Value_var.t -> t
+  val push_func_or_case_binder : t -> Value_var.t -> t
   val push_type_ : t -> Type_var.t -> Path.t -> t
-  val remove_type_ : t -> Type_var.t -> t
-  val push_module : t -> Module_var.t -> Path.t -> t -> t
+  val push_local_type : t -> Type_var.t -> t
+  val push_module : t -> Module_var.t -> O.ModuleAttr.t -> Path.t -> t -> t
   val add_path_to_var : t -> Path.t -> Value_var.t -> t * Value_var.t
   val get_declarations : t -> decl list
   val clean_declarations : t -> t
@@ -165,7 +165,7 @@ end = struct
     decl_list : decl list}
   and decl =
     Value of O.type_expression Binder.t * O.type_expression * O.ValueAttr.t
-  | Module of Module_var.t
+  | Module of Module_var.t * O.ModuleAttr.t
   let empty = { value = ValueVMap.empty; type_ = TypeVMap.empty; module_ = ModuleVMap.empty ; name_map = PathVarMap.empty; decl_list = [] }
   let rec pp ppf scope =
     Format.fprintf ppf "{value : %a; type_ : %a; module_ : %a; name_map :%a}\n%!"
@@ -184,19 +184,19 @@ end = struct
     let value = ValueVMap.add (Binder.get_var b) path scope.value in
     let decl_list = Value (b, ty, attr) :: scope.decl_list in
     { scope with value ; decl_list}
-  let remove_value scope (v : Value_var.t) =
-    let value = ValueVMap.remove v scope.value in
+  let push_func_or_case_binder scope (v : Value_var.t) =
+    let value = ValueVMap.add v Path.empty scope.value in
     { scope with value }
   let push_type_ scope t path =
     let type_ = TypeVMap.add t path scope.type_ in
     { scope with type_ }
-  let remove_type_ scope (v : Type_var.t) =
-    let type_ = TypeVMap.remove v scope.type_ in
+  let push_local_type scope (v : Type_var.t) =
+    let type_ = TypeVMap.add v Path.empty scope.type_ in
     { scope with type_ }
-  let push_module scope m path mod_scope =
+  let push_module scope m attr path mod_scope =
     let module_ = ModuleVMap.add m (path,mod_scope) scope.module_ in
     let name_map = mod_scope.name_map in
-    let decl_list = Module (m) :: scope.decl_list in
+    let decl_list = Module (m,attr) :: scope.decl_list in
     { scope with module_ ; decl_list ; name_map = PathVarMap.union (fun _ f _ -> Some f) name_map scope.name_map }
   let get_declarations scope = scope.decl_list
   let clean_declarations scope = { scope with decl_list = [] }
@@ -267,19 +267,19 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_application {lamb;args}
   | E_lambda {binder;output_type;result} ->
     let binder = Binder.map self_type binder in
-    let scope = Scope.remove_value scope @@ Binder.get_var binder in
+    let scope = Scope.push_func_or_case_binder scope @@ Binder.get_var binder in
     let output_type = self_type output_type in
     let result = self ~scope result in
     return @@ E_lambda {binder;output_type;result}
   | E_type_abstraction {type_binder;result} ->
-    let scope = Scope.remove_type_ scope type_binder in
+    let scope = Scope.push_local_type scope type_binder in
     let result = self ~scope result in
     return @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder;output_type;result}} ->
     let fun_type = self_type fun_type in
     let binder   = Binder.map self_type binder in
-    let scope = Scope.remove_value scope @@ Binder.get_var binder in
-    let scope = Scope.remove_value scope fun_name in
+    let scope = Scope.push_func_or_case_binder scope @@ Binder.get_var binder in
+    let scope = Scope.push_func_or_case_binder scope fun_name in
     let output_type = self_type output_type in
     let result   = self ~scope result in
     return @@ E_recursive {fun_name;fun_type;lambda={binder;output_type;result}}
@@ -318,8 +318,8 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_update   {struct_;path;update}
   | E_mod_in  {module_binder; rhs; let_result} ->
     let path' = Path.add_to_path path @@ module_binder in
-    let mod_scope,rhs = compile_module_expr ~raise path' scope rhs in
-    let scope    = Scope.push_module scope module_binder path' mod_scope in
+    let mod_scope,attr,rhs = compile_module_expr ~raise path' scope rhs in
+    let scope    = Scope.push_module scope module_binder attr path' mod_scope in
     let let_result = self ~scope let_result in
     rhs let_result
   | E_module_accessor {module_path;element} ->
@@ -341,7 +341,7 @@ and compile_cases ~raise path scope cases : O.matching_expr =
   match cases with
     Match_variant {cases;tv} ->
     let cases = List.map cases ~f:(fun I.{constructor;pattern;body} ->
-      let scope = Scope.remove_value scope pattern in
+      let scope = Scope.push_func_or_case_binder scope pattern in
       let body = compile_expression ~raise path scope body in
       O.{constructor;pattern;body})
     in
@@ -349,7 +349,7 @@ and compile_cases ~raise path scope cases : O.matching_expr =
     Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
     let scope, fields = Record.fold_map (fun scope' binder ->
-        Scope.remove_value scope' @@ Binder.get_var binder,
+        Scope.push_func_or_case_binder scope' @@ Binder.get_var binder,
         Binder.map (compile_type_expression ~raise path scope) binder) scope fields in
     let body   = compile_expression ~raise path scope body in
     let tv     = compile_type_expression ~raise path scope tv in
@@ -370,10 +370,10 @@ and compile_declaration ~raise path scope (d : I.declaration) =
         O.e_a_let_in binder expr e attr
   | D_type _ ->
       scope, fun e -> e
-  | D_module {module_binder;module_;module_attr=_} ->
+  | D_module {module_binder;module_;module_attr} ->
       let path' = Path.add_to_path path module_binder in
-      let mod_scope,decl_list = compile_module_expr ~raise path' scope module_ in
-      let scope   = Scope.push_module scope module_binder path' mod_scope in
+      let mod_scope,module_attr,decl_list = compile_module_expr ~raise ~module_attr path' scope module_ in
+      let scope   = Scope.push_module scope module_binder module_attr path' mod_scope in
       scope, decl_list
 
 and compile_declaration_list ~raise (path : Path.t) scope (program : I.program) : (Scope.t) * (O.expression -> O.expression) =
@@ -389,40 +389,43 @@ and compile_module ~raise (path : Path.t) scope (program : I.module_) : (Scope.t
   let current = List.fold_left ~f:Function.compose ~init:(fun e -> e) current in
   scope, current
 
-and compile_module_expr ~raise : Path.t -> Scope.t -> I.module_expr -> (Scope.t) * (O.expression -> O.expression) =
+and compile_module_expr ~raise ?(module_attr = {public=true;hidden=false}) : Path.t -> Scope.t -> I.module_expr -> (Scope.t) * O.ModuleAttr.t * (O.expression -> O.expression) =
   fun path scope mexpr ->
-    let rec get_declarations_from_scope scope new_path old_path =
+    let rec get_declarations_from_scope scope (module_attr : O.ModuleAttr.t) new_path old_path =
       let dcls = Scope.get_declarations scope in
       let module_ = List.fold_left ~init:(fun e -> e) dcls ~f:(fun f dcl ->
         match dcl with
           Value (binder,ty,attr) ->
+            let attr = {attr with hidden = attr.hidden || module_attr.hidden; public = attr.public && module_attr.public} in
             let variable = O.e_a_variable (snd @@ Scope.add_path_to_var scope old_path @@ Binder.get_var binder) ty in
             let _,var = Scope.add_path_to_var scope new_path @@ Binder.get_var binder in
             fun e -> O.e_a_let_in (Binder.set_var binder var) variable (f e) attr
-        | Module (var) ->
+        | Module (var,attr) ->
           let _,scope  = Scope.find_module scope var in
           let old_path = Path.add_to_path old_path var in
           let new_path = Path.add_to_path new_path var in
-          let module_ = get_declarations_from_scope scope new_path old_path in
+          let module_ = get_declarations_from_scope scope attr new_path old_path in
           fun e -> module_ (f e)
       ) in module_
     in
+    let module_attr : O.ModuleAttr.t = {public=module_attr.public;hidden=module_attr.hidden} in
     match mexpr.wrap_content with
     | M_struct m -> (
       (* Keep the scope of identifiers be start with an empty list of declaration (corresponding to this module) *)
       let scope = Scope.clean_declarations scope in
-      compile_module ~raise path scope m
+      let scope,module_ = compile_module ~raise path scope m in
+      scope,module_attr,module_
     )
     | M_variable v -> (
       let path_b,scope = Scope.find_module scope v in
-      let module_ = get_declarations_from_scope scope path path_b in
-      scope,module_
+      let module_ = get_declarations_from_scope scope module_attr path path_b in
+      scope,module_attr,module_
     )
     | M_module_path (hd,tl) -> (
       let old_path,scope = Scope.find_module scope hd in
       let old_path,scope = List.fold_left ~f:(fun (_,s) -> Scope.find_module s) ~init:(old_path,scope) tl in
-      let module_ = get_declarations_from_scope scope path old_path in
-      scope,module_
+      let module_ = get_declarations_from_scope scope module_attr path old_path in
+      scope,module_attr,module_
     )
 
 let preprocess_program program =
