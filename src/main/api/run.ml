@@ -14,7 +14,7 @@ let test (raw_options : Raw_options.t) source_file display_format () =
       let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ steps ; _ } = options.test_framework in
       let typed   = Build.qualified_typed ~raise ~options Env source_file in
-      Interpreter.eval_test ~raise ~steps ~options ~source_file typed
+      Interpreter.eval_test ~raise ~steps ~options typed
 
 let dry_run (raw_options : Raw_options.t) source_file parameter storage amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
