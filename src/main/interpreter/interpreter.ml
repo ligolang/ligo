@@ -914,7 +914,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type ()
     | ( C_TEST_DROP_CONTEXT , [ V_Ct C_unit ] ) ->
       let>> () = Drop_context () in
-      return @@ V_Ct C_unit
+      return @@ v_unit ()
     | ( C_TEST_DROP_CONTEXT , _ ) -> fail @@ error_type ()
     | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string contract_file) ] ) ->
       let>> mod_res = Get_mod_res () in
