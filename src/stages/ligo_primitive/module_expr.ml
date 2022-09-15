@@ -16,6 +16,9 @@ let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> ('a) t -> 'acc * ('b) t =
       (x, (M_struct prg))
     | M_variable _ | M_module_path _ -> (acc,mexp)
 
+let pp_module_path ppf (path : module_path) =
+  Simple_utils.PP_helpers.(ne_list_sep (Var.Module_var.pp) (tag ".")) ppf path
+
 let pp h ppf = function
   | M_struct p ->
     Format.fprintf ppf "@[<v>struct@,%a@,end@]"

@@ -14,6 +14,8 @@ let make ?(mut=false) var ascr = {
 }
 
 let set_var (b : _ t) (var : Var.Value_var.t) = {b with var}
+let set_ascr : 'a t -> 'b -> 'b t =
+  fun x ascr -> {x with ascr}
 let get_var (b : 'a t) = b.var
 let get_ascr (b : 'a t) = b.ascr
 

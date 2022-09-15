@@ -5,7 +5,7 @@ let contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "simple.mligo" ] ;
-  [%expect {|
+  [%expect {xxx|
 module Tezo = struct
               const amoun : tez = 1000000mutez
               endconst balanc : tez = 2000000mutezconst size : int = 10
@@ -20,12 +20,12 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#4 ->
-          amt | Increment unit_proj#5 ->
-                bal ) |}]
+        | Decrement unit_proj#113 ->
+          amt | Increment unit_proj#114 ->
+                bal ) |xxx}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
-  [%expect {|
+  [%expect {xxx|
 module Tezo =
   struct
   module X = struct
@@ -45,13 +45,13 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#4 ->
-          amt | Increment unit_proj#5 ->
-                bal ) |}]
+        | Decrement unit_proj#113 ->
+          amt | Increment unit_proj#114 ->
+                bal ) |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "module_with_free_vars.mligo" ] ;
-  [%expect {|
+  [%expect {xxx|
 const x : tez = 1000000mutezmodule Tezo = struct
                                           const amoun : tez = x
                                           end
@@ -67,13 +67,13 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#4 ->
-          amt | Increment unit_proj#5 ->
-                bal ) |}]
+        | Decrement unit_proj#113 ->
+          amt | Increment unit_proj#114 ->
+                bal ) |xxx}]
 
 let%expect_test _ =
 run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules_with_free_vars.mligo" ] ;
-[%expect{|
+[%expect{xxx|
 const used : tez = 1000000mutezconst unused : tez = 2000000mutez
 module Tezo =
   struct
@@ -98,7 +98,7 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#4 ->
+        | Decrement unit_proj#113 ->
           1000000mutez
-        | Increment unit_proj#5 ->
-          used ) |}]
+        | Increment unit_proj#114 ->
+          used ) |xxx}]

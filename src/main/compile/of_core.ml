@@ -29,11 +29,18 @@ let typecheck ~raise ~(options: Compiler_options.t) (cform : form) (p : Ast_core
 let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
     : Ast_typed.expression =
   let Compiler_options.{ init_env ; _ } = options.middle_end in
-  let env = Environment.append init_prog init_env in
+  let env = Environment.append init_env init_prog in
 
   let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env expr in
   let applied = trace ~raise self_ast_typed_tracer
     @@ Self_ast_typed.all_expression ~warn_unused_rec:options.middle_end.warn_unused_rec typed in
+  applied
+
+let compile_program ~raise ~(options: Compiler_options.t) (prg : Ast_core.program) : Ast_typed.program =
+  let Compiler_options.{ init_env ; _ } = options.middle_end in
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~options:options.middle_end ~env:init_env prg in
+  let applied = trace ~raise self_ast_typed_tracer 
+    (Self_ast_typed.all_program ~warn_unused_rec:options.middle_end.warn_unused_rec typed) in
   applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
