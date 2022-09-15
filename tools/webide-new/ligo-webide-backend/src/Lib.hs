@@ -2,6 +2,7 @@ module Lib
   ( startApp
   , mkApp
   , CompileRequest (..)
+  , CompileExpressionRequest (..)
   , Config (..)
   , DeployScript (..)
   , GenerateDeployScriptRequest (..)
@@ -185,10 +186,29 @@ instance ToSchema GenerateDeployScriptRequest where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {fieldLabelModifier = prepareField 4}
 
+data CompileExpressionRequest = CompileExpressionRequest
+  { cerSources :: [(FilePath, Source)]
+  , cerMain :: FilePath
+  , cerFunction :: Text
+  , cerProtocol :: Maybe Text
+  , cerDisplayFormat :: Maybe DisplayFormat
+  } deriving stock (Eq, Show, Ord, Generic)
+
+instance FromJSON CompileExpressionRequest where
+  parseJSON = genericParseJSON
+    defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToJSON CompileExpressionRequest where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToSchema CompileExpressionRequest where
+  declareNamedSchema = genericDeclareNamedSchema
+    defaultSchemaOptions {fieldLabelModifier = prepareField 3}
 
 type API =
        "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] Build
   :<|> "generate-deploy-script" :> ReqBody '[JSON] GenerateDeployScriptRequest :> Post '[JSON] DeployScript
+  :<|> "compile-expression" :> ReqBody '[JSON] CompileExpressionRequest :> Post '[JSON] Build
 
 type SwaggeredAPI =
   SwaggerSchemaUI "swagger-ui" "swagger.json"
@@ -227,7 +247,7 @@ mkApp config =
     server :: Server SwaggeredAPI
     server =
       swaggerSchemaUIServer (toSwagger (Proxy @API))
-        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript)
+        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression)
 
     hoist :: WebIDEM a -> Handler a
     hoist x = Handler $ do
@@ -425,6 +445,58 @@ compile request =
         case ec of
           ExitSuccess -> pure (Build $ Text.pack out)
           ExitFailure _ -> pure (Build $ Text.pack err)
+
+compileExpression :: CompileExpressionRequest -> WebIDEM Build
+compileExpression request =
+  let (filepaths, sources) = unzip (cerSources request)
+   in withSystemTempDirectory "" $ \dirPath -> do
+        let fullFilepaths = map (dirPath </>) filepaths
+        let fullMainPath = dirPath </> cerMain request
+
+        liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
+          createDirectoryIfMissing True (takeDirectory fp)
+          Text.writeFile fp (unSource src)
+
+        dialect <- case inferDialect fullMainPath of
+          Nothing -> lift . throwError $ err400
+            {errBody = "couldn't infer dialect from filetype"}
+          Just d -> pure d
+
+        (ec, out, err) <- do
+          let commands = ["compile", "expression", prettyDialect dialect, Text.unpack (cerFunction request)]
+          let commands1 = (commands ++) $ case cerDisplayFormat request of
+                Nothing -> []
+                Just df -> ("--display-format":) $ case df of
+                  DFDev -> ["dev"]
+                  DFHumanReadable -> ["human-readable"]
+                  DFJson -> ["json"]
+          let commands2 = (commands1 ++) $ case cerProtocol request of
+                Nothing -> []
+                Just pr -> ["-p", Text.unpack pr]
+          let commands3 = commands2 ++ ["--init-file", fullMainPath]
+
+           in runLigo dirPath commands3
+
+        case ec of
+          ExitSuccess -> pure (Build $ Text.pack out)
+          ExitFailure _ -> pure (Build $ Text.pack err)
+
+data Dialect = CameLIGO | PascaLIGO | JsLIGO
+  deriving stock (Eq, Show, Ord, Enum)
+
+prettyDialect :: Dialect -> String
+prettyDialect = \case
+  CameLIGO -> "cameligo"
+  PascaLIGO -> "pascaligo"
+  JsLIGO -> "jsligo"
+
+inferDialect :: FilePath -> Maybe Dialect
+inferDialect filepath =
+  case Text.takeWhileEnd (/= '.') (Text.pack filepath) of
+    "mligo" -> Just CameLIGO
+    "ligo" -> Just PascaLIGO
+    "jsligo" -> Just JsLIGO
+    _ -> Nothing
 
 runLigo :: FilePath -> [String] -> WebIDEM (ExitCode, String, String)
 runLigo dirPath commands = do

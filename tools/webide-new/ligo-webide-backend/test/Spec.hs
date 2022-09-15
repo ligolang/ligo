@@ -7,7 +7,7 @@ import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.Maybe (fromMaybe)
 import Data.Text.IO qualified as Text
 import Lib
-  (CompileRequest(..), Config(..), GenerateDeployScriptRequest(..), Source(..),
+  (CompileRequest(..), CompileExpressionRequest (..), Config(..), GenerateDeployScriptRequest(..), Source(..),
   mkApp, Build (..), DeployScript (..))
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
@@ -112,3 +112,21 @@ spec config = with (return (mkApp config)) $ do
           case Aeson.decode @DeployScript (simpleBody response) of
             Nothing -> expectationFailure ("could not decode response: " ++ show response)
             Just actual -> actual `shouldBe` expected
+
+  describe "POST /compile-expression" $ do
+    it "compiles basic single-file input correctly" $ do
+      source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
+      let input =
+            CompileExpressionRequest
+              { cerSources = [("main.mligo", Source source)],
+                cerMain = "main.mligo",
+                cerFunction = "main",
+                cerProtocol = Nothing,
+                cerDisplayFormat = Nothing
+              }
+      response <- post "/compile-expression" (Aeson.encode input)
+      expected <- liftIO . fmap Build $ Text.readFile (contractsDir </> "basic/compile_expression_output.tz")
+      liftIO $
+        case Aeson.decode (simpleBody response) of
+          Nothing -> expectationFailure ("could not decode response: " ++ LBS.unpack (simpleBody response))
+          Just actual -> actual `shouldBe` expected
