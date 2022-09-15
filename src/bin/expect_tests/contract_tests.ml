@@ -1643,14 +1643,6 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/self_without_entrypoint.ligo", line 8, characters 4-63:
-      7 |   {
-      8 |     const self_contract: contract(int) = Tezos.self("%default") ;
-      9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
-
-    Warning: Tezos.self type annotation.
-    Annotation "contract (int)" was given, but contract being compiled would expect "contract (int)".
-    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
     { parameter int ;
       storage nat ;
       code { CDR ;
