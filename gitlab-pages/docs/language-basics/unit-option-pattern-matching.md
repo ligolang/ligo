@@ -91,7 +91,7 @@ union type, which should be familiar for developers coming from TypeScript.
 type foo = 
   { kind: "increment", amount: int}
 | { kind: "decrement", amount: int}
-| { kind: "reset}
+| { kind: "reset"}
 ```
 
 Here, the `kind` field is unique among the objects. If not, an error will be 
