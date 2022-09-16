@@ -108,17 +108,19 @@ let obj = { kind: "increment", amount: 3}
 Pattern matching over a discriminated union type works like this:
 
 ```jsligo
-let state = 0;
-switch(foo.kind) {
-  case "increment":
-    state += foo.amount;
-    break
-  case "decrement":
-    state -= foo.amount;
-    break
-  case "reset":
-    state = 0;
-    break
+let foo = () => {
+  let state = 0;
+  switch(foo.kind) {
+    case "increment":
+      state += foo.amount;
+      break
+    case "decrement":
+      state -= foo.amount;
+      break
+    case "reset":
+      state = 0;
+      break
+  }
 }
 ```
 
