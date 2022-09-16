@@ -81,8 +81,6 @@ let main =
     ];
 
     "negative", [
-      schema_test_negative ~with_types:false ~expected_status:(Some false)
-        "error-recovery/simple/cameligo/lambda_with_missing_arguments.mligo";
       schema_test_negative ~with_types:false
         "error-recovery/simple/cameligo/missing_expr_parenthesesL.mligo";
       schema_test_negative ~with_types:false ~expected_status:(Some false)

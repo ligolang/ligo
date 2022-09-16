@@ -7,7 +7,6 @@ PASS,extra_in_kw.mligo,0,0,0,0,0
 PASS,extra_then_kw.mligo,0,0,0,0,0
 PASS,extra_vertical_bar.mligo,1,4,4,4,0
 PASS,fun_kw_instead_of_let_kw.mligo,9,71,49,13,8
-PASS,lambda_with_missing_arguments.mligo,2,6,6,6,0
 PASS,missing_argument_bracketR.mligo,2,15,13,5,1
 PASS,missing_arrow_in_lambda_expr.mligo,2,18,8,4,1
 PASS,missing_arrow_in_match_expr.mligo,0,0,0,0,0
