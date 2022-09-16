@@ -6,7 +6,7 @@ module Protocols = Protocols
 
 (* This is an env use by repl and build *)
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
-type t = module_
+type t = program
 let pp ppf m = PP.module_ ppf @@ m
 let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
   let module_ = Location.wrap @@ Module_expr.M_struct module_ in
@@ -14,12 +14,15 @@ let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_t
   new_d :: env
 
 let add_declaration decl env = decl :: env
-let append (program : program) env : t = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
+let append env (program : program) : t = List.rev_append program env
+  
+let fold ~f ~init (env:t) = List.fold ~f ~init (List.rev env)
+let foldi ~f ~init (env:t) = List.foldi ~f ~init (List.rev env)
 
-let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
 
 (* Artefact for build system *)
 type core = Ast_core.module_
+
 let add_core_module ?public ?hidden : Module_var.t -> Ast_core.module_ -> core -> core =
   fun module_binder module_ env ->
     let module_ = Location.wrap @@ Module_expr.M_struct module_ in
@@ -28,14 +31,17 @@ let add_core_module ?public ?hidden : Module_var.t -> Ast_core.module_ -> core -
 
 let to_module (env:t) : module_ = List.rev env
 
-let to_program (env:t) : program =
-  List.fold_left ~f:(fun l m -> m :: l ) ~init:[] env
+let to_program (env:t) : program = List.rev env
 
-let append_core (program : S.program) env : core = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
-let init_core p = append_core p []
+let append_core (env:core) (program : Ast_core.program) : core = List.rev_append program env
+
+let init_core program = List.rev program
+
 let to_core_module env = List.rev env
-let to_core_program (env:core) : S.program =
-  List.fold_left ~f:(fun l m -> m :: l ) ~init:[] env
+
+let to_core_program (env:core) : S.program = List.rev env
+
+
 
 (* This is an stdlib *)
 let star = Kind.Type
