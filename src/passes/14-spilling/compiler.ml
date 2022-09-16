@@ -584,10 +584,10 @@ and compile_lambda ~raise l fun_type =
   let result' = compile_expression ~raise result in
   let fun_type = compile_type ~raise fun_type in
   let param = Param.map (compile_type ~raise) binder in
-  let todo = Location.generated in (* ! *)
   let output_type = compile_type ~raise output_type in
-  let (binder, body) = make_lambda ~loc:todo param result' output_type in
+  let (binder, body) = make_lambda ~loc:result.location param result' output_type in
   let closure = E_closure { binder; body } in
+  (* TODO this ~loc is wrong, the actual location is not in scope here? *)
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
 (* ast_aggregated has mutable lambda parameters, for now, mini_c does
@@ -742,8 +742,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let loop_type = t_union (None, input_type) (None, output_type) in
   let body = map_lambda fun_name loop_type lambda.result in
   let param = Param.map (compile_type ~raise) lambda.binder in
-  let todo = Location.generated in
-  let (binder, body) = make_lambda ~loc:todo param body loop_type in
+  let (binder, body) = make_lambda ~loc:body.location param body loop_type in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((binder, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type
