@@ -186,12 +186,12 @@ and fun_type_arg = {
   type_expr : type_expr
 }
 
-and obj_expr = field_decl reg ne_injection reg
+and obj_type = field_decl reg ne_injection reg
 
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
-| TObject of obj_expr
+| TObject of obj_type
 | TApp    of (type_constr * type_params) reg
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -199,7 +199,7 @@ and type_expr =
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
-| TDisc   of (obj_expr, vbar) nsepseq
+| TDisc   of (obj_type, vbar) nsepseq
 
 and type_params = (type_expr, comma) nsepseq chevrons reg
 
