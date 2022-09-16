@@ -1,7 +1,7 @@
 { pkgs, lib, stdenv, esy }:
 
 let
-  ligo = pkgs.callPackage ./get_ligo.nix { }; 
+  ligo = pkgs.callPackage ./get_ligo_light.nix { }; 
 in
 
 stdenv.mkDerivation {
