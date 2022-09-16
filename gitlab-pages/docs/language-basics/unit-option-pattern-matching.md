@@ -80,9 +80,9 @@ let n : unit = unit;
 
 </Syntax>
 
-<Syntax syntax="jsligo>
+<Syntax syntax="jsligo">
 
-### Discriminated union type
+## Discriminated union type
 
 The simplest form of pattern matching in JsLIGO is with help of a discriminated
 union type, which should be familiar for developers coming from TypeScript.
