@@ -32,94 +32,6 @@ let compile_attributes attributes : string list =
       | None -> attr
     )
 module Compile_type = struct
-  type disc_variant = {
-    constructor: string;
-    constructor_field: string;
-    has_payload: bool;
-    fields: string list;
-  }
-
-  let disc_unions: disc_variant list list ref = ref []
-
-  let has_constructor (variants: disc_variant list) (variant_name: string) : bool = 
-    let rec aux = function
-      {constructor; _} :: _ when String.equal constructor variant_name -> true
-    | _ :: tl -> aux tl
-    | [] -> false
-    in
-    aux variants
-
-  let find_disc_union (variants: string list) = 
-    let variants_length = List.length variants in
-    let rec aux = function
-      item :: tl when List.length item = variants_length ->
-        let is_disc_union = List.fold_left ~f:(fun a i -> a && has_constructor item i) ~init:true variants in
-        if is_disc_union then 
-          Some item
-        else 
-          aux tl
-    | _ :: tl -> aux tl
-    | [] -> None
-    in
-    aux !disc_unions
-
-  let has_field (variant: disc_variant) (field_name, field_value) : bool = 
-    List.mem variant.fields field_name ~equal:String.equal || (String.equal variant.constructor_field field_name && String.equal variant.constructor field_value)
-
-  let is_disc_union (a: disc_variant list) (fields: (string * string) list) =
-    let rec aux = function
-      variant :: tl when (List.length variant.fields + 1) = List.length fields -> (
-        let result = List.fold_left ~f:(fun a i -> a && has_field variant i) ~init:true fields in
-        if result then
-          Some variant
-        else aux tl
-      )
-    | _ :: tl -> aux tl
-    | [] -> None
-    in 
-    aux a
-
-  let find_variant (fields: (string * string) list) = 
-    let rec aux = function 
-      disc_union :: tl -> 
-        let result = is_disc_union disc_union fields in
-        (match result with 
-          Some s -> Some s
-        | None -> aux tl)
-    | [] -> None
-    in
-    aux !disc_unions
-
-  let is_discriminated_union (a: CST.switch Region.reg) =
-    if Poly.(!disc_unions = []) then 
-      None
-    else (
-      let rec switch_fields (check, result) = function 
-        (CST.Switch_case {expr = EString (String s); _}) :: remaining ->
-          switch_fields (check, s.value :: result) remaining
-      | _ :: _ -> false, []
-      | [] -> (check, List.rev result)
-      in 
-      let (check1, values) = switch_fields (true, []) (nseq_to_list a.value.cases) in
-      if not(check1) then 
-        None
-      else
-        (* check if length is the same and if one disc_union type is correct *)
-        find_disc_union values
-    )
-
-  let find_disc_obj (a: CST.object_expr) =
-    let rec aux fields = function
-      CST.Property {value = {name = EVar v; value; _}; _} :: remaining ->
-      aux ((v.value, match value with EString (String {value = s; _}) -> s | _ -> "" ) :: fields) remaining
-    | [] -> true, List.rev fields
-    | _ -> false, []
-    in
-    let check, fields = aux [] (npseq_to_list a.value.inside) in
-    if check then 
-      find_variant fields
-    else
-      None
 
   (*
     `type_compiler_opt` represents an abstractor for a single pattern.
@@ -367,7 +279,7 @@ module Compile_type = struct
       in
       return @@ aux [module_name] ma.field
     | TDisc n ->
-      let disc_fields (obj: CST.obj_expr) : (string * string) list = 
+      let disc_fields (obj: CST.obj_type) : (string * string) list = 
         let fields = obj.value.ne_elements in
         Utils.nsepseq_foldl (fun all ({value; _}: CST.field_decl Region.reg)  -> 
           match value.field_type with 
@@ -387,25 +299,24 @@ module Compile_type = struct
       ) ~init:hd tl
       in
       let shared_field = match shared_fields with 
-        [] -> failwith "no shared fields" (* raise.error @@ (no_shared_fields n) *)
+        [] -> raise.error @@ no_shared_fields (CST.nsepseq_to_region (fun (r: CST.obj_type) -> r.region) n)
       | (hd, _) :: _ -> hd
       in
       let sum = Utils.nsepseq_map (
-        fun (obj: CST.obj_expr) ->
-          let obj: CST.obj_expr = obj in (* all but the constructor *)
+        fun (obj: CST.obj_type) ->
           let constructor, other = List.partition_map (npseq_to_list obj.value.ne_elements) ~f:(fun x ->
               if String.equal x.value.field_name.value shared_field then 
                 let t = x.value.field_type in
                 match t with 
                   TString s -> First s
-                | _ -> failwith "should not happen"
+                | _ -> raise.error @@ unexpected
               else 
                 Second x
             ) 
           in
           let constructor = match constructor with 
             hd :: _ -> hd.value
-          | _ -> failwith "should not happen"
+          | _ -> raise.error unexpected
           in
           let type_expr = match other with 
             hd :: tl -> 
@@ -427,7 +338,7 @@ module Compile_type = struct
         let sum = npseq_to_list sum in
         let sum, disc_union = (List.fold_left ~f:(fun (all_sum, all_fields) (constructor, type_expr, fields) -> 
           (constructor, type_expr, []) :: all_sum,
-          {
+          Discriminated_union.{
             constructor; 
             constructor_field = shared_field;
             has_payload = Poly.(type_expr <> AST.t_unit ());
@@ -435,7 +346,7 @@ module Compile_type = struct
           } :: all_fields
         ) ~init:([], []) sum)
         in
-        disc_unions := disc_union :: !disc_unions;              
+        Discriminated_union.add disc_union;
         return @@ t_sum_ez_attr ~loc:Location.dummy ~attr:[] sum
 end
 
@@ -739,7 +650,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ List.fold_left ~f:aux ~init:record updates
   | EObject obj' ->
     let (obj, loc) = r_split obj' in
-    (match find_disc_obj obj' with 
+    (match Discriminated_union.find_disc_obj obj' with 
       Some s -> 
         let constructor = s.constructor in
         let filtered_object = Utils.nsepseq_foldl (fun a i -> 
@@ -749,7 +660,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         )  [] obj.inside in
         let new_inside = match filtered_object with 
           hd :: rest -> (snd hd, rest)
-        | [] -> failwith "should not happen"
+        | [] -> raise.error @@ unexpected
         in
         let obj = { 
           obj with 
@@ -1260,13 +1171,12 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     binding initializers'
   | SSwitch s' ->
     let (s, loc)    = r_split s' in
-    (match is_discriminated_union s' with 
+    (match Discriminated_union.is_discriminated_union s' with 
       Some data -> (
         let matchee, payload = match s'.value.expr with 
           EProj {value = {expr = (EVar ev as v); _}; _} -> compile_expression ~raise v, ev
-        | _ -> failwith "not supported for a discriminated union..."
+        | _ -> raise.error @@ wrong_matchee_disc s'.region
         in
-        (* let matchee = self matchee in *)
         let cases = List.map ~f:(fun f -> 
           match f with 
             Switch_case {expr = EString (String v); statements; _} ->
@@ -1285,7 +1195,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
                   | None -> e_unit ())
               } 
 
-          | _ -> failwith "should not happen"
+          | _ -> raise.error unexpected
         ) (nseq_to_list s.cases) in
         expr (e_matching ~loc matchee cases)
       )
