@@ -91,7 +91,7 @@ union type, which should be familiar for developers coming from TypeScript.
 type foo = 
   { kind: "increment", amount: int}
 | { kind: "decrement", amount: int}
-| { kind: "reset}
+| { kind: "reset"}
 ```
 
 Here, the `kind` field is unique among the objects. If not, an error will be 
@@ -108,14 +108,14 @@ let obj = { kind: "increment", amount: 3}
 Pattern matching over a discriminated union type works like this:
 
 ```jsligo
-let foo = () => {
+let foo = (item: foo) => {
   let state = 0;
-  switch(foo.kind) {
+  switch(item.kind) {
     case "increment":
-      state += foo.amount;
+      state += item.amount;
       break
     case "decrement":
-      state -= foo.amount;
+      state -= item.amount;
       break
     case "reset":
       state = 0;
