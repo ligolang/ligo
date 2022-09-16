@@ -85,7 +85,7 @@ let n : unit = unit;
 ### Discriminated union type
 
 The simplest form of pattern matching in JsLIGO is with help of a discriminated
-union type. 
+union type, which should be familiar for developers coming from TypeScript.
 
 ```jsligo
 type foo = 
@@ -116,8 +116,17 @@ switch(foo.kind) {
   case "decrement":
     state -= foo.amount;
     break
+  case "reset":
+    state = 0;
+    break
 }
 ```
+
+Note that all cases of the discriminated union must be handled, if not an error
+will be generated.
+
+The "strict" rules on discriminated union types are because there currently is 
+no type system support for this. 
 
 
 </Syntax>
