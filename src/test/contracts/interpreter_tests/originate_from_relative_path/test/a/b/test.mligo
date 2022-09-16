@@ -10,4 +10,8 @@ let test_originate_from_file_relative_path =
 
 
 let test_originate_from_file_relative_path_w_r_t_imported_file =
-  Foo.originate ()
+  let addr = Foo.originate () in
+  let bef  = Test.get_balance addr in
+  let _    = Test.transfer addr (Test.eval ()) 10tez in
+  let aft  = Test.get_balance addr in
+  aft = (bef + 10tez)
