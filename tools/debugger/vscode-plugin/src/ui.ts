@@ -128,7 +128,7 @@ export const getEntrypoint = (
 			const entrypoints: QuickPickItem[] = currentFilePath && debuggedContract.ref.entrypoints.map(label => ({ label }));
 
 			const currentKey: Maybe<string> = currentFilePath && "quickpick_entrypoint_" + currentFilePath;
-			const previousVal: Maybe<QuickPickItem> = currentKey && context.workspaceState.get<QuickPickItem>(currentKey);
+			const previousVal: Maybe<string> = currentKey && context.workspaceState.get<string>(currentKey);
 
 			if (entrypoints.length <= 1) {
 				if (entrypoints.length === 0) {
@@ -138,10 +138,20 @@ export const getEntrypoint = (
 				return;
 			}
 
+			let activeItem: Maybe<QuickPickItem>;
+			if (isDefined(previousVal)) {
+				for (let entrypoint of entrypoints) {
+					if (entrypoint.label === previousVal) {
+						activeItem = entrypoint;
+						break;
+					}
+				}
+			}
+
 			const pick: QuickPickItem = await input.showQuickPick({
 				totalSteps: 1,
 				items: entrypoints,
-				activeItem: previousVal,
+				activeItem,
 				placeholder: "Choose an entrypoint to run"
 			});
 
@@ -152,7 +162,7 @@ export const getEntrypoint = (
 				return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state);
 			} else {
 				if (isDefined(currentKey)) {
-					context.workspaceState.update(currentKey, pick);
+					context.workspaceState.update(currentKey, pick.label);
 				}
 
 				state.ref.pickedEntrypoint = pick.label;
