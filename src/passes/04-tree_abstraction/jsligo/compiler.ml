@@ -32,7 +32,63 @@ let compile_attributes attributes : string list =
       | None -> attr
     )
 module Compile_type = struct
-  let disc_unions: (string * bool) list list ref = ref []
+  type disc_variant = {
+    constructor: string;
+    constructor_field: string;
+    has_payload: bool;
+    fields: string list;
+  }
+
+  let disc_unions: disc_variant list list ref = ref []
+
+  let has_constructor (variants: disc_variant list) (variant_name: string) : bool = 
+    let rec aux = function
+      {constructor; _} :: _ when String.equal constructor variant_name -> true
+    | _ :: tl -> aux tl
+    | [] -> false
+    in
+    aux variants
+
+  let find_disc_union (variants: string list) = 
+    let variants_length = List.length variants in
+    let rec aux = function
+      item :: tl when List.length item = variants_length ->
+        let is_disc_union = List.fold_left ~f:(fun a i -> a && has_constructor item i) ~init:true variants in
+        if is_disc_union then 
+          Some item
+        else 
+          aux tl
+    | _ :: tl -> aux tl
+    | [] -> None
+    in
+    aux !disc_unions
+
+  let has_field (variant: disc_variant) (field_name, field_value) : bool = 
+    List.mem variant.fields field_name ~equal:String.equal || (String.equal variant.constructor_field field_name && String.equal variant.constructor field_value)
+
+  let is_disc_union (a: disc_variant list) (fields: (string * string) list) =
+    let rec aux = function
+      variant :: tl when (List.length variant.fields + 1) = List.length fields -> (
+        let result = List.fold_left ~f:(fun a i -> a && has_field variant i) ~init:true fields in
+        if result then
+          Some variant
+        else aux tl
+      )
+    | _ :: tl -> aux tl
+    | [] -> None
+    in 
+    aux a
+
+  let find_variant (fields: (string * string) list) = 
+    let rec aux = function 
+      disc_union :: tl -> 
+        let result = is_disc_union disc_union fields in
+        (match result with 
+          Some s -> Some s
+        | None -> aux tl)
+    | [] -> None
+    in
+    aux !disc_unions
 
   let is_discriminated_union (a: CST.switch Region.reg) =
     if Poly.(!disc_unions = []) then 
@@ -47,24 +103,23 @@ module Compile_type = struct
       let (check1, values) = switch_fields (true, []) (nseq_to_list a.value.cases) in
       if not(check1) then 
         None
-      else (
+      else
         (* check if length is the same and if one disc_union type is correct *)
-        let switch_length = List.length values in          
-        let rec find_union (remaining: (string * bool) list list) = 
-          match remaining with 
-            item :: tl when List.length item = switch_length -> 
-              let result = List.fold_left ~f:(fun a x -> a && List.mem (List.map ~f:fst item) x ~equal:String.equal) ~init:true values in 
-              if result then 
-                Some item
-              else 
-                find_union tl
-          | _ :: tl ->
-              find_union tl
-          | [] -> None
-        in
-        find_union !disc_unions
-      ) 
+        find_disc_union values
     )
+
+  let find_disc_obj (a: CST.object_expr) =
+    let rec aux fields = function
+      CST.Property {value = {name = EVar v; value; _}; _} :: remaining ->
+      aux ((v.value, match value with EString (String {value = s; _}) -> s | _ -> "" ) :: fields) remaining
+    | [] -> true, List.rev fields
+    | _ -> false, []
+    in
+    let check, fields = aux [] (npseq_to_list a.value.inside) in
+    if check then 
+      find_variant fields
+    else
+      None
 
   (*
     `type_compiler_opt` represents an abstractor for a single pattern.
@@ -365,11 +420,22 @@ module Compile_type = struct
           | [] -> 
             t_unit ()
           in
-          constructor, type_expr, []
+          let fields = List.map ~f:(fun x -> x.value.field_name.value ) other in
+          (constructor, type_expr, fields)
         ) n
         in 
         let sum = npseq_to_list sum in
-        disc_unions := (List.map ~f:(fun (a, type_expr, _) -> (a, Poly.(type_expr <> AST.t_unit ()))) sum) :: !disc_unions;              
+        let sum, disc_union = (List.fold_left ~f:(fun (all_sum, all_fields) (constructor, type_expr, fields) -> 
+          (constructor, type_expr, []) :: all_sum,
+          {
+            constructor; 
+            constructor_field = shared_field;
+            has_payload = Poly.(type_expr <> AST.t_unit ());
+            fields
+          } :: all_fields
+        ) ~init:([], []) sum)
+        in
+        disc_unions := disc_union :: !disc_unions;              
         return @@ t_sum_ez_attr ~loc:Location.dummy ~attr:[] sum
 end
 
@@ -654,6 +720,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let exprs' = List.map ~f:self exprs in
     return @@ e_tuple ~loc exprs'
   | EObject {value = {inside = (Property_rest {value = {expr; _}; _}, rest); _}; _} ->
+    
     let record = self expr in
     let aux up =
       let (_, p) = up in
@@ -670,27 +737,48 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let updates = List.map ~f:aux rest in
     let aux e (path, update, loc) = e_update ~loc e path update in
     return @@ List.fold_left ~f:aux ~init:record updates
-  | EObject obj ->
-    let (obj, loc) = r_split obj in
-    let aux : CST.property -> string * expression = fun fa ->
-      match fa with
-      | Punned_property prop -> (
-          let (prop, loc) = r_split prop in
-          let var = expression_to_variable ~raise prop in
-          (var.value , e_variable ~loc (compile_variable var))
-        )
-      | Property prop2 -> (
-          let (prop2 , _) = r_split prop2 in
-          let var = expression_to_variable ~raise prop2.name in
-          let expr = self prop2.value in
-          (var.value , expr)
-        )
-      | Property_rest _ -> (
-          raise.error @@ rest_not_supported_here fa
-        )
-    in
-    let obj = List.map ~f:aux @@ npseq_to_list obj.inside in
-    return @@ e_record_ez ~loc obj
+  | EObject obj' ->
+    let (obj, loc) = r_split obj' in
+    (match find_disc_obj obj' with 
+      Some s -> 
+        let constructor = s.constructor in
+        let filtered_object = Utils.nsepseq_foldl (fun a i -> 
+          match i with 
+            CST.Property {value = {value = EString (String {value = s; _}); _}; _} when String.equal s constructor -> a
+          | _ -> (Token.wrap_comma (Region.ghost), i) :: a  
+        )  [] obj.inside in
+        let new_inside = match filtered_object with 
+          hd :: rest -> (snd hd, rest)
+        | [] -> failwith "should not happen"
+        in
+        let obj = { 
+          obj with 
+            inside = new_inside
+        }
+        in
+        let e = self (EObject {value = obj; region = Region.ghost}) in 
+        e_constructor ~loc constructor e
+
+    | None ->
+        let aux : CST.property -> string * expression = fun fa ->
+          match fa with
+          | Punned_property prop -> (
+              let (prop, loc) = r_split prop in
+              let var = expression_to_variable ~raise prop in
+              (var.value , e_variable ~loc (compile_variable var))
+            )
+          | Property prop2 -> (
+              let (prop2 , _) = r_split prop2 in
+              let var = expression_to_variable ~raise prop2.name in
+              let expr = self prop2.value in
+              (var.value , expr)
+            )
+          | Property_rest _ -> (
+              raise.error @@ rest_not_supported_here fa
+            )
+        in
+        let obj = List.map ~f:aux @@ npseq_to_list obj.inside in
+        return @@ e_record_ez ~loc obj)
   | EProj proj ->
     let (proj, loc) = r_split proj in
     let var = self proj.expr in
@@ -1182,8 +1270,8 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
         let cases = List.map ~f:(fun f -> 
           match f with 
             Switch_case {expr = EString (String v); statements; _} ->
-              let (_, has_body) = List.find_exn ~f:(fun (f, _) -> Poly.(f = v.value) ) data in
-              let pattern = if has_body then 
+              let a = List.find_exn ~f:(fun {constructor; _} -> Poly.(constructor = v.value) ) data in
+              let pattern = if a.has_payload then 
                 let b = Binder.make (compile_variable payload) None in
                 let arg = Pattern.P_var b in
                 Location.wrap (Pattern.P_variant (Label v.value, (Location.wrap ~loc arg)))
