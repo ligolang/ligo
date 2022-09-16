@@ -123,9 +123,9 @@ There are also _variant_ types (or "sum types") – a more powerful counterpart 
 ```pascaligo
 type int_option is Number of int | Null
 
-const x : int_option = Number (5)
+const x = Number (5)
 
-const y : int_option = Null
+const y = Null
 ```
 
 Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number (5)`, `Number (10)`, etc.) or `Null`. Notice how `Null` does not hold any value.
@@ -136,9 +136,9 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 ```cameligo
 type int_option = Number of int | Null
 
-let x : int_option = Number 5
+let x = Number 5
 
-let y : int_option = Null
+let y = Null
 ```
 
 Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number 5`, `Number 10`, etc.) or `Null`. Notice how `Null` does not hold any value.
@@ -150,9 +150,9 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 ```reasonligo
 type int_option = Number(int) | Null;
 
-let x: int_option = Number (5);
+let x = Number (5);
 
-let y: int_option = Null;
+let y = Null;
 ```
 
 Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number (5)`, `Number (10)`, etc.) or `Null`. Notice how `Null` does not hold any value.
@@ -164,9 +164,9 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 ```jsligo group=b4
 type int_option = ["Number", int] | ["Null"];
 
-let x: int_option = Number(5);
+let x = Number(5);
 
-let y: int_option = Null ();
+let y = Null ();
 ```
 
 Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number(5)`, `Number(10)`, etc.) or `Null`. Notice how `Null()` does not hold any value.
@@ -179,15 +179,15 @@ There is a special built-in parameterised `option` type with `Some` and `None` c
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const x : option (int) = Some (5)
+const x = Some (5)
 
-const y : option (int) = None
+const y : option(int) = None
 ```
 
 This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option(address)`. We can then use `case` to see if there is something inside:
 
 ```pascaligo
-const x : option (int) = Some (5)
+const x = Some (5)
 
 const x_or_zero : int
 = case x of [
@@ -200,7 +200,7 @@ const x_or_zero : int
 <Syntax syntax="cameligo">
 
 ```cameligo
-let x : int option = Some 5
+let x = Some 5
 
 let y : int option = None
 ```
@@ -210,7 +210,7 @@ This is how we express _nullability_ in LIGO: instead of using a special ad-hoc 
 ```cameligo
 let x : int option = Some 5
 
-let x_or_zero : int =
+let x_or_zero =
   match x with
     Some value -> value
   | None -> 0
@@ -230,7 +230,7 @@ This is how we express _nullability_ in LIGO: instead of using a special ad-hoc 
 ```reasonligo
 let x: option(int) = Some (5);
 
-let x_or_zero: int =
+let x_or_zero =
   switch(x){
   | Some (value) => value
   | None => 0
@@ -241,7 +241,7 @@ let x_or_zero: int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=b5
-let x: option<int> = Some(5);
+let x = Some(5);
 
 let y: option<int> = None();
 ```
@@ -249,11 +249,11 @@ let y: option<int> = None();
 This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option<address>`. We can then use `match` to see if there is something inside:
 
 ```jsligo group=b6
-let x: option<int> = Some (5);
+let x = Some (5);
 
-let x_or_zero: int =
+let x_or_zero  =
   match(x, {
-    Some: (value : int) => value,
+    Some: value => value,
     None: () => 0
   });
 ```
@@ -334,14 +334,14 @@ For example, we can simulate Ethereum dispatching behaviour:
 
 ```pascaligo
 function main (const parameter : bytes; const storage : int) is {
-  const nop : list (operation) = list []
+  const nop = list []
 } with
     if (parameter = 0xbc1ecb8e)
     then (nop, storage + 1)
     else
       if (parameter = 0x36e44653)
       then (nop, storage - 1)
-      else (failwith ("Unknown entrypoint") : list (operation) * int)
+      else failwith ("Unknown entrypoint")
 ```
 
 However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `case`:
@@ -352,7 +352,7 @@ type parameter is Increment | Decrement
 type storage is int
 
 function main (const p : parameter; const s : storage) is {
-  const nop : list (operation) = list []
+  const nop = list []
 } with
     case p of [
       Increment -> (nop, s + 1)
@@ -366,11 +366,11 @@ function main (const p : parameter; const s : storage) is {
 ```cameligo
 let main (parameter, storage : bytes * int) : operation list * int =
   if parameter = 0xbc1ecb8e
-  then ([] : operation list), storage + 1
+  then [], storage + 1
   else
     if parameter = 0x36e44653
-    then ([] : operation list), storage - 1
-    else (failwith "Unknown entrypoint" : operation list * int)
+    then [], storage - 1
+    else failwith "Unknown entrypoint"
 ```
 
 However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
@@ -382,8 +382,8 @@ type storage = int
 
 let main (p, s : parameter * storage) =
   match p with
-    Increment -> ([] : operation list), s + 1
-  | Decrement -> ([] : operation list), s - 1
+    Increment -> [], s + 1
+  | Decrement -> [], s - 1
 ```
 
 </Syntax>
@@ -392,13 +392,13 @@ let main (p, s : parameter * storage) =
 ```reasonligo
 let main = ((parameter, storage): (bytes, int)) => {
   if (parameter == 0xbc1ecb8e) {
-    ([] : list(operation), storage + 1)
+    ([], storage + 1)
   } else {
 
     if (parameter == 0x36e44653) {
-      ([] : list(operation), storage - 1)
+      ([], storage - 1)
     } else {
-      (failwith("Unknown entrypoint") : (list(operation), int))
+      failwith("Unknown entrypoint")
     }
   }
 };
@@ -413,8 +413,8 @@ type storage = int;
 
 let main = ((p, s): (parameter, storage)) => {
   switch(p){
-  | Increment => ([] : list(operation), s + 1)
-  | Decrement => ([] : list(operation), s - 1)
+  | Increment => ([], s + 1)
+  | Decrement => ([], s - 1)
   }
 };
 ```
@@ -425,12 +425,12 @@ let main = ((p, s): (parameter, storage)) => {
 ```jsligo group=a2
 let main = ([parameter, storage]: [bytes, int]): [list<operation>, int] => {
   if (parameter == 0xbc1ecb8e) {
-    return [list([]) as list<operation>, storage + 1]
+    return [list([]), storage + 1]
   } else {
     if (parameter == 0x36e44653) {
-      return [list([]) as list<operation>, storage - 1]
+      return [list([]), storage - 1]
     } else {
-      return (failwith("Unknown entrypoint") as [list<operation>, int])
+      return (failwith("Unknown entrypoint"))
     }
   }
 };
@@ -445,8 +445,8 @@ type storage = int;
 
 let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
   return match(p, {
-    Increment: () => [list([]) as list<operation>, s + 1],
-    Decrement: () => [list([]) as list<operation>, s - 1]
+    Increment: () => [list([]), s + 1],
+    Decrement: () => [list([]), s - 1]
   });
 };
 ```
@@ -464,7 +464,7 @@ type parameter is Add of int | Subtract of int
 type storage is int
 
 function main (const p : parameter; const s : storage) is {
-  const nop : list (operation) = list []
+  const nop = list []
 } with
     case p of [
       Add (n) -> (nop, s + n)
@@ -482,8 +482,8 @@ type storage = int
 
 let main (p, s : parameter * storage) =
   match p with
-    Add n -> ([] : operation list), s + n
-  | Subtract n -> ([] : operation list), s - n
+    Add n -> [], s + n
+  | Subtract n -> [], s - n
 ```
 
 </Syntax>
@@ -497,8 +497,8 @@ type storage = int;
 
 let main = ((p, s): (parameter, storage)) => {
   switch(p){
-  | Add n => ([] : list(operation), s + n)
-  | Subtract n => ([] : list(operation), s - n)
+  | Add n => ([], s + n)
+  | Subtract n => ([], s - n)
   }
 };
 ```
@@ -514,8 +514,8 @@ type storage = int;
 
 let main = (p : parameter, s : storage): [list<operation>, int] => {
   return match(p, {
-    Add: (n : int) => [list([]) as list<operation>, s + n],
-    Subtract: (n : int) => [list([]) as list<operation>, s - n]
+    Add: n => [list([]), s + n],
+    Subtract: n => [list([]), s - n]
   });
 };
 ```
@@ -554,12 +554,12 @@ function multiplyBy4 (const storage : int) is
 
 type parameter is MultiplyBy4 | MultiplyBy16
 
-function main (const param : parameter; const storage : storage) is {
-  const nop : list (operation) = list []
+function main (const param : parameter; const storage : storage) : list(operation) * storage is {
+  const nop = list []
 } with
     case param of [
-      MultiplyBy4 -> multiplyBy4 (storage)
-    | MultiplyBy16 -> multiplyBy4 (multiplyBy4 (storage))
+      MultiplyBy4 -> (nop, multiplyBy4 (storage))
+    | MultiplyBy16 -> (nop, multiplyBy4 (multiplyBy4 (storage)))
     ]
 ```
 
@@ -573,8 +573,8 @@ let multiplyBy4 (storage : int) : int = multiplyBy2 (multiplyBy2 storage)
 
 type parameter = MultiplyBy4 | MultiplyBy16
 
-let main (param, storage : parameter * storage) =
-  ([] : operation list),
+let main (param, storage : parameter * storage) : operation list * storage =
+  [],
   (match param with
      MultiplyBy4 -> multiplyBy4 storage
    | MultiplyBy16 -> multiplyBy4 (multiplyBy4 storage))
@@ -590,10 +590,11 @@ let multiplyBy4 = (storage: int) => multiplyBy2(multiplyBy2(storage));
 
 type parameter = MultiplyBy4 | MultiplyBy16;
 
-let main = ((param, storage): (parameter, storage)) => {
+let main = ((param, storage): (parameter, storage)) : (list(operation) , storage) => {
+  let op = [] ;
   switch(param){
-  | MultiplyBy4 => multiplyBy4(storage)
-  | MultiplyBy16 => multiplyBy4(multiplyBy4(storage))
+  | MultiplyBy4 => (op, multiplyBy4(storage))
+  | MultiplyBy16 => (op, multiplyBy4(multiplyBy4(storage)))
   }
 };
 ```
@@ -602,16 +603,17 @@ let main = ((param, storage): (parameter, storage)) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=a5
-let multiplyBy2 = (storage: int) : int => storage * 2;
+let multiplyBy2 = (storage : int) : int => storage * 2;
 
 let multiplyBy4 = (storage: int) : int => multiplyBy2(multiplyBy2(storage));
 
 type parameter = | ["MultiplyBy4"] | ["MultiplyBy16"];
 
-let main = (param : parameter, storage : int): int => {
+let main = (param : parameter, storage : int) => {
+  const op = list ([]) ;
   return match(param, {
-    MultiplyBy4: () => multiplyBy4(storage),
-    MultiplyBy16: () => multiplyBy4(multiplyBy4(storage))
+    MultiplyBy4: () => [op, multiplyBy4(storage)],
+    MultiplyBy16: () => [op, multiplyBy4(multiplyBy4(storage))]
   });
 };
 ```
@@ -636,9 +638,9 @@ type parameter is Compute of (int -> int) // a function that accepts an int and 
 
 type storage is int
 
-function main (const p : parameter; const s : storage) is
+function main (const p : parameter; const s : storage) : list(operation) * storage is
   case p of [
-    Compute (func) -> ((list [] : list (operation)), func (s))
+    Compute (func) -> (list [], func (s))
   ]
 ```
 
@@ -655,9 +657,9 @@ type parameter = Compute of int -> int // a function that accepts an int and ret
 
 type storage = int
 
-let main (p, s : parameter * storage) =
+let main (p, s : parameter * storage) : operation list * storage =
   match p with
-  Compute func -> ([] : operation list), func s
+  Compute func -> [], func s
 ```
 
 We can then call this contract with the parameter of the form `Compute (fun (x : int) -> x * x + 2 * x + 1)`. Try this out with:
@@ -673,9 +675,9 @@ type parameter = Compute((int => int));
 
 type storage = int;
 
-let main = ((p, s): (parameter, storage)) =>
+let main = ((p, s): (parameter, storage)) : (list(operation) , storage) =>
   switch(p){
-  | Compute(func) => (([] : list(operation)), func(s))
+  | Compute(func) => ([], func(s))
   };
 ```
 
@@ -694,7 +696,7 @@ type storage = int;
 
 let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
   return match(p, {
-    Compute: (func : (c : int) => int) => [list([]) as list<operation>, func(s)]
+    Compute: (func : (c : int) => int) => [list([]), func(s)]
   });
 };
 ```
@@ -719,7 +721,7 @@ type parameter is CallFunction | SetFunction of (int -> int)
 function call (const fn : option (int -> int); const value : int) is
   case fn of [
     Some (f) -> f (value)
-  | None -> (failwith ("Lambda is not set") : int)
+  | None -> failwith ("Lambda is not set")
   ]
 
 function main (const p : parameter; const s : storage) is {
@@ -728,7 +730,7 @@ function main (const p : parameter; const s : storage) is {
       SetFunction (fn) -> s with record [fn = Some (fn)]
     | CallFunction -> s with record [value = call (s.fn, s.value)]
     ]
-} with ((list [] : list (operation)), newStorage)
+} with (list [], newStorage)
 ```
 
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction (function (const x : int) => ...)`.
@@ -744,14 +746,14 @@ type parameter = SetFunction of (int -> int) | CallFunction
 let call (fn, value : (int -> int) option * int) =
   match fn with
     Some f -> f value
-  | None -> (failwith "Lambda is not set" : int)
+  | None -> failwith "Lambda is not set"
 
-let main (p, s : parameter * storage) =
+let main (p, s : parameter * storage) : operation list * storage =
   let newStorage =
     match p with
       SetFunction fn -> {s with fn = Some fn}
     | CallFunction -> {s with value = call (s.fn, s.value)} in
-  ([] : operation list), newStorage
+  [], newStorage
 ```
 
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction (fun (x : int) -> ...)`.
@@ -767,17 +769,17 @@ type parameter = CallFunction | SetFunction((int => int));
 let call = ((fn, value): (option((int => int)), int)) => {
   switch(fn){
   | Some (f) => f(value)
-  | None => (failwith("Lambda is not set") : int)
+  | None => failwith("Lambda is not set")
   }
 };
 
-let main = ((p, s): (parameter, storage)) => {
+let main = ((p, s): (parameter, storage)) : (list(operation) , storage) => {
   let newStorage =
     switch(p){
     | SetFunction fn => {...s, fn: Some (fn)}
     | CallFunction => {...s, value: call(s.fn, s.value)}
     };
-  ([] : list(operation), newStorage)
+  ([], newStorage)
 };
 ```
 
@@ -793,18 +795,18 @@ type parameter = ["CallFunction"] | ["SetFunction", ((x : int) => int)];
 
 let call = ([fn, value]: [option<((x : int) => int)>, int]) : int => {
   return match(fn, {
-    Some: (f : ((x : int) => int)) => f(value),
-    None: () => (failwith("Lambda is not set") as int)
+    Some: f => f(value),
+    None: () => failwith("Lambda is not set")
   })
 };
 
 let main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => {
   let newStorage =
     match(p, {
-      SetFunction: (fn : ((x : int) => int)) => ({...s, fn: Some (fn)}),
+      SetFunction: fn => ({...s, fn: Some (fn)}),
       CallFunction: () => ({...s, value: call(s.fn, s.value)})
     });
-  [list([]) as list<operation>, newStorage]
+  [list([]), newStorage]
 };
 ```
 
@@ -850,17 +852,16 @@ In Tezos, the execution model is quite different. Contracts communicate via mess
 ```pascaligo
 type storage is record [rewardsLeft : tez; beneficiaryAddress : address]
 
-function treasury (const p : unit; const s : storage) is {
+function treasury (const _ : unit; const s : storage) is {
   // We do our computations first
   const newStorage = s with record [rewardsLeft = 0mutez];
 
   // Then we find our beneficiary's `handleRewards` entrypoint:
-  const beneficiaryOpt : option (contract (unit))
-  = Tezos.get_entrypoint_opt ("%handleTransfer", s.beneficiaryAddress);
+  const beneficiaryOpt = Tezos.get_entrypoint_opt ("%handleTransfer", s.beneficiaryAddress);
   const beneficiary
   = case beneficiaryOpt of [
       Some (contract) -> contract
-    | None -> (failwith ("Beneficiary does not exist") : contract (unit))
+    | None -> failwith ("Beneficiary does not exist")
     ];
 
   // Then we prepare the internal operation we want to perform
@@ -881,12 +882,11 @@ let treasury (p, s : unit * storage) =
   let newStorage = {s with rewardsLeft = 0mutez} in
 
   // Then we find our beneficiary's `handleRewards` entrypoint:
-  let beneficiaryOpt : unit contract option =
-    Tezos.get_entrypoint_opt "%handleTransfer" s.beneficiaryAddress in
+  let beneficiaryOpt = Tezos.get_entrypoint_opt "%handleTransfer" s.beneficiaryAddress in
   let beneficiary =
     match beneficiaryOpt with
       Some contract -> contract
-    | None -> (failwith "Beneficiary does not exist" : unit contract) in
+    | None -> failwith "Beneficiary does not exist" in
 
   // Then we prepare the internal operation we want to perform
   let operation = Tezos.transaction () s.rewardsLeft beneficiary in
@@ -901,17 +901,16 @@ let treasury (p, s : unit * storage) =
 ```reasonligo
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
-let treasury = ((p, s): (unit, storage)) => {
+let treasury = ((_, s): (unit, storage)) => {
   // We do our computations first
   let newStorage = {...s, rewardsLeft: 0mutez};
 
   // Then we find our beneficiary's `handleRewards` entrypoint:
-  let beneficiaryOpt: option(contract(unit)) =
-    Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
+  let beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
   let beneficiary =
     switch(beneficiaryOpt){
     | Some (contract) => contract
-    | None => (failwith("Beneficiary does not exist") : contract(unit))
+    | None => failwith("Beneficiary does not exist")
     };
 
   // Then we prepare the internal operation we want to perform
@@ -928,17 +927,16 @@ let treasury = ((p, s): (unit, storage)) => {
 ```jsligo group=b1
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
-let treasury = (p : unit, s : storage): [list<operation>, storage] => {
+let treasury = (p : unit, s : storage) => {
   // We do our computations first
   let newStorage = {...s, rewardsLeft: (0 as mutez)};
 
   // Then we find our beneficiary's `handleRewards` entrypoint:
-  let beneficiaryOpt: option<contract<unit>> =
-    Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
+  let beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
   let beneficiary =
     match(beneficiaryOpt, {
-     Some: (contract : contract<unit>) => contract,
-     None: () => (failwith("Beneficiary does not exist") as contract<unit>)
+     Some: contract => contract,
+     None: () => failwith("Beneficiary does not exist")
     });
 
   // Then we prepare the internal operation we want to perform

@@ -27,7 +27,7 @@ const foo : int = 144
 ```cameligo
 // Demonstrate CameLIGO inclusion statements, see includer.mligo
 
-let foo : int = 144
+let foo = 144
 ```
 
 </Syntax>
@@ -45,7 +45,7 @@ let foo : int = 144;
 ```jsligo
 // Demonstrate JsLIGO inclusion statements, see includer.jsligo
 
-const foo: int = 144;
+const foo = 144;
 ```
 
 </Syntax>
@@ -66,7 +66,7 @@ const bar : int = foo
 ```cameligo skip
 #include "included.mligo"
 
-let bar : int = foo
+let bar = foo
 ```
 
 </Syntax>
@@ -84,7 +84,7 @@ let bar : int = foo;
 ```jsligo skip
 #include "included.jsligo"
 
-const bar: int = foo;
+const bar = foo;
 ```
 
 </Syntax>

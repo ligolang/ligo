@@ -31,7 +31,7 @@ type tx is
 type storage is record [owner : address; transactionLog : list (tx)]
 
 function send (const dst : address; const @amount : tez) is {
-  const callee : option (contract (unit)) = Tezos.get_contract_opt (dst)
+  const callee = Tezos.get_contract_opt (dst)
 } with
     case callee of [
       Some (contract) -> {
@@ -67,7 +67,7 @@ type transaction = Incoming of address * tez | Outgoing of address * tez
 type storage = {owner : address; transactionLog : transaction list}
 
 let send (dst, @amount : address * tez) =
-  let callee : unit contract option = Tezos.get_contract_opt dst in
+  let callee = Tezos.get_contract_opt dst in
   match callee with
     Some contract ->
       let op = Tezos.transaction () @amount contract in
@@ -98,7 +98,7 @@ type transaction = Incoming((address, tez)) | Outgoing((address, tez));
 type storage = {owner: address, transactionLog: list(transaction) };
 
 let send = ((dst, @amount): (address, tez)) => {
-  let callee: option(contract(unit)) = Tezos.get_contract_opt(dst);
+  let callee = Tezos.get_contract_opt(dst);
   switch(callee){
   | Some (contract) =>
       {
@@ -251,8 +251,8 @@ function withdraw (const param : parameter; var s : storage) is {
   const @amount = param.0;
   const beneficiary = param.1;
   const beneficiary_addr = Tezos.address (beneficiary);
-  const @balance
-  = case Map.find_opt (beneficiary_addr, s.balances) of [
+  const @balance = 
+    case Map.find_opt (beneficiary_addr, s.balances) of [
       Some (v) -> v
     | None -> 0mutez
     ];
@@ -362,10 +362,10 @@ Let us consider the following example:
 type storage is record [owner : address; beneficiaries : list (address)]
 
 function send_rewards (const beneficiary_addr : address) is {
-  const maybe_contract : option (contract (unit))
-  = Tezos.get_contract_opt (beneficiary_addr);
-  const beneficiary
-  = case maybe_contract of [
+  const maybe_contract = 
+    Tezos.get_contract_opt (beneficiary_addr);
+  const beneficiary = 
+    case maybe_contract of [
       Some (contract) -> contract
     | None -> (failwith ("CONTRACT_NOT_FOUND") : contract (unit))
     ]
@@ -386,7 +386,7 @@ function main (const p : unit; const s : storage) is
 type storage = {owner : address; beneficiaries : address list}
 
 let send_rewards (beneficiary_addr : address) =
-  let maybe_contract : unit contract option =
+  let maybe_contract =
     Tezos.get_contract_opt beneficiary_addr in
   let beneficiary =
     match maybe_contract with
@@ -409,7 +409,7 @@ let main (p, s : unit * storage) =
 type storage = {owner: address, beneficiaries: list(address) };
 
 let send_rewards = (beneficiary_addr: address) => {
-  let maybe_contract: option(contract(unit)) =
+  let maybe_contract =
     Tezos.get_contract_opt(beneficiary_addr);
   let beneficiary =
     switch(maybe_contract){

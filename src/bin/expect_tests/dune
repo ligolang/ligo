@@ -3,6 +3,7 @@
  (libraries simple-utils cli)
  (inline_tests
   (deps
+   (source_tree ../../../gitlab-pages/website/src/components/HomepageCodeExamples)
    (source_tree ../../test/contracts)
    (source_tree ../../test/lexer)))
  (preprocess

@@ -184,7 +184,7 @@ let main (p, _ : parameter * storage) : return =
     | Ok_opening b -> b
     | Fail_timelock -> 0x00
     | Fail_decrypt -> 0x01
-  in ([] : operation list), new_s
+  in [], new_s
 
 
 let test =
@@ -223,8 +223,8 @@ let test =
 let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
   return (match ( Tezos.open_chest(ck,c,@time), {
     Ok_opening: (b:bytes) => b,
-    Fail_decrypt: () => failwith("decrypt") as bytes,
-    Fail_timelock: () => failwith("timelock") as bytes,
+    Fail_decrypt: () => failwith("decrypt"),
+    Fail_timelock: () => failwith("timelock"),
   }))
 };
 ```
@@ -236,8 +236,8 @@ let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
 let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
   switch (Tezos.open_chest(ck,c,@time)) {
     | Ok_opening b => b
-    | Fail_decrypt => (failwith("decrypt") : bytes)
-    | Fail_timelock => (failwith("timelock") : bytes)
+    | Fail_decrypt => failwith("decrypt")
+    | Fail_timelock => failwith("timelock")
   }
 };
 ```
@@ -249,8 +249,8 @@ let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
 function open_or_fail (const ck : chest_key; const c : chest; const @time : nat) : bytes is
   case Tezos.open_chest (ck, c, @time) of [
     Ok_opening (b) -> b
-  | Fail_decrypt -> (failwith("decrypt") : bytes)
-  | Fail_timelock -> (failwith("timelock") : bytes)
+  | Fail_decrypt -> (failwith("decrypt"))
+  | Fail_timelock -> (failwith("timelock"))
   ]
 ```
 
@@ -286,7 +286,7 @@ are a few legit views:
 
 ```cameligo group=views
 type storage = string
-let main (((),s): unit * storage) : operation list * storage = ([]:operation list) , s
+let main (((),s): unit * storage) : operation list * storage = [] , s
 
 (* view 'view1', simply returns the storage *)
 [@view] let view1 ((),s: unit * storage) : storage = s
@@ -303,7 +303,7 @@ let main (((),s): unit * storage) : operation list * storage = ([]:operation lis
 
 ```jsligo group=views
 type storage = string
-let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [list([]) as list<operation> , s];
+let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [list([]), s];
 
 /* view 'view1', simply returns the storage */
 // @view
@@ -323,7 +323,7 @@ let view3 = ([_ , _s]: [unit , storage]) : int => 42;
 
 ```reasonligo group=views
 type storage = string
-let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => (([] : list(operation)) , s);
+let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => ([] , s);
 
 /* view 'view1', simply returns the storage */
 [@view] let view1 = ((_ , s): (unit , storage)) : storage => s;
@@ -340,7 +340,7 @@ let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => (([] : l
 
 ```pascaligo group=views
 type storage is string
-function main (const _ : unit ; const s : storage) : list (operation) * storage is ((nil : list (operation)), s)
+function main (const _ : unit ; const s : storage) : list (operation) * storage is (nil, s)
 
 (* view 'view1', simply returns the storage *)
 [@view] function view1 (const _ : unit; const s: storage) : storage is s
@@ -349,7 +349,7 @@ function main (const _ : unit ; const s : storage) : list (operation) * storage 
 [@view] function v2 (const expected_length : nat; const s: storage) : bool is (String.length (s) = expected_length)
 
 (* view 'v3' returns a constant int *)
-[@view] function v3 (const _ : unit; const _ : storage) : int is 42
+[@view] function v3 (const _ : unit; const _ : storage) is 42
 ```
 
 </Syntax>
@@ -378,7 +378,7 @@ let view_call ((name,parameter,addr): string * int * address) : int option = Tez
 <Syntax syntax="jsligo">
 
 ```jsligo group=views
-let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => (Tezos.call_view ("sto_plus_n", 1, addr) as option<int>)
+let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.call_view ("sto_plus_n", 1, addr)
 ```
 
 </Syntax>

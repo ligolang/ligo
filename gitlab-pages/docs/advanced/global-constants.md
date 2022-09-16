@@ -147,11 +147,11 @@ function main(const p : string; const s : int) : list(operation) * int is
 <Syntax syntax="cameligo">
 
 ```cameligo group=pre_global
-let helper ((s, x) : string * int) : int =
+let helper ((s, x) : string * int) =
   String.length s + x * 3 + 2
 
 let main ((p, s) : string * int) : operation list * int =
-  (([] : operation list), helper (p, s))
+  ([], helper (p, s))
 ```
 
 </Syntax>
@@ -169,11 +169,11 @@ let main = ((p, s) : (string, int)) : (list (operation), int) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=pre_global
-const helper = ([s, x] : [string, int]) : int =>
+const helper = ([s, x] : [string, int]) =>
   String.length(s) + x * 3 + 2;
 
 const main = ([p, s] : [string, int]) : [list<operation>, int] =>
-  [(list([]) as list<operation>), helper (p, s)];
+  [list([]), helper (p, s)];
 ```
 
 </Syntax>
@@ -360,7 +360,7 @@ function main(const p : string; const s : int) : list(operation) * int is
 
 ```cameligo skip
 let main ((p, s) : string * int) : operation list * int =
-  (([] : operation list), (Tezos.constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf" : (string * int) -> int)(p, s))
+  ([], (Tezos.constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")(p, s))
 ```
 
 </Syntax>
@@ -376,7 +376,7 @@ let main = ((p, s) : (string, int)) : (list (operation), int) =>
 
 ```jsligo skip
 const main = ([p, s] : [string, int]) : [list<operation>, int] =>
-  [(list([]) as list<operation>), (Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8") as ((_ps : [string, int]) => int))([p, s])];
+  [ list([]), Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8")([p, s]) ];
 ```
 
 </Syntax>
@@ -519,10 +519,10 @@ type return = operation list * storage
 
 let f (x : int) = x * 3 + 2
 
-let ct : string = Test.register_constant (Test.eval f)
+let ct = Test.register_constant (Test.eval f)
 
 let main ((), store : parameter * storage) : return =
- ([] : operation list), ((Tezos.constant ct : int -> int) store)
+ [], (Tezos.constant ct store)
 
 let test =
   let (taddr, _, _) = Test.originate main 1 0tez in
@@ -559,14 +559,14 @@ let test =
 type storage = int
 type parameter = unit
 
-const f = (x : int) : int => x * 3 + 2;
+const f = (x : int) => x * 3 + 2;
 
-const ct : string = Test.register_constant(Test.eval(f));
+const ct = Test.register_constant(Test.eval(f));
 
 const main = ([p, s] : [parameter, storage]) : [list<operation>, storage] =>
-  [(list([]) as list<operation>), (((Tezos.constant(ct) as ((x:int) => int)))(s))];
+  [list([]), Tezos.constant(ct)(s)];
 
-const _test = (_u : unit) : unit => {
+const _test = () => {
   let [taddr, _, _] = Test.originate(main, 1, (0 as tez));
   let ctr = Test.to_contract(taddr);
   let _ = Test.transfer_to_contract_exn(ctr, unit, (0 as tez));

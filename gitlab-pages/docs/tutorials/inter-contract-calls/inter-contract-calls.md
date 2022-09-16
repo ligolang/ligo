@@ -38,16 +38,15 @@ type parameter is address
 
 type storage is unit
 
-function main (const destination_addr : parameter; const s : storage) is {
-  const maybe_contract : option (contract (unit))
-  = Tezos.get_contract_opt (destination_addr);
+function main (const destination_addr : parameter; const _ : storage) is {
+  const maybe_contract = Tezos.get_contract_opt (destination_addr);
   const destination_contract
   = case maybe_contract of [
       Some (contract) -> contract
-    | None -> (failwith ("Contract does not exist") : contract (unit))
+    | None -> failwith ("Contract does not exist")
     ];
   const op = Tezos.transaction (Unit, (Tezos.get_amount ()), destination_contract)
-} with (op, Unit)
+} with (list[op], Unit)
 ```
 
 </Syntax>
@@ -59,14 +58,13 @@ type parameter = address
 type storage = unit
 
 let main (destination_addr, _ : parameter * storage) =
-  let maybe_contract : unit contract option =
-    Tezos.get_contract_opt destination_addr in
+  let maybe_contract = Tezos.get_contract_opt destination_addr in
   let destination_contract =
     match maybe_contract with
       Some contract -> contract
-    | None -> (failwith "Contract does not exist" : unit contract) in
+    | None -> failwith "Contract does not exist" in
   let op = Tezos.transaction () (Tezos.get_amount ()) destination_contract in
-  op, ()
+  [op], ()
 ```
 
 </Syntax>
@@ -78,21 +76,22 @@ type parameter = address;
 type storage = unit;
 
 let main = ((destination_addr, _): (parameter, storage)) => {
-  let maybe_contract: option(contract(unit)) =
-    Tezos.get_contract_opt(destination_addr);
+  let maybe_contract = Tezos.get_contract_opt(destination_addr);
   let destination_contract =
     switch(maybe_contract){
     | Some (contract) => contract
-    | None => (failwith("Contract does not exist") : contract(unit))
+    | None => failwith("Contract does not exist")
     };
   let op = Tezos.transaction((), (Tezos.get_amount ()), destination_contract);
-  (op, ())
+  ([op], ())
 };
 ```
 
 </Syntax>
 
 It accepts a destination address as the parameter. Then we need to check whether the address points to a contract that accepts a unit. We do this with `Tezos.get_contract_opt`. This function returns `Some (value)` if the contract exists and the parameter type is correct. Otherwise, it returns `None`. In case it is `None`, we fail with an error, otherwise we use `Tezos.transaction` to forge the internal transaction to the destination contract.
+
+> Note: since `Tezos.transaction` is called with unit as its first argument, LIGO infer that `destination_addr` has to point to a contract that accepts unit 
 
 Let us also examine a contract that stores the address of another contract and passes an argument to it. Here is how this "proxy" can look like:
 
@@ -106,15 +105,15 @@ type parameter is int
 type storage is address
 
 function get_add_entrypoint (const addr : address) is {
-  const maybe_contract : option (contract (int)) = Tezos.get_contract_opt (addr)
+  const maybe_contract = Tezos.get_contract_opt (addr)
 } with
     case maybe_contract of [
       Some (contract) -> contract
-    | None -> (failwith ("Callee does not exist") : contract (int))
+    | None -> failwith ("Callee does not exist")
     ]
 
 function main (const param : parameter; const callee_addr : storage) is {
-  const callee : contract (int) = Tezos.get_contract (callee_addr);
+  const callee = Tezos.get_contract (callee_addr);
   const op = Tezos.transaction (param, 0mutez, callee)
 } with (list [op], callee_addr)
 ```
@@ -130,12 +129,12 @@ type parameter = int
 type storage = address
 
 let get_contract (addr : address) =
-  match (Tezos.get_contract_opt addr : int contract option) with
+  match Tezos.get_contract_opt addr with
     Some contract -> contract
-  | None -> (failwith "Callee does not exist" : int contract)
+  | None -> failwith "Callee does not exist"
 
 let main (param, callee_addr : parameter * storage) =
-  let callee : int contract = get_contract (callee_addr) in
+  let callee = get_contract (callee_addr) in
   let op = Tezos.transaction param 0mutez callee in
   [op], callee_addr
 ```
@@ -151,15 +150,15 @@ type parameter = int;
 type storage = address;
 
 let get_contract = (addr: address) => {
-  let maybe_contract: option(contract(int)) = Tezos.get_contract_opt(addr);
+  let maybe_contract = Tezos.get_contract_opt(addr);
   switch(maybe_contract){
   | Some (contract) => contract
-  | None => (failwith("Callee does not exist") : contract(int))
+  | None => failwith("Callee does not exist")
   }
 };
 
 let main = ((param, callee_addr): (parameter, storage)) => {
-  let callee: contract(int) = get_contract(callee_addr);
+  let callee = get_contract(callee_addr);
   let op = Tezos.transaction(param, 0mutez, callee);
   ([op], callee_addr)
 };
@@ -175,7 +174,7 @@ To call a contract, we need to add a type annotation `: int contract option` for
 (* examples/contracts/ligo/SimpleCounter.ligo *)
 
 function main (const param : int; const storage : int) is
-  ((list [] : list (operation)), param + storage)
+  (list [], param + storage)
 ```
 
 </Syntax>
@@ -184,7 +183,7 @@ function main (const param : int; const storage : int) is
 ```cameligo
 (* examples/contracts/mligo/SimpleCounter.mligo *)
 
-let main (param, storage : int * int) = ([] : operation list), param + storage
+let main (param, storage : int * int) = [], param + storage
 ```
 
 </Syntax>
@@ -194,7 +193,7 @@ let main (param, storage : int * int) = ([] : operation list), param + storage
 /* examples/contracts/religo/SimpleCounter.religo */
 
 let main = ((param, storage): (int, int)) =>
-  ([] : list(operation), param + storage);
+  ([], param + storage);
 ```
 
 </Syntax>
@@ -208,7 +207,7 @@ type parameter is
     Set of int | Add of int | Subtract of int | Multiply of int | Reset
 
 function main (const param : parameter; const storage : int) is {
-  const nop : list (operation) = list []
+  const nop = list []
 } with
     case param of [
       Set (n) -> (nop, n)
@@ -229,7 +228,7 @@ type parameter =
   Set of int | Add of int | Subtract of int | Multiply of int | Reset
 
 let main (param, storage : parameter * int) =
-  let nop : operation list = [] in
+  let nop = [] in
   match param with
     Set n -> nop, n
   | Add n -> nop, storage + n
@@ -247,7 +246,7 @@ let main (param, storage : parameter * int) =
 type parameter = Set(int) | Add(int) | Subtract(int) | Multiply(int) | Reset;
 
 let main = ((param, storage): (parameter, int)) => {
-  let nop: list(operation) = [];
+  let nop = [];
   switch(param){
   | Set n => (nop, n)
   | Add n => (nop, storage + n)
@@ -286,16 +285,15 @@ type parameter is int
 type storage is address
 
 function get_add_entrypoint (const addr : address) is {
-  const entrypoint : option (contract (int))
-  = Tezos.get_entrypoint_opt ("%add", addr)
+  const entrypoint = Tezos.get_entrypoint_opt ("%add", addr)
 } with
     case entrypoint of [
       Some (contract) -> contract
-    | None -> (failwith ("The entrypoint does not exist") : contract (int))
+    | None -> failwith ("The entrypoint does not exist")
     ]
 
 function main (const param : parameter; const callee_addr : storage) is {
-  const add : contract (int) = get_add_entrypoint (callee_addr);
+  const add = get_add_entrypoint (callee_addr);
   const op = Tezos.transaction (param, 0mutez, add)
 } with (list [op], callee_addr)
 ```
@@ -311,9 +309,9 @@ type parameter = int
 type storage = address
 
 let get_add_entrypoint (addr : address) =
-  match (Tezos.get_entrypoint_opt "%add" addr : int contract option) with
+  match Tezos.get_entrypoint_opt "%add" addr with
     Some contract -> contract
-  | None -> (failwith "The entrypoint does not exist" : int contract)
+  | None -> failwith "The entrypoint does not exist"
 
 let main (param, callee_addr : parameter * storage) =
   let add : int contract = get_add_entrypoint (callee_addr) in
@@ -332,10 +330,10 @@ type parameter = int;
 type storage = address;
 
 let get_add_entrypoint = (addr: address) => {
-  let entrypoint: option(contract(int)) = Tezos.get_entrypoint_opt("%add", addr);
+  let entrypoint = Tezos.get_entrypoint_opt("%add", addr);
   switch(entrypoint){
   | Some (contract) => contract
-  | None => (failwith("The entrypoint does not exist") : contract(int))
+  | None => failwith("The entrypoint does not exist")
   }
 };
 
@@ -473,7 +471,7 @@ function main (const p : parameter; const s : storage) is {
       Call (op) ->
         if Set.mem ((Tezos.get_sender ()), s.senders_whitelist)
         then op (Unit)
-        else (failwith ("Sender is not whitelisted") : operation)
+        else failwith ("Sender is not whitelisted")
     | IsWhitelisted (addr_and_callback) -> {
           const addr = addr_and_callback.0;
           const callback_contract = addr_and_callback.1;
@@ -500,7 +498,7 @@ let main (p, s : parameter * storage) =
       Call op ->
         if Set.mem (Tezos.get_sender ()) s.senders_whitelist
         then op ()
-        else (failwith "Sender is not whitelisted" : operation)
+        else failwith "Sender is not whitelisted"
     | IsWhitelisted arg ->
         let addr, callback_contract = arg in
         let whitelisted = Set.mem addr s.senders_whitelist in
@@ -528,7 +526,7 @@ let main = ((p, s): (parameter, storage)) => {
           if (Set.mem((Tezos.get_sender ()), s.senders_whitelist)) {
             op()
           } else {
-            (failwith("Sender is not whitelisted") : operation)
+            failwith("Sender is not whitelisted")
           }
         }
     | IsWhitelisted addr_and_callback =>
@@ -564,13 +562,13 @@ function transfer
    const storage : storage) is (* ... *)
 
 function main (const p : parameter; const s : storage) is {
-  const nop : list (operation) = list []
+  const nop = list []
 } with
     case p of [
       Transfer (arg) ->
         if s.paused
         then
-          (failwith ("The contract is paused") : (list (operation) * storage))
+          failwith ("The contract is paused")
         else {
             const src = arg.0;
             const dst = arg.1;
@@ -578,7 +576,7 @@ function main (const p : parameter; const s : storage) is {
           } with (nop, transfer (src, dst, amount_, s))
     | SetPaused (paused) ->
         if ((Tezos.get_sender ()) =/= s.owner)
-        then (failwith ("Access denied") : (list (operation) * storage))
+        then failwith ("Access denied")
         else (nop, s with record [paused = paused])
 ```
 
@@ -596,17 +594,17 @@ let transfer (src, dst, amount_, storage : address * address * nat * storage) : 
   (* ... *)
 
 let main (p, s : parameter * storage) =
-  ([] : operation list),
+  [],
   (match p with
      Transfer arg ->
        if s.paused
-       then (failwith "The contract is paused" : storage)
+       then failwith "The contract is paused"
        else
          let src, dst, amount_ = arg in
          transfer (src, dst, amount_, s)
    | SetPaused paused ->
        if (Tezos.get_sender ()) <> s.owner
-       then (failwith "Access denied" : storage)
+       then failwith "Access denied"
        else {s with paused = paused})
 ```
 
@@ -623,18 +621,18 @@ type storage = {ledger: big_map(address, nat), owner: address, paused: bool };
 let transfer = ((src, dst, amount_, storage): (address, address, nat, storage)) => /* ... */
 
 let main = ((p, s): (parameter, storage)) => {
-  let nop: list(operation) = [];
+  let nop = [];
   switch(p){
   | Transfer transfer_params =>
       if (s.paused) {
-        (failwith("The contract is paused") : (list(operation), storage))
+        failwith("The contract is paused")
       } else {
         let (src, dst, amount_) = transfer_params;
         (nop, transfer(src, dst, amount_, s))
       }
   | SetPaused paused =>
       if ((Tezos.get_sender()) != s.owner) {
-        (failwith("Access denied") : (list(operation), storage))
+        failwith("Access denied")
       } else {
         (nop, {...s, paused: paused})
       }
@@ -660,22 +658,21 @@ For example, we can create a new counter contract with
 
 <Syntax syntax="pascaligo">
 
-```pascaligo skip
-Tezos.create_contract(
-    function (const p : int; const s : int) is ((list [] : list (operation)), p + s),
-    (None : option (key_hash)),
+```pascaligo group=solo_create_contract
+const op = Tezos.create_contract(
+    function (const p : int; const s : int) is (list [], p + s),
+    None,
     0mutez,
-    1
-)
+    1)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo skip
-Tezos.create_contract
-  (fun (p, s : int * int) -> ([] : operation list), p + s)
-  (None : key_hash option)
+```cameligo group=solo_create_contract
+let op = Tezos.create_contract
+  (fun (p, s : int * int) -> [], p + s)
+  None
   0mutez
   1
 ```
@@ -683,10 +680,10 @@ Tezos.create_contract
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo skip
-Tezos.create_contract(
-    ((p, s): (int, int)) => (([] : list(operation)), p + s),
-    (None : option(key_hash)),
+```reasonligo group=solo_create_contract
+let op = Tezos.create_contract(
+    ((p, s): (int, int)) => ([], p + s),
+    None,
     0mutez,
     1
 );
@@ -711,19 +708,15 @@ function create_and_call (const st : list (address)) is {
   const create_contract_result =
       Tezos.create_contract(
           (function (const p : int; const s : int) is
-            ((list [] : list (operation)), p + s)),
-          (None : option (key_hash)),
+            (list [], p + s)),
+          None,
           0mutez,
           1
       );
   const create_op = create_contract_result.0;
   const addr = create_contract_result.1;
   const call_op =
-      Tezos.transaction(
-          (addr, 41),
-          0mutez,
-          (Tezos.self ("%callback") : contract (address * int))
-      )
+      Tezos.transaction((addr, 41), 0mutez,Tezos.self ("%callback"))
 } with (list [create_op; call_op], (addr # st))
 ```
 
@@ -740,16 +733,13 @@ function create_and_call (const st : list (address)) is {
 let create_and_call (storage : address list) =
   let create_op, addr =
     Tezos.create_contract
-      (fun (p, s : int * int) -> ([] : operation list), p + s)
-      (None : key_hash option)
+      (fun (p, s : int * int) -> [], p + s)
+      None
       0tez
       1 in
   let call_op =
-    Tezos.transaction
-      (addr, 41)
-      0tez
-      (Tezos.self "%callback" : (address * int) contract)
-  in [create_op; call_op], addr :: storage
+    Tezos.transaction (addr, 41) 0tez (Tezos.self "%callback") in
+  [create_op; call_op], addr :: storage
 ```
 
 </Syntax>
@@ -762,11 +752,11 @@ let create_and_call (storage : address list) =
 // the contract, and an operation to self, that will continue
 // the execution after the contract is originated.
 
-let create_and_call =  (st: list(address)) => {
+let create_and_call = (st: list(address)) => {
     let (create_op, addr) =
         Tezos.create_contract(
-            ((p, s): (int, int)) => ([] : list(operation), (p + s)),
-            (None : option(key_hash)),
+            ((p, s): (int, int)) => ([], (p + s)),
+            None,
             0mutez,
             1
         );
@@ -774,7 +764,7 @@ let create_and_call =  (st: list(address)) => {
         Tezos.transaction(
             (addr, 41),
             0mutez,
-            Tezos.self("%callback") : contract((address, int))
+            Tezos.self("%callback")
         );
     ([create_op, call_op], [addr, ...st]);
 };

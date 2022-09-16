@@ -417,14 +417,14 @@ const x      : z_or  = (M_right (y_1) : z_or);
 <Syntax syntax="cameligo">
 
 ```cameligo
-let z : z_or = (M_left unit : z_or)
+let z : z_or = M_left unit
 
-let y_1 : y_or = (M_left unit : y_or)
-let y   : z_or = (M_right y_1 : z_or)
+let y_1 : y_or = M_left unit
+let y   : z_or = M_right y_1
 
-let x_pair : x_and = "foo", (2, 3n)
-let x_1    : y_or  = (M_right x_pair : y_or)
-let x      : z_or  = (M_right y_1 : z_or)
+let x_pair = "foo", (2, 3n)
+let x_1 : y_or = M_right x_pair
+let x : z_or = M_right y_1
 ```
 
 </Syntax>
@@ -445,14 +445,14 @@ let x      : z_or = (M_right (y_1) : z_or)
 <Syntax syntax="jsligo">
 
 ```jsligo
-let z : z_or = M_left(unit) as z_or;
+let z : z_or = M_left(unit);
 
-let y_1 : y_or = M_left(unit) as y_or;
-let y   : z_or = M_right(y_1) as z_or;
+let y_1 : y_or = M_left(unit);
+let y : z_or = M_right(y_1);
 
-let x_pair : x_and = ["foo", [2, 3 as nat]];
-let x_1    : y_or = M_right (x_pair) as y_or;
-let x      : z_or = M_right (y_1) as z_or;
+let x_pair = ["foo", [2, 3 as nat]];
+let x_1 : y_or = M_right (x_pair);
+let x : z_or = M_right (y_1);
 ```
 
 </Syntax>
@@ -569,16 +569,16 @@ type test = {
 
 let make_concrete_sum (r: z_to_v) : z_or =
   match r with
-  | Z -> (M_left (unit) : z_or)
-  | Y -> (M_right (M_left (unit): y_or) : z_or )
-  | X -> (M_right (M_right (M_left (unit): x_or): y_or) : z_or )
-  | W -> (M_right (M_right (M_right (M_left (unit): w_or_v): x_or): y_or) : z_or )
-  | V -> (M_right (M_right (M_right (M_right (unit): w_or_v): x_or): y_or) : z_or )
+  | Z -> M_left (unit)
+  | Y -> M_right (M_left (unit))
+  | X -> M_right (M_right (M_left (unit)))
+  | W -> M_right (M_right (M_right (M_left (unit))))
+  | V -> M_right (M_right (M_right (M_right (unit))))
 
-let make_concrete_record (r: test) : (string * int * string * bool * int) =
+let make_concrete_record (r: test) =
   (r.z, r.y, r.x, r.w, r.v)
 
-let make_abstract_sum (z_or: z_or) : z_to_v =
+let make_abstract_sum (z_or: z_or) =
   match z_or with
   | M_left n -> Z
   | M_right y_or ->
@@ -592,8 +592,7 @@ let make_abstract_sum (z_or: z_or) : z_to_v =
             | M_left n -> W
             | M_right n -> V)))
 
-
-let make_abstract_record (z: string) (y: int) (x: string) (w: bool) (v: int) : test =
+let make_abstract_record z y x w v =
   { z = z; y = y; x = x; w = w; v = v }
 
 ```
@@ -686,15 +685,15 @@ type test = {
 
 let make_concrete_sum = (r: z_to_v): z_or =>
   match(r, {
-    Z: () => M_left(unit) as z_or,
-    Y: () => M_right(M_left(unit) as y_or) as z_or,
-    X: () => M_right (M_right (M_left(unit) as x_or) as y_or) as z_or ,
-    W: () => M_right (M_right (M_right(M_left(unit) as w_or_v) as x_or) as y_or) as z_or ,
-    V: () => M_right (M_right (M_right(M_right(unit) as w_or_v) as x_or) as y_or) as z_or
+    Z: () => M_left(unit),
+    Y: () => M_right(M_left(unit)),
+    X: () => M_right (M_right (M_left(unit))),
+    W: () => M_right (M_right (M_right(M_left(unit)))),
+    V: () => M_right (M_right (M_right(M_right(unit))))
   });
 
 
-let make_concrete_record = (r: test): [string, int, string, bool, int] =>
+let make_concrete_record = (r: test) =>
   [r.z, r.y, r.x, r.w, r.v];
 
 let make_abstract_sum = (z_or: z_or): z_to_v =>
@@ -716,11 +715,9 @@ let make_abstract_sum = (z_or: z_or): z_to_v =>
         }
       })
     }
-  })
+  });
 
-let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int): test =>
-  ({ z: z, y, x, w, v })
-
+let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) =>  ({z,y,x,w,v});
 ```
 
 </Syntax>
@@ -740,7 +737,7 @@ type parameter is
  | Right of int
 
 function main (const p: parameter; const x: storage): (list(operation) * storage) is
-  ((nil: list(operation)), case p of [
+  (nil, case p of [
   | Left  (i) -> x - i
   | Right (i) -> x + i
   ])
@@ -757,10 +754,11 @@ type parameter =
  | Right of int
 
 let main ((p, x): (parameter * storage)): (operation list * storage) =
-  (([]: operation list), (match p with
+  [], 
+  (match p with
   | Left i -> x - i
   | Right i -> x + i
-  ))
+  )
 
 ```
 
@@ -775,7 +773,7 @@ type parameter =
  | Right(int)
 
 let main = ((p, x): (parameter, storage)): (list(operation), storage) => {
-  ([]: list(operation), (switch(p) {
+  ([], (switch(p) {
   | Left(i) => x - i
   | Right(i) => x + i
   }))
@@ -794,7 +792,7 @@ type parameter =
  | ["Right", int];
 
 let main = ([p, x]: [parameter, storage]): [list<operation>, storage] =>
-  [list ([]) as list<operation>, match(p, {
+  [list ([]), match(p, {
     Left: (i: int) => x - i,
     Right: (i: int) => x + i
   })];
@@ -816,14 +814,12 @@ type parameter is int
 type x is Left of int
 
 function main (const p: parameter; const s: storage): (list(operation) * storage) is {
-  const contract: contract(x) =
-    case (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx":address)): option(contract(x))) of [
+  const contract =
+    case Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx":address)) of [
     | Some (c) -> c
-    | None -> (failwith("not a correct contract") : contract(x))
+    | None -> failwith("not a correct contract")
     ];
-
-  const result: (list(operation) * storage) = ((list [Tezos.transaction(Left(2), 2mutez, contract)]: list(operation)), s)
-} with result
+} with (list [Tezos.transaction(Left(2), 2mutez, contract)], s)
 ```
 
 </Syntax>
@@ -838,16 +834,13 @@ type parameter = int
 
 type x = Left of int
 
-let main (p, s: parameter * storage): operation list * storage = (
-  let contract: x contract =
-    match ((Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): x contract option) with
+let main (p, s: parameter * storage): operation list * storage = 
+  let contract =
+    match Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) with
     | Some c -> c
-    | None -> (failwith "contract does not match": x contract)
+    | None -> failwith "contract does not match"
   in
-  (([
-    Tezos.transaction (Left 2) 2mutez contract;
-  ]: operation list), s)
-)
+  [Tezos.transaction (Left 2) 2mutez contract], s
 ```
 
 </Syntax>
@@ -862,14 +855,12 @@ type parameter = int;
 type x = Left(int);
 
 let main = ((p, s): (parameter, storage)): (list(operation), storage) => {
-  let contract: contract(x) =
-    switch (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): option(contract(x))) {
+  let contract =
+    switch (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address))) {
       | Some c => c
-      | None => (failwith ("contract does not match"): contract(x))
+      | None => failwith ("contract does not match")
     };
-  ([
-    Tezos.transaction(Left(2), 2mutez, contract)
-  ]: list(operation), s);
+  ([Tezos.transaction(Left(2), 2mutez, contract)], s);
 };
 ```
 
@@ -885,13 +876,13 @@ type parameter = int;
 type x = | ["Left", int];
 
 let main = ([p, s]: [parameter, storage]): [list<operation>, storage] => {
-  let contract: contract<x> =
-    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address) as option<contract<x>>, {
-      Some: ( c: contract<x>) => c,
-      None: () => (failwith ("contract does not match") as contract<x>)
+  let contract =
+    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), {
+      Some: c => c,
+      None: () => failwith ("contract does not match")
     });
   return [
-    list([Tezos.transaction(Left(2), 2 as mutez, contract)]) as list<operation>,
+    list([Tezos.transaction(Left(2), 2 as mutez, contract)]),
     s];
 };
 ```

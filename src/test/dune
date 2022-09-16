@@ -29,6 +29,13 @@
   (source_tree ../../gitlab-pages/docs)))
 
 (rule
+ (alias md_update)
+ (action
+  (run echo ".md files pushed in _build"))
+ (deps
+  (source_tree ../../gitlab-pages/docs)))
+
+(rule
  (alias repl-test)
  (action
   (run ./repl_test.exe))

@@ -94,20 +94,18 @@ type parameter is
 | Decrement of int
 | Reset
 
-type return is list (operation) * storage
-
 // Two entrypoints
 
-function add (const store : storage; const delta : int) : storage is 
+function add (const store : storage; const delta : int) is 
   store + delta
 
-function sub (const store : storage; const delta : int) : storage is 
+function sub (const store : storage; const delta : int) is 
   store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
-function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),    // No operations
+function main (const action : parameter; const store : storage) : list(operation) * storage is
+ (nil,    // No operations
   case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
@@ -126,17 +124,15 @@ type parameter =
 | Decrement of int
 | Reset
 
-type return = operation list * storage
-
 // Two entrypoints
 
-let add (store, delta : storage * int) : storage = store + delta
-let sub (store, delta : storage * int) : storage = store - delta
+let add (store, delta : storage * int) = store + delta
+let sub (store, delta : storage * int) = store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
-let main (action, store : parameter * storage) : return =
- ([] : operation list),    // No operations
+let main (action, store : parameter * storage) : operation list * storage =
+ [],    // No operations
  (match action with
    Increment (n) -> add (store, n)
  | Decrement (n) -> sub (store, n)
@@ -154,17 +150,15 @@ type parameter =
 | Decrement (int)
 | Reset;
 
-type return = (list (operation), storage);
-
 // Two entrypoints
 
-let add = ((store, delta) : (storage, int)) : storage => store + delta;
-let sub = ((store, delta) : (storage, int)) : storage => store - delta;
+let add = ((store, delta) : (storage, int)) => store + delta;
+let sub = ((store, delta) : (storage, int)) => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ((action, store) : (parameter, storage)) : return => {
- (([] : list (operation)),    // No operations
+let main = ((action, store) : (parameter, storage)) : (list (operation), storage) => {
+ ([],    // No operations
  (switch (action) {
   | Increment (n) => add ((store, n))
   | Decrement (n) => sub ((store, n))
@@ -184,20 +178,18 @@ type parameter =
 | ["Decrement", int]
 | ["Reset"];
 
-type return_ = [list <operation>, storage];
-
 /* Two entrypoints */
-const add = ([store, delta] : [storage, int]) : storage => store + delta;
-const sub = ([store, delta] : [storage, int]) : storage => store - delta;
+const add = ([store, delta] : [storage, int]) => store + delta;
+const sub = ([store, delta] : [storage, int]) => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-const main = ([action, store] : [parameter, storage]) : return_ => {
+const main = ([action, store] : [parameter, storage]) : [list <operation>, storage] => {
  return [
-   (list([]) as list <operation>),    // No operations
+   list([]),    // No operations
    (match (action, {
-    Increment: (n: int) => add ([store, n]),
-    Decrement: (n: int) => sub ([store, n]),
+    Increment: n => add ([store, n]),
+    Decrement: n => sub ([store, n]),
     Reset:     ()  => 0}))
   ]
 };
@@ -291,14 +283,13 @@ let test_increment = {
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=a
-const _test_increment = () : unit => {
+const test_increment = (() : unit => {
   let initial_storage = 10 as int;
   let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
   let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
   return assert(Test.get_storage(taddr) == initial_storage + 1);
-}
-const test_increment = _test_increment();
+}) ()
 ```
 
 </Syntax>

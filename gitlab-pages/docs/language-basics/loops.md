@@ -23,7 +23,7 @@ Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm:
 
 ```pascaligo group=a
-function gcd (var x : nat; var y : nat) : nat is {
+function gcd (var x : nat; var y : nat) is {
   if x < y then {
     const z : nat = x;
     x := y; y := z
@@ -176,7 +176,7 @@ to <upper bound> <block>`, as found in imperative languages.
 Consider how to sum the natural numbers up to `n`:
 
 ```pascaligo group=c
-function sum (var n : nat) : int is {
+function sum (var n : nat) is {
   var acc : int := 0;
   for i := 1 to int (n) {
     acc := acc + i
@@ -205,7 +205,7 @@ of the form: `for <key> -> <value> in map <collection> <block>`, where
 Here is an example where the integers in a list are summed up.
 
 ```pascaligo group=d
-function sum_list (var l : list (int)) : int is {
+function sum_list (var l : list (int)) is {
   var total : int := 0;
   for i in list l { total := total + i }
 } with total
@@ -223,7 +223,7 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo --entry-point sum_li
 Here is an example where the integers in a set are summed up.
 
 ```pascaligo group=d
-function sum_set (var s : set (int)) : int is {
+function sum_set (var s : set (int)) is {
   var total : int := 0;
   for i in set s { total := total + i }
 } with total
@@ -247,9 +247,9 @@ Here is an example where the keys are concatenated and the values are
 summed up.
 
 ```pascaligo group=d
-function sum_map (var m : map (string, int)) : string * int is {
-  var string_total : string := "";
-  var int_total : int := 0;
+function sum_map (var m : map (string, int)) is {
+  var string_total := "";
+  var int_total := 0;
   for key -> value in map m {
     string_total := string_total ^ key;
     int_total := int_total + value
@@ -278,8 +278,8 @@ of the form `for (const <element var> of <collection var>) <block>`.
 Here is an example where the integers in a list are summed up.
 
 ```jsligo group=d
-let sum_list = (l: list<int>): int => {
-  let total : int = 0;
+let sum_list = (l: list<int>) => {
+  let total = 0;
   for (const i of l) {
     total = total + i
   }
@@ -299,7 +299,7 @@ gitlab-pages/docs/language-basics/src/loops/collection.jsligo --entry-point sum_
 Here is an example where the integers in a set are summed up.
 
 ```jsligo group=d
-let sum_set = (s: set<int>): int => {
+let sum_set = (s: set<int>) => {
   let total : int = 0;
   for (const i of s) {
     total = total + i
@@ -323,9 +323,9 @@ all the integers and concatenate all the strings.
 
 
 ```jsligo
-let sum_map = (m: map<string, int>): [string, int] => {
-  let string_total: string = "";
-  let int_total: int = 0;
+let sum_map = (m: map<string, int>) => {
+  let string_total = "";
+  let int_total = 0;
   for (const item of m) {
     let [key, value] = item;
     string_total = string_total + key;
