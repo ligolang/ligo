@@ -72,28 +72,28 @@ input "ff7a7aff" to the following function:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function slice_op (const s : bytes) : bytes is Bytes.sub (1n , 2n , s)
+function slice_op (const s : bytes) is Bytes.sub (1n , 2n , s)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let slice_op (s : bytes) : bytes = Bytes.sub 1n 2n s
+let slice_op (s : bytes) = Bytes.sub 1n 2n s
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```
-let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
+let slice_op = (s: bytes) => Bytes.sub(1n, 2n, s);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```
-let slice_op = (s: bytes): bytes => Bytes.sub(1 as nat, 2 as nat, s);
+let slice_op = (s: bytes) => Bytes.sub(1 as nat, 2 as nat, s);
 ```
 
 </Syntax>
@@ -122,27 +122,27 @@ Converts Michelson data structures to a binary format for serialisation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function id_string (const p : string) : option (string) is {
+function id_string (const p : string) is {
   const packed : bytes = Bytes.pack (p);
-} with (Bytes.unpack (packed) : option (string))
+} with Bytes.unpack (packed)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let id_string (p : string) : string option =
+let id_string (p : string) =
   let packed : bytes = Bytes.pack p in
-  (Bytes.unpack packed : string option)
+  Bytes.unpack packed
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let id_string = (p: string) : option(string) => {
+let id_string = (p: string) => {
   let packed : bytes = Bytes.pack(p);
-  ((Bytes.unpack(packed)): option(string));
+  Bytes.unpack(packed);
 };
 ```
 
@@ -150,9 +150,9 @@ let id_string = (p: string) : option(string) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=pack
-let id_string = (p: string) : option<string> => {
+let id_string = (p: string) => {
   let packed : bytes = Bytes.pack(p);
-  return (Bytes.unpack(packed) as option<string>);
+  return Bytes.unpack(packed);
 };
 ```
 
@@ -183,27 +183,27 @@ As the conversion might fail an option type is returned.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function id_string (const p : string) : option (string) is {
+function id_string (const p : string) is {
   const packed : bytes = Bytes.pack (p);
-} with (Bytes.unpack (packed) : option (string))
+} with Bytes.unpack (packed)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let id_string (p : string) : string option =
+let id_string (p : string) =
   let packed : bytes = Bytes.pack p in
-  (Bytes.unpack packed : string option)
+  Bytes.unpack packed
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let id_string = (p: string) : option(string) => {
+let id_string = (p: string) => {
   let packed : bytes = Bytes.pack(p);
-  ((Bytes.unpack(packed)): option(string));
+  Bytes.unpack(packed);
 };
 ```
 
@@ -211,9 +211,9 @@ let id_string = (p: string) : option(string) => {
 <Syntax syntax="jsligo">
 
 ```jsligo
-let id_string = (p: string) : option<string> => {
+let id_string = (p: string) => {
   let packed : bytes = Bytes.pack(p);
-  return (Bytes.unpack(packed) as option<string>);
+  return Bytes.unpack(packed);
 };
 ```
 

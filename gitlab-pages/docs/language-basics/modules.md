@@ -116,7 +116,7 @@ increments the storage value each time it is called.
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add (store, EURO.one))
+ (nil, EURO.add (store, EURO.one))
 ```
 
 </Syntax>
@@ -126,7 +126,7 @@ function main (const action : unit; const store : storage) : (list (operation)) 
 type storage = EURO.t
 
 let main (action, store : unit * storage) : operation list * storage =
- (([] : operation list), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -135,7 +135,7 @@ let main (action, store : unit * storage) : operation list * storage =
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- (([] : list (operation)), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 
 </Syntax>
@@ -145,7 +145,7 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 type storage = EURO.t;
 
 let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
-  [list([]) as list<operation>, EURO.add(store, EURO.one)];
+  [list([]), EURO.add(store, EURO.one)];
 ```
 
 </Syntax>
@@ -293,7 +293,7 @@ than once:
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add (store, EURO.CONST.one))
+ (nil, EURO.add (store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -303,7 +303,7 @@ function main (const action : unit; const store : storage) : (list (operation)) 
 type storage = EURO.t
 
 let main (action, store : unit * storage) : operation list * storage =
- (([] : operation list), EURO.add(store, EURO.CONST.one))
+ ([], EURO.add(store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -313,7 +313,7 @@ let main (action, store : unit * storage) : operation list * storage =
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- (([] : list (operation)), EURO.add(store, EURO.CONST.one))
+ ([], EURO.add(store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -323,7 +323,7 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 type storage = EURO.t;
 
 let main = ([action, store]: [unit, storage]) : [list<operation>, storage] =>
- [list([]) as list<operation>, EURO.add(store, EURO.CONST.one)]
+ [list([]), EURO.add(store, EURO.CONST.one)]
 ```
 
 </Syntax>
@@ -443,7 +443,7 @@ that imports all definitions from `imported.religo` as the module
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- (([] : list (operation)), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 
 </Syntax>

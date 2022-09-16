@@ -232,7 +232,7 @@ Originate a contract with a path to the contract file, an entrypoint, and a list
 
 ```pascaligo skip
 const originated =
-  Test.originate_from_file (testme_test, "main", nil : list (string), init_storage, 0tez)
+  Test.originate_from_file (testme_test, "main", nil, init_storage, 0tez)
 const addr = originated.0
 const contract = originated.1
 const size = originated.2
@@ -243,7 +243,7 @@ const size = originated.2
 
 ```cameligo skip
 let addr, contract, size =
-  Test.originate_from_file testme_test "main" ([] : string list) init_storage 0tez
+  Test.originate_from_file testme_test "main" [] init_storage 0tez
 ...
 ```
 
@@ -251,14 +251,14 @@ let addr, contract, size =
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-let (addr, contract, size) = Test.originate_from_file(testme_test, "main", ([] : list(string)), init_storage, 0tez);
+let (addr, contract, size) = Test.originate_from_file(testme_test, "main", [], init_storage, 0tez);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, contract, size] = Test.originate_from_file(testme_test, "main", (list([]) : list<string>), init_storage, 0 as tez);
+let [addr, contract, size] = Test.originate_from_file(testme_test, "main", list([]), init_storage, 0 as tez);
 ```
 
 </Syntax>
@@ -958,10 +958,10 @@ const test_example = {
 
 ```cameligo test-ligo group=test_run
 type some_r = [@layout:comb] { one : int ; two : nat ; three : string ; four : bytes ; five : unit }
-let f = fun (x:some_r) -> x.one
+let f = fun (x : some_r) -> x.one
 
 let test_example =
-  Test.run (fun (x : (int * nat * string * bytes * unit)) -> f ({ one = x.0 ; two = x.1 ; three = x.2 ; four = x.3 ; five = x.4 } : some_r))
+  Test.run (fun (x : (int * nat * string * bytes * unit)) -> f ({ one = x.0 ; two = x.1 ; three = x.2 ; four = x.3 ; five = x.4 }))
            (1 + 3 + 2, 1n + 2n, "a" ^ "b", 0xFF00, ())
 ```
 
@@ -970,10 +970,10 @@ let test_example =
 
 ```reasonligo test-ligo group=test_run
 type some_r = [@layout:comb] { one : int , two : nat , three : string , four : bytes , five : unit };
-let f = (x:some_r) => x.one;
+let f = (x: some_r) => x.one;
 
 let test_example =
-  Test.run (((x : (int, nat, string, bytes, unit)) => f ({ one : x[0] , two : x[1] , three : x[2] , four : x[3] , five : x[4] } : some_r)),
+  Test.run (((x : (int, nat, string, bytes, unit)) => f ({ one : x[0] , two : x[1] , three : x[2] , four : x[3] , five : x[4] })),
            (1 + 3 + 2, 1n + 2n, ("a" ++ "b"), 0xFF00, ()));
 ```
 
@@ -982,7 +982,7 @@ let test_example =
 
 ```jsligo test-ligo group=test_run
 type some_r = [@layout:comb] { one : int , two : nat , three : string , four : bytes , five : unit };
-let f = (x:some_r) : int => x.one;
+let f = (x: some_r) : int => x.one;
 
 let test_example =
   Test.run (((x : [int, nat, string, bytes, unit]) => f ({ one : x[0] , two : x[1] , three : x[2] , four : x[3] , five : x[4] })),

@@ -35,7 +35,7 @@ Some future version of LIGO's type system could theoretically provide a safe typ
 In the meantime, if you are willing to risk seeing a Michelson typechecking error, it is possible to work around this by using "unsafe" inline Michelson:
 
 ```cameligo
-[@inline] let equal (type a) (val_a : a) (val_b : a) : bool =
+[@inline] let equal (type a) (val_a : a) (val_b : a) =
   [%Michelson ({|{ UNPAIR; COMPARE; EQ }|} : a * a -> bool)] (val_a, val_b)
 ```
 

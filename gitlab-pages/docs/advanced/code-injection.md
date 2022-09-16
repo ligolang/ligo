@@ -33,7 +33,7 @@ code.
 <Syntax syntax="cameligo">
 
 ```cameligo
-let michelson_add (n : nat * nat) : nat =
+let michelson_add n =
   [%Michelson ({| { UNPAIR ; ADD } |} : nat * nat -> nat) ] n
 ```
 
@@ -49,7 +49,7 @@ let michelson_add = (n : (nat, nat)) : nat =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-const michelson_add = (n: [nat, nat]): nat =>
+const michelson_add = n =>
   (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
 ```
 
@@ -123,7 +123,7 @@ ligo compile expression pascaligo "function (const n : nat) : nat is ([%Michelso
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile expression cameligo "fun (n : nat) -> [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)] n"
+ligo compile expression cameligo "fun n -> [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)] n"
 // Outputs:
 // { PUSH nat 1 ; ADD }
 ```
@@ -180,7 +180,7 @@ type parameter =
 type storage = int
 
 let main (action, store : parameter * storage) : operation list * storage =
-  ([] : operation list),
+  [],
   (match action with
      Increment n -> store + n
    | Extend k    -> [%Michelson ({| { NEVER } |} : never -> int)] k)
@@ -216,13 +216,13 @@ type parameter =
 
 type storage = int;
 
-const main = ([action,store]: [parameter, storage]) => {
+const main = ([action,store]: [parameter, storage]) : [list<operation>, storage] => {
   let storage =
     match(action, {
-     Increment: (n: int) => store + n,
-     Extend: (k: never) => (Michelson`{ NEVER }` as ((n: never) => int))(k);
+     Increment: n => store + n,
+     Extend: k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
     });
-  return [list([]) as list<operation>, storage];
+  return [list([]), storage];
 };
 ```
 

@@ -90,7 +90,7 @@ installation as well.
 ```pascaligo group=a
 (* taco-shop.ligo *)
 function main (const parameter : int; const contractStorage : int) : list (operation) * int is
-  ((nil : list (operation)), contractStorage + parameter)
+  (nil, contractStorage + parameter)
 ```
 
 </Syntax>
@@ -98,7 +98,7 @@ function main (const parameter : int; const contractStorage : int) : list (opera
 
 ```reasonligo group=a
 let main = ((parameter, contractStorage) : (int, int)) : (list (operation), int) => {
-  (([] : list (operation)), contractStorage + parameter)
+  ([], contractStorage + parameter)
 };
 ```
 
@@ -108,7 +108,7 @@ let main = ((parameter, contractStorage) : (int, int)) : (list (operation), int)
 ```jsligo group=a
 let main = ([parameter, contractStorage] : [int, int]) : [list <operation>, int] => {
   return [
-    (list([]) as list <operation>), contractStorage + parameter
+    list([]), contractStorage + parameter
   ]
 };
 ```
@@ -118,7 +118,7 @@ let main = ([parameter, contractStorage] : [int, int]) : [list <operation>, int]
 
 ```cameligo group=a
 let main (parameter, contractStorage : int * int) : operation list * int =
-  ([] : operation list), contractStorage + parameter
+  [], contractStorage + parameter
 ```
 
 </Syntax>
@@ -266,7 +266,7 @@ Next step is to update the `main` function to include
 type return is list (operation) * taco_shop_storage
 
 function main (const parameter : unit; const taco_shop_storage :  taco_shop_storage) : return is
-  ((nil : list (operation)), taco_shop_storage)
+  (nil, taco_shop_storage)
 ```
 
 </Syntax>
@@ -276,7 +276,7 @@ function main (const parameter : unit; const taco_shop_storage :  taco_shop_stor
 type return = operation list * taco_shop_storage
 
 let main (parameter, taco_shop_storage : unit * taco_shop_storage) : return =
-  (([] : operation list), taco_shop_storage)
+  [], taco_shop_storage
 ```
 
 </Syntax>
@@ -286,7 +286,7 @@ let main (parameter, taco_shop_storage : unit * taco_shop_storage) : return =
 type return = (list(operation), taco_shop_storage)
 
 let main = ((parameter, taco_shop_storage) : (unit, taco_shop_storage)) : return => {
-  (([] : list (operation)), taco_shop_storage)
+  ([], taco_shop_storage)
 };
 ```
 
@@ -297,7 +297,7 @@ let main = ((parameter, taco_shop_storage) : (unit, taco_shop_storage)) : return
 type return_ = [list <operation>, taco_shop_storage];
 
 let main = ([parameter, taco_shop_storage] : [unit, taco_shop_storage]) : return_ => {
-  return [(list([]) as list <operation>), taco_shop_storage]
+  return [list([]), taco_shop_storage]
 };
 ```
 
@@ -315,7 +315,7 @@ our storage's value will be defined as follows:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=b
-const init_storage : taco_shop_storage = map [
+const init_storage = map [
   1n -> record [ current_stock = 50n ; max_price = 50tez ] ;
   2n -> record [ current_stock = 20n ; max_price = 75tez ] ;
 ]
@@ -325,7 +325,7 @@ const init_storage : taco_shop_storage = map [
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
-let init_storage : taco_shop_storage = Map.literal [
+let init_storage = Map.literal [
   (1n, { current_stock = 50n ; max_price = 50tez }) ;
   (2n, { current_stock = 20n ; max_price = 75tez }) ;
 ]
@@ -335,7 +335,7 @@ let init_storage : taco_shop_storage = Map.literal [
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=b
-let init_storage : taco_shop_storage = Map.literal ([
+let init_storage = Map.literal ([
   (1n, { current_stock : 50n , max_price : 50tez }),
   (2n, { current_stock : 20n , max_price : 75tez })
 ])
@@ -345,7 +345,7 @@ let init_storage : taco_shop_storage = Map.literal ([
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let init_storage : taco_shop_storage = Map.literal (list([
+let init_storage = Map.literal (list([
   [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
   [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }]
 ]));
@@ -425,7 +425,7 @@ Let is start by customising our contract a bit, we will:
 
 ```pascaligo group=b
 function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
-  ((nil : list (operation)), taco_shop_storage)
+  (nil, taco_shop_storage)
 ```
 
 </Syntax>
@@ -433,7 +433,7 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
 
 ```cameligo group=b
 let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return =
-  (([] : operation list), taco_shop_storage)
+  [], taco_shop_storage
 ```
 
 </Syntax>
@@ -441,7 +441,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 
 ```reasonligo group=b
 let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
-  (([] : list (operation)), taco_shop_storage)
+  ([], taco_shop_storage)
 };
 ```
 
@@ -450,7 +450,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
 
 ```jsligo group=b
 let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
-  return [(list([]) as list <operation>), taco_shop_storage]
+  return [list([]), taco_shop_storage]
 };
 ```
 
@@ -485,7 +485,7 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
 
     // Update the storage with the refreshed taco_kind
     taco_shop_storage[taco_kind_index] := taco_kind
-  } with ((nil : list (operation)), taco_shop_storage)
+  } with (nil, taco_shop_storage)
 ```
 
 </Syntax>
@@ -494,10 +494,10 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
 ```cameligo group=b
 let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return =
   (* Retrieve the taco_kind from the contract's storage or fail *)
-  let taco_kind : taco_supply =
+  let taco_kind =
     match Map.find_opt (taco_kind_index) taco_shop_storage with
     | Some k -> k
-    | None -> (failwith "Unknown kind of taco" : taco_supply)
+    | None -> failwith "Unknown kind of taco"
   in
   (* Update the storage decreasing the stock by 1n *)
   let taco_shop_storage = Map.update
@@ -505,7 +505,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
     (Some { taco_kind with current_stock = abs (taco_kind.current_stock - 1n) })
     taco_shop_storage
   in
-  (([]: operation list), taco_shop_storage)
+  [], taco_shop_storage
 ```
 
 </Syntax>
@@ -514,7 +514,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 ```reasonligo group=b
 let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
   /* Retrieve the taco_kind from the contract's storage or fail */
-  let taco_kind : taco_supply =
+  let taco_kind =
     switch (Map.find_opt (taco_kind_index, taco_shop_storage)) {
     | Some k => k
     | None => (failwith ("Unknown kind of taco"): taco_supply) } ;
@@ -523,7 +523,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
     taco_kind_index,
     (Some ({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) })),
     taco_shop_storage );
-  (([]: list(operation)), taco_shop_storage)
+  ([], taco_shop_storage)
 };
 ```
 
@@ -531,9 +531,9 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let buy_taco2 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
+let buy_taco2 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) => {
   /* Retrieve the taco_kind from the contracts storage or fail */
-  let taco_kind : taco_supply =
+  let taco_kind =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {
       Some: (k:taco_supply) => k,
       None: (_:unit) => (failwith ("Unknown kind of taco") as taco_supply)
@@ -543,7 +543,7 @@ let buy_taco2 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]
     taco_kind_index,
     (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
     taco_shop_storage );
-  return [(list([]) as list <operation>), taco_shop_storage_]
+  return [list([]), taco_shop_storage_]
 };
 ```
 
@@ -568,15 +568,15 @@ To make sure we get paid, we will:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=b
-function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is {
+function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) is {
   // Retrieve the taco_kind from the contract's storage or fail
-  var taco_kind : taco_supply :=
+  var taco_kind :=
     case taco_shop_storage[taco_kind_index] of [
       Some (kind) -> kind
-    | None -> (failwith ("Unknown kind of taco.") : taco_supply)
+    | None -> failwith ("Unknown kind of taco.")
     ];
 
-  const current_purchase_price : tez =
+  const current_purchase_price =
     taco_kind.max_price / taco_kind.current_stock;
 
   if (Tezos.get_amount ()) =/= current_purchase_price then
@@ -588,19 +588,19 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
 
   // Update the storage with the refreshed taco_kind
   taco_shop_storage[taco_kind_index] := taco_kind
-} with ((nil : list (operation)), taco_shop_storage)
+} with (nil, taco_shop_storage)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
-let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return =
+let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) =
   (* Retrieve the taco_kind from the contract's storage or fail *)
-  let taco_kind : taco_supply =
+  let taco_kind =
     match Map.find_opt (taco_kind_index) taco_shop_storage with
     | Some k -> k
-    | None -> (failwith "Unknown kind of taco" : taco_supply)
+    | None -> failwith "Unknown kind of taco"
   in
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock in
   (* We won't sell tacos if the amount is not correct *)
@@ -613,7 +613,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
     (Some { taco_kind with current_stock = abs (taco_kind.current_stock - 1n) })
     taco_shop_storage
   in
-  (([]: operation list), taco_shop_storage)
+  ([], taco_shop_storage)
 ```
 
 </Syntax>
@@ -628,7 +628,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
     | None => (failwith ("Unknown kind of taco"): taco_supply) } ;
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
-  let x : unit = if ((Tezos.get_amount ()) != current_purchase_price) {
+  let _ = if ((Tezos.get_amount ()) != current_purchase_price) {
     failwith ("Sorry, the taco you are trying to purchase has a different price")
   } ;
   /* Update the storage decreasing the stock by 1n */
@@ -648,20 +648,20 @@ let buy_taco3 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {
-      Some: (k:taco_supply) => k,
-      None: (_:unit) => (failwith ("Unknown kind of taco") as taco_supply)
+      Some: k => k,
+      None: _x => failwith ("Unknown kind of taco")
     }) ;
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
   if ((Tezos.get_amount ()) != current_purchase_price) {
-    return failwith ("Sorry, the taco you are trying to purchase has a different price") as return_
+    return failwith ("Sorry, the taco you are trying to purchase has a different price")
   } else {
     /* Update the storage decreasing the stock by 1n */
     let taco_shop_storage = Map.update (
       taco_kind_index,
       (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
       taco_shop_storage );
-    return [(list([]) as list <operation>), taco_shop_storage]
+    return [list([]), taco_shop_storage]
   }
 };
 ```
@@ -676,7 +676,7 @@ For that, we will have another file in which will describe our test:
 ```pascaligo test-ligo group=test
 #include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.ligo"
 
-function assert_string_failure (const res : test_exec_result ; const expected : string) : unit is {
+function assert_string_failure (const res : test_exec_result ; const expected : string) is {
   const expected = Test.eval(expected) ;
 } with
     case res of [
@@ -735,7 +735,7 @@ const test = {
 ```cameligo test-ligo group=test
 #include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.mligo"
 
-let assert_string_failure (res : test_exec_result) (expected : string) : unit =
+let assert_string_failure (res : test_exec_result) (expected : string) =
   let expected = Test.eval expected in
   match res with
   | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal actual expected)
@@ -790,7 +790,7 @@ let test =
 ```reasonligo test-ligo group=test
 #include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.religo"
 
-let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit => {
+let assert_string_failure = ((res,expected) : (test_exec_result, string)) => {
   let expected = Test.eval (expected) ;
   switch (res) {
   | Fail (Rejected (actual,_)) => assert (Test.michelson_equal (actual, expected))
@@ -815,7 +815,7 @@ let test =
   let unknown_kind = 3n ;
 
   /* Auxiliary function for testing equality in maps */
-  let eq_in_map = ((r, m, k) : (taco_supply, taco_shop_storage, nat)) : bool =>
+  let eq_in_map = ((r, m, k) : (taco_supply, taco_shop_storage, nat)) =>
     switch (Map.find_opt (k, m)) {
     | None => false
     | Some (v) => v.current_stock == r.current_stock && v.max_price == r.max_price
@@ -847,7 +847,7 @@ let test =
 ```jsligo test-ligo group=test
 #include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo"
 
-let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit => {
+let assert_string_failure = ([res,expected] : [test_exec_result, string]) => {
   let expected_bis = Test.eval (expected) ;
   match (res, {
     Fail: (x: test_exec_error) => (
@@ -860,7 +860,7 @@ let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit
   } );
 } ;
 
-let _test = (_: unit): unit => {
+let test = ((_: unit): unit => {
   /* Originate the contract with a initial storage */
   let init_storage = Map.literal (list([
       [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
@@ -876,7 +876,7 @@ let _test = (_: unit): unit => {
   let unknown_kind = (3 as nat) ;
 
   /* Auxiliary function for testing equality in maps */
-  let eq_in_map = ([r, m, k] : [taco_supply, taco_shop_storage, nat]) : bool =>
+  let eq_in_map = ([r, m, k] : [taco_supply, taco_shop_storage, nat]) =>
     match(Map.find_opt(k, m), {
      None: () => false,
      Some: (v : taco_supply) => v.current_stock == r.current_stock && v.max_price == r.max_price }) ;
@@ -899,9 +899,7 @@ let _test = (_: unit): unit => {
   let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2 as tez) ;
   let _u3 = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   return unit
-}
-
-let test = _test (unit)
+}) ();
 ```
 
 </Syntax>

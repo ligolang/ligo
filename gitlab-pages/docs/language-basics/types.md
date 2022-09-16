@@ -261,15 +261,13 @@ type storage is
     funded   : bool
   ]
 
-type return is list (operation) * storage
-
-function back (var action : unit; var store : storage) : return is {
+function back (var action : unit; var store : storage) : list (operation) * storage is { // Type annotation
   if Tezos.get_now() > store.deadline then failwith ("Deadline passed.");
   case store.backers[Tezos.get_sender()] of [
     None -> store.backers[Tezos.get_sender()] := Tezos.get_amount()
   | Some (_) -> skip
   ]
-} with ((nil : list (operation)), store) // Type annotation
+} with (nil, store)
 ```
 
 </Syntax>
@@ -286,18 +284,14 @@ type storage = {
   funded   : bool
 }
 
-type return = operation list * storage
-
-let back (param, store : unit * storage) : return =
-  let no_op : operation list = [] in
-  if Tezos.get_now () > store.deadline then
-    (failwith "Deadline passed." : return) // Annotation
+let back (param, store : unit * storage) : operation list * storage = // Annotation
+  if Tezos.get_now () > store.deadline then failwith "Deadline passed."
   else
     match Map.find_opt (Tezos.get_sender ()) store.backers with
       None ->
         let backers = Map.update (Tezos.get_sender ()) (Some (Tezos.get_amount ())) store.backers
-        in no_op, {store with backers=backers}
-    | Some (x) -> no_op, store
+        in [], {store with backers=backers}
+    | Some (x) -> [], store
 ```
 
 </Syntax>
@@ -314,19 +308,16 @@ type storage = {
   funded   : bool,
 };
 
-type return = (list (operation), storage);
-
-let back = ((param, store) : (unit, storage)) : return => {
-  let no_op : list (operation) = [];
+let back = ((param, store) : (unit, storage)) : (list (operation), storage) => { // Annotation
   if (Tezos.get_now () > store.deadline) {
-    (failwith ("Deadline passed.") : return); // Annotation
+    failwith ("Deadline passed.");
   }
   else {
     switch (Map.find_opt (Tezos.get_sender(), store.backers)) {
     | None => {
         let backers = Map.update (Tezos.get_sender(), Some (Tezos.get_amount()), store.backers);
-        (no_op, {...store, backers:backers}) }
-    | Some (x) => (no_op, store)
+        ([], {...store, backers:backers}) }
+    | Some (x) => ([], store)
     }
   }
 };
@@ -349,12 +340,10 @@ type storage = {
   funded   : bool
 };
 
-type return_ = [list<operation>, storage];
-
-let back = ([param, store] : [unit, storage]) : return_ => {
-  let no_op : list<operation> = list([]);
+let back = ([param, store] : [unit, storage]) : [list<operation>, storage] => { // Annotation
+  let no_op = list([]);
   if (Tezos.get_now() > store.deadline) {
-    return failwith ("Deadline passed.") as return_; // Annotation
+    return failwith ("Deadline passed.");
   }
   else {
     return match(Map.find_opt (Tezos.get_sender(), store.backers), {
@@ -362,7 +351,7 @@ let back = ([param, store] : [unit, storage]) : return_ => {
         let backers = Map.update(Tezos.get_sender(), Some(Tezos.get_amount()), store.backers);
         return [no_op, {...store, backers:backers}];
       },
-      Some: (x: tez) => [no_op, store]
+      Some: x => [no_op, store]
     })
   };
 };

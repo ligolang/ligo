@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1981'
+title: 'Fix: remove forced annotation in CameLIGO''s abstractor'
+type: fixed

@@ -17,7 +17,7 @@ example:
 
 ```pascaligo test-ligo group=addr2contract
 const test = {
-  const addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+  const addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
   const taddr : typed_address(unit, unit) = Test.cast_address (addr);
   const contract : contract(unit) = Test.to_contract (taddr);
 } with contract;
@@ -28,7 +28,7 @@ const test = {
 
 ```cameligo test-ligo group=addr2contract
 let test =
-  let addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) in
+  let addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) in
   let taddr : (unit, unit) typed_address = Test.cast_address addr in
   let contract : (unit) contract = Test.to_contract taddr in
   contract
@@ -39,7 +39,7 @@ let test =
 
 ```reasonligo test-ligo group=addr2contract
 let test = {
-  let addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+  let addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
   let taddr : typed_address(unit,unit) = Test.cast_address(addr);
   let contract : contract(unit) = Test.to_contract(taddr);
   contract;
@@ -51,7 +51,7 @@ let test = {
 
 ```jsligo test-ligo group=addr2contract
 const _test = () : contract<unit> => {
-  const addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+  const addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
   const taddr : typed_address<unit,unit> = Test.cast_address(addr);
   const contract : contract<unit> = Test.to_contract(taddr);
   return contract;

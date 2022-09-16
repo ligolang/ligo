@@ -55,7 +55,7 @@ let main (_p, s : param * storage) : operation list * storage =
       assert (2 = 2) // no semicolon here
     end
   in
-  ([] : operation list), s
+  [], s
 ```
 
 ### Name punning
