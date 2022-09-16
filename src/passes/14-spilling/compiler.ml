@@ -572,26 +572,52 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | _ ->
           raise.error (raw_michelson_must_be_seq ae.location code)
     )
-    | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
+  | E_let_mut_in _ -> failwith ("TODO "^__LOC__)
+  | E_deref _ -> failwith ("TODO "^__LOC__)
+  | E_assign _ -> failwith ("TODO "^__LOC__)
+  | E_for _ -> failwith ("TODO "^__LOC__)
+  | E_for_each _ -> failwith ("TODO "^__LOC__)
+  | E_while _ -> failwith ("TODO "^__LOC__)
 
 and compile_lambda ~raise l fun_type =
-  let { binder ; output_type =_ ; result } : _ Lambda.t = l in
+  let { binder ; output_type ; result } : _ Lambda.t = l in
   let result' = compile_expression ~raise result in
   let fun_type = compile_type ~raise fun_type in
-  let binder = Binder.get_var binder in
-  let closure = E_closure { binder; body = result'} in
+  let param = Param.map (compile_type ~raise) binder in
+  let todo = Location.generated in (* ! *)
+  let output_type = compile_type ~raise output_type in
+  let (binder, body) = make_lambda ~loc:todo param result' output_type in
+  let closure = E_closure { binder; body } in
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
+(* ast_aggregated has mutable lambda parameters, for now, mini_c does
+   not. so here we will translate:
+       (fun mut x -> e1)
+   to:
+       (fun x -> let mut x = x in e1) *)
+and make_lambda ~loc param body body_type =
+  let body =
+    if Param.is_mut param
+    then
+      let x = Param.get_var param in
+      let a = Param.get_ascr param in
+      Expression.make ~loc (E_let_mut_in (Expression.make ~loc (E_variable x) a, ((x, a), body))) body_type
+    else body in
+  (Param.get_var param, body)
+
 and compile_recursive ~raise {fun_name; fun_type; lambda} =
-  let rec map_lambda : Value_var.t -> type_expression -> AST.expression -> expression * Value_var.t list = fun fun_name loop_type e ->
+  let rec map_lambda : Value_var.t -> type_expression -> AST.expression -> expression = fun fun_name loop_type e ->
     match e.expression_content with
-      E_lambda {binder;output_type=_;result} ->
-      let binder   = Binder.get_var binder in
-      let (body,l) = map_lambda  fun_name loop_type result in
-      (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
+      E_lambda {binder;output_type;result} ->
+      let param = binder in
+      let body = map_lambda  fun_name loop_type result in
+      let body_type = compile_type ~raise output_type in
+      let param = Param.map (compile_type ~raise) param in
+      let (binder, body) = make_lambda ~loc:e.location param body body_type in
+      Expression.make ~loc:e.location (E_closure {binder;body}) loop_type
     | _  ->
       let res = replace_callback ~raise fun_name loop_type false e in
-      (res, [])
+      res
 
   and replace_callback ~raise : Value_var.t -> type_expression -> bool -> AST.expression -> expression = fun fun_name loop_type shadowed e ->
     match e.expression_content with
@@ -714,12 +740,12 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let fun_type = compile_type ~raise fun_type in
   let (input_type,output_type) = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
-  let (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = Binder.get_var lambda.binder :: binder in
-  let loc = Value_var.get_location fun_name in
-  let binder = match binder with hd::[] -> hd | _ -> raise.error @@ unsupported_recursive_function loc fun_name in
+  let body = map_lambda fun_name loop_type lambda.result in
+  let param = Param.map (compile_type ~raise) lambda.binder in
+  let todo = Location.generated in
+  let (binder, body) = make_lambda ~loc:todo param body loop_type in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Binder.get_var lambda.binder, input_type), body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((binder, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->
