@@ -1,5 +1,5 @@
 {
-  description = "Nix flake provided by ligo to install bin of the last release";
+  description = "Nix flake provided by ligo to install bin of the last release and dependencies";
 
   inputs = {
     esy.url = "github:esy/esy";
@@ -11,13 +11,13 @@
       pkgs = import nixpkgs {
         inherit system;
       };
-      ligo = pkgs.callPackage ./nix/get_ligo.nix { };
-      withEsy = pkgs.callPackage ./nix/with_esy.nix { esy = esy.packages.${system}.default; };
+      ligoLight = pkgs.callPackage ./nix/get_ligo_light.nix { };
+      ligo = pkgs.callPackage ./nix/get_ligo.nix { esy = esy.packages.${system}.default; };
     in
     {
       packages.${system} = {
         default = ligo;
-        inherit ligo withEsy;
+        inherit ligo ligoLight;
       };
     };
 }
