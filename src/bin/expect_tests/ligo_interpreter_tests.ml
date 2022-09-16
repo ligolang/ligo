@@ -698,7 +698,7 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value KT1Wwy6z6g46VLNpLD58bQKhiE4VUa7fPk7s. |}]
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value KT1Qn7wpx2UZayQZ8vezzeJif54mXCwY4BdD. |}]
 let () = Sys.chdir pwd
 
 let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
@@ -707,7 +707,7 @@ let%expect_test _ =
   [%expect{|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value KT1Wwy6z6g46VLNpLD58bQKhiE4VUa7fPk7s. |}]
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value KT1Qn7wpx2UZayQZ8vezzeJif54mXCwY4BdD. |}]
 let () = Sys.chdir pwd
 
 
