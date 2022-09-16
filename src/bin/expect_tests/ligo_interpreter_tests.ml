@@ -698,12 +698,22 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
+  run_ligo_good [ "run"; "test" ; test "test.jsligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 let () = Sys.chdir pwd
 
 let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test/a/b/test.mligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
+  run_ligo_good [ "run"; "test" ; test "test/a/b/test.jsligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
