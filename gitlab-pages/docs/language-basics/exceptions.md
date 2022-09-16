@@ -29,7 +29,7 @@ function main (const p : parameter; const s : storage) : return is {
     Zero (n) -> if n > 0n then failwith ("Should be zero.")
   | Pos (n)  -> if n = 0n then failwith ("Should be positive.")
   ]
-} with ((nil : list (operation)), s)
+} with (nil, s)
 ```
 
 </Syntax>
@@ -60,7 +60,7 @@ The call to failwith should be annotated with a type as the type-checker cannot 
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-let main = (p: unit, s: unit): unit => {
+let main = (p: unit, s: unit) => {
   if (true) {
     failwith("This contract always fails");
   };
@@ -86,7 +86,7 @@ stop executing and display an error.
 ```pascaligo group=failwith
 function main (const p : bool; const s : storage) : return is {
   assert (p)
-} with ((nil : list (operation)), s)
+} with (nil, s)
 
 function some (const o : option (unit)) is assert_some (o)
 ```
@@ -95,9 +95,9 @@ function some (const o : option (unit)) is assert_some (o)
 <Syntax syntax="cameligo">
 
 ```cameligo group=failwith
-let main (p, s : bool * unit) =
+let main (p, s : bool * unit) : operation list * unit =
   let u : unit = assert p
-  in ([] : operation list), s
+  in [], s
 
 let some (o : unit option) =
   assert_some o
@@ -107,9 +107,9 @@ let some (o : unit option) =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=failwith
-let main = (p : bool, s : unit) => {
+let main = (p : bool, s : unit) : (list(operation) , unit) => {
   let u : unit = assert (p);
-  ([]: list (operation), s);
+  ([], s);
 };
 
 let some = (o : option (unit)) => {
@@ -123,7 +123,7 @@ let some = (o : option (unit)) => {
 ```jsligo group=failwith_alt
 let main = (p: bool, s: unit): [list<operation>, unit] => {
   let u: unit = assert(p);
-  return [list([]) as list<operation>, s];
+  return [list([]), s];
 };
 
 let some = (o: option<unit>): unit => {
@@ -140,7 +140,7 @@ You can use `assert_with_error` or `assert_some_with_error` to use a custom erro
 ```pascaligo group=failwith
 function main (const p : bool; const s : storage) : return is {
   assert_with_error (p, "My custom error message.")
-} with ((nil : list (operation)), s)
+} with (nil, s)
 ```
 
 </Syntax>
@@ -148,8 +148,8 @@ function main (const p : bool; const s : storage) : return is {
 
 ```cameligo group=failwith
 let main (p, s : bool * unit) =
-  let u : unit = assert_with_error p "My custom error message."
-  in ([] : operation list), s
+  let () = assert_with_error p "My custom error message."
+  in [], s
 ```
 
 </Syntax>
@@ -157,8 +157,8 @@ let main (p, s : bool * unit) =
 
 ```reasonligo group=failwith
 let main = (p : bool, s : unit) => {
-  let u : unit = assert_with_error (p, "My custom error message.");
-  ([]: list (operation), s);
+  assert_with_error (p, "My custom error message.");
+  ([], s);
 };
 ```
 
@@ -167,8 +167,8 @@ let main = (p : bool, s : unit) => {
 
 ```jsligo group=failwith
 let main2 = (p: bool, s: unit): [list<operation>, unit] => {
-  let u: unit = assert_with_error (p, "My custom error message.");
-  return [list([]) as list<operation>, s];
+  assert_with_error (p, "My custom error message.");
+  return [list([]), s];
 };
 ```
 

@@ -33,10 +33,10 @@ function main (const p : nat * nat; const s : nat * nat) : list (operation) * (n
 
 ```cameligo
 [@inline]
-let fst (p : nat * nat) : nat = p.0
+let fst (p : nat * nat) = p.0
 
 let main (p : nat * nat) (s : nat * nat) : operation list * (nat * nat) =
-    (([]: operation list), (fst (p.0, p.1), fst (s.1, s.0)))
+    ([], (fst (p.0, p.1), fst (s.1, s.0)))
 ```
 
 </Syntax>
@@ -55,10 +55,10 @@ let main = (p : (nat, nat), s : (nat, nat)) : (list(operation), (nat, nat)) =>
 
 ```jsligo
 // @inline
-const fst = (p: [nat, nat]): nat => p[0];
+const fst = (p: [nat, nat]) => p[0];
 
 const main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
-    [list([]) as list<operation>, [fst([p[0], p[1]]), fst([s[1], s[0]])]];
+    [list([]), [fst([p[0], p[1]]), fst([s[1], s[0]])]];
 ```
 
 </Syntax>

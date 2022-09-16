@@ -166,7 +166,7 @@ Consider the following contract:
 function sum (const x : int; const y : int) is x + y
 
 function main (const parameter : int; const storage : int) is
-  ((list [] : list (operation)), sum (parameter, storage))
+  (list [], sum (parameter, storage))
 ```
 
 </Syntax>
@@ -176,7 +176,7 @@ function main (const parameter : int; const storage : int) is
 let sum (x, y : int * int) = x + y
 
 let main (parameter, storage : int * int) =
-  ([] : operation list), sum (parameter, storage)
+  ([], sum (parameter, storage))
 ```
 
 </Syntax>
@@ -186,7 +186,7 @@ let main (parameter, storage : int * int) =
 let sum = ((x, y): (int, int)) => x + y;
 
 let main = ((parameter, storage): (int, int)) =>
-  (([] : list(operation)), sum(parameter, storage));
+  ([], sum(parameter, storage));
 ```
 
 </Syntax>
@@ -222,8 +222,8 @@ Other declarations can be inlined as well. In this contract, the compiler may ge
 ```pascaligo
 const n = 4
 
-function main (const p : int; const s : int) is
-  ((list [] : list (operation)), n * n)
+function main (const _ : int ; const _ : int) is
+  (list [], n * n)
 ```
 
 </Syntax>
@@ -232,7 +232,7 @@ function main (const p : int; const s : int) is
 ```cameligo
 let n = 4
 
-let main (p, s : unit * int) = ([] : operation list), n * n
+let main (_, _ : unit * int) = [], n * n
 ```
 
 </Syntax>
@@ -241,7 +241,7 @@ let main (p, s : unit * int) = ([] : operation list), n * n
 ```reasonligo
 let n = 4;
 
-let main = ((p, s): (unit, int)) => (([] : list(operation)), n * n);
+let main = ((_, _): (unit, int)) => ([], n * n);
 ```
 
 </Syntax>
@@ -271,31 +271,31 @@ It turns out we can do better. Tezos has a lazy container – big map. The conte
 
 Here is how it looks like:
 
-```pascaligo skip
-type parameter is LargeEntrypoint of int | ...
+```pascaligo
+type parameter is LargeEntrypoint of int (* | ... *)
 
 type storage is
   record [large_entrypoint : big_map (bool, int -> int); result : int]
 
 function load_large_ep (const storage : storage) is {
   const maybe_large_entrypoint : option (int -> int)
-  = Map.find_opt (True, storage.large_entrypoint)
+  = Big_map.find_opt (True, storage.large_entrypoint)
 } with
     case maybe_large_entrypoint of [
       Some (ep) -> ep
-    | None -> (failwith ("Internal error") : int -> int)
+    | None -> failwith ("Internal error")
     ]
 
-function main (const parameter : parameter; const storage : storage) is {
-  const nop = (list [] : list (operation))
-} with
-    case parameter of [
-      LargeEntrypoint (n) ->
-        (nop, storage with record [result = (load_large_ep (storage)) (n)])
-    | ...
-      (* Other entrypoints *)
-    | ...
-    ]
+function main (const parameter : parameter; const storage : storage) : list (operation) * storage is
+  (nil,
+  case parameter of [
+    LargeEntrypoint (n) ->
+      (storage with record [result = (load_large_ep (storage)) (n)])
+  (* Other entrypoints
+  | ... -> ...
+  | ... -> ...
+  *)
+  ])
 ```
 
 </Syntax>
@@ -304,25 +304,26 @@ function main (const parameter : parameter; const storage : storage) is {
 It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `(bool, entrypoint_lambda) big_map` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `(unit, entrypoint_lambda) big_map`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
 
 Here is how it looks like:
-```cameligo skip
-type parameter = LargeEntrypoint of int | ...
+```cameligo
+type parameter = LargeEntrypoint of int (* | ... *)
 
 type storage = { large_entrypoint : (bool, int -> int) big_map; result : int }
 
-let load_large_ep (storage : storage) =
-  let maybe_large_entrypoint : (int -> int) option =
+let load_large_ep (storage : storage) : (int -> int) =
+  let maybe_large_entrypoint =
     Big_map.find_opt true (storage.large_entrypoint) in
   match maybe_large_entrypoint with
     Some ep -> ep
-  | None -> (failwith "Internal error" : (int -> int))
+  | None -> failwith "Internal error"
 
-let main (parameter, storage : parameter * storage) =
+let main (parameter, storage : parameter * storage) : operation list * storage =
   match parameter with
     LargeEntrypoint n ->
-      ([] : operation list), {storage with result = (load_large_ep storage) n}
-  | ...
-    (* Other entrypoints *)
-  | ...
+      [], {storage with result = (load_large_ep storage) n}
+  (* Other entrypoints
+  | ... -> ...
+  | ... -> ...
+  *)
 ```
 
 </Syntax>
