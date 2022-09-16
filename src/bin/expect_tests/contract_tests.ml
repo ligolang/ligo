@@ -1817,7 +1817,7 @@ const x =  match (+1 , (+2 , +3)) with
       3 | let a (b,c) = b
       4 | let a ((b)) = b
 
-    Pattern not of the expected type ^gen#4 |}];
+    Pattern not of the expected type ^gen#449 |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
 Pattern (b,c) not of the expected type ^gen#449 |}];
