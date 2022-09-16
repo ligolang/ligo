@@ -246,8 +246,9 @@ let rec unify
   | ( T_record { fields = content1; layout = layout1 }
     , T_record { fields = content2; layout = layout2 } )
     when equal_domains content1 content2 ->
-    if not (Layout.equal layout1 layout2)
-    then raise.error (cannot_unify_diff_layout loc type1 type2 layout1 layout2);
+    (* if not (Layout.equal layout1 layout2)
+    then raise.error (cannot_unify_diff_layout loc type1 type2 layout1 layout2); *)
+    ignore (layout1,layout2);
     (* Naive unification. Layout and content must be consistent *)
     Record.LMap.fold
       (fun label
