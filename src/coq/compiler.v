@@ -163,6 +163,14 @@ Inductive expr : Set :=
 | E_fold : meta -> expr -> expr -> binds -> expr
 | E_fold_right : meta -> ty -> expr -> expr -> binds -> expr
 
+(* TODO add typing rules for these ...maybe ;) *)
+| E_deref : meta -> nat -> expr
+| E_let_mut_in : meta -> expr -> binds -> expr
+| E_assign : meta -> nat -> expr -> expr
+| E_for : meta -> expr -> expr -> expr -> binds -> expr
+| E_for_each : meta -> expr -> binds -> expr
+| E_while : meta -> expr -> expr -> expr
+
 | E_failwith : meta -> expr -> expr
 
 | E_raw_michelson : meta -> ty -> ty -> list micheline -> expr
@@ -821,6 +829,33 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
       let e2' := compile_binds r env e2 in
       [I_SEQ null e1';
        I_SEQ null e2']
+  | E_deref _ n => [I_DUP null (S (embed r n))]
+  | E_let_mut_in _ e1 e2 =>
+      let e1' := compile_expr r env e1 in
+      let e2' := compile_binds r env e2 in
+      [I_SEQ null e1';
+       I_SEQ null e2']
+  | E_assign _ n e1 =>
+      let e1' := compile_expr r env e1 in
+      [I_SEQ null e1';
+       I_DUG null (embed r n);
+       I_DIG null (S (embed r n));
+       I_DROP null 1]
+  | E_for _ start final incr body =>
+      (* TODO ugh *)
+      []
+  | E_for_each l coll body =>
+      let coll' := compile_expr r env coll in
+      let body' := compile_binds r env body in
+      [I_SEQ null coll';
+       I_ITER l body']
+  | E_while l cond body =>
+      let cond' := compile_expr r env cond in
+      let body' := compile_expr r env body in
+      [I_LOOP l [I_SEQ null cond';
+                 I_DUP null 1;
+                 (* TODO may want to avoid the DIP? *)
+                 I_DIP null [I_IF null [I_SEQ null body'] []]]]
   | E_tuple _ args =>
       [I_SEQ null (compile_args r env args);
        I_SEQ null (PAIR (args_length args))]
