@@ -280,9 +280,10 @@ module Compile_type = struct
       return @@ aux [module_name] ma.field
     | TDisc n ->
       let shared_field = Discriminated_union.get_shared_field ~raise n in
-      let sum = Utils.nsepseq_map (
+      let sum_fields = Utils.nsepseq_map (
         fun (obj: CST.obj_type) ->
-          let constructor, other = List.partition_map (npseq_to_list obj.value.ne_elements) ~f:(fun x ->
+          (* split into constructor and fields *)
+          let constructor, fields = List.partition_map (npseq_to_list obj.value.ne_elements) ~f:(fun x ->
               if String.equal x.value.field_name.value shared_field then 
                 let t = x.value.field_type in
                 match t with 
@@ -296,7 +297,8 @@ module Compile_type = struct
             hd :: _ -> hd.value
           | _ -> raise.error unexpected
           in
-          let type_expr = match other with 
+          (* create the object type without the constructor field *)
+          let type_expr = match fields with 
             hd :: tl -> 
               let ne_elements = (hd, (List.map ~f:(fun l -> (Token.wrap_semi Region.ghost,l)) tl)) in
               let obj = CST.TObject {
@@ -309,12 +311,12 @@ module Compile_type = struct
           | [] -> 
             t_unit ()
           in
-          let fields = List.map ~f:(fun x -> x.value.field_name.value ) other in
+          let fields = List.map ~f:(fun x -> x.value.field_name.value) fields in
           (constructor, type_expr, fields)
         ) n
         in 
-        let sum = npseq_to_list sum in
-        let sum, disc_union = (List.fold_left ~f:(fun (all_sum, all_fields) (constructor, type_expr, fields) -> 
+        let sum_fields = npseq_to_list sum_fields in
+        let sum, disc_union = List.fold_left ~f:(fun (all_sum, all_fields) (constructor, type_expr, fields) -> 
           (constructor, type_expr, []) :: all_sum,
           Discriminated_union.{
             constructor; 
@@ -322,7 +324,7 @@ module Compile_type = struct
             has_payload = Poly.(type_expr <> AST.t_unit ());
             fields
           } :: all_fields
-        ) ~init:([], []) sum)
+        ) ~init:([], []) sum_fields
         in
         Discriminated_union.add disc_union;
         return @@ t_sum_ez_attr ~loc:Location.dummy ~attr:[] sum
@@ -630,6 +632,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     (match Discriminated_union.find_disc_obj obj' with 
       Some s -> 
         let constructor = s.constructor in
+        (* recreate the object without the constructor *)
         let filtered_object = Utils.nsepseq_foldl (fun a i -> 
           match i with 
             CST.Property {value = {value = EString (String {value = s; _}); _}; _} when String.equal s constructor -> a
@@ -645,6 +648,8 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         }
         in
         let e = self (EObject {value = obj; region = Region.ghost}) in 
+
+        (* turn the object into a constructor *)
         e_constructor ~loc constructor e
 
     | None ->
@@ -1150,6 +1155,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     let (s, loc)    = r_split s' in
     (match Discriminated_union.is_discriminated_union s' with 
       Some data -> (
+        (* here we turn the switch statement into a simple form of pattern matching *)
         let matchee, payload = match s'.value.expr with 
           EProj {value = {expr = (EVar ev as v); _}; _} -> compile_expression ~raise v, ev
         | _ -> raise.error @@ wrong_matchee_disc s'.region
@@ -1158,13 +1164,15 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
           match f with 
             Switch_case {expr = EString (String v); statements; _} ->
               let a = List.find_exn ~f:(fun {constructor; _} -> Poly.(constructor = v.value) ) data in
-              let pattern = if a.has_payload then 
+              let ty = if a.has_payload then 
                 let b = Binder.make (compile_variable payload) None in
                 let arg = Pattern.P_var b in
-                Location.wrap (Pattern.P_variant (Label v.value, (Location.wrap ~loc arg)))
-              else (
-                Location.wrap (Pattern.P_variant (Label v.value, (Location.wrap ~loc Pattern.P_unit)))
-              ) in
+                Location.wrap ~loc arg
+              else
+                Location.wrap ~loc Pattern.P_unit
+              in
+              let pattern = Location.wrap (Pattern.P_variant (Label v.value, ty)) in
+
               Match_expr.{
                 pattern;
                 body = (match statements with Some statements -> 
@@ -1177,6 +1185,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
         expr (e_matching ~loc matchee cases)
       )
     | None -> (
+      (* a switch statement based on if-else statements *)
       let switch_expr = self_expr s.expr in
       let fallthrough = Value_var.fresh ~name:"fallthrough" () in
       let found_case  = Value_var.fresh ~name:"found_case"  () in

@@ -80,6 +80,45 @@ let n : unit = unit;
 
 </Syntax>
 
+<Syntax syntax="jsligo>
+
+### Discriminated union type
+
+The simplest form of pattern matching in JsLIGO is with help of a discriminated
+union type. 
+
+```jsligo
+type foo = 
+  { kind: "increment", amount: int}
+| { kind: "decrement", amount: int}
+| { kind: "reset}
+```
+
+Here, the `kind` field is unique among the objects. If not, an error will be 
+generated. Also, if multiple fields are present which can be used as unique 
+field, only the first unique field will be used. 
+
+Creating an object from a discriminated union type requires all the fields 
+to be fully written. So for increment that would be:
+
+```jsligo 
+let obj = { kind: "increment", amount: 3}
+```
+
+Pattern matching over a discriminated union type works like this:
+
+```
+let state = 0;
+switch(foo.kind) {
+  case "increment":
+    state += foo.amount;
+    break
+  case "decrement":
+    state -= foo.amount;
+    break
+}
+
+</Syntax>
 
 ## Variant types
 
