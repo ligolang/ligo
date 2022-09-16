@@ -36,6 +36,7 @@ module type M =
       val make_module_declaration : module_name -> t -> declaration
     end
     val compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t
+    val lib_ast : unit -> AST.t
   end
 
 module Make (M : M) =
@@ -152,10 +153,10 @@ module Make (M : M) =
   let compile_file_with_deps asts (file_name, (mangled_name,meta,c_unit,deps)) =
     let env_with_deps = add_deps_to_env asts (file_name, (meta,c_unit,deps)) in
     let ast = M.compile env_with_deps file_name meta c_unit in
-    let ast_env = M.AST.add_ast_to_env ast env_with_deps in
+    let ast_env = M.AST.add_ast_to_env (ast:ast) env_with_deps in
     SMap.add file_name (ast,ast_env) asts
 
-  let compile_separate : code_input -> ast build_error =
+  let compile_unqualified : code_input -> ast build_error =
     fun main_code_input ->
       let deps = dependency_graph main_code_input in
       let main_file_name = Source_input.id_of_code_input main_code_input in
@@ -165,7 +166,7 @@ module Make (M : M) =
         Ok (fst @@ SMap.find main_file_name asts_typed)
       | Error e -> Error e
 
-  let compile_combined : code_input -> ast build_error =
+  let compile_qualified : code_input -> ast build_error =
     fun code_input ->
       let deps = dependency_graph code_input in
       let file_name = Source_input.id_of_code_input code_input in
@@ -173,7 +174,8 @@ module Make (M : M) =
         Ok (ordered_deps) ->
         let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) ordered_deps in
         let contract = aggregate_dependencies_as_headers ordered_deps asts_typed in
-        Ok(contract)
+        let contract = M.lib_ast () @ contract in
+        Ok contract
       | Error e -> Error e
   end
 
