@@ -38,6 +38,11 @@ let get_file_from_location loc =
   let file = reg#file in
   if String.(file = "") then None else Some file
 
+let replace_loc_if_blank e location = 
+  match get_file_from_location e.location with
+    Some _ -> e
+  | None -> { e with location }
+
 let check_value value =
   let open Monad in
   match value with
@@ -999,11 +1004,9 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
 
 and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
-    let replace_loc_if_blank e location = 
-      match get_file_from_location e.location with
-        Some _ -> e
-      | None -> { e with location }
+    let eval_ligo ?(steps = steps - 1) v = 
+      let v = replace_loc_if_blank v term.location in
+      eval_ligo ~raise ~steps ~options v
     in
     let open Monad in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace (v_string "Out of fuel")) else return () in
@@ -1040,8 +1043,8 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       eval_ligo (result) calltrace env
     )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; hidden = _ ; thunk = _ }} -> (
-      let* rhs' = eval_ligo (replace_loc_if_blank rhs term.location) calltrace env in
-      eval_ligo (replace_loc_if_blank let_result term.location) calltrace (Env.extend env (Binder.get_var let_binder) ~inline ~no_mutation (rhs.type_expression,rhs'))
+      let* rhs' = eval_ligo rhs calltrace env in
+      eval_ligo let_result calltrace (Env.extend env (Binder.get_var let_binder) ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_literal l ->
       eval_literal l
