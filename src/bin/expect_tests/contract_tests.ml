@@ -1805,39 +1805,19 @@ const x =  match (+1 , (+2 , +3)) with
 
   run_ligo_bad ["print" ; "ast-typed"; contract "existential.mligo"];
   [%expect {|
-    File "../../test/contracts/existential.mligo", line 4, characters 23-24:
-      3 | let c : 'a -> 'a = fun x -> 2
-      4 | let d : 'a -> 'b = fun x -> x
-      5 | let e =
-
-    Missing a type annotation for argument "x". File "../../test/contracts/existential.mligo", line 3, characters 23-24:
-      2 | let b : _ ->'b = fun _ -> 2
-      3 | let c : 'a -> 'a = fun x -> 2
-      4 | let d : 'a -> 'b = fun x -> x
-
-    Missing a type annotation for argument "x". File "../../test/contracts/existential.mligo", line 2, characters 21-22:
+    File "../../test/contracts/existential.mligo", line 1, characters 8-10:
       1 | let a : 'a = 2
       2 | let b : _ ->'b = fun _ -> 2
-      3 | let c : 'a -> 'a = fun x -> 2
 
-    Missing a type annotation for argument "_". |}];
+    Type "'a" not found. |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
-    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 7, characters 14-15:
-      6 | let a = fun (b,c) -> b
-      7 | let a = fun ((b)) -> b
-
-    Missing a type annotation for argument "b". File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 6, characters 13-14:
-      5 | let a = fun b -> b
-      6 | let a = fun (b,c) -> b
-      7 | let a = fun ((b)) -> b
-
-    Missing a type annotation for argument "b". File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 5, characters 12-13:
+    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 3, characters 7-10:
+      2 | let a b = b
+      3 | let a (b,c) = b
       4 | let a ((b)) = b
-      5 | let a = fun b -> b
-      6 | let a = fun (b,c) -> b
 
-    Missing a type annotation for argument "b". |}];
+    Pattern not of the expected type ^gen#449 |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
 Pattern (b,c) not of the expected type ^gen#449 |}];
