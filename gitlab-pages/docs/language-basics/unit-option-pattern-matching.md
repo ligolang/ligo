@@ -117,6 +117,8 @@ switch(foo.kind) {
     state -= foo.amount;
     break
 }
+```
+
 
 </Syntax>
 
