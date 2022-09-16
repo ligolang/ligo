@@ -19,5 +19,9 @@
         default = ligo;
         inherit ligo ligoLight;
       };
+
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = [ ligo ];
+      };
     };
 }
