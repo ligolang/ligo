@@ -279,29 +279,7 @@ module Compile_type = struct
       in
       return @@ aux [module_name] ma.field
     | TDisc n ->
-      let disc_fields (obj: CST.obj_type) : (string * string) list = 
-        let fields = obj.value.ne_elements in
-        Utils.nsepseq_foldl (fun all ({value; _}: CST.field_decl Region.reg)  -> 
-          match value.field_type with 
-            TString s -> (value.field_name.value, s.value) :: all
-          | _-> all
-        ) [] fields
-      in
-      let objects = Utils.nsepseq_map disc_fields n in
-      let (hd, tl) = objects in
-      let shared_fields = List.fold_left ~f:(fun shared_fields (_, item) -> 
-        List.fold_left ~f:(fun all i -> 
-            if (List.mem item i ~equal:(fun (a, a_value) (b, b_value) -> String.equal a b && not (String.equal a_value b_value))) then
-              i :: all
-            else 
-              all
-        ) ~init:[] shared_fields
-      ) ~init:hd tl
-      in
-      let shared_field = match shared_fields with 
-        [] -> raise.error @@ no_shared_fields (CST.nsepseq_to_region (fun (r: CST.obj_type) -> r.region) n)
-      | (hd, _) :: _ -> hd
-      in
+      let shared_field = Discriminated_union.get_shared_field ~raise n in
       let sum = Utils.nsepseq_map (
         fun (obj: CST.obj_type) ->
           let constructor, other = List.partition_map (npseq_to_list obj.value.ne_elements) ~f:(fun x ->
@@ -630,8 +608,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let exprs = List.map ~f:(array_item_to_expression ~raise) items in
     let exprs' = List.map ~f:self exprs in
     return @@ e_tuple ~loc exprs'
-  | EObject {value = {inside = (Property_rest {value = {expr; _}; _}, rest); _}; _} ->
-    
+  | EObject {value = {inside = (Property_rest {value = {expr; _}; _}, rest); _}; _} ->    
     let record = self expr in
     let aux up =
       let (_, p) = up in

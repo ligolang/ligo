@@ -1,3 +1,6 @@
+open Errors
+open Simple_utils.Trace
+
 module CST = Cst.Jsligo
 module Region = Simple_utils.Region
 module Utils = Simple_utils.Utils
@@ -94,6 +97,28 @@ let find_disc_obj (a: CST.object_expr) =
     find_variant fields
   else
     None
+
+let get_shared_field ~raise (n: (CST.obj_type, CST.vbar) Utils.nsepseq) = 
+  let shared_fields = Utils.nsepseq_foldl (fun shared_fields (obj: CST.obj_type) -> 
+    let fields = obj.value.ne_elements in
+    Utils.nsepseq_foldl (fun shared_fields ({value; _}: CST.field_decl Region.reg)  -> 
+      let field_type = value.field_type in
+      let field_name = value.field_name.value in
+      match shared_fields, field_type with 
+        [],      TString s -> (field_name, s.value) :: shared_fields
+      | _ :: _, TString s 
+          when List.mem shared_fields (field_name, s.value) ~equal:(fun (a, a_value) (b, b_value) -> String.equal a b && not (String.equal a_value b_value)) ->
+            (field_name, s.value) :: shared_fields
+      | _             -> shared_fields
+    ) shared_fields fields  
+  ) [] n
+  in
+  let shared_fields = List.rev shared_fields in
+  let shared_field = match shared_fields with 
+    [] -> raise.error @@ no_shared_fields (CST.nsepseq_to_region (fun (r: CST.obj_type) -> r.region) n)
+  | (hd, _) :: _ -> hd
+  in
+  shared_field
 
 let add disc_union =
   disc_unions := disc_union :: !disc_unions
