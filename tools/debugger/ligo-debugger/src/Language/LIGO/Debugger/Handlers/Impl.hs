@@ -3,15 +3,15 @@ module Language.LIGO.Debugger.Handlers.Impl
   ( LIGO
   ) where
 
+import Prelude hiding (try)
+
 import Debug qualified
 import Unsafe qualified
 
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
-import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
 import Data.Text qualified as Text
-import Fmt (Builder, blockListF, build, pretty)
-import Fmt.Internal.Core (FromBuilder (fromBuilder))
+import Fmt (Builder, blockListF, pretty)
 import Morley.Debugger.Core (slSrcPos)
 import Morley.Debugger.Core.Navigate
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition), curSnapshot,
@@ -22,7 +22,7 @@ import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..),
   DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
   HasSpecificMessages (..), RIO, RioContext (..), StopEventDesc (..), StoppedReason (..),
-  dsDebuggerState, dsVariables, pushMessage)
+  dsDebuggerState, dsVariables, pushMessage, RequestBase (..))
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
@@ -36,6 +36,7 @@ import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO.Directory (doesFileExist)
+import UnliftIO.Exception (fromEither, throwIO, try, Handler (Handler), catches)
 import UnliftIO.STM (modifyTVar)
 
 import Language.LIGO.DAP.Variables
@@ -182,24 +183,17 @@ instance HasSpecificMessages LIGO where
               }
 
   handleLaunch LigoLaunchRequest {..} = do
-    initRes <- lift . lift $
-      runExceptT (initDebuggerSession argumentsLigoLaunchRequest)
-    case initRes of
-      Left msg ->
-        pushMessage $ DAPResponse $ ErrorResponse DAP.defaultErrorResponse
-          { DAP.request_seqErrorResponse = seqLigoLaunchRequest
-          , DAP.commandErrorResponse = commandLigoLaunchRequest
-          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
-          }
-      Right st -> do
-        lift $ lift do
-          logMessage "Launching contract with arguments\n"
-          logMessage $ Debug.show argumentsLigoLaunchRequest <> "\n"
-        put (Just st)
-        pushMessage $ DAPResponse $ LaunchResponse DAP.defaultLaunchResponse
-          { DAP.successLaunchResponse = True
-          , DAP.request_seqLaunchResponse = seqLigoLaunchRequest
-          }
+    st <- lift . lift $
+      initDebuggerSession argumentsLigoLaunchRequest
+
+    lift $ lift do
+      logMessage "Launching contract with arguments\n"
+      logMessage $ Debug.show argumentsLigoLaunchRequest <> "\n"
+    put (Just st)
+    pushMessage $ DAPResponse $ LaunchResponse DAP.defaultLaunchResponse
+      { DAP.successLaunchResponse = True
+      , DAP.request_seqLaunchResponse = seqLigoLaunchRequest
+      }
 
   handleStackTraceRequest DAP.StackTraceRequest{..} = zoom dsDebuggerState do
     -- We mostly follow morley-debugger's implementation, but here we don't need
@@ -268,6 +262,25 @@ instance HasSpecificMessages LIGO where
         }
       }
 
+  handlersWrapper RequestBase{..} = flip catches
+    [ Handler \(e :: LigoException) -> do
+        let msg = pretty e
+        writeResponse $ ErrorResponse DAP.defaultErrorResponse
+          { DAP.request_seqErrorResponse = seqRequestBase
+          , DAP.commandErrorResponse = commandRequestBase
+          , DAP.messageErrorResponse = Just $ toString $ leMessage e
+          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
+          }
+
+    , Handler \(DapMessageException msg :: DapMessageException) -> do
+        writeResponse $ ErrorResponse DAP.defaultErrorResponse
+          { DAP.request_seqErrorResponse = seqRequestBase
+          , DAP.commandErrorResponse = commandRequestBase
+          , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
+          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
+          }
+    ]
+
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
     SetLigoBinaryPathRequest req -> handleSetLigoBinaryPath req
@@ -314,27 +327,16 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
         Just $ dir </> takeFileName file <.> "log"
   whenJust logFileMb openLogHandle
 
-  program <- runExceptT $ ifM (doesFileExist file)
-    (pure file)
-    (throwError $ DAP.mkErrorMessage "Contract file not found" $ toText file)
+  unlessM (doesFileExist file) do
+    throwIO $ DapMessageException $ DAP.mkErrorMessage "Contract file not found" $ toText file
 
-  result <- case program of
-    Left msg -> do
-      writeResponse $ ErrorResponse DAP.defaultErrorResponse
-        { DAP.request_seqErrorResponse = seqLigoInitializeLoggerRequest
-        , DAP.commandErrorResponse = commandLigoInitializeLoggerRequest
-        , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
-        , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
-        }
-      pure $ Left msg
-    Right _ -> do
-      writeResponse $ ExtraResponse $ InitializeLoggerResponse LigoInitializeLoggerResponse
-        { seqLigoInitializeLoggerResponse = 0
-        , request_seqLigoInitializeLoggerResponse = seqLigoInitializeLoggerRequest
-        , successLigoInitializeLoggerResponse = True
-        }
-      pure $ Right ()
-  logMessage [int||Initializing logger for #{file} finished: #s{result}|]
+  writeResponse $ ExtraResponse $ InitializeLoggerResponse LigoInitializeLoggerResponse
+    { seqLigoInitializeLoggerResponse = 0
+    , request_seqLigoInitializeLoggerResponse = seqLigoInitializeLoggerRequest
+    , successLigoInitializeLoggerResponse = True
+    }
+
+  logMessage [int||Initializing logger for #{file} finished|]
 
 handleSetLigoBinaryPath :: LigoSetLigoBinaryPathRequest -> RIO LIGO ()
 handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
@@ -366,34 +368,21 @@ handleSetProgramPath LigoSetProgramPathRequest{..} = do
   let LigoSetProgramPathRequestArguments{..} = argumentsLigoSetProgramPathRequest
   let programPath = programLigoSetProgramPathRequestArguments
 
-  entrypointsE <- getAvailableEntrypoints programPath
+  EntrypointsList{..} <- getAvailableEntrypoints programPath
 
-  result <-
-    case entrypointsE of
-      Left e -> do
-        let msg = fromBuilder . build $ e
-        writeResponse $ ErrorResponse DAP.defaultErrorResponse
-          { DAP.request_seqErrorResponse = seqLigoSetProgramPathRequest
-          , DAP.commandErrorResponse = commandLigoSetProgramPathRequest
-          , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
-          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
-          }
-        pure $ Left msg
-      Right EntrypointsList{..} -> do
-        lServVar <- asks _rcLSState
-        atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
-          { lsProgram = Just programPath
-          }
+  lServVar <- asks _rcLSState
+  atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
+    { lsProgram = Just programPath
+    }
 
-        writeResponse $ ExtraResponse $ SetProgramPathResponse LigoSetProgramPathResponse
-          { seqLigoSetProgramPathResponse = 0
-          , request_seqLigoSetProgramPathResponse = seqLigoSetProgramPathRequest
-          , successLigoSetProgramPathResponse = True
-          , entrypointsLigoSetProgramPathResponse = unEntrypoints
-          }
-        pure $ Right ()
+  writeResponse $ ExtraResponse $ SetProgramPathResponse LigoSetProgramPathResponse
+    { seqLigoSetProgramPathResponse = 0
+    , request_seqLigoSetProgramPathResponse = seqLigoSetProgramPathRequest
+    , successLigoSetProgramPathResponse = True
+    , entrypointsLigoSetProgramPathResponse = unEntrypoints
+    }
 
-  logMessage [int||Setting program path #{programPath} is finished: #s{result}|]
+  logMessage [int||Setting program path #{programPath} is finished|]
 
 handleValidateEntrypoint :: LigoValidateEntrypointRequest -> RIO LIGO ()
 handleValidateEntrypoint LigoValidateEntrypointRequest{..} = do
@@ -401,7 +390,7 @@ handleValidateEntrypoint LigoValidateEntrypointRequest{..} = do
   let pickedEntrypoint = entrypointLigoValidateEntrypointRequestArguments
 
   program <- getProgram
-  result <- void <$> compileLigoContractDebug pickedEntrypoint program
+  result <- void <$> try @_ @LigoException (compileLigoContractDebug pickedEntrypoint program)
 
   writeResponse $ ExtraResponse $ ValidateEntrypointResponse LigoValidateEntrypointResponse
     { seqLigoValidateEntrypointResponse = 0
@@ -418,75 +407,60 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
   lServVar <- asks _rcLSState
   program <- getProgram
 
-  result <- runExceptT do
-    unlessM (doesFileExist program) $
-      throwError [int||Contract file not found: #{toText program}|]
+  unlessM (doesFileExist program) $
+    throwIO @_ @DapMessageException [int||Contract file not found: #{toText program}|]
 
-    ligoDebugInfo <- ExceptT $ compileLigoContractDebug entrypoint program
-    logMessage $ "Successfully read the LIGO debug output for " <> pretty program
+  ligoDebugInfo <- compileLigoContractDebug entrypoint program
+  logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-    (exprLocs, someContract, allFiles) <-
-      readLigoMapper ligoDebugInfo
-      & first [int|m|"Failed to process contract: #{id}|]
-      & liftEither
+  (exprLocs, someContract, allFiles) <-
+    readLigoMapper ligoDebugInfo
+    & first [int|m|Failed to process contract: #{id}|]
+    & fromEither @DapMessageException
 
-    () <- do
-      SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract
-      logMessage $ pretty (unContractCode $ cCode contract)
+  do
+    SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract
+    logMessage $ pretty (unContractCode $ cCode contract)
 
     parsedContracts <- parseContracts allFiles
 
     let statementLocs = getStatementLocs exprLocs parsedContracts
+    let allLocs = exprLocs <> statementLocs
 
-    pure (someContract, exprLocs <> statementLocs, parsedContracts)
+    let
+      paramNotes = cParamNotes contract
+      michelsonEntrypoints =
+        T.flattenEntrypoints paramNotes
+        <> one (U.DefEpName, T.mkUType $ T.pnNotes paramNotes)
 
-  case result of
-    Left e -> do
-      let msg = fromBuilder . build $ e
-      logMessage [int||Getting metadata for contract #{program} failed: #{msg}|]
-      writeResponse $
-        ErrorResponse $
-          DAP.defaultErrorResponse
-            { DAP.request_seqErrorResponse = seqLigoGetContractMetadataRequest
-            , DAP.commandErrorResponse = commandLigoGetContractMetadataRequest
-            , DAP.messageErrorResponse = Just $ toString . leMessage $ e
-            , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
-            }
-    Right (someContract@(SomeContract contract), allLocs, parsedContracts) -> do
-      let
-        paramNotes = cParamNotes contract
-        michelsonEntrypoints =
-          T.flattenEntrypoints paramNotes
-          <> one (U.DefEpName, T.mkUType $ T.pnNotes paramNotes)
+    atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
+      { lsContract = Just someContract
+      , lsAllLocs = Just allLocs
+      , lsParsedContracts = Just parsedContracts
+      }
 
-      atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
-        { lsContract = Just someContract
-        , lsAllLocs = Just allLocs
-        , lsParsedContracts = Just parsedContracts
-        }
+    lServerState <- getServerState
 
-      lServerState <- getServerState
+    logMessage [int||
+      Got metadata for contract #{program}:
+        Server state: #{lServerState}
+        Michelson entrypoints: #{keys michelsonEntrypoints}
+      |]
 
-      logMessage [int||
-        Got metadata for contract #{program}:
-          Server state: #{lServerState}
-          Michelson entrypoints: #{keys michelsonEntrypoints}
-        |]
-
-      writeResponse $ ExtraResponse $ GetContractMetadataResponse LigoGetContractMetadataResponse
-        { seqLigoGetContractMetadataResponse = 0
-        , request_seqLigoGetContractMetadataResponse =
-            seqLigoGetContractMetadataRequest
-        , successLigoGetContractMetadataResponse = True
-        , contractMetadataLigoGetContractMetadataResponse = ContractMetadata
-            { parameterMichelsonTypeContractMetadata =
-                JsonFromBuildable (T.convertParamNotes paramNotes)
-            , storageMichelsonTypeContractMetadata =
-                JsonFromBuildable (T.mkUType $ T.cStoreNotes contract)
-            , michelsonEntrypointsContractMetadata =
-                JsonFromBuildable <$> michelsonEntrypoints
-            }
-        }
+    writeResponse $ ExtraResponse $ GetContractMetadataResponse LigoGetContractMetadataResponse
+      { seqLigoGetContractMetadataResponse = 0
+      , request_seqLigoGetContractMetadataResponse =
+          seqLigoGetContractMetadataRequest
+      , successLigoGetContractMetadataResponse = True
+      , contractMetadataLigoGetContractMetadataResponse = ContractMetadata
+          { parameterMichelsonTypeContractMetadata =
+              JsonFromBuildable (T.convertParamNotes paramNotes)
+          , storageMichelsonTypeContractMetadata =
+              JsonFromBuildable (T.mkUType $ T.cStoreNotes contract)
+          , michelsonEntrypointsContractMetadata =
+              JsonFromBuildable <$> michelsonEntrypoints
+          }
+      }
 
 handleValidateValue :: LigoValidateValueRequest -> RIO LIGO ()
 handleValidateValue LigoValidateValueRequest {..} = do
@@ -504,14 +478,14 @@ handleValidateValue LigoValidateValueRequest {..} = do
   SomeContract (contract@Contract{} :: Contract param storage) <- getContract
   program <- getProgram
 
-  parseRes <- runExceptT case category of
+  parseRes <- try @_ @SomeDebuggerException case category of
     "parameter" ->
-      withMichelsonEntrypoint contract michelsonEntrypoint id $
+      withMichelsonEntrypoint contract michelsonEntrypoint $
         \(_ :: T.Notes arg) _ ->
-        void $ ExceptT $ parseValue @arg program category (toText value) valueType
+        void $ parseValue @arg program category (toText value) valueType
 
     "storage" ->
-      void $ ExceptT $ parseValue @storage program category (toText value) valueType
+      void $ parseValue @storage program category (toText value) valueType
 
     other -> error [int||Unexpected category #{other}|]
 
@@ -519,12 +493,12 @@ handleValidateValue LigoValidateValueRequest {..} = do
     { seqLigoValidateValueResponse = 0
     , request_seqLigoValidateValueResponse = seqLigoValidateValueRequest
     , successLigoValidateValueResponse = True
-    , messageLigoValidateValueResponse = toString <$> leftToMaybe parseRes
+    , messageLigoValidateValueResponse = displayException <$> leftToMaybe parseRes
     }
 
 initDebuggerSession
   :: LigoLaunchRequestArguments
-  -> ExceptT DAP.Message (RIO LIGO) (DAPSessionState InterpretSnapshot)
+  -> RIO LIGO (DAPSessionState InterpretSnapshot)
 initDebuggerSession LigoLaunchRequestArguments {..} = do
   storageT <- toText <$> checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- toText <$> checkArgument "parameter" parameterLigoLaunchRequestArguments
@@ -535,7 +509,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
           -- Sometimes we can find '@' in LIGO values but the last one should be definitely value type
           pure $ first (Text.dropEnd 1) $ Text.breakOnEnd "@" value
         else do
-          throwDAPError [int||
+          throwIO @_ @DapMessageException [int||
             Can't find value type in #{what}.
             It should be separated with '@' sign.
           |]
@@ -544,28 +518,25 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   (parameter, parameterType) <- splitValueAndType paramT ("parameter" :: Text)
 
   asks _rcLSState >>= readTVarIO >>= \case
-    Nothing -> throwDAPError "Language server state is not initialized"
+    Nothing -> throwIO @_ @DapMessageException [int||Language server state is not initialized|]
     Just _ -> pass
 
-  program <- lift getProgram
+  program <- getProgram
 
   -- This do is purely for scoping, otherwise GHC trips up:
   --     • Couldn't match type ‘a0’ with ‘()’
   --         ‘a0’ is untouchable
   do
-    SomeContract contract@Contract{} <- lift getContract
+    SomeContract contract@Contract{} <- getContract
 
     withMichelsonEntrypoint contract michelsonEntrypointLigoLaunchRequestArguments
-      (pretty :: Text -> DAP.Message)
       \(_ :: T.Notes arg) epc -> do
 
-        arg <- ExceptT (parseValue program "parameter" parameter parameterType)
-          & withExceptT (pretty :: Text -> DAP.Message)
-        storage <- ExceptT (parseValue program "storage" stor storageType)
-          & withExceptT (pretty :: Text -> DAP.Message)
+        arg <- parseValue program "parameter" parameter parameterType
+        storage <- parseValue program "storage" stor storageType
 
-        allLocs <- lift getAllLocs
-        parsedContracts <- lift getParsedContracts
+        allLocs <- getAllLocs
+        parsedContracts <- getParsedContracts
 
         let his =
               collectInterpretSnapshots
@@ -587,8 +558,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
         pure $ DAPSessionState ds mempty mempty program
 
-checkArgument :: MonadError DAP.Message m => Text -> Maybe a -> m a
+checkArgument :: MonadIO m => Text -> Maybe a -> m a
 checkArgument _    (Just a) = pure a
-checkArgument name Nothing  = throwError DAP.defaultMessage
-  { DAP.formatMessage = toString $ "Required configuration option \"" <> name <> "\" not found in launch.json."
-  }
+checkArgument name Nothing  = throwIO @_ @DapMessageException
+  [int||Required configuration option "#{name}" not found in launch.json.|]
