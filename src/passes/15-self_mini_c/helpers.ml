@@ -76,6 +76,29 @@ let rec map_expression : mapper -> expression -> expression = fun f e ->
       let args = List.map ~f:self args in
       let code = self code in
       return @@ E_create_contract (p, s, ((x, t), code), args)
+  | E_let_mut_in (expr, ((x, a), body)) ->
+      let expr = self expr in
+      let body = self body in
+      return @@ E_let_mut_in (expr, ((x, a), body))
+  | E_deref x ->
+      return @@ E_deref x
+  | E_assign (x, e) ->
+      let e = self e in
+      return @@ E_assign (x, e)
+  | E_for_each (coll, coll_type, (xs, body)) ->
+      let coll = self coll in
+      let body = self body in
+      return @@ E_for_each (coll, coll_type, (xs, body))
+  | E_for (start, final, incr, (x, body)) ->
+      let start = self start in
+      let final = self final in
+      let incr = self incr in
+      let body = self body in
+      return @@ E_for (start, final, incr, (x, body))
+  | E_while (cond, body) ->
+      let cond = self cond in
+      let body = self body in
+      return @@ E_while (cond, body)
 
 let map_sub_level_expression : mapper -> anon_function -> anon_function = fun f e ->
   let {binder ; body} : anon_function = e in

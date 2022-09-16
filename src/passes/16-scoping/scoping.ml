@@ -227,6 +227,18 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let code = translate_binder code [] in
     let args = translate_args args env in
     E_create_contract (meta, p, s, code, args)
+  | E_let_mut_in _ ->
+    failwith ("TODO " ^ __LOC__)
+  | E_deref _ ->
+    failwith ("TODO " ^ __LOC__)
+  | E_assign _ ->
+    failwith ("TODO " ^ __LOC__)
+  | E_for _ ->
+    failwith ("TODO " ^ __LOC__)
+  | E_for_each _ ->
+    failwith ("TODO " ^ __LOC__)
+  | E_while _ ->
+    failwith ("TODO " ^ __LOC__)
 
 and translate_binder ~raise ~proto (binder, body) env =
   let env' = I.Environment.add binder env in
