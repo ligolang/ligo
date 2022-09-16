@@ -322,23 +322,6 @@ const deny = ([action, store]: [parameter, storage]): return_ => {
 ```
 
 </Syntax>
-<Syntax syntax="jsligo">
-
-```jsligo group=d
-type parameter = unit;
-type storage = unit;
-type return_ = [list<operation>, storage];
-
-const deny = ([action, store]: [parameter, storage]): return_ => {
-  if (Tezos.get_amount() > (0 as tez)) {
-    return failwith("This contract does not accept tokens.");
-  } else {
-    return [list([]), store];
-  };
-};
-```
-
-</Syntax>
 
 ### Access Control
 
