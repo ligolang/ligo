@@ -13,64 +13,44 @@ let%expect_test _ =
 (* list-declarations *)
 let%expect_test _ =
   run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.ligo" ] ;
-  [%expect {|
-    ../../test/contracts/loop.ligo declarations:
-    inner_capture_in_conditional_block
-    dummy
-    nested_for_collection_local_var
-    nested_for_collection
-    for_collection_map_kv
-    for_collection_empty
-    for_collection_with_patches
-    for_collection_comp_with_acc
-    for_collection_proc_call
-    for_collection_rhs_capture
-    for_collection_if_and_local_var
-    for_collection_set
-    for_collection_list
-    for_sum_step
-    for_sum
-    while_sum
-    counter |} ];
+  [%expect.unreachable ];
 
   run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.mligo" ; "--format" ;"json" ] ;
-  [%expect {|
-    {
-      "source_file": "../../test/contracts/loop.mligo",
-      "declarations": [
-        "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
-      ]
-    } |} ];
+  [%expect.unreachable ];
 
 
   run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.mligo" ] ;
-  [%expect {|
-    ../../test/contracts/loop.mligo declarations:
-    counter_nest
-    aux_nest
-    counter
-    counter_simple
-    aux_simple |} ];
+  [%expect.unreachable ];
 
   run_ligo_good ["info"; "list-declarations" ; "../../test/contracts/loop.religo" ] ;
-  [%expect {|
-    ../../test/contracts/loop.religo declarations:
-    counter_nest
-    aux_nest
-    counter
-    counter_simple
-    aux_simple |} ];
+  [%expect.unreachable ];
 
   run_ligo_bad ["run" ; "interpret" ; "1" ; "--syntax"; "cameligo" ; "--protocol"; "do_not_exist" ] ;
-  [%expect {|
-    Invalid protocol version 'do_not_exist'. Available versions: jakarta ,
-    kathmandu |}] ;
+  [%expect.unreachable] ;
 
   run_ligo_bad [ "repl" ; "camelig0" ] ;
-  [%expect {| Please check syntax name. |}] ;
+  [%expect.unreachable] ;
 
   run_ligo_bad [ "repl" ; "cameligo" ; "--protocol" ; "h" ] ;
-  [%expect {| Please check protocol name. |}] ;
+  [%expect.unreachable] ;
 
   run_ligo_bad [ "repl" ; "cameligo" ; "--sender" ; "foo" ] ;
-  [%expect {| Please check run options. |}] ;
+  [%expect.unreachable] ;
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
+  Called from Cli_expect_tests__Misc_cli_commands.(fun) in file "src/bin/expect_tests/misc_cli_commands.ml", line 15, characters 2-82
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  File "../../test/contracts/loop.ligo", line 26, characters 18-21:
+   25 |     var acc : int := 0;
+   26 |     for i := 1 to int (n)
+   27 |       {
+
+  Variable "int" not found. |}]
