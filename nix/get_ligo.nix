@@ -7,7 +7,7 @@ stdenv.mkDerivation rec {
   executable = fetchurl {
     name = "ligo";
     url = "https://gitlab.com/ligolang/ligo/-/jobs/3043602309/artifacts/raw/ligo";
-    sha256 = "";
+    sha256 = "sha256-Vmn8G9qywVTqd/H0oUpxMzI1uhBZfsWLJ6krF993ZVM=";
     executable = true;
   };
 
