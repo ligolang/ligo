@@ -47,5 +47,6 @@ done
 
 # Replace SRI for nix 
 SRI_LIGO_BINARY_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 $(nix-prefetch-url --type sha256 --executable https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo))
+echo "update distribution reference SRI_LIGO_BINARY_HASH = $SRI_LIGO_BINARY_HASH"
 "${SED_IN_PLACE_COMMAND[@]}" -E "s#$NIX_SHA256_SRI_REGEX_PATTERN#\1$SRI_LIGO_BINARY_HASH\2#" "$ROOT_FOLDER/nix/get_ligo.nix"
 
