@@ -443,7 +443,7 @@ division operation:
 
 ```pascaligo group=d
 function div (const a : nat; const b : nat) : option (nat) is
-  if b = 0n then (None: option (nat)) else Some (a/b)
+  if b = 0n then None else Some (a/b)
 ```
 
 </Syntax>
@@ -451,7 +451,7 @@ function div (const a : nat; const b : nat) : option (nat) is
 
 ```cameligo group=d
 let div (a, b : nat * nat) : nat option =
-  if b = 0n then (None: nat option) else Some (a/b)
+  if b = 0n then None else Some (a/b)
 ```
 
 </Syntax>
@@ -459,7 +459,7 @@ let div (a, b : nat * nat) : nat option =
 
 ```reasonligo group=d
 let div = ((a, b) : (nat, nat)) : option (nat) =>
-  if (b == 0n) { (None: option (nat)); } else { Some (a/b); };
+  if (b == 0n) { None } else { Some (a/b) };
 ```
 
 </Syntax>
@@ -468,7 +468,7 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 ```jsligo group=d
 let div = ([a, b]: [nat, nat]): option<nat> => {
   if(b == (0 as nat)){
-    return (None() as option <nat>);
+    return None();
   } else {
     return (Some (a/b));
   };
@@ -571,8 +571,8 @@ type color =
 
 let int_of_color = (c : color) : int =>
   match(c, {
-    RGB: (rgb : [int,int,int]) => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
-    Gray: (i : int) => 232 + i,
+    RGB: rgb => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
+    Gray: i => 232 + i,
     Default: () => 0 });
 ```
 
