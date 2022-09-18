@@ -449,7 +449,7 @@ let iter_op = (l : list (int)) : unit => {
 
 ```jsligo group=lists
 let iter_op = (l: list<int>): unit => {
-  let predicate = i : unit => assert(i > 3);
+  let predicate = i => assert(i > 3);
   List.iter(predicate, l);
 };
 ```
