@@ -449,7 +449,7 @@ let iter_op = (l : list (int)) : unit => {
 
 ```jsligo group=lists
 let iter_op = (l: list<int>): unit => {
-  let predicate = (i) : unit => assert(i > 3);
+  let predicate = i => assert(i > 3);
   List.iter(predicate, l);
 };
 ```
@@ -501,7 +501,7 @@ let plus_one : list (int) = List.map (increment, larger_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let increment = (i) => i + 1;
+let increment = i => i + 1;
 
 // Creates a new list with all elements incremented by 1
 let plus_one: list<int> = List.map(increment, larger_list);
@@ -952,7 +952,7 @@ let iter_op = (s : set (int)) : unit => {
 
 ```jsligo group=sets
 let iter_op = (s: set<int>): unit => {
-  let predicate = (i) => assert(i > 3);
+  let predicate = i => assert(i > 3);
   Set.iter(predicate, s);
 };
 ```
