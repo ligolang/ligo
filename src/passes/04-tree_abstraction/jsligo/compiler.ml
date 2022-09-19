@@ -295,7 +295,7 @@ module Compile_type = struct
           in
           let constructor = match constructor with 
             hd :: _ -> hd.value
-          | _ -> raise.error unexpected
+          | _ -> raise.error @@ no_shared_fields obj.region
           in
           (* create the object type without the constructor field *)
           let type_expr = match fields with 
