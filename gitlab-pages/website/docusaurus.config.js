@@ -172,7 +172,9 @@ const config = {
   plugins: [
     [
       './src/plugins/syntax', {},
-    ]
+    ],
+    // '@aldridged/docusaurus-plugin-lunr'
+    require.resolve("@cmfcmf/docusaurus-search-local")
   ]
 };
 
