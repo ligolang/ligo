@@ -9,6 +9,7 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_unit -> Format.fprintf ppf "()"
   | C_bool t -> Format.fprintf ppf "%b" t
   | C_int z -> Format.fprintf ppf "%s" (Z.to_string z)
+  | C_int64 z -> Format.fprintf ppf "%s" (Int64.to_string z)
   | C_nat n -> Format.fprintf ppf "%sn" (Z.to_string n)
   | C_timestamp t ->
     Format.fprintf ppf "timestamp(%s)" Memory_proto_alpha.Protocol.Time_repr.(to_notation @@ of_seconds (Z.to_int64 t))
