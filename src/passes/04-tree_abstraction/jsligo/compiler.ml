@@ -1146,7 +1146,10 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
               let e = e_sequence e update_vars_break in
               Binding (fun x -> e_sequence (e_cond ~loc test e (e_unit ())) x)
             | Return e ->
-              Binding (fun x -> (e_cond ~loc test e x)))
+              Binding (fun x -> 
+                match x with
+                  {expression_content = E_literal (Literal_unit); _} -> e
+                | _ as x -> e_cond ~loc test e x))
           in
           statements
         | Switch_default_case { statements=None ; kwd_default=_; colon=_} ->
@@ -1172,7 +1175,9 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
               e_sequence (e_cond ~loc default_cond e (e_unit ())) x
             )
           | Return e -> Binding (fun x ->
-              e_cond ~loc default_cond e x)
+              match x with
+                {expression_content = E_literal (Literal_unit); _} -> e
+                | _ as x -> e_cond ~loc default_cond e x)
             )
           in
           statements
