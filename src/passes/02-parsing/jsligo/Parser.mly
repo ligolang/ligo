@@ -299,7 +299,7 @@ expr_stmt:
 | ternary_expr                 { $1 }
 
 ternary_expr:
-| disj_expr_level "?" ternary_expr ":" ternary_expr {   
+| as_expr_level "?" expr_stmt ":" expr_stmt {   
   let start = expr_to_region $1 in
   let stop  = expr_to_region $5 in
   ETernary { 
