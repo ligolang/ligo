@@ -150,9 +150,8 @@ let make_options ~raise ?param ctxt =
       level ;
     }
 
-let run_expression_unwrap ~raise ?ctxt ?(loc = Location.generated) (c_expr : Stacking.compiled_expression) =
-  let options = make_options ~raise ctxt in
-  let runres = Ligo_run.Of_michelson.run_expression ~raise ~options c_expr.expr c_expr.expr_ty in
+let run_expression_unwrap ~raise ~run_options ?(loc = Location.generated) (c_expr : Stacking.compiled_expression) =
+  let runres = Ligo_run.Of_michelson.run_expression ~raise ~options:run_options c_expr.expr c_expr.expr_ty in
   match runres with
   | Success (expr_ty, expr) ->
      let expr, expr_ty = clean_locations expr expr_ty in
@@ -236,6 +235,8 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected int but got %a" Ast_aggregated.PP.type_expression ty))
                  (match ty.type_content with T_constant { injection = (Int | External "int"); _} -> Some () | _ -> None) in
      e_a_int x
+  | V_Ct (C_int64 _) ->
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: int64"
   | V_Ct (C_nat x) ->
      let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected nat but got %a" Ast_aggregated.PP.type_expression ty))
                  (get_t_nat ty) in
@@ -422,14 +423,14 @@ and make_ast_map ~raise ~loc key_ty value_ty kv =
                 (k, v)) kv in
   List.fold_right kv ~f:(fun (k, v) r -> Ast_aggregated.e_a_map_add k v r) ~init:(Ast_aggregated.e_a_map_empty key_ty value_ty)
 
-and compile_simple_value ~raise ~options ?ctxt ~loc : Ligo_interpreter.Types.value ->
+and compile_simple_value ~raise ~options ~run_options ~loc : Ligo_interpreter.Types.value ->
                       Ast_aggregated.type_expression ->
                       Ligo_interpreter.Types.typed_michelson_code =
   fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc v ty in
   let (_: Ast_aggregated.expression) = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj typed_exp in
   let compiled_exp = compile_value ~raise ~options typed_exp in
-  let expr, _ = run_expression_unwrap ~raise ?ctxt ~loc compiled_exp in
+  let expr, _ = run_expression_unwrap ~raise ~run_options ~loc compiled_exp in
   (* TODO-er: check the ignored second component: *)
   let expr_ty = clean_location_with () compiled_exp.expr_ty in
   { code = expr ; code_ty = expr_ty ; ast_ty = typed_exp.type_expression }
@@ -445,15 +446,15 @@ and make_subst_ast_env_exp ~raise env =
 
 let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in
-  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~options ~ctxt ~loc arg arg_ty in
+  let run_options = make_options ~raise (Some ctxt) in
+  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~options ~run_options ~loc arg arg_ty in
   let func_ty = compile_type ~raise func_ty in
   let func = match code with
   | Seq (_, s) ->
      Tezos_utils.Michelson.(seq ([i_push arg_ty arg] @ s))
   | _ ->
      raise.error (Errors.generic_error Location.generated "Could not parse") in
-  let options = make_options ~raise (Some ctxt) in
-  match Ligo_run.Of_michelson.run_expression ~raise ~legacy:true ~options func func_ty with
+  match Ligo_run.Of_michelson.run_expression ~raise ~legacy:true ~options:run_options func func_ty with
   | Success (ty, value) ->
      Result.return @@ Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
   | Fail f ->

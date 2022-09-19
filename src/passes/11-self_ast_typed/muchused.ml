@@ -53,6 +53,7 @@ let rec is_dup (t : type_expression) =
     Ast_contract        |
     Michelson_program   |
     Gen                 |
+    Int64               |
     (* Externals are dup *)
     External _
   ); _} ->

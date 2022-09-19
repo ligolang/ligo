@@ -71,6 +71,10 @@ let wrap_compare_result comp cmpres loc calltrace =
 let compare_constants c o1 o2 loc calltrace =
   let open Monad in
   match (c, [o1; o2]) with
+  | (comp, [V_Ct (C_int64 a'); V_Ct (C_int64 b')]) ->
+      let cmpres = Int64.compare a' b' in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
+      return @@ v_bool x
   | (comp, [V_Ct (C_int a'); V_Ct (C_int b')])
   | (comp, [V_Ct (C_mutez a'); V_Ct (C_mutez b')])
   | (comp, [V_Ct (C_timestamp a'); V_Ct (C_timestamp b')])
@@ -272,6 +276,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_MAP_FIND , _  ) -> fail @@ error_type ()
     (* binary *)
     | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison loc calltrace c operands
+    | ( C_SUB    , [ V_Ct (C_int64 a') ; V_Ct (C_int64 b') ] ) -> return @@ v_int64 Int64.(a' - b')
     | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return @@ v_int (Z.sub a' b')
     | ( C_SUB    , [ V_Ct (C_int a' | C_timestamp a') ; V_Ct (C_timestamp b' | C_int b') ] ) ->
       let res = Michelson_backend.Tezos_eq.timestamp_sub a' b' in
@@ -290,6 +295,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_SUB_MUTEZ , _  ) -> fail @@ error_type ()
     | ( C_CONS   , [ v                  ; V_List vl          ] ) -> return @@ V_List (v::vl)
     | ( C_CONS , _  ) -> fail @@ error_type ()
+    | ( C_ADD    , [ V_Ct (C_int64 a  )  ; V_Ct (C_int64 b  )  ] ) -> return @@ v_int64 Int64.(a + b)
     | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_int b  )  ] )
     | ( C_ADD    , [ V_Ct (C_nat a  )  ; V_Ct (C_int b  )  ] )
     | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.add a b in return (v_int r)
@@ -306,6 +312,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_ADD    , [ V_Ct (C_bls12_381_g2 a) ; V_Ct (C_bls12_381_g2 b) ] ) -> let r = Bls12_381.G2.(add a b) in return (v_bls12_381_g2 r)
     | ( C_ADD    , [ V_Ct (C_bls12_381_fr a) ; V_Ct (C_bls12_381_fr b) ] ) -> let r = Bls12_381.Fr.(a + b) in return (v_bls12_381_fr r)
     | ( C_ADD , _  ) -> fail @@ error_type ()
+    | ( C_MUL    , [ V_Ct (C_int64 a  )  ; V_Ct (C_int64 b  )  ] ) -> return @@ v_int64 Int64.(a * b)
     | ( C_MUL    , [ V_Ct (C_int a  )  ; V_Ct (C_int b  )  ] )
     | ( C_MUL    , [ V_Ct (C_nat a  )  ; V_Ct (C_int b  )  ] )
     | ( C_MUL    , [ V_Ct (C_int a  )  ; V_Ct (C_nat b  )  ] ) -> let r = Z.mul a b in return (v_int r)
@@ -351,6 +358,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV , _  ) -> fail @@ error_type ()
+    | ( C_MOD    , [ V_Ct (C_int64 a')    ; V_Ct (C_int64 b')    ] ) ->
+      return @@ v_int64 Int64.(rem a' b')
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] )
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] )
     | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) -> (
@@ -375,11 +384,17 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     (* Bitwise operators *)
     | ( C_AND    , [ V_Ct (C_int a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logand a' b' in return @@ v_nat v
     | ( C_AND    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logand a' b' in return @@ v_nat v
+    | ( C_AND    , [ V_Ct (C_int64 a'  ) ; V_Ct (C_int64 b'  ) ] ) -> return @@ v_int64 Int64.(a' land b')
     | ( C_OR     , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logor a' b' in return @@ v_nat v
+    | ( C_OR    , [ V_Ct (C_int64 a'  ) ; V_Ct (C_int64 b'  ) ] ) -> return @@ v_int64 Int64.(a' lor b')
     | ( C_XOR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let v = Z.logxor a' b' in return @@ v_nat v
+    | ( C_XOR    , [ V_Ct (C_int64 a'  ) ; V_Ct (C_int64 b'  ) ] ) -> return @@ v_int64 Int64.(a' lxor b')
     | ( C_OR , _  ) -> fail @@ error_type ()
     | ( C_AND , _  ) -> fail @@ error_type ()
     | ( C_XOR , _  ) -> fail @@ error_type ()
+    | ( C_LSL    , [ V_Ct (C_int64 a'  ) ; V_Ct (C_nat b'  ) ] ) ->
+      let b' = Z.to_int b' in
+      return @@ v_int64 Int64.(shift_left a' b')
     | ( C_LSL    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) ->
       let v = Michelson_backend.Tezos_eq.nat_shift_left a' b' in
       begin
@@ -388,6 +403,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow")
       end
     | ( C_LSL , _  ) -> fail @@ error_type ()
+    | ( C_LSR    , [ V_Ct (C_int64 a'  ) ; V_Ct (C_nat b'  ) ] ) ->
+      let b' = Z.to_int b' in
+      return @@ v_int64 Int64.(shift_right_logical a' b')
     | ( C_LSR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) ->
       let v = Michelson_backend.Tezos_eq.nat_shift_right a' b' in
       begin
@@ -938,6 +956,30 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       | Some s -> return @@ v_some (v_string s)
     )
     | ( C_TEST_GET_ENTRYPOINT , _ ) -> fail @@ error_type ()
+    | ( C_TEST_INT64_OF_INT , [ V_Ct (C_int n) ] ) ->
+       return @@ V_Ct (C_int64 (Z.to_int64 n))
+    | ( C_TEST_INT64_OF_INT , _ ) -> fail @@ error_type ()
+    | ( C_TEST_INT64_TO_INT , [ V_Ct (C_int64 n) ] ) ->
+       return @@ V_Ct (C_int (Z.of_int64 n))
+    | ( C_TEST_INT64_TO_INT , _ ) -> fail @@ error_type ()
+    (* Added only for performance *)
+    | ( C_TEST_INT    , [ V_Ct (C_nat a')    ] ) -> return @@ v_int a'
+    | ( C_TEST_INT    , [ V_Ct (C_bls12_381_fr a')    ] ) -> return @@ v_int (Bls12_381.Fr.to_z a')
+    | ( C_TEST_INT , _  ) -> fail @@ error_type ()
+    | ( C_TEST_ABS    , [ V_Ct (C_int a')    ] ) -> return @@ v_nat (Z.abs a')
+    | ( C_TEST_ABS , _  ) -> fail @@ error_type ()
+
+    | ( C_TEST_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
+      (*TODO : allign with tezos*)
+      return @@ V_Ct (C_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed)))
+    | ( C_TEST_SLICE , [ V_Ct (C_nat start) ; V_Ct (C_nat length) ; V_Ct (C_bytes bytes) ] ) ->
+      let start = Z.to_int start in
+      let length = Z.to_int length in
+      if (start > Bytes.length bytes) || (start + length > Bytes.length bytes) then
+        fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
+      else
+        return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
+    | ( C_TEST_SLICE , _  ) -> fail @@ error_type ()
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( C_EMIT_EVENT , _ ) ->

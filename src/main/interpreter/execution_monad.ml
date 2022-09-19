@@ -109,7 +109,8 @@ module Command = struct
       let value_ty = trace_option ~raise (Errors.generic_error loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option value_ty in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
       let mich = Michelson_backend.compile_value ~raise ~options expr in
-      let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
+      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
+      let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich in
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     | Nth_bootstrap_contract (n) ->
@@ -272,7 +273,8 @@ module Command = struct
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj func_typed_exp in
       let func_code = Michelson_backend.compile_value ~raise ~options func_typed_exp in
-      let { code = arg_code ; _ } = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v in_ty in
+      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
+      let { code = arg_code ; _ } = Michelson_backend.compile_simple_value ~raise ~options ~run_options ~loc v in_ty in
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in
       let options = Michelson_backend.make_options ~raise ~param:input_ty (Some ctxt) in
       let runres = Ligo_run.Of_michelson.run_function ~raise ~options func_code.expr func_code.expr_ty arg_code in
@@ -282,7 +284,8 @@ module Command = struct
       let ret = LT.V_Michelson (Ty_code { code = expr ; code_ty = expr_ty ; ast_ty = f.body.type_expression }) in
       (ret, ctxt)
     | Eval (loc, v, expr_ty) ->
-      let value = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v expr_ty in
+      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
+      let value = Michelson_backend.compile_simple_value ~raise ~options ~run_options ~loc v expr_ty in
       (LT.V_Michelson (Ty_code value), ctxt)
     | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) -> (
       match Michelson_backend.run_michelson_func ~raise ~options ~loc ctxt func func_ty value value_ty with
@@ -420,7 +423,8 @@ module Command = struct
         | None -> Ast_aggregated.(e_a_contract_opt (e_a_address @@ Michelson_backend.string_of_contract addr) value_ty)
         | Some entrypoint -> Ast_aggregated.(e_a_contract_entrypoint_opt (e_a_string (Ligo_string.standard entrypoint)) (e_a_address @@ Michelson_backend.string_of_contract addr) value_ty) in
       let mich = Michelson_backend.compile_value ~raise ~options expr in
-      let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
+      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
+      let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich in
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     )
