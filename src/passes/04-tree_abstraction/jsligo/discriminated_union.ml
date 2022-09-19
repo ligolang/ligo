@@ -14,6 +14,9 @@ type disc_variant = {
 
 let disc_unions: disc_variant list list ref = ref []
 
+let reset () = 
+  disc_unions := []
+
 let nseq_to_list (hd, tl) = hd :: tl
 
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)

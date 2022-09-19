@@ -1455,6 +1455,7 @@ let compile_module ~raise : CST.ast -> AST.declaration list =
     compile_statements_to_program ~raise t
 
 let compile_program ~raise : CST.ast -> AST.program = fun ast ->
+  Discriminated_union.reset();
   nseq_to_list ast.statements
   |> List.map ~f:(fun a ~raise ->
     match a with

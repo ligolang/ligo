@@ -2273,6 +2273,17 @@ let while_and_for_loops_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "while_multi_statements_2" (e_int 10) (e_int 55) in
   ()
 
+let disc_union_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/disc_union.jsligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
+  expect_eq_n ~raise program "main" make_input make_expected
+
+
 let main = test_suite "Integration (End to End)"
   @@ [
 
@@ -2462,5 +2473,6 @@ let main = test_suite "Integration (End to End)"
     test_w "if_if_return (jsligo)" if_if_return_jsligo;
     test_w "switch case (jsligo)" switch_cases_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo;
-    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
+    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo;
+    test_w "discriminated_union (jsligo)" disc_union_jsligo
   ]
