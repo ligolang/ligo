@@ -421,6 +421,15 @@ contract: ES6FUN LPAR RPAR ARROW ZWSP
 ## The known suffix of the stack is as follows:
 ## ES6FUN LPAR RPAR ARROW
 ##
+contract: ES6FUN WILD ARROW ZWSP
+##
+## Ends in an error in state: 23.
+##
+## fun_expr -> ES6FUN WILD ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN WILD ARROW
+##
 
 Ill-formed functional expression.
 At this point, the body is expected as one of the following:
@@ -3164,3 +3173,16 @@ contract: Bytes As ES6FUN ZWSP
 
 Ill-formed functional type expression.
 At this point, an opening parenthesis followed by parameters are expected.
+
+contract: ES6FUN WILD ZWSP
+##
+## Ends in an error in state: 22.
+##
+## fun_expr -> ES6FUN WILD . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN WILD
+##
+
+Ill-formed function expression. 
+At this point, an arrow '=>' is expected.
