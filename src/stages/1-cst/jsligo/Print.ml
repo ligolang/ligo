@@ -343,6 +343,9 @@ and print_expr state = function
 | ECodeInj {value; region} ->
     print_loc_node state "ECodeInj" region;
     print_code_inj state value
+| ETernary {value; region} ->
+    print_loc_node state "ETernary" region;
+    print_ternary state value
 
 and print_constr_expr state (node: (constr * expr option) reg) =
   let constr, expr_opt = node.value in
@@ -499,6 +502,17 @@ and print_annotated state annot =
   let expr, _, t_expr = annot in
   print_expr      (state#pad 2 0) expr;
   print_type_expr (state#pad 2 1) t_expr
+
+and print_ternary state ternary = 
+  let state = state#pad 3 0 in
+  print_node state "<condition>";
+  print_expr (state#pad 1 0) ternary.condition;
+  let state = state#pad 3 1 in
+  print_node state "<truthy>";
+  print_expr (state#pad 1 0) ternary.truthy;
+  let state = state#pad 3 2 in
+  print_node state "<falsy>";
+  print_expr (state#pad 1 0) @@ ternary.falsy
 
 and print_cond_statement state (cond: cond_statement) =
   let () =
