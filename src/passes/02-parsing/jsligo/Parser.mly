@@ -877,7 +877,8 @@ fun_expr:
     let value      = {parameters; lhs_type=$4; arrow; body=$6}
     in {region; value}
   }
-| ES6FUN "<ident>" "=>" body {
+| ES6FUN "<ident>" "=>" body
+| ES6FUN "_" "=>" body {
     let params = unwrap $2 in
     let region     = cover params.region (body_to_region $4)
     and parameters = EVar params in

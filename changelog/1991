@@ -1,0 +1,6 @@
+author: SanderSpies
+description: Semicolon before else now allowed. Underscore is now allowed as arrow
+  function argument.
+merge_request: '1991'
+title: 'JsLIGO: improve `if .. else` handling + allow \"_\" as arrow function argument.'
+type: changed
