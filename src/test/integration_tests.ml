@@ -2252,6 +2252,14 @@ let switch_cases_jsligo ~raise () : unit =
 
   ()
 
+let ternary_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/ternary.jsligo" in
+    let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
+    let _ = expect_eq ~raise program "foo" (e_int 101) (e_int 100) in
+    let _ = expect_eq ~raise program "foo" (e_int 1) (e_int 0) in
+    let _ = expect_eq ~raise program "foo" (e_int 0) (e_int 2) in
+    ()
+
 let if_if_return_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/if_if_return.jsligo" in
   let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
@@ -2471,5 +2479,6 @@ let main = test_suite "Integration (End to End)"
     test_w "switch case (jsligo)" switch_cases_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo;
     test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo;
-    test_w "discriminated_union (jsligo)" disc_union_jsligo
+    test_w "discriminated_union (jsligo)" disc_union_jsligo;
+    test_w "ternary (jsligo)" ternary_jsligo;
   ]

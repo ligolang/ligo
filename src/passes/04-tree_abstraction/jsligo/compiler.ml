@@ -788,6 +788,12 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     e_assign_ez ~loc:outer_loc evar_value @@ e_update (e_variable_ez evar_value) [sels] e2
   | EAssign _ as e ->
     raise.error @@ not_supported_assignment e
+  | ETernary e ->
+    let (ternary, loc) = r_split e in
+    let test = self ternary.condition in
+    let truthy = self ternary.truthy in
+    let falsy = self ternary.falsy in
+    e_cond ~loc test truthy falsy
 
 and conv ~raise : const:bool -> CST.pattern -> AST.ty_expr option Pattern.t =
   fun ~const p ->

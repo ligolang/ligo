@@ -295,6 +295,17 @@ module Fold_helpers(M : Monad) = struct
        let* expr = bind_map_option self expr in
        let value = const,expr in
        return @@ EConstr {value;region}
+    | ETernary {value; region} -> 
+      let* condition = self value.condition in
+      let* truthy = self value.truthy in
+      let* falsy = self value.falsy in
+      return @@ ETernary {
+         value = {
+            value with condition; 
+            truthy; 
+            falsy
+         }; 
+         region }
 
   and map_statement : mapper -> statement -> statement monad =
     fun f s ->

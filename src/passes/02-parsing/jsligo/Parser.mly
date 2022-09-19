@@ -75,6 +75,7 @@ let private_attribute = {
 %on_error_reduce nsepseq(statement,SEMI)
 %on_error_reduce nsepseq(variant,VBAR)
 %on_error_reduce nsepseq(object_type,VBAR)
+%on_error_reduce ternary_expr
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -295,7 +296,25 @@ expr_stmt:
 | as_expr_level "%=" expr_stmt { EAssign     ($1, {value = Assignment_operator Mod_eq;   region = $2#region}, $3) }
 | as_expr_level "+=" expr_stmt { EAssign     ($1, {value = Assignment_operator Plus_eq;  region = $2#region}, $3) }
 | as_expr_level "-=" expr_stmt { EAssign     ($1, {value = Assignment_operator Min_eq;   region = $2#region}, $3) }
-| fun_expr                    { EFun    $1         }
+| fun_expr                     { EFun     $1 }
+| ternary_expr                 { $1 }
+
+ternary_expr:
+| as_expr_level "?" expr_stmt ":" expr_stmt {   
+  let start = expr_to_region $1 in
+  let stop  = expr_to_region $5 in
+  ETernary { 
+    value = {
+      condition = $1;
+      qmark = $2;
+      truthy = $3;
+      colon = $4;
+      falsy = $5;
+    };
+    region = cover start stop
+  }
+}
+  
 | as_expr_level               { $1 }
 
 as_expr_level:
