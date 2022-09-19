@@ -73,6 +73,7 @@
 %token <string Wrap.t> SLASH   "/"    [@recover.expr Token.wrap_slash   $loc]
 %token <string Wrap.t> TIMES   "*"    [@recover.expr Token.wrap_times   $loc]
 %token <string Wrap.t> REM     "%"    [@recover.expr Token.wrap_rem     $loc]
+%token <string Wrap.t> QMARK   "?"    [@recover.expr Token.wrap_qmark   $loc]
 (*
 %token <string Wrap.t> PLUS2   "++"   [@recover.expr Token.wrap_plus2   $loc]
 %token <string Wrap.t> MINUS2  "--"   [@recover.expr Token.wrap_minus2  $loc]
