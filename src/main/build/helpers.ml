@@ -40,7 +40,7 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
     | D_value x ->
       let binder = sap_for_all x.binder in
       let binder = at_prefix binder in
-      let attr : ValueAttr.t = { x.attr with inline = true ; hidden = true } in
+      let attr : ValueAttr.t = { x.attr with inline = true } in
       D_value { x with attr ; binder }
   and declaration (d : declaration) = Simple_utils.Location.map f d
   and decl d = declaration d
@@ -49,7 +49,7 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
 
 (* [get_aliases_prelude] [var] [typed_program] returns aliases for all non-private declarations (module , type and value) in [typed_program].
    Declarations are accessed accessed through [var].
-  
+
   e.g. with [var] == Curry
     ```
     module A = <..>
