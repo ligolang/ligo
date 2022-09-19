@@ -1,4 +1,4 @@
--- | ligo version: 0.34.0
+-- | ligo version: 0.51.0
 -- | The definition of type as is represented in ligo JSON output
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -273,13 +273,6 @@ data LigoTypeTable = LigoTypeTable
   deriving stock (Generic, Show)
   deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeTable
 
-data LigoTyBinder = LigoTyBinder
-  { _ltbWrap_content :: LigoTypeVariable
-  , _ltbLocation :: LigoRange
-  }
-  deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTyBinder
-
 data LigoTypeConstant = LigoTypeConstant
   { _ltcParameters :: [LigoTypeExpression]
   , _ltcLanguage   :: Text
@@ -306,11 +299,11 @@ data LigoTypeVariable = LigoTypeVariable
   deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeVariable
 
 data LigoTypeForAll = LigoTypeForAll
-  { _ltfaTyBinder :: LigoTyBinder
-  , _ltfaType     :: LigoTypeExpression -- TODO original field is `type_`
+  { _ltfaTyBinder :: LigoTypeVariable
+  , _ltfaType_    :: LigoTypeExpression
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeForAll
+  deriving (FromJSON, ToJSON) via LigoJSON 4 LigoTypeForAll
 
 -- | Record field type value.
 -- ```
