@@ -1162,7 +1162,11 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
         in
         let cases = List.map ~f:(fun f -> 
           match f with 
-            Switch_case {expr = EString (String v); statements; _} ->
+            Switch_case {expr = EString (String v); statements = Some(statements); _} ->
+              (match Utils.nsepseq_rev (statements) with 
+                (SBreak _, _) -> ()
+              | (_ as s, _) -> raise.error @@ case_break_disc (CST.statement_to_region s)
+              );
               let a = List.find_exn ~f:(fun {constructor; _} -> Poly.(constructor = v.value) ) data in
               let ty = if a.has_payload then 
                 let b = Binder.make (compile_variable payload) None in
@@ -1175,11 +1179,9 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
 
               Match_expr.{
                 pattern;
-                body = (match statements with Some statements -> 
-                  compile_statements_to_expression ~raise statements;
-                  | None -> e_unit ())
+                body = compile_statements_to_expression ~raise statements;
               } 
-
+          | Switch_case {expr = EString (String _); statements = None; _} -> raise.error @@ case_break_disc s'.region
           | _ -> raise.error unexpected
         ) (nseq_to_list s.cases) in
         expr (e_matching ~loc matchee cases)
