@@ -638,17 +638,19 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
             CST.Property {value = {value = EString (String {value = s; _}); _}; _} when String.equal s constructor -> a
           | _ -> (Token.wrap_comma (Region.ghost), i) :: a  
         )  [] obj.inside in
-        let new_inside = match filtered_object with 
-          hd :: rest -> (snd hd, rest)
-        | [] -> raise.error @@ unexpected
-        in
-        let obj = { 
-          obj with 
-            inside = new_inside
-        }
-        in
-        let e = self (EObject {value = obj; region = Region.ghost}) in 
+        let e = match filtered_object with 
+          hd :: rest -> 
+            let new_inside = (snd hd, rest) in
+            let obj = { 
+              obj with 
+                inside = new_inside
+            }
+            in 
+            self @@ EObject {value = obj; region = Region.ghost}
 
+        | [] -> e_unit ()
+        in
+        
         (* turn the object into a constructor *)
         e_constructor ~loc constructor e
 

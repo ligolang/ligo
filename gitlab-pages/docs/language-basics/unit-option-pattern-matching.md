@@ -105,6 +105,12 @@ to be fully written. So for increment that would be:
 let obj = { kind: "increment", amount: 3}
 ```
 
+or 
+
+```jsligo
+let obj2 = { kind: "reset" }
+```
+
 Pattern matching over a discriminated union type works like this:
 
 ```jsligo
