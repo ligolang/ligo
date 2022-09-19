@@ -557,6 +557,12 @@ and print_type_expr state = function
 | TInt s ->
     print_node   state "TInt";
     print_int (state#pad 1 0) s
+| TDisc u ->  
+    print_node   state "TDisc";
+    let objects = Utils.nsepseq_to_list u in
+    let apply len rank (v: field_decl reg ne_injection reg) = 
+      print_ne_injection print_field_decl (state#pad len rank) v.value    in
+    List.iteri ~f:(List.length objects |> apply) objects
 
 and print_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
 = fun f state ma ->

@@ -75,6 +75,20 @@ module Fold_helpers(M : Monad) = struct
        let* inside = self value.inside in
        let value = {value with inside} in
        return @@ TPar {value;region}
+    | TDisc t -> 
+      let field (element : field_decl reg  ) =
+         let* field_type = self element.value.field_type in
+         let value = {element.value with field_type} in
+         ok @@ {element with value}
+       in
+       let obj (element : field_decl reg ne_injection reg) =
+         let* ne_elements = bind_map_npseq field element.value.ne_elements in
+         let element = {element with value = {element.value with ne_elements}} in
+         (* let* value = bind_map_npseq field element.value in  *)
+         ok @@ element 
+       in
+       let* t = bind_map_npseq obj t in
+       return @@ TDisc t 
     | (TVar    _
       | TModA _
       | TInt _

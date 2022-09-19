@@ -3164,3 +3164,36 @@ contract: Bytes As ES6FUN ZWSP
 
 Ill-formed functional type expression.
 At this point, an opening parenthesis followed by parameters are expected.
+
+contract: Bytes As LBRACE Ident RBRACE VBAR ZWSP
+##
+## Ends in an error in state: 72.
+##
+## nsepseq(object_type,VBAR) -> object_type VBAR . nsepseq(object_type,VBAR) [ SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
+##
+## The known suffix of the stack is as follows:
+## object_type VBAR
+##
+
+Ill-formed discriminatory union. 
+At this point, another record type is expected.
+
+contract: Bytes As LBRACE Ident RBRACE VBAR Attr ZWSP
+##
+## Ends in an error in state: 73.
+##
+## object_type -> nseq(Attr) . LBRACE sep_or_term_list(field_decl,COMMA) RBRACE [ VBAR SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 39, spurious reduction of production nseq(Attr) -> Attr
+##
+
+Ill-formed record type.
+At this point, a record type is expected.
+

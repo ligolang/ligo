@@ -347,6 +347,9 @@ and pp_fun {value; _} =
 and pp_seq {value; _} =
   pp_nsepseq "," pp_expr value
 
+and pp_disc value  = 
+  pp_nsepseq "|" pp_object_type value
+
 and pp_type_expr: type_expr -> document = function
   TProd   t -> pp_cartesian t
 | TSum    t -> pp_sum_type t
@@ -358,6 +361,7 @@ and pp_type_expr: type_expr -> document = function
 | TString s -> pp_string s
 | TModA   t -> pp_module_access pp_type_expr t
 | TInt    t -> pp_int t
+| TDisc   t -> pp_disc t
 
 and pp_module_access : type a.(a -> document) -> a module_access reg -> document
 = fun f {value; _} ->
