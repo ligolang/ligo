@@ -39,7 +39,6 @@ module AST.Scope.Common
   , mergeScopeForest
   , withScopeForest
   , lookupEnv
-  , spine
   , addScopes
   , lookupContract
   ) where
@@ -307,15 +306,17 @@ lookupEnv name = getFirst . foldMap \decl ->
     guard (_sdName decl == name)
     return decl
 
+-- | return scoped declarations related to the range
 envAtPoint :: Range -> ScopeForest -> Scope
-envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= toList . spine r >>= Set.toList
+envAtPoint pos (ScopeForest sf ds) = do
+  let sp = sf >>= toList . spine pos >>= Set.toList
   map (ds Map.!) sp
-
-spine :: Range -> ScopeTree -> DList (Set DeclRef)
-spine r ((decls, r') :< trees)
-  | leq r r' = foldMap (spine r) trees `snoc` decls
-  | otherwise = mempty
+  where
+    -- find all nodes that spans the range and take their references
+    spine :: Range -> ScopeTree -> DList (Set DeclRef)
+    spine r ((decls, r') :< trees)
+      | leq r r' = foldMap (spine r) trees `snoc` decls
+      | otherwise = mempty
 
 addLocalScopes
   :: SomeLIGO ParsedInfo
