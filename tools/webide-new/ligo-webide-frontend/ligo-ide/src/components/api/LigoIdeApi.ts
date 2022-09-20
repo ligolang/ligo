@@ -11,8 +11,14 @@ export type CompileContractArgsApi = ProtocolArg & {
   main: string;
 };
 
+export type GenerateDeployScriptArgsApi = CompileContractArgsApi & {
+  name: string;
+  storage: string;
+};
+
 interface LigoIdeApiInterface {
   compileContract(args: CompileContractArgsApi): Promise<string>;
+  generateDeployScript(args: GenerateDeployScriptArgsApi): Promise<string>;
 }
 
 export default function LigoIdeApi(axiosInst: AxiosInstance): LigoIdeApiInterface {
@@ -23,6 +29,11 @@ export default function LigoIdeApi(axiosInst: AxiosInstance): LigoIdeApiInterfac
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       args.protocol = protocol.name;
       return axiosInst.post("/compile", args).then((resp: AxiosResponse<string>) => resp.data);
+    },
+    generateDeployScript: async (args: GenerateDeployScriptArgsApi) => {
+      return axiosInst
+        .post("/generate-deploy-script", args)
+        .then((resp: AxiosResponse<string>) => resp.data);
     },
   };
 }
