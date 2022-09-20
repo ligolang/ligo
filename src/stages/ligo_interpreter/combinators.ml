@@ -301,6 +301,7 @@ let tag_value : value -> int = function
   | V_Michelson_contract _ -> 9
   | V_Ast_contract _ -> 10
   | V_Gen _ -> 11
+  | V_location _ -> 12
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
@@ -343,7 +344,9 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Ast_contract { main ; views = _ }, V_Ast_contract { main = main' ; views = _ } -> Caml.compare main main'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
   | V_Gen v, V_Gen v' -> Caml.compare v v'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
+  | V_location loc, V_location loc' ->
+    Int.compare loc loc'
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _ | V_location _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _ | V_location _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

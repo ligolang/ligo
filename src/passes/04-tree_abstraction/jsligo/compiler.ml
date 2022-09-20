@@ -831,7 +831,7 @@ and compile_function_body_to_expression ~raise : CST.body -> AST.expression = fu
 and compile_let_to_declaration ~raise :  CST.attributes -> CST.val_binding Region.reg -> AST.declaration list =
     fun attributes let_binding ->
       let ({binders; type_params; lhs_type; expr = let_rhs; _} : CST.val_binding) = let_binding.value in
-      let lst = compile_let_binding ~raise ~const:true attributes let_rhs lhs_type type_params binders let_binding.region in
+      let lst = compile_let_binding ~raise attributes let_rhs lhs_type type_params binders let_binding.region in
       let aux : (type_expression option Binder.t * Types.attributes * CST.type_generics option * expression) -> declaration =
         fun (binder,attr,type_params,expr) ->
           (* This handle polymorphic annotation *)
@@ -909,14 +909,13 @@ and compile_pattern ~raise : CST.pattern -> type_expression option Binder.t * (_
 and filter_private (attributes: CST.attributes) =
   List.filter ~f:(fun v -> not @@ String.equal v.value "private") attributes
 
-and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (CST.colon * CST.type_expr) option -> CST.type_generics option -> CST.pattern -> Region.t -> (type_expression option Binder.t * Ast_imperative__.Types.attributes * _ * expression) list =
-  fun ~const attributes let_rhs type_expr type_params binders _region ->
+and compile_let_binding ~raise : CST.attributes -> CST.expr -> (CST.colon * CST.type_expr) option -> CST.type_generics option -> CST.pattern -> Region.t -> (type_expression option Binder.t * Ast_imperative__.Types.attributes * _ * expression) list =
+  fun attributes let_rhs type_expr type_params binders _region ->
   let attributes = compile_attributes attributes in
   let expr = compile_expression ~raise let_rhs in
   let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) type_expr in
   let aux = function
     | CST.PVar name -> (*function or const *)
-      if not const then assert false;
       let fun_binder = compile_variable name.value.variable in
       let expr = (match let_rhs with
         CST.EFun _ ->
@@ -990,7 +989,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
       let matchee = self_expr let_rhs in
       compile_object_let_destructuring ~raise ~const matchee o
     | _ ->
-      let lst = compile_let_binding ~raise ~const attributes let_rhs lhs_type type_params binders region in
+      let lst = compile_let_binding ~raise attributes let_rhs lhs_type type_params binders region in
       let aux (binder,attr,type_params,rhs) expr =
         match rhs.expression_content with
           E_assign {binder=b; _} ->
@@ -1014,7 +1013,10 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
             let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
             List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:rhs type_vars
           ) type_params in
+          if const then
           e_let_in ~loc: (Location.lift region) binder attr rhs expr
+          else
+          e_let_mut_in ~loc:(Location.lift region) binder attr rhs expr
         in
       fun init -> List.fold_right ~f:aux ~init lst
   in
@@ -1282,7 +1284,26 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
     in
     let d = D_type {type_binder = compile_type_var name; type_expr; type_attr=attributes} in
     [ Location.wrap ~loc:(Location.lift region) d ]
-  | SLet _ -> assert false
+  | SLet {value = {bindings; attributes; _}; region} -> (
+    (* Add deprecation warning (for implicit conversion to lets) *)
+    raise.warning (`Jsligo_deprecated_toplevel_let (Location.lift region));
+    let attributes =
+      if export then
+        filter_private attributes
+      else
+        attributes
+    in
+    let fst_binding = fst bindings in
+    let fst_binding = compile_let_to_declaration ~raise attributes fst_binding in
+    let bindings = List.map ~f:(fun (_, b) -> b) @@ snd bindings in
+    let rec aux result = function
+      binding :: remaining ->
+        let d = compile_let_to_declaration ~raise attributes binding in
+        aux (d @ result) remaining
+    | [] -> List.rev result
+    in
+    aux fst_binding bindings
+  )
   | SConst {value = {bindings; attributes; _}; _} -> (
     let attributes =
       if export then
