@@ -283,7 +283,7 @@ after the value name, with its type, then followed by the return type.
 Here is how you define a basic function that sums two integers:
 
 ```jsligo group=b
-let add = ([a, b]: [int, int]): int => a + b;
+let add = (a: int, b: int): int => a + b;
 ```
 
 You can call the function `add` defined above using the LIGO compiler
@@ -302,7 +302,7 @@ If the body contains more than a single expression, you use block
 between braces:
 
 ```jsligo group=b
-let myFun = ([x, y]: [int, int]): int => {
+let myFun = (x: int, y: int): int => {
   let doubleX = x + x;
   let doubleY = y + y;
   return doubleX + doubleY;
@@ -319,13 +319,13 @@ functions. In case we do not use an argument, we can use the wildcard
 identifier:
 
 ```jsligo
-let k = ([x, _] : [int, int]) : int => x;
+let k = (x: int, _: int) : int => x;
 ```
 
 or use an identifier starting with wildcard:
 
 ```jsligo
-let k_other = ([x, _y] : [int, int]) : int => x;
+let k_other = (x: int, _y: int) : int => x;
 ```
 
 </Syntax>
@@ -583,24 +583,23 @@ let rec fibo = ((n, n_1, n_0) : (int, int, int)): int =>
 </Syntax>
 <Syntax syntax="jsligo">
 
-At the moment, recursive function are limited to one, e.g., a tuple,
-parameter and recursion is limited to __tail recursion__, that is, the
+At the moment, recursion is limited to __tail recursion__, that is, the
 recursive call should be the last expression of the function.
 
 ```jsligo group=d
-let sum = ([n, acc] : [int, int]): int => {
-  if (n < 1) { 
-    return acc; 
-  } else { 
-    return sum ([n-1, acc + n]); 
+let sum = (n: int, acc: int): int => {
+  if (n < 1) {
+    return acc;
+  } else {
+    return sum (n-1, acc + n);
   };
 };
 
-let fibo = ([n, n_1, n_0] : [int, int, int]): int => {
+let fibo = (n: int, n_1: int, n_0: int): int => {
   if (n < 2) {
-    return  n_1; 
-  } else { 
-    return fibo ([n-1, n_1 + n_0, n_1]); 
+    return  n_1;
+  } else {
+    return fibo (n-1, n_1 + n_0, n_1);
   };
 };
 ```

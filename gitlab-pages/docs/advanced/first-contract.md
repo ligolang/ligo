@@ -127,14 +127,14 @@ type storage = int;
 
 type return_ = [list<operation>, storage];
 
-const add = ([n, store]: [int, storage]): storage => store + n;
-const sub = ([n, store]: [int, storage]): storage => store - n;
+const add = (n: int, store: storage): storage => store + n;
+const sub = (n: int, store: storage): storage => store - n;
 
-const main = ([action, store]: [parameter, storage]): return_ =>
+const main = (action: parameter, store: storage): return_ =>
   [list([]),
     (match (action, {
-     Increment: n => add ([n, store]),
-     Decrement: n => sub ([n, store])
+     Increment: n => add (n, store),
+     Decrement: n => sub (n, store)
     }))];
 ```
 

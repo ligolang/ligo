@@ -129,19 +129,19 @@ And here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm using tail recursion:
 
 ```jsligo group=a
-let iter = ([x,y]: [nat, nat]): nat => {
+let iter = (x: nat,y: nat): nat => {
   if (y == (0 as nat)) {
     return x;
   } else {
-    return iter ([y, x % y]);
+    return iter (y, x % y);
   };
 };
 
-let gcd2 = ([x,y] : [nat, nat]) : nat => {
+let gcd2 = (x: nat,y: nat) : nat => {
   if (x < y) {
-    return iter ([y, x]);
+    return iter (y, x);
   } else {
-    return iter ([x, y]);
+    return iter (x, y);
   }
 };
 ```

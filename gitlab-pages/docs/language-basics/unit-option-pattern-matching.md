@@ -472,7 +472,7 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let div = ([a, b]: [nat, nat]): option<nat> => {
+let div = (a: nat, b: nat): option<nat> => {
   if(b == (0 as nat)){
     return None();
   } else {

@@ -141,7 +141,7 @@ type parameter =
 
 type return_ = [list<operation>, storage];
 
-let main = ([action, store]: [parameter, storage]) : return_ => {
+let main = (action: parameter, store: storage) : return_ => {
   return [
     list([]),
     match(action, {
