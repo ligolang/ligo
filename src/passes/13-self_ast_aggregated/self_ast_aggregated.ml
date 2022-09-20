@@ -16,6 +16,7 @@ let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
      end
   | _ -> None
 
+
 let get_abstraction_tuple e =
   let open Ast_aggregated in
   match e.expression_content with
@@ -109,6 +110,7 @@ let inline_let : bool ref -> Ast_aggregated.expression -> Ast_aggregated.express
   | E_application _ ->
     (* This case tries to reduce
          `(fun x1 -> ... -> fun xn -> CONST(x1, ..., xn)) A1 ... An` to `CONST(A1, ... AN)` or
+         `(fun (x1, ..., xn) -> CONST(x1, ..., xn))(A1, ..., An)` to `CONST(A1, ... AN)` or
          `(fun (x1, ..., xn) -> CONST(x1, ..., xn))(A1, ..., An)` to `CONST(A1, ... AN)`
        It is needed to handle special constants in the stdlib
      *)

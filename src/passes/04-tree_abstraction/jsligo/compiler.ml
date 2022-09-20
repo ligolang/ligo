@@ -1190,13 +1190,22 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
           EProj {value = {expr = (EVar ev as v); _}; _} -> compile_expression ~raise v, ev
         | _ -> raise.error @@ wrong_matchee_disc s'.region
         in
+        let rec check_return statements =
+          match (Utils.nsepseq_rev statements) with
+            (CST.SBreak _, _) -> ()
+          | (SReturn _, _) -> ()
+          | (SBlock {value = {inside; _};_ }, _) -> check_return inside
+          | (SCond {value = {ifso; ifnot; _}; _}, _) -> 
+            check_return (ifso, []);
+            (match ifnot with 
+              Some (_, ifnot) -> check_return (ifnot, []);
+            | None -> ())
+          | (_ as s, _) -> raise.error @@ case_break_disc (CST.statement_to_region s)
+        in
         let cases = List.map ~f:(fun f -> 
           match f with 
             Switch_case {expr = EString (String v); statements = Some(statements); _} ->
-              (match Utils.nsepseq_rev (statements) with 
-                (SBreak _, _) -> ()
-              | (_ as s, _) -> raise.error @@ case_break_disc (CST.statement_to_region s)
-              );
+              check_return statements;
               let a = List.find_exn ~f:(fun {constructor; _} -> Poly.(constructor = v.value) ) data in
               let ty = if a.has_payload then 
                 let b = Binder.make (compile_variable payload) None in
@@ -1282,7 +1291,11 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
                 let e = e_sequence e update_vars_break in
                 Binding (fun x -> e_sequence (e_cond ~loc test e (e_unit ())) x)
               | Return e ->
-                Binding (fun x -> (e_cond ~loc test e x)))
+                Binding (fun x -> 
+                  match x with
+                  {expression_content = E_literal (Literal_unit); _} -> e
+                  | _ as x -> e_cond ~loc test e x)      
+            )
             in
             statements
           | Switch_default_case { statements=None ; kwd_default=_; colon=_} ->
@@ -1308,7 +1321,9 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
                 e_sequence (e_cond ~loc default_cond e (e_unit ())) x
               )
             | Return e -> Binding (fun x ->
-                e_cond ~loc default_cond e x)
+              match x with
+                {expression_content = E_literal (Literal_unit); _} -> e
+              | _ as x -> e_cond ~loc default_cond e x)
               )
             in
             statements

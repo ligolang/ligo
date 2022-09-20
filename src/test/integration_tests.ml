@@ -2289,6 +2289,27 @@ let disc_union_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "main" data (e_int 17) in
   ()
 
+let switch_return_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/switch_return.jsligo" in
+  let data = e_constructor "Increment" (e_record_ez [("amount" , e_int 42)]) in
+  let _ = expect_eq ~raise program "main" data (e_int 51) in
+
+  let data = e_constructor "Decrement" (e_record_ez [("amount" , e_int 5)]) in
+  let _ = expect_eq ~raise program "main" data (e_int 2) in
+
+  let data = e_constructor "Decrement" (e_record_ez [("amount" , e_int 3)]) in
+  let _ = expect_eq ~raise program "main" data (e_int 5) in
+
+  let data = e_constructor "Reset" (e_unit()) in
+  let _ = expect_eq ~raise program "main" data (e_int 3) in
+
+  let _ = expect_eq ~raise program "main2" (e_int 0) (e_int 11) in
+  let _ = expect_eq ~raise program "main2" (e_int 1) (e_int 5) in
+  let _ = expect_eq ~raise program "main2" (e_int 2) (e_int 3) in
+  let _ = expect_eq ~raise program "main2" (e_int 3) (e_int (-1)) in
+
+  ()
+
 let main = test_suite "Integration (End to End)"
   @@ [
 
@@ -2481,4 +2502,5 @@ let main = test_suite "Integration (End to End)"
     test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo;
     test_w "discriminated_union (jsligo)" disc_union_jsligo;
     test_w "ternary (jsligo)" ternary_jsligo;
+    test_w "switch_return (jsligo)" switch_return_jsligo;
   ]
