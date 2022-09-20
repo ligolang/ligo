@@ -23,6 +23,12 @@ main =
             <> metavar "STRING"
             <> help "path to LIGO binary"
           )))
+        <*> (optional (strOption
+          ( long "tezos-client-path"
+            <> short 't'
+            <> metavar "STRING"
+            <> help "path to tezos-client binary"
+          )))
         <*> option auto
           ( long "port"
             <> short 'p'
