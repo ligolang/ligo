@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: Add `.ocamlformat` configs to the compiler
+merge_request: '2003'
+title: Add `.ocamlformat` Configurations
+type: internal
