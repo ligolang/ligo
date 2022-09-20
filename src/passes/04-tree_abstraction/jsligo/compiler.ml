@@ -882,6 +882,26 @@ and compile_parameter ~raise : CST.expr -> _ Binder.t * (expression -> expressio
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ Value_var.fresh ~loc ~name:"()" ()
+  | EObject obj' -> 
+    let obj, loc = r_split obj' in
+    let var = Value_var.fresh ~loc () in
+    let aux (p:CST.property) (binder_lst,fun_') =
+      match p with 
+        Punned_property {value = (EVar v as value); _} -> 
+        let field_name = v.value in
+        let binder,fun_ = compile_parameter ~raise value in
+        ((field_name,binder)::binder_lst,fun_ <@ fun_')
+      | Property {value = {name = EVar v; value; _}; _} -> 
+        let field_name = v.value in
+        let binder,fun_ = compile_parameter ~raise value in
+        ((field_name,binder)::binder_lst,fun_ <@ fun_')
+      | _ -> raise.error @@ not_a_valid_parameter (CST.EObject obj')
+    in
+    let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],fun e -> e) @@ npseq_to_list obj.inside in
+    let expr = fun expr -> e_matching_record ~loc (e_variable var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:(Fn.compose Binder.get_ascr snd) binder_lst in
+    let ascr = Option.map ~f:(t_tuple) ascr in
+    return ?ascr expr var
   | _ -> raise.error @@ not_a_valid_parameter expr
 
 
