@@ -337,7 +337,9 @@ addLocalScopes tree forest =
 
     , Descent \i (NameDecl t) -> do
         let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, NameDecl t)
+        -- TODO: This is temporary solution developed in LIGO-700, and should be fixed in LIGO-830
+        let declaredScope = Map.lookup (DeclRef t (getRange i)) (sfDecls forest)
+        return ((toList declaredScope <> env) :> Just TermLevel :> i, NameDecl t)
 
     , Descent \i (Ctor t) -> do
         let env = envAtPoint (getPreRange i) forest
