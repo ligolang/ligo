@@ -165,8 +165,8 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes_final = merge_same_scopes (scopes @ scopes') in
         defs' @ defs, refs' @ refs, tenv, scopes_final
       | E_lambda { binder ; result ; output_type = _ } ->
-        let var = Binder.get_var binder in
-        let core_type = Binder.get_ascr binder in
+        let var = Param.get_var binder in
+        let core_type = Param.get_ascr binder in
         let def =
           if VVar.is_generated var then [] else
           let binder_loc =  VVar.get_location var in
@@ -184,6 +184,39 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let defs, refs, tenv, scopes =  expression tenv struct_ in
         let defs', refs', tenv, scopes' = expression tenv update in
         defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
+      | E_while { cond; body } ->
+        let defs, refs, tenv, scopes =  expression tenv cond in
+        let defs', refs', tenv, scopes' = expression tenv body in
+        defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
+      | E_for { binder; start; incr; final; f_body } ->
+        let def =
+          if VVar.is_generated binder then [] else
+          let binder_loc =  VVar.get_location binder in
+          [Misc.make_v_def ~with_types tenv.bindings Local binder binder_loc start.location]
+        in
+        let defs_start, refs_start, tenv, scopes1 = expression tenv start in
+        let defs_incr, refs_incr, tenv, scopes2 = expression tenv incr in
+        let defs_final, refs_final, tenv, scopes3 = expression tenv final in
+        let defs_body, refs_body, tenv, scopes4 = expression tenv f_body in
+        let scopes4 = add_defs_to_scopes def scopes4 in
+        let scopes = merge_same_scopes scopes1 @ merge_same_scopes scopes2 @ merge_same_scopes scopes3 @ scopes4 in
+        let defs, refs_body = update_references refs_body def in
+        defs_start @ defs_incr @ defs_final @ defs_body @ defs, refs_start @ refs_incr @ refs_final @ refs_body, tenv, add_defs_to_scopes def scopes
+      | E_for_each { fe_binder = binder1, binder2; collection; fe_body; _ } ->
+        let binders = binder1 :: Option.to_list binder2 in
+        let defs = 
+          binders
+          |> List.filter ~f:VVar.is_generated
+          |> List.map ~f:(fun binder ->
+            let loc = VVar.get_location binder in
+            Misc.make_v_def ~with_types tenv.bindings Local binder loc collection.location)
+        in
+        let defs_coll, refs_coll, tenv, scopes_coll = expression tenv collection in
+        let defs_body, refs_body, tenv, scopes_body = expression tenv fe_body in
+        let scopes_body = add_defs_to_scopes defs scopes_body in
+        let scopes = merge_same_scopes scopes_coll @ scopes_body in
+        let defs, refs_body = update_references refs_body defs in
+        defs_body @ defs_coll @ defs, refs_body @ refs_coll, tenv, scopes
       | E_record e_lable_map ->
         let defs, refs, tenv, scopes = Record.LMap.fold (fun _ e (defs, refs, tenv, scopes) ->
           let defs', refs', tenv, scopes' = expression tenv e in
@@ -207,6 +240,7 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes = merge_same_scopes scopes @ scopes' in
         let defs, refs_result = update_references refs_result [def] in
         defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
+      | E_let_mut_in { let_binder ; rhs ; let_result ; _ }
       | E_let_in { let_binder ; rhs ; let_result ; _ } ->
         let var = Binder.get_var let_binder in
         let core_type = Binder.get_ascr let_binder in
@@ -227,8 +261,8 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
           Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings Local fun_name binder_loc (result.location)
         in
         let def_par =
-          let var = Binder.get_var binder in
-          let core_type = Binder.get_ascr binder in
+          let var = Param.get_var binder in
+          let core_type = Param.get_ascr binder in
           if VVar.is_generated var then [] else
           let binder_loc =  VVar.get_location var in
           [Misc.make_v_def ~with_types ~core_type tenv.bindings Local var binder_loc (result.location)]

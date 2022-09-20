@@ -19,11 +19,12 @@ let rec extract_variable_types :
     let aux : bindings_map -> Ast_typed.expression -> bindings_map = fun env exp ->
       let return = add env in
       match exp.expression_content with
-      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _
+      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _ | E_deref _ | E_while _
       | E_type_abstraction _ | E_mod_in _
       | E_record _ | E_accessor _ | E_update _ | E_constant _ -> return []
       | E_type_inst _ -> return [] (* TODO *)
       | E_variable v -> return [(v,exp.type_expression)]
+      (* Wait what??? *)
       | E_lambda { binder ; _ } ->
         let rec in_t t = match t.Ast_typed.type_content with
           | T_arrow { type1 ; _ } -> type1
@@ -31,13 +32,13 @@ let rec extract_variable_types :
           | _ -> failwith "lambda does not have type arrow"
         in
         let in_t = in_t exp.type_expression in
-        return [Binder.get_var binder,in_t]
+        return [Param.get_var binder,in_t]
       | E_recursive { fun_name ; fun_type ; lambda = { binder ; _ } } ->
         let in_t = match fun_type.type_content with
           | T_arrow { type1 ; _ } -> type1
           | _ -> failwith "rec fun does not have type arrow"
         in
-        return [ (fun_name , fun_type) ; (Binder.get_var binder , in_t) ]
+        return [ (fun_name , fun_type) ; (Param.get_var binder , in_t) ]
       | E_let_in { let_binder ; rhs ; _ } ->
         return [(Binder.get_var let_binder,rhs.type_expression)]
       | E_matching { matchee ; cases } -> (
@@ -65,6 +66,24 @@ let rec extract_variable_types :
           return (List.map ~f:aux @@ Record.LMap.to_list fields)
       )
       | E_module_accessor { element=e ; _ } -> return [(e,exp.type_expression)]
+      (* TODO, is this semantically correct? *)
+      | E_let_mut_in _ ->
+        return []
+      | E_for { binder; start; _ } ->
+        return [ binder, start.type_expression ]
+      | E_for_each { fe_binder = binder1, Some binder2; collection; _ } ->
+        let key_type, val_type = Ast_typed.get_t_map_exn collection.type_expression in
+        return [ binder1, key_type; binder2, val_type ]
+      | E_for_each { fe_binder = binder, None; collection; _ } ->
+        let type_ = collection.type_expression in
+        if Ast_typed.is_t_set type_ then
+          return [ binder, Ast_typed.get_t_set_exn type_ ]
+        else if Ast_typed.is_t_list type_ then
+          return [ binder, Ast_typed.get_t_list_exn type_ ]
+        else
+          failwith "E_for_each type with 1 binder should have set or list type"
+
+
     in
     match decl with
     | D_value { attr = { hidden = true ; _ } ; _ } -> prev

@@ -24,6 +24,7 @@ and func_val = {
     rec_name : Value_var.t option ;
     orig_lambda : Ast_aggregated.expression ;
     arg_binder : Value_var.t ;
+    arg_mut_flag : Param.mutable_flag;
     body : Ast_aggregated.expression ;
     env : env ;
   }
@@ -83,8 +84,11 @@ and value =
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Gen of gen
+  | V_location of location
 
 and calltrace = Location.t list
+
+and location = int
 
 type bigmap_state = (value * value) list
 type bigmap_data = {
