@@ -46,12 +46,19 @@ import Control.Monad.Except (throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
+import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.HashSet qualified as HS
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
 import Duplo (layer)
 import Fmt (Buildable (..), genericF)
+import Parser (Info)
+import Range (HasRange (getRange), Range (..))
+import Text.Interpolation.Nyan
+import UnliftIO (MonadUnliftIO)
+import Unsafe qualified
+
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, move,
@@ -64,10 +71,6 @@ import Morley.Michelson.Interpret
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
-import Parser (Info)
-import Range (HasRange (getRange), Range (..))
-import Text.Interpolation.Nyan
-import Unsafe qualified
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
@@ -202,7 +205,7 @@ data RecursiveOrCycleEntry = RecursiveOrCycleEntry
 
 -- | State at some point of execution, used by Morley interpreter and by
 -- our snapshots collector.
-data CollectorState = CollectorState
+data CollectorState m = CollectorState
   { csInterpreterState :: InterpreterState
     -- ^ State of the Morley interpreter.
   , csStackFrames :: NonEmpty StackFrame
@@ -217,6 +220,8 @@ data CollectorState = CollectorState
   , csRecursiveOrCycleEntries :: HashMap LigoRange RecursiveOrCycleEntry
     -- ^ @RecursiveOrCycleEntry@ for each cycle or
     -- recursive function expression.
+  , csLoggingFunction :: String -> m ()
+    -- ^ Function for logging some useful debugging info.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -227,7 +232,7 @@ makeLensesWith postfixLFields ''CollectorState
 
 -- | Lens giving an access to the bottom-most frame - which is also
 -- the only active one.
-csActiveStackFrameL :: Lens' CollectorState StackFrame
+csActiveStackFrameL :: Lens' (CollectorState m) StackFrame
 csActiveStackFrameL = csStackFramesL . __head
   where
     __head :: Lens' (NonEmpty a) a
@@ -235,29 +240,40 @@ csActiveStackFrameL = csStackFramesL . __head
 
 -- | Our monadic stack, allows running interpretation and making snapshot
 -- records.
-type CollectingEvalOp =
+type CollectingEvalOp m =
   -- Including ConduitT to build snapshots sequence lazily.
   -- Normally ConduitT lies on top of the stack, but here we put it under
   -- ExceptT to make it record things even when a failure occurs.
   ExceptT MichelsonFailureWithStack $
   ConduitT () InterpretSnapshot $
-  RWST ContractEnv MorleyLogsBuilder CollectorState $
-  Identity
+  RWST ContractEnv MorleyLogsBuilder (CollectorState m) $
+  m
 
 -- TODO: Consider making CollectingEvalOp a newtype to avoid this overlapping
 -- instance.
-instance {-# OVERLAPS #-} InterpreterStateMonad CollectingEvalOp where
+instance {-# OVERLAPS #-} (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
   stateInterpreterState f =
     lift $ lift $ zoom csInterpreterStateL $ state f
 
 stkElValue :: StkEl v -> SomeValue
 stkElValue stkEl = let v = seValue stkEl in withValueTypeSanity v (SomeValue v)
 
+logMessage :: (Monad m) => String -> CollectingEvalOp m ()
+logMessage str = do
+  logger <- use csLoggingFunctionL
+  lift $ lift $ lift $ logger [int||[SnapshotCollecting] #{str}|]
+
 -- | Executes the code and collects snapshots of execution.
-runInstrCollect :: InstrRunner CollectingEvalOp
+runInstrCollect :: forall m. (Monad m) => InstrRunner (CollectingEvalOp m)
 runInstrCollect = \case
   -- TODO: use ConcreteMeta from Morley once available
   instr@(T.Meta (T.SomeMeta (cast -> Just (embeddedMeta :: EmbeddedLigoMeta))) _) -> \stack -> do
+    logMessage
+      [int||
+        Got meta: #{embeddedMeta}
+        for instruction: #{instr}
+      |]
+
     preExecutedStage embeddedMeta (refineStack stack)
     newStack <- runInstrImpl runInstrCollect instr stack
     postExecutedStage embeddedMeta (refineStack stack) (refineStack newStack)
@@ -281,6 +297,12 @@ runInstrCollect = \case
         -- while the first list (@env@) - only stack related to the current
         -- stack frame. And this is good.
         let stackHere = zipWith StackItem env stack
+
+        logMessage
+          [int||
+            Stack at preExecutedStage: #{stackHere}
+          |]
+
         csActiveStackFrameL . sfStackL .= stackHere
 
     -- What is done right after the instruction is executed.
@@ -289,6 +311,12 @@ runInstrCollect = \case
         -- `location` point to instructions that end expression evaluation,
         -- we can record the computed value
         let evaluatedVal = safeHead newStack
+
+        logMessage
+          [int||
+            Just evaluated: #{evaluatedVal}
+          |]
+
         recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
 
     -- Save a snapshot.
@@ -299,8 +327,14 @@ runInstrCollect = \case
     recordSnapshot
       :: LigoRange
       -> InterpretEvent
-      -> CollectingEvalOp ()
+      -> CollectingEvalOp m ()
     recordSnapshot loc event = unless (isLigoStdLib $ lrFile loc) do
+      logMessage
+        [int||
+          Recording location #{loc}
+          For event: #{event}
+        |]
+
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
@@ -344,9 +378,9 @@ runInstrCollect = \case
       where
         toLigoPosition (line, col, _) = LigoPosition (Unsafe.fromIntegral line) (Unsafe.fromIntegral $ col - 1)
 
-    getStatements :: LigoRange -> CollectingEvalOp [LigoRange]
+    getStatements :: LigoRange -> CollectingEvalOp m [LigoRange]
     getStatements ligoRange
-      | lrFile ligoRange == "" = pure []
+      | isLigoStdLib $ lrFile ligoRange = pure []
       | otherwise = do
           let range@Range{..} = ligoRangeToRange ligoRange
 
@@ -358,10 +392,10 @@ runInstrCollect = \case
           statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
           pure $ rangeToLigoRange . getRange <$> statements
       where
-        filterAndReverseStatements :: [LIGO Info] -> CollectingEvalOp [LIGO Info]
+        filterAndReverseStatements :: [LIGO Info] -> CollectingEvalOp m [LIGO Info]
         filterAndReverseStatements = go []
           where
-            go :: [LIGO Info] -> [LIGO Info] -> CollectingEvalOp [LIGO Info]
+            go :: [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
             go acc [] = pure acc
             go acc (x@(layer -> Just AST.Assign{}) : xs) = decide x acc xs
             go acc (x@(layer -> Just AST.BConst{}) : xs) = decide x acc xs
@@ -373,7 +407,7 @@ runInstrCollect = \case
                 _ -> go acc xs
             go acc (_ : xs) = go acc xs
 
-            decide :: LIGO Info -> [LIGO Info] -> [LIGO Info] -> CollectingEvalOp [LIGO Info]
+            decide :: LIGO Info -> [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
             decide x acc xs = do
               let accept = go (x : acc) xs
               let deny = go acc xs
@@ -448,17 +482,16 @@ runInstrCollect = \case
                     nodes = getRange <$> spineAtPoint (getRange node) tree
 
 runCollectInterpretSnapshots
-  :: CollectingEvalOp a
+  :: (MonadUnliftIO m, MonadActive m)
+  => CollectingEvalOp m a
   -> ContractEnv
-  -> CollectorState
+  -> CollectorState m
   -> Value st
-  -> InterpretHistory InterpretSnapshot
+  -> m (InterpretHistory InterpretSnapshot)
 runCollectInterpretSnapshots act env initSt initStorage =
   -- This is safe because we yield at least two snapshots
-  InterpretHistory $
-  (Unsafe.fromJust . twoElemFromList) $
-  runIdentity $
-  C.sourceToList do
+  InterpretHistory . Unsafe.fromJust . twoElemFromList <$>
+  lazyConsume do
     C.yield InterpretSnapshot
       { isStackFrames = csStackFrames initSt
       , isStatus = InterpretStarted
@@ -507,8 +540,9 @@ runCollectInterpretSnapshots act env initSt initStorage =
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.
 collectInterpretSnapshots
-  :: forall cp st arg.
-     FilePath
+  :: forall m cp st arg.
+     (MonadUnliftIO m, MonadActive m)
+  => FilePath
   -> Text
   -> Contract cp st
   -> EntrypointCallT cp arg
@@ -516,8 +550,9 @@ collectInterpretSnapshots
   -> Value st
   -> ContractEnv
   -> HashMap FilePath (LIGO Info)
-  -> InterpretHistory InterpretSnapshot
-collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts =
+  -> (String -> m ())
+  -> m (InterpretHistory InterpretSnapshot)
+collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger =
   runCollectInterpretSnapshots
     (runInstrCollect (unContractCode cCode) initStack)
     env
@@ -541,6 +576,7 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       , csParsedFiles = parsedContracts
       , csRecordedRanges = HS.empty
       , csRecursiveOrCycleEntries = mempty
+      , csLoggingFunction = logger
       }
 
 makePrisms ''InterpretStatus

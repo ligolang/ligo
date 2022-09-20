@@ -21,8 +21,8 @@ import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..),
   DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
-  HasSpecificMessages (..), RIO, RioContext (..), StopEventDesc (..), StoppedReason (..),
-  dsDebuggerState, dsVariables, pushMessage, RequestBase (..))
+  HasSpecificMessages (..), RIO, RequestBase (..), RioContext (..), StopEventDesc (..),
+  StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
@@ -35,8 +35,9 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
+import UnliftIO (withRunInIO)
 import UnliftIO.Directory (doesFileExist)
-import UnliftIO.Exception (fromEither, throwIO, try, Handler (Handler), catches)
+import UnliftIO.Exception (Handler (Handler), catches, fromEither, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Language.LIGO.DAP.Variables
@@ -538,18 +539,20 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         allLocs <- getAllLocs
         parsedContracts <- getParsedContracts
 
-        let his =
-              collectInterpretSnapshots
-                program
-                (fromString entrypoint)
-                contract
-                epc
-                arg
-                storage
-                dummyContractEnv
-                parsedContracts
+        his <-
+          withRunInIO \unlifter ->
+            collectInterpretSnapshots
+              program
+              (fromString entrypoint)
+              contract
+              epc
+              arg
+              storage
+              dummyContractEnv
+              parsedContracts
+              (unlifter . logMessage)
 
-            ds = DebuggerState
+        let ds = DebuggerState
               { _dsSnapshots = playInterpretHistory his
               , _dsSources =
                   DebugSource mempty <$>

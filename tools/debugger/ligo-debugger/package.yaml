@@ -68,6 +68,7 @@ library:
     - aeson
     - bytestring
     - conduit
+    - conduit-extra
     - containers
     - data-default
     - directory
