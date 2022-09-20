@@ -1,0 +1,5 @@
+author: SanderSpies
+description: Add support to destructure objects in function parameters.
+merge_request: '2002'
+title: JsLIGO Object destructuring in parameters
+type: changed
