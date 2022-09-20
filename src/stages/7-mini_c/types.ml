@@ -120,6 +120,7 @@ and expression_content =
   | E_assign of var_name * expression
   | E_for_each of expression * type_expression * (binder list * expression)
   | E_for of expression * expression * expression * (binder * expression)
+  (* (start, final, incr, (binder, body)) *)
   | E_while of expression * expression
 
 

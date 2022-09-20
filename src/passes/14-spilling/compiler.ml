@@ -572,12 +572,48 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | _ ->
           raise.error (raw_michelson_must_be_seq ae.location code)
     )
-  | E_let_mut_in _ -> failwith ("TODO "^__LOC__)
-  | E_deref _ -> failwith ("TODO "^__LOC__)
-  | E_assign _ -> failwith ("TODO "^__LOC__)
-  | E_for _ -> failwith ("TODO "^__LOC__)
-  | E_for_each _ -> failwith ("TODO "^__LOC__)
-  | E_while _ -> failwith ("TODO "^__LOC__)
+  | E_let_mut_in { let_binder; rhs; let_result; attr = _ } ->
+    let binder = compile_binder ~raise let_binder in
+    let rhs = self rhs in
+    let let_result = self let_result in
+    return @@ E_let_mut_in (rhs, (binder, let_result)) 
+  | E_deref mut_var -> return @@ E_deref mut_var 
+  | E_assign { binder; expression } ->
+    let expression = self expression in
+    return @@ E_assign (Binder.get_var binder, expression)
+  | E_for { start; final; incr; binder; f_body } -> 
+    let type_ = compile_type ~raise start.type_expression in
+    let start = self start in
+    let final = self final in
+    let incr = self incr in
+    let binder = (binder, type_) in
+    let body = self f_body in
+    return @@ E_for (start, final, incr, (binder, body))
+  | E_for_each { fe_binder = binder1, Some binder2; collection; fe_body; _ } ->
+    let type_ = compile_type ~raise collection.type_expression in
+    let key_type, val_type = 
+      Ast_aggregated.get_t_map_exn collection.type_expression
+    in
+    let binders = [ binder1, compile_type ~raise key_type; binder2, compile_type ~raise val_type ] in
+    let collection = self collection in
+    let body = self fe_body in
+    return @@ E_for_each (collection, type_, (binders, body))
+  | E_for_each { fe_binder = binder1, None; collection; fe_body; _ } ->
+    let type_ = compile_type ~raise collection.type_expression in
+    let elt_type = 
+      let type_ = collection.type_expression in
+      if is_t_list type_ then get_t_list_exn type_
+      else if is_t_set type_ then get_t_set_exn type_
+      else failwith "Expected set or list type for for-each loop (should have been caught earlier)"
+    in
+    let binders = [ binder1, compile_type ~raise elt_type ] in
+    let collection = self collection in
+    let body = self fe_body in
+    return @@ E_for_each (collection, type_, (binders, body))
+  | E_while { cond; body } ->
+    let cond = self cond in
+    let body = self body in
+    return @@ E_while (cond, body)
 
 and compile_lambda ~raise l fun_type =
   let { binder ; output_type ; result } : _ Lambda.t = l in
@@ -589,6 +625,10 @@ and compile_lambda ~raise l fun_type =
   let closure = E_closure { binder; body } in
   (* TODO this ~loc is wrong, the actual location is not in scope here? *)
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
+
+and compile_binder ~raise binder = 
+  let ascr = compile_type ~raise (Binder.get_ascr binder) in
+  (Binder.get_var binder, ascr)
 
 (* ast_aggregated has mutable lambda parameters, for now, mini_c does
    not. so here we will translate:
