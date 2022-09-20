@@ -791,7 +791,7 @@ type parameter =
    ["Left", int]
  | ["Right", int];
 
-let main = ([p, x]: [parameter, storage]): [list<operation>, storage] =>
+let main = (p: parameter, x: storage): [list<operation>, storage] =>
   [list ([]), match(p, {
     Left: (i: int) => x - i,
     Right: (i: int) => x + i
@@ -875,7 +875,7 @@ type parameter = int;
 
 type x = | ["Left", int];
 
-let main = ([p, s]: [parameter, storage]): [list<operation>, storage] => {
+let main = (p: parameter, s: storage): [list<operation>, storage] => {
   let contract =
     match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), {
       Some: c => c,

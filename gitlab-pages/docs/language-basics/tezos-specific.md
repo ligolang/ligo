@@ -108,7 +108,7 @@ let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let check_hash_key = ([kh1, k2]: [key_hash, key]): [bool, key_hash] => {
+let check_hash_key = (kh1: key_hash, k2: key): [bool, key_hash] => {
   let kh2: key_hash = Crypto.hash_key(k2);
   return [(kh1 == kh2), kh2];
 };
@@ -163,7 +163,7 @@ let check_signature =
 
 ```jsligo group=c
 let check_signature =
-  ([pk, signed, msg]: [key, signature, bytes]): bool =>
+  (pk: key, signed: signature, msg: bytes): bool =>
   Crypto.check(pk, signed, msg);
 ```
 
@@ -255,7 +255,7 @@ let origination : (operation, address) = Tezos.create_contract (
 
 ```jsligo group=e
 let origination : [operation, address] = Tezos.create_contract (
-  ([p, s]: [nat,string]): [list<operation>, string] => [list([]), s],
+  (p: nat, s: string): [list<operation>, string] => [list([]), s],
   None(),
   3 as tez,
   "initial_storage");

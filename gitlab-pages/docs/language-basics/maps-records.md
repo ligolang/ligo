@@ -301,7 +301,7 @@ type vector = {dx: int, dy: int};
 
 let origin: point = {x: 0, y: 0, z: 0};
 
-let xy_translate = ([p, vec]: [point, vector]): point =>
+let xy_translate = (p: point, vec: vector): point =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
@@ -789,7 +789,7 @@ let force_access = ((key, moves) : (address, register)) : move => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let force_access = ([key, moves]: [address, register]): move => {
+let force_access = (key: address, moves: register): move => {
   return match(Map.find_opt (key, moves), {
    Some: move => move,
    None: () => failwith("No move.")
@@ -945,7 +945,7 @@ let delete = ((key, moves) : (address, register)) : register =>
 In JsLIGO, we use the predefined function `Map.remove` as follows:
 
 ```jsligo group=maps
-let delete = ([key, moves]: [address, register]): register =>
+let delete = (key: address, moves: register): register =>
   Map.remove(key, moves);
 ```
 
@@ -1011,7 +1011,7 @@ let iter_op = (m : register) : unit => {
 
 ```jsligo group=maps
 let iter_op = (m: register): unit => {
-  let predicate = ([i, j]: [address, move]) => assert(j[0] > 3);
+  let predicate = (i: address, j: move) => assert(j[0] > 3);
   Map.iter(predicate, m);
 };
 ```
@@ -1061,7 +1061,7 @@ let map_op = (m : register) : register => {
 
 ```jsligo group=maps
 let map_op = (m: register): register => {
-  let increment = ([_, j]: [address, move]) => [j[0], j[1] + 1];
+  let increment = (_: address, j: move) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
 ```
@@ -1115,7 +1115,7 @@ let fold_op = (m : register) : int => {
 
 ```jsligo group=maps
 let fold_op = (m: register): int => {
-  let folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
+  let folded = (i: int, j: [address, move]) => i + j[1][1];
   return Map.fold(folded, m, 5);
 };
 ```
