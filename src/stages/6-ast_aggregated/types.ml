@@ -31,13 +31,13 @@ and row_element = type_expression Rows.row_element_mini_c
 
 and type_expression = {
     type_content : type_content;
-    source_type : Ast_typed.type_expression option[@compare.ignore] [@hash.ignore] ;
-    location : Location.t[@compare.ignore] [@hash.ignore] ;
-    orig_var : Type_var.t option [@compare.ignore] [@hash.ignore] ;
+    source_type : Ast_typed.type_expression option [@equal.ignore] [@compare.ignore] [@hash.ignore] ;
+    location : Location.t [@equal.ignore] [@compare.ignore] [@hash.ignore] ;
+    orig_var : Type_var.t option [@equal.ignore] [@compare.ignore] [@hash.ignore] ;
   }
 and type_expression_list = type_expression list
 and ty_expr = type_expression
-  [@@deriving eq,compare,yojson,hash]
+  [@@deriving equal,compare,yojson,hash]
 
 module ValueAttr = struct
   type t = {
@@ -71,6 +71,20 @@ module ValueAttr = struct
 
 end
 
+module ModuleAttr = struct
+  type t = { public: bool ; hidden : bool }
+    [@@deriving eq,compare,yojson,hash]
+
+  open Format
+  let pp_if_set str ppf attr =
+    if attr then fprintf ppf "[@@%s]" str
+    else fprintf ppf ""
+  let pp ppf { public ; hidden } =
+    fprintf ppf "%a%a"
+      (pp_if_set "private") (not public)
+      (pp_if_set "hidden") hidden
+
+end
 module Access_label = struct
   type 'a t = Label.t
   let equal _ = Label.equal

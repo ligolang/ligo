@@ -26,7 +26,7 @@ class LigoAT0490 < Formula
 
   def install
     # ligo version is taken from the environment variable in build-time
-    ENV["LIGO_VERSION"] = 0.49.0
+    ENV["LIGO_VERSION"] = "0.49.0"
     # avoid opam prompts
     ENV["OPAMYES"] = "true"
 

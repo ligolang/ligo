@@ -13,7 +13,7 @@ open Ligo_prim
 
 let debug = false
 let assertions = false
-let local_pos : Context.pos list ref = ref []
+(* let local_pos : Context.pos list ref = ref [] *)
 
 (* let curr_pos () : Context.pos = List.hd_exn !local_pos *)
 let pp_local_context ppf ctx = Context.pp ppf ctx
@@ -1308,9 +1308,7 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
       , return
         @@ D_type { type_binder; type_expr; type_attr = { public; hidden } } )
     | D_value { binder; attr; expr } ->
-      let ctx, pos = Context.mark ctx in
-      local_pos := pos :: !local_pos;
-      let var = Binder.get_var binder in
+      let var  = Binder.get_var binder in
       let ascr = Binder.get_ascr binder in
       let expr =
         Option.value_map ascr ~default:expr ~f:(fun ascr ->
@@ -1321,8 +1319,6 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
         trace ~raise (constant_declaration_tracer loc var expr ascr)
         @@ infer_expression ~options ~ctx expr
       in
-      local_pos := List.tl_exn !local_pos;
-      let ctx = Context.remove_pos ctx ~pos in
       let attr = type_value_attr attr in
       (* if debug then Format.printf "Ctx After Decl: %a\n" Context.pp_ ctx; *)
       ( ctx
@@ -1412,16 +1408,12 @@ let type_declaration ~raise ~options ?env decl =
 let type_expression ~raise ~options ?env ?tv_opt expr =
   let ctx = Context.init ?env () in
   let ctx, _type_, expr =
-    let ctx, pos = Context.mark ctx in
-    local_pos := pos :: !local_pos;
     match tv_opt with
     | Some type_ ->
       let ctx, expr = check_expression ~raise ~options ~ctx expr type_ in
-      local_pos := List.tl_exn !local_pos;
       ctx, type_, expr
     | None ->
       let ctx, _type, expr = infer_expression ~raise ~options ~ctx expr in
-      local_pos := List.tl_exn !local_pos;
       ctx, _type, expr
   in
   Elaboration.run_expr ~ctx ~raise expr

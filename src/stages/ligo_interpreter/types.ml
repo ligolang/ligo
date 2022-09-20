@@ -48,6 +48,7 @@ and constant_val =
   | C_unit
   | C_bool of bool
   | C_int of Z.t
+  | C_int64 of Int64.t
   | C_nat of Z.t
   | C_timestamp of Z.t
   | C_string of string

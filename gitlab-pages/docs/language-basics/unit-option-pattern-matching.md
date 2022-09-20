@@ -80,6 +80,64 @@ let n : unit = unit;
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+## Discriminated union type
+
+The simplest form of pattern matching in JsLIGO is with help of a discriminated
+union type, which should be familiar for developers coming from TypeScript.
+
+```jsligo
+type foo = 
+  { kind: "increment", amount: int}
+| { kind: "decrement", amount: int}
+| { kind: "reset"}
+```
+
+Here, the `kind` field is unique among the objects. If not, an error will be 
+generated. Also, if multiple fields are present which can be used as unique 
+field, only the first unique field will be used. 
+
+Creating an object from a discriminated union type requires all the fields 
+to be fully written. So for increment that would be:
+
+```jsligo 
+let obj = { kind: "increment", amount: 3}
+```
+
+or 
+
+```jsligo
+let obj2 = { kind: "reset" }
+```
+
+Pattern matching over a discriminated union type works like this:
+
+```jsligo
+let foo = (item: foo) => {
+  let state = 0;
+  switch(item.kind) {
+    case "increment":
+      state += item.amount;
+      break
+    case "decrement":
+      state -= item.amount;
+      break
+    case "reset":
+      state = 0;
+      break
+  }
+}
+```
+
+Note that all cases of the discriminated union must be handled, if not an error
+will be generated.
+
+The "strict" rules on discriminated union types are because there currently is 
+no type system support for this. 
+
+
+</Syntax>
 
 ## Variant types
 
@@ -391,7 +449,7 @@ division operation:
 
 ```pascaligo group=d
 function div (const a : nat; const b : nat) : option (nat) is
-  if b = 0n then (None: option (nat)) else Some (a/b)
+  if b = 0n then None else Some (a/b)
 ```
 
 </Syntax>
@@ -399,7 +457,7 @@ function div (const a : nat; const b : nat) : option (nat) is
 
 ```cameligo group=d
 let div (a, b : nat * nat) : nat option =
-  if b = 0n then (None: nat option) else Some (a/b)
+  if b = 0n then None else Some (a/b)
 ```
 
 </Syntax>
@@ -407,7 +465,7 @@ let div (a, b : nat * nat) : nat option =
 
 ```reasonligo group=d
 let div = ((a, b) : (nat, nat)) : option (nat) =>
-  if (b == 0n) { (None: option (nat)); } else { Some (a/b); };
+  if (b == 0n) { None } else { Some (a/b) };
 ```
 
 </Syntax>
@@ -416,7 +474,7 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 ```jsligo group=d
 let div = ([a, b]: [nat, nat]): option<nat> => {
   if(b == (0 as nat)){
-    return (None() as option <nat>);
+    return None();
   } else {
     return (Some (a/b));
   };
@@ -519,8 +577,8 @@ type color =
 
 let int_of_color = (c : color) : int =>
   match(c, {
-    RGB: (rgb : [int,int,int]) => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
-    Gray: (i : int) => 232 + i,
+    RGB: rgb => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
+    Gray: i => 232 + i,
     Default: () => 0 });
 ```
 

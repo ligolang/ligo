@@ -33,7 +33,6 @@ let compile_attributes attributes : string list =
     )
 module Compile_type = struct
 
-
   (*
     `type_compiler_opt` represents an abstractor for a single pattern.
     For instance, you could have a `type_compiler_opt` that is supposed to compile
@@ -279,7 +278,56 @@ module Compile_type = struct
         | _ -> raise.error (expected_a_variable (CST.type_expr_to_region ma.field))
       in
       return @@ aux [module_name] ma.field
-
+    | TDisc n ->
+      let shared_field = Discriminated_union.get_shared_field ~raise n in
+      let sum_fields = Utils.nsepseq_map (
+        fun (obj: CST.obj_type) ->
+          (* split into constructor and fields *)
+          let constructor, fields = List.partition_map (npseq_to_list obj.value.ne_elements) ~f:(fun x ->
+              if String.equal x.value.field_name.value shared_field then 
+                let t = x.value.field_type in
+                match t with 
+                  TString s -> First s
+                | _ -> raise.error @@ unexpected
+              else 
+                Second x
+            ) 
+          in
+          let constructor = match constructor with 
+            hd :: _ -> hd.value
+          | _ -> raise.error @@ no_shared_fields obj.region
+          in
+          (* create the object type without the constructor field *)
+          let type_expr = match fields with 
+            hd :: tl -> 
+              let ne_elements = (hd, (List.map ~f:(fun l -> (Token.wrap_semi Region.ghost,l)) tl)) in
+              let obj = CST.TObject {
+                obj with 
+                  value = {
+                    obj.value with ne_elements
+                  }
+              } in
+              self obj
+          | [] -> 
+            t_unit ()
+          in
+          let fields = List.map ~f:(fun x -> x.value.field_name.value) fields in
+          (constructor, type_expr, fields)
+        ) n
+        in 
+        let sum_fields = npseq_to_list sum_fields in
+        let sum, disc_union = List.fold_left ~f:(fun (all_sum, all_fields) (constructor, type_expr, fields) -> 
+          (constructor, type_expr, []) :: all_sum,
+          Discriminated_union.{
+            constructor; 
+            constructor_field = shared_field;
+            has_payload = Poly.(type_expr <> AST.t_unit ());
+            fields
+          } :: all_fields
+        ) ~init:([], []) sum_fields
+        in
+        Discriminated_union.add disc_union;
+        return @@ t_sum_ez_attr ~loc:Location.dummy ~attr:[] sum
 end
 
 open Compile_type
@@ -562,7 +610,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let exprs = List.map ~f:(array_item_to_expression ~raise) items in
     let exprs' = List.map ~f:self exprs in
     return @@ e_tuple ~loc exprs'
-  | EObject {value = {inside = (Property_rest {value = {expr; _}; _}, rest); _}; _} ->
+  | EObject {value = {inside = (Property_rest {value = {expr; _}; _}, rest); _}; _} ->    
     let record = self expr in
     let aux up =
       let (_, p) = up in
@@ -579,27 +627,53 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let updates = List.map ~f:aux rest in
     let aux e (path, update, loc) = e_update ~loc e path update in
     return @@ List.fold_left ~f:aux ~init:record updates
-  | EObject obj ->
-    let (obj, loc) = r_split obj in
-    let aux : CST.property -> string * expression = fun fa ->
-      match fa with
-      | Punned_property prop -> (
-          let (prop, loc) = r_split prop in
-          let var = expression_to_variable ~raise prop in
-          (var.value , e_variable ~loc (compile_variable var))
-        )
-      | Property prop2 -> (
-          let (prop2 , _) = r_split prop2 in
-          let var = expression_to_variable ~raise prop2.name in
-          let expr = self prop2.value in
-          (var.value , expr)
-        )
-      | Property_rest _ -> (
-          raise.error @@ rest_not_supported_here fa
-        )
-    in
-    let obj = List.map ~f:aux @@ npseq_to_list obj.inside in
-    return @@ e_record_ez ~loc obj
+  | EObject obj' ->
+    let (obj, loc) = r_split obj' in
+    (match Discriminated_union.find_disc_obj obj' with 
+      Some s -> 
+        let constructor = s.constructor in
+        (* recreate the object without the constructor *)
+        let filtered_object = Utils.nsepseq_foldl (fun a i -> 
+          match i with 
+            CST.Property {value = {value = EString (String {value = s; _}); _}; _} when String.equal s constructor -> a
+          | _ -> (Token.wrap_comma (Region.ghost), i) :: a  
+        )  [] obj.inside in
+        let e = match filtered_object with 
+          hd :: rest -> 
+            let new_inside = (snd hd, rest) in
+            let obj = { 
+              obj with 
+                inside = new_inside
+            }
+            in 
+            self @@ EObject {value = obj; region = Region.ghost}
+
+        | [] -> e_unit ()
+        in
+        
+        (* turn the object into a constructor *)
+        e_constructor ~loc constructor e
+
+    | None ->
+        let aux : CST.property -> string * expression = fun fa ->
+          match fa with
+          | Punned_property prop -> (
+              let (prop, loc) = r_split prop in
+              let var = expression_to_variable ~raise prop in
+              (var.value , e_variable ~loc (compile_variable var))
+            )
+          | Property prop2 -> (
+              let (prop2 , _) = r_split prop2 in
+              let var = expression_to_variable ~raise prop2.name in
+              let expr = self prop2.value in
+              (var.value , expr)
+            )
+          | Property_rest _ -> (
+              raise.error @@ rest_not_supported_here fa
+            )
+        in
+        let obj = List.map ~f:aux @@ npseq_to_list obj.inside in
+        return @@ e_record_ez ~loc obj)
   | EProj proj ->
     let (proj, loc) = r_split proj in
     let var = self proj.expr in
@@ -714,6 +788,12 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     e_assign_ez ~loc:outer_loc evar_value @@ e_update (e_variable_ez evar_value) [sels] e2
   | EAssign _ as e ->
     raise.error @@ not_supported_assignment e
+  | ETernary e ->
+    let (ternary, loc) = r_split e in
+    let test = self ternary.condition in
+    let truthy = self ternary.truthy in
+    let falsy = self ternary.falsy in
+    e_cond ~loc test truthy falsy
 
 and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
   fun p ->
@@ -1103,108 +1183,142 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     binding initializers'
   | SSwitch s' ->
     let (s, loc)    = r_split s' in
-    let switch_expr = self_expr s.expr in
+    (match Discriminated_union.is_discriminated_union s' with 
+      Some data -> (
+        (* here we turn the switch statement into a simple form of pattern matching *)
+        let matchee, payload = match s'.value.expr with 
+          EProj {value = {expr = (EVar ev as v); _}; _} -> compile_expression ~raise v, ev
+        | _ -> raise.error @@ wrong_matchee_disc s'.region
+        in
+        let cases = List.map ~f:(fun f -> 
+          match f with 
+            Switch_case {expr = EString (String v); statements = Some(statements); _} ->
+              (match Utils.nsepseq_rev (statements) with 
+                (SBreak _, _) -> ()
+              | (_ as s, _) -> raise.error @@ case_break_disc (CST.statement_to_region s)
+              );
+              let a = List.find_exn ~f:(fun {constructor; _} -> Poly.(constructor = v.value) ) data in
+              let ty = if a.has_payload then 
+                let b = Binder.make (compile_variable payload) None in
+                let arg = Pattern.P_var b in
+                Location.wrap ~loc arg
+              else
+                Location.wrap ~loc Pattern.P_unit
+              in
+              let pattern = Location.wrap (Pattern.P_variant (Label v.value, ty)) in
 
-    let fallthrough = Value_var.fresh ~name:"fallthrough" () in
-    let found_case  = Value_var.fresh ~name:"found_case"  () in
-    let binder var  = Binder.make var None in
-    let fallthrough_binder = binder fallthrough in
-    let found_case_binder  = binder found_case in
-    let dummy_binder       = binder (Value_var.fresh ()) in
-
-    let initial = Binding (fun x ->
-      e_let_in dummy_binder [] switch_expr (* this is done so that in case of only default we don't the un-used variable warning *)
-        (e_let_in fallthrough_binder [] (e_false ())
-          (e_let_in found_case_binder [] (e_false ()) x))) in
-
-    let cases = Utils.nseq_to_list s.cases in
-    let fallthrough_assign_false = e_assign fallthrough_binder (e_false ()) in
-    let fallthrough_assign_true  = e_assign fallthrough_binder (e_true ()) in
-    let found_case_assign_true   = e_assign found_case_binder  (e_true ()) in
-
-    let not_expr     e   = e_constant (Const C_NOT)     [e   ] in
-    let and_expr     a b = e_constant (Const C_AND)     [a; b] in
-    let or_expr      a b = e_constant (Const C_OR)      [a; b] in
-    let eq_expr ~loc a b = e_constant ~loc (Const C_EQ) [a; b] in
-
-    let found_case_eq_true  = eq_expr ~loc (e_variable found_case)  (e_true()) in
-    let fallthrough_eq_true = eq_expr ~loc (e_variable fallthrough) (e_true()) in
-    let prefix_case_cond case_expr = eq_expr ~loc switch_expr case_expr in
-    let case_cond case_expr =
-      or_expr
-        fallthrough_eq_true
-        (and_expr
-          (not_expr found_case_eq_true)
-          (prefix_case_cond case_expr)
+              Match_expr.{
+                pattern;
+                body = compile_statements_to_expression ~raise statements;
+              } 
+          | Switch_case {expr = EString (String _); statements = None; _} -> raise.error @@ case_break_disc s'.region
+          | _ -> raise.error unexpected
+        ) (nseq_to_list s.cases) in
+        expr (e_matching ~loc matchee cases)
       )
-    in (* __fallthrough || (! __found_case && <cond>) *)
+    | None -> (
+      (* a switch statement based on if-else statements *)
+      let switch_expr = self_expr s.expr in
+      let fallthrough = Value_var.fresh ~name:"fallthrough" () in
+      let found_case  = Value_var.fresh ~name:"found_case"  () in
+      let binder var  = Binder.make var None in
+      let fallthrough_binder = binder fallthrough in
+      let found_case_binder  = binder found_case in
+      let dummy_binder       = binder (Value_var.fresh ()) in
 
-    let process_case case =
-      (match case with
-          CST.Switch_case { kwd_case; expr; statements=None ; colon=_} ->
+      let initial = Binding (fun x ->
+        e_let_mut_in dummy_binder [] switch_expr (* this is done so that in case of only default we don't the un-used variable warning *)
+          (e_let_mut_in fallthrough_binder [] (e_false ())
+            (e_let_mut_in found_case_binder [] (e_false ()) x))) in
+
+      let cases = Utils.nseq_to_list s.cases in
+      let fallthrough_assign_false = e_assign fallthrough_binder (e_false ()) in
+      let fallthrough_assign_true  = e_assign fallthrough_binder (e_true ()) in
+      let found_case_assign_true   = e_assign found_case_binder  (e_true ()) in
+
+      let not_expr     e   = e_constant (Const C_NOT)     [e   ] in
+      let and_expr     a b = e_constant (Const C_AND)     [a; b] in
+      let or_expr      a b = e_constant (Const C_OR)      [a; b] in
+      let eq_expr ~loc a b = e_constant ~loc (Const C_EQ) [a; b] in
+
+      let found_case_eq_true  = eq_expr ~loc (e_variable found_case)  (e_true()) in
+      let fallthrough_eq_true = eq_expr ~loc (e_variable fallthrough) (e_true()) in
+      let prefix_case_cond case_expr = eq_expr ~loc switch_expr case_expr in
+      let case_cond case_expr =
+        or_expr
+          fallthrough_eq_true
+          (and_expr
+            (not_expr found_case_eq_true)
+            (prefix_case_cond case_expr)
+        )
+      in (* __fallthrough || (! __found_case && <cond>) *)
+
+      let process_case case =
+        (match case with
+            CST.Switch_case { kwd_case; expr; statements=None ; colon=_} ->
+              let loc = Location.lift kwd_case#region in
+              let case_expr = self_expr expr in
+              let test = case_cond case_expr in
+              let update_vars = e_sequence fallthrough_assign_true found_case_assign_true in
+              (Binding (fun x -> e_sequence (e_cond ~loc test update_vars (e_unit ())) x))
+          | Switch_case { kwd_case; expr; statements=Some statements ; colon=_} ->
             let loc = Location.lift kwd_case#region in
             let case_expr = self_expr expr in
-            let test = case_cond case_expr in
-            let update_vars = e_sequence fallthrough_assign_true found_case_assign_true in
-            (Binding (fun x -> e_sequence (e_cond ~loc test update_vars (e_unit ())) x))
-        | Switch_case { kwd_case; expr; statements=Some statements ; colon=_} ->
-          let loc = Location.lift kwd_case#region in
-          let case_expr = self_expr expr in
-          let test      = case_cond case_expr in
-          let update_vars_fallthrough = e_sequence fallthrough_assign_true found_case_assign_true in
-          let update_vars_break       = e_sequence fallthrough_assign_false found_case_assign_true in
-          let statements = self_statements statements in
-          let statements =
-            (match statements with
-              Binding s -> Binding (fun x ->
-                let e = e_sequence found_case_assign_true (s (e_unit ())) in
-                let e = (e_cond ~loc test e (e_unit ())) in
+            let test      = case_cond case_expr in
+            let update_vars_fallthrough = e_sequence fallthrough_assign_true found_case_assign_true in
+            let update_vars_break       = e_sequence fallthrough_assign_false found_case_assign_true in
+            let statements = self_statements statements in
+            let statements =
+              (match statements with
+                Binding s -> Binding (fun x ->
+                  let e = e_sequence found_case_assign_true (s (e_unit ())) in
+                  let e = (e_cond ~loc test e (e_unit ())) in
+                  e_sequence e x
+                )
+              | Expr e ->
+                let e = e_sequence e update_vars_fallthrough in
+                Binding (fun x -> e_sequence (e_cond ~loc test e (e_unit ())) x)
+              | Break e ->
+                let e = e_sequence e update_vars_break in
+                Binding (fun x -> e_sequence (e_cond ~loc test e (e_unit ())) x)
+              | Return e ->
+                Binding (fun x -> (e_cond ~loc test e x)))
+            in
+            statements
+          | Switch_default_case { statements=None ; kwd_default=_; colon=_} ->
+            (Binding (fun x ->
+              e_sequence (e_unit ()) x)
+            )
+          | Switch_default_case { kwd_default; statements=Some statements ; colon=_} ->
+            let loc = Location.lift kwd_default#region in
+            let default_cond =
+              or_expr
+                fallthrough_eq_true
+                (not_expr found_case_eq_true)
+            in (* __fallthrough || ! __found_case *)
+            let statements = self_statements statements in
+            let statements =  (match statements with
+            | Binding s -> Binding (fun x ->
+              let e = e_sequence found_case_assign_true (s (e_unit ())) in
+                let e = (e_cond ~loc default_cond e (e_unit ())) in
                 e_sequence e x
               )
-            | Expr e ->
-              let e = e_sequence e update_vars_fallthrough in
-              Binding (fun x -> e_sequence (e_cond ~loc test e (e_unit ())) x)
-            | Break e ->
-              let e = e_sequence e update_vars_break in
-              Binding (fun x -> e_sequence (e_cond ~loc test e (e_unit ())) x)
-            | Return e ->
-              Binding (fun x -> (e_cond ~loc test e x)))
-          in
-          statements
-        | Switch_default_case { statements=None ; kwd_default=_; colon=_} ->
-          (Binding (fun x ->
-            e_sequence (e_unit ()) x)
+            | Expr  e
+            | Break e -> Binding (fun x ->
+                e_sequence (e_cond ~loc default_cond e (e_unit ())) x
+              )
+            | Return e -> Binding (fun x ->
+                e_cond ~loc default_cond e x)
+              )
+            in
+            statements
           )
-        | Switch_default_case { kwd_default; statements=Some statements ; colon=_} ->
-          let loc = Location.lift kwd_default#region in
-          let default_cond =
-            or_expr
-              fallthrough_eq_true
-              (not_expr found_case_eq_true)
-          in (* __fallthrough || ! __found_case *)
-          let statements = self_statements statements in
-          let statements =  (match statements with
-          | Binding s -> Binding (fun x ->
-            let e = e_sequence found_case_assign_true (s (e_unit ())) in
-              let e = (e_cond ~loc default_cond e (e_unit ())) in
-              e_sequence e x
-            )
-          | Expr  e
-          | Break e -> Binding (fun x ->
-              e_sequence (e_cond ~loc default_cond e (e_unit ())) x
-            )
-          | Return e -> Binding (fun x ->
-              e_cond ~loc default_cond e x)
-            )
           in
-          statements
-        )
-        in
-    List.fold_left cases
-      ~init:initial
-      ~f:(fun acc case ->
-            merge_statement_results acc (process_case case))
-
+      List.fold_left cases
+        ~init:initial
+        ~f:(fun acc case ->
+              merge_statement_results acc (process_case case))
+    ))
   | SBreak b ->
     Break (e_unit ~loc:(Location.lift b#region) ())
   | SType ti ->
@@ -1373,6 +1487,7 @@ let compile_module ~raise : CST.ast -> AST.declaration list =
     compile_statements_to_program ~raise t
 
 let compile_program ~raise : CST.ast -> AST.program = fun ast ->
+  Discriminated_union.reset();
   nseq_to_list ast.statements
   |> List.map ~f:(fun a ~raise ->
     match a with

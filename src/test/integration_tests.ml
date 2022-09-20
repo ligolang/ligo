@@ -2252,6 +2252,14 @@ let switch_cases_jsligo ~raise () : unit =
 
   ()
 
+let ternary_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/ternary.jsligo" in
+    let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
+    let _ = expect_eq ~raise program "foo" (e_int 101) (e_int 100) in
+    let _ = expect_eq ~raise program "foo" (e_int 1) (e_int 0) in
+    let _ = expect_eq ~raise program "foo" (e_int 0) (e_int 2) in
+    ()
+
 let if_if_return_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/if_if_return.jsligo" in
   let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
@@ -2271,6 +2279,14 @@ let while_and_for_loops_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "while_single_statement" (e_int 10) (e_int 10) in
   let _ = expect_eq ~raise program "while_multi_statements_1" (e_int 10) (e_int 55) in
   let _ = expect_eq ~raise program "while_multi_statements_2" (e_int 10) (e_int 55) in
+  ()
+
+let disc_union_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/disc_union.jsligo" in
+  let data = e_pair (e_constructor "Increment" (e_record_ez [("amount" , e_int 42)])) (e_int 22) in
+  let _ = expect_eq ~raise program "main" data (e_int 64) in
+  let data = e_pair (e_constructor "Decrement" (e_record_ez [("amount" , e_int 5)])) (e_int 22) in
+  let _ = expect_eq ~raise program "main" data (e_int 17) in
   ()
 
 let main = test_suite "Integration (End to End)"
@@ -2462,5 +2478,7 @@ let main = test_suite "Integration (End to End)"
     test_w "if_if_return (jsligo)" if_if_return_jsligo;
     test_w "switch case (jsligo)" switch_cases_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo;
-    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
+    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo;
+    test_w "discriminated_union (jsligo)" disc_union_jsligo;
+    test_w "ternary (jsligo)" ternary_jsligo;
   ]

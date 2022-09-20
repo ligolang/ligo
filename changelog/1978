@@ -1,0 +1,5 @@
+author: pewulfman
+description: ''
+merge_request: '1978'
+title: bugfix/module attribute deletion in aggregation
+type: fixed

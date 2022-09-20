@@ -3,11 +3,30 @@
 
 (*
  A pre parser for the JsLIGO parser.
-*)
+
+ The following syntax causes shift/reduce conflicts in the JsLIGO parser: 
+ ```
+ let a = (b, c); 
+ ```
+ with
+ ```
+ let a = (b, c) =>  
+````
+ and the different versions between them.
+
+ To solve this in a manageable way the JsLIGO PreParser inserts a ES6FUN based 
+ on a set of heuristics. 
+
+ In certain cases we are sure that a ES6FUN token needs to be inserted or not. 
+ These cases can be considered `Solved`. In some cases we need more information 
+ and either request to `Inject` an ES6FUN token or make a `Suggestion` of where 
+ to place the ES6FUN token.
+ *)
 
 (* Vendors dependencies *)
 
 open Simple_utils.Region
+
 (* LIGO dependencies *)
 
 module Wrap = Lexing_shared.Wrap
@@ -35,7 +54,13 @@ let solve = function
 let cons a b = 
   match a, b with     
     (* let foo = a:int => a *)
-  | (EQ _ | COLON _  as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
+  | (EQ _ as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
+  | (COLON _  as s), Suggestion f  -> 
+    Suggestion (fun c -> 
+      match c with 
+        Some c ->
+          s :: c :: (f None)
+      | None -> s :: (f None))
     (* let foo:int => a *)
   | (Let _  | Const _ as l), Suggestion f  -> Solved (l :: (f (Some es6fun_token)))
     (* | Foo, y =>  *)
@@ -51,8 +76,13 @@ let cons a b =
      Some c ->
       s :: c :: tokens
     | None -> s :: tokens)
-    (* | [] => *)
+    
+  (* , foo => bar *)
+  | COMMA _ as c, Suggestion f -> Solved (c :: (f (Some es6fun_token)))
+
+  (* | [] => *)
   | (VBAR _ as v),          Inject tokens -> Solved (v :: tokens)
+
     (* : bar 
       
       It's not clear yet what needs to happen here, so we make a suggestion. 
@@ -60,10 +90,8 @@ let cons a b =
     *)
   | (COLON _ as c),         Inject tokens -> Suggestion (fun t -> 
       match t with 
-        Some t -> 
-          c :: t :: tokens
-      | None ->
-          c :: tokens
+        Some t -> c :: t :: tokens
+      | None -> c :: tokens
       )
   | (_ as s),               Inject tokens -> Inject (s :: tokens)
   | _,                      Solved s      -> Solved (a :: s)
@@ -140,6 +168,7 @@ everything_else:
 | "/="              { DIV_EQ $1   }
 | "|"               { VBAR $1     }
 | "_"               { WILD $1     }
+| "?"               { QMARK $1    }
 | "break"           { Break $1    }
 | "case"            { Case $1     }
 | "const"           { Const $1    }
@@ -168,7 +197,6 @@ inner:
   Inject ($1 :: (ARROW $2) :: solve $3)
 }
 | parenthesized inner
-// | chevrons inner 
 | braces inner
 | brackets inner {
   concat $1 $2
@@ -198,12 +226,6 @@ brackets:
   Inject ((LBRACKET $1 :: solve $2) @ (RBRACKET $3 :: ARROW $4 :: []))
 }
 
-// chevrons: 
-// "<" inner ">" {
-//   Solved ((LT $1 :: solve $2) @ (GT $3 :: []))
-// }
-
-
 self_pass_inner: 
   everything_else self_pass_inner {
     cons $1 $2
@@ -212,7 +234,6 @@ self_pass_inner:
    Inject ($1 :: ARROW $2 :: (solve $3))
 }
 | parenthesized self_pass_inner
-// | chevrons  self_pass_inner
 | braces self_pass_inner
 | brackets self_pass_inner {
   concat $1 $2

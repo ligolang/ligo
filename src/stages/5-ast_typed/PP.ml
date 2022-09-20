@@ -177,10 +177,10 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
         (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
         f body
 
-and declaration ppf (d : declaration) = match Location.unwrap d with
-    D_value vd  -> Types.Value_decl.pp expression type_expression_option ppf vd
-  | D_type  td  -> Types.Type_decl.pp type_expression ppf td
-  | D_module md -> Types.Module_decl.pp module_expr ppf md
+and declaration ?(use_hidden=true) ppf (d : declaration) = match Location.unwrap d with
+    D_value vd  -> if (vd.attr.hidden && use_hidden) then () else Types.Value_decl.pp expression type_expression_option ppf vd
+  | D_type  td  -> if (td.type_attr.hidden && use_hidden) then () else Types.Type_decl.pp type_expression ppf td
+  | D_module md -> if (md.module_attr.hidden && use_hidden) then () else Types.Module_decl.pp module_expr ppf md
 
 and decl ppf d = declaration ppf d
 and module_expr ppf (me : module_expr) : unit =
@@ -188,4 +188,4 @@ and module_expr ppf (me : module_expr) : unit =
 
 let module_ ppf (m : module_) = list_sep decl (tag "@,") ppf m
 
-let program ppf (p : program) = list_sep declaration (tag "@,") ppf p
+let program ?(use_hidden=false) ppf (p : program) = list_sep (declaration ~use_hidden) (tag "@,") ppf p

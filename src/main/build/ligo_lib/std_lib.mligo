@@ -266,51 +266,34 @@ module Crypto = struct
 
 end
 
-[@private]
   let assert (b : bool) : unit = [%Michelson ({| { IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } } |} : bool -> unit)] b
-[@private]
   let assert_some (type a) (v : a option) : unit =
     [%Michelson ({| { IF_NONE { PUSH string "failed assert some" ; FAILWITH } { DROP ; UNIT } } |} : a option -> unit)] v
-[@private]
   let assert_none (type a) (v : a option) : unit =
     [%Michelson ({| { IF_NONE { UNIT } { PUSH string "failed assert none" ; FAILWITH } } |} : a option -> unit)] v
-[@private]
   let abs (i : int) : nat = [%Michelson ({| { ABS } |} : int -> nat)] i
-[@private]
   let is_nat (i : int) : nat option = [%Michelson ({| { ISNAT } |} : int -> nat option)] i
-[@private]
   let true : bool = [%external ("TRUE")]
-[@private]
   let false : bool = [%external ("FALSE")]
-[@private]
   let unit : unit = [%external ("UNIT")]
-[@private]
   let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
-[@private]
   let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
+  let ignore (type a) (_ : a) : unit = ()
 
 #if CURRY
-[@private]
   let assert_with_error (b : bool) (s : string) =
     [%Michelson ({| { UNPAIR ; IF { DROP ; UNIT } { FAILWITH } } |} : bool * string -> unit)] (b, s)
-[@private]
   let assert_some_with_error (type a) (v : a option) (s : string) : unit =
     [%Michelson ({| { UNPAIR ; IF_NONE { FAILWITH } { DROP 2 ; UNIT } } |} : a option * string -> unit)] (v, s)
-[@private]
   let assert_none_with_error (type a) (v : a option) (s : string) : unit =
     [%Michelson ({| { UNPAIR ; IF_NONE { DROP ; UNIT } { DROP ; FAILWITH } } |} : a option * string -> unit)] (v, s)
-[@private]
   let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_ediv)] (l, r)
 #endif
 
 #if UNCURRY
-[@private]
   let assert_with_error ((b, s) : bool * string) = [%Michelson ({| { UNPAIR ; IF { DROP ; UNIT } { FAILWITH } } |} : bool * string -> unit)] (b, s)
-[@private]
   let assert_some_with_error (type a) ((v, s) : a option * string) : unit = [%Michelson ({| { UNPAIR ; IF_NONE { FAILWITH } { DROP 2 ; UNIT } } |} : a option * string -> unit)] (v, s)
-[@private]
   let assert_none_with_error (type a) ((v, s) : a option * string) : unit = [%Michelson ({| { UNPAIR ; IF_NONE { DROP ; UNIT } { DROP ; FAILWITH } } |} : a option * string -> unit)] (v, s)
-[@private]
   let ediv (type a b) ((l, r) : (a * b)) : (a, b) external_u_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_u_ediv)] (l, r)
 #endif
 

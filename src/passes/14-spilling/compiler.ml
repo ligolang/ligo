@@ -107,12 +107,12 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       | T_base TB_int, T_base TB_nat -> return (T_base TB_nat)
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(ediv|u_ediv) application"))
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
-        Ticket                     | Sapling_state        | Michelson_contract  |
+        Ticket          | Int64    | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
         Michelson_pair  | Set      | Mutation             | Ast_contract        |
         List            | External _ | Gen), [])
         -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
-    | ((             Unit      | Baker_operation      |
+    | ((Int64      | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String       | Gen       | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |

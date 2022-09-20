@@ -42,7 +42,7 @@ let%expect_test _ =
       4 |     Failure: (_ : test_exec_error) => ""
       5 |   });
 
-    Pattern not of the expected type test_exec_result |}]
+    Pattern not of the expected type Uncurry_lib#3.test_exec_result |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
@@ -61,13 +61,13 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ; "--test" ] ;
-  [%expect{|
+  [%expect{xxx|
     const test_foo[@var] : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] -> string =
       lambda (xsum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat])string return
        match x with
         | Fail _#3 ->
           "" | Success _#2 ->
-               ""[@private] |}]
+               ""[@private] |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match7.jsligo") ] ;

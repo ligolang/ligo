@@ -420,8 +420,8 @@ elements (integers) are strictly greater than `3`.
 
 ```pascaligo group=lists
 function iter_op (const l : list (int)) : unit is {
-  function iterated (const i : int) : unit is
-    if i <= 3 then (failwith ("Below range.") : unit)
+  function iterated (const i) is
+    if i <= 3 then failwith ("Below range.")
 } with List.iter (iterated, l)
 ```
 
@@ -430,7 +430,7 @@ function iter_op (const l : list (int)) : unit is {
 
 ```cameligo group=lists
 let iter_op (l : int list) : unit =
-  let predicate = fun (i : int) -> assert (i > 3)
+  let predicate = fun (i:int) -> assert (i > 3)
   in List.iter predicate l
 ```
 
@@ -439,7 +439,7 @@ let iter_op (l : int list) : unit =
 
 ```reasonligo group=lists
 let iter_op = (l : list (int)) : unit => {
-  let predicate = (i : int) => assert (i > 3);
+  let predicate = i => assert (i > 3);
   List.iter (predicate, l);
 };
 ```
@@ -449,7 +449,7 @@ let iter_op = (l : list (int)) : unit => {
 
 ```jsligo group=lists
 let iter_op = (l: list<int>): unit => {
-  let predicate = (i: int): unit => assert(i > 3);
+  let predicate = i => assert(i > 3);
   List.iter(predicate, l);
 };
 ```
@@ -471,7 +471,7 @@ is used as follows.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-function increment (const i : int) : int is i + 1
+function increment (const i) is i + 1
 
 // Creates a new list with all elements incremented by 1
 const plus_one : list (int) = List.map (increment, larger_list)
@@ -481,7 +481,7 @@ const plus_one : list (int) = List.map (increment, larger_list)
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
-let increment (i : int) : int = i + 1
+let increment (i : int) = i + 1
 
 // Creates a new list with all elements incremented by 1
 let plus_one : int list = List.map increment larger_list
@@ -491,7 +491,7 @@ let plus_one : int list = List.map increment larger_list
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=lists
-let increment = (i : int) : int => i + 1;
+let increment = (i) => i + 1;
 
 // Creates a new list with all elements incremented by 1
 let plus_one : list (int) = List.map (increment, larger_list);
@@ -501,7 +501,7 @@ let plus_one : list (int) = List.map (increment, larger_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let increment = (i: int): int => i + 1;
+let increment = i => i + 1;
 
 // Creates a new list with all elements incremented by 1
 let plus_one: list<int> = List.map(increment, larger_list);
@@ -534,7 +534,7 @@ Here is an example of their use.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-function sum (const acc : int; const i : int) : int is acc + i
+function sum (const acc : int; const i : int) is acc + i
 const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 ```
 
@@ -542,7 +542,7 @@ const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
-let sum (acc, i: int * int) : int = acc + i
+let sum (acc, i: int * int) = acc + i
 let sum_of_elements : int = List.fold_left sum 0 my_list
 ```
 
@@ -550,7 +550,7 @@ let sum_of_elements : int = List.fold_left sum 0 my_list
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=lists
-let sum = ((result, i): (int, int)): int => result + i;
+let sum = ((result, i): (int, int)) => result + i;
 let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 ```
 
@@ -558,7 +558,7 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let sum = ([result, i]: [int, int]): int => result + i;
+let sum = ([result, i]: [int, int]) => result + i;
 let sum_of_elements: int = List.fold (sum, my_list, 0);
 ```
 
@@ -923,8 +923,8 @@ iterated to check that all its elements (integers) are greater than
 
 ```pascaligo group=sets
 function iter_op (const s : set (int)) : unit is {
-  function iterated (const i : int) : unit is
-    if i <= 2 then (failwith ("Below range.") : unit)
+  function iterated (const i) is
+    if i <= 2 then failwith ("Below range.")
 } with Set.iter (iterated, s)
 ```
 
@@ -942,7 +942,7 @@ let iter_op (s : int set) : unit =
 
 ```reasonligo group=sets
 let iter_op = (s : set (int)) : unit => {
-  let predicate = (i : int) => assert (i > 3);
+  let predicate = (i) => assert (i > 3);
   Set.iter (predicate, s);
 };
 ```
@@ -952,7 +952,7 @@ let iter_op = (s : set (int)) : unit => {
 
 ```jsligo group=sets
 let iter_op = (s: set<int>): unit => {
-  let predicate = (i: int): unit => assert(i > 3);
+  let predicate = i => assert(i > 3);
   Set.iter(predicate, s);
 };
 ```

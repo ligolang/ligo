@@ -389,8 +389,6 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
     let ({binders; rhs_type; body;kwd_fun=_;type_params=_;arrow=_; attributes=_} : CST.fun_expr) = func in
-    let () = check_annotation ~raise (fst binders) in
-    let () = List.iter ~f:(check_annotation ~raise) (snd binders) in
     let rhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) rhs_type in
     let (binder,fun_),lst = List.Ne.map (compile_parameter ~raise) binders in
     let body = self body in

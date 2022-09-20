@@ -11,7 +11,7 @@ val set_var : 'a t -> Var.Value_var.t -> 'a t
 
 val get_var : 'a t -> Var.Value_var.t
 val get_ascr : 'a t -> 'a
-val set_ascr : 'a t -> 'a -> 'a t
+val set_ascr : 'a t -> 'b -> 'b t
 
 val apply : (Var.Value_var.t -> 'b) -> 'a t -> 'b
 
