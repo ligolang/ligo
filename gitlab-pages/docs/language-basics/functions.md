@@ -389,7 +389,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.reli
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let increment = b => ((a) => a + 1) (b);
+let increment = b => (a => a + 1) (b);
 let a = increment(1); // a == 2
 ```
 
