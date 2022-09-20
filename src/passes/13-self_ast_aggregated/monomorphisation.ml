@@ -61,6 +61,7 @@ let apply_table_expr table (expr : AST.expression) =
          return @@ E_type_inst { forall ; type_ = apply_table_type type_ }
       | E_lambda { binder ; output_type ; result } ->
          let binder = Param.map apply_table_type binder in
+         let output_type = apply_table_type output_type in
          return @@ E_lambda { binder ; output_type ; result }
       | E_recursive { fun_name ; fun_type ; lambda } ->
          let fun_type = apply_table_type fun_type in
@@ -77,8 +78,12 @@ let apply_table_expr table (expr : AST.expression) =
          let _,types = List.fold_map ~init:(e.type_expression) table ~f:(fun (te) (v,t) -> let te = AST.Helpers.subst_type v t te in te,te) in
          let expr = List.fold2_exn ~init:(e) ~f:(fun e (_v,t) u -> AST.e_a_type_inst e t u) (List.rev table) types in
          false, (), expr
-      (* Why not apply to let_in? *)
-      | E_let_in _ | E_let_mut_in _
+      | E_let_in { let_binder; rhs; let_result; attr } ->
+         let let_binder = Binder.map apply_table_type let_binder in
+         return @@ E_let_in { let_binder; rhs; let_result; attr }
+      | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+         let let_binder = Binder.map apply_table_type let_binder in
+         return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
       | E_deref _ | E_while _ | E_for _ | E_for_each _
       | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
       | E_raw_code _ | E_constructor _ | E_record _
