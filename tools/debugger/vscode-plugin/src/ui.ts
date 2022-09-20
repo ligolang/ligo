@@ -10,10 +10,9 @@
 // Useful UI elements which is used to make the plugin more pleasant to use.
 
 import * as vscode from 'vscode';
-import { ExtensionContext, QuickPickItem } from 'vscode';
-import { DebuggedContractSession, Maybe, Ref, isDefined, ContractMetadata } from './base'
-
-export type InputBoxType = "parameter" | "storage"
+import { QuickPickItem } from 'vscode';
+import { DebuggedContractSession, Maybe, Ref, isDefined, InputBoxType, InputValueType } from './base'
+import { LigoDebugContext, ValueAccess } from './LigoDebugContext'
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
 	const startsWith = (prefix: string, str: string): boolean =>
@@ -106,10 +105,8 @@ export const createRememberingQuickPick =
 		})
 	}
 
-export type ValueType = "LIGO" | "Michelson";
-
 export const getEntrypoint = (
-		context: ExtensionContext,
+		context: LigoDebugContext,
 		validateEntrypoint: (entrypoint: string) => Promise<Maybe<string>>,
 		getContractMetadata: (entrypoint: string) => Promise<void>,
 		debuggedContract: Ref<DebuggedContractSession>
@@ -124,11 +121,9 @@ export const getEntrypoint = (
 				throw new Error("Internal error: entrypoints must be defined");
 			}
 
-			const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-			const entrypoints: QuickPickItem[] = currentFilePath && debuggedContract.ref.entrypoints.map(label => ({ label }));
+			const entrypoints: QuickPickItem[] = debuggedContract.ref.entrypoints.map(label => ({ label }));
 
-			const currentKey: Maybe<string> = currentFilePath && "quickpick_entrypoint_" + currentFilePath;
-			const previousVal: Maybe<string> = currentKey && context.workspaceState.get<string>(currentKey);
+			const remembered = context.workspaceState.lastEntrypoint();
 
 			if (entrypoints.length <= 1) {
 				if (entrypoints.length === 0) {
@@ -139,9 +134,9 @@ export const getEntrypoint = (
 			}
 
 			let activeItem: Maybe<QuickPickItem>;
-			if (isDefined(previousVal)) {
+			if (isDefined(remembered.value)) {
 				for (let entrypoint of entrypoints) {
-					if (entrypoint.label === previousVal) {
+					if (entrypoint.label === remembered.value) {
 						activeItem = entrypoint;
 						break;
 					}
@@ -161,10 +156,7 @@ export const getEntrypoint = (
 				input.doNotRecordStep();
 				return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state);
 			} else {
-				if (isDefined(currentKey)) {
-					context.workspaceState.update(currentKey, pick.label);
-				}
-
+				remembered.value = pick.label;
 				state.ref.pickedEntrypoint = pick.label;
 			}
 		}
@@ -182,8 +174,8 @@ export const getEntrypoint = (
 }
 
 export const getParameterOrStorage = (
-		context: ExtensionContext,
-		validateInput: (inputType: InputBoxType, valueType: ValueType) => (value: string) => Promise<Maybe<string>>,
+		context: LigoDebugContext,
+		validateInput: (boxType: InputBoxType, valueType: InputValueType) => (value: string) => Promise<Maybe<string>>,
 		inputBoxType: InputBoxType,
 		placeHolder: string,
 		prompt: string,
@@ -197,15 +189,13 @@ export const getParameterOrStorage = (
 	const ligoEntrypoint: string = debuggedContract.ref.pickedLigoEntrypoint;
 
 	const totalSteps = 1;
-	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-	const switchButtonKey: Maybe<string> = currentFilePath
-		&& "switch_button_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
+	const rememberedFormat = context.workspaceState.lastParameterOrStorageFormat(inputBoxType, ligoEntrypoint)
 
 	class SwitchButton implements vscode.QuickInputButton {
-		public typ: ValueType;
+		public typ: InputValueType;
 		public tooltip: string;
 
-		constructor(public iconPath: vscode.Uri, typ: ValueType) {
+		constructor(public iconPath: vscode.Uri, typ: InputValueType) {
 			this.typ = typ;
 			this.tooltip = "Input in " + typ + " format";
 		}
@@ -231,8 +221,7 @@ export const getParameterOrStorage = (
 			throw new Error("Internal error: metadata is not defined at the moment of user input")
 		}
 
-		let currentKey: Maybe<string> = currentFilePath
-				&& "quickpick_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
+		var rememberedVal: ValueAccess<string>;
 
 		let placeholderExtra: string = ''
 		let michelsonType: string = ''
@@ -241,23 +230,19 @@ export const getParameterOrStorage = (
 				michelsonType = debuggedContract.ref.contractMetadata.parameterMichelsonType
 				// Consider picked entrypoint in the key to remember value depending on an entrypoint
 				const entrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
+				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, entrypoint);
 				if (entrypoint) {
-					// rewrite currentKey with entrypoint specific one
-					currentKey =
-						currentFilePath &&
-						"quickpick_" + inputBoxType +
-						(entrypoint ? + '_' + entrypoint : '') +
-						'_' + currentFilePath
 					placeholderExtra = " for '" + entrypoint + "' entrypoint"
 				}
 				break
 
 			case "storage":
 				michelsonType = debuggedContract.ref.contractMetadata.storageMichelsonType
+				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint);
 				break;
 		}
 
-		const previousVal = currentKey && context.workspaceState.get<string>(currentKey)
+		const previousVal = rememberedVal.value
 		const defaultValue =
 			isDefined(previousVal)
 				? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
@@ -276,8 +261,8 @@ export const getParameterOrStorage = (
 			ignoreFocusOut: true
 		});
 
-		if (isDefined(input.getCurrentValue()) && isDefined(currentKey)) {
-			context.workspaceState.update(currentKey, input.getCurrentValue());
+		if (isDefined(input.getCurrentValue())) {
+			rememberedVal.value = input.getCurrentValue();
 		}
 
 		input.doNotRecordStep();
@@ -292,9 +277,7 @@ export const getParameterOrStorage = (
 					break;
 			}
 
-			if (isDefined(switchButtonKey)) {
-				context.workspaceState.update(switchButtonKey, state.ref.currentSwitch.typ);
-			}
+			rememberedFormat.value = state.ref.currentSwitch.typ;
 
 			return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askValue(input, state);
 		} else {
@@ -303,17 +286,14 @@ export const getParameterOrStorage = (
 	}
 
 	let switchButton: SwitchButton = SwitchButton.LigoSwitch;
-	if (isDefined(switchButtonKey)) {
-		let switchButtonName: Maybe<ValueType> = context.workspaceState.get<ValueType>(switchButtonKey);
-		if (isDefined(switchButtonName)) {
-			switch(switchButtonName) {
-				case "LIGO":
-					switchButton = SwitchButton.LigoSwitch;
-					break;
-				case "Michelson":
-					switchButton = SwitchButton.MichelsonSwitch;
-					break;
-			}
+	if (isDefined(rememberedFormat.value)) {
+		switch(rememberedFormat.value) {
+			case "LIGO":
+				switchButton = SwitchButton.LigoSwitch;
+				break;
+			case "Michelson":
+				switchButton = SwitchButton.MichelsonSwitch;
+				break;
 		}
 	}
 
