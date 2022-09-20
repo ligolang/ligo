@@ -285,7 +285,7 @@ let rec compile_expression : I.expression -> O.expression =
       let rhs = self rhs in
       let let_result = self let_result in
       let attr = compile_exp_attributes attributes in
-      return @@ O.E_let_in { let_binder; attr; rhs; let_result }
+      return @@ O.E_let_mut_in { let_binder; attr; rhs; let_result }
 
 and compile_declaration : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in

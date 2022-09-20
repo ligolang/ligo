@@ -981,7 +981,7 @@ and compile_statement ~raise : ?next:AST.expression -> CST.statement -> AST.expr
       let var = compile_variable name in
       match next with
       | Some next ->
-        Some (e_let_in_ez ~loc var ?ascr:type_ ~mut:true [] init next)
+        Some (e_let_mut_in ~loc (Binder.make var type_) [] init next)
       | None -> None
     )
     | pattern ->
