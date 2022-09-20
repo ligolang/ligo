@@ -6,6 +6,7 @@ open Ligo_prim
 
 let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s
+let contract_of_bytes ~raise b = Proto_alpha_utils.Trace.trace_option ~raise (Errors.generic_error Location.generated "Cannot parse address") @@ Data_encoding.Binary.of_bytes_opt Memory_proto_alpha.Protocol.Alpha_context.Contract.encoding b
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
 let key_hash_of_bytes ~raise s =
@@ -41,8 +42,8 @@ let normalize_edo_comb_type =
 
 let normalize_edo_comb_value =
   function
-  (* only do it for type is "pair", because Seq case is ambiguous *)
-  | Prim (_, "pair", _, _) ->
+  (* only do it for type is "pair" (and "ticket"), because Seq case is ambiguous *)
+  | Prim (_, "pair", _, _) | Prim (_, "ticket", _, _) ->
     (function
       | Prim (loc, "Pair", xs, _) ->
         comb "Pair" loc xs
@@ -116,10 +117,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
   | Prim (_, "bytes", [], _), Bytes (_, b) ->
       V_Ct (C_bytes b)
   | Prim (_, "address", [], _), Bytes (_, b) ->
-      let open Proto_alpha_utils in
-      let enc = Memory_proto_alpha.Protocol.Alpha_context.Contract.encoding in
-      let c = Data_encoding.Binary.of_bytes_exn enc b in
-      V_Ct (C_address c)
+      V_Ct (C_address (contract_of_bytes ~raise b))
   | Prim (_, "address", [], _), String (_, s) ->
       V_Ct (C_address (contract_of_string ~raise s))
   | Prim (_, "contract", [_], _), String (_, s) ->
@@ -208,10 +206,13 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
       let orig_lambda = e_a_lambda {binder=Binder.make arg_binder t_input;output_type=t_output;result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
-  | Prim (loct, "ticket", [ty], _) , Prim (_, "Pair", [String (_,addr);vt;amt], _) ->
+  | Prim (loct, "ticket", [ty_ticked], _) , Prim (_, "Pair", [addr; Prim (_, "Pair", [vt;amt],_)], _) ->
+    let addr = Ligo_interpreter.Combinators.v_address @@ match addr with
+      | Bytes (_, b) -> contract_of_bytes ~raise b
+      | String (_, s) -> contract_of_string ~raise s
+      | _ -> raise.error (untranspilable ty value) in
     let ty_nat = Prim (loct, "nat", [], []) in
-    let addr =  V_Ct (C_address (contract_of_string ~raise addr)) in
-    let vt = decompile_to_untyped_value ~raise ~bigmaps ty vt in
+    let vt = decompile_to_untyped_value ~raise ~bigmaps ty_ticked vt in
     let amt = decompile_to_untyped_value ~raise ~bigmaps ty_nat amt in
     let va = Ligo_interpreter.Combinators.v_pair (vt, amt) in
     Ligo_interpreter.Combinators.v_pair (addr, va)
@@ -270,7 +271,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux lst in
         V_Set lst'
       )
-    | ((Ast_contract | Map           | Big_map             | List                 | Set              |
+    | ((Ast_contract | Map           | Big_map             | List                 | Set              | Int64        |
         String       | Bytes         | Int                 | Operation            | Nat              | Tez          |
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |

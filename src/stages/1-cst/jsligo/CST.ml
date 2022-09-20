@@ -56,6 +56,9 @@ type slash      = lexeme wrap  (* "/" *)
 type modulo     = lexeme wrap  (* "%" *)
 type times      = lexeme wrap  (* "*" *)
 
+(* ternary operator *)
+type qmark      = lexeme wrap  (* ? *)
+
 (* Boolean operators *)
 
 type bool_or  = lexeme wrap  (* "||" *)
@@ -186,10 +189,12 @@ and fun_type_arg = {
   type_expr : type_expr
 }
 
+and obj_type = field_decl reg ne_injection reg
+
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
-| TObject of field_decl reg ne_injection reg
+| TObject of obj_type
 | TApp    of (type_constr * type_params) reg
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -197,6 +202,7 @@ and type_expr =
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
+| TDisc   of (obj_type, vbar) nsepseq
 
 and type_params = (type_expr, comma) nsepseq chevrons reg
 
@@ -345,6 +351,15 @@ and expr =
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
 | ECodeInj of code_inj reg
+| ETernary of ternary reg
+
+and ternary = {
+  condition: expr;
+  qmark  : qmark;
+  truthy : expr;
+  colon  : colon;
+  falsy  : expr
+}
 
 and assignment_operator =
   Times_eq
@@ -547,8 +562,8 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TModA   {region; _}
-| TInt    {region; _}
- -> region
+| TInt    {region; _} -> region
+| TDisc   reg         -> nsepseq_to_region (fun a -> a.Region.region) reg
 
 let pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
@@ -587,7 +602,7 @@ let rec expr_to_region = function
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ECodeInj {region; _} | EModA { region; _} -> region
+| ECodeInj {region; _} | EModA { region; _} | ETernary {region; _} -> region
 
 let statement_to_region = function
   SBreak b -> b#region

@@ -69,6 +69,7 @@ let automatic_semicolon_insertion tokens =
     inner (t :: result) rest
   | (_ as semi) :: (LineCom _ as t) :: rest
   | (_ as semi) :: (BlockCom _ as t) :: rest
+  | (COLON _ as semi) :: (_ as t)  :: rest
   | (SEMI _ as semi) :: (Namespace _ as t)  :: rest
   | (SEMI _ as semi) :: (Export _ as t)  :: rest
   | (SEMI _ as semi) :: (Let _ as t)  :: rest
@@ -82,6 +83,10 @@ let automatic_semicolon_insertion tokens =
   | (LBRACE _ as semi) :: (Type _ as t)  :: rest
   | (LBRACE _ as semi) :: (Return _ as t)  :: rest ->
     inner (t:: semi :: result) rest
+  | (SEMI _) :: (Case _ as t) :: rest
+  | (SEMI _) :: (Default _ as t) :: rest
+  | (SEMI _) :: (Else _ as t) :: rest ->
+    inner (t :: result) rest
   | token :: (Namespace _ as t) :: rest
   | token :: (Export _ as t) :: rest
   | token :: (Let _ as t) :: rest

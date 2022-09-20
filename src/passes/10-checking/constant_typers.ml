@@ -72,6 +72,7 @@ module Comparable = struct
         ; t_unit ()
         ; t_never ()
         ; t_michelson_code ()
+        ; t_int64 ()
         ]
     in
     fun loc _s ~ctx a b ->
@@ -206,7 +207,6 @@ module Comparable = struct
     let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_value b_value in
     ctx, t_bool ()
 
-
   and big_map_comparator ~raise ~test : Location.t -> string -> t =
    fun loc s ~ctx a_map b_map ->
     let ctx =
@@ -222,7 +222,6 @@ module Comparable = struct
     let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_key b_key in
     let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_value b_value in
     ctx, t_bool ()
-
 
   and comparator ~cmp ~raise ~test ~loc : t =
    fun ~ctx a b ->
@@ -955,6 +954,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
                ; O.(t_int () ^-> t_timestamp () ^~> t_timestamp ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_POLYMORPHIC_SUB
       , of_type
@@ -974,6 +974,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_timestamp () ^-> t_timestamp () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
                ; O.(t_mutez () ^-> t_mutez () ^~> t_option (t_mutez ()))
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_ADD
       , of_type
@@ -993,6 +994,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
                ; O.(t_int () ^-> t_timestamp () ^~> t_timestamp ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_MUL
       , of_type
@@ -1015,6 +1017,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_mutez () ^-> t_nat () ^~> t_mutez ())
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_nat () ^-> t_int () ^~> t_int ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_SUB
       , of_type
@@ -1034,6 +1037,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_timestamp () ^-> t_timestamp () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
                ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_SUB_MUTEZ
       , of_type
@@ -1051,6 +1055,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_mutez () ^-> t_nat () ^~> t_mutez ())
                ; O.(t_mutez () ^-> t_mutez () ^~> t_nat ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_MOD
       , of_type
@@ -1063,6 +1068,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; O.(t_int () ^-> t_int () ^~> t_nat ())
                ; O.(t_mutez () ^-> t_nat () ^~> t_mutez ())
                ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_NEG
       , of_type
@@ -1093,6 +1099,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                [ O.(t_bool () ^-> t_bool () ^~> t_bool ())
                ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
                ; O.(t_int () ^-> t_nat () ^~> t_nat ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_OR
       , of_type
@@ -1101,6 +1108,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~types:
                [ O.(t_bool () ^-> t_bool () ^~> t_bool ())
                ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_XOR
       , of_type
@@ -1109,17 +1117,22 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~types:
                [ O.(t_bool () ^-> t_bool () ^~> t_bool ())
                ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_LSL
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:[ t_nat () ^-> t_nat () ^~> t_nat () ]) )
+             ~types:[ t_nat () ^-> t_nat () ^~> t_nat ()
+                    ; t_int64 () ^-> t_nat () ^~> t_int64 ()
+                    ]) )
     ; ( C_LSR
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:[ t_nat () ^-> t_nat () ^~> t_nat () ]) )
+             ~types:[ t_nat () ^-> t_nat () ^~> t_nat ()
+                    ; t_int64 () ^-> t_nat () ^~> t_int64 ()
+                    ]) )
       (* Tests *)
     ; ( C_TEST_COMPILE_CONTRACT
       , of_type
@@ -1524,6 +1537,21 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (for_all "a"
           @@ fun a ->
           create ~mode_annot:[ Inferred ] ~types:[ t_list a ^~> t_set a ]) )
+    ; ( C_TEST_INT64_OF_INT
+      , of_type
+          (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_int64 () ]))
+    ; ( C_TEST_INT64_TO_INT
+      , of_type
+          (create ~mode_annot:[ Checked ] ~types:[ t_int64 () ^~> t_int () ]))
+    ; ( C_TEST_INT
+      , of_type
+          (create ~mode_annot:[ Checked ] ~types:[ t_nat () ^~> t_int () ]))
+    ; ( C_TEST_ABS
+      , of_type
+          (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_nat () ]))
+    ; ( C_TEST_SLICE
+      , of_type
+          (create ~mode_annot:[ Checked ; Checked ; Inferred ] ~types:[ t_nat () ^-> t_nat () ^-> t_string () ^~> t_string () ; t_nat () ^-> t_nat () ^-> t_bytes () ^~> t_bytes () ]))
     ]
 
 
