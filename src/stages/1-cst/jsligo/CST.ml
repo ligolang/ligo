@@ -189,10 +189,12 @@ and fun_type_arg = {
   type_expr : type_expr
 }
 
+and obj_type = field_decl reg ne_injection reg
+
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
-| TObject of field_decl reg ne_injection reg
+| TObject of obj_type
 | TApp    of (type_constr * type_params) reg
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -200,6 +202,7 @@ and type_expr =
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
+| TDisc   of (obj_type, vbar) nsepseq
 
 and type_params = (type_expr, comma) nsepseq chevrons reg
 
@@ -559,8 +562,8 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TModA   {region; _}
-| TInt    {region; _}
- -> region
+| TInt    {region; _} -> region
+| TDisc   reg         -> nsepseq_to_region (fun a -> a.Region.region) reg
 
 let pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }

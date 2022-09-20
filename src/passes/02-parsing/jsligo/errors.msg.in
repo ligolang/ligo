@@ -3166,7 +3166,7 @@ contract: Bytes As ES6FUN ZWSP
 Ill-formed functional type expression.
 At this point, an opening parenthesis followed by parameters are expected.
 
-# contract: Bytes As LBRACE Ident RBRACE VBAR ZWSP
+contract: Bytes As LBRACE Ident RBRACE VBAR ZWSP
 ##
 ## Ends in an error in state: 72.
 ##
@@ -3175,11 +3175,11 @@ At this point, an opening parenthesis followed by parameters are expected.
 ## The known suffix of the stack is as follows:
 ## object_type VBAR
 ##
-#
-# Ill-formed discriminatory union. 
-# At this point, another record type is expected.
 
-# contract: Bytes As LBRACE Ident RBRACE VBAR Attr ZWSP
+Ill-formed discriminatory union. 
+At this point, another record type is expected.
+
+contract: Bytes As LBRACE Ident RBRACE VBAR Attr ZWSP
 ##
 ## Ends in an error in state: 73.
 ##
@@ -3194,9 +3194,9 @@ At this point, an opening parenthesis followed by parameters are expected.
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 39, spurious reduction of production nseq(Attr) -> Attr
 ##
-#
-# Ill-formed record type.
-# At this point, a record type is expected.
+
+Ill-formed record type.
+At this point, a record type is expected.
 
 contract: Bytes QMARK ZWSP
 ##
