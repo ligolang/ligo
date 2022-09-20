@@ -176,11 +176,11 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_jsligo_unexpected -> 
       Format.fprintf f "@[<hv>Unexpected error.@]"
     | `Concrete_jsligo_wrong_matchee_disc r -> (
-      Format.fprintf f "@[<hv>%aExpected a record field. Eg. `field.kind` or `some.other.id`, but not `foo`. @]"
+      Format.fprintf f "@[<hv>%aExpected a record field. For example: `field.kind`. @]"
       Snippet.pp_lift r
     )
     | `Concrete_jsligo_case_break_disc r ->
-      Format.fprintf f "@[<hv>%aA discriminated union case needs to end with a break. A fallthrough to another case is currently not supported. @]"
+      Format.fprintf f "@[<hv>%aA discriminated union case needs to end with a `break` or `return` statement. A fallthrough to another case is currently not supported. @]"
       Snippet.pp_lift r
   )
 

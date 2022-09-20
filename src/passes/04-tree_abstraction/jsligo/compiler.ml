@@ -1173,6 +1173,11 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
             (CST.SBreak _, _) -> ()
           | (SReturn _, _) -> ()
           | (SBlock {value = {inside; _};_ }, _) -> check_return inside
+          | (SCond {value = {ifso; ifnot; _}; _}, _) -> 
+            check_return (ifso, []);
+            (match ifnot with 
+              Some (_, ifnot) -> check_return (ifnot, []);
+            | None -> ())
           | (_ as s, _) -> raise.error @@ case_break_disc (CST.statement_to_region s)
         in
         let cases = List.map ~f:(fun f -> 
