@@ -167,7 +167,7 @@ Inductive expr : Set :=
 | E_deref : meta -> nat -> expr
 | E_let_mut_in : meta -> expr -> binds -> expr
 | E_assign : meta -> nat -> expr -> expr
-| E_for : meta -> expr -> expr -> expr -> binds -> expr
+| E_for : meta -> args -> binds -> expr
 | E_for_each : meta -> expr -> binds -> expr
 | E_while : meta -> expr -> expr -> expr
 
@@ -447,6 +447,10 @@ Inductive instr : Set :=
 | I_ITER : meta -> prog -> instr
 | I_MAP : meta -> prog -> instr
 
+(* convenient fictional instruction for implementing E_for (arithmetic
+   progression loops) without exposing arithmetic here right now... *)
+| I_FOR : meta -> prog -> instr
+
 | I_CREATE_CONTRACT : meta -> ty -> ty -> prog -> instr
 where
 "'prog'" := (list instr).
@@ -642,6 +646,10 @@ Inductive instr_typed : instr -> list ty -> list ty -> Prop :=
 | Map_typed_list {body a b s} :
     `{prog_typed body (a :: s) (b :: s) ->
       instr_typed (I_MAP l1 body) (T_list l2 a :: s) (T_list l3 b :: s)}
+(* FICTION *)
+| For_typed {body s} :
+  `{prog_typed body (T_int l1 :: s) s ->
+    instr_typed (I_FOR l2 body) (T_int l3 :: T_int l4 :: T_int l5 :: s) s}
 
 (* Failure *)
 | Failwith_typed {a s1 s2} :
@@ -841,9 +849,11 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
        I_DUG null (embed r n);
        I_DIG null (S (embed r n));
        I_DROP null 1]
-  | E_for _ start final incr body =>
-      (* TODO ugh *)
-      []
+  | E_for _ args body =>
+      let args' := compile_args r env args in
+      let body' := compile_binds r env body in
+      [I_SEQ null args';
+       I_FOR null body']
   | E_for_each l coll body =>
       let coll' := compile_expr r env coll in
       let body' := compile_binds r env body in
@@ -1364,6 +1374,11 @@ Fixpoint
       let (rb, body') := strengthen_progg body (true :: rfix) in
       (true :: rfix,
         I_MAP l (compile_ope (true :: inj1 (tl rb) (tl r)) ++ body') :: compile_ope (ope_hd r :: inj2 (tl rb) (tl r)))
+  | I_FOR l body =>
+      let rfix := proj1_sig (fix_ope (fun x => union (tl (fst (strengthen_progg body x))) r) [] TRUST_ME_IT_TERMINATES) in
+      let (rb, body') := strengthen_progg body rfix in
+      (true :: true :: true :: rfix,
+        I_FOR l (compile_ope (ope_hd rb :: inj1 (tl rb) r) ++ body') :: compile_ope (inj2 (tl rb) r))
   | I_CREATE_CONTRACT l p s script =>
       let (rs, script') := strengthen_progg script [true] in
       (true :: true :: true :: tl (tl r),
@@ -1780,6 +1795,8 @@ Proof with try split; try lia; eauto 15 with michelson.
   (* I_ITER *)
   - admit.
   (* I_MAP *)
+  - admit.
+  (* I_FOR *)
   - admit.
   (* I_FAILWITH *)
   - idtac...

@@ -238,11 +238,9 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let e = translate_expression e env in
     E_assign (meta, x, e)
   | E_for (start, final, incr, body) ->
-    let start = translate_expression start env in
-    let final = translate_expression final env in
-    let incr = translate_expression incr env in
+    let args = translate_args [start; final; incr] env in
     let body = translate_binder body env in
-    E_for (meta, start, final, incr, body)
+    E_for (meta, args, body)
   | E_for_each (coll, _coll_type, body) ->
     let coll = translate_expression coll env in
     let body = translate_binderN body env in

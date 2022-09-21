@@ -234,6 +234,20 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
       @ compile_dups (false :: proj1)
       @ pair_tuple cs
       @ [Prim (null, "APPLY", [], [])]
+  (* FICTION *)
+  | I_FOR (_, body) ->
+    (* hmmm *)
+    [Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+     Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+     Prim (null, "LE", [], []);
+     Prim (null, "LOOP", [Prim (null, "DUP", [], []);
+                          Prim (null, "DUG", [Int (null, Z.of_int 3)], []);
+                          Prim (null, "DIP", [Int (null, Z.of_int 3); Seq (null, translate_prog body)], []);
+                          Prim (null, "DUP", [Int (null, Z.of_int 3)], []);
+                          Prim (null, "ADD", [], []);
+                          Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+                          Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+                          Prim (null, "LE", [], [])], [])]
   | I_LAMBDA (l, a, b, body) ->
     [Prim (l, "LAMBDA", [translate_type a;
                          translate_type b;
