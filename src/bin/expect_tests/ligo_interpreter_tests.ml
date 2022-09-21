@@ -4,6 +4,13 @@ let test basename = "./" ^ basename
 let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/interpreter_tests/"
 
+(* events payload being records and not decompiled to pairs in the interpreter *)
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ; "--protocol" ; "kathmandu" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_foo exited with value 3n. |}]
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
   [%expect{|

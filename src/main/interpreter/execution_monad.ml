@@ -790,8 +790,8 @@ module Command = struct
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       v, ctxt
-    | Get_last_events (rq_tag, rq_p_ty) ->
-      let rq_p_ty = Michelson_backend.compile_type ~raise rq_p_ty in
+    | Get_last_events (rq_tag, rq_p_ast_ty) ->
+      let rq_p_ty = Michelson_backend.compile_type ~raise rq_p_ast_ty in
       let rq_p_ty =
         Tezos_micheline.Micheline.(
           inject_locations (fun _ -> ()) (strip_locations rq_p_ty))
@@ -804,6 +804,14 @@ module Command = struct
             ~bigmaps:ctxt.transduced.bigmaps
             ty
             payload
+        in
+        (* this takes care of record, possibly being decompiled to pairs *)
+        let x =
+          Michelson_to_value.decompile_value
+            ~raise
+            ~bigmaps:ctxt.transduced.bigmaps
+            x
+            rq_p_ast_ty
         in
         LC.v_pair (src, x)
       in
