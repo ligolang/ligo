@@ -1379,8 +1379,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
-  | ( ( C_ASSERT_INFERRED
-      | C_UPDATE
+  | ( ( C_UPDATE
       | C_ITER
       | C_FOLD_LEFT
       | C_FOLD_RIGHT
