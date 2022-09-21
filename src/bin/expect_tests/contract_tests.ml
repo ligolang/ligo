@@ -3519,3 +3519,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ;  "jsligo" ; "test" ; "--init-file" ; contract "ignore.jsligo" ] ;
   [%expect{| 1 |}]
+
+(* bytes literals using raw_code *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ;  "cameligo" ; "tests" ; "--init-file" ; contract "bytes_literals.mligo" ] ;
+  [%expect{| { True ; True ; True } |}]
