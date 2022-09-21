@@ -66,6 +66,7 @@ module LigoManifest = struct
     ; description        : string
     ; scripts            : (string * string) list
     ; author             : string
+    ; repository         : string
     ; license            : string
     ; readme             : string
     ; ligo_manifest_path : string
@@ -122,11 +123,13 @@ module LigoManifest = struct
         with _ -> []  in
       let author = try json |> Util.member "author" |> Util.to_string 
         with _ -> failwith "No author field  in package.json" in
+      let repository = try json |> Util.member "repository" |> Util.to_string 
+        with _ -> failwith "No repository field in package.json" in
       let license = try json |> Util.member "license" |> Util.to_string
         with _ -> failwith "No license field in package.json" in
       let readme = try json |> Util.member "readme" |> Util.to_string
         with _ -> try_readme ~project_root in 
-      Ok{ name ; version ; description ; scripts ; author ; license ; readme ; ligo_manifest_path }
+      Ok{ name ; version ; description ; scripts ; author ; repository; license ; readme ; ligo_manifest_path }
     with Failure e -> Error e
 end
 
