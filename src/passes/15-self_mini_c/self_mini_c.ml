@@ -69,7 +69,6 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
   | C_OPTION_MAP
-  | C_ASSERT_INFERRED
   | C_MAP_FIND
   | C_CALL
   | C_ITER
