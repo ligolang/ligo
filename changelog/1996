@@ -1,0 +1,5 @@
+author: lesenechal.remi & er433
+description: '- Testing framework: fix a bug where a ticket in a big_map was not transpilable'
+merge_request: '1996'
+title: 'Testing framework: untranspilable ticket in bigmap update'
+type: fixed

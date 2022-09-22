@@ -41,6 +41,7 @@ type t =
   | Tx_rollup_l2_address
   | External of string
   | Gen
+  | Int64
   [@@deriving ord, eq, yojson, hash]
 
 let to_string = function
@@ -85,6 +86,7 @@ let to_string = function
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s           -> "external_" ^ s
   | Gen                  -> "pbt_gen"
+  | Int64                -> "int64"
 
   let of_string = function
   | "string"               -> String
@@ -129,9 +131,10 @@ let to_string = function
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
   | "external_u_ediv"      -> External "u_ediv"
+  | "pbt_gen"              -> Gen
+  | "int64"                -> Int64
   | "external_and"         -> External "and"
   | "external_u_and"       -> External "u_and"
-  | "pbt_gen"                  -> Gen
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
 let pp ppf l = Format.fprintf ppf "%s" (to_string l)
@@ -179,6 +182,7 @@ let external_int         = External "int"
 let external_ediv        = External "ediv"
 let external_u_ediv      = External "u_ediv"
 let gen                  = Gen
+let int64                = Int64
 
 let v_bool                 : Var.Type_var.t = Var.Type_var.of_input_var ("bool")
 let v_string               : Var.Type_var.t = Var.Type_var.of_input_var (to_string String)
@@ -227,3 +231,4 @@ let v_external_u_ediv      : Var.Type_var.t = Var.Type_var.of_input_var (to_stri
 let v_external_and         : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "and")
 let v_external_u_and       : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ External "u_and")
 let v_gen                  : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ Gen)
+let v_int64                : Var.Type_var.t = Var.Type_var.of_input_var (to_string @@ Int64)

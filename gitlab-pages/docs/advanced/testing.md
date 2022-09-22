@@ -158,17 +158,17 @@ type parameter =
 type @return = [list<operation>, storage];
 
 // Two entrypoints
-const add = ([store, delta]: [storage, int]): storage => store + delta;
-const sub = ([store, delta]: [storage, int]): storage => store - delta;
+const add = (store: storage, delta: int): storage => store + delta;
+const sub = (store: storage, delta: int): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-const main = ([action, store]: [parameter, storage]) : @return => {
+const main = (action: parameter, store: storage) : @return => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
-      Increment:(n: int) => add ([store, n]),
-      Decrement:(n: int) => sub ([store, n]),
+      Increment:(n: int) => add (store, n),
+      Decrement:(n: int) => sub (store, n),
       Reset: ()          => 0})
   ]
 };
@@ -629,7 +629,7 @@ let test_transfer_to_contract =
 
 type param = [ int , ticket<string>]
 
-const main = ( [p,_] : [param , [string , address]] ) : [list<operation> , [string , address]] => {
+const main = (p: param, _: [string , address]) : [list<operation> , [string , address]] => {
   let [_,ticket] = p ;
   let [[_,[v,_]] , _] = Tezos.read_ticket (ticket) ;
   return ([list([]) , [v, Tezos.get_sender ()]])
@@ -738,7 +738,7 @@ let test_originate_contract =
 type storage = option< ticket<bytes> >
 type unforged_storage = option< unforged_ticket<bytes> >
 
-const main = ( [_,s] : [unit , storage]) : [ list<operation> , storage] => {
+const main = (_: unit, s: storage) : [ list<operation> , storage] => {
   let x =
     match (s, {
       Some: (ticket: ticket<bytes>) => {
@@ -1213,18 +1213,18 @@ type @return = [list<operation>, storage];
 
 // Two entrypoints
 
-let add = ([store, delta]: [storage, int]): storage => store + delta;
-let sub = ([store, delta]: [storage, int]): storage => store - delta;
+let add = (store: storage, delta: int): storage => store + delta;
+let sub = (store: storage, delta: int): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
 
-let main = ([action, store]: [parameter, storage]) : @return => {
+let main = (action: parameter, store: storage) : @return => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
-      Increment:(n: int) => add ([store, n]),
-      Decrement:(n: int) => sub ([store, n]),
+      Increment:(n: int) => add (store, n),
+      Decrement:(n: int) => sub (store, n),
       Reset: ()          => 0})
   ]
 };

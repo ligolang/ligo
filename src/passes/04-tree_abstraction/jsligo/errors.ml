@@ -36,6 +36,10 @@ type abs_error = [
   | `Concrete_jsligo_expected_a_field_name of Raw.selection
   | `Concrete_jsligo_expected_an_int of Raw.expr
   | `Concrete_jsligo_invalid_list_pattern_match of Raw.array_item list
+  | `Concrete_jsligo_no_shared_fields of Region.t
+  | `Concrete_jsligo_unexpected
+  | `Concrete_jsligo_wrong_matchee_disc of Region.t
+  | `Concrete_jsligo_case_break_disc of Region.t
   ] [@@deriving poly_constructor { prefix = "concrete_jsligo_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -165,6 +169,19 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_jsligo_invalid_list_pattern_match _l -> (
       Format.fprintf f "@[<hv>Invalid list pattern matching.@]"
     )
+    | `Concrete_jsligo_no_shared_fields r -> (
+      Format.fprintf f "@[<hv>%aAll the objects are expected to have a shared field with an unique value.@]"
+      Snippet.pp_lift r
+    )
+    | `Concrete_jsligo_unexpected -> 
+      Format.fprintf f "@[<hv>Unexpected error.@]"
+    | `Concrete_jsligo_wrong_matchee_disc r -> (
+      Format.fprintf f "@[<hv>%aExpected a record field. For example: `field.kind`. @]"
+      Snippet.pp_lift r
+    )
+    | `Concrete_jsligo_case_break_disc r ->
+      Format.fprintf f "@[<hv>%aA discriminated union case needs to end with a `break` or `return` statement. A fallthrough to another case is currently not supported. @]"
+      Snippet.pp_lift r
   )
 
 
@@ -364,4 +381,33 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("message", message);
       (* ("location", Location.to_yojson loc); *)
       ] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_no_shared_fields reg ->
+    let message = `String "No shared field." in
+    let loc = Location.lift reg in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_unexpected ->
+    let message = `String "Unexpected error." in
+    (* let loc = Location.lift (Raw.expr_to_region e) in *)
+    let content = `Assoc [
+      ("message", message);
+      (* ("location", Location.to_yojson loc); *)
+      ] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_wrong_matchee_disc reg ->
+    let message = `String "Wrong matchee." in
+    let loc = Location.lift reg in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_case_break_disc reg ->
+    let message = `String "Discriminatory union case needs to end with break." in
+    let loc = Location.lift reg in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content

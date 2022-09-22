@@ -4,6 +4,13 @@ let test basename = "./" ^ basename
 let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/interpreter_tests/"
 
+(* events payload being records and not decompiled to pairs in the interpreter *)
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ; "--protocol" ; "kathmandu" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_foo exited with value 3n. |}]
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
   [%expect{|
@@ -689,6 +696,13 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value Success (2796n). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_tickets_and_bigmaps.mligo" ] ;
+  [%expect {|
+    Success (3498n)
+    Everything at the top-level was executed.
+    - test_one exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -698,12 +712,22 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
+  run_ligo_good [ "run"; "test" ; test "test.jsligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 let () = Sys.chdir pwd
 
 let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test/a/b/test.mligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
+  run_ligo_good [ "run"; "test" ; test "test/a/b/test.jsligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.

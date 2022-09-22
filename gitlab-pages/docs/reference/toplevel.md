@@ -491,7 +491,7 @@ let main = ((p,s) : (int, unit)) =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = ([p, s] : [int, unit]): unit => {
+let main = (p: int, s: unit): unit => {
   if (p > 10) { failwith ("Failure."); };
 };
 ```

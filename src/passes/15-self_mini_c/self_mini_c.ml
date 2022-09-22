@@ -69,7 +69,6 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
   | C_OPTION_MAP
-  | C_ASSERT_INFERRED
   | C_MAP_FIND
   | C_CALL
   | C_ITER
@@ -156,8 +155,13 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_TEST_READ_CONTRACT_FROM_FILE
   | C_TEST_SIGN
   | C_TEST_GET_ENTRYPOINT
+  | C_TEST_INT64_OF_INT
+  | C_TEST_INT64_TO_INT
   | C_TEST_LAST_EVENTS
   | C_TEST_TRY_WITH
+  | C_TEST_ABS
+  | C_TEST_INT
+  | C_TEST_SLICE
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

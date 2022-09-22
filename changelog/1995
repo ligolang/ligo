@@ -1,0 +1,5 @@
+author: SanderSpies
+description: Return in switch case now works properly.
+merge_request: '1995'
+title: Allow return in switch case.
+type: fixed

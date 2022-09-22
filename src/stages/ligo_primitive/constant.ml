@@ -5,7 +5,6 @@ type constant' =
   | C_NONE
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
-  | C_ASSERT_INFERRED
   | C_UPDATE
   (* Loops *)
   | C_ITER
@@ -153,8 +152,14 @@ type constant' =
   | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_SIGN [@only_interpreter]
   | C_TEST_GET_ENTRYPOINT [@only_interpreter]
+  | C_TEST_INT64_OF_INT [@only_interpreter]
+  | C_TEST_INT64_TO_INT [@only_interpreter]
   | C_TEST_LAST_EVENTS [@only_interpreter]
   | C_TEST_TRY_WITH [@only_interpreter]
+  (* Added only for performance in the interpreter, not exposed *)
+  | C_TEST_ABS [@only_interpreter]
+  | C_TEST_INT [@only_interpreter]
+  | C_TEST_SLICE [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE

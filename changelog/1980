@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1980'
+title: Fix path issue in testing framwork for jsligo tests
+type: fixed

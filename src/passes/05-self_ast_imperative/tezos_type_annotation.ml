@@ -35,4 +35,9 @@ let peephole_expression ~raise : expression -> expression = fun e ->
         )
       | _ -> return ec
     )
+   | E_raw_code { language ; code = { expression_content = E_literal (Literal_string code) ; _ } }
+      when String.equal language "bytes" -> (
+        let str = (Simple_utils.Ligo_string.extract code) in
+        let e' = e_bytes_string str in
+        return e'.expression_content)
   | e -> return e

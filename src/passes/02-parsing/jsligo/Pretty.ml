@@ -201,6 +201,7 @@ and pp_expr = function
 | EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
+| ETernary e -> pp_ternary e
 
 and pp_array (node: (array_item, comma) Utils.sepseq brackets reg) =
   match node.value.inside with
@@ -273,6 +274,13 @@ and pp_annot_expr {value; _} =
   let expr, _, type_expr = value in
     group (nest 1 (pp_expr expr ^/^ string "as "
     ^^ pp_type_expr type_expr))
+
+and pp_ternary {value; _} =
+  pp_expr value.condition ^^
+  string "?" ^^
+  nest 2 (pp_expr value.truthy) ^^
+  string ":" ^^
+  nest 2 (pp_expr value.falsy)
 
 and pp_logic_expr = function
   BoolExpr e -> pp_bool_expr e
@@ -347,6 +355,9 @@ and pp_fun {value; _} =
 and pp_seq {value; _} =
   pp_nsepseq "," pp_expr value
 
+and pp_disc value  = 
+  pp_nsepseq "|" pp_object_type value
+
 and pp_type_expr: type_expr -> document = function
   TProd   t -> pp_cartesian t
 | TSum    t -> pp_sum_type t
@@ -358,6 +369,7 @@ and pp_type_expr: type_expr -> document = function
 | TString s -> pp_string s
 | TModA   t -> pp_module_access pp_type_expr t
 | TInt    t -> pp_int t
+| TDisc   t -> pp_disc t
 
 and pp_module_access : type a.(a -> document) -> a module_access reg -> document
 = fun f {value; _} ->
