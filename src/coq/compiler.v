@@ -857,19 +857,22 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
       let args' := compile_args r env args in
       let body' := compile_binds r env body in
       [I_SEQ null args';
-       I_FOR null [I_SEQ null body'; I_DROP null 1]]
+       I_FOR null [I_SEQ null body'; I_DROP null 1];
+       I_UNIT null]
   | E_for_each l coll body =>
       let coll' := compile_expr r env coll in
       let body' := compile_binds r env body in
       [I_SEQ null coll';
-       I_ITER l [I_SEQ null body'; I_DROP null 1]]
+       I_ITER l [I_SEQ null body'; I_DROP null 1];
+       I_UNIT null]
   | E_while l cond body =>
       let cond' := compile_expr r env cond in
       let body' := compile_expr (false :: r) env body in
       [I_TRUE null;
        I_LOOP l [I_SEQ null cond';
                  I_DUP null 1;
-                 I_IF null [I_SEQ null body'; I_DROP null 1] []]]
+                 I_IF null [I_SEQ null body'; I_DROP null 1] []];
+       I_UNIT null]
   | E_tuple _ args =>
       [I_SEQ null (compile_args r env args);
        I_SEQ null (PAIR (args_length args))]
