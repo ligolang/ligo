@@ -2299,6 +2299,27 @@ let func_object_destruct_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "x" data (e_int 5) in
   ()
   
+let func_tuple_destruct_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/jsligo_destructure_tuples.jsligo" in
+  let data = e_tuple [
+    e_tuple [
+      e_string "first";
+      e_tuple [
+        e_int 1;
+        e_string "uno";
+      ]      
+    ];
+    e_tuple [
+      e_string "second";
+      e_tuple [
+        e_int 2;
+        e_string "dos"
+      ]
+    ]
+  ] in
+  let _ = expect_eq ~raise program "test" data (e_tuple [e_string "firstsecond"; e_int 3; e_string "unodos"]) in
+  ()
+
 let switch_return_jsligo ~raise () : unit = 
   let program = type_file ~raise "./contracts/switch_return.jsligo" in
   let data = e_constructor "Increment" (e_record_ez [("amount" , e_int 42)]) in
@@ -2513,5 +2534,6 @@ let main = test_suite "Integration (End to End)"
     test_w "discriminated_union (jsligo)" disc_union_jsligo;
     test_w "ternary (jsligo)" ternary_jsligo;
     test_w "destruct func object param (jsligo)" func_object_destruct_jsligo;
+    test_w "destruct func tuple param (jsligo)" func_tuple_destruct_jsligo;
     test_w "switch_return (jsligo)" switch_return_jsligo;
   ]

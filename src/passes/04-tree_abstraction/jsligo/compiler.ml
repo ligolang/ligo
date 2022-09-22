@@ -835,16 +835,14 @@ and compile_parameter ~raise : CST.expr -> _ Binder.t * (expression -> expressio
   let return ?ascr ?mut fun_ var =
     Binder.make ?mut var ascr, fun_ in
   let return_1 ?ascr ?mut var = return ?ascr ?mut (fun e -> e) var in
-  let matching ~loc binder_lst fun_ =
-    match (binder_lst : _ Binder.t list) with
-    | [binder] ->
-       binder, fun_
-    | _ ->
-       let var = Value_var.fresh () in
-       let expr = fun expr -> e_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr in
-       let ascr = Option.all @@ List.map ~f:(Binder.get_ascr) binder_lst in
-       let ascr = Option.map ~f:(t_tuple) ascr in
-       Binder.make var ascr, expr in
+ 
+  let bind ~loc binder_lst fun_ =
+    let var = Value_var.fresh () in
+    let expr = fun expr -> e_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:(Binder.get_ascr) binder_lst in
+    let ascr = Option.map ~f:(t_tuple) ascr in
+    Binder.make var ascr, expr
+  in
   match expr with
   | EAnnot ea ->
      let (ea, _loc) = r_split ea in
@@ -856,17 +854,14 @@ and compile_parameter ~raise : CST.expr -> _ Binder.t * (expression -> expressio
     let (arguments, loc) = r_split array_items in
     let { inside = arguments ; _ } : _ CST.brackets = arguments in
     let array_item = function
-        CST.Expr_entry EVar var ->
-         return_1 @@ compile_variable var
+        CST.Expr_entry e -> compile_parameter ~raise e
       | Rest_entry _ as r -> raise.error @@ array_rest_not_supported r
-      | _ -> raise.error @@ not_a_valid_parameter expr
     in
     let arguments = Utils.sepseq_to_list arguments in
     let aux (binder, fun_') (binder_lst, fun_) =
       (binder :: binder_lst, fun_' <@ fun_) in
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([], (fun e -> e)) @@ (List.map ~f:array_item arguments) in
-    let binder, expr = matching ~loc binder_lst fun_ in
-    binder,expr
+    bind ~loc binder_lst fun_
   | EPar { value = { inside = ESeq { value = arguments; _ }; _ }; region } ->
     let loc = Location.lift region in
     let aux b (binder_lst, fun_) =
@@ -874,7 +869,13 @@ and compile_parameter ~raise : CST.expr -> _ Binder.t * (expression -> expressio
       (binder :: binder_lst, fun_' <@ fun_)
     in
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([], (fun e -> e)) @@ npseq_to_list arguments in
-    let binder, expr = matching ~loc binder_lst fun_ in
+    let binder, expr = 
+      match (binder_lst : _ Binder.t list) with
+      | [binder] ->
+         binder, fun_
+      | _ ->
+        bind ~loc binder_lst fun_ 
+      in 
     binder, expr
   | EVar var ->
     let var = compile_variable var in
