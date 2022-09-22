@@ -77,6 +77,7 @@ library
     , base-noprelude
     , bytestring
     , conduit
+    , conduit-extra
     , containers
     , data-default
     , directory
