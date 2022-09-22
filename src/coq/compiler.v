@@ -848,7 +848,8 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
       [I_SEQ null e1';
        I_DUG null (embed r n);
        I_DIG null (S (embed r n));
-       I_DROP null 1]
+       I_DROP null 1;
+       I_UNIT null]
   | E_for _ args body =>
       let args' := compile_args r env args in
       let body' := compile_binds r env body in
