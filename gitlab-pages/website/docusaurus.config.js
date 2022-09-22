@@ -171,6 +171,12 @@ const config = {
     }),
   plugins: [
     [
+      '@docusaurus/plugin-google-analytics',
+      {
+        trackingID: 'UA-205736400-1'
+      }
+    ],
+    [
       './src/plugins/syntax', {},
     ],
     // '@aldridged/docusaurus-plugin-lunr'
