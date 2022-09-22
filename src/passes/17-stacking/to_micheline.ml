@@ -263,6 +263,7 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
   | I_DROP (l, n) -> [Prim (l, "DROP", [nat_to_mich n], [])]
   | I_SWAP l -> [Prim (l, "SWAP", [], [])]
   | I_UNIT l -> [Prim (l, "UNIT", [], [])]
+  | I_TRUE l -> [Prim (l, "PUSH", [Prim (null, "bool", [], []); Prim (null, "True", [], [])], [])]
   | I_LEFT (l, a) -> [Prim (l, "LEFT", [translate_type a], [])]
   | I_RIGHT (l, b) -> [Prim (l, "RIGHT", [translate_type b], [])]
   | I_IF_LEFT (l, bt, bf) -> [Prim (l, "IF_LEFT", [Seq (null, translate_prog bt); Seq (null, translate_prog bf)], [])]

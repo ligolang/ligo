@@ -414,6 +414,7 @@ Inductive instr : Set :=
 | I_SWAP : meta -> instr
 
 | I_UNIT : meta -> instr
+| I_TRUE : meta -> instr (* fictional version of PUSH bool True, for impl of E_while... *)
 
 | I_LEFT : meta -> ty -> instr
 | I_RIGHT : meta -> ty -> instr
@@ -557,6 +558,8 @@ Inductive instr_typed : instr -> list ty -> list ty -> Prop :=
 (* Unit *)
 | Unit_typed {s} :
     `{instr_typed (I_UNIT l1) s (T_unit l2 :: s)}
+| True_typed {s} :
+    `{instr_typed (I_TRUE l1) s (T_bool l2 :: s)}
 
 (* Or *)
 | Left_typed {a b s} :
@@ -862,11 +865,11 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
        I_ITER l [I_SEQ null body'; I_DROP null 1]]
   | E_while l cond body =>
       let cond' := compile_expr r env cond in
-      let body' := compile_expr r env body in
-      [I_LOOP l [I_SEQ null cond';
+      let body' := compile_expr (false :: r) env body in
+      [I_TRUE null;
+       I_LOOP l [I_SEQ null cond';
                  I_DUP null 1;
-                 (* TODO may want to avoid the DIP? *)
-                 I_DIP null [I_IF null [I_SEQ null body'; I_DROP null 1] []]]]
+                 I_IF null [I_SEQ null body'; I_DROP null 1] []]]
   | E_tuple _ args =>
       [I_SEQ null (compile_args r env args);
        I_SEQ null (PAIR (args_length args))]
@@ -1219,6 +1222,11 @@ Fixpoint
         if ope_hd r
         then [I_UNIT l]
         else [])
+  | I_TRUE l =>
+      (tl r,
+        if ope_hd r
+        then [I_TRUE l]
+        else [])
   | I_PAIR l n =>
       if ope_hd r
       then (repeat true n ++ tl r, [I_PAIR l n])
@@ -1528,6 +1536,8 @@ Proof with try split; try lia; eauto 15 with michelson.
   (* I_SWAP *)
   - destruct r as [|[|] [|[|] r]]; strengthen_rewrite...
   (* I_UNIT *)
+  - destruct r as [|[|] r]; strengthen_rewrite...
+  (* I_TRUE *)
   - destruct r as [|[|] r]; strengthen_rewrite...
   (* I_LEFT *)
   - destruct r as [|[|] r]; strengthen_rewrite...
