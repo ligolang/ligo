@@ -71,9 +71,21 @@ and pp_while {value; _} =
 
 and pp_import (node : CST.import Region.reg) =
   let {value; _} : CST.import Region.reg = node in
-  string "import " ^^ string value.alias.value
-  ^^ string " = "
-  ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
+  match value with 
+    Import_rename value ->
+    string "import " ^^ string value.alias.value
+    ^^ string " = "
+    ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
+  | Import_all_as value -> 
+    string "import " ^^ string "*" ^^ string " as " ^^ string value.alias.value 
+    ^^ string " from "
+    ^^ pp_string value.module_path
+  | Import_selected value ->
+    let pp_idents = pp_nsepseq "," pp_ident in
+    string "import " ^^ 
+    group (pp_braces pp_idents value.imported) ^^
+    string " from "
+    ^^ pp_string value.module_path
 
 and pp_export {value = (_, statement); _} =
   string "export " ^^ pp_statement statement

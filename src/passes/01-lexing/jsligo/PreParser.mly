@@ -183,6 +183,7 @@ everything_else:
 | "return"          { Return $1   }
 | "switch"          { Switch $1    }
 | "while"           { While $1    }
+| "from"            { From $1    }
 | "as"              { As $1       }
 | "namespace"       { Namespace $1 }
 | "type"            { Type $1      }

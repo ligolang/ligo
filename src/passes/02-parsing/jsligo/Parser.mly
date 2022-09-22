@@ -76,6 +76,7 @@ let private_attribute = {
 %on_error_reduce nsepseq(variant,VBAR)
 %on_error_reduce nsepseq(object_type,VBAR)
 %on_error_reduce ternary_expr
+%on_error_reduce nsepseq(field_name,COMMA)
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -873,8 +874,44 @@ import_stmt:
     let kwd_import = $1 in
     let equal = $3 in
     let region = cover kwd_import#region (nsepseq_to_region (fun a -> a.region) $4)
-    and value = {kwd_import; alias=$2; equal; module_path=$4}
+    and value = Import_rename {kwd_import; alias=$2; equal; module_path=$4}
     in {region; value} }
+| "import" "*" "as" module_name "from" "<string>" {
+    let kwd_import = $1 in
+    let times = $2 in 
+    let kwd_as = $3 in
+    let alias   = $4 in
+    let kwd_from = $5 in 
+    let module_path = unwrap $6 in
+    let region = cover kwd_import#region module_path.region in
+    let value = Import_all_as {
+      kwd_import;
+      times;
+      kwd_as;
+      alias;
+      kwd_from;
+      module_path
+    }
+    in 
+    {region; value}
+  }
+| "import" braces(nsepseq(field_name, ",")) "from" "<string>" {
+  let kwd_import  = $1 in 
+
+  let imported: (field_name, comma) Utils.nsepseq braces reg   = $2 in 
+
+  let kwd_from    = $3 in 
+  let module_path = unwrap $4 in
+  let region = cover kwd_import#region module_path.region in
+  let value = Import_selected {
+    kwd_import;
+    imported;
+    kwd_from;
+    module_path
+  }
+  in 
+  {region; value}
+}
 
 (* Statements *)
 
