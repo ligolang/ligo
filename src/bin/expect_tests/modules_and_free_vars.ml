@@ -20,8 +20,8 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
-          amt | Increment unit_proj#114 ->
+        | Decrement unit_proj#262 ->
+          amt | Increment unit_proj#263 ->
                 bal ) |xxx}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
@@ -45,8 +45,8 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
-          amt | Increment unit_proj#114 ->
+        | Decrement unit_proj#262 ->
+          amt | Increment unit_proj#263 ->
                 bal ) |xxx}]
 
 let%expect_test _ =
@@ -67,8 +67,8 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
-          amt | Increment unit_proj#114 ->
+        | Decrement unit_proj#262 ->
+          amt | Increment unit_proj#263 ->
                 bal ) |xxx}]
 
 let%expect_test _ =
@@ -98,7 +98,7 @@ const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
+        | Decrement unit_proj#262 ->
           1000000mutez
-        | Increment unit_proj#114 ->
+        | Increment unit_proj#263 ->
           used ) |xxx}]

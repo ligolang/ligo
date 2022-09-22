@@ -37,8 +37,19 @@ let check_string v =
   in
   check_printable_ascii (String.length v - 1)
 
-let check_obj_ligo ~raise (t : AST.expression) =
+(*
+  check_obj_ligo [blacklist] [t] fails if t hold meta-ligo types or meta-ligo constants sub-terms
+  [blacklist] is a list of binder and location which refer to meta-ligo terms, when
+  encountering a variable matching an element of this list, it fails
+*)
+let check_obj_ligo ~raise ?(blacklist = []) (t : AST.expression) : unit =
   let folder_constant () expr = match expr.AST.expression_content with
+    | E_variable v -> (
+      let b_opt = List.find ~f:(fun (x,_loc) -> Value_var.equal v (Binder.get_var x)) blacklist in
+      match b_opt with
+      | Some (_,loc) -> raise.Trace.error @@ Errors.expected_obj_ligo loc
+      | None -> ()
+      )
     | E_constant {cons_name}
          when Constant.ppx_is_only_interpreter cons_name ->
        raise.Trace.error @@ Errors.expected_obj_ligo expr.location
@@ -55,4 +66,79 @@ let check_obj_ligo ~raise (t : AST.expression) =
     traverse_type_expression (traverser_types expr.location) expr.type_expression in
   let () = Helpers.fold_expression folder_constant () t in
   let () = Helpers.fold_expression folder_types () t in
-  t
+  ()
+
+
+(*
+    [purge_meta_ligo] [t] remove any "top-level" let-in bindings holding meta-ligo terms in [t]
+    it __strongly__ rely on the fact that an aggregated expression has the following form:
+
+    ```
+    let <x_0> = <rhs_0> in
+    ...
+    let <x_N> = <rhs_N> in
+    <rest>
+    ```
+
+    [purge_meta_ligo] will check every right-hand sides (<rhs_0> ... <rhs_N>) for meta-ligo
+    constructs (primitives or types) in which case it will purge the let-in binding from [t] while
+    keeping a list of all "meta-binders" along with their location (blacklist)
+
+    e.g.
+
+    ```
+    (* blacklist = [] *)
+    let x = Test.log "hello" in
+    (* blacklist = [ (x,LOCATION(Test.log "hello")) ] *)
+    let y = 1 in
+    y + 1
+    ```
+    |->
+
+    ```
+    let y = 1 in
+    y + 1
+    ```
+
+    when encountering the <rest>, [purge_meta_ligo] will fail on any meta-ligo constructors
+    
+    e.g.
+
+    ```
+    let x = Test.log "hello" in
+    let y = 1 in
+    x
+    ```
+    |-> FAIL
+
+    of
+
+    ```
+    let y = "hello" in
+    (fun _ -> 2) (Test.log y)
+    ```
+    | -> FAIL
+    
+*)
+let purge_meta_ligo ~raise (t: AST.expression) : AST.expression =
+  let rec aux :
+      (AST.type_expression Binder.t * Location.t) list ->AST.expression -> (AST.type_expression Binder.t * Location.t) list * AST.expression = fun blacklist expr ->
+    match expr.expression_content with
+    | E_let_in { let_binder ; rhs ; let_result ; attr } ->
+      let rhs_is_meta = not (Trace.to_bool (check_obj_ligo ~blacklist rhs)) in
+      let blacklist = if rhs_is_meta then (let_binder, rhs.location)::blacklist else blacklist in
+      let _, let_result = aux blacklist let_result in
+      let () =
+        match let_result.expression_content with
+        | E_let_in _ -> ()
+        | _ ->
+          (* at this point, we reach the let-in "rest", which must not contain any meta-ligo *)
+          check_obj_ligo ~raise ~blacklist let_result in
+      if rhs_is_meta then
+        blacklist,let_result
+      else
+        blacklist,{ expr with expression_content = E_let_in { let_binder ; rhs ; let_result ; attr }}
+    |  _ -> blacklist,expr
+  in
+  let purged = snd (aux [] t) in
+  purged

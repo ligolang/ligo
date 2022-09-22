@@ -13,7 +13,7 @@ let sub = ((store, delta) : (storage, int)) => store - delta;
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
 
-let main = ((action, store) : (parameter, storage)) => {
+let main = ((action, store) : (parameter, storage)) : (list(operation), storage)=> {
  ([],    // No operations
  (switch (action) {
   | Increment (n) => add ((store, n))

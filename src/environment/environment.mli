@@ -10,7 +10,6 @@ val add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_t
 val append : t -> Ast_typed.program -> t
 
 val default : Protocols.t -> t
-val default_with_test : Protocols.t -> t
 
 val fold : f:('a -> Ast_typed.decl -> 'a) -> init:'a -> t -> 'a
 val foldi : f:(int -> 'a -> Ast_typed.decl -> 'a) -> init:'a -> t -> 'a

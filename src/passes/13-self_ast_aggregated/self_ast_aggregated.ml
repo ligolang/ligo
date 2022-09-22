@@ -134,7 +134,12 @@ let rec thunk e =
 
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = Helpers.map_expression Polymorphic_replace.expression e in
-  let e = if not options.test then Obj_ligo.check_obj_ligo ~raise e else e in
+  let e =
+    if not options.test then
+      let e = Obj_ligo.purge_meta_ligo ~raise e in
+      let () = Obj_ligo.check_obj_ligo ~raise e in (* for good measure .. *)
+      e
+    else e in
   let e = Purify_assignations.expression ~raise e in
   let e = Monomorphisation.mono_polymorphic_expr ~raise e in
   let e = Uncurry.uncurry_expression e in

@@ -124,7 +124,7 @@ let compile_groups ~raise filename grp_list =
       match lang with
       | Meta ->
         let options =
-          let init_env = Environment.default_with_test protocol_version in
+          let init_env = Environment.default protocol_version in
           Compiler_options.set_init_env options init_env in
         let options = Compiler_options.set_test_flag options true in
         let typed = Build.qualified_typed_str ~raise ~options contents in

@@ -1,0 +1,6 @@
+author: lesenechal.remi
+description: '- fix a regression where contract could not compile in presence of meta-ligo
+  expressions (automatically remove such expressions)'
+merge_request: '2010'
+title: 'fix: contract not compiling in presence of meta-ligo terms'
+type: fixed
