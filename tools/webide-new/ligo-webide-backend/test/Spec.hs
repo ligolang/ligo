@@ -5,11 +5,12 @@ import Data.Aeson qualified as Aeson
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.Maybe (fromMaybe)
-import Data.Text.IO qualified as Text
 import Data.Text qualified as Text
+import Data.Text.IO qualified as Text
 import Lib
-  (CompileRequest(..), CompileExpressionRequest (..), Config(..), GenerateDeployScriptRequest(..), Source(..),
-  mkApp, CompilerResponse (..), DeployScript (..), DryRunRequest(..), ListDeclarationsRequest (..))
+  (CompileExpressionRequest(..), CompileRequest(..), CompilerResponse(..), Config(..),
+  DeployScript(..), DryRunRequest(..), GenerateDeployScriptRequest(..), ListDeclarationsRequest(..),
+  Source(..), mkApp)
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
 import System.Environment (lookupEnv)
