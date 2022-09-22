@@ -40,6 +40,7 @@ type abs_error = [
   | `Concrete_jsligo_unexpected
   | `Concrete_jsligo_wrong_matchee_disc of Region.t
   | `Concrete_jsligo_case_break_disc of Region.t
+  | `Concrete_jsligo_not_implemented of Region.t
   ] [@@deriving poly_constructor { prefix = "concrete_jsligo_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -181,6 +182,9 @@ let error_ppformat : display_format:string display_format ->
     )
     | `Concrete_jsligo_case_break_disc r ->
       Format.fprintf f "@[<hv>%aA discriminated union case needs to end with a `break` or `return` statement. A fallthrough to another case is currently not supported. @]"
+      Snippet.pp_lift r
+    | `Concrete_jsligo_not_implemented r ->
+      Format.fprintf f "@[<hv>%aThis has not been implemented yet. @]"
       Snippet.pp_lift r
   )
 
@@ -406,6 +410,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_jsligo_case_break_disc reg ->
     let message = `String "Discriminatory union case needs to end with break." in
+    let loc = Location.lift reg in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_not_implemented reg ->
+    let message = `String "Not implemented." in
     let loc = Location.lift reg in
     let content = `Assoc [
       ("message", message);

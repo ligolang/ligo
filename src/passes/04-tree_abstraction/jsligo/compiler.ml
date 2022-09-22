@@ -1352,14 +1352,19 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
   | SExport e ->
     let ((_, statement), _) = r_split e in
     self statement
-  | SImport i ->
-    let (({alias; module_path; _}: CST.import), loc) = r_split i in
-    let alias = compile_mod_var alias in
-    let module_ =
-      let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list module_path in
-      m_path ~loc:Location.generated path
-    in
-    binding (e_mod_in ~loc alias module_)
+  | SImport i' ->
+    let (i, loc) = r_split i' in 
+    (match i with 
+      Import_rename {alias; module_path; _} -> (
+        let alias = compile_mod_var alias in
+        let module_ =
+          let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list module_path in
+          m_path ~loc:Location.generated path
+        in
+        binding (e_mod_in ~loc alias module_)
+      )
+    | Import_all_as   _ -> raise.error @@ not_implemented i'.region
+    | Import_selected _ -> raise.error @@ not_implemented i'.region)
   | SForOf s ->
     let (forOf, loc) = r_split s in
     let binder = ( compile_variable forOf.index , None ) in
@@ -1463,14 +1468,19 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
         Module_expr.M_struct (compile_namespace ~raise statements) in
     let d = D_module  {module_binder; module_; module_attr=attributes} in
     [ Location.wrap ~loc d ]
-  | SImport {value = {alias; module_path; _}; region} ->
-    let module_binder   = compile_mod_var alias in
-    let module_ =
-      let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list module_path in
-      m_path ~loc:Location.generated path
-    in
-    let d = D_module { module_binder; module_ ; module_attr = [] } in
-    [ Location.wrap ~loc:(Location.lift region) d ]
+  | SImport {value; region} ->
+    (match value with 
+      Import_rename {alias; module_path; _} ->      
+      let module_binder   = compile_mod_var alias in
+      let module_ =
+        let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list module_path in
+        m_path ~loc:Location.generated path
+      in
+      let d = D_module { module_binder; module_ ; module_attr = [] } in
+      [ Location.wrap ~loc:(Location.lift region) d ]
+    | Import_all_as   _ -> raise.error @@ not_implemented region
+    | Import_selected _ -> raise.error @@ not_implemented region
+    )
   | SExport {value = (_, s); _} -> compile_statement_to_declaration ~raise ~export:true s
   | _ ->
     raise.error @@ statement_not_supported_at_toplevel statement
