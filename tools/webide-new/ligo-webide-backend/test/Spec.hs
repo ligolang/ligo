@@ -162,7 +162,8 @@ spec config = with (return (mkApp config)) $ do
                 ldrOnlyEndpoint = False
               }
       response <- post "/list-declarations" (Aeson.encode input)
-      expected <- liftIO $ fmap Text.lines $ Text.readFile (contractsDir </> "basic/list_declarations.txt")
+      expected <- liftIO . fmap Text.lines
+        $ Text.readFile (contractsDir </> "basic/list_declarations.txt")
       liftIO $
         case Aeson.decode (simpleBody response) of
           Nothing -> expectationFailure ("could not decode response: " ++ show response)
