@@ -213,8 +213,7 @@ let build_expression ~raise : options:Compiler_options.t -> Syntax_types.t -> st
       Option.value_map file_name_opt ~f ~default:default
     in
     let typed_exp  = Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg in
-    let init_prg   = Ligo_compile.Of_typed.compile_program ~raise init_prg in
-    let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp init_prg in
+    let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end init_prg typed_exp in
     let mini_c_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     (mini_c_exp ,aggregated)
 

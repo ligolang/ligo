@@ -85,6 +85,7 @@ module ModuleAttr = struct
       (pp_if_set "hidden") hidden
 
 end
+module Value_decl  = Value_decl(ValueAttr)
 module Access_label = struct
   type 'a t = Label.t
   let equal _ = Label.equal
@@ -169,7 +170,16 @@ and expression = {
   }
 
 and expr = expression
+
+and declaration_content =
+    D_value of (expr, ty_expr) Value_decl.t
   [@@deriving eq,compare,yojson,hash]
 
+and  declaration = declaration_content Location.wrap
+and  decl = declaration
+  [@@deriving eq,compare,yojson,hash]
 
-type 'a program = 'a -> expression
+type context = declaration list
+  [@@deriving eq,compare,yojson,hash]
+
+type program = context * expression

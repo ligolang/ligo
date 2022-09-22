@@ -132,20 +132,31 @@ let rec thunk e =
   then thunk e
   else e
 
-let all_expression ~raise ~(options : Compiler_options.middle_end) e =
-  let e = Helpers.map_expression Polymorphic_replace.expression e in
-  let e =
-    if not options.test then
-      let e = Obj_ligo.purge_meta_ligo ~raise e in
-      let () = Obj_ligo.check_obj_ligo ~raise e in (* for good measure .. *)
-      e
-    else e in
+let all_aggregated_expression ~raise e =
   let e = Purify_assignations.expression ~raise e in
   let e = Monomorphisation.mono_polymorphic_expr ~raise e in
   let e = Uncurry.uncurry_expression e in
   let e = thunk e in
   let e = Helpers.map_expression (Literal_replace.expression ~raise) e in
   e
+
+let all_expression ~raise ~(options : Compiler_options.middle_end) e =
+  let e = Helpers.map_expression Polymorphic_replace.expression e in
+  let e =
+    if not options.test then
+      let () = Obj_ligo.check_obj_ligo ~raise e in (* for good measure .. *)
+      e
+    else e in
+  all_aggregated_expression ~raise e
+
+let all_program ~raise ~(options : Compiler_options.middle_end) (prg : Ast_aggregated.program) =
+  let prg = Helpers.map_program Polymorphic_replace.expression prg in
+  let prg = if not options.test then
+      let prg = Obj_ligo.purge_meta_ligo_program ~raise prg in
+      let () = Obj_ligo.check_obj_ligo_program ~raise prg in (* for good measure .. *)
+      prg
+    else prg in
+  prg
 
 let contract_passes ~raise = [
   Contract_passes.self_typing ~raise ;
