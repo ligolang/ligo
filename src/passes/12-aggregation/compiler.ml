@@ -342,7 +342,7 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
   | E_deref var -> 
     let path = Scope.find_value scope var in
     let _,expression_variable = Scope.add_path_to_var scope path var in
-    return @@ E_variable expression_variable
+    return @@ E_deref expression_variable
   | E_assign {binder;expression} ->
     let binder = Binder.map self_type binder in
     let expression = self expression in
