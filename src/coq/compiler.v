@@ -854,19 +854,19 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
       let args' := compile_args r env args in
       let body' := compile_binds r env body in
       [I_SEQ null args';
-       I_FOR null body']
+       I_FOR null [I_SEQ null body'; I_DROP null 1]]
   | E_for_each l coll body =>
       let coll' := compile_expr r env coll in
       let body' := compile_binds r env body in
       [I_SEQ null coll';
-       I_ITER l body']
+       I_ITER l [I_SEQ null body'; I_DROP null 1]]
   | E_while l cond body =>
       let cond' := compile_expr r env cond in
       let body' := compile_expr r env body in
       [I_LOOP l [I_SEQ null cond';
                  I_DUP null 1;
                  (* TODO may want to avoid the DIP? *)
-                 I_DIP null [I_IF null [I_SEQ null body'] []]]]
+                 I_DIP null [I_IF null [I_SEQ null body'; I_DROP null 1] []]]]
   | E_tuple _ args =>
       [I_SEQ null (compile_args r env args);
        I_SEQ null (PAIR (args_length args))]
