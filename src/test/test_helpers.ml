@@ -194,8 +194,7 @@ let typed_program_with_imperative_input_to_michelson ~raise (program : Ast_typed
   let app              = Ligo_compile.Of_core.apply entry_point core in
   let typed_app        = Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program app in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
-  let program = Ligo_compile.Of_typed.compile_program ~raise program in
-  let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_app program in
+  let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end program typed_app in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c, aggregated.type_expression
 

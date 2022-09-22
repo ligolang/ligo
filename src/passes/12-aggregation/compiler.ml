@@ -321,7 +321,7 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let mod_scope,rhs = compile_module_expr ~raise path' scope rhs in
     let scope    = Scope.push_module scope module_binder path' mod_scope in
     let let_result = self ~scope let_result in
-    rhs let_result
+    O.context_apply rhs let_result
   | E_module_accessor {module_path;element} ->
     (match module_path with
     | [] -> failwith "Corner case : E_module_accessor with empty module_path"
@@ -367,10 +367,9 @@ and compile_declaration ~raise ~(super_attr : O.ModuleAttr.t) path scope (d : I.
       let scope  = Scope.push_value scope binder expr.type_expression attr path in
       let scope,var = Scope.add_path_to_var scope path @@ Binder.get_var binder in
       let binder = Binder.set_var binder var in
-      scope, fun e ->
-        O.e_a_let_in binder expr e attr
+      scope, O.context_decl binder expr attr
   | D_type _ ->
-      scope, fun e -> e
+      scope, O.context_id
   | D_module {module_binder;module_;module_attr} ->
       let module_attr : O.ModuleAttr.t = {hidden = module_attr.hidden || super_attr.hidden; public = module_attr.public && super_attr.public} in
       let path' = Path.add_to_path path module_binder in
@@ -378,35 +377,35 @@ and compile_declaration ~raise ~(super_attr : O.ModuleAttr.t) path scope (d : I.
       let scope   = Scope.push_module scope module_binder path' mod_scope in
       scope, decl_list
 
-and compile_declaration_list ~raise ~super_attr (path : Path.t) scope (program : I.program) : (Scope.t) * (O.expression -> O.expression) =
+and compile_declaration_list ~raise ~super_attr (path : Path.t) scope (program : I.program) : (Scope.t) * (O.context) =
   let scope, current = List.fold_map ~init:scope ~f:(compile_declaration ~raise ~super_attr path) program in
-  let current = List.fold_left ~f:Function.compose ~init:(fun e -> e) current in
+  let current = List.fold_left ~f:O.context_append ~init:O.context_id current in
   scope, current
 
 and compile_decl ~raise path scope (d : I.decl) =
   compile_declaration ~raise path scope d
 
-and compile_module ~raise ~super_attr (path : Path.t) scope (program : I.module_) : (Scope.t) * (O.expression -> O.expression) =
+and compile_module ~raise ~super_attr (path : Path.t) scope (program : I.module_) : (Scope.t) * (O.context) =
   let scope, current = List.fold_map ~init:scope ~f:(compile_decl ~raise ~super_attr path) program in
-  let current = List.fold_left ~f:Function.compose ~init:(fun e -> e) current in
+  let current = List.fold_left ~f:O.context_append ~init:O.context_id current in
   scope, current
 
-and compile_module_expr ~raise ?(module_attr = {public=true;hidden=false}) : Path.t -> Scope.t -> I.module_expr -> (Scope.t) * (O.expression -> O.expression) =
+and compile_module_expr ~raise ?(module_attr = {public=true;hidden=false}) : Path.t -> Scope.t -> I.module_expr -> (Scope.t) * (O.context) =
   fun path scope mexpr ->
     let rec get_declarations_from_scope scope new_path old_path =
       let dcls = Scope.get_declarations scope in
-      let module_ = List.fold_left ~init:(fun e -> e) dcls ~f:(fun f dcl ->
+      let module_ = List.fold_left ~init:O.context_id dcls ~f:(fun f dcl ->
         match dcl with
           Value (binder,ty,attr) ->
             let variable = O.e_a_variable (snd @@ Scope.add_path_to_var scope old_path @@ Binder.get_var binder) ty in
             let _,var = Scope.add_path_to_var scope new_path @@ Binder.get_var binder in
-            fun e -> O.e_a_let_in (Binder.set_var binder var) variable (f e) attr
+            O.(context_append (context_decl (Binder.set_var binder var) variable attr) f)
         | Module (var) ->
           let _,scope  = Scope.find_module scope var in
           let old_path = Path.add_to_path old_path var in
           let new_path = Path.add_to_path new_path var in
           let module_ = get_declarations_from_scope scope new_path old_path in
-          fun e -> module_ (f e)
+          O.context_append module_ f
       ) in module_
     in
     let super_attr : O.ModuleAttr.t = {public=module_attr.public;hidden=module_attr.hidden} in
@@ -439,17 +438,14 @@ let preprocess_expression ?scope ?aliases e =
   let e = Resolve_module_aliases.expression ?aliases e in
   e
 
-let compile ~raise : I.expression -> I.program -> O.expression =
-  fun hole program ->
-    let scope,aliases,program = preprocess_program program in
-    let hole = preprocess_expression ~scope ~aliases hole in
-    let (scope), decls = compile_declaration_list ~raise ~super_attr:{public=true;hidden=false} Path.empty Scope.empty program in
-    let init = compile_expression ~raise Path.empty scope hole in
-    decls init
+let compile_program ~raise : I.program -> Scope.t * Deduplicate_module_binders.Scope.t * Resolve_module_aliases.Aliases.t * O.context =
+  fun program ->
+    let deduplicate_scope,aliases,program = preprocess_program program in
+    let scope, decls = compile_declaration_list ~raise ~super_attr:{public=true;hidden=false} Path.empty Scope.empty program in
+    scope, deduplicate_scope, aliases, decls
 
-let compile_expression ~raise : I.expression -> O.expression =
+let compile_expression ~raise ?(scope = Scope.empty) ?deduplicate_scope ?aliases : I.expression -> O.expression =
   fun e ->
-    let e = preprocess_expression e in
-    let e = compile_expression ~raise Path.empty Scope.empty e in
+    let e = preprocess_expression ?scope:deduplicate_scope ?aliases e in
+    let e = compile_expression ~raise Path.empty scope e in
     e
-

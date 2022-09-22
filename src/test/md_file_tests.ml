@@ -132,8 +132,7 @@ let compile_groups ~raise filename grp_list =
         ()
       | Object ->
         let typed = Build.qualified_typed_str ~raise ~options contents in
-        let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
-        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end (Ast_typed.e_a_unit ()) agg_prg in
+        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed (Ast_typed.e_a_unit ()) in
         let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
         let _michelson : Stacking__Compiler_program.compiled_expression = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
         ()

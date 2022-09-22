@@ -64,11 +64,7 @@ let evaluate_call (raw_options : Raw_options.t) source_file parameter amount bal
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
-      let init_prog, aggregated_prg =
-        let typed_prg       = Build.qualified_typed ~raise Env ~options source_file in
-        let agg_prg         = Compile.Of_typed.compile_program ~raise typed_prg in
-        typed_prg, agg_prg
-      in
+      let init_prog = Build.qualified_typed ~raise Env ~options source_file in
       let meta             = Compile.Of_source.extract_meta syntax in
       let c_unit_param,_   = Compile.Of_source.compile_string ~raise ~options:options.frontend ~meta parameter in
       let imperative_param = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param in
@@ -76,7 +72,7 @@ let evaluate_call (raw_options : Raw_options.t) source_file parameter amount bal
       let core_param       = Compile.Of_sugar.compile_expression ~raise sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
       let typed_app        = Compile.Of_core.compile_expression ~raise ~options ~init_prog app in
-      let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_app aggregated_prg in
+      let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end init_prog typed_app in
       let app_mini_c       = Compile.Of_aggregated.compile_expression ~raise app_aggregated in
       let michelson        = Compile.Of_mini_c.compile_expression ~raise ~options app_mini_c in
       let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None} in

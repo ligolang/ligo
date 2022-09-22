@@ -68,21 +68,24 @@ let check_obj_ligo ~raise ?(blacklist = []) (t : AST.expression) : unit =
   let () = Helpers.fold_expression folder_types () t in
   ()
 
+(*
+  check_obj_ligo [blacklist] [t] fails if t hold meta-ligo types or meta-ligo constants sub-terms
+  [blacklist] is a list of binder and location which refer to meta-ligo terms, when
+  encountering a variable matching an element of this list, it fails
+*)
+let check_obj_ligo_program ~raise ?(blacklist = []) ((ctxt, e) : AST.program) : unit =
+  let f decl () =
+    match Location.unwrap decl with
+    | AST.D_value { binder = _ ; expr ; attr = _ } ->
+      check_obj_ligo ~raise ~blacklist expr in
+  let () = List.fold_right ctxt ~f ~init:() in
+  check_obj_ligo ~raise ~blacklist e
 
 (*
-    [purge_meta_ligo] [t] remove any "top-level" let-in bindings holding meta-ligo terms in [t]
-    it __strongly__ rely on the fact that an aggregated expression has the following form:
-
-    ```
-    let <x_0> = <rhs_0> in
-    ...
-    let <x_N> = <rhs_N> in
-    <rest>
-    ```
-
-    [purge_meta_ligo] will check every right-hand sides (<rhs_0> ... <rhs_N>) for meta-ligo
-    constructs (primitives or types) in which case it will purge the let-in binding from [t] while
-    keeping a list of all "meta-binders" along with their location (blacklist)
+    [purge_meta_ligo_program] [t] remove any "top-level" let-in bindings holding meta-ligo terms in [t] context
+    it checks right-hand sides of context bindings (`[let <rhs_0> = ... ; let <rhs_N> = ... ]`) for meta-ligo
+    constructs (primitives or types). If present, the corresponding let-in binding is purged from [t] context
+    while keeping a list of all "meta-binders" along with their location (blacklist)
 
     e.g.
 
@@ -120,25 +123,17 @@ let check_obj_ligo ~raise ?(blacklist = []) (t : AST.expression) : unit =
     | -> FAIL
     
 *)
-let purge_meta_ligo ~raise (t: AST.expression) : AST.expression =
-  let rec aux :
-      (AST.type_expression Binder.t * Location.t) list ->AST.expression -> (AST.type_expression Binder.t * Location.t) list * AST.expression = fun blacklist expr ->
-    match expr.expression_content with
-    | E_let_in { let_binder ; rhs ; let_result ; attr } ->
-      let rhs_is_meta = not (Trace.to_bool (check_obj_ligo ~blacklist rhs)) in
-      let blacklist = if rhs_is_meta then (let_binder, rhs.location)::blacklist else blacklist in
-      let _, let_result = aux blacklist let_result in
-      let () =
-        match let_result.expression_content with
-        | E_let_in _ -> ()
-        | _ ->
-          (* at this point, we reach the let-in "rest", which must not contain any meta-ligo *)
-          check_obj_ligo ~raise ~blacklist let_result in
-      if rhs_is_meta then
-        blacklist,let_result
+let purge_meta_ligo_program ~raise ((ctxt, e) : AST.program) : AST.program =
+  let f (blacklist, ctxt) decl =
+    match Location.unwrap decl with
+    | AST.D_value { binder ; expr ; attr = _ } ->
+      let expr_is_meta = not (Trace.to_bool (check_obj_ligo ~blacklist expr)) in
+      let blacklist = if expr_is_meta then (binder, expr.location) :: blacklist else blacklist in
+      if expr_is_meta then
+        blacklist, ctxt
       else
-        blacklist,{ expr with expression_content = E_let_in { let_binder ; rhs ; let_result ; attr }}
-    |  _ -> blacklist,expr
-  in
-  let purged = snd (aux [] t) in
-  purged
+        blacklist, decl :: ctxt in
+  let blacklist, ctxt = List.fold_left ctxt ~init:([], []) ~f in
+  let ctxt = List.rev ctxt in
+  let () = check_obj_ligo ~raise ~blacklist e in
+  (ctxt, e)

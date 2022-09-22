@@ -8,13 +8,19 @@ module Var = Simple_utils.Var
 
 module SMap = Map.Make(String)
 
-let compile_program ~raise : Ast_typed.program -> Ast_typed.expression Ast_aggregated.program = fun p ->
-  trace ~raise aggregation_tracer @@ Aggregation.compile_program p
-
-let compile_expression_in_context ~raise ~options : Ast_typed.expression -> Ast_typed.expression Ast_aggregated.program -> Ast_aggregated.expression =
-  fun exp prg ->
-    let x = Aggregation.compile_expression_in_context exp prg in
-    trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
+let compile_expression_in_context ~raise ~options ?(self_pass = true) : Ast_typed.program -> Ast_typed.expression -> Ast_aggregated.expression =
+  fun ctxt exp ->
+    let ctxt, exp = Aggregation.compile_program exp ctxt  in
+    let ctxt, exp =
+      if self_pass then
+        trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_program ~options (ctxt, exp)
+      else
+        ctxt, exp in
+    let exp = Ast_aggregated.context_apply ctxt exp in
+    if self_pass then
+      trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_aggregated_expression exp
+    else
+      exp
 
 let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.expression = fun e ->
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
@@ -22,22 +28,20 @@ let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.
 
 let apply_to_entrypoint_contract ~raise ~options : Ast_typed.program -> Value_var.t -> Ast_aggregated.expression =
     fun prg entrypoint ->
-  let aggregated_prg = compile_program ~raise prg in
   let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
   let ty = t_arrow (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
   let var_ep = Ast_typed.(e_a_variable entrypoint ty) in
-  compile_expression_in_context ~raise ~options var_ep aggregated_prg
+  compile_expression_in_context ~raise ~options prg var_ep
 
 let apply_to_entrypoint ~raise ~options : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
-  let aggregated_prg = compile_program ~raise prg in
   let v = Value_var.of_input_var entrypoint in
   let ty, _ =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg in
   let var_ep = Ast_typed.(e_a_variable v ty) in
-  compile_expression_in_context ~raise ~options var_ep aggregated_prg
+  compile_expression_in_context ~raise ~options prg var_ep
 
 let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> Value_var.t -> Ast_typed.program -> Ast_typed.expression -> unit  =
     fun c entry contract param ->
@@ -69,8 +73,7 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
       Label.of_int i, Ast_typed.(e_a_variable (Binder.get_var view_binder) ty)
     in
     let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views_info) in
-    let aggregated_prg = compile_program ~raise prg in
-    compile_expression_in_context ~raise ~options tuple_view aggregated_prg
+    compile_expression_in_context ~raise ~options prg tuple_view
 
 (* if only_ep, we only list the declarations with types fiting an entrypoint *)
 let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list =

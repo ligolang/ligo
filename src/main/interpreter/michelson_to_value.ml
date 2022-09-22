@@ -304,6 +304,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     Ligo_interpreter.Combinators.v_pair (addr, va)
   | ty, v -> raise.error (untranspilable ty v)
 
+
 (*
 decompile_value [v] [t] will morph value [v] into another value using type [t].
 LIGO types do not always find their equivalent in Michelson and some information can be lost:

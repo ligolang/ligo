@@ -121,6 +121,12 @@ and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
     let body = map_expression f body in
     Match_record {fields; body; tv}
 
+and map_program : 'err mapper -> program -> program = fun g (ctxt, expr) ->
+  let f d = Location.map (function D_value { binder ; expr ; attr } -> D_value { binder ; expr = map_expression g expr ; attr }) d in
+  let ctxt = List.map ~f ctxt in
+  let expr = map_expression g expr in
+  (ctxt, expr)
+
 type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
 let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
   let self = fold_map_expression f in
