@@ -16,7 +16,7 @@ function sub (const store : storage; const delta : int) is
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
 
-function main (const action : parameter; const store : storage) is
+function main (const action : parameter; const store : storage) : list(operation) * storage is
  (nil,    // No operations
   case action of [
     Increment (n) -> add (store, n)
