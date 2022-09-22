@@ -5,14 +5,15 @@ module Test.LigoCall
 import Prelude hiding (try)
 
 import Test.Tasty (TestTree, testGroup)
+import Test.Util
+import UnliftIO.Exception (try)
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
 import Morley.Michelson.Parser (MichelsonSource (MSName))
 import Morley.Michelson.Text (mt)
 import Morley.Michelson.Untyped qualified as U
-import Test.Util
-import UnliftIO.Exception ( try )
+
+import Language.LIGO.Debugger.CLI.Call
+import Language.LIGO.Debugger.CLI.Types
 
 test_Compilation :: TestTree
 test_Compilation = testGroup "Getting debug info"
@@ -53,4 +54,19 @@ test_ExpressionCompilation = testGroup "Compiling expression"
       res <- try @_ @LigoException $ evalExprOverContract1 "absentStorage"
       res @? isLeft
 
+  ]
+
+test_EntrypointsCollection :: TestTree
+test_EntrypointsCollection = testGroup "Getting entrypoints"
+  [ testCase "Two entrypoints" do
+      let file = contractsDir </> "two-entrypoints.mligo"
+
+      EntrypointsList res <- getAvailableEntrypoints file
+      res @~=? ["main1", "main2"]
+
+  , testCase "Zero entrypoints" do
+      let file = contractsDir </> "module_contracts" </> "imported.mligo"
+
+      EntrypointsList res <- getAvailableEntrypoints file
+      res @?= []
   ]

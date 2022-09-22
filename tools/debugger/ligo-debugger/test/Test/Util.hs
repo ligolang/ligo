@@ -16,6 +16,7 @@ module Test.Util
   , (@?)
   , (@@?)
   , (@?==)
+  , (@~=?)
   , HUnit.testCase
   , HUnit.testCaseSteps
   , HUnit.assertFailure
@@ -149,6 +150,15 @@ len @?== expected = do
   actual <- view len
   actual @?= expected
 infixl 0 @?==
+
+-- | Check that the first list is permutation of the second one.
+(@~=?)
+  :: (Ord a, Buildable (TestBuildable a), MonadIO m, HasCallStack)
+  => [a] -> [a] -> m ()
+(@~=?) xs ys = liftIO $
+  HUnit.assertBool
+    [int||Expected #tb{xs} to be a permutation of #tb{ys}|]
+    (xs `isPermutationOf` ys)
 
 intType :: LigoType
 intType = LTConstant $
@@ -294,3 +304,7 @@ fromValCasting v = do
 pattern SomeLorentzValue :: T.IsoValue v => v -> T.SomeValue
 pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
   where SomeLorentzValue v =  T.SomeValue (T.toVal v)
+
+isPermutationOf :: (Ord a) => [a] -> [a] -> Bool
+isPermutationOf xs ys = sort xs == sort ys
+
