@@ -177,7 +177,7 @@ let rec decompile_expression : O.expression -> I.expression =
       let rhs = self rhs in
       let let_result = self let_result in
       let attributes = decompile_exp_attributes attr in
-      return @@ I.E_let_in { let_binder; attributes; rhs; let_result }
+      return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result }
 
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in

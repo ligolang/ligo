@@ -106,7 +106,7 @@ and get_fv expr =
     let env,let_result = (self let_result) in
     let env = {env with used_mut_var=VVarSet.remove (Binder.get_var let_binder) env.used_mut_var} in
     let env', rhs = self rhs in
-    return (merge_env env env') @@ E_let_in {let_binder; rhs; let_result; attr}
+    return (merge_env env env') @@ E_let_mut_in {let_binder; rhs; let_result; attr}
   | E_deref var ->
     return { empty_env with used_mut_var = VVarSet.singleton var }
     @@ E_deref var
