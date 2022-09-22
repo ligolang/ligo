@@ -32,6 +32,12 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
       | `No | `Unknown -> ModResHelpers.resolve_file_name contract_file mod_res)
   | None -> ModResHelpers.resolve_file_name contract_file mod_res)
 
+let get_file_from_location loc =
+  let open Option in
+  let* reg = Location.get_file loc in
+  let file = reg#file in
+  if String.(file = "") then None else Some file
+
 let check_value value =
   let open Monad in
   match value with
@@ -181,11 +187,11 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
-let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_file : Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Constant in
   let open Monad in
-  let eval_ligo = eval_ligo ~raise ~steps ~options ?source_file in
+  let eval_ligo = eval_ligo ~raise ~steps ~options in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
   let error_type () = Errors.generic_error loc (Format.asprintf "Type error: evaluating constant %a with types:@.%a@." Ligo_prim.Constant.pp_constant' c (PP_helpers.list_sep_d AST.PP.type_expression) types) in
@@ -201,6 +207,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let>> a = State_error_to_value e in
       return a
   in
+  let source_file = get_file_from_location loc in
   ( match (c,operands) with
     (* nullary *)
     | ( C_NONE , [] ) -> return @@ v_none ()
@@ -910,8 +917,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let>> () = Drop_context () in
       return @@ v_unit ()
     | ( C_TEST_DROP_CONTEXT , _ ) -> fail @@ error_type ()
-    | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string fn) ] ) ->
-      let>> contract = Read_contract_from_file (loc, calltrace, fn) in
+    | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string contract_file) ] ) ->
+      let>> mod_res = Get_mod_res () in
+      let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
+      let>> contract = Read_contract_from_file (loc, calltrace, contract_file) in
       return @@ contract
     | ( C_TEST_READ_CONTRACT_FROM_FILE , _ ) -> fail @@ error_type ()
     | ( C_TEST_SIGN , [ V_Ct (C_string sk) ; V_Ct (C_bytes d) ] ) ->
@@ -988,9 +997,14 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options ?source_file in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
+    let replace_loc_if_blank e location = 
+      match get_file_from_location e.location with
+        Some _ -> e
+      | None -> { e with location }
+    in
     let open Monad in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace (v_string "Out of fuel")) else return () in
     match term.expression_content with
@@ -1026,8 +1040,8 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       eval_ligo (result) calltrace env
     )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; hidden = _ ; thunk = _ }} -> (
-      let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend env (Binder.get_var let_binder) ~inline ~no_mutation (rhs.type_expression,rhs'))
+      let* rhs' = eval_ligo (replace_loc_if_blank rhs term.location) calltrace env in
+      eval_ligo (replace_loc_if_blank let_result term.location) calltrace (Env.extend env (Binder.get_var let_binder) ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_literal l ->
       eval_literal l
@@ -1068,7 +1082,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
           let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
-      apply_operator ~raise ~steps ~options ?source_file term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label "True" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool true)
@@ -1166,10 +1180,10 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
     )
     | E_assign _ -> raise.error @@ Errors.generic_error term.location "Assignements should not reach interpreter"
 
-and try_eval ~raise ~steps ~options ?source_file expr env state r =
-  Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options ?source_file expr [] env) state r
+and try_eval ~raise ~steps ~options expr env state r =
+  Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 
-let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((string * value) list) =
+let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) list) =
   fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -1197,7 +1211,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
-  let value, _ = try_eval ~raise ~steps ~options ?source_file expr Env.empty_env initial_state None in
+  let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
     let f (n, _) r =

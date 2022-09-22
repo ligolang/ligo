@@ -103,7 +103,7 @@ let%expect_test _ =
      66 | let warn_me = TopA 42
      67 | let warn_me = TopB 42
 
-    Warning: The type of this value is ambiguous: Inferred type is ta but could be of type ttop.
+    Warning: The type of this value is ambiguous: Inferred type is ttop but could be of type ta.
     Hint: You might want to add a type annotation.
 
     File "../../test/contracts/warning_sum_types.mligo", line 67, characters 14-21:
@@ -111,7 +111,7 @@ let%expect_test _ =
      67 | let warn_me = TopB 42
      68 |
 
-    Warning: The type of this value is ambiguous: Inferred type is tb but could be of type ttop.
+    Warning: The type of this value is ambiguous: Inferred type is ttop but could be of type tb.
     Hint: You might want to add a type annotation.
 
     File "../../test/contracts/warning_sum_types.mligo", line 69, characters 14-19:

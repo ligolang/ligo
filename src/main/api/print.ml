@@ -84,7 +84,10 @@ let ast_typed (raw_options : Raw_options.t) source_file display_format () =
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
-      let typed = Build.type_contract ~raise ~options source_file in
+      let typed = Build.qualified_typed ~raise ~options Env source_file in
+      (* Here, I would like to write this, but it become slow ...
+         let typed = Build.unqualified_typed ~raise ~options Env source_file in
+      *)
       if self_pass then
         Trace.trace ~raise Main_errors.self_ast_typed_tracer
           @@ Self_ast_typed.all_program ~warn_unused_rec:options.middle_end.warn_unused_rec typed
@@ -100,7 +103,7 @@ let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
-      let typed = Build.merge_and_type_libraries ~raise ~options source_file in
+      let typed = Build.qualified_typed ~raise Env ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       let aggregated = Aggregation.compile_expression_in_context (Ast_typed.e_a_unit ()) aggregated in
       if self_pass then
@@ -116,7 +119,7 @@ let mini_c (raw_options : Raw_options.t) source_file display_format optimize () 
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
-      let typed = Build.merge_and_type_libraries ~raise ~options source_file in
+      let typed = Build.qualified_typed ~raise Env ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       match optimize with
         | None ->

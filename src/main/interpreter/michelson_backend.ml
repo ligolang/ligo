@@ -210,8 +210,7 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
   Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
 
 let compile_contract_file ~raise ~options source_file entry_point declared_views =
-  let aggregated = Build.build_aggregated ~raise ~options entry_point source_file in
-  let views = Build.build_aggregated_views ~raise ~options entry_point declared_views source_file in
+  let aggregated,views = Build.build_contract_meta_ligo ~raise ~options entry_point declared_views source_file in
   (aggregated, views)
 
 let make_function in_ty out_ty arg_binder body subst_lst =
