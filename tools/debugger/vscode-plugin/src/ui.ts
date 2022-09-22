@@ -285,16 +285,15 @@ export const getParameterOrStorage = (
 		}
 	}
 
-	let switchButton: SwitchButton = SwitchButton.LigoSwitch;
-	if (isDefined(rememberedFormat.value)) {
-		switch(rememberedFormat.value) {
-			case "LIGO":
-				switchButton = SwitchButton.LigoSwitch;
-				break;
-			case "Michelson":
-				switchButton = SwitchButton.MichelsonSwitch;
-				break;
-		}
+	let switchButton: SwitchButton;
+	switch(rememberedFormat.value) {
+		case "LIGO":
+		case undefined:
+			switchButton = SwitchButton.LigoSwitch;
+			break;
+		case "Michelson":
+			switchButton = SwitchButton.MichelsonSwitch;
+			break;
 	}
 
 	const result: State =
