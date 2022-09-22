@@ -239,15 +239,20 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
     (* hmmm *)
     [Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
      Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+     Prim (null, "COMPARE", [], []);
      Prim (null, "LE", [], []);
-     Prim (null, "LOOP", [Prim (null, "DUP", [], []);
-                          Prim (null, "DUG", [Int (null, Z.of_int 3)], []);
-                          Prim (null, "DIP", [Int (null, Z.of_int 3); Seq (null, translate_prog body)], []);
-                          Prim (null, "DUP", [Int (null, Z.of_int 3)], []);
-                          Prim (null, "ADD", [], []);
-                          Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
-                          Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
-                          Prim (null, "LE", [], [])], [])]
+     Prim (null, "LOOP",
+           [Seq (null, [Prim (null, "DUP", [], []);
+                        Prim (null, "DUG", [Int (null, Z.of_int 3)], []);
+                        Prim (null, "DIP", [Int (null, Z.of_int 3); Seq (null, translate_prog body)], []);
+                        Prim (null, "DUP", [Int (null, Z.of_int 3)], []);
+                        Prim (null, "ADD", [], []);
+                        Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+                        Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+                        Prim (null, "COMPARE", [], []);
+                        Prim (null, "LE", [], [])])],
+           []);
+     Prim (null, "DROP", [Int (null, Z.of_int 3)], [])]
   | I_LAMBDA (l, a, b, body) ->
     [Prim (l, "LAMBDA", [translate_type a;
                          translate_type b;
