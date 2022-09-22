@@ -862,9 +862,19 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
   | E_for_each l coll body =>
       let coll' := compile_expr r env coll in
       let body' := compile_binds r env body in
-      [I_SEQ null coll';
-       I_ITER l [I_SEQ null body'; I_DROP null 1];
-       I_UNIT null]
+      (* TODO? this is a hack to make map iteration work -- Michelson
+         gives you the key and value in a pair, but LIGO things here
+         are set up to expect two stack elements, so insert an UNPAIR
+         in the map case: *)
+      if beq_nat 2 (binds_length body)
+      then
+        [I_SEQ null coll';
+         I_ITER l [I_UNPAIR null 2; I_SEQ null body'; I_DROP null 1];
+         I_UNIT null]
+      else
+        [I_SEQ null coll';
+         I_ITER l [I_SEQ null body'; I_DROP null 1];
+         I_UNIT null]
   | E_while l cond body =>
       let cond' := compile_expr r env cond in
       let body' := compile_expr (false :: r) env body in
