@@ -90,6 +90,16 @@ okayTests =
       , "build" </> "common" </> "storage.mligo"
       , "build" </> "instance" </> "main.mligo"
 
+        -- LIGO-808
+      , "jsligo_destructure_object.jsligo"
+      , "switch_return.jsligo"
+      , "views_using_view.test.mligo"
+      , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "a" </> "b" </> "test.mligo"
+      , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "c" </> "d" </> "foo.mligo"
+      , "ternary.jsligo"
+      , "infer_fun_application.mligo"
+      , "disc_union.jsligo"
+
         -- LIGO fails to parse these:
       , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
