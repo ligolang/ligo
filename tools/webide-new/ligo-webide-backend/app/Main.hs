@@ -1,8 +1,8 @@
 module Main (main) where
 
 import Control.Monad (join)
-import Lib
 import Options.Applicative
+import Server
 
 main :: IO ()
 main =

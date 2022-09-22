@@ -1,4 +1,4 @@
-module Lib
+module Server
   ( startApp
   , mkApp
   , CompileRequest (..)

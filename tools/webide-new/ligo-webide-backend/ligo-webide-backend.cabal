@@ -12,7 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
-      Lib
+      Server
   other-modules:
       Paths_ligo_webide_backend
   hs-source-dirs:

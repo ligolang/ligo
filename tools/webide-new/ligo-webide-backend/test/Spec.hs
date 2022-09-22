@@ -7,12 +7,12 @@ import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.Maybe (fromMaybe)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
-import Lib
+import Network.HTTP.Types.Method (methodPost)
+import Network.Wai.Test (SResponse, simpleBody)
+import Server
   (CompileExpressionRequest(..), CompileRequest(..), CompilerResponse(..), Config(..),
   DeployScript(..), DryRunRequest(..), GenerateDeployScriptRequest(..), ListDeclarationsRequest(..),
   Source(..), mkApp)
-import Network.HTTP.Types.Method (methodPost)
-import Network.Wai.Test (SResponse, simpleBody)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
 import Test.Hspec
