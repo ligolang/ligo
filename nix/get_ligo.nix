@@ -1,20 +1,19 @@
-{ lib, stdenv, fetchurl }:
+{ pkgs, lib, stdenv, esy }:
 
-stdenv.mkDerivation rec {
-  name = "ligo";
-  version = "0.51.0";
+let
+  ligo = pkgs.callPackage ./get_ligo_light.nix { }; 
+in
 
-  executable = fetchurl {
-    name = "ligo";
-    url = "https://gitlab.com/ligolang/ligo/-/jobs/3043602309/artifacts/raw/ligo";
-    sha256 = "sha256-Vmn8G9qywVTqd/H0oUpxMzI1uhBZfsWLJ6krF993ZVM=";
-    executable = true;
-  };
+stdenv.mkDerivation {
+  inherit (ligo) name version;
+
+  nativeBuildInputs = [ pkgs.makeWrapper ];
 
   phases = [ "installPhase" ]; # Removes all phases except installPhase
 
-  installPhase = "
-    mkdir -p $out/bin
-    cp ${executable} $out/bin/ligo
-  ";
+  installPhase = ''
+     makeWrapper "${ligo}/bin/ligo" "$out/bin/ligo" \
+      --prefix PATH : ${lib.makeBinPath (with pkgs; [ esy ])}
+  ''; 
+
 }
