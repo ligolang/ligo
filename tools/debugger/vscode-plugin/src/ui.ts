@@ -220,6 +220,9 @@ export const getParameterOrStorage = (
 		if (!isDefined(debuggedContract.ref.contractMetadata)) {
 			throw new Error("Internal error: metadata is not defined at the moment of user input")
 		}
+		if (!isDefined(state.ref.currentSwitch)) {
+			throw new Error("Internal error: debugging state is not initialized")
+		}
 
 		var rememberedVal: ValueAccess<string>;
 
@@ -335,7 +338,7 @@ interface InputBoxParameters {
 class MultiStepInput<S> {
 
 	static async run<S>(start: InputStep<S>, state?: Partial<S>) {
-		const input = new MultiStepInput();
+		const input = new MultiStepInput<S>();
 		if (state) {
 			input.state.ref = state
 		}
@@ -475,7 +478,7 @@ class MultiStepInput<S> {
 					const validationMessage = await current;
 					if (current === validating) {
 						if (text.trim() === '') {
-							input.validationMessage = null;
+							input.validationMessage = undefined;
 							return;
 						}
 
