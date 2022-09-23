@@ -705,6 +705,7 @@ unit_Contracts_locations_are_sensible = do
     badContracts = combine contractsDir <$>
       [ "self.mligo" -- this contract doesn't typecheck in Michelson
       , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
+      , "no-entrypoint.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
       ]

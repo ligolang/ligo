@@ -65,8 +65,23 @@ test_EntrypointsCollection = testGroup "Getting entrypoints"
       res @~=? ["main1", "main2"]
 
   , testCase "Zero entrypoints" do
-      let file = contractsDir </> "module_contracts" </> "imported.mligo"
+      let file = contractsDir </> "no-entrypoint.mligo"
 
       EntrypointsList res <- getAvailableEntrypoints file
       res @?= []
+  ]
+
+-- | Corner cases that once broke in LIGO and we have to extra check them.
+test_Regressions :: TestTree
+test_Regressions = testGroup "Regressions"
+  [ -- Getting entrypoints when a contract imports another contract of
+    -- a different dialect
+
+    -- TODO: enable this test
+    testCase "ligolang#1461" $ when False do
+
+      let file = contractsDir </> "module_contracts" </> "imported.mligo"
+
+      EntrypointsList _res <- getAvailableEntrypoints file
+      pass
   ]
