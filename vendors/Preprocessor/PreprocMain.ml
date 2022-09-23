@@ -1,23 +1,42 @@
-(* Standalone preprocessor with default settings *)
+(* Standalone preprocessor with default settings for PascaLIGO *)
 
-module Comments =
+(* Vendors dependencies *)
+
+module Std    = Simple_utils.Std
+module Lexbuf = Simple_utils.Lexbuf
+module CLI    = Preprocessor.CLI
+module TopAPI = Preprocessor.TopAPI
+
+module Config =
   struct
-    type line_comment  = string (* Opening of a line comment *)
-    type block_comment = <opening : string; closing : string>
+    type block_comment_delimiters = <opening : string; closing : string>
+    type line_comment_delimiter   = string (*Opening of a line comment*)
+    type string_delimiter         = string
+    type verbatim_delimiters      = <opening : string; closing : string>
 
-    let block = None
-    let line  = None
+    let block =
+      object
+        method opening = "(*"
+        method closing = "*)"
+      end
+
+    let block    = Some block
+    let line     = Some "//"
+    let string   = Some "\""
+    let verbatim = None
+    let file_ext = None
   end
 
-module Modules =
-  struct
-    let mk_module _ _ = ""
-  end
+module Parameters = CLI.Make (Config)
+module Main = TopAPI.Make (Parameters)
 
-
-module CLI     = Preprocessor.CLI.Make (Comments) (Modules)
-module MainGen = Preprocessor.PreprocMainGen
-module Main    = MainGen.Make (CLI)
-
-let () = Main.check_cli ()
-let () = Main.preprocess () |> ignore
+let () =
+  let open Main in
+  match check_cli () with
+    Main.Ok ->
+      let file   = Option.value Parameters.Options.input ~default:"" in
+      let std, _ = preprocess (Lexbuf.File file)
+      in Printf.printf  "%s%!" (Std.string_of std.out);
+         Printf.eprintf "%s%!" (Std.string_of std.err)
+  | Info  msg -> Printf.printf "%s%!" msg
+  | Error msg -> Printf.eprintf "%s\n%!" msg
