@@ -6,7 +6,7 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.:!), (.:))
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
 import Data.Aeson.Lens (key, nth, values)
@@ -280,7 +280,7 @@ instance Buildable LigoExposedStackEntry where
 
 instance FromJSON LigoExposedStackEntry where
   parseJSON = withObject "LIGO exposed stack entry" \o -> do
-    leseType <- o .: "source_type"
+    leseType <- o .:! "source_type" .!= LTUnresolved
     leseDeclaration <- o .:! "name"
     return LigoExposedStackEntry{..}
 
