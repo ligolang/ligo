@@ -13,6 +13,7 @@ build-type:     Simple
 library
   exposed-modules:
       Server
+      Types
       Util
   other-modules:
       Paths_ligo_webide_backend

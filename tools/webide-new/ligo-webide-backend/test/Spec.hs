@@ -17,7 +17,8 @@ import Test.Hspec.Wai (WaiSession, request, with)
 import Server
   (CompileExpressionRequest(..), CompileRequest(..), CompilerResponse(..), Config(..),
   DeployScript(..), DryRunRequest(..), GenerateDeployScriptRequest(..), ListDeclarationsRequest(..),
-  Source(..), mkApp)
+  mkApp)
+import Types (Source(..))
 
 main :: IO ()
 main = do

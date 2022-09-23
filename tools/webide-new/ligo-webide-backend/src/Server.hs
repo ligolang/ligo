@@ -9,7 +9,6 @@ module Server
   , GenerateDeployScriptRequest (..)
   , ListDeclarationsRequest (..)
   , ListDeclarationsResponse
-  , Source (..)
   , CompilerResponse (..)
   )
 where
@@ -78,34 +77,8 @@ import Morley.Tezos.Address.Alias
 import Morley.Tezos.Core (Mutez(UnsafeMutez), unMutez)
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
+import Types (DisplayFormat(..), Source(..))
 import Util (prepareField)
-
-newtype Source = Source {unSource :: Text}
-  deriving stock (Eq, Show, Ord, Generic)
-
-instance FromJSON Source where
-  parseJSON = genericParseJSON defaultOptions
-    {unwrapUnaryRecords = True}
-
-instance ToJSON Source where
-  toJSON = genericToJSON defaultOptions
-    {unwrapUnaryRecords = True}
-
-instance ToSchema Source where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {unwrapUnaryRecords = True}
-
-data DisplayFormat =
-  DFDev | DFJson | DFHumanReadable
-    deriving stock (Eq, Ord, Show, Enum, Generic)
-
-instance FromJSON DisplayFormat
-
-instance ToJSON DisplayFormat
-
-instance ToSchema DisplayFormat where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {constructorTagModifier = prepareField 2 }
 
 data CompileRequest = CompileRequest
   { rSources :: [(FilePath, Source)]
