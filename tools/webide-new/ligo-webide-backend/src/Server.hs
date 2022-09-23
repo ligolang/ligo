@@ -25,7 +25,6 @@ import Data.Aeson
   genericParseJSON, genericToJSON, parseJSON, toJSON)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as LBS
-import Data.Char (toLower)
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NonEmpty
 import Data.Map (Map)
@@ -79,6 +78,8 @@ import Morley.Tezos.Address.Alias
 import Morley.Tezos.Core (Mutez(UnsafeMutez), unMutez)
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
+import Util (prepareField)
+
 newtype Source = Source {unSource :: Text}
   deriving stock (Eq, Show, Ord, Generic)
 
@@ -114,13 +115,6 @@ data CompileRequest = CompileRequest
   , rStorage :: Maybe Text
   , rDisplayFormat :: Maybe DisplayFormat
   } deriving stock (Eq, Show, Ord, Generic)
-
-prepareField :: Int -> String -> String
-prepareField n = lowercaseInitial . drop n
-  where
-    lowercaseInitial :: String -> String
-    lowercaseInitial [] = []
-    lowercaseInitial (c:s) = toLower c : s
 
 instance FromJSON CompileRequest where
   parseJSON = genericParseJSON
