@@ -4,7 +4,6 @@ module Language.LIGO.Debugger.CLI.Call
   , getAvailableEntrypoints
   ) where
 
-import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Aeson
 import Data.ByteString.Lazy qualified as LBS
 import Text.Interpolation.Nyan
@@ -21,13 +20,6 @@ import Language.LIGO.Debugger.CLI.Types
 withMapLigoExc :: (MonadUnliftIO m) => m a -> m a
 withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
   [int||#{cfeStderr e}|] :: LigoException
-
--- | This function tries to decode @ligo@ compiler's output.
--- If it fails, then it would throw @LigoException@.
-decodeBytes :: (MonadIO m, FromJSON a) => (String -> LigoException) -> LBS.ByteString -> m a
-decodeBytes mkExc bytes = case Aeson.decode bytes of
-  Just res -> pure res
-  Nothing -> throwIO $ mkExc $ decodeUtf8 bytes
 
 {-
   Here and in the next calling @ligo@ binary functions
@@ -54,7 +46,8 @@ compileLigoContractDebug entrypoint file = withMapLigoExc $
     , "--disable-michelson-typechecking"
     , file
     ] Nothing
-    >>= decodeBytes [int|m|Unexpected output of `ligo` from decoding source mapper: #{id}|]
+    >>= let mkErrMsg = [int|m|Unexpected output of `ligo` from decoding source mapper: #{id}|]
+        in either (throwIO . LigoException . mkErrMsg) pure . Aeson.eitherDecode
 
 -- | Run ligo to compile expression into Michelson in the context of the
 -- given file.
