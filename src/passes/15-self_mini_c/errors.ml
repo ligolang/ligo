@@ -9,7 +9,7 @@ type self_mini_c_error = [
   | `Self_mini_c_not_a_pair
   | `Self_mini_c_could_not_aggregate_entry
   | `Self_mini_c_corner_case of string
-  | `Self_mini_c_fvs_in_create_contract_lambda of Mini_c.expression * ValueVar.t
+  | `Self_mini_c_fvs_in_create_contract_lambda of Mini_c.expression * Value_var.t
   | `Self_mini_c_create_contract_lambda of Constant.constant' * Mini_c.expression
 ] [@@deriving poly_constructor { prefix = "self_mini_c_" }]
 
@@ -31,7 +31,7 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Not all free variables could be inlined in Tezos.create_contract usage: %a.@]"
         Simple_utils.Snippet.pp e.location
-        ValueVar.pp v
+        Value_var.pp v
     | `Self_mini_c_create_contract_lambda (_cst,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]"
@@ -73,7 +73,7 @@ let error_jsonformat : self_mini_c_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_mini_c_fvs_in_create_contract_lambda (e, v) ->
-    let loc = ValueVar.get_location v in
+    let loc = Value_var.get_location v in
     let message = `String "Free variables are not allowed in CREATE_CONTRACT lambdas" in
     let loc = `String (Format.asprintf "%a" Simple_utils.Location.pp loc) in
     let expression = `String (Format.asprintf "%a" Mini_c.PP.expression e) in

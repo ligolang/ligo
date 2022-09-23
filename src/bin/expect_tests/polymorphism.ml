@@ -330,23 +330,42 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (test "constants.mligo") ] ;
   [%expect{|
-    File "./constants.mligo", line 5, characters 8-13:
+    File "./constants.mligo", line 5, characters 14-45:
       4 |
       5 | let m = merge (Map.empty : (int, string) foo)
 
-    These types are not matching:
-     - string
-     - int |}]
+    Invalid type(s)
+    Cannot unify string with int. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "f" ; "--init-file" ; (test "cases_annotation.mligo") ] ;
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "f" ; "--init-file" ; (test "cases_annotation.mligo") ] ;
   [%expect{|
-    File "./cases_annotation.mligo", line 4, characters 20-22:
-      3 | let f (b : bool) (str : string) =
-      4 |   let k = if b then k1 else k2 in
-      5 |   k str (40 + 2)
-
-    Can't infer the type of this value, please add a type annotation. |}]
+    { LAMBDA
+        (pair bool string)
+        string
+        { UNPAIR ;
+          SWAP ;
+          PUSH int 2 ;
+          PUSH int 40 ;
+          ADD ;
+          SWAP ;
+          DIG 2 ;
+          IF { LAMBDA
+                 string
+                 (lambda int string)
+                 { LAMBDA (pair string int) string { CAR } ; DUP 2 ; APPLY ; SWAP ; DROP } }
+             { LAMBDA
+                 string
+                 (lambda int string)
+                 { LAMBDA (pair string int) string { CAR } ; DUP 2 ; APPLY ; SWAP ; DROP } } ;
+          SWAP ;
+          EXEC ;
+          SWAP ;
+          EXEC } ;
+      DUP 2 ;
+      APPLY ;
+      SWAP ;
+      DROP } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "bar 0" ; "--init-file" ; (test "use_error.mligo") ] ;
@@ -357,43 +376,32 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract.mligo") ] ;
-  [%expect{|
-    File "./unresolved/contract.mligo", line 6, characters 29-31:
-      5 |     let b                = List.length ys in
-      6 |     [], (a + b + List.length [])
-
-    Can't infer the type of this value, please add a type annotation. |}]
+  [%expect{xxx|
+    Underspecified type list (^gen#421) -> nat.
+    Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
-  [%expect{|
-    File "./unresolved/contract2.mligo", line 4, characters 13-15:
-      3 | let main (_, _ : int list * nat) : (operation list * nat) =
-      4 |     [], (one [])
-
-    Can't infer the type of this value, please add a type annotation. |}]
+  [%expect{xxx|
+    Underspecified type list (^gen#419) -> nat.
+    Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
-  [%expect{|
-    File "./unresolved/storage.mligo", line 1, characters 20-22:
-      1 | let s = List.length []
-      2 |
-
-    Can't infer the type of this value, please add a type annotation. |}]
+  [%expect{xxx|
+    Underspecified type list (^gen#416) -> nat.
+    Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
-  [%expect{|
-    File "./unresolved/parameter.mligo", line 1, characters 8-10:
-      1 | let p = []
-      2 |
-
-    Can't infer the type of this value, please add a type annotation. |}]
+  [%expect{xxx|
+    Underspecified type list (^gen#416).
+    Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
   [%expect{|
-    Can't infer the type of this value, please add a type annotation. |}]
+    Underspecified type list (^gen#5).
+    Please add additional annotations. |}]
 
 let () = Sys.chdir pwd

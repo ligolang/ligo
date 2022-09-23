@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '2007'
+title: Remove unused `C_ASSERT_INFERRED`
+type: internal

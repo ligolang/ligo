@@ -491,7 +491,7 @@ let main = ((p,s) : (int, unit)) =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = ([p, s] : [int, unit]): unit => {
+let main = (p: int, s: unit): unit => {
   if (p > 10) { failwith ("Failure."); };
 };
 ```
@@ -566,6 +566,21 @@ let ediv: (value: nat, divided_by: nat) => option&lt;[nat, nat]&gt;
 </SyntaxTitle>
 
 Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < abs(y)`.
+
+<SyntaxTitle syntax="pascaligo">
+val ignore&lt;a&gt; : a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val ignore : 'a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let ignore: 'a => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let ignore: (value: &apos;a) => &apos;unit
+</SyntaxTitle>
+
+Ignores a value, it can be an alternative to `_` prefixed variables.
 
 <SyntaxTitle syntax="pascaligo">
 type sapling_state (n)

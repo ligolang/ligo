@@ -3,6 +3,8 @@ module Var  = Simple_utils.Var
 open Ast_imperative
 open Ligo_prim
 
+include Ast_imperative.Helpers
+
 type 'a folder = 'a -> expression -> 'a
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression f in
@@ -30,7 +32,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   | E_tuple     t -> List.fold ~f:self ~init t
   | E_let_in   li -> Let_in.fold self self_type init li
   | E_type_in  ti -> Type_in.fold self self_type init ti
-  | E_mod_in   mi -> Types.Declaration.Fold.mod_in  self self_type init mi
+  | E_mod_in   mi -> Mod_in.fold  self self_type init mi
   | E_cond      c -> Conditional.fold self init c
   | E_recursive r -> Recursive.fold self self_type init r
   | E_sequence  s -> Sequence.fold self init s
@@ -111,7 +113,7 @@ let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
       return @@ E_type_in ti
     )
   | E_mod_in mi -> (
-      let mi = Types.Declaration.Map.mod_in self self_type mi in
+      let mi = Mod_in.map self self_type mi in
       return @@ E_mod_in mi
     )
   | E_lambda l -> (
@@ -201,26 +203,26 @@ and map_module : abs_mapper -> module_ -> module_ = fun m p ->
 
 and map_declaration_content = fun (m: abs_mapper) (x : declaration_content) : declaration_content ->
   match x,m with
-  | Declaration_constant dc, Expression m' -> (
-      let dc = Types.Declaration.Map.declaration_constant (map_expression m') (fun a -> a) dc in
-      Declaration_constant dc
+  | D_value dc, Expression m' -> (
+      let dc = Types.Value_decl.map (map_expression m') (fun a -> a) dc in
+      D_value dc
     )
-  | Declaration_type dt, Type_expression m' -> (
-      let dt = Types.Declaration.Map.declaration_type (map_type_expression m') dt in
-      Declaration_type dt
+  | D_type dt, Type_expression m' -> (
+      let dt = Types.Type_decl.map (map_type_expression m') dt in
+      D_type dt
     )
-  | Declaration_module dm, Module m' -> (
+  | D_module dm, Module m' -> (
     let module_ = map_module_expr m' dm.module_ in
     let dm = { dm with module_ } in
-    Declaration_module dm
+    D_module dm
   )
-  | Declaration_module dm, Expression _ -> (
-      let dm = Types.Declaration.Map.declaration_module (map_decl m) dm in
-      Declaration_module dm
+  | D_module dm, Expression _ -> (
+      let dm = Types.Module_decl.map (Location.map @@ Module_expr.map (map_decl m)) dm in
+      D_module dm
     )
   | decl,_ -> decl
 
-and map_decl m = fun (Decl d) -> (Decl (Location.map (map_declaration_content m) d))
+and map_decl m = Location.map (map_declaration_content m)
 
 let map_program m (p : program) =
   let p = match m with
@@ -294,7 +296,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       (res, return @@ E_type_in ti)
     )
   | E_mod_in mi -> (
-      let res,mi = Types.Declaration.Fold_map.mod_in self idle init mi in
+      let res,mi = Mod_in.fold_map self idle init mi in
       (res, return @@ E_mod_in mi)
     )
   | E_lambda l -> (
@@ -334,114 +336,13 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> (init, return e')
 
 let remove_from var vars =
-  let f v vars = if ValueVar.equal var v then vars else v :: vars in
+  let f v vars = if Value_var.equal var v then vars else v :: vars in
   List.fold_right ~f vars ~init:[]
 
 let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Pattern.t) =
   Pattern.fold_pattern (fun vars p ->
       match p.wrap_content with
-      | Pattern.P_var {var;attributes;_} when pred attributes ->
-         var :: vars
+      | Pattern.P_var b when pred (Binder.is_mutable b) ->
+        Binder.get_var b :: vars
       | _ -> vars) [] pattern
 
-module Free_variables :
-  sig
-    val expression : expression -> ValueVar.t list
-  end
-  = struct
-
-  module VarSet = Caml.Set.Make(ValueVar)
-
-  let unions : VarSet.t list -> VarSet.t =
-    fun l -> List.fold l ~init:VarSet.empty ~f:VarSet.union
-
-  let rec get_fv_expr : expression -> VarSet.t = fun e ->
-    let self = get_fv_expr in
-    match e.expression_content with
-    | E_variable v ->
-       VarSet.singleton v
-    | E_literal _ | E_raw_code _ | E_skip _ | E_module_accessor _ ->
-       VarSet.empty
-    | E_list lst ->
-      unions @@ List.map ~f:self lst
-    | E_set lst ->
-      unions @@ List.map ~f:self lst
-    | E_map lst ->
-      unions @@ List.map ~f:(fun (l, r) -> VarSet.union (self l) (self r)) lst
-    | E_big_map lst ->
-      unions @@ List.map ~f:(fun (l, r) -> VarSet.union (self l) (self r)) lst
-    | E_ascription {anno_expr;_} ->
-      self anno_expr
-    | E_matching {matchee;cases} ->
-      let aux ({ pattern ; body } : _ Match_expr.match_case) =
-        let pattern = get_pattern pattern in
-        List.fold_right pattern ~f:VarSet.remove ~init:(self body)
-      in
-      VarSet.union (self matchee) (unions @@ List.map ~f:aux cases)
-    | E_record m ->
-      let res = List.map ~f:(fun (_,v) -> self v) m in
-      unions res
-    | E_accessor {record;path} ->
-      let aux = function
-        | Access_path.Access_tuple _ | Access_record _ -> VarSet.empty
-        | Access_map e -> self e in
-      VarSet.union (self record) (unions @@ List.map ~f:aux path)
-    | E_update {record;path;update} ->
-      let aux = function
-        | Access_path.Access_tuple _ | Access_record _ -> VarSet.empty
-        | Access_map e -> self e in
-      unions ([self record; self update] @ List.map ~f:aux path)
-    | E_tuple t ->
-      unions @@ List.map ~f:self t
-    | E_constructor {element;_} ->
-      self element
-    | E_application {lamb; args} ->
-      VarSet.union (self lamb) (self args)
-    | E_let_in {let_binder = {var;ascr=_;attributes=_}; rhs; let_result;_} ->
-      VarSet.union (self rhs) (VarSet.remove var (self let_result))
-    | E_type_in {let_result;type_binder=_;rhs=_} ->
-      self let_result
-    | E_mod_in {rhs;let_result;module_binder=_} ->
-      VarSet.union (get_fv_module_expr rhs.wrap_content) (self let_result)
-    | E_lambda {binder = {var;ascr=_;attributes=_}; result;output_type=_} ->
-      VarSet.remove var @@ self result
-    | E_type_abstraction {type_binder=_;result} ->
-      self result
-    | E_recursive {fun_name; lambda = {binder = {var;ascr=_;attributes=_}; result;_};fun_type=_} ->
-      VarSet.remove fun_name @@ VarSet.remove var @@ self result
-    | E_constant {arguments;cons_name=_} ->
-      unions @@ List.map ~f:self arguments
-    | E_cond {condition; then_clause; else_clause} ->
-      unions @@ [self condition; self then_clause; self else_clause]
-    | E_sequence {expr1; expr2} ->
-      VarSet.union (self expr1) (self expr2)
-    | E_assign {binder; expression} ->
-      unions @@ [VarSet.singleton binder.var; self expression]
-    | E_for {binder; start; final; incr; f_body} ->
-      VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
-    | E_for_each {fe_binder = (binder, None); collection; fe_body; collection_type = _} ->
-      unions [self collection; VarSet.remove binder @@ self fe_body]
-    | E_for_each {fe_binder = (binder, Some binder'); collection; fe_body;_} ->
-      unions [self collection; VarSet.remove binder @@ VarSet.remove binder' @@ self fe_body]
-    | E_while {cond; body} ->
-      unions [self cond; self body]
-
-  and get_fv_module_expr : module_expr_content -> VarSet.t = function
-    | M_struct prg -> get_fv_module prg
-    | M_variable _ -> VarSet.empty
-    | M_module_path _ -> VarSet.empty
-
-  and get_fv_module : module_ -> VarSet.t = fun p ->
-    let aux = fun (Decl x : decl) ->
-      match Location.unwrap x with
-      | Declaration_constant {binder=_; expr;attr=_} ->
-        get_fv_expr expr
-      | Declaration_module {module_binder=_;module_;module_attr=_} ->
-        get_fv_module_expr module_.wrap_content
-      | Declaration_type _t ->
-        VarSet.empty
-    in
-    unions @@ List.map ~f:aux p
-
-  let expression e = VarSet.fold (fun v r -> v :: r) (get_fv_expr e) []
-end

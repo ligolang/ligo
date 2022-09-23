@@ -34,6 +34,9 @@ let v_nat : Z.t -> value =
 let v_int : Z.t -> value =
   fun v -> V_Ct (C_int v)
 
+let v_int64 : int64 -> value =
+  fun v -> V_Ct (C_int64 v)
+
 let v_mutez : Z.t -> value =
   fun v -> V_Ct (C_mutez v)
 
@@ -196,6 +199,18 @@ let get_pair : value -> (value * value) option =
     )
     | _ -> None
 
+let get_left : value -> value option =
+  fun value ->
+    match value with
+    | V_Construct ("Left", v) -> Some v
+    | _ -> None
+
+let get_right : value -> value option =
+  fun value ->
+    match value with
+    | V_Construct ("Right", v) -> Some v
+    | _ -> None
+
 let get_func : value -> func_val option =
   fun value ->
     match value with
@@ -245,6 +260,7 @@ let tag_constant_val : constant_val -> int = function
   | C_bls12_381_g1 _ -> 13
   | C_bls12_381_g2 _ -> 14
   | C_bls12_381_fr _ -> 15
+  | C_int64 _ -> 16
 
 let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   match c, c' with
@@ -274,7 +290,8 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
      Bytes.compare (Bls12_381.G2.to_bytes b) (Bls12_381.G2.to_bytes b')
   | C_bls12_381_fr b, C_bls12_381_fr b' ->
      Bytes.compare (Bls12_381.Fr.to_bytes b) (Bls12_381.Fr.to_bytes b')
-  | (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _), (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> Int.compare (tag_constant_val c) (tag_constant_val c')
+  | C_int64 i, C_int64 i' -> Int64.compare i i'
+  | (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _ | C_int64 _), (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _ | C_int64 _) -> Int.compare (tag_constant_val c) (tag_constant_val c')
 
 let tag_value : value -> int = function
   | V_Ct _ -> 0

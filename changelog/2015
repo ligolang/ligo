@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '2015'
+title: Keep `(context, expression)` in `Ast_aggregated` for test purging
+type: internal

@@ -74,6 +74,9 @@ let private_attribute = {
 (*%on_error_reduce nsepseq(type_expr,COMMA)*)
 %on_error_reduce nsepseq(statement,SEMI)
 %on_error_reduce nsepseq(variant,VBAR)
+%on_error_reduce nsepseq(object_type,VBAR)
+%on_error_reduce ternary_expr
+%on_error_reduce nsepseq(field_name,COMMA)
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -294,7 +297,25 @@ expr_stmt:
 | as_expr_level "%=" expr_stmt { EAssign     ($1, {value = Assignment_operator Mod_eq;   region = $2#region}, $3) }
 | as_expr_level "+=" expr_stmt { EAssign     ($1, {value = Assignment_operator Plus_eq;  region = $2#region}, $3) }
 | as_expr_level "-=" expr_stmt { EAssign     ($1, {value = Assignment_operator Min_eq;   region = $2#region}, $3) }
-| fun_expr                    { EFun    $1         }
+| fun_expr                     { EFun     $1 }
+| ternary_expr                 { $1 }
+
+ternary_expr:
+| as_expr_level "?" expr_stmt ":" expr_stmt {   
+  let start = expr_to_region $1 in
+  let stop  = expr_to_region $5 in
+  ETernary { 
+    value = {
+      condition = $1;
+      qmark = $2;
+      truthy = $3;
+      colon = $4;
+      falsy = $5;
+    };
+    region = cover start stop
+  }
+}
+  
 | as_expr_level               { $1 }
 
 as_expr_level:
@@ -717,10 +738,10 @@ type_expr:
 (* Functional types *)
 
 fun_type:
-  par(nsepseq(fun_param,",")) "=>" type_expr {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop
-    and value  = $1.value, $2, $3
+  ES6FUN par(nsepseq(fun_param,",")) "=>" type_expr {
+    let stop   = type_expr_to_region $4 in
+    let region = cover $2.region stop
+    and value  = $2.value, $3, $4
     in TFun {region; value} }
 
 fun_param:
@@ -765,7 +786,11 @@ core_type:
 | "_"                   { TVar    {value="_"; region=$1#region} }
 | type_name             { TVar    $1 }
 | module_access_t       { TModA   $1 }
-| object_type           { TObject $1 }
+| nsepseq(object_type, "|") { 
+    match $1 with 
+      (obj, []) -> TObject obj
+    | _ as u    -> TDisc u
+  }
 | type_ctor_app         { TApp    $1 }
 | attributes type_tuple { TProd   {inside=$2; attributes=$1} }
 | par(type_expr)        { TPar    $1 }
@@ -849,8 +874,44 @@ import_stmt:
     let kwd_import = $1 in
     let equal = $3 in
     let region = cover kwd_import#region (nsepseq_to_region (fun a -> a.region) $4)
-    and value = {kwd_import; alias=$2; equal; module_path=$4}
+    and value = Import_rename {kwd_import; alias=$2; equal; module_path=$4}
     in {region; value} }
+| "import" "*" "as" module_name "from" "<string>" {
+    let kwd_import = $1 in
+    let times = $2 in 
+    let kwd_as = $3 in
+    let alias   = $4 in
+    let kwd_from = $5 in 
+    let module_path = unwrap $6 in
+    let region = cover kwd_import#region module_path.region in
+    let value = Import_all_as {
+      kwd_import;
+      times;
+      kwd_as;
+      alias;
+      kwd_from;
+      module_path
+    }
+    in 
+    {region; value}
+  }
+| "import" braces(nsepseq(field_name, ",")) "from" "<string>" {
+  let kwd_import  = $1 in 
+
+  let imported: (field_name, comma) Utils.nsepseq braces reg   = $2 in 
+
+  let kwd_from    = $3 in 
+  let module_path = unwrap $4 in
+  let region = cover kwd_import#region module_path.region in
+  let value = Import_selected {
+    kwd_import;
+    imported;
+    kwd_from;
+    module_path
+  }
+  in 
+  {region; value}
+}
 
 (* Statements *)
 
@@ -862,26 +923,27 @@ statements:
 (* Expressions *)
 
 fun_expr:
-  par(parameters) ioption(type_annotation) "=>" body {
-    let region = cover $1.region (body_to_region $4) in
-    let value  = {parameters = EPar $1; lhs_type=$2; arrow=$3; body=$4}
+  ES6FUN par(parameters) ioption(type_annotation) "=>" body {
+    let region = cover $2.region (body_to_region $5) in
+    let value  = {parameters = EPar $2; lhs_type=$3; arrow=$4; body=$5}
     in {region; value}
   }
-| "(" ")" ioption(type_annotation) "=>" body {
-    let lpar = $1 in
-    let rpar = $2 in
-    let arrow = $4 in
+| ES6FUN "(" ")" ioption(type_annotation) "=>" body {
+    let lpar = $2 in
+    let rpar = $3 in
+    let arrow = $5 in
     let region     = cover lpar#region rpar#region in
     let parameters = EUnit {region; value = (lpar,rpar)} in
-    let region     = cover lpar#region (body_to_region $5) in
-    let value      = {parameters; lhs_type=$3; arrow; body=$5}
+    let region     = cover lpar#region (body_to_region $6) in
+    let value      = {parameters; lhs_type=$4; arrow; body=$6}
     in {region; value}
   }
-| "<ident>" "=>" body {
-    let params = unwrap $1 in
-    let region     = cover params.region (body_to_region $3)
+| ES6FUN "<ident>" "=>" body
+| ES6FUN "_" "=>" body {
+    let params = unwrap $2 in
+    let region     = cover params.region (body_to_region $4)
     and parameters = EVar params in
-    let value = {parameters; lhs_type=None; arrow=$2; body=$3}
+    let value = {parameters; lhs_type=None; arrow=$3; body=$4}
     in {region; value} }
 
 parameters:
@@ -896,13 +958,14 @@ parameters:
 *)
 
 parameter:
-  expr type_annotation {
-    let colon, type_expr = $2 in
-    let start  = expr_to_region $1
-    and stop   = type_expr_to_region type_expr in
-    let region = cover start stop
-    and value  = $1, colon, type_expr
-    in EAnnot {region; value} }
+  expr ioption(type_annotation) {
+    match $2 with
+    | Some (colon, type_expr) ->
+      let start = expr_to_region $1 in
+      let stop = type_expr_to_region type_expr in
+      let region = cover start stop in
+      EAnnot { region; value = $1, colon, type_expr }
+    | None -> $1 }
 
 body:
   braces(statements) { FunctionBody   $1 }

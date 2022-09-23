@@ -13,7 +13,7 @@ let get_declarations_core (core_prg : Ast_core.program )=
      Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
-    let module_variable = try ModuleVar.to_name_exn module_variable with _ -> "" in
+    let module_variable = try Module_var.to_name_exn module_variable with _ -> "" in
     not @@ Caml.Sys.file_exists module_variable in
 
   let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
@@ -24,15 +24,15 @@ let get_declarations_core (core_prg : Ast_core.program )=
 
 let get_declarations_typed (typed_prg : Ast_typed.program) =
   List.filter_map ~f:Ast_typed.(fun (a : declaration) -> Simple_utils.Location.unwrap a |>
-    (function Declaration_constant a when not a.attr.hidden -> Option.return @@ `Value a.binder.var
-    | Declaration_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
-    | Declaration_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
+    (function D_value a when not a.attr.hidden -> Option.return @@ `Value (Binder.get_var a.binder)
+    | D_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
+    | D_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
     | _ -> None)) @@ typed_prg
 
 let pp_declaration ppf = function
-    `Value a  -> ValueVar.pp  ppf a
-  | `Type a   -> TypeVar.pp   ppf a
-  | `Module a -> ModuleVar.pp ppf a
+    `Value a  -> Value_var.pp  ppf a
+  | `Type a   -> Type_var.pp   ppf a
+  | `Module a -> Module_var.pp ppf a
 
 
 (* REPL logic *)
@@ -68,14 +68,14 @@ let repl_result_jsonformat = function
   | Defined_values_core module_ ->
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
-     let func_defs = List.map ~f:(fun n -> `Assoc [("name", ValueVar.to_yojson n)]) func_declarations in
-     let type_defs = List.map ~f:(fun n -> `Assoc [("name", TypeVar.to_yojson n)]) type_declarations in
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Value_var.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Type_var.to_yojson n)]) type_declarations in
      `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations false module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
-     let func_defs = List.map ~f:(fun n -> `Assoc [("name", ValueVar.to_yojson n)]) func_declarations in
-     let type_defs = List.map ~f:(fun n -> `Assoc [("name", TypeVar.to_yojson n)]) type_declarations in
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Value_var.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Type_var.to_yojson n)]) type_declarations in
      `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Just_ok -> `Assoc []
 
@@ -99,8 +99,7 @@ let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
-  let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
-  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp module_ in
+  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end state.top_level typed_exp in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
   let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let options = state.dry_run_opts in
@@ -124,7 +123,7 @@ let try_declaration ~raise ~raw_options state s =
     try_with (fun ~raise ~catch:_ ->
       let typed_prg,core_prg =
         Ligo_compile.Utils.type_program_string ~raise ~options:options state.syntax s in
-      let env = Environment.append typed_prg state.env in
+      let env = Environment.append state.env typed_prg in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
     (fun ~catch:_ -> function
@@ -144,12 +143,11 @@ let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
-    let prg = Build.merge_and_type_libraries ~raise ~options file_name in
-    let prg = List.map ~f:(fun d -> Ast_typed.Decl d) prg in
-    Simple_utils.Location.wrap (Ast_typed.Declaration.M_struct prg)
+    let prg = Build.qualified_typed ~raise ~options Env file_name in
+    Simple_utils.Location.wrap (Module_expr.M_struct prg)
   in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration.Declaration_module {module_binder=ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
-  let env     = Environment.append module_ state.env in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ D_module {module_binder=Module_var.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
+  let env     = Environment.append state.env module_ in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
@@ -158,8 +156,8 @@ let use_file ~raise ~raw_options state file_name =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
-  let module' = Build.merge_and_type_libraries ~raise ~options file_name in
-  let env = Environment.append module' state.env in
+  let module' = Build.qualified_typed ~raise ~options Env file_name in
+  let env = Environment.append state.env module' in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'
                           } in
@@ -217,8 +215,9 @@ Included directives:
   #import \"file_path\" \"module_name\";;"
 
 let make_initial_state syntax protocol dry_run_opts project_root options =
-  let top_level = Build.Stdlib.typed ~options syntax in
-  let env = Environment.append top_level @@ Environment.default protocol in
+  let lib = Build.Stdlib.get ~options in
+  let top_level = Build.Stdlib.select_lib_typed syntax lib in
+  let env = Environment.append (Environment.default protocol) top_level in
   {
     env;
     top_level;

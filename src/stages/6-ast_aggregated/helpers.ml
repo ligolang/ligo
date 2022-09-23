@@ -68,11 +68,11 @@ let is_michelson_pair (t: row_element Record.t) : (row_element * row_element) op
   | _ -> None
 
 (* This function parse te and replace all occurence of binder by value *)
-let rec subst_type (binder : TypeVar.t) (value : type_expression) (te : type_expression) =
+let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_expression) =
   let self = subst_type binder value in
   let return type_content = {te with type_content} in
   match te.type_content with
-    T_variable var when TypeVar.equal binder var -> value
+    T_variable var when Type_var.equal binder var -> value
   | T_variable  _ -> te
   | T_constant  {language;injection;parameters} ->
       let parameters = List.map ~f:self parameters in
@@ -179,7 +179,7 @@ let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expressi
   | T_arrow _, _ -> None
   | T_variable x, T_variable y ->
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
-     if TypeVar.equal x y then Some () else None
+     if Type_var.equal x y then Some () else None
   | T_variable _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None

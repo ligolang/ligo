@@ -69,68 +69,48 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 land 2" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat) or (int, nat), but got an argument of type int, int. |}]
+    Invalid type(s)
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lor 2" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type nat, int. |}]
+    Invalid type(s)
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 lor 2n" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type int, nat. |}]
+    Invalid type(s)
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lxor 2" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type nat, int. |}]
+    Invalid type(s)
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 lxor 2n" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type int, nat. |}]
+    Invalid type(s)
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "4 lsr 0n" ] ;
   [%expect{|
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - int
-    - nat. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lsr 1" ] ;
   [%expect{|
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - nat
-    - int. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 lsl 2n" ] ;
   [%expect{|
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - int
-    - nat. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lsl 2" ] ;
   [%expect{|
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - nat
-    - int. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 
 
 let%expect_test _ =
@@ -234,89 +214,69 @@ let%expect_test _ =
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat) or (int, nat), but got an argument of type int, int. |}]
+    Invalid type(s)
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lor 2" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type nat, int. |}]
+    Invalid type(s)
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14 lor 2n" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type int, nat. |}]
+    Invalid type(s)
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lxor 2" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type nat, int. |}]
+    Invalid type(s)
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14 lxor 2n" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Invalid arguments.
-    Expected an argument of type (bool, bool) or (nat, nat), but got an argument of type int, nat. |}]
+    Invalid type(s)
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "4 lsr 0n" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - int
-    - nat. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lsr 1" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - nat
-    - int. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14 lsl 2n" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - int
-    - nat. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lsl 2" ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - nat
-    - nat
-    but got arguments with types:
-    - nat
-    - int. |}]
+    Invalid type(s)
+    Cannot unify nat with int. |}]

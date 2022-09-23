@@ -6,13 +6,16 @@ let stage = "self_ast_aggregated"
 type self_ast_aggregated_error = [
   | `Self_ast_aggregated_expected_obj_ligo of Location.t
   | `Self_ast_aggregated_polymorphism_unresolved of Location.t
-  | `Self_ast_aggregated_fvs_in_create_contract_lambda of Ast_aggregated.expression * ValueVar.t
+  | `Self_ast_aggregated_fvs_in_create_contract_lambda of Ast_aggregated.expression * Value_var.t
   | `Self_ast_aggregated_create_contract_lambda of Constant.constant' * Ast_aggregated.expression
   | `Self_ast_aggregated_bad_format_entrypoint_ann of string * Location.t
   | `Self_ast_aggregated_entrypoint_ann_not_literal of Location.t
   | `Self_ast_aggregated_emit_tag_not_literal of Location.t
   | `Self_ast_aggregated_unmatched_entrypoint of Location.t
   | `Self_ast_aggregated_corner_case of string
+  | `Self_ast_aggregated_bad_single_arity of (Constant.constant' * Ast_aggregated.expression)
+  | `Self_ast_aggregated_bad_map_param_type of (Constant.constant' * Ast_aggregated.expression)
+  | `Self_ast_aggregated_bad_set_param_type of (Constant.constant' * Ast_aggregated.expression)
 ] [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -33,7 +36,7 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Free variable usage is not allowed in call to Tezos.create_contract:@.%a@]"
         Snippet.pp e.location
-        Snippet.pp (ValueVar.get_location v)
+        Snippet.pp (Value_var.get_location v)
     | `Self_ast_aggregated_create_contract_lambda (_cst,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]"
@@ -59,6 +62,18 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Internal error: %s @]"
         desc
+    | `Self_ast_aggregated_bad_single_arity (c, e) ->
+      Format.fprintf f
+        "@[<hv>%a@ Ill-formed \"%a\" expression@.One function argument is expected. @]"
+        Snippet.pp e.location Constant.pp_constant' c
+    | `Self_ast_aggregated_bad_map_param_type (c,e) ->
+      Format.fprintf f
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
+        Snippet.pp e.location Constant.pp_constant' c
+    | `Self_ast_aggregated_bad_set_param_type (c,e) ->
+      Format.fprintf f
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
+        Snippet.pp e.location Constant.pp_constant' c
   )
 
 let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
@@ -90,7 +105,7 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_aggregated_fvs_in_create_contract_lambda (e, v) ->
-    let loc = ValueVar.get_location v in
+    let loc = Value_var.get_location v in
     let message = `String "Free variables are not allowed in CREATE_CONTRACT lambdas" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let expression = `String (Format.asprintf "%a" Ast_aggregated.PP.expression e) in
@@ -154,4 +169,34 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
        ("description", description);
        ]
     in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_bad_single_arity (c, e) ->
+    let message = `String "constant expects one parameters" in
+    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_bad_map_param_type (c,e) ->
+    let message = `String "constant expects a list of pair as parameter" in
+    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_bad_set_param_type (c,e) ->
+    let message = `String "constant expects a list as parameter" in
+    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+      ("value", value);
+    ] in
     json_error ~stage ~content

@@ -301,7 +301,7 @@ type vector = {dx: int, dy: int};
 
 let origin: point = {x: 0, y: 0, z: 0};
 
-let xy_translate = ([p, vec]: [point, vector]): point =>
+let xy_translate = (p: point, vec: vector): point =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
@@ -759,7 +759,7 @@ the reader to account for a missing key in the map. This requires
 function force_access (const key : address; const moves : register) : move is
   case moves[key] of [
     Some (move) -> move
-  | None -> (failwith ("No move.") : move)
+  | None -> failwith ("No move.")
   ]
 ```
 
@@ -770,7 +770,7 @@ function force_access (const key : address; const moves : register) : move is
 let force_access (key, moves : address * register) : move =
   match Map.find_opt key moves with
     Some move -> move
-  | None -> (failwith "No move." : move)
+  | None -> failwith "No move."
 ```
 
 </Syntax>
@@ -780,7 +780,7 @@ let force_access (key, moves : address * register) : move =
 let force_access = ((key, moves) : (address, register)) : move => {
   switch (Map.find_opt (key, moves)) {
   | Some (move) => move
-  | None => (failwith ("No move.") : move)
+  | None => failwith ("No move.")
   }
 };
 ```
@@ -789,10 +789,10 @@ let force_access = ((key, moves) : (address, register)) : move => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let force_access = ([key, moves]: [address, register]): move => {
+let force_access = (key: address, moves: register): move => {
   return match(Map.find_opt (key, moves), {
-   Some: (move: register) => move,
-   None: () => (failwith("No move.") as move)
+   Some: move => move,
+   None: () => failwith("No move.")
   });
 };
 ```
@@ -945,7 +945,7 @@ let delete = ((key, moves) : (address, register)) : register =>
 In JsLIGO, we use the predefined function `Map.remove` as follows:
 
 ```jsligo group=maps
-let delete = ([key, moves]: [address, register]): register =>
+let delete = (key: address, moves: register): register =>
   Map.remove(key, moves);
 ```
 
@@ -982,9 +982,9 @@ of moves is iterated to check that the start of each move is above
 
 ```pascaligo group=maps
 function iter_op (const m : register) : unit is {
-  function iterated (const i : address; const j : move) : unit is
-    if j.1 <= 3 then (failwith ("Below range.") : unit)
-} with Map.iter (iterated, m)
+  function predicate (const i : address; const j : move) is
+    assert (j.0 > 3)
+} with Map.iter (predicate, m)
 ```
 
 </Syntax>
@@ -1011,7 +1011,7 @@ let iter_op = (m : register) : unit => {
 
 ```jsligo group=maps
 let iter_op = (m: register): unit => {
-  let predicate = ([i, j]: [address, move]): unit => assert(j[0] > 3);
+  let predicate = (i: address, j: move) => assert(j[0] > 3);
   Map.iter(predicate, m);
 };
 ```
@@ -1032,7 +1032,7 @@ register.
 
 ```pascaligo group=maps
 function map_op (const m : register) : register is {
-  function increment (const i : address; const j : move) : move is
+  function increment (const _ : address ; const j : move) is
     (j.0, j.1 + 1)
 } with Map.map (increment, m)
 ```
@@ -1042,7 +1042,7 @@ function map_op (const m : register) : register is {
 
 ```cameligo group=maps
 let map_op (m : register) : register =
-  let increment = fun (i,j : address * move) -> j.0, j.1 + 1
+  let increment = fun (_,j : address * move) -> j.0, j.1 + 1
   in Map.map increment m
 ```
 
@@ -1051,7 +1051,7 @@ let map_op (m : register) : register =
 
 ```reasonligo group=maps
 let map_op = (m : register) : register => {
-  let increment = ((i,j): (address, move)) => (j[0], j[1] + 1);
+  let increment = ((_,j): (address, move)) => (j[0], j[1] + 1);
   Map.map (increment, m);
 };
 ```
@@ -1061,7 +1061,7 @@ let map_op = (m : register) : register => {
 
 ```jsligo group=maps
 let map_op = (m: register): register => {
-  let increment = ([i, j]: [address, move]): [int, int] => [j[0], j[1] + 1];
+  let increment = (_: address, j: move) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
 ```
@@ -1086,7 +1086,7 @@ over maps is called `Map.fold` and is used as follows.
 
 ```pascaligo group=maps
 function fold_op (const m : register) : int is {
-  function folded (const i : int; const j : address * move) : int is
+  function folded (const i : int; const j : address * move) is
     i + j.1.1
 } with Map.fold (folded, m, 5)
 ```
@@ -1115,7 +1115,7 @@ let fold_op = (m : register) : int => {
 
 ```jsligo group=maps
 let fold_op = (m: register): int => {
-  let folded = ([i, j]: [int, [address, move]]): int => i + j[1][1];
+  let folded = (i: int, j: [address, move]) => i + j[1][1];
   return Map.fold(folded, m, 5);
 };
 ```

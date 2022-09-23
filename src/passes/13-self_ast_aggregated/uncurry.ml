@@ -4,11 +4,11 @@ open Ast_aggregated
 
 (* Utilities *)
 
-let rec uncurry_lambda (depth : int) (expr : expression) : ValueVar.t list * expression =
+let rec uncurry_lambda (depth : int) (expr : expression) : Value_var.t list * expression =
   match expr.expression_content with
   | E_lambda { binder; result } when depth > 0 ->
     let (vars, result) = uncurry_lambda (depth - 1) result in
-    (binder.var :: vars, result)
+    (Binder.get_var binder :: vars, result)
   | _ -> ([], expr)
 
 let rec uncurry_arrow (depth : int) (type_ : type_expression) :
@@ -32,7 +32,7 @@ let curried_depth_in_lambda (rhs : expression) : int =
 
 let isvar f x : bool =
   match x.expression_content with
-  | E_variable x -> ValueVar.equal f x
+  | E_variable x -> Value_var.equal f x
   | _ -> false
 
 (* Finding the usage of a function in an expression: we will look for
@@ -56,16 +56,16 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
 
 let usages = List.fold_left ~f:combine_usage ~init:Unused
 
-let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
+let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
-    if List.mem ~equal:ValueVar.equal vars f
+    if List.mem ~equal:Value_var.equal vars f
     then Unused
     else usage_in_expr f e in
   match expr.expression_content with
   (* interesting cases: *)
   | E_variable x ->
-    if ValueVar.equal f x
+    if Value_var.equal f x
     (* if f was only used in applications we won't get here *)
     then Other
     else Unused
@@ -86,13 +86,13 @@ let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
   | E_constant { cons_name = _; arguments } ->
     usages (List.map ~f:self arguments)
   | E_lambda { binder; result } ->
-    self_binder [binder.var] result
+    self_binder [Binder.get_var binder] result
   | E_type_abstraction { type_binder = _; result } ->
     self result
   | E_recursive { fun_name; fun_type = _; lambda = { binder; result } } ->
-    self_binder [fun_name; binder.var] result
+    self_binder [fun_name; Binder.get_var binder] result
   | E_let_in { let_binder; rhs; let_result; attr = _ } ->
-    usages [self rhs; self_binder [let_binder.var] let_result]
+    usages [self rhs; self_binder [Binder.get_var let_binder] let_result]
   | E_raw_code _ ->
     Unused
   | E_constructor { constructor = _; element } ->
@@ -101,13 +101,13 @@ let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
     usages (self matchee ::
             List.map ~f:(fun { constructor = _; pattern; body } -> self_binder [pattern] body) cases)
   | E_matching { matchee; cases = Ast_aggregated.Match_record { fields; body; tv = _ } } ->
-    usages [self matchee; self_binder (List.map ~f:(fun b -> b.Binder.var) (Record.LMap.to_list fields)) body]
+    usages [self matchee; self_binder (List.map ~f:Binder.get_var (Record.LMap.to_list fields)) body]
   | E_record fields ->
     usages (List.map ~f:self (Record.LMap.to_list fields))
-  | E_accessor { record; path = _ } ->
-    self record
-  | E_update { record; path = _; update } ->
-    usages [self record; self update]
+  | E_accessor { struct_; path = _ } ->
+    self struct_
+  | E_update { struct_; path = _; update } ->
+    usages [self struct_; self update]
   | E_type_inst { forall; type_ = _} ->
     self forall
   | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
@@ -144,7 +144,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
 
   let (vars, body) = uncurry_lambda depth expr in
-  let binder = ValueVar.fresh () in
+  let binder = Value_var.fresh () in
 
   let labels = uncurried_labels depth in
   let rows = uncurried_rows depth arg_types in
@@ -154,7 +154,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
                   type_expression = record_type } in
   let fields =
     try
-      Record.of_list (List.zip_exn labels (List.map2_exn ~f:(fun var ascr : _ Binder.t -> {var;ascr;attributes={const_or_var=None}}) vars arg_types))
+      Record.of_list (List.zip_exn labels (List.map2_exn ~f:Binder.make vars arg_types))
     with
       | _ -> failwith @@
         Format.asprintf "Uncurry: mismatching number of arguments, expr: %a, type %a\n%!"
@@ -173,11 +173,11 @@ let uncurry_rhs (depth : int) (expr : expression) =
   (binder, result, arg_types, record_type, ret_type)
 
 let rec uncurry_in_expression ~raise
-    (f : ValueVar.t) (depth : int) (expr : expression) :
+    (f : Value_var.t) (depth : int) (expr : expression) :
   expression =
   let self = uncurry_in_expression ~raise f depth in
   let self_binder vars e =
-    if List.mem ~equal:ValueVar.equal vars f
+    if List.mem ~equal:Value_var.equal vars f
     then e
     else uncurry_in_expression ~raise f depth e in
   let return e' = { expr with expression_content = e' } in
@@ -213,17 +213,17 @@ let rec uncurry_in_expression ~raise
   | E_variable _ ->
     return_id
   | E_lambda { binder; output_type; result } ->
-    let result = self_binder [binder.var] result in
+    let result = self_binder [Binder.get_var binder] result in
     return (E_lambda { binder; output_type; result })
   | E_type_abstraction { type_binder; result } ->
     let result = self result in
     return (E_type_abstraction { type_binder; result })
   | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
-    let result = self_binder [fun_name; binder.var] result in
+    let result = self_binder [fun_name; Binder.get_var binder] result in
     return (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } })
   | E_let_in { let_binder; rhs; let_result; attr } ->
     let rhs = self rhs in
-    let let_result = self_binder [let_binder.var] let_result in
+    let let_result = self_binder [ Binder.get_var let_binder] let_result in
     return (E_let_in { let_binder; rhs; let_result; attr })
   | E_raw_code _ ->
     return_id
@@ -241,18 +241,18 @@ let rec uncurry_in_expression ~raise
     return (E_matching { matchee; cases = Match_variant { cases; tv } } )
   | E_matching { matchee; cases = Match_record { fields; body; tv } } ->
     let matchee = self matchee in
-    let body = self_binder (List.map ~f:(fun b -> b.Binder.var) (Record.LMap.to_list fields)) body in
+    let body = self_binder (List.map ~f:Binder.get_var (Record.LMap.to_list fields)) body in
     return (E_matching { matchee; cases = Match_record { fields; body; tv } })
   | E_record fields ->
     let fields = Record.map self fields in
     return (E_record fields)
-  | E_accessor { record; path } ->
-    let record = self record in
-    return (E_accessor { record; path })
-  | E_update { record; path; update } ->
-    let record = self record in
+  | E_accessor { struct_; path } ->
+    let struct_ = self struct_ in
+    return (E_accessor { struct_; path })
+  | E_update { struct_; path; update } ->
+    let struct_ = self struct_ in
     let update = self update in
-    return (E_update { record; path; update })
+    return (E_update { struct_; path; update })
   | E_type_inst {forall;type_} ->
     let forall = self forall in
     return @@ E_type_inst {forall;type_}
@@ -281,7 +281,7 @@ let uncurry_expression (expr : expression) : expression =
               (* Uncurry calls inside the expression *)
               let result = uncurry_in_expression ~raise fun_name depth result in
               (* Generate binders for each argument: x1', ..., xn' *)
-              let binder_types = List.map ~f:(fun t -> (ValueVar.fresh (), t)) arg_types in
+              let binder_types = List.map ~f:(fun t -> (Value_var.fresh (), t)) arg_types in
               (* An variable for each function argument *)
               let args = List.map ~f:(fun (b, t) -> e_a_variable b t) binder_types in
               (* Generate tupled argument (x1', ..., xn') *)
@@ -300,18 +300,18 @@ let uncurry_expression (expr : expression) : expression =
               let fun_type = t_arrow ~loc:fun_type.location ?source_type:fun_type.source_type record_type ret_type () in
               (* Generate the rhs for the new let: (rec(f, (x1, x2, ..., xn)).E[x1, x2, ..., xn]) *)
               let rhs = { expr with
-                          expression_content = E_recursive { fun_name ; fun_type ; lambda = { binder = {var;ascr=record_type;attributes=Binder.empty_attribute} ; output_type=ret_type; result } } ;
+                          expression_content = E_recursive { fun_name ; fun_type ; lambda = { binder = Binder.make var record_type ; output_type=ret_type; result } } ;
                           type_expression = { type_content = T_arrow {type1 = record_type ; type2 = ret_type} ;
                                               orig_var = None ;
                                               location = Location.generated ;
                                               source_type = None } } in
               (* Apply function to tuple: f(x1', x2', ..., xn') *)
               let result = e_a_application (e_a_variable fun_name fun_type) args ret_type in
-              let attr = Attr.{ inline = true ; no_mutation = false ; view = false; public = true ; hidden = false ; thunk = false } in
+              let attr = ValueAttr.{ inline = true ; no_mutation = false ; view = false; public = true ; hidden = false ; thunk = false } in
               (* Construct the let *)
-              let result = e_a_let_in {var=fun_name;ascr=rhs.type_expression;attributes=Binder.empty_attribute} rhs result attr in
+              let result = e_a_let_in (Binder.make fun_name rhs.type_expression) rhs result attr in
               let f (var, t) result =
-                let binder : _ Binder.t = {var;ascr=t; attributes=Binder.empty_attribute} in
+                let binder = Binder.make var t in
                 e_a_lambda { binder ; output_type = result.type_expression; result } t result.type_expression in
               (* Add the external lambdas *)
               let lambda = List.fold_right ~f ~init:result binder_types in

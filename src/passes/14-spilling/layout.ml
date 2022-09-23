@@ -298,7 +298,8 @@ let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
       vp
     )
 
-let extract_record ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list) : _ list =
+let extract_record (type value) ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list)
+  (get_pair : _) : _ list =
   match layout with
   | L_tree -> (
     let open Append_tree in
@@ -308,7 +309,8 @@ let extract_record ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.t
     let rec aux tv : (Label.t * (value * AST.type_expression)) list =
       match tv with
       | Leaf (s, t), v -> [s, (v, t)]
-      | Node {a;b;size=_;full=_}, D_pair (va, vb) ->
+      | Node {a;b;size=_;full=_}, v when Option.is_some (get_pair v) ->
+          let (va, vb) = Option.value_exn (get_pair v) in
           let a' = aux (a, va) in
           let b' = aux (b, vb) in
           (a' @ b')
@@ -317,15 +319,17 @@ let extract_record ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.t
     aux (tree, v)
   )
   | L_comb -> (
-    let rec aux lst_record v : (Label.t * (value * AST.type_expression)) list =
+    let rec aux lst_record (v : value) : (Label.t * (value * AST.type_expression)) list =
       match lst_record,v with
       | [], _ -> raise.error @@ corner_case ~loc:__LOC__ "empty record"
       | [(s,t)], v -> [s,(v,t)]
-      | [(sa,ta);(sb,tb)], D_pair (va,vb) ->
+      | [(sa,ta);(sb,tb)], v when Option.is_some (get_pair v) ->
+          let (va, vb) = Option.value_exn (get_pair v) in
           let a' = aux [sa, ta] va in
           let b' = aux [sb, tb] vb in
           (a' @ b')
-      | (shd,thd)::tl, D_pair (va,vb) ->
+      | (shd,thd)::tl, v when Option.is_some (get_pair v) ->
+          let (va, vb) = Option.value_exn (get_pair v) in
         let tl' = aux tl vb in
         ((shd,(va,thd))::tl')
       | _ -> raise.error @@ corner_case ~loc:__LOC__ "bad record path"
@@ -333,7 +337,7 @@ let extract_record ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.t
     aux lst v
   )
 
-let extract_constructor ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list) : (Label.t * value * AST.type_expression) =
+let extract_constructor (type value) ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list) get_left get_right : (Label.t * value * AST.type_expression) =
   match layout with
   | L_tree ->
     let open Append_tree in
@@ -343,8 +347,12 @@ let extract_constructor ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * 
     let rec aux tv : (Label.t * value * AST.type_expression) =
       match tv with
       | Leaf (k, t), v -> (k, v, t)
-      | Node {a;b=_;size=_;full=_}, D_left v -> aux (a, v)
-      | Node {a=_;b;size=_;full=_}, D_right v -> aux (b, v)
+      | Node {a;b=_;size=_;full=_}, v when Option.is_some (get_left v) ->
+        let v = Option.value_exn (get_left v) in
+        aux (a, v)
+      | Node {a=_;b;size=_;full=_}, v when Option.is_some (get_right v) ->
+        let v = Option.value_exn (get_right v) in
+        aux (b, v)
       | _ -> raise.error @@ corner_case ~loc:__LOC__ "bad constructor path"
     in
     let (s, v, t) = aux (tree, v) in
@@ -353,10 +361,10 @@ let extract_constructor ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * 
     let rec aux tv : (Label.t * value * AST.type_expression) =
       match tv with
       | [], _ -> failwith "lal"
-      | ((l,t)::tl), v-> ( match v with
-        | D_left v -> (l,v,t)
-        | D_right v -> aux (tl,v)
-        | v -> (l,v,t)
+      | ((l,t)::tl), v-> ( match get_left v, get_right v with
+        | Some v, _ -> (l,v,t)
+        | _, Some v -> aux (tl,v)
+        | _ -> (l,v,t)
       )
     in
     aux (lst,v)

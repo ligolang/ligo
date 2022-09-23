@@ -75,9 +75,9 @@ let decompile_variable_abs (type a) (module X:X_var with type t = a): a -> CST.v
     else
       wrap @@ var
 
-let decompile_variable = decompile_variable_abs (module ValueVar)
-let decompile_type_var = decompile_variable_abs (module TypeVar)
-let decompile_mod_var  = decompile_variable_abs (module ModuleVar)
+let decompile_variable = decompile_variable_abs (module Value_var)
+let decompile_type_var = decompile_variable_abs (module Type_var)
+let decompile_mod_var  = decompile_variable_abs (module Module_var)
 
 let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   let return te = te in
@@ -130,7 +130,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_path;element} -> (
-    let rec aux : ModuleVar.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
+    let rec aux : Module_var.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
       match lst with
       | module_name::tl ->
         let module_name = decompile_mod_var module_name in
@@ -176,11 +176,11 @@ let get_e_tuple : AST.expression -> _  = fun expr ->
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
 
-let pattern_type ({var;ascr;attributes}: _ Binder.t) =
-  let attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
-  let var : CST.var_pattern = {variable = decompile_variable var; attributes = attributes} in
+let pattern_type binder =
+  let attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+  let var : CST.var_pattern = {variable = decompile_variable @@ Binder.get_var binder; attributes = attributes} in
   let pattern : CST.pattern = CST.PVar (wrap var) in
-  match ascr with
+  match Binder.get_ascr binder with
     Some s ->
       let type_expr = decompile_type_expr s in
       CST.PTyped (wrap @@ CST.{pattern;colon=Token.ghost_colon;type_expr})
@@ -326,11 +326,11 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   | E_type_abstraction _ -> failwith "corner case : annonymous type abstraction"
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->
-    let var_attributes = var_attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
-    let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ var; attributes = var_attributes } : CST.var_pattern)) in
+  | E_let_in {let_binder;rhs;let_result;attributes} ->
+    let var_attributes = let_binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+    let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var let_binder; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
-    let type_params, rhs_type = Option.value_map ascr ~default:(None, None)
+    let type_params, rhs_type = Option.value_map (Binder.get_ascr let_binder) ~default:(None, None)
                                            ~f:(fun t -> let type_params, rhs_type = decompile_type_params t in
                                                         type_params, Some (prefix_colon rhs_type)) in
     let let_rhs = decompile_expression rhs in
@@ -367,7 +367,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     | M_module_path path -> (
       let alias = name in
       let binders =
-        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" ModuleVar.pp x)) path
+        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" Module_var.pp x)) path
       in
       let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
       let body = decompile_expression let_result in
@@ -410,38 +410,38 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let record = ne_inject braces record ~attr:[] in
     (* why is the record not empty ? *)
     return_expr @@ CST.ERecord (wrap record)
-  | E_accessor {record; path} ->
+  | E_accessor {struct_; path} ->
     let rec aux : AST.expression -> AST.expression Access_path.t -> AST.expression * AST.expression Access_path.t = fun e acc_path ->
       match e.expression_content with
-      | E_accessor { record ; path } ->
-        aux record (path @ acc_path)
+      | E_accessor { struct_ ; path } ->
+        aux struct_ (path @ acc_path)
       | _ -> e,acc_path
     in
-    let (record,path) = aux record path in
+    let (struct_,path) = aux struct_ path in
     (match List.rev path with
       Access_map e :: [] ->
-      let map = decompile_expression record in
+      let map = decompile_expression struct_ in
       let e = decompile_expression e in
       let arg = e,[map] in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | Access_map e :: lst ->
       let path = List.rev lst in
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot @@ List.map ~f:decompile_to_selection path in
-      let struct_name = decompile_variable @@ get_e_variable record in
+      let struct_name = decompile_variable @@ get_e_variable struct_ in
       let proj : CST.projection = {struct_name;selector=Token.ghost_dot;field_path} in
       let e = decompile_expression e in
       let arg = e,[CST.EProj (wrap proj)] in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | _ ->
       let field_path = list_to_nsepseq ~sep:Token.ghost_dot @@ List.map ~f:decompile_to_selection path in
-       let struct_name = decompile_variable @@ get_e_variable record in
+       let struct_name = decompile_variable @@ get_e_variable struct_ in
       let proj : CST.projection = {struct_name;selector=Token.ghost_dot;field_path} in
       return_expr @@ CST.EProj (wrap proj)
     )
   (* Update on multiple field of the same record. may be removed by adding sugar *)
-  | E_update {record={expression_content=E_update _;_} as record;path;update} ->
-    let record = decompile_expression record in
-    let (record,updates) = match record with
+  | E_update {struct_={expression_content=E_update _;_} as struct_;path;update} ->
+    let struct_ = decompile_expression struct_ in
+    let (struct_,updates) = match struct_ with
       CST.EUpdate {value;_} -> (value.record,value.updates)
     | _ -> failwith @@ Format.asprintf "Inpossible case %a" AST.PP.expression expr
     in
@@ -449,36 +449,36 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (ValueVar.of_input_var var) path in
+    let field_path = decompile_to_path (Value_var.of_input_var var) path in
     let field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
     let updates = updates.value.ne_elements in
     let updates = wrap @@ ne_inject ~attr:[] braces @@ npseq_cons ~sep:Token.ghost_semi (wrap @@ field_assign) updates in
-    let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
+    let update : CST.update = {lbrace=Token.ghost_lbrace;record=struct_;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
     return_expr @@ CST.EUpdate (wrap @@ update)
-  | E_update {record; path; update} ->
+  | E_update {struct_; path; update} ->
     let rec aux : AST.expression -> AST.expression Access_path.t -> AST.expression * AST.expression Access_path.t = fun e acc_path ->
       match e.expression_content with
-      | E_accessor { record ; path } ->
-        aux record (path @ acc_path)
+      | E_accessor { struct_ ; path } ->
+        aux struct_ (path @ acc_path)
       | _ -> e,acc_path
     in
-    let (record,path) = aux record path in
-    let record = decompile_variable @@ get_e_variable record in
+    let (struct_,path) = aux struct_ path in
+    let struct_ = decompile_variable @@ get_e_variable struct_ in
     let field_expr = decompile_expression update in
     let (struct_name,field_path) = List.Ne.of_list path in
     (match field_path with
       [] ->
       (match struct_name with
         Access_record name ->
-        let record : CST.path = Name record in
+        let record : CST.path = Name struct_ in
         let field_path = CST.Name (wrap name) in
         let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
         return_expr @@ CST.EUpdate (wrap update)
       | Access_tuple i ->
-        let record : CST.path = Name record in
+        let record : CST.path = Name struct_ in
         let field_path = CST.Name (wrap @@ Z.to_string i) in
         let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
@@ -486,7 +486,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         return_expr @@ CST.EUpdate (wrap update)
       | Access_map e ->
         let e = decompile_expression e in
-        let arg = field_expr,[e; CST.EVar record] in
+        let arg = field_expr,[e; CST.EVar struct_] in
         return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"), arg))
       )
     | _ ->
@@ -510,7 +510,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let field_path = list_to_nsepseq ~sep:Token.ghost_dot field_path in
         let field_path : CST.projection = {struct_name; selector=Token.ghost_dot;field_path} in
         let field_path = CST.Path (wrap @@ field_path) in
-        let record : CST.path = Name record in
+        let record : CST.path = Name struct_ in
         let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
@@ -522,7 +522,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let ty   = decompile_type_expr type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,Token.ghost_colon,ty))
   | E_module_accessor {module_path;element} -> (
-    let rec aux : ModuleVar.t list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
+    let rec aux : Module_var.t list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
       match lst with
       | module_name::tl ->
         let module_name = decompile_mod_var module_name in
@@ -582,11 +582,11 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr @@ CST.ECall (wrap @@ (var,set))
     (* We should avoid to generate skip instruction*)
   | E_skip _ -> return_expr @@ CST.EUnit (wrap (Token.ghost_lpar,Token.ghost_rpar))
-  | E_assign {binder={var;ascr;attributes};expression} ->
-    let var_attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
-    let binder : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ var; attributes = var_attributes } : CST.var_pattern)) in
-    let binders = (binder,[]) in
-    let type_params, rhs_type = Option.value_map ascr ~default:(None, None)
+  | E_assign {binder;expression} ->
+    let var_attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+    let p_binder : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var binder; attributes = var_attributes } : CST.var_pattern)) in
+    let binders = (p_binder,[]) in
+    let type_params, rhs_type = Option.value_map (Binder.get_ascr binder) ~default:(None, None)
                                            ~f:(fun t -> let type_params, lhs_type = decompile_type_params t in
                                                         type_params, Some (prefix_colon lhs_type)) in
     let let_rhs = decompile_expression expression in
@@ -600,7 +600,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     failwith @@ Format.asprintf "Decompiling a imperative construct to CameLIGO %a"
     AST.PP.expression expr
 
-and decompile_to_path : ValueVar.t -> _ Access_path.t -> CST.path = fun var access ->
+and decompile_to_path : Value_var.t -> _ Access_path.t -> CST.path = fun var access ->
   let struct_name = decompile_variable var in
   match access with
     [] -> CST.Name struct_name
@@ -628,7 +628,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type {type_binder;type_expr; type_attr=_} -> (
+    D_type {type_binder;type_expr; type_attr=_} -> (
     let name = decompile_type_var type_binder in
     let params =
       match type_expr.type_content with
@@ -650,12 +650,12 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     let type_expr = decompile_type_expr type_expr in
     CST.TypeDecl (wrap (CST.{kwd_type=Token.ghost_type;params;name; eq=Token.ghost_eq; type_expr}))
   )
-  | Declaration_constant {binder;attr;expr}-> (
+  | D_value {binder;attr;expr}-> (
     let attributes : CST.attributes = Shared_helpers.decompile_attributes attr in
-    let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
-    let var = CST.PVar (wrap ({variable = decompile_variable binder.var; attributes = var_attributes } : CST.var_pattern)) in
+    let var_attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+    let var = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var binder; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
-    let type_params, rhs_type = Option.value_map binder.ascr ~default:(None, None)
+    let type_params, rhs_type = Option.value_map (Binder.get_ascr binder) ~default:(None, None)
                                            ~f:(fun t -> let type_params, rhs_type = decompile_type_params t in
                                                         type_params, Some (prefix_colon rhs_type)) in
     match expr.expression_content with
@@ -676,7 +676,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
       let let_decl : CST.let_decl = (Token.ghost_let,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
   )
-  | Declaration_module {module_binder;module_;module_attr=_} -> (
+  | D_module {module_binder;module_;module_attr=_} -> (
     let name    = decompile_mod_var module_binder in
     match module_.wrap_content with
     | M_struct prg -> (
@@ -697,7 +697,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     | M_module_path path -> (
       let alias = name in
       let binders =
-        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" ModuleVar.pp x)) path
+        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" Module_var.pp x)) path
       in
       let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
       CST.ModuleAlias (wrap mod_alias)
@@ -711,8 +711,8 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
     match pattern.wrap_content with
     | P_unit -> CST.PUnit (wrap (Token.ghost_lpar, Token.ghost_rpar))
     | P_var v ->
-      let name = (decompile_variable v.var).value in
-      let attributes = v.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
+      let name = (decompile_variable @@ Binder.get_var v).value in
+      let attributes = v |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
       let pvar : CST.var_pattern = {variable = wrap name; attributes } in
       CST.PVar (wrap pvar)
     | P_list pl -> (
@@ -754,7 +754,7 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       CST.PRecord (wrap inj)
 
 and decompile_module : AST.module_ -> CST.ast = fun prg ->
-  let decl = List.map ~f:(fun (Decl d) -> decompile_declaration d) prg in
+let decl = List.map ~f:(decompile_declaration) prg in
   let decl = List.Ne.of_list decl in
   ({decl;eof=Token.ghost_eof}: CST.ast)
 

@@ -77,7 +77,7 @@ type parameter is
 type return is list (operation) * storage
 
 function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),
+ (nil,
   case action of [
     Increment (n) -> store + n
   | Decrement (n) -> store - n
@@ -99,7 +99,7 @@ type parameter =
 type return = operation list * storage
 
 let main (action, store : parameter * storage) : return =
-  ([] : operation list),
+  [],
   (match action with
      Increment n -> store + n
    | Decrement n -> store - n
@@ -120,7 +120,7 @@ type parameter =
 type return = (list (operation), storage);
 
 let main = ((action, store): (parameter, storage)) : return => {
-  (([] : list (operation)),
+  ([],
   (switch (action) {
    | Increment (n) => store + n
    | Decrement (n) => store - n
@@ -141,12 +141,12 @@ type parameter =
 
 type return_ = [list<operation>, storage];
 
-let main = ([action, store]: [parameter, storage]) : return_ => {
+let main = (action: parameter, store: storage) : return_ => {
   return [
-    list([]) as list<operation>,
+    list([]),
     match(action, {
-      Increment: (n: int) => store + n,
-      Decrement: (n: int) => store - n,
+      Increment: n => store + n,
+      Decrement: n => store - n,
       Reset:     ()       => 0
     })
   ];

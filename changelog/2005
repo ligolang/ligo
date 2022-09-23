@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: 'Testing framework: fixing decompilation of event payloads'
+merge_request: '2005'
+title: 'Testing framework: fixing decompilation of event payloads'
+type: fixed

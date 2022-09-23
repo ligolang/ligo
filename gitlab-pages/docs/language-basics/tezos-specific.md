@@ -30,7 +30,7 @@ return type of `Byte.unpack` is an option that needs to be annotated.
 ```pascaligo group=a
 function id_string (const p : string) : option (string) is {
   const packed : bytes = Bytes.pack (p)
-} with (Bytes.unpack (packed) : option (string))
+} with Bytes.unpack (packed)
 ```
 
 </Syntax>
@@ -39,7 +39,7 @@ function id_string (const p : string) : option (string) is {
 ```cameligo group=a
 let id_string (p : string) : string option =
   let packed: bytes = Bytes.pack p in
-  (Bytes.unpack packed : string option)
+  Bytes.unpack packed
 ```
 
 </Syntax>
@@ -48,7 +48,7 @@ let id_string (p : string) : string option =
 ```reasonligo group=a
 let id_string = (p : string) : option (string) => {
   let packed : bytes = Bytes.pack (p);
-  (Bytes.unpack(packed) : option (string));
+  Bytes.unpack(packed);
 };
 ```
 
@@ -58,7 +58,7 @@ let id_string = (p : string) : option (string) => {
 ```jsligo group=a
 let id_string = (p: string): option<string> => {
   let packed: bytes = Bytes.pack(p);
-  return (Bytes.unpack(packed) as option<string>);
+  return (Bytes.unpack(packed));
 };
 ```
 
@@ -108,7 +108,7 @@ let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let check_hash_key = ([kh1, k2]: [key_hash, key]): [bool, key_hash] => {
+let check_hash_key = (kh1: key_hash, k2: key): [bool, key_hash] => {
   let kh2: key_hash = Crypto.hash_key(k2);
   return [(kh1 == kh2), kh2];
 };
@@ -163,7 +163,7 @@ let check_signature =
 
 ```jsligo group=c
 let check_signature =
-  ([pk, signed, msg]: [key, signature, bytes]): bool =>
+  (pk: key, signed: signature, msg: bytes): bool =>
   Crypto.check(pk, signed, msg);
 ```
 
@@ -222,8 +222,8 @@ The return value is a pair of type `(operation * address)`.
 
 ```pascaligo group=e
 const origination : operation * address = Tezos.create_contract (
-  function (const p : nat; const s : string): list(operation) * string is ((nil : list(operation)), s),
-  (None : option(key_hash)),
+  function (const p : nat; const s : string): list(operation) * string is (nil, s),
+  None,
   3tz,
   "initial_storage")
 ```
@@ -233,8 +233,8 @@ const origination : operation * address = Tezos.create_contract (
 
 ```cameligo group=e
 let origination : operation * address = Tezos.create_contract
-  (fun (p, s : nat * string) -> (([] : operation list), s))
-  (None: key_hash option)
+  (fun (p, s : nat * string) -> ([], s))
+  None
   3tz
   "initial_storage"
 ```
@@ -244,8 +244,8 @@ let origination : operation * address = Tezos.create_contract
 
 ```reasonligo group=e
 let origination : (operation, address) = Tezos.create_contract (
-  ((p, s) : (nat,string)) : (list(operation),string) => (([] : list(operation)), s),
-  None: option(key_hash),
+  ((p, s) : (nat,string)) : (list(operation),string) => ([], s),
+  None,
   3tz,
   "initial_storage")
 ```
@@ -255,8 +255,8 @@ let origination : (operation, address) = Tezos.create_contract (
 
 ```jsligo group=e
 let origination : [operation, address] = Tezos.create_contract (
-  ([p, s]: [nat,string]): [list<operation>, string] => [(list([]) as list<operation>), s],
-  None() as option<key_hash>,
+  (p: nat, s: string): [list<operation>, string] => [list([]), s],
+  None(),
   3 as tez,
   "initial_storage");
 ```

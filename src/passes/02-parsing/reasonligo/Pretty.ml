@@ -349,11 +349,11 @@ and pp_ne_injection :
       match Option.map ~f:pp_compound compound with
         None -> elements
       | Some (opening, closing) ->
-          string opening ^^  
+          string opening ^^
           (if should_break then nest 2 (break 0 ^^ elements) else elements)
           ^^ string closing in
     let inj = if List.is_empty attributes then inj
-              else 
+              else
               (if should_break then break 0 ^^ pp_attributes attributes ^/^ inj
               else pp_attributes attributes ^/^ inj)
     in inj

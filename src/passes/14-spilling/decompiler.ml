@@ -188,7 +188,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       raise.error @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | ((Unit            | Nat                  | Tez             | Bytes    | Bls12_381_g1      | Bls12_381_g2       |
         Bls12_381_fr    | Address              | Key             | Chain_id | Signature         | Ast_contract       |
-        Map             | Big_map              | Set                        | Baker_hash        | Pvss_key           |
+        Map             | Big_map              | Set             | Int64    | Baker_hash        | Pvss_key           |
         Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Michelson_contract |
         Gen             | String               | Typed_address   | Mutation | List              | Chest              |
         Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp          |
@@ -208,12 +208,12 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     )
   | T_sum {layout ; fields} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_sum ~layout fields in
-      let (constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in
+      let (constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst get_left get_right in
       let sub = self v tv in
       return (E_constructor {constructor;element=sub})
   | T_record {layout ; fields } ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
-      let lst = Layout.extract_record ~raise ~layout v lst in
+      let lst = Layout.extract_record ~raise ~layout v lst get_pair in
       let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
       let m' = Ligo_prim.Record.of_list lst in
       return (E_record m')

@@ -5,7 +5,6 @@ type constant' =
   | C_NONE
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
-  | C_ASSERT_INFERRED
   | C_UPDATE
   (* Loops *)
   | C_ITER
@@ -153,8 +152,14 @@ type constant' =
   | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_SIGN [@only_interpreter]
   | C_TEST_GET_ENTRYPOINT [@only_interpreter]
+  | C_TEST_INT64_OF_INT [@only_interpreter]
+  | C_TEST_INT64_TO_INT [@only_interpreter]
   | C_TEST_LAST_EVENTS [@only_interpreter]
   | C_TEST_TRY_WITH [@only_interpreter]
+  (* Added only for performance in the interpreter, not exposed *)
+  | C_TEST_ABS [@only_interpreter]
+  | C_TEST_INT [@only_interpreter]
+  | C_TEST_SLICE [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
@@ -165,7 +170,7 @@ type constant' =
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ
   | C_OPTION_MAP
-[@@deriving eq,compare,yojson,hash, enum, print_constant, only_interpreter_tags, read_constant ]
+[@@deriving eq,compare,yojson,hash, print_constant, only_interpreter_tags, read_constant ]
 
 
 type deprecated = {
@@ -181,22 +186,12 @@ let const_name (Const c) = c
 type 'e t = {
   cons_name: constant' ; (* this is in enum *)
   arguments: 'e list ;
-  } [@@deriving eq,compare,yojson,hash]
+  } [@@deriving eq,compare,yojson,hash, fold, map]
 
 let pp f ppf = fun {cons_name;arguments} ->
   Format.fprintf ppf "@[%a@[<hv 1>(%a)@]@]"
     pp_constant' cons_name
     Simple_utils.PP_helpers.(list_sep_d f) arguments
-
-let fold : ('acc -> 'a ->  'acc) -> 'acc -> 'a t -> 'acc
-= fun f acc {cons_name=_;arguments} ->
-  let acc = List.fold ~f ~init:acc arguments in
-   acc
-
-let map : ('a ->  'b) -> 'a t -> 'b t
-= fun f {cons_name;arguments} ->
-  let arguments = List.map ~f arguments in
-  {cons_name;arguments}
 
 let fold_map : ('acc -> 'a ->  'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
 = fun f acc {cons_name;arguments} ->

@@ -92,7 +92,7 @@ the given currency, as well as constants for zero and one.
 ```jsligo group=EURO
 namespace EURO {
   export type t = nat;
-  export let add = ([a, b]: [t, t]): t => a + b;
+  export let add = (a: t, b: t): t => a + b;
   export let zero: t = 0 as nat;
   export let one: t = 1 as nat
 }
@@ -116,7 +116,7 @@ increments the storage value each time it is called.
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add (store, EURO.one))
+ (nil, EURO.add (store, EURO.one))
 ```
 
 </Syntax>
@@ -126,7 +126,7 @@ function main (const action : unit; const store : storage) : (list (operation)) 
 type storage = EURO.t
 
 let main (action, store : unit * storage) : operation list * storage =
- (([] : operation list), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -135,7 +135,7 @@ let main (action, store : unit * storage) : operation list * storage =
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- (([] : list (operation)), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 
 </Syntax>
@@ -144,8 +144,8 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 ```jsligo group=EURO
 type storage = EURO.t;
 
-let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
-  [list([]) as list<operation>, EURO.add(store, EURO.one)];
+let main = (action: unit, store: storage): [list<operation>, storage] =>
+  [list([]), EURO.add(store, EURO.one)];
 ```
 
 </Syntax>
@@ -196,7 +196,7 @@ module EURO = {
 ```jsligo group=EURO2
 namespace EURO {
   export type t = int;
-  export let add = ([a, b]: [t, t]): t => a + b;
+  export let add = (a: t, b: t): t => a + b;
   export let zero: t = 0;
   export let one: t = 1;
 }
@@ -273,7 +273,7 @@ module EURO = {
 namespace EURO {
   export type t = nat;
 
-  export let add = ([a, b]: [t, t]): t => a + b;
+  export let add = (a: t, b: t): t => a + b;
 
   export namespace CONST {
     export let zero: t = 0 as nat;
@@ -293,7 +293,7 @@ than once:
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add (store, EURO.CONST.one))
+ (nil, EURO.add (store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -303,7 +303,7 @@ function main (const action : unit; const store : storage) : (list (operation)) 
 type storage = EURO.t
 
 let main (action, store : unit * storage) : operation list * storage =
- (([] : operation list), EURO.add(store, EURO.CONST.one))
+ ([], EURO.add(store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -313,7 +313,7 @@ let main (action, store : unit * storage) : operation list * storage =
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- (([] : list (operation)), EURO.add(store, EURO.CONST.one))
+ ([], EURO.add(store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -322,8 +322,8 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 ```jsligo group=EURO3
 type storage = EURO.t;
 
-let main = ([action, store]: [unit, storage]) : [list<operation>, storage] =>
- [list([]) as list<operation>, EURO.add(store, EURO.CONST.one)]
+let main = (action: unit, store: storage) : [list<operation>, storage] =>
+ [list([]), EURO.add(store, EURO.CONST.one)]
 ```
 
 </Syntax>
@@ -389,7 +389,7 @@ For example, in JsLIGO, we can create a file `imported.jsligo`:
 ```jsligo group=imported
 export type t = nat;
 
-export const add = ([a, b]: [t, t]): t => a + b;
+export const add = (a: t, b: t): t => a + b;
 
 export const zero: t = 0 as nat;
 export const one: t = 1 as nat;
@@ -443,7 +443,7 @@ that imports all definitions from `imported.religo` as the module
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- (([] : list (operation)), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 
 </Syntax>
@@ -459,7 +459,7 @@ that imports all definitions from `imported.jsligo` as the module
 
 type storage = EURO.t;
 
-const main = ([_action, store]: [unit, storage]): [list<operation>, storage] =>
+const main = (_action: unit, store: storage): [list<operation>, storage] =>
   [list([]), EURO.add(store, EURO.one)];
 ```
 

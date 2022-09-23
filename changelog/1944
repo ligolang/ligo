@@ -1,0 +1,5 @@
+author: pewulfman
+description: ''
+merge_request: '1944'
+title: Split Declaration module in ligo prim + Add ppx for fold and map
+type: internal
