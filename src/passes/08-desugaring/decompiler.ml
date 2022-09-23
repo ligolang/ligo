@@ -5,8 +5,8 @@ module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 open Ligo_prim
 
-let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
-  let aux : string list -> (unit -> string option) -> I.Attr.value = fun acc is_fun ->
+let decompile_exp_attributes : O.ValueAttr.t -> I.Attr.t = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
+  let aux : string list -> (unit -> string option) -> I.Attr.t = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
     | None -> acc
@@ -21,8 +21,8 @@ let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_
       (fun () -> if thunk then Some "thunk" else None) ;
     ]
 
-let decompile_type_attributes : O.Attr.type_ -> I.Attr.type_ = fun { public ; hidden } ->
-  let aux : string list -> (unit -> string option) -> I.Attr.type_ = fun acc is_fun ->
+let decompile_type_attributes : O.TypeOrModuleAttr.t -> I.Attr.t = fun { public ; hidden } ->
+  let aux : string list -> (unit -> string option) -> I.Attr.t = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
     | None -> acc
@@ -114,9 +114,9 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_recursive recs ->
       let recs = Recursive.map self self_type recs in
       return @@ I.E_recursive recs
-    | O.E_let_in {let_binder = {var; ascr;attributes=_};attr={inline=false;no_mutation=_;view=_;public=_;hidden=_;thunk=false};rhs=expr1;let_result=expr2}
-      when ValueVar.is_name var "()"
-           && Stdlib.(=) ascr (Some (O.t_unit ())) ->
+    | O.E_let_in {let_binder;attr={inline=false;no_mutation=_;view=_;public=_;hidden=_;thunk=false};rhs=expr1;let_result=expr2}
+      when Value_var.is_name (Binder.get_var let_binder) "()"
+           && Stdlib.(=) (Binder.get_ascr let_binder) (Some (O.t_unit ())) ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
       return @@ I.E_sequence {expr1;expr2}
@@ -146,15 +146,15 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_record recd ->
       let recd = Record.map self recd in
       return @@ I.E_record recd
-    | O.E_accessor {record;path} ->
-      let record = self record in
+    | O.E_accessor {struct_;path} ->
+      let struct_ = self struct_ in
       let Label path  = path in
-      return @@ I.E_accessor {record;path=[Access_record path]}
-    | O.E_update {record;path;update} ->
-      let record = self record in
+      return @@ I.E_accessor {struct_;path=[Access_record path]}
+    | O.E_update {struct_;path;update} ->
+      let struct_ = self struct_ in
       let update = self update in
       let Label path  = path in
-      return @@ I.E_update {record;path=[Access_record path];update}
+      return @@ I.E_update {struct_;path=[Access_record path];update}
     | O.E_ascription {anno_expr; type_annotation} ->
       let anno_expr = self anno_expr in
       let type_annotation = decompile_type_expression type_annotation in
@@ -167,19 +167,19 @@ let rec decompile_expression : O.expression -> I.expression =
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = decompile_type_expression type_expr in
-    let type_attr = decompile_type_attributes type_attr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map decompile_type_expression_option binder in
     let expr   = decompile_expression expr in
     let attr   = decompile_exp_attributes attr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = decompile_type_expression type_expr in
+    let type_attr = decompile_type_attributes type_attr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = decompile_module_expr module_ in
     let module_attr = decompile_module_attributes module_attr in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   let return wrap_content : I.module_expr = {me with wrap_content} in
@@ -192,7 +192,7 @@ and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   | M_module_path mp ->
       return @@ M_module_path mp
 
-and decompile_decl : O.decl -> I.decl = fun (Decl d) -> Decl (decompile_declaration d)
+and decompile_decl : O.decl -> I.decl = fun d -> decompile_declaration d
 and decompile_module : O.module_ -> I.module_ = fun m ->
   List.map ~f:decompile_decl m
 

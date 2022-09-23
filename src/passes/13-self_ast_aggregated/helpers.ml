@@ -121,6 +121,12 @@ and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
     let body = map_expression f body in
     Match_record {fields; body; tv}
 
+and map_program : 'err mapper -> program -> program = fun g (ctxt, expr) ->
+  let f d = Location.map (function D_value { binder ; expr ; attr } -> D_value { binder ; expr = map_expression g expr ; attr }) d in
+  let ctxt = List.map ~f ctxt in
+  let expr = map_expression g expr in
+  (ctxt, expr)
+
 type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
 let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
   let self = fold_map_expression f in
@@ -204,11 +210,11 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr
 
 module Free_variables :
   sig
-    val expression : expression -> ValueVar.t list
+    val expression : expression -> Value_var.t list
   end
   = struct
 
-  module VarSet = Caml.Set.Make(ValueVar)
+  module VarSet = Caml.Set.Make(Value_var)
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty
     ~f:VarSet.union
@@ -227,12 +233,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; result} ->
       let fv = self result in
-      VarSet.remove binder.var @@ fv
+      VarSet.remove (Binder.get_var binder) @@ fv
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; result}} ->
       let fv = self result in
-      VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv
+      VarSet.remove fun_name @@ VarSet.remove (Binder.get_var binder) @@ fv
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -241,13 +247,13 @@ module Free_variables :
       let res = Record.map self m in
       let res = Record.LMap.to_list res in
       unions res
-    | E_accessor {record} ->
-      self record
-    | E_update {record;update} ->
-      VarSet.union (self record) (self update)
+    | E_accessor {struct_} ->
+      self struct_
+    | E_update {struct_;update} ->
+      VarSet.union (self struct_) (self update)
     | E_let_in { let_binder ; rhs ; let_result } ->
       let fv2 = (self let_result) in
-      let fv2 = VarSet.remove let_binder.var fv2 in
+      let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       VarSet.union (self rhs) fv2
     | E_assign { binder=_; expression } ->
       self expression
@@ -260,7 +266,7 @@ module Free_variables :
         VarSet.remove pattern @@ varSet in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = Record.LMap.values fields |> List.map ~f:(fun b -> b.Binder.var) in
+      let pattern = Record.LMap.values fields |> List.map ~f:Binder.get_var in
       let varSet = get_fv_expr body in
       List.fold_right pattern ~f:VarSet.remove ~init:varSet
 

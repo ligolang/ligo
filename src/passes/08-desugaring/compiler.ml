@@ -33,7 +33,7 @@ let get_layout : (string list) -> Layout.t option = fun attributes ->
   in
   aux attributes
 
-let compile_exp_attributes : I.Attr.value -> O.Attr.value = fun attributes ->
+let compile_exp_attributes : I.Attr.t -> O.ValueAttr.t = fun attributes ->
   let is_inline attr = String.equal "inline" attr in
   let is_no_mutation attr = String.equal "no_mutation" attr in
   let is_view attr = String.equal "view" attr in
@@ -53,13 +53,13 @@ let compile_exp_attributes : I.Attr.value -> O.Attr.value = fun attributes ->
   let thunk = get_thunk attributes in
   {inline; no_mutation; view; public; hidden; thunk}
 
-let compile_type_attributes : I.Attr.type_ -> O.Attr.type_ = fun attributes ->
+let compile_type_attributes : I.Attr.t -> O.TypeOrModuleAttr.t = fun attributes ->
   let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
   let get_hidden : (string list) -> bool = fun attr -> List.mem attr "hidden" ~equal:String.equal in
   let public = get_public attributes in
   let hidden = get_hidden attributes in
   {public;hidden}
-let compile_module_attributes : I.Attr.type_ -> O.Attr.type_ = compile_type_attributes
+let compile_module_attributes : I.Attr.t -> O.TypeOrModuleAttr.t = compile_type_attributes
 
 let rec compile_type_expression : I.type_expression -> O.type_expression =
   fun te ->
@@ -167,8 +167,8 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_record recd ->
       let recd = Record.map self recd in
       return @@ O.E_record recd
-    | I.E_accessor {record;path} ->
-      let record = self record in
+    | I.E_accessor {struct_;path} ->
+      let struct_ = self struct_ in
       let accessor ~loc expr a =
         match (a : _ Access_path.access) with
           Access_tuple  i -> O.e_record_accessor ~loc expr (Label (Z.to_string i))
@@ -177,9 +177,9 @@ let rec compile_expression : I.expression -> O.expression =
           let k = self k in
           O.e_constant ~loc C_MAP_FIND_OPT [k;expr]
       in
-      List.fold ~f:(accessor ~loc:sugar.location) ~init:record path
-    | I.E_update {record;path;update} ->
-      let record = self record in
+      List.fold ~f:(accessor ~loc:sugar.location) ~init:struct_ path
+    | I.E_update {struct_;path;update} ->
+      let struct_ = self struct_ in
       let update = self update in
       let accessor ~loc expr a =
         match (a : _ Access_path.access) with
@@ -205,7 +205,7 @@ let rec compile_expression : I.expression -> O.expression =
         in
         (s',e')
       in
-      let (_,rhs) = List.fold ~f:aux ~init:(record, fun e -> e) path in
+      let (_,rhs) = List.fold ~f:aux ~init:(struct_, fun e -> e) path in
       rhs @@ update
     | I.E_map map -> (
       let map = List.dedup_and_sort ~compare:Caml.compare map in
@@ -258,7 +258,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_sequence {expr1; expr2} ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
-      let let_binder : _ Binder.t = {var = ValueVar.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Binder.empty_attribute} in
+      let let_binder = Binder.make (Value_var.fresh ~name:"()" ()) (Some (O.t_unit ())) in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true ; hidden = false ; thunk = false }}
     | I.E_skip () -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
@@ -275,19 +275,19 @@ let rec compile_expression : I.expression -> O.expression =
 and compile_declaration : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = compile_type_expression type_expr in
-    let type_attr = compile_type_attributes type_attr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map compile_type_expression_option binder in
     let expr   = compile_expression expr in
     let attr   = compile_exp_attributes attr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = compile_type_expression type_expr in
+    let type_attr = compile_type_attributes type_attr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = compile_module_expr module_ in
     let module_attr = compile_module_attributes module_attr in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and compile_module_expr : I.module_expr -> O.module_expr = fun me ->
   let return wrap_content : O.module_expr = {me with wrap_content} in
@@ -300,7 +300,7 @@ and compile_module_expr : I.module_expr -> O.module_expr = fun me ->
   | M_module_path mp ->
       return @@ M_module_path mp
 
-and compile_decl : I.decl -> O.decl = fun (Decl d) -> Decl (compile_declaration d)
+and compile_decl : I.decl -> O.decl = fun d -> compile_declaration d
 and compile_module : I.module_ -> O.module_ = fun m ->
   List.map ~f:compile_decl m
 

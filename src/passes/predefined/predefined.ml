@@ -11,94 +11,7 @@ module Ligo_string = Simple_utils.Ligo_string
 
 module Tree_abstraction = struct
 
-  let some_const c = Some (Ligo_prim.Constant.Const c)
-
-  (*
-    Each front-end has its owns constants.
-
-    Constants are special names that have their own case in the AST. E_constant
-    for regular constants, and T_constant for type constants. Both types are
-    defined in `Ast_core/types.ml`.
-    For instance, "2 + 2" in Pascaligo is translated to `E_constant ("ADD" , [
-      E_literal (Literal_int 2) ;
-      E_literal (Literal_int 2) ;
-    ])`.
-
-    They are used to represent what can't expressed in the languages:
-    - Primitives. Like "int", "string", "unit" for types. Or "+" for values.
-    - Tezos specific stuff. Like "operation" for types. Or "source" for values.
-    - What can't be represented in the language yet. Like "list" or "List.fold".
-
-    Each constant is expressed as a pair:
-    - The left-hand-side is the reserved name in the given front-end.
-    - The right-hand-side is the name that will be used in the AST.
-  *)
-  let pseudo_modules x =
-    match x with
-    | "Tezos.self"               -> some_const C_SELF
-    | "Tezos.create_contract"    -> some_const C_CREATE_CONTRACT
-    | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
-    | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
-    | "Tezos.call_view"          -> some_const C_VIEW
-    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
-    | "Tezos.emit"         -> some_const C_EMIT_EVENT
-
-    (* Sapling *)
-    | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
-    | "Tezos.sapling_verify_update" -> some_const C_SAPLING_VERIFY_UPDATE
-
-    (* Set module *)
-    | "Set.literal"    -> some_const C_SET_LITERAL
-
-    (* Map module *)
-    | "Map.literal"  -> some_const C_MAP_LITERAL
-
-    (* Big_map module *)
-    | "Big_map.literal"  -> some_const C_BIG_MAP_LITERAL
-
-    (* Bitwise module *)
-    | "Bitwise.or"          -> some_const C_OR
-    | "Bitwise.and"         -> some_const C_AND
-
-    (* Operator module *)
-    | "Operator.neg"   -> some_const C_NEG
-    | "Operator.add"   -> some_const C_ADD
-    | "Operator.sub"   -> some_const C_POLYMORPHIC_SUB
-    | "Operator.sub_mutez" -> some_const C_SUB_MUTEZ
-    | "Operator.times" -> some_const C_MUL
-    | "Operator.div"   -> some_const C_DIV
-    | "Operator.modulus" -> some_const C_MOD
-    | "Operator.eq"    -> some_const C_EQ
-    | "Operator.not"   -> some_const C_NOT
-    | "Operator.and"   -> some_const C_AND
-    | "Operator.or"    -> some_const C_OR
-    | "Operator.gt"    -> some_const C_GT
-    | "Operator.ge"    -> some_const C_GE
-    | "Operator.lt"    -> some_const C_LT
-    | "Operator.le"    -> some_const C_LE
-    | "Operator.cons"  -> some_const C_CONS
-    | "Operator.neq"   -> some_const C_NEQ
-
-    | _ -> None
-
-
   let pseudo_module_to_string (c : Ligo_prim.Constant.constant') = match c with
-    | C_ADDRESS                 -> "Tezos.address"
-    | C_SELF                    -> "Tezos.self"
-    | C_SELF_ADDRESS            -> "Tezos.self_address"
-    | C_IMPLICIT_ACCOUNT        -> "Tezos.implicit_account"
-    | C_CREATE_CONTRACT         -> "Tezos.create_contract"
-    | C_CALL                    -> "Tezos.transaction"
-    | C_SET_DELEGATE            -> "Tezos.set_delegate"
-    | C_CONTRACT_WITH_ERROR     -> "Tezos.get_contract_with_error"
-    | C_CONTRACT_OPT            -> "Tezos.get_contract_opt"
-    | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
-    | C_CONTRACT                -> "Tezos.get_contract"
-    | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
-    | C_OPEN_CHEST              -> "Tezos.open_chest"
-    | C_VIEW                    -> "Tezos.call_view"
-    | C_GLOBAL_CONSTANT         -> "Tezos.constant"
-
     (* Operator module *)
     | C_NEG  -> "Operator.neg"
     | C_ADD  -> "Operator.add"
@@ -119,16 +32,9 @@ module Tree_abstraction = struct
     | C_CONS -> "Operator.cons"
     | C_NEQ  -> "Operator.neq"
 
-    (* Set module *)
-    | C_SET_LITERAL    -> "Set.literal"
-
     (* Map module *)
-    | C_MAP_LITERAL  -> "Map.literal"
     | C_MAP_ADD      -> "Map.add"
     | C_MAP_REMOVE   -> "Map.remove"
-
-    (* Big_map module *)
-    | C_BIG_MAP_LITERAL -> "Big_map.literal"
 
     (* Bitwise module *)
     | C_XOR -> "Bitwise.xor"
@@ -138,7 +44,6 @@ module Tree_abstraction = struct
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Ligo_prim.Constant.pp_constant' c
 
 
-  let constants x = pseudo_modules x
   let constant_to_string = function
       | Ligo_prim.Constant.Const x -> pseudo_module_to_string x
 end
@@ -198,7 +103,6 @@ module Michelson = struct
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
     | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
     | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
-    | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
     | C_CONS               , _   -> Some ( simple_binary @@ prim "CONS")
     | C_UNIT               , _   -> Some ( simple_constant @@ prim "UNIT")
     | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")

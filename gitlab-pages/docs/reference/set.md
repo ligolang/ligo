@@ -463,7 +463,7 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let sum = ([acc, i]: [int, int]): int => acc + i;
+let sum = (acc: int, i: int): int => acc + i;
 let sum_of_elements: int = Set.fold(sum, my_set, 0);
 ```
 
@@ -511,7 +511,7 @@ let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let sum_right = ([i, acc] : [int, int]) : int => acc + i;
+let sum_right = (i: int, acc: int) : int => acc + i;
 let sum_of_elements_desc : int = Set.fold_desc (sum_right, my_set, 0);
 ```
 

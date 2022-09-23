@@ -6,6 +6,13 @@
   (action (run menhir %{ParToken} --only-tokens --inspection --table
                --base MenhirToken)))
 
+;; Pre-Parser
+(menhir
+ (merge_into PreParser)
+ (modules ../../02-parsing/jsligo/ParToken PreParser)
+ (flags -la 1 --table --strict --explain --inspection --cmly
+   --external-tokens Token))
+
 (library
   (name menhir_jsligo_tokens)
   (public_name ligo.lexing.menhir_jsligo_tokens)
@@ -22,14 +29,16 @@
 (library
   (name lexing_jsligo)
   (public_name ligo.lexing.jsligo)
-  (modules Token Self_tokens Style)
+  (modules Token Self_tokens Style PreParser State)
   (libraries
     ;; LIGO
     lexing_shared
     menhir_jsligo_tokens
     ;; Third party
+    menhirLib
     str
-    hex))
+    hex)
+)
 
 ;; Build of a standalone lexer for JsLIGO
 

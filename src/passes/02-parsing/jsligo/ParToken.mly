@@ -73,6 +73,7 @@
 %token <string Wrap.t> SLASH   "/"    [@recover.expr Token.wrap_slash   $loc]
 %token <string Wrap.t> TIMES   "*"    [@recover.expr Token.wrap_times   $loc]
 %token <string Wrap.t> REM     "%"    [@recover.expr Token.wrap_rem     $loc]
+%token <string Wrap.t> QMARK   "?"    [@recover.expr Token.wrap_qmark   $loc]
 (*
 %token <string Wrap.t> PLUS2   "++"   [@recover.expr Token.wrap_plus2   $loc]
 %token <string Wrap.t> MINUS2  "--"   [@recover.expr Token.wrap_minus2  $loc]
@@ -137,6 +138,7 @@
 %token <string Wrap.t> Return  "return"  [@recover.expr Token.wrap_return  $loc]
 %token <string Wrap.t> Switch  "switch"  [@recover.expr Token.wrap_switch  $loc]
 %token <string Wrap.t> While   "while"   [@recover.expr Token.wrap_while   $loc]
+%token <string Wrap.t> From    "from"    [@recover.expr Token.wrap_from    $loc]
 
 (* TypeScript keywords *)
 
@@ -147,6 +149,7 @@
 (* Virtual tokens *)
 
 %token <string Wrap.t> ZWSP [@recover.expr Token.wrap_zwsp $loc]
+%token <string Wrap.t> ES6FUN [@recover.expr Token.wrap_es6fun $loc]
 
 (* End of File *)
 

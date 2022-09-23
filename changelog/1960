@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: \nFix the emission of recursive functions in JsLIGO tree abstractor
+merge_request: '1960'
+title: Fix the emission of recursive functions in JsLIGO tree abstractor
+type: fixed

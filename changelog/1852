@@ -1,0 +1,7 @@
+author: tomjack & er433
+description: '### Raw bytes representation from string\n\nRaw bytes can be expressed
+  directly from a string using `[%bytes \"...\"]`. E.g., `[%bytes \"foo\"]` represents
+  bytes `0x666f6f`.'
+merge_request: '1852'
+title: Add raw bytes literal from string
+type: added

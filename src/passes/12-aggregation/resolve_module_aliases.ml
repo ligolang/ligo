@@ -2,10 +2,10 @@ open Ligo_prim
 module AST = Ast_typed
 
 module Aliases = struct
-  module MMap = Simple_utils.Map.Make(ModuleVar)
-  type t = {inside : (t * ModuleVar.t list option) MMap.t}
+  module MMap = Simple_utils.Map.Make(Module_var)
+  type t = {inside : (t * Module_var.t list option) MMap.t}
   let rec pp ppf {inside} =
-    Format.fprintf ppf "%a" (PP_helpers.list_sep_d (fun ppf (k,(t,v)) -> Format.fprintf ppf "%a => (%a,%a)" ModuleVar.pp k pp t PP_helpers.(option (list_sep_d ModuleVar.pp)) v )) @@ MMap.to_kv_list inside
+    Format.fprintf ppf "%a" (PP_helpers.list_sep_d (fun ppf (k,(t,v)) -> Format.fprintf ppf "%a => (%a,%a)" Module_var.pp k pp t PP_helpers.(option (list_sep_d Module_var.pp)) v )) @@ MMap.to_kv_list inside
   let empty = {inside = MMap.empty}
   let push aliases mvar path mod_aliases =
     {inside = MMap.add mvar (path,mod_aliases) aliases.inside}
@@ -90,13 +90,13 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
   | E_record record ->
     let record = Record.map self record in
     return @@ E_record record
-  | E_accessor {record;path} ->
-    let record = self record in
-    return @@ E_accessor {record;path}
-  | E_update {record;path;update} ->
-    let record = self record in
+  | E_accessor {struct_;path} ->
+    let struct_ = self struct_ in
+    return @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+    let struct_ = self struct_ in
     let update = self update in
-    return @@ E_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   | E_mod_in  {module_binder; rhs; let_result} ->
     let mod_aliases,path,rhs = compile_module_expr aliases rhs in
     let aliases = Aliases.push aliases module_binder mod_aliases path in
@@ -137,18 +137,18 @@ and compile_declaration aliases (d : AST.declaration) : Aliases.t * AST.declarat
   let return_s aliases wrap_content = aliases, Some {d with wrap_content} in
   let return_n aliases = aliases, None in
   match Location.unwrap d with
-    Declaration_constant {binder;expr;attr} ->
+    D_value {binder;expr;attr} ->
       let expr   = expression aliases expr in
       let binder = Binder.map (Option.map ~f:(type_expression aliases)) binder in
-      return_s aliases @@ AST.Declaration.Declaration_constant {binder;expr;attr}
-  | Declaration_type {type_binder;type_expr;type_attr} ->
+      return_s aliases @@ AST.D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
       let type_expr = type_expression aliases type_expr in
-      return_s aliases @@ AST.Declaration.Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+      return_s aliases @@ AST.D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
       let mod_aliases,path,module_  = compile_module_expr aliases module_ in
       let aliases = Aliases.push aliases module_binder mod_aliases path in
       match module_ with None -> return_n aliases
-      | Some module_ -> return_s aliases @@ AST.Declaration.Declaration_module {module_binder;module_;module_attr}
+      | Some module_ -> return_s aliases @@ AST.D_module {module_binder;module_;module_attr}
 
 and compile_declaration_list aliases (program : AST.program) : Aliases.t * AST.program =
   let aliases,dcl = List.fold_map ~init:aliases ~f:(compile_declaration) program in
@@ -156,9 +156,7 @@ and compile_declaration_list aliases (program : AST.program) : Aliases.t * AST.p
   aliases,dcl
 
 and compile_decl : Aliases.t -> AST.decl -> Aliases.t * AST.decl option =
-  fun s (Decl d) ->
-    let s,d = compile_declaration s d in
-    s,Option.map ~f:(fun x -> AST.Decl x) d
+  fun s d -> compile_declaration s d
 
 
 and compile_module aliases (m : AST.module_) : Aliases.t * AST.module_ =
@@ -166,7 +164,7 @@ and compile_module aliases (m : AST.module_) : Aliases.t * AST.module_ =
   let dcl = List.filter_opt dcl in
   aliases,dcl
 
-and compile_module_expr : Aliases.t -> AST.module_expr -> Aliases.t * ModuleVar.t list option * AST.module_expr option =
+and compile_module_expr : Aliases.t -> AST.module_expr -> Aliases.t * Module_var.t list option * AST.module_expr option =
   fun aliases mexpr ->
     match mexpr.wrap_content with
     | M_struct prg -> (

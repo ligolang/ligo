@@ -6,8 +6,8 @@ let%expect_test _ =
     File "../../test/contracts/negative/error_function_annotation_1.mligo", line 1, characters 26-27:
       1 | let main (a:int) : unit = a
 
-    Invalid type(s).
-    Expected: "unit", but got: "int". |}];
+    Invalid type(s)
+    Cannot unify int with unit. |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_function_annotation_2.mligo"; "--entry-point"; "f"];
   [%expect {|
@@ -15,8 +15,8 @@ let%expect_test _ =
       1 | let f : int = fun (x, y : int*int) -> x + y
       2 | let g (x, y : int * int) : int = f (x, y)
 
-    Invalid type(s).
-    Expected: "int", but got: "( int * int ) -> int". |}];
+    Invalid type(s)
+    Cannot unify ( int * int ) -> int with int. |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "--entry-point"; "f"];
   [%expect {|
@@ -25,8 +25,8 @@ let%expect_test _ =
       8 |   | Add si -> Add si
       9 |   | Sub si -> Sub si
 
-    Invalid type(s).
-    Expected: "( list (operation) * op )", but got: "op". |}];
+    Invalid type(s)
+    Cannot unify sum[Add -> int , Sub -> int] with ( list (operation) * sum[Add -> int , Sub -> int] ). |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "--entry-point"; "unvalid"];
   [%expect {|
@@ -44,8 +44,8 @@ let%expect_test _ =
       2 |
       3 | const foo : nat = 42 + "bar"
 
-    Invalid arguments.
-    Expected an argument of type (bls12_381_g1, bls12_381_g1) or (bls12_381_g2, bls12_381_g2) or (bls12_381_fr, bls12_381_fr) or (nat, nat) or (int, int) or (tez, tez) or (nat, int) or (int, nat) or (timestamp, int) or (int, timestamp), but got an argument of type int, string. |} ] ;
+    Invalid type(s)
+    Cannot unify bls12_381_g1 with int. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_type_record_access.mligo" ] ;
   [%expect {|
@@ -54,8 +54,8 @@ let%expect_test _ =
       6 |   let y : bool = x.i in
       7 |   42
 
-    Invalid type(s).
-    Expected: "bool", but got: "int". |} ] ;
+    Invalid type(s)
+    Cannot unify int with bool. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_type_record_update.mligo" ] ;
   [%expect {|
@@ -64,8 +64,8 @@ let%expect_test _ =
       7 |   let x = { x with i = x.j } in
       8 |   x
 
-    Invalid type(s).
-    Expected: "int", but got: "bool". |} ] ;
+    Invalid type(s)
+    Cannot unify bool with int. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.mligo" ] ;
   [%expect {|
@@ -74,8 +74,8 @@ let%expect_test _ =
       3 | let foo : string = 42 + 127
       4 |
 
-    Invalid type(s).
-    Expected: "string", but got: "int". |} ] ;
+    Invalid type(s)
+    Cannot unify int with string. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_2.mligo" ] ;
   [%expect {|
@@ -84,8 +84,8 @@ let%expect_test _ =
       3 | let foo : string list = Some (42 + 127)
       4 |
 
-    Invalid type(s).
-    Expected: "list (string)", but got: "toto". |} ] ;
+    Invalid type(s)
+    Cannot unify option (int) with list (string). |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|
@@ -94,8 +94,8 @@ let%expect_test _ =
       3 | let foo : (int * string * bool) = ((1, "foo") : toto)
       4 |
 
-    Invalid type(s).
-    Expected: "( int * string * bool )", but got: "toto". |} ] ;
+    Invalid type(s)
+    Cannot unify ( int * string ) with ( int * string * bool ). |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
@@ -104,8 +104,8 @@ let%expect_test _ =
       4 | let foo : tata = ({a = 1 ; b = "foo" ; c = true} : toto)
       5 |
 
-    Invalid type(s).
-    Expected: "tata", but got: "toto". |} ] ;
+    Invalid type(s)
+    Cannot unify record[a -> int , b -> string , c -> bool] with record[a -> int , c -> bool , d -> string]. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_5.mligo" ] ;
   [%expect {|
@@ -121,9 +121,8 @@ let%expect_test _ =
       1 | let foo : (int, string) map = (Map.literal [] : (int, bool) map)
       2 | let main (p:int) (storage : int) =
 
-    Invalid type(s).
-    Expected: "map (int , string)", but got: "map (int ,
-    bool)". |} ] ;
+    Invalid type(s)
+    Cannot unify bool with string. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_7.mligo" ] ;
   [%expect {|
@@ -132,28 +131,27 @@ let%expect_test _ =
       4 | let foo : tata = ({a = 1 ; b = "foo" ; c = true} : toto)
       5 |
 
-    Invalid type(s).
-    Expected: "toto", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
+    Mismatching record labels. Expected record of type record[a -> int , b -> string]. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 31-60:
+    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 38-60:
       9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
      10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
      11 |     return [list([]) as list<operation>, newStorage];
 
-    Invalid type(s).
-    Expected: "nat", but got: "( nat * nat )". |} ] ;
+    Invalid type(s)
+    Cannot unify ( nat * nat ) with nat. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/id.mligo", line 45, characters 4-18:
+    File "../../test/contracts/negative/id.mligo", line 45, characters 26-40:
      44 |   let updated_identities: (id, id_details) big_map =
      45 |     Big_map.update new_id new_id_details identities
      46 |   in
 
-    Invalid type(s).
-    Expected: "option (v)", but got: "id_details". |}]
+    Invalid type(s)
+    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#419). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -168,11 +166,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/invalid_field_record_update.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/invalid_field_record_update.mligo", line 4, characters 50-54:
+    File "../../test/contracts/negative/invalid_field_record_update.mligo", line 4, characters 29-36:
       3 | let main (p:int) (storage : abc) =
       4 |   (([] : operation list) , { storage with nofield=2048} )
 
-    Invalid record field "nofield" in record "storage". |}]
+    Invalid record field "nofield" in record. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/override_option.mligo" ] ;
@@ -193,7 +191,8 @@ let%expect_test _ =
 
     Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
 
-let%expect_test _ =
+(* Compiles due to inference ;) *)
+(* let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;
   [%expect {|
       File "../../test/contracts/negative/error_contract_type_inference.mligo", line 8, characters 12-69:
@@ -202,4 +201,4 @@ let%expect_test _ =
         9 |
   
       Invalid type(s).
-      Expected: "contract ('a)", but got: "contract (int)". |}]
+      Expected: "contract ('a)", but got: "contract (int)". |}] *)

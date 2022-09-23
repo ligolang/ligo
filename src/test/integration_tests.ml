@@ -392,7 +392,7 @@ let set_arithmetic ~raise f : unit =
     expect_eq ~raise program "iter_op"
       (e_set [e_int 2 ; e_int 4 ; e_int 7])
       (e_int 0) in
-  (* can't work without effect
+  (* capture of non constant variable
   let () =
     expect_eq ~raise program "iter_op_with_effect"
       (e_set [e_int 2 ; e_int 4 ; e_int 7])
@@ -795,6 +795,10 @@ let list ~raise () : unit =
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
       (e_list [e_int 3 ; e_int 5 ; e_int 8])
   in
+  let () = expect_eq_evaluate ~raise program "find_x" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_y4" (e_some (e_int 4)) in
+  let () = expect_eq_evaluate ~raise program "find_y6" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_z2" (e_some (e_int 2)) in
   ()
 
 let condition ~raise f : unit =
@@ -998,6 +1002,14 @@ let loop19 ~raise () : unit =
     expect_eq_n_pos_mid ~raise program "nested_loops" make_input make_expected in
   ()
 
+let nested_for_loop ~raise () : unit =
+  let program = type_file ~raise "./contracts/nested_for_loop.ligo" in
+  let () =
+    let make_input = e_int in
+    let make_expected = fun n -> e_int (n * n * n) in
+    expect_eq_n_pos_mid ~raise program "main" make_input make_expected in
+  ()
+
 let loop ~raise () : unit =
   let program = type_file ~raise "./contracts/loop.ligo" in
   let () =
@@ -1123,6 +1135,11 @@ let loop_jsligo ~raise () : unit =
     let input = e_int 100 in
     let expected = e_int 10000 in
     expect_eq ~raise program "counter_nest" input expected
+  in
+  let () =
+    let input = e_variable_ez "testmap" in
+    let expected = e_list [e_pair (e_int 2) (e_int 4) ; e_pair (e_int 1) (e_int 2) ; e_pair (e_int 0) (e_int 1)] in
+    expect_eq ~raise program "entries" input expected
   in ()
 
 let loop2_jsligo ~raise () : unit =
@@ -1532,6 +1549,10 @@ let mligo_list ~raise () : unit =
   let () = expect_eq_evaluate ~raise program "x" (e_list []) in
   let () = expect_eq_evaluate ~raise program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
   let () = expect_eq_evaluate ~raise program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
+  let () = expect_eq_evaluate ~raise program "find_x" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_y4" (e_some (e_int 4)) in
+  let () = expect_eq_evaluate ~raise program "find_y6" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_z2" (e_some (e_int 2)) in
   let () = expect_eq ~raise program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let () = expect_eq ~raise program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ()
@@ -1576,6 +1597,10 @@ let jsligo_list ~raise () : unit =
   let () = expect_eq_evaluate ~raise program "x" (e_list []) in
   let () = expect_eq_evaluate ~raise program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
   let () = expect_eq_evaluate ~raise program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
+  let () = expect_eq_evaluate ~raise program "find_x" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_y4" (e_some (e_int 4)) in
+  let () = expect_eq_evaluate ~raise program "find_y6" (e_none ()) in
+  let () = expect_eq_evaluate ~raise program "find_z2" (e_some (e_int 2)) in
   let () = expect_eq ~raise program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let () = expect_eq ~raise program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ()
@@ -2227,6 +2252,14 @@ let switch_cases_jsligo ~raise () : unit =
 
   ()
 
+let ternary_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/ternary.jsligo" in
+    let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
+    let _ = expect_eq ~raise program "foo" (e_int 101) (e_int 100) in
+    let _ = expect_eq ~raise program "foo" (e_int 1) (e_int 0) in
+    let _ = expect_eq ~raise program "foo" (e_int 0) (e_int 2) in
+    ()
+
 let if_if_return_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/if_if_return.jsligo" in
   let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
@@ -2246,6 +2279,66 @@ let while_and_for_loops_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "while_single_statement" (e_int 10) (e_int 10) in
   let _ = expect_eq ~raise program "while_multi_statements_1" (e_int 10) (e_int 55) in
   let _ = expect_eq ~raise program "while_multi_statements_2" (e_int 10) (e_int 55) in
+  ()
+
+let disc_union_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/disc_union.jsligo" in
+  let data = e_pair (e_constructor "Increment" (e_record_ez [("amount" , e_int 42)])) (e_int 22) in
+  let _ = expect_eq ~raise program "main" data (e_int 64) in
+  let data = e_pair (e_constructor "Decrement" (e_record_ez [("amount" , e_int 5)])) (e_int 22) in
+  let _ = expect_eq ~raise program "main" data (e_int 17) in
+  ()
+
+let func_object_destruct_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/jsligo_destructure_object.jsligo" in
+  let data = e_record_ez [("bar", e_record_ez ["color", e_constructor "red" (e_unit ()) ]  )] in
+  let _ = expect_eq ~raise program "x" data (e_int 1) in
+  let data = e_record_ez [("bar", e_record_ez ["color", e_constructor "white" (e_unit ()) ]  )] in
+  let _ = expect_eq ~raise program "x" data (e_int 2) in
+  let data = e_record_ez [("bar", e_record_ez ["color", e_constructor "blue" (e_unit ()) ]  )] in
+  let _ = expect_eq ~raise program "x" data (e_int 5) in
+  ()
+  
+let func_tuple_destruct_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/jsligo_destructure_tuples.jsligo" in
+  let data = e_tuple [
+    e_tuple [
+      e_string "first";
+      e_tuple [
+        e_int 1;
+        e_string "uno";
+      ]      
+    ];
+    e_tuple [
+      e_string "second";
+      e_tuple [
+        e_int 2;
+        e_string "dos"
+      ]
+    ]
+  ] in
+  let _ = expect_eq ~raise program "test" data (e_tuple [e_string "firstsecond"; e_int 3; e_string "unodos"]) in
+  ()
+
+let switch_return_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/switch_return.jsligo" in
+  let data = e_constructor "Increment" (e_record_ez [("amount" , e_int 42)]) in
+  let _ = expect_eq ~raise program "main" data (e_int 51) in
+
+  let data = e_constructor "Decrement" (e_record_ez [("amount" , e_int 5)]) in
+  let _ = expect_eq ~raise program "main" data (e_int 2) in
+
+  let data = e_constructor "Decrement" (e_record_ez [("amount" , e_int 3)]) in
+  let _ = expect_eq ~raise program "main" data (e_int 5) in
+
+  let data = e_constructor "Reset" (e_unit()) in
+  let _ = expect_eq ~raise program "main" data (e_int 3) in
+
+  let _ = expect_eq ~raise program "main2" (e_int 0) (e_int 11) in
+  let _ = expect_eq ~raise program "main2" (e_int 1) (e_int 5) in
+  let _ = expect_eq ~raise program "main2" (e_int 2) (e_int 3) in
+  let _ = expect_eq ~raise program "main2" (e_int 3) (e_int (-1)) in
+
   ()
 
 let main = test_suite "Integration (End to End)"
@@ -2372,6 +2465,7 @@ let main = test_suite "Integration (End to End)"
     test_w "loop17" loop17 ;
     test_w "loop18" loop18 ;
     test_w "loop19" loop19 ;
+    test_w "nested_for_loop" nested_for_loop;
     test_w "loop" loop ;
     test_w "loop (mligo)" loop_mligo ;
     test_w "loop (religo)" loop_religo ;
@@ -2436,5 +2530,10 @@ let main = test_suite "Integration (End to End)"
     test_w "if_if_return (jsligo)" if_if_return_jsligo;
     test_w "switch case (jsligo)" switch_cases_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo;
-    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
+    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo;
+    test_w "discriminated_union (jsligo)" disc_union_jsligo;
+    test_w "ternary (jsligo)" ternary_jsligo;
+    test_w "destruct func object param (jsligo)" func_object_destruct_jsligo;
+    test_w "destruct func tuple param (jsligo)" func_tuple_destruct_jsligo;
+    test_w "switch_return (jsligo)" switch_return_jsligo;
   ]

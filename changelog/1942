@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1942'
+title: 'Stdlib: move `C_..._LITERAL` in'
+type: internal

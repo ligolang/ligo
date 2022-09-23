@@ -81,11 +81,10 @@ let rec decompile_expression : O.expression -> I.expression =
     let recs = Recursive.map self self_type recs in
     return @@ I.E_recursive recs
   | O.E_let_in {let_binder;attributes;rhs;let_result} ->
-    let {var;ascr;attributes=var_attributes} : _ Binder.t = let_binder in
-    let ascr = Option.map ~f:decompile_type_expression ascr in
+    let let_binder = Binder.map (Option.map ~f:decompile_type_expression) let_binder in
     let rhs = decompile_expression rhs in
     let let_result = decompile_expression let_result in
-    return @@ I.E_let_in {let_binder={var;ascr;attributes=var_attributes};attributes;rhs;let_result}
+    return @@ I.E_let_in {let_binder;attributes;rhs;let_result}
   | O.E_type_in ti ->
     let ti = Type_in.map self self_type ti in
     return @@ I.E_type_in ti
@@ -150,16 +149,16 @@ let rec decompile_expression : O.expression -> I.expression =
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in
   match Location.unwrap d with
-  | Declaration_type {type_binder;type_expr;type_attr} ->
-    let type_expr = decompile_type_expression type_expr in
-    return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {binder;expr;attr} ->
+  | D_value {binder;expr;attr} ->
     let binder = Binder.map decompile_type_expression_option binder in
     let expr   = decompile_expression expr in
-    return @@ Declaration_constant {binder;expr;attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+    return @@ D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
+    let type_expr = decompile_type_expression type_expr in
+    return @@ D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
     let module_ = decompile_module_expr module_ in
-    return @@ Declaration_module {module_binder;module_;module_attr}
+    return @@ D_module {module_binder;module_;module_attr}
 
 and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   let return wrap_content : I.module_expr = {me with wrap_content} in
@@ -172,7 +171,7 @@ and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
   | M_module_path mp ->
       return @@ M_module_path mp
 
-and decompile_decl : O.decl -> I.decl = fun (Decl d) -> Decl (decompile_declaration d)
+and decompile_decl : O.decl -> I.decl = fun d -> decompile_declaration d
 and decompile_module : O.module_ -> I.module_ = fun m ->
   List.map ~f:decompile_decl m
 

@@ -1,119 +1,250 @@
-module Definitions = struct
-  open Ligo_prim
-  module Location = Simple_utils.Location
-  module List     = Simple_utils.List
-  module Def_map = Simple_utils.Map.Make( struct type t = string let compare = String.compare end)
+open Ligo_prim
 
-  type type_case =
-    | Core of Ast_core.type_expression
-    | Resolved of Ast_typed.type_expression
-    | Unresolved
+let generated_flag = "#?generated"
 
-  type vdef = {
-    name  : string ;
-    range : Location.t ;
-    body_range : Location.t ;
-    t : type_case ;
-    references : Location.t list
+let get_binder_name : Value_var.t -> string =
+ fun v ->
+  if Value_var.is_generated v then generated_flag else Value_var.to_name_exn v
+
+
+let get_type_binder_name : Type_var.t -> string =
+ fun v ->
+  if Type_var.is_generated v then generated_flag else Type_var.to_name_exn v
+
+
+let get_mod_binder_name : Module_var.t -> string =
+ fun v ->
+  if Module_var.is_generated v then generated_flag else Module_var.to_name_exn v
+
+
+let counter = ref 0
+let reset_counter () = counter := 0
+
+let make_def_id name =
+  let c, () = !counter, incr counter in
+  name ^ "#" ^ string_of_int c
+
+
+module Location = Simple_utils.Location
+module List = Simple_utils.List
+module LSet = Caml.Set.Make (Location)
+
+type type_case =
+  | Core of Ast_core.type_expression
+  | Resolved of Ast_typed.type_expression
+  | Unresolved
+
+type def_type =
+  | Local
+  | Global
+
+type vdef =
+  { name : string
+  ; uid : string
+  ; range : Location.t
+  ; body_range : Location.t
+  ; t : type_case
+  ; references : LSet.t
+  ; def_type : def_type
   }
 
-  type tdef = {
-    name  : string ;
-    range : Location.t ;
-    body_range : Location.t ;
-    content : Ast_core.type_expression ;
+type tdef =
+  { name : string
+  ; uid : string
+  ; range : Location.t
+  ; body_range : Location.t
+  ; content : Ast_core.type_expression
+  ; def_type : def_type
   }
 
-  type mdef = {
-    name : string ;
-    range : Location.t ;
-    body_range : Location.t ;
-    (* this field is used internally to build the definition map, but should not be present in the final representation *)
-    content : def_map ;
+type mod_case =
+  | Def of def list
+  | Alias of string list
+
+and mdef =
+  { name : string
+  ; uid : string
+  ; range : Location.t
+  ; body_range : Location.t
+  ; references : LSet.t
+  ; mod_case : mod_case
+  ; def_type : def_type
   }
 
-  and def = Variable of vdef | Type of tdef | Module of mdef
-  and def_map = def Def_map.t
+and def =
+  | Variable of vdef
+  | Type of tdef
+  | Module of mdef
 
-  let def_equal a b =
-    match a , b with
-    | Variable x , Variable y -> String.equal x.name y.name
-    | Type x , Type y -> String.equal x.name y.name
-    | Module x , Module y -> String.equal x.name y.name
-    | (Variable _ | Type _ | Module _) , (Variable _ | Type _ | Module _) -> false
+let def_compare a b =
+  match a, b with
+  | Variable x, Variable y -> String.compare x.name y.name
+  | Type x, Type y -> String.compare x.name y.name
+  | Module x, Module y -> String.compare x.name y.name
+  | Variable _, (Type _ | Module _) -> -1
+  | (Type _ | Module _), Variable _ -> 1
+  | Type _, Module _ -> 1
+  | Module _, Type _ -> -1
 
-  let merge_refs : string -> def -> def -> def option = fun _ a b ->
-    match a,b with
-    | Variable a , Variable b ->
-      let references = List.dedup_and_sort ~compare:Location.compare (a.references @ b.references) in
-      Some (Variable { a with references })
-    | (Variable _ |Type _ | Module _ ) , (Variable _ |Type _ | Module _ ) -> Some a
 
-  let merge_defs a b =
-    Def_map.union merge_refs a b
+let def_equal a b = 0 = def_compare a b
 
-  let get_def_name = function
-    | Variable    d -> d.name
-    | Type        d -> d.name
-    | Module      d -> d.name
+let get_def_name = function
+  | Variable d -> d.name
+  | Type d -> d.name
+  | Module d -> d.name
 
-  let get_range = function
-    | Type        t -> t.range
-    | Variable    v -> v.range
-    | Module      m -> m.range
 
-  let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
-    fun name t range body_range ->
-      Variable { name ; range ; body_range ; t ; references = [] }
+let get_def_uid = function
+  | Variable d -> d.uid
+  | Type d -> d.uid
+  | Module d -> d.uid
 
-  let make_t_def : string -> Location.t -> Ast_core.type_expression -> def =
-    fun name loc te ->
-      Type { name ; range = loc ; body_range = te.location ; content = te }
 
-  let make_m_def : string -> Location.t -> _ Def_map.t -> def =
-    fun name loc m ->
-      Module { name ; range = loc ; body_range = Location.dummy ; content = m }
+let get_range = function
+  | Type t -> t.range
+  | Variable v -> v.range
+  | Module m -> m.range
 
-  let add_reference : ValueVar.t -> def_map -> def_map = fun x env ->
-    let aux : string * def -> bool = fun (_,d) ->
-      match d with
-      | Variable v -> ValueVar.is_name x v.name
-      | (Type _ | Module _ ) -> false
-    in
-    match List.find ~f:aux (Def_map.bindings env) with
-    | Some (k,_) ->
-      let aux : def option -> def option = fun d_opt ->
-        match d_opt with
-        | Some (Variable v) -> Some (Variable { v with references = (ValueVar.get_location x :: v.references) })
-        | Some x -> Some x
-        | None -> None
-      in
-      Def_map.update k aux env
-    | None -> env
 
-end
+let get_body_range = function
+  | Type t -> t.body_range
+  | Variable v -> v.body_range
+  | Module m -> m.body_range
 
-include Definitions
 
-type scope = { range : Location.t ; env : def_map }
+let get_def_type = function
+  | Type t -> t.def_type
+  | Variable v -> v.def_type
+  | Module m -> m.def_type
+
+
+let make_v_def
+    : string -> type_case -> def_type -> Location.t -> Location.t -> def
+  =
+ fun name t def_type range body_range ->
+  let uid = make_def_id name in
+  Variable
+    { name; range; body_range; t; uid; references = LSet.empty; def_type }
+
+
+let make_t_def
+    : string -> def_type -> Location.t -> Ast_core.type_expression -> def
+  =
+ fun name def_type loc te ->
+  let uid = make_def_id name in
+  Type
+    { name; range = loc; body_range = te.location; uid; content = te; def_type }
+
+
+let make_m_def
+    :  range:Location.t -> body_range:Location.t -> string -> def_type
+    -> def list -> def
+  =
+ fun ~range ~body_range name def_type members ->
+  let uid = make_def_id name in
+  let mod_case = Def members in
+  Module
+    { name
+    ; range
+    ; body_range
+    ; mod_case
+    ; uid
+    ; references = LSet.empty
+    ; def_type
+    }
+
+
+let make_m_alias_def
+    :  range:Location.t -> body_range:Location.t -> string -> def_type
+    -> string list -> def
+  =
+ fun ~range ~body_range name def_type alias ->
+  let uid = make_def_id name in
+  let mod_case = Alias alias in
+  Module
+    { name
+    ; range
+    ; body_range
+    ; mod_case
+    ; uid
+    ; references = LSet.empty
+    ; def_type
+    }
+
+
+let rec filter_local_defs : def list -> def list =
+ fun defs ->
+  match defs with
+  | [] -> []
+  | def :: defs when Caml.(get_def_type def = Local) -> filter_local_defs defs
+  | def :: defs -> def :: filter_local_defs defs
+
+
+type scope = Location.t * def list
 type scopes = scope list
 
-let add_scope (range,env) (scopes:scopes) =
-  let def_map_equal : def_map -> def_map -> bool = fun a b ->
-    Def_map.equal def_equal a b
-  in
-  let replaced,scopes = List.fold_map scopes ~init:false
-    ~f:(fun replaced scope ->
-          if replaced then replaced,scope else (
-            if def_map_equal env scope.env then
-              true , {scope with range = Location.cover scope.range range}
-            else
-              replaced,scope
-          )
-    )
-  in
-  if replaced then scopes
-  else { range ; env } :: scopes
+let add_defs_to_scope : def list -> scope -> scope =
+ fun defs scope ->
+  let loc, scope_defs = scope in
+  loc, scope_defs @ defs
 
-module Bindings_map = Simple_utils.Map.Make (Ligo_prim.ValueVar)
+
+let add_defs_to_scopes : def list -> scopes -> scopes =
+ fun defs scopes -> List.map scopes ~f:(add_defs_to_scope defs)
+
+
+let merge_same_scopes : scopes -> scopes =
+ fun scopes ->
+  let rec aux scopes acc =
+    match scopes with
+    | [] -> acc
+    | (loc, scope) :: scopes ->
+      let same, different =
+        List.partition_tf scopes ~f:(fun (_, s) -> List.equal def_equal s scope)
+      in
+      let merged_scope_loc =
+        List.fold_left same ~init:loc ~f:(fun loc (loc', _) ->
+            Location.cover loc loc')
+      in
+      let merged_scope = merged_scope_loc, scope in
+      aux different (merged_scope :: acc)
+  in
+  aux scopes []
+
+
+let rec flatten_defs defs =
+  match defs with
+  | [] -> []
+  | (Module { mod_case = Def d; _ } as def) :: defs ->
+    [ def ] @ flatten_defs (shadow_defs d) @ flatten_defs defs
+  | def :: defs -> def :: flatten_defs defs
+
+
+and shadow_defs : def list -> def list =
+ fun defs ->
+  match defs with
+  | [] -> []
+  | def :: defs ->
+    let shadow_def def' = not @@ def_equal def def' in
+    def :: shadow_defs (List.filter defs ~f:shadow_def)
+
+
+let fix_shadowing_in_scope : scope -> scope =
+ fun (loc, defs) ->
+  let defs = shadow_defs defs in
+  let defs = flatten_defs defs in
+  loc, defs
+
+
+let fix_shadowing_in_scopes : scopes -> scopes =
+ fun scopes -> List.map scopes ~f:fix_shadowing_in_scope
+
+
+module Bindings_map = Simple_utils.Map.Make (struct
+  type t = Ast_typed.expression_variable
+
+  let compare = Value_var.compare
+end)
+
 type bindings_map = Ast_typed.type_expression Bindings_map.t

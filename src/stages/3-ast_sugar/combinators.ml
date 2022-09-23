@@ -70,11 +70,11 @@ let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   t_sum_ez ?loc lst
 
-let t_bool ?loc () : type_expression =
-  let unit : ty_expr Rows.row_element =
-    { associated_type = t_unit (); attributes = [] ; decl_pos = 0 } in
+let t_bool ?loc () : type_expression = 
+  let unit decl_pos : ty_expr Rows.row_element = 
+    { associated_type = t_unit (); attributes = [] ; decl_pos } in
   t_sum_ez ?loc
-  [("True", unit);("False", unit)]
+  [("True", unit 0);("False", unit 1)]
 
 let t_arrow ?loc type1 type2  : type_expression = t_arrow ?loc {type1; type2} ()
 
@@ -97,18 +97,18 @@ let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; argum
 let e_variable ?loc v = make_e ?loc @@ E_variable v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
-let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
+let e_lambda_ez ?loc var ?ascr ?mut output_type result : expression = e_lambda ?loc (Ligo_prim.Binder.make ?mut var ascr) output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder ; rhs ; let_result; attributes }
-let e_let_in_ez ?loc var ?ascr ?const_or_var attributes rhs let_result = e_let_in ?loc {var;ascr;attributes={const_or_var}} attributes rhs let_result
+let e_let_in_ez ?loc var ?ascr ?mut attributes rhs let_result = e_let_in ?loc (Ligo_prim.Binder.make ?mut var ascr) attributes rhs let_result
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = s; element = a}
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
 let e_record ?loc map : expression = make_e ?loc @@ E_record map
-let e_accessor ?loc record path = make_e ?loc @@ E_accessor {record; path}
-let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
+let e_accessor ?loc struct_ path = make_e ?loc @@ E_accessor {struct_; path}
+let e_update ?loc struct_ path update = make_e ?loc @@ E_update {struct_; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
@@ -140,7 +140,7 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let get_e_accessor = fun t ->
   match t with
-  | E_accessor {record; path} -> Some (record, path)
+  | E_accessor {struct_; path} -> Some (struct_, path)
   | _ -> None
 
 let assert_e_accessor = fun t ->

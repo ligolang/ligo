@@ -1,7 +1,11 @@
 type t =
-    Type
+  | Type
   | Singleton
-[@@deriving yojson,equal,compare,hash]
+  | Arrow of t * t
+[@@deriving yojson, equal, compare, hash]
 
-let pp ppf (_ : t) : unit =
-  Format.fprintf ppf "*"
+let rec pp ppf t =
+  match t with
+  | Type -> Format.fprintf ppf "*"
+  | Singleton -> Format.fprintf ppf "+"
+  | Arrow (t1, t2) -> Format.fprintf ppf "%a -> %a" pp t1 pp t2

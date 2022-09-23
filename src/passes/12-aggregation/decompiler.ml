@@ -4,7 +4,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
   fun exp ->
   let module I = Ast_aggregated in
   let module O = Ast_typed in
-   let decompile_value_attr : I.Attr.value -> O.Attr.value =
+   let decompile_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
       fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
    in
 
@@ -71,13 +71,13 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
     | E_record map ->
        let map = Record.map (decompile ~raise) map in
        return (O.E_record map)
-    | E_accessor { record ; path } ->
-       let record = decompile ~raise record in
-       return (O.E_accessor { record ; path })
-    | E_update { record ; path ; update } ->
-       let record = decompile ~raise record in
+    | E_accessor { struct_ ; path } ->
+       let struct_ = decompile ~raise struct_ in
+       return (O.E_accessor { struct_ ; path })
+    | E_update { struct_ ; path ; update } ->
+       let struct_ = decompile ~raise struct_ in
        let update = decompile ~raise update in
-       return (O.E_update { record ; path ; update })
+       return (O.E_update { struct_ ; path ; update })
    | I.E_assign {binder;expression} ->
       let binder = Binder.map (decompile_type ~raise) binder in
       let expression = decompile ~raise expression in

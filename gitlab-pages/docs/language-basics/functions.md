@@ -61,7 +61,7 @@ integers:
 
 ```pascaligo group=a
 function add (const a : int; const b : int) : int is {
-  const sum : int = a + b
+  const sum = a + b
 } with sum
 ```
 
@@ -283,7 +283,7 @@ after the value name, with its type, then followed by the return type.
 Here is how you define a basic function that sums two integers:
 
 ```jsligo group=b
-let add = ([a, b]: [int, int]): int => a + b;
+let add = (a: int, b: int): int => a + b;
 ```
 
 You can call the function `add` defined above using the LIGO compiler
@@ -302,7 +302,7 @@ If the body contains more than a single expression, you use block
 between braces:
 
 ```jsligo group=b
-let myFun = ([x, y]: [int, int]): int => {
+let myFun = (x: int, y: int): int => {
   let doubleX = x + x;
   let doubleY = y + y;
   return doubleX + doubleY;
@@ -319,13 +319,13 @@ functions. In case we do not use an argument, we can use the wildcard
 identifier:
 
 ```jsligo
-let k = ([x, _] : [int, int]) : int => x;
+let k = (x: int, _: int) : int => x;
 ```
 
 or use an identifier starting with wildcard:
 
 ```jsligo
-let k_other = ([x, _y] : [int, int]) : int => x;
+let k_other = (x: int, _y: int) : int => x;
 ```
 
 </Syntax>
@@ -344,8 +344,8 @@ Here is how to define an anonymous function:
 
 ```pascaligo group=c
 function increment (const b : int) : int is
-   (function (const a : int) : int is a + 1) (b)
-const a : int = increment (1); // a = 2
+   (function (const a) is a + 1) (b)
+const a = increment (1); // a = 2
 ```
 
 You can check the value of `a` defined above using the LIGO compiler
@@ -360,7 +360,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.ligo
 
 ```cameligo group=c
 let increment (b : int) : int = (fun (a : int) -> a + 1) b
-let a : int = increment 1 // a = 2
+let a = increment 1 // a = 2
 ```
 
 You can check the value of `a` defined above using the LIGO compiler
@@ -374,8 +374,8 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mlig
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
-let increment = (b : int) : int => ((a : int) : int => a + 1) (b);
-let a : int = increment (1); // a == 2
+let increment = (b : int) : int => (a => a + 1) (b);
+let a = increment (1); // a == 2
 ```
 
 You can check the value of `a` defined above using the LIGO compiler
@@ -389,8 +389,8 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.reli
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let increment = (b: int): int => ((a: int): int => a + 1) (b);
-let a: int = increment(1); // a == 2
+let increment = b => (a => a + 1) (b);
+let a = increment(1); // a == 2
 ```
 
 You can check the value of `a` defined above using the LIGO compiler
@@ -412,8 +412,8 @@ function to all its elements.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=c
-function incr_map (const l : list (int)) : list (int) is
-  List.map (function (const i : int) : int is i + 1, l)
+function incr_map (const l : list (int)) is
+  List.map (function (const i) is i + 1, l)
 ```
 
 You can call the function `incr_map` defined above using the LIGO
@@ -447,7 +447,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.mligo --entry-point inc
 
 ```reasonligo group=c
 let incr_map = (l : list (int)) : list (int) =>
-  List.map ((i : int) => i + 1, l);
+  List.map ((i) => i + 1, l);
 ```
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
@@ -463,7 +463,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo --entry-point in
 
 ```jsligo group=c
 let incr_map = (l: list<int>): list<int> =>
-  List.map((i: int) => i + 1, l);
+  List.map(i => i + 1, l);
 ```
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
@@ -485,7 +485,7 @@ have access to variables in the same scope.
 
 ```pascaligo
 function closure_example (const i : int) : int is {
-  function closure (const j : int) : int is i + j
+  function closure (const j) is i + j
 } with closure (i)
 ```
 
@@ -494,7 +494,7 @@ function closure_example (const i : int) : int is {
 
 ```cameligo
 let closure_example (i : int) : int =
-  let closure : int -> int = fun (j : int) -> i + j in
+  let closure = fun (j : int) -> i + j in
   closure i
 ```
 
@@ -503,7 +503,7 @@ let closure_example (i : int) : int =
 
 ```reasonligo
 let closure_example = (i : int) : int => {
-  let closure = (j: int): int => i + j;
+  let closure = (j) => i + j;
   closure(i);
 };
 ```
@@ -513,7 +513,7 @@ let closure_example = (i : int) : int => {
 
 ```jsligo
 let closure_example = (i: int): int => {
-  let closure = (j: int): int => i + j;
+  let closure = j => i + j;
   return closure(i);
 };
 ```
@@ -583,24 +583,23 @@ let rec fibo = ((n, n_1, n_0) : (int, int, int)): int =>
 </Syntax>
 <Syntax syntax="jsligo">
 
-At the moment, recursive function are limited to one, e.g., a tuple,
-parameter and recursion is limited to __tail recursion__, that is, the
+At the moment, recursion is limited to __tail recursion__, that is, the
 recursive call should be the last expression of the function.
 
 ```jsligo group=d
-let sum = ([n, acc] : [int, int]): int => {
-  if (n < 1) { 
-    return acc; 
-  } else { 
-    return sum ([n-1, acc + n]); 
+let sum = (n: int, acc: int): int => {
+  if (n < 1) {
+    return acc;
+  } else {
+    return sum (n-1, acc + n);
   };
 };
 
-let fibo = ([n, n_1, n_0] : [int, int, int]): int => {
+let fibo = (n: int, n_1: int, n_0: int): int => {
   if (n < 2) {
-    return  n_1; 
-  } else { 
-    return fibo ([n-1, n_1 + n_0, n_1]); 
+    return  n_1;
+  } else {
+    return fibo (n-1, n_1 + n_0, n_1);
   };
 };
 ```

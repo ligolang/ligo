@@ -88,7 +88,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "view_restrictions.mligo" ; "--views" ; "bad_view2" ; "--protocol" ; "jakarta"  ] ;
   [%expect {| 
-    File "../../test/contracts/view_restrictions.mligo", line 17, characters 26-47:
+    File "../../test/contracts/view_restrictions.mligo", line 17, character 2 to line 18, character 3:
      16 | let bad_view2 ((),_: unit * int) : unit contract =
      17 |   let x : unit contract = Tezos.self "%default" in
      18 |   x
@@ -143,4 +143,70 @@ let%expect_test _ =
 
     This declaration holds an annotation and is later shadowed. |}]
 
-    
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "views_using_view.jsligo" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { DROP ; PUSH int 0 ; NIL operation ; PAIR } ;
+      view "basic" address int { CDR ; PUSH int 0 ; ADD } ;
+      view "not_funny" unit int { PUSH int 0 ; SWAP ; CDR ; DUP 2 ; ADD ; ADD } ;
+      view "get_storage" unit int { CDR ; PUSH int 0 ; ADD } ;
+      view "get_address" unit address { DROP ; SENDER } ;
+      view "super_not_funny"
+           unit
+           int
+           { PUSH int 0 ;
+             SWAP ;
+             CDR ;
+             DUP ;
+             DUP 3 ;
+             ADD ;
+             SWAP ;
+             DUP 3 ;
+             ADD ;
+             DIG 2 ;
+             ADD ;
+             ADD } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; contract "views_using_view.test.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_basic exited with value true.
+    - test_not_funny exited with value true.
+    - test_get_storage exited with value true.
+    - test_get_address exited with value true.
+    - test_super_not_funny exited with value true. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "call_view_tuple.mligo" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage (pair (pair (int %a) (nat %b)) (mutez %c) (address %d)) ;
+      code { CDR ;
+             PUSH int 1 ;
+             SOME ;
+             IF_NONE
+               {}
+               { DROP ;
+                 DUP ;
+                 CDR ;
+                 CDR ;
+                 DUP 2 ;
+                 CAR ;
+                 CAR ;
+                 SENDER ;
+                 PAIR ;
+                 VIEW "foo" unit ;
+                 DROP ;
+                 DUP ;
+                 CDR ;
+                 CDR ;
+                 DUP 2 ;
+                 CAR ;
+                 CDR ;
+                 VIEW "bar" unit ;
+                 IF_NONE {} { DROP } } ;
+             NIL operation ;
+             PAIR } } |}]

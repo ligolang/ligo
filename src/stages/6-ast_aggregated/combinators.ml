@@ -165,7 +165,7 @@ let tuple_of_record (m: _ Record.t) =
   List.map ~f:(fun ({associated_type;_}: row_element) -> associated_type) l
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
-  | T_record record -> Some (tuple_of_record record.fields)
+  | T_record struct_ -> Some (tuple_of_record struct_.fields)
   | _ -> None
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
@@ -261,7 +261,7 @@ let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
 let e_a_constructor constructor element t = e_constructor { constructor = (Label constructor) ; element } t
-let e_a_record_accessor record path t = e_accessor {record ; path} t
+let e_a_record_accessor struct_ path t = e_accessor {struct_ ; path} t
 let e_a_record ?(layout=default_layout) r = e_record r (t_record ~layout
   (Record.LMap.map
     (fun t ->
@@ -329,8 +329,8 @@ let get_a_bool (t:expression) =
 let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option =
   match get_t_record_opt t with
   | None -> None
-  | Some record ->
-    match Record.LMap.find_opt label record.fields with
+  | Some struct_ ->
+    match Record.LMap.find_opt label struct_.fields with
     | None -> None
     | Some row_element -> Some row_element.associated_type
 
@@ -340,3 +340,45 @@ let get_type_abstractions (e : expression) =
   | Some { type_binder ; result } ->
      aux (type_binder :: tv) result in
   aux [] e
+
+(* This function re-builds a term prefixed with E_type_abstraction:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression /\ t1 . ... . /\ tn . e *)
+let build_type_abstractions init =
+  let t_for_all ty_binder kind type_ = t_for_all { ty_binder ; kind ; type_ } () in
+  let f e abs_var = { e with expression_content = E_type_abstraction { type_binder = abs_var ; result = e } ;
+                             type_expression = t_for_all abs_var Type e.type_expression } in
+  List.fold_left ~init ~f
+
+(* This function re-builds a term prefixed with E_type_inst:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression e@{t1}@...@{tn} *)
+let build_type_insts init =
+  let f av forall =
+      let Abstraction.{ ty_binder ; type_ = t ; kind = _ } = Option.value_exn @@ get_t_for_all forall.type_expression in
+      let type_ = t_variable av () in
+      (make_e (E_type_inst {forall ; type_ }) (Helpers.subst_type ty_binder type_ t)) in
+  List.fold_right ~init ~f
+
+(* This function expands a function with a type T_for_all but not with
+   the same amount of E_type_abstraction *)
+let forall_expand (e : expression) =
+  let tvs, _ = Helpers.destruct_for_alls e.type_expression in
+  let evs, e_without_type_abs = get_type_abstractions e in
+  if List.equal Ligo_prim.Type_var.equal tvs evs then
+    e
+  else
+    let e = build_type_insts e_without_type_abs tvs in
+    build_type_abstractions e tvs
+
+let context_decl ?(loc = Location.generated) (binder : type_expression Binder.t) (expr : expression) (attr : ValueAttr.t) : context =
+  [Location.wrap ~loc @@ D_value { binder ; expr ; attr }]
+
+let context_id : context = []
+
+let context_append (l : context) (r : context) : context = l @ r
+
+let context_apply (p : context) (e : expression) : expression =
+  let f d e = match Location.unwrap d with
+    | D_value { binder ; expr ; attr } -> e_a_let_in binder expr e attr in
+  List.fold_right ~f ~init:e p

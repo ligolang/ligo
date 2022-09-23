@@ -31,6 +31,19 @@ initialize-git:
       - git config --global user.name 'InfraBot'
       - git config --global user.email 'infra@marigold.dev'
 
+trigger_new_minor_version_generation:
+  stage: pretooling
+  dependencies:
+    - initialize-git
+  script:
+    - LAST_RELEASE_VERSION=$(./.ci/scripts/release_metadata/read_release_metadata.sh LAST_RELEASE_VERSION)
+    - NEW_VERSION=$(./.ci/scripts/versionning/increment_minor_version.sh $LAST_RELEASE_VERSION)
+    - git checkout -b release/$NEW_VERSION
+    - git push -u origin release/$NEW_VERSION
+  rules:
+    - if: ($TRIGGER_NEW_MINOR_VERSION_GENERATION != null )
+      when: always
+
 build_release_env_vars:
   stage: pretooling
   script:
@@ -163,6 +176,7 @@ update_release_metadata:
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
     - git fetch
     - git checkout release/$CI_COMMIT_TAG  
+    - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_RELEASE_VERSION $CI_COMMIT_TAG
     - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_TAG_JOB_ID $RELEASE_CI_JOB_ID 
     - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_STABLE_VERSION $STABLE_VERSION 
     - git commit -am "[Bot] Update release metadata $CI_COMMIT_TAG"
@@ -196,8 +210,11 @@ update-versionned-doc:
     - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
+    - GITLAB_REF_INFO=$(./.ci/scripts/homebrew/retrieve_gitlab_reference_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} $RELEASE_VERSION)
+    - TAG_HEAD_COMMIT_SHA=$(jq \".id\" <<< ${GITLAB_REF_INFO})
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
-    - git add gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
+    - ./.ci/scripts/homebrew/create_new_homebrew_version.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} $LAST_TAG_JOB_ID $RELEASE_VERSION
+    - git add  HomebrewFormula/ nix/get_ligo.nix gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
   needs:

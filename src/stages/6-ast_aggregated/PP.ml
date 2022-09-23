@@ -47,7 +47,7 @@ open Format
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_variable        tv -> TypeVar.pp ppf tv
+  | T_variable        tv -> Type_var.pp ppf tv
   | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (Record.LMap.to_kv_list_rev m.fields)
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
   | T_arrow            a -> Arrow.pp      type_expression ppf a
@@ -64,7 +64,7 @@ and type_injection ppf {language;injection;parameters} =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
   fprintf ppf "%s%a" (Literal_types.to_string injection) (list_sep_d_par type_expression) parameters
-and bool ppf : unit = fprintf ppf "%a" TypeVar.pp Literal_types.v_bool
+and bool ppf : unit = fprintf ppf "%a" Type_var.pp Literal_types.v_bool
 and option ppf (te : type_expression) : unit =
   let t = Combinators.get_t_option te in
   (match t with
@@ -80,7 +80,7 @@ and type_expression ppf (te : type_expression) : unit =
 let rec type_content_orig : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_variable        tv -> TypeVar.pp ppf tv
+  | T_variable        tv -> Type_var.pp ppf tv
   | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (Record.LMap.to_kv_list_rev m.fields)
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
   | T_arrow            a -> Arrow.pp      type_expression ppf a
@@ -100,6 +100,9 @@ and type_expression_orig ppf (te : type_expression) : unit =
   | Some v ->
      Ast_core.(PP.type_expression ppf (t_variable v ()))
 
+let type_expression_annot ppf (te : type_expression) : unit =
+  fprintf ppf " : %a" type_expression te
+
 let rec expression ppf (e : expression) =
   fprintf ppf "%a"
     expression_content e.expression_content
@@ -107,28 +110,28 @@ let rec expression ppf (e : expression) =
 and expression_content ppf (ec: expression_content) =
   match ec with
   | E_literal     l -> Literal_value.pp   ppf l
-  | E_variable    n -> ValueVar.pp        ppf n
+  | E_variable    n -> Value_var.pp        ppf n
   | E_application a -> Application.pp expression ppf a
   | E_constructor c -> Constructor.pp expression ppf c
   | E_constant    c -> Constant.pp expression ppf c
   | E_record      m -> Record.pp expression ppf m
   | E_accessor    a -> Types.Accessor.pp    expression ppf a
   | E_update      u -> Types.Update.pp      expression ppf u
-  | E_lambda      l -> Lambda.pp      expression type_expression ppf l
+  | E_lambda      l -> Lambda.pp      expression type_expression_annot ppf l
   | E_type_abstraction e -> Type_abs.pp expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_recursive  r -> Recursive.pp expression type_expression ppf r
+  | E_recursive  r -> Recursive.pp expression type_expression_annot ppf r
   | E_let_in {let_binder; rhs; let_result; attr = { hidden = false ; _ } as attr } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression) let_binder
+      (Binder.pp type_expression_annot) let_binder
       expression rhs
-      Types.Attr.pp_value attr
+      Types.ValueAttr.pp attr
       expression let_result
   | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
       fprintf ppf "@[<h>%a@]" expression let_result
   | E_raw_code   r -> Raw_code.pp   expression ppf r
-  | E_assign     a -> Assign.pp     expression type_expression ppf a
+  | E_assign     a -> Assign.pp     expression type_expression_annot ppf a
   | E_type_inst ti -> type_inst ppf ti
 
 and type_inst ppf {forall; type_} =
@@ -142,17 +145,16 @@ and option_inline ppf inline =
 
 and matching_variant_case : (formatter -> expression -> unit) -> formatter -> expression matching_content_case -> unit =
   fun f ppf {constructor=c; pattern; body} ->
-  fprintf ppf "@[<v 2>| %a %a ->@ %a@]" Label.pp c ValueVar.pp pattern f body
+  fprintf ppf "@[<v 2>| %a %a ->@ %a@]" Label.pp c Value_var.pp pattern f body
 
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_variant {cases ; tv=_} ->
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      let fields = Rows.LMap.map (fun b -> b.Binder.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
-        (tuple_or_record_sep_expr ValueVar.pp) fields
+        (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
         f body
 
-let program ppf : expression program -> unit = fun prg ->
-  fprintf ppf "%a" expression (prg @@ Combinators.e_a_unit ())
+let program ppf : program -> unit = fun (prg, exp) ->
+  fprintf ppf "%a" expression Combinators.(context_apply prg exp)

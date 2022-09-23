@@ -259,7 +259,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;
   [%expect{|
-    const fooint -> int -> int =
+    const foo : int -> int -> int =
       lambda (x : int) : int -> int return let bar : int -> int =
                                              lambda (y[@var] : int) : int return
                                              ADD(x , y) in
@@ -268,7 +268,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_same_const_var.ligo") ] ;
   [%expect{|
-    const fooint -> int =
+    const foo : int -> int =
       lambda (x : int) : int return let bar : int -> int =
                                       lambda (x[@var] : int) : int return
                                       let ()#2 : unit = x[@var] := ADD(x , 1) in
@@ -278,7 +278,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_var_const.ligo") ] ;
   [%expect{|
-    const fooint -> int =
+    const foo : int -> int =
       lambda (x[@var] : int) : int return let bar : int -> int =
                                             lambda (x : int) : int return x in
                                           (bar)@(42) |}]
@@ -286,7 +286,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "var_loop.ligo") ] ;
   [%expect{|
-    const fooint -> int =
+    const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
                                     let ()#5 : unit =
@@ -321,20 +321,16 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
   [%expect{|
     const foo[@var] =
-      rec (foo : unit -> int => lambda (_#2 : unit) : int return  match (
-                                                                   4 , 5) with
-                                                                   | (x[@var],y[@var]) -> {
-
-                                                                     x[@var] := 2;
-                                                                     {
-                                                                        y[@var] := 3;
-                                                                        C_POLYMORPHIC_ADD(x ,y)
-                                                                     }
-                                                                   })[@@private]
+      lambda (_#2 : unit) : int return  match (4 , 5) with
+                                         | (x[@var],y[@var]) -> {
+                                                                   x[@var] := 2;
+                                                                   {
+                                                                      y[@var] := 3;
+                                                                      C_POLYMORPHIC_ADD(x ,y)
+                                                                   }
+                                         }[@@private]
     const bar[@var] =
-      rec (bar : unit -> int => lambda (_#3 : unit) : int return  match (
-                                                                   4 , 5) with
-                                                                   | (x,y) ->
-                                                                   let add[@var] = rec (add : unit -> int => lambda (_#4 : unit) : int return C_POLYMORPHIC_ADD(x ,y))[@@private] in
-                                                                   (add)@(unit))[@@private] |}]
+      lambda (_#3 : unit) : int return  match (4 , 5) with
+                                         | (x,y) -> let add[@var] = lambda (_#4 : unit) : int return C_POLYMORPHIC_ADD(x ,y)[@@private] in
+                                                    (add)@(unit)[@@private] |}]
 

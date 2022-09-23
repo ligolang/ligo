@@ -8,16 +8,16 @@ module AST = Ast_typed
 module Scope : sig
   type t
   val empty : t
-  val new_module_var  : t -> ModuleVar.t -> t  -> t * ModuleVar.t
-  val get_module_var  : t -> ModuleVar.t -> t * ModuleVar.t
+  val new_module_var  : t -> Module_var.t -> t  -> t * Module_var.t
+  val get_module_var  : t -> Module_var.t -> t * Module_var.t
 end =
 struct
-  module MMap = Simple_utils.Map.Make(ModuleVar)
-  type t = {module_ : (ModuleVar.t * t) MMap.t}
+  module MMap = Simple_utils.Map.Make(Module_var)
+  type t = {module_ : (Module_var.t * t) MMap.t}
   let empty = {module_ = MMap.empty}
   let new_module_var map var mod_scope =
     let var' = match MMap.find_opt var map.module_ with
-      Some (v,_) -> ModuleVar.fresh_like ~loc:(ModuleVar.get_location var) v
+      Some (v,_) -> Module_var.fresh_like ~loc:(Module_var.get_location var) v
     | None -> var in
     let module_ = MMap.add var (var',mod_scope) map.module_ in
     {module_}, var'
@@ -25,7 +25,7 @@ struct
   let get_module_var map var =
     (* The default value is for variable coming from other files *)
     Option.value ~default:(var,empty) @@ MMap.find_opt var map.module_
-    |> fun (v,m) -> (m,ModuleVar.(set_location @@ get_location var) v)
+    |> fun (v,m) -> (m,Module_var.(set_location @@ get_location var) v)
 
 end
 
@@ -90,11 +90,11 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
   | E_recursive r ->
     let r = Recursive.map self self_type r in
     return @@ E_recursive r
-  | E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr} ->
-    let ascr = self_type ascr in
+  | E_let_in {let_binder;rhs;let_result;attr} ->
+    let let_binder = Binder.map self_type let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
-    return @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
+    return @@ E_let_in {let_binder;rhs;let_result;attr}
   | E_type_inst {forall; type_} ->
     let forall = self forall in
     let type_  = self_type type_ in
@@ -112,13 +112,13 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
   | E_record record ->
     let record = Record.map self record in
     return @@ E_record record
-  | E_accessor {record;path} ->
-    let record = self record in
-    return @@ E_accessor {record;path}
-  | E_update {record;path;update} ->
-    let record = self record in
+  | E_accessor {struct_;path} ->
+    let struct_ = self struct_ in
+    return @@ E_accessor {struct_;path}
+  | E_update {struct_;path;update} ->
+    let struct_ = self struct_ in
     let update = self update in
-    return @@ E_update {record;path;update}
+    return @@ E_update {struct_;path;update}
   | E_mod_in  {module_binder; rhs; let_result} ->
     let mod_scope,rhs = compile_module_expr scope rhs in
     let scope,module_binder = Scope.new_module_var scope module_binder mod_scope in
@@ -127,10 +127,10 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
   | E_module_accessor {module_path;element} ->
     let _,module_path = List.fold_map ~init:(scope) module_path ~f:(Scope.get_module_var) in
     return @@ E_module_accessor {module_path;element}
-  | E_assign {binder={var;ascr;attributes};expression} ->
-    let ascr = self_type ascr in
+  | E_assign {binder;expression} ->
+    let binder = Binder.map self_type binder in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};expression}
+    return @@ E_assign {binder;expression}
 
 and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in
@@ -145,10 +145,7 @@ and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun sco
     let tv   = self_type tv in
     return @@ AST.Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = Record.map (fun Binder.{var;ascr;attributes} ->
-      let ascr = self_type ascr in
-      Binder.{var;ascr;attributes}
-    ) fields in
+    let fields = Record.map (Binder.map self_type) fields in
     let body = self body in
     let tv   = self_type tv in
     return @@ AST.Match_record {fields;body;tv}
@@ -156,25 +153,23 @@ and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun sco
 and compile_declaration scope (d : AST.declaration) : Scope.t * AST.declaration =
   let return scope wrap_content = scope, {d with wrap_content} in
   match Location.unwrap d with
-    Declaration_constant {binder;expr;attr} ->
+    D_value {binder;expr;attr} ->
       let expr   = expression scope expr in
       let binder = Binder.map (Option.map ~f:(type_expression scope)) binder in
-      return scope @@ AST.Declaration.Declaration_constant {binder;expr;attr}
-  | Declaration_type {type_binder;type_expr;type_attr} ->
+      return scope @@ AST.D_value {binder;expr;attr}
+  | D_type {type_binder;type_expr;type_attr} ->
       let type_expr = type_expression scope type_expr in
-      return scope @@ AST.Declaration.Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_module {module_binder;module_;module_attr} ->
+      return scope @@ AST.D_type {type_binder;type_expr;type_attr}
+  | D_module {module_binder;module_;module_attr} ->
       let mod_scope,module_   = compile_module_expr scope module_ in
       let scope,module_binder = Scope.new_module_var scope module_binder mod_scope in
-      return scope @@ AST.Declaration.Declaration_module {module_binder;module_;module_attr}
+      return scope @@ AST.D_module {module_binder;module_;module_attr}
 
 and compile_program scope (program : AST.program) : Scope.t * AST.program =
   List.fold_map ~init:scope ~f:(compile_declaration) program
 
 and compile_decl : Scope.t -> AST.decl -> Scope.t * AST.decl =
-  fun s (Decl d) ->
-    let s,d = compile_declaration s d in
-    s,Decl d
+  fun s d -> compile_declaration s d
 
 
 and compile_module scope (m : AST.module_) : Scope.t * AST.module_ =

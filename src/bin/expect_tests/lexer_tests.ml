@@ -438,17 +438,17 @@ Hint: Insert some space.
     (* Add semi-colon *)
 
     run_ligo_good [ "print" ; "ast-typed" ; "../../test/lexer/add_semi.jsligo" ] ;
-    [%expect {|
-    const x[@var] = 1[@private]
+    [%expect {xxx|
+    const x[@var] : int = 1[@private]
     module Foo =
       struct
-      const y[@var] = x[@private]
-      const z[@var] = 2
+      const y[@var] : int = x[@private]
+      const z[@var] : int = 2
       module Bar = struct
-                   const w[@var] = 1[@private]
+                   const w[@var] : int = 1[@private]
                    end[@private]
       module Do = struct
-                  const r[@var] = 1
+                  const r[@var] : int = 1
                   end[@private]
-      end |}]
+      end |xxx}]
   end
