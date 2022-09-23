@@ -6,8 +6,7 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson
-  (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:), (.:?))
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
 import Data.Aeson.Lens (key, nth, values)
@@ -21,10 +20,11 @@ import Data.Typeable (cast)
 import Data.Vector qualified as V
 import Fmt (Buildable (..), blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
+import Text.Interpolation.Nyan (int, rmode')
+
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
-import Text.Interpolation.Nyan (int, rmode')
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -424,46 +424,29 @@ instance FromJSON LigoMapper where
 
 class (Exception e) => DebuggerException e
 
-data LigoException = LigoException
-  { leMessage :: Text
-  , leDescription :: Text
-  , leLocation :: Maybe LigoPosition
-  }
-  deriving stock (Eq, Show)
+newtype LigoException = LigoException { leMessage :: Text }
+  deriving newtype (Eq, Show, FromBuilder, Buildable)
   deriving anyclass (DebuggerException)
 
-instance FromJSON LigoException where
-  parseJSON = withObject "LIGO output" $ \o -> do
-    content <- o .: "content"
-    flip (withObject "Content") content $ \c -> do
-      leMessage <- c .: "message"
-      leDescription <- c .:? "description" .!= ""
-      leLocation <- c .:? "location"
-      pure LigoException{..}
-
 instance Default LigoException where
-  def = LigoException "" "" Nothing
+  def = LigoException ""
 
 instance Exception LigoException where
   displayException = pretty
 
-instance Buildable LigoException where
-  build (LigoException msg desc loc) =
-    [int||
-        #{msg}
-        #{desc}
-        #{loc}
-    |]
-
-instance FromBuilder LigoException where
-  fromBuilder b = def {leMessage = fromBuilder b}
-
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
+  deriving newtype (Buildable)
 
-instance FromJSON EntrypointsList where
-  parseJSON = withObject "list-declarations" \o -> do
-    lst <- o .: "declarations"
-    pure $ EntrypointsList lst
+parseEntrypointsList :: Text -> Maybe EntrypointsList
+parseEntrypointsList (lines -> parts) = do
+  entrypoints <- safeTail >=> safeInit $ parts
+  pure $ EntrypointsList (toString <$> entrypoints)
+  where
+    safeTail :: [a] -> Maybe [a]
+    safeTail = fmap tail . nonEmpty
+
+    safeInit :: [a] -> Maybe [a]
+    safeInit = fmap init . nonEmpty
 
 -- TODO: move this instance to morley-debugger
 instance FromBuilder DAP.Message where

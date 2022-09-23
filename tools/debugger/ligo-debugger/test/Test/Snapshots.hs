@@ -697,6 +697,7 @@ unit_Contracts_locations_are_sensible = do
       -- we use built-in functions in next contract and they are having weird source locations.
       , ("built-ins", def & coCheckSourceLocationsL .~ False)
       , ("poly", def & coCheckSourceLocationsL .~ False)
+      , ("two-entrypoints", def & coEntrypointL ?~ "main1")
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
