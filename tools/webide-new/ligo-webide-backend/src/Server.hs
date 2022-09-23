@@ -6,9 +6,9 @@ where
 
 import Control.Arrow ((>>>))
 import Control.Monad (forM_, (>=>))
-import Control.Monad.Except (ExceptT, runExcept, throwError)
+import Control.Monad.Except (runExcept, throwError)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (ReaderT, asks, runReaderT)
+import Control.Monad.Reader (asks, runReaderT)
 import Control.Monad.Trans (lift)
 import Data.Aeson (decodeStrict)
 import Data.ByteString qualified as BS
@@ -22,15 +22,14 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Data.Text.IO qualified as Text
-import Katip (Environment(..), KatipT, initLogEnv, runKatipT)
+import Katip (Environment(..), initLogEnv, runKatipT)
 import Network.Wai (Middleware)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (cors, corsRequestHeaders, simpleCorsResourcePolicy)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Numeric (showFFloat)
 import Servant
-  (Application, Handler(..), Server, ServerError, err400, err500, errBody, hoistServer, serve,
-  (:<|>)((:<|>)))
+  (Application, Handler(..), Server, err400, err500, errBody, hoistServer, serve, (:<|>)((:<|>)))
 import Servant.Client (BaseUrl(..), Scheme(Https))
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (swaggerSchemaUIServer)
@@ -63,6 +62,7 @@ import Morley.Tezos.Core (Mutez(UnsafeMutez), unMutez)
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
 import Api (API, SwaggeredAPI)
+import Common (WebIDEM)
 import Config (Config(..))
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompileRequest (CompileRequest(..))
@@ -73,8 +73,6 @@ import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
 import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
 import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
 import Types (DisplayFormat(..), Source(..))
-
-type WebIDEM = KatipT (ReaderT Config (ExceptT ServerError IO))
 
 startApp :: Config -> IO ()
 startApp config = run (cPort config) (mkApp config)
