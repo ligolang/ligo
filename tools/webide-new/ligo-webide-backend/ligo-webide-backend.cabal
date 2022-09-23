@@ -16,6 +16,11 @@ library
       Common
       Config
       Ligo
+      Method.Compile
+      Method.CompileExpression
+      Method.DryRun
+      Method.GenerateDeployScript
+      Method.ListDeclarations
       Schema.CompileExpressionRequest
       Schema.CompileRequest
       Schema.CompilerResponse
