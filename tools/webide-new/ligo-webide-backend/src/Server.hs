@@ -1,7 +1,6 @@
 module Server
   ( startApp
   , mkApp
-  , Config (..)
   )
 where
 
@@ -64,6 +63,7 @@ import Morley.Tezos.Core (Mutez(UnsafeMutez), unMutez)
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
 import Api (API, SwaggeredAPI)
+import Config (Config(..))
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompileRequest (CompileRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
@@ -73,14 +73,6 @@ import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
 import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
 import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
 import Types (DisplayFormat(..), Source(..))
-
-data Config = Config
-  { cLigoPath :: Maybe FilePath
-  , cTezosClientPath :: Maybe FilePath
-  , cPort :: Int
-  , cVerbose :: Bool
-  , cDockerizedLigoVersion :: Maybe String
-  }
 
 type WebIDEM = KatipT (ReaderT Config (ExceptT ServerError IO))
 
