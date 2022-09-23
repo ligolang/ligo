@@ -944,7 +944,7 @@ and compile_let_to_declaration ~raise : const:bool -> CST.attributes -> CST.val_
     function that takes `body` as a parameter and returns `let x = 42 in body`
 *)
 
-and merge_statement_results : statement_result -> statement_result -> statement_result = fun f s ->
+and merge_statement_results ~raise : statement_result -> statement_result -> statement_result = fun f s ->
   match f, s with
     Binding a, Binding b -> Binding (a <@ b)
   | Binding a, Expr    b -> Expr (a b)
@@ -955,8 +955,29 @@ and merge_statement_results : statement_result -> statement_result -> statement_
   | Expr    a, Expr    b -> Expr (e_sequence a b)
   | Expr    a, Break   _ -> Break a
   | Expr    a, Return  b -> Return (e_sequence a b)
-  | Break   a, _ ->         Break a
-  | Return  a, _ ->         Return a
+
+  (* In a block, any statement after a [break] or [return] is considered unreachable *)
+  | Break   a, Expr    b
+  | Break   a, Break   b
+  | Break   a, Return  b -> raise.warning (`Jsligo_unreachable_code b.location); Break a
+  | Break   a, Binding b -> 
+    let x = (b @@ e_unit ()) in
+    raise.warning (`Jsligo_unreachable_code x.location); 
+    Break a
+
+  | Return  a, Return x ->         
+    raise.warning (`Jsligo_unreachable_code x.location); 
+    Return a
+  | Return  a, Expr x ->         
+    raise.warning (`Jsligo_unreachable_code x.location); 
+    Return a
+  | Return a, Binding b -> 
+    let x = (b @@ e_unit ()) in
+    raise.warning (`Jsligo_unreachable_code x.location); 
+    Return a
+  | Return a, Break b -> 
+    raise.warning (`Jsligo_unreachable_code b.location); 
+    Return a
 
 and is_failwith_call = function
   {expression_content = E_constant {cons_name;_}; _} -> String.equal "failwith" @@ constant_to_string cons_name
@@ -1045,7 +1066,7 @@ and compile_statements ?(wrap=false) ~raise : CST.statements -> statement_result
           region = Region.ghost
       } in
       let block = compile_statement ~wrap:false ~raise wrapper in
-      merge_statement_results result block
+      merge_statement_results ~raise result block
   | [] -> result
   in
   let hd  = fst statements in
@@ -1331,7 +1352,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
       List.fold_left cases
         ~init:initial
         ~f:(fun acc case ->
-              merge_statement_results acc (process_case case))
+              merge_statement_results ~raise acc (process_case case))
     ))
   | SBreak b ->
     Break (e_unit ~loc:(Location.lift b#region) ())
