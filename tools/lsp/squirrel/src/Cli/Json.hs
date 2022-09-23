@@ -1,4 +1,4 @@
--- | ligo version: 0.34.0
+-- | ligo version: 0.51.0
 -- | The definition of type as is represented in ligo JSON output
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -70,7 +70,7 @@ data LigoError = LigoError
   , _leContent :: LigoErrorContent
   }
   deriving stock (Eq, Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 2 LigoError
+  deriving (FromJSON) via LigoJSON 2 LigoError
 
 -- | An actual ligo error
 data LigoErrorContent = LigoErrorContent
@@ -82,7 +82,6 @@ data LigoErrorContent = LigoErrorContent
   , _lecLocation :: Maybe LigoRange
   }
   deriving stock (Eq, Generic, Show)
-  deriving ToJSON via LigoJSON 3 LigoErrorContent
 
 -- | The output for 'ligo info get-scope' may return with a list of errors and a
 -- list of warnings.
@@ -93,7 +92,7 @@ data LigoMessages = LigoMessages
   , _lmWarnings :: [LigoError]
   }
   deriving stock (Eq, Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 2 LigoMessages
+  deriving (FromJSON) via LigoJSON 2 LigoMessages
 
 -- | Whole successfull ligo `get-scope` output
 data LigoDefinitions = LigoDefinitions
@@ -111,7 +110,7 @@ data LigoDefinitions = LigoDefinitions
   , _ldScopes      :: [LigoScope] -- it is optional
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 2 LigoDefinitions
+  deriving (FromJSON) via LigoJSON 2 LigoDefinitions
 
 -- | First part under `"variables"` constraint
 data LigoDefinitionsInner = LigoDefinitionsInner
@@ -121,7 +120,7 @@ data LigoDefinitionsInner = LigoDefinitionsInner
   , _ldiTypes     :: HM.HashMap Text LigoTypeDefinitionScope
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoDefinitionsInner
+  deriving (FromJSON) via LigoJSON 3 LigoDefinitionsInner
 
 -- | Scope that goes as a member of the list under `"scopes"` constraint
 -- ```
@@ -140,7 +139,7 @@ data LigoScope = LigoScope
   , _lsTypeEnvironment       :: [Text]
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 2 LigoScope
+  deriving (FromJSON) via LigoJSON 2 LigoScope
 
 -- | Definition declaration that goes from `"definitions"` constraint
 
@@ -165,7 +164,7 @@ data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   , _lvdsReferences :: [LigoRange]
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 4 LigoVariableDefinitionScope
+  deriving (FromJSON) via LigoJSON 4 LigoVariableDefinitionScope
 
 data LigoTypeDefinitionScope = LigoTypeDefinitionScope
   { -- | `"name"`
@@ -179,7 +178,7 @@ data LigoTypeDefinitionScope = LigoTypeDefinitionScope
   , _ltdsContent   :: LigoTypeExpression
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 4 LigoTypeDefinitionScope
+  deriving (FromJSON) via LigoJSON 4 LigoTypeDefinitionScope
 
 -- | Parameter of a type
 -- ```
@@ -204,7 +203,7 @@ data LigoTypeExpression = LigoTypeExpression
   , _lteOrigVar     :: Maybe LigoTypeVariable
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeExpression
+  deriving (FromJSON) via LigoJSON 3 LigoTypeExpression
 
 -- | Whole ligo type.
 -- ```
@@ -215,7 +214,6 @@ data LigoTypeFull
   | LTFResolved LigoTypeExpression
   | LTFUnresolved
   deriving stock (Generic, Show)
-  deriving ToJSON via LigoJSON 3 LigoTypeFull
 
 -- | Inner object representing type content that depends on `name` in `LigoTypeContent`.
 -- ```
@@ -247,21 +245,20 @@ data LigoTypeContent
   | -- `"t_constant"`
     LTCConstant LigoTypeConstant
   deriving stock (Generic, Show)
-  deriving ToJSON via LigoJSON 3 LigoTypeContent
 
 data LigoTypeApp = LigoTypeApp
   { _ltaTypeOperator :: LigoTypeVariable
   , _ltaArguments    :: [LigoTypeExpression]
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeApp
+  deriving (FromJSON) via LigoJSON 3 LigoTypeApp
 
 data LigoTypeModuleAccessor = LigoTypeModuleAccessor
   { _ltmaModuleName :: Value -- TODO not used
   , _ltmaElement    :: Value -- TODO not used
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 4 LigoTypeModuleAccessor
+  deriving (FromJSON) via LigoJSON 4 LigoTypeModuleAccessor
 
 type LigoTypeSum = LigoTypeTable
 type LigoTypeRecord = LigoTypeTable
@@ -271,14 +268,7 @@ data LigoTypeTable = LigoTypeTable
   , _lttLayout  :: Value -- TODO not used
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeTable
-
-data LigoTyBinder = LigoTyBinder
-  { _ltbWrap_content :: LigoTypeVariable
-  , _ltbLocation :: LigoRange
-  }
-  deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTyBinder
+  deriving (FromJSON) via LigoJSON 3 LigoTypeTable
 
 data LigoTypeConstant = LigoTypeConstant
   { _ltcParameters :: [LigoTypeExpression]
@@ -286,7 +276,7 @@ data LigoTypeConstant = LigoTypeConstant
   , _ltcInjection  :: NonEmpty Text
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeConstant
+  deriving (FromJSON) via LigoJSON 3 LigoTypeConstant
 
 data LigoTypeArrow = LigoTypeArrow
   -- "type2" -> "type1"
@@ -294,7 +284,7 @@ data LigoTypeArrow = LigoTypeArrow
   , _ltaType1 :: LigoTypeExpression
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeArrow
+  deriving (FromJSON) via LigoJSON 3 LigoTypeArrow
 
 data LigoTypeVariable = LigoTypeVariable
   { _ltvName      :: Text
@@ -303,14 +293,14 @@ data LigoTypeVariable = LigoTypeVariable
   , _ltvLocation  :: LigoRange
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeVariable
+  deriving (FromJSON) via LigoJSON 3 LigoTypeVariable
 
 data LigoTypeForAll = LigoTypeForAll
-  { _ltfaTyBinder :: LigoTyBinder
-  , _ltfaType     :: LigoTypeExpression -- TODO original field is `type_`
+  { _ltfaTyBinder :: LigoTypeVariable
+  , _ltfaType_    :: LigoTypeExpression
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTypeForAll
+  deriving (FromJSON) via LigoJSON 4 LigoTypeForAll
 
 -- | Record field type value.
 -- ```
@@ -327,7 +317,7 @@ data LigoTableField = LigoTableField
     _ltfAssociatedType :: LigoTypeExpression
   }
   deriving stock (Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoTableField
+  deriving (FromJSON) via LigoJSON 3 LigoTableField
 
 -- | Location of definition.
 -- ```
@@ -337,14 +327,13 @@ data LigoRange
   = LRVirtual Text
   | LRFile LigoFileRange
   deriving stock (Eq, Generic, Show)
-  deriving ToJSON via LigoJSON 3 LigoRange
 
 data LigoFileRange = LigoFileRange
   { _lfrStart :: LigoRangeInner
   , _lfrStop  :: LigoRangeInner
   }
   deriving stock (Eq, Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoFileRange
+  deriving (FromJSON) via LigoJSON 3 LigoFileRange
 
 -- | Insides of ligo location.
 -- ```
@@ -356,7 +345,7 @@ data LigoRangeInner = LigoRangeInner
   , _lriPointBol :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 3 LigoRangeInner
+  deriving (FromJSON) via LigoJSON 3 LigoRangeInner
 
 -- | Byte representation of ligo location.
 -- ```
@@ -369,15 +358,13 @@ data LigoByte = LigoByte
   , _lbPosCnum  :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
-  deriving (FromJSON, ToJSON) via LigoJSON 2 LigoByte
+  deriving (FromJSON) via LigoJSON 2 LigoByte
 
 ----------------------------------------------------------------------------
 -- Instances
 ----------------------------------------------------------------------------
 
--- TODO: some ToJSON instances are not opposed to `FromJSON` ones meaning
--- that some `FromJSON (ToJSON a)` instances are not isomorphic to `Identity`
-newtype LigoJSON (n :: Nat) a = LigoJSON {unLigoJSON :: a}
+newtype LigoJSON (n :: Nat) a = LigoJSON a
 
 instance forall n a. (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON (LigoJSON n a) where
   parseJSON = fmap LigoJSON . genericParseJSON defaultOptions
@@ -385,13 +372,6 @@ instance forall n a. (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON
       drop (fromInteger (natVal $ Proxy @n) + 2)
       . toSnakeCase
     }
-
-instance forall n a. (Generic a, GToJSON Zero (Rep a), KnownNat n) => ToJSON (LigoJSON n a) where
-  toJSON = genericToJSON defaultOptions
-    { fieldLabelModifier =
-      drop (fromInteger (natVal $ Proxy @n) + 2)
-      . toSnakeCase
-    } . unLigoJSON
 
 -- Sometimes LigoErrorContent is just a String
 instance FromJSON LigoErrorContent where
