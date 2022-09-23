@@ -37,7 +37,6 @@ import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.FilePath (takeDirectory, (</>))
 import System.IO.Temp (withTempDirectory)
-import System.Process (proc, readCreateProcessWithExitCode)
 import Text.Megaparsec (errorBundlePretty)
 
 import Morley.Client
@@ -64,6 +63,7 @@ import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey
 import Api (API, SwaggeredAPI)
 import Common (WebIDEM)
 import Config (Config(..))
+import Ligo (runLigo)
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompileRequest (CompileRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
@@ -411,28 +411,3 @@ inferDialect filepath =
     "ligo" -> Just PascaLIGO
     "jsligo" -> Just JsLIGO
     _ -> Nothing
-
-runLigo :: FilePath -> [String] -> WebIDEM (ExitCode, String, String)
-runLigo dirPath commands = do
-  dockerizedLigo <- lift (asks cDockerizedLigoVersion)
-  case dockerizedLigo of
-    Just version ->
-      liftIO
-      $ flip readCreateProcessWithExitCode ""
-      $ proc "docker"
-      $ [ "run"
-        , "--rm"
-        , "-v"
-        , dirPath ++ ":" ++ dirPath
-        , "-w"
-        , dirPath
-        , "ligolang/ligo:" ++ version
-        ]
-        ++ commands
-    Nothing -> do
-      mLigoPath <- lift (asks cLigoPath)
-      case mLigoPath of
-        Nothing -> lift $ throwError err500
-          {errBody = "server doesn't have access to LIGO binary."}
-        Just ligoPath ->
-          liftIO $ readCreateProcessWithExitCode (proc ligoPath commands) ""

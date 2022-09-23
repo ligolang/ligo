@@ -15,6 +15,7 @@ library
       Api
       Common
       Config
+      Ligo
       Schema.CompileExpressionRequest
       Schema.CompileRequest
       Schema.CompilerResponse
