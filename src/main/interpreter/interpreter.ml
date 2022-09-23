@@ -1832,7 +1832,9 @@ and eval_ligo ~raise ~steps ~options
       | _ ->
         failwith
           (Format.asprintf
-             "unbound variable mutable: %a"
+             "@[<hv>%a@.unbound variable mutable: %a@]"
+             Snippet.pp
+             term.location
              Value_var.pp
              (Binder.get_var binder))
     in
@@ -1845,7 +1847,12 @@ and eval_ligo ~raise ~steps ~options
       | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
       | _ ->
         failwith
-          (Format.asprintf "unbound variable mutable: %a" Value_var.pp mut_var)
+        (Format.asprintf
+           "@[<hv>%a@.unbound variable mutable: %a@]"
+           Snippet.pp
+           term.location
+           Value_var.pp
+           mut_var)
     in
     let@ val_ = Deref loc in
     return val_
@@ -1856,7 +1863,7 @@ and eval_ligo ~raise ~steps ~options
       eval_ligo
         let_result
         calltrace
-        (Env.extend env (Binder.get_var let_binder) (rhs.type_expression, rhs'))
+        (Env.extend env (Binder.get_var let_binder) (rhs.type_expression, V_location loc))
     in
     let@ () = Free loc in
     return let_result

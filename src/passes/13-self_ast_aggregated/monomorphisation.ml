@@ -65,6 +65,7 @@ let apply_table_expr table (expr : AST.expression) =
          return @@ E_lambda { binder ; output_type ; result }
       | E_recursive { fun_name ; fun_type ; lambda } ->
          let fun_type = apply_table_type fun_type in
+         let lambda = Lambda.map Fn.id apply_table_type lambda in
          return @@ E_recursive { fun_name ; fun_type ; lambda }
       | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
          return @@ E_matching { matchee ; cases = Match_variant { cases ; tv = apply_table_type tv } }

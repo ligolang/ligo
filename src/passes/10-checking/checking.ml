@@ -717,6 +717,8 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       in
       let ctx, rhs_type, rhs = infer rhs in
       let rhs_type = Context.apply ctx rhs_type in
+      (* TODO: Improve inference here -- we could subtype it to get a monotype? *)
+      if is_t_for_all rhs_type then raise.error (mut_is_polymorphic loc rhs_type);
       let ctx, res_type, let_result =
         Context.enter ~ctx ~in_:(fun ctx ->
           infer
@@ -782,7 +784,9 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let t_unit = t_unit ~loc () in
       let ctx, type_, collection = infer ~ctx collection in
       let key_type, val_type =
-        trace_option ~raise (mismatching_for_each_collection_type loc collection_type type_)
+        trace_option
+          ~raise
+          (mismatching_for_each_collection_type loc collection_type type_)
         @@ get_t_map (Context.apply ctx type_)
       in
       let ctx, fe_body =
@@ -802,7 +806,11 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         return
           (E_for_each { fe_binder; collection; collection_type = Map; fe_body })
           t_unit )
-    | E_for_each { fe_binder = _, Some _; collection_type = (List | Set) as collection_type; _ } ->
+    | E_for_each
+        { fe_binder = _, Some _
+        ; collection_type = (List | Set) as collection_type
+        ; _
+        } ->
       raise.error @@ mismatching_for_each_binder_arity loc collection_type 2
     | E_for_each
         { fe_binder = (binder, None) as fe_binder
@@ -813,18 +821,23 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let t_unit = t_unit ~loc () in
       let ctx, type_, collection = infer ~ctx collection in
       let binder_type =
-        trace_option ~raise (mismatching_for_each_collection_type loc collection_type type_)
+        trace_option
+          ~raise
+          (mismatching_for_each_collection_type loc collection_type type_)
         @@
+        (* This is bad -- TODO: get rid of collection type (no-longer required) + use patterns *)
+        let get_t_map type_ =
+          get_t_map type_
+          |> Option.map ~f:(fun (t1, t2) -> t_tuple ~loc [ t1; t2 ])
+        in
         match (collection_type : For_each_loop.collect_type) with
         | Set -> get_t_set type_
         | List -> get_t_list type_
+        | Map -> get_t_map type_
         | Any ->
-          Option.merge
+          Option.first_some
             (get_t_set type_)
-            (get_t_list type_)
-            (* [assert false] bcs it is impossible for the type to both be ['a list] and ['a set] *)
-            ~f:(fun _ _ -> assert false)
-        | Map -> raise.error @@ mismatching_for_each_binder_arity loc collection_type 1
+            (Option.first_some (get_t_list type_) (get_t_map type_))
       in
       let ctx, fe_body =
         check
@@ -1308,7 +1321,7 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
       , return
         @@ D_type { type_binder; type_expr; type_attr = { public; hidden } } )
     | D_value { binder; attr; expr } ->
-      let var  = Binder.get_var binder in
+      let var = Binder.get_var binder in
       let ascr = Binder.get_ascr binder in
       let expr =
         Option.value_map ascr ~default:expr ~f:(fun ascr ->

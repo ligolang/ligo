@@ -154,6 +154,7 @@ type typer_error =
     Location.t * For_each_loop.collect_type * Ast_typed.type_expression
   | `Typer_mismatching_for_each_binder_arity of
     Location.t * For_each_loop.collect_type * int
+  | `Typer_mut_is_polymorphic of Location.t * Ast_typed.type_expression
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -644,7 +645,16 @@ let rec error_ppformat
          loc
          constant
          (String.capitalize protocol_name)
-         protocol_name)
+         protocol_name
+     | `Typer_mut_is_polymorphic (loc, type_) ->
+       Format.fprintf
+         f
+         "@[<hv>%a@.Mutable binding has the polymorphic type %a@.Hint: Add an \
+          annotation.@]"
+         Snippet.pp
+         loc
+         Ast_typed.PP.type_expression
+         type_)
 
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t =
@@ -1227,6 +1237,16 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
         ; ( "collection_type"
           , For_each_loop.collect_type_to_yojson collection_type )
         ; "type", `Int arity
+        ]
+    in
+    json_error ~stage ~content
+  | `Typer_mut_is_polymorphic (loc, type_) ->
+    let message = "Mutable binding is polymorphic" in
+    let content =
+      `Assoc
+        [ "message", `String message
+        ; "location", Location.to_yojson loc
+        ; "type", Ast_typed.type_expression_to_yojson type_
         ]
     in
     json_error ~stage ~content

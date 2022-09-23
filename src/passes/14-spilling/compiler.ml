@@ -604,7 +604,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       let type_ = collection.type_expression in
       if is_t_list type_ then get_t_list_exn type_
       else if is_t_set type_ then get_t_set_exn type_
-      else failwith "Expected set or list type for for-each loop (should have been caught earlier)"
+      else if is_t_map type_ then
+        let key_type, val_type = get_t_map_exn type_
+        in AST.t_pair key_type val_type
+      else failwith "Expected set, map or list type for for-each loop (should have been caught earlier)"
     in
     let binders = [ binder1, compile_type ~raise elt_type ] in
     let collection = self collection in
@@ -668,6 +671,13 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
         let ty  = compile_type ~raise li.rhs.type_expression in
         let let_binder = Binder.get_var li.let_binder in
         e_let_in let_binder ty li.attr.inline rhs let_result
+      | E_let_mut_in li ->
+        (* Not possible for mut to shadow fun_name *)
+        let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
+        let rhs = compile_expression ~raise li.rhs in
+        let ty  = compile_type ~raise li.rhs.type_expression in
+        let let_binder = Binder.get_var li.let_binder in
+        e_let_mut_in let_binder ty rhs let_result
       | E_matching m ->
         let ty = compile_type ~raise e.type_expression in
         matching ~raise fun_name loop_type shadowed m ty

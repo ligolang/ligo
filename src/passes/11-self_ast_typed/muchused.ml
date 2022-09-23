@@ -181,9 +181,12 @@ let rec muchuse_of_expr expr : muchuse =
     let binders = 
       let type_ = collection.type_expression in
       if is_t_map type_ then
-        let binder2 = Option.value_exn binder2 in
         let key_type, val_type = get_t_map_exn type_ in
-        [ binder1, key_type; binder2, val_type ] 
+        (match binder2 with
+        | None ->
+          [ binder1, t_pair key_type val_type ]
+        | Some binder2 -> 
+          [ binder1, key_type; binder2, val_type ]) 
       else if is_t_set type_ then
         [ binder1, get_t_set_exn type_ ]
       else if is_t_list type_ then
