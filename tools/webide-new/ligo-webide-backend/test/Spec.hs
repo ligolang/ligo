@@ -9,14 +9,15 @@ import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
-import Server
-  (CompileExpressionRequest(..), CompileRequest(..), CompilerResponse(..), Config(..),
-  DeployScript(..), DryRunRequest(..), GenerateDeployScriptRequest(..), ListDeclarationsRequest(..),
-  Source(..), mkApp)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
 import Test.Hspec
 import Test.Hspec.Wai (WaiSession, request, with)
+
+import Server
+  (CompileExpressionRequest(..), CompileRequest(..), CompilerResponse(..), Config(..),
+  DeployScript(..), DryRunRequest(..), GenerateDeployScriptRequest(..), ListDeclarationsRequest(..),
+  Source(..), mkApp)
 
 main :: IO ()
 main = do
@@ -153,7 +154,7 @@ spec config = with (return (mkApp config)) $ do
           Nothing -> expectationFailure ("could not decode response: " ++ show response)
           Just actual -> actual `shouldBe` expected
 
-  describe "POST /list-declarationss" $ do
+  describe "POST /list-declarations" $ do
     it "compiles basic single-file input correctly" $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
