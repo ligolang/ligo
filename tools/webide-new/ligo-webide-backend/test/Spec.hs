@@ -14,10 +14,14 @@ import System.FilePath ((</>))
 import Test.Hspec
 import Test.Hspec.Wai (WaiSession, request, with)
 
-import Server
-  (CompileExpressionRequest(..), CompileRequest(..), CompilerResponse(..), Config(..),
-  DeployScript(..), DryRunRequest(..), GenerateDeployScriptRequest(..), ListDeclarationsRequest(..),
-  mkApp)
+import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
+import Schema.CompileRequest (CompileRequest(..))
+import Schema.CompilerResponse (CompilerResponse(..))
+import Schema.DeployScript (DeployScript(..))
+import Schema.DryRunRequest (DryRunRequest(..))
+import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
+import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
+import Server (Config(..), mkApp)
 import Types (Source(..))
 
 main :: IO ()

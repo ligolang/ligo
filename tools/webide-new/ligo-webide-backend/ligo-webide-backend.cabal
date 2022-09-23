@@ -12,6 +12,14 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Schema.CompileExpressionRequest
+      Schema.CompileRequest
+      Schema.CompilerResponse
+      Schema.DeployScript
+      Schema.DryRunRequest
+      Schema.GenerateDeployScriptRequest
+      Schema.ListDeclarationsRequest
+      Schema.ListDeclarationsResponse
       Server
       Types
       Util

@@ -1,15 +1,7 @@
 module Server
   ( startApp
   , mkApp
-  , CompileRequest (..)
-  , CompileExpressionRequest (..)
   , Config (..)
-  , DryRunRequest (..)
-  , DeployScript (..)
-  , GenerateDeployScriptRequest (..)
-  , ListDeclarationsRequest (..)
-  , ListDeclarationsResponse
-  , CompilerResponse (..)
   )
 where
 
@@ -19,9 +11,7 @@ import Control.Monad.Except (ExceptT, runExcept, throwError)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ReaderT, asks, runReaderT)
 import Control.Monad.Trans (lift)
-import Data.Aeson
-  (FromJSON, Options(..), ToJSON, decodeStrict, defaultOptions, fieldLabelModifier,
-  genericParseJSON, genericToJSON, parseJSON, toJSON)
+import Data.Aeson (decodeStrict)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.List.NonEmpty (NonEmpty)
@@ -29,14 +19,10 @@ import Data.List.NonEmpty qualified as NonEmpty
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Proxy (Proxy(Proxy))
-import Data.Swagger.ParamSchema (ToParamSchema)
-import Data.Swagger.Schema
-  (SchemaOptions(..), ToSchema, declareNamedSchema, defaultSchemaOptions, genericDeclareNamedSchema)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Data.Text.IO qualified as Text
-import GHC.Generics (Generic)
 import Katip (Environment(..), KatipT, initLogEnv, runKatipT)
 import Network.Wai (Middleware)
 import Network.Wai.Handler.Warp (run)
@@ -77,144 +63,15 @@ import Morley.Tezos.Address.Alias
 import Morley.Tezos.Core (Mutez(UnsafeMutez), unMutez)
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
+import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
+import Schema.CompileRequest (CompileRequest(..))
+import Schema.CompilerResponse (CompilerResponse(..))
+import Schema.DeployScript (DeployScript(..))
+import Schema.DryRunRequest (DryRunRequest(..))
+import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
+import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
+import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
 import Types (DisplayFormat(..), Source(..))
-import Util (prepareField)
-
-data CompileRequest = CompileRequest
-  { rSources :: [(FilePath, Source)]
-  , rMain :: FilePath
-  , rEntrypoint :: Maybe Text
-  , rProtocol :: Maybe Text
-  , rStorage :: Maybe Text
-  , rDisplayFormat :: Maybe DisplayFormat
-  } deriving stock (Eq, Show, Ord, Generic)
-
-instance FromJSON CompileRequest where
-  parseJSON = genericParseJSON
-    defaultOptions {fieldLabelModifier = prepareField 1}
-
-instance ToJSON CompileRequest where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 1}
-
-instance ToSchema CompileRequest where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {fieldLabelModifier = prepareField 1}
-
-newtype CompilerResponse = CompilerResponse { unCompilerResponse :: Text } deriving stock (Show, Generic, Eq)
-
-instance ToJSON CompilerResponse where
-  toJSON = genericToJSON
-    defaultOptions {unwrapUnaryRecords = True}
-
-instance FromJSON CompilerResponse where
-  parseJSON = genericParseJSON
-    defaultOptions {unwrapUnaryRecords = True}
-
-instance ToSchema CompilerResponse where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {unwrapUnaryRecords = True}
-
-instance ToParamSchema CompilerResponse
-
--- TODO: Figure out how to make this a newtype and generate a Schema for it
-type ListDeclarationsResponse = [Text]
-
-data GenerateDeployScriptRequest = GenerateDeployScriptRequest
-  { gdsrName :: Text
-  , gdsrSources :: [(FilePath, Source)]
-  , gdsrMain :: FilePath
-  , gdsrStorage :: Text
-  , gdsrEntrypoint :: Maybe Text
-  , gdsrProtocol :: Maybe Text
-  }
-  deriving stock (Show, Generic)
-
-data DeployScript = DeployScript
-  { dsScript :: Text
-  , dsBuild :: CompilerResponse
-  }
-  deriving stock (Eq, Show, Generic)
-
-instance ToJSON DeployScript where
-  toJSON = genericToJSON
-    defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance FromJSON DeployScript where
-  parseJSON = genericParseJSON
-    defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance ToSchema DeployScript where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {fieldLabelModifier = prepareField 2}
-
-instance FromJSON GenerateDeployScriptRequest where
-  parseJSON = genericParseJSON
-    defaultOptions {fieldLabelModifier = prepareField 4}
-
-instance ToJSON GenerateDeployScriptRequest where
-  toJSON = genericToJSON
-    defaultOptions {fieldLabelModifier = prepareField 4}
-
-instance ToSchema GenerateDeployScriptRequest where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {fieldLabelModifier = prepareField 4}
-
-data CompileExpressionRequest = CompileExpressionRequest
-  { cerSources :: [(FilePath, Source)]
-  , cerMain :: FilePath
-  , cerFunction :: Text
-  , cerProtocol :: Maybe Text
-  , cerDisplayFormat :: Maybe DisplayFormat
-  } deriving stock (Eq, Show, Ord, Generic)
-
-instance FromJSON CompileExpressionRequest where
-  parseJSON = genericParseJSON
-    defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToJSON CompileExpressionRequest where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToSchema CompileExpressionRequest where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {fieldLabelModifier = prepareField 3}
-
-data DryRunRequest = DryRunRequest
-  { drrSources :: [(FilePath, Source)]
-  , drrMain :: FilePath
-  , drrParameters :: Text
-  , drrStorage :: Text
-  , drrEntrypoint :: Maybe Text
-  , drrProtocol :: Maybe Text
-  , drrDisplayFormat :: Maybe DisplayFormat
-  } deriving stock (Eq, Show, Ord, Generic)
-
-instance FromJSON DryRunRequest where
-  parseJSON = genericParseJSON
-    defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToJSON DryRunRequest where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToSchema DryRunRequest where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {fieldLabelModifier = prepareField 3}
-
-data ListDeclarationsRequest = ListDeclarationsRequest
-  { ldrSources :: [(FilePath, Source)]
-  , ldrMain :: FilePath
-  , ldrOnlyEndpoint :: Bool
-  } deriving stock (Eq, Show, Ord, Generic)
-
-instance FromJSON ListDeclarationsRequest where
-  parseJSON = genericParseJSON
-    defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToJSON ListDeclarationsRequest where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToSchema ListDeclarationsRequest where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {fieldLabelModifier = prepareField 3}
 
 type API =
        "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] CompilerResponse
