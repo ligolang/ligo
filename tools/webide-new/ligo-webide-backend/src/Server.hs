@@ -30,11 +30,11 @@ import Network.Wai.Middleware.Cors (cors, corsRequestHeaders, simpleCorsResource
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Numeric (showFFloat)
 import Servant
-  (Application, Handler(..), JSON, Post, ReqBody, Server, ServerError, err400, err500, errBody,
-  hoistServer, serve, (:<|>)((:<|>)), (:>))
+  (Application, Handler(..), Server, ServerError, err400, err500, errBody, hoistServer, serve,
+  (:<|>)((:<|>)))
 import Servant.Client (BaseUrl(..), Scheme(Https))
 import Servant.Swagger (toSwagger)
-import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
+import Servant.Swagger.UI (swaggerSchemaUIServer)
 import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.FilePath (takeDirectory, (</>))
@@ -63,6 +63,7 @@ import Morley.Tezos.Address.Alias
 import Morley.Tezos.Core (Mutez(UnsafeMutez), unMutez)
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
+import Api (API, SwaggeredAPI)
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompileRequest (CompileRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
@@ -72,17 +73,6 @@ import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
 import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
 import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
 import Types (DisplayFormat(..), Source(..))
-
-type API =
-       "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] CompilerResponse
-  :<|> "generate-deploy-script" :> ReqBody '[JSON] GenerateDeployScriptRequest :> Post '[JSON] DeployScript
-  :<|> "compile-expression" :> ReqBody '[JSON] CompileExpressionRequest :> Post '[JSON] CompilerResponse
-  :<|> "dry-run" :> ReqBody '[JSON] DryRunRequest :> Post '[JSON] CompilerResponse
-  :<|> "list-declarations" :> ReqBody '[JSON] ListDeclarationsRequest :> Post '[JSON] ListDeclarationsResponse
-
-type SwaggeredAPI =
-  SwaggerSchemaUI "swagger-ui" "swagger.json"
-    :<|> API
 
 data Config = Config
   { cLigoPath :: Maybe FilePath

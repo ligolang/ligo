@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Api
       Schema.CompileExpressionRequest
       Schema.CompileRequest
       Schema.CompilerResponse
