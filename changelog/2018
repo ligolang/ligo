@@ -1,0 +1,5 @@
+author: SanderSpies
+description: ''
+merge_request: '2018'
+title: Jsligo support `Foo.bar<int>` syntax
+type: internal
