@@ -1,11 +1,12 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson
-  (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:), (.:?))
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
 import Data.Aeson.Lens (key, nth, values)
@@ -15,12 +16,15 @@ import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
 import Data.Text qualified as T
+import Data.Typeable (cast)
 import Data.Vector qualified as V
 import Fmt (Buildable (..), blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
+import Text.Interpolation.Nyan (int, rmode')
+
+import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
-import Text.Interpolation.Nyan (int, rmode')
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -276,7 +280,7 @@ instance Buildable LigoExposedStackEntry where
 
 instance FromJSON LigoExposedStackEntry where
   parseJSON = withObject "LIGO exposed stack entry" \o -> do
-    leseType <- o .: "source_type"
+    leseType <- o .:! "source_type" .!= LTUnresolved
     leseDeclaration <- o .:! "name"
     return LigoExposedStackEntry{..}
 
@@ -418,43 +422,56 @@ instance FromJSON LigoMapper where
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
 
-data LigoException = LigoException
-  { leMessage :: Text
-  , leDescription :: Text
-  , leLocation :: Maybe LigoPosition
-  }
-  deriving stock (Eq, Show)
+class (Exception e) => DebuggerException e
 
-instance FromJSON LigoException where
-  parseJSON = withObject "LIGO output" $ \o -> do
-    content <- o .: "content"
-    flip (withObject "Content") content $ \c -> do
-      leMessage <- c .: "message"
-      leDescription <- c .:? "description" .!= ""
-      location <- c .:? "location"
-      leLocation <- maybe (pure Nothing) parseJSON location
-      pure LigoException{..}
+newtype LigoException = LigoException { leMessage :: Text }
+  deriving newtype (Eq, Show, FromBuilder, Buildable)
+  deriving anyclass (DebuggerException)
 
 instance Default LigoException where
-  def = LigoException "" "" Nothing
+  def = LigoException ""
 
 instance Exception LigoException where
   displayException = pretty
 
-instance Buildable LigoException where
-  build (LigoException msg desc loc) =
-    [int||
-        #{msg}
-        #{desc}
-        #{loc}
-    |]
-
-instance FromBuilder LigoException where
-  fromBuilder b = def {leMessage = fromBuilder b}
-
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
+  deriving newtype (Buildable)
 
-instance FromJSON EntrypointsList where
-  parseJSON = withObject "list-declarations" \o -> do
-    lst <- o .: "declarations"
-    pure $ EntrypointsList lst
+parseEntrypointsList :: Text -> Maybe EntrypointsList
+parseEntrypointsList (lines -> parts) = do
+  entrypoints <- safeTail >=> safeInit $ parts
+  pure $ EntrypointsList (toString <$> entrypoints)
+  where
+    safeTail :: [a] -> Maybe [a]
+    safeTail = fmap tail . nonEmpty
+
+    safeInit :: [a] -> Maybe [a]
+    safeInit = fmap init . nonEmpty
+
+-- TODO: move this instance to morley-debugger
+instance FromBuilder DAP.Message where
+  fromBuilder txt = DAP.defaultMessage
+    { DAP.formatMessage = fromBuilder txt
+    }
+
+newtype DapMessageException = DapMessageException DAP.Message
+  deriving newtype (Show, Buildable, FromBuilder)
+  deriving anyclass (DebuggerException)
+
+instance Exception DapMessageException where
+  displayException (DapMessageException msg) = DAP.formatMessage msg
+
+data SomeDebuggerException where
+  SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
+
+deriving stock instance Show SomeDebuggerException
+
+instance Exception SomeDebuggerException where
+  displayException (SomeDebuggerException e) = displayException e
+
+  fromException e@(SomeException e') =
+    asum
+      [ SomeDebuggerException <$> fromException @LigoException e
+      , SomeDebuggerException <$> fromException @DapMessageException e
+      , cast @_ @SomeDebuggerException e'
+      ]

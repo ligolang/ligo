@@ -1,4 +1,4 @@
--- | ligo version: 0.34.0
+-- | ligo version: 0.51.0
 -- | The definition of type as is represented in ligo JSON output
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -10,12 +10,12 @@ module Cli.Json
   , LigoScope (..)
   , LigoDefinitions (..)
   , LigoDefinitionsInner (..)
-  , LigoDefinitionScope (..)
+  , LigoVariableDefinitionScope (..)
+  , LigoTypeDefinitionScope (..)
   , LigoTypeFull (..)
   , LigoTypeContent (..)
-  , LigoTypeContentInner (..)
   , LigoTypeExpression (..)
-  , LigoRecordField (..)
+  , LigoTableField (..)
   , LigoRange (..)
   , LigoRangeInner (..)
   , LigoByte (..)
@@ -24,29 +24,26 @@ module Cli.Json
   , fromLigoErrorToMsg
   , fromLigoTypeFull
   , mkLigoError
-  , prepareField
   )
 where
 
-import Control.Applicative (Alternative ((<|>)), liftA2)
-import Control.Lens.Operators ((??))
 import Control.Monad.State
 import Data.Aeson.Types hiding (Error)
-import Data.Aeson.KeyMap qualified as KM
+import Data.Aeson.KeyMap (toAscList)
 import Data.Char (isUpper, toLower)
-import Data.Foldable (asum, toList)
+import Data.Foldable (toList)
 import Data.Function
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe)
+import Data.Proxy (Proxy(..))
 import Data.Text (Text)
-import Data.Text qualified as Text (unpack)
 import GHC.Generics
+import GHC.TypeLits (Nat, KnownNat, natVal)
 import Language.LSP.Types qualified as J
-import Text.Read (readEither)
-import Text.Regex.TDFA ((=~), getAllTextSubmatches)
+import Prelude hiding (sum)
 
 import AST.Skeleton hiding (CString)
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
@@ -64,21 +61,22 @@ import Range hiding (startLine)
 -- | Node representing ligo error with additional meta
 data LigoError = LigoError
   { -- | `"status"`
-    _leStatus :: Text
+    _leStatus  :: Text
     -- | Stage on where the error appeared (parser/typechecker)
     -- `"stage"`
-  , _leStage :: Text
+  , _leStage   :: Text
     -- | Error message block
     -- `"content"`
   , _leContent :: LigoErrorContent
   }
   deriving stock (Eq, Generic, Show)
+  deriving (FromJSON) via LigoJSON 2 LigoError
 
 -- | An actual ligo error
 data LigoErrorContent = LigoErrorContent
   { -- | Error message
     -- `"message"`
-    _lecMessage :: Text
+    _lecMessage  :: Text
     -- | Location of the error
     -- `"location"`
   , _lecLocation :: Maybe LigoRange
@@ -89,35 +87,40 @@ data LigoErrorContent = LigoErrorContent
 -- list of warnings.
 data LigoMessages = LigoMessages
   { -- | `"errors"`
-    _lmErrors :: NonEmpty LigoError
+    _lmErrors   :: NonEmpty LigoError
     -- | `"warnings"`
   , _lmWarnings :: [LigoError]
   }
   deriving stock (Eq, Generic, Show)
+  deriving (FromJSON) via LigoJSON 2 LigoMessages
 
 -- | Whole successfull ligo `get-scope` output
 data LigoDefinitions = LigoDefinitions
   { -- | Errors produced by LIGO
     -- `"errors"`
-    _ldErrors :: Maybe [LigoError]
+    _ldErrors      :: [LigoError]
     -- | Warnings produced by LIGO
     -- `"warnings"`
-  , _ldWarnings :: Maybe [LigoError]
+  , _ldWarnings    :: [LigoError]
     -- | All the definitions
     -- `"definitions"`
-  , _ldDefinitions :: LigoDefinitionsInner
+  , _ldDefinitions :: LigoDefinitionsInner -- it is optional
     -- | Scopes
     -- `"scopes"`
-  , _ldScopes :: [LigoScope]
+  , _ldScopes      :: [LigoScope] -- it is optional
   }
   deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 2 LigoDefinitions
 
 -- | First part under `"variables"` constraint
-newtype LigoDefinitionsInner = LigoDefinitionsInner
+data LigoDefinitionsInner = LigoDefinitionsInner
   { -- | `"variables"`
-    _ldiVariables :: HM.HashMap Text LigoDefinitionScope
+    _ldiVariables :: HM.HashMap Text LigoVariableDefinitionScope
+    -- | `"types"`
+  , _ldiTypes     :: HM.HashMap Text LigoTypeDefinitionScope
   }
   deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoDefinitionsInner
 
 -- | Scope that goes as a member of the list under `"scopes"` constraint
 -- ```
@@ -129,182 +132,220 @@ data LigoScope = LigoScope
     -- ```
     -- { "range": [ "<scope>", LigoRangeInner ] }
     -- ```
-    _lsRange :: LigoRange
+    _lsRange                 :: LigoRange
     -- | `"expression_environment"`
   , _lsExpressionEnvironment :: [Text]
     -- | `"type_environment"`
-  , _lsTypeEnvironment :: Value
+  , _lsTypeEnvironment       :: [Text]
   }
   deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 2 LigoScope
 
 -- | Definition declaration that goes from `"definitions"` constraint
--- ```
--- { "definitions" { a#n : LigoDefinitionScope } }
--- ```
-data LigoDefinitionScope = LigoDefinitionScope
+
+data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   { -- | `"name"`
-    _ldsName :: Text
+    _lvdsName       :: Text
     -- | Binding location
     -- `"location"`
-  , _ldsRange :: LigoRange
+  , _lvdsRange      :: LigoRange
     -- | Definition body location
     -- `"body_location"`
-  , _ldsBodyRange :: LigoRange
+  , _lvdsBodyRange  :: LigoRange
     -- | The type itself
     -- `"t"`
-  , _ldsT :: Maybe LigoTypeFull
+  , _lvdsT          :: LigoTypeFull
     -- | We parse it in chunks of 2, each odd element of the array is a name for
     -- the corresponding element which is `LigoRangeInner`.
     -- ```
     -- { "references": [ ["<scope>", LigoRangeInner] ] }
     -- ```
     -- `"references"`
-  , _ldsReferences :: [LigoRange]
+  , _lvdsReferences :: [LigoRange]
   }
   deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 4 LigoVariableDefinitionScope
+
+data LigoTypeDefinitionScope = LigoTypeDefinitionScope
+  { -- | `"name"`
+    _ltdsName      :: Text
+    -- | Binding location
+    -- `"location"`
+  , _ltdsRange     :: LigoRange
+    -- | Definition body location
+    -- `"body_location"`
+  , _ltdsBodyRange :: LigoRange
+  , _ltdsContent   :: LigoTypeExpression
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 4 LigoTypeDefinitionScope
 
 -- | Parameter of a type
 -- ```
 -- { "parameters": [LigoTypeParameter] }
 -- ```
-data LigoTypeParameter
-  = LigoTypeParameter
-      { -- | We parse it by a chunks of 2, each odd element of array is a name for
-        -- even element which is `LigoTypeContentInner`.
-        -- ```
-        -- { "type_content": [ <name>, LigoTypeContentInner ] }
-        -- ```
-        _ltpTypeContent :: [LigoTypeContent]
-        -- | `"type_meta"`
-      , _ltpTypeMeta :: Maybe LigoTypeExpression
-        -- | `"location"`
-      , _ltpLocation :: LigoRange
-        -- | `"orig_var"`
-      , _ltpOrigVar :: Maybe Text
-      }
-      deriving stock (Generic, Show)
+data LigoTypeExpression = LigoTypeExpression
+  { -- | We parse it by a chunks of 2, each odd element of array is a name for
+    -- even element which is `LigoTypeContentInner`.
+  ---- Common for 4th and 5th stage
+    -- ```
+    -- { "type_content": [ <name>, LigoTypeContentInner ] }
+    -- ```
+    _lteTypeContent :: LigoTypeContent
+    -- | `"location"`
+  , _lteLocation    :: LigoRange
+  ---- 4th stage specific
+  , _lteSugar       :: Maybe Value
+  ---- 5th stage specific
+      -- | `"type_meta"`
+  , _lteTypeMeta    :: Maybe LigoTypeExpression
+    -- | `"orig_var"`
+  , _lteOrigVar     :: Maybe LigoTypeVariable
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTypeExpression
 
 -- | Whole ligo type.
 -- ```
 -- { "t" : LigoTypeFull }
 -- ```
 data LigoTypeFull
-  =
-    LigoTypeFullCore
-      { -- | Location of the definition.
-        _ltfcLocation :: LigoRange
-      , -- | We parse it by a chunks of 2, each odd element of array is a name for
-        -- even element which is `LigoTypeContentInner`.
-        -- ```
-        -- { "type_content": [ <name>, LigoTypeContentInner ] }
-        -- ```
-        _ltfcTypeContent :: [LigoTypeContent]
-      }
-  | LigoTypeFullResolved
-      { -- | `"location"`
-        _ltfrLocation :: LigoRange
-      , -- | *Some* meta constructors (e.g. `Some`).
-        -- `"type_meta"`
-        _ltfrTypeMeta :: Maybe LigoTypeExpression
-      , -- | `"orig_var"`
-        _ltfrOrigVar :: Maybe Text
-      , -- | We parse it by a chunks of 2, each odd element of array is a name for
-        -- even element which is `LigoTypeContentInner`.
-        -- ```
-        -- { "type_content": [ <name>, LigoTypeContentInner ] }
-        -- ```
-        _ltfrTypeContent :: [LigoTypeContent]
-      }
-  | LigoTypeFullUnresolved Value -- TODO
-  deriving stock (Generic, Show)
-
-data LigoTypeExpression
-  = LigoTypeExpression
-      { _lteTypeContent :: [LigoTypeContent]
-      , _lteSugar :: Value  -- TODO: Sugar is not necessary at the moment, but may
-                            -- be useful to parse in the future.
-      , _lteLocation :: LigoRange
-      }
-  deriving stock (Generic, Show)
-
--- | A pair in "type_content" array `[name, content]`.
--- ```
--- { "type_content": LigoTypeContent }
--- ```
-data LigoTypeContent = LigoTypeContent
-  { _ltcName :: Text
-  , _ltcContentInner :: LigoTypeContentInner
-  }
+  = LTFCore LigoTypeExpression
+  | LTFResolved LigoTypeExpression
+  | LTFUnresolved
   deriving stock (Generic, Show)
 
 -- | Inner object representing type content that depends on `name` in `LigoTypeContent`.
 -- ```
 -- { "type_content": [ <type>, LigoTypeContentInner ] }
 -- ```
-data LigoTypeContentInner
+data LigoTypeContent
   = -- | Type call represented by the list of arguments and its constructor.
-    -- `"t_constant"`
-    LTCConstant
-      { _ltciParameters :: [LigoTypeParameter]
-      , _ltciLanguage :: Text
-      , _ltciInjection :: NonEmpty Text
-      }
-  | -- | `"t_variable"`
-    LTCVariable
-      { _ltcvName :: Text
-      }
+  ---- Common for 4th and 5th stage
+    -- | `"t_variable"`
+    LTCVariable LigoTypeVariable
+  |
+    LTCSum LigoTypeSum
   | -- | `"t_record"`
-    LTCRecord (HM.HashMap Text LigoRecordField)
-  | -- | `"t_app"`
-    LTCApp
-      { _ltciTypeOperator :: Text
-      , _ltciArguments :: [LigoTypeFull]
-      }
+    LTCRecord LigoTypeRecord
   | -- | `"t_arrow"`
-    LTCArrow
-      { _ltciType2 :: LigoTypeFull
-      , _ltciType1 :: LigoTypeFull
-      }
+    LTCArrow LigoTypeArrow
+  |
+    LTCSingleton Value -- TODO not used
+  |
+    LTCAbstraction LigoTypeForAll
+  |
+    LTCForAll LigoTypeForAll
+  ---- 4th stage specific
+  |
+    LTCApp LigoTypeApp
+  |
+    LTCModuleAccessor LigoTypeModuleAccessor
+  ---- 5th stage specific
+  | -- `"t_constant"`
+    LTCConstant LigoTypeConstant
   deriving stock (Generic, Show)
+
+data LigoTypeApp = LigoTypeApp
+  { _ltaTypeOperator :: LigoTypeVariable
+  , _ltaArguments    :: [LigoTypeExpression]
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTypeApp
+
+data LigoTypeModuleAccessor = LigoTypeModuleAccessor
+  { _ltmaModuleName :: Value -- TODO not used
+  , _ltmaElement    :: Value -- TODO not used
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 4 LigoTypeModuleAccessor
+
+type LigoTypeSum = LigoTypeTable
+type LigoTypeRecord = LigoTypeTable
+
+data LigoTypeTable = LigoTypeTable
+  { _lttContent :: HM.HashMap Text LigoTableField
+  , _lttLayout  :: Value -- TODO not used
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTypeTable
+
+data LigoTypeConstant = LigoTypeConstant
+  { _ltcParameters :: [LigoTypeExpression]
+  , _ltcLanguage   :: Text
+  , _ltcInjection  :: NonEmpty Text
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTypeConstant
+
+data LigoTypeArrow = LigoTypeArrow
+  -- "type2" -> "type1"
+  { _ltaType2 :: LigoTypeExpression
+  , _ltaType1 :: LigoTypeExpression
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTypeArrow
+
+data LigoTypeVariable = LigoTypeVariable
+  { _ltvName      :: Text
+  , _ltvCounter   :: Int
+  , _ltvGenerated :: Bool
+  , _ltvLocation  :: LigoRange
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTypeVariable
+
+data LigoTypeForAll = LigoTypeForAll
+  { _ltfaTyBinder :: LigoTypeVariable
+  , _ltfaType_    :: LigoTypeExpression
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 4 LigoTypeForAll
 
 -- | Record field type value.
 -- ```
--- { "type_content": ["T_record", { "key": LigoRecordField } ] }
+-- { "type_content": ["T_record", { "key": LigoTableField } ] }
 -- ```
-data LigoRecordField = LigoRecordField
+data LigoTableField = LigoTableField
   { -- | Declaration position (don't ask me I too don't know what actual
     -- position is this since from all the example it's somewhat always 0).
-    _lrfDeclPos :: Int
+    _ltfDeclPos        :: Int
     -- | How the value is represented in michelson, currently ignored
     -- during parsing.
-    -- _lrfLocation :: LigoRange
+  , _lrfMichelsonAnnotation :: Value
   , -- | The type itself.
-    _lrfAssociatedType :: LigoTypeFull
+    _ltfAssociatedType :: LigoTypeExpression
   }
   deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoTableField
 
 -- | Location of definition.
 -- ```
 -- { "location": LigoRange }
 -- ```
 data LigoRange
-  = Virtual Text
-  | LigoRange
-      { _lrStart :: LigoRangeInner
-      , _lrStop :: LigoRangeInner
-      }
+  = LRVirtual Text
+  | LRFile LigoFileRange
   deriving stock (Eq, Generic, Show)
+
+data LigoFileRange = LigoFileRange
+  { _lfrStart :: LigoRangeInner
+  , _lfrStop  :: LigoRangeInner
+  }
+  deriving stock (Eq, Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoFileRange
 
 -- | Insides of ligo location.
 -- ```
 -- { ["start" | "stop"]: LigoRangeInner }
 -- ```
 data LigoRangeInner = LigoRangeInner
-  { _lriByte :: LigoByte
+  { _lriByte     :: LigoByte
   , _lriPointNum :: J.UInt
   , _lriPointBol :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
+  deriving (FromJSON) via LigoJSON 3 LigoRangeInner
 
 -- | Byte representation of ligo location.
 -- ```
@@ -312,297 +353,54 @@ data LigoRangeInner = LigoRangeInner
 -- ```
 data LigoByte = LigoByte
   { _lbPosFname :: FilePath
-  , _lbPosLnum :: J.UInt
-  , _lbPosBol :: J.UInt
-  , _lbPosCnum :: J.UInt
+  , _lbPosLnum  :: J.UInt
+  , _lbPosBol   :: J.UInt
+  , _lbPosCnum  :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
+  deriving (FromJSON) via LigoJSON 2 LigoByte
 
 ----------------------------------------------------------------------------
 -- Instances
 ----------------------------------------------------------------------------
 
--- TODO: some ToJSON instances are not opposed to `FromJSON` ones meaning
--- that some `FromJSON (ToJSON a)` instances are not isomorphic to `Identity`
+newtype LigoJSON (n :: Nat) a = LigoJSON a
 
-instance FromJSON LigoError where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
+instance forall n a. (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON (LigoJSON n a) where
+  parseJSON = fmap LigoJSON . genericParseJSON defaultOptions
+    { fieldLabelModifier =
+      drop (fromInteger (natVal $ Proxy @n) + 2)
+      . toSnakeCase
+    }
 
-instance ToJSON LigoError where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance FromJSON LigoMessages where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
+-- Sometimes LigoErrorContent is just a String
 instance FromJSON LigoErrorContent where
-  parseJSON = asum . (parsers ??)
-    where
-      parsers =
-        [ withObject "error_content" \o -> do
-          _lecMessage <- o .: "message"
-          _lecLocation <- traverse (parseLigoRange "location_error_inner_range") =<< o .:? "location"
-          return LigoErrorContent {..}
-        , withText "error_content" \t -> do
-          let
-            _lecMessage = t
-            _lecLocation = Nothing
-          pure LigoErrorContent {..}
-        ]
+  parseJSON (String t) = pure $ LigoErrorContent t Nothing
+  parseJSON o = genericParseJSON defaultOptions{fieldLabelModifier = drop 5 . toSnakeCase} o
 
-instance ToJSON LigoErrorContent where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoDefinitions where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance ToJSON LigoDefinitions where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance FromJSON LigoDefinitionsInner where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToJSON LigoDefinitionsInner where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoScope where
-  parseJSON = withObject "scope" $ \o -> do
-    _lsRange <- parseLigoRange "scope_range" =<< o .: "range"
-    _lsTypeEnvironment <- o .: "type_environment"
-    _lsExpressionEnvironment <- o .: "expression_environment"
-    return $ LigoScope {..}
-
--- TODO: malformed
-instance ToJSON LigoScope where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance FromJSON LigoDefinitionScope where
-  parseJSON = withObject "scope" $ \o -> do
-    _ldsName <- o .: "name"
-    _ldsRange <- parseLigoRange "scope_range" =<< o .: "range"
-    _ldsBodyRange <- parseLigoRange "scope_body_range" =<< o .: "body_range"
-    _ldsT <- o .:? "t"
-    _ldsReferences <- traverse (parseLigoRangeArray "scope_references_ranges") =<< o .: "references"
-    return $ LigoDefinitionScope {..}
-
-instance ToJSON LigoDefinitionScope where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
--- We trust ligo compiler output for printing even number
--- of array elements.
+-- { "core" : ... }
 instance FromJSON LigoTypeFull where
-  parseJSON = withObject "type_full" $ \o ->
-    asum
-      [ o .: "core" >>= parseAsCoreType
-      , o .: "resolved" >>= parseAsResolvedType
-      , o .: "unresolved" >>= parseAsUnresolvedType
-      ]
-    where
-      parseAsCoreType :: Value -> Parser LigoTypeFull
-      parseAsCoreType = do
-        withObject "type_full_core" $ \o' -> do
-          _ltfcLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
-          type_content <- o' .: "type_content"
-          _ltfcTypeContent <-
-            withArray "type_content" parseManyLigoTypeContent type_content
-          return $ LigoTypeFullCore {..}
+  parseJSON = withObject "LigoTypeFull" \o -> case toAscList o of
+    [("core"      , value)] -> LTFCore     <$> parseJSON value
+    [("resolved"  , value)] -> LTFResolved <$> parseJSON value
+    [("unresolved", Null )] -> pure LTFUnresolved
+    _ -> fail "wrong `LigoTypeFull` format"
 
-      parseAsResolvedType :: Value -> Parser LigoTypeFull
-      parseAsResolvedType = do
-        withObject "type_full_resolved" $ \o' -> do
-          _ltfrLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
-          type_content <- o' .: "type_content"
-          _ltfrTypeContent <-
-            withArray "type_content" parseManyLigoTypeContent type_content
-          _ltfrTypeMeta <- o' .: "type_meta"
-          _ltfrOrigVar <- o' .: "orig_var"
-          return $ LigoTypeFullResolved {..}
-
-      -- TODO: For now we don't know what 'Value's may go into this type,
-      -- but we assume it is 'Null' for now.
-      parseAsUnresolvedType :: Value -> Parser LigoTypeFull
-      parseAsUnresolvedType = pure . LigoTypeFullUnresolved
-
-instance ToJSON LigoTypeFull where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
+-- [ "t_variable", ...]
 instance FromJSON LigoTypeContent where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
+  parseJSON = genericParseJSON defaultOptions
+    { sumEncoding = TwoElemArray
+    -- "LTCVariable" -> "t_variable"
+    , constructorTagModifier = ('T' :) . toSnakeCase . drop 3
+    }
 
-instance ToJSON LigoTypeContent where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoTypeParameter where
-  parseJSON = withObject "type_parameter" $ \o -> do
-    type_content <- o .: "type_content"
-    _ltpTypeContent <-
-      withArray "type_content" parseManyLigoTypeContent type_content
-    _ltpTypeMeta <- o .: "type_meta"
-    _ltpLocation <- parseLigoRange "type_parameter_range" =<< o .: "location"
-    _ltpOrigVar <- o .: "orig_var"
-    return LigoTypeParameter {..}
-
-instance ToJSON LigoTypeExpression where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoTypeExpression where
-  parseJSON = withObject "type_expression" $ \o -> do
-    type_content <- o .: "type_content"
-    _lteTypeContent <-
-      withArray "type_content" parseManyLigoTypeContent type_content
-    _lteSugar <- o .: "sugar"
-    _lteLocation <- parseLigoRange "type_expression_range" =<< o .: "location"
-    return LigoTypeExpression {..}
-
-instance ToJSON LigoTypeParameter where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoTypeContentInner where
-  parseJSON = withObject "type_content" $ \o -> do
-    asum
-      [
-        do -- parse tuple
-          content <- o .: "content"
-          parsed <- parseJSON content
-          pure $ LTCRecord parsed
-      , do -- parse record
-          parsed <- sequence $ parseJSON <$> o
-          pure $ LTCRecord $ KM.toHashMapText parsed
-      , do
-          _ltciParameters <- o .: "parameters"
-          _ltciLanguage <- o .: "language"
-          _ltciInjection <- o .: "injection"
-          pure $ LTCConstant {..}
-      , do
-          _ltciType1 <- o .: "type1" >>= parseTypeInner
-          _ltciType2 <- o .: "type2" >>= parseTypeInner
-          pure $ LTCArrow {..}
-      , do
-          _ltciTypeOperator <- o .: "type_operator" >>= \o' -> o' .: "name"
-          (arguments :: Value) <- o .: "arguments"
-          _ltciArguments <-
-            toList <$> withArray "l_type_arguments" (mapM parseTypeInner) arguments
-          return LTCApp {..}
-      , LTCVariable <$> o .: "name"
-      ]
-
-instance ToJSON LigoTypeContentInner where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoRecordField where
-  parseJSON = withObject "record_field" $ \o -> do
-    _lrfDeclPos <- o .: "decl_pos"
-    _lrfAssociatedType <- o .: "associated_type" >>= parseTypeInner
-    return $ LigoRecordField {..}
-
-instance ToJSON LigoRecordField where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
+-- [ "Virtual", ...]
 instance FromJSON LigoRange where
-  parseJSON = liftA2 (<|>) parseAsString parseAsObject
-    where
-      parseAsString (String o) = return $ Virtual o
-      parseAsString _ = fail "failed to parse as string"
-      parseAsObject = withObject "range" $ \o -> do
-        _lrStart <- o .: "start"
-        _lrStop <- o .: "stop"
-        return $ LigoRange {..}
-
-instance ToJSON LigoRange where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance FromJSON LigoRangeInner where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance ToJSON LigoRangeInner where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
-
-instance FromJSON LigoByte where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
-instance ToJSON LigoByte where
-  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
-
--- A workaround since function types are not separated to "core" | "resolved" | "unresolved" and lets consider these as "core" ones
-parseTypeInner :: Value -> Parser LigoTypeFull
-parseTypeInner = withObject "type_inner" $ \o -> do
-  _ltfcLocation <- parseLigoRange "ligo_type_core_range" =<< o .: "location"
-  type_content <- o .: "type_content"
-  _ltfcTypeContent <-
-    withArray "type_content" parseManyLigoTypeContent type_content
-  return $ LigoTypeFullCore {..}
-
--- | Construct a parser for ligo ranges that are represented in pairs
--- ```
--- [ "name", <LigoRange> ]
--- ```
-parseLigoRange :: String -> Value -> Parser LigoRange
-parseLigoRange str val = parseLigoRangeArray str val <|> parseLigoRangeString str val
-
-parseLigoRangeArray :: String -> Value -> Parser LigoRange
-parseLigoRangeArray = flip withArray (safeExtract . group 2 . toList)
-  where
-    safeExtract :: [[Value]] -> Parser LigoRange
-    safeExtract ([_, value]:_) = parseJSON @LigoRange value
-    safeExtract _ = error "number of range elements in array is not even and cannot be grouped"
-
--- LIGO sometimes returns the ranges as a human-readable string (wtf), so parse
--- this string for relevant points.
-parseLigoRangeString :: String -> Value -> Parser LigoRange
-parseLigoRangeString = flip withText safeExtract
-  where
-    safeExtract :: Text -> Parser LigoRange
-    safeExtract str = case parseRange $ matchRange $ Text.unpack str of
-      Left err -> fail err
-      Right (file, line, colStart, colStop) -> pure LigoRange
-        { _lrStart = LigoRangeInner
-          { _lriByte = LigoByte
-            { _lbPosFname = file
-            , _lbPosLnum = line
-            , _lbPosBol = 0  -- not used in mbFromLigoRange
-            , _lbPosCnum = 0  -- not used in mbFromLigoRange
-            }
-          , _lriPointNum = colStart
-          , _lriPointBol = 0  -- need abs (_lriPointNum - _lriPointBol) == _lriPointNum
-          }
-        , _lrStop = LigoRangeInner
-          { _lriByte = LigoByte
-            { _lbPosFname = file
-            , _lbPosLnum = line
-            , _lbPosBol = 0  -- not used in mbFromLigoRange
-            , _lbPosCnum = 0  -- not used in mbFromLigoRange
-            }
-          , _lriPointNum = colStop
-          , _lriPointBol = 0  -- need abs (_lriPointNum - _lriPointBol) == _lriPointNum
-          }
-        }
-
-    parseRange :: [String] -> Either String (FilePath, J.UInt, J.UInt, J.UInt)
-    parseRange = \case
-        [_, file, line, colStart, colStop] -> do
-          let fp = file
-          l <- readEither line
-          cStart <- readEither colStart
-          cStop <- readEither colStop
-          pure (fp, l, cStart, cStop)
-        matches -> Left $ "Could not match range with expected format: " <> show matches
-
-    matchRange :: String -> [String]
-    matchRange str =
-      getAllTextSubmatches (str =~ ("\"(.*)\", line ([0-9]+), characters ([0-9]+)-([0-9]+)" :: Text))
-
--- | Construct a parser of ligo type content that is represented in pairs
--- ```
--- [ "name", <LigoTypeContent> ]
--- ```
-parseLigoTypeContent :: [Value] -> Parser LigoTypeContent
-parseLigoTypeContent [name, value] = do
-  _ltcName <- parseJSON @Text name
-  _ltcContentInner <- parseJSON @LigoTypeContentInner value
-  return $ LigoTypeContent {..}
-parseLigoTypeContent _ = error "number of type content elements is not even and cannot be grouped"
-
-parseManyLigoTypeContent :: Array -> Parser [LigoTypeContent]
-parseManyLigoTypeContent = mapM parseLigoTypeContent . group 2 . toList
+  parseJSON = genericParseJSON defaultOptions
+    { sumEncoding = TwoElemArray
+    -- "LRVirtual" -> "Virtual"
+    , constructorTagModifier = drop 2
+    }
 
 ----------------------------------------------------------------------------
 -- Pretty
@@ -621,6 +419,14 @@ instance Pretty LigoError where
 -- Helpers
 ----------------------------------------------------------------------------
 
+-- | Converts string to snake_case
+toSnakeCase :: String -> String
+toSnakeCase = foldr helper []
+  where
+    helper c acc
+      | isUpper c = '_' : toLower c : acc
+      | otherwise = c : acc
+
 -- | Convert ligo error to its corresponding internal representation.
 fromLigoErrorToMsg :: LigoError -> Message
 fromLigoErrorToMsg LigoError
@@ -636,27 +442,6 @@ fromLigoErrorToMsg LigoError
       "warning" -> SeverityWarning
       _         -> SeverityError
 
--- | Helper function that converts qualified field to its JSON counterpart.
---
--- >>> prepareField 2 "__llFooBar"
--- "foo_bar"
-prepareField :: Int -> String -> String
-prepareField dropAmount = Prelude.drop (dropAmount + 2) . concatMap process
-  where
-    process c
-      | isUpper c = ['_', toLower c]
-      | otherwise = [c]
-
--- | Splits an array onto chunks of n elements, throws error otherwise.
---
--- >>> group 2 [1, 2, 3, 4]
--- [[1,2],[3,4]]
-group :: Int -> [a] -> [[a]]
-group _ [] = []
-group n l
-  | n > 0 = take n l : group n (drop n l)
-  | otherwise = error "Negative or zero n"
-
 -- | Converts ligo ranges to our internal ones.
 -- Note: ligo team allows for start file of a range be different from end file.
 -- Either if this intentional or not we throw an error if they are so.
@@ -669,11 +454,13 @@ group n l
 -- :}
 -- contracts/test.ligo:2:4-5:2
 mbFromLigoRange :: LigoRange -> Maybe Range
-mbFromLigoRange (Virtual _) = Nothing
+mbFromLigoRange (LRVirtual _) = Nothing
 mbFromLigoRange
-  (LigoRange
-    (LigoRangeInner LigoByte { _lbPosLnum = startLine , _lbPosFname = startFilePath } startCNum startBol)
-    (LigoRangeInner LigoByte { _lbPosLnum = endLine   , _lbPosFname = endFilePath   } endCNum   endBol)
+  (LRFile
+    (LigoFileRange
+      (LigoRangeInner LigoByte { _lbPosLnum = startLine , _lbPosFname = startFilePath } startCNum startBol)
+      (LigoRangeInner LigoByte { _lbPosLnum = endLine   , _lbPosFname = endFilePath   } endCNum   endBol)
+    )
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
   | otherwise = Just Range
@@ -688,36 +475,9 @@ fromLigoRangeOrDef = fromMaybe (point 0 0) . mbFromLigoRange
 -- | Reconstruct `LIGO` tree out of `LigoTypeFull`.
 fromLigoTypeFull :: LigoTypeFull -> LIGO Info
 fromLigoTypeFull = enclose . \case
-  LigoTypeFullCore
-    { _ltfcTypeContent = [tc]
-    , _ltfcLocation
-    } -> do
-        modify . putElem . fromLigoRangeOrDef $ _ltfcLocation
-        fromLigoType tc
-
-  LigoTypeFullResolved
-    { _ltfrLocation
-    , _ltfrTypeMeta = Just LigoTypeExpression {_lteTypeContent = [tc]}
-    } -> do
-        modify . putElem . fromLigoRangeOrDef $ _ltfrLocation
-        fromLigoType tc
-
-  LigoTypeFullResolved
-    { _ltfrTypeContent = [tc]
-    , _ltfrLocation
-    } -> do
-        modify . putElem . fromLigoRangeOrDef $ _ltfrLocation
-        fromLigoType tc
-
-  LigoTypeFullCore {} ->
-    mkErr "malformed core type given (the array is not of length of 2)"
-
-  LigoTypeFullResolved {} ->
-    mkErr "malformed resolved type given (the array is not of length of 2)"
-
-  LigoTypeFullUnresolved _ ->
-    mkErr "unresolved type given"
-
+  LTFCore lte     -> fromLigoTypeExpression lte
+  LTFResolved lte -> fromLigoTypeExpression lte
+  LTFUnresolved   -> mkErr "unresolved type given"
   where
 
     fromLigoPrimitive :: Text -> State (Product Info) (LIGO Info)
@@ -725,75 +485,72 @@ fromLigoTypeFull = enclose . \case
       st <- get
       return $ make' (st, TypeName p)
 
-    fromLigoParameter
-      LigoTypeParameter
-        { _ltpTypeMeta = Just LigoTypeExpression { _lteTypeContent = [t] }
-        , _ltpLocation
+    fromLigoTypeExpression
+      LigoTypeExpression
+        { _lteTypeMeta = Just LigoTypeExpression { _lteTypeContent = t }
+        , _lteLocation
         } = do
-          modify . putElem . fromLigoRangeOrDef $ _ltpLocation
+          modify . putElem . fromLigoRangeOrDef $ _lteLocation
           fromLigoType t
-    fromLigoParameter
-      LigoTypeParameter
-        { _ltpTypeContent = [t]
-        , _ltpLocation
-        } = do
-          modify . putElem . fromLigoRangeOrDef $ _ltpLocation
-          fromLigoType t
-    fromLigoParameter
-      LigoTypeParameter
-        { _ltpLocation
-        } = do
-          modify . putElem . fromLigoRangeOrDef $ _ltpLocation
-          mkErr "malformed type parameter"
+    fromLigoTypeExpression
+      LigoTypeExpression {..} = do
+        modify . putElem . fromLigoRangeOrDef $ _lteLocation
+        fromLigoType _lteTypeContent
 
     fromLigoConstant name [] = fromLigoPrimitive name
     fromLigoConstant name params = do
       st <- get
       n <- fromLigoPrimitive name
-      p <- sequence $ fromLigoParameter <$> params
+      p <- sequence $ fromLigoTypeExpression <$> params
       return $ make' (st, TApply n p)
 
     fromLigoType
       :: LigoTypeContent
       -> State (Product Info) (LIGO Info)
-    fromLigoType LigoTypeContent {..} = case _ltcContentInner of
-      LTCConstant
-        { _ltciParameters
-        , _ltciInjection
-        } -> fromLigoConstant (NE.head _ltciInjection) _ltciParameters
+    fromLigoType = \case
+      LTCConstant LigoTypeConstant {..} ->
+        fromLigoConstant (NE.head _ltcInjection) _ltcParameters
 
-      LTCVariable name ->
-        fromLigoPrimitive name
+      LTCVariable variable ->
+        fromLigoPrimitive $ _ltvName variable
 
       LTCRecord record -> do
         st <- get
-        record' <-
-            record
-          & HM.mapWithKey fromLigoRecordField
-          & toList
-          & sequence
+        record' <- fromLigoTable record
         return $ make' (st, TRecord record')
 
-      LTCApp {..} -> do
+      LTCSum sum -> do
         st <- get
-        p <- fromLigoPrimitive _ltciTypeOperator
+        sum' <- fromLigoTable sum
+        return $ make' (st, TSum sum')
+
+      LTCSingleton      _ -> mkErr "unsupported type `Singleton`"      -- TODO not used
+      LTCAbstraction    _ -> mkErr "unsupported type `Abstraction`"    -- TODO not used
+      LTCForAll         _ -> mkErr "unsupported type `ForAll`"         -- TODO not used
+      LTCModuleAccessor _ -> mkErr "unsupported type `ModuelAccessor`" -- TODO not used
+
+      LTCApp LigoTypeApp{..} -> do
+        st <- get
+        p <- fromLigoPrimitive (_ltvName _ltaTypeOperator)
         return . make' . (st,) $
-          TApply p (fromLigoTypeFull <$> _ltciArguments)
+          TApply p (enclose . fromLigoTypeExpression <$> _ltaArguments)
 
-      LTCArrow {..} -> do
+      LTCArrow LigoTypeArrow {..} -> do
         st <- get
-        let mkArrow = TArrow `on` fromLigoTypeFull
-        return $ make' (st, mkArrow _ltciType1 _ltciType2)
+        let mkArrow = TArrow `on` (enclose . fromLigoTypeExpression)
+        return $ make' (st, mkArrow _ltaType1 _ltaType2)
 
-    fromLigoRecordField
+    fromLigoTable = traverse (uncurry fromLigoTableField) . HM.toList . _lttContent
+
+    fromLigoTableField
       :: Text
-      -> LigoRecordField
+      -> LigoTableField
       -> State (Product Info) (LIGO Info)
-    fromLigoRecordField name LigoRecordField {..} = do
+    fromLigoTableField name LigoTableField {..} = do
       st <- get
       n <- fromLigoPrimitive name
       -- FIXME: Type annotation is optional.
-      return $ make' (st, TField n (Just $ fromLigoTypeFull _lrfAssociatedType))
+      return $ make' (st, TField n (Just $ enclose $ fromLigoTypeExpression _ltfAssociatedType))
 
     mkErr = gets . flip mkLigoError
 

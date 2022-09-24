@@ -55,6 +55,10 @@
   }
 }
 
+.dropdown-menu.dropdown-menu-short {
+  max-height: 100px;
+}
+
 .input-dropdown-menu {
   width: 100%;
   &.dropdown-menu-sm .dropdown-item,

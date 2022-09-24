@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable new-cap */
-import React, { lazy, useEffect, useRef, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
 import { GlobalModals, autoUpdater } from "~/base-components/global";
 import { config, updateStore } from "~/lib/redux";
 import redux, { Provider } from "~/base-components/redux";

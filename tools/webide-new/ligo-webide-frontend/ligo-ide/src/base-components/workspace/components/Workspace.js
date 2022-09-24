@@ -284,7 +284,11 @@ export default class Workspace extends Component {
                 readOnly={readOnly}
                 onClick={() => this.gistUploadFileModal()}
               />
-              <ProjectToolbar finalCall={this.updateTree} signer={signer} />
+              <ProjectToolbar
+                finalCall={this.updateTree}
+                signer={signer}
+                editor={this.codeEditor}
+              />
             </div>
             <FileTree
               ref={this.filetree}

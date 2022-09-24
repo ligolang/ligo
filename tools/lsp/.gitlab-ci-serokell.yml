@@ -69,7 +69,7 @@ lsp-lint:
 
 print-nix-version:
   stage: nix
-  only: [merge_requests, tooling]
+  only: [merge_requests, tooling, vscode-production]
   needs: []
   script:
     - nix --version
