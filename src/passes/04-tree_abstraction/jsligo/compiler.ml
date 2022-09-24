@@ -540,9 +540,11 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     in
     let rec compile_parameter = function
       CST.EPar p -> compile_parameter p.value.inside
-    | ESeq {value = (EAnnot {value = (EArray {value = {inside = None; _}; _}, _, _); _}, _); _} ->
+    | ESeq {value = (EAnnot {value = (EArray {value = {inside = None; _}; _}, _, _); _}, _); _}
+    | ESeq {value = (EArray {value = {inside = None; _}; _}, _); _} ->
       Match_nil (e_unit ())
-    | ESeq {value = (EAnnot {value = (EArray {value = {inside = Some (Expr_entry hd, [(_, Rest_entry {value = {expr = tl; _}; _})]); _}; _}, _, _); _}, _); _} ->
+    | ESeq {value = (EAnnot {value = (EArray {value = {inside = Some (Expr_entry hd, [(_, Rest_entry {value = {expr = tl; _}; _})]); _}; _}, _, _); _}, _); _}
+    | ESeq {value = (EArray {value = {inside = Some (Expr_entry hd, [(_, Rest_entry {value = {expr = tl; _}; _})]); _}; _}, _); _} ->
       let hd = compile_simple_pattern hd in
       let tl = compile_simple_pattern tl in
       Match_cons (hd, tl)
