@@ -242,8 +242,8 @@ module Make (Config : Config.S) (Options : Options.S) =
 
             let state' = (state#set_mode State.Copy)#set_trace [] in
 
-            (* We set the first position in the file to include to
-               line [1]. *)
+            (* We set the first position to 1 in the file to
+               include. *)
 
             let pos'   = (state#pos#set_file incl_file)#set_line 1 in
             let state' = state'#set_pos pos' in
@@ -270,7 +270,6 @@ module Make (Config : Config.S) (Options : Options.S) =
                the included file may contain dependencies from #import
                directives. *)
 
-            (* let state = state#set_pos XXX ? in *)
             let state = state#set_env     state'#env in
             let state = state#set_chans   state'#chans in
             let state = state#set_imports state'#imports in
@@ -304,6 +303,14 @@ module Make (Config : Config.S) (Options : Options.S) =
 (* Scanning #import directives *)
 
 let import_action ~callback hash_pos state lexbuf =
+  let mangle str =
+    let name =
+        Str.global_replace (Str.regexp_string ".") "____" str
+      |> Str.global_replace (Str.regexp_string "/") "__"
+      |> Str.global_replace (Str.regexp_string "@") "_"
+      |> Str.global_replace (Str.regexp_string "-") "_"
+    in "Mangled_module_" ^ name
+  in
   match Directive.scan_import hash_pos state lexbuf with
     Stdlib.Error (region, error) -> fail state region error
   | Ok (state, import, _, _) ->
@@ -311,7 +318,7 @@ let import_action ~callback hash_pos state lexbuf =
       let state         = fst (state#newline lexbuf) in
       let import_region = import#region
       and import_file   = import#file_path.Region.value
-      and module_name   = import#module_name.Region.value in
+      and import_module = import#module_name.Region.value in
       let state =
         if state#is_copy then
           let file =
@@ -323,11 +330,15 @@ let import_action ~callback hash_pos state lexbuf =
             ModRes.get_dependencies ~file state#mod_res in
           let import_path =
             match find state#incl import_file external_dirs with
-              None ->
-                Error.File_not_found import_file
-                |> fail state import_region
-            | Some import_path -> import_path
-          in state#push_import import_path module_name
+              None -> Error.File_not_found import_file
+                      |> fail state import_region
+            | Some import_path -> import_path in
+          let mangled_filename = mangle import_path in
+          let () = state#print @@
+                     Config.mk_module mangled_filename
+                                      import_module
+
+          in state#push_import import_path mangled_filename
         else state
       in callback state lexbuf
 
@@ -335,7 +346,7 @@ let import_action ~callback hash_pos state lexbuf =
 
 let if_action ~callback dir_region state lexbuf =
   match Directive.scan_if dir_region#start state lexbuf with
-    Ok (state, bool_expr, _, _) -> (* The directive and ending dropped. *)
+    Ok (state, bool_expr, _, _) -> (* Directive and ending dropped. *)
       let open State in
       let ()    = state#copy_nl lexbuf in
       let state = fst (state#newline lexbuf) in

@@ -1,5 +1,6 @@
 (* This configuration interface gathers information that is not
-   directly provided by the CLI (command-line options). *)
+   directly provided by the CLI (command-line options) and is specific
+   to a given LIGO concrete syntax. *)
 
 module type S =
   sig
@@ -8,9 +9,10 @@ module type S =
     type string_delimiter         = string
     type verbatim_delimiters      = <opening : string; closing : string>
 
-    val block    : block_comment_delimiters option
-    val line     : line_comment_delimiter option
-    val string   : string_delimiter option
-    val verbatim : verbatim_delimiters option
-    val file_ext : string option (* File extension *)
+    val block     : block_comment_delimiters option
+    val line      : line_comment_delimiter option
+    val string    : string_delimiter option
+    val verbatim  : verbatim_delimiters option
+    val file_ext  : string option (* File extension *)
+    val mk_module : string -> string -> string
   end

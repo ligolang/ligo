@@ -25,6 +25,9 @@ module Config =
     let string   = Some "\""
     let verbatim = None
     let file_ext = None
+
+    let mk_module file_name module_name =
+      Printf.sprintf "(* module %s is %s *)" module_name file_name
   end
 
 module Parameters = CLI.Make (Config)
