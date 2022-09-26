@@ -4,24 +4,24 @@ title: Getting started
 ---
 
 This section is aimed at newcomers to Ligo and Tezos smart-contracts.
-In this turorial, we will go through the following step :
+In this tutorial, we will go through the following step :
 -	Setting up the development environment,
 -	Writing a simple contract in Cameligo
 -	Testing the contract
--	Deploying the contract to tezos
+-	Deploying the contract to Tezos
 
 # Setting up the development environment.
-At the present moment, we recommand the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
+At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
 More on [installation](https://ligolang.org/docs/intro/installation) and [editor support](https://ligolang.org/docs/intro/editor-support)
 
-Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). This can be usefull for testing or for small project. However, it doesn't scale well for bigger size projet as you won't be able to spread your project accross multiple files and use your own libraries.
+Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). This can be useful for testing or for small project. However, it doesn't scale well for bigger size project as you won't be able to spread your project across multiple files and use your own libraries.
 
 
 ## Install ligo
 
-  If you are on linux, we have a `.deb` package ready for you. Those package are widely supported by linux distribution
+  If you are on Linux, we have a `.deb` package ready for you. Those package are widely supported by Linux distribution
 
-  * On debian or unbuntun, download [the package](https://ligolang.org/deb/ligo.deb), and then install using: 
+  * On Debian or Ubuntu, download [the package](https://ligolang.org/deb/ligo.deb), and then install using:
     ```zsh
     sudo apt install ./ligo.deb
     ```
@@ -51,7 +51,7 @@ Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). Th
 
 
 
-## Setting up the editor 
+## Setting up the editor
 
   You can see the updated list of supported editor [here](https://ligolang.org/docs/intro/editor-support)
 
@@ -66,25 +66,23 @@ Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). Th
 
   Once, you've done it, you are ready to make your first smart-contract
 
-## Install the tezos tools
+## Install the Tezos tools
 
-  To deploy your smart-contract on the network and to test it, you will need to use a tezos client.
+  To deploy your smart-contract on the network and to test it, you will need to use a Tezos client.
 
-  * On GNU/linux, the simplest way to get tezos-client is through opam using `opam install tezos`. alternatives are avaliable [here](https://tezos.gitlab.io/introduction/howtoget.html)
+  * On GNU/Linux, the simplest way to get tezos-client is through opam using `opam install tezos`. alternatives are available [here](https://tezos.gitlab.io/introduction/howtoget.html)
 
-  * On MacOsX, the sowtfare is distributed through a [brew](https://brew.sh/) formula with `brew install tezos`.
+  * On MacOsX, the software is distributed through a [brew](https://brew.sh/) formula with `brew install tezos`.
 
 # Building a smart-contract.
 
 In this section and the following one we will use a simple smart-contract that is present as example on our webide. We will cover the ligo language and smart-contract development in the following tutorials.
 
-First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is availiable in [Pascaligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.ligo), [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo), [Reasonligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.religo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
-
-In the following, we consider that you are using the Cameligo contract, simply change the extension (`.mligo` for cameligo, `.ligo` for pascaligo, `.religo` for reasonligo, `.jsligo`) in case you use another one.
-
-Open your editor in the folder and the file in the editor. you should have this code
+First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is available in [Pascaligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.ligo), [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo), [Reasonligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.religo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
 
 <Syntax syntax="pascaligo">
+
+Open your editor in the folder and the file `increment.ligo` in the editor. You should have this code
 
 ```pascaligo test-ligo group=a
 type storage is int
@@ -96,10 +94,10 @@ type parameter is
 
 // Two entrypoints
 
-function add (const store : storage; const delta : int) is 
+function add (const store : storage; const delta : int) is
   store + delta
 
-function sub (const store : storage; const delta : int) is 
+function sub (const store : storage; const delta : int) is
   store - delta
 
 (* Main access point that dispatches to the entrypoints according to
@@ -115,6 +113,8 @@ function main (const action : parameter; const store : storage) : list(operation
 
 </Syntax>
 <Syntax syntax="cameligo">
+
+Open your editor in the folder and the file `increment.mligo` in the editor. You should have this code
 
 ```cameligo test-ligo group=a
 type storage = int
@@ -141,6 +141,8 @@ let main (action, store : parameter * storage) : operation list * storage =
 
 </Syntax>
 <Syntax syntax="reasonligo">
+
+Open your editor in the folder and the file `increment.religo` in the editor. You should have this code
 
 ```reasonligo test-ligo group=a
 type storage = int;
@@ -169,6 +171,8 @@ let main = ((action, store) : (parameter, storage)) : (list (operation), storage
 
 </Syntax>
 <Syntax syntax="jsligo">
+
+Open your editor in the folder and the file `increment.jsligo` in the editor. You should have this code
 
 ```jsligo test-ligo group=a
 type storage = int;
@@ -199,13 +203,38 @@ const main = ([action, store] : [parameter, storage]) : [list <operation>, stora
 
 Now we are going to compile the contract, open a terminal in the folder. (or the vs-code built-in terminal with  Ctrl+shift+²) and run the following command:
 
+<Syntax syntax="pascaligo">
+
+```zsh
+ligo compile contract increment.ligo -o increment.tz
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```zsh
 ligo compile contract increment.mligo -o increment.tz
 ```
 
-The `compile contract` take one parameters, the file you want to compile. The `-o` parameter indicates to store the result in increment.tz instead of outputting it in the terminal. By default, the `maiin` function will be use as entrypoint. To select another entrypoint use `-e`
+</Syntax>
+<Syntax syntax="reasonligo">
 
-Now, you should have a michelson contract `increment.tz` in the folder ready to be deploy. But before that, we want to test it to be sure that it behaves as expected, because once publish, it cannot be modified.
+```zsh
+ligo compile contract increment.religo -o increment.tz
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```zsh
+ligo compile contract increment.jsligo -o increment.tz
+```
+
+</Syntax>
+
+The `compile contract` take one parameters, the file you want to compile. The `-o` parameter indicates to store the result in increment.tz instead of outputting it in the terminal. By default, the `main` function will be use as entrypoint. To select another entrypoint use `-e`
+
+Now, you should have a Michelson contract `increment.tz` in the folder ready to be deploy. But before that, we want to test it to be sure that it behaves as expected, because once publish, it cannot be modified.
 
 # Testing the contract
 
@@ -213,37 +242,114 @@ As we can never underline enough the importance of tests in the context of smart
 
 ## Test the code from the command line
 
-  Using the `interpret` command, one can run ligo code in the context of an init file. For intances
+  Using the `interpret` command, one can run ligo code in the context of an init file. For instance
+
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run interpret "<code>" --init-file increment.ligo
+  ```
+
+</Syntax>
+<Syntax syntax="cameligo">
 
   ```zsh
   ligo run interpret "<code>" --init-file increment.mligo
-  ``` 
+  ```
 
-  will run `<code>` after evaluating everything in increment.mligo. This is usefull to test arbitrary function and variable in your code.
+</Syntax>
+<Syntax syntax="reasonligo">
 
-  For intance, to test the `add` function you can run
+  ```zsh
+  ligo run interpret "<code>" --init-file increment.religo
+  ```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  ```zsh
+  ligo run interpret "<code>" --init-file increment.jsligo
+  ```
+
+</Syntax>
+
+  will run `<code>` after evaluating everything in the contract file. This is useful to test arbitrary functions and variables in your code.
+
+  For instance, to test the `add` function you can run
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run interpret "add(10,32)" --init-file increment.ligo
+  ```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
   ```zsh
   ligo run interpret "add(10,32)" --init-file increment.mligo
   ```
-  which should return 42.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+  ```zsh
+  ligo run interpret "add(10,32)" --init-file increment.religo
+  ```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  ```zsh
+  ligo run interpret "add(10,32)" --init-file increment.jsligo
+  ```
+
+</Syntax>
+
+  which should return `42`.
   Running several of this command will cover the complete code.
 
   To run the contract as called on the blockchain, you will prefer the command `dry-run` which take the contract, the entrypoint, the initial parameter and the initial storage, like so
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run dry-run increment.ligo "Increment(32)" "10"
+  ```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
   ```zsh
   ligo run dry-run increment.mligo "Increment(32)" "10"
   ```
-  which will return (LIST_EMPTY(), 42).
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+  ```zsh
+  ligo run dry-run increment.religo "Increment(32)" "10"
+  ```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  ```zsh
+  ligo run dry-run increment.jsligo "Increment(32)" "10"
+  ```
+
+</Syntax>
+
+  which will return `(LIST_EMPTY(), 42)`.
 
   Combine several of those command to fully test the contract use-cases.
 
 
 ## Test the code with ligo test framework.
 
-  In ligo, you are able to write test directly in the source file, using the test module. 
-
-  Add the following line at the end of `increment.mligo`
+  In LIGO, you are able to write tests directly in the source file, using the `Test` module.
 
 <Syntax syntax="pascaligo">
+
+  Add the following line at the end of `increment.ligo`
 
 ```pascaligo test-ligo group=a
 const test_increment = {
@@ -258,6 +364,8 @@ const test_increment = {
 </Syntax>
 <Syntax syntax="cameligo">
 
+  Add the following line at the end of `increment.mligo`
+
   ```cameligo test-ligo group=a
   let test_increment =
     let initial_storage = 10 in
@@ -268,6 +376,8 @@ const test_increment = {
   ```
 </Syntax>
 <Syntax syntax="reasonligo">
+
+  Add the following line at the end of `increment.religo`
 
 ```reasonligo test-ligo group=a
 let test_increment = {
@@ -281,6 +391,8 @@ let test_increment = {
 
 </Syntax>
 <Syntax syntax="jsligo">
+
+  Add the following line at the end of `increment.jsligo`
 
 ```jsligo test-ligo group=a
 const test_increment = (() : unit => {
@@ -297,24 +409,49 @@ const test_increment = (() : unit => {
   which execute the same test as the previous section.
 
   Now simply run the command
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run test increment.ligo
+  ```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
   ```zsh
   ligo run test increment.mligo
   ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+  ```zsh
+  ligo run test increment.religo
+  ```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  ```zsh
+  ligo run test increment.jsligo
+  ```
+
+</Syntax>
 
   The command will run every function starting with `test` and return their values.
 
   More on the syntax for the test framework [here](https://ligolang.org/docs/advanced/testing#testing-with-test).
 
 
-## Testing the michelson contract
+## Testing the Michelson contract
 
-  The ligo compiler is made so the produced michelson program types and correspond to the initial ligo program. However until we have tools for formal verification, we advise testing that the michelson code will behave as the ligo one. For this purpose, you should also write a test for the michelson code. 
+  The ligo compiler is made so the produced Michelson program types and correspond to the initial ligo program. However until we have tools for formal verification, we advise testing that the Michelson code will behave as the ligo one. For this purpose, you should also write a test for the Michelson code.
 
-  There is different methods for testing michelson code. In this tutorial we will focus on tezos-client mockup. More information [here](https://ligolang.org/docs/advanced/michelson_testing)
+  There is different methods for testing Michelson code. In this tutorial we will focus on `tezos-client` mockup. More information [here](https://ligolang.org/docs/advanced/michelson_testing)
 
-  This method consist in running a "mockup" tezos chain on our computer, push the contract on the chain and send transaction to the chain to test the contract behavior.
+  This method consist in running a "mockup" Tezos chain on our computer, push the contract on the chain and send transaction to the chain to test the contract behaviour.
 
-  First, create a temporary folder for the mockup chain by runnig 
+  First, create a temporary folder for the mockup chain by running
   ```zsh
   mkdir /tmp/mockup
   ```
@@ -328,12 +465,12 @@ const test_increment = (() : unit => {
     create mockup
   ```
 
-  This will run the node using the `Edo` protocol and return a few address, aliased from bootstrap1 to 5. For other version, check 
+  This will run the node using the `Edo` protocol and return a few address, aliased from bootstrap1 to 5. For other version, check
   `tezos-client list mockup protocols`
 
   You can now originate the contract to the mock net with :
   ```zsh
-  tezos-client \                                                      
+  tezos-client \
     --protocol PtEdo2ZkT9oKpimTah6x2embF25oss54njMuPzkJTEi5RqfdZFA \
     --base-dir /tmp/mockup \
     --mode mockup \
@@ -342,13 +479,13 @@ const test_increment = (() : unit => {
                 running increment.tz \
                 --init 10 --burn-cap 0.1
   ```
-  you should see a lot of information on the command line and the information `New contract ... origninated`
+  you should see a lot of information on the command line and the information `New contract ... originated`
 
   You can now start testing the contract.
 
   To check its storage run :
   ```zsh
-  tezos-client \                                                      
+  tezos-client \
     --protocol PtEdo2ZkT9oKpimTah6x2embF25oss54njMuPzkJTEi5RqfdZFA \
     --base-dir /tmp/mockup \
     --mode mockup \
@@ -357,13 +494,38 @@ const test_increment = (() : unit => {
   You should see a `10` in your terminal
 
   We are now ready to send a transaction to our contract. We want to send a transaction with parameter "Increment (32)" but the parameter is written is ligo.
-  For that, it must first be converted to a michelson parameter. Which is done by running :
+  For that, it must first be converted to a Michelson parameter. Which is done by running :
+
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo compile parameter increment.ligo "Increment (32)"
+  ```
+
+</Syntax>
+<Syntax syntax="cameligo">
 
   ```zsh
   ligo compile parameter increment.mligo "Increment (32)"
   ```
 
-  Which give you the result (Left (Right 32))
+</Syntax>
+<Syntax syntax="reasonligo">
+
+  ```zsh
+  ligo compile parameter increment.religo "Increment (32)"
+  ```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  ```zsh
+  ligo compile parameter increment.jsligo "Increment (32)"
+  ```
+
+</Syntax>
+
+  Which gives you the result `(Left (Right 32))`
 
   Now we can send our transaction with the command
 
@@ -378,21 +540,21 @@ const test_increment = (() : unit => {
   ```
   The network will again send back many information including the updated storage which should now be equal to 42.
 
-  This conclude our section about testing. As a exercice, you can write the test for the other entrypoint (decrease and reset).
-  Once you are sure that the contract work corectly for all the use cases, you can move on to the next section
+  This conclude our section about testing. As an exercise, you can write the test for the other entrypoint (decrease and reset).
+  Once you are sure that the contract work correctly for all the use cases, you can move on to the next section
 
 # Publishing the contract
 
-For deploying the contract on tezos, we will use the `tezos-client` interface like we did on the previous section.
+For deploying the contract on Tezos, we will use the `tezos-client` interface like we did on the previous section.
 
 First, you will need an account address. You can get one for testing at the [faucet](https://faucet.tzalpha.net/).
 Download the json file and place it in the `ligo_tutorial` folder. $!$ The account that you get from the faucet are only temporary
 
-Then we are going to point the client on a tezos node
+Then we are going to point the client on a Tezos node
 ```zsh
-tezos-client --endpoint https://testnet-tezos.giganode.io config update 
+tezos-client --endpoint https://testnet-tezos.giganode.io config update
 ```
-This is the testnet, which is a seperate network from Tezos, use for testing.
+This is the testnet, which is a separate network from Tezos, use for testing.
 
 
 Once done, activate your account
@@ -414,7 +576,7 @@ Again, you will receive several messages from the node and you should get the co
 
 You can search your contract on the network using the portal [Better call dev](https://better-call.dev/)
 
-You can know  call your contract with 
+You can know  call your contract with
 ```zsh
 tezos-client call increment from alice \
              --arg "(Left (Right 32))" \
@@ -425,4 +587,4 @@ If you do so, you will see several information on the operation, including the n
 
 This conclude this part of our tutorial.
 You should now be able to compile, test, publish and call a contract.
-Now you can go to the tacos shop tutorial to know more about programming with Ligo or you can start developping your own contract using the Ligo flavor you are more familiar with.
+Now you can go to the tacos shop tutorial to know more about programming with Ligo or you can start developing your own contract using the Ligo flavor you are more familiar with.
