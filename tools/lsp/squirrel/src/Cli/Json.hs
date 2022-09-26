@@ -1,8 +1,6 @@
 -- | ligo version: 0.51.0
 -- | The definition of type as is represented in ligo JSON output
 
-{-# LANGUAGE DeriveGeneric #-}
-
 module Cli.Json
   ( LigoError (..)
   , LigoErrorContent (..)
@@ -11,6 +9,8 @@ module Cli.Json
   , LigoDefinitions (..)
   , LigoDefinitionsInner (..)
   , LigoVariableDefinitionScope (..)
+  , LigoModuleDefinitionScope (..)
+  , LigoModuleAliasDefinitionScope (..)
   , LigoTypeDefinitionScope (..)
   , LigoTypeFull (..)
   , LigoTypeContent (..)
@@ -115,9 +115,13 @@ data LigoDefinitions = LigoDefinitions
 -- | First part under `"variables"` constraint
 data LigoDefinitionsInner = LigoDefinitionsInner
   { -- | `"variables"`
-    _ldiVariables :: HM.HashMap Text LigoVariableDefinitionScope
-    -- | `"types"`
-  , _ldiTypes     :: HM.HashMap Text LigoTypeDefinitionScope
+    _ldiVariables     :: HM.HashMap Text LigoVariableDefinitionScope
+  , -- | `"types"`
+    _ldiTypes         :: HM.HashMap Text LigoTypeDefinitionScope
+  , -- | `"modules"
+    _ldiModules       :: HM.HashMap Text LigoModuleDefinitionScope
+  , -- | `"module_aliases"
+    _ldiModuleAliases :: HM.HashMap Text LigoModuleAliasDefinitionScope
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 3 LigoDefinitionsInner
@@ -133,16 +137,17 @@ data LigoScope = LigoScope
     -- { "range": [ "<scope>", LigoRangeInner ] }
     -- ```
     _lsRange                 :: LigoRange
-    -- | `"expression_environment"`
-  , _lsExpressionEnvironment :: [Text]
-    -- | `"type_environment"`
-  , _lsTypeEnvironment       :: [Text]
+  , -- | `"expression_environment"`
+    _lsExpressionEnvironment :: [Text]
+  , -- | `"type_environment"`
+    _lsTypeEnvironment       :: [Text]
+  , -- | `"module_environment"`
+    _lsModuleEnvironment     :: [Text]
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 2 LigoScope
 
 -- | Definition declaration that goes from `"definitions"` constraint
-
 data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   { -- | `"name"`
     _lvdsName       :: Text
@@ -165,6 +170,26 @@ data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 4 LigoVariableDefinitionScope
+
+-- | Definition of a module from '_ldiModules'.
+data LigoModuleDefinitionScope = LigoModuleDefinitionScope
+  { -- | `"definition"`
+    _lmdsDefinition :: LigoVariableDefinitionScope
+  , -- | `"members"`
+    _lmdsMembers    :: LigoDefinitionsInner
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 4 LigoModuleDefinitionScope
+
+-- | Definition of a module from '_ldiModuleAliases'.
+data LigoModuleAliasDefinitionScope = LigoModuleAliasDefinitionScope
+  { -- | `"definition"`
+    _lmadsDefinition :: LigoVariableDefinitionScope
+  , -- | `"members"`
+    _lmadsAlias      :: [Text]
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 5 LigoModuleAliasDefinitionScope
 
 data LigoTypeDefinitionScope = LigoTypeDefinitionScope
   { -- | `"name"`
@@ -254,7 +279,7 @@ data LigoTypeApp = LigoTypeApp
   deriving (FromJSON) via LigoJSON 3 LigoTypeApp
 
 data LigoTypeModuleAccessor = LigoTypeModuleAccessor
-  { _ltmaModuleName :: Value -- TODO not used
+  { _ltmaModulePath :: Value -- TODO not used
   , _ltmaElement    :: Value -- TODO not used
   }
   deriving stock (Generic, Show)
