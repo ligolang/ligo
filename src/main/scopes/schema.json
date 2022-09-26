@@ -170,7 +170,7 @@
     "table_type_expression": {
       "type": "object",
       "properties": {
-        "content": {
+        "fields": {
           "type": "object",
           "properties": {
             ".{1,}": { "$ref": "#/$defs/row_type_expression" }
@@ -199,7 +199,7 @@
           ]
         }
       },
-      "required": ["content", "layout"]
+      "required": ["fields", "layout"]
     },
     "for_all_type": {
       "type": "object",

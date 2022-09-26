@@ -122,8 +122,7 @@ unit_referenceOfId = do
 unit_definitionOfLeft :: Assertion
 unit_definitionOfLeft = do
   definitionOfLeft @Standard
-  -- FIXME: LIGO-759
-  --definitionOfLeft @FromCompiler
+  definitionOfLeft @FromCompiler
 
 unit_referenceOfLeft :: Assertion
 unit_referenceOfLeft = do
