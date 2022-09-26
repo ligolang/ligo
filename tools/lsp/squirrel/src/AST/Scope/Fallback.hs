@@ -7,9 +7,10 @@ module AST.Scope.Fallback
 
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
-import Control.Lens (makeLenses, view, _1, (%~), (^.), (|>))
+import Control.Lens (makeLenses, view, _1, (%~), (^.), (|>), (^?), (<&>))
 import Control.Monad.Reader (runReader)
 import Control.Monad.RWS.Strict (RWS, asks, evalRWS, get, local, modify, tell, void)
+import Control.Monad.Trans.Maybe (MaybeT (..))
 import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
 import Data.Bool (bool)
@@ -35,9 +36,9 @@ import AST.Scope.Common
 import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..)
   , Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..)
-  , sdName, sdNamespace, sdOrigin, sdRefs
+  , mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec, _ModuleSpec
   )
-import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics)
+import AST.Scope.ScopedDecl.Parser (parseModule, parseParameters, parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type, TypeParams (..))
 import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))
 import Cli.Types
@@ -46,7 +47,10 @@ import Log (i)
 import Parser (ParsedInfo)
 import Product
 import Range
-import Util (foldMapM, (<<&>>))
+import Util (foldMapM, unconsFromEnd, (<<&>>))
+
+hoistMaybe :: Applicative f => Maybe a -> MaybeT f a
+hoistMaybe = MaybeT . pure
 
 data Fallback
 
@@ -72,7 +76,7 @@ data ExtendedDeclRef = ExtendedDeclRef
 
 data RefKind
   = OrdinaryRef
-  | ModuleAliasRef Namespace
+  | ModuleAliasRef (Maybe ExtendedDeclRef)
   deriving Show via PP RefKind
   deriving stock (Eq, Ord)
 
@@ -81,7 +85,7 @@ instance Pretty ExtendedDeclRef where
 
 instance Pretty RefKind where
   pp OrdinaryRef = "ref"
-  pp (ModuleAliasRef ns) = "alias" <+> pp ns
+  pp (ModuleAliasRef ns) = "alias" <+> maybe "unresolved" pp ns
 
 type ExtendedScopeInfo = (Set ExtendedDeclRef, Range)
 type ExtendedScopeTree = Cofree [] ExtendedScopeInfo
@@ -89,17 +93,12 @@ type ExtendedScopeTree = Cofree [] ExtendedScopeInfo
 data InScopeRef
   = InScopeOrdinaryRef Range
   -- ^ An ordinary value, function, or type reference, with its 'Range'.
-  | InScopeModuleAliasRef Range Namespace
+  | InScopeModuleAliasRef Range (Maybe ExtendedDeclRef)
   -- ^ A reference to a module alias. Suppose that @module A = B.C@, then this
-  -- constructor contains the 'Range' of @A@ as well as its alias @B.C@.
+  -- constructor contains the 'Range' of @A@ as well as the chain of declaration
+  -- references up to the original module (if resolved).
   deriving stock (Show)
 
--- FIXME: The type alias `module B = type titi = int end` doesn't work inside
--- `module A = type titi = B.titi end`.
--- The culprit: We need to lookup outside of the module _even_ if it's qualified.
--- The fix might be to have have a datatype like
--- `data Qualified = Qualified Namespace Namespace` where the first one is
--- unqualified/implicit and the second one is qualified/explicit.
 -- | A 'Namespace' may be explicitly qualified (e.g. @Foo.bar@) or implicitly
 -- qualified (e.g. @module Foo = struct let bar = 0 end@). This datatype records
 -- in which situation we're accessing a name.
@@ -188,13 +187,56 @@ insertScope edrRefKind scopedDecl = do
   modify (Map.insert declRef scopedDecl)
   pure declRef
 
+-- | Tries to expand a module alias into its full definition. For instance, if
+--
+-- > module A = struct
+-- >   module Y = struct
+-- >     module Z = struct
+-- >     end
+-- >   end
+-- >
+-- >   module X = Y.Z end
+-- > end
+-- > module W = A
+--
+-- Then using `W.X` will expand to 'A.Y.Z'.
 resolveModuleAlias :: Text -> ScopeM (Maybe Namespace)
 resolveModuleAlias moduleName = do
   namespace <- askNamespace
-  inScope <- askInScope
-  pure $ HashMap.lookup (unqualified namespace, moduleName) inScope >>= \case
-    InScopeOrdinaryRef _ -> Nothing
-    InScopeModuleAliasRef _ ns -> Just ns
+  lookupInOuterModules namespace moduleName <&> \case
+    Nothing -> Nothing
+    Just (InScopeOrdinaryRef _, ns) -> Just $ ns <> Namespace [moduleName]
+    Just (InScopeModuleAliasRef _ ref, _) -> expandAliasRef ref
+  where
+    expandAliasRef :: Maybe ExtendedDeclRef -> Maybe Namespace
+    expandAliasRef Nothing =
+      Nothing
+    expandAliasRef (Just ExtendedDeclRef{edrDeclRef = DeclRef{drName}, edrNamespace, edrRefKind = OrdinaryRef}) =
+      Just $ edrNamespace <> Namespace [drName]
+    expandAliasRef (Just ExtendedDeclRef{edrRefKind = ModuleAliasRef refM}) =
+      expandAliasRef refM
+
+-- It's possible that the resolved name has parts that are unresolved, so we
+-- deal with them here.
+--   This is done like so: the first name part of the namespace should always be
+-- in scope of the current unqualified namespace (assuming it's bound). For the
+-- next name parts, we insert the previous (resolved) namespaces as qualified
+-- namespaces, so it will look _inside_ these namespaces.
+--   We always expand the first name part until it's ordinary (or unbound), and
+-- use it as the qualified namespace for the next parts, recursively.
+--   If we get 'Nothing' at any point, it means it's unbound and we should stop
+-- the expansion.
+--   As an example, W.X will be expanded like below. The parentheses indicate
+-- which name we're currenly expanding.
+--   (W).X -> (A).X -> A.(X) -> A.(Y).Z -> A.Y.(Z) -> A.Y.Z
+expandModuleAlias :: Namespace -> ScopeM (Maybe Namespace)
+expandModuleAlias (Namespace []) = Just . qualified <$> askNamespace
+expandModuleAlias (Namespace (base : nested)) =
+  resolveModuleAlias base >>= \case
+    -- Unbound name, stop.
+    Nothing -> pure Nothing
+    -- The base is already expanded, we can continue with the nested modules.
+    Just resolved -> mapNamespace (const resolved) $ expandModuleAlias $ Namespace nested
 
 withScope :: ExtendedDeclRef -> ScopeM a -> ScopeM a
 withScope ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..} =
@@ -207,16 +249,10 @@ withScope ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..} =
 withScopes :: [ExtendedDeclRef] -> ScopeM a -> ScopeM a
 withScopes declRefs m = foldl' (flip withScope) m declRefs
 
-withUnqualifiedNamespace, withQualifiedNamespace :: Text -> ScopeM a -> ScopeM a
--- | Inserts the given name at the top of the @Namespace@ and performs a @local@
--- function with the modified environment. Useful to deal with modules.
--- Unlike 'withQualifiedNamespace', preserves the current qualification.
-withUnqualifiedNamespace inner =
-  mapQualified (mapInUnqualified (\(Namespace ns) -> Namespace (ns |> inner)))
--- | Like 'withUnqualifiedNamespace', but makes the transformation in the
--- 'Qualified' 'Namespace'.
-withQualifiedNamespace inner =
-  mapQualified (mapInQualified (\(Namespace ns) -> Namespace (ns |> inner)))
+inScopeRefToRef :: InScopeRef -> (Range, RefKind)
+inScopeRefToRef = \case
+  InScopeOrdinaryRef range -> (range, OrdinaryRef)
+  InScopeModuleAliasRef range ref -> (range, ModuleAliasRef ref)
 
 insertRef :: Text -> PreprocessedRange -> ScopeM ()
 insertRef name (PreprocessedRange refRange) = do
@@ -225,9 +261,7 @@ insertRef name (PreprocessedRange refRange) = do
     Nothing -> pure ()
     Just (inScopeRef, declNamespace) -> do
       let
-        (declRange, refKind) = case inScopeRef of
-          InScopeOrdinaryRef range -> (range, OrdinaryRef)
-          InScopeModuleAliasRef range ns -> (range, ModuleAliasRef ns)
+        (declRange, refKind) = inScopeRefToRef inScopeRef
         ref = ExtendedDeclRef (DeclRef name declRange) declNamespace refKind
       modify $ Map.adjust (sdRefs %~ (refRange :)) ref
 
@@ -345,8 +379,7 @@ instance HasGo Expr where
           scopes <- withScopes decls (walk body)
           let bodyTree = getTree <$> scopes
           let scopeTrees = [statementsTree, (Set.fromList decls, getRange $ extract body) :< maybeToList bodyTree]
-          pure $ Just $ (, []) $
-            (Set.empty, getRange r) :< scopeTrees
+          pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
     Apply func params -> do
       funcTree <- maybeToList . fmap getTree <$> walk func
       paramTrees <- map getTree <$> wither walk params
@@ -634,23 +667,41 @@ instance HasGo Binding where
     BInclude      {} -> pure Nothing
     BImport       {} -> pure Nothing
     BModuleDecl name decls ->
-      mkDecl (moduleScopedDecl [] name)
+      mkDecl (moduleScopedDecl [] name decls)
         >>= maybe (pure Nothing) \moduleDecl -> do
+          let moduleName = moduleDecl ^. sdName
+          (declTree, declRefs) <-
+            mapQualified (mapInUnqualified (\(Namespace ns) -> Namespace (ns |> moduleName)))
+            $ processSequence decls
           moduleRef <- insertScope OrdinaryRef moduleDecl
           void $ withScope moduleRef $ walk name
-          let moduleName = moduleDecl ^. sdName
-          (declTree, declRefs) <- withUnqualifiedNamespace moduleName $ processSequence decls
           pure $ Just
             ( (Set.singleton moduleRef, getRange r) :< declTree
             , moduleRef : Set.toList declRefs
             )
     BModuleAlias name path ->
-      mkDecl (moduleScopedDecl [] name)
+      mkDecl (moduleScopedDecl [] name path)
         >>= maybe (pure Nothing) \moduleDecl -> do
-          aliasM <- walkModuleAccess path Nothing
-          -- It's not technically correct to use an 'OrdinaryRef' here, but we'd
-          -- like to insert something anyway if it fails.
-          moduleRef <- insertScope (maybe OrdinaryRef ModuleAliasRef aliasM) moduleDecl
+          walkModuleAccess path Nothing
+
+          declRefM <- runMaybeT do
+            -- Extract the original module alias path and expand it to resolve
+            -- all aliases.
+            ModuleAlias alias <- hoistMaybe (moduleDecl ^? sdSpec . _ModuleSpec . mdsInit)
+            Namespace expandedAlias <- MaybeT $ expandModuleAlias alias
+            (aliasNamespace, drName) <- hoistMaybe $ unconsFromEnd expandedAlias
+
+            -- Lookup the module name that we resolved to and return its cached
+            -- reference.
+            (ref, edrNamespace) <- MaybeT do
+              currentNamespace <- askNamespace
+              lookupInOuterModules
+                (mapInQualified (<> Namespace aliasNamespace) currentNamespace)
+                drName
+            let (drRange, edrRefKind) = inScopeRefToRef ref
+            pure ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..}
+
+          moduleRef <- insertScope (ModuleAliasRef declRefM) moduleDecl
           void $ withScope moduleRef $ walk name
           pure $ Just
             ( (Set.singleton moduleRef, getRange r) :< []
@@ -703,20 +754,17 @@ instance HasGo ModuleName where
 
 -- | Given a module access such as `A.B.C` ('Nothing' case) or `A.B.C.x` ('Just'
 -- case), add references to each module in the chain and maybe walk over the
--- qualified accessor. Returns the walked namespace, if we successfuly walked
--- over it.
-walkModuleAccess :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM (Maybe Namespace)
+-- qualified accessor.
+walkModuleAccess :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM ()
 walkModuleAccess path accessorM = go path
   where
-    go [] = do
-      maybe (pure ()) (void . walk) accessorM
-      Just . qualified <$> askNamespace
+    go [] = maybe (pure ()) (void . walk) accessorM
     go (modName : modNames) = do
       void $ walk modName
       getName modName >>= \case
-        Left _ -> pure Nothing
+        Left _ -> pure ()
         Right (_, namespacePart) -> resolveModuleAlias namespacePart >>= \case
-          Nothing -> withQualifiedNamespace namespacePart (go modNames)
+          Nothing -> pure ()
           Just resolved -> mapNamespace (const resolved) (go modNames)
 
 instance HasGo ModuleAccess where
@@ -861,11 +909,11 @@ moduleScopedDecl
      )
   => [Text] -- ^ documentation comments
   -> LIGO info -- ^ node name
+  -> [LIGO info] -- ^ body node
   -> ScopeM (Either TreeDoesNotContainName ScopedDecl)
-moduleScopedDecl docs nameNode = do
+moduleScopedDecl docs nameNode body = do
   dialect <- askDialect
   namespace <- askNamespace
-  let range = getRange nameNode
   getName nameNode <<&>> \(PreprocessedRange origin, name) ->
     ScopedDecl
       { _sdName = name
@@ -873,7 +921,11 @@ moduleScopedDecl docs nameNode = do
       , _sdRefs = []
       , _sdDoc = docs
       , _sdDialect = dialect
-      , _sdSpec = ModuleSpec (ModuleDeclSpecifics range ModuleDecl name)
+      , _sdSpec = ModuleSpec ModuleDeclSpecifics
+        { _mdsInitRange = getRange nameNode
+        , _mdsInit = runReader (parseModule body) dialect
+        , _mdsName = name
+        }
       , _sdNamespace = unqualified namespace
       }
 

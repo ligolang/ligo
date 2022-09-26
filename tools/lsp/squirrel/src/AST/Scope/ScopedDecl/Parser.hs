@@ -3,6 +3,7 @@ module AST.Scope.ScopedDecl.Parser
   , parseTypeDeclSpecifics
   , parseTypeParams
   , parseParameters
+  , parseModule
   ) where
 
 import Control.Lens ((??))
@@ -209,3 +210,12 @@ parseRecordFieldPattern node = do
   runMaybeT $ hoistMaybe (layer node) >>= \case
     LIGO.IsRecordField name body -> IsRecordField (ppToText $ lppDialect dialect name) <$> MaybeT (parsePattern body)
     LIGO.IsRecordCapture name -> pure $ IsRecordCapture (ppToText $ lppDialect dialect name)
+
+-- * Parsers for modules.
+
+-- TODO: We only parse aliases for now.
+parseModule :: [LIGO info] -> Parser Module
+parseModule =
+  pure
+  . maybe ModuleDecl (ModuleAlias . Namespace . coerce)
+  . traverse (layer @LIGO.ModuleName)
