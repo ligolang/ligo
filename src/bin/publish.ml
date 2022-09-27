@@ -92,18 +92,20 @@ type body =
   ; name        : string 
   ; description : string
   ; dist_tags   : dist_tag [@key "dist-tags"]
+  ; main        : string option
   ; versions    : Versions.t  
   ; readme      : string
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~author ~repository ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
   id = name ;
   name ;
   description ;
   dist_tags = {
     latest = version
   } ;
+  main = main;
   versions = SMap.add version {
     name ;
     author = {
@@ -131,7 +133,7 @@ let body ~name ~author ~repository ~readme ~version ~ligo_registry ~description 
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let LigoManifest.{ name ; version ; scripts ; description ; readme ; author; repository ;  _ } = manifest in
+  let LigoManifest.{ name ; version ; main; scripts ; description ; readme ; author; repository ;  _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
@@ -144,6 +146,7 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
     ~repository
     ~version
     ~scripts
+    ~main
     ~description 
     ~readme
     ~ligo_registry

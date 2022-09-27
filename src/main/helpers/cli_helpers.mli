@@ -25,6 +25,7 @@ module LigoManifest : sig
     ; version            : string
     ; description        : string
     ; scripts            : (string * string) list
+    ; main               : string option
     ; author             : string
     ; repository         : string
     ; license            : string
