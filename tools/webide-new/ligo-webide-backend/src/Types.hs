@@ -1,5 +1,6 @@
 module Types
   ( DisplayFormat (..)
+  , prettyDisplayFormat
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -21,3 +22,9 @@ instance ToJSON DisplayFormat
 instance ToSchema DisplayFormat where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {constructorTagModifier = prepareField 2 }
+
+prettyDisplayFormat :: DisplayFormat -> String
+prettyDisplayFormat = \case
+  DFDev -> "dev"
+  DFJson -> "json"
+  DFHumanReadable -> "human-readable"

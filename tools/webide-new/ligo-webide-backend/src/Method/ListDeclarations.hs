@@ -16,15 +16,10 @@ import Source (withProject)
 listDeclarations :: ListDeclarationsRequest -> WebIDEM ListDeclarationsResponse
 listDeclarations request =
   withProject (ldrProject request) $ \(dirPath, fullMainPath) -> do
-    (ec, out, err) <- do
-      let commands =
-            [ "info"
-            , "list-declarations"
-            , fullMainPath
-            , "--display-format"
-            , "dev"]
-            ++ ["--only-ep" | ldrOnlyEndpoint request]
-       in runLigo dirPath commands
+    (ec, out, err) <- runLigo dirPath $
+      [ "info", "list-declarations" , fullMainPath]
+      ++ ["--display-format", "dev"]
+      ++ ["--only-ep" | ldrOnlyEndpoint request]
 
     case ec of
       ExitSuccess -> do

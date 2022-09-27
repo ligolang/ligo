@@ -11,7 +11,7 @@ import Ligo (runLigo)
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
 import Source (withProject)
-import Types (DisplayFormat(..))
+import Types (prettyDisplayFormat)
 
 compileExpression :: CompileExpressionRequest -> WebIDEM CompilerResponse
 compileExpression request =
@@ -21,20 +21,14 @@ compileExpression request =
         {errBody = "couldn't infer dialect from filetype"}
       Just d -> pure d
 
-    (ec, out, err) <- do
-      let commands = ["compile", "expression", prettyDialect dialect, Text.unpack (cerFunction request)]
-      let commands1 = (commands ++) $ case cerDisplayFormat request of
-            Nothing -> []
-            Just df -> ("--display-format":) $ case df of
-              DFDev -> ["dev"]
-              DFHumanReadable -> ["human-readable"]
-              DFJson -> ["json"]
-      let commands2 = (commands1 ++) $ case cerProtocol request of
-            Nothing -> []
-            Just pr -> ["-p", Text.unpack pr]
-      let commands3 = commands2 ++ ["--init-file", fullMainPath]
-
-       in runLigo dirPath commands3
+    (ec, out, err) <- runLigo dirPath $
+      ["compile", "expression"]
+      ++ [prettyDialect dialect, Text.unpack (cerFunction request)]
+      ++ maybe []
+           (\df -> ["--display-format", prettyDisplayFormat df])
+           (cerDisplayFormat request)
+      ++ maybe [] (\p -> ["-p", Text.unpack p]) (cerProtocol request)
+      ++ ["--init-file", fullMainPath]
 
     case ec of
       ExitSuccess -> pure (CompilerResponse $ Text.pack out)
