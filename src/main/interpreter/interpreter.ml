@@ -227,6 +227,17 @@ let bind_param
       let@ () = Free loc in
       return result
 
+(* HACK? deref any "locations" in the env, in order to stuff it in a
+   closure *)
+let deref_env env =
+  let open Monad in
+  bind_map_list
+    (fun (x, y) -> match y.item.eval_term with
+                   | V_location loc ->
+                      let* v = Call (Deref loc) in
+                      return (x, {y with item = {y.item with eval_term = v}})
+                   | _ -> return (x, y))
+    env
 
 let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   :  Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant'
@@ -1619,6 +1630,7 @@ and eval_ligo ~raise ~steps ~options
     let env =
       List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env
     in
+    let* env = deref_env env in
     return
     @@ V_Func_val
          { rec_name = None
@@ -1798,6 +1810,7 @@ and eval_ligo ~raise ~steps ~options
     let env =
       List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env
     in
+    let* env = deref_env env in
     return
     @@ V_Func_val
          { rec_name = Some fun_name

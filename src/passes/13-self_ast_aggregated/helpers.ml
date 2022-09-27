@@ -286,11 +286,15 @@ module Free_variables :
       let fv2 = (self let_result) in
       let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       VarSet.union (self rhs) fv2
-    | E_let_mut_in { rhs; let_result; _ } ->
-      VarSet.union (self let_result) (self rhs)
-    | E_assign {expression;_} ->
-      self expression
-    | E_deref _ -> VarSet.empty
+    (* HACK? return free mutable variables too, without distinguishing
+       them from free immutable variables *)
+    | E_let_mut_in { let_binder; rhs; let_result } ->
+      let fv2 = (self let_result) in
+      let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
+      VarSet.union (self rhs) fv2
+    | E_assign {binder; expression} ->
+      VarSet.union (VarSet.singleton (Binder.get_var binder)) (self expression)
+    | E_deref v -> VarSet.singleton v
     | E_for { binder; start; final; incr; f_body } ->
       unions
         [ self start
