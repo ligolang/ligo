@@ -352,15 +352,6 @@ let%expect_test _ =
   [%expect{| 4 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.religo") ] ;
-  [%expect{|
-    const a =
-       match CONS(1 , LIST_EMPTY()) with
-        | [] -> 1
-        | a::b::c::[] -> 2
-        | gen#2 -> 3 |}]
-
-let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.religo") ] ;
   [%expect{|
     Reasonligo is depreacted, support will be dropped in a few versions.
