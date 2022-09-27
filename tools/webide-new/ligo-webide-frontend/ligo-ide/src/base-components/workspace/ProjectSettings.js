@@ -1,7 +1,10 @@
 import set from "lodash/set";
 import get from "lodash/get";
+import fileOps from "~/base-components/file-ops";
 
 export default class ProjectSettings {
+  static configFileName = "config.json";
+
   constructor(projectManager, settingFilePath, channel) {
     this.projectManager = projectManager;
     this.settingFilePath = settingFilePath;
@@ -16,7 +19,7 @@ export default class ProjectSettings {
   async readSettings() {
     let settingsJson;
     try {
-      settingsJson = await this.projectManager.readFile(this.settingFilePath);
+      settingsJson = await fileOps.readFile(this.settingFilePath);
     } catch (e) {}
 
     this.update(settingsJson);
@@ -27,7 +30,7 @@ export default class ProjectSettings {
     const settings = this.trimSettings(rawSettings);
 
     const settingsJson = JSON.stringify(settings, null, 2);
-    await this.projectManager.saveFile(this.settingFilePath, settingsJson);
+    await fileOps.writeFile(this.settingFilePath, settingsJson);
   }
 
   update(settingsJson) {
@@ -77,5 +80,39 @@ export default class ProjectSettings {
       this.channel.trigger(`settings:${key}`, value);
       await this.writeSettings(settings);
     }
+
+    if (key === "compilers.solc") {
+      this.projectManager.lint();
+    }
   }
+
+  trimSettings = (rawSettings = {}) => {
+    const compilers = rawSettings.compilers || {};
+    const settings = {
+      main: rawSettings.main || "./contracts/Contract.sol",
+      deploy: rawSettings.deploy,
+      framework: rawSettings.framework || `${process.env.COMPILER_VERSION_KEY}-docker`,
+      npmClient: rawSettings.npmClient,
+      compilers: {
+        ...compilers,
+        [process.env.COMPILER_VERSION_KEY]: compilers[process.env.COMPILER_VERSION_KEY] || "",
+        solc: compilers.solc || "",
+        evmVersion: compilers.evmVersion || "istanbul",
+        optimizer: compilers.optimizer,
+      },
+      linter: rawSettings.linter || "solhint",
+      editor: {
+        fontFamily: rawSettings.editor?.fontFamily || "Hack",
+        fontSize: rawSettings.editor?.fontSize || "13px",
+        ligatures: Boolean(rawSettings.editor?.ligatures),
+      },
+    };
+    if (rawSettings.language) {
+      settings.language = rawSettings.language;
+    }
+    if (!settings.npmClient) {
+      delete settings.npmClient;
+    }
+    return settings;
+  };
 }

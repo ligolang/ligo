@@ -4,7 +4,7 @@ import { DebouncedFormGroup, FormGroup, Label, CustomInput } from "~/base-compon
 
 import {
   WorkspaceContext,
-  BaseProjectManager,
+  ProjectManager,
   AbstractProjectSettingsTab,
   ProjectPath,
 } from "~/base-components/workspace";
@@ -13,11 +13,11 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
   static contextType = WorkspaceContext;
 
   componentDidMount() {
-    BaseProjectManager.channel.on("settings", this.debouncedUpdate);
+    ProjectManager.channel.on("settings", this.debouncedUpdate);
   }
 
   componentWillUnmount() {
-    BaseProjectManager.channel.off("settings", this.debouncedUpdate);
+    ProjectManager.channel.off("settings", this.debouncedUpdate);
   }
 
   renderLanguageOption = (projectSettings) => {

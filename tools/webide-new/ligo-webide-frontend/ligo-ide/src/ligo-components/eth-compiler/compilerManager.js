@@ -6,6 +6,7 @@ import fileOps from "~/base-components/file-ops";
 import SolcjsCompiler from "./SolcjsCompiler";
 import soljsonReleases from "./soljsonReleases.json";
 import Api from "~/components/api/api";
+import ProjectManager from "~/base-components/workspace/ProjectManager/ProjectManager";
 
 class SolcjsChannel extends DockerImageChannel {
   installed() {
@@ -132,7 +133,7 @@ export class CompilerManager {
 
     // Write output to file
     if (!(await fileOps.exists(buildFolder))) {
-      await projectManager.writeDirectory(projectManager.projectRoot, "build");
+      await ProjectManager.writeDirectory(projectManager.projectRoot, "build");
     }
 
     const buildRelatedPath = projectManager.mainFilePath.replace(
@@ -144,7 +145,7 @@ export class CompilerManager {
     let curFolder = buildFolder;
     for (let i = 0; i < buildRelatedFolders.length; i++) {
       if (!(await fileOps.exists(`${curFolder}/${buildRelatedFolders[i]}`))) {
-        await projectManager.writeDirectory(curFolder, buildRelatedFolders[i]);
+        await ProjectManager.writeDirectory(curFolder, buildRelatedFolders[i]);
         curFolder = `${curFolder}/${buildRelatedFolders[i]}`;
       }
     }
@@ -161,10 +162,10 @@ export class CompilerManager {
     );
 
     if (!(await fileOps.exists(amendedBuildPath))) {
-      await projectManager.createNewFile(fileFolder, fileName);
-      await projectManager.saveFile(amendedBuildPath, data);
+      await ProjectManager.createNewFile(fileFolder, fileName);
+      await fileOps.writeFile(amendedBuildPath, data);
     } else {
-      await projectManager.saveFile(amendedBuildPath, data);
+      await fileOps.writeFile(amendedBuildPath, data);
     }
 
     return amendedBuildPath;

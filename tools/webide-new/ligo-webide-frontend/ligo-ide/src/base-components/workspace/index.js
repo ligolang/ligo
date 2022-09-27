@@ -1,6 +1,6 @@
 import "./styles.scss";
 
-export { default } from "./WorkspaceLoader";
+export { WorkspaceLoader } from "./WorkspaceLoader";
 export { default as WorkspaceContext } from "./WorkspaceContext";
 
 export { default as TutorialModal } from "./components/TutorialModal";
@@ -10,8 +10,7 @@ export { default as AbstractProjectSettingsTab } from "./components/AbstractProj
 export { default as ProjectPath } from "./components/ProjectPath";
 export { default as TerminalButton } from "./components/TerminalButton";
 
-export { default as ProjectManager } from "./ProjectManager";
-export { default as BaseProjectManager } from "./ProjectManager/BaseProjectManager";
+export { ProjectManager } from "./ProjectManager";
 export { default as ProjectSettings } from "./ProjectSettings";
 
 export { default as redux } from "./redux";

@@ -99,6 +99,8 @@ module.exports = {
         message: '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.', 
       }, 
     ],
+
+    "no-await-in-loop": 0,
   },
   overrides: [
     {
@@ -182,7 +184,6 @@ module.exports = {
         "import/no-cycle": 0,
         "react/no-find-dom-node": 0,
         "react/button-has-type": 0,
-        "no-await-in-loop": 0,
         "import/no-dynamic-require": 0,
         "no-restricted-globals": 0
       },

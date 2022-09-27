@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import throttle from "lodash/throttle";
+import pathHelper from "path-browserify";
 
 import { SplitPane, ToolbarButton } from "~/base-components/ui-components";
 
@@ -9,7 +10,7 @@ import CodeEditorCollection from "~/base-components/code-editor";
 import FileTree from "~/base-components/filetree";
 
 import WorkspaceContext from "../WorkspaceContext";
-import BaseProjectManager from "../ProjectManager/BaseProjectManager";
+import ProjectManager from "../ProjectManager/ProjectManager";
 import actions from "../actions";
 
 import contextMenu, { registerHandlers } from "./contextMenu";
@@ -50,7 +51,7 @@ export default class Workspace extends Component {
       terminalSize: 160,
     };
 
-    const effect = BaseProjectManager.effect("settings:editor", (editorConfig) => {
+    const effect = ProjectManager.effect("settings:editor", (editorConfig) => {
       this.state.editorConfig = editorConfig;
     });
     this.disposable = effect();
@@ -61,7 +62,7 @@ export default class Workspace extends Component {
       newFile: (node) => this.openCreateFileModal(node),
       newFolder: (node) => this.openCreateFolderModal(node),
       rename: (node) => this.openRenameModal(node),
-      deleteFile: (node) => this.context.projectManager.deleteFile(node),
+      deleteFile: (node) => ProjectManager.deleteFile(node),
       openFile: (node) => this.openFile(node, true),
     });
   }
@@ -101,7 +102,7 @@ export default class Workspace extends Component {
   }
 
   openFile = ({ path, remote, pathInProject, isLeaf }, setTreeActive) => {
-    isLeaf && this.codeEditor.current.openTab(this.tabFromPath(path, remote, pathInProject)); // it triggers onSelectTab function eventually
+    this.codeEditor.current.openTab(this.tabFromPath(path, remote, pathInProject)); // it triggers onSelectTab function eventually
     path.startsWith("custom:") && this.setFileTreeActive();
     setTreeActive && this.setFileTreeActive(path);
   };
@@ -121,12 +122,10 @@ export default class Workspace extends Component {
   openCreateFileModal = (node) => {
     const activeNode =
       node || this.filetree.current.activeNode || this.filetree.current.rootNode[0];
-    const basePath = activeNode.children
-      ? activeNode.path
-      : fileOps.pathHelper.dirname(activeNode.path);
+    const basePath = activeNode.children ? activeNode.path : pathHelper.dirname(activeNode.path);
     const baseName = basePath;
     // if (platform.isWeb) {
-    //   baseName = activeNode.children ? activeNode.pathInProject : fileOps.pathHelper.dirname(activeNode.pathInProject)
+    //   baseName = activeNode.children ? activeNode.pathInProject : pathHelper.dirname(activeNode.pathInProject)
     // }
     this.createModal.current.openCreateFileModal({ baseName, basePath });
   };
@@ -138,12 +137,10 @@ export default class Workspace extends Component {
 
   openCreateFolderModal = (node) => {
     const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode;
-    const basePath = activeNode.children
-      ? activeNode.path
-      : fileOps.pathHelper.dirname(activeNode.path);
+    const basePath = activeNode.children ? activeNode.path : pathHelper.dirname(activeNode.path);
     const baseName = basePath;
     // if (platform.isWeb) {
-    //   baseName = activeNode.children ? activeNode.pathInProject : fileOps.pathHelper.dirname(activeNode.pathInProject)
+    //   baseName = activeNode.children ? activeNode.pathInProject : pathHelper.dirname(activeNode.pathInProject)
     // }
     this.createModal.current.openCreateFolderModal({ baseName, basePath });
   };
@@ -151,7 +148,7 @@ export default class Workspace extends Component {
   openRenameModal = (node) => {
     const activeNode = node || this.filetree.current.activeNode;
     const type = activeNode.children ? "folder" : "file";
-    const { base } = fileOps.pathHelper.parse(activeNode.path);
+    const { base } = pathHelper.parse(activeNode.path);
     this.renameModal.current.openModal({
       type,
       name: base,
