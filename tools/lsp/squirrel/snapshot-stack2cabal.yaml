@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2021 Oxhead Alpha
+# SPDX-License-Identifier: LicenseRef-MIT-OA
+
+# snapshot used for ./scripts/generate-cabal-files.sh script
+name: stack2cabal-snapshot
+
+resolver: lts-19.16
+packages:
+  # the versions must be the same that ci uses, to make sure `stack2cabal` output is identical
+  - hpack-0.34.6
+  - stack2cabal-1.0.12
