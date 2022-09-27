@@ -1,11 +1,16 @@
-import React from 'react';
-import styles from './styles.module.css';
+import React from "react";
+import styles from "./styles.module.css";
 
 function SyntaxSwitch(props) {
   return /*#__PURE__*/React.createElement("select", {
     className: styles.syntaxSwitch,
     defaultValue: props.syntax,
-    onChange: e => props.onSyntaxChange(e.target.value)
+    onChange: e => {
+      const url = new URL(window.location);
+      url.searchParams.set("lang", e.target.value);
+      window.history.pushState(null, "", url.toString());
+      props.onSyntaxChange(e.target.value);
+    }
   }, /*#__PURE__*/React.createElement("option", {
     value: "pascaligo"
   }, "PascaLIGO"), /*#__PURE__*/React.createElement("option", {
