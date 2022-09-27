@@ -10,6 +10,7 @@ import Unsafe qualified
 
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
+import Data.Map qualified as M
 import Data.Text qualified as Text
 import Fmt (Builder, blockListF, pretty)
 import Morley.Debugger.Core (slSrcPos)
@@ -26,13 +27,17 @@ import Morley.Debugger.DAP.Types
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Interpret (ContractEnv (ceSelf), ceContracts)
 import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
+import Morley.Michelson.Runtime (AddressState (ASContract), ContractState (..))
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed
   (Contract, Contract' (..), ContractCode' (unContractCode), SomeConstrainedValue (SomeValue),
   SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
+import Morley.Tezos.Address (ta)
+import Morley.Tezos.Core (tz)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (withRunInIO)
@@ -551,6 +556,19 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         allLocs <- getAllLocs
         parsedContracts <- getParsedContracts
 
+        let contractState = ContractState
+              { csBalance = [tz|0u|]
+              , csContract = contract
+              , csStorage = storage
+              , csDelegate = Nothing
+              }
+
+        -- TODO: remove it when we migrate to morley-1.18.0
+        let self = [ta|KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB|]
+
+        logMessage [int||Self address: #{self}|]
+        logMessage [int||Contract state: #{contractState}|]
+
         his <-
           withRunInIO \unlifter ->
             collectInterpretSnapshots
@@ -560,7 +578,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
               epc
               arg
               storage
-              dummyContractEnv
+              dummyContractEnv { ceContracts = M.fromList [(self, ASContract contractState)], ceSelf = self }
               parsedContracts
               (unlifter . logMessage)
 
