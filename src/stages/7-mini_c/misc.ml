@@ -79,7 +79,7 @@ module Free_variables = struct
     | E_deref x ->
       var_name b x
     | E_assign (x, e) ->
-      union (singleton x) (self e)
+      union (var_name b x) (self e)
     | E_for (start, final, incr, ((x, _), body)) ->
       unions [ self start;
                self final;
