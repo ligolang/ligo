@@ -9,12 +9,12 @@ import Data.Swagger.Schema
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
-import Types (DisplayFormat(..), Source(..))
+import Source (Project(..))
+import Types (DisplayFormat(..))
 import Util (prepareField)
 
 data DryRunRequest = DryRunRequest
-  { drrSources :: [(FilePath, Source)]
-  , drrMain :: FilePath
+  { drrProject :: Project
   , drrParameters :: Text
   , drrStorage :: Text
   , drrEntrypoint :: Maybe Text

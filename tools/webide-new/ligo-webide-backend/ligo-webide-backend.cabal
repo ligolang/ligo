@@ -30,6 +30,7 @@ library
       Schema.ListDeclarationsRequest
       Schema.ListDeclarationsResponse
       Server
+      Source
       Types
       Util
   other-modules:

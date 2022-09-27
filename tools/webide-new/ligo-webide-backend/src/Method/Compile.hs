@@ -13,15 +13,18 @@ import Common (WebIDEM)
 import Ligo (runLigo)
 import Schema.CompileRequest (CompileRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
-import Types (DisplayFormat(..), Source(..))
+import Source (Project(..), Source(..), SourceFile(..))
+import Types (DisplayFormat(..))
 
 compile :: CompileRequest -> WebIDEM CompilerResponse
 compile request = do
   pwd <- liftIO getCurrentDirectory
-  let (filepaths, sources) = unzip (rSources request)
+  let sourceFiles = pSourceFiles . rProject $ request
+      filepaths = fmap sfFilePath sourceFiles
+      sources = fmap sfSource sourceFiles
    in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
-        let fullMainPath = dirPath </> rMain request
+        let fullMainPath = dirPath </> (pMain . rProject $ request)
 
         liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
           createDirectoryIfMissing True (takeDirectory fp)

@@ -9,12 +9,12 @@ import Data.Swagger.Schema
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
-import Types (DisplayFormat(..), Source(..))
+import Source (Project(..))
+import Types (DisplayFormat(..))
 import Util (prepareField)
 
 data CompileRequest = CompileRequest
-  { rSources :: [(FilePath, Source)]
-  , rMain :: FilePath
+  { rProject :: Project
   , rEntrypoint :: Maybe Text
   , rProtocol :: Maybe Text
   , rStorage :: Maybe Text

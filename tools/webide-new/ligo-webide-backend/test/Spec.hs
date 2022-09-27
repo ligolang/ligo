@@ -23,7 +23,7 @@ import Schema.DryRunRequest (DryRunRequest(..))
 import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
 import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
 import Server (mkApp)
-import Types (Source(..))
+import Source (Project(..), Source(..), SourceFile(..))
 
 main :: IO ()
 main = do
@@ -62,8 +62,11 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             CompileRequest
-              { rSources = [("main.mligo", Source source)],
-                rMain = "main.mligo",
+              { rProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" (Source source)]
+                  },
                 rEntrypoint = Nothing,
                 rProtocol = Nothing,
                 rStorage = Nothing,
@@ -84,11 +87,13 @@ spec config = with (return (mkApp config)) $ do
 
       let input =
             CompileRequest
-              { rSources =
-                  [ ("dir/types.mligo", typesSource),
-                    ("main.mligo", mainSource)
-                  ],
-                rMain = "main.mligo",
+              { rProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" mainSource,
+                       SourceFile "dir/types.mligo" typesSource
+                      ]
+                  },
                 rEntrypoint = Just "main",
                 rProtocol = Just "jakarta",
                 rStorage = Nothing,
@@ -107,8 +112,11 @@ spec config = with (return (mkApp config)) $ do
       let input =
             GenerateDeployScriptRequest
               { gdsrStorage = "0"
-              , gdsrSources = [("main.mligo", Source source)]
-              , gdsrMain = "main.mligo"
+              , gdsrProject = Project
+                { pMain = "main.mligo",
+                  pSourceFiles =
+                    [SourceFile "main.mligo" (Source source)]
+                  }
               , gdsrName = "increment-cameligo"
               , gdsrEntrypoint = Just "main"
               , gdsrProtocol = Just "jakarta"
@@ -127,8 +135,11 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             CompileExpressionRequest
-              { cerSources = [("main.mligo", Source source)],
-                cerMain = "main.mligo",
+              { cerProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" (Source source)]
+                  },
                 cerFunction = "main",
                 cerProtocol = Nothing,
                 cerDisplayFormat = Nothing
@@ -145,8 +156,11 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             DryRunRequest
-              { drrSources = [("main.mligo", Source source)],
-                drrMain = "main.mligo",
+              { drrProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" (Source source)]
+                  },
                 drrParameters = "Increment (1)",
                 drrStorage = "0",
                 drrEntrypoint = Nothing,
@@ -165,9 +179,12 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             ListDeclarationsRequest
-              { ldrSources = [("main.mligo", Source source)],
-                ldrMain = "main.mligo",
-                ldrOnlyEndpoint = False
+              { ldrProject = Project
+                  { pMain = "main.mligo"
+                  , pSourceFiles =
+                     [SourceFile "main.mligo" (Source source)]
+                  }
+              , ldrOnlyEndpoint = False
               }
       response <- post "/list-declarations" (Aeson.encode input)
       expected <- liftIO . fmap Text.lines

@@ -17,15 +17,17 @@ import Common (WebIDEM)
 import Ligo (runLigo)
 import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
 import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
-import Types (Source(..))
+import Source (Project(..), Source(..), SourceFile(..))
 
 listDeclarations :: ListDeclarationsRequest -> WebIDEM ListDeclarationsResponse
 listDeclarations request = do
   pwd <- liftIO getCurrentDirectory
-  let (filepaths, sources) = unzip (ldrSources request)
+  let sourceFiles = pSourceFiles . ldrProject $ request
+      filepaths = fmap sfFilePath sourceFiles
+      sources = fmap sfSource sourceFiles
    in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
-        let fullMainPath = dirPath </> ldrMain request
+        let fullMainPath = dirPath </> (pMain . ldrProject $ request)
 
         liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
           createDirectoryIfMissing True (takeDirectory fp)

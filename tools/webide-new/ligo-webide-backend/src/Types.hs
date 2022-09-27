@@ -1,33 +1,14 @@
 module Types
-  ( Source (..)
-  , DisplayFormat (..)
+  ( DisplayFormat (..)
   ) where
 
-import Data.Aeson
-  (FromJSON, Options(..), ToJSON, defaultOptions, genericParseJSON, genericToJSON, parseJSON,
-  toJSON)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Swagger.Schema
   (ToSchema, constructorTagModifier, declareNamedSchema, defaultSchemaOptions,
-  genericDeclareNamedSchema, unwrapUnaryRecords)
-import Data.Text (Text)
+  genericDeclareNamedSchema)
 import GHC.Generics (Generic)
 
 import Util (prepareField)
-
-newtype Source = Source {unSource :: Text}
-  deriving stock (Eq, Show, Ord, Generic)
-
-instance FromJSON Source where
-  parseJSON = genericParseJSON defaultOptions
-    {unwrapUnaryRecords = True}
-
-instance ToJSON Source where
-  toJSON = genericToJSON defaultOptions
-    {unwrapUnaryRecords = True}
-
-instance ToSchema Source where
-  declareNamedSchema = genericDeclareNamedSchema
-    defaultSchemaOptions {unwrapUnaryRecords = True}
 
 data DisplayFormat =
   DFDev | DFJson | DFHumanReadable

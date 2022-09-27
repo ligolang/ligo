@@ -8,12 +8,11 @@ import Data.Swagger.Schema
   genericDeclareNamedSchema)
 import GHC.Generics (Generic)
 
-import Types (Source(..))
+import Source (Project)
 import Util (prepareField)
 
 data ListDeclarationsRequest = ListDeclarationsRequest
-  { ldrSources :: [(FilePath, Source)]
-  , ldrMain :: FilePath
+  { ldrProject :: Project
   , ldrOnlyEndpoint :: Bool
   } deriving stock (Eq, Show, Ord, Generic)
 

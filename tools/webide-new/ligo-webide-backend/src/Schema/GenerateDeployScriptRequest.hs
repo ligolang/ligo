@@ -11,13 +11,12 @@ import Data.Swagger.Schema
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
-import Types (Source(..))
+import Source (Project(..))
 import Util (prepareField)
 
 data GenerateDeployScriptRequest = GenerateDeployScriptRequest
-  { gdsrName :: Text
-  , gdsrSources :: [(FilePath, Source)]
-  , gdsrMain :: FilePath
+  { gdsrProject :: Project
+  , gdsrName :: Text
   , gdsrStorage :: Text
   , gdsrEntrypoint :: Maybe Text
   , gdsrProtocol :: Maybe Text

@@ -60,32 +60,28 @@ generateDeployScript request = do
       buildJSON = build >=> decodeTextCode
 
   michelsonCode <- build CompileRequest
-    { rSources = gdsrSources request
-    , rMain = gdsrMain request
+    { rProject = gdsrProject request
     , rStorage = Nothing
     , rEntrypoint = gdsrEntrypoint request
     , rProtocol = Nothing
     , rDisplayFormat = Just DFHumanReadable
     }
   michelsonStorage <- build CompileRequest
-    { rSources = gdsrSources request
-    , rMain = gdsrMain request
+    { rProject = gdsrProject request
     , rStorage = Just (gdsrStorage request)
     , rEntrypoint = gdsrEntrypoint request
     , rProtocol = Nothing
     , rDisplayFormat = Just DFHumanReadable
     }
   michelsonCodeJson <- buildJSON CompileRequest
-    { rSources = gdsrSources request
-    , rMain = gdsrMain request
+    { rProject = gdsrProject request
     , rStorage = Nothing
     , rEntrypoint = gdsrEntrypoint request
     , rProtocol = Nothing
     , rDisplayFormat = Just DFJson
     }
   michelsonStorageJson <- buildJSON CompileRequest
-    { rSources = gdsrSources request
-    , rMain = gdsrMain request
+    { rProject = gdsrProject request
     , rStorage = Just (gdsrStorage request)
     , rEntrypoint = gdsrEntrypoint request
     , rProtocol = Nothing
