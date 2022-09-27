@@ -2,8 +2,12 @@ module Source
   ( Source (..)
   , SourceFile (..)
   , Project (..)
+  , withProject
   ) where
 
+import Control.Monad (forM_)
+import Control.Monad.Catch (MonadMask)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson
   (FromJSON, Options(..), ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON,
   genericToJSON, parseJSON, toJSON)
@@ -11,8 +15,12 @@ import Data.Swagger.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema, unwrapUnaryRecords)
 import Data.Text (Text)
+import Data.Text.IO qualified as Text
 import GHC.Generics (Generic)
+import System.FilePath (takeDirectory, (</>))
 
+import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
+import System.IO.Temp (withTempDirectory)
 import Util (prepareField)
 
 newtype Source = Source {unSource :: Text}
@@ -63,3 +71,23 @@ instance ToJSON Project where
 instance ToSchema Project where
   declareNamedSchema = genericDeclareNamedSchema
     defaultSchemaOptions {fieldLabelModifier = prepareField 1}
+
+withProject
+  :: (MonadIO m, MonadMask m)
+  => Project
+  -> ((FilePath, FilePath) -> m a)
+  -> m a
+withProject project f = do
+  pwd <- liftIO getCurrentDirectory
+  let sourceFiles = pSourceFiles project
+      filepaths = fmap sfFilePath sourceFiles
+      sources = fmap sfSource sourceFiles
+   in withTempDirectory pwd "" $ \dirPath -> do
+        let fullFilepaths = map (dirPath </>) filepaths
+        let fullMainPath = dirPath </> pMain project
+
+        liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
+          createDirectoryIfMissing True (takeDirectory fp)
+          Text.writeFile fp (unSource src)
+
+        f (dirPath, fullMainPath)

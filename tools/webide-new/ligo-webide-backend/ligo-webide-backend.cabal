@@ -86,6 +86,7 @@ library
     , bytestring
     , containers
     , directory
+    , exceptions
     , filepath
     , katip
     , megaparsec
