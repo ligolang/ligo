@@ -77,7 +77,7 @@ module Free_variables = struct
     | E_let_mut_in (expr, ((x, _), body)) ->
       union (self expr) (expression (union (singleton x) b) body)
     | E_deref x ->
-      singleton x
+      var_name b x
     | E_assign (x, e) ->
       union (singleton x) (self e)
     | E_for (start, final, incr, ((x, _), body)) ->
