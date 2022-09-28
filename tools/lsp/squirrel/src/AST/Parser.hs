@@ -24,18 +24,16 @@ import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
 
 import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
+import AST.Parser.Jsligo qualified as Js
 import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
-import AST.Parser.Jsligo qualified as Js
-import AST.Skeleton
 import AST.Scope
-  ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
-  , addLigoErrsToMsg, addScopes, contractNotFoundException, lookupContract
-  )
+  (ContractInfo, ContractInfo', HasScopeForest, Includes (..), addLigoErrsToMsg, addScopes,
+  contractNotFoundException, lookupContract, pattern FindContract)
+import AST.Skeleton
 import Cli
-  ( HasLigoClient, LigoDecodedExpectedClientFailureException (..), SomeLigoException (..)
-  , TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
-  )
+  (HasLigoClient, LigoDecodedExpectedClientFailureException (..), LigoIOException,
+  SomeLigoException (..), TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess)
 import Diagnostic (Message)
 import Extension
 import Log (Log, NoLoggingT (..), i)
@@ -71,11 +69,10 @@ loadPreprocessed tempSettings src = do
       ((, []) <$> preprocess tempSettings src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
-        , Handler \(_ :: SomeLigoException) ->
+        , Handler \(e :: LigoIOException) -> do
+          $(Log.err) [i|#{displayException e}|]
           pure (src', [])
-        , Handler \(e :: IOError) -> do
-          -- Likely LIGO isn't installed or was not found.
-          $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
+        , Handler \(_ :: SomeLigoException) ->
           pure (src', [])
         ]
     else
