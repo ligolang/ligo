@@ -1467,8 +1467,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
-  | ( ( C_ASSERT_INFERRED
-      | C_UPDATE
+  | ( ( C_UPDATE
       | C_ITER
       | C_FOLD_LEFT
       | C_FOLD_RIGHT
@@ -1981,7 +1980,6 @@ let eval_test ~raise ~steps ~options
   in
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
-  let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
     let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
@@ -1989,7 +1987,13 @@ let eval_test ~raise ~steps ~options
   in
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
-  let expr = ctxt expr in
+  let expr =
+    Ligo_compile.Of_typed.compile_expression_in_context
+      ~raise
+      ~options:options.middle_end
+      decl_lst
+      expr
+  in
   let expr =
     trace ~raise Main_errors.self_ast_aggregated_tracer
     @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr

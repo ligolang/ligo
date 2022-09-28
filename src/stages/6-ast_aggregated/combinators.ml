@@ -370,3 +370,15 @@ let forall_expand (e : expression) =
   else
     let e = build_type_insts e_without_type_abs tvs in
     build_type_abstractions e tvs
+
+let context_decl ?(loc = Location.generated) (binder : type_expression Binder.t) (expr : expression) (attr : ValueAttr.t) : context =
+  [Location.wrap ~loc @@ D_value { binder ; expr ; attr }]
+
+let context_id : context = []
+
+let context_append (l : context) (r : context) : context = l @ r
+
+let context_apply (p : context) (e : expression) : expression =
+  let f d e = match Location.unwrap d with
+    | D_value { binder ; expr ; attr } -> e_a_let_in binder expr e attr in
+  List.fold_right ~f ~init:e p

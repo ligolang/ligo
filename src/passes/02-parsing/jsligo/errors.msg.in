@@ -2317,20 +2317,6 @@ contract: Ident As LPAR WILD ZWSP
 Ill-formed parenthesised type expression.
 At this point, a closing parenthesis ')' is expected.
 
-contract: String As UIdent DOT UIdent ZWSP
-##
-## Ends in an error in state: 115.
-##
-## module_access_t -> UIdent . DOT module_var_t [ SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
-##
-## The known suffix of the stack is as follows:
-## UIdent
-##
-
-Ill-formed selection of a type in a module.
-At this point, the selection symbol '.' is expected, followed by the
-qualified name of a type.
-
 contract: Ident BOOL_AND ZWSP
 ##
 ## Ends in an error in state: 180.
@@ -3264,3 +3250,134 @@ contract: ES6FUN WILD ZWSP
 
 Ill-formed function expression. 
 At this point, an arrow '=>' is expected.
+
+contract: Import TIMES ZWSP
+##
+## Ends in an error in state: 328.
+##
+## import_stmt -> Import TIMES . As UIdent From String [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## Import TIMES
+##
+
+Ill-formed import statement.
+At this point, the keyword 'from' is expected.
+
+contract: Import TIMES As ZWSP
+##
+## Ends in an error in state: 329.
+##
+## import_stmt -> Import TIMES As . UIdent From String [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## Import TIMES As
+##
+
+Ill-formed import statement.
+At this point, the name of the module alias is expected, starting with a
+capital letter.
+
+contract: Import TIMES As UIdent ZWSP
+##
+## Ends in an error in state: 330.
+##
+## import_stmt -> Import TIMES As UIdent . From String [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## Import TIMES As UIdent
+##
+contract: Import LBRACE Ident RBRACE ZWSP
+##
+## Ends in an error in state: 339.
+##
+## import_stmt -> Import braces(nsepseq(field_name,COMMA)) . From String [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## Import braces(nsepseq(field_name,COMMA))
+##
+
+Ill-formed import statement.
+At this point, the keyword 'from' is expected.
+
+contract: Import TIMES As UIdent From ZWSP
+##
+## Ends in an error in state: 331.
+##
+## import_stmt -> Import TIMES As UIdent From . String [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## Import TIMES As UIdent From
+##
+contract: Import LBRACE Ident RBRACE From ZWSP
+##
+## Ends in an error in state: 340.
+##
+## import_stmt -> Import braces(nsepseq(field_name,COMMA)) From . String [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## Import braces(nsepseq(field_name,COMMA)) From
+##
+
+Ill-formed import statement.
+At this point, a path to another file is expected as a string.
+
+contract: Import LBRACE ZWSP
+##
+## Ends in an error in state: 333.
+##
+## braces(nsepseq(field_name,COMMA)) -> LBRACE . nsepseq(field_name,COMMA) RBRACE [ From ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+contract: Import LBRACE Ident COMMA ZWSP
+##
+## Ends in an error in state: 335.
+##
+## nsepseq(field_name,COMMA) -> Ident COMMA . nsepseq(field_name,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Ident COMMA
+##
+
+Ill-formed import statement.
+At this point, a value of a module is expected.
+
+contract: Import LBRACE Ident ZWSP
+##
+## Ends in an error in state: 337.
+##
+## braces(nsepseq(field_name,COMMA)) -> LBRACE nsepseq(field_name,COMMA) . RBRACE [ From ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE nsepseq(field_name,COMMA)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 334, spurious reduction of production nsepseq(field_name,COMMA) -> Ident
+##
+
+Ill-formed import statement.
+At this point, if all the values are complete, a closing brace '}' is expected.
+
+contract: Bytes As UIdent DOT UIdent ZWSP
+##
+## Ends in an error in state: 131.
+##
+## module_access_t -> UIdent . DOT module_var_t [ SEMI RPAR REM_EQ RBRACKET RBRACE QMARK PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
+## type_ctor_app -> UIdent . chevrons(type_ctor_args) [ SEMI RPAR REM_EQ RBRACKET RBRACE QMARK PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
+##
+## The known suffix of the stack is as follows:
+## UIdent
+##
+
+Ill-formed selection of a type in a module.
+At this point, one of the following is expected:
+* a dot '.', followed by a type of the module.
+* an opening chevron '<' followed by a type parameter 
+  and a closing chevron '>'.
+
+  

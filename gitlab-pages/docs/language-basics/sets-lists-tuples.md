@@ -168,13 +168,13 @@ destructuring. Destructuring a tuple allows you to give names to the elements
 inside the tuple.
 
 ```jsligo group=tuple
-let [first_name, last_name]: full_name = full_name;
+let [first_name, last_name] = full_name;
 ```
 
 This also works in functions:
 
 ```jsligo group=tuple
-let first_name_fun = ([first_name, _]: full_name):string => first_name;
+let first_name_fun = ([first_name, _]: full_name) => first_name;
 let alice = first_name_fun(full_name);
 ```
 
@@ -236,7 +236,7 @@ let first_name : string = full_name[0];
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
-let first_name_component: string = full_name[0];
+let first_name_component = full_name[0];
 ```
 
 </Syntax>
@@ -286,7 +286,7 @@ let my_list : list (int) = [1, 2, 2]; // The head is 1
 
 ```jsligo group=lists
 let empty_list: list<int> = list([]);
-let my_list: list<int> = list([1, 2, 2]); // The head is 1
+let my_list = list([1, 2, 2]); // The head is 1
 ```
 
 </Syntax>
@@ -341,7 +341,7 @@ not symmetric: on the left lies the element to cons, and, on the
 right, a list on which to cons.
 
 ```jsligo group=lists
-let larger_list: list<int> = list([5, ...my_list]); // [5,1,2,2]
+let larger_list = list([5, ...my_list]); // [5,1,2,2]
 ```
 
 </Syntax>
@@ -558,7 +558,7 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let sum = ([result, i]: [int, int]) => result + i;
+let sum = (result: int, i: int) => result + i;
 let sum_of_elements: int = List.fold (sum, my_list, 0);
 ```
 
@@ -951,7 +951,7 @@ let iter_op = (s : set (int)) : unit => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let iter_op = (s: set<int>): unit => {
+let iter_op = s => {
   let predicate = i => assert(i > 3);
   Set.iter(predicate, s);
 };
@@ -1077,8 +1077,8 @@ signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
 'acc`.
 
 ```jsligo group=sets
-let sum = ([acc, i]: [int, int]): int => acc + i;
-let sum_of_elements: int = Set.fold (sum, my_set, 0);
+let sum = (acc: int, i: int) => acc + i;
+let sum_of_elements = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>

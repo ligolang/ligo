@@ -922,7 +922,7 @@ and compile_simple_value ~raise ~options ~run_options ~loc
   =
  fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc v ty in
-  let (_ : Ast_aggregated.expression) =
+  let () =
     trace ~raise Main_errors.self_ast_aggregated_tracer
     @@ Self_ast_aggregated.expression_obj typed_exp
   in

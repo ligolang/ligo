@@ -253,6 +253,13 @@ and matching_cases : Scope.swapper -> matching_expr -> matching_expr = fun swape
     let tv   = self_type tv in
     return @@ Match_record {fields;body;tv}
 
+let swap_declaration : Scope.swapper -> declaration -> declaration = fun swaper decl ->
+  match Location.unwrap decl with
+  | D_value { binder ; expr ; attr } ->
+    let binder = swap_binder swaper binder in
+    let expr = swap_expression swaper expr in
+    Location.wrap ~loc:(Location.get_location decl) @@ D_value { binder ; expr ; attr }
+  
 let rec type_expression : Scope.t -> type_expression -> type_expression = fun scope te ->
   let self ?(scope = scope) = type_expression scope in
   let return type_content = {te with type_content} in
@@ -448,3 +455,21 @@ let program : expression -> expression = fun e ->
   let swapper = Scope.make_swapper scope in
   let e = swap_expression swapper e in
   e
+
+let declaration : Scope.t -> declaration -> Scope.t * declaration = fun scope decl ->
+  match Location.unwrap decl with
+  | D_value { binder ; expr ; attr } ->
+    let scope,binder = binder_new scope binder in
+    let _,expr = expression scope expr in
+    scope, Location.wrap ~loc:(Location.get_location decl) @@ D_value { binder ; expr ; attr }
+
+let program_ : program -> program = fun (ctxt, prg) ->
+  let scope = Scope.empty in
+  let scope, prg = expression scope prg in
+  let f decl (scope, ctxt) = let scope, decl = declaration scope decl in scope, decl :: ctxt in
+  let scope, ctxt = List.fold_right ctxt ~init:(scope, []) ~f in
+  let swapper = Scope.make_swapper scope in
+  let prg = swap_expression swapper prg in
+  let f decl ctxt = let decl = swap_declaration swapper decl in decl :: ctxt in
+  let ctxt = List.fold_right ctxt ~init:[] ~f in
+  ctxt, prg

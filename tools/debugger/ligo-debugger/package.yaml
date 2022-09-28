@@ -68,6 +68,7 @@ library:
     - aeson
     - bytestring
     - conduit
+    - conduit-extra
     - containers
     - data-default
     - directory
@@ -142,6 +143,7 @@ tests:
       - singletons
       - tasty
       - text
+      - unliftio
       - unordered-containers
       - HUnit
       - tasty-hunit-compat

@@ -126,7 +126,8 @@ module T =
     | Void     of lexeme Wrap.t  (* void    *) *)
     | While    of lexeme Wrap.t  (* while   *)
  (* | With     of lexeme Wrap.t  (* with    *) *)
-
+    | From     of lexeme Wrap.t  (* from      *)
+   
     (* TypeScript keywords *)
 
     | As          of lexeme Wrap.t  (* as        *)
@@ -238,6 +239,7 @@ module T =
  (* | This     t
     | Void     t *)
     | While    t
+    | From    t
  (* | With     t *)
 
     (* TypeScript keywords *)
@@ -278,6 +280,7 @@ module T =
   (* let wrap_this    = wrap "this"
      let wrap_void    = wrap "void"    *)
      let wrap_while   = wrap "while"
+     let wrap_from   = wrap "from"
   (* let wrap_with    = wrap "with"    *)
 
      let mk_Break   region = Break   (wrap_break   region)
@@ -297,6 +300,7 @@ module T =
   (* let mk_This    region = This    (wrap_this    region)
      let mk_Void    region = Void    (wrap_void    region) *)
      let mk_While   region = While   (wrap_while   region)
+     let mk_From    region = From    (wrap_from   region)
   (* let mk_With    region = With    (wrap_with    region) *)
 
      (* TypeScript keywords *)
@@ -329,6 +333,7 @@ module T =
   (*   mk_This;
        mk_Void;   *)
        mk_While;
+       mk_From;
   (*   mk_With;   *)
 
        mk_As;
@@ -368,6 +373,7 @@ module T =
   (* let ghost_this    = wrap_this    Region.ghost
      let ghost_void    = wrap_void    Region.ghost *)
      let ghost_while   = wrap_while   Region.ghost
+     let ghost_from    = wrap_from    Region.ghost
   (* let ghost_with    = wrap_with    Region.ghost *)
 
      let ghost_Break   = Break   ghost_break
@@ -386,7 +392,7 @@ module T =
      let ghost_Switch  = Switch  ghost_switch
   (* let ghost_This    = This    ghost_this
      let ghost_Void    = Void    ghost_void     *)
-     let ghost_While   = While   ghost_while
+     let ghost_From    = From    ghost_from
   (* let ghost_With    = With    ghost_with     *)
 
      (* TypeScript keywords *)
@@ -823,6 +829,7 @@ module T =
  (* | "This"     -> ghost_this#payload
     | "Void"     -> ghost_void#payload *)
     | "While"    -> ghost_while#payload
+    | "From"     -> ghost_from#payload
  (* | "With"     -> ghost_with#payload *)
 
     (* TypeScript keywords *)
@@ -957,6 +964,7 @@ module T =
  (* | This     t -> t#region, "This"
     | Void     t -> t#region, "Void" *)
     | While    t -> t#region, "While"
+    | From     t -> t#region, "From"
  (* | With     t -> t#region, "With" *)
 
     (* TypeScript keywords *)

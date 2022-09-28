@@ -121,12 +121,12 @@ let some = (o : option (unit)) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith_alt
-let main = (p: bool, s: unit): [list<operation>, unit] => {
+let main = (p: bool, s: unit) => {
   let u: unit = assert(p);
   return [list([]), s];
 };
 
-let some = (o: option<unit>): unit => {
+let some = (o: option<unit>) => {
   assert_some(o)
 };
 ```
@@ -166,7 +166,7 @@ let main = (p : bool, s : unit) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-let main2 = (p: bool, s: unit): [list<operation>, unit] => {
+let main2 = (p: bool, s: unit) => {
   assert_with_error (p, "My custom error message.");
   return [list([]), s];
 };

@@ -38,6 +38,7 @@ type kwd_namespace = lexeme wrap
 type kwd_export    = lexeme wrap
 type kwd_import    = lexeme wrap
 type kwd_while     = lexeme wrap
+type kwd_from      = lexeme wrap
 type kwd_for       = lexeme wrap
 type kwd_of        = lexeme wrap
 
@@ -416,12 +417,28 @@ and index_kind = [
   `Let   of kwd_let
 | `Const of kwd_const]
 
-and import = {
-  kwd_import   : kwd_import;
-  alias        : module_name;
-  equal        : equal;
-  module_path  : (module_name, dot) nsepseq
-}
+and import = 
+  Import_rename of {
+    kwd_import   : kwd_import;
+    alias        : module_name;
+    equal        : equal;
+    module_path  : (module_name, dot) nsepseq
+  }
+| Import_all_as of {
+    kwd_import   : kwd_import;
+    times        : times;
+    kwd_as       : kwd_as;
+    alias        : module_name;
+    kwd_from     : kwd_from;
+    module_path  : string reg
+  }
+| Import_selected of {
+    kwd_import   : kwd_import;
+    imported     : (field_name, comma) nsepseq braces reg;
+    kwd_from      : kwd_from;
+    module_path  : string reg
+  }
+
 
 and statements = (statement, semi) nsepseq
 

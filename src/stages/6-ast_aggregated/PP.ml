@@ -169,5 +169,5 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
         (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
         f body
 
-let program ppf : expression program -> unit = fun prg ->
-  fprintf ppf "%a" expression (prg @@ Combinators.e_a_unit ())
+let program ppf : program -> unit = fun (prg, exp) ->
+  fprintf ppf "%a" expression Combinators.(context_apply prg exp)

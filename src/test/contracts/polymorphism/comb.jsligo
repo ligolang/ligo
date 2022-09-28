@@ -4,8 +4,8 @@ let diag : <T>((x : T) => dup<T>) = (x : T) => [x, x];
 
 let _rev : <T>((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
   match(xs, list([
-  ([] : list<T>) => acc,
-  ([x,... xs] : list<T>) => _rev([xs, list([x,...acc])])
+  ([]) => acc,
+  ([x,... xs]) => _rev([xs, list([x,...acc])])
   ]));
 
 let rev : <T>((xs : list<T>) => list<T>) = (xs : list<T>) : list<T> => _rev([xs, (list([]) as list<T>)]);

@@ -1,0 +1,5 @@
+author: SanderSpies
+description: Reduce number of type annotations in JsLIGO examples in the documentation.
+merge_request: '2026'
+title: Improve JsLIGO docs
+type: changed

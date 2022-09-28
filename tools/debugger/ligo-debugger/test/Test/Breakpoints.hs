@@ -11,7 +11,6 @@ import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 
 import Language.LIGO.Debugger.Snapshots
-import Test.Snapshots
 import Test.Util
 
 test_test :: [TestTree]

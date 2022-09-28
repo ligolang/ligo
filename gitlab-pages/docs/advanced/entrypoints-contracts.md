@@ -108,7 +108,7 @@ type parameter = nat;
 type storage = nat;
 type return_ = [list<operation>, storage];
 
-const main = ([action, store]: [parameter, storage]): return_ =>
+const main = (action: parameter, store: storage): return_ =>
   [list([]), store];
 ```
 
@@ -233,16 +233,16 @@ type storage = {
 
 type return_ = [list<operation>, storage];
 
-const entry_A = ([n, store]: [nat, storage]): return_ =>
+const entry_A = (n: nat, store: storage): return_ =>
   [list([]), {...store, counter: n}];
 
-const entry_B = ([s, store]: [string, storage]): return_ =>
+const entry_B = (s: string, store: storage): return_ =>
   [list([]), {...store, name: s}];
 
-const main = ([action, store]: [parameter, storage]): return_ =>
+const main = (action: parameter, store: storage): return_ =>
   match(action, {
-    Action_A: n => entry_A([n, store]),
-    Action_B: s => entry_B([s, store])
+    Action_A: n => entry_A(n, store),
+    Action_B: s => entry_B(s, store)
   });
 ```
 
@@ -312,7 +312,7 @@ type parameter = unit;
 type storage = unit;
 type return_ = [list<operation>, storage];
 
-const deny = ([action, store]: [parameter, storage]): return_ => {
+const deny = (action: parameter, store: storage): return_ => {
   if (Tezos.get_amount() > (0 as tez)) {
     return failwith("This contract does not accept tokens.");
   } else {
@@ -367,7 +367,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 ```jsligo group=c
 const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-const main = ([action, store]: [parameter, storage]): return_ => {
+const main = (action: parameter, store: storage): return_ => {
   if (Tezos.get_source() != owner) { return failwith("Access denied."); }
   else { return [list([]), store]; };
 };
@@ -553,7 +553,7 @@ type return_ = [list<operation>, storage];
 
 const dest = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
 
-const proxy = ([action, store]: [parameter, storage]): return_ => {
+const proxy = (action: parameter, store: storage): return_ => {
   let counter =
     match (Tezos.get_contract_opt(dest), {
       Some: contract => contract,

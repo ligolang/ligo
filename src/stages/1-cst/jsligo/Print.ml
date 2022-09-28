@@ -148,11 +148,24 @@ and print_while state {expr; statement; _} =
   print_expr state expr;
   print_statement state statement
 
-and print_import state  {alias; module_path; _} =
-  print_ident state alias;
-  let items = Utils.nsepseq_to_list module_path in
-  let f p = print_ident state p in
-  List.iter ~f items
+and print_import state import =
+  match import with 
+   Import_rename {alias; module_path; _} -> 
+    print_node state "<alias>";
+    print_ident state alias;
+    let items = Utils.nsepseq_to_list module_path in
+    let f p = print_ident state p in
+    List.iter ~f items
+  | Import_all_as {alias; module_path; _} ->
+    print_node state "<*>";
+    print_ident state alias;
+    print_string state module_path
+  | Import_selected {imported; module_path; _} ->
+    print_node state "<selected>";
+    let imported = Utils.nsepseq_to_list imported.value.inside in
+    let apply len rank = print_ident (state#pad len rank) in  
+    List.iteri ~f:(List.length imported |> apply) imported;
+    print_string state module_path
 
 and print_namespace state (n, name, {value = {inside = statements;_}; _}, attributes) =
   print_loc_node state "<namespace>" n#region;

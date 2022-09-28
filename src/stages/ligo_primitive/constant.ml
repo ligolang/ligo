@@ -5,7 +5,6 @@ type constant' =
   | C_NONE
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
-  | C_ASSERT_INFERRED
   | C_UPDATE
   (* Loops *)
   | C_ITER

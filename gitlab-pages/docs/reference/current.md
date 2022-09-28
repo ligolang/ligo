@@ -49,7 +49,7 @@ let main = ((p,s) : (unit, tez)) =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = ([p, s] : [unit, tez]):[list<operation>, tez] =>
+let main = (p: unit, s: tez):[list<operation>, tez] =>
   [list([]), Tezos.get_balance()];
 ```
 
@@ -649,7 +649,7 @@ let main = ((ignore, storage): (unit, storage)) => {
 ```jsligo group=k
 type storage = bytes;
 
-let main = ([ignore, storage]: [unit, storage]):[list<operation>, storage] => {
+let main = (ignore: unit, storage: storage):[list<operation>, storage] => {
   let packed = Bytes.pack(Tezos.get_chain_id());
   if (storage != packed) {
     return failwith("wrong chain") as [list<operation>, storage];

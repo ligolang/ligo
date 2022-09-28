@@ -65,11 +65,17 @@ library:
   source-dirs: src
   dependencies:
   - aeson
+  - bytestring
+  - containers
   - directory
   - filepath
   - katip
+  - megaparsec
+  - morley
+  - morley-client
   - mtl
   - process
+  - servant-client
   - servant-server
   - servant-swagger
   - servant-swagger-ui

@@ -34,6 +34,7 @@ module ASTMap
   , invalidate
   ) where
 
+import Control.Concurrent.MVar
 import Control.Concurrent.STM (STM, retry)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Functor ((<&>), void)
@@ -45,7 +46,7 @@ import Focus qualified
 import StmContainers.Map (Map)
 import StmContainers.Map qualified as Map
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
-import UnliftIO (Async, MonadUnliftIO, async, atomically, cancel)
+import UnliftIO (Async, MonadUnliftIO, async, atomically, wait)
 
 ----
 ---- Implementation notes:
@@ -85,6 +86,8 @@ data ASTMap k v m = ASTMap
     -- ^ When each value was invalidated last.
   , amWorkers :: Map k (Async v)
     -- ^ Background threads loading values.
+  , amSyncValue :: Map k (MVar ())
+    -- ^ MVar storage for synchronising multiple load requests
   , amLoad :: k -> m v
     -- ^ Loading action.
   }
@@ -92,7 +95,7 @@ data ASTMap k v m = ASTMap
 -- | Construct a new empty 'ASTMap' given the loading action.
 empty :: (k -> m v) -> IO (ASTMap k v m)
 empty load = atomically $
-  ASTMap <$> Map.new <*> Map.new <*> Map.new <*> Map.new <*> pure load
+  ASTMap <$> Map.new <*> Map.new <*> Map.new <*> Map.new <*> Map.new <*> pure load
 
 -- | Insert some value into an 'ASTMap'.
 insert
@@ -115,13 +118,14 @@ delete
   => k  -- ^ Key
   -> ASTMap k v m  -- ^ Map
   -> m (Maybe v)
-delete k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
+delete k tmap@ASTMap{amValues, amLoadStarted, amInvalid, amSyncValue} = do
   time <- getTimestamp
   go <- checkIfLoading time k tmap
   if go then
     atomically do
       Map.delete k amLoadStarted
       Map.delete k amInvalid
+      Map.delete k amSyncValue
       v <- Map.focus Focus.lookupAndDelete k amValues
       pure $ fst <$> v
   else
@@ -360,13 +364,32 @@ fetchFast = fetchFastAndNotify (const $ pure ())
 
 -- | Just like 'fetchFast', but also runs an action after it has finished
 -- loading.
+--
+-- Algorithm description:
+-- Whenever we have a request to fetch data, this function performs two things.
+-- First - it loads the value from cache (if we have it inside), or from file.
+-- Second - it sends a notification request.
+-- If value was loaded from cache we need to update it in the background. Since this
+-- function triggers on every character typed, we need to do it fast.
+--
+-- Algorithm:
+-- When we receive a request to update data, we first check if there is already anyone,
+-- trying to update it. If none, than we are first to update value, so we proceed to loading. We
+-- also create a new empty `MVar` to synchronize threads, that might come afterwards.
+-- If there is someone loading value already, we need to wait, for that thread to finnish.
+--
+-- When the loading function is called, if it was called by the first thread, than we update `MVar`
+-- putting dummy value inside, and proceed. If current thread is the one, which was waiting, than
+-- it tries, to get the priority, by extracting value from `MVar`. If extraction is successful -
+-- we load and cache new value, and call notification. If thread could not take control over MVar,
+-- it simply returns some outdated value, without calling notification.
 fetchFastAndNotify
   :: forall k v m
   .  ( Eq k, Hashable k
      , MonadUnliftIO m
      )
   => (v -> m ()) -> k -> ASTMap k v m -> m v
-fetchFastAndNotify notify k tmap@ASTMap{amInvalid, amLoadStarted, amValues, amWorkers} = do
+fetchFastAndNotify notify k tmap@ASTMap{..} = do
   mv <- atomically do
     invTime <- fromMaybe 0 <$> Map.lookup k amInvalid
     mres <- Map.lookup k amValues
@@ -382,17 +405,46 @@ fetchFastAndNotify notify k tmap@ASTMap{amInvalid, amLoadStarted, amValues, amWo
         -- new one in the background.
         | otherwise -> pure $ Just (v, True)
 
-  let load = do
-        time <- getTimestamp
-        v <- loadValue k tmap time
-        v <$ notify v
+  let
+    load :: v -> Bool -> m v
+    load oldVar shouldWait = do
+      mVar <- fmap (fromMaybe (error "Impossible")) $ atomically $ Map.lookup k amSyncValue
+      if not shouldWait
+      then do
+        liftIO $ putMVar mVar ()
+        loadNoWait
+      else do
+        lock <- liftIO $ tryTakeMVar mVar
+        case lock of
+          Just _ -> loadNoWait
+          Nothing -> pure oldVar
+
   case mv of
-    Nothing -> load
-    Just (v, shouldLoad) -> v <$ when shouldLoad do
-      mWorker <- atomically $ Map.focus Focus.lookupAndDelete k amWorkers
-      maybe (pure ()) cancel mWorker
-      worker <- async load
-      atomically $ Map.insert worker k amWorkers
+    Nothing -> loadNoWait
+    Just (v, shouldLoad) -> v <$ when shouldLoad (concurrentLoadValue (load v))
+    where
+      loadNoWait :: m v
+      loadNoWait = getTimestamp >>= loadValue k tmap >>= (\v -> v <$ notify v)
+
+      concurrentLoadValue :: (Bool -> m v) -> m ()
+      concurrentLoadValue loadFunc = do
+        let
+          noWait :: m ()
+          noWait = do
+            mVar <- atomically $ Map.lookup k amSyncValue
+            liftIO $ maybe
+              (newEmptyMVar >>= \var -> atomically (Map.insert var k amSyncValue))
+              (\_ -> pure ()) mVar
+
+            worker <- async (loadFunc False)
+            atomically $ Map.insert worker k amWorkers
+
+          waitFor :: Async v -> m ()
+          waitFor worker = void $ async $ wait worker >> loadFunc True
+
+        mWorker <- atomically $ Map.focus Focus.lookupAndDelete k amWorkers
+        maybe noWait waitFor mWorker
+
 
 -- | A 'Focus' that will insert a value if none was present or use the
 -- one that is newer based on the function that returns the timestamp.

@@ -292,7 +292,7 @@ let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
 <Syntax syntax="jsligo">
 
 ```jsligo
-let check_hash_key = ([kh1, k2]: [key_hash, key]) : [bool, key_hash] => {
+let check_hash_key = (kh1: key_hash, k2: key) : [bool, key_hash] => {
   let kh2 : key_hash = Crypto.hash_key(k2);
   if (kh1 == kh2) { return [true, kh2]; } else { return [false, kh2]; };
 };
@@ -350,7 +350,7 @@ let check_signature = ((pk, signed, msg): (key, signature, bytes)) : bool => {
 <Syntax syntax="jsligo">
 
 ```jsligo
-let check_signature = ([pk, signed, msg]: [key, signature, bytes]) : bool => {
+let check_signature = (pk: key, signed: signature, msg: bytes) : bool => {
   return Crypto.check(pk, signed, msg);
 };
 ```

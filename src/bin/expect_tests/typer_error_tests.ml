@@ -169,7 +169,7 @@ let%expect_test _ =
      46 |   in
 
     Invalid type(s)
-    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#450). |}]
+    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#419). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage

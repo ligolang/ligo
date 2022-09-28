@@ -601,17 +601,17 @@ type parameter =
 type return_ = [list<operation>, storage];
 
 // Two entrypoints
-const add = ([store, delta]: [storage, int]): storage => store + delta;
-const sub = ([store, delta]: [storage, int]): storage => store - delta;
+const add = (store: storage, delta: int): storage => store + delta;
+const sub = (store: storage, delta: int): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-const main = ([action, store]: [parameter, storage]) : return_ => {
+const main = (action: parameter, store: storage) : return_ => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
-      Increment:(n: int) => add ([store, n]),
-      Decrement:(n: int) => sub ([store, n])})
+      Increment:(n: int) => add (store, n),
+      Decrement:(n: int) => sub (store, n)})
   ]
 };
 ```
@@ -817,8 +817,8 @@ $ ligo run test gitlab-pages/docs/advanced/src/mutation-contract.religo
 ligo run test gitlab-pages/docs/advanced/src/mutation-contract.jsligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.jsligo", line 12, characters 55-68:
-//  11 | let add = ([store, delta]: [storage, int]): storage => store + delta;
-//  12 | let sub = ([store, delta]: [storage, int]): storage => store - delta;
+//  11 | let add = (store: storage, delta: int): storage => store + delta;
+//  12 | let sub = (store: storage, delta: int): storage => store - delta;
 //  13 |
 //
 // Replacing by: ADD(store ,
@@ -1148,18 +1148,18 @@ type parameter =
 type return_ = [list<operation>, storage];
 
 // Two entrypoints
-const add = ([store, delta]: [storage, int]): storage => store + delta;
-/* @no_mutation */ const sub = ([store, delta]: [storage, int]): storage => store - delta;
+const add = (store: storage, delta: int): storage => store + delta;
+/* @no_mutation */ const sub = (store: storage, delta: int): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-const main = ([action, store]: [parameter, storage]) : return_ => {
+const main = (action: parameter, store: storage) : return_ => {
   /* @no_mutation */ let _ = assert (0 == 0);
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
-      Increment:(n: int) => add ([store, n]),
-      Decrement:(n: int) => sub ([store, n])})
+      Increment:(n: int) => add (store, n),
+      Decrement:(n: int) => sub (store, n)})
   ]
 };
 ```

@@ -404,7 +404,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     | M_variable v -> (
       let alias = name in
       let module_path = decompile_mod_var v , [] in
-      let mod_alias : CST.import = {kwd_import=Token.ghost_import;alias;equal=Token.ghost_eq;module_path} in
+      let mod_alias : CST.import = Import_rename {kwd_import=Token.ghost_import;alias;equal=Token.ghost_eq;module_path} in
       let body = decompile_expression_in let_result in
       [Statement (CST.SImport (Region.wrap_ghost mod_alias))] @ body
     )
@@ -413,7 +413,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       let module_path =
         nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map decompile_mod_var path
       in
-      let mod_alias : CST.import = {kwd_import=Token.ghost_import;alias;equal=Token.ghost_eq;module_path} in
+      let mod_alias : CST.import = Import_rename  {kwd_import=Token.ghost_import;alias;equal=Token.ghost_eq;module_path} in
       let body = decompile_expression_in let_result in
       [Statement (CST.SImport (Region.wrap_ghost mod_alias))] @ body
     )
@@ -841,14 +841,14 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
     )
     | M_variable v -> (
       let binders = name , [] in
-      CST.SImport (Region.wrap_ghost CST.{alias = name; module_path = binders; kwd_import = Token.ghost_import; equal = Token.ghost_eq})
+      CST.SImport (Region.wrap_ghost (CST.Import_rename {alias = name; module_path = binders; kwd_import = Token.ghost_import; equal = Token.ghost_eq}))
     )
     | M_module_path path -> (
       let alias = name in
       let binders =
         nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map decompile_mod_var path
       in
-      CST.SImport (Region.wrap_ghost CST.{alias; module_path = binders; kwd_import = Token.ghost_import; equal = Token.ghost_eq})
+      CST.SImport (Region.wrap_ghost (CST.Import_rename {alias; module_path = binders; kwd_import = Token.ghost_import; equal = Token.ghost_eq}))
     )
   )
 

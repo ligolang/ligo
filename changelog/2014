@@ -1,0 +1,6 @@
+author: SanderSpies
+description: Remove the need for type annotations when using the match function over
+  lists.
+merge_request: '2014'
+title: Match list no annotation
+type: changed

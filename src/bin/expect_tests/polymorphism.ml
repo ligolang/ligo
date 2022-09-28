@@ -118,8 +118,8 @@ let%expect_test _ =
       4 |
       5 | let _rev : <T>((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
       6 |   match(xs, list([
-      7 |   ([] : list<T>) => acc,
-      8 |   ([x,... xs] : list<T>) => _rev([xs, list([x,...acc])])
+      7 |   ([]) => acc,
+      8 |   ([x,... xs]) => _rev([xs, list([x,...acc])])
       9 |   ]));
      10 |
 
@@ -136,29 +136,10 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (test "identity.jsligo") ] ;
-  [%expect.unreachable]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
-  Called from Cli_expect_tests__Polymorphism.(fun) in file "src/bin/expect_tests/polymorphism.ml", line 138, characters 2-69
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
-
-  Trailing output
-  ---------------
-  File "./identity.jsligo", line 7, character 12 to line 10, character 9:
-    6 |     const id_1 : <Q>(y : Q) => Q = (y : Q) => {
-    7 |         let id_2 : <R>(z : R) => R = (z : R) => {
-    8 |             let z = z;
-    9 |             return z;
-   10 |         };
-   11 |         let y = y;
-
-  Mutable binding has the polymorphic type funtype R : * . R -> R
-  Hint: Add an annotation. |}]
+  [%expect{|
+    { parameter unit ;
+      storage int ;
+      code { DROP ; PUSH int 1 ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip((zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))))(list([\"a\",\"b\",\"c\"]))" ; "--init-file" ; (test "comb.jsligo") ] ;
@@ -223,8 +204,8 @@ let%expect_test _ =
       4 |
       5 | let _rev : <T>((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
       6 |   match(xs, list([
-      7 |   ([] : list<T>) => acc,
-      8 |   ([x,... xs] : list<T>) => _rev([xs, list([x,...acc])])
+      7 |   ([]) => acc,
+      8 |   ([x,... xs]) => _rev([xs, list([x,...acc])])
       9 |   ]));
      10 |
 
@@ -387,7 +368,18 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "annotate.mligo") ] ;
-  [%expect{| const f = Λ a ->  lambda ( x : a) return x |}]
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Failure
+    "DO NOT PRINT ASTs IN EXPECT TESTS: PLEASE USE src/test/ast_production.ml")
+  Raised at Stdlib.failwith in file "stdlib.ml", line 29, characters 17-33
+  Called from Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 34, characters 20-103
+  Called from Cli_expect_tests__Polymorphism.(fun) in file "src/bin/expect_tests/polymorphism.ml", line 370, characters 2-66
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; (test "same_vars.mligo") ] ;
@@ -454,31 +446,31 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract.mligo") ] ;
   [%expect{xxx|
-    Underspecified type list (^gen#452) -> nat.
+    Underspecified type list (^gen#421) -> nat.
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
   [%expect{xxx|
-    Underspecified type list (^gen#450) -> nat.
+    Underspecified type list (^gen#419) -> nat.
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
   [%expect{xxx|
-    Underspecified type list (^gen#447) -> nat.
+    Underspecified type list (^gen#416) -> nat.
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
   [%expect{xxx|
-    Underspecified type list (^gen#447).
+    Underspecified type list (^gen#416).
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
   [%expect{|
-    Underspecified type list (^gen#2).
+    Underspecified type list (^gen#5).
     Please add additional annotations. |}]
 
 let () = Sys.chdir pwd

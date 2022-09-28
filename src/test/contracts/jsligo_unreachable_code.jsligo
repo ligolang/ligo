@@ -1,0 +1,55 @@
+
+const reach_1 = (_n : int) : string => {
+  let _x = "Reachable code";
+  return "end";
+}
+
+const unreach_1 = (_n : int) : string => {
+  return "end";
+  let _x = "Unreachable post-return code that should trigger a warning";
+}
+
+const unreach_2 = (n : int) : string => {
+  if (n == 42) {
+    let _x = "Reachable code";
+    return "a";
+  } else {
+    return "b";
+    let _x = "Unreachable post-return code that should trigger a warning";
+  }
+}
+
+const unreach_3 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1:
+      let _x = "Reachable code";
+      break;
+      output = "Unreachable post-break code that should trigger a warnings";
+    case 2:
+    case 3:
+      let _x = "Reachable code";
+      return "end";
+      output = "Unreachable post-return code that should trigger a warnings";
+    case 4:
+      let _x = "Reachable code";
+      break;
+      return "Unreachable post-break code that should trigger a warnings";
+    default:
+      let _x = "Reachable code";
+  };
+  return output;
+}
+
+const unreach_4 = (_n : int) : string => {
+  return "end";
+  return "Unreachable post-return code that should trigger a warnings";
+}
+
+
+const main = ([_, s] : [int, int]) : [list <operation>, int] => {
+  return [
+   (list([]) as list <operation>),    // No operations
+   s
+  ];
+}

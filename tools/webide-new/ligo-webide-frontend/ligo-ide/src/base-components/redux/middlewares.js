@@ -12,6 +12,7 @@ const trackedActions = [
   "SELECT_PROJECT",
   "ADD_PROJECT",
   "REMOVE_PROJECT",
+  "SET_PROTOCOL",
 ];
 
 let mixpanelInitialized;

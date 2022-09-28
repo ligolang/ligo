@@ -13,6 +13,15 @@ You can specify a path to the `ligo` executable in `settings.json`. The debugger
 2. If this field is blank, the debugger will try to find the `ligo` executable in the `$PATH` variable.
 3. Otherwise, the debugger will use the path from the `$LIGO_BINARY_PATH` variable.
 
+Also, if you prefer using `ligo` from the docker image then you can specify a path to the next script which runs `ligo` from docker:
+```sh
+#!/bin/sh
+docker run --rm -v $(pwd):$(pwd) -w $(pwd) ligolang/ligo:{ligo-version} "$@"
+```
+where `{ligo-version}` is your preferred `ligo` version (e.g. `0.50.0`).
+
+At this moment running `ligo` from docker is slow, so, it's better to use static binary.
+
 Currently, simple contracts are supported, with support for more complex contracts on the way.
 
 ## Running the debugger

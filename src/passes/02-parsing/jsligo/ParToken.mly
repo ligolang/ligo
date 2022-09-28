@@ -138,6 +138,7 @@
 %token <string Wrap.t> Return  "return"  [@recover.expr Token.wrap_return  $loc]
 %token <string Wrap.t> Switch  "switch"  [@recover.expr Token.wrap_switch  $loc]
 %token <string Wrap.t> While   "while"   [@recover.expr Token.wrap_while   $loc]
+%token <string Wrap.t> From    "from"    [@recover.expr Token.wrap_from    $loc]
 
 (* TypeScript keywords *)
 

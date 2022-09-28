@@ -88,16 +88,10 @@
         };
 
         pack = pkg:
-          pkg.overrideAttrs (_: {
+          pkg.overrideAttrs (_:  let relink-script = ../scripts/relink-mac-binary.sh; in {
             postInstall = with pkgs; ''
               mkdir -p $out/lib
-              cp ${gmp}/lib/* $out/lib
-              chmod -R 777 $out/lib/
-              install_name_tool -change ${gmp}/lib/libgmp.10.dylib @executable_path/../lib/libgmp.dylib $out/bin/ligo-squirrel
-              install_name_tool -change ${libffi}/lib/libffi.8.dylib /usr/lib/libffi.dylib $out/bin/ligo-squirrel
-              install_name_tool -change ${libiconv}/lib/libiconv.dylib /usr/lib/libiconv.dylib $out/bin/ligo-squirrel
-              install_name_tool -change ${darwin.Libsystem}/lib/libSystem.B.dylib /usr/lib/libSystem.B.dylib $out/bin/ligo-squirrel
-              install_name_tool -change ${darwin.Libsystem}/lib/libSystem.B.dylib /usr/lib/libSystem.B.dylib $out/lib/libgmp.dylib
+              ${relink-script} $out/bin/ligo-squirrel ../lib
             '';
           });
 

@@ -12,7 +12,7 @@ extra-deps:
 - dir-traverse-0.2.3.0
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
-  commit: 2b565c33adeb568929210145bd52d86b48018353  # master
+  commit: 1e09a33e0fd7d3c75bd83b6416e2b79253696c30  # master
 - base58-bytestring-0.1.0
 - monad-stm-0.1.0.2
 - git: https://github.com/serokell/base-noprelude.git

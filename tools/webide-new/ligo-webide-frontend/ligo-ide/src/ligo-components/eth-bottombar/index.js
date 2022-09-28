@@ -5,11 +5,12 @@ import { connect } from "~/base-components/redux";
 
 // import { KeypairButton } from '~/base-components/keypair'
 import { TerminalButton } from "~/base-components/workspace";
+import ProtocolSelector from "~/ligo-components/eth-compiler/bottombar/ProtocolSelector";
 
 // import { NetworkStatus } from '~/ligo-components/eth-network'
 // import { QueueButton } from '~/ligo-components/eth-queue'
 // import { AbiStorage } from '~/ligo-components/eth-contract'
-// import { CompilerSelectors } from '~/ligo-components/eth-compiler'
+// import { CompilerSelectors } from "~/ligo-components/eth-compiler";
 
 export default connect(["network", "queue", "projects", "uiState"])(function BottomBar(props) {
   const {
@@ -39,10 +40,7 @@ export default connect(["network", "queue", "projects", "uiState"])(function Bot
   if (loaded) {
     projectButtons = (
       <>
-        {/* <CacheRoute
-        path={[`/${Auth.username}/:project`, '/local/:project']}
-        render={() => <CompilerSelectors author={selectedProject.get('author')} />}
-      /> */}
+        <CacheRoute path={["/local/:project"]} component={ProtocolSelector} />
         <CacheRoute path={["/local/:project"]} component={TerminalButton} />
       </>
     );

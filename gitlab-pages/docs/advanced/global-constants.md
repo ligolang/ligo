@@ -169,10 +169,10 @@ let main = ((p, s) : (string, int)) : (list (operation), int) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=pre_global
-const helper = ([s, x] : [string, int]) =>
+const helper = (s: string, x: int) =>
   String.length(s) + x * 3 + 2;
 
-const main = ([p, s] : [string, int]) : [list<operation>, int] =>
+const main = (p: string, s: int) : [list<operation>, int] =>
   [list([]), helper (p, s)];
 ```
 
@@ -375,8 +375,8 @@ let main = ((p, s) : (string, int)) : (list (operation), int) =>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-const main = ([p, s] : [string, int]) : [list<operation>, int] =>
-  [ list([]), Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8")([p, s]) ];
+const main = (p: string, s: int) : [list<operation>, int] =>
+  [ list([]), Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8")(p, s) ];
 ```
 
 </Syntax>
@@ -563,7 +563,7 @@ const f = (x : int) => x * 3 + 2;
 
 const ct = Test.register_constant(Test.eval(f));
 
-const main = ([p, s] : [parameter, storage]) : [list<operation>, storage] =>
+const main = (p: parameter, s: storage) : [list<operation>, storage] =>
   [list([]), Tezos.constant(ct)(s)];
 
 const _test = () => {

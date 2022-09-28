@@ -89,7 +89,7 @@ let make :
       } in
       let middle_end = {
         test = raw_options.test;
-        init_env = if raw_options.test then default_with_test protocol_version else default protocol_version ;
+        init_env = default protocol_version ;
         protocol_version ;
         warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec ;
         no_stdlib = raw_options.no_stdlib ;
@@ -123,6 +123,7 @@ let set_test_flag opts test =
 
 let set_entry_point opts entry_point =
   { opts with frontend = { opts.frontend with entry_point } }
-
+let set_syntax opts syntax =
+  { opts with frontend = { opts.frontend with syntax } }
 let set_views opts views =
   { opts with backend = { opts.backend with views } }

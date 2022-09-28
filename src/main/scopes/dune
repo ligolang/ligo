@@ -5,5 +5,10 @@
   (backend bisect_ppx))
  (preprocess
   (pps ppx_here))
- (libraries main_errors ligo_compile simple-utils self_ast_core ast_typed
-   compiler_options))
+ (libraries
+  main_errors
+  ligo_compile
+  simple-utils
+  self_ast_core
+  ast_typed
+  compiler_options))

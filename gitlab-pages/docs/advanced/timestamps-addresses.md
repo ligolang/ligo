@@ -145,6 +145,49 @@ let in_24_hrs: timestamp = today - one_day;
 
 </Syntax>
 
+### Subtracting timestamps
+
+Timestamps can be subtracted, that means, we can use minus (`-`) between two timestamps:
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=g
+const today : timestamp = Tezos.get_now()
+const some_date : timestamp = ("2035-01-01T10:10:10Z" : timestamp)
+const secs_until_some_date : int = some_date - today
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=g
+let today : timestamp = Tezos.get_now ()
+let some_date : timestamp = ("2035-01-01t10:10:10Z" : timestamp)
+let secs_until_some_date : int = some_date - today
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=g
+let today : timestamp = Tezos.get_now ();
+let some_date : timestamp = ("2035-01-01t10:10:10Z" : timestamp);
+let secs_until_some_date : int = some_date - today;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=g
+let today: timestamp = Tezos.get_now();
+let some_date: timestamp = "2035-01-01t10:10:10Z" as timestamp;
+let secs_until_some_date: int = some_date - today;
+```
+
+</Syntax>
+
+Notice that the result of such subtraction is an `int`, which describes the difference in seconds between the two timestamps.
 
 ### Comparing Timestamps
 

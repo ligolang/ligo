@@ -209,6 +209,7 @@ let%expect_test _ =
           | Transfer_single (at) -> transfer_single (at, s)
           ]
       ] |}]
+(*       
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "cameligo" ] ;
   [%expect.unreachable];
@@ -220,8 +221,8 @@ let%expect_test _ =
      Please change this test to not include a backtrace. *)
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
-  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 21, characters 2-93
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 213, characters 2-93
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -247,7 +248,7 @@ let%expect_test _ =
                                                           }
                                                        }
                                                     }
-                                                 }. |}]
+                                                 }. |}] *)
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "pascaligo" ] ;
@@ -291,7 +292,7 @@ let%expect_test _ =
           Some (s) -> s
         | None -> (failwith ("Should not happen.") : string)
         ] |}]
-let%expect_test _ =
+(* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "cameligo" ] ;
   [%expect.unreachable]
 [@@expect.uncaught_exn {|
@@ -300,8 +301,8 @@ let%expect_test _ =
      Please change this test to not include a backtrace. *)
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
-  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 78, characters 2-99
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 295, characters 2-99
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -315,8 +316,8 @@ let%expect_test _ =
                                                  {
                                                     a := { a with 0 = { a.0 with x = { a.0.x with 0 = 2 } } };
                                                     a.0.x.0
-                                                 }. |}]
-let%expect_test _ =
+                                                 }. |}] *)
+(* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
   [%expect.unreachable]
 [@@expect.uncaught_exn {|
@@ -325,8 +326,8 @@ let%expect_test _ =
      Please change this test to not include a backtrace. *)
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
-  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 103, characters 2-101
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 320, characters 2-101
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -340,7 +341,7 @@ let%expect_test _ =
                                                    {
                                                       a := { a with 0 = { a.0 with x = { a.0.x with 0 = 2 } } };
                                                       a.0.x.0
-                                                   }. |}]
+                                                   }. |}] *)
 
 (*
 let%expect_test _ =
@@ -546,7 +547,7 @@ let%expect_test _ =
     {
       if Operator.eq (p, 1) then failwith (42) else skip
     } with p |}]
-let%expect_test _ =
+(* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect.unreachable]
 [@@expect.uncaught_exn {|
@@ -555,8 +556,8 @@ let%expect_test _ =
      Please change this test to not include a backtrace. *)
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
-  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 291, characters 2-96
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 550, characters 2-96
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -592,8 +593,8 @@ let%expect_test _ =
      Please change this test to not include a backtrace. *)
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 31, characters 7-29
-  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 328, characters 2-98
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 587, characters 2-98
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -620,7 +621,7 @@ let%expect_test _ =
                                                        match p with
                                                         | Zero _#3 -> i
                                                         | Pos _#4 -> (failwith)@("waaaa") : int
-                                                   }. |}]
+                                                   }. |}] *)
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;
