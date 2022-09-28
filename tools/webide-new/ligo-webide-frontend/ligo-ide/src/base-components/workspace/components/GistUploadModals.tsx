@@ -136,7 +136,7 @@ const GistUploadModals = forwardRef(
                   To upload your project you need to add github token, or leave the default one to
                   create a gist without a Github account. Currenty you are going to use{" "}
                   <kbd>{token}</kbd>{" "}
-                  {token === atob("Z2hwX3dNYkNNS2Z1MGs1d1loZzl4aDRVODBlT1BBdUpGUjF6b3Z4TA==") ? (
+                  {token === atob("Z2hwX05aa0h5MzBUN1RMTVRoRGh0MGpRTmF5ZFF1TWg3ajF3bEpGVw==") ? (
                     <b>default</b>
                   ) : (
                     <b>custom</b>
