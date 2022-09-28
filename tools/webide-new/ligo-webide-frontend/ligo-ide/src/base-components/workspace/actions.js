@@ -9,6 +9,7 @@ export class ProjectActions {
     this.history = null;
     this.newProjectModal = null;
     this.openProjectModal = null;
+    this.renameProjectModal = null;
     this.workspace = null;
   }
 
@@ -21,7 +22,7 @@ export class ProjectActions {
   }
 
   async openProject() {
-    await this.processNewProject(this.openProjectModal);
+    await this.processNewProject(this.openProjectModal.current);
   }
 
   async processNewProject(modal) {
@@ -92,6 +93,11 @@ export class ProjectActions {
       notificationDescription = `You have permanently delete project <b>${name}</b>`;
     }
     notification.info(notificationTitle, notificationDescription);
+  }
+
+  async renameProjects(project) {
+    const newName = await this.renameProjectModal.openModal(project);
+    await ProjectManager.renameProject(project.id, newName);
   }
 }
 

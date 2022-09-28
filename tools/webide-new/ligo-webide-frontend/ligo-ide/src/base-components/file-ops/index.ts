@@ -145,7 +145,7 @@ class FileManager {
 
   async writeFile(path: string, content: string) {
     await IndexedLocalFs.writeFile(path, content).catch((e) => {
-      throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`);
+      throw new Error(`Fail to save the file <b>${JSON.stringify(e)}</b>.`);
     });
   }
 
@@ -250,6 +250,21 @@ class FileManager {
     }
   }
 
+  async getProjectNames() {
+    const dirFiles: { [a: string]: { isDirectory: boolean } } = await IndexedLocalFs.readDirectory(
+      ".workspaces"
+    ).catch((e) => {
+      throw new Error(`Fail to fetch directory: <b>${JSON.stringify(e)}</b>.`);
+    });
+
+    return Object.keys(dirFiles)
+      .filter((item) => dirFiles[item].isDirectory)
+      .map((item) => {
+        const dirPath = item;
+        return dirPath.replace(".workspaces/", "");
+      });
+  }
+
   async loadGistProject(gistId: string) {
     const data = await GistFs.loadData(gistId)
       .then((dt: GistData) => {
@@ -270,11 +285,10 @@ class FileManager {
       const path = element.replace(/\.\.\./g, "/");
       obj[path] = data[element];
     });
-    console.log(obj);
     return obj;
   }
 
-  async uploadGistProject(token: string, projectRoot: string): Promise<string> {
+  async uploadGistProject(token: string, projectRoot: string, gistId?: string): Promise<string> {
     if (await this.isFile(projectRoot)) {
       throw Error(`${projectRoot} is not a directory`);
     }
@@ -285,7 +299,7 @@ class FileManager {
       packagedObject[path] = { content };
     });
     const description = "Description";
-    return GistFs.uploadData(packagedObject, description, token);
+    return GistFs.uploadData(packagedObject, description, token, gistId);
   }
 
   async copyFolderToJson(path: string): Promise<{ path: string; content: string }[]> {
@@ -344,3 +358,4 @@ export default new FileManager();
 
 export { fileSystems, fileSystem } from "./filesystems/fileSystem";
 export { indexedDBFileSystem } from "./filesystems/indexedDB";
+export { default as redux } from "./redux";

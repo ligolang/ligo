@@ -15,12 +15,17 @@ export type GistData = {
 
 export default class GistFs {
   static loadData(gistId: string): Promise<GistData> {
-    return fetch(`https://api.github.com/gists/${gistId}`)
-      .then((data) => data.json())
-      .then((data) => {
+    const gists = new Gists();
+
+    return gists
+      .get(gistId)
+      .then((data: any) => {
+        return data.body;
+      })
+      .then((data: any) => {
         return data as GistData;
       })
-      .catch((e) => {
+      .catch((e: any) => {
         throw new Error(JSON.stringify(e));
       });
   }
@@ -28,12 +33,16 @@ export default class GistFs {
   static uploadData(
     data: { [a: string]: { content: string } },
     description: string,
-    token: string
+    token: string,
+    gistId?: string
   ): Promise<string> {
     const gists = new Gists({ token });
 
-    return gists
-      .create({ description, public: true, files: data })
+    const action = gistId
+      ? (options: any) => gists.edit(gistId, options)
+      : (options: any) => gists.create(options);
+
+    return action({ description, public: true, files: data })
       .then(
         (result: {
           body: { html_url: any };
