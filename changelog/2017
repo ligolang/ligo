@@ -1,0 +1,5 @@
+author: SanderSpies
+description: Give a warning when there's unreachable code in JsLIGO.
+merge_request: '2017'
+title: 'Jsligo unreachable code'
+type: added

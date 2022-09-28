@@ -26,6 +26,14 @@ let run_ligo args =
   result
 
 let run_ligo_good args =
+  let () =
+    (* std_lib and generated variables (gen#42) makes it very annoying as an expect test *)
+    match args with
+    | "print"::"dependency-graph"::_ -> ()
+    | "print"::"preprocessed"::_ -> ()
+    | "print"::_ -> failwith "DO NOT PRINT ASTs IN EXPECT TESTS: PLEASE USE src/test/ast_production.ml"
+    | _ -> ()
+  in
   let exit_code = run_ligo args in
   if (exit_code <> 0)
   then raise Should_exit_good

@@ -34,7 +34,7 @@ let a : string = "Hello Alice";
 <Syntax syntax="jsligo">
 
 ```jsligo
-let a: string = "Hello Alice";
+let a = "Hello Alice";
 ```
 
 </Syntax>
@@ -82,9 +82,9 @@ let full_greeting : string = greeting ++ " " ++ name;
 Strings can be concatenated using the `+` operator.
 
 ```jsligo group=a
-let name: string = "Alice";
-let greeting: string = "Hello";
-let full_greeting: string = greeting + " " + name;
+let name = "Alice";
+let greeting = "Hello";
+let full_greeting = greeting + " " + name;
 ```
 
 </Syntax>
@@ -124,8 +124,8 @@ let slice : string = String.sub (0n, 1n, name);
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let name: string = "Alice";
-let slice: string = String.sub (0 as nat, 1 as nat, name);
+let name = "Alice";
+let slice = String.sub (0 as nat, 1 as nat, name);
 ```
 
 </Syntax>
@@ -172,8 +172,8 @@ let length : nat = String.length (name);  // length == 5
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let name: string = "Alice";
-let length: nat = String.length(name);  // length == 5
+let name = "Alice";
+let length = String.length(name);  // length == 5
 ```
 
 </Syntax>
@@ -207,7 +207,7 @@ let b : bytes = 0x7070;
 <Syntax syntax="jsligo">
 
 ```jsligo
-let b : bytes = 0x7070;
+let b = 0x7070;
 ```
 
 </Syntax>
@@ -248,9 +248,9 @@ let mixed : bytes = Bytes.concat(white, black); // 0xffff0000
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let white: bytes = 0xffff;
-let black: bytes = 0x0000;
-let mixed: bytes = Bytes.concat(white, black); // 0xffff0000
+let white = 0xffff;
+let black = 0x0000;
+let mixed = Bytes.concat(white, black); // 0xffff0000
 ```
 
 </Syntax>
@@ -290,8 +290,8 @@ let slice : bytes = Bytes.sub (1n, 2n, b); // 0x3456
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let b     : bytes = 0x12345678;
-let slice : bytes = Bytes.sub (1 as nat, 2 as nat, b); // 0x3456
+let b     = 0x12345678;
+let slice = Bytes.sub (1 as nat, 2 as nat, b); // 0x3456
 ```
 
 </Syntax>
@@ -328,8 +328,8 @@ let length : nat   = Bytes.length (b);  // length = 3
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-let b      : bytes = 0x123456;
-let length : nat   = Bytes.length(b);  // length = 3
+let b      = 0x123456;
+let length = Bytes.length(b);  // length = 3
 ```
 
 </Syntax>

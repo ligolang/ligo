@@ -123,6 +123,7 @@ let set_test_flag opts test =
 
 let set_entry_point opts entry_point =
   { opts with frontend = { opts.frontend with entry_point } }
-
+let set_syntax opts syntax =
+  { opts with frontend = { opts.frontend with syntax } }
 let set_views opts views =
   { opts with backend = { opts.backend with views } }

@@ -70,6 +70,9 @@ module.exports = {
     "jsx-a11y/click-events-have-key-events": 0,
     "jsx-a11y/no-static-element-interactions": 0,
 
+    "react/jsx-uses-react": "off",
+    "react/react-in-jsx-scope": "off",
+
     // Enable while(true) loops
     "no-constant-condition": ["error", { checkLoops: false }],
 

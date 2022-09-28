@@ -8,15 +8,10 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Control.Exception
 import Control.Lens (ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
-import Data.Singletons (SingI, sing)
-import Data.Singletons.Decide (decideEquality)
-import Data.Typeable ((:~:) (Refl))
-import Fmt (Buildable, pretty)
-import Morley.Michelson.Typed qualified as T
+import Fmt (pretty)
 import System.FilePath (combine, dropExtension, makeRelative)
 import System.Timeout (timeout)
 import Test.Tasty (TestTree, testGroup)
@@ -25,119 +20,21 @@ import Test.Util
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate),
+  (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate),
   NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
-  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs,
-  twoElemFromList)
+  curSnapshot, frozen, move, moveTill, tsAfterInstrs, twoElemFromList)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SomeValue)
+import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Common
-import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
-
-data ContractRunData =
-  forall param st.
-  ( T.IsoValue param, T.IsoValue st
-  , SingI (T.ToT param), SingI (T.ToT st)
-  , T.ForbidOr (T.ToT param)
-  )
-  => ContractRunData
-  { crdProgram :: FilePath
-  , crdEntrypoint :: Maybe String
-  , crdParam :: param
-  , crdStorage :: st
-  }
-
--- | Make snapshots history for simple contract.
-mkSnapshotsFor
-  :: HasCallStack
-  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
-mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
-  let entrypoint = mEntrypoint ?: "main"
-  result <- compileLigoContractDebug entrypoint file
-  ligoMapper <- either throwIO pure result
-  (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles) <-
-    case readLigoMapper ligoMapper of
-      Right v -> pure v
-      Left err -> assertFailure $ pretty err
-  Refl <- sing @cp' `decideEquality` sing @(T.ToT param)
-    & maybe (assertFailure "Parameter type mismatch") pure
-  Refl <- sing @st' `decideEquality` sing @(T.ToT st)
-    & maybe (assertFailure "Storage type mismatch") pure
-
-  parsedContracts <- parseContracts allFiles
-
-  let statementLocs = getStatementLocs exprLocs parsedContracts
-
-  let his =
-        collectInterpretSnapshots
-          file
-          (fromString entrypoint)
-          contract
-          T.epcPrimitive
-          (T.toVal param)
-          (T.toVal st)
-          dummyContractEnv
-          parsedContracts
-
-  return (exprLocs <> statementLocs, his)
-
-withSnapshots
-  :: (Monad m)
-  => (Set SourceLocation, InterpretHistory InterpretSnapshot)
-  -> StateT (DebuggerState InterpretSnapshot) m a
-  -> m a
-withSnapshots (allLocs, his) action = do
-  let st = DebuggerState
-        { _dsSnapshots = playInterpretHistory his
-        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
-        }
-  evalStateT action st
-
-testWithSnapshots
-  :: ContractRunData
-  -> StateT (DebuggerState InterpretSnapshot) IO ()
-  -> Assertion
-testWithSnapshots runData action = do
-  locsAndHis <- mkSnapshotsFor runData
-  withSnapshots locsAndHis action
-
-(@?==)
-  :: (MonadIO m, MonadReader r m, Eq a, Buildable (TestBuildable a), HasCallStack)
-  => Lens' r a -> a -> m ()
-len @?== expected = do
-  actual <- view len
-  actual @?= expected
-infixl 0 @?==
-
-checkSnapshot
-  :: (MonadState (DebuggerState InterpretSnapshot) m, MonadIO m)
-  => (InterpretSnapshot -> Assertion)
-  -> m ()
-checkSnapshot check = frozen curSnapshot >>= liftIO . check
-
-unexpectedSnapshot
-  :: HasCallStack => InterpretSnapshot -> Assertion
-unexpectedSnapshot sp =
-  assertFailure $ "Unexpected snapshot:\n" <> pretty sp
-
-fromValCasting :: forall a t. (T.IsoValue a, SingI t) => T.Value t -> Maybe a
-fromValCasting v = do
-  Refl <- sing @(T.ToT a) `decideEquality` sing @t
-  return $ T.fromVal v
-
-pattern SomeLorentzValue :: T.IsoValue v => v -> T.SomeValue
-pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
-  where SomeLorentzValue v =  T.SomeValue (T.toVal v)
 
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
@@ -726,6 +623,27 @@ test_Snapshots = testGroup "Snapshots collection"
             frozen curSnapshot
 
       assertBool "Expected history to be evaluated" (isJust res)
+
+  , testCaseSteps "Check snapshot collection logging" \step -> do
+      anyWritten <- newIORef False
+
+      let logger :: String -> IO ()
+          logger = const $ writeIORef anyWritten True
+
+      let file = contractsDir </> "noop.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      step [int||Going through all execution history|]
+      testWithSnapshotsImpl logger runData do
+        void $ moveTill Forward $ FrozenPredicate $ pure False
+
+      unlessM (readIORef anyWritten) do
+        assertFailure [int||No logs we're dumped during snapshot collection|]
   ]
 
 -- | Special options for checking contract.
@@ -754,8 +672,7 @@ unit_Contracts_locations_are_sensible = do
     testContract contractName = do
       let CheckingOptions{..} = fromMaybe def (specialContracts M.!? dropExtension contractName)
 
-      result <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
-      ligoMapper <- either throwIO pure result
+      ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
       (locations, _, _) <-
         case readLigoMapper ligoMapper of
@@ -780,6 +697,7 @@ unit_Contracts_locations_are_sensible = do
       -- we use built-in functions in next contract and they are having weird source locations.
       , ("built-ins", def & coCheckSourceLocationsL .~ False)
       , ("poly", def & coCheckSourceLocationsL .~ False)
+      , ("two-entrypoints", def & coEntrypointL ?~ "main1")
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
@@ -787,6 +705,7 @@ unit_Contracts_locations_are_sensible = do
     badContracts = combine contractsDir <$>
       [ "self.mligo" -- this contract doesn't typecheck in Michelson
       , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
+      , "no-entrypoint.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
       ]

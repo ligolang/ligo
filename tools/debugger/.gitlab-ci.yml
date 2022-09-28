@@ -1,6 +1,6 @@
 ligo-debugger-extension:
   stage: debugger
-  only: [merge_requests, tooling]
+  only: [merge_requests, tooling, vscode-production]
   needs: [ print-nix-version ]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/debugger'#ligo-debugger-extension

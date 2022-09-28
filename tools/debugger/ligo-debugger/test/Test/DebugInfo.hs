@@ -3,17 +3,16 @@ module Test.DebugInfo
   ( module Test.DebugInfo
   ) where
 
-import Control.Exception
 import Control.Lens (_Empty, hasn't)
 import Data.Default (def)
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
-import Morley.Michelson.Typed qualified as T
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
 
 import Morley.Debugger.Core (SourceLocation (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
 
 import Language.LIGO.Debugger.CLI.Call
@@ -50,8 +49,7 @@ test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
-      result <- compileLigoContractDebug "main" file
-      ligoMapper <- either throwIO pure result
+      ligoMapper <- compileLigoContractDebug "main" file
       (exprLocs, T.SomeContract contract, _) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v

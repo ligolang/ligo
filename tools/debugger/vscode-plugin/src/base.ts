@@ -47,6 +47,7 @@ export interface DebuggedContractSession {
 	pickedMichelsonEntrypoint?: string
 	logDir?: string
 	contractMetadata?: ContractMetadata
+	pickedLigoEntrypoint?: string
 }
 
 type BinaryInfo = {

@@ -128,7 +128,7 @@ export const getEntrypoint = (
 			const entrypoints: QuickPickItem[] = currentFilePath && debuggedContract.ref.entrypoints.map(label => ({ label }));
 
 			const currentKey: Maybe<string> = currentFilePath && "quickpick_entrypoint_" + currentFilePath;
-			const previousVal: Maybe<QuickPickItem> = currentKey && context.workspaceState.get<QuickPickItem>(currentKey);
+			const previousVal: Maybe<string> = currentKey && context.workspaceState.get<string>(currentKey);
 
 			if (entrypoints.length <= 1) {
 				if (entrypoints.length === 0) {
@@ -138,10 +138,20 @@ export const getEntrypoint = (
 				return;
 			}
 
+			let activeItem: Maybe<QuickPickItem>;
+			if (isDefined(previousVal)) {
+				for (let entrypoint of entrypoints) {
+					if (entrypoint.label === previousVal) {
+						activeItem = entrypoint;
+						break;
+					}
+				}
+			}
+
 			const pick: QuickPickItem = await input.showQuickPick({
 				totalSteps: 1,
 				items: entrypoints,
-				activeItem: previousVal,
+				activeItem,
 				placeholder: "Choose an entrypoint to run"
 			});
 
@@ -152,7 +162,7 @@ export const getEntrypoint = (
 				return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state);
 			} else {
 				if (isDefined(currentKey)) {
-					context.workspaceState.update(currentKey, pick);
+					context.workspaceState.update(currentKey, pick.label);
 				}
 
 				state.ref.pickedEntrypoint = pick.label;
@@ -166,6 +176,7 @@ export const getEntrypoint = (
 
 		if (isDefined(result.pickedEntrypoint)) {
 			await getContractMetadata(result.pickedEntrypoint);
+			debuggedContract.ref.pickedLigoEntrypoint = result.pickedEntrypoint;
 			return result.pickedEntrypoint;
 		}
 }
@@ -179,13 +190,24 @@ export const getParameterOrStorage = (
 		debuggedContract: Ref<DebuggedContractSession>
 	) => async (_config: any): Promise<Maybe<string>> => {
 
+	if (!isDefined(debuggedContract.ref.pickedLigoEntrypoint)) {
+		throw new Error("Internal error: LIGO entrypoint is not defined");
+	}
+
+	const ligoEntrypoint: string = debuggedContract.ref.pickedLigoEntrypoint;
+
 	const totalSteps = 1;
+	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
+	const switchButtonKey: Maybe<string> = currentFilePath
+		&& "switch_button_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
 
 	class SwitchButton implements vscode.QuickInputButton {
 		public typ: ValueType;
+		public tooltip: string;
 
-		constructor(public iconPath: vscode.Uri, public tooltip: ValueType) {
-			this.typ = tooltip;
+		constructor(public iconPath: vscode.Uri, typ: ValueType) {
+			this.typ = typ;
+			this.tooltip = "Input in " + typ + " format";
 		}
 
 		static readonly LigoSwitch = new SwitchButton(
@@ -209,8 +231,9 @@ export const getParameterOrStorage = (
 			throw new Error("Internal error: metadata is not defined at the moment of user input")
 		}
 
-		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-		let currentKey: Maybe<string> = currentFilePath && "quickpick_" + inputBoxType + '_' + currentFilePath
+		let currentKey: Maybe<string> = currentFilePath
+				&& "quickpick_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
+
 		let placeholderExtra: string = ''
 		let michelsonType: string = ''
 		switch (inputBoxType) {
@@ -268,16 +291,36 @@ export const getParameterOrStorage = (
 					state.ref.currentSwitch = SwitchButton.LigoSwitch;
 					break;
 			}
+
+			if (isDefined(switchButtonKey)) {
+				context.workspaceState.update(switchButtonKey, state.ref.currentSwitch.typ);
+			}
+
 			return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askValue(input, state);
 		} else {
 			state.ref.value = pick;
 		}
 	}
 
+	let switchButton: SwitchButton = SwitchButton.LigoSwitch;
+	if (isDefined(switchButtonKey)) {
+		let switchButtonName: Maybe<ValueType> = context.workspaceState.get<ValueType>(switchButtonKey);
+		if (isDefined(switchButtonName)) {
+			switch(switchButtonName) {
+				case "LIGO":
+					switchButton = SwitchButton.LigoSwitch;
+					break;
+				case "Michelson":
+					switchButton = SwitchButton.MichelsonSwitch;
+					break;
+			}
+		}
+	}
+
 	const result: State =
 		await MultiStepInput.run(
 			(input: MultiStepInput<State>, state) => askValue(input, state),
-			{ currentSwitch: SwitchButton.LigoSwitch }
+			{ currentSwitch: switchButton }
 		) as State;
 
 	if (isDefined(result.value) && isDefined(result.currentSwitch.typ)) {
@@ -437,7 +480,31 @@ class MultiStepInput<S> {
 					...(buttons || [])
 				];
 				input.ignoreFocusOut = ignoreFocusOut;
-				let validating = validate('');
+				let validating = validate(value);
+
+				interface LastValidationResult {
+					value: string,
+					result: boolean
+				}
+
+				let lastValidationResult: Maybe<LastValidationResult> = undefined;
+
+				let emitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
+				emitter.event(async text => {
+					const current = validate(text);
+					validating = current;
+					const validationMessage = await current;
+					if (current === validating) {
+						if (text.trim() === '') {
+							input.validationMessage = null;
+							return;
+						}
+
+						lastValidationResult = { value: text, result: !validationMessage };
+						input.validationMessage = validationMessage;
+					}
+				});
+
 				disposables.push(
 					input.onDidTriggerButton(item => {
 						if (item === vscode.QuickInputButtons.Back) {
@@ -450,31 +517,38 @@ class MultiStepInput<S> {
 						const value = input.value;
 						input.enabled = false;
 						input.busy = true;
-						if (!(await validate(value))) {
-							resolve(value);
+
+						if (isDefined(lastValidationResult)) {
+							if (lastValidationResult.value === value && lastValidationResult.result) {
+								resolve(value);
+							}
+						} else {
+							const result: boolean = !(await validate(value));
+							lastValidationResult = { value, result };
+							if (result) {
+								resolve(value);
+							}
 						}
+
 						input.enabled = true;
 						input.busy = false;
 					}),
 					input.onDidChangeValue(async text => {
-						const current = validate(text);
-						validating = current;
-						const validationMessage = await current;
-						if (current === validating) {
-							input.validationMessage = validationMessage;
-						}
+						emitter.fire(text);
 					}),
 					input.onDidHide(() => {
 						(async () => {
 							reject(InputFlowAction.cancel);
 						})()
 							.catch(reject);
-					})
+					}),
+					emitter
 				);
 				if (this.current) {
 					this.current.dispose();
 				}
 				this.current = input;
+				emitter.fire(value);
 				this.current.show();
 			});
 		} finally {

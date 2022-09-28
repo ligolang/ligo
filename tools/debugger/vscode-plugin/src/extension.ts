@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await client.sendMsg('setLigoBinaryPath', { binaryPath });
 
 			debuggedContractSession.ref.entrypoints =
-				(await client.sendMsg('setProgramPath', { program: info.file })).entrypoints
+				(await client.sendMsg('setProgramPath', { program: info.file })).entrypoints.reverse() as [string];
 
 			const entrypointCommand = getCommand(info.entrypoint);
 			if (entrypointCommand === 'AskForEntrypoint') {
