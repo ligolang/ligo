@@ -3,13 +3,50 @@ id: installation
 title: Installation
 ---
 
-There are currently three ways to get started with LIGO. You can choose to use a Docker image, a static Linux binary or to install packages for your Debian Linux distribution.
+Currently Ligo can be installed on Linux and MacOS. It still possible to use it on Windows through WSL or docker.
 
 You can also try LIGO in a Gitpod environment
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://gitlab.com/ligolang/template-ligo)
 
-## Dockerised installation (recommended)
+
+## Static Linux binary
+
+The `ligo` executable is statically linked. It should run on most modern Linux distributions.
+
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/3097040721/artifacts/raw/ligo), make it executable, and you are done!
+
+```zsh
+wget https://gitlab.com/ligolang/ligo/-/jobs/3097040721/artifacts/raw/ligo
+chmod +x ./ligo
+```
+
+For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).  
+Optionally, you can put it somewhere in your `PATH` for easy access:
+
+```zsh
+sudo cp ./ligo /usr/local/bin
+```
+
+## MacOS
+
+Try our tap,
+
+```
+brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
+brew install ligolang/ligo/ligo
+```
+
+## Debian Linux package installation
+
+A `.deb` package containing the static `ligo` executable is also available.
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3097040721/artifacts/raw/ligo.deb), and then install using: 
+
+```zsh
+sudo apt install ./ligo.deb
+```
+
+## Dockerised installation
 If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.52.0](./changelog.md):
 
 Linux or OSX:
@@ -37,42 +74,6 @@ Windows:
 Or if you want the development version, replace the version above with `next`.
 
 Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
-
-## MacOS
-
-Try our tap,
-
-```
-brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
-brew install ligolang/ligo/ligo
-```
-
-## Static Linux binary
-
-The `ligo` executable is statically linked. It should run on most modern Linux distributions.
-
-You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/3097040721/artifacts/raw/ligo), make it executable, and you are done!
-
-```zsh
-wget https://gitlab.com/ligolang/ligo/-/jobs/3097040721/artifacts/raw/ligo
-chmod +x ./ligo
-```
-
-For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).  
-Optionally, you can put it somewhere in your `PATH` for easy access:
-
-```zsh
-sudo cp ./ligo /usr/local/bin
-```
-
-## Debian Linux package installation
-
-A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3097040721/artifacts/raw/ligo.deb), and then install using: 
-
-```zsh
-sudo apt install ./ligo.deb
-```
 
 ## Releases
 
