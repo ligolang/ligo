@@ -15,6 +15,7 @@ import Data.Char (isDigit)
 import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
+import Data.SemVer qualified as SemVer
 import Data.Text qualified as T
 import Data.Typeable (cast)
 import Data.Vector qualified as V
@@ -25,6 +26,8 @@ import Text.Interpolation.Nyan (int, rmode')
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
+
+import Util
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -434,6 +437,18 @@ instance Default LigoException where
 instance Exception LigoException where
   displayException = pretty
 
+newtype UnsupportedLigoVersionException =
+    UnsupportedLigoVersionException SemVer.Version
+  deriving stock (Show)
+  deriving anyclass (DebuggerException)
+
+instance Buildable UnsupportedLigoVersionException where
+  build (UnsupportedLigoVersionException ver) =
+    [int||Used `ligo` executable has #semv{ver} version which is not supported|]
+
+instance Exception UnsupportedLigoVersionException where
+  displayException = pretty
+
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
   deriving newtype (Buildable)
 
@@ -473,5 +488,6 @@ instance Exception SomeDebuggerException where
     asum
       [ SomeDebuggerException <$> fromException @LigoException e
       , SomeDebuggerException <$> fromException @DapMessageException e
+      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
       , cast @_ @SomeDebuggerException e'
       ]

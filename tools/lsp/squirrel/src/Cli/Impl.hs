@@ -16,7 +16,8 @@ module Cli.Impl
   , callLigo
   , callLigoBS
   , callForFormat
-  , getLigoVersion
+  , getLigoVersionRaw
+  , getLigoVersionSafe
   , preprocess
   , getLigoDefinitions
   ) where
@@ -341,16 +342,26 @@ fixMarkers tempFp (Source fp dirty contents) = liftIO do  -- HACK: I use `liftIO
 -- ```
 -- ligo --version
 -- ```
-getLigoVersion :: (HasLigoClient m, Log m) => m (Maybe Version)
-getLigoVersion = Log.addNamespace "getLigoVersion" do
-  mbOut <- try $ callLigoImpl Nothing ["--version"] Nothing
-  case mbOut of
-    -- We don't want to die if we failed to parse the version...
+--
+-- TODO: rename this back to @getLigoVersion@.
+getLigoVersionRaw :: (HasLigoClient m) => m Version
+getLigoVersionRaw =
+  Version . Text.strip <$> callLigoImpl Nothing ["--version"] Nothing
+
+-- | Get the current LIGO version, but in case of any failure return 'Nothing'.
+--
+-- ```
+-- ligo --version
+-- ```
+getLigoVersionSafe :: (HasLigoClient m, Log m) => m (Maybe Version)
+getLigoVersionSafe = Log.addNamespace "getLigoVersion" do
+  mbVersion <- try getLigoVersionRaw
+  case mbVersion of
     Left (SomeException e) -> do
       $(Log.err) [i|Couldn't get LIGO version with: #{e}|]
       pure Nothing
-    Right output ->
-      pure $ Just $ Version $ Text.strip output
+    Right version ->
+      pure $ Just version
 
 -- | Call LIGO's pretty printer on some contract.
 --
