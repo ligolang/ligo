@@ -264,7 +264,7 @@ type LigoTypeSum = LigoTypeTable
 type LigoTypeRecord = LigoTypeTable
 
 data LigoTypeTable = LigoTypeTable
-  { _lttContent :: HM.HashMap Text LigoTableField
+  { _lttFields :: HM.HashMap Text LigoTableField
   , _lttLayout  :: Value -- TODO not used
   }
   deriving stock (Generic, Show)
@@ -540,7 +540,7 @@ fromLigoTypeFull = enclose . \case
         let mkArrow = TArrow `on` (enclose . fromLigoTypeExpression)
         return $ make' (st, mkArrow _ltaType1 _ltaType2)
 
-    fromLigoTable = traverse (uncurry fromLigoTableField) . HM.toList . _lttContent
+    fromLigoTable = traverse (uncurry fromLigoTableField) . HM.toList . _lttFields
 
     fromLigoTableField
       :: Text

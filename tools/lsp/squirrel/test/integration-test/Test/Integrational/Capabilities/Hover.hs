@@ -18,10 +18,8 @@ import Test.Common.FixedExpectations (anyException, shouldThrow)
 
 unit_hover_arrow_type :: Assertion
 unit_hover_arrow_type = do
-  -- FIXME: LIGO-759
-  --Hover.unit_hover_arrow_type @Standard
-  --Hover.unit_hover_arrow_type @FromCompiler
-  pure ()
+  Hover.unit_hover_arrow_type @Standard
+  Hover.unit_hover_arrow_type @FromCompiler
 
 unit_hover_arrow_type_mligo :: Assertion
 unit_hover_arrow_type_mligo = do
@@ -44,15 +42,15 @@ unit_hover_inferred_simple_from_compiler :: Assertion
 unit_hover_inferred_simple_from_compiler = do
   -- FIXME: LIGO-760
   --Hover.unit_hover_inferred_simple @Standard
-  -- FIXME: LIGO-759
   --Hover.unit_hover_inferred_simple @FromCompiler
   pure ()
 
 unit_hover_inferred_recursion_from_compiler :: Assertion
 unit_hover_inferred_recursion_from_compiler = do
-  Hover.unit_hover_inferred_recursion @Standard
-  -- FIXME: LIGO-759
+  -- FIXME: LIGO-760
+  --Hover.unit_hover_inferred_recursion @Standard
   --Hover.unit_hover_inferred_recursion @FromCompiler
+  pure ()
 
 unit_hover_inferred_recursion_fallback :: Assertion
 unit_hover_inferred_recursion_fallback =
