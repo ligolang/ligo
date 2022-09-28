@@ -204,6 +204,8 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-const
 # Outputs: 2
 ```
 
+</Syntax>
+
 ## Escaped Identifiers
 
 Both variables and constants are, at the level of the lexicon,
@@ -217,5 +219,32 @@ complain about the value being not used.) But this is not a good
 practice because we do not pronounce aloud the underscores, and there
 is the issue of one or two underscores. To solve all those problems,
 in LIGO, you can prefix you identifier with `@`, like `@amount`.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=a
+const @Unique_name = true
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=a
+let @Unique_name = true
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=a
+let @Unique_name = true
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a
+let @Unique_name = true
+```
 
 </Syntax>
