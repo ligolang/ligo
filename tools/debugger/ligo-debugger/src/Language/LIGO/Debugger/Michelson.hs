@@ -1,35 +1,43 @@
 module Language.LIGO.Debugger.Michelson
   ( DecodeError (..)
   , EmbedError
+  , typesReplaceRules
+  , instrReplaceRules
   , readLigoMapper
   ) where
 
 import Unsafe qualified
 
-import Control.Lens (at, each)
+import Control.Lens (at, cons, each, (%=), (.=))
 import Control.Lens.Prism (_Just)
 import Control.Monad.Except (Except, liftEither, runExcept, throwError)
 import Data.Char (isAsciiUpper, isDigit)
 import Data.Coerce (coerce)
 import Data.DList qualified as DL
 import Data.Data (cast)
-import Data.Default (def)
+import Data.Default (Default, def)
+import Data.Map qualified as M
 import Data.Set qualified as Set
 import Data.Text qualified as Text
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, genericF)
+import Generics.SYB (everywhere, everywhereM, mkM, mkT)
+import Text.Interpolation.Nyan
+import Util (everywhereM')
+
 import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
+import Morley.Michelson.Text (mt)
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
   (Contract' (..), ContractCode' (ContractCode, unContractCode), CtorEffectsApp (..),
   DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta), dfsFoldInstr,
   dfsTraverseInstr, isMichelsonInstr)
 import Morley.Michelson.Untyped qualified as U
-import Text.Interpolation.Nyan
+import Morley.Util.Lens (makeLensesWith, postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
@@ -75,6 +83,20 @@ extractInstructionsIndexes =
     primInstrs = Set.filter (Text.all (\c -> isAsciiUpper c || isDigit c || c == '_')) prims
     prims = Set.fromList $ toList michelsonPrimitive
 
+-- | In this state we store two lists with metas.
+-- When we're processing one meta then we're taking it
+-- from the first list and prepening it to the second one.
+-- We're processing them in such manner because sometimes
+-- we want to insert empty metas for replaced instr.
+data PreprocessState meta = PreprocessState
+  { psMetasIn :: [meta]
+    -- ^ Metas to process.
+  , psMetasOut :: [meta]
+    -- ^ Processed metas (in reversed order).
+  }
+
+makeLensesWith postfixLFields ''PreprocessState
+
 data DecodeError
   = FromExpressionFailed FromExpressionError
   | TypeCheckFailed TCError
@@ -94,12 +116,17 @@ instance Buildable DecodeError where
     decodeError -> genericF decodeError
 
 fromExpressionToTyped
-  :: Expression
-  -> Either DecodeError SomeContract
-fromExpressionToTyped expr = do
+  :: (Default meta)
+  => Expression
+  -> [meta]
+  -> (U.T -> U.T)
+  -> (U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
+  -> Either DecodeError (SomeContract, [meta])
+fromExpressionToTyped expr metas typeRules instrRules = do
   uContract <- first FromExpressionFailed $ fromExpression expr
-  processedUContract <- first PreprocessError $ preprocessContract uContract
-  first TypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
+  (processedUContract, newMetas, oldMetas) <- first PreprocessError $ preprocessContract uContract metas typeRules instrRules
+  contract <- first TypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
+  pure (contract, reverse newMetas <> oldMetas)
 
 newtype PreprocessError
   = EntrypointTypeNotFound U.EpName
@@ -107,9 +134,97 @@ newtype PreprocessError
 
 instance Buildable PreprocessError where
   build = \case
-    EntrypointTypeNotFound epName -> [int||Type for entrypoint #{epName} not found|]
+    EntrypointTypeNotFound epName ->
+      [int||
+        SELF instruction have the entrypoint #{epName} \
+        that the contract's parameter doesn't declare.
+      |]
 
-type PreprocessMonad = ReaderT (Map U.EpName U.Ty) (Except PreprocessError)
+type PreprocessMonad meta =
+  ReaderT (Map U.EpName U.Ty) $
+  ExceptT PreprocessError $
+  State (PreprocessState meta)
+
+metasToProcess :: U.ExpandedInstr -> Int
+metasToProcess = \case
+  U.IF{} -> 3
+  U.IF_NONE{} -> 3
+  U.IF_LEFT{} -> 3
+  U.IF_CONS{} -> 3
+
+  U.LOOP{} -> 2
+  U.LOOP_LEFT{} -> 2
+
+  U.MAP{} -> 2
+  U.ITER{} -> 2
+
+  U.DIP{} -> 2
+  U.DIPN{} -> 2
+
+  U.LAMBDA{} -> 2
+
+  _ -> 1
+
+-- | This function may generate a wrong number of empty metas for
+-- complex replacable instructions (e.g. @LAMBDA@, @IF@ or @LOOP@).
+-- For all other instructions this function works correctly.
+generateEmptyMetas :: forall meta. (Default meta) => U.ExpandedInstr -> U.ExpandedOp -> PreprocessMonad meta ()
+generateEmptyMetas replacableInstr op = do
+  generateEmptyMetasImpl op
+  psMetasOutL %= drop (metasToProcess replacableInstr)
+  where
+    generateEmptyMetasImpl :: U.ExpandedOp -> PreprocessMonad meta ()
+    generateEmptyMetasImpl = \case
+      U.PrimEx instr -> do
+        replicateM_ (metasToProcess instr) insertEmptyMeta
+        traverseOps instr
+      U.SeqEx ops -> insertEmptyMeta >> mapM_ generateEmptyMetasImpl ops
+      U.WithSrcEx _ op' -> generateEmptyMetasImpl op'
+      where
+        traverseOps :: U.ExpandedInstr -> PreprocessMonad meta ()
+        traverseOps =
+          void . everywhereM (mkM \op' -> generateEmptyMetasImpl op' >> pure op')
+
+    insertEmptyMeta :: PreprocessMonad meta ()
+    insertEmptyMeta = do
+      psMetasOutL %= cons def
+
+instrReplaceRules :: (Default meta) => U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp
+instrReplaceRules = \case
+  U.EMPTY_BIG_MAP typeAnn varAnn tyKey tyValue ->
+    pure $ U.PrimEx $ U.EMPTY_MAP typeAnn varAnn tyKey tyValue
+  selfInstr@(U.SELF varAnn fieldAnn) -> do
+    let epName = U.epNameFromSelfAnn fieldAnn
+    ty <- do
+      tyMb <- view $ at epName
+      maybe
+        do throwError $ EntrypointTypeNotFound epName
+        pure
+        tyMb
+
+    let errorValue =
+          createErrorValue [mt|Cannot find self contract in the contract's environment|]
+
+    let replacement = U.SeqEx $ U.PrimEx <$>
+          [ U.SELF_ADDRESS varAnn
+          , U.CONTRACT varAnn fieldAnn ty
+          , U.IF_NONE
+              do
+                U.PrimEx <$>
+                  [ U.PUSH def errorValueType errorValue
+                  , U.FAILWITH
+                  ]
+              do []
+          ]
+
+    generateEmptyMetas selfInstr replacement
+    pure replacement
+  instr -> pure $ U.PrimEx instr
+
+typesReplaceRules :: U.T -> U.T
+typesReplaceRules = \case
+  U.TBigMap tyKey tyValue -> U.TMap tyKey tyValue
+  other -> other
 
 -- | Since optimization disabling feature in @ligo@ can produce
 -- badly typed Michelson code, we should fix it somehow. At this
@@ -118,140 +233,55 @@ type PreprocessMonad = ReaderT (Map U.EpName U.Ty) (Except PreprocessError)
 -- 2. Replacing all @BIG_MAP@ occurrences with @MAP@.
 --    We're doing this by replacing all big-map's @Ty@ to map ones
 --    and replacing @EMPTY_BIG_MAP@ instr to @EMPTY_MAP@.
-preprocessContract :: U.Contract -> Either PreprocessError U.Contract
-preprocessContract con@U.Contract{..} =
+--
+-- Returns processed contract, processed metas (in reversed order) and not processed metas.
+preprocessContract
+  :: forall meta
+   . (Default meta)
+  => U.Contract
+  -> [meta]
+  -> (U.T -> U.T)
+  -> (U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
+  -> Either PreprocessError (U.Contract, [meta], [meta])
+preprocessContract con@U.Contract{..} metas typesRules instrRules =
   let
-    ctx = U.mkEntrypointsMap contractParameter
-    mappedOpsInMonad = mapM (go False) contractCode
-    mappedOpsE = runExcept $ runReaderT mappedOpsInMonad ctx
-  in (\ops -> con { U.contractCode = ops }) <$> mappedOpsE
+    (U.ParameterType rootType _) = contractParameter
+    ctx = U.mkEntrypointsMap contractParameter <> M.fromList [(U.DefEpName, rootType)]
+    mappedOpsInMonad = mapM go contractCode
+    (mappedOpsE, PreprocessState{..}) = runState (runExceptT $ runReaderT mappedOpsInMonad ctx) (PreprocessState metas [])
+  in (\ops -> (con { U.contractCode = ops }, psMetasOut, psMetasIn)) <$> mappedOpsE
   where
-    go :: Bool -> U.ExpandedOp -> PreprocessMonad U.ExpandedOp
-    go insideLambda = \case
-      prim@(U.PrimEx instr) -> case instr of
-        U.PUSH varAnn ty value -> do
-          processedValue <- preprocessValue value
-          pure $ U.PrimEx $ U.PUSH varAnn (preprocessTy ty) processedValue
-        U.NONE typeAnn varAnn ty -> pure $ U.PrimEx $ U.NONE typeAnn varAnn (preprocessTy ty)
-        U.IF_NONE ops1 ops2 -> do
-          mappedOps1 <- mapM (go insideLambda) ops1
-          mappedOps2 <- mapM (go insideLambda) ops2
-          pure $ U.PrimEx $ U.IF_NONE mappedOps1 mappedOps2
-        U.LEFT typeAnn varAnn fstFieldAnn sndFieldAnn ty ->
-          pure $ U.PrimEx $ U.LEFT typeAnn varAnn fstFieldAnn sndFieldAnn (preprocessTy ty)
-        U.RIGHT typeAnn varAnn fstFieldAnn sndFieldAnn ty ->
-          pure $ U.PrimEx $ U.RIGHT typeAnn varAnn fstFieldAnn sndFieldAnn (preprocessTy ty)
-        U.IF_LEFT ops1 ops2 -> do
-          mappedOps1 <- mapM (go insideLambda) ops1
-          mappedOps2 <- mapM (go insideLambda) ops2
-          pure $ U.PrimEx $ U.IF_LEFT mappedOps1 mappedOps2
-        U.NIL typeAnn varAnn ty -> pure $ U.PrimEx $ U.NIL typeAnn varAnn (preprocessTy ty)
-        U.IF_CONS ops1 ops2 -> do
-          mappedOps1 <- mapM (go insideLambda) ops1
-          mappedOps2 <- mapM (go insideLambda) ops2
-          pure $ U.PrimEx $ U.IF_CONS mappedOps1 mappedOps2
-        U.EMPTY_SET typeAnn varAnn ty -> pure $ U.PrimEx $ U.EMPTY_SET typeAnn varAnn (preprocessTy ty)
-        U.EMPTY_MAP typeAnn varAnn tyKeys tyValues ->
-          pure $ U.PrimEx $ U.EMPTY_MAP typeAnn varAnn (preprocessTy tyKeys) (preprocessTy tyValues)
-        U.EMPTY_BIG_MAP typeAnn varAnn tyKeys tyValues ->
-          pure $ U.PrimEx $ U.EMPTY_MAP typeAnn varAnn (preprocessTy tyKeys) (preprocessTy tyValues)
-        U.MAP varAnn ops -> do
-          processedOps <- mapM (go insideLambda) ops
-          pure $ U.PrimEx $ U.MAP varAnn processedOps
-        U.ITER ops -> do
-          processedOps <- mapM (go insideLambda) ops
-          pure $ U.PrimEx $ U.ITER processedOps
-        U.IF ops1 ops2 -> do
-          mappedOps1 <- mapM (go insideLambda) ops1
-          mappedOps2 <- mapM (go insideLambda) ops2
-          pure $ U.PrimEx $ U.IF mappedOps1 mappedOps2
-        U.LOOP ops -> do
-          processedOps <- mapM (go insideLambda) ops
-          pure $ U.PrimEx $ U.LOOP processedOps
-        U.LOOP_LEFT ops -> do
-          processedOps <- mapM (go insideLambda) ops
-          pure $ U.PrimEx $ U.LOOP_LEFT processedOps
-        U.LAMBDA varAnn tyIn tyOut ops -> do
-          processedOps <- mapM (go True) ops
-          pure $ U.PrimEx $ U.LAMBDA varAnn (preprocessTy tyIn) (preprocessTy tyOut) processedOps
-        U.DIP ops -> do
-          processedOps <- mapM (go insideLambda) ops
-          pure $ U.PrimEx $ U.DIP processedOps
-        U.DIPN n ops -> do
-          processedOps <- mapM (go insideLambda) ops
-          pure $ U.PrimEx $ U.DIPN n processedOps
-        U.CAST varAnn ty -> pure $ U.PrimEx $ U.CAST varAnn (preprocessTy ty)
-        U.UNPACK typeAnn varAnn ty -> pure $ U.PrimEx $ U.UNPACK typeAnn varAnn (preprocessTy ty)
-        U.VIEW varAnn viewName ty -> pure $ U.PrimEx $ U.VIEW varAnn viewName (preprocessTy ty)
-        U.SELF varAnn fieldAnn
-          | insideLambda -> do
-              let epName = U.epNameFromSelfAnn fieldAnn
-              ty <-
-                if U.isDefEpName epName
-                then do
-                  let (U.ParameterType ty' _) = contractParameter
-                  pure ty'
-                else do
-                  tyMb <- view $ at epName
-                  maybe
-                    do throwError $ EntrypointTypeNotFound epName
-                    pure
-                    tyMb
-              pure $
-                U.SeqEx $ U.PrimEx <$>
-                  [ U.SELF_ADDRESS varAnn
-                  , U.CONTRACT varAnn fieldAnn (preprocessTy ty)
-                  , U.IF_NONE
-                      do
-                        U.PrimEx <$>
-                          [ U.UNIT def def
-                          , U.FAILWITH
-                          ]
-                      do []
-                  ]
-          | otherwise -> pure $ U.PrimEx $ U.SELF varAnn fieldAnn
-        U.CONTRACT varAnn fieldAnn ty -> pure $ U.PrimEx $ U.CONTRACT varAnn fieldAnn (preprocessTy ty)
-        U.CREATE_CONTRACT varAnn1 varAnn2 contract -> do
-          processedContract <- liftEither $ preprocessContract contract
-          pure $ U.PrimEx $ U.CREATE_CONTRACT varAnn1 varAnn2 processedContract
-        _ -> pure prim
-      U.SeqEx expandedOps -> U.SeqEx <$> mapM (go insideLambda) expandedOps
-      U.WithSrcEx errorSrcPos expanedOp -> do
-        processedExpandedOp <- go insideLambda expanedOp
-        pure $ U.WithSrcEx errorSrcPos processedExpandedOp
-      where
-        preprocessTy :: U.Ty -> U.Ty
-        preprocessTy oldTy@(U.Ty typ ann) = case typ of
-          U.TOption ty -> U.Ty (U.TOption $ preprocessTy ty) ann
-          U.TList ty -> U.Ty (U.TList $ preprocessTy ty) ann
-          U.TSet ty -> U.Ty (U.TSet $ preprocessTy ty) ann
-          U.TContract ty -> U.Ty (U.TContract $ preprocessTy ty) ann
-          U.TTicket ty -> U.Ty (U.TTicket $ preprocessTy ty) ann
-          U.TPair fstFieldAnn sndFieldAnn fstVarAnn sndVarAnn tyLeft tyRight ->
-            U.Ty (U.TPair fstFieldAnn sndFieldAnn fstVarAnn sndVarAnn (preprocessTy tyLeft) (preprocessTy tyRight)) ann
-          U.TOr fstFieldAnn sndFieldAnn tyLeft tyRight ->
-            U.Ty (U.TOr fstFieldAnn sndFieldAnn (preprocessTy tyLeft) (preprocessTy tyRight)) ann
-          U.TLambda tyIn tyOut ->
-            U.Ty (U.TLambda (preprocessTy tyIn) (preprocessTy tyOut)) ann
-          U.TMap tyKey tyValue ->
-            U.Ty (U.TMap (preprocessTy tyKey) (preprocessTy tyValue)) ann
-          U.TBigMap tyKey tyValue ->
-            U.Ty (U.TMap (preprocessTy tyKey) (preprocessTy tyValue)) ann
-          _ -> oldTy
+    processOneMeta :: PreprocessMonad meta ()
+    processOneMeta = do
+      metasIn <- use psMetasInL
+      case metasIn of
+        [] -> pass
+        (meta : xs) -> do
+          psMetasOutL %= cons meta
+          psMetasInL .= xs
 
-        preprocessValue :: U.Value -> PreprocessMonad U.Value
-        preprocessValue = \case
-          U.ValuePair valLeft valRight ->
-            U.ValuePair <$> preprocessValue valLeft <*> preprocessValue valRight
-          U.ValueLeft val -> U.ValueLeft <$> preprocessValue val
-          U.ValueRight val -> U.ValueRight <$> preprocessValue val
-          U.ValueSome val -> U.ValueSome <$> preprocessValue val
-          U.ValueSeq vals -> U.ValueSeq <$> mapM preprocessValue vals
-          U.ValueMap elts ->
-            let mapElt (U.Elt val1 val2) = U.Elt <$> preprocessValue val1 <*> preprocessValue val2
-            in U.ValueMap <$> mapM mapElt elts
-          U.ValueLambda ops -> U.ValueLambda <$> mapM (go insideLambda) ops
-          value -> pure value
+    processMetas :: U.ExpandedInstr -> PreprocessMonad meta ()
+    processMetas instr = replicateM_ (metasToProcess instr) processOneMeta
+
+    go :: U.ExpandedOp -> PreprocessMonad meta U.ExpandedOp
+    go = fmap (everywhere $ mkT typesRules) . everywhereM' (mkM preprocessExpandedOps)
+      where
+        preprocessExpandedOps :: U.ExpandedOp -> PreprocessMonad meta U.ExpandedOp
+        preprocessExpandedOps = \case
+          U.PrimEx instr -> do
+            processMetas instr
+            case instr of
+              U.CREATE_CONTRACT varAnn1 varAnn2 contract -> do
+                oldMetas <- use psMetasInL
+                (processedContract, newMetas, unusedMetas) <- liftEither $ preprocessContract contract oldMetas typesRules instrRules
+                psMetasOutL %= mappend newMetas
+                psMetasInL .= unusedMetas
+                pure $ U.PrimEx $ U.CREATE_CONTRACT varAnn1 varAnn2 processedContract
+              _ -> instrRules instr
+          seqEx@U.SeqEx{} -> do
+            processOneMeta
+            pure seqEx
+          other -> pure other
 
 -- Using proper content in this type is too inconvenient at the moment
 data EmbedError
@@ -346,8 +376,10 @@ michelsonInstrInnerBranches = \case
 -- 3. All contract filepaths that would be used in debugging session.
 readLigoMapper
   :: LigoMapper
+  -> (U.T -> U.T)
+  -> (forall meta. (Default meta) => U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
   -> Either DecodeError (Set SourceLocation, SomeContract, [FilePath])
-readLigoMapper ligoMapper = do
+readLigoMapper ligoMapper typeRules instrRules = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
   metaPerInstr :: [LigoIndexedInfo] <-
@@ -355,11 +387,11 @@ readLigoMapper ligoMapper = do
       maybe (Left $ InsufficientMeta i) pure $
         lmLocations ligoMapper V.!? unTableEncodingIdx i
 
-  SomeContract contract <- fromExpressionToTyped (lmMichelsonCode ligoMapper)
+  (SomeContract contract, newMetas) <- fromExpressionToTyped (lmMichelsonCode ligoMapper) metaPerInstr typeRules instrRules
   extendedContract@(SomeContract extContract) <- first MetaEmbeddingError $
     (\code -> SomeContract contract{ cCode = ContractCode code }) <$>
       embedInInstr @EmbeddedLigoMeta
-        metaPerInstr
+        newMetas
         (unContractCode $ cCode contract)
 
   let allFiles = metaPerInstr ^.. each . liiLocationL . _Just . lrFileL

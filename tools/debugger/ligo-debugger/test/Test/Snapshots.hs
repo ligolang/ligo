@@ -675,7 +675,7 @@ unit_Contracts_locations_are_sensible = do
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
       (locations, _, _) <-
-        case readLigoMapper ligoMapper of
+        case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
 

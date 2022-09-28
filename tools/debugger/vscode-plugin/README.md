@@ -24,7 +24,9 @@ At this moment running `ligo` from docker is slow, so, it's better to use static
 
 Currently, simple contracts are supported, with support for more complex contracts on the way.
 
-Sometimes `ligo` executable with optimizations turned off may produce invalid `Michelson` code. We have some fixes on our side but there might be more edge cases. If you encounter this problem, please contact us.
+Due to some limitations on `ligo` executable's side and on our side an invalid `Michelson` code may be produced. If you encounter this problem, please contact us.
+
+We slightly change the `Michelson` code, which may result in minor differences (e.g. `PACK`ed code may result in a different bytestring).
 
 At this moment contracts with tickets have very limited support.
 

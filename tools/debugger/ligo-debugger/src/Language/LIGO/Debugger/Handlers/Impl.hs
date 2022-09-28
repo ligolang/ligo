@@ -432,7 +432,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
   logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
   (exprLocs, someContract, allFiles) <-
-    readLigoMapper ligoDebugInfo
+    readLigoMapper ligoDebugInfo typesReplaceRules instrReplaceRules
     & first [int|m|Failed to process contract: #{id}|]
     & fromEither @DapMessageException
 
@@ -578,6 +578,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
               epc
               arg
               storage
+              -- We're adding our own contract in order to use
+              -- @{ SELF_ADDRESS; CONTRACT }@ replacement
+              -- (we need to have this contract state to use @CONTRACT@ instruction).
               dummyContractEnv { ceContracts = M.fromList [(self, ASContract contractState)], ceSelf = self }
               parsedContracts
               (unlifter . logMessage)
