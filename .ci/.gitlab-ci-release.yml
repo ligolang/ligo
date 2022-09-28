@@ -203,10 +203,25 @@ update_release_metadata:
 #######################################################################
 update-versionned-doc:
   stage: tooling
+  tags:
+    - docker
+  image: node:16.17.0-buster
+  before_script:
+    # Have to be done here because we are using an image for this job.
+    - mkdir ~/.ssh
+    - chmod 766 ~/.ssh
+    - eval `ssh-agent -s`
+    - cat $SSH_PRIVATE_KEY_TOOLKIT  > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan gitlab.com  >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - git config --global user.name 'InfraBot'
+    - git config --global user.email 'infra@marigold.dev'
+    - apt-get update
+    - apt-get install -y --no-install-recommends jq
+    - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
   script:
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
-    # Doing it to avoid divergence which provoke bug 
-    - git reset --hard origin/$CI_COMMIT_REF_NAME
     - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
