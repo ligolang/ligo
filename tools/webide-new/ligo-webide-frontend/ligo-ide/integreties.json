@@ -1,0 +1,7 @@
+{
+  "https://codeload.github.com/ObsidianLabs/react-json-view/tar.gz/b786b081b0476bb8280938690da39a589e39c46d": "sha256:0s6j19a89xp3d1y969vm6b8wk5x4fkc2xixwygn2mbbv1jay8iap",
+  "https://codeload.github.com/ObsidianLabs/solhint/tar.gz/e9b7b11781a82c9ea398a380ec5fc709889e164f": "sha256:04jmi1jj0888m73rgfml3paxq78q2gi9qs7skb78sf7kih4fqskp",
+  "https://codeload.github.com/ObsidianLabs/Ethlint/tar.gz/b0e5168ad446f80bcd5fb1d38b9f12e5eaead822": "sha256:1n5lhjhy0raisyddh8m8xh1v9lcvd65hi8axk8xvm07nplx28514",
+  "https://codeload.github.com/ObsidianLabs/solparse/tar.gz/2c8be7a3318865618be1a27477924d9a55bfb47c": "sha256:0vy5rjn4mi9xzvlbh6fxg7x7n9hi5lksc705b77z4jwhysj5vbb6",
+  "git+https://gitlab.com/ligolang/react-component-tree.git#44e88c8c6692797e8523218d5a903de15e6c8232": "sha256-B0vWNfhuyubLwmss3Dux3QAq+v2W6+BvYNZUe+ibBMQ="
+}

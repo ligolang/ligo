@@ -10,6 +10,7 @@ stages:
   - ligo
   - debugger
   - lsp
+  - webide
   - push
 
 default:
@@ -19,6 +20,8 @@ default:
 include:
   #  ligo-debugger CI
   - '/tools/debugger/.gitlab-ci.yml'
+  # webIDE CI
+  - '/tools/webide-new/.gitlab-ci.yml'
 
 validate-cabal-files:
   stage: cabal
