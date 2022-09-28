@@ -273,7 +273,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     in
     let orig_lambda =
       e_a_lambda
-        { binder = Binder.make arg_binder t_input
+        { binder = Param.make arg_binder t_input
         ; output_type = t_output
         ; result = body
         }
@@ -284,6 +284,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
       { rec_name = None
       ; orig_lambda
       ; arg_binder
+      ; arg_mut_flag = Immutable
       ; body
       ; env = Ligo_interpreter.Environment.empty_env
       }
@@ -452,7 +453,15 @@ let rec decompile_value
     V_Record m'
   | T_arrow { type1; type2 } ->
     (* We now patch the types *)
-    let { arg_binder; body; rec_name = _; orig_lambda = _; env = _ } =
+    (* Mut flag is ignored bcs not required in the case when we patch raw code to a function *)
+    let { arg_binder
+        ; arg_mut_flag = _
+        ; body
+        ; rec_name = _
+        ; orig_lambda = _
+        ; env = _
+        }
+      =
       trace_option ~raise (wrong_mini_c_value t v) @@ get_func v
     in
     (match body.expression_content with
@@ -467,7 +476,7 @@ let rec decompile_value
           in
           let orig_lambda =
             e_a_lambda
-              { binder = Binder.make arg_binder type1
+              { binder = Param.make arg_binder type1
               ; output_type = type2
               ; result = body
               }
@@ -478,6 +487,7 @@ let rec decompile_value
             { rec_name = None
             ; orig_lambda
             ; arg_binder
+            ; arg_mut_flag = Immutable
             ; body
             ; env = Ligo_interpreter.Environment.empty_env
             }

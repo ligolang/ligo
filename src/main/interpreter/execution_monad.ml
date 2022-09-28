@@ -17,9 +17,55 @@ open Errors
 
 type execution_trace = unit
 
+module Heap : sig
+  type value := LT.value
+  type loc := LT.location
+  type t
+
+  val empty : t
+  val alloc : t -> value -> loc * t
+  val free : t -> loc -> t
+  val deref : t -> loc -> value
+  val set : t -> loc -> value -> t
+end = struct
+  module Map = Caml.Map.Make (Int)
+
+  type t = LT.value Map.t
+
+  let empty = Map.empty
+
+  let incr_next =
+    let next = ref 0 in
+    fun () ->
+      Int.incr next;
+      !next
+
+
+  let alloc t value =
+    let loc = incr_next () in
+    loc, Map.add loc value t
+
+
+  let free t loc =
+    if not (Map.mem loc t) then failwith "Cannot free unallocated location";
+    Map.remove loc t
+
+
+  let set t loc value =
+    if not (Map.mem loc t) then failwith "Cannot set unallocated location";
+    Map.add loc value t
+
+
+  let deref t loc =
+    match Map.find_opt loc t with
+    | Some value -> value
+    | None -> failwith "Cannot deref unallocated location"
+end
+
 type state =
   { tezos_context : Tezos_state.context
   ; mod_res : ModRes.t option
+  ; heap : Heap.t
   }
 
 let make_state ~raise ~(options : Compiler_options.t) =
@@ -27,7 +73,7 @@ let make_state ~raise ~(options : Compiler_options.t) =
     Tezos_state.init_ctxt ~raise options.backend.protocol_version []
   in
   let mod_res = Option.bind ~f:ModRes.make options.frontend.project_root in
-  { tezos_context; mod_res }
+  { tezos_context; mod_res; heap = Heap.empty }
 
 
 let clean_locations ty =
@@ -36,62 +82,65 @@ let clean_locations ty =
     (Tezos_micheline.Micheline.strip_locations ty)
 
 
-(* Command should _only_ contains instruction that needs or modify the tezos context *)
+(* Command should _only_ contains instruction that needs or modify the *tezos* state *)
 module Command = struct
-  type 'a t =
+  type 'a tezos_command =
     | Set_big_map :
         Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression
-        -> unit t
-    | Unpack : Location.t * bytes * Ast_aggregated.type_expression -> LT.value t
+        -> unit tezos_command
+    | Unpack :
+        Location.t * bytes * Ast_aggregated.type_expression
+        -> LT.value tezos_command
     | Bootstrap_contract :
         int * LT.value * LT.value * Ast_aggregated.type_expression
-        -> unit t
+        -> unit tezos_command
     | Nth_bootstrap_contract :
         int
-        -> Tezos_protocol.Protocol.Alpha_context.Contract.t t
+        -> Tezos_protocol.Protocol.Alpha_context.Contract.t tezos_command
     | Nth_bootstrap_typed_address :
         Location.t * int
         -> (Tezos_protocol.Protocol.Alpha_context.Contract.t
            * Ast_aggregated.type_expression
            * Ast_aggregated.type_expression)
-           t
+           tezos_command
     | Reset_state :
         Location.t * Z.t option * LT.calltrace * LT.value * LT.value
-        -> unit t
-    | Get_state : unit -> Tezos_state.context t
-    | Get_mod_res : unit -> ModRes.t option t
+        -> unit tezos_command
+    | Get_state : unit -> Tezos_state.context tezos_command
     | External_call :
         Location.t
         * Ligo_interpreter.Types.calltrace
         * LT.contract
         * (execution_trace, string) Tezos_micheline.Micheline.node
         * Z.t
-        -> [ `Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t ] t
-    | State_error_to_value : Tezos_state.state_error -> LT.value t
+        -> [ `Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t ]
+           tezos_command
+    | State_error_to_value : Tezos_state.state_error -> LT.value tezos_command
     | Get_storage :
         Location.t
         * Ligo_interpreter.Types.calltrace
         * LT.value
         * Ast_aggregated.type_expression
-        -> LT.value t
+        -> LT.value tezos_command
     | Get_storage_of_address :
         Location.t * Ligo_interpreter.Types.calltrace * LT.value
-        -> LT.value t
-    | Get_size : LT.value -> LT.value t
+        -> LT.value tezos_command
+    | Get_size : LT.value -> LT.value tezos_command
     | Get_balance :
         Location.t * Ligo_interpreter.Types.calltrace * LT.value
-        -> LT.value t
-    | Get_last_originations : unit -> LT.value t
-    | Get_last_events : string * LT.type_expression -> LT.value t
-    | Check_obj_ligo : LT.expression -> unit t
+        -> LT.value tezos_command
+    | Get_last_originations : unit -> LT.value tezos_command
+    | Get_last_events : string * LT.type_expression -> LT.value tezos_command
     | Compile_contract_from_file :
         string * string * string list * Z.t option
-        -> LT.value t
-    | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
-    | Run : Location.t * LT.func_val * LT.value -> LT.value t
+        -> LT.value tezos_command
+    | Read_contract_from_file :
+        Location.t * LT.calltrace * string
+        -> LT.value tezos_command
+    | Run : Location.t * LT.func_val * LT.value -> LT.value tezos_command
     | Eval :
         Location.t * LT.value * Ast_aggregated.type_expression
-        -> LT.value t
+        -> LT.value tezos_command
     | Run_Michelson :
         Location.t
         * LT.calltrace
@@ -99,95 +148,108 @@ module Command = struct
         * Ast_aggregated.type_expression
         * LT.value
         * Ast_aggregated.type_expression
-        -> LT.value t
-    | Compile_contract : Location.t * LT.value -> LT.value t
-    | Compile_ast_contract : Location.t * LT.value -> LT.value t
+        -> LT.value tezos_command
+    | Compile_contract : Location.t * LT.value -> LT.value tezos_command
+    | Compile_ast_contract : Location.t * LT.value -> LT.value tezos_command
     | Decompile :
         LT.mcode * LT.mcode * Ast_aggregated.type_expression
-        -> LT.value t
+        -> LT.value tezos_command
     | To_contract :
         Location.t * LT.value * string option * Ast_aggregated.type_expression
-        -> LT.value t
+        -> LT.value tezos_command
     | Check_storage_address :
         Location.t
         * Tezos_protocol.Protocol.Alpha_context.Contract.t
         * Ast_aggregated.type_expression
-        -> unit t
+        -> unit tezos_command
     | Inject_script :
         Location.t
         * Ligo_interpreter.Types.calltrace
         * LT.value
         * LT.value
         * Z.t
-        -> LT.value t
-    | Set_source : LT.value -> unit t
-    | Set_baker : Location.t * LT.calltrace * LT.value -> unit t
+        -> LT.value tezos_command
+    | Set_source : LT.value -> unit tezos_command
+    | Set_baker : Location.t * LT.calltrace * LT.value -> unit tezos_command
     | Get_voting_power :
         Location.t
         * Ligo_interpreter.Types.calltrace
         * Tezos_protocol.Protocol.Alpha_context.public_key_hash
-        -> LT.value t
+        -> LT.value tezos_command
     | Get_total_voting_power :
         Location.t * Ligo_interpreter.Types.calltrace
-        -> LT.value t
-    | Get_bootstrap : Location.t * LT.calltrace * LT.value -> LT.value t
-    | Sign : Location.t * LT.calltrace * string * bytes -> LT.value t
+        -> LT.value tezos_command
+    | Get_bootstrap :
+        Location.t * LT.calltrace * LT.value
+        -> LT.value tezos_command
+    | Sign :
+        Location.t * LT.calltrace * string * bytes
+        -> LT.value tezos_command
     | Add_cast :
         Location.t * LT.mcontract * Ast_aggregated.type_expression
-        -> unit t
-    (* TODO : move them ou to here *)
-    | Michelson_equal : Location.t * LT.value * LT.value -> bool t
+        -> unit tezos_command
+    | Michelson_equal : Location.t * LT.value * LT.value -> bool tezos_command
     | Implicit_account :
         Tezos_protocol.Protocol.Alpha_context.public_key_hash
-        -> LT.value t
+        -> LT.value tezos_command
     | Contract :
         Location.t
         * LT.calltrace
         * LT.mcontract
         * string option
         * Ast_aggregated.type_expression
-        -> LT.value t
-    | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
+        -> LT.value tezos_command
+    | Pairing_check :
+        (Bls12_381.G1.t * Bls12_381.G2.t) list
+        -> LT.value tezos_command
     | Add_account :
         Location.t
         * LT.calltrace
         * string
         * Tezos_protocol.Protocol.Alpha_context.public_key
-        -> unit t
-    | New_account : unit -> LT.value t
-    | Baker_account : LT.value * LT.value -> unit t
+        -> unit tezos_command
+    | New_account : unit -> LT.value tezos_command
+    | Baker_account : LT.value * LT.value -> unit tezos_command
     | Register_delegate :
         Location.t
         * Ligo_interpreter.Types.calltrace
         * Tezos_protocol.Protocol.Alpha_context.public_key_hash
-        -> LT.value t
+        -> LT.value tezos_command
     | Bake_until_n_cycle_end :
         Location.t * Ligo_interpreter.Types.calltrace * Z.t
-        -> LT.value t
+        -> LT.value tezos_command
     | Register_constant :
         Location.t * Ligo_interpreter.Types.calltrace * LT.mcode
-        -> string t
+        -> string tezos_command
     | Constant_to_Michelson :
         Location.t * Ligo_interpreter.Types.calltrace * string
-        -> LT.mcode t
+        -> LT.mcode tezos_command
     | Register_file_constants :
         Location.t * Ligo_interpreter.Types.calltrace * string
-        -> LT.value t
-    | Push_context : unit -> unit t
-    | Pop_context : unit -> unit t
-    | Drop_context : unit -> unit t
+        -> LT.value tezos_command
+    | Push_context : unit -> unit tezos_command
+    | Pop_context : unit -> unit tezos_command
+    | Drop_context : unit -> unit tezos_command
 
-  let eval
+  type 'a t =
+    | Tezos : 'a tezos_command -> 'a t
+    | Get_mod_res : unit -> ModRes.t option t
+    | Check_obj_ligo : LT.expression -> unit t
+    | Alloc : LT.value -> LT.location t
+    | Free : LT.location -> unit t
+    | Set : LT.location * LT.value -> unit t
+    | Deref : LT.location -> LT.value t
+
+  let eval_tezos
     : type a.
       raise:(Errors.interpreter_error, Main_warnings.all) raise
       -> options:Compiler_options.t
-      -> a t
-      -> state
+      -> a tezos_command
+      -> Tezos_state.context
       -> execution_trace ref option
       -> a * Tezos_state.context
     =
-   fun ~raise ~options command state _log ->
-    let ctxt = state.tezos_context in
+   fun ~raise ~options command ctxt _log ->
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let k_ty, v_ty =
@@ -307,7 +369,6 @@ module Command = struct
       in
       (), ctxt
     | Get_state () -> ctxt, ctxt
-    | Get_mod_res () -> state.mod_res, ctxt
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) ->
       let entrypoint =
         Option.map
@@ -447,12 +508,6 @@ module Command = struct
         LT.V_Michelson (Ty_code { code = storage; code_ty = ty; ast_ty })
       in
       ret, ctxt
-    | Check_obj_ligo e ->
-      let _ =
-        trace ~raise Main_errors.self_ast_aggregated_tracer
-        @@ Self_ast_aggregated.expression_obj e
-      in
-      (), ctxt
     | Get_size contract_code ->
       (match contract_code with
        | LT.V_Michelson_contract contract_code ->
@@ -594,7 +649,14 @@ module Command = struct
     | Compile_contract (loc, v) ->
       let ast_aggregated =
         match v with
-        | LT.V_Func_val { arg_binder; body; orig_lambda; env; rec_name } ->
+        | LT.V_Func_val
+            { arg_binder
+            ; arg_mut_flag = Immutable
+            ; body
+            ; orig_lambda
+            ; env
+            ; rec_name
+            } ->
           let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env in
           let Arrow.{ type1 = in_ty; type2 = out_ty } =
             trace_option
@@ -947,6 +1009,43 @@ module Command = struct
        | _ :: ctxts ->
          Tezos_state.contexts := ctxts;
          (), ctxt)
+
+
+  let eval
+    : type a.
+      raise:(Errors.interpreter_error, Main_warnings.all) raise
+      -> options:Compiler_options.t
+      -> a t
+      -> state
+      -> execution_trace ref option
+      -> a * state
+    =
+   fun ~raise ~options command state log ->
+    match command with
+    | Tezos tezos_cmd ->
+      let ret, ctxt =
+        eval_tezos ~raise ~options tezos_cmd state.tezos_context log
+      in
+      ret, { state with tezos_context = ctxt }
+    | Check_obj_ligo e ->
+      let _ =
+        trace ~raise Main_errors.self_ast_aggregated_tracer
+        @@ Self_ast_aggregated.expression_obj e
+      in
+      (), state
+    | Get_mod_res () -> state.mod_res, state
+    | Alloc val_ ->
+      let loc, heap = Heap.alloc state.heap val_ in
+      loc, { state with heap }
+    | Free var ->
+      let heap = Heap.free state.heap var in
+      (), { state with heap }
+    | Set (var, val_) ->
+      let heap = Heap.set state.heap var val_ in
+      (), { state with heap }
+    | Deref var ->
+      let val_ = Heap.deref state.heap var in
+      val_, state
 end
 
 type 'a t =
@@ -963,16 +1062,15 @@ let rec eval
     -> a t
     -> state
     -> execution_trace ref option
-    -> a * Tezos_state.context
+    -> a * state
   =
  fun ~raise ~options e state log ->
   match e with
   | Bind (e', f) ->
-    let v, tezos_context = eval ~raise ~options e' state log in
-    let state = { state with tezos_context } in
+    let v, state = eval ~raise ~options e' state log in
     eval ~raise ~options (f v) state log
   | Call command -> Command.eval ~raise ~options command state log
-  | Return v -> v, state.tezos_context
+  | Return v -> v, state
   | Fail_ligo err -> raise.error err
   | Try_or (e', handler) ->
     try_with
@@ -990,7 +1088,8 @@ let fail err : 'a t = Fail_ligo err
 let return (x : 'a) : 'a t = Return x
 let call (command : 'a Command.t) : 'a t = Call command
 let try_or (c : 'a t) (handler : 'a t) : 'a t = Try_or (c, handler)
-let ( let>> ) o f = Bind (call o, f)
+let ( let>> ) o f = Bind (call (Tezos o), f)
+let ( let@ ) cmd in_ = Bind (call cmd, in_)
 let ( let* ) o f = Bind (o, f)
 
 let rec bind_list = function

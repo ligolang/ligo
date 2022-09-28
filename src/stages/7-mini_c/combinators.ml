@@ -196,6 +196,11 @@ let e_let_in ?loc v tv inline expr body : expression = Expression.(make_tpl ?loc
     E_let_in (expr, inline, ((v , tv) , body)) ,
     get_type body
   ))
+let e_let_mut_in ?loc v tv expr body : expression = Expression.(make_tpl ?loc(
+  E_let_mut_in (expr, ((v , tv) , body)) ,
+  get_type body
+))
+
 let e_application ?loc f t arg: expression = Expression.(make_tpl ?loc(
     E_application (f,arg) ,
     t

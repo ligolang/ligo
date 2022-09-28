@@ -114,6 +114,27 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
     usages (List.map ~f:self args)
   | E_create_contract (_p, _s, _code, args) ->
     usages (List.map ~f:self args)
+  | E_let_mut_in (e1, ((x, _), e2)) ->
+    usages [self e1; self_binder [x] e2]
+  | E_deref x ->
+    if Value_var.equal f x
+    then Other
+    else Unused
+  | E_assign (x, e) ->
+    if Value_var.equal f x
+    then Other
+    else self e
+  | E_for (start, final, incr, ((x, _), body)) ->
+    usages [self start;
+            self final;
+            self incr;
+            self_binder [x] body]
+  | E_for_each (coll, _coll_type, (xs, body)) ->
+    usages [self coll;
+            self_binder (List.map ~f:fst xs) body]
+  | E_while (cond, body) ->
+    usages [self cond;
+            self body]
 
 let comb_type (ts : type_expression list) : type_expression =
   { type_content = T_tuple (List.map ~f:(fun t -> (None, t)) ts);
@@ -252,6 +273,29 @@ let rec uncurry_in_expression
   | E_create_contract (p, s, code, args) ->
     let args = List.map ~f:self args in
     return (E_create_contract (p, s, code, args))
+  | E_let_mut_in (e1, ((v, t), e2)) ->
+    let e1 = self e1 in
+    let e2 = self_binder [v] e2 in
+    return (E_let_mut_in (e1, ((v, t), e2)))
+  | E_deref _ ->
+    return_id
+  | E_assign (x, e) ->
+    let e = self e in
+    return (E_assign (x, e))
+  | E_for (start, final, incr, ((x, a), body)) ->
+    let start = self start in
+    let final = self final in
+    let incr = self incr in
+    let body = self_binder [x] body in
+    return (E_for (start, final, incr, ((x, a), body)))
+  | E_for_each (e1, coll_type, (xs, e2)) ->
+    let e1 = self e1 in
+    let e2 = self_binder (List.map ~f:fst xs) e2 in
+    return (E_for_each (e1, coll_type, (xs, e2)))
+  | E_while (cond, body) ->
+    let cond = self cond in
+    let body = self body in
+    return (E_while (cond, body))
 
 (* hack to specialize map_expression to identity monad since there are
    no errors here *)

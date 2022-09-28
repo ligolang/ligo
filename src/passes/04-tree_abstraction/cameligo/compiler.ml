@@ -399,7 +399,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         let expr, rhs_type = aux lst in
         let expr = fun_ expr in
         e_lambda ~loc binder rhs_type expr,
-        Option.map ~f:(Utils.uncurry @@ t_arrow ~loc) @@ Option.bind_pair (Binder.get_ascr binder, rhs_type)
+        Option.map ~f:(Utils.uncurry @@ t_arrow ~loc) @@ Option.bind_pair (Param.get_ascr binder, rhs_type)
     in
     let expr, rhs_type = aux lst in
     let expr = fun_ expr  in
@@ -466,11 +466,11 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let match_case = Match_expr.{ pattern ; body } in
       e_matching ~loc matchee [match_case]
     | pattern, args -> (* function *)
-      let let_binder, fun_ = compile_parameter ~raise pattern in
+      let let_binder, fun_ = compile_binder ~raise pattern in
       let binders = List.map ~f:(compile_parameter ~raise) args in
       (* collect type annotation for let function declaration *)
       let let_rhs, rhs_type = List.fold_right ~init:(let_rhs, rhs_type) ~f:(fun (b,fun_) (e,a) ->
-        e_lambda ~loc:(Value_var.get_location @@ Binder.get_var b) b a @@ fun_ e, Option.map2 ~f:t_arrow (Binder.get_ascr b) a) binders in
+        e_lambda ~loc:(Value_var.get_location @@ Param.get_var b) b a @@ fun_ e, Option.map2 ~f:t_arrow (Param.get_ascr b) a) binders in
       (* Add polymorphic binder to ascription *)
       let rhs_type =
         Option.map rhs_type ~f:(fun rhs_type ->
@@ -491,7 +491,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
           let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.Ascription.anno_expr) @@ get_e_annotation e  in
           let lambda = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
           let Arrow.{type1 = arg_type; type2 = ret_type} = get_t_arrow_exn fun_type in
-          let lambda = Lambda.{ binder = Binder.map (Fn.const arg_type) lambda.binder; result = lambda.result; output_type = ret_type} in
+          let lambda = Lambda.{ binder = Param.map (Fn.const arg_type) lambda.binder; result = lambda.result; output_type = ret_type} in
           e_recursive ~loc:(Location.lift reg#region) (Binder.get_var let_binder) fun_type lambda
       | None   -> let_rhs
       in
@@ -563,10 +563,9 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
   match unepar p with
   | CST.PVar x ->
     let (pvar,loc) = r_split x in
-    let mut = Tree_abstraction_shared.Helpers.binder_attributes_of_strings (compile_attributes pvar.attributes) in
     let b =
       let var = compile_variable pvar.variable in
-      Binder.make ~mut var None
+      Binder.make var None
     in
     Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple ->
@@ -668,11 +667,12 @@ and check_annotation ~raise = function
   | _ -> ())
 | _ -> ()
 
-and compile_parameter ~raise : CST.pattern -> _ Binder.t * (_ -> _) =
+
+and compile_binder ~raise : CST.pattern -> _ Binder.t * (_ -> _) =
   fun pattern ->
-  let return ?ascr ?mut fun_ var =
-    (Binder.make ?mut var ascr, fun_) in
-  let return_1 ?ascr ?mut var = return ?ascr ?mut (fun e -> e) var in
+  let return ?ascr fun_ var =
+    (Binder.make var ascr, fun_) in
+  let return_1 ?ascr var = return ?ascr (fun e -> e) var in
   match pattern with
     PConstr _ -> raise.error @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
@@ -680,9 +680,59 @@ and compile_parameter ~raise : CST.pattern -> _ Binder.t * (_ -> _) =
     return_1 ~ascr:(t_unit ~loc ()) @@ Value_var.fresh ~loc ()
   | PVar pvar ->
     let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
-    let {variable;attributes=var_attributes} : CST.var_pattern = pvar in
-    let mut = Tree_abstraction_shared.Helpers.binder_attributes_of_strings (compile_attributes var_attributes) in
-    return_1 ~mut @@ compile_variable variable
+    let {variable;_} : CST.var_pattern = pvar in
+    return_1 @@ compile_variable variable
+  | PTuple tuple ->
+    let (tuple, loc) = r_split tuple in
+    let var = Value_var.fresh ~loc () in
+    let aux pattern (binder_lst, fun_) =
+      let (binder,fun_') = compile_binder ~raise pattern in
+      (binder :: binder_lst, fun_' <@ fun_)
+    in
+    let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],fun e -> e) @@ npseq_to_list tuple in
+    let expr = fun expr -> e_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:Binder.get_ascr binder_lst in
+    let ascr = Option.map ~f:(t_tuple) ascr in
+    return ?ascr expr var
+  | PPar par ->
+    let (par,_loc) = r_split par in
+    let binder, expr = compile_binder ~raise par.inside in
+    binder,expr
+  | PRecord record ->
+    let record,loc = r_split record in
+    let var = Value_var.fresh ~loc () in
+    let aux ({value={field_name;eq=_;pattern};_}:CST.field_pattern CST.reg) (binder_lst,fun_') =
+      let field_name = field_name.value in
+      let binder,fun_ = compile_binder ~raise pattern in
+      ((field_name,binder)::binder_lst,fun_ <@ fun_')
+    in
+    let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],fun e -> e) @@ npseq_to_list record.ne_elements in
+    let expr = fun expr -> e_matching_record ~loc (e_variable var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:(Fn.compose Binder.get_ascr snd) binder_lst in
+    let ascr = Option.map ~f:(t_tuple) ascr in
+    return ?ascr expr var
+  | PTyped tp ->
+    let (tp, _loc) = r_split tp in
+    let {pattern; type_expr;colon=_} : CST.typed_pattern = tp in
+    let ascr = compile_type_expression ~raise type_expr in
+    let ((b: _ Binder.t), exprs) = compile_binder ~raise pattern in
+    Binder.map (Fn.const (Some ascr)) b, exprs
+  | _ -> raise.error @@ unsupported_pattern_type [pattern]
+
+and compile_parameter ~raise : CST.pattern -> _ Param.t * (_ -> _) =
+  fun pattern ->
+  let return ?ascr fun_ var =
+    (Param.make var ascr, fun_) in
+  let return_1 ?ascr var = return ?ascr (fun e -> e) var in
+  match pattern with
+    PConstr _ -> raise.error @@ unsupported_pattern_type [pattern]
+  | PUnit the_unit  ->
+    let loc = Location.lift the_unit.region in
+    return_1 ~ascr:(t_unit ~loc ()) @@ Value_var.fresh ~loc ()
+  | PVar pvar ->
+    let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
+    let {variable;_} : CST.var_pattern = pvar in
+    return_1 @@ compile_variable variable
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
     let var = Value_var.fresh ~loc () in
@@ -691,8 +741,8 @@ and compile_parameter ~raise : CST.pattern -> _ Binder.t * (_ -> _) =
       (binder :: binder_lst, fun_' <@ fun_)
     in
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],fun e -> e) @@ npseq_to_list tuple in
-    let expr = fun expr -> e_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr in
-    let ascr = Option.all @@ List.map ~f:Binder.get_ascr binder_lst in
+    let expr = fun expr -> e_param_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:Param.get_ascr binder_lst in
     let ascr = Option.map ~f:(t_tuple) ascr in
     return ?ascr expr var
   | PPar par ->
@@ -708,16 +758,16 @@ and compile_parameter ~raise : CST.pattern -> _ Binder.t * (_ -> _) =
       ((field_name,binder)::binder_lst,fun_ <@ fun_')
     in
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([],fun e -> e) @@ npseq_to_list record.ne_elements in
-    let expr = fun expr -> e_matching_record ~loc (e_variable var) binder_lst @@ fun_ expr in
-    let ascr = Option.all @@ List.map ~f:(Fn.compose Binder.get_ascr snd) binder_lst in
+    let expr = fun expr -> e_param_matching_record ~loc (e_variable var) binder_lst @@ fun_ expr in
+    let ascr = Option.all @@ List.map ~f:(Fn.compose Param.get_ascr snd) binder_lst in
     let ascr = Option.map ~f:(t_tuple) ascr in
     return ?ascr expr var
   | PTyped tp ->
     let (tp, _loc) = r_split tp in
     let {pattern; type_expr;colon=_} : CST.typed_pattern = tp in
     let ascr = compile_type_expression ~raise type_expr in
-    let ((b: _ Binder.t), exprs) = compile_parameter ~raise pattern in
-    Binder.map (Fn.const (Some ascr)) b, exprs
+    let ((b: _ Param.t), exprs) = compile_parameter ~raise pattern in
+    Param.map (Fn.const (Some ascr)) b, exprs
   | _ -> raise.error @@ unsupported_pattern_type [pattern]
 
 and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
@@ -773,7 +823,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let attributes = compile_attributes attributes in
       let matchee = compile_expression ~raise let_rhs in
       let tuple,_loc = r_split tuple in
-      let lst = List.map ~f:(compile_parameter ~raise) @@ npseq_to_list tuple in
+      let lst = List.map ~f:(compile_binder ~raise) @@ npseq_to_list tuple in
       let (lst, exprs) = List.unzip lst in
       let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
       let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor expr @@ [Access_tuple i]) in
@@ -786,7 +836,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let record,_loc = r_split record in
       let aux ({value={field_name;eq=_;pattern};_}:CST.field_pattern CST.reg) =
         let field_name = field_name.value in
-        let binder,fun_ = compile_parameter ~raise pattern in
+        let binder,fun_ = compile_binder ~raise pattern in
         ((field_name,binder),fun_)
       in
       let lst = List.map ~f:aux @@ npseq_to_list record.ne_elements in
@@ -799,11 +849,11 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     | _,_ ->
       let let_rhs = compile_expression ~raise let_rhs in
       let rhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) rhs_type in
-      let binder,_fun_ = compile_parameter ~raise pattern in
-      let binders = List.map ~f:(compile_parameter ~raise) args in
+      let binder,_fun_ = compile_binder ~raise pattern in
+      let params = List.map ~f:(compile_parameter ~raise) args in
       (* collect type annotation for let function declaration *)
       let let_rhs,rhs_type = List.fold_right ~init:(let_rhs,rhs_type) ~f:(fun (b,fun_) (e,a) ->
-        e_lambda ~loc:(Value_var.get_location @@ Binder.get_var b) b a @@ fun_ e, Option.map2 ~f:t_arrow (Binder.get_ascr b) a) binders in
+        e_lambda ~loc:(Value_var.get_location @@ Param.get_var b) b a @@ fun_ e, Option.map2 ~f:t_arrow (Param.get_ascr b) a) params in
       (* Add polymorphic binder to ascription *)
       let rhs_type =
         Option.map rhs_type ~f:(fun rhs_type ->
@@ -823,7 +873,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
           let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.Ascription.anno_expr) @@ get_e_annotation e  in
           let lambda = trace_option ~raise (recursion_on_non_function @@ Location.lift region) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
           let Arrow.{type1; type2} = get_t_arrow_exn fun_type in
-          let lambda = Lambda.{lambda with binder = Binder.map (Fn.const type1) lambda.binder; output_type = type2} in
+          let lambda = Lambda.{lambda with binder = Param.map (Fn.const type1) lambda.binder; output_type = type2} in
           e_recursive ~loc:(Location.lift reg#region) (Binder.get_var binder) fun_type lambda
       | None   -> let_rhs
       in

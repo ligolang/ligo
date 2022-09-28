@@ -76,7 +76,8 @@ let type_improve t =
 
 
 type typer_error =
-  [ `Typer_ill_formed_type of Location.t * Ast_typed.type_expression
+  [ `Typer_mut_var_captured of Location.t * Value_var.t
+  | `Typer_ill_formed_type of Location.t * Ast_typed.type_expression
   | `Typer_existential_found of Location.t * Ast_typed.type_expression
   | `Typer_record_mismatch of
     Location.t * Ast_core.expression * Ast_typed.type_expression
@@ -149,6 +150,12 @@ type typer_error =
     * Ast_typed.type_expression
     * Layout.t
     * Layout.t
+  | `Typer_unbound_mut_variable of Value_var.t * Location.t
+  | `Typer_mismatching_for_each_collection_type of
+    Location.t * For_each_loop.collect_type * Ast_typed.type_expression
+  | `Typer_mismatching_for_each_binder_arity of
+    Location.t * For_each_loop.collect_type * int
+  | `Typer_mut_is_polymorphic of Location.t * Ast_typed.type_expression
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -168,6 +175,13 @@ let rec error_ppformat
   match display_format with
   | Human_readable | Dev ->
     (match a with
+     | `Typer_mut_var_captured (loc, var) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid capture of mutable variable \"%a\"@]"
+        Snippet.pp
+        loc
+        Value_var.pp
+        var
      | `Typer_existential_found (loc, type_) ->
        Format.fprintf
          f
@@ -303,6 +317,41 @@ let rec error_ppformat
          loc
          Value_var.pp
          v
+     | `Typer_unbound_mut_variable (v, loc) ->
+       Format.fprintf
+         f
+         "@[<hv>%a@.Mutable variable \"%a\" not found. @]"
+         Snippet.pp
+         loc
+         Value_var.pp
+         v
+     | `Typer_mismatching_for_each_collection_type (loc, collection_type, type_)
+       ->
+       Format.fprintf
+         f
+         "@[<hv>%a@.Expected collection of type \"%a\", but recieved \
+          collection of type %a.@]"
+         Snippet.pp
+         loc
+         For_each_loop.pp_collect_type
+         collection_type
+         Ast_typed.PP.type_expression
+         type_
+     | `Typer_mismatching_for_each_binder_arity (loc, collection_type, arity) ->
+       let expected_arity =
+         match collection_type with
+         | List | Set -> 1
+         | Map -> 2
+         | Any -> assert false
+       in
+       Format.fprintf
+         f
+         "@[<hv>%a@.Expected for each loop to bind %d variables, but loop \
+          binds %d variables.@]"
+         Snippet.pp
+         loc
+         expected_arity
+         arity
      | `Typer_match_missing_case (m, v, loc) ->
        let missing =
          List.fold_left
@@ -604,7 +653,16 @@ let rec error_ppformat
          loc
          constant
          (String.capitalize protocol_name)
-         protocol_name)
+         protocol_name
+     | `Typer_mut_is_polymorphic (loc, type_) ->
+       Format.fprintf
+         f
+         "@[<hv>%a@.Mutable binding has the polymorphic type %a@.Hint: Add an \
+          annotation.@]"
+         Snippet.pp
+         loc
+         Ast_typed.PP.type_expression
+         type_)
 
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t =
@@ -614,6 +672,16 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
       [ "status", `String "error"; "stage", `String stage; "content", content ]
   in
   match a with
+  | `Typer_mut_var_captured (loc, var) ->
+    let message = "Invalid capture of mutable variable" in
+    let content = 
+      `Assoc
+        [ "message", `String message
+        ; "location", Location.to_yojson loc
+        ; "var", Value_var.to_yojson var
+        ]
+    in
+    json_error ~stage ~content
   | `Typer_existential_found (loc, type_) ->
     let message = "Existential found" in
     let content =
@@ -750,8 +818,17 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
         [ "message", message; "location", `String loc; "value", `String value ]
     in
     json_error ~stage ~content
+  | `Typer_unbound_mut_variable (v, loc) ->
+    let message = `String "unbound mut variable" in
+    let loc = Format.asprintf "%a" Location.pp loc in
+    let value = Format.asprintf "%a" Value_var.pp v in
+    let content =
+      `Assoc
+        [ "message", message; "location", `String loc; "value", `String value ]
+    in
+    json_error ~stage ~content
   | `Typer_unbound_variable (v, loc) ->
-    let message = `String "unbound type variable" in
+    let message = `String "unbound variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
     let value = Format.asprintf "%a" Value_var.pp v in
     let content =
@@ -1155,5 +1232,39 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
     in
     let content =
       `Assoc [ "message", message; "location", Location.to_yojson loc ]
+    in
+    json_error ~stage ~content
+  | `Typer_mismatching_for_each_collection_type (loc, collection_type, type_) ->
+    let message = "Mismatching for-each collection type" in
+    let content =
+      `Assoc
+        [ "message", `String message
+        ; "location", Location.to_yojson loc
+        ; ( "collection_type"
+          , For_each_loop.collect_type_to_yojson collection_type )
+        ; "type", Ast_typed.type_expression_to_yojson type_
+        ]
+    in
+    json_error ~stage ~content
+  | `Typer_mismatching_for_each_binder_arity (loc, collection_type, arity) ->
+    let message = "Mismatching for-each collection type" in
+    let content =
+      `Assoc
+        [ "message", `String message
+        ; "location", Location.to_yojson loc
+        ; ( "collection_type"
+          , For_each_loop.collect_type_to_yojson collection_type )
+        ; "type", `Int arity
+        ]
+    in
+    json_error ~stage ~content
+  | `Typer_mut_is_polymorphic (loc, type_) ->
+    let message = "Mutable binding is polymorphic" in
+    let content =
+      `Assoc
+        [ "message", `String message
+        ; "location", Location.to_yojson loc
+        ; "type", Ast_typed.type_expression_to_yojson type_
+        ]
     in
     json_error ~stage ~content

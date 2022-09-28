@@ -110,11 +110,7 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
           let rhs = substitute_var_in_body ~raise to_subst new_var letin.rhs in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin}
-        | O.E_assign assign when Binder.apply (Value_var.equal to_subst) assign.binder ->
-          let expression = substitute_var_in_body ~raise to_subst new_var assign.expression in
-          let assign = { assign with expression } in
-          ret false { exp with expression_content = E_assign assign}
-        | O.E_lambda lamb when Binder.apply (Value_var.equal to_subst) lamb.binder -> ret false exp
+        | O.E_lambda lamb when Value_var.equal to_subst (Param.get_var lamb.binder) -> ret false exp
         | O.E_recursive r when Value_var.equal r.fun_name to_subst -> ret false exp
         | O.E_matching m -> (
           let matchee = substitute_var_in_body ~raise to_subst new_var m.matchee in
@@ -136,10 +132,10 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
           in
           ret false { exp with expression_content = O.E_matching {matchee ; cases}}
         )
-        | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
-           E_type_abstraction _ | E_recursive _ | E_let_in _ | E_mod_in _ |
+        | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ | E_assign _ | E_let_mut_in _ | E_while _ | E_for _ | E_for_each _ | E_deref _
+           | E_type_abstraction _ | E_recursive _ | E_let_in _ | E_mod_in _ |
            E_raw_code _ | E_constructor _ | E_record _ | E_accessor _ |
-           E_update _ | E_type_inst _ | E_module_accessor _ | E_assign _) -> ret true exp
+           E_update _ | E_type_inst _ | E_module_accessor _ ) -> ret true exp
     in
     let ((), res) = O.Helpers.fold_map_expression (aux ~raise) () body in
     res

@@ -325,7 +325,7 @@ const prices : prices =
 
 const price : option (tez) = prices[50n]
 
-function mutate (const u : unit) : unit is { prices[200n] := 10mutez } with unit
+function mutate (var prices : prices) : prices is { prices[200n] := 10mutez } with prices
 ```
 
 </div>

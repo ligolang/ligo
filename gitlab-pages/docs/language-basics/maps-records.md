@@ -1396,7 +1396,7 @@ example,
 
 ```pascaligo group=big_maps
 function rem (var m : register) : register is {
-  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map m
 } with m
 
 const updated_map : register = rem (moves)

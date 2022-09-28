@@ -60,10 +60,12 @@ let apply_table_expr table (expr : AST.expression) =
       | E_type_inst { forall ; type_ } ->
          return @@ E_type_inst { forall ; type_ = apply_table_type type_ }
       | E_lambda { binder ; output_type ; result } ->
-         let binder = Binder.map apply_table_type binder in
+         let binder = Param.map apply_table_type binder in
+         let output_type = apply_table_type output_type in
          return @@ E_lambda { binder ; output_type ; result }
       | E_recursive { fun_name ; fun_type ; lambda } ->
          let fun_type = apply_table_type fun_type in
+         let lambda = Lambda.map Fn.id apply_table_type lambda in
          return @@ E_recursive { fun_name ; fun_type ; lambda }
       | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
          return @@ E_matching { matchee ; cases = Match_variant { cases ; tv = apply_table_type tv } }
@@ -77,8 +79,15 @@ let apply_table_expr table (expr : AST.expression) =
          let _,types = List.fold_map ~init:(e.type_expression) table ~f:(fun (te) (v,t) -> let te = AST.Helpers.subst_type v t te in te,te) in
          let expr = List.fold2_exn ~init:(e) ~f:(fun e (_v,t) u -> AST.e_a_type_inst e t u) (List.rev table) types in
          false, (), expr
+      | E_let_in { let_binder; rhs; let_result; attr } ->
+         let let_binder = Binder.map apply_table_type let_binder in
+         return @@ E_let_in { let_binder; rhs; let_result; attr }
+      | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+         let let_binder = Binder.map apply_table_type let_binder in
+         return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+      | E_deref _ | E_while _ | E_for _ | E_for_each _
       | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
-      | E_let_in _ | E_raw_code _ | E_constructor _ | E_record _
+      | E_raw_code _ | E_constructor _ | E_record _
       | E_accessor _ | E_update _ -> return e.expression_content) () expr in
    e
 
@@ -116,7 +125,7 @@ let subst_external_term et t (e : AST.expression) =
       | E_type_inst { forall ; type_ } ->
          return @@ E_type_inst { forall ; type_ = subst_external_type et t type_ }
       | E_lambda { binder ; output_type ; result } ->
-         let binder = Binder.map (subst_external_type et t) binder in
+         let binder = Param.map (subst_external_type et t) binder in
          return @@ E_lambda { binder ; output_type ; result }
       | E_recursive { fun_name ; fun_type ; lambda } ->
          let fun_type =  subst_external_type et t fun_type in
@@ -129,8 +138,11 @@ let subst_external_term et t (e : AST.expression) =
       | E_assign { binder ; expression } ->
          let binder = Binder.map (subst_external_type et t) binder in
          return @@ E_assign { binder ; expression }
+      (* Again not applying to E_let_in ?? What? *)
+      | E_let_in _ | E_let_mut_in _ 
+      | E_deref _ | E_for _ | E_while _ | E_for_each _
       | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
-      | E_let_in _ | E_raw_code _ | E_constructor _ | E_record _
+      | E_raw_code _ | E_constructor _ | E_record _
       | E_accessor _ | E_update _ -> return e.expression_content) () e in
    e
 
@@ -152,7 +164,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
    let self = mono_polymorphic_expression ~raise in
    let return ec = { expr with expression_content = ec } in
    match expr.expression_content with
-   | E_variable _ | E_literal _ | E_raw_code _ -> data, expr
+   | E_variable _ | E_literal _ | E_raw_code _ | E_deref _ -> data, expr
    | E_constant { cons_name ; arguments } ->
       let data, arguments = List.fold_right arguments ~init:(data, [])
                               ~f:(fun arg (data, args) -> let data, arg = self data arg in data, arg :: args) in
@@ -227,6 +239,19 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
    | E_assign {binder;expression} ->
       let data, expression = self data expression in
       data, return (E_assign {binder;expression})
+   | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+      let data, rhs = self data rhs in
+      let data, let_result = self data let_result in
+      data, return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+   | E_while while_loop ->
+      let data, while_loop = While_loop.fold_map self data while_loop in
+      data, return @@ E_while while_loop
+   | E_for for_loop ->
+      let data, for_loop = For_loop.fold_map self data for_loop in
+      data, return @@ E_for for_loop 
+   | E_for_each for_each_loop ->
+      let data, for_each_loop = For_each_loop.fold_map self data for_each_loop in
+      data, return @@ E_for_each for_each_loop
 
 and mono_polymorphic_cases ~raise : Data.t -> AST.matching_expr -> Data.t * AST.matching_expr = fun data m ->
    match m with

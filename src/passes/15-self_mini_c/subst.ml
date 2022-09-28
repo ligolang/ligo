@@ -113,6 +113,39 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let x = replace_var x in
     let code = replace code in
     return @@ E_create_contract (p, s, ((x, t), code), args)
+  (* Mutable stuff. We treat immutable and mutable variables
+     identically because they share the context (e.g. a mutable
+     variables might need to be renamed for capture-avoidance during
+     substitution of an immutable variable.) *)
+  | E_let_mut_in (e1, ((v, tv), e2)) ->
+    let v = replace_var v in
+    let e1 = replace e1 in
+    let e2 = replace e2 in
+    return @@ E_let_mut_in (e1, ((v, tv), e2))
+  | E_deref v ->
+    let v = replace_var v in
+    return @@ E_deref v
+  | E_assign (v, e) ->
+    let v = replace_var v in
+    let e = replace e in
+    return @@ E_assign (v, e)
+  | E_for (start, final, incr, ((x, a), body)) ->
+    let start = replace start in
+    let final = replace final in
+    let incr = replace incr in
+    let x = replace_var x in
+    let body = replace body in
+    return @@ E_for (start, final, incr, ((x, a), body))
+  | E_for_each (coll, coll_type, (xs, body)) ->
+    let coll = replace coll in
+    let xs = List.map ~f:(fun (x, a) -> (replace_var x, a)) xs in
+    let body = replace body in
+    return @@ E_for_each (coll, coll_type, (xs, body))
+  | E_while (cond, body) ->
+    let cond = replace cond in
+    let body = replace body in
+    return @@ E_while (cond, body)
+
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
@@ -264,6 +297,39 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let args = List.map ~f:self args in
     let (x, code) = self_binder1 ~body:(x, code) in
     return @@ E_create_contract (p, s, ((x, t), code), args)
+  (* Mutable stuff. We allow substituting mutable variables which
+     aren't mutated because it was easy. Hmm. *)
+  | E_let_mut_in (expr, ((v, tv), body)) ->
+    let expr = self expr in
+    let (v, body) = self_binder1 ~body:(v, body) in
+    return @@ E_let_mut_in (expr, ((v , tv) , body))
+  | E_deref x' ->
+    if Value_var.equal x' x
+    then expr
+    else return_id
+  | E_assign (x', e) ->
+    if Value_var.equal x' x
+    then failwith ("internal error, please report this as a bug: tried to substitute for mutated var " ^ __LOC__)
+    else
+      let e = self e in
+      return @@ E_assign (x', e)
+  | E_for (start, final, incr, ((x, a), body)) ->
+    let start = self start in
+    let final = self final in
+    let incr = self incr in
+    let (x, body) = self_binder1 ~body:(x, body) in
+    return @@ E_for (start, final, incr, ((x, a), body))
+  | E_for_each (coll, coll_type, (xs, body)) ->
+    let coll = self coll in
+    let (xs, ts) = List.unzip xs in
+    let (xs, body) = self_binds ~body:(xs, body) in
+    let xs = List.zip_exn xs ts in
+    return @@ E_for_each (coll, coll_type, (xs, body))
+  | E_while (cond, body) ->
+    let cond = self cond in
+    let body = self body in
+    return @@ E_while (cond, body)
+
 
 let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in

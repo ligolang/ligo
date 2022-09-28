@@ -1,6 +1,6 @@
 //PART 0
 #include "remove-balance.religo"
-let _u = Test.reset_state (5n, ([] : list(nat)));
+let _u = Test.reset_state (5n, ([] : list(tez)));
 
 //PART 1
 let balances : balances =

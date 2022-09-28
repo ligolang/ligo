@@ -19,6 +19,7 @@ let rec reduplicate ~raise : expression -> expression =
   let return expression_content : expression =
     { exp with expression_content } in
   let binder_remove_counter = fun b -> Binder.set_var b (Binder.apply remove_counter b) in
+  let param_remove_counter = fun b -> Param.set_var b (remove_counter @@ Param.get_var b) in
   match exp.expression_content with
     | E_literal l ->
        return (E_literal l)
@@ -32,7 +33,7 @@ let rec reduplicate ~raise : expression -> expression =
        let lamb = self lamb in
        return (E_application { lamb ; args })
     | E_lambda { binder ; output_type ; result } ->
-       let binder = binder_remove_counter binder in
+       let binder = param_remove_counter binder in
        let result = self result in
        return (E_lambda { binder ; output_type ; result })
     | E_type_abstraction { type_binder ; result } ->
@@ -40,7 +41,7 @@ let rec reduplicate ~raise : expression -> expression =
        return (E_type_abstraction { type_binder ; result })
     | E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } } ->
        let result = self result in
-       let binder = binder_remove_counter binder in
+       let binder = param_remove_counter binder in
        return (E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } })
     | E_let_in { let_binder ; rhs ; let_result ; attr } ->
        let rhs = self rhs in
@@ -85,3 +86,27 @@ let rec reduplicate ~raise : expression -> expression =
       let binder = binder_remove_counter binder in
       let expression = self expression in
       return @@ E_assign {binder;expression}
+   | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+      let let_binder = binder_remove_counter let_binder in
+      let rhs = self rhs in
+      let let_result = self let_result in
+      return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+   | E_for { binder; start; incr; final; f_body } ->
+      let binder = remove_counter binder in
+      let start = self start in
+      let incr = self incr in
+      let final = self final in
+      let f_body = self f_body in
+      return @@ E_for { binder; start; incr; final; f_body }
+   | E_while { cond; body } ->
+      let cond = self cond in
+      let body = self body in
+      return @@ E_while { cond; body }
+   | E_for_each { fe_binder = binder1, binder2; collection; collection_type; fe_body } ->
+      let fe_binder = 
+         remove_counter binder1, Option.map ~f:remove_counter binder2
+      in
+      let collection = self collection in
+      let fe_body = self fe_body in
+      return @@ E_for_each { fe_binder; collection; collection_type; fe_body }
+   | E_deref mut_var -> return @@ E_deref (remove_counter mut_var)

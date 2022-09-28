@@ -83,6 +83,8 @@ type value =
 
 and selector = var_name list
 
+and binder = var_name * type_expression
+
 and expression_content =
   | E_literal of Literal_value.t
   | E_closure of anon_function
@@ -112,6 +114,15 @@ and expression_content =
   (* E_global_constant (hash, args) *)
   | E_global_constant of string * expression list
   | E_create_contract of type_expression * type_expression * ((var_name * type_expression) * expression) * expression list
+  (* Mutability stuff *)
+  | E_let_mut_in of expression * (binder * expression)
+  | E_deref of var_name
+  | E_assign of var_name * expression
+  | E_for_each of expression * type_expression * (binder list * expression)
+  | E_for of expression * expression * expression * (binder * expression)
+  (* (start, final, incr, (binder, body)) *)
+  | E_while of expression * expression
+
 
 and expression = {
   content : expression_content ;
