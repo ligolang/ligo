@@ -38,18 +38,18 @@ unbloated. Our hope is to have a simple, strongly typed language with a low foot
 
 LIGO currently offers four syntaxes:
 
-  - **PascaLIGO**, a syntax inspired by Pascal which provides an
-    imperative developer experience.
+  - **JsLIGO**, a TypeScript/JavaScript inspired syntax that aims to be familiar 
+    to those coming from TypeScript/JavaScript.
 
   - **CameLIGO**, an [OCaml](https://ocaml.org/) inspired
     syntax that allows you to write in a functional style.
 
+  - **PascaLIGO**, a syntax inspired by Pascal which provides an
+    imperative developer experience.
+
   - **ReasonLIGO**, a [ReasonML](https://reasonml.github.io/) inspired syntax
     that builds on the strong points of OCaml.
   
-  - **JsLIGO**, a TypeScript/JavaScript inspired syntax that aims to be familiar 
-    to those coming from TypeScript/JavaScript.
-
 Let's define some LIGO contract in the four flavours above. Do
 not worry if it is a little confusing at first; we will explain all
 the syntax in the upcoming sections of the documentation.
@@ -58,77 +58,12 @@ the syntax in the upcoming sections of the documentation.
 <Tabs
   defaultValue="pascaligo"
   values={[
-    { label: 'PascaLIGO', value: 'pascaligo', },
-    { label: 'CameLIGO', value: 'cameligo', },
-    { label: 'ReasonLIGO', value: 'reasonligo', },
     { label: 'JsLIGO', value: 'jsligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
   ]
 }>
-<TabItem value="pascaligo">
-
-```pascaligo group=a
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-| Reset
-
-type return is list (operation) * storage
-
-function main (const action : parameter; const store : storage) : return is
- (nil,
-  case action of [
-    Increment (n) -> store + n
-  | Decrement (n) -> store - n
-  | Reset         -> 0
-  ])
-```
-
-</TabItem>
-<TabItem value="cameligo">
-
-```cameligo group=a
-type storage = int
-
-type parameter =
-  Increment of int
-| Decrement of int
-| Reset
-
-type return = operation list * storage
-
-let main (action, store : parameter * storage) : return =
-  [],
-  (match action with
-     Increment n -> store + n
-   | Decrement n -> store - n
-   | Reset       -> 0)
-```
-
-</TabItem>
-<TabItem value="reasonligo">
-
-```reasonligo group=a
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int)
-| Reset;
-
-type return = (list (operation), storage);
-
-let main = ((action, store): (parameter, storage)) : return => {
-  ([],
-  (switch (action) {
-   | Increment (n) => store + n
-   | Decrement (n) => store - n
-   | Reset         => 0}));
-};
-```
-
-</TabItem>
 <TabItem value="jsligo">
 
 ```jsligo group=a
@@ -154,6 +89,72 @@ let main = (action: parameter, store: storage) : return_ => {
 ```
 
 </TabItem>
+<TabItem value="cameligo">
+
+```cameligo group=a
+type storage = int
+
+type parameter =
+  Increment of int
+| Decrement of int
+| Reset
+
+type return = operation list * storage
+
+let main (action, store : parameter * storage) : return =
+  [],
+  (match action with
+     Increment n -> store + n
+   | Decrement n -> store - n
+   | Reset       -> 0)
+```
+
+</TabItem>
+<TabItem value="pascaligo">
+
+```pascaligo group=a
+type storage is int
+
+type parameter is
+  Increment of int
+| Decrement of int
+| Reset
+
+type return is list (operation) * storage
+
+function main (const action : parameter; const store : storage) : return is
+ (nil,
+  case action of [
+    Increment (n) -> store + n
+  | Decrement (n) -> store - n
+  | Reset         -> 0
+  ])
+```
+
+</TabItem>
+<TabItem value="reasonligo">
+
+```reasonligo group=a
+type storage = int;
+
+type parameter =
+  Increment (int)
+| Decrement (int)
+| Reset;
+
+type return = (list (operation), storage);
+
+let main = ((action, store): (parameter, storage)) : return => {
+  ([],
+  (switch (action) {
+   | Increment (n) => store + n
+   | Decrement (n) => store - n
+   | Reset         => 0}));
+};
+```
+
+</TabItem>
+
 </Tabs>
 
 This LIGO contract accepts the following LIGO expressions:

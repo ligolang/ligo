@@ -145,7 +145,7 @@ let alice_admin : bool = alice.is_admin;
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
-let alice_admin: bool = alice.is_admin;
+let alice_admin = alice.is_admin;
 ```
 
 </Syntax>
@@ -299,9 +299,9 @@ The syntax for the functional updates of record in JsLIGO:
 type point = {x: int, y: int, z: int};
 type vector = {dx: int, dy: int};
 
-let origin: point = {x: 0, y: 0, z: 0};
+let origin = {x: 0, y: 0, z: 0};
 
-let xy_translate = (p: point, vec: vector): point =>
+let xy_translate = (p: point, vec: vector) =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
@@ -443,7 +443,7 @@ let change_color_preference = (account : account, color : color): account =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let change_color_preference = (account : account, color : color): account =>
+let change_color_preference = (account : account, color : color) =>
   ({ ...account, preferences: {...account.preferences, color: color }});
 ```
 
@@ -789,7 +789,7 @@ let force_access = ((key, moves) : (address, register)) : move => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let force_access = (key: address, moves: register): move => {
+let force_access = (key: address, moves: register) => {
   return match(Map.find_opt (key, moves), {
    Some: move => move,
    None: () => failwith("No move.")
@@ -887,7 +887,7 @@ We can update a binding in a map in JsLIGO by means of the
 `Map.update` built-in function:
 
 ```jsligo group=maps
-let assign = (m: register): register =>
+let assign = (m: register) =>
   Map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some ([4, 9]), m);
 ```
@@ -898,7 +898,7 @@ Notice the optional value `Some ([4,9])` instead of `[4, 9]`. If we used
 As a particular case, we can only add a key and its associated value.
 
 ```jsligo group=maps
-let add = (m: register): register =>
+let add = (m: register) =>
   Map.add
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [4, 9], m);
 ```
@@ -945,7 +945,7 @@ let delete = ((key, moves) : (address, register)) : register =>
 In JsLIGO, we use the predefined function `Map.remove` as follows:
 
 ```jsligo group=maps
-let delete = (key: address, moves: register): register =>
+let delete = (key: address, moves: register) =>
   Map.remove(key, moves);
 ```
 
@@ -1010,7 +1010,7 @@ let iter_op = (m : register) : unit => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let iter_op = (m: register): unit => {
+let iter_op = (m: register) => {
   let predicate = (i: address, j: move) => assert(j[0] > 3);
   Map.iter(predicate, m);
 };
@@ -1060,7 +1060,7 @@ let map_op = (m : register) : register => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let map_op = (m: register): register => {
+let map_op = (m: register) => {
   let increment = (_: address, j: move) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };

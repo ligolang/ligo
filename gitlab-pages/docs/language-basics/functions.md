@@ -283,7 +283,7 @@ after the value name, with its type, then followed by the return type.
 Here is how you define a basic function that sums two integers:
 
 ```jsligo group=b
-let add = (a: int, b: int): int => a + b;
+let add = (a: int, b: int) => a + b;
 ```
 
 You can call the function `add` defined above using the LIGO compiler
@@ -302,7 +302,7 @@ If the body contains more than a single expression, you use block
 between braces:
 
 ```jsligo group=b
-let myFun = (x: int, y: int): int => {
+let myFun = (x: int, y: int) => {
   let doubleX = x + x;
   let doubleY = y + y;
   return doubleX + doubleY;
@@ -319,13 +319,13 @@ functions. In case we do not use an argument, we can use the wildcard
 identifier:
 
 ```jsligo
-let k = (x: int, _: int) : int => x;
+let k = (x: int, _: int) => x;
 ```
 
 or use an identifier starting with wildcard:
 
 ```jsligo
-let k_other = (x: int, _y: int) : int => x;
+let k_other = (x: int, _y: int) => x;
 ```
 
 </Syntax>
@@ -462,7 +462,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo --entry-point in
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let incr_map = (l: list<int>): list<int> =>
+let incr_map = l =>
   List.map(i => i + 1, l);
 ```
 You can call the function `incr_map` defined above using the LIGO compiler
@@ -512,7 +512,7 @@ let closure_example = (i : int) : int => {
 <Syntax syntax="jsligo">
 
 ```jsligo
-let closure_example = (i: int): int => {
+let closure_example = i => {
   let closure = j => i + j;
   return closure(i);
 };
