@@ -147,7 +147,13 @@ module LigoManifest = struct
         with _ -> failwith "No author field  in package.json" in
       let repository = try json 
         |> Util.member "repository" 
-        |> (fun s -> URL_Shorthand (Util.to_string s)) 
+        |> (fun j -> 
+              match type_url_dir_of_yojson j with
+                Ok tud -> Type_URL_Dir tud
+              | Error _ -> 
+                (match type_url_of_yojson j with
+                  Ok tu -> Type_URL tu
+                | Error _ -> URL_Shorthand (Util.to_string j))) 
         with _ -> failwith "No repository field in package.json" in
       let main = try Some (json |> Util.member "main" |> Util.to_string)
         with _ -> None in
