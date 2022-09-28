@@ -54,7 +54,7 @@ type author = {
 type version = 
   { name        : string
   ; author      : author
-  ; repository  : string (* Only urls to git repositories supported for now *)
+  ; repository  : LigoManifest.repository (* Only urls to git repositories supported for now *)
   ; version     : sem_ver
   ; description : string
   ; scripts     : (string * string) list

@@ -20,6 +20,24 @@ module LigoRC : sig
 end
 
 module LigoManifest : sig
+  type type_url_dir = 
+    { type_     : string [@key "type"]
+    ; url       : string 
+    ; directory : string 
+    } [@@deriving to_yojson]
+
+  type type_url =
+    { type_ : string [@key "type"]
+    ; url   : string 
+    } [@@deriving to_yojson]
+
+  type repository =
+      URL_Shorthand of string
+    | Type_URL of type_url
+    | Type_URL_Dir of type_url_dir
+
+  val repository_to_yojson : repository -> Yojson.Safe.t
+
   type t =
     { name               : string
     ; version            : string
@@ -27,7 +45,7 @@ module LigoManifest : sig
     ; scripts            : (string * string) list
     ; main               : string option
     ; author             : string
-    ; repository         : string
+    ; repository         : repository
     ; license            : string
     ; readme             : string
     ; ligo_manifest_path : string

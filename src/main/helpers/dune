@@ -23,5 +23,6 @@
  (modules cli_helpers)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils lwt lwt.unix semver))
+ (libraries simple-utils lwt lwt.unix semver)
+ (preprocess (pps ppx_deriving_yojson)))
  

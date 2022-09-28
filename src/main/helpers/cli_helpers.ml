@@ -60,6 +60,27 @@ module LigoRC = struct
 end
 
 module LigoManifest = struct
+  type type_url_dir = 
+    { type_     : string [@key "type"]
+    ; url       : string 
+    ; directory : string 
+    } [@@deriving yojson]
+
+  type type_url =
+    { type_ : string [@key "type"]
+    ; url   : string 
+    } [@@deriving yojson]
+
+  type repository =
+      URL_Shorthand of string
+    | Type_URL of type_url
+    | Type_URL_Dir of type_url_dir
+
+  let repository_to_yojson = function
+    URL_Shorthand s -> `String s
+  | Type_URL tu -> type_url_to_yojson tu
+  | Type_URL_Dir tud -> type_url_dir_to_yojson tud
+
   type t =
     { name               : string
     ; version            : string
@@ -67,7 +88,7 @@ module LigoManifest = struct
     ; scripts            : (string * string) list
     ; main               : string option
     ; author             : string
-    ; repository         : string
+    ; repository         : repository
     ; license            : string
     ; readme             : string
     ; ligo_manifest_path : string
@@ -124,14 +145,16 @@ module LigoManifest = struct
         with _ -> []  in
       let author = try json |> Util.member "author" |> Util.to_string 
         with _ -> failwith "No author field  in package.json" in
-      let repository = try json |> Util.member "repository" |> Util.to_string 
+      let repository = try json 
+        |> Util.member "repository" 
+        |> (fun s -> URL_Shorthand (Util.to_string s)) 
         with _ -> failwith "No repository field in package.json" in
       let main = try Some (json |> Util.member "main" |> Util.to_string)
         with _ -> None in
       let license = try json |> Util.member "license" |> Util.to_string
         with _ -> failwith "No license field in package.json" in
       let readme = try json |> Util.member "readme" |> Util.to_string
-        with _ -> try_readme ~project_root in 
+        with _ -> try_readme ~project_root in
       Ok{ name ; version ; description ; scripts ; main; author ; repository; license ; readme ; ligo_manifest_path }
     with Failure e -> Error e
 end
