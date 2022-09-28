@@ -71,7 +71,7 @@ let x = (a : int) : int => {
 Unlike the other syntaxes, JsLIGO doesn't allow variable names to be reused in the same block scope:
 
 ```jsligo skip
-let x = (a : int) : int => {
+let x = a => {
   const age = 25;
   const age = 3; // Yields an error
 };
@@ -80,7 +80,7 @@ let x = (a : int) : int => {
 However, the following does work:
 
 ```jsligo group=d
-let x = (a: int): int => {
+let x = a => {
   const age = 25;
   {
    const age = 3; // does not give an error

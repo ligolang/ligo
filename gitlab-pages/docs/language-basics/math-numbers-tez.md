@@ -179,10 +179,10 @@ let g : int = 1_000_000;
 
 ```jsligo group=a
 // int + int yields int
-let a: int = 5 + 10;
+let a = 5 + 10;
 
 // nat + int yields int
-let b: int = (5 as nat) + 10;
+let b = (5 as nat) + 10;
 
 // tez + tez yields tez
 let c: tez = (5 as mutez) + (1 as tez);
@@ -196,7 +196,7 @@ let e: nat = (5 as nat) + (10 as nat);
 // nat + int yields an int: invalid
 // let f : nat = (5 as nat) + 10;
 
-let g: int = 1_000_000;
+let g = 1_000_000;
 ```
 
 > Pro tip: you can use underscores for readability when defining large
@@ -256,7 +256,7 @@ let b : int = 5n - 2n;
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let a: int = 5 - 10;
+let a = 5 - 10;
 
 // Subtraction of two nats yields an int
 let b: int = (5 as nat) - (2 as nat);
@@ -355,7 +355,7 @@ let c : tez = 5n * 5mutez;
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let a: int = 5 * 5;
+let a = 5 * 5;
 let b: nat = (5 as nat) * (5 as nat);
 
 // You can also multiply `nat` and `tez`
@@ -464,14 +464,14 @@ let rem4 : nat = a mod d;  // 3
 > not with negative numbers.
 
 ```jsligo group=e
-let a: int = 120;
-let b: int = 9;
-let rem1: nat = a % b;  // 3
-let c: nat = 120 as nat;
-let rem2: nat = c % b;  // 3
-let d: nat = 9 as nat;
-let rem3: nat = c % d;  // 3
-let rem4: nat = a % d;  // 3
+let a = 120;
+let b = 9;
+let rem1 = a % b;  // 3
+let c = 120 as nat;
+let rem2 = c % b;  // 3
+let d = 9 as nat;
+let rem3 = c % d;  // 3
+let rem4 = a % d;  // 3
 ```
 
 </Syntax>
@@ -527,12 +527,12 @@ let ediv4 : option((int , nat)) = ediv(a, d);  // Some (7, 2)
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-let a: int = 37;
-let b: int = 5;
+let a = 37;
+let b = 5;
 let ediv1 : option<[int , nat]> = ediv(a, b);  // Some (7, 2)
-let c: nat = 37 as nat;
+let c = 37 as nat;
 let ediv2: option<[int , nat]> = ediv(c, b);  // Some (7, 2)
-let d: nat = 5 as nat;
+let d = 5 as nat;
 let ediv3: option<[nat , nat]> = ediv(c, d);  // Some (7, 2)
 let ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
 ```
@@ -572,8 +572,8 @@ let b : nat = abs (1);
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-let a: int = int(1 as nat);
-let b: nat = abs(1);
+let a = int(1 as nat);
+let b = abs(1);
 ```
 
 </Syntax>
@@ -611,7 +611,7 @@ let is_a_nat : option (nat) = is_nat (1);
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-let is_a_nat: option<nat> = is_nat(1);
+let is_a_nat = is_nat(1);
 ```
 
 </Syntax>

@@ -38,8 +38,8 @@ let b : bool = false;
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let a: bool = true;
-let b: bool = false;
+let a = true;
+let b = false;
 ```
 
 </Syntax>
@@ -424,7 +424,7 @@ let lte: bool = 4 <= 3;
   <div className="example">
 
 ```jsligo
-let logical_and: bool = true && true;
+let logical_and = true && true;
 ```
 
   </div>
@@ -437,7 +437,7 @@ let logical_and: bool = true && true;
   <div className="example">
 
 ```jsligo
-let logical_or: bool = false || true;
+let logical_or = false || true;
 ```
 
   </div>
@@ -450,7 +450,7 @@ let logical_or: bool = false || true;
   <div className="example">
 
 ```jsligo
-let logical_not: bool = !false;
+let logical_not = !false;
 ```
 
   </div>
@@ -463,7 +463,7 @@ let logical_not: bool = !false;
   <div className="example">
 
 ```jsligo
-let eq: bool = 2 == 3;
+let eq = 2 == 3;
 ```
 
   </div>
@@ -476,7 +476,7 @@ let eq: bool = 2 == 3;
   <div className="example">
 
 ```jsligo
-let not_eq: bool = 2 != 3;
+let not_eq = 2 != 3;
 ```
 
   </div>
@@ -489,7 +489,7 @@ let not_eq: bool = 2 != 3;
   <div className="example">
 
 ```jsligo
-let gt: bool = 4 > 3;
+let gt = 4 > 3;
 ```
 
   </div>
@@ -502,7 +502,7 @@ let gt: bool = 4 > 3;
   <div className="example">
 
 ```jsligo
-let lt: bool = 4 < 3;
+let lt = 4 < 3;
 ```
 
   </div>
@@ -515,7 +515,7 @@ let lt: bool = 4 < 3;
   <div className="example">
 
 ```jsligo
-let gte: bool = 4 >= 3;
+let gte = 4 >= 3;
 ```
 
   </div>
@@ -528,7 +528,7 @@ let gte: bool = 4 >= 3;
   <div className="example">
 
 ```jsligo
-let lte: bool = 4 <= 3;
+let lte = 4 <= 3;
 ```
 
   </div>
@@ -580,9 +580,9 @@ let c : bool = (a == b); // true
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let a: string = "Alice";
-let b: string = "Alice";
-let c: bool = (a == b); // true
+let a = "Alice";
+let b = "Alice";
+let c = (a == b); // true
 ```
 
 </Syntax>
@@ -636,14 +636,14 @@ let h : bool = (a != b);
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let a: int  = 5;
-let b: int  = 4;
-let c: bool = (a == b);
-let d: bool = (a > b);
-let e: bool = (a < b);
-let f: bool = (a <= b);
-let g: bool = (a >= b);
-let h: bool = (a != b);
+let a  = 5;
+let b  = 4;
+let c = (a == b);
+let d = (a > b);
+let e = (a < b);
+let f = (a <= b);
+let g = (a >= b);
+let h = (a != b);
 ```
 
 </Syntax>
@@ -686,7 +686,7 @@ let c : bool = (a == b); // false
 ```jsligo group=d
 let a: tez  = 5 as mutez;
 let b: tez  = 10 as mutez;
-let c: bool = (a == b); // false
+let c = (a == b); // false
 ```
 
 </Syntax>
@@ -794,8 +794,13 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo '21n' --entry-
 ```jsligo group=e
 type magnitude = ["Small"] | ["Large"]; // See variant types.
 
-let compare = (n : nat) : magnitude => {
-  if (n < (10 as nat)) { return Small (); } else { return Large (); };
+let compare = n => {
+  if (n < (10 as nat)) { 
+    return Small (); 
+  } 
+  else { 
+    return Large (); 
+  };
 };
 ```
 
@@ -818,7 +823,7 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo '21n' --entry-
 JsLIGO also supports branching of control flow via the switch statement.
 
 ```jsligo group=switch
-let quarter = (n : int) : string => {
+let quarter = n => {
   let output = "";
   switch (n) {
     case 1:
