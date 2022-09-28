@@ -14,14 +14,14 @@ const amt : tez = ADD(Tezo.amoun , 1000000mutez)
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
 const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
-  ( list (operation) * tez ) =
-  lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
+  ( list (operation) * tez ) = lambda (
+  gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
-          amt | Increment unit_proj#114 ->
+        | Decrement unit_proj#105 ->
+          amt | Increment unit_proj#106 ->
                 bal ) |xxx}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
@@ -39,14 +39,14 @@ const amt : tez = ADD(Tezo.X.Y.amoun , 1000000mutez)
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
 const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
-  ( list (operation) * tez ) =
-  lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
+  ( list (operation) * tez ) = lambda (
+  gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
-          amt | Increment unit_proj#114 ->
+        | Decrement unit_proj#105 ->
+          amt | Increment unit_proj#106 ->
                 bal ) |xxx}]
 
 let%expect_test _ =
@@ -61,14 +61,14 @@ const amt : tez = ADD(Tezo.amoun , 1000000mutez)
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
 const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
-  ( list (operation) * tez ) =
-  lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
+  ( list (operation) * tez ) = lambda (
+  gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
-          amt | Increment unit_proj#114 ->
+        | Decrement unit_proj#105 ->
+          amt | Increment unit_proj#106 ->
                 bal ) |xxx}]
 
 let%expect_test _ =
@@ -92,13 +92,13 @@ module Tezo =
 type parameter = sum[Decrement -> unit , Increment -> unit]type storage = tez
 type return = ( list (operation) * tez )
 const main : ( sum[Decrement -> unit , Increment -> unit] * tez ) ->
-  ( list (operation) * tez ) =
-  lambda (gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
+  ( list (operation) * tez ) = lambda (
+  gen#2( sum[Decrement -> unit , Increment -> unit] * tez ))( list (operation) * tez ) return
    match gen#2 with
     | ( action : sum[Decrement -> unit , Increment -> unit] , _#3 : tez ) ->
     ( LIST_EMPTY() ,
        match action with
-        | Decrement unit_proj#113 ->
+        | Decrement unit_proj#105 ->
           1000000mutez
-        | Increment unit_proj#114 ->
+        | Increment unit_proj#106 ->
           used ) |xxx}]

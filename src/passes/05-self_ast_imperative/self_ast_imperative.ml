@@ -2,7 +2,6 @@ module Errors = Errors
 
 let all_expression_mapper ~raise ~js_style_no_shadowing = [
   Vars.capture_expression ~raise ;
-  Consts.assign_expression ~raise ;
   Tezos_type_annotation.peephole_expression ~raise ;
   Literals.peephole_expression ~raise ;
   Expression_soundness.linearity ~raise ;

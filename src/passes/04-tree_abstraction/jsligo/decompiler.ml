@@ -594,9 +594,26 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr
-  | E_let_mut_in _ ->
-    failwith @@ Format.asprintf "Decompiling a let mut in to JsLIGO %a"
-    AST.PP.expression expr
+  | E_let_mut_in { let_binder; rhs; let_result; _ } ->
+    let var = CST.PVar (decompile_variable2 @@ Binder.get_var let_binder) in
+    let binders = var in
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr let_binder in
+    let expr = decompile_expression_in rhs in
+    let expr = e_hd expr in
+    let let_binding = CST.{
+      binders;
+      lhs_type;
+      type_params=None;
+      eq = Token.ghost_eq;
+      expr
+    } in
+    let const = CST.SLet (Region.wrap_ghost CST.{
+      kwd_let = Token.ghost_let;
+      bindings  = (Region.wrap_ghost let_binding, []);
+      attributes = []
+    }) in
+    let body = decompile_expression_in let_result in
+    return_expr @@ Statement const :: body
   (* Update on multiple field of the same record. may be removed by adding sugar *)
   | E_update {struct_;path;update} when List.length path > 1 ->
     failwith "Nested updates are not supported in JsLIGO."

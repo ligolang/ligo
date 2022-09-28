@@ -211,6 +211,7 @@ module T = struct
     | C_marker of exists_variable
     | C_module of module_variable * Signature.t
     | C_pos of pos
+    | C_mut_pos of pos
   [@@deriving hash]
 end
 
@@ -261,7 +262,7 @@ module PP = struct
       | C_marker evar -> Format.fprintf ppf "|>%a" Exists_var.pp evar
       | C_module (mvar, sig_) ->
         Format.fprintf ppf "module %a = %a" Module_var.pp mvar Signature.pp sig_
-      | C_pos _ -> ())
+      | C_pos _ | C_mut_pos _ -> ())
 
 
   let context_local ~pos ppf t =
@@ -324,7 +325,8 @@ module PP = struct
           type_
           loop
           items
-      | C_pos pos' :: _items when pos = pos' -> Format.fprintf ppf ""
+      | (C_pos pos' | C_mut_pos pos') :: _items when pos = pos' ->
+        Format.fprintf ppf ""
       | _ :: items -> loop ppf items
     in
     Format.fprintf ppf "@[<hv>%a@]" loop t.items
@@ -374,10 +376,18 @@ let get_value =
     hashable
     (module Value_var)
     (fun t evar ->
-      (List.find_map t.items ~f:(function
-        | C_value (evar', mut_flag, type_) when Value_var.equal evar evar' ->
-          Some (mut_flag, type_)
-        | _ -> None) [@landmark "get_value"]))
+      let[@landmark "get_value"] rec loop ?(mut_allowed = true) items =
+        match items with
+        | C_value (evar', mut_flag, type_) :: _ when Value_var.equal evar evar'
+          ->
+          (match mut_flag, mut_allowed with
+           | Mutable, false -> Error `Mut_var_captured
+           | _ -> Ok (mut_flag, type_))
+        | C_mut_pos _ :: items -> loop ~mut_allowed:false items
+        | _ :: items -> loop ~mut_allowed items
+        | [] -> Error `Not_found
+      in
+      loop t.items)
 
 
 let get_imm =
@@ -396,10 +406,14 @@ let get_mut =
     hashable
     (module Value_var)
     (fun t evar ->
-      List.find_map t.items ~f:(function
-        | C_value (evar', Mutable, type_) when Value_var.equal evar evar' ->
-          Some type_
-        | _ -> None))
+      let rec loop = function
+        | C_value (evar', Mutable, type_) :: _ when Value_var.equal evar evar'
+          -> Some type_
+        | C_mut_pos _ :: _ -> None
+        | _ :: items -> loop items
+        | [] -> None
+      in
+      loop t.items)
 
 
 let get_type =
@@ -496,6 +510,7 @@ let equal_item : item -> item -> bool =
   | C_module (mvar1, sig1), C_module (mvar2, sig2) ->
     Module_var.equal mvar1 mvar2 && Signature.equal sig1 sig2
   | C_pos pos1, C_pos pos2 -> pos1 = pos2
+  | C_mut_pos pos1, C_mut_pos pos2 -> pos1 = pos2
   | _, _ -> false
 
 
@@ -503,7 +518,7 @@ let drop_until t ~pos =
   let rec loop t =
     match t.items with
     | [] -> t
-    | C_pos pos' :: items when pos = pos' -> { t with items }
+    | (C_pos pos' | C_mut_pos pos') :: items when pos = pos' -> { t with items }
     | item :: items ->
       loop
         { items
@@ -545,12 +560,12 @@ let split_at t ~at =
 
 let mark =
   let next = ref 0 in
-  fun t ->
+  fun t ~mut ->
     let pos =
       Int.incr next;
       !next
     in
-    t |:: C_pos pos, pos
+    (t |:: if mut then C_mut_pos pos else C_pos pos), pos
 
 
 let insert_at t ~at ~hole =
@@ -979,7 +994,7 @@ end = struct
          | C_marker evar ->
            (not (List.mem ~equal:Exists_var.equal (get_markers t) evar))
            && not (List.mem ~equal:Exists_var.equal (get_exists_vars t) evar)
-         | C_pos _ -> true
+         | C_pos _ | C_mut_pos _ -> true
          | C_module (_mvar, sig_) ->
            (* Shadowing permitted *)
            signature ~ctx sig_)
@@ -1491,17 +1506,18 @@ let unsolved { items; solved } =
   }
 
 
-let enter ~ctx ~in_ =
-  let ctx, pos = mark ctx in
+let enter ~ctx ~mut ~in_ =
+  let ctx, pos = mark ctx ~mut in
   let ctx, ret_type, expr = in_ ctx in
-  let ctxl, ctxr = split_at ctx ~at:(C_pos pos) in
+  let c_pos = if mut then C_mut_pos pos else C_pos pos in
+  let ctxl, ctxr = split_at ctx ~at:c_pos in
   let ret_type = apply ctxr ret_type in
   let ctxr = unsolved ctxr in
   ctxl |@ ctxr, ret_type, expr
 
 
 let decl_enter ~ctx ~in_ =
-  let ctx, pos = mark ctx in
+  let ctx, pos = mark ctx ~mut:false in
   let ctx, sig_, ret = in_ ctx in
   let ctxl, ctxr = split_at ctx ~at:(C_pos pos) in
   let ret_sig = signature_apply ctxr sig_ in
@@ -1552,11 +1568,12 @@ module Generalization = struct
     { empty with solved }, tvars
 
 
-  let enter ~ctx ~in_ =
+  let enter ~ctx ~mut ~in_ =
     let open Elaboration.Let_syntax in
-    let ctx, pos = mark ctx in
+    let ctx, pos = mark ctx ~mut in
     let ctx, ret_type, expr = in_ ctx in
-    let ctxl, ctxr = split_at ctx ~at:(C_pos pos) in
+    let c_pos = if mut then C_mut_pos pos else C_pos pos in
+    let ctxl, ctxr = split_at ctx ~at:c_pos in
     let ret_type = apply ctxr ret_type in
     let ctxr, tvars = unsolved ctxr in
     let tvars =

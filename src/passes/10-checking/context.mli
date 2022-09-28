@@ -48,6 +48,10 @@ and item =
   | C_marker of exists_variable
   | C_module of module_variable * Signature.t
   | C_pos of pos
+  (** A mutable position denotes a position in which we cannot search 
+      for mutable variables behind. This is a slightly hacky solution to
+      ensure lambdas don't contain captured mutable variables. *)
+  | C_mut_pos of pos
 
 val empty : t
 val add : t -> item -> t
@@ -69,7 +73,7 @@ val add_module : t -> module_variable -> Signature.t -> t
 val get_value
   :  t
   -> expression_variable
-  -> (mutable_flag * type_expression) option
+  -> (mutable_flag * type_expression, [> `Mut_var_captured | `Not_found ]) Result.t
 
 val get_imm : t -> expression_variable -> type_expression option
 val get_mut : t -> expression_variable -> type_expression option
@@ -88,7 +92,7 @@ val insert_at : t -> at:item -> hole:t -> t
 val split_at : t -> at:item -> t * t
 val drop_until : t -> pos:pos -> t
 val apply : t -> type_expression -> type_expression
-val mark : t -> t * pos
+val mark : t -> mut:bool -> t * pos
 
 val get_record
   :  type_expression Rows.row_element_mini_c Rows.LMap.t
@@ -153,6 +157,7 @@ end
 
 val enter
   :  ctx:t
+  -> mut:bool
   -> in_:(t -> t * type_expression * (expression, 'err, 'wrn) Elaboration.t)
   -> t * type_expression * (expression, 'err, 'wrn) Elaboration.t
 
@@ -164,6 +169,7 @@ val decl_enter
 module Generalization : sig
   val enter
     :  ctx:t
+    -> mut:bool
     -> in_:(t -> t * type_expression * (expression, 'err, 'wrn) Elaboration.t)
     -> t * type_expression * (expression, 'err, 'wrn) Elaboration.t
 end

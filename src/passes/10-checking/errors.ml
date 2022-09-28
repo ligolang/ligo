@@ -76,7 +76,8 @@ let type_improve t =
 
 
 type typer_error =
-  [ `Typer_ill_formed_type of Location.t * Ast_typed.type_expression
+  [ `Typer_mut_var_captured of Location.t * Value_var.t
+  | `Typer_ill_formed_type of Location.t * Ast_typed.type_expression
   | `Typer_existential_found of Location.t * Ast_typed.type_expression
   | `Typer_record_mismatch of
     Location.t * Ast_core.expression * Ast_typed.type_expression
@@ -174,6 +175,13 @@ let rec error_ppformat
   match display_format with
   | Human_readable | Dev ->
     (match a with
+     | `Typer_mut_var_captured (loc, var) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid capture of mutable variable \"%a\"@]"
+        Snippet.pp
+        loc
+        Value_var.pp
+        var
      | `Typer_existential_found (loc, type_) ->
        Format.fprintf
          f
@@ -664,6 +672,16 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
       [ "status", `String "error"; "stage", `String stage; "content", content ]
   in
   match a with
+  | `Typer_mut_var_captured (loc, var) ->
+    let message = "Invalid capture of mutable variable" in
+    let content = 
+      `Assoc
+        [ "message", `String message
+        ; "location", Location.to_yojson loc
+        ; "var", Value_var.to_yojson var
+        ]
+    in
+    json_error ~stage ~content
   | `Typer_existential_found (loc, type_) ->
     let message = "Existential found" in
     let content =

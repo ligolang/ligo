@@ -135,6 +135,24 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.jsligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative/error_typer_1.jsligo", line 9, character 0 to line 12, character 1:
+      8 |
+      9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
+     10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
+     11 |     return [list([]) as list<operation>, newStorage];
+     12 | }
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/negative/error_typer_1.jsligo", line 5, character 0 to line 7, character 1:
+      4 |
+      5 | let addone = (oldStorage: nat) : nat => {
+      6 |    return oldStorage + (1 as nat);
+      7 | }
+      8 |
+
+    Toplevel let declaration are silently change to const declaration.
+
     File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 38-60:
       9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
      10 |     let newStorage : storage = addone (oldStorage, 1 as nat);

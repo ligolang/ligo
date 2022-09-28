@@ -938,7 +938,7 @@ and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expre
     )
     | pattern ->
       (* not sure what to do with  attributes in that case *)
-      compile_let_destructuring ~raise loc cd.init pattern next type_
+      compile_let_destructuring ~const:true ~raise loc cd.init pattern next type_
   )
   | D_Directive _ -> next
   | D_Fun fun_decl -> (

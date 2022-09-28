@@ -631,7 +631,27 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let block = Region.wrap_ghost @@ Option.value ~default:empty_block block in
     let while_ : CST.while_loop = { kwd_while = Token.ghost_while ; cond ; block } in
     return_inst @@ CST.I_While (Region.wrap_ghost while_)
-  | E_let_mut_in _ -> failwith "Decompiling E_let_mut_in in PascaLIGO"
+  | E_let_mut_in { let_binder; rhs; let_result; _ } -> 
+    let pattern = CST.P_Var (decompile_variable @@ Binder.get_var let_binder) in
+    let var_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr let_binder in
+    let rhs = decompile_expression rhs in
+    let var_decl = 
+      Region.wrap_ghost 
+      @@ { CST.kwd_var = Token.ghost_var
+         ; pattern
+         ; type_params = None
+         ; var_type
+         ; assign = Token.ghost_ass
+         ; init = rhs
+         ; terminator = Some Token.ghost_semi
+         }
+    in
+    let (lst, expr) = decompile_eos Expression let_result in
+    let lst = match lst with
+      Some lst -> List.Ne.cons (CST.S_VarDecl var_decl) lst
+    | None -> (CST.S_VarDecl var_decl, [])
+    in
+    return @@ (Some lst, expr)
 
 and decompile_if_clause : AST.expression -> CST.test_clause = fun e ->
   let clause = decompile_statements e in
