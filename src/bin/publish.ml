@@ -23,15 +23,15 @@ CLI:
 - [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
 - [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
 - [X] login & add-user: CLI prompt for username & password
-- [ ] Better logging during publish (show tarball contents, size, etc. similar to npm publish)
+- [X] Better logging during publish (show tarball contents, size, etc. similar to npm publish)
 
 DOCS:
-- [ ] Mention that only gloable ligorc (~/.ligorc) file
+- [X] Mention that only gloable ligorc (~/.ligorc) file
 
 UI:
-- [ ] List packages
+- [X] List packages
 - [ ] For a package list all versions
-- [ ] Stats about pakage (user, downloads) stuff what npmjs website shows
+- [X] Stats about pakage (user, downloads) stuff what npmjs website shows
 
 *)
 
@@ -47,9 +47,8 @@ type repository =
     ; directory : string option
     } [@@deriving yojson]
 
-(* TODO: write samll parser of repository URL *)
 let to_repository = function
-    LigoManifest.URL_Shorthand s -> { type_ = "" ; url = "" ; directory = None }
+    LigoManifest.URL_Shorthand _s -> { type_ = "" ; url = "" ; directory = None }
   | Type_URL { type_ ; url } -> { type_ ; url ; directory = None }
   | Type_URL_Dir { type_ ; url ; directory } -> { type_ ; url ; directory = Some directory }
 

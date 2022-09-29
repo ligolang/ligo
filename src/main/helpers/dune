@@ -20,9 +20,10 @@
 (library
  (name cli_helpers)
  (public_name ligo.cli_helpers)
- (modules cli_helpers)
+ (modules cli_helpers repository_url)
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils lwt lwt.unix semver)
- (preprocess (pps ppx_deriving_yojson)))
+ (inline_tests)
+ (preprocess (pps ppx_deriving_yojson ppx_inline_test)))
  
