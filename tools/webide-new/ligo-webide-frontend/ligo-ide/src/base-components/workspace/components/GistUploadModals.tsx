@@ -40,7 +40,7 @@ const GistUploadModals = forwardRef(
 
     const dispatch = useDispatch();
 
-    const getGistId = (str: string) => {
+    const gistIdFromLink = (str: string) => {
       const idr = /[0-9A-Fa-f]{8,}/;
       const match = idr.exec(str);
       return match ? match[0] : null;
@@ -91,7 +91,7 @@ const GistUploadModals = forwardRef(
         return;
       }
 
-      const gId = getGistId(link);
+      const gId = gistIdFromLink(link);
 
       if (projectManager.projectSettings) {
         await projectManager.projectSettings.set("gistId", gId).catch((e: Error) => {
@@ -101,6 +101,16 @@ const GistUploadModals = forwardRef(
 
       setLoading(false);
       setGistLink(link);
+    };
+
+    const getGistId = (gId: string, gLink: string) => {
+      if (gLink !== "") {
+        return gistIdFromLink(gLink);
+      }
+      if (gId !== "") {
+        return gId;
+      }
+      throw new Error("No gist id or gist link");
     };
 
     return (
@@ -128,6 +138,45 @@ const GistUploadModals = forwardRef(
         textActions={isUpdatable && gistLink === "" ? ["Update"] : ""}
         onActions={isUpdatable && gistLink === "" ? [() => onCreate("update")] : []}
       >
+        {(gistLink !== "" || gistId !== "") && (
+          <>
+            {getGistId(gistId, gistLink) !== null && (
+              <p>
+                Your Gist id <kbd>{getGistId(gistId, gistLink)}</kbd>
+              </p>
+            )}
+            <p>
+              Gist link{" "}
+              <a
+                href={`//gist.github.com/${getGistId(gistId, gistLink) || ""}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {`https://gist.github.com/${getGistId(gistId, gistLink) || ""}`}
+              </a>
+            </p>
+            {getGistId(gistId, gistLink) !== null && (
+              <p>
+                LIGO Web IDE link{" "}
+                <a
+                  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                  href={`//${window.location.host}/share/${getGistId(gistId, gistLink)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                  {`https://${window.location.host}/share/${getGistId(gistId, gistLink)}`}
+                </a>
+              </p>
+            )}
+            {gistLink !== "" && (
+              <p>
+                Its id will be stored in config. You will be able to use it to update files in gist.
+              </p>
+            )}
+            <br />
+          </>
+        )}
         {gistLink === "" && (
           <>
             <DebouncedFormGroup
@@ -154,38 +203,6 @@ const GistUploadModals = forwardRef(
                 You can simply update project in gist using <b>Update</b> button.
               </div>
             )}
-          </>
-        )}
-        {gistLink !== "" && (
-          <>
-            {getGistId(gistLink) !== null && (
-              <p>
-                Your Gist id <kbd>{getGistId(gistLink)}</kbd>
-              </p>
-            )}
-            <p>
-              Gist link{" "}
-              <a href={gistLink} target="_blank" rel="noreferrer">
-                {gistLink}
-              </a>
-            </p>
-            {getGistId(gistLink) !== null && (
-              <p>
-                LIGO Web IDE link{" "}
-                <a
-                  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                  href={`${window.location.host}/share/${getGistId(gistLink)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                  {`${window.location.host}/share/${getGistId(gistLink)}`}
-                </a>
-              </p>
-            )}
-            <p>
-              Its id will be stored in config. You will be able to use it to update files in gist.
-            </p>
           </>
         )}
       </Modal>

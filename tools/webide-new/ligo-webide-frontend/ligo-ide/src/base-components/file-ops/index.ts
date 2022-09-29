@@ -304,9 +304,8 @@ class FileManager {
 
   async copyFolderToJson(path: string): Promise<{ path: string; content: string }[]> {
     const files = await this.collectFiles(path);
-    const regex = new RegExp(path);
     return files.map(({ path: filePath, content }) => {
-      const gistFilePath = filePath.replace(regex, "").replace(/\//g, "...");
+      const gistFilePath = filePath.replace(path, "").replace(/\//g, "...");
       const gistFileContent =
         /^\s+$/.test(content) || !content.length
           ? "// this line is added to create a gist. Empty file is not allowed."
