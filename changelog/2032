@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: ''
+merge_request: '2032'
+title: Revert InfraBot change for `tezos-ligo` version
+type: fixed
