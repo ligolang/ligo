@@ -256,7 +256,7 @@ let e_bool b : expression_content =
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key", "chain_id"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
