@@ -394,6 +394,7 @@ let find_external_file ~file ~inclusion_list =
         let scope_name = Core.String.chop_prefix_exn ~prefix:"@" scope in
         let path_opt = find_in_inclusion_list ~inclusion_list ~scope_name pkg_name in
         Option.map (fun path -> path, rest_of_path) path_opt
+    | pkg_name::[] -> None
     | pkg_name::rest_of_path -> 
         let path_opt = find_in_inclusion_list ~inclusion_list pkg_name in
         Option.map (fun path -> path, rest_of_path) path_opt
