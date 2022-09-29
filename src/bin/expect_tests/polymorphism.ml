@@ -367,21 +367,6 @@ let%expect_test _ =
     (Some { Elt "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" 0 }) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-core" ; (test "annotate.mligo") ] ;
-  [%expect.unreachable]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Failure
-    "DO NOT PRINT ASTs IN EXPECT TESTS: PLEASE USE src/test/ast_production.ml")
-  Raised at Stdlib.failwith in file "stdlib.ml", line 29, characters 17-33
-  Called from Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 34, characters 20-103
-  Called from Cli_expect_tests__Polymorphism.(fun) in file "src/bin/expect_tests/polymorphism.ml", line 370, characters 2-66
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19 |}]
-
-let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; (test "same_vars.mligo") ] ;
   [%expect{| 4 |}]
 
