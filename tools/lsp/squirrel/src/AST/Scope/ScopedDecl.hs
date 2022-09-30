@@ -49,6 +49,7 @@ import Control.Applicative ((<|>))
 import Control.Lens ((%~), (&), (^?))
 import Control.Lens.TH (makeLenses, makePrisms)
 import Data.List (find)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Sum (inject)
 import Data.Text (Text)
 import Duplo.Tree (Cofree ((:<)), Element)
@@ -95,7 +96,7 @@ data TypeDeclSpecifics init = TypeDeclSpecifics
 
 data Type
   = RecordType [TypeField]
-  | VariantType [TypeConstructor]
+  | VariantType (NonEmpty TypeConstructor)
   | TupleType [TypeDeclSpecifics Type]
   | ApplyType Type [Type]
   | AliasType Text
@@ -191,7 +192,7 @@ instance IsLIGO init => IsLIGO (TypeDeclSpecifics init) where
 
 instance IsLIGO Type where
   toLIGO (RecordType fields) = node (LIGO.TRecord (map toLIGO fields))
-  toLIGO (VariantType cons) = node (LIGO.TSum (map toLIGO cons))
+  toLIGO (VariantType cons) = node (LIGO.TSum (toLIGO <$> cons))
   toLIGO (TupleType typs) = node (LIGO.TProduct (map toLIGO typs))
   toLIGO (AliasType typ) = node (LIGO.TypeName typ)
   toLIGO (ApplyType name types) = node (LIGO.TApply (toLIGO name) (map toLIGO types))

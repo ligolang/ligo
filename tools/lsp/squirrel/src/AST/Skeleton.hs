@@ -30,6 +30,7 @@ import Control.Lens.Lens (Lens, lens)
 import Data.Functor.Classes (Eq1 (..))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -140,7 +141,7 @@ type IsRec = Bool
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)
   | TRecord   [it]     -- ^ [TField]
-  | TSum      [it]     -- ^ [Variant]
+  | TSum      (NonEmpty it) -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
   | TApply    it [it]  -- ^ (Name) [Type]
   | TString   it       -- ^ (TString)
@@ -336,6 +337,9 @@ liftEqList _ []       []       = True
 liftEqList f (x : xs) (y : ys) = f x y && liftEqList f xs ys
 liftEqList _ _        _        = False
 
+liftEqNonEmpty :: (a -> b -> Bool) -> NonEmpty a -> NonEmpty b -> Bool
+liftEqNonEmpty f (x :| xs) (y :| ys) = f x y && liftEqList f xs ys
+
 liftEqMaybe :: (a -> b -> Bool) -> Maybe a -> Maybe b -> Bool
 liftEqMaybe _ Nothing  Nothing  = True
 liftEqMaybe f (Just x) (Just y) = f x y
@@ -448,7 +452,7 @@ instance Eq1 TypeParams where
 instance Eq1 Type where
   liftEq f (TArrow a b) (TArrow c d) = f a c && f b d
   liftEq f (TRecord xs) (TRecord ys) = liftEqList f xs ys
-  liftEq f (TSum xs) (TSum ys) = liftEqList f xs ys
+  liftEq f (TSum xs) (TSum ys) = liftEqNonEmpty f xs ys
   liftEq f (TProduct xs) (TProduct ys) = liftEqList f xs ys
   liftEq f (TString x) (TString y) = f x y
   liftEq _ TWildcard TWildcard = True

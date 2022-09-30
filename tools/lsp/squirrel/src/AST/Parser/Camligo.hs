@@ -191,8 +191,8 @@ recognise (SomeRawTree dialect rawTree)
         "tuple_type"   -> TProduct <$> fields "x"
         "TypeWildcard" -> pure TWildcard
         "var_type"     -> TVariable <$> field "name"
-        "sum_type_prod_type_level" -> TSum <$> fields "variant"
-        "sum_type_fun_type_level"  -> TSum <$> fields "variant"
+        "sum_type_prod_type_level" -> TSum <$> fields1 "variant"
+        "sum_type_fun_type_level"  -> TSum <$> fields1 "variant"
         _              -> fallthrough
 
     -- Module access:

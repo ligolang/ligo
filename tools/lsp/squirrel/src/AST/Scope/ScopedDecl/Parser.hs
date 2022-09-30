@@ -8,6 +8,7 @@ module AST.Scope.ScopedDecl.Parser
 import Control.Lens ((??))
 import Data.Foldable (asum)
 import Data.Functor ((<&>))
+import Data.List.NonEmpty (nonEmpty, toList)
 import Data.Maybe (fromMaybe, mapMaybe)
 import Duplo.Tree (layer, match)
 
@@ -81,7 +82,7 @@ parseTypeField node = do
 parseVariantType :: PPableLIGO info => LIGO info -> Maybe Type
 parseVariantType node = do
   LIGO.TSum conNodes <- layer node
-  let cons = mapMaybe parseTypeConstructor conNodes
+  cons <- nonEmpty $ mapMaybe parseTypeConstructor $ toList conNodes
   pure (VariantType cons)
 
 parseTypeConstructor :: PPableLIGO info => LIGO info -> Maybe TypeConstructor

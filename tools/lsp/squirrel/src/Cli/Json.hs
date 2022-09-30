@@ -35,7 +35,7 @@ import Data.Foldable (toList)
 import Data.Function
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe)
 import Data.Proxy (Proxy(..))
@@ -527,7 +527,9 @@ fromLigoTypeFull = enclose . \case
       LTCSum sum -> do
         st <- get
         sum' <- fromLigoTable FieldSum sum
-        return $ make' (st, TSum sum')
+        case sum' of
+          [] -> mkErr "malformed sum type, please report this as a bug"
+          v : vs -> pure $ make' (st, TSum (v :| vs))
 
       LTCSingleton      _ -> mkErr "unsupported type `Singleton`"      -- TODO not used
       LTCAbstraction    _ -> mkErr "unsupported type `Abstraction`"    -- TODO not used
