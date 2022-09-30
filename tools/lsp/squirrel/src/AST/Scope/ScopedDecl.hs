@@ -110,8 +110,9 @@ data TypeField = TypeField
   }
   deriving stock (Eq, Show)
 
-newtype TypeConstructor = TypeConstructor
+data TypeConstructor = TypeConstructor
   { _tcName :: Text
+  , _tcTspec :: Maybe (TypeDeclSpecifics Type)
   }
   deriving stock (Eq, Show)
 
@@ -211,7 +212,7 @@ instance IsLIGO TypeField where
 
 instance IsLIGO TypeConstructor where
   toLIGO TypeConstructor{ .. } = node
-    (LIGO.Variant (node (LIGO.Ctor _tcName)) Nothing)
+    (LIGO.Variant (node (LIGO.Ctor _tcName)) (toLIGO <$> _tcTspec))
 
 instance IsLIGO Parameter where
   toLIGO (ParameterPattern pat) = toLIGO pat

@@ -78,16 +78,17 @@ parseTypeField node = do
   let _tfTspec = parseTypeDeclSpecifics <$> typNode
   pure TypeField{ .. }
 
-parseVariantType :: LIGO info -> Maybe Type
+parseVariantType :: PPableLIGO info => LIGO info -> Maybe Type
 parseVariantType node = do
   LIGO.TSum conNodes <- layer node
   let cons = mapMaybe parseTypeConstructor conNodes
   pure (VariantType cons)
 
-parseTypeConstructor :: LIGO info -> Maybe TypeConstructor
+parseTypeConstructor :: PPableLIGO info => LIGO info -> Maybe TypeConstructor
 parseTypeConstructor node = do
-  LIGO.Variant conNameNode _ <- layer node
+  LIGO.Variant conNameNode conTypNode <- layer node
   LIGO.Ctor _tcName <- layer conNameNode
+  let _tcTspec = parseTypeDeclSpecifics <$> conTypNode
   pure TypeConstructor{ .. }
 
 parseTupleType :: PPableLIGO info => LIGO info -> Maybe Type
