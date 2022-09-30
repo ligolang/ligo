@@ -61,6 +61,8 @@ and type_constant ppf (tb:type_base) : unit =
     in
   fprintf ppf "%s" s
 
+let commas f = Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") f)
+
 let rec value ppf : value -> unit = function
   | D_bool b -> fprintf ppf "%b" b
   | D_operation _ -> fprintf ppf "operation[...bytes]"
@@ -110,6 +112,9 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
 
 and expression ppf (e:expression) =
   fprintf ppf "%a" expression_content e.content
+
+and binder ppf (b : binder) =
+  Value_var.pp ppf (fst b)
 
 and expression_content ppf (e:expression_content) = match e with
   | E_closure x -> function_ ppf x
@@ -174,6 +179,35 @@ and expression_content ppf (e:expression_content) = match e with
       type_expression a
       expression code
       Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
+  | E_let_mut_in (expr, ((name, _), body)) ->
+     fprintf ppf "@[let mut %a =@;<1 2>%a in@ %a@]"
+       Value_var.pp name
+       expression expr
+       expression body
+  | E_deref x ->
+     fprintf ppf "!%a"
+       Value_var.pp x
+  | E_assign (x, e) ->
+     fprintf ppf "@[%a := %a@]"
+       Value_var.pp x
+       expression e
+  | E_for_each (coll, coll_type, (xs, body)) ->
+     fprintf ppf "@[for_each %a %a %a -> %a@]" (* TODO use Cameligo style after it exists? *)
+       expression coll
+       type_expression coll_type
+       (commas binder) xs
+       expression body
+  | E_for (start, final, incr, (x, body)) ->
+     fprintf ppf "@[for %a %a %a %a -> %a@]" (* TODO use OCaml style? *)
+       expression start
+       expression final
+       expression incr
+       binder x
+       expression body
+  | E_while (cond, body) ->
+     fprintf ppf "@[while %a do@ %a@ done@]"
+       expression cond
+       expression body
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

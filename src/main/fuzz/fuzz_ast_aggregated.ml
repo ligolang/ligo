@@ -264,6 +264,8 @@ module Mutator = struct
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
     | E_type_inst _ as e' -> [ (return e'), None ]
+    (* TODO: Determine proper fuzzing semantics for these *)
+    | E_let_mut_in _ | E_for_each _ | E_deref _ | E_while _ | E_for _ as e' -> [ (return e'), None ]
     | E_assign {binder;expression} ->
         let+ expression, mutation = self expression in
         return @@ E_assign {binder;expression}, mutation

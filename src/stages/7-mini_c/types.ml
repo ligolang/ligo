@@ -83,22 +83,24 @@ type value =
 
 and selector = var_name list
 
+and binder = var_name * type_expression
+
 and expression_content =
   | E_literal of Literal_value.t
   | E_closure of anon_function
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
-  | E_iterator of Constant.constant' * ((var_name * type_expression) * expression) * expression
-  | E_fold     of (((var_name * type_expression) * expression) * expression * expression)
-  | E_fold_right of (((var_name * type_expression) * expression) * (expression * type_expression) * expression)
+  | E_iterator of Constant.constant' * (binder * expression) * expression
+  | E_fold     of ((binder * expression) * expression * expression)
+  | E_fold_right of ((binder * expression) * (expression * type_expression) * expression)
   | E_if_bool  of (expression * expression * expression)
-  | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
-  | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
-  | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
-  | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
+  | E_if_none  of expression * expression * (binder * expression)
+  | E_if_cons  of expression * expression * ((binder * binder) * expression)
+  | E_if_left  of expression * (binder * expression) * (binder * expression)
+  | E_let_in   of expression * inline * (binder * expression)
   | E_tuple of expression list
-  | E_let_tuple of expression * (((var_name * type_expression) list) * expression)
+  | E_let_tuple of expression * (binder list * expression)
   (* E_proj (record, index, field_count): we use the field_count to
      know whether the index is the last field or not, since Michelson
      treats the last element of a comb differently than the rest. We
@@ -111,7 +113,16 @@ and expression_content =
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
   (* E_global_constant (hash, args) *)
   | E_global_constant of string * expression list
-  | E_create_contract of type_expression * type_expression * ((var_name * type_expression) * expression) * expression list
+  | E_create_contract of type_expression * type_expression * (binder * expression) * expression list
+  (* Mutability stuff *)
+  | E_let_mut_in of expression * (binder * expression)
+  | E_deref of var_name
+  | E_assign of var_name * expression
+  | E_for_each of expression * type_expression * (binder list * expression)
+  | E_for of expression * expression * expression * (binder * expression)
+  (* (start, final, incr, (binder, body)) *)
+  | E_while of expression * expression
+
 
 and expression = {
   content : expression_content ;

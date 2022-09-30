@@ -110,10 +110,25 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
         aliases, Option.value ~default:(mvar::module_path) path) in
     let module_path = List.rev module_path in
     return @@ E_module_accessor {module_path;element}
+  | E_let_mut_in { let_binder ; rhs ; let_result ; attr } ->
+    let rhs = self rhs in
+    let let_result = self let_result in
+    let let_binder = Binder.map self_type let_binder in
+    return (E_let_mut_in { let_binder ; rhs ; let_result ; attr })
+  | E_deref var -> return (E_deref var)
   | E_assign {binder;expression} ->
     let binder = Binder.map self_type binder in
     let expression = self expression in
     return @@ E_assign {binder;expression}
+  | E_for for_loop ->
+    let for_loop = For_loop.map self for_loop in
+    return @@ E_for for_loop
+  | E_for_each for_each_loop ->
+    let for_each_loop = For_each_loop.map self for_each_loop in
+    return @@ E_for_each for_each_loop
+  | E_while while_loop ->
+    let while_loop = While_loop.map self while_loop in
+    return @@ E_while while_loop
 
 and matching_cases : Aliases.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in

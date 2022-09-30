@@ -59,7 +59,15 @@ and expression_content ppf (ec : expression_content) =
   | E_big_map    m -> Map_expr.pp   expression ppf m
   | E_list       l -> Set_expr.pp   expression ppf l
   | E_set        s -> Set_expr.pp   expression ppf s
+  | E_let_mut_in    li -> 
+    Let_in.pp_mut expression type_expression_option ppf li
   | E_assign     a -> Assign.pp     expression type_expression_option ppf a
+  | E_for for_loop ->
+    For_loop.pp expression ppf for_loop
+  | E_for_each for_each ->
+    For_each_loop.pp expression ppf for_each
+  | E_while while_loop ->
+    While_loop.pp expression ppf while_loop
 
 
 and declaration ppf (d : declaration) = match Location.unwrap d with

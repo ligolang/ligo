@@ -271,7 +271,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
       Ast_aggregated.e_a_lambda
         { result = aggregated_exp'
         ; output_type = out_ty
-        ; binder = Binder.make arg_binder in_ty
+        ; binder = Param.make arg_binder in_ty
         }
         in_ty
         out_ty
@@ -282,7 +282,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
         ; lambda =
             { result = aggregated_exp'
             ; output_type = out_ty
-            ; binder = Binder.make arg_binder in_ty
+            ; binder = Param.make arg_binder in_ty
             }
         }
   in
@@ -374,13 +374,7 @@ let compile_contract_file ~raise ~options source_file entry_point declared_views
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
-  Ast_aggregated.e_a_lambda
-    { result = typed_exp'
-    ; output_type = out_ty
-    ; binder = Binder.make arg_binder in_ty
-    }
-    in_ty
-    out_ty
+  Ast_aggregated.e_a_lambda {result=typed_exp'; output_type = out_ty ; binder=Param.make arg_binder in_ty} in_ty out_ty
 
 
 let rec val_to_ast ~raise ~loc
@@ -834,8 +828,9 @@ let rec val_to_ast ~raise ~loc
   | V_Mutation _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: mutation"
   | V_Gen _ ->
-    raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
-
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
+  | V_location _ ->
+    raise.error @@ Errors.generic_error loc "Cannot be abstracted: location"
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
@@ -848,7 +843,7 @@ and make_ast_func ~raise ?name env arg body orig =
     Lambda.
       { result = typed_exp'
       ; output_type = out_ty
-      ; binder = Binder.make arg in_ty
+      ; binder = Param.make arg in_ty
       }
   in
   let typed_exp' =

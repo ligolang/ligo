@@ -23,7 +23,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let lamb = decompile ~raise lamb in
        return (O.E_application { lamb ; args })
     | E_lambda { binder ; output_type ; result } ->
-       let binder = Binder.map (decompile_type ~raise) binder in
+       let binder = Param.map (decompile_type ~raise) binder in
        let output_type = decompile_type ~raise output_type in
        let result = decompile ~raise result in
        return (O.E_lambda { binder ; output_type ; result })
@@ -34,7 +34,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let fun_type = decompile_type ~raise fun_type in
        let result = decompile ~raise result in
        let output_type = decompile_type ~raise output_type in
-       let binder = Binder.map (decompile_type ~raise) binder in
+       let binder = Param.map (decompile_type ~raise) binder in
        return (O.E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } })
     | E_let_in { let_binder ; rhs ; let_result ; attr } ->
        let rhs = decompile ~raise rhs in
@@ -78,10 +78,27 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let struct_ = decompile ~raise struct_ in
        let update = decompile ~raise update in
        return (O.E_update { struct_ ; path ; update })
+   (* Imperative *)
+   | I.E_let_mut_in { let_binder ; rhs ; let_result ; attr } ->
+      let rhs = decompile ~raise rhs in
+      let let_result = decompile ~raise let_result in
+      let let_binder = Binder.map (decompile_type ~raise) let_binder in
+      let attr = decompile_value_attr attr in
+      return (O.E_let_mut_in { let_binder ; rhs ; let_result ; attr })
+   | I.E_deref var -> return (O.E_deref var)
    | I.E_assign {binder;expression} ->
       let binder = Binder.map (decompile_type ~raise) binder in
       let expression = decompile ~raise expression in
       return @@ O.E_assign {binder;expression}
+   | I.E_for for_loop ->
+      let for_loop = For_loop.map (decompile ~raise) for_loop in
+      return @@ O.E_for for_loop
+   | I.E_for_each for_each_loop ->
+      let for_each_loop = For_each_loop.map (decompile ~raise) for_each_loop in
+      return @@ O.E_for_each for_each_loop
+   | I.E_while while_loop ->
+      let while_loop = While_loop.map (decompile ~raise) while_loop in
+      return @@ O.E_while while_loop
 
 and decompile_type ~raise : Ast_aggregated.type_expression -> Ast_typed.type_expression =
   fun ty ->

@@ -4,7 +4,7 @@ type parameter = unit;
 
 const id : <P>(x : P) => P = (x : P) => {
     const id_1 : <Q>(y : Q) => Q = (y : Q) => {
-        let id_2 : <R>(z : R) => R = (z : R) => {
+        const id_2 : <R>(z : R) => R = (z : R) => {
             let z = z;
             return z;
         };
@@ -16,7 +16,7 @@ const id : <P>(x : P) => P = (x : P) => {
 
 const ident : <P>(x : P) => P = (x : P) => {
     const ident_1 : <P>(y : P) => P = (y : P) => {
-        let ident_2 : <P>(z : P) => P = (z : P) => {
+        const ident_2 : <P>(z : P) => P = (z : P) => {
             let z = z;
             return z;
         };

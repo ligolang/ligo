@@ -100,7 +100,7 @@ let rec lift
          ~mode:Contravariant
          (t_subst ~tvar:tvar' ~type_:(t_exists ~loc evar') type_)
      | Covariant ->
-       let ctx, pos = Context.mark ctx in
+       let ctx, pos = Context.mark ctx ~mut:false in
        let ctx, type_ =
          self
            ~ctx:Context.(ctx |:: C_type_var (tvar', kind'))
@@ -109,7 +109,7 @@ let rec lift
        in
        Context.drop_until ctx ~pos, type_
      | Invariant ->
-       let ctx, pos = Context.mark ctx in
+       let ctx, pos = Context.mark ctx ~mut:false in
        let ctx, type_ =
          self
            ~ctx:Context.(ctx |:: C_type_var (tvar', kind'))
@@ -121,7 +121,7 @@ let rec lift
   | T_abstraction { ty_binder = tvar'; kind; type_ } ->
     let tvar'' = Type_var.fresh ~loc () in
     let type_ = t_subst_var ~loc type_ ~tvar:tvar' ~tvar':tvar'' in
-    let ctx, pos = Context.mark ctx in
+    let ctx, pos = Context.mark ctx ~mut:false in
     let ctx, type_ =
       self ~ctx:Context.(ctx |:: C_type_var (tvar'', kind)) ~mode type_
     in
@@ -238,7 +238,7 @@ let rec unify
     let tvar = Type_var.fresh_like ~loc tvar1 in
     let type1 = t_subst_var ~loc ~tvar:tvar1 ~tvar':tvar type1 in
     let type2 = t_subst_var ~loc ~tvar:tvar2 ~tvar':tvar type2 in
-    let ctx, pos = Context.mark ctx in
+    let ctx, pos = Context.mark ctx ~mut:false in
     self ~ctx:Context.(ctx |:: C_type_var (tvar, kind1)) type1 type2
     |> Context.drop_until ~pos
   | ( T_sum { fields = content1; layout = layout1 }
@@ -248,7 +248,7 @@ let rec unify
     when equal_domains content1 content2 ->
     (* if not (Layout.equal layout1 layout2)
     then raise.error (cannot_unify_diff_layout loc type1 type2 layout1 layout2); *)
-    ignore (layout1,layout2);
+    ignore (layout1, layout2);
     (* Naive unification. Layout and content must be consistent *)
     Record.LMap.fold
       (fun label
@@ -287,24 +287,25 @@ let rec subtype
   match received.type_content, expected.type_content with
   | ( T_arrow { type1 = type11; type2 = type12 }
     , T_arrow { type1 = type21; type2 = type22 } ) ->
-    if type_expression_eq (type11, type21) && type_expression_eq (type12, type22)
+    let ctx, f1 = self ~ctx type21 type11 in
+    let ctx, f2 =
+      self ~ctx (Context.apply ctx type12) (Context.apply ctx type22)
+    in
+    if type_expression_eq (Context.apply ctx type11, Context.apply ctx type21)
+       && type_expression_eq (Context.apply ctx type12, Context.apply ctx type22)
     then ctx, fun hole -> hole
-    else (
-      let ctx, f1 = self ~ctx type21 type11 in
-      let ctx, f2 =
-        self ~ctx (Context.apply ctx type12) (Context.apply ctx type22)
-      in
+    else
       ( ctx
       , fun hole ->
           let x = Value_var.fresh ~name:"_sub" () in
           let args = f1 (e_variable x type21) in
-          let binder = Binder.make ~mut:false x type21 in
+          let binder = Param.make x type21 in
           let result = f2 (e_application { lamb = hole; args } type12) in
-          e_a_lambda { binder; result; output_type = type22 } type21 type22 ))
+          e_a_lambda { binder; result; output_type = type22 } type21 type22 )
   | T_for_all { ty_binder = tvar; kind; type_ }, _ ->
     let evar = Exists_var.fresh ~loc () in
     let type' = t_subst type_ ~tvar ~type_:(t_exists ~loc evar) in
-    let ctx, pos = Context.mark ctx in
+    let ctx, pos = Context.mark ctx ~mut:false in
     let ctx, f =
       self ~ctx:Context.(ctx |:: C_exists_var (evar, kind)) type' expected
     in
@@ -313,7 +314,7 @@ let rec subtype
         f (e_type_inst { forall = hole; type_ = t_exists ~loc evar } type') )
   | _, T_for_all { ty_binder = tvar; kind; type_ } ->
     let tvar' = Type_var.fresh_like ~loc tvar in
-    let ctx, pos = Context.mark ctx in
+    let ctx, pos = Context.mark ctx ~mut:false in
     let ctx, f =
       self
         ~ctx:Context.(ctx |:: C_type_var (tvar', kind))
