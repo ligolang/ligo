@@ -491,13 +491,6 @@ fromLigoTypeFull = enclose . \case
         Nothing           -> make' (st, TypeName p)
 
     fromLigoTypeExpression
-      LigoTypeExpression
-        { _lteTypeMeta = Just LigoTypeExpression { _lteTypeContent = t }
-        , _lteLocation
-        } = do
-          modify . putElem . fromLigoRangeOrDef $ _lteLocation
-          fromLigoType t
-    fromLigoTypeExpression
       LigoTypeExpression {..} = do
         modify . putElem . fromLigoRangeOrDef $ _lteLocation
         fromLigoType _lteTypeContent
