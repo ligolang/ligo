@@ -472,6 +472,8 @@ mbFromLigoRange
 fromLigoRangeOrDef :: LigoRange -> Range
 fromLigoRangeOrDef = fromMaybe (point 0 0) . mbFromLigoRange
 
+data FieldKind = FieldSum | FieldProduct
+
 -- | Reconstruct `LIGO` tree out of `LigoTypeFull`.
 fromLigoTypeFull :: LigoTypeFull -> LIGO Info
 fromLigoTypeFull = enclose . \case
@@ -480,10 +482,13 @@ fromLigoTypeFull = enclose . \case
   LTFUnresolved   -> mkErr "unresolved type given"
   where
 
-    fromLigoPrimitive :: Text -> State (Product Info) (LIGO Info)
-    fromLigoPrimitive p = do
+    fromLigoPrimitive :: Maybe FieldKind -> Text -> State (Product Info) (LIGO Info)
+    fromLigoPrimitive fieldKind p = do
       st <- get
-      return $ make' (st, TypeName p)
+      return case fieldKind of
+        Just FieldSum     -> make' (st, Ctor p)
+        Just FieldProduct -> make' (st, FieldName p)
+        Nothing           -> make' (st, TypeName p)
 
     fromLigoTypeExpression
       LigoTypeExpression
@@ -497,10 +502,10 @@ fromLigoTypeFull = enclose . \case
         modify . putElem . fromLigoRangeOrDef $ _lteLocation
         fromLigoType _lteTypeContent
 
-    fromLigoConstant name [] = fromLigoPrimitive name
+    fromLigoConstant name [] = fromLigoPrimitive Nothing name
     fromLigoConstant name params = do
       st <- get
-      n <- fromLigoPrimitive name
+      n <- fromLigoPrimitive Nothing name
       p <- sequence $ fromLigoTypeExpression <$> params
       return $ make' (st, TApply n p)
 
@@ -512,26 +517,26 @@ fromLigoTypeFull = enclose . \case
         fromLigoConstant (NE.head _ltcInjection) _ltcParameters
 
       LTCVariable variable ->
-        fromLigoPrimitive $ _ltvName variable
+        fromLigoPrimitive Nothing $ _ltvName variable
 
       LTCRecord record -> do
         st <- get
-        record' <- fromLigoTable record
+        record' <- fromLigoTable FieldProduct record
         return $ make' (st, TRecord record')
 
       LTCSum sum -> do
         st <- get
-        sum' <- fromLigoTable sum
+        sum' <- fromLigoTable FieldSum sum
         return $ make' (st, TSum sum')
 
       LTCSingleton      _ -> mkErr "unsupported type `Singleton`"      -- TODO not used
       LTCAbstraction    _ -> mkErr "unsupported type `Abstraction`"    -- TODO not used
       LTCForAll         _ -> mkErr "unsupported type `ForAll`"         -- TODO not used
-      LTCModuleAccessor _ -> mkErr "unsupported type `ModuelAccessor`" -- TODO not used
+      LTCModuleAccessor _ -> mkErr "unsupported type `ModuleAccessor`" -- TODO not used
 
       LTCApp LigoTypeApp{..} -> do
         st <- get
-        p <- fromLigoPrimitive (_ltvName _ltaTypeOperator)
+        p <- fromLigoPrimitive Nothing (_ltvName _ltaTypeOperator)
         return . make' . (st,) $
           TApply p (enclose . fromLigoTypeExpression <$> _ltaArguments)
 
@@ -540,17 +545,22 @@ fromLigoTypeFull = enclose . \case
         let mkArrow = TArrow `on` (enclose . fromLigoTypeExpression)
         return $ make' (st, mkArrow _ltaType1 _ltaType2)
 
-    fromLigoTable = traverse (uncurry fromLigoTableField) . HM.toList . _lttFields
+    fromLigoTable fieldKind =
+      traverse (uncurry (fromLigoTableField fieldKind)) . HM.toList . _lttFields
 
     fromLigoTableField
-      :: Text
+      :: FieldKind
+      -> Text
       -> LigoTableField
       -> State (Product Info) (LIGO Info)
-    fromLigoTableField name LigoTableField {..} = do
+    fromLigoTableField fieldKind name LigoTableField {..} = do
       st <- get
-      n <- fromLigoPrimitive name
+      n <- fromLigoPrimitive (Just fieldKind) name
       -- FIXME: Type annotation is optional.
-      return $ make' (st, TField n (Just $ enclose $ fromLigoTypeExpression _ltfAssociatedType))
+      let type' = Just $ enclose $ fromLigoTypeExpression _ltfAssociatedType
+      return case fieldKind of
+        FieldSum     -> make' (st, Variant n type')
+        FieldProduct -> make' (st, TField  n type')
 
     mkErr = gets . flip mkLigoError
 
