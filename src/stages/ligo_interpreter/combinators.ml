@@ -261,6 +261,7 @@ let tag_constant_val : constant_val -> int = function
   | C_bls12_381_g2 _ -> 14
   | C_bls12_381_fr _ -> 15
   | C_int64 _ -> 16
+  | C_chain_id _ -> 17
 
 let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   match c, c' with
@@ -291,7 +292,8 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   | C_bls12_381_fr b, C_bls12_381_fr b' ->
      Bytes.compare (Bls12_381.Fr.to_bytes b) (Bls12_381.Fr.to_bytes b')
   | C_int64 i, C_int64 i' -> Int64.compare i i'
-  | (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _ | C_int64 _), (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _ | C_int64 _) -> Int.compare (tag_constant_val c) (tag_constant_val c')
+  | C_chain_id i, C_chain_id i' -> String.compare i i'
+  | (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _ | C_int64 _ | C_chain_id _), (C_unit | C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _ | C_int64 _ | C_chain_id _) -> Int.compare (tag_constant_val c) (tag_constant_val c')
 
 let tag_value : value -> int = function
   | V_Ct _ -> 0
