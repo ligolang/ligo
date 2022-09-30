@@ -39,9 +39,9 @@ CURRENT_VERSION=$2
 NUMBER_OF_VERSION_TO_KEEP=3
 
 VERSION_REGEX="([0-9]*)\.([0-9]*)\.([0-9]*)"
-EXTRACT_VERSION_REGEX="$HOMEBREW_FORMULA_FOLDER_PATH/([0-9]*\.[0-9]*\.[0-9]*).rb$"
-FILES=($(find $HOMEBREW_FORMULA_FOLDER_PATH -type f -regex "$HOMEBREW_FORMULA_FOLDER_PATH/[0-9]*\.[0-9]*\.[0-9]*\.rb$"))
-
+EXTRACT_VERSION_REGEX="$HOMEBREW_FORMULA_FOLDER_PATH/ligo@([0-9]*\.[0-9]*\.[0-9]*).rb$"
+FILES=($(find $HOMEBREW_FORMULA_FOLDER_PATH -type f -regex "$HOMEBREW_FORMULA_FOLDER_PATH/ligo@[0-9]*\.[0-9]*\.[0-9]*\.rb$"))
+echo $FILES
 if [[ $CURRENT_VERSION =~ $VERSION_REGEX ]]; then
   NEW_MAJOR=${BASH_REMATCH[1]}
   NEW_MINOR=${BASH_REMATCH[2]} 
@@ -55,7 +55,7 @@ OLDEST_VERSION="9999.9999.9999"
 # check if anterior fix version exist
 for FILEPATH in "${FILES[@]}"
 do
-
+  echo $FILEPATH
   if [[ $FILEPATH =~ $EXTRACT_VERSION_REGEX ]]; then
     FILE_VERSION=${BASH_REMATCH[1]}
   else
@@ -79,16 +79,17 @@ do
   echo "if [[ $MAJOR = $NEW_MAJOR ]] && [[ $MINOR = $NEW_MINOR ]] && [[ $FIX -lt $NEW_FIX ]] "
   if [[ $MAJOR = $NEW_MAJOR ]] && [[ $MINOR = $NEW_MINOR ]] && [[ $FIX -lt $NEW_FIX ]]; then 
     echo "fix version detected, remove the old one"
-    rm $HOMEBREW_FORMULA_FOLDER_PATH/$MAJOR.$MINOR.$FIX.rb
+    rm $HOMEBREW_FORMULA_FOLDER_PATH/ligo@$MAJOR.$MINOR.$FIX.rb
     exit 0
   fi
 done
 
+echo ${#FILES[@]}
 # If there is no files, exit directly.
 if [[ ${#FILES[@]} -le $NUMBER_OF_VERSION_TO_KEEP ]]; then
  echo "there is less than 4 version, keep them all"
  exit 0
 fi
 
-rm $HOMEBREW_FORMULA_FOLDER_PATH/$OLDEST_VERSION.rb
+rm $HOMEBREW_FORMULA_FOLDER_PATH/ligo@$OLDEST_VERSION.rb
 

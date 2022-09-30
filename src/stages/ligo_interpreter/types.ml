@@ -62,6 +62,7 @@ and constant_val =
   | C_bls12_381_g1 of Bls12_381.G1.t
   | C_bls12_381_g2 of Bls12_381.G2.t
   | C_bls12_381_fr of Bls12_381.Fr.t
+  | C_chain_id of string
 
 and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
                         (unit, string) Tezos_micheline.Micheline.node

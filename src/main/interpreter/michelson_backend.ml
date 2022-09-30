@@ -648,6 +648,21 @@ let rec val_to_ast ~raise ~loc
     in
     let x = bytes_of_bls12_381_fr b in
     e_a_bls12_381_fr x
+  | V_Ct (C_chain_id s) ->
+    let () =
+      trace_option
+        ~raise
+        (Errors.generic_error
+           loc
+           (Format.asprintf
+              "Expected chain_id but got %a"
+              Ast_aggregated.PP.type_expression
+              ty))
+        (match ty.type_content with
+         | T_constant { injection = Chain_id ; _ } -> Some ()
+         | _ -> None)
+    in
+    e_a_chain_id s
   | V_Construct (ctor, arg) when is_t_sum ty ->
     let map_ty =
       trace_option
