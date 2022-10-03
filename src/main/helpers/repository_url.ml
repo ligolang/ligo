@@ -13,17 +13,35 @@ type type_url =
   }
 [@@deriving yojson]
 
+type type_url_directory =
+  { type_ : string [@key "type"]
+  ; url : string
+  ; directory : string
+  }
+[@@deriving yojson]
+
+(* let pp_tud f ({ type_; url; directory } : type_url_directory) =
+  Format.fprintf
+    f
+    "{ type = %s ; url = %s ; directory = %s }"
+    type_
+    url
+    directory *)
+
 let github ~user ~repo = Format.sprintf "https://github.com/%s/%s" user repo
 let gitlab ~user ~repo = Format.sprintf "https://gitlab.com/%s/%s" user repo
 
 let bitbucket ~user ~repo =
   Format.sprintf "https://bitbucket.org/%s/%s" user repo
 
+let hex = Str.regexp "[0-9a-fA-F]+"
 
 let gist ~hash ?user () =
+  if Str.string_match hex hash 0 then
   match user with
-  | Some user -> Format.sprintf "https://gist.github.com/%s/%s" user hash
-  | None -> Format.sprintf "https://gist.github.com/%s" hash
+  | Some user -> Some (Format.sprintf "https://gist.github.com/%s/%s" user hash)
+  | None -> Some (Format.sprintf "https://gist.github.com/%s" hash)
+  else None
 
 
 let parse_uri_with_scheme repo_short =
@@ -73,8 +91,8 @@ let parse_specific_short_url short =
   match String.split short ~on:':' with
   | [ "gist"; suffix ] ->
     (match String.split suffix ~on:'/' with
-    | [ hash ] -> Some (gist ~hash ())
-    | [ user; hash ] -> Some (gist ~user ~hash ())
+    | [ hash ] -> gist ~hash ()
+    | [ user; hash ] -> gist ~user ~hash ()
     | _ -> None)
   | [ short_url ] ->
     (match String.split short_url ~on:'/' with
@@ -115,19 +133,24 @@ let parse' j : t option =
   match type_url_of_yojson j with
   | Ok { type_; url } ->
     let url = parse_url url in
-    Option.map url ~f:(fun url -> { type_; url; directory })
+    Option.map url ~f:(fun url : t -> { type_; url; directory })
   | Error _ ->
-    let short = Util.to_string j in
-    let type_ = "git" in
-    let url = parse_url short in
-    Option.map url ~f:(fun url -> { type_; url; directory })
+    let short = Util.to_string_option j in
+    (match short with
+    | Some short ->
+      let type_ = "git" in
+      let url = parse_url short in
+      Option.map url ~f:(fun url : t -> { type_; url; directory })
+    | None -> None)
 
 
-let parse j =
-  match of_yojson j with
-  | Ok tud ->
-    (* Validate url ?? *)
-    Ok tud
+let parse j : (t, string) result =
+  match type_url_directory_of_yojson j with
+  | Ok { type_; url; directory } ->
+    (* Format.printf "%a\n" pp_tud tud; *)
+    (match parse_uri_with_scheme url with
+    | Some _ -> Ok { type_; url; directory = Some directory }
+    | None -> Error "repository url is invalid")
   | Error _ ->
     (match parse' j with
     | Some t -> Ok t
@@ -220,70 +243,64 @@ let%test _ =
 let%test _ =
   let short =
     Yojson.Safe.from_string
-      "{\"type\":\"git\",\"url\":\"https://github.com/npm/cli.git\",\"directory\":\"foor/bar\"}"
+      "{\"type\":\"git\",\"url\":\"https://github.com/npm/cli.git\",\"directory\":\"foo/bar\"}"
   in
   match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.equal String.equal directory (Some "foo/bar")
-         && String.(url = "https://github.com/npm/cli.git") -> true
+  | Ok
+      { type_ = "git"
+      ; url = "https://github.com/npm/cli.git"
+      ; directory = Some "foo/bar"
+      } -> true
   | _ -> false
 
-(* 2 keys type, url *)
 let%test _ =
-  let short = Yojson.Safe.from_string "{}" in
+  let short =
+    Yojson.Safe.from_string
+      "{\"type\":\"git\",\"url\":\"https://github.com/npm/cli.git\"}"
+  in
   match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.is_none directory
-         && String.(url = "https://server.com:12345/~/repository.git") -> true
+  | Ok
+      { type_ = "git"
+      ; url = "https://github.com/npm/cli.git"
+      ; directory = None
+      } -> true
   | _ -> false
 
-(* 1 keys url *)
 let%test _ =
-  let short = Yojson.Safe.from_string "{}" in
+  let short = Yojson.Safe.from_string "\"https://github.com/npm/cli.git\"" in
   match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.is_none directory
-         && String.(url = "https://server.com:12345/~/repository.git") -> true
+  | Ok
+      { type_ = "git"
+      ; url = "https://github.com/npm/cli.git"
+      ; directory = None
+      } -> true
   | _ -> false
 
 (* All 3 invalid url as it is *)
 let%test _ =
-  let short = Yojson.Safe.from_string "{}" in
+  let short =
+    Yojson.Safe.from_string
+      "{\"type\":\"git\",\"url\":\"ftp://github.com/npm/cli.git\",\"directory\":\"foo/bar\"}"
+  in
   match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.is_none directory
-         && String.(url = "https://server.com:12345/~/repository.git") -> true
-  | _ -> false
+  | Ok _ -> false
+  | _ -> true
 
-(* 2 keys type, invalid url *)
-let%test _ =
-  let short = Yojson.Safe.from_string "{}" in
-  match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.is_none directory
-         && String.(url = "https://server.com:12345/~/repository.git") -> true
-  | _ -> false
-
-(* 1 keys invalid url *)
-let%test _ =
-  let short = Yojson.Safe.from_string "{}" in
-  match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.is_none directory
-         && String.(url = "https://server.com:12345/~/repository.git") -> true
-  | _ -> false
 
 let%test _ =
-  let short = Yojson.Safe.from_string "null" in
+  let short = Yojson.Safe.from_string "{\"type\":\"git\",\"url\":\"AAAAAAAAAAAAAAAAAAA\"}" in
   match parse short with
-  | Ok { type_; url; directory }
-    when String.(type_ = "git")
-         && Option.is_none directory
-         && String.(url = "https://server.com:12345/~/repository.git") -> true
-  | _ -> false
+  | Ok _ -> false
+  | _ -> true
+
+let%test _ =
+  let short = Yojson.Safe.from_string "\"gist:xyz\"" in
+  match parse short with
+  | Ok _ -> false
+  | _ -> true
+
+let%test _ =
+  let short = `Null in
+  match parse short with
+  | Ok _ -> false
+  | _ -> true
