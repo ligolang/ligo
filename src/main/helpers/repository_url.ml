@@ -34,13 +34,16 @@ let gitlab ~user ~repo = Format.sprintf "https://gitlab.com/%s/%s" user repo
 let bitbucket ~user ~repo =
   Format.sprintf "https://bitbucket.org/%s/%s" user repo
 
+
 let hex = Str.regexp "[0-9a-fA-F]+"
 
 let gist ~hash ?user () =
-  if Str.string_match hex hash 0 then
-  match user with
-  | Some user -> Some (Format.sprintf "https://gist.github.com/%s/%s" user hash)
-  | None -> Some (Format.sprintf "https://gist.github.com/%s" hash)
+  if Str.string_match hex hash 0
+  then (
+    match user with
+    | Some user ->
+      Some (Format.sprintf "https://gist.github.com/%s/%s" user hash)
+    | None -> Some (Format.sprintf "https://gist.github.com/%s" hash))
   else None
 
 
@@ -65,6 +68,13 @@ let parse_uri_with_scheme repo_short =
       , _
       , []
       , None ) -> Some repo_short
+    | ( Some ("git+http" | "git+https")
+      , (Some _ | None)
+      , (Some _ | None)
+      , (Some _ | None)
+      , _
+      , []
+      , None ) -> String.chop_prefix repo_short ~prefix:"git+"
     | ( Some ("ssh" | "git+ssh")
       , (Some _ | None)
       , Some host
@@ -147,7 +157,7 @@ let parse' j : t option =
 let parse j : (t, string) result =
   match type_url_directory_of_yojson j with
   | Ok { type_; url; directory } ->
-    (* Format.printf "%a\n" pp_tud tud; *)
+    Format.printf "%s\n" url;
     (match parse_uri_with_scheme url with
     | Some _ -> Ok { type_; url; directory = Some directory }
     | None -> Error "repository url is invalid")
@@ -199,6 +209,40 @@ let%test _ =
   | _ -> false
 
 let%test _ =
+  let short =
+    Yojson.Safe.from_string
+      "{\n\
+      \        \"type\": \"git\",\n\
+      \        \"url\": \
+       \"git+https://github.com/ocaml-ppx/ppx_deriving_yojson.git\"\n\
+      \      }"
+  in
+  match parse short with
+  | Ok
+      { type_ = "git"
+      ; url = "https://github.com/ocaml-ppx/ppx_deriving_yojson.git"
+      ; directory = None
+      } -> true
+  | _ -> false
+
+let%test _ =
+  let short =
+    Yojson.Safe.from_string
+      "{\n\
+      \        \"type\": \"git\",\n\
+      \        \"url\": \
+       \"git+http://github.com/ocaml-ppx/ppx_deriving_yojson.git\"\n\
+      \      }"
+  in
+  match parse short with
+  | Ok
+      { type_ = "git"
+      ; url = "http://github.com/ocaml-ppx/ppx_deriving_yojson.git"
+      ; directory = None
+      } -> true
+  | _ -> false
+
+let%test _ =
   let short = "gist:11081aaa281" in
   match parse_url short with
   | Some url when String.(url = "https://gist.github.com/11081aaa281") -> true
@@ -238,8 +282,6 @@ let%test _ =
   | Some url when String.(url = "https://github.com/npm/npm") -> true
   | _ -> false
 
-(* JSON tests*)
-
 let%test _ =
   let short =
     Yojson.Safe.from_string
@@ -276,7 +318,6 @@ let%test _ =
       } -> true
   | _ -> false
 
-(* All 3 invalid url as it is *)
 let%test _ =
   let short =
     Yojson.Safe.from_string
@@ -286,9 +327,10 @@ let%test _ =
   | Ok _ -> false
   | _ -> true
 
-
 let%test _ =
-  let short = Yojson.Safe.from_string "{\"type\":\"git\",\"url\":\"AAAAAAAAAAAAAAAAAAA\"}" in
+  let short =
+    Yojson.Safe.from_string "{\"type\":\"git\",\"url\":\"AAAAAAAAAAAAAAAAAAA\"}"
+  in
   match parse short with
   | Ok _ -> false
   | _ -> true

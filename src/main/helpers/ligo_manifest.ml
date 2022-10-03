@@ -87,8 +87,10 @@ let read ~project_root =
        in
        let repository =
          let repo =
-           try json |> Util.member "repository" with
-           | _ -> failwith "No repository field in package.json"
+           match json |> Util.member "repository" with
+            `Null -> failwith "No repository field in package.json"
+           | repo -> repo
+           | exception _ -> failwith "Invalid repository field in package.json"
          in
          match Repository_url.parse repo with
          | Ok t -> t
