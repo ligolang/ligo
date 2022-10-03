@@ -37,20 +37,10 @@ UI:
 
 module LigoRC = Cli_helpers.LigoRC
 module LigoManifest = Cli_helpers.LigoManifest
+module RepositoryUrl = Cli_helpers.RepositoryUrl
 module SMap = Caml.Map.Make(String)
 
 type sem_ver = string [@@deriving to_yojson]
-
-type repository = 
-    { type_     : string [@key "type"]
-    ; url       : string 
-    ; directory : string option
-    } [@@deriving yojson]
-
-let to_repository = function
-    LigoManifest.URL_Shorthand _s -> { type_ = "" ; url = "" ; directory = None }
-  | Type_URL { type_ ; url } -> { type_ ; url ; directory = None }
-  | Type_URL_Dir { type_ ; url ; directory } -> { type_ ; url ; directory = Some directory }
 
 type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 
@@ -65,7 +55,7 @@ type author = {
 type version = 
   { name        : string
   ; author      : author
-  ; repository  : repository (* Only urls to git repositories supported for now *)
+  ; repository  : RepositoryUrl.t
   ; version     : sem_ver
   ; description : string
   ; scripts     : (string * string) list
@@ -145,7 +135,6 @@ let body ~name ~author ~repository ~main ~readme ~version ~ligo_registry ~descri
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
   let LigoManifest.{ name ; version ; main; scripts ; description ; readme ; author; repository ;  _ } = manifest in
-  let repository = to_repository repository in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
