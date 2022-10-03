@@ -78,13 +78,13 @@ module Comparable = struct
     fun loc _s ~ctx a b ->
       let ctx =
         trace_compare ~raise ~loc a b ~in_:(fun ~raise ->
-          Trace.bind_exists ~raise
-          @@ List.Ne.map
-               (fun type_ ~raise ->
-                 let ctx = unify ~raise ~loc ~ctx a type_ in
-                 let ctx = unify ~raise ~loc ~ctx b type_ in
-                 ctx)
-               simple_types)
+            Trace.bind_exists ~raise
+            @@ List.Ne.map
+                 (fun type_ ~raise ->
+                   let ctx = unify ~raise ~loc ~ctx a type_ in
+                   let ctx = unify ~raise ~loc ~ctx b type_ in
+                   ctx)
+                 simple_types)
       in
       ctx, t_bool ()
 
@@ -94,7 +94,7 @@ module Comparable = struct
    fun loc s ~ctx a b ->
     let ctx =
       trace_compare ~raise ~loc a b ~in_:(fun ~raise ->
-        unify ~raise ~loc ~ctx a b)
+          unify ~raise ~loc ~ctx a b)
     in
     let a_r =
       trace_option ~raise (comparator_composed loc a) @@ get_t_record a
@@ -103,7 +103,7 @@ module Comparable = struct
       trace_option ~raise (comparator_composed loc b) @@ get_t_record b
     in
     let aux ctx (a : _ Rows.row_element_mini_c) (b : _ Rows.row_element_mini_c)
-      : Context.t
+        : Context.t
       =
       let ctx, _ =
         comparator
@@ -132,12 +132,12 @@ module Comparable = struct
    fun loc s ~ctx a b ->
     let ctx =
       trace_compare ~raise ~loc a b ~in_:(fun ~raise ->
-        unify ~raise ~loc ~ctx a b)
+          unify ~raise ~loc ~ctx a b)
     in
     let a_r = trace_option ~raise (comparator_composed loc a) @@ get_t_sum a in
     let b_r = trace_option ~raise (comparator_composed loc b) @@ get_t_sum b in
     let aux ctx (a : _ Rows.row_element_mini_c) (b : _ Rows.row_element_mini_c)
-      : Context.t
+        : Context.t
       =
       let ctx, _ =
         comparator
@@ -165,7 +165,7 @@ module Comparable = struct
    fun loc s ~ctx a_lst b_lst ->
     let ctx =
       trace_compare ~raise ~loc a_lst b_lst ~in_:(fun ~raise ->
-        unify ~raise ~loc ~ctx a_lst b_lst)
+          unify ~raise ~loc ~ctx a_lst b_lst)
     in
     let a =
       trace_option ~raise (comparator_composed loc a_lst) @@ get_t_list a_lst
@@ -180,7 +180,7 @@ module Comparable = struct
    fun loc s ~ctx a_set b_set ->
     let ctx =
       trace_compare ~raise ~loc a_set b_set ~in_:(fun ~raise ->
-        unify ~raise ~loc ~ctx a_set b_set)
+          unify ~raise ~loc ~ctx a_set b_set)
     in
     let a =
       trace_option ~raise (comparator_composed loc a_set) @@ get_t_set a_set
@@ -195,7 +195,7 @@ module Comparable = struct
    fun loc s ~ctx a_map b_map ->
     let ctx =
       trace_compare ~raise ~loc a_map b_map ~in_:(fun ~raise ->
-        unify ~raise ~loc ~ctx a_map b_map)
+          unify ~raise ~loc ~ctx a_map b_map)
     in
     let a_key, a_value =
       trace_option ~raise (comparator_composed loc a_map) @@ get_t_map a_map
@@ -207,11 +207,12 @@ module Comparable = struct
     let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_value b_value in
     ctx, t_bool ()
 
+
   and big_map_comparator ~raise ~test : Location.t -> string -> t =
    fun loc s ~ctx a_map b_map ->
     let ctx =
       trace_compare ~raise ~loc a_map b_map ~in_:(fun ~raise ->
-        unify ~raise ~loc ~ctx a_map b_map)
+          unify ~raise ~loc ~ctx a_map b_map)
     in
     let a_key, a_value =
       trace_option ~raise (comparator_composed loc a_map) @@ get_t_big_map a_map
@@ -222,6 +223,7 @@ module Comparable = struct
     let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_key b_key in
     let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_value b_value in
     ctx, t_bool ()
+
 
   and comparator ~cmp ~raise ~test ~loc : t =
    fun ~ctx a b ->
@@ -347,36 +349,36 @@ let of_type ({ mode_annot; types } : Type.t) : _ t =
     let inst ctx { Type.for_alls; arg_types; ret_type } =
       let exists =
         List.map for_alls ~f:(fun (tvar, kind) ->
-          tvar, kind, Exists_var.fresh ~loc ())
+            tvar, kind, Exists_var.fresh ~loc ())
       in
       let subst type_ =
         List.fold exists ~init:type_ ~f:(fun type_ (tvar, _, evar) ->
-          t_subst_evar type_ ~tvar ~evar)
+            t_subst_evar type_ ~tvar ~evar)
       in
       let ctx =
         Context.(
           ctx
           |@ of_list
                (List.map exists ~f:(fun (_, kind, evar) ->
-                  C_exists_var (evar, kind))))
+                    C_exists_var (evar, kind))))
       in
       ctx, List.map arg_types ~f:subst, subst ret_type
     in
     (* Determine arguments to be inferred *)
     let inferred =
       List.filter_mapi args ~f:(fun i arg ->
-        match mode ~raise i with
-        | Inferred -> Some (i, arg)
-        | Checked -> None)
+          match mode ~raise i with
+          | Inferred -> Some (i, arg)
+          | Checked -> None)
     in
     (* [output_args] table is used to store elaborated arguments. Later used to sort arguments by position. *)
     let output_args = Hashtbl.create (module Int) in
     (* Infer the inferred arguments *)
     let ctx =
       List.fold inferred ~init:ctx ~f:(fun ctx (i, arg) ->
-        let ctx, arg_type, arg = infer ~raise ~ctx arg in
-        Hashtbl.set output_args ~key:i ~data:(arg_type, arg);
-        ctx)
+          let ctx, arg_type, arg = infer ~raise ~ctx arg in
+          Hashtbl.set output_args ~key:i ~data:(arg_type, arg);
+          ctx)
     in
     (* Select type using try-based unification on inferred types *)
     let ctx, checked, ret_type =
@@ -399,11 +401,11 @@ let of_type ({ mode_annot; types } : Type.t) : _ t =
                args_types
                |> List.mapi ~f:(fun i x -> i, x)
                |> List.partition_map ~f:(fun (i, (arg_type, arg)) ->
-                    match (mode ~raise i : Type.mode) with
-                    | Inferred ->
-                      (* [Hashtbl.find_exn] cannot raise error due to inference above. *)
-                      First (arg_type, fst (Hashtbl.find_exn output_args i))
-                    | Checked -> Second (i, arg_type, arg))
+                      match (mode ~raise i : Type.mode) with
+                      | Inferred ->
+                        (* [Hashtbl.find_exn] cannot raise error due to inference above. *)
+                        First (arg_type, fst (Hashtbl.find_exn output_args i))
+                      | Checked -> Second (i, arg_type, arg))
              in
              (* Unify the inferred types *)
              let ctx =
@@ -411,12 +413,12 @@ let of_type ({ mode_annot; types } : Type.t) : _ t =
                  unify_worklist
                  ~init:ctx
                  ~f:(fun ctx (arg_type1, arg_type2) ->
-                 unify
-                   ~raise
-                   ~loc
-                   ~ctx
-                   (Context.apply ctx arg_type1)
-                   (Context.apply ctx arg_type2))
+                   unify
+                     ~raise
+                     ~loc
+                     ~ctx
+                     (Context.apply ctx arg_type1)
+                     (Context.apply ctx arg_type2))
              in
              ctx, checked, ret_type)
            types
@@ -424,9 +426,9 @@ let of_type ({ mode_annot; types } : Type.t) : _ t =
     (* Check the checked arguments *)
     let ctx =
       List.fold checked ~init:ctx ~f:(fun ctx (i, arg_type, arg) ->
-        let ctx, arg = check ~raise ~ctx arg (Context.apply ctx arg_type) in
-        Hashtbl.set output_args ~key:i ~data:(arg_type, arg);
-        ctx)
+          let ctx, arg = check ~raise ~ctx arg (Context.apply ctx arg_type) in
+          Hashtbl.set output_args ~key:i ~data:(arg_type, arg);
+          ctx)
     in
     (* Reconstruct arguments using [output_args] *)
     let args =
@@ -940,98 +942,98 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(t_string () ^-> t_string () ^~> t_string ())
+               [ O.(t_int () ^-> t_int () ^~> t_int ())
+               ; O.(t_string () ^-> t_string () ^~> t_string ())
+               ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
+               ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
+               ; O.(t_int () ^-> t_nat () ^~> t_int ())
+               ; O.(t_nat () ^-> t_int () ^~> t_int ())
+               ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
+               ; O.(t_int () ^-> t_timestamp () ^~> t_timestamp ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ; O.(
                    t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^~> t_bls12_381_g1 ())
                ; O.(
                    t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^~> t_bls12_381_g2 ())
                ; O.(
                    t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
-               ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
-               ; O.(t_int () ^-> t_int () ^~> t_int ())
-               ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
-               ; O.(t_nat () ^-> t_int () ^~> t_int ())
-               ; O.(t_int () ^-> t_nat () ^~> t_int ())
-               ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
-               ; O.(t_int () ^-> t_timestamp () ^~> t_timestamp ())
-               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_POLYMORPHIC_SUB
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(
-                   t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^~> t_bls12_381_g1 ())
-               ; O.(
-                   t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^~> t_bls12_381_g2 ())
-               ; O.(
-                   t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
+               [ O.(t_int () ^-> t_int () ^~> t_int ())
                ; O.(t_nat () ^-> t_nat () ^~> t_int ())
-               ; O.(t_int () ^-> t_int () ^~> t_int ())
                ; O.(t_nat () ^-> t_int () ^~> t_int ())
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_timestamp () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
                ; O.(t_mutez () ^-> t_mutez () ^~> t_option (t_mutez ()))
                ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
+               ; O.(
+                   t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^~> t_bls12_381_g1 ())
+               ; O.(
+                   t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^~> t_bls12_381_g2 ())
+               ; O.(
+                   t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
                ]) )
     ; ( C_ADD
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(
+               [ O.(t_int () ^-> t_int () ^~> t_int ())
+               ; O.(t_int () ^-> t_nat () ^~> t_int ())
+               ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
+               ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
+               ; O.(t_nat () ^-> t_int () ^~> t_int ())
+               ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
+               ; O.(t_int () ^-> t_timestamp () ^~> t_timestamp ())
+               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
+               ; O.(
                    t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^~> t_bls12_381_g1 ())
                ; O.(
                    t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^~> t_bls12_381_g2 ())
                ; O.(
                    t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
-               ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
-               ; O.(t_int () ^-> t_int () ^~> t_int ())
-               ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
-               ; O.(t_nat () ^-> t_int () ^~> t_int ())
-               ; O.(t_int () ^-> t_nat () ^~> t_int ())
-               ; O.(t_timestamp () ^-> t_int () ^~> t_timestamp ())
-               ; O.(t_int () ^-> t_timestamp () ^~> t_timestamp ())
-               ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
                ]) )
     ; ( C_MUL
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(
-                   t_bls12_381_g1 () ^-> t_bls12_381_fr () ^~> t_bls12_381_g1 ())
-               ; O.(
-                   t_bls12_381_g2 () ^-> t_bls12_381_fr () ^~> t_bls12_381_g2 ())
-               ; O.(
-                   t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
+               [ O.(t_int () ^-> t_int () ^~> t_int ())
                ; O.(t_nat () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
                ; O.(t_int () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
                ; O.(t_bls12_381_fr () ^-> t_nat () ^~> t_bls12_381_fr ())
                ; O.(t_bls12_381_fr () ^-> t_int () ^~> t_bls12_381_fr ())
                ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
-               ; O.(t_int () ^-> t_int () ^~> t_int ())
                ; O.(t_nat () ^-> t_mutez () ^~> t_mutez ())
                ; O.(t_mutez () ^-> t_nat () ^~> t_mutez ())
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_nat () ^-> t_int () ^~> t_int ())
                ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
+               ; O.(
+                   t_bls12_381_g1 () ^-> t_bls12_381_fr () ^~> t_bls12_381_g1 ())
+               ; O.(
+                   t_bls12_381_g2 () ^-> t_bls12_381_fr () ^~> t_bls12_381_g2 ())
+               ; O.(
+                   t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
                ]) )
     ; ( C_SUB
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(
+               [ O.(t_int () ^-> t_int () ^~> t_int ())
+               ; O.(
                    t_bls12_381_g1 () ^-> t_bls12_381_fr () ^~> t_bls12_381_g1 ())
                ; O.(
                    t_bls12_381_g2 () ^-> t_bls12_381_fr () ^~> t_bls12_381_g2 ())
                ; O.(
                    t_bls12_381_fr () ^-> t_bls12_381_fr () ^~> t_bls12_381_fr ())
                ; O.(t_nat () ^-> t_nat () ^~> t_int ())
-               ; O.(t_int () ^-> t_int () ^~> t_int ())
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_nat () ^-> t_int () ^~> t_int ())
                ; O.(t_timestamp () ^-> t_timestamp () ^~> t_int ())
@@ -1049,8 +1051,8 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(t_nat () ^-> t_nat () ^~> t_nat ())
-               ; O.(t_int () ^-> t_int () ^~> t_int ())
+               [ O.(t_int () ^-> t_int () ^~> t_int ())
+               ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
                ; O.(t_nat () ^-> t_int () ^~> t_int ())
                ; O.(t_int () ^-> t_nat () ^~> t_int ())
                ; O.(t_mutez () ^-> t_nat () ^~> t_mutez ())
@@ -1062,10 +1064,10 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ O.(t_nat () ^-> t_nat () ^~> t_nat ())
+               [ O.(t_int () ^-> t_int () ^~> t_nat ())
+               ; O.(t_nat () ^-> t_nat () ^~> t_nat ())
                ; O.(t_nat () ^-> t_int () ^~> t_nat ())
                ; O.(t_int () ^-> t_nat () ^~> t_nat ())
-               ; O.(t_int () ^-> t_int () ^~> t_nat ())
                ; O.(t_mutez () ^-> t_nat () ^~> t_mutez ())
                ; O.(t_mutez () ^-> t_mutez () ^~> t_mutez ())
                ; O.(t_int64 () ^-> t_int64 () ^~> t_int64 ())
@@ -1123,16 +1125,18 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:[ t_nat () ^-> t_nat () ^~> t_nat ()
-                    ; t_int64 () ^-> t_nat () ^~> t_int64 ()
-                    ]) )
+             ~types:
+               [ t_nat () ^-> t_nat () ^~> t_nat ()
+               ; t_int64 () ^-> t_nat () ^~> t_int64 ()
+               ]) )
     ; ( C_LSR
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:[ t_nat () ^-> t_nat () ^~> t_nat ()
-                    ; t_int64 () ^-> t_nat () ^~> t_int64 ()
-                    ]) )
+             ~types:
+               [ t_nat () ^-> t_nat () ^~> t_nat ()
+               ; t_int64 () ^-> t_nat () ^~> t_int64 ()
+               ]) )
       (* Tests *)
     ; ( C_TEST_COMPILE_CONTRACT
       , of_type
@@ -1539,19 +1543,24 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           create ~mode_annot:[ Inferred ] ~types:[ t_list a ^~> t_set a ]) )
     ; ( C_TEST_INT64_OF_INT
       , of_type
-          (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_int64 () ]))
+          (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_int64 () ]) )
     ; ( C_TEST_INT64_TO_INT
       , of_type
-          (create ~mode_annot:[ Checked ] ~types:[ t_int64 () ^~> t_int () ]))
+          (create ~mode_annot:[ Checked ] ~types:[ t_int64 () ^~> t_int () ]) )
     ; ( C_TEST_INT
       , of_type
-          (create ~mode_annot:[ Checked ] ~types:[ t_nat () ^~> t_int () ]))
+          (create ~mode_annot:[ Checked ] ~types:[ t_nat () ^~> t_int () ]) )
     ; ( C_TEST_ABS
       , of_type
-          (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_nat () ]))
+          (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_nat () ]) )
     ; ( C_TEST_SLICE
       , of_type
-          (create ~mode_annot:[ Checked ; Checked ; Inferred ] ~types:[ t_nat () ^-> t_nat () ^-> t_string () ^~> t_string () ; t_nat () ^-> t_nat () ^-> t_bytes () ^~> t_bytes () ]))
+          (create
+             ~mode_annot:[ Checked; Checked; Inferred ]
+             ~types:
+               [ t_nat () ^-> t_nat () ^-> t_string () ^~> t_string ()
+               ; t_nat () ^-> t_nat () ^-> t_bytes () ^~> t_bytes ()
+               ]) )
     ]
 
 
@@ -1605,12 +1614,12 @@ module External_types = struct
            (* Unify args types *)
            let ctx =
              List.fold arg_types ~init:ctx ~f:(fun ctx (received, expected) ->
-               unify
-                 ~raise
-                 ~loc
-                 ~ctx
-                 (Context.apply ctx received)
-                 (Context.apply ctx expected))
+                 unify
+                   ~raise
+                   ~loc
+                   ~ctx
+                   (Context.apply ctx received)
+                   (Context.apply ctx expected))
            in
            ctx, ret_type)
          types
