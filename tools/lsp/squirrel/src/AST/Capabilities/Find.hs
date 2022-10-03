@@ -3,7 +3,6 @@ module AST.Capabilities.Find
   , TypeDefinitionRes (..)
   , findScopedDecl
   , findNodeAtPoint
-  , rangeOf
   , definitionOf
   , typeDefinitionOf
   , typeDefinitionAt
@@ -65,18 +64,6 @@ spineAtPoint
   :: Contains Range xs
   => Range -> SomeLIGO xs -> [LIGO xs]
 spineAtPoint pos tree = spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO)
-
-rangeOf
-  :: CanSearch xs
-  => Range
-  -> SomeLIGO xs
-  -> Maybe Range
-rangeOf pos tree = do
-  refs <- _sdRefs <$> findScopedDecl pos tree
-  range <- getRange <$> findInfoAtPoint pos tree
-  if range `elem` refs
-    then Just range
-    else Nothing
 
 definitionOf
   :: CanSearch xs
