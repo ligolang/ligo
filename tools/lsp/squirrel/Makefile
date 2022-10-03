@@ -35,7 +35,7 @@ watch: grammar
 	$(STACK_DEV) $(GHC_OPTIONS_WITHOUT_WERROR) --file-watch
 
 installvsc: grammar
-	$(BUILD_FLAGS) stack install $(GHC_OPTIONS_WITHOUT_WERROR) --local-bin-path $(VSCODE_BIN_PATH)
+	$(BUILD_FLAGS) stack install :ligo-squirrel $(GHC_OPTIONS_WITHOUT_WERROR) --local-bin-path $(VSCODE_BIN_PATH)
 	cd ../vscode-plugin && yarn package && code --install-extension *.vsix
 
 
