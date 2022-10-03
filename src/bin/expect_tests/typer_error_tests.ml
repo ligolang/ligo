@@ -45,7 +45,7 @@ let%expect_test _ =
       3 | const foo : nat = 42 + "bar"
 
     Invalid type(s)
-    Cannot unify bls12_381_g1 with int. |} ] ;
+    Cannot unify int with string. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_type_record_access.mligo" ] ;
   [%expect {|
