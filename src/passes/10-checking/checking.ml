@@ -1331,12 +1331,6 @@ and check_pattern
         | Unequal_lengths ->
           raise.error (corner_case "Mismatch between labels and patterns")
       in
-      (* Strange sorting required by anomalies check? *)
-      let record_pat =
-        List.sort
-          ~compare:(fun (label1, _) (label2, _) -> Label.compare label1 label2)
-          record_pat
-      in
       let ctx, record_pat =
         List.fold_map record_pat ~init:ctx ~f:(fun ctx (label, pat) ->
             let label_row_elem =
