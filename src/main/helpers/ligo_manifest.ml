@@ -86,8 +86,13 @@ let read ~project_root =
          | _ -> failwith "No author field  in package.json"
        in
        let repository =
-         try json |> Util.member "repository" |> Repository_url.parse with
-         | _ -> failwith "No repository field in package.json"
+         let repo =
+           try json |> Util.member "repository" with
+           | _ -> failwith "No repository field in package.json"
+         in
+         match Repository_url.parse repo with
+         | Ok t -> t
+         | Error e -> failwith e
        in
        let main =
          try Some (json |> Util.member "main" |> Util.to_string) with
