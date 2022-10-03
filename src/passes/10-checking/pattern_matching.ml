@@ -317,7 +317,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             (l, b)
         in
         List.mapi ~f:aux ps
-      | P_record (labels,patterns) , t ->
+      | P_record lps , t ->
         let aux : (Label.t * _ Pattern.t)  -> (Label.t * (O.type_expression Binder.t)) =
           fun (l,proj_pattern) ->
             let field_t = extract_record_type ~raise p l t in
@@ -327,7 +327,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             in
             (l, b)
         in
-        List.map ~f:aux (List.zip_exn labels patterns)
+        List.map ~f:aux (Record.LMap.to_kv_list lps)
       | _ -> raise.error @@ corner_case __LOC__
     in
     let aux : typed_pattern list * O.expression ->
@@ -344,12 +344,12 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
           in
           let tps = List.mapi ~f:aux ps in
           (tps @ var_filler::ptl , body)
-        | P_record (labels,ps) ->
-          let aux label p =
+        | P_record lps ->
+          let aux (label, p) =
             let field_t = extract_record_type ~raise p label t in
             (p,field_t)
           in
-          let tps = List.map2_exn ~f:aux labels ps in
+          let tps = List.map ~f:aux (Record.LMap.to_kv_list lps) in
           (tps @ var_filler::ptl , body)
         | P_var _ ->
           let filler =
@@ -365,8 +365,8 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 (v,field_t)
               in
               List.mapi ~f:aux ps
-            | P_record (labels,patterns) , t ->
-              let aux l p =
+            | P_record lps , t ->
+              let aux (l, p) =
                 let field_t = extract_record_type ~raise p l t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
@@ -374,7 +374,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 in
                 (v,field_t)
               in
-              List.map2_exn ~f:aux labels patterns
+              List.map ~f:aux (Record.LMap.to_kv_list lps)
             | _ -> raise.error @@ corner_case __LOC__
           in
           (filler @ pl , body)
@@ -393,7 +393,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
   )
   | [] -> raise.error @@ corner_case __LOC__
 
-let rec sort_record_pattern (p : O.type_expression option Pattern.t) =
+(* let rec sort_record_pattern (p : O.type_expression option Pattern.t) =
   let loc = Location.get_location p in
   let rep = match Location.unwrap p with
     P_unit -> Pattern.P_unit
@@ -407,20 +407,18 @@ let rec sort_record_pattern (p : O.type_expression option Pattern.t) =
       P_list (List ps)
   | P_variant (l, p) -> P_variant (l, sort_record_pattern p)
   | P_tuple ps -> P_tuple (List.map ~f:sort_record_pattern ps)
-  | P_record (ls, ps) ->
-      let ls_ps = List.zip_exn ls ps in
-      let ls_ps =
+  | P_record lps ->
+      let lps =
         List.sort
           ~compare:(fun (label1, _) (label2, _) -> Label.compare label1 label2)
-          ls_ps
+          lps
       in
-      let ls, ps = List.unzip ls_ps in
-      P_record (ls, ps)
+      P_record lps
   in
-  Location.wrap ~loc rep
+  Location.wrap ~loc rep *)
 
 let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression option Pattern.t * O.type_expression * O.expression) list) =
-  let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(sort_record_pattern pattern,pattern_ty)] , body )) eqs in
+  let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
     let fs = O.make_e (O.E_literal (Literal_value.Literal_string Backend.Michelson.fw_partial_match)) (O.t_string ()) in
     let t_fail =

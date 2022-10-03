@@ -636,9 +636,8 @@ and conv ~raise :  CST.pattern -> AST.ty_expr option Pattern.t =
             in
             (Label lhs, self field_rhs)
       in
-      let lst' = List.map ~f:aux lst in
-      let (labels,patterns) = List.unzip lst' in
-      Location.wrap ~loc (P_record (labels,patterns))
+      let lst' = Record.LMap.of_list (List.map ~f:aux lst) in
+      Location.wrap ~loc (P_record lst')
     )
     | P_Typed {region ; value = { pattern ; type_annot = (_,ty_expr) }} -> (
       let loc = Location.lift region in

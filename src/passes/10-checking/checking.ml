@@ -1212,18 +1212,12 @@ and infer_pattern
     , tuple_type
     , let%bind tuple_pat = Elaboration.all tuple_pat in
       return @@ P_tuple tuple_pat )
-  | P_record (labels, pats) ->
-    let record_pat =
-      match List.zip labels pats with
-      | Ok record_pat -> record_pat
-      | Unequal_lengths ->
-        raise.error (corner_case "Mismatch between labels and patterns")
-    in
+  | P_record lps ->
     let (ctx, row_content), record_pat =
-      List.fold_map
-        record_pat
+      Record.LMap.fold_map
+        lps
         ~init:(ctx, Record.LMap.empty)
-        ~f:(fun (ctx, row_content) (label, pat) ->
+        ~f:(fun label pat (ctx, row_content) ->
           let ctx, pat_type, pat = infer ~ctx pat in
           let row_content = Record.LMap.add label pat_type row_content in
           (ctx, row_content), (label, pat))
@@ -1248,11 +1242,11 @@ and infer_pattern
       | Some (orig_var, row) ->
         make_t_orig_var ~loc (T_record row) None orig_var
     in
-    let labels, pats = List.unzip record_pat in
+    let labels, pats = List.unzip (Record.LMap.to_kv_list record_pat) in
     ( ctx
     , record_type
-    , let%bind pats = Elaboration.all pats in
-      return @@ P_record (labels, pats) )
+    , let%bind pats = Elaboration.all (List.map ~f:snd pats) in
+      return @@ P_record (Record.LMap.of_list (List.zip_exn labels pats)))
 
 
 and check_pattern
@@ -1322,17 +1316,11 @@ and check_pattern
       ( ctx
       , let%bind tuple_pat = Elaboration.all tuple_pat in
         return @@ P_tuple tuple_pat )
-    | P_record (labels, pats), O.T_record row ->
-      if Record.LMap.cardinal row.fields <> List.length labels
+    | P_record lps, O.T_record row ->
+      if Record.LMap.cardinal row.fields <> Record.LMap.cardinal lps
       then raise.error (fail ());
-      let record_pat =
-        match List.zip labels pats with
-        | Ok record_pat -> record_pat
-        | Unequal_lengths ->
-          raise.error (corner_case "Mismatch between labels and patterns")
-      in
       let ctx, record_pat =
-        List.fold_map record_pat ~init:ctx ~f:(fun ctx (label, pat) ->
+        Record.LMap.fold_map lps ~init:ctx ~f:(fun label pat ctx ->
             let label_row_elem =
               trace_option ~raise (err ())
               @@ Record.LMap.find_opt label row.fields
@@ -1340,10 +1328,10 @@ and check_pattern
             let ctx, pat = self ~ctx pat label_row_elem.associated_type in
             ctx, (label, pat))
       in
-      let labels, pats = List.unzip record_pat in
+      let labels, pats = List.unzip (Record.LMap.to_kv_list record_pat) in
       ( ctx
-      , let%bind pats = Elaboration.all pats in
-        return @@ P_record (labels, pats) )
+      , let%bind pats = Elaboration.all (List.map ~f:snd pats) in
+        return @@ P_record (Record.LMap.of_list (List.zip_exn labels pats)))
     | _ ->
       let ctx, type_', pat = infer ~ctx pat in
       let ctx, _f =

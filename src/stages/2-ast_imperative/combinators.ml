@@ -184,7 +184,7 @@ let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : 
   let labels,binders = List.unzip binders in
   let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
   let labels = List.map ~f:(fun s -> Label.of_string s) labels in
-  let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
+  let pattern = Location.wrap ?loc @@ Pattern.P_record (Record.LMap.of_list (List.zip_exn labels pv_lst)) in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 
@@ -193,7 +193,7 @@ let e_param_matching_record ?loc matchee (params: (string * _ Param.t) list) bod
   let labels,params = List.unzip params in
   let pv_lst = List.map ~f:(fun (p:_ Param.t) -> Location.wrap ?loc @@ (Pattern.P_var (Param.to_binder p))) params in
   let labels = List.map ~f:(fun s -> Label.of_string s) labels in
-  let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
+  let pattern = Location.wrap ?loc @@ Pattern.P_record (Record.LMap.of_list (List.zip_exn labels pv_lst)) in
   let body =
     List.fold_left params ~init:body ~f:(fun body param ->
       match Param.get_mut_flag param with

@@ -88,15 +88,9 @@ let rec to_simple_pattern (ty_pattern : _ option Pattern.t * AST.type_expression
       to_simple_pattern (p, row_elem.associated_type))
     in
     List.concat ps
-  | P_record (labels, ps) ->
+  | P_record lps ->
     let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
-    let label_ps = List.zip_exn labels ps in
-    let label_ps =
-      List.sort
-        ~compare:(fun (label1, _) (label2, _) -> Label.compare label1 label2)
-        label_ps
-    in
-    let ps = List.map label_ps ~f:(fun (label, p) ->
+    let ps = List.map (Record.LMap.to_kv_list lps) ~f:(fun (label, p) ->
       let row_elem = Option.value_exn ~here:[%here] (LMap.find_opt label row.fields) in
       to_simple_pattern (p, row_elem.associated_type))
     in
@@ -154,7 +148,7 @@ and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
       if are_keys_numeric labels then
         Location.wrap @@ P_tuple ps
       else
-        Location.wrap @@ P_record (labels, ps)
+        Location.wrap @@ P_record (Record.LMap.of_list (List.zip_exn labels ps))
     | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple")
 
 let print_matrix matrix =
