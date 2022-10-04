@@ -149,16 +149,58 @@ let alice_admin = alice.is_admin;
 
 </Syntax>
 
-### Destructuring Record Fields
+### Destructuring Records
 
-We can also access fields of a record using the destructuring syntax. This 
-allows accessing multiple fields of a record in a concise manner, like so:
+We can also access fields of a record using the destructuring syntax. 
+This allows accessing multiple fields of a record in a concise manner, like so:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=records1
-function get_id (const u : user) : nat is {
+function user_to_tuple (const u : user) is {
   const record[ id ; is_admin ; name ] = u;
+} with (id, is_admin, name)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=records1
+let user_to_tuple (u : user) = 
+  let { id ; is_admin ; name } = u in
+  (id, is_admin, name)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=records1
+let user_to_tuple = (u : user) => { 
+  let { id, is_admin, name } = u;
+  (id, is_admin, name)
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+let userToTuple = (u : user) => {
+  let { id, is_admin, name } = u;
+  return [id, is_admin, name];
+}
+```
+
+</Syntax>
+
+We can ignore some fields of the records we can do so by 
+using `_` (underscore), like so:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+function get_id (const u : user) is {
+  const record[ id ; is_admin = _ ; name = _ ] = u;
 } with id
 ```
 
@@ -167,7 +209,7 @@ function get_id (const u : user) : nat is {
 
 ```cameligo group=records1
 let get_id (u : user) = 
-  let { id ; is_admin ; name } = u in
+  let { id ; is_admin = _ ; name = _ } = u in
   id
 ```
 
@@ -176,7 +218,7 @@ let get_id (u : user) =
 
 ```reasonligo group=records1
 let get_id = (u : user) => { 
-  let { id, is_admin, name } = u;
+  let { id, is_admin: _, name: _ } = u;
   id
 }
 ```
@@ -187,11 +229,12 @@ let get_id = (u : user) => {
 ```jsligo group=records1
 let getId = (u : user) => {
   let { id, is_admin, name } = u;
-  return id
+  return id;
 }
 ```
 
 </Syntax>
+
 
 ### Functional Updates
 
