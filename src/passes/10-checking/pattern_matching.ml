@@ -393,8 +393,34 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
   )
   | [] -> raise.error @@ corner_case __LOC__
 
+let rec sort_record_pattern (p : O.type_expression option Pattern.t) =
+  let loc = Location.get_location p in
+  let rep = match Location.unwrap p with
+    P_unit -> Pattern.P_unit
+  | P_var v -> P_var v
+  | P_list (Cons (h, t)) ->
+    let h = sort_record_pattern h in
+    let t = sort_record_pattern t in
+    P_list (Cons (h, t))
+  | P_list (List ps) -> 
+      let ps = List.map ~f:sort_record_pattern ps in
+      P_list (List ps)
+  | P_variant (l, p) -> P_variant (l, sort_record_pattern p)
+  | P_tuple ps -> P_tuple (List.map ~f:sort_record_pattern ps)
+  | P_record (ls, ps) ->
+      let ls_ps = List.zip_exn ls ps in
+      let ls_ps =
+        List.sort
+          ~compare:(fun (label1, _) (label2, _) -> Label.compare label1 label2)
+          ls_ps
+      in
+      let ls, ps = List.unzip ls_ps in
+      P_record (ls, ps)
+  in
+  Location.wrap ~loc rep
+
 let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression option Pattern.t * O.type_expression * O.expression) list) =
-  let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
+  let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(sort_record_pattern pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
     let fs = O.make_e (O.E_literal (Literal_value.Literal_string Backend.Michelson.fw_partial_match)) (O.t_string ()) in
     let t_fail =

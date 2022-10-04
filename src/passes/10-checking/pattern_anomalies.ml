@@ -91,6 +91,11 @@ let rec to_simple_pattern (ty_pattern : _ option Pattern.t * AST.type_expression
   | P_record (labels, ps) ->
     let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
     let label_ps = List.zip_exn labels ps in
+    let label_ps =
+      List.sort
+        ~compare:(fun (label1, _) (label2, _) -> Label.compare label1 label2)
+        label_ps
+    in
     let ps = List.map label_ps ~f:(fun (label, p) ->
       let row_elem = Option.value_exn ~here:[%here] (LMap.find_opt label row.fields) in
       to_simple_pattern (p, row_elem.associated_type))
