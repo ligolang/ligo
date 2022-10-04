@@ -314,7 +314,6 @@ let import_action ~callback hash_pos state lexbuf =
   match Directive.scan_import hash_pos state lexbuf with
     Stdlib.Error (region, error) -> fail state region error
   | Ok (state, import, _, _) ->
-      let ()            = state#copy_nl lexbuf in
       let state         = fst (state#newline lexbuf) in
       let import_region = import#region
       and import_file   = import#file_path.Region.value
@@ -336,9 +335,12 @@ let import_action ~callback hash_pos state lexbuf =
           let mangled_filename = mangle import_path in
           let () = state#print @@
                      Config.mk_module mangled_filename import_module
-
           in state#push_import import_path mangled_filename
-        else state
+        else state in
+      (* We emit the newline character _after_ the module alias
+         declaration, if any, and not before, to keep its line number
+         identical to the original #import. *)
+      let () = state#copy_nl lexbuf
       in callback state lexbuf
 
 (* Scanning #if directives *)
