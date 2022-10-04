@@ -5,17 +5,25 @@ import Data.Aeson qualified as Aeson
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.Maybe (fromMaybe)
-import Data.Text.IO qualified as Text
 import Data.Text qualified as Text
-import Lib
-  (CompileRequest(..), CompileExpressionRequest (..), Config(..), GenerateDeployScriptRequest(..), Source(..),
-  mkApp, CompilerResponse (..), DeployScript (..), DryRunRequest(..), ListDeclarationsRequest (..))
+import Data.Text.IO qualified as Text
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse, simpleBody)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
 import Test.Hspec
 import Test.Hspec.Wai (WaiSession, request, with)
+
+import Config (Config(..))
+import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
+import Schema.CompileRequest (CompileRequest(..))
+import Schema.CompilerResponse (CompilerResponse(..))
+import Schema.DeployScript (DeployScript(..))
+import Schema.DryRunRequest (DryRunRequest(..))
+import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest(..))
+import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
+import Server (mkApp)
+import Source (Project(..), Source(..), SourceFile(..))
 
 main :: IO ()
 main = do
@@ -54,8 +62,11 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             CompileRequest
-              { rSources = [("main.mligo", Source source)],
-                rMain = "main.mligo",
+              { rProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" (Source source)]
+                  },
                 rEntrypoint = Nothing,
                 rProtocol = Nothing,
                 rStorage = Nothing,
@@ -76,11 +87,13 @@ spec config = with (return (mkApp config)) $ do
 
       let input =
             CompileRequest
-              { rSources =
-                  [ ("dir/types.mligo", typesSource),
-                    ("main.mligo", mainSource)
-                  ],
-                rMain = "main.mligo",
+              { rProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" mainSource,
+                       SourceFile "dir/types.mligo" typesSource
+                      ]
+                  },
                 rEntrypoint = Just "main",
                 rProtocol = Just "jakarta",
                 rStorage = Nothing,
@@ -99,8 +112,11 @@ spec config = with (return (mkApp config)) $ do
       let input =
             GenerateDeployScriptRequest
               { gdsrStorage = "0"
-              , gdsrSources = [("main.mligo", Source source)]
-              , gdsrMain = "main.mligo"
+              , gdsrProject = Project
+                { pMain = "main.mligo",
+                  pSourceFiles =
+                    [SourceFile "main.mligo" (Source source)]
+                  }
               , gdsrName = "increment-cameligo"
               , gdsrEntrypoint = Just "main"
               , gdsrProtocol = Just "jakarta"
@@ -119,8 +135,11 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             CompileExpressionRequest
-              { cerSources = [("main.mligo", Source source)],
-                cerMain = "main.mligo",
+              { cerProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" (Source source)]
+                  },
                 cerFunction = "main",
                 cerProtocol = Nothing,
                 cerDisplayFormat = Nothing
@@ -137,8 +156,11 @@ spec config = with (return (mkApp config)) $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             DryRunRequest
-              { drrSources = [("main.mligo", Source source)],
-                drrMain = "main.mligo",
+              { drrProject = Project
+                  { pMain = "main.mligo",
+                    pSourceFiles =
+                      [SourceFile "main.mligo" (Source source)]
+                  },
                 drrParameters = "Increment (1)",
                 drrStorage = "0",
                 drrEntrypoint = Nothing,
@@ -152,17 +174,21 @@ spec config = with (return (mkApp config)) $ do
           Nothing -> expectationFailure ("could not decode response: " ++ show response)
           Just actual -> actual `shouldBe` expected
 
-  describe "POST /list-declarationss" $ do
+  describe "POST /list-declarations" $ do
     it "compiles basic single-file input correctly" $ do
       source <- liftIO $ Text.readFile $ contractsDir </> "basic/main.mligo"
       let input =
             ListDeclarationsRequest
-              { ldrSources = [("main.mligo", Source source)],
-                ldrMain = "main.mligo",
-                ldrOnlyEndpoint = False
+              { ldrProject = Project
+                  { pMain = "main.mligo"
+                  , pSourceFiles =
+                     [SourceFile "main.mligo" (Source source)]
+                  }
+              , ldrOnlyEndpoint = False
               }
       response <- post "/list-declarations" (Aeson.encode input)
-      expected <- liftIO $ fmap Text.lines $ Text.readFile (contractsDir </> "basic/list_declarations.txt")
+      expected <- liftIO . fmap Text.lines
+        $ Text.readFile (contractsDir </> "basic/list_declarations.txt")
       liftIO $
         case Aeson.decode (simpleBody response) of
           Nothing -> expectationFailure ("could not decode response: " ++ show response)
