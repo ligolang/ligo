@@ -7,6 +7,7 @@ open Simple_utils.Trace
 
 let var_equal = Value_var.equal
 
+(* TODO: is this dead? *)
 let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ()
@@ -45,7 +46,8 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
     check_recursive_call ~raise n false update
   | E_module_accessor _
   | E_type_inst _
-  | E_assign _ -> ()
+  (* Wtf?? *)
+  | E_assign _ | _ -> ()
 
 and check_recursive_call_in_matching ~raise = fun n final_path c ->
   match c with
@@ -58,10 +60,10 @@ and check_recursive_call_in_matching ~raise = fun n final_path c ->
     check_recursive_call ~raise n final_path body
 
 let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
-  let _, fv = FV.expression lambda.result in
+  let _, fv, _ = FV.expression lambda.result in
   let is_binder_shadowed_in_body
     = not @@ List.mem fv fun_name ~equal:var_equal in
-  var_equal fun_name (Binder.get_var lambda.binder) ||
+  var_equal fun_name (Param.get_var lambda.binder) ||
   is_binder_shadowed_in_body
 
 let check_tail_expression ~raise : expression -> expression = fun e ->

@@ -16,5 +16,8 @@ let pp f ppf = fun {binder; start; final; incr; f_body} ->
 
 let fold_map
 = fun f acc {binder; start; final; incr; f_body} ->
+  let acc, start = f acc start in
+  let acc, final = f acc final in
+  let acc, incr = f acc incr in
   let acc,f_body = f acc f_body in
   (acc, {binder; start; final; incr; f_body})

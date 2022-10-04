@@ -19,8 +19,8 @@ let%expect_test _ =
 
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
-      code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}]
-
+      code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] 
+      
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ] ;
   [%expect {|

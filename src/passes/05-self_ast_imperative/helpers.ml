@@ -40,6 +40,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   | E_for       f -> For_loop.fold self init f
   | E_for_each fe -> For_each_loop.fold self init fe
   | E_while     w -> While_loop.fold self init w
+  | E_let_mut_in li -> Let_in.fold self self_type init li
 
 type exp_mapper = expression -> expression
 type ty_exp_mapper = type_expression -> type_expression
@@ -150,6 +151,9 @@ let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
   | E_while w ->
       let w = While_loop.map self w in
       return @@ E_while w
+  | E_let_mut_in li ->
+      let li = Let_in.map self Fn.id li in
+      return @@ E_let_mut_in li
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> return e'
 
 and map_type_expression : ty_exp_mapper -> type_expression -> type_expression = fun f te ->
@@ -333,16 +337,12 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
   | E_while w ->
       let res,w = While_loop.fold_map self init w in
       (res, return @@ E_while w)
+  | E_let_mut_in li -> (
+      let res,li = Let_in.fold_map self idle init li in
+      (res, return @@ E_let_mut_in li)
+    )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> (init, return e')
 
 let remove_from var vars =
   let f v vars = if Value_var.equal var v then vars else v :: vars in
   List.fold_right ~f vars ~init:[]
-
-let get_pattern ?(pred = fun _ -> true) (pattern : type_expression option Pattern.t) =
-  Pattern.fold_pattern (fun vars p ->
-      match p.wrap_content with
-      | Pattern.P_var b when pred (Binder.is_mutable b) ->
-        Binder.get_var b :: vars
-      | _ -> vars) [] pattern
-

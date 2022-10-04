@@ -46,3 +46,6 @@ coverage:
 	dune runtest --instrument-with bisect_ppx --force
 	bisect-ppx-report html -o ./_coverage_all --title="LIGO overall test coverage"
 	bisect-ppx-report summary --per-file
+
+install:
+	cp _build/install/default/bin/ligo /usr/local/bin/ligo

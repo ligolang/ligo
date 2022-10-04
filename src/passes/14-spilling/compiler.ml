@@ -572,26 +572,95 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | _ ->
           raise.error (raw_michelson_must_be_seq ae.location code)
     )
-    | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
+  | E_let_mut_in { let_binder; rhs; let_result; attr = _ } ->
+    let binder = compile_binder ~raise let_binder in
+    let rhs = self rhs in
+    let let_result = self let_result in
+    return @@ E_let_mut_in (rhs, (binder, let_result)) 
+  | E_deref mut_var -> return @@ E_deref mut_var 
+  | E_assign { binder; expression } ->
+    let expression = self expression in
+    return @@ E_assign (Binder.get_var binder, expression)
+  | E_for { start; final; incr; binder; f_body } -> 
+    let type_ = compile_type ~raise start.type_expression in
+    let start = self start in
+    let final = self final in
+    let incr = self incr in
+    let binder = (binder, type_) in
+    let body = self f_body in
+    return @@ E_for (start, final, incr, (binder, body))
+  | E_for_each { fe_binder = binder1, Some binder2; collection; fe_body; _ } ->
+    let type_ = compile_type ~raise collection.type_expression in
+    let key_type, val_type = 
+      Ast_aggregated.get_t_map_exn collection.type_expression
+    in
+    let binders = [ binder1, compile_type ~raise key_type; binder2, compile_type ~raise val_type ] in
+    let collection = self collection in
+    let body = self fe_body in
+    return @@ E_for_each (collection, type_, (binders, body))
+  | E_for_each { fe_binder = binder1, None; collection; fe_body; _ } ->
+    let type_ = compile_type ~raise collection.type_expression in
+    let elt_type = 
+      let type_ = collection.type_expression in
+      if is_t_list type_ then get_t_list_exn type_
+      else if is_t_set type_ then get_t_set_exn type_
+      else if is_t_map type_ then
+        let key_type, val_type = get_t_map_exn type_
+        in AST.t_pair key_type val_type
+      else failwith "Expected set, map or list type for for-each loop (should have been caught earlier)"
+    in
+    let binders = [ binder1, compile_type ~raise elt_type ] in
+    let collection = self collection in
+    let body = self fe_body in
+    return @@ E_for_each (collection, type_, (binders, body))
+  | E_while { cond; body } ->
+    let cond = self cond in
+    let body = self body in
+    return @@ E_while (cond, body)
 
 and compile_lambda ~raise l fun_type =
-  let { binder ; output_type =_ ; result } : _ Lambda.t = l in
+  let { binder ; output_type ; result } : _ Lambda.t = l in
   let result' = compile_expression ~raise result in
   let fun_type = compile_type ~raise fun_type in
-  let binder = Binder.get_var binder in
-  let closure = E_closure { binder; body = result'} in
+  let param = Param.map (compile_type ~raise) binder in
+  let output_type = compile_type ~raise output_type in
+  let (binder, body) = make_lambda ~loc:result.location param result' output_type in
+  let closure = E_closure { binder; body } in
+  (* TODO this ~loc is wrong, the actual location is not in scope here? *)
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
+and compile_binder ~raise binder = 
+  let ascr = compile_type ~raise (Binder.get_ascr binder) in
+  (Binder.get_var binder, ascr)
+
+(* ast_aggregated has mutable lambda parameters, for now, mini_c does
+   not. so here we will translate:
+       (fun mut x -> e1)
+   to:
+       (fun x -> let mut x = x in e1) *)
+and make_lambda ~loc param body body_type =
+  let body =
+    if Param.is_mut param
+    then
+      let x = Param.get_var param in
+      let a = Param.get_ascr param in
+      Expression.make ~loc (E_let_mut_in (Expression.make ~loc (E_variable x) a, ((x, a), body))) body_type
+    else body in
+  (Param.get_var param, body)
+
 and compile_recursive ~raise {fun_name; fun_type; lambda} =
-  let rec map_lambda : Value_var.t -> type_expression -> AST.expression -> expression * Value_var.t list = fun fun_name loop_type e ->
+  let rec map_lambda : Value_var.t -> type_expression -> AST.expression -> expression = fun fun_name loop_type e ->
     match e.expression_content with
-      E_lambda {binder;output_type=_;result} ->
-      let binder   = Binder.get_var binder in
-      let (body,l) = map_lambda  fun_name loop_type result in
-      (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
+      E_lambda {binder;output_type;result} ->
+      let param = binder in
+      let body = map_lambda  fun_name loop_type result in
+      let body_type = compile_type ~raise output_type in
+      let param = Param.map (compile_type ~raise) param in
+      let (binder, body) = make_lambda ~loc:e.location param body body_type in
+      Expression.make ~loc:e.location (E_closure {binder;body}) loop_type
     | _  ->
       let res = replace_callback ~raise fun_name loop_type false e in
-      (res, [])
+      res
 
   and replace_callback ~raise : Value_var.t -> type_expression -> bool -> AST.expression -> expression = fun fun_name loop_type shadowed e ->
     match e.expression_content with
@@ -602,6 +671,13 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
         let ty  = compile_type ~raise li.rhs.type_expression in
         let let_binder = Binder.get_var li.let_binder in
         e_let_in let_binder ty li.attr.inline rhs let_result
+      | E_let_mut_in li ->
+        (* Not possible for mut to shadow fun_name *)
+        let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
+        let rhs = compile_expression ~raise li.rhs in
+        let ty  = compile_type ~raise li.rhs.type_expression in
+        let let_binder = Binder.get_var li.let_binder in
+        e_let_mut_in let_binder ty rhs let_result
       | E_matching m ->
         let ty = compile_type ~raise e.type_expression in
         matching ~raise fun_name loop_type shadowed m ty
@@ -714,12 +790,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let fun_type = compile_type ~raise fun_type in
   let (input_type,output_type) = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
-  let (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = Binder.get_var lambda.binder :: binder in
-  let loc = Value_var.get_location fun_name in
-  let binder = match binder with hd::[] -> hd | _ -> raise.error @@ unsupported_recursive_function loc fun_name in
+  let body = map_lambda fun_name loop_type lambda.result in
+  let param = Param.map (compile_type ~raise) lambda.binder in
+  let (binder, body) = make_lambda ~loc:body.location param body loop_type in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Binder.get_var lambda.binder, input_type), body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((binder, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->

@@ -57,7 +57,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
   | (E_variable _, _) | (E_lambda _, _) | (E_type_abstraction _, _)
 
-  | (E_application _, _) | (E_let_in _, _) | (E_assign _, _)
+  | (E_application _, _) | (E_let_in _, _) | (E_let_mut_in _, _) | (E_assign _, _)
+  | (E_for _, _) | (E_for_each _, _) | (E_while _, _)
   | (E_type_in _, _) | (E_mod_in _, _)
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_accessor _, _)

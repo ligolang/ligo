@@ -278,7 +278,7 @@ of the form `for (const <element var> of <collection var>) <block>`.
 Here is an example where the integers in a list are summed up.
 
 ```jsligo group=d
-let sum_list = l => {
+let sum_list = (l : list<int>) => {
   let total = 0;
   for (const i of l) {
     total = total + i
@@ -299,7 +299,7 @@ gitlab-pages/docs/language-basics/src/loops/collection.jsligo --entry-point sum_
 Here is an example where the integers in a set are summed up.
 
 ```jsligo group=d
-let sum_set = s => {
+let sum_set = (s : set<int>) => {
   let total : int = 0;
   for (const i of s) {
     total = total + i

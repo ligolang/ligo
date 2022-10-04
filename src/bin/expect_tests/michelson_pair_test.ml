@@ -102,6 +102,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.jsligo" ] ;
   [%expect {|
+    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, character 0 to line 11, character 1:
+      7 |
+      8 | let main = ([action, store] : [unit, storage]) : return_ => {
+      9 |   let foo = [3, [1, 2 as nat]];
+     10 |   return [list([]) as list<operation>, foo as storage]
+     11 | };
+
+    Toplevel let declaration are silently change to const declaration.
+
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 13-19:
       7 |
       8 | let main = ([action, store] : [unit, storage]) : return_ => {
@@ -117,13 +126,6 @@ let%expect_test _ =
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
-
-    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 4-8:
-      7 |
-      8 | let main = ([action, store] : [unit, storage]) : return_ => {
-      9 |   let foo = [3, [1, 2 as nat]];
-
-    Toplevel let declaration are silently change to const declaration.
 
     { parameter unit ;
       storage (pair (int %three) (pair %four (int %one) (nat %two))) ;
