@@ -23,8 +23,9 @@ let check_linearity_patterns ~raise : expression -> unit = fun exp ->
       | P_variant (_,p) -> aux vlst p
       | P_list (Cons (p1,p2)) ->
         List.fold ~init:vlst ~f:aux [p1;p2]
-      | P_list (List lst) | P_tuple lst | P_record (_,lst) ->
+      | P_list (List lst) | P_tuple lst ->
         List.fold ~init:vlst ~f:aux lst
+      | P_record lps -> Record.fold aux vlst lps 
     in
     List.iter _patterns
       ~f:(fun p ->
