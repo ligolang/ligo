@@ -39,7 +39,6 @@ module AST.Scope.Common
   , mergeScopeForest
   , withScopeForest
   , lookupEnv
-  , spine
   , addScopes
   , lookupContract
   ) where
@@ -307,15 +306,17 @@ lookupEnv name = getFirst . foldMap \decl ->
     guard (_sdName decl == name)
     return decl
 
+-- | return scoped declarations related to the range
 envAtPoint :: Range -> ScopeForest -> Scope
-envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= toList . spine r >>= Set.toList
+envAtPoint pos (ScopeForest sf ds) = do
+  let sp = sf >>= toList . spine pos >>= Set.toList
   map (ds Map.!) sp
-
-spine :: Range -> ScopeTree -> DList (Set DeclRef)
-spine r ((decls, r') :< trees)
-  | leq r r' = foldMap (spine r) trees `snoc` decls
-  | otherwise = mempty
+  where
+    -- find all nodes that spans the range and take their references
+    spine :: Range -> ScopeTree -> DList (Set DeclRef)
+    spine r ((decls, r') :< trees)
+      | leq r r' = foldMap (spine r) trees `snoc` decls
+      | otherwise = mempty
 
 addLocalScopes
   :: SomeLIGO ParsedInfo
@@ -337,7 +338,9 @@ addLocalScopes tree forest =
 
     , Descent \i (NameDecl t) -> do
         let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, NameDecl t)
+        -- TODO: This is temporary solution developed in LIGO-700, and should be fixed in LIGO-830
+        let declaredScope = Map.lookup (DeclRef t (getRange i)) (sfDecls forest)
+        return ((toList declaredScope <> env) :> Just TermLevel :> i, NameDecl t)
 
     , Descent \i (Ctor t) -> do
         let env = envAtPoint (getPreRange i) forest

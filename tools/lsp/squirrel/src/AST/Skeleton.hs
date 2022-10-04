@@ -307,6 +307,7 @@ newtype TypeVariableName it = TypeVariableName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | Constructor node in AST
 newtype Ctor it = Ctor Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
