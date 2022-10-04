@@ -193,10 +193,10 @@ let userToTuple = (u : user) => {
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
 We can ignore some fields of the records we can do so by 
 using `_` (underscore), like so:
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=records1
 function get_id (const u : user) is {
@@ -207,9 +207,6 @@ function get_id (const u : user) is {
 </Syntax>
 <Syntax syntax="cameligo">
 
-We can ignore some fields of the records we can do so by 
-using `_` (underscore), like so:
-
 ```cameligo group=records1
 let get_id (u : user) = 
   let { id ; is_admin = _ ; name = _ } = u in
@@ -219,13 +216,23 @@ let get_id (u : user) =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-We can ignore some fields of the records we can do so by 
-using `_` (underscore), like so:
-
 ```reasonligo group=records1
 let get_id = (u : user) => { 
   let { id, is_admin: _, name: _ } = u;
   id
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+let getId = (u : user) => {
+  let { id, is_admin, name } = u;
+  /* we don't use `is_admin` and `name`
+   so prevent warning with `ignore` */
+  ignore([is_admin, name]);
+  return id;
 }
 ```
 
