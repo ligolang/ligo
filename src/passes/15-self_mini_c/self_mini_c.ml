@@ -200,6 +200,20 @@ let rec is_pure : expression -> bool = fun e ->
     (* very not pure *)
     false
 
+  (* TODO E_let_mut_in is pure when the rhs is pure and the body's
+     only impurity is assign/deref of the bound mutable variable *)
+  | E_let_mut_in _
+  | E_assign _
+  | E_deref _ ->
+     false
+
+  (* these could be pure through the exception above for
+     E_let_mut_in *)
+  | E_for _ | E_for_each _ -> false
+
+  (* never pure in any important case *)
+  | E_while _ -> false
+
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _
   | E_iterator _

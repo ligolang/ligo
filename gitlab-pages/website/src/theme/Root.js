@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import SyntaxContext from "@theme/Syntax/SyntaxContext";
 
 let defaultSyntax = (() => {
-  if (typeof window === 'undefined') return "jsligo"
+  if (typeof window === "undefined") return "jsligo";
 
   const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),

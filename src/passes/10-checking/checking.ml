@@ -287,7 +287,7 @@ let rec check_expression
     | ( E_type_abstraction { type_binder = tvar; result }
       , T_for_all { ty_binder = tvar'; kind; type_ } )
       when Type_var.equal tvar tvar' ->
-      let ctx, pos = Context.mark ctx in
+      let ctx, pos = Context.mark ctx ~mut:false in
       let ctx, result =
         check ~ctx:Context.(ctx |:: C_type_var (tvar', kind)) result type_
       in
@@ -296,7 +296,7 @@ let rec check_expression
         return @@ E_type_abstraction { type_binder = tvar; result } )
     | _, T_for_all { ty_binder = tvar; kind; type_ } ->
       let tvar' = Type_var.fresh_like ~loc tvar in
-      let ctx, pos = Context.mark ctx in
+      let ctx, pos = Context.mark ctx ~mut:false in
       let ctx, result =
         check
           ~ctx:Context.(ctx |:: C_type_var (tvar', kind))
@@ -422,16 +422,26 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
     | E_constant { cons_name = const; arguments = args } ->
       infer_constant ~raise ~options ~ctx ~loc const args
     | E_variable var ->
-      let type_ =
-        trace_option ~raise (unbound_variable var expr.location)
-        @@ Context.get_value ctx var
-      in
-      ctx, type_, return (E_variable var) type_
+      (match Context.get_value ctx var with
+      | Error `Not_found -> raise.error @@ unbound_variable var expr.location
+      | Error `Mut_var_captured -> raise.error @@ mut_var_captured expr.location var
+      | Ok (mut_flag, type_) ->
+      ( ctx
+      , type_
+      , (match mut_flag with
+         | Immutable -> return (E_variable var) type_
+         | Mutable -> return (E_deref var) type_) ))
     | E_lambda lambda -> infer_lambda ~raise ~options ~loc ~ctx lambda
     | E_application { lamb; args } ->
       let ctx, lamb_type, lamb = infer lamb in
       let ctx, ret_type, f, args =
-        infer_application ~raise ~loc ~options ~ctx (Context.apply ctx lamb_type) args
+        infer_application
+          ~raise
+          ~loc
+          ~options
+          ~ctx
+          (Context.apply ctx lamb_type)
+          args
       in
       ( ctx
       , ret_type
@@ -439,7 +449,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         and args = args in
         return (E_application { lamb = f lamb; args }) ret_type )
     | E_type_abstraction { type_binder = tvar; result } ->
-      Context.Generalization.enter ~ctx ~in_:(fun ctx ->
+      Context.Generalization.enter ~ctx ~mut:false ~in_:(fun ctx ->
         let ctx, ret_type, result =
           infer ~ctx:Context.(ctx |:: C_type_var (tvar, Type)) result
         in
@@ -448,12 +458,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         , ret_type
         , let%bind result = result in
           return (E_type_abstraction { type_binder = tvar; result }) ret_type ))
-    | E_let_in
-        { let_binder
-        ; rhs
-        ; let_result
-        ; attr
-        } ->
+    | E_let_in { let_binder; rhs; let_result; attr } ->
       let rhs_ascr = Binder.get_ascr let_binder in
       let rhs =
         Option.value_map
@@ -464,8 +469,12 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let ctx, rhs_type, rhs = infer rhs in
       let rhs_type = Context.apply ctx rhs_type in
       let ctx, res_type, let_result =
-        Context.enter ~ctx ~in_:(fun ctx ->
-          infer ~ctx:Context.(ctx |:: C_value (Binder.get_var let_binder, rhs_type)) let_result)
+        Context.enter ~ctx ~mut:false ~in_:(fun ctx ->
+          infer
+            ~ctx:
+              Context.(
+                ctx |:: C_value (Binder.get_var let_binder, Immutable, rhs_type))
+            let_result)
       in
       let attr = type_value_attr attr in
       ( ctx
@@ -508,7 +517,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let fun_type = evaluate_type ~raise ~ctx fun_type in
       let ctx, lambda =
         check
-          ~ctx:Context.(ctx |:: C_value (fun_name, fun_type))
+          ~ctx:Context.(ctx |:: C_value (fun_name, Immutable, fun_type))
           (I.make_e ~loc (E_lambda (Lambda.map Fn.id Option.some lambda)))
           fun_type
       in
@@ -664,7 +673,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
     | E_mod_in { module_binder = mvar; rhs; let_result } ->
       let ctx, sig_, rhs = infer_module_expr ~raise ~options ~ctx rhs in
       let ctx, ret_type, let_result =
-        Context.enter ~ctx ~in_:(fun ctx ->
+        Context.enter ~ctx ~mut:false ~in_:(fun ctx ->
           infer ~ctx:Context.(ctx |:: C_module (mvar, sig_)) let_result)
       in
       ( ctx
@@ -698,12 +707,47 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       ( ctx
       , elt_type
       , return (E_module_accessor { module_path; element }) elt_type )
+    | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+      let rhs_ascr = Binder.get_ascr let_binder in
+      let rhs =
+        Option.value_map
+          rhs_ascr
+          ~f:(fun rhs_ascr -> I.e_ascription ~loc rhs rhs_ascr)
+          ~default:rhs
+      in
+      let ctx, rhs_type, rhs = infer rhs in
+      let rhs_type = Context.apply ctx rhs_type in
+      (* TODO: Improve inference here -- we could subtype it to get a monotype? *)
+      if is_t_for_all rhs_type then raise.error (mut_is_polymorphic loc rhs_type);
+      let ctx, res_type, let_result =
+        Context.enter ~ctx ~mut:false ~in_:(fun ctx ->
+          infer
+            ~ctx:
+              Context.(
+                ctx |:: C_value (Binder.get_var let_binder, Mutable, rhs_type))
+            let_result)
+      in
+      let attr = type_value_attr attr in
+      ( ctx
+      , res_type
+      , let%bind rhs = rhs
+        and let_result = let_result in
+        return
+          (E_let_mut_in
+             { let_binder = Binder.map (Fn.const rhs_type) let_binder
+             ; rhs
+             ; let_result
+             ; attr
+             })
+          res_type )
     | E_assign { binder; expression } ->
       let type_ =
         trace_option
           ~raise
-          (unbound_variable (Binder.get_var binder) (Value_var.get_location @@ Binder.get_var binder))
-        @@ Context.get_value ctx (Binder.get_var binder)
+          (unbound_mut_variable
+             (Binder.get_var binder)
+             (Value_var.get_location @@ Binder.get_var binder))
+        @@ Context.get_mut ctx (Binder.get_var binder)
       in
       let binder = Binder.map (Fn.const type_) binder in
       let ctx, expression = check ~ctx expression type_ in
@@ -712,6 +756,111 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       , ret_type
       , let%bind expression = expression in
         return (E_assign { binder; expression }) ret_type )
+    | E_for { binder; start; final; incr; f_body } ->
+      let t_int = t_int ~loc () in
+      let t_unit = t_unit ~loc () in
+      let ctx, start = check ~ctx start t_int in
+      let ctx, final = check ~ctx final t_int in
+      let ctx, incr = check ~ctx incr t_int in
+      let ctx, f_body =
+        check
+          ~ctx:Context.(ctx |:: C_value (binder, Immutable, t_int))
+          f_body
+          t_unit
+      in
+      ( ctx
+      , t_unit
+      , let%bind start = start
+        and final = final
+        and incr = incr
+        and f_body = f_body in
+        return (E_for { binder; start; final; incr; f_body }) t_unit )
+    | E_for_each
+        { fe_binder = (key_binder, Some val_binder) as fe_binder
+        ; collection
+        ; collection_type = (Map | Any) as collection_type
+        ; fe_body
+        } ->
+      let t_unit = t_unit ~loc () in
+      let ctx, type_, collection = infer ~ctx collection in
+      let key_type, val_type =
+        trace_option
+          ~raise
+          (mismatching_for_each_collection_type loc collection_type type_)
+        @@ get_t_map (Context.apply ctx type_)
+      in
+      let ctx, fe_body =
+        check
+          ~ctx:
+            Context.(
+              ctx
+              |:: C_value (key_binder, Immutable, key_type)
+              |:: C_value (val_binder, Immutable, val_type))
+          fe_body
+          t_unit
+      in
+      ( ctx
+      , t_unit
+      , let%bind collection = collection
+        and fe_body = fe_body in
+        return
+          (E_for_each { fe_binder; collection; collection_type = Map; fe_body })
+          t_unit )
+    | E_for_each
+        { fe_binder = _, Some _
+        ; collection_type = (List | Set) as collection_type
+        ; _
+        } ->
+      raise.error @@ mismatching_for_each_binder_arity loc collection_type 2
+    | E_for_each
+        { fe_binder = (binder, None) as fe_binder
+        ; collection
+        ; collection_type
+        ; fe_body
+        } ->
+      let t_unit = t_unit ~loc () in
+      let ctx, type_, collection = infer ~ctx collection in
+      let binder_type =
+        trace_option
+          ~raise
+          (mismatching_for_each_collection_type loc collection_type type_)
+        @@
+        (* This is bad -- TODO: get rid of collection type (no-longer required) + use patterns *)
+        let get_t_map type_ =
+          get_t_map type_
+          |> Option.map ~f:(fun (t1, t2) -> t_tuple ~loc [ t1; t2 ])
+        in
+        match (collection_type : For_each_loop.collect_type) with
+        | Set -> get_t_set type_
+        | List -> get_t_list type_
+        | Map -> get_t_map type_
+        | Any ->
+          Option.first_some
+            (get_t_set type_)
+            (Option.first_some (get_t_list type_) (get_t_map type_))
+      in
+      let ctx, fe_body =
+        check
+          ~ctx:Context.(ctx |:: C_value (binder, Immutable, binder_type))
+          fe_body
+          t_unit
+      in
+      ( ctx
+      , t_unit
+      , let%bind collection = collection
+        and fe_body = fe_body in
+        return
+          (E_for_each { fe_binder; collection; collection_type = Map; fe_body })
+          t_unit )
+    | E_while { cond; body } ->
+      let t_unit = t_unit ~loc () in
+      let ctx, cond = check ~ctx cond (t_bool ~loc ()) in
+      let ctx, body = check ~ctx body t_unit in
+      ( ctx
+      , t_unit
+      , let%bind cond = cond
+        and body = body in
+        return (E_while { cond; body }) t_unit )
   in
   if debug
   then
@@ -776,7 +925,7 @@ and check_lambda
       I.e_ascription ~loc result ret_ascr)
   in
   let ctx, arg_type, f =
-    match Binder.get_ascr binder with
+    match Param.get_ascr binder with
     | Some arg_ascr ->
       let arg_ascr = evaluate_type ~raise ~ctx arg_ascr in
       (* TODO: Kinding check for ascription *)
@@ -789,12 +938,15 @@ and check_lambda
   in
   let arg_type = Context.apply ctx arg_type in
   let ret_type = Context.apply ctx ret_type in
-  let ctx, pos = Context.mark ctx in
+  let ctx, pos = Context.mark ctx ~mut:true in
   let ctx, result =
     check_expression
       ~raise
       ~options
-      ~ctx:Context.(ctx |:: C_value (Binder.get_var binder, arg_type))
+      ~ctx:
+        Context.(
+          ctx
+          |:: C_value (Param.get_var binder, Param.get_mut_flag binder, arg_type))
       result
       ret_type
   in
@@ -802,7 +954,7 @@ and check_lambda
   , let%bind result = result in
     return
       Lambda.
-        { binder = Binder.map (Fn.const arg_type) binder
+        { binder = Param.map (Fn.const arg_type) binder
         ; result = f result
         ; output_type = ret_type
         } )
@@ -823,9 +975,9 @@ and infer_lambda
     Option.value_map ret_ascr ~default:result ~f:(fun ret_ascr ->
       I.e_ascription ~loc result ret_ascr)
   in
-  Context.Generalization.enter ~ctx ~in_:(fun ctx ->
+  Context.Generalization.enter ~ctx ~mut:true ~in_:(fun ctx ->
     let ctx, arg_type =
-      match Binder.get_ascr binder with
+      match Param.get_ascr binder with
       | Some arg_ascr -> ctx, evaluate_type ~raise ~ctx arg_ascr
       | None ->
         let evar = Exists_var.fresh ~loc () in
@@ -835,7 +987,11 @@ and infer_lambda
       infer_expression
         ~raise
         ~options
-        ~ctx:Context.(ctx |:: C_value (Binder.get_var binder, arg_type))
+        ~ctx:
+          Context.(
+            ctx
+            |:: C_value
+                  (Param.get_var binder, Param.get_mut_flag binder, arg_type))
         result
     in
     let type_ = O.t_arrow ~loc arg_type ret_type () in
@@ -843,7 +999,7 @@ and infer_lambda
       let%bind result = result in
       return
         (E_lambda
-           { binder = Binder.map (Fn.const arg_type) binder
+           { binder = Param.map (Fn.const arg_type) binder
            ; result
            ; output_type = ret_type
            })
@@ -893,13 +1049,9 @@ and infer_application ~raise ~loc ~options ~ctx lamb_type args
               ~loc
               ~ctx
               parameters
-          | T_constant
-              { injection = External ("and" | "u_and"); parameters; _ } ->
-            Constant_typers.External_types.and_types
-              ~raise
-              ~loc
-              ~ctx
-              parameters
+          | T_constant { injection = External ("and" | "u_and"); parameters; _ }
+            ->
+            Constant_typers.External_types.and_types ~raise ~loc ~ctx parameters
           | _ -> ctx, ret_type)
         (fun ~catch:_ _ -> ctx, ret_type)
     in
@@ -963,8 +1115,8 @@ and check_pattern
       ctx, return @@ P_unit
     | P_unit, _ -> fail ()
     | P_var binder, _ ->
-      ( Context.(ctx |:: C_value (Binder.get_var binder, type_))
-      , return @@ P_var (Binder.map (Fn.const @@ Some type_) binder ))
+      ( Context.(ctx |:: C_value (Binder.get_var binder, Immutable, type_))
+      , return @@ P_var (Binder.map (Fn.const @@ Some type_) binder) )
     | ( P_list (Cons (hd_pat, tl_pat))
       , O.T_constant
           { injection = Literal_types.List; parameters = [ elt_type ]; _ } ) ->
@@ -1057,7 +1209,7 @@ and check_cases
   let open Elaboration.Let_syntax in
   let ctx, cases =
     List.fold_map ~init:ctx cases ~f:(fun ctx Match_expr.{ pattern; body } ->
-      let ctx, pos = Context.mark ctx in
+      let ctx, pos = Context.mark ctx ~mut:false in
       let matchee_type = Context.apply ctx matchee_type in
       if debug
       then Format.printf "Matchee type: %a\n" O.PP.type_expression matchee_type;
@@ -1107,7 +1259,7 @@ and compile_match
       Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
     in
     O.E_let_in
-      { let_binder = Binder.make ~mut:true var matchee.type_expression
+      { let_binder = Binder.make var matchee.type_expression
       ; rhs = matchee
       ; let_result = { match_expr with location = loc }
       ; attr =
@@ -1161,17 +1313,15 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
   in
   let ctx, (sig_item : Signature.item), decl' =
     match decl.wrap_content with
-    | D_type
-        { type_binder; type_expr; type_attr = { public; hidden } } ->
+    | D_type { type_binder; type_expr; type_attr = { public; hidden } } ->
       let type_expr = evaluate_type ~raise ~ctx type_expr in
       let type_expr = { type_expr with orig_var = Some type_binder } in
       ( ctx
       , S_type (type_binder, type_expr)
       , return
-        @@ D_type
-             { type_binder; type_expr; type_attr = { public; hidden } } )
+        @@ D_type { type_binder; type_expr; type_attr = { public; hidden } } )
     | D_value { binder; attr; expr } ->
-      let var  = Binder.get_var binder in
+      let var = Binder.get_var binder in
       let ascr = Binder.get_ascr binder in
       let expr =
         Option.value_map ascr ~default:expr ~f:(fun ascr ->
@@ -1189,17 +1339,18 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
       , let%bind expr = expr in
         return
         @@ D_value
-             { binder = Binder.map (Fn.const @@ Some expr_type) binder; expr; attr }
-      )
-    | D_module
-        { module_binder; module_; module_attr = { public; hidden } } ->
+             { binder = Binder.map (Fn.const @@ Some expr_type) binder
+             ; expr
+             ; attr
+             } )
+    | D_module { module_binder; module_; module_attr = { public; hidden } } ->
       let ctx, sig_, module_ = infer_module_expr ~raise ~options ~ctx module_ in
       ( ctx
       , S_module (module_binder, sig_)
       , let%bind module_ = module_ in
         return
-        @@ D_module
-             { module_binder; module_; module_attr = { public; hidden } } )
+        @@ D_module { module_binder; module_; module_attr = { public; hidden } }
+      )
   in
   if debug
   then
@@ -1216,10 +1367,7 @@ and infer_decl ~(raise : raise) ~options ~ctx (decl : I.decl)
   : Context.t * Signature.item * (O.decl, _, _) Elaboration.t
   =
   let ctx, sig_item, decl = infer_declaration ~raise ~options ~ctx decl in
-  ( ctx
-  , sig_item
-  , decl
-  )
+  ctx, sig_item, decl
 
 
 and infer_module ~raise ~options ~ctx (module_ : I.module_)

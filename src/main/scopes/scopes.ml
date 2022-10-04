@@ -160,70 +160,82 @@ let update_references : reference list -> def list -> def list * reference list 
   in
   defs, refs
 
-
-let rec expression
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> AST.expression -> def list * reference list * typing_env * scopes
-  =
- fun ~with_types ~options tenv e ->
-  let expression = expression ~with_types ~options in
-  match e.expression_content with
-  | E_literal _ -> [], [], tenv, [ e.location, [] ]
-  | E_raw_code _ -> [], [], tenv, [ e.location, [] ]
-  | E_variable ev -> [], [ Variable ev ], tenv, [ e.location, [] ]
-  | E_module_accessor m ->
-    [], [ ModuleAccess (m.module_path, m.element) ], tenv, [ e.location, [] ]
-  | E_constant { arguments; _ } ->
-    let defs, refs, tenv, scopes =
-      List.fold_left
-        arguments
-        ~init:([], [], tenv, [])
-        ~f:(fun (defs, refs, tenv, scopes) e ->
-          let ds, rs, tenv, scopes' = expression tenv e in
-          ds @ defs, rs @ refs, tenv, scopes @ scopes')
-    in
-    defs, refs, tenv, merge_same_scopes scopes
-  | E_application { lamb; args } ->
-    let defs, refs, tenv, scopes = expression tenv lamb in
-    let scopes = merge_same_scopes scopes in
-    let defs', refs', tenv, scopes' = expression tenv args in
-    let scopes' = merge_same_scopes scopes' in
-    let scopes_final = merge_same_scopes (scopes @ scopes') in
-    defs' @ defs, refs' @ refs, tenv, scopes_final
-  | E_lambda { binder; result; output_type = _ } ->
-    let var = Binder.get_var binder in
-    let core_type = Binder.get_ascr binder in
-    let def =
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ?core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            result.location
-        ])
-    in
-    let defs_result, refs_result, tenv, scopes = expression tenv result in
-    let scopes = merge_same_scopes scopes in
-    let defs, refs_result = update_references refs_result def in
-    defs_result @ defs, refs_result, tenv, add_defs_to_scopes def scopes
-  | E_type_abstraction { result; _ } -> expression tenv result
-  | E_constructor { element; _ } -> expression tenv element
-  | E_accessor { struct_; _ } -> expression tenv struct_
-  | E_ascription { anno_expr; _ } -> expression tenv anno_expr
-  | E_update { struct_; update; _ } ->
-    let defs, refs, tenv, scopes = expression tenv struct_ in
-    let defs', refs', tenv, scopes' = expression tenv update in
-    defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
-  | E_record e_lable_map ->
-    let defs, refs, tenv, scopes =
-      Record.LMap.fold
-        (fun _ e (defs, refs, tenv, scopes) ->
+let rec expression : with_types:bool -> options:Compiler_options.middle_end -> typing_env -> AST.expression -> def list * reference list * typing_env * scopes
+  = fun ~with_types ~options tenv e ->
+      let expression = expression ~with_types ~options in
+      match e.expression_content with
+        E_literal _ -> [], [], tenv, [e.location, []]
+      | E_raw_code _ -> [], [], tenv, [e.location, []]
+      | E_variable ev -> [], [Variable ev], tenv, [e.location, []]
+      | E_module_accessor m -> [], [ModuleAccess (m.module_path, m.element)], tenv, [e.location, []]
+      | E_constant { arguments ; _ } ->
+        let defs, refs, tenv, scopes = List.fold_left arguments ~init:([], [], tenv, [])
+          ~f:(fun (defs, refs, tenv, scopes) e ->
+                let ds, rs, tenv, scopes' = expression tenv e in
+                ds @ defs, rs @ refs, tenv, scopes @ scopes') in
+        defs, refs, tenv, merge_same_scopes scopes
+      | E_application { lamb ; args } ->
+        let defs, refs, tenv, scopes = expression tenv lamb  in
+        let scopes = merge_same_scopes scopes in
+        let defs', refs', tenv, scopes' = expression tenv args in
+        let scopes' = merge_same_scopes scopes' in
+        let scopes_final = merge_same_scopes (scopes @ scopes') in
+        defs' @ defs, refs' @ refs, tenv, scopes_final
+      | E_lambda { binder ; result ; output_type = _ } ->
+        let var = Param.get_var binder in
+        let core_type = Param.get_ascr binder in
+        let def =
+          if VVar.is_generated var then [] else
+          let binder_loc =  VVar.get_location var in
+          [Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc result.location]
+        in
+        let defs_result, refs_result, tenv, scopes = expression tenv result in
+        let scopes = merge_same_scopes scopes in
+        let defs, refs_result = update_references refs_result def in
+        defs_result @ defs, refs_result, tenv, add_defs_to_scopes def scopes
+      | E_type_abstraction { result ; _ } -> expression tenv result
+      | E_constructor { element ; _ } -> expression tenv element
+      | E_accessor { struct_ ; _ } -> expression tenv struct_
+      | E_ascription { anno_expr ; _ } -> expression tenv anno_expr
+      | E_update { struct_ ; update ; _ } ->
+        let defs, refs, tenv, scopes =  expression tenv struct_ in
+        let defs', refs', tenv, scopes' = expression tenv update in
+        defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
+      | E_while { cond; body } ->
+        let defs, refs, tenv, scopes =  expression tenv cond in
+        let defs', refs', tenv, scopes' = expression tenv body in
+        defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes'
+      | E_for { binder; start; incr; final; f_body } ->
+        let def =
+          if VVar.is_generated binder then [] else
+          let binder_loc =  VVar.get_location binder in
+          [Misc.make_v_def ~with_types tenv.bindings Local binder binder_loc start.location]
+        in
+        let defs_start, refs_start, tenv, scopes1 = expression tenv start in
+        let defs_incr, refs_incr, tenv, scopes2 = expression tenv incr in
+        let defs_final, refs_final, tenv, scopes3 = expression tenv final in
+        let defs_body, refs_body, tenv, scopes4 = expression tenv f_body in
+        let scopes4 = add_defs_to_scopes def scopes4 in
+        let scopes = merge_same_scopes scopes1 @ merge_same_scopes scopes2 @ merge_same_scopes scopes3 @ scopes4 in
+        let defs, refs_body = update_references refs_body def in
+        defs_start @ defs_incr @ defs_final @ defs_body @ defs, refs_start @ refs_incr @ refs_final @ refs_body, tenv, add_defs_to_scopes def scopes
+      | E_for_each { fe_binder = binder1, binder2; collection; fe_body; _ } ->
+        let binders = binder1 :: Option.to_list binder2 in
+        let defs = 
+          binders
+          |> List.filter ~f:VVar.is_generated
+          |> List.map ~f:(fun binder ->
+            let loc = VVar.get_location binder in
+            Misc.make_v_def ~with_types tenv.bindings Local binder loc collection.location)
+        in
+        let defs_coll, refs_coll, tenv, scopes_coll = expression tenv collection in
+        let defs_body, refs_body, tenv, scopes_body = expression tenv fe_body in
+        let scopes_body = add_defs_to_scopes defs scopes_body in
+        let scopes = merge_same_scopes scopes_coll @ scopes_body in
+        let defs, refs_body = update_references refs_body defs in
+        defs_body @ defs_coll @ defs, refs_body @ refs_coll, tenv, scopes
+      | E_record e_lable_map ->
+        let defs, refs, tenv, scopes = Record.LMap.fold (fun _ e (defs, refs, tenv, scopes) ->
           let defs', refs', tenv, scopes' = expression tenv e in
           let scopes' = merge_same_scopes scopes' in
           defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes')
@@ -245,90 +257,57 @@ let rec expression
     (* For recursive functions we don't need to add a def for [let_binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_rhs] *)
-    let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-    let def, defs_rhs = drop_last defs_rhs in
-    let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-    let scopes' = add_defs_to_scopes [ def ] scopes' in
-    let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs_result = update_references refs_result [ def ] in
-    defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
-  | E_let_in { let_binder; rhs; let_result; _ } ->
-    let var = Binder.get_var let_binder in
-    let core_type = Binder.get_ascr let_binder in
-    let defs_binder =
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ?core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            rhs.location
-        ])
-    in
-    let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-    let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
-    let scopes' = add_defs_to_scopes defs_binder scopes' in
-    let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs_result = update_references refs_result defs_binder in
-    defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
-  | E_recursive { fun_name; fun_type; lambda = { binder; result; _ } } ->
-    let def_fun =
-      let binder_loc = VVar.get_location fun_name in
-      Misc.make_v_def
-        ~with_types
-        ~core_type:fun_type
-        tenv.bindings
-        Local
-        fun_name
-        binder_loc
-        result.location
-    in
-    let def_par =
-      let var = Binder.get_var binder in
-      let core_type = Binder.get_ascr binder in
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ~core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            result.location
-        ])
-    in
-    let defs_result, refs_result, tenv, scopes = expression tenv result in
-    let scopes = merge_same_scopes scopes in
-    let defs = def_par @ [ def_fun ] in
-    let defs, refs_result = update_references refs_result defs in
-    ( defs_result @ defs
-    , refs_result
-    , tenv
-    , add_defs_to_scopes (def_par @ [ def_fun ]) scopes )
-  | E_type_in { type_binder; rhs; let_result } ->
-    let def = type_expression type_binder Local rhs in
-    let defs, refs, tenv, scopes = expression tenv let_result in
-    let scopes = merge_same_scopes scopes in
-    [ def ] @ defs, refs, tenv, scopes
-  | E_matching { matchee; cases } ->
-    let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
-    let scopes = merge_same_scopes scopes in
-    let defs_cases, refs_cases, tenv, scopes' =
-      List.fold_left
-        cases
-        ~init:([], [], tenv, [])
-        ~f:(fun (defs, refs, tenv, scopes) { pattern; body } ->
-          let defs_pat =
-            Pattern.fold_pattern
-              (fun defs (p : _ Pattern.t) ->
+        let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
+        let def, defs_rhs = drop_last defs_rhs in
+        let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+        let scopes' = add_defs_to_scopes [def] scopes' in
+        let scopes = merge_same_scopes scopes @ scopes' in
+        let defs, refs_result = update_references refs_result [def] in
+        defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
+      | E_let_mut_in { let_binder ; rhs ; let_result ; _ }
+      | E_let_in { let_binder ; rhs ; let_result ; _ } ->
+        let var = Binder.get_var let_binder in
+        let core_type = Binder.get_ascr let_binder in
+        let defs_binder =
+          if VVar.is_generated var then [] else
+          let binder_loc =  VVar.get_location var in
+          [ Misc.make_v_def ~with_types ?core_type tenv.bindings Local var binder_loc rhs.location ]
+        in
+        let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
+        let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
+        let scopes' = add_defs_to_scopes defs_binder scopes' in
+        let scopes = merge_same_scopes scopes @ scopes' in
+        let defs, refs_result = update_references refs_result defs_binder in
+        defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
+      | E_recursive { fun_name ; fun_type ; lambda = { binder ; result ; _ } } ->
+        let def_fun =
+          let binder_loc =  VVar.get_location fun_name in
+          Misc.make_v_def ~with_types ~core_type:fun_type tenv.bindings Local fun_name binder_loc (result.location)
+        in
+        let def_par =
+          let var = Param.get_var binder in
+          let core_type = Param.get_ascr binder in
+          if VVar.is_generated var then [] else
+          let binder_loc =  VVar.get_location var in
+          [Misc.make_v_def ~with_types ~core_type tenv.bindings Local var binder_loc (result.location)]
+        in
+        let defs_result, refs_result, tenv, scopes = expression tenv result in
+        let scopes = merge_same_scopes scopes in
+        let defs = def_par @ [def_fun] in
+        let defs, refs_result = update_references refs_result defs in
+        defs_result @ defs, refs_result, tenv, add_defs_to_scopes (def_par @ [def_fun]) scopes
+      | E_type_in { type_binder ; rhs ; let_result } ->
+        let def = type_expression type_binder Local rhs in
+        let defs, refs, tenv, scopes = expression tenv let_result in
+        let scopes = merge_same_scopes scopes in
+        [def] @ defs, refs, tenv, scopes
+      | E_matching { matchee ; cases } ->
+        let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
+        let scopes = merge_same_scopes scopes in
+        let defs_cases, refs_cases, tenv, scopes' = List.fold_left cases ~init:([], [], tenv, [])
+          ~f:(fun (defs, refs, tenv, scopes) { pattern ; body } ->
+            let defs_pat = Pattern.fold_pattern (
+              fun defs (p : _ Pattern.t) ->
                 match p.wrap_content with
                 | P_var binder ->
                   let def =

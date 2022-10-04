@@ -1,6 +1,6 @@
 //PART 0
 #include "remove-balance.jsligo"
-let x = Test.reset_state ( 5 as nat, list([]) as list <nat> );
+let x = Test.reset_state ( 5 as nat, list([]) as list <tez> );
 
 //PART 1
 let balances : balances =

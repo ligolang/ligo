@@ -26,6 +26,13 @@ module Fold_helpers(M : Monad) = struct
     let* ascr = f ascr in
     let binder = Binder.map (Fn.const ascr) binder in
     ok @@ binder
+
+  and param : ('a -> 'b monad) -> 'a Param.t -> ('b Param.t) monad
+    = fun f param ->
+    let ascr = Param.get_ascr param in
+    let* ascr = f ascr in
+    let binder = Param.map (Fn.const ascr) param in
+    ok @@ binder
   let let_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Let_in.t -> (('b,'d) Let_in.t) monad
     = fun f g {let_binder; rhs; let_result; attributes} ->
     let* let_binder = binder g let_binder in
@@ -41,7 +48,7 @@ module Fold_helpers(M : Monad) = struct
 
   let lambda : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) Lambda.t -> (('b,'d) Lambda.t ) monad
     = fun f g {binder=b;output_type;result}->
-    let* binder = binder g b in
+    let* binder = param g b in
     let* output_type = g output_type in
     let* result = f result in
     ok @@ Lambda.{binder;output_type;result}
@@ -276,6 +283,10 @@ module Fold_helpers(M : Monad) = struct
     | E_while w ->
        let* w = while_loop self w in
        return @@ E_while w
+    | E_let_mut_in li -> (
+      let* li = let_in self ok li in
+      return @@ E_let_in li
+    )
     | E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _ as e' -> return e'
 
   and declaration m : declaration -> declaration monad = fun d ->

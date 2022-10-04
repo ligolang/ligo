@@ -2,7 +2,7 @@
 
 #include "remove-balance.ligo"
 
-const _u = Test.reset_state (5n, (list [] : list (nat)))
+const _u = Test.reset_state (5n, (list [] : list (tez)))
 
 (*PART 1*)
 

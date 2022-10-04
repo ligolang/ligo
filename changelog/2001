@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: \nFix/improve LIGO's implementation of mutable features
+merge_request: '2001'
+title: Mutable Let
+type: fixed

@@ -1,6 +1,6 @@
 (*PART 0*)
 #include "remove-balance.mligo"
-let _u = Test.reset_state 5n ([] : nat list)
+let _u = Test.reset_state 5n ([] : tez list)
 
 (*PART 1*)
 let balances : balances =

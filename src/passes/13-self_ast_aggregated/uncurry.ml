@@ -8,7 +8,7 @@ let rec uncurry_lambda (depth : int) (expr : expression) : Value_var.t list * ex
   match expr.expression_content with
   | E_lambda { binder; result } when depth > 0 ->
     let (vars, result) = uncurry_lambda (depth - 1) result in
-    (Binder.get_var binder :: vars, result)
+    (Param.get_var binder :: vars, result)
   | _ -> ([], expr)
 
 let rec uncurry_arrow (depth : int) (type_ : type_expression) :
@@ -58,10 +58,19 @@ let usages = List.fold_left ~f:combine_usage ~init:Unused
 
 let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
   let self = usage_in_expr f in
+  let self_param param e = 
+    match Param.get_mut_flag param with
+    | Mutable -> usage_in_expr f e
+    | Immutable ->
+      if Value_var.equal (Param.get_var param) f
+      then Unused
+      else usage_in_expr f e
+  in
   let self_binder vars e =
     if List.mem ~equal:Value_var.equal vars f
     then Unused
-    else usage_in_expr f e in
+    else usage_in_expr f e 
+  in
   match expr.expression_content with
   (* interesting cases: *)
   | E_variable x ->
@@ -86,11 +95,16 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
   | E_constant { cons_name = _; arguments } ->
     usages (List.map ~f:self arguments)
   | E_lambda { binder; result } ->
-    self_binder [Binder.get_var binder] result
+    self_param binder result
   | E_type_abstraction { type_binder = _; result } ->
     self result
   | E_recursive { fun_name; fun_type = _; lambda = { binder; result } } ->
-    self_binder [fun_name; Binder.get_var binder] result
+    let binders = 
+      fun_name :: Param.(if is_imm binder then [ get_var binder ] else [])
+    in
+    self_binder
+      binders
+      result
   | E_let_in { let_binder; rhs; let_result; attr = _ } ->
     usages [self rhs; self_binder [Binder.get_var let_binder] let_result]
   | E_raw_code _ ->
@@ -110,7 +124,18 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
     usages [self struct_; self update]
   | E_type_inst { forall; type_ = _} ->
     self forall
-  | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
+  | E_assign { expression; _ } ->
+    self expression
+  | E_let_mut_in { let_binder = _; rhs; let_result; attr = _ } ->
+    usages [self rhs; self let_result]
+  | E_while { cond; body } ->
+    usages [ self cond; self body ]
+  | E_for { binder; start; final; incr; f_body } ->
+    usages [ self start; self final; self incr; self_binder [ binder ] f_body ]
+  | E_for_each { fe_binder = binder1, binder2; collection; fe_body; _ } ->
+    let binders = binder1 :: Option.to_list binder2 in
+    usages [ self collection; self_binder binders fe_body ]
+  | E_deref _ -> Unused 
 
 (* Actually doing one instance of uncurrying *)
 
@@ -176,6 +201,14 @@ let rec uncurry_in_expression ~raise
     (f : Value_var.t) (depth : int) (expr : expression) :
   expression =
   let self = uncurry_in_expression ~raise f depth in
+  let self_param param e = 
+    match Param.get_mut_flag param with
+    | Mutable -> uncurry_in_expression ~raise f depth e
+    | Immutable ->
+      if Value_var.equal (Param.get_var param) f
+      then e
+      else uncurry_in_expression ~raise f depth e
+  in
   let self_binder vars e =
     if List.mem ~equal:Value_var.equal vars f
     then e
@@ -213,13 +246,13 @@ let rec uncurry_in_expression ~raise
   | E_variable _ ->
     return_id
   | E_lambda { binder; output_type; result } ->
-    let result = self_binder [Binder.get_var binder] result in
+    let result = self_param binder result in
     return (E_lambda { binder; output_type; result })
   | E_type_abstraction { type_binder; result } ->
     let result = self result in
     return (E_type_abstraction { type_binder; result })
   | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
-    let result = self_binder [fun_name; Binder.get_var binder] result in
+    let result = self_binder [ fun_name ] (self_param binder result) in
     return (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } })
   | E_let_in { let_binder; rhs; let_result; attr } ->
     let rhs = self rhs in
@@ -256,7 +289,29 @@ let rec uncurry_in_expression ~raise
   | E_type_inst {forall;type_} ->
     let forall = self forall in
     return @@ E_type_inst {forall;type_}
-  | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
+  | E_assign { expression; binder } ->
+    let expression = self expression in
+    return @@ E_assign { binder; expression }
+  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+    let rhs = self rhs in
+    let let_result = self let_result in
+    return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+  | E_while { cond; body } ->
+    let cond = self cond in
+    let body = self body in
+    return @@ E_while { cond ; body }
+  | E_for { binder; start; final; incr; f_body } ->
+    let start = self start in
+    let final = self final in
+    let incr = self incr in
+    let f_body = self_binder [ binder ] f_body in
+    return @@ E_for { binder; start; final; incr; f_body }
+  | E_for_each { fe_binder = binder1, binder2 as fe_binder; collection; fe_body; collection_type } ->
+    let binders = binder1 :: Option.to_list binder2 in
+    let collection = self collection in
+    let fe_body = self_binder binders fe_body in
+    return @@ E_for_each { fe_binder; collection; fe_body; collection_type }
+  | E_deref _ -> return_id
 
 (* Uncurrying as much as possible throughout an expression *)
 
@@ -300,7 +355,7 @@ let uncurry_expression (expr : expression) : expression =
               let fun_type = t_arrow ~loc:fun_type.location ?source_type:fun_type.source_type record_type ret_type () in
               (* Generate the rhs for the new let: (rec(f, (x1, x2, ..., xn)).E[x1, x2, ..., xn]) *)
               let rhs = { expr with
-                          expression_content = E_recursive { fun_name ; fun_type ; lambda = { binder = Binder.make var record_type ; output_type=ret_type; result } } ;
+                          expression_content = E_recursive { fun_name ; fun_type ; lambda = { binder = Param.make var record_type ; output_type=ret_type; result } } ;
                           type_expression = { type_content = T_arrow {type1 = record_type ; type2 = ret_type} ;
                                               orig_var = None ;
                                               location = Location.generated ;
@@ -311,7 +366,7 @@ let uncurry_expression (expr : expression) : expression =
               (* Construct the let *)
               let result = e_a_let_in (Binder.make fun_name rhs.type_expression) rhs result attr in
               let f (var, t) result =
-                let binder = Binder.make var t in
+                let binder = Param.make var t in
                 e_a_lambda { binder ; output_type = result.type_expression; result } t result.type_expression in
               (* Add the external lambdas *)
               let lambda = List.fold_right ~f ~init:result binder_types in
