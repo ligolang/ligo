@@ -7,7 +7,11 @@ open! Mini_c
 open Simple_utils.Trace
 open Simple_utils.Function
 
-let annotation_or_label annot label = Option.value ~default:label (Helpers.remove_empty_annotation annot)
+let nonempty = function
+  | "" -> None
+  | s -> Some s
+
+let annotation_or_label annot label = nonempty (Option.value ~default:label annot)
 
 let t_sum ~raise ~layout return compile_type m =
   let open AST.Helpers in
@@ -23,7 +27,7 @@ let t_sum ~raise ~layout return compile_type m =
       (fun (Label.Label label, ({associated_type;michelson_annotation;decl_pos=_}: AST.row_element)) ->
           let label = String.uncapitalize label in
           let a = compile_type associated_type in
-          (Some (annotation_or_label michelson_annotation label), a)
+          ((annotation_or_label michelson_annotation label), a)
       )
       aux node in
     snd m'
@@ -33,7 +37,7 @@ let t_sum ~raise ~layout return compile_type m =
     let aux (Label.Label l , (x : row_element )) =
       let l = String.uncapitalize l in
       let t = compile_type x.associated_type in
-      let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
+      let annot_opt = (annotation_or_label x.michelson_annotation l) in
       (annot_opt,t)
     in
     let rec lst_fold_right = function
@@ -81,7 +85,7 @@ let record_tree ~layout ?source_type compile_type m =
              let annot = (if is_tuple_lmap then
                             None
                           else
-                            Some (annotation_or_label michelson_annotation label)) in
+                            (annotation_or_label michelson_annotation label)) in
              (annot, { content = Field (Label label) ;
                           type_ = a })
           )
@@ -112,7 +116,7 @@ let t_record_to_pairs ~layout return compile_type m =
              ((if is_tuple_lmap then
                     None
                   else
-                    Some (annotation_or_label michelson_annotation label)),
+                    (annotation_or_label michelson_annotation label)),
                  a)
           )
           aux node in
@@ -122,7 +126,7 @@ let t_record_to_pairs ~layout return compile_type m =
       (* Right combs *)
       let aux (Label.Label l , (x : row_element)) =
         let t = compile_type x.associated_type in
-        let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
+        let annot_opt = (annotation_or_label x.michelson_annotation l) in
         (annot_opt,t)
       in
       let ts = List.map ~f:aux lst in
