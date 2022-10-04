@@ -120,7 +120,6 @@ let alice : user = {
 If we want the contents of a given field, we use the (`.`) infix
 operator, like so:
 
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=records1
@@ -150,6 +149,39 @@ let alice_admin = alice.is_admin;
 
 </Syntax>
 
+### Destructuring Record Fields
+
+We can also access fields of a record using the destructuring syntax. This 
+allows accessing multiple fields of a record in a concise manner, like so:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+const record[ id ; is_admin ; name ] = alice
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=records1
+let { id ; is_admin ; name } = alice
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=records1
+let { id, is_admin, name } = alice;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+let { id, is_admin, name } = alice;
+```
+
+</Syntax>
 
 ### Functional Updates
 
