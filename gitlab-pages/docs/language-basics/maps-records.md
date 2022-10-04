@@ -157,28 +157,38 @@ allows accessing multiple fields of a record in a concise manner, like so:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=records1
-const record[ id ; is_admin ; name ] = alice
+function get_id (const u : user) : nat is {
+  const record[ id ; is_admin ; name ] = u;
+} with id
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
-let { id ; is_admin ; name } = alice
+let get_id (u : user) = 
+  let { id ; is_admin ; name } = u in
+  id
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=records1
-let { id, is_admin, name } = alice;
+let get_id = (u : user) => { 
+  let { id, is_admin, name } = u;
+  id
+}
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
-let { id, is_admin, name } = alice;
+let getId = (u : user) => {
+  let { id, is_admin, name } = u;
+  return id
+}
 ```
 
 </Syntax>
