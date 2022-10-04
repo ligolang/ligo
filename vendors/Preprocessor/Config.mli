@@ -14,5 +14,9 @@ module type S =
     val string    : string_delimiter option
     val verbatim  : verbatim_delimiters option
     val file_ext  : string option (* File extension *)
-    val mk_module : string -> string -> string
+
+    type file_name   = string
+    type module_name = string
+
+    val mk_module : file_name -> module_name -> string
   end

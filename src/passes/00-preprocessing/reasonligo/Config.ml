@@ -24,5 +24,8 @@ let verbatim =
 
 let verbatim = Some verbatim
 
+type file_name   = string
+type module_name = string
+
 let mk_module file_name module_name =
   Printf.sprintf "module %s = %s" module_name file_name

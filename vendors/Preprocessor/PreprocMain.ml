@@ -26,6 +26,9 @@ module Config =
     let verbatim = None
     let file_ext = None
 
+    type file_name   = string
+    type module_name = string
+
     let mk_module file_name module_name =
       Printf.sprintf "(* module %s is %s *)" module_name file_name
   end

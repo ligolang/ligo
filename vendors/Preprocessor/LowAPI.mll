@@ -335,8 +335,7 @@ let import_action ~callback hash_pos state lexbuf =
             | Some import_path -> import_path in
           let mangled_filename = mangle import_path in
           let () = state#print @@
-                     Config.mk_module mangled_filename
-                                      import_module
+                     Config.mk_module mangled_filename import_module
 
           in state#push_import import_path mangled_filename
         else state
