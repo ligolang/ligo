@@ -133,8 +133,7 @@ and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
   | _ ->
     (match ty.type_content with
     AST.T_record { fields ; _ } ->
-      let kvs = List.sort (LMap.to_kv_list fields)
-        ~compare:(fun (l1, _) (l2, _) -> Label.compare l1 l2) in
+      let kvs = LMap.to_kv_list fields in
       let labels, tys = List.unzip kvs in
       let tys = List.map tys ~f:(fun ty -> ty.associated_type) in
 
@@ -148,7 +147,7 @@ and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
       if are_keys_numeric labels then
         Location.wrap @@ P_tuple ps
       else
-        Location.wrap @@ P_record (Record.LMap.of_list (List.zip_exn labels ps))
+        Location.wrap @@ P_record (Record.of_list (List.zip_exn labels ps))
     | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple")
 
 let print_matrix matrix =

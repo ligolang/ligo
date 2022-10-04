@@ -536,7 +536,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
         (Label field_name.value , pattern)
     in
     let lst = List.Ne.map aux @@ npseq_to_ne_list inj.ne_elements in
-    let lst = Record.LMap.of_list (List.Ne.to_list lst) in
+    let lst = Record.of_list (List.Ne.to_list lst) in
     Location.wrap ~loc @@ P_record lst
   | CST.PConstr pattern -> (
       let ((constr,p_opt), loc) = r_split pattern in
@@ -593,7 +593,8 @@ and compile_record_let_destructuring ~raise :
     let lst = List.Ne.to_list lst in
     let (labels,patterns) = List.unzip lst in
     let nested_patterns = List.map ~f:(conv ~raise) patterns in
-    let pattern = Location.wrap @@ Pattern.P_record (Record.LMap.of_list (List.zip_exn labels nested_patterns)) in
+    let lps = List.zip_exn labels nested_patterns in
+    let pattern = Location.wrap @@ Pattern.P_record (Record.of_list lps) in
     let cases : (AST.expression , AST.ty_expr option) Match_expr.match_case = { pattern ; body } in
     e_matching ~loc matchee [cases]
 

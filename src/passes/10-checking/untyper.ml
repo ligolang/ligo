@@ -120,10 +120,11 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       let body = self body in
       let case = match Record.is_tuple fields with
         | false ->
-          let pattern = Location.wrap (Pattern.P_record (Record.LMap.map aux fields)) in
+          let pattern = Location.wrap (Pattern.P_record (Record.map aux fields)) in
           ({ pattern ; body } : _ Match_expr.match_case)
         | true ->
-          let patterns = List.map ~f:(fun (_,p) -> aux p) (Record.LMap.to_kv_list fields) in
+          let patterns = Record.map aux fields in
+          let patterns = Record.LMap.values patterns in
           let pattern = Location.wrap (Pattern.P_tuple patterns) in
           ({ pattern ; body } : _ Match_expr.match_case)
       in

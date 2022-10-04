@@ -10,7 +10,7 @@ and 'ty_exp pattern_repr =
   | P_list of 'ty_exp list_pattern
   | P_variant of Label.t * 'ty_exp t
   | P_tuple of 'ty_exp t list
-  | P_record of 'ty_exp t Record.LMap.t
+  | P_record of 'ty_exp t Record.t
 
 and 't t = 't pattern_repr Location.wrap
   [@@deriving eq,compare,yojson,hash]
@@ -34,7 +34,8 @@ and pp type_expression ppf = fun p ->
     let aux ppf (l,p) =
       fprintf ppf "%a = %a" Label.pp l (pp type_expression) p
     in
-    fprintf ppf "{ %a }" Simple_utils.PP_helpers.(list_sep aux (tag " ; ")) (Record.LMap.to_kv_list lps)
+    let kvs = Record.LMap.to_kv_list lps in
+    fprintf ppf "{ %a }" Simple_utils.PP_helpers.(list_sep aux (tag " ; ")) kvs
 
 let rec fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a =
   fun f acc p ->
@@ -48,7 +49,7 @@ let rec fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a =
     )
     | P_variant (_,p) -> fold_pattern f acc p
     | P_tuple lp -> List.fold_left ~f:(fold_pattern f) ~init:acc lp
-    | P_record lps -> Record.LMap.fold (fun _ p acc -> fold_pattern f acc p) lps acc
+    | P_record lps -> Record.fold (fold_pattern f) acc lps
 
 let rec fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a =
   fun f acc p ->
@@ -62,7 +63,7 @@ let rec fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a =
     )
     | P_variant (_,p) -> fold f acc p
     | P_tuple lp -> List.fold_left ~f:(fold f) ~init:acc lp
-    | P_record lps -> List.fold_left ~f:(fun acc (_,p) -> fold f acc p) ~init:acc (Record.LMap.to_kv_list lps)
+    | P_record lps -> Record.fold (fold f) acc lps
 
 let rec map : ('a -> 'b ) -> 'a t -> 'b t =
   fun f p ->
@@ -94,7 +95,7 @@ let rec map : ('a -> 'b ) -> 'a t -> 'b t =
       let lp = List.map ~f:self lp in
       P_tuple lp
     | P_record lps ->
-      let lps = Record.LMap.map (fun p -> self p) lps in
+      let lps = Record.map self lps in
       P_record lps
     in Location.map aux p
 
@@ -128,10 +129,7 @@ let rec fold_map : ('a -> 'b -> 'a * 'c) -> 'a -> 'b t -> 'a * 'c t =
       let acc,lp = List.fold_map ~f:self ~init:acc lp in
       ret acc @@ P_tuple lp
     | P_record lps ->
-      let acc, lps = Record.LMap.fold_map ~f:(fun _ p acc  -> 
-        let acc, p = self acc p in
-        acc, p
-      ) ~init:acc lps in
+      let acc, lps = Record.fold_map self acc lps in
       ret acc @@ P_record lps
 
 let binders t =

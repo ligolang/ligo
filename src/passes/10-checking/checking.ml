@@ -1242,11 +1242,11 @@ and infer_pattern
       | Some (orig_var, row) ->
         make_t_orig_var ~loc (T_record row) None orig_var
     in
-    let labels, pats = List.unzip (Record.LMap.to_kv_list record_pat) in
+    let labels, pats = List.unzip (Record.LMap.values record_pat) in
     ( ctx
     , record_type
-    , let%bind pats = Elaboration.all (List.map ~f:snd pats) in
-      return @@ P_record (Record.LMap.of_list (List.zip_exn labels pats)))
+    , let%bind pats = Elaboration.all pats in
+      return @@ P_record (Record.of_list (List.zip_exn labels pats)))
 
 
 and check_pattern
@@ -1328,9 +1328,9 @@ and check_pattern
             let ctx, pat = self ~ctx pat label_row_elem.associated_type in
             ctx, (label, pat))
       in
-      let labels, pats = List.unzip (Record.LMap.to_kv_list record_pat) in
+      let labels, pats = List.unzip (Record.LMap.values record_pat) in
       ( ctx
-      , let%bind pats = Elaboration.all (List.map ~f:snd pats) in
+      , let%bind pats = Elaboration.all pats in
         return @@ P_record (Record.LMap.of_list (List.zip_exn labels pats)))
     | _ ->
       let ctx, type_', pat = infer ~ctx pat in

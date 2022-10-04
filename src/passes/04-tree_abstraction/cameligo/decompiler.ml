@@ -749,7 +749,9 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
           (fun (Label.Label x) pattern acc -> 
             let pattern = decompile_pattern pattern in
             let field_name = wrap x in
-            (wrap ({ field_name ; eq = Token.ghost_eq ; pattern }:CST.field_pattern))::acc)
+            let field_pattern : CST.field_pattern =
+              { field_name ; eq = Token.ghost_eq ; pattern } in 
+            (wrap field_pattern) :: acc)
           lps []
       in
       let field_patterns = list_to_nsepseq ~sep:Token.ghost_semi field_patterns in
