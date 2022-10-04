@@ -8,6 +8,8 @@ function SyntaxSwitch(props) {
       className={styles.syntaxSwitch}
       defaultValue={props.syntax}
       onChange={e => {
+        if (typeof window === 'undefined') return
+
         const url = new URL(window.location);
         url.searchParams.set("lang", e.target.value);
         window.history.pushState(null, "", url.toString());
