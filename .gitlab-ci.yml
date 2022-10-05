@@ -141,9 +141,8 @@ xrefcheck:
     # nix run github:serokell/xrefcheck
     # Once flakes roll out to stable
     # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
-    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
+    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.2.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
     - xrefcheck/bin/xrefcheck
-  allow_failure: true #TODO could be better if we do not allow failure for realeases
 
 .docker-image:
   stage: push
