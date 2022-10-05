@@ -219,9 +219,9 @@ and decompile_statements : AST.expression -> _ = fun expr ->
         AST.PP.expression expr
         Location.pp expr.location
 
-and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
+and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern =
   fun pattern ->
-    let is_unit_pattern (p : AST.type_expression option Pattern.t) =
+    let is_unit_pattern (p : AST.type_expression option AST.Pattern.t) =
       match p.wrap_content with P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | P_unit ->
@@ -444,7 +444,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let expr  = decompile_expression matchee in
     let (opening,closing) = enclosing_brackets in
     let aux decompile_f =
-      fun ({ pattern ; body }:(AST.expression, AST.type_expression option) Match_expr.match_case) ->
+      fun ({ pattern ; body }:(AST.expression, AST.type_expression option) AST.Match_expr.match_case) ->
         let pattern = decompile_pattern pattern in
         let rhs = decompile_f body in
         let clause : (_ CST.case_clause)= { pattern ; arrow = Token.ghost_arrow ; rhs } in

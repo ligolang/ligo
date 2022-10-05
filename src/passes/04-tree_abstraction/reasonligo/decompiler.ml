@@ -381,7 +381,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr_with_par @@ CST.EConstr (wrap (constr, Some element))
   | E_matching {matchee; cases} ->
     let expr  = decompile_expression matchee in
-    let aux : _ Match_expr.match_case -> _ CST.case_clause CST.reg =
+    let aux : _ AST.Match_expr.match_case -> _ CST.case_clause CST.reg =
       fun { pattern ; body } ->
         let rhs = decompile_expression body in
         let pattern = decompile_pattern pattern in
@@ -705,9 +705,9 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     )
   )
 
-and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
+and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern =
   fun pattern ->
-    let is_unit_pattern (p : AST.type_expression option Pattern.t) =
+    let is_unit_pattern (p : AST.type_expression option AST.Pattern.t) =
       match p.wrap_content with P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | P_unit -> CST.PUnit (wrap (ghost, ghost))

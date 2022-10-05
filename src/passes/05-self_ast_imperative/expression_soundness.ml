@@ -1,9 +1,9 @@
 module Var = Simple_utils.Var
 module Trace = Simple_utils.Trace
+open Ligo_prim
 open Ast_imperative
 open Errors
 open Simple_utils.Trace
-open Ligo_prim
 
 let check_linearity_record_fields ~raise : expression -> unit = fun exp ->
   match exp.expression_content with

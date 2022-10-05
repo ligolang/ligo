@@ -41,7 +41,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
 
 let decompile_pattern_to_string ~syntax pattern =
-  let p = Pattern.map (decompile_type_expression_option) pattern in
+  let p = O.Pattern.map (decompile_type_expression_option) pattern in
   let s = match syntax with
     Some Syntax_types.JsLIGO ->
       Tree_abstraction.Jsligo.decompile_pattern_to_string p
@@ -99,7 +99,7 @@ let rec decompile_expression : O.expression -> I.expression =
     let const = Constructor.map self const in
     return @@ I.E_constructor const
   | O.E_matching m ->
-    let m = Match_expr.map self self_type_opt m in
+    let m = O.Match_expr.map self self_type_opt m in
     return @@ I.E_matching m
   | O.E_record recd ->
     let recd = Record.map self recd in

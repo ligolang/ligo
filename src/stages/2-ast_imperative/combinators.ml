@@ -1,3 +1,6 @@
+open Ligo_prim
+open Literal_types
+
 open Types
 module Option = Simple_utils.Option
 
@@ -37,8 +40,7 @@ type module_expr_content = [%import: Types.module_expr_content]
       wrap_get = ("module_content" , get) ;
     } ]
 
-open Ligo_prim
-open Literal_types
+
 
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
 let t_singleton ?loc x = make_t ?loc @@ T_singleton x

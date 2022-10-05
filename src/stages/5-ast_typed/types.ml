@@ -113,6 +113,8 @@ end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
 
+module Pattern = Pattern.Make(Record)
+
 type 'e matching_content_case = {
     constructor : Label.t ;
     pattern : Value_var.t ;

@@ -106,6 +106,10 @@ module Access_label = struct
 end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
+
+module Match_expr = Match_expr.Make(Pattern.Make) (Record)
+module Pattern = Pattern.Make(Record)
+
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t

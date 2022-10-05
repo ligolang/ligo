@@ -55,6 +55,8 @@ let tuple_of_record (m: _ t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
+let to_list = LMap.to_kv_list
+
 module PP = struct
   open Format
   open Simple_utils.PP_helpers
