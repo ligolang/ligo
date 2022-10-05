@@ -760,13 +760,16 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq pl in
       CST.PPar (wrap (par (CST.PTuple (wrap pl))))
-    | P_record (llst,lst) ->
-      let pl = List.map ~f:decompile_pattern lst in
-      let fields_name = List.map ~f:(fun (Label x) -> wrap x) llst in
+    | P_record lps ->
       let field_patterns =
-        List.map
-          ~f:(fun (field_name,pattern) -> wrap ({ field_name ; eq = ghost ; pattern }:CST.field_pattern))
-          (List.zip_exn fields_name pl)
+        Record.LMap.fold
+          (fun (Label.Label x) pattern acc -> 
+            let pattern = decompile_pattern pattern in
+            let field_name = wrap x in
+            let field_pattern 
+              = CST.{ field_name ; eq = Token.ghost_eq ; pattern } in 
+            (wrap field_pattern) :: acc)
+          lps []
       in
       let field_patterns = list_to_nsepseq field_patterns in
       let inj = ne_inject braces field_patterns ~attr:[] in

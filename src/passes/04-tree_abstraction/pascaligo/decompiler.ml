@@ -262,14 +262,14 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
       CST.P_Tuple (Region.wrap_ghost (par pl))
-    | P_record (labels, patterns) ->
-      let aux : Label.t * AST.type_expression option Pattern.t -> CST.field_pattern CST.reg =
-        fun (Label label, pattern) ->
+    | P_record lps ->
+      let aux =
+        fun (Label.Label label) pattern acc ->
           let field_rhs = decompile_pattern pattern in
           let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_eq ; field_rhs ; attributes = [] } in
-          Region.wrap_ghost full_field
+          (Region.wrap_ghost full_field)::acc
       in
-      let field_patterns = List.map ~f:aux (List.zip_exn labels patterns) in
+      let field_patterns = Record.LMap.fold aux lps [] in
       let inj = inject Token.ghost_record (list_to_sepseq ~sep:Token.ghost_semi field_patterns) in
       CST.P_Record (Region.wrap_ghost inj)
 
