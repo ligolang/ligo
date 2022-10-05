@@ -1,4 +1,4 @@
-(*
+(* (*
   Due to the nature of the pattern matching compilation (Core -> Typed), FAILWITH expression are sometimes generated when
   patterns matching a given expression alternates between variable and constructors.
 
@@ -119,4 +119,4 @@ let compress_matching : expression -> expression =
 
 let peephole_expression exp =
   let exp' = compress_matching exp in
-  exp'
+  exp' *)

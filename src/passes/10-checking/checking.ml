@@ -1404,31 +1404,12 @@ and compile_match
   (* Elaborate (by compiling pattern) *)
   return
   @@
-  match matchee.expression_content with
-  | E_variable var ->
-    let match_expr =
-      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
-    in
-    match_expr.expression_content
-  | _ ->
-    let var = Value_var.fresh ~loc ~name:"match_" () in
-    let match_expr =
-      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
-    in
-    O.E_let_in
-      { let_binder = Binder.make var matchee.type_expression
-      ; rhs = matchee
-      ; let_result = { match_expr with location = loc }
-      ; attr =
-          { inline = false
-          ; no_mutation = false
-          ; public = true
-          ; view = false
-          ; hidden = false
-          ; thunk = false
-          }
-      }
-
+  let cases = List.map cases  
+    ~f:(fun (pattern, body) ->
+          let pattern = Pattern.map (fun _ -> matchee_type) pattern in
+          Match_expr.{ pattern ; body }
+    ) in
+  O.E_matching { matchee ; cases}
 
 and infer_module_expr ~raise ~options ~ctx (mod_expr : I.module_expr)
     : Context.t * Signature.t * (O.module_expr, _, _) Elaboration.t
