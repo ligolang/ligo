@@ -4,14 +4,14 @@ variables:
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - pretooling                      # changelog
-  - build                           # build, test, produces binaries/.deb/doc within docker
-  - post-build-action               # Post build action
-  - docker-extract                  # extract what have been built and expose them as artifact
+  # - pretooling                      # changelog
+  # - build                           # build, test, produces binaries/.deb/doc within docker
+  # - post-build-action               # Post build action
+  # - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
-  - push                            # deploy docker images, pages, releases (tag)
-  - deploy                          # deploy web IDE, website preview
-  - release                         # Manage branch matching ^release/*
+  # - push                            # deploy docker images, pages, releases (tag)
+  # - deploy                          # deploy web IDE, website preview
+  # - release                         # Manage branch matching ^release/*
 
 include:
   # jobs for managing process around changelog generation
