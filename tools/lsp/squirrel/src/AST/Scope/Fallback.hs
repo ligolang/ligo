@@ -19,7 +19,7 @@ import Data.Kind qualified (Type)
 import Data.HashMap.Lazy qualified as HashMap
 import Data.HashMap.Lazy (HashMap)
 import Data.List (foldl')
-import Data.List.NonEmpty (unzip)
+import Data.List.NonEmpty (toList, unzip)
 import Data.Map qualified as Map
 import Data.Map (Map)
 import Data.Maybe (catMaybes, fromMaybe, listToMaybe, mapMaybe, maybeToList)
@@ -455,7 +455,7 @@ instance HasGo Binding where
           (subforest, fromMaybe [] -> subRefs) <-
             fmap unzip $ withScopes (declRef:paramRefs) $ case expr of
               (layer -> Just (TSum variants)) -> do
-                (sts, concat -> refs) <- unzip <$> wither scopeVariant variants
+                (sts, concat -> refs) <- unzip <$> wither scopeVariant (toList variants)
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
               _ -> pure Nothing
           pure $ Just

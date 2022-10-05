@@ -15,6 +15,7 @@ module AST.Pretty
   ) where
 
 import Data.Kind (Type)
+import Data.List.NonEmpty (NonEmpty (..), toList)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
@@ -187,7 +188,7 @@ instance Pretty1 AST.Type where
   pp1 = \case
     TArrow    dom codom -> sop dom "->" [codom]
     TRecord   fields    -> sexpr "RECORD" fields
-    TSum      variants  -> sexpr "SUM" variants
+    TSum      variants  -> sexpr "SUM" (toList variants)
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" xs
     TString   t         -> sexpr "TSTRING" [pp t]
@@ -441,8 +442,7 @@ instance LPP1 'Pascal AST.Type where
     TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
     TProduct  [element] -> element
     TProduct  elements  -> parens $ train " *" elements
-    TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
-    TSum      []        -> error "looks like you've been given malformed AST" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("|"<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -594,8 +594,7 @@ instance LPP1 'Reason AST.Type where
     TArrow    dom codom -> dom <+> "=>" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  elements  -> tuple elements
-    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
-    TSum      []        -> error "malformed TSum type" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -719,8 +718,7 @@ instance LPP1 'Js AST.Type where
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  [element] -> element
     TProduct  elements  -> tupleJsLIGO elements
-    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
-    TSum      []        -> error "malformed TSum type" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -851,8 +849,7 @@ instance LPP1 'Caml AST.Type where
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
     TProduct  elements  -> train " *" elements
-    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
-    TSum      []        -> error "malformed TSum type" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
     TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
