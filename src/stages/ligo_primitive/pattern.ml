@@ -10,6 +10,7 @@ module Container = struct
     val fold_map : ('b -> 'a -> 'b * 'c) -> 'b -> 'a t -> 'b * 'c t
   
     val to_list : 'a t -> (Label.t * 'a) list
+    val of_list : (Label.t * 'a) list -> 'a t
   end
   
   module List : S = struct
@@ -31,6 +32,7 @@ module Container = struct
                   init, (l,t)) ~init
   
     let to_list xs = xs
+    let of_list : (Label.t * 'a) list -> 'a t = fun xs -> xs
   end
 end
 

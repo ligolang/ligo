@@ -264,12 +264,12 @@ and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern 
       CST.P_Tuple (Region.wrap_ghost (par pl))
     | P_record lps ->
       let aux =
-        fun (Label.Label label) pattern acc ->
+        fun acc (Label.Label label, pattern) ->
           let field_rhs = decompile_pattern pattern in
           let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_eq ; field_rhs ; attributes = [] } in
           (Region.wrap_ghost full_field)::acc
       in
-      let field_patterns = Record.LMap.fold aux lps [] in
+      let field_patterns = List.fold ~f:aux (Container.List.to_list lps) ~init:[] in
       let inj = inject Token.ghost_record (list_to_sepseq ~sep:Token.ghost_semi field_patterns) in
       CST.P_Record (Region.wrap_ghost inj)
 

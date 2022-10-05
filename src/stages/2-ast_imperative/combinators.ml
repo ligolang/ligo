@@ -166,7 +166,7 @@ let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;case
 let e_matching_tuple ?loc matchee (binders: _ Binder.t list) body : expression =
   let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
   let pattern = Location.wrap ?loc @@ Pattern.P_tuple pv_lst in
-  let cases = [ Match_expr.{ pattern ; body } ] in
+  let cases = [ Types.Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 
 let e_param_matching_tuple ?loc matchee (params: _ Param.t list) body : expression =
@@ -186,7 +186,7 @@ let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : 
   let binders = List.map binders ~f:(fun (l,b) ->
     Label.of_string l, Location.wrap ?loc (Pattern.P_var b)
   ) in
-  let lps = Record.of_list binders in
+  let lps = Container.List.of_list binders in
   let pattern = Location.wrap ?loc (Pattern.P_record lps) in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
@@ -202,8 +202,8 @@ let e_param_matching_record ?loc matchee (params: (string * _ Param.t) list) bod
   let params = List.map params ~f:(fun (l,p) ->
     Label.of_string l, Location.wrap ?loc (Pattern.P_var (Param.to_binder p))
   ) in
-  let lps = Record.of_list params in
-  let pattern = Location.wrap ?loc @@ Pattern.P_record lps in
+  let lps = Container.List.of_list params in
+  let pattern = Location.wrap ?loc @@ Types.Pattern.P_record lps in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 
