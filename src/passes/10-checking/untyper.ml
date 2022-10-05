@@ -111,19 +111,20 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       let cases = List.map ~f:aux cases in
       return (e_matching matchee cases)
     | Match_record {fields ; body ; tv=_} -> (
-      let aux : (Label.t * Ast_typed.type_expression Binder.t) -> Label.t * Ast_core.type_expression option Pattern.t =
-        fun (Label label, binder) -> (
+      let aux : (Ast_typed.type_expression Binder.t) -> Ast_core.type_expression option Pattern.t =
+        fun binder -> (
           let proj = Location.wrap @@ Pattern.P_var (Binder.map (Fn.compose Option.return self_type) binder) in
-          (Label label, proj)
+          proj
         )
       in
-      let (labels,patterns) = List.unzip @@ List.map ~f:aux (Record.LMap.to_kv_list fields) in
       let body = self body in
       let case = match Record.is_tuple fields with
         | false ->
-          let pattern = Location.wrap (Pattern.P_record (labels,patterns)) in
+          let pattern = Location.wrap (Pattern.P_record (Record.map aux fields)) in
           ({ pattern ; body } : _ Match_expr.match_case)
         | true ->
+          let patterns = Record.map aux fields in
+          let patterns = Record.LMap.values patterns in
           let pattern = Location.wrap (Pattern.P_tuple patterns) in
           ({ pattern ; body } : _ Match_expr.match_case)
       in
