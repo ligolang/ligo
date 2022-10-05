@@ -295,19 +295,14 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   | E_deref _
   | E_literal _ | E_variable _  | E_module_accessor _ as e' -> (init, return e')
 
-and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
-  match m with
-  | Match_variant {cases ; tv} -> (
-      let aux init {constructor ; pattern ; body} =
-        let (init, body) = fold_map_expression f init body in
-        (init, {constructor; pattern ; body})
-      in
-      let (init,cases) = List.fold_map ~f:aux ~init cases in
-      (init, Match_variant {cases ; tv})
-    )
-  | Match_record { fields; body; tv } ->
-      let (init, body) = fold_map_expression f init body in
-      (init, Match_record { fields ; body ; tv })
+and fold_map_case : 'a fold_mapper -> 'a -> (expression, type_expression) Match_expr.match_case -> 'a * (expression, type_expression) Match_expr.match_case
+  = fun f init { pattern ; body } -> 
+      let init, body = fold_map_expression f init body in
+      init, { pattern ; body }
+
+and fold_map_cases : 'a fold_mapper -> 'a -> (expression, type_expression) Match_expr.match_case list -> 'a * (expression, type_expression) Match_expr.match_case list 
+  = fun f init ms ->
+      List.fold_map ms ~init ~f:(fold_map_case f)
 
 and fold_map_declaration = fun m acc (x : declaration) ->
   match Location.unwrap x with

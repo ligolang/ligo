@@ -113,26 +113,6 @@ end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
 
-type 'e matching_content_case = {
-    constructor : Label.t ;
-    pattern : Value_var.t ;
-    body : 'e ;
-  }
-
-and 'e matching_content_case_list = 'e matching_content_case list
-
-and 'e matching_content_variant = {
-    cases: 'e matching_content_case_list;
-    tv: type_expression;
-  }
-  [@@deriving eq,compare,yojson,hash]
-
-type 'e matching_content_record = {
-  fields : (type_expression Binder.t) Record.LMap.t;
-  body : 'e ;
-  tv : type_expression;
-} [@@deriving eq,compare,yojson,hash]
-
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t
@@ -148,7 +128,7 @@ type expression_content =
   | E_type_abstraction of expr Type_abs.t
   (* Variant *)
   | E_constructor of expr Constructor.t (* For user defined constructors *)
-  | E_matching of matching
+  | E_matching of (expr, ty_expr) Match_expr.t
   (* Record *)
   | E_record of expr Record.t
   | E_accessor of expr Accessor.t
@@ -172,15 +152,6 @@ and let_in = {
     rhs: expression ;
     let_result: expression ;
     attr: ValueAttr.t ;
-  }
-
-and matching_expr =
-  | Match_variant of expr matching_content_variant
-  | Match_record of expr matching_content_record
-
-and matching = {
-    matchee: expression ;
-    cases: matching_expr ;
   }
 
 and expression = {
