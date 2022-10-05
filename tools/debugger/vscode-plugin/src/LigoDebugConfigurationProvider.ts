@@ -70,8 +70,12 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 			);
 		config.entrypoint = entrypoint;
 
-		const contractMetadata : ContractMetadata =
+		const contractMetadata : Maybe<ContractMetadata> =
 			(await this.client.sendMsg('getContractMetadata', { entrypoint })).contractMetadata;
+
+		if (!isDefined(contractMetadata)) {
+			return config;
+		}
 
 		const michelsonEntrypoint : string =
 			await tryExecuteCommand(
