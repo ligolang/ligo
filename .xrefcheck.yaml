@@ -33,6 +33,8 @@ verification:
     - .gitlab/merge_request_templates/
     - .gitlab/issue_templates/
 
+    - vendors/
+
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
   virtualFiles:
