@@ -374,7 +374,13 @@ let compile_contract_file ~raise ~options source_file entry_point declared_views
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
-  Ast_aggregated.e_a_lambda {result=typed_exp'; output_type = out_ty ; binder=Param.make arg_binder in_ty} in_ty out_ty
+  Ast_aggregated.e_a_lambda
+    { result = typed_exp'
+    ; output_type = out_ty
+    ; binder = Param.make arg_binder in_ty
+    }
+    in_ty
+    out_ty
 
 
 let rec val_to_ast ~raise ~loc
@@ -659,7 +665,7 @@ let rec val_to_ast ~raise ~loc
               Ast_aggregated.PP.type_expression
               ty))
         (match ty.type_content with
-         | T_constant { injection = Chain_id ; _ } -> Some ()
+         | T_constant { injection = Chain_id; _ } -> Some ()
          | _ -> None)
     in
     e_a_chain_id s
@@ -828,9 +834,10 @@ let rec val_to_ast ~raise ~loc
   | V_Mutation _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: mutation"
   | V_Gen _ ->
-     raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
+    raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
   | V_location _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: location"
+
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in

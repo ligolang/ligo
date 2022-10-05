@@ -1,3 +1,4 @@
+let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
 
 module Tezos = struct
 
@@ -89,7 +90,7 @@ module Big_map = struct
   [@thunk] [@inline] let literal (type k v) (l : (k * v) list) : (k, v) big_map = [%external ("BIG_MAP_LITERAL", l)]
 
 #if CURRY
-  let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
+  let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%external ("MAP_MEM", k, m)]
   let add (type k v) (k : k) (v : v) (m : (k, v) big_map) : (k, v) big_map = [%external ("MAP_ADD", k, v, m)]
   let remove (type k v) (k : k) (m : (k, v) big_map) : (k, v) big_map = [%external ("MAP_REMOVE", k, m)]
   let update (type k v) (k : k) (v : v option) (m : (k, v) big_map) : (k, v) big_map = [%external ("MAP_UPDATE", k, v, m)]
@@ -99,7 +100,7 @@ module Big_map = struct
 #endif
 
 #if UNCURRY
-  let mem (type k v) ((k, m) : k * (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
+  let mem (type k v) ((k, m) : k * (k, v) big_map) : bool = [%external ("MAP_MEM", k, m)]
   let add (type k v) ((k, v, m) : k * v * (k, v) big_map) : (k, v) big_map = [%external ("MAP_ADD", k, v, m)]
   let remove (type k v) ((k, m) : k * (k, v) big_map) : (k, v) big_map = [%external ("MAP_REMOVE", k, m)]
   let update (type k v) ((k, v, m) : k * v option * (k, v) big_map) : (k, v) big_map = [%external ("MAP_UPDATE", k, v, m)]
@@ -112,11 +113,11 @@ end
 
 module Map = struct
   let empty (type k v) : (k, v) map = [%external ("MAP_EMPTY")]
-  let size (type k v) (m : (k, v) map) : nat = [%Michelson ({| { SIZE } |} : (k, v) map -> nat)] m
+  let size (type k v) (m : (k, v) map) : nat = [%external ("MAP_SIZE", m)]
   [@thunk] [@inline] let literal (type k v) (l : (k * v) list) : (k, v) map = [%external ("MAP_LITERAL", l)]
 
 #if CURRY
-  let mem (type k v) (k : k) (m : (k, v) map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) map -> bool)] (k, m)
+  let mem (type k v) (k : k) (m : (k, v) map) : bool = [%external ("MAP_MEM", k, m)]
   let add (type k v) (k : k) (v : v) (m : (k, v) map) : (k, v) map = [%external ("MAP_ADD", k, v, m)]
   let remove (type k v) (k : k) (m : (k, v) map) : (k, v) map = [%external ("MAP_REMOVE", k, m)]
   let update (type k v) (k : k) (v : v option) (m : (k, v) map) : (k, v) map = [%external ("MAP_UPDATE", k, v, m)]
@@ -129,7 +130,7 @@ module Map = struct
 #endif
 
 #if UNCURRY
-  let mem (type k v) ((k, m) : k * (k, v) map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) map -> bool)] (k, m)
+  let mem (type k v) ((k, m) : k * (k, v) map) : bool = [%external ("MAP_MEM", k, m)]
   let add (type k v) ((k, v, m) : k * v * (k, v) map) : (k, v) map = [%external ("MAP_ADD", k, v, m)]
   let remove (type k v) ((k, m) : k * (k, v) map) : (k, v) map = [%external ("MAP_REMOVE", k, m)]
   let update (type k v) ((k, v, m) : k * v option * (k, v) map) : (k, v) map = [%external ("MAP_UPDATE", k, v, m)]
@@ -145,8 +146,8 @@ end
 
 module Set = struct
   let empty (type a) : a set = [%external ("SET_EMPTY")]
-  let size (type a) (s : a set) : nat = [%Michelson ({| { SIZE } |} : a set -> nat)]  s
-  let cardinal (type a) (s : a set) : nat = [%Michelson ({| { SIZE } |} : a set -> nat)] s
+  let size (type a) (s : a set) : nat = [%external ("SET_SIZE", s)]
+  let cardinal (type a) (s : a set) : nat = [%external ("SET_SIZE", s)]
   [@thunk] [@inline] let literal (type a) (l : a list) : a set = [%external ("SET_LITERAL", l)]
 
 #if CURRY
@@ -172,8 +173,8 @@ module Set = struct
 end
 
 module List = struct
-  let length (type a) (xs : a list) : nat = [%Michelson ({| { SIZE } |} : a list -> nat)]  xs
-  let size (type a) (xs : a list) : nat = [%Michelson ({| { SIZE } |} : a list -> nat)]  xs
+  let length (type a) (xs : a list) : nat = [%external ("LIST_SIZE", xs)]
+  let size (type a) (xs : a list) : nat = [%external ("LIST_SIZE", xs)]
   let head_opt (type a) (xs : a list) : a option = match xs with | [] -> None | (x :: _) -> Some x
   let tail_opt (type a) (xs : a list) : (a list) option = match xs with | [] -> None | (_ :: xs) -> Some xs
 
@@ -202,30 +203,30 @@ module List = struct
 end
 
 module String = struct
-  let length (b : string) : nat = [%Michelson ({| { SIZE } |} : string -> nat)] b
+  let length (b : string) : nat = [%external ("SIZE", b)]
 
 #if CURRY
-  let concat (b1 : string) (b2 : string) : string = [%Michelson ({| { UNPAIR ; CONCAT } |} : string * string -> string)] (b1, b2)
-  let sub (s : nat) (l : nat) (b : string) : string = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string "SLICE" ; FAILWITH } {} } |} : nat * nat * string -> string)] (s, l, b)
+  let concat (b1 : string) (b2 : string) : string = [%external ("CONCAT", b1, b2)]
+  let sub (s : nat) (l : nat) (b : string) : string = [%external ("SLICE", s, l, b)]
 #endif
 
 #if UNCURRY
-  let concat ((b1, b2) : string * string) : string = [%Michelson ({| { UNPAIR ; CONCAT } |} : string * string -> string)] (b1, b2)
-  let sub ((s, l, b) : nat * nat * string) : string = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string "SLICE" ; FAILWITH } {} } |} : nat * nat * string -> string)] (s, l, b)
+  let concat ((b1, b2) : string * string) : string = [%external ("CONCAT", b1, b2)]
+  let sub ((s, l, b) : nat * nat * string) : string = [%external ("SLICE", s, l, b)]
 #endif
 
 end
 
 module Option = struct
-  let unopt (type a) (v : a option) : a = [%external ("UNOPT", v)]
+  let unopt (type a) (v : a option) : a = match v with | Some v -> v | None -> failwith "option is None"
 
 #if CURRY
-  let unopt_with_error (type a) (v : a option) (s : string) : a = [%external ("UNOPT_WITH_ERROR", v, s)]
+  let unopt_with_error (type a) (v : a option) (s : string) : a = match v with | Some v -> v | None -> failwith s
   [@thunk] let map (type a b) (f : a -> b) (v : a option) : b option = [%external ("OPTION_MAP", f, v)]
 #endif
 
 #if UNCURRY
-  let unopt_with_error (type a) ((v, s) : (a option) * string) : a = [%external ("UNOPT_WITH_ERROR", v, s)]
+  let unopt_with_error (type a) ((v, s) : (a option) * string) : a = match v with | Some v -> v | None -> failwith s
   [@thunk] let map (type a b) ((f, v) : (a -> b) * (a option)) : b option = [%external ("OPTION_MAP", f, v)]
 #endif
 
@@ -234,16 +235,16 @@ end
 module Bytes = struct
   let pack (type a) (v : a) : bytes = [%Michelson ({| { PACK } |} : a -> bytes)] v
   let unpack (type a) (b : bytes) : a option = [%external ("BYTES_UNPACK", b)]
-  let length (b : bytes) : nat = [%Michelson ({| { SIZE } |} : bytes -> nat)] b
+  let length (b : bytes) : nat = [%external ("SIZE", b)]
 
 #if CURRY
-  let concat (b1 : bytes) (b2 : bytes) : bytes = [%Michelson ({| { UNPAIR ; CONCAT } |} : bytes * bytes -> bytes)] (b1, b2)
-  let sub (s : nat) (l : nat) (b : bytes) : bytes = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string "SLICE" ; FAILWITH } {} } |} : nat * nat * bytes -> bytes)] (s, l, b)
+  let concat (b1 : bytes) (b2 : bytes) : bytes = [%external ("CONCAT", b1, b2)]
+  let sub (s : nat) (l : nat) (b : bytes) : bytes = [%external ("SLICE", s, l, b)]
 #endif
 
 #if UNCURRY
-  let concat ((b1, b2) : bytes * bytes) : bytes = [%Michelson ({| { UNPAIR ; CONCAT } |} : bytes * bytes -> bytes)] (b1, b2)
-  let sub ((s, l, b) : nat * nat * bytes) : bytes = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string "SLICE" ; FAILWITH } {} } |} : nat * nat * bytes -> bytes)] (s, l, b)
+  let concat ((b1, b2) : bytes * bytes) : bytes = [%external ("CONCAT", b1, b2)]
+  let sub ((s, l, b) : nat * nat * bytes) : bytes = [%external ("SLICE", s, l, b)]
 #endif
 
 end
@@ -266,35 +267,29 @@ module Crypto = struct
 
 end
 
-  let assert (b : bool) : unit = [%Michelson ({| { IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } } |} : bool -> unit)] b
-  let assert_some (type a) (v : a option) : unit =
-    [%Michelson ({| { IF_NONE { PUSH string "failed assert some" ; FAILWITH } { DROP ; UNIT } } |} : a option -> unit)] v
-  let assert_none (type a) (v : a option) : unit =
-    [%Michelson ({| { IF_NONE { UNIT } { PUSH string "failed assert none" ; FAILWITH } } |} : a option -> unit)] v
-  let abs (i : int) : nat = [%Michelson ({| { ABS } |} : int -> nat)] i
-  let is_nat (i : int) : nat option = [%Michelson ({| { ISNAT } |} : int -> nat option)] i
-  let true : bool = [%external ("TRUE")]
-  let false : bool = [%external ("FALSE")]
-  let unit : unit = [%external ("UNIT")]
-  let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
-  let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
-  let ignore (type a) (_ : a) : unit = ()
+let assert (b : bool) : unit = if b then () else failwith "failed assertion"
+let assert_some (type a) (v : a option) : unit = match v with | None -> failwith "failed assert some" | Some _ -> ()
+let assert_none (type a) (v : a option) : unit = match v with | None -> () | Some _ -> failwith "failed assert none"
+let abs (i : int) : nat = [%Michelson ({| { ABS } |} : int -> nat)] i
+let is_nat (i : int) : nat option = [%Michelson ({| { ISNAT } |} : int -> nat option)] i
+let true : bool = [%external ("TRUE")]
+let false : bool = [%external ("FALSE")]
+let unit : unit = [%external ("UNIT")]
+let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
+let ignore (type a) (_ : a) : unit = ()
 
 #if CURRY
-  let assert_with_error (b : bool) (s : string) =
-    [%Michelson ({| { UNPAIR ; IF { DROP ; UNIT } { FAILWITH } } |} : bool * string -> unit)] (b, s)
-  let assert_some_with_error (type a) (v : a option) (s : string) : unit =
-    [%Michelson ({| { UNPAIR ; IF_NONE { FAILWITH } { DROP 2 ; UNIT } } |} : a option * string -> unit)] (v, s)
-  let assert_none_with_error (type a) (v : a option) (s : string) : unit =
-    [%Michelson ({| { UNPAIR ; IF_NONE { DROP ; UNIT } { DROP ; FAILWITH } } |} : a option * string -> unit)] (v, s)
-  let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_ediv)] (l, r)
+let assert_with_error (b : bool) (s : string) = if b then () else failwith s
+let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> failwith s | Some _ -> ()
+let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
+let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_ediv)] (l, r)
 #endif
 
 #if UNCURRY
-  let assert_with_error ((b, s) : bool * string) = [%Michelson ({| { UNPAIR ; IF { DROP ; UNIT } { FAILWITH } } |} : bool * string -> unit)] (b, s)
-  let assert_some_with_error (type a) ((v, s) : a option * string) : unit = [%Michelson ({| { UNPAIR ; IF_NONE { FAILWITH } { DROP 2 ; UNIT } } |} : a option * string -> unit)] (v, s)
-  let assert_none_with_error (type a) ((v, s) : a option * string) : unit = [%Michelson ({| { UNPAIR ; IF_NONE { DROP ; UNIT } { DROP ; FAILWITH } } |} : a option * string -> unit)] (v, s)
-  let ediv (type a b) ((l, r) : (a * b)) : (a, b) external_u_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_u_ediv)] (l, r)
+let assert_with_error ((b, s) : bool * string) = if b then () else failwith s
+let assert_some_with_error (type a) ((v, s) : a option * string) : unit = match v with | None -> failwith s | Some _ -> ()
+let assert_none_with_error (type a) ((v, s) : a option * string) : unit = match v with | None -> () | Some _ -> failwith s
+let ediv (type a b) ((l, r) : (a * b)) : (a, b) external_u_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_u_ediv)] (l, r)
 #endif
 
 
