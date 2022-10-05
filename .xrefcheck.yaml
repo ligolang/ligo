@@ -33,7 +33,7 @@ verification:
     - .gitlab/merge_request_templates/
     - .gitlab/issue_templates/
 
-    - vendors/tezos-ligo/*
+    - ./vendors/tezos-ligo/*
 
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
