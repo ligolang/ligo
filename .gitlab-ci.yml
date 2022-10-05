@@ -143,7 +143,7 @@ xrefcheck:
     # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
     - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
     - chmod 777 ./xrefcheck-x86_64-linux
-    - ./xrefcheck
+    - ./xrefcheck-x86_64-linux
 
 .docker-image:
   stage: push
