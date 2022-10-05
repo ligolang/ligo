@@ -1,4 +1,4 @@
-(**
+(* (**
 
 This implements the pattern_matching compiler of `Peyton-Jones, S.L., The Implementation of Functional Programming Languages`, chapter 5.
 By reduction, this algorithm transforms pattern matching expression into (nested) cases expressions.
@@ -406,4 +406,4 @@ let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression option Pat
     let args = fs in
     O.E_application {lamb ; args }
   in
-  match_ ~raise ~err_loc [matchee] eqs missing_case_default
+  match_ ~raise ~err_loc [matchee] eqs missing_case_default *)

@@ -1267,23 +1267,9 @@ module Elaboration = struct
     Binder.map (Option.map ~f:(t_apply ctx)) binder
 
 
-  and matching_expr_apply ctx match_expr =
-    match match_expr with
-    | Match_variant { cases; tv } ->
-      Match_variant
-        { cases =
-            List.map cases ~f:(fun content ->
-              { content with body = e_apply ctx content.body })
-        ; tv = t_apply ctx tv
-        }
-    | Match_record { fields; body; tv } ->
-      Match_record
-        { fields =
-            Record.LMap.map (fun binder -> binder_apply ctx binder) fields
-        ; body = e_apply ctx body
-        ; tv = t_apply ctx tv
-        }
-
+  and matching_expr_apply ctx match_exprs =
+    List.map match_exprs 
+      ~f:(Match_expr.map_match_case (e_apply ctx) (t_apply ctx))
 
   and decl_apply ctx (decl : decl) = declaration_apply ctx decl
 
@@ -1425,16 +1411,9 @@ module Elaboration = struct
     Option.iter (Binder.get_ascr binder) ~f:(type_pass ~raise)
 
 
-  and matching_expr_pass ~raise match_expr =
-    match match_expr with
-    | Match_variant { cases; tv } ->
-      type_pass ~raise tv;
-      List.iter cases ~f:(fun { body; _ } -> expression_pass ~raise body)
-    | Match_record { fields; body; tv } ->
-      type_pass ~raise tv;
-      Record.LMap.iter (fun _ binder -> binder_pass ~raise binder) fields;
-      expression_pass ~raise body
-
+  and matching_expr_pass ~raise match_exprs =
+    List.iter match_exprs
+      ~f:(Match_expr.iter_match_case (expression_pass ~raise) (type_pass ~raise))
 
   and decl_pass ~raise (decl : decl) = declaration_pass ~raise decl
 

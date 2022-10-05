@@ -13,7 +13,7 @@ and 'ty_exp pattern_repr =
   | P_record of 'ty_exp t Record.t
 
 and 't t = 't pattern_repr Location.wrap
-  [@@deriving eq,compare,yojson,hash]
+  [@@deriving eq,compare,yojson,hash,iter]
 
 let rec pp_list g ppf = fun pl ->
   let mpp = pp g in

@@ -65,7 +65,7 @@ let is_virtual = function
 type 'a wrap = {
   wrap_content : 'a ;
   location : t [@hash.ignore] ;
-} [@@deriving eq,compare,yojson,hash]
+} [@@deriving eq,compare,yojson,hash,iter]
 
 let wrap_to_yojson f {wrap_content;location} =
   `Assoc [("wrap_content", f wrap_content); ("location",to_yojson location)]

@@ -88,49 +88,12 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
     let r' = self r in
     let e = self e in
     return (e_record_update r' (Label l) e)
-  | E_matching {matchee;cases} -> (
+  | E_matching {matchee;cases} ->
     let matchee = self matchee in
-    match cases with
-    | Match_variant {cases ; tv} ->
-      (*
-        If one day this code is actually executed, and if the list type is still not a tuple type.
-        A special case for lists might be required here
-      *)
-      let aux : _ Ast_typed.matching_content_case -> _ Match_expr.match_case =
-        fun { constructor ; pattern ; body } -> (
-          let pattern =
-            match tv with
-            | _ ->
-              let proj = Location.wrap @@ Pattern.P_var (Binder.make pattern None) in
-              Location.wrap @@ Pattern.P_variant (constructor, proj)
-          in
-          let body = self body in
-          ({pattern ; body } : (Ast_core.expression, Ast_core.type_expression option) Match_expr.match_case)
-        )
-      in
-      let cases = List.map ~f:aux cases in
-      return (e_matching matchee cases)
-    | Match_record {fields ; body ; tv=_} -> (
-      let aux : (Ast_typed.type_expression Binder.t) -> Ast_core.type_expression option Pattern.t =
-        fun binder -> (
-          let proj = Location.wrap @@ Pattern.P_var (Binder.map (Fn.compose Option.return self_type) binder) in
-          proj
-        )
-      in
-      let body = self body in
-      let case = match Record.is_tuple fields with
-        | false ->
-          let pattern = Location.wrap (Pattern.P_record (Record.map aux fields)) in
-          ({ pattern ; body } : _ Match_expr.match_case)
-        | true ->
-          let patterns = Record.map aux fields in
-          let patterns = Record.LMap.values patterns in
-          let pattern = Location.wrap (Pattern.P_tuple patterns) in
-          ({ pattern ; body } : _ Match_expr.match_case)
-      in
-      return (e_matching matchee [case])
-    )
-  )
+    let cases = List.map cases 
+      ~f:(Match_expr.map_match_case 
+            untype_expression untype_type_expression_option) in
+    return (e_matching matchee cases)
   | E_let_in {let_binder;rhs;let_result; attr} ->
       let tv = self_type rhs.type_expression in
       let rhs = self rhs in

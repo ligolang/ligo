@@ -1,12 +1,12 @@
 type ('e , 't) match_case = {
   pattern : 't Pattern.t ;
   body : 'e;
-  } [@@deriving eq,compare,yojson,hash,fold,map]
+  } [@@deriving eq,compare,yojson,hash,fold,map,iter]
 
 type ('e , 't) t = {
   matchee : 'e ;
   cases : ('e , 't) match_case list
-  } [@@deriving eq,compare,yojson,hash,fold,map]
+  } [@@deriving eq,compare,yojson,hash,fold,map,iter]
 
 let pp_match_case f g ppf = fun {pattern ; body} ->
   Format.fprintf ppf "@[| %a -> %a@]"
