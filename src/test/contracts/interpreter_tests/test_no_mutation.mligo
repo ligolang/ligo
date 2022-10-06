@@ -25,7 +25,7 @@ let originate_and_test (mainf : parameter * storage -> return) =
   let (taddr, _, _) = Test.originate mainf initial_storage 0tez in
   let contr = Test.to_contract taddr in
   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
-  assert (Test.get_storage taddr = initial_storage + 7)
+  Test.assert (Test.get_storage taddr = initial_storage + 7)
 
 let test = originate_and_test main
 

@@ -84,7 +84,7 @@ let%expect_test _ =
       7 |   | xs  , Nil -> 2
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#470 , b -> ^gen#471 , c -> ^gen#472] with
+    Cannot unify record[a -> ^gen#496 , b -> ^gen#497 , c -> ^gen#498] with
     sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
@@ -96,7 +96,7 @@ let%expect_test _ =
       6 |   | xs  , Nil -> 2
 
     Invalid type(s)
-    Cannot unify ( ^gen#470 * ^gen#471 * ^gen#472 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify ( ^gen#496 * ^gen#497 * ^gen#498 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;

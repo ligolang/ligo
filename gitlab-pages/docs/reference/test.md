@@ -1266,3 +1266,55 @@ let sign: (secret_key: string, data: bytes) => signature
 
 Creates a signature of `bytes` from a `string` representing a secret
 key, it can be checked with `Crypto.check`.
+
+
+### Failwith and asserts
+
+
+<SyntaxTitle syntax="pascaligo">
+val failwith&lt;a&gt; : a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val failwith : 'a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let failwith: 'a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let failwith: (message: &apos;a) => unit
+</SyntaxTitle>
+
+Cause the testing framework to fail.
+
+
+<SyntaxTitle syntax="pascaligo">
+val assert : bool -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val assert : bool -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let assert: bool => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let assert: (condition: bool) => unit
+</SyntaxTitle>
+
+Check if a certain condition has been met. If not the testing framework will fail.
+
+
+
+<SyntaxTitle syntax="pascaligo">
+val assert_with_error : bool -> string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val assert_with_error : bool -> string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let assert_with_error: (bool, string) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let assert_with_error: (condition: bool, message: string) => unit
+</SyntaxTitle>
+
+Check if a certain condition has been met. If not the testing framework will fail with the string passed as message.

@@ -1252,7 +1252,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   9 |   in
  10 |   ([toto.0], store)
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#276. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#295. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1334,7 +1334,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#276.
      12 |   in
      13 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#278. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#297. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -1383,7 +1383,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#276.
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
      10 |   let toto : operation list = [ op ] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#287. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#306. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract.mligo" ] ;
   [%expect{|
@@ -1936,7 +1936,7 @@ let%expect_test _ =
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
     Invalid type(s)
-    Cannot unify option (^gen#469) with string. |}]
+    Cannot unify option (^gen#495) with string. |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =
@@ -2150,20 +2150,20 @@ let%expect_test _ =
              LAMBDA
                unit
                unit
-               { { /* x#261 */ } }
+               { { /* x#280 */ } }
              /* File "../../test/contracts/noop.mligo", line 2, characters 9-10 */ ;
-             { /* f#260, _ */ } ;
+             { /* f#279, _ */ } ;
              SWAP ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s2#262, f#260 */ } ;
+             { /* s2#281, f#279 */ } ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s3#263, f#260 */ } ;
+             { /* s3#282, f#279 */ } ;
              EXEC ;
-             { /* s#264 */ } ;
+             { /* s#283 */ } ;
              NIL operation
                  /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */
              /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */ ;
@@ -2414,17 +2414,17 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "10" } } }, {}, {}, {},
-              { "environment": [ { "name": "x#261", "source_type": "3" } ] },
+              { "environment": [ { "name": "x#280", "source_type": "3" } ] },
               { "environment":
-                  [ { "name": "f#260", "source_type": "4" },
+                  [ { "name": "f#279", "source_type": "4" },
                     { "source_type": "3" } ] }, {}, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2#262", "source_type": "0" },
-                    { "name": "f#260", "source_type": "4" } ] }, {}, {}, {}, {},
+                  [ { "name": "s2#281", "source_type": "0" },
+                    { "name": "f#279", "source_type": "4" } ] }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3#263", "source_type": "1" },
-                    { "name": "f#260", "source_type": "4" } ] }, {},
-              { "environment": [ { "name": "s#264", "source_type": "2" } ] },
+                  [ { "name": "s3#282", "source_type": "1" },
+                    { "name": "f#279", "source_type": "4" } ] }, {},
+              { "environment": [ { "name": "s#283", "source_type": "2" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
