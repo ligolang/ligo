@@ -12,7 +12,7 @@
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 
@@ -745,15 +745,16 @@ and print_variant state {constr; args; attributes=attr} =
 
 type ('src, 'dst) printer = Tree.state -> 'src -> 'dst
 
-let print_pattern_to_string state pattern =
-  print_pattern state pattern; Buffer.contents(state#buffer)
-  
 let print_to_buffer state cst = print_cst state cst; state#buffer
 
 let print_to_string state cst =
   Buffer.contents (print_to_buffer state cst)
 
+let print_pattern_to_string state pattern =
+  print_pattern state pattern; Buffer.contents state#buffer
+
 (* Aliases *)
 
 let to_buffer = print_to_buffer
 let to_string = print_to_string
+let pattern_to_string = print_pattern_to_string

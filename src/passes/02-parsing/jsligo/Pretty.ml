@@ -42,7 +42,7 @@ and pp_statement ?top = function
 | SConst      s -> pp_const s
 | SType       s -> pp_type s
 | SSwitch     s -> pp_switch s
-| SBreak      _ -> string "break" ^^ hardline
+| SBreak      _ -> string "break"
 | SNamespace  s -> pp_namespace ?top s
 | SExport     s -> pp_export s
 | SImport     s -> pp_import s
@@ -145,14 +145,13 @@ and pp_val_binding {value = {binders; lhs_type; expr; _}; _} =
   (pp_expr expr)
 
 and pp_switch {value = {expr; cases; _}; _} =
-  string "switch(" ^^
-  pp_expr expr ^^
-  string ") {" ^^
-  pp_cases cases ^^
+  string "switch(" ^^ pp_expr expr ^^ string ")"
+  ^^ string "{" ^^
+  nest 2 (pp_cases cases) ^^
   string "}"
 
 and pp_cases cases =
-  Utils.nseq_foldl (fun a i -> a ^^ pp_case i) empty cases
+  Utils.nseq_foldl (fun a i -> a ^^ break 0 ^^ pp_case i) empty cases
 
 and pp_case = function
   Switch_case {expr; statements; _} ->
@@ -161,7 +160,8 @@ and pp_case = function
          Some s ->
           let app s = group (pp_statement s) in
           separate_map (string ";" ^^ hardline) app (Utils.nsepseq_to_list s)
-       | None -> empty )
+            ^^ string ";"
+       | None -> hardline )
 | Switch_default_case {statements; _} ->
     string "default: " ^^
     (match statements with

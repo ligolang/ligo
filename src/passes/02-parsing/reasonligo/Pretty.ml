@@ -33,7 +33,7 @@ and pp_declaration = function
 
 (*
 and pp_dir_decl = function
-  Directive.Linemarker {value; _} ->
+  Directive.PP_Linemarker {value; _} ->
     let open Directive in
     let linenum, file_path, flag_opt = value in
     let flag =
