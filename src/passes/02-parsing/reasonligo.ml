@@ -1,17 +1,18 @@
+(* This file provides an interface to the ReasonLIGO parser and
+   pretty-printer. *)
+
 (* Vendor dependencies *)
 
 module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module File        = Preprocessing_reasonligo.File
-module Comments    = Preprocessing_reasonligo.Comments
-module Modules     = Preprocessing_reasonligo.Modules
+module Config      = Preprocessing_reasonligo.Config
 module Token       = Lexing_reasonligo.Token
-module Self_tokens = Lexing_reasonligo.Self_tokens
+module UnitPasses  = Lexing_reasonligo_self_units.Self
+module TokenPasses = Lexing_reasonligo_self_tokens.Self
 module ParErr      = Parsing_reasonligo.ParErr
 module Parser      = Parsing_reasonligo.Parser
-module Common      = Parsing_shared.Common
 module Pretty      = Parsing_reasonligo.Pretty
 module CST         = Cst_reasonligo.CST
 module Tree        = Cst_shared.Tree
@@ -26,22 +27,29 @@ module ReasonligoParser =
     module Recovery = Parsing_reasonligo.RecoverParser
   end
 
-include Common.MakeTwoParsers
-          (File) (Comments) (Modules) (Token) (ParErr) (Self_tokens)
-          (CST) (ReasonligoParser)
+include Parsing_shared.Common.MakeTwoParsers
+          (Config) (Token) (ParErr)
+          (UnitPasses) (TokenPasses) (CST) (ReasonligoParser)
 
 (* Making the pretty-printers *)
 
-include Common.MakePretty (CST) (Pretty)
+include Parsing_shared.Common.MakePretty (CST) (Pretty)
+
+type raise = (Errors.t, Main_warnings.all) Trace.raise
 
 let pretty_print_file ~raise buffer file_path =
-  ContractParser.parse_file ~raise buffer file_path |> pretty_print
+  parse_file ~raise buffer file_path |> pretty_print
 
 let pretty_print_cst ~raise buffer file_path =
-  let cst = ContractParser.parse_file ~raise buffer file_path in
+  let module PreprocParams =
+    Preprocessor.CLI.MakeDefault (Config) in
+  let module LexerParams =
+    LexerLib.CLI.MakeDefault (PreprocParams) in
+  let module Options = LexerParams.Options in
+  let tree   = parse_file ~raise buffer file_path in
   let buffer = Buffer.create 59 in
-  let state =
-    Tree.mk_state ~buffer
-                  ~offsets:true
-                  `Point
-  in Cst_reasonligo.Print.to_buffer state cst
+  let state  = Tree.mk_state
+                 ~buffer
+                 ~offsets:Options.offsets
+                 Options.mode
+  in Cst_reasonligo.Print.to_buffer state tree
