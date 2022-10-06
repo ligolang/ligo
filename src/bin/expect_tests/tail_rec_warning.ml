@@ -65,63 +65,143 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ] ;
   [%expect{|
-    File "../../test/contracts/unused_recursion.jsligo", line 3, characters 4-10:
-      2 |
-      3 | let coucou = (storage : t) : t => {
-      4 |   let number = 2;
-
-    Toplevel let declaration are silently change to const declaration.
-
-    File "../../test/contracts/unused_recursion.jsligo", line 31, characters 4-8:
+    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
      31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
      32 |   return [
+     33 |     (list([]) as list<operation>),
+     34 |     coucou(storage)
+     35 |   ];
+     36 | }
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/unused_recursion.jsligo", line 3, character 0 to line 29, character 1:
+      2 |
+      3 | let coucou = (storage : t) : t => {
+      4 |   let number = 2;
+      5 |
+      6 |   let id = (x : int) : int => x;
+      7 |
+      8 |   /* parameter shadows fun_name: simple */
+      9 |   let toto = (toto:int) : int => {
+     10 |     let number = toto;
+     11 |     return number + 1;
+     12 |   };
+     13 |
+     14 |   /* parameter shadows fun_name: complex */
+     15 |   let foo = (foo : ((p:int) => int)) : int => {
+     16 |     let foo = foo(0);
+     17 |     return foo;
+     18 |   };
+     19 |
+     20 |   /* fun_name shadowed in body */
+     21 |   let bar = (x : int) : t => {
+     22 |     let bar = x;
+     23 |     return { ...storage, bar : bar };
+     24 |   };
+     25 |
+     26 |   let n = toto(number)  + foo(id);
+     27 |
+     28 |   return bar(n);
+     29 | }
+     30 |
 
     Toplevel let declaration are silently change to const declaration.
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
       code { CDR ;
-             PUSH int 0 ;
-             PUSH int 1 ;
              PUSH int 2 ;
-             ADD ;
-             ADD ;
+             LAMBDA int int {} ;
+             LAMBDA int int { PUSH int 1 ; ADD } ;
+             LAMBDA (lambda int int) int { PUSH int 0 ; EXEC } ;
+             LAMBDA (pair (pair int int) int) (pair int int) { UNPAIR ; CDR ; SWAP ; PAIR } ;
+             DUP 6 ;
+             APPLY ;
+             DIG 5 ;
+             DROP ;
+             DIG 3 ;
+             DIG 2 ;
              SWAP ;
-             CDR ;
+             EXEC ;
+             DIG 3 ;
+             DIG 3 ;
              SWAP ;
-             PAIR ;
+             EXEC ;
+             ADD ;
+             EXEC ;
              NIL operation ;
              PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ; "--warn-unused-rec" ] ;
   [%expect{|
-    File "../../test/contracts/unused_recursion.jsligo", line 3, characters 4-10:
-      2 |
-      3 | let coucou = (storage : t) : t => {
-      4 |   let number = 2;
-
-    Toplevel let declaration are silently change to const declaration.
-
-    File "../../test/contracts/unused_recursion.jsligo", line 31, characters 4-8:
+    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
      31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
      32 |   return [
+     33 |     (list([]) as list<operation>),
+     34 |     coucou(storage)
+     35 |   ];
+     36 | }
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/unused_recursion.jsligo", line 3, character 0 to line 29, character 1:
+      2 |
+      3 | let coucou = (storage : t) : t => {
+      4 |   let number = 2;
+      5 |
+      6 |   let id = (x : int) : int => x;
+      7 |
+      8 |   /* parameter shadows fun_name: simple */
+      9 |   let toto = (toto:int) : int => {
+     10 |     let number = toto;
+     11 |     return number + 1;
+     12 |   };
+     13 |
+     14 |   /* parameter shadows fun_name: complex */
+     15 |   let foo = (foo : ((p:int) => int)) : int => {
+     16 |     let foo = foo(0);
+     17 |     return foo;
+     18 |   };
+     19 |
+     20 |   /* fun_name shadowed in body */
+     21 |   let bar = (x : int) : t => {
+     22 |     let bar = x;
+     23 |     return { ...storage, bar : bar };
+     24 |   };
+     25 |
+     26 |   let n = toto(number)  + foo(id);
+     27 |
+     28 |   return bar(n);
+     29 | }
+     30 |
 
     Toplevel let declaration are silently change to const declaration.
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
       code { CDR ;
-             PUSH int 0 ;
-             PUSH int 1 ;
              PUSH int 2 ;
-             ADD ;
-             ADD ;
+             LAMBDA int int {} ;
+             LAMBDA int int { PUSH int 1 ; ADD } ;
+             LAMBDA (lambda int int) int { PUSH int 0 ; EXEC } ;
+             LAMBDA (pair (pair int int) int) (pair int int) { UNPAIR ; CDR ; SWAP ; PAIR } ;
+             DUP 6 ;
+             APPLY ;
+             DIG 5 ;
+             DROP ;
+             DIG 3 ;
+             DIG 2 ;
              SWAP ;
-             CDR ;
+             EXEC ;
+             DIG 3 ;
+             DIG 3 ;
              SWAP ;
-             PAIR ;
+             EXEC ;
+             ADD ;
+             EXEC ;
              NIL operation ;
              PAIR } } |} ]

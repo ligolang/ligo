@@ -234,6 +234,25 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
       @ compile_dups (false :: proj1)
       @ pair_tuple cs
       @ [Prim (null, "APPLY", [], [])]
+  (* FICTION *)
+  | I_FOR (_, body) ->
+    (* hmmm *)
+    [Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+     Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+     Prim (null, "COMPARE", [], []);
+     Prim (null, "LE", [], []);
+     Prim (null, "LOOP",
+           [Seq (null, [Prim (null, "DUP", [], []);
+                        Prim (null, "DUG", [Int (null, Z.of_int 3)], []);
+                        Prim (null, "DIP", [Int (null, Z.of_int 3); Seq (null, translate_prog body)], []);
+                        Prim (null, "DUP", [Int (null, Z.of_int 3)], []);
+                        Prim (null, "ADD", [], []);
+                        Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+                        Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
+                        Prim (null, "COMPARE", [], []);
+                        Prim (null, "LE", [], [])])],
+           []);
+     Prim (null, "DROP", [Int (null, Z.of_int 3)], [])]
   | I_LAMBDA (l, a, b, body) ->
     [Prim (l, "LAMBDA", [translate_type a;
                          translate_type b;
@@ -249,6 +268,7 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
   | I_DROP (l, n) -> [Prim (l, "DROP", [nat_to_mich n], [])]
   | I_SWAP l -> [Prim (l, "SWAP", [], [])]
   | I_UNIT l -> [Prim (l, "UNIT", [], [])]
+  | I_TRUE l -> [Prim (l, "PUSH", [Prim (null, "bool", [], []); Prim (null, "True", [], [])], [])]
   | I_LEFT (l, a) -> [Prim (l, "LEFT", [translate_type a], [])]
   | I_RIGHT (l, b) -> [Prim (l, "RIGHT", [translate_type b], [])]
   | I_IF_LEFT (l, bt, bf) -> [Prim (l, "IF_LEFT", [Seq (null, translate_prog bt); Seq (null, translate_prog bf)], [])]

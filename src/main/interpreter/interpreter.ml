@@ -48,8 +48,14 @@ let replace_loc_if_blank e location =
 let check_value value =
   let open Monad in
   match value with
-  | V_Func_val { orig_lambda; rec_name = _; arg_binder = _; body = _; env = _ }
-    -> call @@ Check_obj_ligo orig_lambda
+  | V_Func_val
+      { orig_lambda
+      ; rec_name = _
+      ; arg_binder = _
+      ; arg_mut_flag = _
+      ; body = _
+      ; env = _
+      } -> call @@ Check_obj_ligo orig_lambda
   | _ -> return ()
 
 
@@ -204,6 +210,24 @@ let rec apply_comparison
     fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
 
+let bind_param
+  :  env -> Value_var.t -> Param.mutable_flag -> type_expression * value
+  -> in_:(env -> 'a Monad.t) -> 'a Monad.t
+  =
+  let open Monad in
+  fun env var mut_flag (type_, val_) ~in_ ->
+    match mut_flag with
+    | Immutable ->
+      let env = Env.extend env var (type_, val_) in
+      in_ env
+    | Mutable ->
+      let@ loc = Alloc val_ in
+      let env = Env.extend env var (type_, V_location loc) in
+      let* result = in_ env in
+      let@ () = Free loc in
+      return result
+
+
 let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   :  Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant'
   -> (value * AST.type_expression * Location.t) list -> value Monad.t
@@ -266,6 +290,12 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_NEG, [ V_Ct (C_bls12_381_fr a') ] ->
     return @@ v_bls12_381_fr (Bls12_381.Fr.negate a')
   | C_NEG, _ -> fail @@ error_type ()
+  | C_INT, [ V_Ct (C_nat a') ] -> return @@ v_int a'
+  | C_INT, [ V_Ct (C_bls12_381_fr a') ] ->
+    return @@ v_int (Bls12_381.Fr.to_z a')
+  | C_INT, _ -> fail @@ error_type ()
+  | C_ABS, [ V_Ct (C_int a') ] -> return @@ v_nat (Z.abs a')
+  | C_ABS, _ -> fail @@ error_type ()
   | C_SOME, [ v ] -> return @@ v_some v
   | C_SOME, _ -> fail @@ error_type ()
   | C_ADDRESS, [ V_Ct (C_contract { address; entrypoint = _ }) ] ->
@@ -276,19 +306,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> value = Unpack (loc, bytes, value_ty) in
     return value
   | C_BYTES_UNPACK, _ -> fail @@ error_type ()
-  | C_UNOPT, [ v ] ->
-    (match get_option v with
-     | Some (Some value) -> return @@ value
-     | Some None ->
-       fail @@ Errors.meta_lang_eval loc calltrace (v_string "option is None")
-     | None -> fail @@ Errors.generic_error loc "Expected option type")
-  | C_UNOPT, _ -> fail @@ error_type ()
-  | C_UNOPT_WITH_ERROR, [ v; V_Ct (C_string s) ] ->
-    (match get_option v with
-     | Some (Some value) -> return @@ value
-     | Some None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string s)
-     | None -> fail @@ Errors.generic_error loc "Expected option type")
-  | C_UNOPT_WITH_ERROR, _ -> fail @@ error_type ()
   | C_MAP_FIND_OPT, [ k; V_Map l ] ->
     (match List.Assoc.find ~equal:LC.equal_value l k with
      | Some v -> return @@ v_some v
@@ -495,7 +512,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_LIST_EMPTY, [] -> return @@ V_List []
   | C_LIST_EMPTY, _ -> fail @@ error_type ()
   | ( C_LIST_MAP
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_List elts
       ] ) ->
     let lst_ty = nth_type 1 in
@@ -506,14 +524,15 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let* elts =
       Monad.bind_map_list
         (fun elt ->
-          let env' = Env.extend env arg_binder (ty, elt) in
-          eval_ligo body calltrace env')
+          bind_param env arg_binder arg_mut_flag (ty, elt) ~in_:(fun env' ->
+            eval_ligo body calltrace env'))
         elts
     in
     return (V_List elts)
   | C_LIST_MAP, _ -> fail @@ error_type ()
   | ( C_MAP_MAP
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Map elts
       ] ) ->
     let map_ty = nth_type 1 in
@@ -524,17 +543,21 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let* elts =
       Monad.bind_map_list
         (fun (k, v) ->
-          let env' =
-            Env.extend env arg_binder (AST.t_pair k_ty v_ty, v_pair (k, v))
-          in
-          let* v' = eval_ligo body calltrace env' in
-          return @@ (k, v'))
+          bind_param
+            env
+            arg_binder
+            arg_mut_flag
+            (AST.t_pair k_ty v_ty, v_pair (k, v))
+            ~in_:(fun env ->
+              let* v' = eval_ligo body calltrace env in
+              return @@ (k, v')))
         elts
     in
     return (V_Map elts)
   | C_MAP_MAP, _ -> fail @@ error_type ()
   | ( C_LIST_ITER
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_List elts
       ] ) ->
     let lst_ty = nth_type 1 in
@@ -544,13 +567,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     Monad.bind_fold_list
       (fun _ elt ->
-        let env' = Env.extend env arg_binder (ty, elt) in
-        eval_ligo body calltrace env')
+        bind_param env arg_binder arg_mut_flag (ty, elt) ~in_:(fun env ->
+          eval_ligo body calltrace env))
       (v_unit ())
       elts
   | C_LIST_ITER, _ -> fail @@ error_type ()
   | ( C_MAP_ITER
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Map elts
       ] ) ->
     let map_ty = nth_type 1 in
@@ -560,26 +584,34 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     Monad.bind_fold_list
       (fun _ kv ->
-        let env' =
-          Env.extend env arg_binder (AST.t_pair k_ty v_ty, v_pair kv)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.t_pair k_ty v_ty, v_pair kv)
+          ~in_:(fun env -> eval_ligo body calltrace env))
       (v_unit ())
       elts
   | C_MAP_ITER, _ -> fail @@ error_type ()
   (* ternary *)
   | ( C_LOOP_LEFT
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; init
       ] ) ->
     let init_ty = nth_type 1 in
     let rec aux cur_env =
-      let env' = Env.extend env arg_binder (init_ty, cur_env) in
-      let* ret = eval_ligo body calltrace env' in
-      match ret with
-      | V_Construct ("##Loop_continue", v) -> aux v
-      | V_Construct ("##Loop_stop", v) -> return v
-      | _ -> fail @@ error_type ()
+      bind_param
+        env
+        arg_binder
+        arg_mut_flag
+        (init_ty, cur_env)
+        ~in_:(fun env' ->
+        let* ret = eval_ligo body calltrace env' in
+        match ret with
+        | V_Construct ("##Loop_continue", v) -> aux v
+        | V_Construct ("##Loop_stop", v) -> return v
+        | _ -> fail @@ error_type ())
     in
     aux init
   | C_LOOP_LEFT, _ -> fail @@ error_type ()
@@ -588,7 +620,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_LOOP_STOP, [ v ] -> return (v_ctor "##Loop_stop" v)
   | C_LOOP_STOP, _ -> fail @@ error_type ()
   | ( C_LIST_FOLD_LEFT
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; init
       ; V_List elts
       ] ) ->
@@ -601,20 +634,24 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_list
       (fun prev elt ->
         let fold_args = v_pair (prev, elt) in
-        let env' =
-          Env.extend env arg_binder (AST.t_pair acc_ty ty, fold_args)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.t_pair acc_ty ty, fold_args)
+          ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
   | C_LIST_FOLD_LEFT, _ -> fail @@ error_type ()
   | ( C_FOLD
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_List elts
       ; init
       ] )
   | ( C_LIST_FOLD
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_List elts
       ; init
       ] ) ->
@@ -627,19 +664,23 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_list
       (fun prev elt ->
         let fold_args = v_pair (prev, elt) in
-        let env' =
-          Env.extend env arg_binder (AST.t_pair acc_ty ty, fold_args)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.t_pair acc_ty ty, fold_args)
+          ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
   | ( C_FOLD
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Set elts
       ; init
       ] )
   | ( C_SET_FOLD
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Set elts
       ; init
       ] ) ->
@@ -652,17 +693,20 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_list
       (fun prev elt ->
         let fold_args = v_pair (prev, elt) in
-        let env' =
-          Env.extend env arg_binder (AST.(t_pair acc_ty ty), fold_args)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.(t_pair acc_ty ty), fold_args)
+          ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
   | C_FOLD, _ -> fail @@ error_type ()
   | C_LIST_FOLD, _ -> fail @@ error_type ()
   | C_SET_FOLD, _ -> fail @@ error_type ()
   | ( C_LIST_FOLD_RIGHT
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_List elts
       ; init
       ] ) ->
@@ -675,10 +719,12 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_right_list
       (fun elt prev ->
         let fold_args = v_pair (elt, prev) in
-        let env' =
-          Env.extend env arg_binder (AST.t_pair ty acc_ty, fold_args)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.t_pair ty acc_ty, fold_args)
+          ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
   | C_LIST_FOLD_RIGHT, _ -> fail @@ error_type ()
@@ -687,7 +733,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_MAP_EMPTY, [] -> return @@ V_Map []
   | C_MAP_EMPTY, _ -> fail @@ error_type ()
   | ( C_MAP_FOLD
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Map kvs
       ; init
       ] ) ->
@@ -700,13 +747,12 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_list
       (fun prev kv ->
         let fold_args = v_pair (prev, v_pair kv) in
-        let env' =
-          Env.extend
-            env
-            arg_binder
-            (AST.(t_pair acc_ty (t_pair k_ty v_ty)), fold_args)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.(t_pair acc_ty (t_pair k_ty v_ty)), fold_args)
+          ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       kvs
   | C_MAP_FOLD, _ -> fail @@ error_type ()
@@ -724,6 +770,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
        return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
      | _ -> assert false)
   | C_MAP_UPDATE, _ -> fail @@ error_type ()
+  | C_MAP_MEM, [ k; V_Map kvs ] ->
+    return @@ v_bool (List.Assoc.mem ~equal:LC.equal_value kvs k)
+  | C_MAP_MEM, _ -> fail @@ error_type ()
   | C_BIG_MAP_GET_AND_UPDATE, [ k; option; V_Map kvs ]
   | C_MAP_GET_AND_UPDATE, [ k; option; V_Map kvs ] ->
     let old_value = List.Assoc.find ~equal:LC.equal_value kvs k in
@@ -751,7 +800,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ V_Set (List.dedup_and_sort ~compare:LC.compare_value (v :: l))
   | C_SET_ADD, _ -> fail @@ error_type ()
   | ( C_SET_FOLD_DESC
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Set elts
       ; init
       ] ) ->
@@ -764,15 +814,18 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_right_list
       (fun prev elt ->
         let fold_args = v_pair (prev, elt) in
-        let env' =
-          Env.extend env arg_binder (AST.(t_pair acc_ty ty), fold_args)
-        in
-        eval_ligo body calltrace env')
+        bind_param
+          env
+          arg_binder
+          arg_mut_flag
+          (AST.(t_pair acc_ty ty), fold_args)
+          ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
   | C_SET_FOLD_DESC, _ -> fail @@ error_type ()
   | ( C_SET_ITER
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Set elts
       ] ) ->
     let set_ty = nth_type 1 in
@@ -782,8 +835,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     Monad.bind_fold_list
       (fun _ elt ->
-        let env' = Env.extend env arg_binder (ty, elt) in
-        eval_ligo body calltrace env')
+        bind_param env arg_binder arg_mut_flag (ty, elt) ~in_:(fun env' ->
+          eval_ligo body calltrace env'))
       (v_unit ())
       elts
   | C_SET_ITER, _ -> fail @@ error_type ()
@@ -802,7 +855,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       return @@ V_Set (List.filter ~f:(fun el -> not (equal_value el v)) elts)
   | C_SET_UPDATE, _ -> fail @@ error_type ()
   | ( C_OPTION_MAP
-    , [ V_Func_val { arg_binder; body; env; rec_name = _; orig_lambda = _ }
+    , [ V_Func_val
+          { arg_binder; arg_mut_flag; body; env; rec_name = _; orig_lambda = _ }
       ; V_Construct ("Some", v)
       ] ) ->
     let opt_ty = nth_type 1 in
@@ -811,8 +865,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       @@ AST.get_t_option opt_ty
     in
     let* new_v =
-      let env' = Env.extend env arg_binder (ty, v) in
-      eval_ligo body calltrace env'
+      bind_param env arg_binder arg_mut_flag (ty, v) ~in_:(fun env' ->
+        eval_ligo body calltrace env')
     in
     return @@ v_some new_v
   | C_OPTION_MAP, [ V_Func_val _; (V_Construct ("None", V_Ct C_unit) as v) ] ->
@@ -933,6 +987,28 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
      | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string msg)
      | Some value -> return @@ value)
   | C_CONTRACT_WITH_ERROR, _ -> fail @@ error_type ()
+  | C_LIST_SIZE, [ V_List l ] -> return @@ v_nat (Z.of_int @@ List.length l)
+  | C_LIST_SIZE, _ -> fail @@ error_type ()
+  | C_SET_SIZE, [ V_Set l ] -> return @@ v_nat (Z.of_int @@ List.length l)
+  | C_SET_SIZE, _ -> fail @@ error_type ()
+  | C_MAP_SIZE, [ V_Map l ] -> return @@ v_nat (Z.of_int @@ List.length l)
+  | C_MAP_SIZE, _ -> fail @@ error_type ()
+  | C_SIZE, [ V_Ct (C_string s) ] ->
+    return @@ v_nat (Z.of_int @@ String.length s)
+  | C_SIZE, [ V_Ct (C_bytes b) ] -> return @@ v_nat (Z.of_int @@ Bytes.length b)
+  | C_SIZE, _ -> fail @@ error_type ()
+  | C_SLICE, [ V_Ct (C_nat st); V_Ct (C_nat ed); V_Ct (C_string s) ] ->
+    (*TODO : allign with tezos*)
+    return @@ v_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed))
+  | C_SLICE, [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_bytes bytes) ]
+    ->
+    let start = Z.to_int start in
+    let length = Z.to_int length in
+    if start > Bytes.length bytes || start + length > Bytes.length bytes
+    then
+      fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
+    else return @@ v_bytes (Bytes.sub bytes ~pos:start ~len:length)
+  | C_SLICE, _ -> fail @@ error_type ()
   (*
     >>>>>>>>
       Test operators
@@ -943,6 +1019,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | ( C_TEST_TRY_WITH
     , [ V_Func_val
           { arg_binder = try_binder
+          ; arg_mut_flag = try_mut_flag
           ; body = try_body
           ; env = try_env
           ; rec_name = _
@@ -950,22 +1027,40 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           }
       ; V_Func_val
           { arg_binder = catch_binder
+          ; arg_mut_flag = catch_mut_flag
           ; body = catch_body
           ; env = catch_env
           ; rec_name = _
           ; orig_lambda = catch_lambda
           }
       ] ) ->
-    let eval_branch arg_binder orig_lambda body calltrace env =
+    let eval_branch arg_binder arg_mut_flag orig_lambda body calltrace env =
       let Arrow.{ type1 = in_ty; type2 = _ } =
         AST.get_t_arrow_exn orig_lambda.type_expression
       in
-      let f_env' = Env.extend env arg_binder (in_ty, v_unit ()) in
-      eval_ligo { body with location = loc } (loc :: calltrace) f_env'
+      bind_param
+        env
+        arg_binder
+        arg_mut_flag
+        (in_ty, v_unit ())
+        ~in_:(fun f_env' ->
+          eval_ligo { body with location = loc } (loc :: calltrace) f_env')
     in
     try_or
-      (eval_branch try_binder try_lambda try_body calltrace try_env)
-      (eval_branch catch_binder catch_lambda catch_body calltrace catch_env)
+      (eval_branch
+         try_binder
+         try_mut_flag
+         try_lambda
+         try_body
+         calltrace
+         try_env)
+      (eval_branch
+         catch_binder
+         catch_mut_flag
+         catch_lambda
+         catch_body
+         calltrace
+         catch_env)
   | C_TEST_TRY_WITH, _ -> fail @@ error_type ()
   | ( C_TEST_COMPILE_CONTRACT_FROM_FILE
     , [ V_Ct (C_string contract_file)
@@ -973,7 +1068,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       ; V_List views
       ; mutation
       ] ) ->
-    let>> mod_res = Get_mod_res () in
+    let@ mod_res = Get_mod_res () in
     let contract_file =
       resolve_contract_file ~mod_res ~source_file ~contract_file
     in
@@ -1328,7 +1423,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ v_unit ()
   | C_TEST_DROP_CONTEXT, _ -> fail @@ error_type ()
   | C_TEST_READ_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ] ->
-    let>> mod_res = Get_mod_res () in
+    let@ mod_res = Get_mod_res () in
     let contract_file =
       resolve_contract_file ~mod_res ~source_file ~contract_file
     in
@@ -1350,26 +1445,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_INT64_TO_INT, [ V_Ct (C_int64 n) ] ->
     return @@ V_Ct (C_int (Z.of_int64 n))
   | C_TEST_INT64_TO_INT, _ -> fail @@ error_type ()
-  (* Added only for performance *)
-  | C_TEST_INT, [ V_Ct (C_nat a') ] -> return @@ v_int a'
-  | C_TEST_INT, [ V_Ct (C_bls12_381_fr a') ] ->
-    return @@ v_int (Bls12_381.Fr.to_z a')
-  | C_TEST_INT, _ -> fail @@ error_type ()
-  | C_TEST_ABS, [ V_Ct (C_int a') ] -> return @@ v_nat (Z.abs a')
-  | C_TEST_ABS, _ -> fail @@ error_type ()
-  | C_TEST_SLICE, [ V_Ct (C_nat st); V_Ct (C_nat ed); V_Ct (C_string s) ] ->
-    (*TODO : allign with tezos*)
-    return
-    @@ V_Ct (C_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed)))
-  | ( C_TEST_SLICE
-    , [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_bytes bytes) ] ) ->
-    let start = Z.to_int start in
-    let length = Z.to_int length in
-    if start > Bytes.length bytes || start + length > Bytes.length bytes
-    then
-      fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
-    else return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
-  | C_TEST_SLICE, _ -> fail @@ error_type ()
   | (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE), _ ->
     fail @@ Errors.generic_error loc "Sapling is not supported."
   | C_EMIT_EVENT, _ -> fail @@ Errors.generic_error loc "Can't emit event here"
@@ -1481,28 +1556,39 @@ and eval_ligo ~raise ~steps ~options
     let* f' = eval_ligo f calltrace env in
     let* args' = eval_ligo args calltrace env in
     (match f' with
-     | V_Func_val { arg_binder; body; env; rec_name = None; orig_lambda } ->
-       let Arrow.{ type1 = in_ty; type2 = _ } =
-         AST.get_t_arrow_exn orig_lambda.type_expression
-       in
-       let f_env' = Env.extend env arg_binder (in_ty, args') in
-       eval_ligo
-         { body with location = term.location }
-         (term.location :: calltrace)
-         f_env'
      | V_Func_val
-         { arg_binder; body; env; rec_name = Some fun_name; orig_lambda } ->
+         { arg_binder; arg_mut_flag; body; env; rec_name = None; orig_lambda }
+       ->
        let Arrow.{ type1 = in_ty; type2 = _ } =
          AST.get_t_arrow_exn orig_lambda.type_expression
        in
-       let f_env' = Env.extend env arg_binder (in_ty, args') in
-       let f_env'' =
-         Env.extend f_env' fun_name (orig_lambda.type_expression, f')
+       bind_param env arg_binder arg_mut_flag (in_ty, args') ~in_:(fun f_env' ->
+         eval_ligo
+           { body with location = term.location }
+           (term.location :: calltrace)
+           f_env')
+     | V_Func_val
+         { arg_binder
+         ; arg_mut_flag
+         ; body
+         ; env
+         ; rec_name = Some fun_name
+         ; orig_lambda
+         } ->
+       let Arrow.{ type1 = in_ty; type2 = _ } =
+         AST.get_t_arrow_exn orig_lambda.type_expression
        in
-       eval_ligo
-         { body with location = term.location }
-         (term.location :: calltrace)
-         f_env''
+       let f_env' = Env.extend env fun_name (orig_lambda.type_expression, f') in
+       bind_param
+         f_env'
+         arg_binder
+         arg_mut_flag
+         (in_ty, args')
+         ~in_:(fun f_env'' ->
+         eval_ligo
+           { body with location = term.location }
+           (term.location :: calltrace)
+           f_env'')
      | V_Michelson (Ty_code { code; code_ty = _; ast_ty = _ }) ->
        let () =
          match code with
@@ -1534,7 +1620,8 @@ and eval_ligo ~raise ~steps ~options
     @@ V_Func_val
          { rec_name = None
          ; orig_lambda = term
-         ; arg_binder = Binder.get_var binder
+         ; arg_binder = Param.get_var binder
+         ; arg_mut_flag = Param.get_mut_flag binder
          ; body = result
          ; env
          }
@@ -1712,7 +1799,8 @@ and eval_ligo ~raise ~steps ~options
     @@ V_Func_val
          { rec_name = Some fun_name
          ; orig_lambda = term
-         ; arg_binder = Binder.get_var lambda.binder
+         ; arg_binder = Param.get_var lambda.binder
+         ; arg_mut_flag = Param.get_mut_flag lambda.binder
          ; body = lambda.result
          ; env
          }
@@ -1734,11 +1822,118 @@ and eval_ligo ~raise ~steps ~options
        @@ Errors.generic_error
             term.location
             "Embedded raw code can only have a functional type")
-  | E_assign _ ->
-    raise.error
-    @@ Errors.generic_error
-         term.location
-         "Assignements should not reach interpreter"
+  | E_assign { binder; expression } ->
+    let loc =
+      match Env.lookup env (Binder.get_var binder) with
+      | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
+      | _ ->
+        failwith
+          (Format.asprintf
+             "@[<hv>%a@.unbound variable mutable: %a@]"
+             Snippet.pp
+             term.location
+             Value_var.pp
+             (Binder.get_var binder))
+    in
+    let* val_ = eval_ligo expression calltrace env in
+    let@ () = Set (loc, val_) in
+    return @@ v_unit ()
+  | E_deref mut_var ->
+    let loc =
+      match Env.lookup env mut_var with
+      | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
+      | _ ->
+        failwith
+          (Format.asprintf
+             "@[<hv>%a@.unbound variable mutable: %a@]"
+             Snippet.pp
+             term.location
+             Value_var.pp
+             mut_var)
+    in
+    let@ val_ = Deref loc in
+    return val_
+  | E_let_mut_in { let_binder; rhs; let_result; attr = _ } ->
+    let* rhs' = eval_ligo rhs calltrace env in
+    let@ loc = Alloc rhs' in
+    let* let_result =
+      eval_ligo
+        let_result
+        calltrace
+        (Env.extend
+           env
+           (Binder.get_var let_binder)
+           (rhs.type_expression, V_location loc))
+    in
+    let@ () = Free loc in
+    return let_result
+  | E_while { cond; body } ->
+    let rec loop () =
+      let* cond = eval_ligo cond calltrace env in
+      match cond with
+      | V_Ct (C_bool true) ->
+        let* _ = eval_ligo body calltrace env in
+        loop ()
+      | V_Ct (C_bool false) -> return @@ v_unit ()
+      | _ ->
+        failwith (Format.asprintf "Non-boolean value for while-loop condition")
+    in
+    loop ()
+  | E_for_each { fe_binder = binder1, Some binder2; collection; fe_body; _ } ->
+    let* k_ty, v_ty =
+      monad_option
+        (Errors.generic_error collection.location "Expected map type")
+      @@ AST.get_t_map collection.type_expression
+    in
+    let* collection = eval_ligo collection calltrace env in
+    (match collection with
+     | V_Map elts ->
+       Monad.bind_fold_list
+         (fun _ (k_val, v_val) ->
+           let env = Env.extend env binder1 (k_ty, k_val) in
+           let env = Env.extend env binder2 (v_ty, v_val) in
+           eval_ligo fe_body calltrace env)
+         (v_unit ())
+         elts
+     | _ -> failwith (Format.asprintf "Expected map value for for-each loop"))
+  | E_for_each { fe_binder = binder1, None; collection; fe_body; _ } ->
+    let type_ = collection.type_expression in
+    let* v_ty =
+      monad_option
+        (Errors.generic_error collection.location "Expected list or set type")
+        (* [assert false] bcs this case can *never* occur *)
+        (Option.merge
+           (AST.get_t_set type_)
+           (AST.get_t_list type_)
+           ~f:(fun _ _ -> assert false))
+    in
+    let* collection = eval_ligo collection calltrace env in
+    (match collection with
+     | V_Set elts | V_List elts ->
+       Monad.bind_fold_list
+         (fun _ v_val ->
+           let env = Env.extend env binder1 (v_ty, v_val) in
+           eval_ligo fe_body calltrace env)
+         (v_unit ())
+         elts
+     | _ ->
+       failwith (Format.asprintf "Expected list or set value for for-each loop"))
+  | E_for { binder; start; final; incr; f_body } ->
+    let* start = eval_ligo start calltrace env in
+    let* incr = eval_ligo incr calltrace env in
+    let* final = eval_ligo final calltrace env in
+    (match start, incr, final with
+     | V_Ct (C_int start), V_Ct (C_int incr), V_Ct (C_int final) ->
+       let rec loop curr =
+         if Z.geq curr final
+         then return @@ v_unit ()
+         else (
+           let env = Env.extend env binder (AST.t_int (), V_Ct (C_int curr)) in
+           let* _ = eval_ligo f_body calltrace env in
+           loop (Z.add curr incr))
+       in
+       loop start
+     | _ -> failwith (Format.asprintf "Expected int types for for loop"))
 
 
 and try_eval ~raise ~steps ~options expr env state r =

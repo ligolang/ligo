@@ -110,11 +110,7 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
           let rhs = substitute_var_in_body ~raise to_subst new_var letin.rhs in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin}
-        | O.E_assign assign when Binder.apply (Value_var.equal to_subst) assign.binder ->
-          let expression = substitute_var_in_body ~raise to_subst new_var assign.expression in
-          let assign = { assign with expression } in
-          ret false { exp with expression_content = E_assign assign}
-        | O.E_lambda lamb when Binder.apply (Value_var.equal to_subst) lamb.binder -> ret false exp
+        | O.E_lambda lamb when Value_var.equal to_subst (Param.get_var lamb.binder) -> ret false exp
         | O.E_recursive r when Value_var.equal r.fun_name to_subst -> ret false exp
         | O.E_matching m -> (
           let matchee = substitute_var_in_body ~raise to_subst new_var m.matchee in
@@ -136,10 +132,10 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
           in
           ret false { exp with expression_content = O.E_matching {matchee ; cases}}
         )
-        | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
-           E_type_abstraction _ | E_recursive _ | E_let_in _ | E_mod_in _ |
+        | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ | E_assign _ | E_let_mut_in _ | E_while _ | E_for _ | E_for_each _ | E_deref _
+           | E_type_abstraction _ | E_recursive _ | E_let_in _ | E_mod_in _ |
            E_raw_code _ | E_constructor _ | E_record _ | E_accessor _ |
-           E_update _ | E_type_inst _ | E_module_accessor _ | E_assign _) -> ret true exp
+           E_update _ | E_type_inst _ | E_module_accessor _ ) -> ret true exp
     in
     let ((), res) = O.Helpers.fold_map_expression (aux ~raise) () body in
     res
@@ -321,7 +317,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             (l, b)
         in
         List.mapi ~f:aux ps
-      | P_record (labels,patterns) , t ->
+      | P_record lps , t ->
         let aux : (Label.t * _ Pattern.t)  -> (Label.t * (O.type_expression Binder.t)) =
           fun (l,proj_pattern) ->
             let field_t = extract_record_type ~raise p l t in
@@ -331,7 +327,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             in
             (l, b)
         in
-        List.map ~f:aux (List.zip_exn labels patterns)
+        List.map ~f:aux (Record.LMap.to_kv_list lps)
       | _ -> raise.error @@ corner_case __LOC__
     in
     let aux : typed_pattern list * O.expression ->
@@ -348,12 +344,12 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
           in
           let tps = List.mapi ~f:aux ps in
           (tps @ var_filler::ptl , body)
-        | P_record (labels,ps) ->
-          let aux label p =
+        | P_record lps ->
+          let aux (label, p) =
             let field_t = extract_record_type ~raise p label t in
             (p,field_t)
           in
-          let tps = List.map2_exn ~f:aux labels ps in
+          let tps = List.map ~f:aux (Record.LMap.to_kv_list lps) in
           (tps @ var_filler::ptl , body)
         | P_var _ ->
           let filler =
@@ -369,8 +365,8 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 (v,field_t)
               in
               List.mapi ~f:aux ps
-            | P_record (labels,patterns) , t ->
-              let aux l p =
+            | P_record lps , t ->
+              let aux (l, p) =
                 let field_t = extract_record_type ~raise p l t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
@@ -378,7 +374,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 in
                 (v,field_t)
               in
-              List.map2_exn ~f:aux labels patterns
+              List.map ~f:aux (Record.LMap.to_kv_list lps)
             | _ -> raise.error @@ corner_case __LOC__
           in
           (filler @ pl , body)

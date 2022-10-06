@@ -179,7 +179,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
     AST.PP.expression expr
 
 let pattern_type (binder) =
-  let attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
+  let attributes = [] in
   let var = CST.PVar (Region.wrap_ghost CST.{variable = decompile_variable @@ Binder.get_var binder; attributes }) in
   let type_expr = Option.map ~f:decompile_type_expr @@ Binder.get_ascr binder in
   let t_wild = Region.wrap_ghost "_" in
@@ -319,7 +319,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder;rhs;let_result;attributes} ->
-    let var_attributes = let_binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
+    let var_attributes = [] in
     let var =
       CST.PVar (wrap @@ CST.{
                     variable = decompile_variable @@ Binder.get_var let_binder;
@@ -585,7 +585,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     (* We should avoid to generate skip instruction*)
   | E_skip _ -> return_expr @@ CST.EUnit (wrap (ghost,ghost))
   | E_assign {binder;expression} ->
-    let var_attributes = binder |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
+    let var_attributes = [] in
     let binders =
       CST.PVar (wrap @@ CST.{
                     variable = decompile_variable @@ Binder.get_var binder;
@@ -597,6 +597,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;semi=ghost;body;attributes=[]} in
     return_expr @@ CST.ELetIn (wrap lin)
   | E_for _
+  | E_let_mut_in _
   | E_for_each _
   | E_while _ ->
     failwith @@ Format.asprintf "Decompiling a imperative construct to ReasonLIGO %a"
@@ -621,7 +622,7 @@ and decompile_to_selection : _ Access_path.access -> CST.selection = fun access 
 
 and decompile_lambda : (AST.expr, AST.ty_expr option) Lambda.t -> _ =
   fun {binder;output_type;result} ->
-    let param_decl = pattern_type binder in
+    let param_decl = pattern_type (Param.to_binder binder) in
     let param = CST.PPar (wrap @@ par @@ param_decl) in
     let ret_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in
     let return = decompile_expression result in
@@ -653,7 +654,7 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
   | D_value {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
-    let var_attributes = binder|> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
+    let var_attributes = [] in
     let pvar = CST.{variable = decompile_variable @@ Binder.get_var binder ; attributes = var_attributes} in
     let var : CST.pattern = CST.PVar (wrap pvar) in
     let binders = var in
@@ -712,7 +713,7 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
     | P_unit -> CST.PUnit (wrap (ghost, ghost))
     | P_var b ->
       let name = (decompile_variable @@ Binder.get_var b).value in
-      let attributes = b |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
+      let attributes = [] in
       let pvar = wrap CST.{variable = wrap name; attributes} in
       CST.PVar pvar
     | P_list pl -> (
@@ -759,13 +760,16 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq pl in
       CST.PPar (wrap (par (CST.PTuple (wrap pl))))
-    | P_record (llst,lst) ->
-      let pl = List.map ~f:decompile_pattern lst in
-      let fields_name = List.map ~f:(fun (Label x) -> wrap x) llst in
+    | P_record lps ->
       let field_patterns =
-        List.map
-          ~f:(fun (field_name,pattern) -> wrap ({ field_name ; eq = ghost ; pattern }:CST.field_pattern))
-          (List.zip_exn fields_name pl)
+        Record.LMap.fold
+          (fun (Label.Label x) pattern acc -> 
+            let pattern = decompile_pattern pattern in
+            let field_name = wrap x in
+            let field_pattern 
+              = CST.{ field_name ; eq = Token.ghost_eq ; pattern } in 
+            (wrap field_pattern) :: acc)
+          lps []
       in
       let field_patterns = list_to_nsepseq field_patterns in
       let inj = ne_inject braces field_patterns ~attr:[] in

@@ -245,7 +245,7 @@ pages-attempt:
 
 deploy_website_preview:
   stage: deploy
-  image: node:12.20.0-buster
+  image: node:16.17.0-buster
   tags:
     - docker
   needs:

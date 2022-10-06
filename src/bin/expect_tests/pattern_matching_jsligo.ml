@@ -60,16 +60,6 @@ let%expect_test _ =
   - C |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ; "--test" ] ;
-  [%expect{xxx|
-    const test_foo[@var] : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] -> string =
-      lambda (xsum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat])string return
-       match x with
-        | Fail _#3 ->
-          "" | Success _#2 ->
-               ""[@private] |xxx}]
-
-let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match7.jsligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match7.jsligo", line 1, characters 11-20:

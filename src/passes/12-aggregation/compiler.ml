@@ -266,8 +266,8 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let args = self args in
     return @@ E_application {lamb;args}
   | E_lambda {binder;output_type;result} ->
-    let binder = Binder.map self_type binder in
-    let scope = Scope.push_func_or_case_binder scope @@ Binder.get_var binder in
+    let binder = Param.map self_type binder in
+    let scope = Scope.push_func_or_case_binder scope @@ Param.get_var binder in
     let output_type = self_type output_type in
     let result = self ~scope result in
     return @@ E_lambda {binder;output_type;result}
@@ -277,8 +277,8 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder;output_type;result}} ->
     let fun_type = self_type fun_type in
-    let binder   = Binder.map self_type binder in
-    let scope = Scope.push_func_or_case_binder scope @@ Binder.get_var binder in
+    let binder   = Param.map self_type binder in
+    let scope = Scope.push_func_or_case_binder scope @@ Param.get_var binder in
     let scope = Scope.push_func_or_case_binder scope fun_name in
     let output_type = self_type output_type in
     let result   = self ~scope result in
@@ -332,10 +332,38 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let path    = Path.append path2 path in
     let _,element = Scope.add_path_to_var scope path element in
     return @@ E_variable element)
+  | E_let_mut_in { let_binder ; rhs ; let_result ; attr } ->
+    let let_binder   = Binder.map self_type let_binder in
+    let rhs = self rhs in
+    let attr = compile_value_attr attr in
+    let scope = Scope.push_value scope let_binder rhs.type_expression attr Path.empty  in
+    let let_result = self ~scope let_result in
+    return (E_let_mut_in { let_binder ; rhs ; let_result ; attr })
+  | E_deref var -> 
+    let path = Scope.find_value scope var in
+    let _,expression_variable = Scope.add_path_to_var scope path var in
+    return @@ E_deref expression_variable
   | E_assign {binder;expression} ->
     let binder = Binder.map self_type binder in
     let expression = self expression in
     return @@ E_assign {binder;expression}
+  | E_for { binder; start; final; incr; f_body } ->
+    let start = self start
+    and final = self final 
+    and incr = self incr in
+    let scope = Scope.push_func_or_case_binder scope binder in
+    let f_body = self ~scope f_body in
+    return @@ E_for { binder; start; final; incr; f_body }
+  | E_for_each { fe_binder = binder1, binder2 as fe_binder; collection; collection_type; fe_body } ->
+    let collection = self collection in
+    let scope = 
+      List.fold_left (binder1 :: Option.to_list binder2) ~init:scope ~f:Scope.push_func_or_case_binder
+    in
+    let fe_body = self ~scope fe_body in
+    return @@ E_for_each { fe_binder; collection; collection_type; fe_body }
+  | E_while while_loop ->
+    let while_loop = While_loop.map self while_loop in
+    return @@ E_while while_loop
 
 and compile_cases ~raise path scope cases : O.matching_expr =
   match cases with

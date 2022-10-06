@@ -95,9 +95,9 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
   then O
   else S (int_to_nat (x - 1))
 
-let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
+let translate_var (x : I.var_name) (env : I.environment) =
   let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Ligo_prim.Value_var.pp x in
-  (O.E_var (m, int_to_nat idx))
+  int_to_nat idx
 
 (* probably should use result monad for conformity? but all errors
    here are supposed to be impossible, under the assumption that the
@@ -131,7 +131,7 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
   | E_literal lit ->
     O.E_literal (meta, lit)
   | E_variable x ->
-    translate_var meta x env
+    E_var (meta, translate_var x env)
   | E_closure { binder; body } ->
     let (binder_type, return_type) =
       (* TODO move binder type to the binder, like all other binders? *)
@@ -227,6 +227,28 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let code = translate_binder code [] in
     let args = translate_args args env in
     E_create_contract (meta, p, s, code, args)
+  | E_let_mut_in (e1, e2) ->
+    let e1 = translate_expression e1 env in
+    let e2 = translate_binder e2 env in
+    E_let_mut_in (meta, e1, e2)
+  | E_deref x ->
+    E_deref (meta, translate_var x env)
+  | E_assign (x, e) ->
+    let x = translate_var x env in
+    let e = translate_expression e env in
+    E_assign (meta, x, e)
+  | E_for (start, final, incr, body) ->
+    let args = translate_args [start; final; incr] env in
+    let body = translate_binder body env in
+    E_for (meta, args, body)
+  | E_for_each (coll, _coll_type, body) ->
+    let coll = translate_expression coll env in
+    let body = translate_binderN body env in
+    E_for_each (meta, coll, body)
+  | E_while (cond, body) ->
+    let cond = translate_expression cond env in
+    let body = translate_expression body env in
+    E_while (meta, cond, body)
 
 and translate_binder ~raise ~proto (binder, body) env =
   let env' = I.Environment.add binder env in

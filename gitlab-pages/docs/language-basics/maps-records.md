@@ -120,7 +120,6 @@ let alice : user = {
 If we want the contents of a given field, we use the (`.`) infix
 operator, like so:
 
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=records1
@@ -145,7 +144,96 @@ let alice_admin : bool = alice.is_admin;
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
-let alice_admin: bool = alice.is_admin;
+let alice_admin = alice.is_admin;
+```
+
+</Syntax>
+
+### Destructuring Records
+
+We can also access fields of a record using the destructuring syntax. 
+This allows accessing multiple fields of a record in a concise manner, like so:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+function user_to_tuple (const u : user) is {
+  const record[ id ; is_admin ; name ] = u;
+} with (id, is_admin, name)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=records1
+let user_to_tuple (u : user) = 
+  let { id ; is_admin ; name } = u in
+  (id, is_admin, name)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=records1
+let user_to_tuple = (u : user) => { 
+  let { id, is_admin, name } = u;
+  (id, is_admin, name)
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+let userToTuple = (u : user) => {
+  let { id, is_admin, name } = u;
+  return [id, is_admin, name];
+}
+```
+
+</Syntax>
+
+We can ignore some fields of the records we can do so by 
+using `_` (underscore), like so:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+function get_id (const u : user) is {
+  const record[ id ; is_admin = _ ; name = _ ] = u;
+} with id
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=records1
+let get_id (u : user) = 
+  let { id ; is_admin = _ ; name = _ } = u in
+  id
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=records1
+let get_id = (u : user) => { 
+  let { id, is_admin: _, name: _ } = u;
+  id
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+let getId = (u : user) => {
+  let { id, is_admin, name } = u;
+  /* we don't use `is_admin` and `name`
+   so prevent warning with `ignore` */
+  ignore([is_admin, name]);
+  return id;
+}
 ```
 
 </Syntax>
@@ -299,9 +387,9 @@ The syntax for the functional updates of record in JsLIGO:
 type point = {x: int, y: int, z: int};
 type vector = {dx: int, dy: int};
 
-let origin: point = {x: 0, y: 0, z: 0};
+let origin = {x: 0, y: 0, z: 0};
 
-let xy_translate = (p: point, vec: vector): point =>
+let xy_translate = (p: point, vec: vector) =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
@@ -443,7 +531,7 @@ let change_color_preference = (account : account, color : color): account =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let change_color_preference = (account : account, color : color): account =>
+let change_color_preference = (account : account, color : color) =>
   ({ ...account, preferences: {...account.preferences, color: color }});
 ```
 
@@ -789,7 +877,7 @@ let force_access = ((key, moves) : (address, register)) : move => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let force_access = (key: address, moves: register): move => {
+let force_access = (key: address, moves: register) => {
   return match(Map.find_opt (key, moves), {
    Some: move => move,
    None: () => failwith("No move.")
@@ -887,7 +975,7 @@ We can update a binding in a map in JsLIGO by means of the
 `Map.update` built-in function:
 
 ```jsligo group=maps
-let assign = (m: register): register =>
+let assign = (m: register) =>
   Map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some ([4, 9]), m);
 ```
@@ -898,7 +986,7 @@ Notice the optional value `Some ([4,9])` instead of `[4, 9]`. If we used
 As a particular case, we can only add a key and its associated value.
 
 ```jsligo group=maps
-let add = (m: register): register =>
+let add = (m: register) =>
   Map.add
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [4, 9], m);
 ```
@@ -945,7 +1033,7 @@ let delete = ((key, moves) : (address, register)) : register =>
 In JsLIGO, we use the predefined function `Map.remove` as follows:
 
 ```jsligo group=maps
-let delete = (key: address, moves: register): register =>
+let delete = (key: address, moves: register) =>
   Map.remove(key, moves);
 ```
 
@@ -1010,7 +1098,7 @@ let iter_op = (m : register) : unit => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let iter_op = (m: register): unit => {
+let iter_op = (m: register) => {
   let predicate = (i: address, j: move) => assert(j[0] > 3);
   Map.iter(predicate, m);
 };
@@ -1060,7 +1148,7 @@ let map_op = (m : register) : register => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let map_op = (m: register): register => {
+let map_op = (m: register) => {
   let increment = (_: address, j: move) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
@@ -1396,7 +1484,7 @@ example,
 
 ```pascaligo group=big_maps
 function rem (var m : register) : register is {
-  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map m
 } with m
 
 const updated_map : register = rem (moves)

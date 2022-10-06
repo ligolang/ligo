@@ -121,6 +121,9 @@ let type_file ~raise ?(st = "auto") f entry options =
   ignore st;
   Build.qualified_typed ~raise ~options entry f
 
+let core_file ~raise f options =
+  Build.qualified_core ~raise ~options f
+
 let get_program ~raise ?(st = "auto") f entry =
   wrap_ref f (fun s ->
       let program = type_file ~raise ~st f entry options in

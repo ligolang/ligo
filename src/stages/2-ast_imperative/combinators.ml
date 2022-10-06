@@ -134,12 +134,18 @@ let e_variable_ez ?loc v = e_variable ?loc @@ Value_var.of_input_var ?loc v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_type_abs  ?loc type_binder result : expression = e_type_abstraction ?loc {type_binder;result} ()
-let e_lambda_ez ?loc var ?ascr ?mut output_type result : expression = e_lambda ?loc (Ligo_prim.Binder.make ?mut var ascr) output_type result
+let e_lambda_ez ?loc var ?ascr ?mut_flag output_type result : expression = e_lambda ?loc (Ligo_prim.Param.make ?mut_flag var ascr) output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
 (* let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_input_var fun_name) fun_type lambda *)
 let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; attributes }
-let e_let_in_ez ?loc var ?ascr ?mut attributes rhs let_result = e_let_in ?loc (Ligo_prim.Binder.make ?mut var ascr) attributes rhs let_result
+let e_let_mut_in ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
+
+let e_let_in_ez ?loc var ?ascr ?(mut = false) attributes rhs let_result = 
+  let binder = Ligo_prim.Binder.make var ascr in
+  if mut then e_let_mut_in ?loc binder attributes rhs let_result
+  else e_let_in ?loc binder attributes rhs let_result
+
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_input_var binder, ascr) inline rhs let_result *)
 let e_type_in   ?loc type_binder rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result}
 let e_mod_in    ?loc module_binder rhs let_result = make_e ?loc @@ E_mod_in  { module_binder; rhs ; let_result }
@@ -160,13 +166,45 @@ let e_matching_tuple ?loc matchee (binders: _ Binder.t list) body : expression =
   let pattern = Location.wrap ?loc @@ Pattern.P_tuple pv_lst in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
-let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : expression =
-  let labels,binders = List.unzip binders in
-  let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
-  let labels = List.map ~f:(fun s -> Label.of_string s) labels in
-  let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
+
+let e_param_matching_tuple ?loc matchee (params: _ Param.t list) body : expression =
+  let pv_lst = List.map ~f:(fun (p:_ Param.t) -> Location.wrap ?loc @@ (Pattern.P_var (Param.to_binder p))) params in
+  let pattern = Location.wrap ?loc @@ Pattern.P_tuple pv_lst in
+  let body =
+    List.fold_left params ~init:body ~f:(fun body param ->
+      match Param.get_mut_flag param with
+      | Immutable -> body
+      | Mutable -> e_let_mut_in ?loc (Param.to_binder param) [] (e_variable ?loc @@ Param.get_var param) body
+      )
+  in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
+  
+let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : expression =
+  let binders = List.map binders ~f:(fun (l,b) ->
+    Label.of_string l, Location.wrap ?loc (Pattern.P_var b)
+  ) in
+  let lps = Record.of_list binders in
+  let pattern = Location.wrap ?loc (Pattern.P_record lps) in
+  let cases = [ Match_expr.{ pattern ; body } ] in
+  make_e ?loc @@ E_matching {matchee;cases}
+
+let e_param_matching_record ?loc matchee (params: (string * _ Param.t) list) body : expression =
+  let body =
+    List.fold_left params ~init:body ~f:(fun body (_,param) ->
+      match Param.get_mut_flag param with
+      | Immutable -> body
+      | Mutable -> e_let_mut_in ?loc (Param.to_binder param) [] (e_variable ?loc @@ Param.get_var param) body
+      )
+  in
+  let params = List.map params ~f:(fun (l,p) ->
+    Label.of_string l, Location.wrap ?loc (Pattern.P_var (Param.to_binder p))
+  ) in
+  let lps = Record.of_list params in
+  let pattern = Location.wrap ?loc @@ Pattern.P_record lps in
+  let cases = [ Match_expr.{ pattern ; body } ] in
+  make_e ?loc @@ E_matching {matchee;cases}
+
 let e_accessor ?loc struct_ path      = make_e ?loc @@ E_accessor {struct_; path}
 let e_update ?loc struct_ path update = make_e ?loc @@ E_update {struct_; path; update}
 
@@ -220,7 +258,7 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_assign ?loc binder expression = make_e ?loc @@ E_assign {binder;expression}
-let e_assign_ez ?loc variable expression = e_assign ?loc (Binder.make ~mut:true (Value_var.of_input_var ?loc variable) None) expression
+let e_assign_ez ?loc variable expression = e_assign ?loc (Binder.make (Value_var.of_input_var ?loc variable) None) expression
 
 let e_unopt ?loc matchee none_body (var_some,some_body) =
   let some_case =

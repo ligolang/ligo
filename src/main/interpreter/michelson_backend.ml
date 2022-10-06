@@ -271,7 +271,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
       Ast_aggregated.e_a_lambda
         { result = aggregated_exp'
         ; output_type = out_ty
-        ; binder = Binder.make arg_binder in_ty
+        ; binder = Param.make arg_binder in_ty
         }
         in_ty
         out_ty
@@ -282,7 +282,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
         ; lambda =
             { result = aggregated_exp'
             ; output_type = out_ty
-            ; binder = Binder.make arg_binder in_ty
+            ; binder = Param.make arg_binder in_ty
             }
         }
   in
@@ -377,7 +377,7 @@ let make_function in_ty out_ty arg_binder body subst_lst =
   Ast_aggregated.e_a_lambda
     { result = typed_exp'
     ; output_type = out_ty
-    ; binder = Binder.make arg_binder in_ty
+    ; binder = Param.make arg_binder in_ty
     }
     in_ty
     out_ty
@@ -654,6 +654,21 @@ let rec val_to_ast ~raise ~loc
     in
     let x = bytes_of_bls12_381_fr b in
     e_a_bls12_381_fr x
+  | V_Ct (C_chain_id s) ->
+    let () =
+      trace_option
+        ~raise
+        (Errors.generic_error
+           loc
+           (Format.asprintf
+              "Expected chain_id but got %a"
+              Ast_aggregated.PP.type_expression
+              ty))
+        (match ty.type_content with
+         | T_constant { injection = Chain_id; _ } -> Some ()
+         | _ -> None)
+    in
+    e_a_chain_id s
   | V_Construct (ctor, arg) when is_t_sum ty ->
     let map_ty =
       trace_option
@@ -820,6 +835,8 @@ let rec val_to_ast ~raise ~loc
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: mutation"
   | V_Gen _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
+  | V_location _ ->
+    raise.error @@ Errors.generic_error loc "Cannot be abstracted: location"
 
 
 and make_ast_func ~raise ?name env arg body orig =
@@ -833,7 +850,7 @@ and make_ast_func ~raise ?name env arg body orig =
     Lambda.
       { result = typed_exp'
       ; output_type = out_ty
-      ; binder = Binder.make arg in_ty
+      ; binder = Param.make arg in_ty
       }
   in
   let typed_exp' =

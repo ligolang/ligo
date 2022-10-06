@@ -93,7 +93,19 @@ and expression_content ppf (ec : expression_content) =
   | E_raw_code   r -> Raw_code.pp   expression ppf r
   | E_ascription a -> Ascription.pp expression type_expression ppf a
   | E_module_accessor ma -> Module_access.pp Value_var.pp ppf ma
+  | E_let_mut_in { let_binder ;rhs ; let_result; attr } ->
+    fprintf ppf "@[let mut %a =@;<1 2>%a%a in@ %a@]"
+      (Binder.pp type_expression_option) let_binder
+      expression rhs
+      Types.ValueAttr.pp attr
+      expression let_result
   | E_assign     a -> Assign.pp     expression type_expression_option ppf a
+  | E_for for_loop ->
+    For_loop.pp expression ppf for_loop
+  | E_for_each for_each ->
+    For_each_loop.pp expression ppf for_each
+  | E_while while_loop ->
+    While_loop.pp expression ppf while_loop
 
 and declaration ppf (d : declaration) = match Location.unwrap d with
     D_value vd  -> Types.Value_decl.pp expression type_expression_option ppf vd

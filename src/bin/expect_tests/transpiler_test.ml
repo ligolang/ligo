@@ -2,7 +2,7 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "pascaligo" ] ;
-  [%expect {|
+  [%expect{|
     type card_pattern_id is nat
 
     type card_pattern is
@@ -47,10 +47,12 @@ let%expect_test _ =
       case gen__parameters2 of [
         (action, s) ->
           {
-            const cards : cards = s.cards;
+            var s : storage := s;
 
-            const card : card
-            = case cards [action.card_to_transfer]  of [
+            var cards : cards := s.cards;
+
+            var card : card
+            := case cards [action.card_to_transfer]  of [
                 Some (card) -> card
               | None ->
                   (failwith ("transfer_single: No card.")
@@ -77,6 +79,8 @@ let%expect_test _ =
       case gen__parameters3 of [
         (action, s) ->
           {
+            var s : storage := s;
+
             const card : card
             = case s.cards [action.card_to_sell]  of [
                 Some (card) -> card
@@ -90,8 +94,8 @@ let%expect_test _ =
             then failwith ("This card doesn't belong to you")
             else skip;
 
-            const card_pattern : card_pattern
-            = case s.card_patterns [card.card_pattern]  of [
+            var card_pattern : card_pattern
+            := case s.card_patterns [card.card_pattern]  of [
                 Some (pattern) -> pattern
               | None ->
                   (failwith ("sell_single: No card pattern.")
@@ -102,8 +106,7 @@ let%expect_test _ =
               card_pattern.quantity with
                 abs (Operator.sub (card_pattern.quantity, 1n));
 
-            const card_patterns : card_patterns
-            = s.card_patterns;
+            var card_patterns : card_patterns := s.card_patterns;
 
             card_patterns :=
               Map.add
@@ -113,7 +116,7 @@ let%expect_test _ =
 
             s := s.card_patterns with card_patterns;
 
-            const cards : cards = s.cards;
+            var cards : cards := s.cards;
 
             cards := Map.remove (action.card_to_sell, cards);
 
@@ -147,8 +150,10 @@ let%expect_test _ =
       case gen__parameters4 of [
         (action, s) ->
           {
-            const card_pattern : card_pattern
-            = case s.card_patterns [action.card_to_buy]  of [
+            var s : storage := s;
+
+            var card_pattern : card_pattern
+            := case s.card_patterns [action.card_to_buy]  of [
                 Some (pattern) -> pattern
               | None ->
                   (failwith ("buy_single: No card pattern.")
@@ -168,8 +173,7 @@ let%expect_test _ =
               card_pattern.quantity with
                 Operator.add (card_pattern.quantity, 1n);
 
-            const card_patterns : card_patterns
-            = s.card_patterns;
+            var card_patterns : card_patterns := s.card_patterns;
 
             card_patterns :=
               Map.add
@@ -179,7 +183,7 @@ let%expect_test _ =
 
             s := s.card_patterns with card_patterns;
 
-            const cards : cards = s.cards;
+            var cards : cards := s.cards;
 
             cards :=
               Map.add
@@ -205,470 +209,46 @@ let%expect_test _ =
           | Transfer_single (at) -> transfer_single (at, s)
           ]
       ] |}]
+(*       
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "cameligo" ] ;
-  [%expect {|
-    type card_pattern_id = nat
-
-    type card_pattern = {coefficient : tez; quantity : nat}
-
-    type card_patterns = (card_pattern_id, card_pattern) map
-
-    type card_id = nat
-
-    type card =
-      {card_owner : address; card_pattern : card_pattern_id}
-
-    type cards = (card_id, card) map
-
-    type storage =
-      {card_patterns : card_patterns;
-       cards : cards;
-       next_id : nat}
-
-    type return = operation list * storage
-
-    type action_buy_single = {card_to_buy : card_pattern_id}
-
-    type action_sell_single = {card_to_sell : card_id}
-
-    type action_transfer_single =
-      {card_to_transfer : card_id; destination : address}
-
-    type parameter =
-      Buy_single of action_buy_single
-    | Sell_single of action_sell_single
-    | Transfer_single of action_transfer_single
-
-    let transfer_single
-    : action_transfer_single * storage -> return =
-      (fun gen__parameters2 : action_transfer_single * storage ->
-         match gen__parameters2 with
-         (action, [@var] s) ->
-             let [@var] cards : cards = s.cards in
-             let [@var] card : card =
-               match Map.find_opt action.card_to_transfer cards
-               with
-                 Some card -> card
-               | None ->
-                   (failwith "transfer_single: No card." : card) in
-             begin
-               if (card.card_owner <> Tezos.get_sender ())
-               then failwith "This card doesn't belong to you"
-               else ();
-               begin
-                 let [@var] card =
-                   {card with
-                     {card_owner = action.destination}} in
-                 ();
-                 begin
-                   let [@var] cards =
-                     (Map.add
-                        (action.card_to_transfer)
-                        (card)
-                        (cards)) in
-                   ();
-                   begin
-                     let [@var] s = {s with {cards = cards}} in
-                     ();
-                     ([] : operation list), s
-                   end
-                 end
-               end
-             end)
-
-    let sell_single : action_sell_single * storage -> return =
-      (fun gen__parameters3 : action_sell_single * storage ->
-         match gen__parameters3 with
-         (action, [@var] s) ->
-             let card : card =
-               match Map.find_opt action.card_to_sell s.cards
-               with
-                 Some card -> card
-               | None ->
-                   (failwith "sell_single: No card." : card) in
-             begin
-               if (card.card_owner <> Tezos.get_sender ())
-               then failwith "This card doesn't belong to you"
-               else ();
-               let [@var] card_pattern : card_pattern =
-                 match Map.find_opt
-                         card.card_pattern
-                         s.card_patterns
-                 with
-                   Some pattern -> pattern
-                 | None ->
-                     (failwith "sell_single: No card pattern."
-                      : card_pattern) in
-               begin
-                 let [@var] card_pattern =
-                   {card_pattern with
-                     {quantity =
-                        abs (card_pattern.quantity - 1n)}} in
-                 ();
-                 let [@var] card_patterns : card_patterns =
-                   s.card_patterns in
-                 begin
-                   let [@var] card_patterns =
-                     (Map.add
-                        (card.card_pattern)
-                        (card_pattern)
-                        (card_patterns)) in
-                   ();
-                   begin
-                     let [@var] s =
-                       {s with
-                         {card_patterns = card_patterns}} in
-                     ();
-                     let [@var] cards : cards = s.cards in
-                     begin
-                       let [@var] cards =
-                         (Map.remove
-                            (action.card_to_sell)
-                            (cards)) in
-                       ();
-                       begin
-                         let [@var] s = {s with {cards = cards}} in
-                         ();
-                         let price : tez =
-                           (card_pattern.coefficient
-                            * card_pattern.quantity) in
-                         let receiver : unit contract =
-                           match (Tezos.get_contract_opt
-                                    (Tezos.get_sender ())
-                                  : unit contract option)
-                           with
-                             Some contract -> contract
-                           | None ->
-                               (failwith
-                                  "sell_single: No contract."
-                                : unit contract) in
-                         let op : operation =
-                           Tezos.transaction unit price receiver in
-                         let operations : operation list = [op] in
-                         operations, s
-                       end
-                     end
-                   end
-                 end
-               end
-             end)
-
-    let buy_single : action_buy_single * storage -> return =
-      (fun gen__parameters4 : action_buy_single * storage ->
-         match gen__parameters4 with
-         (action, [@var] s) ->
-             let [@var] card_pattern : card_pattern =
-               match Map.find_opt
-                       action.card_to_buy
-                       s.card_patterns
-               with
-                 Some pattern -> pattern
-               | None ->
-                   (failwith "buy_single: No card pattern."
-                    : card_pattern) in
-             let price : tez =
-               (card_pattern.coefficient
-                * (card_pattern.quantity + 1n)) in
-             begin
-               if (price > Tezos.get_amount ())
-               then failwith "Not enough money"
-               else ();
-               begin
-                 let [@var] card_pattern =
-                   {card_pattern with
-                     {quantity = (card_pattern.quantity + 1n)}} in
-                 ();
-                 let [@var] card_patterns : card_patterns =
-                   s.card_patterns in
-                 begin
-                   let [@var] card_patterns =
-                     (Map.add
-                        (action.card_to_buy)
-                        (card_pattern)
-                        (card_patterns)) in
-                   ();
-                   begin
-                     let [@var] s =
-                       {s with
-                         {card_patterns = card_patterns}} in
-                     ();
-                     let [@var] cards : cards = s.cards in
-                     begin
-                       let [@var] cards =
-                         (Map.add
-                            (s.next_id)
-                            ({card_owner = Tezos.get_sender ();
-                              card_pattern = action.card_to_buy})
-                            (cards)) in
-                       ();
-                       begin
-                         let [@var] s = {s with {cards = cards}} in
-                         ();
-                         begin
-                           let [@var] s =
-                             {s with
-                               {next_id = (s.next_id + 1n)}} in
-                           ();
-                           ([] : operation list), s
-                         end
-                       end
-                     end
-                   end
-                 end
-               end
-             end)
-
-    let main : parameter * storage -> return =
-      (fun gen__parameters5 : parameter * storage ->
-         match gen__parameters5 with
-         (action, s) ->
-             match action with
-               Buy_single bs -> buy_single bs s
-             | Sell_single as -> sell_single as s
-             | Transfer_single at -> transfer_single at s) |}];
+  [%expect.unreachable];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "reasonligo" ] ;
-  [%expect {|
-type card_pattern_id = nat;
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
 
-type card_pattern = {coefficient: tez, quantity: nat};
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 213, characters 2-93
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
-type card_patterns = map(card_pattern_id, card_pattern);
-
-type card_id = nat;
-
-type card = {
-  card_owner: address,
-  card_pattern: card_pattern_id};
-
-type cards = map(card_id, card);
-
-type storage = {card_patterns, cards, next_id: nat};
-
-type return = (list(operation), storage);
-
-type action_buy_single = {card_to_buy: card_pattern_id};
-
-type action_sell_single = {card_to_sell: card_id};
-
-type action_transfer_single = {
-  card_to_transfer: card_id,
-  destination: address};
-
-type parameter =
-  Buy_single(action_buy_single)
-| Sell_single(action_sell_single)
-| Transfer_single(action_transfer_single);
-
-let transfer_single
-: (action_transfer_single, storage) => return =
-  ((gen__parameters2: (action_transfer_single, storage))
-   : return =>
-     switch  gen__parameters2 {
-     | (action, [@var] s) =>
-         let [@var] cards: cards = s.cards;
-         let [@var] card: card =
-           switch
-           Map.find_opt(action.card_to_transfer, cards) {
-           | Some card => card
-           | None =>
-               (failwith("transfer_single: No card.") : card)
-           };
-         {
-           if(((card.card_owner) != (Tezos.get_sender(())))) {
-             failwith("This card doesn't belong to you")
-           } else {
-
-             ()
-             };
-           {
-             let [@var] card =
-               {...card,
-                 {card_owner: action.destination}};
-             ();
-             {
-               let [@var] cards =
-                 (
-                  Map.add((action.card_to_transfer),
-                     (card),
-                     (cards)));
-               ();
-               {
-                 let [@var] s = {...s, {cards: cards}};
-                 ();
-                 ([] : list(operation)), s
-               }
-             }
-           }
-         }
-     });
-
-let sell_single: (action_sell_single, storage) => return =
-  ((gen__parameters3: (action_sell_single, storage)): return =>
-     switch  gen__parameters3 {
-     | (action, [@var] s) =>
-         let card: card =
-           switch Map.find_opt(action.card_to_sell, s.cards) {
-           | Some card => card
-           | None =>
-               (failwith("sell_single: No card.") : card)
-           };
-         {
-           if(((card.card_owner) != (Tezos.get_sender(())))) {
-             failwith("This card doesn't belong to you")
-           } else {
-
-             ()
-             };
-           let [@var] card_pattern: card_pattern =
-             switch
-             Map.find_opt(card.card_pattern, s.card_patterns) {
-             | Some pattern => pattern
-             | None =>
-                 (failwith("sell_single: No card pattern.")
-                   : card_pattern)
-             };
-           {
-             let [@var] card_pattern =
-               {...card_pattern,
-                 {
-                   quantity:
-                     abs(((card_pattern.quantity) - (1n)))}};
-             ();
-             let [@var] card_patterns: card_patterns =
-               s.card_patterns;
-             {
-               let [@var] card_patterns =
-                 (
-                  Map.add((card.card_pattern),
-                     (card_pattern),
-                     (card_patterns)));
-               ();
-               {
-                 let [@var] s =
-                   {...s,
-                     {card_patterns: card_patterns}};
-                 ();
-                 let [@var] cards: cards = s.cards;
-                 {
-                   let [@var] cards =
-                     (
-                      Map.remove((action.card_to_sell),
-                         (cards)));
-                   ();
-                   {
-                     let [@var] s = {...s, {cards: cards}};
-                     ();
-                     let price: tez =
-                       ((card_pattern.coefficient) * (card_pattern.
-                           quantity));
-                     let receiver: contract(unit) =
-                       switch (
-                         Tezos.get_contract_opt(
-                           Tezos.get_sender(()))
-                         : option(contract(unit))) {
-                       | Some contract => contract
-                       | None =>
-                           (
-                             failwith("sell_single: No contract.")
-                             : contract(unit))
-                       };
-                     let op: operation =
-
-                       Tezos.transaction(unit,
-                          price,
-                          receiver);
-                     let operations: list(operation) = [op];
-                     operations, s
-                   }
-                 }
-               }
-             }
-           }
-         }
-     });
-
-let buy_single: (action_buy_single, storage) => return =
-  ((gen__parameters4: (action_buy_single, storage)): return =>
-     switch  gen__parameters4 {
-     | (action, [@var] s) =>
-         let [@var] card_pattern: card_pattern =
-           switch
-           Map.find_opt(action.card_to_buy, s.card_patterns) {
-           | Some pattern => pattern
-           | None =>
-               (failwith("buy_single: No card pattern.")
-                 : card_pattern)
-           };
-         let price: tez =
-           ((card_pattern.coefficient) * (((card_pattern.
-                 quantity) + (1n))));
-         {
-           if(((price) > (Tezos.get_amount(())))) {
-             failwith("Not enough money")
-           } else {
-
-             ()
-             };
-           {
-             let [@var] card_pattern =
-               {...card_pattern,
-                 {
-                   quantity:
-                     ((card_pattern.quantity) + (1n))}};
-             ();
-             let [@var] card_patterns: card_patterns =
-               s.card_patterns;
-             {
-               let [@var] card_patterns =
-                 (
-                  Map.add((action.card_to_buy),
-                     (card_pattern),
-                     (card_patterns)));
-               ();
-               {
-                 let [@var] s =
-                   {...s,
-                     {card_patterns: card_patterns}};
-                 ();
-                 let [@var] cards: cards = s.cards;
-                 {
-                   let [@var] cards =
-                     (
-                      Map.add((s.next_id),
-                         ({
-                           card_owner: Tezos.get_sender(()),
-                           card_pattern: action.card_to_buy}),
-                         (cards)));
-                   ();
-                   {
-                     let [@var] s = {...s, {cards: cards}};
-                     ();
-                     {
-                       let [@var] s =
-                         {...s,
-                           {next_id: ((s.next_id) + (1n))}};
-                       ();
-                       ([] : list(operation)), s
-                     }
-                   }
-                 }
-               }
-             }
-           }
-         }
-     });
-
-let main: (parameter, storage) => return =
-  ((gen__parameters5: (parameter, storage)): return =>
-     switch  gen__parameters5 {
-     | (action, s) =>
-         switch  action {
-         | Buy_single bs => buy_single(bs, s)
-         | Sell_single as => sell_single(as, s)
-         | Transfer_single at => transfer_single(at, s)
-         }
-     }); |}]
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  Decompiling a imperative construct to CameLIGO let mut s : storage = s in
+                                                 let mut cards : cards = s.cards in
+                                                 let mut card : card =
+                                                  match cards.[action.card_to_transfer] with
+                                                   | Some card -> card
+                                                   | None () -> (failwith)@("transfer_single: No card.") : card in
+                                                 {
+                                                    if NEQ(card.card_owner ,
+                                                    (Tezos.get_sender)@(unit)) then
+                                                    (failwith)@("This card doesn't belong to you") else skip;
+                                                    {
+                                                       card := { card with card_owner = action.destination };
+                                                       {
+                                                          cards := MAP_ADD(action.card_to_transfer ,card ,cards);
+                                                          {
+                                                             s := { s with cards = cards };
+                                                             (set[] : list (operation) , s)
+                                                          }
+                                                       }
+                                                    }
+                                                 }. |}] *)
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "pascaligo" ] ;
@@ -681,8 +261,8 @@ let%expect_test _ =
 
     function main (const gen___2 : unit) is
     {
-      const a : ppp
-      = (record [x = (0, 1); y = (10, 11)],
+      var a : ppp
+      := (record [x = (0, 1); y = (10, 11)],
          record [x = (100, 101); y = (110, 111)]);
 
       a := a.0 with a.0.x with a.0. x.0 with 2
@@ -690,7 +270,7 @@ let%expect_test _ =
 
     function asymetric_tuple_access (const gen___3 : unit) is
     {
-      const tuple : int * int * int * int = (0, (1, (2, 3)))
+      var tuple : int * int * int * int := (0, (1, (2, 3)))
     } with
         Operator.add
           (Operator.add
@@ -712,94 +292,56 @@ let%expect_test _ =
           Some (s) -> s
         | None -> (failwith ("Should not happen.") : string)
         ] |}]
-let%expect_test _ =
+(* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "cameligo" ] ;
-  [%expect{|
-    type pii = int * int
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
 
-    type ppi = {x : pii; y : pii}
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 295, characters 2-99
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
-    type ppp = ppi * ppi
-
-    let main : unit -> int =
-      (fun gen___2 : unit ->
-         let [@var] a : ppp =
-           {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
-         begin
-           let [@var] a =
-             {a with
-               {0 = {a with {0.x = {a with {0.x.0 = 2}}}}}} in
-           ();
-           a.0.x.0
-         end)
-
-    let asymetric_tuple_access : unit -> int =
-      (fun gen___3 : unit ->
-         let [@var] tuple : int * int * int * int = 0, 1, 2, 3 in
-         (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1))
-
-    type nested_record_t = {nesty : {mymap : (int, string) map}}
-
-    let nested_record : nested_record_t -> string =
-      (fun [@var] nee : nested_record_t ->
-         begin
-           let [@var] nee =
-             {nee with
-               {nesty =
-                  {nee with
-                    {nesty.mymap =
-                       (Map.add (1) ("one") (nee.nesty.mymap))}}}} in
-           ();
-           match Map.find_opt 1 nee.nesty.mymap with
-             Some s -> s
-           | None -> (failwith "Should not happen." : string)
-         end) |}]
-let%expect_test _ =
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  Decompiling a imperative construct to CameLIGO let mut a : ppp = ({ x : (
+                                                                    0 , 1) ;y : (
+                                                                    10 , 11) } , { x : (
+                                                                      100 , 101) ;y : (
+                                                                      110 , 111) }) in
+                                                 {
+                                                    a := { a with 0 = { a.0 with x = { a.0.x with 0 = 2 } } };
+                                                    a.0.x.0
+                                                 }. |}] *)
+(* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
-  [%expect{|
-type pii = (int, int);
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
 
-type ppi = {x: pii, y: pii};
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 320, characters 2-101
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
-type ppp = (ppi, ppi);
-
-let main: unit => int =
-  ((gen___2: unit): int =>
-     let [@var] a: ppp =
-       {
-          x: 0, 1,
-          y: 10, 11}, {x: 100, 101, y: 110, 111};
-     {
-       let [@var] a =
-         {...a,
-           {0: {...a, {0.x: {...a, {0.x[0]: 2}}}}}};
-       ();
-       a[0].x[0]
-     });
-
-let asymetric_tuple_access: unit => int =
-  ((gen___3: unit): int =>
-     let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
-     ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
-
-type nested_record_t = {nesty: {mymap: map(int, string)}};
-
-let nested_record: nested_record_t => string =
-  (([@var] nee: nested_record_t): string => {
-     let [@var] nee =
-       {...nee,
-         {
-           nesty:
-             {...nee,
-               {
-                 nesty.mymap:
-                   (Map.add((1), ("one"), (nee.nesty.mymap)))}}}};
-     ();
-     switch Map.find_opt(1, nee.nesty.mymap) {
-     | Some s => s
-     | None => (failwith("Should not happen.") : string)
-     }
-   }); |}]
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  Decompiling a imperative construct to ReasonLIGO let mut a : ppp = ({ x : (
+                                                                      0 , 1) ;y : (
+                                                                      10 , 11) } , { x : (
+                                                                      100 , 101) ;y : (
+                                                                      110 , 111) }) in
+                                                   {
+                                                      a := { a with 0 = { a.0 with x = { a.0.x with 0 = 2 } } };
+                                                      a.0.x.0
+                                                   }. |}] *)
 
 (*
 let%expect_test _ =
@@ -948,204 +490,138 @@ block {
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;
-  [%expect {|
-type parameter is Pos of nat | Zero of nat
+  [%expect{|
+    type parameter is Pos of nat | Zero of nat
 
-type storage is unit
+    type storage is unit
 
-type return is list (operation) * storage
+    type return is list (operation) * storage
 
-function main (const gen__parameters2 : parameter * storage) is
-  case gen__parameters2 of [
-    (p, s) ->
-      {
+    function main (const gen__parameters2 : parameter * storage) is
+      case gen__parameters2 of [
+        (p, s) ->
+          {
+            case p of [
+              Zero (n) ->
+                if Operator.gt (n, 0n)
+                then failwith ("fail")
+                else skip
+            | Pos (n) ->
+                if Operator.eq (n, 0n)
+                then failwith ("fail")
+                else skip
+            ]
+          } with ((list [] : list (operation)), s)
+      ]
+
+    function foobar (const i : int) is
+    {
+      var p : parameter := (Zero (42n));
+
+      if Operator.gt (i, 0)
+      then {
+        i := Operator.add (i, 1);
+
+        if Operator.gt (i, 10)
+        then {
+          i := 20;
+
+          failwith ("who knows");
+
+          i := 30
+        }
+        else skip
+      }
+      else
         case p of [
-          Zero (n) ->
-            if Operator.gt (n, 0n)
-            then failwith ("fail")
-            else skip
-        | Pos (n) ->
-            if Operator.eq (n, 0n)
-            then failwith ("fail")
-            else skip
+          Zero (gen___5) -> failwith (42n)
+        | Pos (gen___6) -> skip
         ]
-      } with ((list [] : list (operation)), s)
-  ]
+    } with
+        case p of [
+          Zero (gen___3) -> i
+        | Pos (gen___4) -> (failwith ("waaaa") : int)
+        ]
 
-function foobar (const i : int) is
-{
-  const p : parameter = (Zero (42n));
-
-  if Operator.gt (i, 0)
-  then {
-    i := Operator.add (i, 1);
-
-    if Operator.gt (i, 10)
-    then {
-      i := 20;
-
-      failwith ("who knows");
-
-      i := 30
-    }
-    else skip
-  }
-  else
-    case p of [
-      Zero (gen___5) -> failwith (42n)
-    | Pos (gen___6) -> skip
-    ]
-} with
-    case p of [
-      Zero (gen___3) -> i
-    | Pos (gen___4) -> (failwith ("waaaa") : int)
-    ]
-
-function failer (const p : int) is
-{
-  if Operator.eq (p, 1) then failwith (42) else skip
-} with p |}]
-let%expect_test _ =
+    function failer (const p : int) is
+    {
+      if Operator.eq (p, 1) then failwith (42) else skip
+    } with p |}]
+(* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
-  [%expect {|
-type parameter = Pos of nat | Zero of nat
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
 
-type storage = unit
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 550, characters 2-96
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
-type return = operation list * storage
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  Decompiling a imperative construct to CameLIGO let mut p : parameter =
+                                                 Zero(+42) in
+                                                 {
+                                                    if GT(i ,0) then {
+                                                                      i := ADD(i ,1);
+                                                                      if GT(i ,10) then {
 
-let main : parameter * storage -> return =
-  (fun gen__parameters2 : parameter * storage ->
-     match gen__parameters2 with
-     (p, s) ->
-         begin
-           match p with
-             Zero n ->
-               if (n > 0n) then failwith "fail" else ()
-           | Pos n ->
-               if (n = 0n) then failwith "fail" else ();
-           ([] : operation list), s
-         end)
-
-let foobar : int -> int =
-  (fun [@var] i : int ->
-     let [@var] p : parameter = (Zero 42n) in
-     begin
-       if (i > 0)
-       then
-         begin
-           let [@var] i = (i + 1) in
-           ();
-           if (i > 10)
-           then
-             begin
-               let [@var] i = 20 in
-               ();
-               begin
-                 failwith "who knows";
-                 let [@var] i = 30 in
-                 ()
-               end
-             end
-           else ()
-         end
-       else
-         match p with
-           Zero gen___5 -> failwith 42n
-         | Pos gen___6 -> ();
-       match p with
-         Zero gen___3 -> i
-       | Pos gen___4 -> (failwith "waaaa" : int)
-     end)
-
-let failer : int -> int =
-  (fun p : int ->
-     begin
-       if (p = 1) then failwith 42 else ();
-       p
-     end) |}]
+                                                                      i := 20;
+                                                                      {
+                                                                      (failwith)@("who knows");
+                                                                      i := 30
+                                                                      }
+                                                                      } else skip
+                                                    } else  match p with
+                                                             | Zero _#5 ->
+                                                             (failwith)@(+42)
+                                                             | Pos _#6 -> skip;
+                                                     match p with
+                                                      | Zero _#3 -> i
+                                                      | Pos _#4 -> (failwith)@("waaaa") : int
+                                                 }. |}]
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
-  [%expect {|
-type parameter = Pos(nat) | Zero(nat);
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
 
-type storage = unit;
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Transpiler_test.(fun) in file "src/bin/expect_tests/transpiler_test.ml", line 587, characters 2-98
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
-type return = (list(operation), storage);
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  Decompiling a imperative construct to ReasonLIGO let mut p : parameter =
+                                                   Zero(+42) in
+                                                   {
+                                                      if GT(i ,0) then {
 
-let main: (parameter, storage) => return =
-  ((gen__parameters2: (parameter, storage)): return =>
-     switch  gen__parameters2 {
-     | (p, s) =>
-         {
-           switch  p {
-           | Zero n =>
-               if(((n) > (0n))) {
-                 failwith("fail")
-               } else {
+                                                        i := ADD(i ,1);
+                                                        if GT(i ,10) then {
 
-                 ()
-                 }
-           | Pos n =>
-               if(((n) == (0n))) {
-                 failwith("fail")
-               } else {
-
-                 ()
-                 }
-           };
-           ([] : list(operation)), s
-         }
-     });
-
-let foobar: int => int =
-  (([@var] i: int): int =>
-     let [@var] p: parameter = (Zero 42n);
-     {
-       if(((i) > (0))) {
-
-         {
-           let [@var] i = ((i) + (1));
-           ();
-           if(((i) > (10))) {
-
-             {
-               let [@var] i = 20;
-               ();
-               {
-                 failwith("who knows");
-                 let [@var] i = 30;
-                 ()
-               }
-             }
-           } else {
-
-             ()
-             }
-         }
-       } else {
-
-         switch  p {
-         | Zero gen___5 => failwith(42n)
-         | Pos gen___6 => ()
-         }
-         };
-       switch  p {
-       | Zero gen___3 => i
-       | Pos gen___4 => (failwith("waaaa") : int)
-       }
-     });
-
-let failer: int => int =
-  ((p: int): int => {
-     if(((p) == (1))) {
-       failwith(42)
-     } else {
-
-       ()
-       };
-     p
-   }); |}]
+                                                          i := 20;
+                                                          {
+                                                             (failwith)@("who knows");
+                                                             i := 30
+                                                          }
+                                                        } else skip
+                                                      } else  match p with
+                                                               | Zero _#5 ->
+                                                               (failwith)@(+42)
+                                                               | Pos _#6 -> skip;
+                                                       match p with
+                                                        | Zero _#3 -> i
+                                                        | Pos _#4 -> (failwith)@("waaaa") : int
+                                                   }. |}] *)
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;

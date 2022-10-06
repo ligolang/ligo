@@ -59,8 +59,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a = _; b = One; c = Five}
-    - {a = _; b = One; c = Four} |}]
+    - {c = Five; b = One; a = _}
+    - {c = Four; b = One; a = _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_t_c.mligo") ] ;
@@ -89,8 +89,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - One {a = _; b = Five}
-    - One {a = _; b = Four} |}]
+    - One {b = Five; a = _}
+    - One {b = Four; a = _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_t_c.mligo") ] ;
@@ -118,8 +118,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - (_, ({a = _; b = Three; c = _}, _))
-    - (_, ({a = _; b = Two; c = _}, _)) |}]
+    - (_, ({c = _; b = Three; a = _}, _))
+    - (_, ({c = _; b = Two; a = _}, _)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_r_c.ligo") ] ;
@@ -133,8 +133,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - (_, (record [a = _; b = Three; c = _], _))
-    - (_, (record [a = _; b = Two; c = _], _)) |}]
+    - (_, (record [c = _; b = Three; a = _], _))
+    - (_, (record [c = _; b = Two; a = _], _)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_r_c.religo") ] ;
@@ -148,8 +148,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - (_, ({a : _,b : Three,c : _}, _))
-    - (_, ({a : _,b : Two,c : _}, _)) |}]
+    - (_, ({c : _,b : Three,a : _}, _))
+    - (_, ({c : _,b : Two,a : _}, _)) |}]
 
 
 let%expect_test _ =
@@ -163,8 +163,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a = _; b = ((_, _), (Four, _)); c = _}
-    - {a = _; b = ((_, _), (Three, _)); c = _} |}]
+    - {c = _; b = ((_, _), (Four, _)); a = _}
+    - {c = _; b = ((_, _), (Three, _)); a = _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_t_c.ligo") ] ;
@@ -178,8 +178,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - record [a = _; b = ((_, _), (Four, _)); c = _]
-    - record [a = _; b = ((_, _), (Three, _)); c = _] |}]
+    - record [c = _; b = ((_, _), (Four, _)); a = _]
+    - record [c = _; b = ((_, _), (Three, _)); a = _] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_t_c.religo") ] ;
@@ -192,9 +192,9 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a : _,b : ((_, _), (Four, _)),c : _}
-    - {a : _,b : ((_, _), (Three, _)),c : _}
-    - {a : _,b : ((_, _), (Two, _)),c : _} |}]
+    - {c : _,b : ((_, _), (Four, _)),a : _}
+    - {c : _,b : ((_, _), (Three, _)),a : _}
+    - {c : _,b : ((_, _), (Two, _)),a : _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_r_c.mligo") ] ;
@@ -207,8 +207,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a = _; b = {d = {e = _; f = _}; i = {g = Four; h = _}}; c = _}
-    - {a = _; b = {d = {e = _; f = _}; i = {g = One; h = _}}; c = _} |}]
+    - {c = _; b = {i = {h = _; g = Four}; d = {f = _; e = _}}; a = _}
+    - {c = _; b = {i = {h = _; g = One}; d = {f = _; e = _}}; a = _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "last.mligo") ] ;

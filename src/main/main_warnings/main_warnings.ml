@@ -15,6 +15,7 @@ type all =
   | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
   | `Jsligo_deprecated_failwith_no_return of Location.t
   | `Jsligo_deprecated_toplevel_let of Location.t
+  | `Jsligo_unreachable_code of Location.t
   | `Use_meta_ligo of Location.t
   | `Self_ast_aggregated_warning_bad_self_type of Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
   | `Deprecated_reasonligo
@@ -85,6 +86,9 @@ let pp : display_format:string display_format ->
     | `Jsligo_deprecated_toplevel_let loc ->
       Format.fprintf f "@[<hv>%a@.Toplevel let declaration are silently change to const declaration.@.@]"
       Snippet.pp loc
+    | `Jsligo_unreachable_code loc ->
+      Format.fprintf f "@[<hv>%a@ Warning: Unreachable code. @]"
+      Snippet.pp loc
     | `Self_ast_aggregated_warning_bad_self_type (got,expected,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Warning: Tezos.self type annotation.@.Annotation \"%a\" was given, but contract being compiled would expect \"%a\".@.Note that \"Tezos.self\" refers to the current contract, so the parameters should be generally the same. @]"
@@ -93,6 +97,7 @@ let pp : display_format:string display_format ->
         Ast_aggregated.PP.type_expression expected
     | `Deprecated_reasonligo ->
       Format.fprintf f "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]"
+    
   )
 let to_json : all -> Yojson.Safe.t = fun a ->
   let json_warning ~stage ~content =
@@ -210,6 +215,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
     json_warning ~stage ~content
   | `Jsligo_deprecated_toplevel_let loc ->
     let message = `String "Toplevel let declarations are silently convert to const declarations" in
+    let stage   = "lexer" in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
+  | `Jsligo_unreachable_code loc ->
+    let message = `String "Unreachable code" in
     let stage   = "lexer" in
     let loc = Location.to_yojson loc in
     let content = `Assoc [

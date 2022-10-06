@@ -24,6 +24,7 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_bls12_381_g1 b -> Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.G1.to_bytes b))
   | C_bls12_381_g2 b -> Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.G2.to_bytes b))
   | C_bls12_381_fr b -> Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.Fr.to_bytes b))
+  | C_chain_id s -> Format.fprintf ppf "%s" s
 
 let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   match v with
@@ -58,6 +59,8 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." Snippet.pp l s
   | V_Gen _ ->
      Format.fprintf ppf "Generator"
+  | V_location _ -> 
+     Format.fprintf ppf "Heap location"
 
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term
