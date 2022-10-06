@@ -50,10 +50,11 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_LOOP_CONTINUE | C_LOOP_STOP
   | C_SUB_MUTEZ
   | C_BYTES_UNPACK
-  | C_SET_EMPTY | C_SET_LITERAL
-  | C_LIST_EMPTY | C_LIST_LITERAL
-  | C_MAP_EMPTY | C_MAP_LITERAL
-  | C_MAP_GET | C_MAP_REMOVE
+  | C_SIZE | C_SLICE
+  | C_SET_EMPTY | C_SET_LITERAL | C_SET_SIZE
+  | C_LIST_EMPTY | C_LIST_LITERAL | C_LIST_SIZE
+  | C_MAP_EMPTY | C_MAP_LITERAL | C_MAP_SIZE
+  | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
   | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
   | C_BIG_MAP_EMPTY
   | C_SAPLING_EMPTY_STATE
@@ -66,8 +67,6 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
   | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
   (* impure: *)
-  | C_UNOPT
-  | C_UNOPT_WITH_ERROR
   | C_OPTION_MAP
   | C_MAP_FIND
   | C_CALL
@@ -159,9 +158,8 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_TEST_INT64_TO_INT
   | C_TEST_LAST_EVENTS
   | C_TEST_TRY_WITH
-  | C_TEST_ABS
-  | C_TEST_INT
-  | C_TEST_SLICE
+  | C_ABS
+  | C_INT
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

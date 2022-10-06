@@ -278,6 +278,54 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_no_mutation.mligo" ] ;
   [%expect{|
+    File "./test_no_mutation.mligo", line 28, characters 2-55:
+     27 |   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+     28 |   assert (Test.get_storage taddr = initial_storage + 7)
+     29 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "./test_no_mutation.mligo", line 28, characters 2-55:
+     27 |   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+     28 |   assert (Test.get_storage taddr = initial_storage + 7)
+     29 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "./test_no_mutation.mligo", line 28, characters 2-55:
+     27 |   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+     28 |   assert (Test.get_storage taddr = initial_storage + 7)
+     29 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "./test_no_mutation.mligo", line 28, characters 2-55:
+     27 |   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+     28 |   assert (Test.get_storage taddr = initial_storage + 7)
+     29 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "./test_no_mutation.mligo", line 28, characters 2-55:
+     27 |   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+     28 |   assert (Test.get_storage taddr = initial_storage + 7)
+     29 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "./test_no_mutation.mligo", line 28, characters 2-55:
+     27 |   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+     28 |   assert (Test.get_storage taddr = initial_storage + 7)
+     29 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
     Everything at the top-level was executed.
     - test exited with value ().
     - test_mutation exited with value ().
@@ -286,6 +334,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_mutate_from_file.mligo" ] ;
   [%expect{|
+    File "./test_mutate_from_file.mligo", line 7, character 2 to line 8, character 4:
+      6 |   let _ = Test.transfer_exn a (Test.eval 1) 0tez in
+      7 |   let () = assert (Test.get_storage_of_address a = (Test.eval 1)) in
+      8 |   ()
+      9 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
     Everything at the top-level was executed.
     - tester exited with value <fun>.
     - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 59-64:
@@ -699,7 +756,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_tickets_and_bigmaps.mligo" ] ;
   [%expect {|
-    Success (3498n)
+    Success (3497n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
@@ -773,6 +830,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
+      1 | let test =
+      2 |     assert false
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
       2 |     assert false
