@@ -33,7 +33,7 @@ module type PRETTY =
     val print           : cst       -> PPrint.document
     val print_expr      : expr      -> PPrint.document
     val print_type_expr : type_expr -> PPrint.document
-    val print_pattern   : ?cols:int -> pattern -> PPrint.document
+    val print_pattern   : pattern   -> PPrint.document
   end
 
 (* PARSING *)
