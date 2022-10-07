@@ -478,17 +478,18 @@ let find_external_file ~file ~inclusion_paths =
     match segs with
       scope :: pkg_name :: rest_of_path
         when Core.String.is_prefix ~prefix:"@" scope ->
-      (* scoped npm packages are of the form `@scope/pkg` *)
+        (* scoped npm packages are of the form `@scope/pkg` *)
       let scope = Core.String.chop_prefix_exn ~prefix:"@" scope in
       let* Path dir = find_in_inclusion_paths ~scope pkg_name in
       let rest_of_path =
         String.concat ~sep:Filename.dir_sep rest_of_path
       in Some (Path.join dir rest_of_path)
+    | [pkg_name] -> None
     | pkg_name :: rest_of_path ->
-        let* Path dir = find_in_inclusion_paths pkg_name in
-        let rest_of_path =
-          String.concat ~sep:Filename.dir_sep rest_of_path
-        in Some (Path.join dir rest_of_path)
+       let* Path dir = find_in_inclusion_paths pkg_name in
+       let rest_of_path =
+         String.concat ~sep:Filename.dir_sep rest_of_path
+       in Some (Path.join dir rest_of_path)
     | _ -> None
   in Some segs
 

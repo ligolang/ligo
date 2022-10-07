@@ -1,0 +1,5 @@
+author: SanderSpies
+description: 'JsLIGO: Pass ES6FUN token also when a syntax error occurs in the PreParser'
+merge_request: '2051'
+title: 'JsLIGO: Pass ES6FUN token also when a syntax error occurs in the PreParser'
+type: internal

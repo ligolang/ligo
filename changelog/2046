@@ -1,0 +1,5 @@
+author: SanderSpies
+description: 'Fix for JsLIGO assignment chaining when tuples are used (see also: #1462)'
+merge_request: '2046'
+title: Assignment chaining
+type: fixed

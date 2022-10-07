@@ -673,4 +673,20 @@ module Test = struct
     mutation_nth ([] : (b * mutation) list) 0n
 #endif
 
+  let assert (b : bool) : unit = if b then () else failwith "failed assertion"
+  let assert_some (type a) (v : a option) : unit = match v with | None -> failwith "failed assert some" | Some _ -> ()
+  let assert_none (type a) (v : a option) : unit = match v with | None -> () | Some _ -> failwith "failed assert none"
+
+#if CURRY
+  let assert_with_error (b : bool) (s : string) = if b then () else failwith s
+  let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> failwith s | Some _ -> ()
+  let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
+#endif
+
+#if UNCURRY
+  let assert_with_error ((b, s) : bool * string) = if b then () else failwith s
+  let assert_some_with_error (type a) ((v, s) : a option * string) : unit = match v with | None -> failwith s | Some _ -> ()
+  let assert_none_with_error (type a) ((v, s) : a option * string) : unit = match v with | None -> () | Some _ -> failwith s
+#endif
+
 end

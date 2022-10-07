@@ -1,7 +1,7 @@
 STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
 PASS,16tuples_sequences_functions.jsligo,64,636,274,130,51
 PASS,1assignment_operators.jsligo,115,776,196,62,37
-PASS,1high-order.jsligo,57,662,382,159,55
+PASS,1high-order.jsligo,60,696,286,112,38
 PASS,1never.jsligo,15,177,91,34,15
 PASS,2amount.jsligo,7,88,32,17,3
 PASS,2bytes_unpack.jsligo,13,172,40,15,9

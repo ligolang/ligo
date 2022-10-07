@@ -42,8 +42,13 @@ let pre_parser tokens : _ result =
   let failure = function
     Inter.Accepted s ->  Ok s
   | HandlingError _env ->
-      (* We don't handle this here, but let it go through *)
-      Error ([], Region.wrap_ghost "Parse error.")
+    (* In case something goes wrong in the PreParser, we reinject the ES6FUN tokens here. *)
+    Ok (List.rev (List.fold_left ~f:(fun a t ->
+      if List.mem !State.insertions t ~equal:Caml.(=) then
+        t :: (Token.mk_ES6FUN (Token.to_region t)) :: a
+      else
+        t::a
+    ) ~init:[] tokens))
   | _ -> Error ([], Region.wrap_ghost "Unhandled state.")
   in
   let checkpoint = PreParser.Incremental.self_pass
