@@ -5,6 +5,7 @@ type t =
   ; scripts : (string * string) list
   ; main : string option
   ; author : string
+  ; contract: bool
   ; repository : Repository_url.t
   ; license : string
   ; readme : string
@@ -85,6 +86,10 @@ let read ~project_root =
          try json |> Util.member "author" |> Util.to_string with
          | _ -> failwith "No author field  in package.json"
        in
+       let contract =
+         try json |> Util.member "contract" |> Util.to_bool with
+         | _ -> false
+       in
        let repository =
          let repo =
            match json |> Util.member "repository" with
@@ -115,6 +120,7 @@ let read ~project_root =
          ; scripts
          ; main
          ; author
+         ; contract
          ; repository
          ; license
          ; readme

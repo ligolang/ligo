@@ -55,6 +55,7 @@ type author = {
 type version = 
   { name        : string
   ; author      : author
+  ; contract    : bool
   ; repository  : RepositoryUrl.t
   ; version     : sem_ver
   ; description : string
@@ -99,7 +100,7 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~author ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~is_contract ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
   id = name ;
   name ;
   description ;
@@ -112,6 +113,7 @@ let body ~name ~author ~repository ~main ~readme ~version ~ligo_registry ~descri
     author = {
       name = author
     } ;
+    contract = is_contract;
     repository = repository;
     version = version ;
     description ;
@@ -134,7 +136,7 @@ let body ~name ~author ~repository ~main ~readme ~version ~ligo_registry ~descri
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let LigoManifest.{ name ; version ; main; scripts ; description ; readme ; author; repository ;  _ } = manifest in
+  let LigoManifest.{ name ; version ; main; scripts ; description ; readme ; author; contract; repository ;  _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
@@ -144,6 +146,7 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let body = body 
     ~name 
     ~author
+    ~is_contract: contract
     ~repository
     ~version
     ~scripts
