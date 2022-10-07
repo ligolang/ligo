@@ -242,7 +242,6 @@ let () =
     test_suite "REPL (cameligo)" [
         test "basic" (test_basic ~raw_options);
         test "stdlib" (test_stdlib ~raw_options);
-        test "empty" (test_empty ~raw_options);
         test "def&eval" (test_def ~raw_options);
         test "mod" (test_mod ~raw_options);
         test "use" (test_use ~raw_options);
@@ -251,7 +250,6 @@ let () =
     test_suite "REPL (jsligo)" [
         test "basic" (test_basic_jsligo ~raw_options);
         test "stdlib" (test_stdlib_jsligo ~raw_options);
-        test "empty" (test_empty_jsligo ~raw_options);
         test "def&eval" (test_def_jsligo ~raw_options);
         test "mod" (test_mod_jsligo ~raw_options);
         test "use" (test_use_jsligo ~raw_options);
