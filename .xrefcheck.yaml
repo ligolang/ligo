@@ -33,6 +33,7 @@ verification:
     - .gitlab/merge_request_templates/
     - .gitlab/issue_templates/
 
+    - static.esy.esy.lock/overrides/5a340488c657db45d2ed088d31b1c36d/Readme.md
     - ./vendors/tezos-ligo/*
 
   # Glob patterns describing the files which do not physically exist in the
