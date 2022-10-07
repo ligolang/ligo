@@ -23,35 +23,12 @@ type message = string Region.reg
 
 type token = Token.t
 
-(* It's not a lexer *)
-(*
-type window = <
-  last_token    : token option;
-  current_token : token           (* Including EOF *)
->
-
-let window : window option ref = ref None
-
-let set_window ~current ~last : unit =
-  window := Some (object
-                    method last_token    = last
-                    method current_token = current
-                  end)
- *)
-
 let fake_lexer : token list -> Lexing.lexbuf -> token =
   fun tokens ->
     let store = ref tokens in
     fun _ ->
       match !store with
-        token::tokens ->
-(*          let last =
-            match !window with
-              None -> None
-            | Some window -> Some window#current_token in
-          set_window ~current:token ~last; *)
-          store := tokens;
-          token
+        token::tokens -> store := tokens; token
       | [] -> Token.ghost_EOF
 
 let pre_parser tokens : _ result =
