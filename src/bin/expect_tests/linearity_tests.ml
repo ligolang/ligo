@@ -81,16 +81,6 @@ let%expect_test _ =
     Repeated variable in pattern.
     Hint: Change the name. |}];
 
-  run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_record_pattern_let_in.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/negative/linearity_record_pattern_let_in.mligo", line 6, characters 8-27:
-      5 | let y =
-      6 |     let { foo ; foo ; bar } = x in
-      7 |     foo + bar
-
-    Repeated variable in pattern.
-    Hint: Change the name. |}];
-
   run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_record_pattern_fun.mligo" ] ;
   [%expect{|
     File "../../test/contracts/negative/linearity_record_pattern_fun.mligo", line 3, characters 12-31:

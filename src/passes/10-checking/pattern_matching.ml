@@ -327,7 +327,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             in
             (l, b)
         in
-        List.map ~f:aux (Record.LMap.to_kv_list lps)
+        List.map ~f:aux (Pattern.Container.Record.to_list lps)
       | _ -> raise.error @@ corner_case __LOC__
     in
     let aux : typed_pattern list * O.expression ->
@@ -349,7 +349,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             let field_t = extract_record_type ~raise p label t in
             (p,field_t)
           in
-          let tps = List.map ~f:aux (Record.LMap.to_kv_list lps) in
+          let tps = List.map ~f:aux (Pattern.Container.Record.to_list lps) in
           (tps @ var_filler::ptl , body)
         | P_var _ ->
           let filler =
@@ -374,7 +374,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 in
                 (v,field_t)
               in
-              List.map ~f:aux (Record.LMap.to_kv_list lps)
+              List.map ~f:aux (Pattern.Container.Record.to_list lps)
             | _ -> raise.error @@ corner_case __LOC__
           in
           (filler @ pl , body)

@@ -6,29 +6,6 @@ module I = Ast_imperative
 module O = Ast_sugar
 open Ligo_prim
 
-let rec r_to_l (pr : _ O.Pattern.t) : _ I.Pattern.t =
-  let loc = Location.get_location pr in
-  match (Location.unwrap pr) with
-  | P_unit -> Location.wrap ~loc I.Pattern.P_unit
-  | P_var b -> Location.wrap ~loc (I.Pattern.P_var b)
-  | P_list Cons (h, t) ->
-      let h = r_to_l h in
-      let t = r_to_l t in
-      Location.wrap ~loc (I.Pattern.P_list (Cons(h, t)))
-  | P_list List ps ->
-      let ps = List.map ~f:r_to_l ps in
-      Location.wrap ~loc (I.Pattern.P_list (List ps))
-  | P_variant (l, p) ->
-      let p = r_to_l p in
-      Location.wrap ~loc (I.Pattern.P_variant (l, p))
-  | P_tuple ps -> 
-      let ps = List.map ~f:r_to_l ps in
-      Location.wrap ~loc (I.Pattern.P_tuple ps)
-  | P_record lps ->
-      let lps = Record.LMap.map r_to_l lps in
-      let lps = Pattern.Container.List.of_list (Record.to_list lps) in
-      Location.wrap ~loc (I.Pattern.P_record lps)
-
 let rec decompile_type_expression : O.type_expression -> I.type_expression =
   fun te ->
   let self = decompile_type_expression in
@@ -64,7 +41,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
 
 let decompile_pattern_to_string ~syntax pattern =
-  let pattern = r_to_l pattern in
+  let pattern = Pattern.Conv.r_to_l pattern in
   let p = I.Pattern.map (decompile_type_expression_option) pattern in
   let s = match syntax with
     Some Syntax_types.JsLIGO ->
@@ -125,7 +102,7 @@ let rec decompile_expression : O.expression -> I.expression =
   | O.E_matching m ->
     let O.Match_expr.{matchee;cases} = O.Match_expr.map self self_type_opt m in
     let cases = List.map cases ~f:(fun {pattern;body} -> 
-      let pattern = r_to_l pattern in
+      let pattern = Pattern.Conv.r_to_l pattern in
       I.Match_expr.{pattern;body}) in
     return @@ I.E_matching {matchee;cases}
   | O.E_record recd ->

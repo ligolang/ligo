@@ -53,7 +53,7 @@ module Module_decl= Module_decl(Attr)
 module Accessor = Accessor(Access_path)
 module Update   = Update(Access_path)
 
-module Match_expr = Match_expr.Make (Pattern.Make) (Pattern.Container.List)
+module Match_expr = Match_expr.Make(Pattern.Make)(Pattern.Container.List)
 module Pattern = Pattern.Make(Pattern.Container.List)
 
 

@@ -7,29 +7,6 @@ open Simple_utils.Trace
 module VMap = Simple_utils.Map.Make(Ligo_prim.Value_var)
 open Ligo_prim
 
-let rec l_to_r (pl : _ I.Pattern.t) : _ O.Pattern.t =
-  let loc = Location.get_location pl in
-  match (Location.unwrap pl) with
-  | P_unit -> Location.wrap ~loc O.Pattern.P_unit
-  | P_var b -> Location.wrap ~loc (O.Pattern.P_var b)
-  | P_list Cons (h, t) ->
-      let h = l_to_r h in
-      let t = l_to_r t in
-      Location.wrap ~loc (O.Pattern.P_list (Cons(h, t)))
-  | P_list List ps ->
-      let ps = List.map ~f:l_to_r ps in
-      Location.wrap ~loc (O.Pattern.P_list (List ps))
-  | P_variant (l, p) ->
-      let p = l_to_r p in
-      Location.wrap ~loc (O.Pattern.P_variant (l, p))
-  | P_tuple ps -> 
-      let ps = List.map ~f:l_to_r ps in
-      Location.wrap ~loc (O.Pattern.P_tuple ps)
-  | P_record lps ->
-      let lps = Pattern.Container.List.map l_to_r lps in
-      let lps = Record.of_list (Pattern.Container.List.to_list lps) in
-      Location.wrap ~loc (O.Pattern.P_record lps)
-
 let rec add_to_end (expression: O.expression) to_add =
   match expression.expression_content with
   | O.E_let_in lt ->
@@ -158,7 +135,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_matching {matchee;cases} ->
       let matchee = self matchee in
       let aux I.Match_expr.{pattern;body} =
-        let pattern = l_to_r pattern in
+        let pattern = Pattern.Conv.l_to_r pattern in
         let pattern = O.Pattern.map (Option.map ~f:(compile_type_expression ~raise)) pattern in
         O.Match_expr.{pattern;body = self body} in
       let cases   = List.map ~f:aux cases in

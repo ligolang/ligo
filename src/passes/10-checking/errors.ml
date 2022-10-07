@@ -134,7 +134,7 @@ type typer_error =
   | `Typer_pattern_missing_cases of
     Location.t
     * Syntax_types.t option
-    * Ast_core.type_expression option Ast_core.Pattern.t list
+    * Ast_core.type_expression option Ast_typed.Pattern.t list
   | `Typer_pattern_redundant_case of Location.t
   | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
