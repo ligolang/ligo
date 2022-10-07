@@ -718,8 +718,7 @@ let register_constant = (constant : michelson_program) => string
 </SyntaxTitle>
 Registers a global constant `constant`, returns its hash as a string.
 
-See the [documentation for global
-constants](../advanced/global-constants#global-constants-in-the-testing-framework)
+See the [documentation for global constants](../advanced/global-constants.md#global-constants-in-the-testing-framework)
 for an example of usage.
 
 <SyntaxTitle syntax="pascaligo">
