@@ -116,9 +116,9 @@ let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme
       name = author
     } ;
     type_;
-    storage_fn;
+    storage_fn ;
     storage_arg;
-    repository;
+    repository ;
     version ;
     description ;
     scripts ;
