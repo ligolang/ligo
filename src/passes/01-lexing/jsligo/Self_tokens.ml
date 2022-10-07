@@ -92,6 +92,13 @@ let automatic_semicolon_insertion tokens =
   | (SEMI _) :: (Default _ as t) :: rest
   | (SEMI _) :: (Else _ as t) :: rest ->
     inner (t :: result) rest
+  | (RBRACE _ as rbrace) :: (Namespace _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (Export _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (Let _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (Const _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (Return _ as r)  :: rest -> 
+    inner (r :: SEMI (Token.wrap_semi Region.ghost) :: rbrace :: result ) rest
   | token :: (Namespace _ as t) :: rest
   | token :: (Export _ as t) :: rest
   | token :: (Let _ as t) :: rest
