@@ -5,7 +5,9 @@ type t =
   ; scripts : (string * string) list
   ; main : string option
   ; author : string
-  ; contract: bool
+  ; type_ : string
+  ; storage_fn : string option
+  ; storage_arg : string option
   ; repository : Repository_url.t
   ; license : string
   ; readme : string
@@ -86,9 +88,26 @@ let read ~project_root =
          try json |> Util.member "author" |> Util.to_string with
          | _ -> failwith "No author field  in package.json"
        in
-       let contract =
-         try json |> Util.member "contract" |> Util.to_bool with
-         | _ -> false
+       let type_ =
+         try json |> Util.member "type" |> Util.to_string
+          |> (fun t -> 
+                if String.(t = "contract" || t = "library") 
+                then t 
+                else failwith "Type can be either library or contract") with
+         | _ -> "library"
+       in
+       let storage_fn = 
+          try Some (json |> Util.member "storage_fn" |> Util.to_string) with
+          | _ -> None in
+       let storage_arg =
+          try Some (json |> Util.member "storage_arg" |> Util.to_string) with
+          | _ -> None in
+       let () = 
+          match type_, storage_fn, storage_arg with
+            "contract", Some _, Some _ -> ()
+          | "libray", _, _ -> ()
+          | _, (None | Some _), (None | Some _) -> 
+            failwith "In case of a contract a `storage_fn` & `storage_are` needs to provided"
        in
        let repository =
          let repo =
@@ -120,7 +139,9 @@ let read ~project_root =
          ; scripts
          ; main
          ; author
-         ; contract
+         ; type_
+         ; storage_fn
+         ; storage_arg
          ; repository
          ; license
          ; readme

@@ -55,7 +55,9 @@ type author = {
 type version = 
   { name        : string
   ; author      : author
-  ; contract    : bool
+  ; type_       : string [@key "type"]
+  ; storage_fn  : string option
+  ; storage_arg : string option
   ; repository  : RepositoryUrl.t
   ; version     : sem_ver
   ; description : string
@@ -100,7 +102,7 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~author ~is_contract ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
   id = name ;
   name ;
   description ;
@@ -113,9 +115,11 @@ let body ~name ~author ~is_contract ~repository ~main ~readme ~version ~ligo_reg
     author = {
       name = author
     } ;
-    contract = is_contract;
-    repository = repository;
-    version = version ;
+    type_;
+    storage_fn;
+    storage_arg;
+    repository;
+    version ;
     description ;
     scripts ;
     readme ;
@@ -136,7 +140,17 @@ let body ~name ~author ~is_contract ~repository ~main ~readme ~version ~ligo_reg
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let LigoManifest.{ name ; version ; main; scripts ; description ; readme ; author; contract; repository ;  _ } = manifest in
+  let LigoManifest.{ name 
+  ; version 
+  ; main
+  ; scripts 
+  ; description 
+  ; readme 
+  ; author
+  ; type_
+  ; repository 
+  ; storage_fn
+  ; storage_arg ; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
@@ -146,7 +160,9 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let body = body 
     ~name 
     ~author
-    ~is_contract: contract
+    ~type_
+    ~storage_fn
+    ~storage_arg
     ~repository
     ~version
     ~scripts

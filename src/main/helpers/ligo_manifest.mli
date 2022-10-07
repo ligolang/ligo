@@ -5,7 +5,9 @@ type t =
   ; scripts : (string * string) list
   ; main : string option
   ; author : string
-  ; contract: bool
+  ; type_ : string
+  ; storage_fn : string option
+  ; storage_arg : string option
   ; repository : Repository_url.t
   ; license : string
   ; readme : string
