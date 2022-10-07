@@ -90,11 +90,12 @@ let read ~project_root =
        in
        let type_ =
          try json |> Util.member "type" |> Util.to_string
-          |> (fun t -> 
+          |> (fun t ->
                 if String.(t = "contract" || t = "library") 
                 then t 
                 else failwith "Type can be either library or contract") with
-         | _ -> "library"
+          | Failure s -> failwith s      
+          | _ -> "library"
        in
        let storage_fn = 
           try Some (json |> Util.member "storage_fn" |> Util.to_string) with
@@ -105,9 +106,9 @@ let read ~project_root =
        let () = 
           match type_, storage_fn, storage_arg with
             "contract", Some _, Some _ -> ()
-          | "libray", _, _ -> ()
-          | _, (None | Some _), (None | Some _) -> 
+          | "contract", (None | Some _), (None | Some _) -> 
             failwith "In case of a contract a `storage_fn` & `storage_are` needs to provided"
+          | ("library" | _), _, _ -> ()
        in
        let repository =
          let repo =
