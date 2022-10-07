@@ -6,7 +6,7 @@ module Std = Simple_utils.Std
 
 (* Insertion *)
 
-let automatic_semicolon_insertion tokens =
+let semicolon_insertion tokens =
   let open! Token in
   let rec inner result = function
     (Directive _ as t) :: rest ->
@@ -68,7 +68,7 @@ let automatic_semicolon_insertion tokens =
   | hd :: tl -> inner (hd :: result) tl
   | [] -> List.rev result
   in
-  inner [] tokens
+  Ok (inner [] tokens)
 
 (* Exported *)
 
