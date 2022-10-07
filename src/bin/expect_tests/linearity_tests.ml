@@ -71,3 +71,40 @@ let%expect_test _ =
 
     Repeated variable in pattern.
     Hint: Change the name. |}];
+
+  run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_pattern_matching.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/linearity_pattern_matching.mligo", line 4, characters 4-30:
+      3 | let yy : string = match { a = 1 ; b = 2n ; c = "33" } with
+      4 |   | { a = a ;  b = b ; c = a } -> a
+
+    Repeated variable in pattern.
+    Hint: Change the name. |}];
+
+  run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_record_pattern_let_in.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/linearity_record_pattern_let_in.mligo", line 6, characters 8-27:
+      5 | let y =
+      6 |     let { foo ; foo ; bar } = x in
+      7 |     foo + bar
+
+    Repeated variable in pattern.
+    Hint: Change the name. |}];
+
+  run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_record_pattern_fun.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/linearity_record_pattern_fun.mligo", line 3, characters 12-31:
+      2 |
+      3 | let y = fun { foo ; foo ; bar } -> foo + bar
+
+    Repeated variable in pattern.
+    Hint: Change the name. |}];
+
+  run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_record_pattern.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/linearity_record_pattern.mligo", line 3, characters 32-51:
+      2 |
+      3 | let y (x:foofoo) = match x with { foo ; foo ; bar } -> foo + bar
+
+    Repeated variable in pattern.
+    Hint: Change the name. |}];

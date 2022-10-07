@@ -84,7 +84,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
 
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
 let decompile_pattern_to_string pattern =
-  let p = I.Pattern.map (decompile_type_expression_option) pattern in
+  let p : (I.type_expression option) I.Pattern.t = O.Pattern.map (decompile_type_expression_option) pattern in
   Purification.Decompiler.decompile_pattern_to_string p
 
 let rec decompile_expression : O.expression -> I.expression =

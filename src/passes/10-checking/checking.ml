@@ -1364,7 +1364,7 @@ and check_cases
   =
   let open Elaboration.Let_syntax in
   let ctx, cases =
-    List.fold_map ~init:ctx cases ~f:(fun ctx Match_expr.{ pattern; body } ->
+    List.fold_map ~init:ctx cases ~f:(fun ctx { pattern; body } ->
         let ctx, pos = Context.mark ctx ~mut:false in
         let matchee_type = Context.apply ctx matchee_type in
         if debug
