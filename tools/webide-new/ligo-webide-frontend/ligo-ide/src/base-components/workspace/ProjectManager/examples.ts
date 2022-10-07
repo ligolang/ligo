@@ -22,7 +22,6 @@ let main (action, store : parameter * storage) : return =
    Increment (n) -> add (store, n)
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
-
 `;
 
 const incrementL = `
@@ -48,12 +47,11 @@ function sub (const store : storage; const delta : int) : storage is
    
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
-  end)
-
+  ])
 `;
 
 const incrementR = `
@@ -81,7 +79,6 @@ let main = ((action, store) : (parameter, storage)) : return => {
   | Decrement (n) => sub ((store, n))
   | Reset         => 0}))
 };
-
 `;
 
 const incrementJ = `
@@ -95,12 +92,12 @@ type parameter =
 type return_ = [list <operation>, storage];
 
 /* Two entrypoints */
-let add = ([store, delta] : [storage, int]) : storage => store + delta;
-let sub = ([store, delta] : [storage, int]) : storage => store - delta;
+const add = ([store, delta] : [storage, int]) : storage => store + delta;
+const sub = ([store, delta] : [storage, int]) : storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ([action, store] : [parameter, storage]) : return_ => {
+const main = ([action, store] : [parameter, storage]) : return_ => {
  return [
    (list([]) as list <operation>),    // No operations
    (match (action, {
@@ -109,7 +106,6 @@ let main = ([action, store] : [parameter, storage]) : return_ => {
     Reset:     ()  => 0}))
   ]
 };
-
 `;
 
 const idM = `
@@ -354,21 +350,20 @@ be to deter people from doing it just to chew up address space.
 
 function buy (const parameter : buy; const storage : storage) : list(operation) * storage is
   begin
-    if amount = storage.name_price
-    then skip
-    else failwith("Incorrect amount paid.");
+    if (Tezos.get_amount() =/= storage.name_price)
+    then failwith("Incorrect amount paid.");
     const profile : bytes = parameter.profile;
     const initial_controller : option(address) = parameter.initial_controller;
     var identities : big_map (id, id_details) := storage.identities;
     const new_id : int = storage.next_id;
     const controller : address =
-      case initial_controller of
+      case initial_controller of [
         Some(addr) -> addr
-      | None -> sender
-      end;
+      | None -> Tezos.get_sender()
+      ];
     const new_id_details: id_details =
       record [
-              owner = sender ;
+              owner = Tezos.get_sender() ;
               controller = controller ;
               profile = profile ;
       ];
@@ -383,22 +378,21 @@ function buy (const parameter : buy; const storage : storage) : list(operation) 
 function update_owner (const parameter : update_owner; const storage : storage) :
          list(operation) * storage is
   begin
-    if (amount =/= 0mutez)
+    if (Tezos.get_amount() =/= 0mutez)
     then
       begin
         failwith("Updating owner doesn't cost anything.");
-      end
-    else skip;
+      end;
     const id : int = parameter.id;
     const new_owner : address = parameter.new_owner;
     var identities : big_map (id, id_details) := storage.identities;
     var id_details : id_details :=
-      case identities[id] of
+      case identities[id] of [
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
-      end;
+      ];
     var is_allowed : bool := False;
-    if sender = id_details.owner
+    if Tezos.get_sender() = id_details.owner
     then is_allowed := True
     else failwith("You are not the owner of this ID.");
     id_details.owner := new_owner;
@@ -413,33 +407,32 @@ function update_owner (const parameter : update_owner; const storage : storage) 
 function update_details (const parameter : update_details; const storage : storage ) :
          list(operation) * storage is
   begin
-    if (amount =/= 0mutez)
-    then failwith("Updating details doesn't cost anything.")
-    else skip;
+    if (Tezos.get_amount() =/= 0mutez)
+    then failwith("Updating details doesn't cost anything.");
     const id : int = parameter.id;
     const new_profile : option(bytes) = parameter.new_profile;
     const new_controller : option(address) = parameter.new_controller;
     var identities : big_map (id, id_details) := storage.identities;
     var id_details: id_details :=
-      case identities[id] of
+      case identities[id] of [
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
-      end;
+      ];
     var is_allowed : bool := False;
-    if (sender = id_details.controller) or (sender = id_details.owner)
+    if (Tezos.get_sender() = id_details.controller) or (Tezos.get_sender() = id_details.owner)
     then is_allowed := True
     else failwith("You are not the owner or controller of this ID.");
     const owner: address = id_details.owner;
     const profile: bytes =
-      case new_profile of
+      case new_profile of [
         None -> (* Default *) id_details.profile
       | Some(new_profile) -> new_profile
-      end;
+      ];
     const controller: address =
-    case new_controller of
+    case new_controller of [
       None -> (* Default *) id_details.controller
     | Some(new_controller) -> new_controller
-    end;
+    ];
     id_details.owner := owner;
     id_details.controller := controller;
     id_details.profile := profile;
@@ -454,9 +447,8 @@ function update_details (const parameter : update_details; const storage : stora
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
   begin
-    if amount = storage.skip_price
-    then skip
-    else failwith("Incorrect amount paid.");
+    if Tezos.get_amount() =/= storage.skip_price
+    then failwith("Incorrect amount paid.");
   end with ((nil: list(operation)), record [
                                      identities = storage.identities;
                                      next_id = storage.next_id + 1;
@@ -465,13 +457,12 @@ function skip_ (const p: unit; const storage: storage) : list(operation) * stora
                                    ])
 
 function main (const action : action; const storage : storage) : list(operation) * storage is
-  case action of
+  case action of [
   | Buy(b) -> buy (b, storage)
   | Update_owner(uo) -> update_owner (uo, storage)
   | Update_details(ud) -> update_details (ud, storage)
   | Skip(s) -> skip_ (unit, storage)
-  end;
-
+  ];
 `;
 
 const idR = `
@@ -533,7 +524,7 @@ be to deter people from doing it just to chew up address space.
 
 let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) => {
   let void: unit =
-    if (amount == storage.name_price) { (); }
+    if (Tezos.get_amount () == storage.name_price) { (); }
     else { failwith("Incorrect amount paid."); };
   let profile = parameter.profile;
   let initial_controller = parameter.initial_controller;
@@ -542,10 +533,10 @@ let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) =>
   let controller: address =
     switch (initial_controller) {
       | Some(addr) => addr
-      | None => sender
+      | None => Tezos.get_sender ()
     };
   let new_id_details: id_details = {
-    owner : sender,
+    owner : Tezos.get_sender (),
     controller : controller,
     profile : profile,
   };
@@ -561,7 +552,7 @@ let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) =>
 
 let update_owner = ((parameter, storage): (update_owner, storage)) : (list(operation), storage) => {
   let void: unit =
-    if (amount != 0mutez) {
+    if (Tezos.get_amount () != 0mutez) {
       failwith("Updating owner doesn't cost anything.");
     }
     else { (); };
@@ -574,7 +565,7 @@ let update_owner = ((parameter, storage): (update_owner, storage)) : (list(opera
       | None => (failwith("This ID does not exist."): id_details)
     };
   let is_allowed: bool =
-    if (sender == current_id_details.owner) { true; }
+    if (Tezos.get_sender () == current_id_details.owner) { true; }
     else { (failwith("You are not the owner of this ID."): bool); };
   let updated_id_details: id_details = {
     owner : new_owner,
@@ -593,7 +584,7 @@ let update_owner = ((parameter, storage): (update_owner, storage)) : (list(opera
 let update_details = ((parameter, storage): (update_details, storage)) :
                    (list(operation), storage) => {
   let void : unit =
-    if (amount != 0mutez) {
+    if (Tezos.get_amount () != 0mutez) {
       failwith("Updating details doesn't cost anything.");
     }
     else { (); };
@@ -607,8 +598,8 @@ let update_details = ((parameter, storage): (update_details, storage)) :
       | None => (failwith("This ID does not exist."): id_details)
     };
   let is_allowed: bool =
-    if ((sender != current_id_details.controller) &&
-        (sender != current_id_details.owner)) {
+    if ((Tezos.get_sender () != current_id_details.controller) &&
+        (Tezos.get_sender () != current_id_details.owner)) {
       (failwith ("You are not the owner or controller of this ID."): bool)
     }
     else { true; };
@@ -641,7 +632,7 @@ let update_details = ((parameter, storage): (update_details, storage)) :
 /* Let someone skip the next identity so nobody has to take one that's undesirable */
 let skip = ((p,storage): (unit, storage)) => {
   let void : unit =
-    if (amount != storage.skip_price) {
+    if (Tezos.get_amount () != storage.skip_price) {
       failwith("Incorrect amount paid.");
     }
     else { (); };
@@ -661,7 +652,6 @@ let main = ((action, storage): (action, storage)) : (list(operation), storage) =
     | Skip s => skip(((), storage))
   };
 };
-
 `;
 
 const idJ = `
@@ -722,7 +712,7 @@ be to deter people from doing it just to chew up address space.
 */
 
 let buy = ([parameter, storage]: [buy, storage]) : [list<operation>, storage] => {
-  if (amount != storage.name_price)
+  if (Tezos.get_amount() != storage.name_price)
     failwith("Incorrect amount paid.");
   let profile = parameter.profile;
   let initial_controller = parameter.initial_controller;
@@ -731,10 +721,10 @@ let buy = ([parameter, storage]: [buy, storage]) : [list<operation>, storage] =>
   let controller: address =
     match (initial_controller, {
       Some: addr => addr,
-      None: () => sender
+      None: () => Tezos.get_sender()
     });
   let new_id_details: id_details = {
-    owner : sender,
+    owner : Tezos.get_sender(),
     controller : controller,
     profile : profile,
   };
@@ -749,7 +739,7 @@ let buy = ([parameter, storage]: [buy, storage]) : [list<operation>, storage] =>
   };
 
 let update_owner = ([parameter, storage]: [update_owner, storage]) : [list<operation>, storage] => {
-  if (amount != (0 as mutez)) {
+  if (Tezos.get_amount() != (0 as mutez)) {
     failwith("Updating owner doesn't cost anything.");
   }
   let id : int = parameter.id;
@@ -761,7 +751,7 @@ let update_owner = ([parameter, storage]: [update_owner, storage]) : [list<opera
       None: () => (failwith("This ID does not exist.") as id_details)
     });
 
-  if (sender != current_id_details.owner)
+  if (Tezos.get_sender() != current_id_details.owner)
     { failwith("You are not the owner of this ID."); }
 
   let updated_id_details: id_details = {
@@ -780,7 +770,7 @@ let update_owner = ([parameter, storage]: [update_owner, storage]) : [list<opera
 
 let update_details = ([parameter, storage]: [update_details, storage]) :
                    [list<operation>, storage] => {
-  if (amount != (0 as mutez)) {
+  if (Tezos.get_amount() != (0 as mutez)) {
     failwith("Updating details doesn't cost anything.");
   }
   let id = parameter.id;
@@ -793,8 +783,8 @@ let update_details = ([parameter, storage]: [update_details, storage]) :
       None: () => (failwith("This ID does not exist.") as id_details)
     });
 
-  if ((sender != current_id_details.controller) &&
-        (sender != current_id_details.owner)) {
+  if ((Tezos.get_sender() != current_id_details.controller) &&
+        (Tezos.get_sender() != current_id_details.owner)) {
       failwith ("You are not the owner or controller of this ID.");
   }
 
@@ -826,7 +816,7 @@ let update_details = ([parameter, storage]: [update_details, storage]) :
 
 /* Let someone skip the next identity so nobody has to take one that's undesirable */
 let skip = ([p,storage]: [unit, storage]) : [list<operation>, storage] => {
-  if (amount != storage.skip_price) {
+  if (Tezos.get_amount() != storage.skip_price) {
     failwith("Incorrect amount paid.");
   }
 
@@ -846,7 +836,6 @@ let main = ([action, storage]: [action, storage]) : [list<operation>, storage] =
     Skip: s => skip([unit, storage])
   });
 };
-
 `;
 
 const hashlockM = `
@@ -878,9 +867,9 @@ type return = operation list * storage
 
 let commit (p, s : bytes * storage) : return =
   let commit : commit =
-    {date = Tezos.now + 86_400; salted_hash = p} in
+    {date = Tezos.get_now () + 86_400; salted_hash = p} in
   let updated_map: commit_set =
-    Big_map.update Tezos.sender (Some commit) s.commits in
+    Big_map.update (Tezos.get_sender ()) (Some commit) s.commits in
   let s = {s with commits = updated_map}
   in ([] : operation list), s
 
@@ -890,18 +879,18 @@ let reveal (p, s : reveal * storage) : return =
     (failwith "This contract has already been used." : return)
   else
     let commit : commit =
-      match Big_map.find_opt sender s.commits with
+      match Big_map.find_opt (Tezos.get_sender ()) s.commits with
     | Some c -> c
     | None ->
        (failwith "You have not made a commitment to hash against yet."
         : commit)
     in
-    if Tezos.now < commit.date
+    if Tezos.get_now () < commit.date
     then
       (failwith "It has not been 24 hours since your commit yet.": return)
     else
       let salted =
-        Crypto.sha256 (Bytes.concat p.hashable (Bytes.pack sender)) in
+        Crypto.sha256 (Bytes.concat p.hashable (Bytes.pack (Tezos.get_sender ()))) in
       if salted <> commit.salted_hash
       then
         (failwith "This reveal does not match your commitment.": return)
@@ -917,7 +906,6 @@ let main (p, s : parameter * storage) : return =
   match p with
   | Commit c -> commit (c,s)
   | Reveal r -> reveal (r,s)
-
 `;
 
 const hashlockL = `
@@ -949,42 +937,38 @@ type return is list(operation) * storage
 
 function commit (const p : bytes; var s: storage) : return is
   begin
-    const commit : commit = record [date = Tezos.now + 86_400; salted_hash = p];
-    const updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit), s.commits);
+    const commit : commit = record [date = Tezos.get_now() + 86_400; salted_hash = p];
+    const updated_map: commit_set = Big_map.update(Tezos.get_sender(), Some(commit), s.commits);
     s := s with record [commits = updated_map];    
   end with ((nil : list(operation)), s)
 
 function reveal (const p: reveal; var s: storage) : return is
   begin
     if not s.unused
-    then failwith("This contract has already been used.")
-    else skip;
+    then failwith("This contract has already been used.");
     var commit : commit := record [date = (0: timestamp); salted_hash = ("": bytes)];
-    case Big_map.find_opt(sender, s.commits) of
+    case Big_map.find_opt(Tezos.get_sender(), s.commits) of [
     | Some (c) -> commit := c
     | None -> failwith("You have not made a commitment to hash against yet.")
-    end;
-    if Tezos.now < commit.date
+    ];
+    if Tezos.get_now() < commit.date
     then failwith("It has not been 24 hours since your commit yet.");
-    else skip;
     const salted : bytes =
       Crypto.sha256(
-        Bytes.concat(p.hashable, Bytes.pack(sender))
+        Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender()))
       );
     if salted =/= commit.salted_hash
-    then failwith("This reveal does not match your commitment.")
-    else skip;
+    then failwith("This reveal does not match your commitment.");
     if s.hashed = Crypto.sha256(p.hashable)
     then s := s with record [unused = False]
     else failwith("Your commitment did not match the storage hash.");
   end with (p.message(unit), s)
 
 function main (const p: parameter; const s: storage) : return is
-  case p of
+  case p of [
   | Commit (c) -> commit (c,s)
   | Reveal (r) -> reveal (r,s)
-  end
-
+  ]
 `;
 
 const hashlockR = `
@@ -1017,8 +1001,8 @@ type return = (list(operation), storage)
 /* We use hash-commit so that a baker can not steal */
 
 let commit = ((p, s) : (bytes, storage)) : return => {
-  let commit : commit = {date: Tezos.now + 86_400, salted_hash: p};
-  let updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit), s.commits);
+  let commit : commit = {date: Tezos.get_now () + 86_400, salted_hash: p};
+  let updated_map: commit_set = Big_map.update(Tezos.get_sender (), Some(commit), s.commits);
   let s = {...s, commits: updated_map};
   (([] : list(operation)), s);
 };
@@ -1029,18 +1013,18 @@ let reveal = ((p, s): (reveal, storage)) : return => {
   }
   else { (); };
   let commit_ : commit =
-    switch (Big_map.find_opt(sender, s.commits)) {
+    switch (Big_map.find_opt(Tezos.get_sender (), s.commits)) {
     | Some (c) => c
     | None =>
        (failwith("You have not made a commitment to hash against yet."): commit)
     };
-  if (Tezos.now < commit_.date) {
+  if (Tezos.get_now () < commit_.date) {
     failwith("It has not been 24 hours since your commit yet.");
   }
   else { (); };
   let salted : bytes =
     Crypto.sha256(
-      Bytes.concat(p.hashable, Bytes.pack(Tezos.sender))
+      Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender ()))
     );
   if (salted != commit_.salted_hash) {
     failwith("This reveal does not match your commitment.");
@@ -1061,7 +1045,6 @@ let main = ((p, s): (parameter, storage)) : return => {
   | Reveal (r) => reveal((r,s))
   };
 };
-
 `;
 
 const hashlockJ = `
@@ -1094,8 +1077,8 @@ type return_ = [list<operation>, storage];
 /* We use hash-commit so that a baker can not steal */
 
 let commit = ([p, s] : [bytes, storage]) : return_ => {
-  let commit_ : commit = {date: Tezos.now + 86_400, salted_hash: p};
-  let updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit_), s.commits);
+  let commit_ : commit = {date: Tezos.get_now() + 86_400, salted_hash: p};
+  let updated_map: commit_set = Big_map.update(Tezos.get_sender(), Some(commit_), s.commits);
   let s_ = {...s, commits: updated_map};
   return [(list([]) as list<operation>), s_];
 };
@@ -1106,18 +1089,18 @@ let reveal = ([p, s]: [reveal, storage]) : return_ => {
   };
 
   let commit_ : commit =
-    match (Big_map.find_opt(sender, s.commits), {
+    match (Big_map.find_opt(Tezos.get_sender(), s.commits), {
     Some: c => c,
     None: () =>
        (failwith("You have not made a commitment to hash against yet.") as commit)
     });
-  if (Tezos.now < commit_.date) {
+  if (Tezos.get_now() < commit_.date) {
     failwith("It has not been 24 hours since your commit yet.");
   };
 
   let salted : bytes =
     Crypto.sha256(
-      Bytes.concat(p.hashable, Bytes.pack(Tezos.sender))
+      Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender()))
     );
   if (salted != commit_.salted_hash) {
     failwith("This reveal does not match your commitment.");
@@ -1137,7 +1120,6 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
     Reveal: r => reveal([r,s])
   });
 };
-
 `;
 
 const config = (name: string, projectName: string) => `{
