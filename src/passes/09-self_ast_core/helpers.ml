@@ -1,6 +1,6 @@
+open Ligo_prim
 open Ast_core
 open Simple_utils.Trace
-open Ligo_prim
 include Ast_core.PP
 
 let map_lmap_t f map =

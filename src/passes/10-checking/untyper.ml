@@ -120,6 +120,8 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       let body = self body in
       let case = match Record.is_tuple fields with
         | false ->
+          let open Ligo_prim.Pattern.Container in
+          let fields = Record.of_record fields in
           let pattern = Location.wrap (Pattern.P_record (Record.map aux fields)) in
           ({ pattern ; body } : _ Match_expr.match_case)
         | true ->

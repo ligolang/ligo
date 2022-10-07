@@ -1,6 +1,6 @@
 module Pair = Simple_utils.Pair
-open Ast_sugar
 open Ligo_prim
+open Ast_sugar
 
 type ('a, 'err) folder = 'a -> expression -> 'a
 

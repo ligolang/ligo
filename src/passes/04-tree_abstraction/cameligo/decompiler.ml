@@ -387,7 +387,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr_with_par @@ CST.EConstr (wrap (constr, Some element))
   | E_matching {matchee; cases} ->
     let expr  = decompile_expression matchee in
-    let aux : _ Match_expr.match_case -> _ CST.case_clause CST.reg =
+    let aux : _ AST.Match_expr.match_case -> _ CST.case_clause CST.reg =
       fun { pattern ; body } ->
         let rhs = decompile_expression body in
         let pattern = decompile_pattern pattern in
@@ -706,9 +706,9 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     )
   )
 
-and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
+and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern =
   fun pattern ->
-    let is_unit_pattern (p : AST.type_expression option Pattern.t) =
+    let is_unit_pattern (p : AST.type_expression option AST.Pattern.t) =
       match p.wrap_content with P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | P_unit -> CST.PUnit (wrap (Token.ghost_lpar, Token.ghost_rpar))
@@ -745,14 +745,14 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       CST.PPar (wrap (par (CST.PTuple (wrap pl))))
     | P_record lps ->
       let field_patterns =
-        Record.LMap.fold
-          (fun (Label.Label x) pattern acc -> 
+        List.fold
+          ~f:(fun acc (Label.Label x, pattern) -> 
             let pattern = decompile_pattern pattern in
             let field_name = wrap x in
-            let field_pattern : CST.field_pattern =
-              { field_name ; eq = Token.ghost_eq ; pattern } in 
+            let field_pattern 
+              = CST.{ field_name ; eq = Token.ghost_eq ; pattern } in 
             (wrap field_pattern) :: acc)
-          lps []
+          (Container.List.to_list lps) ~init:[]
       in
       let field_patterns = list_to_nsepseq ~sep:Token.ghost_semi field_patterns in
       let inj = ne_inject braces field_patterns ~attr:[] in
