@@ -1,10 +1,10 @@
 STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
-PASS,extra_arrow_in_lambda.jsligo,15,233,85,26,13
+PASS,extra_arrow_in_lambda.jsligo,15,232,62,22,11
 FAIL,extra_colon_in_return_type.jsligo,-1,-1,-1,-1,-1
 PASS,extra_eq_in_func_decl.jsligo,0,0,0,0,0
 PASS,extra_gt_zwsp.jsligo,2,15,5,2,0
 PASS,lambda_with_missing_arguments.jsligo,5,34,16,10,1
-PASS,missing_argument_bracketR.jsligo,27,334,122,56,19
+PASS,missing_argument_bracketR.jsligo,27,336,110,50,17
 PASS,missing_arrow_in_lambda_expr.jsligo,5,27,11,6,1
 PASS,missing_arrow_in_lambda_in_match.jsligo,6,125,43,17,6
 PASS,missing_colon_in_record_expr.jsligo,2,10,6,2,0
@@ -13,12 +13,12 @@ PASS,missing_comma_in_list_pat.jsligo,3,103,21,14,3
 PASS,missing_comma_in_record_decl.jsligo,3,3,3,4,0
 PASS,missing_comma_in_tuple_pat.jsligo,8,113,23,11,4
 PASS,missing_curly_bracketR_in_the_nested_namespace.jsligo,28,294,54,16,8
-PASS,missing_curly_bracket_in_record_decl.jsligo,15,233,85,26,14
+PASS,missing_curly_bracket_in_record_decl.jsligo,15,233,45,17,8
 PASS,missing_dots_in_list_pat.jsligo,3,112,26,18,5
 PASS,missing_dots_in_record_update.jsligo,2,2,2,1,0
 PASS,missing_eq_in_type_decl.jsligo,0,0,0,0,0
-PASS,missing_expr_parenthesesL.jsligo,15,236,86,28,14
-PASS,missing_expr_parenthesesR.jsligo,15,237,91,28,14
+PASS,missing_expr_parenthesesL.jsligo,15,236,46,19,8
+PASS,missing_expr_parenthesesR.jsligo,15,237,51,19,8
 PASS,missing_ident_in_type_decl.jsligo,2,2,2,2,0
 PASS,missing_int.jsligo,2,6,6,2,0
 PASS,missing_name_of_argument.jsligo,6,114,14,11,3
@@ -38,7 +38,7 @@ PASS,triple_eq_in_if_condition.jsligo,2,17,3,2,0
 PASS,unfinished_code00.jsligo,3,6,6,5,0
 PASS,unfinished_code01.jsligo,2,2,2,2,0
 PASS,unfinished_code02.jsligo,18,174,64,49,2
-PASS,unfinished_code03.jsligo,68,802,174,82,34
+PASS,unfinished_code03.jsligo,64,810,108,52,22
 PASS,unfinished_code04.jsligo,2,25,23,23,0
 PASS,unfinished_code05.jsligo,2,8,8,5,0
 PASS,unfinished_code06.jsligo,2,10,10,5,0

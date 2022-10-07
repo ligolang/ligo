@@ -1462,8 +1462,10 @@ contract: MINUS LPAR LBRACE Ident RBRACE ZWSP
 ## LPAR expr
 ##
 
-Ill-formed parenthesised expression.
-At this point, a closing parenthesis ')' is expected.
+Ill-formed expression.
+At this point, one of the following is expected:
+ * a closing parenthesis ')', if definining a parenthesized expression
+ * a closing parenthesis ')' after the parameters, if defining a function expression.
 
 contract: Namespace UIdent LBRACE Ident SEMI ZWSP
 ##

@@ -249,13 +249,18 @@ let pre_parser tokens : (token list, string Region.reg) result  =
   let fake_lexbuf = Lexing.from_string "" in
   let module Inter = PreParser.MenhirInterpreter in
   let supplier     = Inter.lexer_lexbuf_to_supplier fake_lexer fake_lexbuf in
-  let success a    = ok a
+  let success a    = ok a 
   in
   let failure = function
     Inter.Accepted s ->  Ok s
   | HandlingError _env -> 
-    (* We don't handle this here, but let it go through *)
-    Error Region.{value = "Parser error."; region = Region.ghost}
+    (* In case something goes wrong in the PreParser, we reinject the ES6FUN tokens here. *)
+    Ok (List.rev (List.fold_left ~f:(fun a t ->   
+      if List.mem !State.insertions t ~equal:Caml.(=) then 
+        t :: (Token.mk_ES6FUN (Token.to_region t)) :: a
+      else
+        t::a  
+    ) ~init:[] tokens))
   | _ -> Error Region.{value = "Unhandled state."; region = Region.ghost}
   in
   let checkpoint = PreParser.Incremental.self_pass fake_lexbuf.lex_curr_p in
