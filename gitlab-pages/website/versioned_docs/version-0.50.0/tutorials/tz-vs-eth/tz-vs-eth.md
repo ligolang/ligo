@@ -1019,7 +1019,7 @@ However, here you leave your contract in an _intermediate_ state before making a
 
 By making contract interactions harder, Tezos incentives you to simplify your architecture. Think about whether you can use lambdas or merge your contracts to avoid complex inter-contract dependencies. If it is possible to _not_ split your logic into multiple contracts, then avoid the split.
 
-You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](https://ligolang.org/docs/tutorials/inter-contract-calls/inter-contract-calls) article.
+You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](../inter-contract-calls/inter-contract-calls.md) article.
 
 ## Fees
 
