@@ -55,6 +55,7 @@ type author = {
 type version = 
   { name        : string
   ; author      : author
+  ; main        : string option
   ; type_       : string [@key "type"]
   ; storage_fn  : string option
   ; storage_arg : string option
@@ -96,7 +97,6 @@ type body =
   ; name        : string 
   ; description : string
   ; dist_tags   : dist_tag [@key "dist-tags"]
-  ; main        : string option
   ; versions    : Versions.t  
   ; readme      : string
   ; attachments : Attachments.t [@key "_attachments"]
@@ -109,16 +109,16 @@ let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme
   dist_tags = {
     latest = version
   } ;
-  main = main;
   versions = SMap.add version {
+    main = main;
     name ;
     author = {
       name = author
     } ;
     type_;
-    storage_fn;
+    storage_fn ;
     storage_arg;
-    repository;
+    repository ;
     version ;
     description ;
     scripts ;
