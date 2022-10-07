@@ -23,20 +23,21 @@ CLI:
 - [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
 - [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
 - [X] login & add-user: CLI prompt for username & password
-- [ ] Better logging during publish (show tarball contents, size, etc. similar to npm publish)
+- [X] Better logging during publish (show tarball contents, size, etc. similar to npm publish)
 
 DOCS:
-- [ ] Mention that only gloable ligorc (~/.ligorc) file
+- [X] Mention that only gloable ligorc (~/.ligorc) file
 
 UI:
-- [ ] List packages
+- [X] List packages
 - [ ] For a package list all versions
-- [ ] Stats about pakage (user, downloads) stuff what npmjs website shows
+- [X] Stats about pakage (user, downloads) stuff what npmjs website shows
 
 *)
 
 module LigoRC = Cli_helpers.LigoRC
 module LigoManifest = Cli_helpers.LigoManifest
+module RepositoryUrl = Cli_helpers.RepositoryUrl
 module SMap = Caml.Map.Make(String)
 
 type sem_ver = string [@@deriving to_yojson]
@@ -54,6 +55,10 @@ type author = {
 type version = 
   { name        : string
   ; author      : author
+  ; type_       : string [@key "type"]
+  ; storage_fn  : string option
+  ; storage_arg : string option
+  ; repository  : RepositoryUrl.t
   ; version     : sem_ver
   ; description : string
   ; scripts     : (string * string) list
@@ -91,24 +96,30 @@ type body =
   ; name        : string 
   ; description : string
   ; dist_tags   : dist_tag [@key "dist-tags"]
+  ; main        : string option
   ; versions    : Versions.t  
   ; readme      : string
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~author ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
   id = name ;
   name ;
   description ;
   dist_tags = {
     latest = version
   } ;
+  main = main;
   versions = SMap.add version {
     name ;
     author = {
       name = author
     } ;
-    version = version ;
+    type_;
+    storage_fn;
+    storage_arg;
+    repository;
+    version ;
     description ;
     scripts ;
     readme ;
@@ -129,7 +140,17 @@ let body ~name ~author ~readme ~version ~ligo_registry ~description ~sha512 ~sha
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let LigoManifest.{ name ; version ; scripts ; description ; readme ; author ;  _ } = manifest in
+  let LigoManifest.{ name 
+  ; version 
+  ; main
+  ; scripts 
+  ; description 
+  ; readme 
+  ; author
+  ; type_
+  ; repository 
+  ; storage_fn
+  ; storage_arg ; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
@@ -139,8 +160,13 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let body = body 
     ~name 
     ~author
+    ~type_
+    ~storage_fn
+    ~storage_arg
+    ~repository
     ~version
     ~scripts
+    ~main
     ~description 
     ~readme
     ~ligo_registry
