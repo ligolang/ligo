@@ -6,9 +6,10 @@ import { ValidateValueCategory } from './messages'
 import LigoDebugAdapterServerDescriptorFactory from './LigoDebugAdapterDescriptorFactory'
 import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoDebugConfigurationProvider'
 import LigoProtocolClient from './LigoProtocolClient'
-import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, ValueType } from './ui'
+import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, InputValueType } from './ui'
 import LigoServer from './LigoServer'
 import { Ref, DebuggedContractSession, Maybe, getBinaryPath, getCommand, isDefined } from './base'
+import { LigoDebugContext } from './LigoDebugContext'
 
 let server: LigoServer
 let client: LigoProtocolClient
@@ -70,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(factory)
 	}
 
-	const validateInput = (category: ValidateValueCategory, valueType: ValueType) => async (value: string): Promise<Maybe<string>> => {
+	const validateInput = (category: ValidateValueCategory, valueType: InputValueType) => async (value: string): Promise<Maybe<string>> => {
 		if (client) {
 			const pickedMichelsonEntrypoint = debuggedContractSession.ref.pickedMichelsonEntrypoint
 			return (await client.sendMsg('validateValue', { value, category, valueType, pickedMichelsonEntrypoint })).message
@@ -85,10 +86,12 @@ export function activate(context: vscode.ExtensionContext) {
 		return undefined;
 	}
 
+	const ourContext = new LigoDebugContext(context);
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestEntrypoint',
 			getEntrypoint(
-				context,
+				ourContext,
 				validateEntrypoint,
 				getContractMetadata,
 				debuggedContractSession)));
@@ -102,7 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestParameterValue',
 			getParameterOrStorage(
-				context,
+				ourContext,
 				validateInput,
 				"parameter",
 				"Input the contract parameter",
@@ -111,7 +114,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestStorageValue',
-			getParameterOrStorage(context,
+			getParameterOrStorage(
+				ourContext,
 				validateInput,
 				"storage",
 				"Input the contract storage",

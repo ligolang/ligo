@@ -50,6 +50,12 @@ export interface DebuggedContractSession {
 	pickedLigoEntrypoint?: string
 }
 
+// Type if input box that initializ
+export type InputBoxType = "parameter" | "storage"
+
+export type InputValueType = "LIGO" | "Michelson";
+
+
 type BinaryInfo = {
   name: string,
   path: string,
