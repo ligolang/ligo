@@ -18,4 +18,4 @@ val decompile_expression : AST.expr -> CST.expr
 
 val decompile_declarations : AST.program -> CST.declarations
 
-val decompile_pattern_to_string : AST.type_expression option Ligo_prim.Pattern.t -> string
+val decompile_pattern_to_string : AST.type_expression option AST.Pattern.t -> string

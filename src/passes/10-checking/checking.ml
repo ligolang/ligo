@@ -1102,15 +1102,15 @@ and infer_application ~raise ~loc ~options ~ctx lamb_type args
 and infer_pattern
     ~(raise : raise)
     ~ctx
-    (pat : I.type_expression option Pattern.t)
+    (pat : I.type_expression option I.Pattern.t)
     : Context.t
       * O.type_expression
-      * (O.type_expression option Pattern.t, _, _) Elaboration.t
+      * (O.type_expression option O.Pattern.t, _, _) Elaboration.t
   =
   let open Elaboration.Let_syntax in
   let loc = pat.location in
   let return content =
-    return @@ (Location.wrap ~loc content : O.type_expression option Pattern.t)
+    return @@ (Location.wrap ~loc content : O.type_expression option I.Pattern.t)
   in
   let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
   let check ~ctx pat type_ = check_pattern ~raise ~ctx pat type_ in
@@ -1213,6 +1213,7 @@ and infer_pattern
     , let%bind tuple_pat = Elaboration.all tuple_pat in
       return @@ P_tuple tuple_pat )
   | P_record lps ->
+    let lps = Pattern.Container.Record.to_record lps in
     let (ctx, row_content), record_pat =
       Record.LMap.fold_map
         lps
@@ -1246,22 +1247,22 @@ and infer_pattern
     ( ctx
     , record_type
     , let%bind pats = Elaboration.all pats in
-      return @@ P_record (Record.of_list (List.zip_exn labels pats)))
+      return @@ P_record (Pattern.Container.Record.of_list (List.zip_exn labels pats)))
 
 
 and check_pattern
     ~(raise : raise)
     ~ctx
-    (pat : I.type_expression option Pattern.t)
+    (pat : I.type_expression option I.Pattern.t)
     (type_ : O.type_expression)
-    : Context.t * (O.type_expression option Pattern.t, _, _) Elaboration.t
+    : Context.t * (O.type_expression option O.Pattern.t, _, _) Elaboration.t
   =
   let open Elaboration.Let_syntax in
   let loc = pat.location in
   let err () = pattern_do_not_conform_type pat type_ in
   let fail () = raise.error (err ()) in
   let return content =
-    return @@ (Location.wrap ~loc content : O.type_expression option Pattern.t)
+    return @@ (Location.wrap ~loc content : O.type_expression option I.Pattern.t)
   in
   let self ?(raise = raise) = check_pattern ~raise in
   let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
@@ -1317,6 +1318,7 @@ and check_pattern
       , let%bind tuple_pat = Elaboration.all tuple_pat in
         return @@ P_tuple tuple_pat )
     | P_record lps, O.T_record row ->
+      let lps = Pattern.Container.Record.to_record lps in
       if Record.LMap.cardinal row.fields <> Record.LMap.cardinal lps
       then raise.error (fail ());
       let ctx, record_pat =
@@ -1331,7 +1333,7 @@ and check_pattern
       let labels, pats = List.unzip (Record.LMap.values record_pat) in
       ( ctx
       , let%bind pats = Elaboration.all pats in
-        return @@ P_record (Record.LMap.of_list (List.zip_exn labels pats)))
+        return @@ P_record (Pattern.Container.Record.of_list (List.zip_exn labels pats)))
     | _ ->
       let ctx, type_', pat = infer ~ctx pat in
       let ctx, _f =
@@ -1353,18 +1355,18 @@ and check_cases
     ~options
     ~ctx
     (cases :
-      (I.expression, I.type_expression option) Match_expr.match_case list)
+      (I.expression, I.type_expression option) I.Match_expr.match_case list)
     matchee_type
     ret_type
     : Context.t
-      * ( (O.type_expression option Pattern.t * O.expression) list
+      * ( (O.type_expression option O.Pattern.t * O.expression) list
         , _
         , _ )
         Elaboration.t
   =
   let open Elaboration.Let_syntax in
   let ctx, cases =
-    List.fold_map ~init:ctx cases ~f:(fun ctx Match_expr.{ pattern; body } ->
+    List.fold_map ~init:ctx cases ~f:(fun ctx { pattern; body } ->
         let ctx, pos = Context.mark ctx ~mut:false in
         let matchee_type = Context.apply ctx matchee_type in
         if debug
