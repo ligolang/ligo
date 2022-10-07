@@ -76,7 +76,7 @@ of simplicity. You can find the installation instructions
 
 > From now on we will get a bit more technical. If you run into
 > something we have not covered yet - please try checking out the
-> [LIGO cheat sheet](api/cheat-sheet.md) for some extra tips & tricks.
+> [LIGO cheat sheet](../../api/cheat-sheet.md) for some extra tips & tricks.
 
 To begin implementing our smart contract, we need a *main function*,
 that is the first function being executed. We will call it `main` and
