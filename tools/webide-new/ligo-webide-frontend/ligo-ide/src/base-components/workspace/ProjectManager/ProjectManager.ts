@@ -80,12 +80,33 @@ export default class ProjectManager {
     const config = JSON.parse(projectData["/config.json"].content || "{}");
     config.gistId = gistId;
 
-    const projectNameFromParams = name ? name : config.projectName ? config.projectName : gistId;
-    const exitstingNames = projectsNames.filter((pn) => pn.includes(projectNameFromParams));
-    const projectName: string =
-      exitstingNames.length === 0
-        ? projectNameFromParams
-        : `${projectNameFromParams}(${exitstingNames.length})`;
+    const projectNameFromParams = name || (config.projectName ? config.projectName : gistId);
+    let projectName: string = projectNameFromParams;
+
+    if (!projectsNames.includes(projectNameFromParams)) {
+      projectName = projectNameFromParams;
+    } else {
+      const getProjectNameRegex = new RegExp(/^.*(?=\((0|[1-9]{1}[0-9]*)\)$)/g);
+      const isNumericProjectName = projectNameFromParams.match(getProjectNameRegex) !== null;
+      const baseProjectName = isNumericProjectName
+        ? projectNameFromParams.match(getProjectNameRegex)[0]
+        : projectNameFromParams;
+
+      const getNumberRegex = new RegExp(
+        `(?<=^${baseProjectName}\\()(0|[1-9]{1}[0-9]*)(?=\\)$)`,
+        "g"
+      );
+      const sameProjectNumbers = projectsNames
+        .filter((pn) => pn.match(getNumberRegex) !== null)
+        .map((pn) => Number(pn.match(getNumberRegex)));
+
+      if (sameProjectNumbers.length === 0) {
+        projectName = `${baseProjectName}(1)`;
+      } else {
+        projectName = `${baseProjectName}(${Math.max(...sameProjectNumbers) + 1})`;
+      }
+    }
+
     config.projectName = projectName;
     projectData["/config.json"].content = JSON.stringify(config);
     /* eslint-enable */
