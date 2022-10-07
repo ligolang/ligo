@@ -67,14 +67,14 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _, expr) ->
      let () = add_lines_to_buffer ic (r # start # line - 1) output_buffer in
      let s = if (r # start # line = r # stop # line) then
                let line = In_channel.input_line_exn ic in
-               let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Byte) in
-               let postfix = String.sub line ~pos:(r # stop # offset `Byte) ~len:(String.length line - r # stop # offset `Byte) in
+               let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Point) in
+               let postfix = String.sub line ~pos:(r # stop # offset `Point) ~len:(String.length line - r # stop # offset `Point) in
                prefix ^ expr ^ postfix
              else
                let line = In_channel.input_line_exn ic in
-               let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Byte) in
+               let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Point) in
                let line = consume_lines ic (r # stop # line - r # start # line) in
-               let postfix = String.sub line ~pos:(r # stop # offset `Byte) ~len:(String.length line - r # stop # offset `Byte) in
+               let postfix = String.sub line ~pos:(r # stop # offset `Point) ~len:(String.length line - r # stop # offset `Point) in
                prefix ^ expr ^ postfix in
      let () = add_line output_buffer s in
      (* Read rest of lines *)
