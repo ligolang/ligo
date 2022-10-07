@@ -107,7 +107,7 @@ let read ~project_root =
           match type_, storage_fn, storage_arg with
             "contract", Some _, Some _ -> ()
           | "contract", (None | Some _), (None | Some _) -> 
-            failwith "In case of a contract a `storage_fn` & `storage_are` needs to provided"
+            failwith "In case of a contract a `storage_fn` & `storage_arg` needs to provided"
           | ("library" | _), _, _ -> ()
        in
        let repository =
