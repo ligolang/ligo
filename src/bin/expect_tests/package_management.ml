@@ -6,12 +6,21 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value KT1KD4LM2SpR88dNjniDUb2EXKYDNj1phjkE(None). |}]
+    - test exited with value KT1QVWJTnMi6XJFPpnASjbfi53qokforNwdP(None). |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract" ; "using_scope_pkg_project/src/a/b/c/contract.mligo" ; "--project-root" ; "using_scope_pkg_project" ] ;
   [%expect{|
     95 bytes |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract" ; "originate_contract/main.mligo" ; "--project-root" ; "originate_contract" ] ;
+  [%expect{|
+    File "originate_contract/main.mligo", line 1, characters 8-30:
+      1 | #import "tezos-ligo-fa2" "FA2"
+      2 |
+    File "originate_contract/main.mligo", line 1, characters 8-30:
+    File "tezos-ligo-fa2" to include not found. |}]
 
 let pwd = Sys.getcwd ()
 let () = Sys.chdir "using_scope_pkg_project"

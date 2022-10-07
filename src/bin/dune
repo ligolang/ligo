@@ -29,7 +29,7 @@
  (name install)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix)
+ (libraries cli_helpers simple-utils lwt lwt.unix yojson)
  (modules install))
 
 (library

@@ -35,8 +35,20 @@ module Region = Simple_utils.Region
 open Token
 open State  
 
-
 let es6fun_token = ES6FUN (Wrap.wrap "=>" Region.ghost)
+let handle_state state =
+  let rec aux remaining inject_before =
+    match remaining with 
+      ES6FUN _ :: item :: remaining -> aux remaining (item :: inject_before)
+    | _ :: remaining   -> aux remaining inject_before
+    | []                  -> inject_before
+
+  in
+  (match state with 
+    Solved l ->  State.insertions := aux l !State.insertions
+  | _ -> () (* Not handled for now *)
+  );
+  state
 
 let solve = function
   Solved t     -> t
@@ -52,7 +64,7 @@ let solve = function
    - Suggestion: an ES6FUN token might need to be inserted at the suggested location
  *)
 let cons a b = 
-  match a, b with     
+  let s = match a, b with     
     (* let foo = a:int => a *)
   | (EQ _ as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
   | (COLON _  as s), Suggestion f  -> 
@@ -95,14 +107,16 @@ let cons a b =
       )
   | (_ as s),               Inject tokens -> Inject (s :: tokens)
   | _,                      Solved s      -> Solved (a :: s)
-  | _,                      Suggestion f  -> Suggestion (fun c -> a :: f c)   
+  | _,                      Suggestion f  -> Suggestion (fun c -> a :: f c)  
+  in 
+  handle_state s
  
 
 (* 
   Concat lists
 *)
 let concat a b = 
-  match a, b with   
+  let s = match a, b with   
     Solved a,     Solved b                  -> Solved (a @ b)
   | Solved a,     Inject b
   | Inject a,     Solved b                  -> Inject (a @ b)
@@ -118,6 +132,8 @@ let concat a b =
   | Suggestion a, Suggestion b              -> Suggestion (fun c -> a c @ (b None))
   | Suggestion a, Inject b
   | Suggestion a, Solved b                  -> Suggestion (fun c -> a c @ b)
+  in 
+  handle_state s
 %}
 
 (* See [../../02-parsing/reasonligo/ParToken.mly] for the definition of tokens. *)
@@ -195,7 +211,7 @@ inner:
     cons $1 $2
   }
 | everything_else "=>" inner {
-  Inject ($1 :: (ARROW $2) :: solve $3)
+  handle_state (Inject ($1 :: (ARROW $2) :: solve $3))
 }
 | parenthesized inner
 | braces inner
@@ -205,26 +221,26 @@ inner:
 
 parenthesized:
   "(" inner ")" {
-    Solved ((LPAR $1 :: solve $2) @ (RPAR $3 :: []))
+    handle_state (Solved ((LPAR $1 :: solve $2) @ (RPAR $3 :: [])))
   }
 | "(" inner ")" "=>" {
-    Solved ((ES6FUN $1 :: LPAR $1 :: solve $2) @ (RPAR $3 :: ARROW $4 :: []))
+    handle_state (Solved ((ES6FUN $1 :: LPAR $1 :: solve $2) @ (RPAR $3 :: ARROW $4 :: [])))
 }
 
 braces: 
   "{" inner "}" {
-  Solved ((LBRACE $1 :: solve $2) @ (RBRACE $3 :: []))
+    handle_state (Solved ((LBRACE $1 :: solve $2) @ (RBRACE $3 :: [])))
   }
 | "{" inner "}" "=>" {
-    Inject ((LBRACE $1 :: solve $2) @ (RBRACE $3 :: ARROW $4 :: []))
+    handle_state (Inject ((LBRACE $1 :: solve $2) @ (RBRACE $3 :: ARROW $4 :: [])))
   }
 
 brackets: 
   "[" inner "]" {
-  Solved ((LBRACKET $1 :: solve $2) @ (RBRACKET $3 :: []))
+  handle_state (Solved ((LBRACKET $1 :: solve $2) @ (RBRACKET $3 :: [])))
 }
 | "[" inner "]" "=>" {
-  Inject ((LBRACKET $1 :: solve $2) @ (RBRACKET $3 :: ARROW $4 :: []))
+  handle_state (Inject ((LBRACKET $1 :: solve $2) @ (RBRACKET $3 :: ARROW $4 :: [])))
 }
 
 self_pass_inner: 
@@ -232,14 +248,16 @@ self_pass_inner:
     cons $1 $2
   }
 | everything_else "=>" self_pass_inner {
-   Inject ($1 :: ARROW $2 :: (solve $3))
+   handle_state (Inject ($1 :: ARROW $2 :: (solve $3)))
 }
 | parenthesized self_pass_inner
 | braces self_pass_inner
 | brackets self_pass_inner {
   concat $1 $2
 }
-| EOF { Solved [EOF $1] }
+| EOF { 
+  handle_state (Solved [EOF $1])
+}
 
 self_pass: 
   self_pass_inner {  
