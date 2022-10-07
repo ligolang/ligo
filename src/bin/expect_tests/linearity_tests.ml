@@ -89,7 +89,7 @@ let%expect_test _ =
       7 |     foo + bar
 
     Repeated variable in pattern.
-    Hint: Change the name. |}];
+    Hint: Change the name. |}]  ;
 
   run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_record_pattern_fun.mligo" ] ;
   [%expect{|
