@@ -163,20 +163,6 @@ and print_opt_type thread (node : type_annotation option) =
 and print_type_annotation thread (_, type_expr : type_annotation) =
   group (thread ^/^ nest 2 (string ": " ^^ print_type_expr type_expr))
 
-(*
-and print_dir_decl = function
-  Directive.PP_Linemarker {value; _} ->
-    let open Directive in
-    let linenum, file_path, flag_opt = value in
-    let flag =
-      match flag_opt with
-        Some Push -> " 1"
-      | Some Pop  -> " 2"
-      | None      -> "" in
-    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
-    in string lexeme
-*)
-
 (* Function declaration *)
 
 and print_D_Fun (node : fun_decl reg) =
