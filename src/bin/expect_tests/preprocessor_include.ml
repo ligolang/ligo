@@ -15,16 +15,13 @@ let%expect_test _ =
     # 1 "includes/b2/../b3.ligo" 1
     const b3 = 3
 
-
     # 2 "includes/b2/b2.ligo" 2
 
     const b2 = b3 * 3
 
-
     # 2 "includes/b1.ligo" 2
 
     const b1 = b2 * 2 + b3
-
 
     # 2 "root.ligo" 2 |}]
 
@@ -40,7 +37,6 @@ let%expect_test _ =
 
     # 1 "bug/dir/B.mligo" 1
     let x : int = 42
-
     # 2 "bug/A.mligo" 2
 
     # 2 "Root.mligo" 2 |}]
@@ -57,11 +53,9 @@ let%expect_test _ =
 
     # 1 "B2/../B3.ligo" 1
     const b3 = 3
-
     # 2 "B2/B2.ligo" 2
 
     const b2 = b3 * 3
-
     # 2 "B1.ligo" 2
 
     const b1 = b2 * 2 + b3 |}]
@@ -78,7 +72,6 @@ let%expect_test _ =
 
     # 1 "../bug/nested/../B.ligo" 1
     const x = 42
-
     # 2 "../bug/nested/A.ligo" 2
 
     # 2 "../Root.ligo" 2 |}]

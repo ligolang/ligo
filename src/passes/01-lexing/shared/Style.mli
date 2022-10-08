@@ -1,14 +1,32 @@
 (* Checking style based on the lexical context *)
 
-(* Vendor depedencies *)
+(* Vendor dependencies *)
 
 module Region = Simple_utils.Region
-module Core   = LexerLib.Core
+module Std    = Simple_utils.Std
+module Unit   = LexerLib.Unit
 
-(* Style checking function (filter-out) *)
+(* LIGO dependencies *)
 
-type lex_units = Token.t Core.lex_unit list
+module type TOKEN = Token.S
 
-type message = string Region.reg
+(* Functor *)
 
-val check : (lex_units, message) result -> (lex_units, message) result
+module Make (Token : TOKEN) :
+ sig
+   type error =
+     Odd_lengthed_bytes
+   | Missing_break
+
+   type units = Token.t Unit.t list
+
+   type message = string Region.reg
+
+   type result = (units, units * message) Stdlib.result
+
+   val filter :
+     ?print_passes:Std.t ->
+     add_warning:(Main_warnings.all -> unit) ->
+     units ->
+     result
+ end

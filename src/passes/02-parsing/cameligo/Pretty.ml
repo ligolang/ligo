@@ -29,20 +29,6 @@ and pp_declaration = function
 | ModuleAlias decl -> Some (pp_module_alias decl)
 | Directive      _ -> None
 
-(*
-and pp_dir_decl = function
-  Directive.Linemarker {value; _} ->
-    let open Directive in
-    let linenum, file_path, flag_opt = value in
-    let flag =
-      match flag_opt with
-        Some Push -> " 1"
-      | Some Pop  -> " 2"
-      | None      -> "" in
-    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
-    in string lexeme
-*)
-
 (* Variables *)
 
 and pp_ident t = string t.value

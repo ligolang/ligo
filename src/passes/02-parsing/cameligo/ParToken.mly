@@ -12,13 +12,16 @@
   (* See [dune] file for [-open] flags for modules used in the
      semantic value of tokens, like [Wrap]. *)
 
-  module Directive = LexerLib.Directive
+  module Directive = Preprocessor.Directive
   module Region    = Simple_utils.Region
   module Token     = Lexing_cameligo.Token
 
   let mk_Directive region =
-    let value = 1, "file_path", None
-    in Directive.Linemarker Region.{value; region}
+    let linenum   = Region.wrap_ghost 1
+    and filename  = Region.wrap_ghost "_none_"
+    and flag      = None in
+    let open Directive in
+    PP_Linemarker (new mk_line_directive region linenum filename flag)
 
   let mk_lang region =
     Region.{value = {value="Ghost_lang"; region}; region}
@@ -45,7 +48,7 @@
 
 (* Literals *)
 
-%token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
+%token     <Preprocessor.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
 %token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]
 %token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim  $loc]
 %token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes     $loc]

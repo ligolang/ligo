@@ -3,7 +3,7 @@ open Ligo_prim
 
 (* Helpers *)
 
-module ModResHelpers = Preprocessor.ModRes.Helpers
+module ModRes = Preprocessor.ModRes
 
 let get_declarations_core (core_prg : Ast_core.program )=
   (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
@@ -139,7 +139,8 @@ let try_declaration ~raise ~raw_options state s =
      raise.error `Repl_unexpected
 
 let import_file ~raise ~raw_options state file_name module_name =
-  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
+  let file_name =
+    ModRes.Helpers.resolve ~file:file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
@@ -152,7 +153,8 @@ let import_file ~raise ~raw_options state file_name module_name =
   (state, Just_ok)
 
 let use_file ~raise ~raw_options state file_name =
-  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
+  let file_name =
+    ModRes.Helpers.resolve ~file:file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)

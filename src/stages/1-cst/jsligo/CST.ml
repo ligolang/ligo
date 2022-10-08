@@ -6,20 +6,24 @@
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 module Token     = Lexing_jsligo.Token
-module Wrap      = Lexing_shared.Wrap
+
+(* Local dependencies *)
+
+module Wrap = Lexing_shared.Wrap
+module Attr = Lexing_shared.Attr
+
+(* Utilities *)
+
+type 'a reg = 'a Region.reg
+type 'payload wrap = 'payload Wrap.t
 
 open Utils
-type 'a reg = 'a Region.reg
-
-(* Lexemes *)
 
 type lexeme = string
-
-type 'payload wrap = 'payload Wrap.t
 
 (* Keywords of JsLIGO *)
 
@@ -57,8 +61,9 @@ type slash      = lexeme wrap  (* "/" *)
 type modulo     = lexeme wrap  (* "%" *)
 type times      = lexeme wrap  (* "*" *)
 
-(* ternary operator *)
-type qmark      = lexeme wrap  (* ? *)
+(* Ternary operator *)
+
+type qmark = lexeme wrap  (* ? *)
 
 (* Boolean operators *)
 
@@ -355,11 +360,11 @@ and expr =
 | ETernary of ternary reg
 
 and ternary = {
-  condition: expr;
-  qmark  : qmark;
-  truthy : expr;
-  colon  : colon;
-  falsy  : expr
+  condition : expr;
+  qmark     : qmark;
+  truthy    : expr;
+  colon     : colon;
+  falsy     : expr
 }
 
 and assignment_operator =
@@ -580,7 +585,7 @@ let type_expr_to_region = function
 | TVar    {region; _}
 | TModA   {region; _}
 | TInt    {region; _} -> region
-| TDisc   reg         -> nsepseq_to_region (fun a -> a.Region.region) reg
+| TDisc   reg -> nsepseq_to_region (fun a -> a.Region.region) reg
 
 let pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }

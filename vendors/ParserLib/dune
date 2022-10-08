@@ -3,15 +3,20 @@
 (library
   (name ParserLib)
   (public_name ParserLib)
-  (wrapped true)
-  (modules CLI API Version)
+  (modules
+     Options Status CLI LowAPI Version)
+  (modules_without_implementation
+     Status)
   (libraries
     ;; Vendors
     simple-utils
+    Preprocessor
+    LexerLib
+    GetoptLib
     ocaml-recovery-parser
     ;; Third party
-    getopt
-    menhirLib))
+    menhirLib)
+  (flags (:standard -open Core)))
 
 ;; Build of the version source (for the user, as a CLI option)
 

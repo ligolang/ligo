@@ -1,43 +1,42 @@
-(* PREPROCESSING *)
+(* Interfacing the preprocessor with the LIGO compiler depending on
+   the concrete syntax *)
 
-(* Directories and files *)
+(* Vendors dependencies *)
 
-type file_path = string
-type dirs = file_path list (* #include and #import *)
+module Config = Preprocessor.Config
+module LowAPI = Preprocessor.LowAPI
 
-module Make (File : File.S) (Comments : Comments.S) (Modules : Modules.S) :
+(* Functor *)
+
+module type S =
   sig
-    (* Directories and files *)
+    (* Some inputs *)
 
-    type nonrec file_path = file_path
-    type nonrec dirs = dirs
+    type file_path = string
+    type dirs = file_path list
 
-    (* Results *)
+    (* Preprocessor types and their results *)
 
     module Errors = Errors
 
-    type success = Preprocessor.API.success
-    type nonrec result  = (success, Errors.t) result
+    type nonrec result = (LowAPI.success, Errors.t) result
+
+    type 'src preprocessor =
+      ?project_root:file_path -> dirs -> 'src -> result
 
     (* Preprocessing various sources *)
 
-    val from_file    : ?project_root:file_path -> dirs -> file_path  -> result
-    val from_string  : ?project_root:file_path -> dirs -> string     -> result
-    val from_channel : ?project_root:file_path -> dirs -> In_channel.t -> result
+    val from_file    :    file_path preprocessor
+    val from_string  :       string preprocessor
+    val from_buffer  :     Buffer.t preprocessor
+    val from_channel : In_channel.t preprocessor
 
     (* Aliases *)
 
-    val preprocess_file    : ?project_root:file_path -> dirs -> file_path  -> result
-    val preprocess_string  : ?project_root:file_path -> dirs -> string     -> result
-    val preprocess_channel : ?project_root:file_path -> dirs -> In_channel.t -> result
+    val preprocess_file    :    file_path preprocessor
+    val preprocess_string  :       string preprocessor
+    val preprocess_buffer  :     Buffer.t preprocessor
+    val preprocess_channel : In_channel.t preprocessor
   end
 
-(* For further passes *)
-
-module type FILE =
-  sig
-    include File.S
-    val input            : file_path option
-    val dirs             : dirs
-    val project_root     : file_path option
-  end
+module Make (Config : Config.S) : S

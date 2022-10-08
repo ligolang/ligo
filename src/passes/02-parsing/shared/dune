@@ -3,6 +3,8 @@
 (library
   (name parsing_shared)
   (public_name ligo.parsing.shared)
+  (modules
+     Errors Formatter Common TopAPI)
   (instrumentation
     (backend bisect_ppx))
   (libraries
@@ -12,8 +14,6 @@
     ParserLib
     ;; LIGO
     lexing_shared
-    cst_shared
     ;; Third party
     terminal_size
-    pprint)
-  (modules Errors Formatter Common ParserMainGen))
+    pprint))

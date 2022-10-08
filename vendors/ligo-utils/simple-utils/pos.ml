@@ -9,6 +9,8 @@ type t = <
   set_line   : int -> t;
   set_offset : int -> t;
   set        : file:string -> line:int -> offset:int -> t;
+  reset_cnum : t;
+
   new_line   : string -> t;
   add_nl     : t;
 
@@ -35,7 +37,7 @@ type pos = t
 
 let sprintf = Printf.sprintf
 
-let make ~byte ~point_num ~point_bol =
+let make ~byte ~point_num ~point_bol : t =
   let () = assert (point_num >= point_bol) in
   object (self)
     val    byte      = byte
@@ -55,6 +57,9 @@ let make ~byte ~point_num ~point_bol =
 
     method set_offset offset =
       {< byte = Lexing.{byte with pos_cnum = byte.pos_bol + offset} >}
+
+    method reset_cnum =
+      {< byte = Lexing.{byte with pos_cnum = 0} >}
 
     method set ~file ~line ~offset =
       let pos = self#set_file file in
@@ -105,8 +110,7 @@ let make ~byte ~point_num ~point_bol =
       else
         let offset = self#offset mode in
         let horizontal, value =
-          if offsets then
-            "character", offset
+          if offsets then "character", offset
           else "column", offset + 1 in
         if file && String.(<>) self#file "" then
           sprintf "File %S, line %i, %s %i"
@@ -188,7 +192,11 @@ let min ~file =
 (* Comparisons *)
 
 let equal pos1 pos2 =
-  String.equal pos1#file pos2#file && pos1#byte_offset = pos2#byte_offset
+  String.equal pos1#file pos2#file
+  && pos1#line = pos2#line
+  && pos1#byte_offset = pos2#byte_offset
 
 let lt pos1 pos2 =
-  String.equal pos1#file pos2#file && pos1#byte_offset < pos2#byte_offset
+  String.equal pos1#file pos2#file
+ && (pos1#line < pos2#line
+    || pos1#line = pos2#line && pos1#byte_offset < pos2#byte_offset)
