@@ -472,16 +472,15 @@ let linemarker_action ~callback region linenum state lexbuf =
 
 (* REGULAR EXPRESSIONS *)
 
-let utf8_bom  = "\xEF\xBB\xBF" (* Byte Order Mark for UTF-8 *)
-let nl        = '\n' | '\r' | "\r\n"
-let blank     = ' ' | '\t'
-let digit     = ['0'-'9']
-let natural   = digit | digit (digit | '_')* digit
-let small     = ['a'-'z']
-let capital   = ['A'-'Z']
-let letter    = small | capital
-let ident     = letter (letter | '_' | digit)*
-let directive = '#' blank* (small+ as id)
+let utf8_bom = "\xEF\xBB\xBF" (* Byte Order Mark for UTF-8 *)
+let nl       = '\n' | '\r' | "\r\n"
+let blank    = ' ' | '\t'
+let digit    = ['0'-'9']
+let natural  = digit | digit (digit | '_')* digit
+let small    = ['a'-'z']
+let capital  = ['A'-'Z']
+let letter   = small | capital
+let ident    = letter (letter | '_' | digit)*
 
 (* Comment delimiters *)
 
