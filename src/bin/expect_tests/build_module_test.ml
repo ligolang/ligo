@@ -153,9 +153,9 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "type_B.mligo" ] ;
   [%expect {|
     File "../../test/contracts/build/type_B.mligo", line 5, characters 5-6:
-      4 | 	let s = s + 1 in
-      5 | 	let p = p ^ "titi" in
-      6 | 	([] : operation list), s
+      4 | \tlet s = s + 1 in
+      5 | \tlet p = p ^ "titi" in
+      6 | \t([] : operation list), s
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
