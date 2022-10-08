@@ -1,12 +1,13 @@
-name: "ligo"
-opam-version: "2.0"
-maintainer: "Galfour <contact@ligolang.org>"
-authors: [ "Galfour" ]
-homepage: "https://gitlab.com/ligolang/tezos"
-bug-reports: "https://gitlab.com/ligolang/tezos/issues"
-synopsis: "A high-level language which compiles to Michelson"
-dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
-license: "MIT"
+name         : "ligo"
+opam-version : "2.0"
+maintainer   : "Galfour <contact@ligolang.org>"
+authors      : [ "Gabriel Alfour" "Christian Rinderknecht"]
+homepage     : "https://gitlab.com/ligolang/tezos"
+bug-reports  : "https://gitlab.com/ligolang/tezos/issues"
+synopsis     : "A high-level language which compiles to Michelson"
+dev-repo     : "git+https://gitlab.com/ligolang/tezos.git"
+license      : "MIT"
+
 # If you change the dependencies, run `opam lock` in the root
 depends: [
   # Jane Street Core
@@ -22,7 +23,6 @@ depends: [
   "coq" { build & >= "8.12" & < "8.14" }
   # I/O
   "bos"
-  "getopt"
   "tezos-clic"
   "qcheck"
   "terminal_size"

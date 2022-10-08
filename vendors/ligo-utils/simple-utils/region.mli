@@ -90,15 +90,23 @@ and region = t
 
 and 'a reg = {region: t; value: 'a}
 
-(* CONSTRUCTORS *)
+(* Making a region from the matched prefix of a lexing buffer *)
 
-exception Invalid
+val from_lexbuf : Lexing.lexbuf -> t
+
+(* {1 Injections} *)
+
+exception Different_files of string * string
+exception Out_of_order_pos of string * string
 
 (* The function [make] creates a region from two positions. If the
     positions are not properly ordered or refer to different files,
-    the exception [Invalid] is raised. *)
+    the exceptions [Out_of_order_pos] and [Different_files],
+    respectively, are raised. *)
 
 val make : start:Pos.t -> stop:Pos.t -> t
+
+val empty : Pos.t -> t (* Special case of [make] when [stop] is [stop]. *)
 
 (* SPECIAL REGIONS *)
 

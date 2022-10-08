@@ -2187,13 +2187,13 @@ let%expect_test _ =
                 { "start":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
-                          "pos_lnum": "3", "pos_bol": "90", "pos_cnum": "108" },
-                      "point_num": "108", "point_bol": "90" },
+                          "pos_lnum": "3", "pos_bol": "1", "pos_cnum": "18" },
+                      "point_num": "184", "point_bol": "166" },
                   "stop":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
-                          "pos_lnum": "3", "pos_bol": "90", "pos_cnum": "111" },
-                      "point_num": "111", "point_bol": "90" } } ] },
+                          "pos_lnum": "3", "pos_bol": "1", "pos_cnum": "21" },
+                      "point_num": "187", "point_bol": "166" } } ] },
           { "type_content":
               [ "T_constant",
                 { "language": "Michelson", "injection": [ "Unit" ],
@@ -2203,13 +2203,13 @@ let%expect_test _ =
                 { "start":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
-                          "pos_lnum": "4", "pos_bol": "115", "pos_cnum": "133" },
-                      "point_num": "133", "point_bol": "115" },
+                          "pos_lnum": "4", "pos_bol": "1", "pos_cnum": "18" },
+                      "point_num": "209", "point_bol": "191" },
                   "stop":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
-                          "pos_lnum": "4", "pos_bol": "115", "pos_cnum": "137" },
-                      "point_num": "137", "point_bol": "115" } } ] },
+                          "pos_lnum": "4", "pos_bol": "1", "pos_cnum": "22" },
+                      "point_num": "213", "point_bol": "191" } } ] },
           { "type_content":
               [ "T_constant",
                 { "language": "Michelson", "injection": [ "Unit" ],
@@ -2219,13 +2219,13 @@ let%expect_test _ =
                 { "start":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
-                          "pos_lnum": "5", "pos_bol": "141", "pos_cnum": "151" },
-                      "point_num": "151", "point_bol": "141" },
+                          "pos_lnum": "5", "pos_bol": "1", "pos_cnum": "10" },
+                      "point_num": "227", "point_bol": "217" },
                   "stop":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
-                          "pos_lnum": "5", "pos_bol": "141", "pos_cnum": "155" },
-                      "point_num": "155", "point_bol": "141" } } ] },
+                          "pos_lnum": "5", "pos_bol": "1", "pos_cnum": "14" },
+                      "point_num": "231", "point_bol": "217" } } ] },
           { "type_content":
               [ "T_constant",
                 { "language": "Michelson", "injection": [ "Unit" ],
@@ -2266,32 +2266,32 @@ let%expect_test _ =
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "70" },
-                                        "point_num": "70", "point_bol": "57" },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "13" },
+                                        "point_num": "146", "point_bol": "133" },
                                     "stop":
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "74" },
-                                        "point_num": "74", "point_bol": "57" } } ] },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "17" },
+                                        "point_num": "150", "point_bol": "133" } } ] },
                           "location":
                             [ "File",
                               { "start":
                                   { "byte":
                                       { "pos_fname":
                                           "../../test/contracts/noop.mligo",
-                                        "pos_lnum": "2", "pos_bol": "57",
-                                        "pos_cnum": "70" }, "point_num": "70",
-                                    "point_bol": "57" },
+                                        "pos_lnum": "2", "pos_bol": "1",
+                                        "pos_cnum": "13" }, "point_num": "146",
+                                    "point_bol": "133" },
                                 "stop":
                                   { "byte":
                                       { "pos_fname":
                                           "../../test/contracts/noop.mligo",
-                                        "pos_lnum": "2", "pos_bol": "57",
-                                        "pos_cnum": "74" }, "point_num": "74",
-                                    "point_bol": "57" } } ] },
+                                        "pos_lnum": "2", "pos_bol": "1",
+                                        "pos_cnum": "17" }, "point_num": "150",
+                                    "point_bol": "133" } } ] },
                       "type2":
                         { "type_content":
                             [ "T_variable",
@@ -2310,32 +2310,32 @@ let%expect_test _ =
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "78" },
-                                        "point_num": "78", "point_bol": "57" },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "21" },
+                                        "point_num": "154", "point_bol": "133" },
                                     "stop":
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "82" },
-                                        "point_num": "82", "point_bol": "57" } } ] },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "25" },
+                                        "point_num": "158", "point_bol": "133" } } ] },
                           "location":
                             [ "File",
                               { "start":
                                   { "byte":
                                       { "pos_fname":
                                           "../../test/contracts/noop.mligo",
-                                        "pos_lnum": "2", "pos_bol": "57",
-                                        "pos_cnum": "78" }, "point_num": "78",
-                                    "point_bol": "57" },
+                                        "pos_lnum": "2", "pos_bol": "1",
+                                        "pos_cnum": "21" }, "point_num": "154",
+                                    "point_bol": "133" },
                                 "stop":
                                   { "byte":
                                       { "pos_fname":
                                           "../../test/contracts/noop.mligo",
-                                        "pos_lnum": "2", "pos_bol": "57",
-                                        "pos_cnum": "82" }, "point_num": "82",
-                                    "point_bol": "57" } } ] } } ],
+                                        "pos_lnum": "2", "pos_bol": "1",
+                                        "pos_cnum": "25" }, "point_num": "158",
+                                    "point_bol": "133" } } ] } } ],
                 "sugar":
                   { "type_content":
                       [ "T_arrow",
@@ -2351,16 +2351,16 @@ let%expect_test _ =
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "70" },
-                                        "point_num": "70", "point_bol": "57" },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "13" },
+                                        "point_num": "146", "point_bol": "133" },
                                     "stop":
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "74" },
-                                        "point_num": "74", "point_bol": "57" } } ] },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "17" },
+                                        "point_num": "150", "point_bol": "133" } } ] },
                           "type2":
                             { "type_content":
                                 [ "T_variable",
@@ -2373,16 +2373,16 @@ let%expect_test _ =
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "78" },
-                                        "point_num": "78", "point_bol": "57" },
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "21" },
+                                        "point_num": "154", "point_bol": "133" },
                                     "stop":
                                       { "byte":
                                           { "pos_fname":
                                               "../../test/contracts/noop.mligo",
-                                            "pos_lnum": "2", "pos_bol": "57",
-                                            "pos_cnum": "82" },
-                                        "point_num": "82", "point_bol": "57" } } ] } } ],
+                                            "pos_lnum": "2", "pos_bol": "1",
+                                            "pos_cnum": "25" },
+                                        "point_num": "158", "point_bol": "133" } } ] } } ],
                     "location": [ "Virtual", "generated" ] },
                 "location": [ "Virtual", "generated" ] }, "orig_var": null,
             "location": [ "Virtual", "generated" ] } ],

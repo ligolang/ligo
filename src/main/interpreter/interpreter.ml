@@ -7,7 +7,7 @@ module AST = Ast_aggregated
 include AST.Types
 module Env = Ligo_interpreter.Environment
 module Monad = Execution_monad
-module ModResHelpers = Preprocessor.ModRes.Helpers
+module ModRes = Preprocessor.ModRes
 
 type interpreter_error = Errors.interpreter_error
 
@@ -28,8 +28,8 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
        (match Sys.file_exists s with
         | `Yes -> s
         | `No | `Unknown ->
-          ModResHelpers.resolve_file_name contract_file mod_res)
-     | None -> ModResHelpers.resolve_file_name contract_file mod_res)
+          ModRes.Helpers.resolve ~file:contract_file mod_res)
+     | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
 
 
 let get_file_from_location loc =

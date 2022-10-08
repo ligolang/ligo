@@ -5,16 +5,21 @@
 (library
   (name LexerLib)
   (public_name LexerLib)
-  (wrapped true)
-  (modules CLI Core API Markup Directive Version)
+  (modules
+     Client Status Options CLI LowAPI Core Unit Error
+     Thread State Markup Version)
+  (modules_without_implementation
+     Status Client)
+  (private_modules
+     Core Error Version)
   (libraries
     ;; Vendor
     simple-utils
+    Preprocessor
+    GetoptLib
     ;; Third party
-    getopt
     uutf)
-  (flags (:standard -open Core))
-)
+  (flags (:standard -open Core)))
 
 ;; Build of the version source (for the user, as a CLI option)
 

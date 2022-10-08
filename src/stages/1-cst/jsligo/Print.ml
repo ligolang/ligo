@@ -12,7 +12,7 @@
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 
@@ -149,8 +149,8 @@ and print_while state {expr; statement; _} =
   print_statement state statement
 
 and print_import state import =
-  match import with 
-   Import_rename {alias; module_path; _} -> 
+  match import with
+   Import_rename {alias; module_path; _} ->
     print_node state "<alias>";
     print_ident state alias;
     let items = Utils.nsepseq_to_list module_path in
@@ -163,7 +163,7 @@ and print_import state import =
   | Import_selected {imported; module_path; _} ->
     print_node state "<selected>";
     let imported = Utils.nsepseq_to_list imported.value.inside in
-    let apply len rank = print_ident (state#pad len rank) in  
+    let apply len rank = print_ident (state#pad len rank) in
     List.iteri ~f:(List.length imported |> apply) imported;
     print_string state module_path
 
@@ -516,7 +516,7 @@ and print_annotated state annot =
   print_expr      (state#pad 2 0) expr;
   print_type_expr (state#pad 2 1) t_expr
 
-and print_ternary state ternary = 
+and print_ternary state ternary =
   let state = state#pad 3 0 in
   print_node state "<condition>";
   print_expr (state#pad 1 0) ternary.condition;
@@ -584,10 +584,10 @@ and print_type_expr state = function
 | TInt s ->
     print_node   state "TInt";
     print_int (state#pad 1 0) s
-| TDisc u ->  
+| TDisc u ->
     print_node   state "TDisc";
     let objects = Utils.nsepseq_to_list u in
-    let apply len rank (v: field_decl reg ne_injection reg) = 
+    let apply len rank (v: field_decl reg ne_injection reg) =
       print_ne_injection print_field_decl (state#pad len rank) v.value    in
     List.iteri ~f:(List.length objects |> apply) objects
 
@@ -669,15 +669,16 @@ and print_cartesian state {inside;_} =
 
 type ('src, 'dst) printer = Tree.state -> 'src -> 'dst
 
-let print_pattern_to_string state pattern =
-  print_pattern state pattern; Buffer.contents(state#buffer)
-
 let print_to_buffer state cst = print_cst state cst; state#buffer
 
 let print_to_string state cst =
   Buffer.contents (print_to_buffer state cst)
 
+let print_pattern_to_string state pattern =
+  print_pattern state pattern; Buffer.contents state#buffer
+
 (* Aliases *)
 
 let to_buffer = print_to_buffer
 let to_string = print_to_string
+let pattern_to_string = print_pattern_to_string

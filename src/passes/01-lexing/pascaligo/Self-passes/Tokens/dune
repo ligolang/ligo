@@ -1,0 +1,36 @@
+;; Build of the self passes on the tokens of PascaLIGO
+
+(library
+  (name lexing_pascaligo_self_tokens)
+  (public_name ligo.lexing.pascaligo.self.tokens)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+     ;; Vendors
+     simple-utils
+     LexerLib
+     ;; LIGO
+     lexing_shared
+     menhir_pascaligo_tokens)
+  (modules Token Self))
+
+;; --------------------------------------------------------------------
+;; Build the type ['a terminal] to complete the inspection API of
+;; Menhir
+
+(rule
+  (targets MenhirToken.ml MenhirToken.mli)
+  (deps (:ParToken ../../../../02-parsing/pascaligo/ParToken.mly))
+  (action (run menhir %{ParToken} --only-tokens --inspection
+                                  --table --base MenhirToken)))
+
+(library
+  (name menhir_pascaligo_tokens)
+  (public_name ligo.lexing.menhir_pascaligo_tokens)
+  (libraries
+    ;; LIGO
+    lexing_shared
+    Preprocessor
+    ;; Third party
+    hex)
+  (modules MenhirToken)
+  (flags (:standard -open Lexing_shared -open Preprocessor -open Wrap)))

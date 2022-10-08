@@ -6,7 +6,7 @@
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 
@@ -18,6 +18,7 @@ module Attr = Lexing_shared.Attr
 (* Utilities *)
 
 type 'a reg = 'a Region.reg
+type 'payload wrap = 'payload Wrap.t
 
 open Utils
 
@@ -25,9 +26,7 @@ open Utils
 
 type lexeme = string
 
-type 'payload wrap = 'payload Wrap.wrap
-
-(* Keywords of OCaml *)
+(* Keywords of CameLIGO *)
 
 type keyword       = lexeme wrap
 type kwd_and       = lexeme wrap
@@ -573,8 +572,7 @@ let expr_to_region = function
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
-| EModA {region; _}
-| ECodeInj {region; _}
+| EModA {region; _} | ECodeInj {region; _}
 | ERevApp {region; _} -> region
 
 let declaration_to_region = function
