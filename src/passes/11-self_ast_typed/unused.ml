@@ -152,7 +152,7 @@ and defuse_of_binders defuse binders in_ =
 and defuse_of_cases defuse cases = 
   List.fold_left cases ~init:(defuse,[])
     ~f:(fun (defuse,unused_) {pattern;body} ->
-      let vars = Pattern.binders pattern |> List.map ~f:Binder.get_var in
+      let vars = Pattern.binders pattern |> List.rev_map ~f:Binder.get_var in
       let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
       let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
       let defuse,unused = defuse_of_expr map body in
