@@ -396,22 +396,6 @@ and compile_cases ~raise ~loc path scope matchee cases : O.expression_content =
           ; thunk = false
           }
       }
-  (* match cases with
-    Match_variant {cases;tv} ->
-    let cases = List.map cases ~f:(fun I.{constructor;pattern;body} ->
-      let scope = Scope.push_func_or_case_binder scope pattern in
-      let body = compile_expression ~raise path scope body in
-      O.{constructor;pattern;body})
-    in
-    let tv = compile_type_expression ~raise path scope tv in
-    Match_variant {cases;tv}
-  | Match_record {fields;body;tv} ->
-    let scope, fields = Record.fold_map (fun scope' binder ->
-        Scope.push_func_or_case_binder scope' @@ Binder.get_var binder,
-        Binder.map (compile_type_expression ~raise path scope) binder) scope fields in
-    let body   = compile_expression ~raise path scope body in
-    let tv     = compile_type_expression ~raise path scope tv in
-    Match_record {fields;body;tv} *)
 
 and compile_declaration ~raise ~(super_attr : O.ModuleAttr.t) path scope (d : I.declaration) =
   match Location.unwrap d with

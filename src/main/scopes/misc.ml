@@ -63,38 +63,12 @@ let rec extract_variable_types
     | E_let_in { let_binder; rhs; _ } ->
       return [ Binder.get_var let_binder, rhs.type_expression ]
     | E_matching { matchee; cases } ->
-      (match cases with
-       | Match_variant { cases; tv = _ } ->
-         (match Ast_typed.get_t_sum matchee.type_expression with
-          | Some variant_t ->
-            let aux
-              :  _ Ast_typed.matching_content_case
-              -> Ast_typed.expression_variable * Ast_typed.type_expression
-              =
-             fun { constructor; pattern; _ } ->
-              let proj_t =
-                (Record.LMap.find constructor variant_t.fields).associated_type
-              in
-              pattern, proj_t
-            in
-            return (List.map ~f:aux cases)
-          | None ->
-            (match Ast_typed.get_t_list matchee.type_expression with
-             | Some list_proj ->
-               let x =
-                 List.find_exn
-                   ~f:
-                     (fun ({ constructor = Label l; _ } :
-                            _ Ast_typed.matching_content_case) ->
-                     String.equal l "Cons")
-                   cases
-               in
-               let t = Ast_typed.t_pair list_proj matchee.type_expression in
-               return [ x.pattern, t ]
-             | None -> failwith "matched value in the Match_variant: wrong type"))
-       | Match_record { fields; _ } ->
-         let aux b = Binder.get_var b, Binder.get_ascr b in
-         return (List.map ~f:aux @@ Record.LMap.to_list fields))
+      let bindings = List.concat @@ List.map cases 
+        ~f:(fun {pattern;_} -> 
+            let binders = Pattern.binders pattern in
+            List.map binders ~f:(fun b -> Binder.get_var b, Binder.get_ascr b)  
+          ) in
+      return bindings
     | E_module_accessor { element = e; _ } -> return [ e, exp.type_expression ]
     (* TODO, is this semantically correct? *)
     | E_let_mut_in _ -> return []
