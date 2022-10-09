@@ -62,7 +62,7 @@ let rec extract_variable_types
       return [ fun_name, fun_type; Param.get_var binder, in_t ]
     | E_let_in { let_binder; rhs; _ } ->
       return [ Binder.get_var let_binder, rhs.type_expression ]
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee=_; cases } ->
       let bindings = List.concat @@ List.map cases 
         ~f:(fun {pattern;_} -> 
             let binders = Pattern.binders pattern in

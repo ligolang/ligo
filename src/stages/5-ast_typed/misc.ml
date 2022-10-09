@@ -78,9 +78,7 @@ module Free_variables = struct
         let rec get_bindings_from_pattern =
           function
           | Pattern.P_unit -> empty
-          | Pattern.P_var v -> 
-              let b' = union (Binder.apply singleton v) b in
-              expression b' m.body
+          | Pattern.P_var v -> union (Binder.apply singleton v) b
           | P_list Cons (h, t) -> 
               union 
                 (get_bindings_from_pattern h.wrap_content) 
@@ -100,7 +98,7 @@ module Free_variables = struct
         in
         let b' = get_bindings_from_pattern m.pattern.wrap_content in
         let bs = union b b' in 
-        expression bs m.body
+        f bs m.body
 
   and matching : (bindings -> expression -> bindings) -> bindings -> _ Match_expr.match_case list -> bindings 
     = fun f b ms ->
