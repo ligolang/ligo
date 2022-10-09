@@ -246,7 +246,7 @@ let rec compile_type_expression ~raise path scope (type_expression : I.type_expr
 let rec compile_expression ~raise path scope (expr : I.expression) =
   let self ?(path = path) ?(scope=scope) = compile_expression ~raise path scope in
   let self_type ?(path = path) ?(scope=scope) = compile_type_expression ~raise path scope in
-  let self_cases ?(path = path) ?(scope=scope) = compile_cases ~raise path scope in
+  let self_cases ?(path = path) ?(scope=scope) = compile_cases ~raise ~loc:expr.location path scope in
   let return expression_content =
     let type_expression = self_type expr.type_expression in
     O.{expression_content;location=expr.location;type_expression}
@@ -303,8 +303,8 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_constructor {constructor;element}
   | E_matching {matchee;cases} ->
     let matchee = self matchee in
-    let cases   = self_cases cases in
-    return @@ E_matching {matchee;cases}
+    let cases   = self_cases matchee cases in
+    return @@ cases
   (* Record *)
   | E_record record ->
     let record = Record.map self record in
@@ -365,8 +365,38 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let while_loop = While_loop.map self while_loop in
     return @@ E_while while_loop
 
-and compile_cases ~raise path scope cases : O.matching_expr =
-  match cases with
+and compile_cases ~raise ~loc path scope matchee cases : O.expression_content =
+  let matchee_type = matchee.type_expression in
+  let eqs = List.map cases 
+    ~f:(fun {pattern ; body} -> 
+        let pattern = Pattern.map (compile_type_expression ~raise path scope) pattern in
+        let body = compile_expression ~raise path scope body in
+        pattern, matchee_type, body) in
+  match matchee.expression_content with
+  | E_variable var ->
+    let match_expr =
+      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
+    in
+    match_expr.expression_content
+  | _ ->
+    let var = Value_var.fresh ~loc ~name:"match_" () in
+    let match_expr =
+      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
+    in
+    O.E_let_in
+      { let_binder = Binder.make var matchee.type_expression
+      ; rhs = matchee
+      ; let_result = { match_expr with location = loc }
+      ; attr =
+          { inline = false
+          ; no_mutation = false
+          ; public = true
+          ; view = false
+          ; hidden = false
+          ; thunk = false
+          }
+      }
+  (* match cases with
     Match_variant {cases;tv} ->
     let cases = List.map cases ~f:(fun I.{constructor;pattern;body} ->
       let scope = Scope.push_func_or_case_binder scope pattern in
@@ -381,9 +411,7 @@ and compile_cases ~raise path scope cases : O.matching_expr =
         Binder.map (compile_type_expression ~raise path scope) binder) scope fields in
     let body   = compile_expression ~raise path scope body in
     let tv     = compile_type_expression ~raise path scope tv in
-    Match_record {fields;body;tv}
-
-
+    Match_record {fields;body;tv} *)
 
 and compile_declaration ~raise ~(super_attr : O.ModuleAttr.t) path scope (d : I.declaration) =
   match Location.unwrap d with

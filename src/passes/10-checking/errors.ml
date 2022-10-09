@@ -136,7 +136,6 @@ type typer_error =
     * Syntax_types.t option
     * Ast_core.type_expression option Pattern.t list
   | `Typer_pattern_redundant_case of Location.t
-  | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
   | `Typer_constant_since_protocol of
     Location.t * string * Environment.Protocols.t
@@ -620,8 +619,6 @@ let rec error_ppformat
          p
          Ast_typed.PP.type_expression
          (type_improve t)
-     | `Typer_redundant_pattern loc ->
-       Format.fprintf f "@[<hv>%a@.Redundant pattern matching@]" Snippet.pp loc
      | `Typer_pattern_missing_cases (loc, syntax, ps) ->
        let ps =
          List.fold ps ~init:"" ~f:(fun s p ->
@@ -767,12 +764,6 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
         ; "expected", Ast_typed.type_expression_to_yojson t
         ; "location", Location.to_yojson l
         ]
-    in
-    json_error ~stage ~content
-  | `Typer_redundant_pattern loc ->
-    let message = "Redundant pattern matching" in
-    let content =
-      `Assoc [ "message", `String message; "location", Location.to_yojson loc ]
     in
     json_error ~stage ~content
   | `Typer_pattern_do_not_match loc ->

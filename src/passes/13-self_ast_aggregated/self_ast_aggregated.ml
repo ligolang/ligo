@@ -170,6 +170,6 @@ let contract_passes ~raise = [
 
 let all_contract ~raise parameter storage prg =
   let contract_type : Contract_passes.contract_type = { parameter ; storage } in
-  let all_p = List.map ~f:(fun pass -> Helpers.fold_map_expression pass contract_type) @@ contract_passes ~raise in
+  let all_p = List.map ~f:(fun pass -> Ast_aggregated.Helpers.fold_map_expression pass contract_type) @@ contract_passes ~raise in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
   prg

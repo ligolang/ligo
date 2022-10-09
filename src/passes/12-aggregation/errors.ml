@@ -4,6 +4,7 @@ let stage = "aggregation"
 
 type aggregation_error = [
   | `Aggregation_corner_case of string
+  | `Aggregation_redundant_pattern of Location.t
 ] [@@deriving poly_constructor { prefix = "aggregation_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -16,6 +17,8 @@ let error_ppformat : display_format:string display_format ->
         Format.fprintf f
         "@[<hv>An aggregation corner case occurred:@.%s@]"
         desc
+    | `Aggregation_redundant_pattern loc ->
+      Format.fprintf f "@[<hv>%a@.Redundant pattern matching@]" Snippet.pp loc
   )
 
 let error_jsonformat : aggregation_error -> Yojson.Safe.t = fun a ->
@@ -31,5 +34,11 @@ let error_jsonformat : aggregation_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message);
     ] in
+    json_error ~stage ~content
+  | `Aggregation_redundant_pattern loc ->
+    let message = "Redundant pattern matching" in
+    let content =
+      `Assoc [ "message", `String message; "location", Location.to_yojson loc ]
+    in
     json_error ~stage ~content
 

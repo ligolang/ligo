@@ -2,7 +2,7 @@ module PP_helpers = Simple_utils.PP_helpers
 module AST = Ast_aggregated
 open Ligo_prim
 
-let fold_map_expression = Helpers.fold_map_expression
+let fold_map_expression = AST.Helpers.fold_map_expression
 
 let to_name_safe v =
   fst (Value_var.internal_get_name_and_counter v)
