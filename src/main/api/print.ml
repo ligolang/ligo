@@ -27,7 +27,7 @@ let preprocess (raw_options : Raw_options.t) source_file display_format () =
     let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options = Compiler_options.make ~raw_options ~syntax () in
     let meta = Compile.Of_source.extract_meta syntax in
-    Compile.Of_source.compile ~raise ~options:options.frontend ~meta source_file
+    Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file
 
 let cst (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Parsing.Formatter.ppx_format) @@
@@ -43,7 +43,7 @@ let ast (raw_options : Raw_options.t) source_file display_format () =
       let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options  = Compiler_options.make ~raw_options ~syntax () in
       let meta     = Compile.Of_source.extract_meta syntax in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
+      let c_unit,_ = Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file in
       Compile.Utils.to_imperative ~raise ~options ~meta c_unit source_file
 
 let ast_sugar (raw_options : Raw_options.t) source_file display_format () =
@@ -53,7 +53,7 @@ let ast_sugar (raw_options : Raw_options.t) source_file display_format () =
       let options = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let meta     = Compile.Of_source.extract_meta syntax in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
+      let c_unit,_ = Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file in
       let sugar = Compile.Utils.to_sugar ~raise ~options ~meta c_unit source_file in
       if self_pass then
         Self_ast_sugar.all_program sugar
@@ -67,7 +67,7 @@ let ast_core (raw_options : Raw_options.t) source_file display_format () =
       let options = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let meta     = Compile.Of_source.extract_meta syntax in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
+      let c_unit,_ = Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file in
       let core = Compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
       if self_pass then
         (*NOTE: this run self_ast_core a second time*)

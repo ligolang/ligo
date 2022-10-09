@@ -126,8 +126,8 @@ module Make (Lexer  : LEXER)
     (* Errors and error messages *)
 
     let get_current_token_region lexbuf : Region.t * token list =
-      let used_tokens = Lexer.used_tokens () |> List.rev in
-      match used_tokens with
+      let used_tokens = Lexer.used_tokens () in
+      match used_tokens |> List.rev with
         current_token :: _ ->
           Lexer.Token.to_region current_token, used_tokens
       | [] ->

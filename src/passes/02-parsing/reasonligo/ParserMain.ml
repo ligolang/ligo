@@ -67,7 +67,6 @@ module Pretty =
   struct
     include Parsing_reasonligo.Pretty
     type tree = CST.t
-
   end
 
 module Print =
@@ -82,7 +81,6 @@ module Print =
 
 module Main =
   ParserAPI.Make
-    (Preprocessor)
     (Lexer)
     (Parameters)
     (ParErr)

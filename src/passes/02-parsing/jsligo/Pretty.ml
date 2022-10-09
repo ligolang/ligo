@@ -24,14 +24,19 @@ let pp_nsepseq :
     in separate_map sep printer elems
 
 let rec print cst =
-  let stmt     = Utils.nseq_to_list cst.statements in
-  let stmt     = List.filter_map ~f:pp_toplevel_statement stmt in
+    Utils.nseq_to_list cst.statements
+  |> List.map ~f:pp_toplevel_statement
+  |> separate_map hardline group
+(*  let stmts     = Utils.nseq_to_list cst.statements in
+  let stmts     = List.map ~f:pp_toplevel_statement stmts in
   let app stmt = group (stmt ^^ string ";")
-  in separate_map (hardline ^^ hardline) app stmt
+  in separate_map (hardline ^^ hardline) app stmts *)
 
 and pp_toplevel_statement = function
-  TopLevel (stmt, _) -> Some (pp_statement ?top:(Some true) stmt)
-| Directive _   -> None
+  TopLevel (stmt, _) ->
+    pp_statement ?top:(Some true) stmt ^^ string ";" ^^ hardline
+| Directive dir ->
+    string (Directive.to_lexeme dir).Region.value
 
 and pp_statement ?top = function
   SBlock      s -> pp_SBlock s
@@ -71,18 +76,18 @@ and pp_while {value; _} =
 
 and pp_import (node : CST.import Region.reg) =
   let {value; _} : CST.import Region.reg = node in
-  match value with 
+  match value with
     Import_rename value ->
     string "import " ^^ string value.alias.value
     ^^ string " = "
     ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
-  | Import_all_as value -> 
-    string "import " ^^ string "*" ^^ string " as " ^^ string value.alias.value 
+  | Import_all_as value ->
+    string "import " ^^ string "*" ^^ string " as " ^^ string value.alias.value
     ^^ string " from "
     ^^ pp_string value.module_path
   | Import_selected value ->
     let pp_idents = pp_nsepseq "," pp_ident in
-    string "import " ^^ 
+    string "import " ^^
     group (pp_braces pp_idents value.imported) ^^
     string " from "
     ^^ pp_string value.module_path
@@ -367,7 +372,7 @@ and pp_fun {value; _} =
 and pp_seq {value; _} =
   pp_nsepseq "," pp_expr value
 
-and pp_disc value  = 
+and pp_disc value  =
   pp_nsepseq "|" pp_object_type value
 
 and pp_type_expr: type_expr -> document = function
