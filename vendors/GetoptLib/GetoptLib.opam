@@ -1,0 +1,21 @@
+opam-version : "2.0"
+name         : "GetoptLib"
+version      : "1.0"
+synopsis     : "An implementation of GNU getopt for OCaml projects"
+description  : "The OCaml distribution comes with the module Arg specialized in
+command-line parsing. However, it doesn't support the well known
+features of GNU getopt and getopt_long. The module Getopt is an alternative; it supports GNU syntax, but from the programmer point of view, it is close to the spirit of Arg: the programmer gives to the general parsing function a list of possible options, together with the behaviour of these options."
+maintainer   : "Christian Rinderknecht <rinderknecht@free.fr>"
+authors      : "Alain Frisch"
+homepage     : "https://github.com/gildor478/ocaml-getopt"
+bug-reports  : "https://gitlab.com/ligolang/ligo/-/issues"
+license      : "MIT"
+
+# If you change the dependencies, run `opam lock` in the root
+depends      : []
+build        : [
+                [ "dune" "build" "-p" name "-j" jobs ]
+               ]
+url {
+  src: "https://github.com/gildor478/ocaml-getopt/archive/refs/heads/master.zip"
+}

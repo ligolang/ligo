@@ -1,8 +1,8 @@
 open Helpers
 open Errors
+open Ligo_prim
 open Ast_imperative
 open Simple_utils.Trace
-open Ligo_prim
 
 let add_binder b vars =
   let var = Binder.get_var b in

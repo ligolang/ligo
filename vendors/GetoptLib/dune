@@ -1,0 +1,4 @@
+(library
+  (name GetoptLib)
+  (public_name GetoptLib)
+  (modules Getopt))

@@ -42,11 +42,19 @@ type 'a reg = {region : t; value : 'a}
 
 (* Injections *)
 
-exception Invalid
+exception Different_files of string * string
+exception Out_of_order_pos of string * string
 
 let make ~(start : Pos.t) ~(stop : Pos.t) =
-  if String.(<>) start#file stop#file || start#byte_offset > stop#byte_offset
-  then raise Invalid
+  if String.(<>) start#file stop#file
+  then raise (Different_files (start#file, stop#file))
+  else
+  if start#line > stop#line
+   || start#line = stop#line && start#byte_offset > stop#byte_offset
+  then
+    let pos1 = start#compact `Point
+    and pos2 = stop#compact ` Point
+    in raise (Out_of_order_pos (pos1, pos2))
   else
     object
       val    start = start
@@ -57,17 +65,17 @@ let make ~(start : Pos.t) ~(stop : Pos.t) =
       method shift_bytes len =
         let start = start#shift_bytes len
         and stop  = stop#shift_bytes len
-        in {< start = start; stop = stop >}
+        in {< start; stop >}
 
       method shift_one_uchar len =
         let start = start#shift_one_uchar len
         and stop  = stop#shift_one_uchar len
-        in {< start = start; stop = stop >}
+        in {< start; stop >}
 
       method set_file name =
         let start = start#set_file name
         and stop  = stop#set_file name
-        in {< start = start; stop = stop >}
+        in {< start; stop >}
 
       (* Getters *)
 
@@ -104,21 +112,28 @@ let make ~(start : Pos.t) ~(stop : Pos.t) =
       method compact ?(file=true) ?(offsets=true) mode =
         if start#is_ghost || stop#is_ghost then "ghost"
         else
-          let prefix    = if file then
-                            Filename.basename start#file ^ ":"
-                          else ""
+          let file_opt  =
+            if file then Filename.basename start#file ^ ":" else ""
           and start_str = start#compact ~file:false ~offsets mode
           and stop_str  = stop#compact ~file:false ~offsets mode in
           if String.equal start#file stop#file then
             if start#line = stop#line then
-              sprintf "%s%s-%i" prefix start_str
-                      (if offsets then stop#offset mode
-                       else stop#column mode)
-            else
-              sprintf "%s%s-%s" prefix start_str stop_str
+              sprintf "%s%s-%i"
+                      file_opt start_str
+                      (if offsets then stop#offset mode else stop#column mode)
+            else sprintf "%s%s-%s" file_opt start_str stop_str
           else sprintf "%s:%s-%s:%s"
                        start#file start_str stop#file stop_str
     end
+
+let empty pos = make ~start:pos ~stop:pos
+
+(* Making a region from the matched prefix of a lexing buffer *)
+
+let from_lexbuf lexbuf =
+  let start = Lexing.lexeme_start_p lexbuf |> Pos.from_byte
+  and stop  = Lexing.lexeme_end_p lexbuf   |> Pos.from_byte
+  in make ~start ~stop
 
 (* Special regions *)
 
@@ -173,11 +188,9 @@ let to_human_yojson f =
 
 let of_yojson = fun t ->
   match t with
-  | `Assoc [
-       ("start", start) ;
-       ("stop", stop)] ->
-     begin match Pos.of_yojson start, Pos.of_yojson stop with
-     | Ok start, Ok stop -> Ok (make ~start ~stop)
-     | (Error _ as e), _ | _, (Error _ as e) -> e end
+    `Assoc [("start", start); ("stop", stop)] ->
+      (match Pos.of_yojson start, Pos.of_yojson stop with
+         Ok start, Ok stop -> Ok (make ~start ~stop)
+       | (Error _ as e), _ | _, (Error _ as e) -> e)
   | _ ->
      Utils.error_yojson_format "{start: Pos.t, stop: Pos.t}"

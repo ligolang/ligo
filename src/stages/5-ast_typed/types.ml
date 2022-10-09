@@ -113,6 +113,9 @@ end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
 
+module Match_expr = Match_expr.Make(Pattern.Make)(Pattern.Container.Record)
+module Pattern = Pattern.Make(Pattern.Container.Record)
+
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t

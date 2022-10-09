@@ -453,7 +453,7 @@ module Free_variables :
       List.concat (List.map ps ~f:find_vars_in_pattern)
     | P_variant (_,p) -> find_vars_in_pattern p
     | P_record r -> 
-      Record.fold (fun acc p -> acc @ find_vars_in_pattern p) [] r
+      Ligo_prim.Pattern.Container.Record.fold (fun acc p -> acc @ find_vars_in_pattern p) [] r
 
   and get_fv_cases : _ Match_expr.match_case list -> moduleEnv' = fun m ->
     unions @@ List.map m

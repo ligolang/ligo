@@ -65,7 +65,7 @@ let rec extract_variable_types
     | E_matching { matchee=_; cases } ->
       let bindings = List.concat @@ List.map cases 
         ~f:(fun {pattern;_} -> 
-            let binders = Pattern.binders pattern in
+            let binders = Ast_typed.Pattern.binders pattern in
             List.map binders ~f:(fun b -> Binder.get_var b, Binder.get_ascr b)  
           ) in
       return bindings

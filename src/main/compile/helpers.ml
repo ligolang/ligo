@@ -15,7 +15,7 @@ let protocol_to_variant ~raise : string -> Environment.Protocols.t =
 type options = Compiler_options.t
 
 let preprocess_file ~raise ~(options:Compiler_options.frontend) ~(meta: meta) file_path
-  : Preprocessing.Pascaligo.success =
+  : Preprocessor.LowAPI.success =
   let open Preprocessing in
   let Compiler_options.{ project_root ; libraries ; _ } = options in
   let preprocess_file =

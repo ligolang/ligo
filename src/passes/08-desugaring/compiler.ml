@@ -162,7 +162,7 @@ let rec compile_expression : I.expression -> O.expression =
       let const = Constructor.map self const in
       return @@ O.E_constructor const
     | I.E_matching m ->
-      let m = Match_expr.map self self_type_opt m in
+      let m = I.Match_expr.map self self_type_opt m in
       return @@ O.E_matching m
     | I.E_record recd ->
       let recd = Record.map self recd in
@@ -251,8 +251,8 @@ let rec compile_expression : I.expression -> O.expression =
       return @@ O.E_matching {
           matchee ;
           cases = [
-            { pattern = Location.wrap @@ Pattern.P_variant (Label "True" , Location.wrap Pattern.P_unit) ; body = match_true  } ;
-            { pattern = Location.wrap @@ Pattern.P_variant (Label "False", Location.wrap Pattern.P_unit) ; body = match_false } ;
+            { pattern = Location.wrap @@ I.Pattern.P_variant (Label "True" , Location.wrap I.Pattern.P_unit) ; body = match_true  } ;
+            { pattern = Location.wrap @@ I.Pattern.P_variant (Label "False", Location.wrap I.Pattern.P_unit) ; body = match_false } ;
           ]
         }
     | I.E_sequence {expr1; expr2} ->

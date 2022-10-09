@@ -13,8 +13,9 @@ let main (_, store : parameter * storage) : return =
   let my_now : timestamp = Tezos.get_now () in
   if my_now > store.next_use
   then
+    let next_use = my_now + store.interval in
     let store : storage =
-      {store with next_use = my_now + store.interval}
+      {store with next_use}
     in store.execute (), store
   else
     (* TODO: Add the time until next use to this message *)

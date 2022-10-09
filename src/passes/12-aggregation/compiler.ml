@@ -369,7 +369,7 @@ and compile_cases ~raise ~loc path scope matchee cases : O.expression_content =
   let matchee_type = matchee.type_expression in
   let eqs = List.map cases 
     ~f:(fun {pattern ; body} -> 
-        let pattern = Pattern.map (compile_type_expression ~raise path scope) pattern in
+        let pattern = I.Pattern.map (compile_type_expression ~raise path scope) pattern in
         let body = compile_expression ~raise path scope body in
         pattern, matchee_type, body) in
   match matchee.expression_content with

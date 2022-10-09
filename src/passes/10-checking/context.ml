@@ -1269,7 +1269,7 @@ module Elaboration = struct
 
   and matching_expr_apply ctx match_exprs =
     List.map match_exprs 
-      ~f:(Match_expr.map_match_case (e_apply ctx) (t_apply ctx))
+      ~f:(Types.Match_expr.map_match_case (e_apply ctx) (t_apply ctx))
 
   and decl_apply ctx (decl : decl) = declaration_apply ctx decl
 
@@ -1413,7 +1413,7 @@ module Elaboration = struct
 
   and matching_expr_pass ~raise match_exprs =
     List.iter match_exprs
-      ~f:(Match_expr.iter_match_case (expression_pass ~raise) (type_pass ~raise))
+      ~f:(Types.Match_expr.iter_match_case (expression_pass ~raise) (type_pass ~raise))
 
   and decl_pass ~raise (decl : decl) = declaration_pass ~raise decl
 

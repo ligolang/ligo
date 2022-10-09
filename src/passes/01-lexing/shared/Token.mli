@@ -34,7 +34,7 @@
 (* Vendor dependencies *)
 
 module Region    = Simple_utils.Region
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 
 (* TOKENS *)
 
@@ -128,10 +128,6 @@ module type S =
     val is_hex    : token -> bool
     val is_sym    : token -> bool
     val is_eof    : token -> bool
-
-    (* String delimiters *)
-
-    val support_string_delimiter : char -> bool
 
     (* Verbatim strings *)
 

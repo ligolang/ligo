@@ -1,8 +1,8 @@
+open Ligo_prim
 open Types
 open Format
 open Simple_utils.PP_helpers
 
-open Ligo_prim
 
 let sum_set_t value sep ppf m =
   let lst = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) m in

@@ -907,13 +907,23 @@ update_record:
     in {region; value} }
 
 field_path_assignment:
-  path "=" expr {
+  field_name {
+     let region = $1.region
+      and value  = {field_path=Name $1; assignment=(wrap "" $1.region); field_expr=EVar $1}
+        in {region; value} 
+  }
+| path "=" expr {
     let region = cover (path_to_region $1) (expr_to_region $3)
     and value  = {field_path=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
 field_assignment:
-  field_name "=" expr {
+  field_name {
+    let region = $1.region
+    and value  = {field_name=$1; assignment=(wrap "" $1.region); field_expr=EVar $1}
+      in {region; value} 
+  }
+| field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {field_name=$1; assignment=$2; field_expr=$3}
     in {region; value} }

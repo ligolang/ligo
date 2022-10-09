@@ -801,18 +801,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (for_all "a"
           @@ fun a ->
           create ~mode_annot:[ Inferred ] ~types:[ a ^~> t_option a ]) )
-    ; ( C_UNOPT
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create ~mode_annot:[ Inferred ] ~types:[ t_option a ^~> a ]) )
-    ; ( C_UNOPT_WITH_ERROR
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Inferred; Checked ]
-            ~types:[ t_option a ^-> t_string () ^~> a ]) )
     ; ( C_OPTION_MAP
       , of_type
           (for_all "a"
@@ -1547,20 +1535,42 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
     ; ( C_TEST_INT64_TO_INT
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_int64 () ^~> t_int () ]) )
-    ; ( C_TEST_INT
+    ; ( C_INT
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_nat () ^~> t_int () ]) )
-    ; ( C_TEST_ABS
+    ; ( C_ABS
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_int () ^~> t_nat () ]) )
-    ; ( C_TEST_SLICE
+    ; ( C_LIST_SIZE
       , of_type
-          (create
-             ~mode_annot:[ Checked; Checked; Inferred ]
-             ~types:
-               [ t_nat () ^-> t_nat () ^-> t_string () ^~> t_string ()
-               ; t_nat () ^-> t_nat () ^-> t_bytes () ^~> t_bytes ()
-               ]) )
+          (for_all "a"
+           @@  fun a ->
+           (create ~mode_annot:[ Inferred ] ~types:[ t_list a ^~> t_nat () ])))
+    ; ( C_SET_SIZE
+      , of_type
+          (for_all "a"
+           @@  fun a ->
+           (create ~mode_annot:[ Inferred ] ~types:[ t_set a ^~> t_nat () ])))
+    ; ( C_MAP_SIZE
+      , of_type
+          (for_all "a"
+           @@  fun a ->
+           for_all "b"
+           @@  fun b ->
+           (create ~mode_annot:[ Inferred ] ~types:[ t_map a b ^~> t_nat () ])))
+    ; ( C_SIZE
+      , of_type
+          (create ~mode_annot:[ Inferred ] ~types:[ t_string () ^~> t_nat () ; t_bytes () ^~> t_nat () ]))
+    ; ( C_SLICE
+      , of_type
+          (create ~mode_annot:[ Checked ; Checked ; Inferred ] ~types:[ t_nat () ^-> t_nat () ^-> t_string () ^~> t_string () ; t_nat () ^-> t_nat () ^-> t_bytes () ^~> t_bytes () ]))
+    ; ( C_MAP_MEM
+      , of_type
+          (for_all "a"
+           @@  fun a ->
+           for_all "b"
+           @@  fun b ->
+           (create ~mode_annot:[ Checked ; Inferred ] ~types:[ a ^-> t_map a b ^~> t_bool () ; a ^-> t_big_map a b ^~> t_bool () ])))
     ]
 
 

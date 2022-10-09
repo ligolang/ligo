@@ -69,7 +69,7 @@ val gen_sym : unit -> string
 
 (* General tracing function *)
 
-val trace : string -> out_channel option -> unit
+val trace : string -> Core.out_channel option -> unit
 
 (* Printing a string in red to standard error *)
 

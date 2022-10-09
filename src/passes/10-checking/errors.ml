@@ -130,11 +130,11 @@ type typer_error =
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of
-    Ast_core.type_expression option Pattern.t * Ast_typed.type_expression
+    Ast_core.type_expression option Ast_core.Pattern.t * Ast_typed.type_expression
   | `Typer_pattern_missing_cases of
     Location.t
     * Syntax_types.t option
-    * Ast_core.type_expression option Pattern.t list
+    * Ast_core.type_expression option Ast_typed.Pattern.t list
   | `Typer_pattern_redundant_case of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
   | `Typer_constant_since_protocol of
@@ -606,7 +606,7 @@ let rec error_ppformat
            Format.fprintf
              ppf
              "%a "
-             (Pattern.pp Ast_core.PP.type_expression_option)
+             (Ast_core.Pattern.pp Ast_core.PP.type_expression_option)
              value
          | File _ -> ()
        in
@@ -1178,7 +1178,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
   | `Typer_pattern_do_not_conform_type (p, t) ->
     let message = `String "pattern not of the expected type" in
     let pattern =
-      (Pattern.to_yojson Ast_core.type_expression_option_to_yojson) p
+      (Ast_core.Pattern.to_yojson Ast_core.type_expression_option_to_yojson) p
     in
     let t = Ast_typed.type_expression_to_yojson t in
     let content =

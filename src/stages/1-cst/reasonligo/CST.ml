@@ -6,22 +6,26 @@
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 module Token     = Lexing_reasonligo.Token
-module Wrap      = Lexing_shared.Wrap
+
+(* Local dependencies *)
+
+module Wrap = Lexing_shared.Wrap
+module Attr = Lexing_shared.Attr
+
+(* Utilities *)
+
+type 'a reg = 'a Region.reg
+type 'payload wrap = 'payload Wrap.t
 
 open Utils
-type 'a reg = 'a Region.reg
-
-(* Lexemes *)
 
 type lexeme = string
 
-type 'payload wrap = 'payload Wrap.t
-
-(* Keywords of Reason *)
+(* Keywords of ReasonLIGO *)
 
 type kwd_and    = lexeme wrap
 type kwd_else   = lexeme wrap

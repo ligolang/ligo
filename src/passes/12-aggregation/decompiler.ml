@@ -55,7 +55,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        return (O.E_constructor { constructor ; element })
     | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
       let matchee = decompile ~raise matchee in
-      let aux : _ I.matching_content_case -> _ Match_expr.match_case =
+      let aux : _ I.matching_content_case -> _ Ast_typed.Match_expr.match_case =
          fun { constructor ; pattern ; body } -> (
            let pattern =
             (* Note copied from Ast_typed untyper:
@@ -63,34 +63,36 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
               A special case for lists might be required here
             *)
             let tv = decompile_type ~raise tv in
-            let proj = Location.wrap @@ Pattern.P_var (Binder.make pattern tv) in
-            Location.wrap @@ Pattern.P_variant (constructor, proj)
+            let proj = Location.wrap @@ Ast_typed.Pattern.P_var (Binder.make pattern tv) in
+            Location.wrap @@ Ast_typed.Pattern.P_variant (constructor, proj)
            in
            let body = decompile ~raise body in
-           ({pattern ; body } : (O.expression, O.type_expression) Match_expr.match_case)
+           ({pattern ; body } : (O.expression, O.type_expression) Ast_typed.Match_expr.match_case)
          )
        in
        let cases = List.map ~f:aux cases in
       return (O.E_matching { matchee ; cases })
     | E_matching { matchee ; cases = Match_record { fields ; body ; tv=_ } } ->
         let matchee = decompile ~raise matchee in
-        let aux : (I.type_expression Binder.t) -> O.type_expression Pattern.t =
+        let aux : (I.type_expression Binder.t) -> O.type_expression Ast_typed.Pattern.t =
           fun binder -> (
             let proj = Location.wrap 
-              @@ Pattern.P_var (Binder.map (decompile_type ~raise) binder) in
+              @@ Ast_typed.Pattern.P_var (Binder.map (decompile_type ~raise) binder) in
             proj
           )
         in
         let body = decompile ~raise body in
         let case = match Record.is_tuple fields with
           | false ->
-            let pattern = Location.wrap (Pattern.P_record (Record.map aux fields)) in
-            ({ pattern ; body } : _ Match_expr.match_case)
+            let fields = Record.map aux fields in
+            let fields = Pattern.Container.Record.of_record fields in
+            let pattern = Location.wrap (O.Pattern.P_record fields) in
+            ({ pattern ; body } : _ O.Match_expr.match_case)
           | true ->
             let patterns = Record.map aux fields in
             let patterns = Record.LMap.values patterns in
-            let pattern = Location.wrap (Pattern.P_tuple patterns) in
-            ({ pattern ; body } : _ Match_expr.match_case)
+            let pattern = Location.wrap (O.Pattern.P_tuple patterns) in
+            ({ pattern ; body } : _ O.Match_expr.match_case)
         in
         let cases = [case] in
        return (O.E_matching { matchee ; cases })

@@ -20,27 +20,27 @@ open Errors
 open Ligo_prim
 
 type matchees = Value_var.t list
-type pattern = O.type_expression Pattern.t
+type pattern = O.type_expression I.Pattern.t
 type typed_pattern = pattern * O.type_expression
 type equations = (typed_pattern list * O.expression) list
 type rest = O.expression_content
 
 module PP_DEBUG = struct
-  let pp_typed_pattern ppf ((p,t) : typed_pattern) = Format.fprintf ppf "(%a : %a)" (Pattern.pp O.PP.type_expression) p O.PP.type_expression t
+  let pp_typed_pattern ppf ((p,t) : typed_pattern) = Format.fprintf ppf "(%a : %a)" (I.Pattern.pp O.PP.type_expression) p O.PP.type_expression t
   let pp_pattern_list ppf (plist : typed_pattern list) = Format.fprintf ppf "[%a]" Simple_utils.PP_helpers.(list_sep pp_typed_pattern (tag "; ")) plist
   let pp_eq ppf ((plist,expr):(typed_pattern list * O.expression)) = Format.fprintf ppf "@[%a -> %a]" pp_pattern_list plist O.PP.expression expr
   let pp_eqs ppf (eqs:equations) = Format.fprintf ppf "@[<hv>%a@]" Simple_utils.PP_helpers.(list_sep pp_eq (tag "; ")) eqs
   let pp_partition ppf (part: equations list) = Format.fprintf ppf "@[<hv><@.%a@.>@]" Simple_utils.PP_helpers.(list_sep pp_eqs (tag "@.")) part
 end
 
-let is_var : _ Pattern.t -> bool = fun p ->
+let is_var : _ I.Pattern.t -> bool = fun p ->
   match p.wrap_content with
   | P_var _ -> true
   | P_tuple _ -> true
   | P_record _ -> true
   | P_unit -> true
   | _ -> false
-let is_product' : _ Pattern.t -> bool = fun p ->
+let is_product' : _ I.Pattern.t -> bool = fun p ->
   match p.wrap_content with
   | P_tuple _ -> true
   | P_record _ -> true
@@ -141,7 +141,7 @@ let rec substitute_var_in_body ~raise : Value_var.t -> Value_var.t -> O.expressi
     res
 
 let make_var_pattern : Value_var.t -> O.type_expression -> pattern =
-  fun var t -> Location.wrap @@ Pattern.P_var (Binder.make var t)
+  fun var t -> Location.wrap @@ I.Pattern.P_var (Binder.make var t)
 
 let rec partition : ('a -> bool) -> 'a list -> 'a list list =
   fun f lst ->
@@ -183,10 +183,10 @@ let group_equations ~raise : equations -> equations Record.t =
         | P_list (List []) ->
           let label = Label.of_string "Nil" in
           let proj_t = extract_variant_type ~raise phd label t in
-          Record.LMap.update label (upd proj_t (Location.wrap Pattern.P_unit)) m
+          Record.LMap.update label (upd proj_t (Location.wrap I.Pattern.P_unit)) m
         | P_list (Cons (p_hd,p_tl)) ->
           let label = Label.of_string "Cons" in
-          let pattern = Location.wrap ~loc:(phd.location) @@ Pattern.P_tuple [p_hd;p_tl] in
+          let pattern = Location.wrap ~loc:(phd.location) @@ I.Pattern.P_tuple [p_hd;p_tl] in
           let proj_t = extract_variant_type ~raise phd label t in
           Record.LMap.update label (upd proj_t pattern) m
         | _ -> raise.error @@ corner_case __LOC__
@@ -306,7 +306,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
       let (p,t) = product_shape in
       match (p.wrap_content,t) with
       | P_tuple ps , t ->
-        let aux : int -> _ Pattern.t -> (Label.t * (O.type_expression Binder.t)) =
+        let aux : int -> _ I.Pattern.t -> (Label.t * (O.type_expression Binder.t)) =
           fun i proj_pattern ->
             let l = (Label.of_int i) in
             let field_t = extract_record_type ~raise p l t in
@@ -318,7 +318,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
         in
         List.mapi ~f:aux ps
       | P_record lps , t ->
-        let aux : (Label.t * _ Pattern.t)  -> (Label.t * (O.type_expression Binder.t)) =
+        let aux : (Label.t * _ I.Pattern.t)  -> (Label.t * (O.type_expression Binder.t)) =
           fun (l,proj_pattern) ->
             let field_t = extract_record_type ~raise p l t in
             let b = match proj_pattern.wrap_content with
@@ -327,6 +327,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             in
             (l, b)
         in
+        let lps = Pattern.Container.Record.to_record lps in
         List.map ~f:aux (Record.LMap.to_kv_list lps)
       | _ -> raise.error @@ corner_case __LOC__
     in
@@ -349,6 +350,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             let field_t = extract_record_type ~raise p label t in
             (p,field_t)
           in
+          let lps = Pattern.Container.Record.to_record lps in
           let tps = List.map ~f:aux (Record.LMap.to_kv_list lps) in
           (tps @ var_filler::ptl , body)
         | P_var _ ->
@@ -374,6 +376,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 in
                 (v,field_t)
               in
+              let lps = Pattern.Container.Record.to_record lps in
               List.map ~f:aux (Record.LMap.to_kv_list lps)
             | _ -> raise.error @@ corner_case __LOC__
           in
@@ -393,7 +396,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
   )
   | [] -> raise.error @@ corner_case __LOC__
 
-let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression Pattern.t * O.type_expression * O.expression) list) =
+let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression I.Pattern.t * O.type_expression * O.expression) list) =
   let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
     let fs = O.make_e (O.E_literal (Literal_value.Literal_string Backend.Michelson.fw_partial_match)) (O.t_string ()) in

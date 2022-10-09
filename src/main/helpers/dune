@@ -16,12 +16,13 @@
   (backend bisect_ppx))
  (libraries simple-utils main_errors syntax_types))
 
-
 (library
  (name cli_helpers)
  (public_name ligo.cli_helpers)
- (modules cli_helpers)
+ (modules cli_helpers repository_url ligo_rc ligo_manifest)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils lwt lwt.unix semver))
- 
+ (libraries simple-utils lwt lwt.unix semver uri)
+ (inline_tests)
+ (preprocess
+  (pps ppx_deriving_yojson ppx_inline_test)))

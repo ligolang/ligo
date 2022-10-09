@@ -131,12 +131,12 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
     return @@ E_while while_loop
 
 and matching_cases 
-: Aliases.t -> (AST.expression, AST.type_expression) Match_expr.match_case list
-  -> (AST.expression, AST.type_expression) Match_expr.match_case list
+: Aliases.t -> (AST.expression, AST.type_expression) AST.Match_expr.match_case list
+  -> (AST.expression, AST.type_expression) AST.Match_expr.match_case list
 = fun scope me ->
   let self ?(scope = scope) = expression scope in
   let self_type ?(scope = scope) = type_expression scope in
-  List.map me ~f:(Match_expr.map_match_case self self_type)
+  List.map me ~f:(AST.Match_expr.map_match_case self self_type)
 
 and compile_declaration aliases (d : AST.declaration) : Aliases.t * AST.declaration option =
   let return_s aliases wrap_content = aliases, Some {d with wrap_content} in
