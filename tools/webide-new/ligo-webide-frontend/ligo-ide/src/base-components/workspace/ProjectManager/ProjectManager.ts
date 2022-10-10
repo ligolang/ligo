@@ -286,7 +286,12 @@ export default class ProjectManager {
     const existingPaths = new Set<string>([mainFilePath]);
     const resultMap = new Map<string, string>();
     await this.getContractsRecursively(mainFilePath, mainFile, resultMap, existingPaths);
-    return Array.from(resultMap);
+    return Array.from(resultMap).map(([filePath, source]: [string, string]) => {
+      return {
+        filePath,
+        source,
+      };
+    });
   }
 
   async getContractsRecursively(

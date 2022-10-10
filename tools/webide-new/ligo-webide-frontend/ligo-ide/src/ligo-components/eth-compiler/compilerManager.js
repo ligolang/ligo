@@ -110,8 +110,10 @@ export class CompilerManager {
     );
 
     Api.compileContract({
-      sources: contractFiles,
-      main: projectManager.mainFilePath,
+      project: {
+        sourceFiles: contractFiles,
+        main: projectManager.mainFilePath,
+      },
     })
       .then(async (data) => {
         CompilerManager.terminal.writeToTerminal(data.replace(/\n/g, "\n\r"));
