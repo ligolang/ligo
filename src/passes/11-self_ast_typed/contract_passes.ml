@@ -137,18 +137,16 @@ and get_fv expr =
     let body_env = { body_env with used_var = VVarSet.diff body_env.used_var fe_binder_set } in
     return (merge_env coll_env body_env) @@ E_for_each { fe_binder; collection; collection_type; fe_body }
 
-and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
-  match m with
-  | Match_variant {cases;tv} ->
-     let aux {constructor; pattern ; body} =
-       let env,body= get_fv body in
-       {env with used_var=VVarSet.remove pattern @@ env.used_var},{constructor;pattern;body} in
-     let envs,cases = List.unzip @@  List.map ~f:aux cases in
-     (unions envs), Match_variant {cases;tv}
-  | Match_record {fields; body; tv} ->
-     let pattern = Record.LMap.values fields |> List.map ~f:(Binder.get_var) in
-     let env,body = get_fv body in
-     {env with used_var=List.fold_right pattern ~f:VVarSet.remove ~init:env.used_var}, Match_record {fields;body;tv}
+and get_fv_cases : _ Match_expr.match_case list -> env * _ Match_expr.match_case list = fun ms ->
+  let envs = List.map ms 
+  ~f:(fun {pattern;body} ->
+    let env,_= get_fv body in
+    let binders = Pattern.binders pattern |> List.map ~f:Binder.get_var in
+    let used_var = List.fold_right binders ~init:env.used_var ~f:VVarSet.remove in
+    let env = { env with used_var } in
+    env
+  ) in
+  unions envs, ms
 
 and get_fv_module (env:env) acc = function
   | [] -> env, acc

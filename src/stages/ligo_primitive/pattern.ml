@@ -4,6 +4,7 @@ module Container = struct
   module type S = sig
     type 'a t [@@deriving eq, compare, yojson, hash]
 
+    val iter : ('a -> unit) -> 'a t -> unit
     val map : ('a -> 'b) -> 'a t -> 'b t
     val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
     val fold_map : ('b -> 'a -> 'b * 'c) -> 'b -> 'a t -> 'b * 'c t
@@ -16,13 +17,14 @@ module Container = struct
   module List : S = struct
     type 'a t = (Label.t * 'a) list [@@deriving eq, compare, yojson, hash]
 
+    let iter : ('a -> unit) -> 'a t -> unit = 
+      fun f xs -> List.iter ~f:(fun (_,x) -> f x) xs 
+
     let map : ('a -> 'b) -> 'a t -> 'b t =
      fun f xs -> List.map xs ~f:(fun (l, t) -> l, f t)
 
-
     let fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b =
      fun f init xs -> List.fold xs ~f:(fun init (_, t) -> f init t) ~init
-
 
     let fold_map : ('b -> 'a -> 'b * 'c) -> 'b -> 'a t -> 'b * 'c t =
      fun f init xs ->
@@ -65,7 +67,7 @@ module type S = functor (C : Container.S) -> sig
     | P_record of 'ty_exp t C.t
 
   and 't t = 't pattern_repr Location.wrap
-  [@@deriving eq, compare, yojson, hash]
+  [@@deriving eq, compare, yojson, hash, iter]
 
   val fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a
   val fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
@@ -89,7 +91,7 @@ module Make (Container : Container.S) = struct
     | P_record of 'ty_exp t Container.t
 
   and 't t = 't pattern_repr Location.wrap
-  [@@deriving eq, compare, yojson, hash]
+  [@@deriving eq, compare, yojson, hash, iter]
 
   let rec pp_list g ppf pl =
     let mpp = pp g in

@@ -86,17 +86,8 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
   | M_module_path _ -> acc
   | M_variable _ -> acc
 
-and fold_cases : 'a folder -> 'a -> matching_expr -> 'a = fun f init m ->
-  match m with
-  | Match_variant {cases;tv=_} -> (
-      let aux init' {constructor=_; pattern=_ ; body} =
-        let res' = fold_expression f init' body in
-        res' in
-      let res = List.fold ~f:aux ~init cases in
-      res
-    )
-  | Match_record {fields = _; body; tv = _} ->
-    fold_expression f init body
+and fold_cases : 'a folder -> 'a -> _ Match_expr.match_case list -> 'a = fun f init m ->
+  List.fold m ~init ~f:(fun init { body ; _ } -> fold_expression f init body)
 
 and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
   let aux = fun acc x ->
@@ -222,19 +213,8 @@ and map_expression_in_module_expr : (expression -> expression) -> module_expr ->
   | M_module_path _ -> x
   | M_variable _ -> x
 
-and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
-  match m with
-  | Match_variant {cases;tv} -> (
-      let aux { constructor ; pattern ; body } =
-        let body = map_expression f body in
-        {constructor;pattern;body}
-      in
-      let cases = List.map ~f:aux cases in
-      Match_variant {cases ; tv}
-    )
-  | Match_record {fields; body; tv} ->
-    let body = map_expression f body in
-    Match_record {fields; body; tv}
+and map_cases : 'err mapper -> _ Match_expr.match_case list -> _ Match_expr.match_case list = fun f m ->
+  List.map m ~f:(Match_expr.map_match_case (map_expression f) (fun t -> t))
 
 and map_declaration m = fun (x : declaration) ->
   let return (d : declaration_content) = { x with wrap_content=d} in
@@ -460,18 +440,15 @@ module Free_variables :
       let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet;mutSet=fv2}
     
-
-  and get_fv_cases : matching_expr -> moduleEnv' = fun m ->
-    match m with
-    | Match_variant {cases;tv=_} ->
-      let aux {constructor=_; pattern ; body} =
-        let {modVarSet;moduleEnv;varSet;mutSet} = get_fv_expr body in
-        {modVarSet;moduleEnv;varSet=VarSet.remove pattern @@ varSet;mutSet} in
-      unions @@  List.map ~f:aux cases
-    | Match_record {fields; body; tv = _} ->
-      let pattern = Record.LMap.values fields |> List.map ~f:(Binder.get_var) in
-      let {modVarSet;moduleEnv;varSet;mutSet} = get_fv_expr body in
-      {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet;mutSet}
+  and get_fv_cases : _ Match_expr.match_case list -> moduleEnv' = fun m ->
+    unions @@ List.map m
+      ~f:(fun { pattern ; body } ->
+          let {modVarSet;moduleEnv;varSet;mutSet} = get_fv_expr body in
+          let vars = Pattern.binders pattern |> List.map ~f:Binder.get_var in
+          let varSet = List.fold vars ~init:varSet
+            ~f:(fun vs v -> VarSet.remove v vs) in
+          {modVarSet;moduleEnv;varSet;mutSet}
+      )
 
   and get_fv_module_expr : module_expr -> moduleEnv' =
     fun x ->

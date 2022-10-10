@@ -7,7 +7,7 @@ module Make (Pattern : Pattern.S) (Container : Container.S) = struct
     { pattern : 't Pattern.t
     ; body : 'e
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, iter]
 
   type ('e, 't) t =
     { matchee : 'e

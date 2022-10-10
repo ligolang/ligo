@@ -395,6 +395,20 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;
   [%expect{|
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 28-33:
+      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+    :
+    Warning: unused variable "mynat".
+    Hint: replace it by "_mynat" to prevent this warning.
+
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 14-17:
+      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+    :
+    Warning: unused variable "myt".
+    Hint: replace it by "_myt" to prevent this warning.
+
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
       6 |   match p with
       7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
