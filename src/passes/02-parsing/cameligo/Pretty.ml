@@ -330,8 +330,11 @@ and pp_constr_expr {value; _} =
 and pp_record_expr ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
 and pp_field_assign {value; _} =
-  let {field_name; field_expr; _} = value in
-  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
+  match value with 
+    Property {field_name; field_expr; _} -> 
+      prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
+  | Punned_property field_name ->
+    pp_ident field_name
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -388,9 +391,12 @@ and pp_code_inj {value; _} =
   string "[%" ^^ language ^/^ code ^^ string "]"
 
 and pp_field_path_assign {value; _} =
-  let {field_path; field_expr; _} = value in
-  let path = pp_path field_path in
-  prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
+  match value with 
+    Path_property {field_path; field_expr; _} ->
+      let path = pp_path field_path in 
+      prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
+  | Path_punned_property field_name ->
+    pp_ident field_name
 
 and pp_path = function
   Name v -> pp_ident v
