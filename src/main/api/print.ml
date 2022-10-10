@@ -10,7 +10,8 @@ let pretty_print (raw_options : Raw_options.t) source_file display_format () =
     let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options = Compiler_options.make ~raw_options ~syntax () in
     let meta = Compile.Of_source.extract_meta syntax in
-    Compile.Utils.pretty_print ~raise ~options:options.frontend ~meta source_file
+    Compile.Utils.pretty_print
+      ~preprocess:false ~raise ~options:options.frontend ~meta source_file
 
 let dependency_graph (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (BuildSystem.Formatter.graph_format) @@
@@ -35,7 +36,8 @@ let cst (raw_options : Raw_options.t) source_file display_format () =
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let meta = Compile.Of_source.extract_meta syntax in
-      Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
+      Compile.Utils.pretty_print_cst
+        ~preprocess:false ~raise ~options:options.frontend ~meta source_file
 
 let ast (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ast_imperative.Formatter.program_format) @@

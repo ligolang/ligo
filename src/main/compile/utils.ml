@@ -85,10 +85,16 @@ let buffer_from_path file_path =
   let ()          = Caml.Buffer.add_channel buffer in_channel int_length
   in buffer
 
-let pretty_print ~raise ~options:_ ~meta file_path =
-  let buffer = buffer_from_path file_path in
-  Of_c_unit.pretty_print ~raise ~meta buffer file_path
+let pretty_print ?(preprocess=true) ~raise ~options ~meta file_path =
+  let buffer =
+    if preprocess then
+      fst @@ Of_source.preprocess_file ~raise ~options ~meta file_path
+    else buffer_from_path file_path
+  in Of_c_unit.pretty_print ~raise ~meta buffer file_path
 
-let pretty_print_cst ~raise ~options:_ ~meta file_path =
-  let buffer = buffer_from_path file_path in
-  Of_c_unit.pretty_print_cst ~raise ~meta buffer file_path
+let pretty_print_cst ?(preprocess=true) ~raise ~options ~meta file_path =
+  let buffer =
+    if preprocess then
+      fst @@ Of_source.preprocess_file ~raise ~options ~meta file_path
+    else buffer_from_path file_path
+  in Of_c_unit.pretty_print_cst ~raise ~meta buffer file_path
