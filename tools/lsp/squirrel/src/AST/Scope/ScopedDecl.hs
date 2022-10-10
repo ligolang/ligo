@@ -1,33 +1,18 @@
 module AST.Scope.ScopedDecl
-  ( Scope
-  , ScopedDecl (..)
-  , sdName
-  , sdOrigin
-  , sdRefs
-  , sdDoc
-  , sdDialect
-  , sdSpec
-  , DeclarationSpecifics (..)
-  , TypeVariable (..)
-  , tvName
-  , TypeParams (..)
-  , _TypeParam
-  , _TypeParams
-  , _TypeSpec
-  , _ValueSpec
-  , TypeDeclSpecifics (..)
-  , tdsInitRange
-  , tdsInit
+  ( Namespace (..)
+  , Scope
+  , ScopedDecl (..), sdName, sdOrigin, sdRefs, sdDoc, sdDialect, sdSpec, sdNamespace
+  , DeclarationSpecifics (..), _TypeSpec, _ModuleSpec, _ValueSpec
+  , TypeVariable (..), tvName
+  , TypeParams (..), _TypeParam, _TypeParams
+  , TypeDeclSpecifics (..), tdsInitRange, tdsInit
   , Type (..)
   , _RecordType
-  , TypeField (..)
-  , tfName
-  , tfTspec
+  , TypeField (..), tfName, tfTspec
   , TypeConstructor (..)
-  , ValueDeclSpecifics (..)
-  , vdsInitRange
-  , vdsParams
-  , vdsTspec
+  , ModuleDeclSpecifics (..), mdsInitRange, mdsInit, mdsName
+  , Module (..)
+  , ValueDeclSpecifics (..), vdsInitRange, vdsParams, vdsTspec
   , Parameter (..)
 
   , Constant (..)
@@ -48,6 +33,7 @@ module AST.Scope.ScopedDecl
 import Control.Applicative ((<|>))
 import Control.Lens ((%~), (&), (^?))
 import Control.Lens.TH (makeLenses, makePrisms)
+import Data.Hashable (Hashable)
 import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Sum (inject)
@@ -62,6 +48,14 @@ import Product (Product (Nil))
 import Range (Range)
 import Util (safeIndex)
 
+newtype Namespace = Namespace
+  { getNamespace :: [Text]
+  } deriving stock (Eq, Ord, Show)
+    deriving newtype (Hashable, Semigroup, Monoid)
+
+instance Pretty Namespace where
+  pp (Namespace ns) = sexpr "::" (map pp ns)
+
 type Scope = [ScopedDecl]
 
 data ScopedDecl = ScopedDecl
@@ -71,10 +65,12 @@ data ScopedDecl = ScopedDecl
   , _sdDoc :: [Text]
   , _sdDialect :: Lang
   , _sdSpec :: DeclarationSpecifics
+  , _sdNamespace :: Namespace
   } deriving stock (Show)
 
 data DeclarationSpecifics
   = TypeSpec (Maybe TypeParams) (TypeDeclSpecifics Type)
+  | ModuleSpec ModuleDeclSpecifics
   | ValueSpec ValueDeclSpecifics
   deriving stock (Show)
 
@@ -115,6 +111,19 @@ data TypeConstructor = TypeConstructor
   { _tcName :: Text
   , _tcTspec :: Maybe (TypeDeclSpecifics Type)
   }
+  deriving stock (Eq, Show)
+
+data ModuleDeclSpecifics = ModuleDeclSpecifics
+  { _mdsInitRange :: Range
+  -- TODO: parse specifics of module declarations
+  -- This will require twaking the parser to handle anything from a 'Binding'
+  , _mdsInit :: Module
+  , _mdsName :: Text
+  } deriving stock (Eq, Show)
+
+data Module
+  = ModuleDecl
+  | ModuleAlias Namespace
   deriving stock (Eq, Show)
 
 data ValueDeclSpecifics = ValueDeclSpecifics
@@ -159,22 +168,26 @@ data RecordFieldPattern
 
 instance Eq ScopedDecl where
   sd1 == sd2 =
+    _sdNamespace sd1 == _sdNamespace sd2 &&
     _sdName sd1 == _sdName sd2 &&
     _sdOrigin sd1 == _sdOrigin sd2
 
 instance Ord ScopedDecl where
   sd1 `compare` sd2 =
+    _sdNamespace sd1 `compare` _sdNamespace sd2 <>
     _sdName sd1 `compare` _sdName sd2 <>
     _sdOrigin sd1 `compare` _sdOrigin sd2
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o refs doc _ _) =
-    sexpr "decl" [pp n, pp o, pp refs, pp doc]
+  pp (ScopedDecl n o refs doc _ _ ns) =
+    sexpr "decl" [pp n, pp ns, pp o, pp refs, pp doc]
 
 lppDeclCategory :: ScopedDecl -> Doc
 lppDeclCategory decl = case _sdSpec decl of
   TypeSpec tparams tspec ->
     maybe mempty (lppLigoLike dialect) tparams <+> lppLigoLike dialect tspec
+  ModuleSpec mspec ->
+    pp $ _mdsName mspec
   ValueSpec vspec -> case _vdsTspec vspec of
     Nothing -> pp @Text "unknown"
     Just tspec -> lppLigoLike dialect tspec
@@ -250,6 +263,7 @@ node element = Nil :< inject element
 $(makeLenses ''ScopedDecl)
 $(makePrisms ''DeclarationSpecifics)
 $(makeLenses ''TypeDeclSpecifics)
+$(makeLenses ''ModuleDeclSpecifics)
 $(makeLenses ''ValueDeclSpecifics)
 $(makePrisms ''Type)
 $(makePrisms ''TypeParams)

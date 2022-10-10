@@ -240,6 +240,8 @@ completionKind :: ScopedDecl -> Maybe CompletionItemKind
 completionKind ScopedDecl {_sdName, _sdSpec} = case _sdSpec of
   TypeSpec _typeParams spec ->
     Just $ completeFromTSpec spec
+  ModuleSpec _ ->
+    Nothing
   ValueSpec ValueDeclSpecifics {_vdsParams, _vdsTspec} ->
     let completion = completeFromTSpec <$> _vdsTspec in
     bool

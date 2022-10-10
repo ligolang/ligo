@@ -33,7 +33,7 @@ import Witherable (wither)
 import AST.Pretty (PPableLIGO)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), ScopedDecl (..), Type (VariableType)
+  ( DeclarationSpecifics (..), Namespace (..), ScopedDecl (..), Type (VariableType)
   , TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..), sdName
   , sdOrigin, sdRefs
   )
@@ -600,6 +600,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
+      , _sdNamespace = Namespace []
       }
 
 valueScopedDecl
@@ -621,6 +622,7 @@ valueScopedDecl docs nameNode typ body = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
+      , _sdNamespace = Namespace []
       }
   where
     _vdsInitRange = getRange <$> body
@@ -645,6 +647,7 @@ typeScopedDecl docs nameNode body = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = TypeSpec Nothing (parseTypeDeclSpecifics body)  -- The type variables are filled later
+      , _sdNamespace = Namespace []
       }
 
 mkTypeVariableScope :: Text -> Range -> ScopeM ScopedDecl
@@ -658,6 +661,7 @@ mkTypeVariableScope name range = do
     , _sdDoc = []
     , _sdDialect = dialect
     , _sdSpec = TypeSpec Nothing tspec
+    , _sdNamespace = Namespace []
     }
 
 mkDecl
