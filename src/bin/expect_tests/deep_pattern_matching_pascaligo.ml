@@ -38,7 +38,9 @@ let%expect_test _ =
       6 |   | (Nil , record [a ; b ; c ]) -> 1
       7 |   | (xs  , Nil) -> 2
 
-    Pattern not of the expected type myt |}]
+    Invalid type(s)
+    Cannot unify record[a -> ^gen#470 , b -> ^gen#471 , c -> ^gen#472] with
+    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.ligo") ] ;
@@ -48,7 +50,8 @@ let%expect_test _ =
       5 |   | (Nil , (a,b,c)) -> 1
       6 |   | (xs  , Nil) -> 2
 
-    Pattern not of the expected type myt |}]
+    Invalid type(s)
+    Cannot unify ( ^gen#470 * ^gen#471 * ^gen#472 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.ligo") ] ;
@@ -124,7 +127,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - record [a = None; b = _] |}]
+    - record [b = _; a = None] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.ligo") ] ;
@@ -299,15 +302,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t13 (some_a, some_a)" ; "--init-file";(good_test "pm_test.ligo") ] ;
   [%expect{| 4 |}]
-
-let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.ligo") ] ;
-  [%expect{|
-    const a =
-       match CONS(1 , LIST_EMPTY()) with
-        | [] -> 1
-        | a::b::c::[] -> 2
-        | _#2 -> 3 |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "nested_record_pm (record [ a = 1 ; b = E ])" ; "--init-file" ; (good_test "pm_test.ligo") ] ;

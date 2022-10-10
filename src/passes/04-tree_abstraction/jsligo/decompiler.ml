@@ -594,6 +594,26 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr
+  | E_let_mut_in { let_binder; rhs; let_result; _ } ->
+    let var = CST.PVar (decompile_variable2 @@ Binder.get_var let_binder) in
+    let binders = var in
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr let_binder in
+    let expr = decompile_expression_in rhs in
+    let expr = e_hd expr in
+    let let_binding = CST.{
+      binders;
+      lhs_type;
+      type_params=None;
+      eq = Token.ghost_eq;
+      expr
+    } in
+    let const = CST.SLet (Region.wrap_ghost CST.{
+      kwd_let = Token.ghost_let;
+      bindings  = (Region.wrap_ghost let_binding, []);
+      attributes = []
+    }) in
+    let body = decompile_expression_in let_result in
+    return_expr @@ Statement const :: body
   (* Update on multiple field of the same record. may be removed by adding sugar *)
   | E_update {struct_;path;update} when List.length path > 1 ->
     failwith "Nested updates are not supported in JsLIGO."
@@ -673,9 +693,9 @@ and function_body body =
 
 and decompile_lambda : (AST.expr, AST.ty_expr option) Lambda.t -> _ =
   fun {binder;output_type;result} ->
-    let type_expr = Option.map ~f:decompile_type_expr @@ Binder.get_ascr binder in
+    let type_expr = Option.map ~f:decompile_type_expr @@ Param.get_ascr binder in
     let type_expr = Option.value ~default:(TVar {value = "_"; region = Region.ghost}) type_expr in
-    let v = decompile_variable @@ Binder.get_var binder in
+    let v = decompile_variable @@ Param.get_var binder in
     let seq = CST.ESeq (Region.wrap_ghost (CST.EAnnot (Region.wrap_ghost (CST.EVar v,Token.ghost_as,type_expr)), [])) in
     let parameters = CST.EPar (Region.wrap_ghost @@ par seq ) in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in
@@ -883,12 +903,12 @@ let rec decompile_pattern p =
       CST.PArray (Region.wrap_ghost (brackets pl))
     )
   | P_list pl -> Error "no PList in JsLIGO CST"
-  | P_record (llst,_) ->
+  | P_record lps ->
     let fields_name = List.map ~f:(fun (Label x) ->
       CST.PVar (
         Region.wrap_ghost
           { CST.variable = Region.wrap_ghost x
-          ; attributes = [] })) llst in
+          ; attributes = [] })) (Record.LMap.keys lps) in
     let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
     let inj = Region.wrap_ghost @@ braced inj in
     Ok (CST.PObject inj)

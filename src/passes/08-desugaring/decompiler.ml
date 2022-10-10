@@ -163,6 +163,21 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_assign a ->
       let a = Assign.map self self_type_opt a in
       return @@ I.E_assign a
+    | O.E_for for_loop ->
+      let for_loop = For_loop.map self for_loop in
+      return @@ I.E_for for_loop
+    | O.E_for_each for_each_loop ->
+      let for_each_loop = For_each_loop.map self for_each_loop in
+      return @@ I.E_for_each for_each_loop
+    | O.E_while while_loop ->
+      let while_loop = While_loop.map self while_loop in
+      return @@ I.E_while while_loop
+    | O.E_let_mut_in { let_binder; rhs; let_result; attr } ->
+      let let_binder = Binder.map self_type_opt let_binder in
+      let rhs = self rhs in
+      let let_result = self let_result in
+      let attributes = decompile_exp_attributes attr in
+      return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result }
 
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in

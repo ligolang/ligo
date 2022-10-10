@@ -3,10 +3,16 @@
 open Test_helpers
 
 let () =
-  Printexc.record_backtrace true ;
-    run_test @@ test_suite "LIGO"
-  [
-    Integration_tests.main ;
-    Spilling_tests.main ;
-    Ligo_init_tests.main ;
-  ];()
+  Printexc.record_backtrace true;
+  run_test
+  @@ test_suite
+       "LIGO (former print)"
+       [ Ast_production.typed_prod
+       ; Ast_production.core_prod
+       ; Ast_production.agg_prod
+       ; Ast_production.mini_c_prod
+       ; Integration_tests.main
+       ; Spilling_tests.main
+       ; Ligo_init_tests.main
+       ];
+  ()

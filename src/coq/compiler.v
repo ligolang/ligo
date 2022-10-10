@@ -163,6 +163,14 @@ Inductive expr : Set :=
 | E_fold : meta -> expr -> expr -> binds -> expr
 | E_fold_right : meta -> ty -> expr -> expr -> binds -> expr
 
+(* TODO add typing rules for these ...maybe ;) *)
+| E_deref : meta -> nat -> expr
+| E_let_mut_in : meta -> expr -> binds -> expr
+| E_assign : meta -> nat -> expr -> expr
+| E_for : meta -> args -> binds -> expr
+| E_for_each : meta -> expr -> binds -> expr
+| E_while : meta -> expr -> expr -> expr
+
 | E_failwith : meta -> expr -> expr
 
 | E_raw_michelson : meta -> ty -> ty -> list micheline -> expr
@@ -406,6 +414,7 @@ Inductive instr : Set :=
 | I_SWAP : meta -> instr
 
 | I_UNIT : meta -> instr
+| I_TRUE : meta -> instr (* fictional version of PUSH bool True, for impl of E_while... *)
 
 | I_LEFT : meta -> ty -> instr
 | I_RIGHT : meta -> ty -> instr
@@ -438,6 +447,10 @@ Inductive instr : Set :=
 
 | I_ITER : meta -> prog -> instr
 | I_MAP : meta -> prog -> instr
+
+(* convenient fictional instruction for implementing E_for (arithmetic
+   progression loops) without exposing arithmetic here right now... *)
+| I_FOR : meta -> prog -> instr
 
 | I_CREATE_CONTRACT : meta -> ty -> ty -> prog -> instr
 where
@@ -545,6 +558,8 @@ Inductive instr_typed : instr -> list ty -> list ty -> Prop :=
 (* Unit *)
 | Unit_typed {s} :
     `{instr_typed (I_UNIT l1) s (T_unit l2 :: s)}
+| True_typed {s} :
+    `{instr_typed (I_TRUE l1) s (T_bool l2 :: s)}
 
 (* Or *)
 | Left_typed {a b s} :
@@ -634,6 +649,10 @@ Inductive instr_typed : instr -> list ty -> list ty -> Prop :=
 | Map_typed_list {body a b s} :
     `{prog_typed body (a :: s) (b :: s) ->
       instr_typed (I_MAP l1 body) (T_list l2 a :: s) (T_list l3 b :: s)}
+(* FICTION *)
+| For_typed {body s} :
+  `{prog_typed body (T_int l1 :: s) s ->
+    instr_typed (I_FOR l2 body) (T_int l3 :: T_int l4 :: T_int l5 :: s) s}
 
 (* Failure *)
 | Failwith_typed {a s1 s2} :
@@ -821,6 +840,49 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
       let e2' := compile_binds r env e2 in
       [I_SEQ null e1';
        I_SEQ null e2']
+  | E_deref _ n => [I_DUP null (S (embed r n))]
+  | E_let_mut_in _ e1 e2 =>
+      let e1' := compile_expr r env e1 in
+      let e2' := compile_binds r env e2 in
+      [I_SEQ null e1';
+       I_SEQ null e2']
+  | E_assign _ n e1 =>
+      let e1' := compile_expr r env e1 in
+      [I_SEQ null e1';
+       I_DUG null (embed r n);
+       I_DIG null (S (embed r n));
+       I_DROP null 1;
+       I_UNIT null]
+  | E_for _ args body =>
+      let args' := compile_args r env args in
+      let body' := compile_binds r env body in
+      [I_SEQ null args';
+       I_FOR null [I_SEQ null body'; I_DROP null 1];
+       I_UNIT null]
+  | E_for_each l coll body =>
+      let coll' := compile_expr r env coll in
+      let body' := compile_binds r env body in
+      (* TODO? this is a hack to make map iteration work -- Michelson
+         gives you the key and value in a pair, but LIGO things here
+         are set up to expect two stack elements, so insert an UNPAIR
+         in the map case: *)
+      if beq_nat 2 (binds_length body)
+      then
+        [I_SEQ null coll';
+         I_ITER l [I_UNPAIR null 2; I_SEQ null body'; I_DROP null 1];
+         I_UNIT null]
+      else
+        [I_SEQ null coll';
+         I_ITER l [I_SEQ null body'; I_DROP null 1];
+         I_UNIT null]
+  | E_while l cond body =>
+      let cond' := compile_expr r env cond in
+      let body' := compile_expr (false :: r) env body in
+      [I_TRUE null;
+       I_LOOP l [I_SEQ null cond';
+                 I_DUP null 1;
+                 I_IF null [I_SEQ null body'; I_DROP null 1] []];
+       I_UNIT null]
   | E_tuple _ args =>
       [I_SEQ null (compile_args r env args);
        I_SEQ null (PAIR (args_length args))]
@@ -1173,6 +1235,11 @@ Fixpoint
         if ope_hd r
         then [I_UNIT l]
         else [])
+  | I_TRUE l =>
+      (tl r,
+        if ope_hd r
+        then [I_TRUE l]
+        else [])
   | I_PAIR l n =>
       if ope_hd r
       then (repeat true n ++ tl r, [I_PAIR l n])
@@ -1329,6 +1396,11 @@ Fixpoint
       let (rb, body') := strengthen_progg body (true :: rfix) in
       (true :: rfix,
         I_MAP l (compile_ope (true :: inj1 (tl rb) (tl r)) ++ body') :: compile_ope (ope_hd r :: inj2 (tl rb) (tl r)))
+  | I_FOR l body =>
+      let rfix := proj1_sig (fix_ope (fun x => union (tl (fst (strengthen_progg body x))) r) [] TRUST_ME_IT_TERMINATES) in
+      let (rb, body') := strengthen_progg body rfix in
+      (true :: true :: true :: rfix,
+        I_FOR l (compile_ope (ope_hd rb :: inj1 (tl rb) r) ++ body') :: compile_ope (inj2 (tl rb) r))
   | I_CREATE_CONTRACT l p s script =>
       let (rs, script') := strengthen_progg script [true] in
       (true :: true :: true :: tl (tl r),
@@ -1477,6 +1549,8 @@ Proof with try split; try lia; eauto 15 with michelson.
   (* I_SWAP *)
   - destruct r as [|[|] [|[|] r]]; strengthen_rewrite...
   (* I_UNIT *)
+  - destruct r as [|[|] r]; strengthen_rewrite...
+  (* I_TRUE *)
   - destruct r as [|[|] r]; strengthen_rewrite...
   (* I_LEFT *)
   - destruct r as [|[|] r]; strengthen_rewrite...
@@ -1745,6 +1819,8 @@ Proof with try split; try lia; eauto 15 with michelson.
   (* I_ITER *)
   - admit.
   (* I_MAP *)
+  - admit.
+  (* I_FOR *)
   - admit.
   (* I_FAILWITH *)
   - idtac...

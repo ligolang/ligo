@@ -77,6 +77,7 @@ let private_attribute = {
 %on_error_reduce nsepseq(object_type,VBAR)
 %on_error_reduce ternary_expr
 %on_error_reduce nsepseq(field_name,COMMA)
+%on_error_reduce module_var_t
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -834,6 +835,7 @@ module_access_t:
 module_var_t:
   module_access_t { TModA $1 }
 | "<ident>"       { TVar  (unwrap $1) }
+| type_ctor_app   { TApp $1 }
 
 (* Record types (a.k.a. "object types" in JS) *)
 

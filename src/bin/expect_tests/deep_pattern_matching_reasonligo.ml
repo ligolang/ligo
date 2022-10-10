@@ -38,7 +38,9 @@ let%expect_test _ =
       6 |   | (Nil , {a : a , b : b , c : c}) => 1
       7 |   | (xs  , Nil) => 2
 
-    Pattern not of the expected type myt |}]
+    Invalid type(s)
+    Cannot unify record[a -> ^gen#470 , b -> ^gen#471 , c -> ^gen#472] with
+    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.religo") ] ;
@@ -48,7 +50,8 @@ let%expect_test _ =
       5 |   | (Nil , (a,b,c)) => 1
       6 |   | (xs  , Nil) => 2
 
-    Pattern not of the expected type myt |}]
+    Invalid type(s)
+    Cannot unify ( ^gen#470 * ^gen#471 * ^gen#472 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -134,7 +137,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a : None,b : _} |}]
+    - {b : _,a : None} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;
@@ -350,15 +353,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "(t13 (some_a))(some_a)" ; "--init-file";(good_test "pm_test.religo") ] ;
   [%expect{| 4 |}]
-
-let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.religo") ] ;
-  [%expect{|
-    const a =
-       match CONS(1 , LIST_EMPTY()) with
-        | [] -> 1
-        | a::b::c::[] -> 2
-        | gen#2 -> 3 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.religo") ] ;

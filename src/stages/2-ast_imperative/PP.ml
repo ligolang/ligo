@@ -96,6 +96,8 @@ and expression_content ppf (ec : expression_content) =
   | E_big_map    m -> Map_expr.pp   expression ppf m
   | E_list       l -> Set_expr.pp   expression ppf l
   | E_set        s -> Set_expr.pp   expression ppf s
+  | E_let_mut_in li ->
+    Let_in.pp_mut expression type_expression_option ppf li
   | E_assign     a -> Assign.pp     expression type_expression_option ppf a
   | E_for        f -> For_loop.pp   expression ppf f
   | E_for_each   f -> For_each_loop.pp expression ppf f

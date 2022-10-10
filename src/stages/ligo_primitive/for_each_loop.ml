@@ -5,6 +5,14 @@ type collect_type =
   | Any
   [@@deriving eq,compare,yojson,hash]
 
+let pp_collect_type ppf collect_type = 
+  match collect_type with
+  | Map -> Format.fprintf ppf "map"
+  | Set -> Format.fprintf ppf "set"
+  | List -> Format.fprintf ppf "list"
+  | Any -> Format.fprintf ppf "any"
+  
+
 type 'e t = {
   fe_binder : Var.Value_var.t * Var.Value_var.t option ;
   collection : 'e ;

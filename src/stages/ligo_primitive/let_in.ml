@@ -20,6 +20,13 @@ let pp f g ppf = fun {let_binder; rhs; let_result; attributes=attr} ->
     pp_attributes attr
     f let_result
 
+let pp_mut f g ppf = fun {let_binder; rhs; let_result; attributes=attr} ->
+  Format.fprintf ppf "@[<v>let mut %a = %a%a in@,%a@]"
+    (Binder.pp g) let_binder
+    f rhs
+    pp_attributes attr
+    f let_result
+
 let fold_map :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) t -> 'acc * ('b,'d) t
 = fun f g acc {let_binder; rhs; let_result; attributes} ->
   let acc,let_binder = Binder.fold_map g acc let_binder in

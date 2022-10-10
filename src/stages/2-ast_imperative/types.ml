@@ -87,6 +87,7 @@ type expression_content =
   | E_list    of expr List_expr.t
   | E_set     of expr Set_expr.t
   (* Imperative *)
+  | E_let_mut_in  of (expr,ty_expr option) Let_in.t
   | E_assign   of (expr,ty_expr option) Assign.t
   | E_for      of expr For_loop.t
   | E_for_each of expr For_each_loop.t

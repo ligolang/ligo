@@ -1,6 +1,7 @@
 (*Primitives *)
 module Label = Label
 module Binder = Binder
+module Param = Param
 module Pattern = Pattern
 module Access_path = Access_path
 module Layout = Layout

@@ -13,8 +13,15 @@ let get_of m l =
 let add_binder (b : _ Binder.t) vars =
   let var = Binder.get_var b in
   let vars = remove_from var vars in
-  if Binder.is_mutable b then var :: vars else vars
+  vars
 
+let add_param p vars = 
+  let var = Param.get_var p in
+  let vars = remove_from var vars in
+  match Param.get_mut_flag p with
+  | Mutable -> var :: vars
+  | Immutable -> vars
+  
 let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expression = fun ?(vars = []) e ->
   let self = capture_expression ~raise in
   let _ = fold_map_expression
@@ -26,7 +33,7 @@ let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expr
                       if not (List.is_empty fv_expr) then
                         raise.error @@ vars_captured fv_expr
                       else
-                        let vars = add_binder binder vars in
+                        let vars = add_param binder vars in
                         (true, vars, expr)
                    | E_let_in {let_binder;rhs;let_result;attributes=_} ->
                       let _ = self ~vars rhs in
@@ -35,11 +42,8 @@ let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expr
                       (false, vars, expr)
                    | E_matching {matchee;cases} ->
                       let f Match_expr.{pattern;body} =
-                        let all_pattern_vars = get_pattern pattern in
+                        let all_pattern_vars = Pattern.binders pattern |> List.map ~f:Binder.get_var in
                         let vars = List.fold_right ~f:remove_from all_pattern_vars ~init:vars in
-                        let const_pattern_vars = get_pattern ~pred:Fun.id pattern in
-                        let vars =
-                          List.fold_right ~f:(fun var vars -> var :: remove_from var vars) const_pattern_vars ~init:vars in
                         self ~vars body in
                       let _ = self ~vars matchee in
                       let _ = List.map ~f:f cases in
@@ -50,7 +54,7 @@ let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expr
                       if not (List.is_empty fv_expr) then
                         raise.error @@ vars_captured fv_expr
                       else
-                        let vars = add_binder binder vars in
+                        let vars = add_param binder vars in
                         (true, vars, expr)
                    | _  ->
                       (true, vars, expr)

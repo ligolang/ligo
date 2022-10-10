@@ -2317,20 +2317,6 @@ contract: Ident As LPAR WILD ZWSP
 Ill-formed parenthesised type expression.
 At this point, a closing parenthesis ')' is expected.
 
-contract: String As UIdent DOT UIdent ZWSP
-##
-## Ends in an error in state: 115.
-##
-## module_access_t -> UIdent . DOT module_var_t [ SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
-##
-## The known suffix of the stack is as follows:
-## UIdent
-##
-
-Ill-formed selection of a type in a module.
-At this point, the selection symbol '.' is expected, followed by the
-qualified name of a type.
-
 contract: Ident BOOL_AND ZWSP
 ##
 ## Ends in an error in state: 180.
@@ -3377,3 +3363,21 @@ contract: Import LBRACE Ident ZWSP
 Ill-formed import statement.
 At this point, if all the values are complete, a closing brace '}' is expected.
 
+contract: Bytes As UIdent DOT UIdent ZWSP
+##
+## Ends in an error in state: 131.
+##
+## module_access_t -> UIdent . DOT module_var_t [ SEMI RPAR REM_EQ RBRACKET RBRACE QMARK PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
+## type_ctor_app -> UIdent . chevrons(type_ctor_args) [ SEMI RPAR REM_EQ RBRACKET RBRACE QMARK PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW ]
+##
+## The known suffix of the stack is as follows:
+## UIdent
+##
+
+Ill-formed selection of a type in a module.
+At this point, one of the following is expected:
+* a dot '.', followed by a type of the module.
+* an opening chevron '<' followed by a type parameter 
+  and a closing chevron '>'.
+
+  
