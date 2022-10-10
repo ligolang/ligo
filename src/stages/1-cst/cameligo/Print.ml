@@ -566,15 +566,24 @@ and print_selection state = function
     print_int state c
 
 and print_field_assign state {value; _} =
-  print_node  state  "<field assignment>";
-  print_ident (state#pad 2 0) value.field_name;
-  print_expr  (state#pad 2 1) value.field_expr
+  match value with 
+    Property {field_name; field_expr; _} -> 
+      print_node  state  "<field assignment>";
+      print_ident (state#pad 2 0) field_name;
+      print_expr  (state#pad 2 1) field_expr
+  | Punned_property field_name ->
+    print_node  state  "<punned field assignment>";
+    print_ident (state#pad 2 0) field_name
 
 and print_field_path_assign state {value; _} =
-  let {field_path; field_expr; _} = value in
-  print_node state "<update>";
-  print_path (state#pad 2 0) field_path;
-  print_expr (state#pad 2 1) field_expr
+  match value with 
+    Path_property {field_path; field_expr; _} ->
+      print_node state "<update>";
+      print_path (state#pad 2 0) field_path;
+      print_expr (state#pad 2 1) field_expr
+  | Path_punned_property field_name ->
+    print_node state "<punned update>";
+    print_ident (state#pad 2 0) field_name
 
 and print_constr_expr state {value; _} =
   let constr, expr_opt = value in
