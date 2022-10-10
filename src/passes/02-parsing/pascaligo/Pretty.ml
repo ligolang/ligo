@@ -94,19 +94,19 @@ let rec print cst = print_declarations cst.decl
 
 and print_declarations (node : declarations) =
     Utils.nseq_to_list node
-  |> List.map ~f:print_declaration
-  |> separate_map hardline group
+  |> List.map ~f:(fun d -> print_declaration d ^^ string ";")
+  |> separate_map (hardline ^^ hardline) group
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 
 and print_declaration = function
   D_Attr      d -> print_D_Attr d
-| D_Const     d -> print_D_Const d ^^ hardline
+| D_Const     d -> print_D_Const d
 | D_Directive d -> string (Directive.to_lexeme d).Region.value
-| D_Fun       d -> print_D_Fun d ^^ hardline
-| D_Module    d -> print_D_Module d ^^ hardline
-| D_Type      d -> print_D_Type d ^^ hardline
+| D_Fun       d -> print_D_Fun d
+| D_Module    d -> print_D_Module d
+| D_Type      d -> print_D_Type d
 
 (* Attributed declaration *)
 
@@ -454,9 +454,9 @@ and print_in_block (node : block reg) =
 
 and print_statements (node : statements) =
   let statements = Utils.nsepseq_to_list node in
-  let sep        = string ";" ^^ hardline
-  in List.map ~f:print_statement statements
-     |> separate_map sep group
+  let sep        = string ";"
+  in List.map ~f:(fun s -> print_statement s ^^ sep) statements
+     |> separate_map hardline group
 
 and print_statement (node : statement) =
   match node with
