@@ -7,17 +7,11 @@ let all_program_passes ~raise ~warn_unused_rec = [
   Muchused.muchused_map_program ~raise;
   Helpers.map_program @@ Recursion.check_tail_expression ~raise ;
   Helpers.map_program @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec ;
-  
-  (* TODO: move this to aggregated selfpass *)
-  (* Helpers.map_program @@ Pattern_matching_simpl.peephole_expression ; *)
 ]
 
 let all_expression_passes ~raise ~warn_unused_rec = [
   Helpers.map_expression @@ Recursion.check_tail_expression ~raise ;
   Helpers.map_expression @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec ;
-  
-  (* TODO: move this to aggregated selfpass *)
-  (* Pattern_matching_simpl.peephole_expression ; *)
 ]
 
 let contract_passes ~raise = [

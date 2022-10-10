@@ -75,28 +75,7 @@ module Free_variables = struct
 
   and matching_case : (bindings -> expression -> bindings) -> bindings -> _ Types.Match_expr.match_case -> bindings
     = fun f b m ->
-        let rec get_bindings_from_pattern =
-          function
-          | Types.Pattern.P_unit -> empty
-          | P_var v -> union (Binder.apply singleton v) b
-          | P_list Cons (h, t) -> 
-              union 
-                (get_bindings_from_pattern h.wrap_content) 
-                (get_bindings_from_pattern t.wrap_content)
-          | P_tuple ps
-          | P_list (List ps) ->
-              List.fold_left ps ~init:empty
-                ~f:(fun acc p -> union (get_bindings_from_pattern p.wrap_content) acc)
-          | P_variant (_, p) -> get_bindings_from_pattern p.wrap_content
-          | P_record r ->
-              Pattern.Container.Record.fold 
-                (fun acc p -> 
-                    union 
-                      (get_bindings_from_pattern (Location.unwrap p)) 
-                      acc
-                ) empty r
-        in
-        let b' = get_bindings_from_pattern m.pattern.wrap_content in
+        let b' = Types.Pattern.binders m.pattern |> List.map ~f:Binder.get_var in
         let bs = union b b' in 
         f bs m.body
 

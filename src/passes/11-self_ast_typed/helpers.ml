@@ -440,26 +440,11 @@ module Free_variables :
       let fv2 = VarSet.remove (Binder.get_var let_binder) fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet;mutSet=fv2}
     
-  and find_vars_in_pattern : _ Pattern.t -> Value_var.t list = fun p ->
-    match p.wrap_content with
-    | Pattern.P_unit -> []
-    | P_var b -> [Binder.get_var b]
-    | P_list Cons (h, t) -> 
-      let h = find_vars_in_pattern h in
-      let t = find_vars_in_pattern t in
-      h @ t
-    | P_tuple ps
-    | P_list List ps ->
-      List.concat (List.map ps ~f:find_vars_in_pattern)
-    | P_variant (_,p) -> find_vars_in_pattern p
-    | P_record r -> 
-      Ligo_prim.Pattern.Container.Record.fold (fun acc p -> acc @ find_vars_in_pattern p) [] r
-
   and get_fv_cases : _ Match_expr.match_case list -> moduleEnv' = fun m ->
     unions @@ List.map m
       ~f:(fun { pattern ; body } ->
           let {modVarSet;moduleEnv;varSet;mutSet} = get_fv_expr body in
-          let vars = find_vars_in_pattern pattern in
+          let vars = Pattern.binders pattern |> List.map ~f:Binder.get_var in
           let varSet = List.fold vars ~init:varSet
             ~f:(fun vs v -> VarSet.remove v vs) in
           {modVarSet;moduleEnv;varSet;mutSet}
