@@ -11,6 +11,7 @@
   compiler_options
   main_warnings
   desugaring
-  syntax_types)
+  syntax_types
+  simple-diff)
  (preprocess
   (pps ppx_poly_constructor ppx_compare ppx_let ppx_here ppx_hash)))

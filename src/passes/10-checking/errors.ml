@@ -208,13 +208,15 @@ let rec error_ppformat
      | `Typer_cannot_unify (loc, type1, type2) ->
        Format.fprintf
          f
-         "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.@]"
+         "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.@]%a"
          Snippet.pp
          loc
          Ast_typed.PP.type_expression
          type1
          Ast_typed.PP.type_expression
          type2
+         Typediff.PP.t
+         (Typediff.get_diff type1 type2)
      | `Typer_cannot_unify_diff_layout (loc, type1, type2, layout1, layout2) ->
        Format.fprintf
          f
