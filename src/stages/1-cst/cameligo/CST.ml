@@ -402,7 +402,11 @@ and selection =
   FieldName of variable
 | Component of (string * Z.t) reg
 
-and field_assign = {
+and field_assign = 
+  Property of field_assign_property 
+| Punned_property of field_name
+
+and field_assign_property = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
@@ -416,7 +420,11 @@ and update = {
   rbrace   : rbrace
 }
 
-and field_path_assignment = {
+and field_path_assignment = 
+  Path_property of field_path_assignment_property
+| Path_punned_property of field_name
+
+and field_path_assignment_property =  {
   field_path : path;
   assignment : equal;
   field_expr : expr
