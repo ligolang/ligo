@@ -370,6 +370,8 @@ and compile_cases ~raise ~loc path scope matchee cases : O.expression_content =
   let eqs = List.map cases 
     ~f:(fun {pattern ; body} -> 
         let pattern = I.Pattern.map (compile_type_expression ~raise path scope) pattern in
+        let binders = I.Pattern.binders pattern |> List.map ~f:Binder.get_var in
+        let scope = List.fold binders ~init:scope ~f:Scope.push_func_or_case_binder in
         let body = compile_expression ~raise path scope body in
         pattern, matchee_type, body) in
   match matchee.expression_content with
