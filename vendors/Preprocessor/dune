@@ -18,7 +18,8 @@
     ;; Third party
     str
     fpath
-    uutf)
+    uutf
+    core_unix.sys_unix)
   (flags (:standard -open Core)))
 
 ;; Building the lexers of the preprocessor

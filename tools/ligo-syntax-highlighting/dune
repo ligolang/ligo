@@ -12,5 +12,7 @@
  (libraries 
   SyntaxHighlighting
   cmdliner
+  core_unix
+  core_unix.sys_unix
  )
 )

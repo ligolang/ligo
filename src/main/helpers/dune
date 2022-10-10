@@ -22,7 +22,7 @@
  (modules cli_helpers repository_url ligo_rc ligo_manifest)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils lwt lwt.unix semver uri)
+ (libraries simple-utils lwt lwt.unix semver uri core_unix core_unix.sys_unix)
  (inline_tests)
  (preprocess
   (pps ppx_deriving_yojson ppx_inline_test)))

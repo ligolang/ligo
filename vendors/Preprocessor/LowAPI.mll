@@ -59,7 +59,7 @@ module Make (Config : Config.S) (Options : Options.S) =
         let path =
           if String.(dir = "." || dir = "") then file_path
           else dir ^ Filename.dir_sep ^ file_path in
-        match Sys.file_exists path with
+        match Sys_unix.file_exists path with
           `Yes           -> Some path
         | `No | `Unknown -> find_in_cli_paths file_path dirs
 
@@ -73,7 +73,7 @@ module Make (Config : Config.S) (Options : Options.S) =
       let path =
         if String.(dir = "." || dir = "") then file
         else dir ^ Filename.dir_sep ^ file in
-      match Sys.file_exists path with
+      match Sys_unix.file_exists path with
         `Yes -> Some path
       | `No | `Unknown ->
           match find_in_cli_paths file Options.dirs with
@@ -84,7 +84,7 @@ module Make (Config : Config.S) (Options : Options.S) =
               in match file_opt with
                    None -> None
                  | Some file ->
-                     match Sys.file_exists file with
+                     match Sys_unix.file_exists file with
                        `Yes -> file_opt
                      | `No | `Unknown -> None
 

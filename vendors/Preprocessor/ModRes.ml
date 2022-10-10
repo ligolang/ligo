@@ -153,7 +153,7 @@ module Path =
     (* [get_absolute_path path] returns the absolute path
        w.r.t. the root *)
 
-    let get_absolute_path ?(root=Sys.getcwd ()) path =
+    let get_absolute_path ?(root=Sys_unix.getcwd ()) path =
       let path' = v path in
       if is_abs path' then path' else v (join root path)
 
