@@ -85,6 +85,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
 let decompile_pattern_to_string pattern =
   let p = O.Pattern.map (decompile_type_expression_option) pattern in
+  let p = O.Helpers.Conv.o_to_i p in
   Purification.Decompiler.decompile_pattern_to_string p
 
 let rec decompile_expression : O.expression -> I.expression =
@@ -141,8 +142,11 @@ let rec decompile_expression : O.expression -> I.expression =
       let const = Constructor.map self const in
       return @@ I.E_constructor const
     | O.E_matching m ->
-      let m = I.Match_expr.map self self_type_opt m in
-      return @@ I.E_matching m
+      let O.Match_expr.{matchee;cases} = O.Match_expr.map self self_type_opt m in
+      let cases = List.map cases ~f:(fun {pattern;body} -> 
+        let pattern = O.Helpers.Conv.o_to_i pattern in
+        I.Match_expr.{pattern;body}) in
+      return @@ I.E_matching {matchee;cases}
     | O.E_record recd ->
       let recd = Record.map self recd in
       return @@ I.E_record recd

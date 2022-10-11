@@ -91,8 +91,12 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
   | E_matching {matchee;cases} ->
     let matchee = self matchee in
     let cases = List.map cases 
-      ~f:(Match_expr.map_match_case 
+      ~f:(O.Match_expr.map_match_case 
             untype_expression untype_type_expression_option) in
+    let cases = List.map cases 
+      ~f:(fun {pattern;body} -> 
+        let pattern = O.Helpers.Conv.o_to_i pattern in
+        I.Match_expr.{pattern;body}) in
     return (e_matching matchee cases)
   | E_let_in {let_binder;rhs;let_result; attr} ->
       let tv = self_type rhs.type_expression in

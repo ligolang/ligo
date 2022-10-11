@@ -113,8 +113,8 @@ end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
 
-module Match_expr = Match_expr.Make(Pattern.Make)(Pattern.Container.Record)
-module Pattern = Pattern.Make(Pattern.Container.Record)
+module Pattern = Pattern.Make(Pattern.Container.Record)()
+module Match_expr = Match_expr.Make(Pattern)
 
 type expression_content =
   (* Base *)

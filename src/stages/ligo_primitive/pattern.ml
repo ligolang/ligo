@@ -53,20 +53,8 @@ module Container = struct
   end
 end
 
-module type S = functor (C : Container.S) -> sig
-  type 'ty_exp list_pattern =
-    | Cons of 'ty_exp t * 'ty_exp t
-    | List of 'ty_exp t list
-
-  and 'ty_exp pattern_repr =
-    | P_unit
-    | P_var of 'ty_exp Binder.t
-    | P_list of 'ty_exp list_pattern
-    | P_variant of Label.t * 'ty_exp t
-    | P_tuple of 'ty_exp t list
-    | P_record of 'ty_exp t C.t
-
-  and 't t = 't pattern_repr Location.wrap
+module type P = sig
+  type 't t
   [@@deriving eq, compare, yojson, hash, iter]
 
   val fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a
@@ -76,8 +64,9 @@ module type S = functor (C : Container.S) -> sig
   val binders : 'a t -> 'a Binder.t list
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
+module type S = functor (C : Container.S) -> P
 
-module Make (Container : Container.S) = struct
+module Make (Container : Container.S) () = struct
   type 'ty_exp list_pattern =
     | Cons of 'ty_exp t * 'ty_exp t
     | List of 'ty_exp t list
@@ -232,55 +221,4 @@ module Make (Container : Container.S) = struct
         | _ -> binders)
       []
       t
-end
-
-module Conv = struct
-  module LPattern = Make(Container.List)
-  module RPattern = Make(Container.Record)
-
-  let rec l_to_r (pl : _ LPattern.t) : _ RPattern.t =
-    let loc = Location.get_location pl in
-    match (Location.unwrap pl) with
-    | P_unit -> Location.wrap ~loc RPattern.P_unit
-    | P_var b -> Location.wrap ~loc (RPattern.P_var b)
-    | P_list Cons (h, t) ->
-        let h = l_to_r h in
-        let t = l_to_r t in
-        Location.wrap ~loc (RPattern.P_list (Cons(h, t)))
-    | P_list List ps ->
-        let ps = List.map ~f:l_to_r ps in
-        Location.wrap ~loc (RPattern.P_list (List ps))
-    | P_variant (l, p) ->
-        let p = l_to_r p in
-        Location.wrap ~loc (RPattern.P_variant (l, p))
-    | P_tuple ps -> 
-        let ps = List.map ~f:l_to_r ps in
-        Location.wrap ~loc (RPattern.P_tuple ps)
-    | P_record lps ->
-        let lps = Container.List.map l_to_r lps in
-        let lps = Container.Record.of_list (Container.List.to_list lps) in
-        Location.wrap ~loc (RPattern.P_record lps)
-
-  let rec r_to_l (pr : _ RPattern.t) : _ LPattern.t =
-    let loc = Location.get_location pr in
-    match (Location.unwrap pr) with
-    | P_unit -> Location.wrap ~loc LPattern.P_unit
-    | P_var b -> Location.wrap ~loc (LPattern.P_var b)
-    | P_list Cons (h, t) ->
-        let h = r_to_l h in
-        let t = r_to_l t in
-        Location.wrap ~loc (LPattern.P_list (Cons(h, t)))
-    | P_list List ps ->
-        let ps = List.map ~f:r_to_l ps in
-        Location.wrap ~loc (LPattern.P_list (List ps))
-    | P_variant (l, p) ->
-        let p = r_to_l p in
-        Location.wrap ~loc (LPattern.P_variant (l, p))
-    | P_tuple ps -> 
-        let ps = List.map ~f:r_to_l ps in
-        Location.wrap ~loc (LPattern.P_tuple ps)
-    | P_record lps ->
-        let lps = Container.Record.map r_to_l lps in
-        let lps = Container.List.of_list (Container.Record.to_list lps) in
-        Location.wrap ~loc (LPattern.P_record lps)
 end
