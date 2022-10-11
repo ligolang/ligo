@@ -4,7 +4,7 @@ FAIL,extra_colon_in_return_type.jsligo,-1,-1,-1,-1,-1
 PASS,extra_eq_in_func_decl.jsligo,0,0,0,193,0
 PASS,extra_gt_zwsp.jsligo,2,15,5,185,0
 PASS,lambda_with_missing_arguments.jsligo,5,34,16,185,1
-PASS,missing_argument_bracketR.jsligo,27,336,110,185,17
+PASS,missing_argument_bracketR.jsligo,28,336,110,185,17
 PASS,missing_arrow_in_lambda_expr.jsligo,5,27,11,185,1
 PASS,missing_arrow_in_lambda_in_match.jsligo,6,125,43,193,6
 PASS,missing_colon_in_record_expr.jsligo,2,10,6,193,0
@@ -23,7 +23,7 @@ PASS,missing_ident_in_type_decl.jsligo,2,2,2,125,0
 PASS,missing_int.jsligo,2,6,6,193,0
 PASS,missing_name_of_argument.jsligo,6,114,14,193,3
 PASS,missing_namespace_kw_in_namespace_decl.jsligo,18,142,24,125,1
-PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,28,243,49,125,9
+PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,29,243,49,125,9
 PASS,missing_par_in_call.jsligo,2,7,3,193,0
 PASS,missing_par_in_if_condition.jsligo,0,0,0,185,1
 PASS,missing_semicolon_before_return_on_same_line.jsligo,0,0,0,185,0
@@ -38,13 +38,13 @@ PASS,triple_eq_in_if_condition.jsligo,2,17,3,113,0
 PASS,unfinished_code00.jsligo,3,6,6,446,0
 PASS,unfinished_code01.jsligo,2,2,2,446,0
 PASS,unfinished_code02.jsligo,18,174,64,446,2
-PASS,unfinished_code03.jsligo,64,810,108,446,22
+PASS,unfinished_code03.jsligo,65,810,108,446,22
 PASS,unfinished_code04.jsligo,2,25,23,446,0
 PASS,unfinished_code05.jsligo,2,8,8,446,0
 PASS,unfinished_code06.jsligo,2,10,10,446,0
 PASS,unfinished_code07.jsligo,2,2,2,446,0
 PASS,unfinished_code08.jsligo,4,8,6,446,0
-PASS,unfinished_code09.jsligo,4,7,7,125,1
+PASS,unfinished_code09.jsligo,5,7,7,125,1
 PASS,unfinished_code10.jsligo,2,234,8,444,0
 PASS,unfinished_code11.jsligo,2,2,2,446,0
 PASS,unfinished_code12.jsligo,2,7,7,185,0

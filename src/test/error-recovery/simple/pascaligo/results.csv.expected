@@ -20,7 +20,7 @@ PASS,missing_ident_in_type_decl.ligo,2,2,2,103,0
 PASS,missing_int.ligo,3,5,5,150,0
 PASS,missing_is_kw_in_lambda_expr.ligo,0,0,0,179,0
 PASS,missing_is_kw_in_type_decl.ligo,0,0,0,150,0
-PASS,missing_module_kw_in_module_decl.ligo,12,100,6,103,1
+PASS,missing_module_kw_in_module_decl.ligo,13,100,6,103,1
 PASS,missing_name_of_argument.ligo,2,2,2,150,0
 PASS,missing_of_kw.ligo,2,10,6,150,0
 PASS,missing_semicolon_between_stmts.ligo,0,0,0,387,0
@@ -45,5 +45,5 @@ PASS,unfinished_code09.ligo,2,2,2,103,0
 PASS,unfinished_code10.ligo,5,29,29,389,0
 PASS,unfinished_code11.ligo,2,5,5,387,0
 PASS,unfinished_code12.ligo,2,7,7,179,0
-PASS,unfinished_code13.ligo,38,346,24,179,2
+PASS,unfinished_code13.ligo,44,346,24,179,2
 FAIL,unreadable_symbol.ligo,-1,-1,-1,-1,-1

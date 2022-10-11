@@ -94,7 +94,7 @@ let rec print cst = print_declarations cst.decl
 
 and print_declarations (node : declarations) =
     Utils.nseq_to_list node
-  |> List.map ~f:(fun d -> print_declaration d ^^ string ";")
+  |> List.map ~f:print_declaration
   |> separate_map (hardline ^^ hardline) group
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
@@ -102,7 +102,7 @@ and print_declarations (node : declarations) =
 
 and print_declaration = function
   D_Attr      d -> print_D_Attr d
-| D_Const     d -> print_D_Const d
+| D_Const     d -> print_D_Const d 
 | D_Directive d -> string (Directive.to_lexeme d).Region.value
 | D_Fun       d -> print_D_Fun d
 | D_Module    d -> print_D_Module d

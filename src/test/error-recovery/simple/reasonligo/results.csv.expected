@@ -26,7 +26,7 @@ FAIL,missing_expr_parenthesesL.religo,-1,-1,-1,-1,-1
 FAIL,missing_expr_parenthesesR.religo,-1,-1,-1,-1,-1
 PASS,missing_ident_in_type_decl.religo,2,2,2,117,0
 PASS,missing_int.religo,2,6,6,158,0
-PASS,missing_module_kw_in_module_decl.religo,10,103,5,117,1
+PASS,missing_module_kw_in_module_decl.religo,11,103,5,117,1
 PASS,missing_name_of_argument.religo,4,80,12,158,2
 FAIL,missing_open_curly_bracket_in_module_decl.religo,-1,-1,-1,-1,-1
 PASS,missing_vbar_in_type_declaration.religo,2,13,5,100,0

@@ -48,9 +48,7 @@ let%expect_test _ =
         (action, s) ->
           {
             var s : storage := s;
-
             var cards : cards := s.cards;
-
             var card : card
             := case cards [action.card_to_transfer]  of [
                 Some (card) -> card
@@ -58,18 +56,14 @@ let%expect_test _ =
                   (failwith ("transfer_single: No card.")
                    : card)
               ];
-
             if Operator.neq
                  (card.card_owner,
                   Tezos.get_sender (Unit))
             then failwith ("This card doesn't belong to you")
             else skip;
-
             card := card.card_owner with action.destination;
-
             cards :=
               Map.add (action.card_to_transfer, card, cards);
-
             s := s.cards with cards
           } with ((list [] : list (operation)), s)
       ]
@@ -80,20 +74,18 @@ let%expect_test _ =
         (action, s) ->
           {
             var s : storage := s;
-
             const card : card
             = case s.cards [action.card_to_sell]  of [
                 Some (card) -> card
               | None ->
                   (failwith ("sell_single: No card.") : card)
-              ];
-
+              ]
+            ;
             if Operator.neq
                  (card.card_owner,
                   Tezos.get_sender (Unit))
             then failwith ("This card doesn't belong to you")
             else skip;
-
             var card_pattern : card_pattern
             := case s.card_patterns [card.card_pattern]  of [
                 Some (pattern) -> pattern
@@ -101,32 +93,24 @@ let%expect_test _ =
                   (failwith ("sell_single: No card pattern.")
                    : card_pattern)
               ];
-
             card_pattern :=
               card_pattern.quantity with
                 abs (Operator.sub (card_pattern.quantity, 1n));
-
             var card_patterns : card_patterns := s.card_patterns;
-
             card_patterns :=
               Map.add
                 (card.card_pattern,
                  card_pattern,
                  card_patterns);
-
             s := s.card_patterns with card_patterns;
-
             var cards : cards := s.cards;
-
             cards := Map.remove (action.card_to_sell, cards);
-
             s := s.cards with cards;
-
             const price : tez
             = Operator.times
                 (card_pattern.coefficient,
-                 card_pattern.quantity);
-
+                 card_pattern.quantity)
+            ;
             const receiver : contract (unit)
             = case (Tezos.get_contract_opt
                       (Tezos.get_sender (Unit))
@@ -136,12 +120,13 @@ let%expect_test _ =
               | None ->
                   (failwith ("sell_single: No contract.")
                    : contract (unit))
-              ];
-
+              ]
+            ;
             const op : operation
-            = Tezos.transaction (unit, price, receiver);
-
+            = Tezos.transaction (unit, price, receiver)
+            ;
             const operations : list (operation) = list [op]
+
           } with (operations, s)
       ]
 
@@ -151,7 +136,6 @@ let%expect_test _ =
         (action, s) ->
           {
             var s : storage := s;
-
             var card_pattern : card_pattern
             := case s.card_patterns [action.card_to_buy]  of [
                 Some (pattern) -> pattern
@@ -159,32 +143,25 @@ let%expect_test _ =
                   (failwith ("buy_single: No card pattern.")
                    : card_pattern)
               ];
-
             const price : tez
             = Operator.times
                 (card_pattern.coefficient,
-                 Operator.add (card_pattern.quantity, 1n));
-
+                 Operator.add (card_pattern.quantity, 1n))
+            ;
             if Operator.gt (price, Tezos.get_amount (Unit))
             then failwith ("Not enough money")
             else skip;
-
             card_pattern :=
               card_pattern.quantity with
                 Operator.add (card_pattern.quantity, 1n);
-
             var card_patterns : card_patterns := s.card_patterns;
-
             card_patterns :=
               Map.add
                 (action.card_to_buy,
                  card_pattern,
                  card_patterns);
-
             s := s.card_patterns with card_patterns;
-
             var cards : cards := s.cards;
-
             cards :=
               Map.add
                 (s.next_id,
@@ -193,9 +170,7 @@ let%expect_test _ =
                    card_pattern = action.card_to_buy
                  ],
                  cards);
-
             s := s.cards with cards;
-
             s := s.next_id with Operator.add (s.next_id, 1n)
           } with ((list [] : list (operation)), s)
       ]
@@ -264,7 +239,6 @@ let%expect_test _ =
       var a : ppp
       := (record [x = (0, 1); y = (10, 11)],
          record [x = (100, 101); y = (110, 111)]);
-
       a := a.0 with a.0.x with a.0. x.0 with 2
     } with a.0. x. 0
 
@@ -517,17 +491,13 @@ let%expect_test _ =
     function foobar (const i : int) is
     {
       var p : parameter := (Zero (42n));
-
       if Operator.gt (i, 0)
       then {
         i := Operator.add (i, 1);
-
         if Operator.gt (i, 10)
         then {
           i := 20;
-
           failwith ("who knows");
-
           i := 30
         }
         else skip
