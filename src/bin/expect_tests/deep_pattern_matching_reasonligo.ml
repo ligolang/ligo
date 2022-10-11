@@ -363,6 +363,14 @@ let%expect_test _ =
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.religo", line 8, characters 27-32:
+      7 |   | { myt : _myt , mynat : mynat } , None     => ([]: list(operation), mynat)
+      8 |   | { myt : _myt , mynat : mynat } , Some (x) => ([]: list(operation), x    )
+      9 |   }
+    :
+    Warning: unused variable "mynat".
+    Hint: replace it by "_mynat" to prevent this warning.
+
     { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
       storage nat ;
       code { CAR ;

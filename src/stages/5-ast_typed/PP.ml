@@ -125,9 +125,8 @@ and expression_content ppf (ec: expression_content) =
   | E_update      u -> Types.Update.pp      expression ppf u
   | E_lambda      l -> Lambda.pp      expression type_expression ppf l
   | E_type_abstraction e -> Type_abs.pp expression ppf e
-  | E_matching {matchee; cases;} ->
-      fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_recursive  r -> Recursive.pp expression type_expression ppf r
+  | E_matching    m -> Types.Match_expr.pp expression type_expression ppf m
+  | E_recursive   r -> Recursive.pp expression type_expression ppf r
   | E_let_in {let_binder; rhs; let_result; attr = { hidden = false ; _ } as attr } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
       (Binder.pp type_expression_annot) let_binder
@@ -163,19 +162,6 @@ and option_inline ppf inline =
     fprintf ppf "[@inline]"
   else
     fprintf ppf ""
-
-and matching_variant_case : (formatter -> expression -> unit) -> formatter -> expression matching_content_case -> unit =
-  fun f ppf {constructor=c; pattern; body} ->
-  fprintf ppf "@[<v 2>| %a %a ->@ %a@]" Label.pp c Value_var.pp pattern f body
-
-and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
-  | Match_variant {cases ; tv=_} ->
-      fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
-  | Match_record {fields ; body ; tv = _} ->
-      (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      fprintf ppf "| @[%a@] ->@ @[%a@]"
-        (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
-        f body
 
 and declaration ?(use_hidden=true) ppf (d : declaration) = match Location.unwrap d with
     D_value vd  -> if (vd.attr.hidden && use_hidden) then () else Types.Value_decl.pp expression type_expression_option ppf vd

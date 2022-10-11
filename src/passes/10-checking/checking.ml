@@ -1105,12 +1105,12 @@ and infer_pattern
     (pat : I.type_expression option I.Pattern.t)
     : Context.t
       * O.type_expression
-      * (O.type_expression option O.Pattern.t, _, _) Elaboration.t
+      * (O.type_expression O.Pattern.t, _, _) Elaboration.t
   =
   let open Elaboration.Let_syntax in
   let loc = pat.location in
   let return content =
-    return @@ (Location.wrap ~loc content : O.type_expression option I.Pattern.t)
+    return @@ (Location.wrap ~loc content : O.type_expression I.Pattern.t)
   in
   let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
   let check ~ctx pat type_ = check_pattern ~raise ~ctx pat type_ in
@@ -1128,7 +1128,7 @@ and infer_pattern
         Context.(ctx |:: C_exists_var (evar, Type)), t_exists ~loc evar
     in
     let ctx = Context.(ctx |:: C_value (var, Immutable, type_)) in
-    ctx, type_, return @@ P_var (Binder.set_ascr binder (Some type_))
+    ctx, type_, return @@ P_var (Binder.set_ascr binder type_)
   | P_list (Cons (hd_pat, tl_pat)) ->
     let ctx, elt_type, hd_pat = infer ~ctx hd_pat in
     let ctx, tl_pat = check ~ctx tl_pat (t_list ~loc elt_type) in
@@ -1247,7 +1247,9 @@ and infer_pattern
     ( ctx
     , record_type
     , let%bind pats = Elaboration.all pats in
-      return @@ P_record (Pattern.Container.Record.of_list (List.zip_exn labels pats)))
+      return
+      @@ P_record (Pattern.Container.Record.of_list (List.zip_exn labels pats))
+    )
 
 
 and check_pattern
@@ -1255,14 +1257,14 @@ and check_pattern
     ~ctx
     (pat : I.type_expression option I.Pattern.t)
     (type_ : O.type_expression)
-    : Context.t * (O.type_expression option O.Pattern.t, _, _) Elaboration.t
+    : Context.t * (O.type_expression O.Pattern.t, _, _) Elaboration.t
   =
   let open Elaboration.Let_syntax in
   let loc = pat.location in
   let err () = pattern_do_not_conform_type pat type_ in
   let fail () = raise.error (err ()) in
   let return content =
-    return @@ (Location.wrap ~loc content : O.type_expression option I.Pattern.t)
+    return @@ (Location.wrap ~loc content : O.type_expression I.Pattern.t)
   in
   let self ?(raise = raise) = check_pattern ~raise in
   let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
@@ -1274,7 +1276,7 @@ and check_pattern
     | P_var binder, _ ->
       (* TODO: Check if the binder annot is consistent with expected type *)
       ( Context.(ctx |:: C_value (Binder.get_var binder, Immutable, type_))
-      , return @@ P_var (Binder.map (Fn.const @@ Some type_) binder) )
+      , return @@ P_var (Binder.map (Fn.const @@ type_) binder) )
     | ( P_list (Cons (hd_pat, tl_pat))
       , O.T_constant
           { injection = Literal_types.List; parameters = [ elt_type ]; _ } ) ->
@@ -1333,7 +1335,9 @@ and check_pattern
       let labels, pats = List.unzip (Record.LMap.values record_pat) in
       ( ctx
       , let%bind pats = Elaboration.all pats in
-        return @@ P_record (Pattern.Container.Record.of_list (List.zip_exn labels pats)))
+        return
+        @@ P_record
+             (Pattern.Container.Record.of_list (List.zip_exn labels pats)) )
     | _ ->
       let ctx, type_', pat = infer ~ctx pat in
       let ctx, _f =
@@ -1359,7 +1363,7 @@ and check_cases
     matchee_type
     ret_type
     : Context.t
-      * ( (O.type_expression option O.Pattern.t * O.expression) list
+      * ( (O.type_expression O.Pattern.t * O.expression) list
         , _
         , _ )
         Elaboration.t
@@ -1406,30 +1410,10 @@ and compile_match
   (* Elaborate (by compiling pattern) *)
   return
   @@
-  match matchee.expression_content with
-  | E_variable var ->
-    let match_expr =
-      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
-    in
-    match_expr.expression_content
-  | _ ->
-    let var = Value_var.fresh ~loc ~name:"match_" () in
-    let match_expr =
-      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
-    in
-    O.E_let_in
-      { let_binder = Binder.make var matchee.type_expression
-      ; rhs = matchee
-      ; let_result = { match_expr with location = loc }
-      ; attr =
-          { inline = false
-          ; no_mutation = false
-          ; public = true
-          ; view = false
-          ; hidden = false
-          ; thunk = false
-          }
-      }
+  let cases =
+    List.map cases ~f:(fun (pattern, body) -> O.Match_expr.{ pattern; body })
+  in
+  O.E_matching { matchee; cases }
 
 
 and infer_module_expr ~raise ~options ~ctx (mod_expr : I.module_expr)

@@ -53,7 +53,7 @@ let rec destructure_type (t : AST.type_expression) =
         fields []
   | _ -> [t]
 
-let rec to_simple_pattern (ty_pattern : _ option AST.Pattern.t * AST.type_expression) =
+let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
   let pattern', ty = ty_pattern in
   let pattern = Location.unwrap pattern' in
   match pattern with
@@ -474,7 +474,7 @@ let redundant_case_analysis ~raise matrix =
    missing pattern to the original pattern representation
    using [to_original_pattern].
    e. If there are no missing cases we check for redundant cases. *)
-let check_anomalies ~(raise : raise) ~syntax ~loc (eqs : (AST.type_expression option AST.Pattern.t * AST.type_expression * AST.expression) list) t =
+let check_anomalies ~(raise : raise) ~syntax ~loc (eqs : (AST.type_expression AST.Pattern.t * AST.type_expression * AST.expression) list) t =
 
   let matrix = List.map eqs ~f:(fun (p, t, _) -> to_simple_pattern (p, t)) in
 

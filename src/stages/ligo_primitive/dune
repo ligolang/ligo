@@ -12,6 +12,7 @@
    ppx_deriving.ord
    ppx_deriving.fold
    ppx_deriving.map
+   ppx_deriving.iter
    ppx_deriving.make
    ppx_hash
    ppx_print_constant

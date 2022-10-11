@@ -50,7 +50,8 @@ let agg_file_ ~raise f test syntax () =
     Compiler_options.set_test_flag options test
   in
   let prg = Test_helpers.type_file ~raise f Env options in
-  let _ : Ast_aggregated.program = Aggregation.compile_program (Ast_typed.e_a_unit ()) prg in
+  let _ : Ast_aggregated.program = trace ~raise aggregation_tracer 
+    @@ Aggregation.compile_program (Ast_typed.e_a_unit ()) prg in
   ()
 
 let mini_c_file_ ~raise f test syntax () =
@@ -60,7 +61,8 @@ let mini_c_file_ ~raise f test syntax () =
     Compiler_options.set_test_flag options test
   in
   let prg = Test_helpers.type_file ~raise f Env options in
-  let ctxt, exp = Aggregation.compile_program (Ast_typed.e_a_unit ()) prg in
+  let ctxt, exp = trace ~raise aggregation_tracer 
+    @@ Aggregation.compile_program (Ast_typed.e_a_unit ()) prg in
   let ctxt, exp = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_program ~options:options.middle_end (ctxt, exp) in
   let x = Ast_aggregated.context_apply ctxt exp in
   let x = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end x in

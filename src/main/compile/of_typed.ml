@@ -10,7 +10,7 @@ module SMap = Map.Make(String)
 
 let compile_expression_in_context ~raise ~options ?(self_pass = true) : Ast_typed.program -> Ast_typed.expression -> Ast_aggregated.expression =
   fun ctxt exp ->
-    let ctxt, exp = Aggregation.compile_program exp ctxt  in
+    let ctxt, exp = trace ~raise aggregation_tracer @@ Aggregation.compile_program exp ctxt  in
     let ctxt, exp =
       if self_pass then
         trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_program ~options (ctxt, exp)
