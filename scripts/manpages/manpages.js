@@ -49,12 +49,25 @@ let top = new Promise((resolve, reject) => {
         const descrption = lines[0].trim();
         const synopsis = lines[1].trim();
 
-        const subcommands = lines.slice(3)
-                                .map(subcommand => {
-                                    let [name, ...desc] = subcommand.trim().split(/\s+/)
-                                    desc = desc.join(" ")
-                                    return { name, desc }
-                                })
+        let [subcommands, last] = lines.slice(3)
+            .reduce(([acc, sofar], line) => {
+                if (line.includes(" . ")) {
+                    acc.push(sofar)
+                    sofar = []
+                }
+                sofar.push(line.trim());
+                return [acc, sofar];
+            }, [[], []])
+            subcommands.push(last);
+            subcommands.shift();
+            subcommands = subcommands.map(subcommand => {
+                let [name_, ...desc_rest] = subcommand
+                let [name, ...desc_start] = name_.split(" . ")
+                let desc = [...desc_start, ...desc_rest]
+                desc = desc.join(" ").trim()
+                name = name.trim()
+                return { name, desc }
+            })
 
         const data = { descrption, synopsis, subcommands }
                                 
@@ -149,11 +162,19 @@ let all = sub.then(commands =>
             flags.push(last);
             flags.shift();
             flags = flags.map(flag => {
-                let [name, desc] = flag[0].split("]");
+                let [name, alias_desc] = flag[0].split("]");
                 name = name.slice(1)
-                desc = desc.replace("... ", "")
+                alias_desc = alias_desc.replace("... ", "")
+                let [alias, ...desc] = alias_desc.split(".")
+                desc = desc.join(".")
+                flag = flag.map(f => f.startsWith(". ") ? f.slice(2) : f)
                 desc = [desc.trim(), ...flag.slice(1)]
                 desc = desc.join(" ")
+                alias = alias.slice(1) 
+                alias = alias.trim()
+                alias = alias !== "" ? ` (alias: ${alias})` : alias
+                desc += alias
+                desc = desc.trim()
                 return { name, desc }
             })
 
