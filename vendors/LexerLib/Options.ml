@@ -14,7 +14,7 @@ module MakeDefault (Options : Preprocessor.Options.S) =
     include Options
 
     let postprocess  = None (* All passes *)
-    let preprocess   = false
+    let preprocess   = true
     let print_passes = false
     let mode         = `Point
     let command      = None

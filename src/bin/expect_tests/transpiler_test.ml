@@ -64,7 +64,7 @@ let%expect_test _ =
             card := card.card_owner with action.destination;
             cards :=
               Map.add (action.card_to_transfer, card, cards);
-            s := s.cards with cards
+            s := s.cards with cards;
           } with ((list [] : list (operation)), s)
       ]
 
@@ -79,8 +79,7 @@ let%expect_test _ =
                 Some (card) -> card
               | None ->
                   (failwith ("sell_single: No card.") : card)
-              ]
-            ;
+              ];
             if Operator.neq
                  (card.card_owner,
                   Tezos.get_sender (Unit))
@@ -109,8 +108,7 @@ let%expect_test _ =
             const price : tez
             = Operator.times
                 (card_pattern.coefficient,
-                 card_pattern.quantity)
-            ;
+                 card_pattern.quantity);
             const receiver : contract (unit)
             = case (Tezos.get_contract_opt
                       (Tezos.get_sender (Unit))
@@ -120,13 +118,10 @@ let%expect_test _ =
               | None ->
                   (failwith ("sell_single: No contract.")
                    : contract (unit))
-              ]
-            ;
+              ];
             const op : operation
-            = Tezos.transaction (unit, price, receiver)
-            ;
-            const operations : list (operation) = list [op]
-
+            = Tezos.transaction (unit, price, receiver);
+            const operations : list (operation) = list [op];
           } with (operations, s)
       ]
 
@@ -146,8 +141,7 @@ let%expect_test _ =
             const price : tez
             = Operator.times
                 (card_pattern.coefficient,
-                 Operator.add (card_pattern.quantity, 1n))
-            ;
+                 Operator.add (card_pattern.quantity, 1n));
             if Operator.gt (price, Tezos.get_amount (Unit))
             then failwith ("Not enough money")
             else skip;
@@ -171,7 +165,7 @@ let%expect_test _ =
                  ],
                  cards);
             s := s.cards with cards;
-            s := s.next_id with Operator.add (s.next_id, 1n)
+            s := s.next_id with Operator.add (s.next_id, 1n);
           } with ((list [] : list (operation)), s)
       ]
 
@@ -239,12 +233,12 @@ let%expect_test _ =
       var a : ppp
       := (record [x = (0, 1); y = (10, 11)],
          record [x = (100, 101); y = (110, 111)]);
-      a := a.0 with a.0.x with a.0. x.0 with 2
+      a := a.0 with a.0.x with a.0. x.0 with 2;
     } with a.0. x. 0
 
     function asymetric_tuple_access (const gen___3 : unit) is
     {
-      var tuple : int * int * int * int := (0, (1, (2, 3)))
+      var tuple : int * int * int * int := (0, (1, (2, 3)));
     } with
         Operator.add
           (Operator.add
@@ -260,7 +254,7 @@ let%expect_test _ =
       nee :=
         nee.nesty with
           nee.nesty.mymap with
-            Map.add (1, "one", nee.nesty. mymap)
+            Map.add (1, "one", nee.nesty. mymap);
     } with
         case nee.nesty. mymap [1]  of [
           Some (s) -> s
@@ -484,7 +478,7 @@ let%expect_test _ =
                 if Operator.eq (n, 0n)
                 then failwith ("fail")
                 else skip
-            ]
+            ];
           } with ((list [] : list (operation)), s)
       ]
 
@@ -498,15 +492,15 @@ let%expect_test _ =
         then {
           i := 20;
           failwith ("who knows");
-          i := 30
+          i := 30;
         }
-        else skip
+        else skip;
       }
       else
         case p of [
           Zero (gen___5) -> failwith (42n)
         | Pos (gen___6) -> skip
-        ]
+        ];
     } with
         case p of [
           Zero (gen___3) -> i
@@ -515,7 +509,7 @@ let%expect_test _ =
 
     function failer (const p : int) is
     {
-      if Operator.eq (p, 1) then failwith (42) else skip
+      if Operator.eq (p, 1) then failwith (42) else skip;
     } with p |}]
 (* let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;

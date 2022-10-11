@@ -63,7 +63,7 @@ module MakeParser
 
     type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-    type 'a parser = raise:raise -> Buffer.t -> 'a
+    type 'a parser = ?preprocess:bool -> raise:raise -> Buffer.t -> 'a
 
     val parse_file   : (file_path -> CST.tree) parser
     val parse_string : CST.tree parser
@@ -142,7 +142,7 @@ module MakeTwoParsers
 
     type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-    type 'a parser = raise:raise -> Buffer.t -> 'a
+    type 'a parser = ?preprocess:bool -> raise:raise -> Buffer.t -> 'a
 
     val parse_file   : (file_path -> CST.t) parser
     val parse_string : CST.t parser
