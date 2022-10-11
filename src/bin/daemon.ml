@@ -1,5 +1,5 @@
 let main () =
-  let () = Sys.catch_break true in
+  let () = Sys_unix.catch_break true in
   let stdin = In_channel.stdin in
   let exception Break in
   try
@@ -22,5 +22,5 @@ let main () =
     done in Ok("", "")
   with 
     Break
-  | Sys.Break -> Ok("", "") 
+  | Sys_unix.Break -> Ok("", "") 
   | _ -> Error ("","Unexpected error")

@@ -1,7 +1,7 @@
 open Cli_expect
 
 (* avoid pretty printing *)
-let () = Unix.putenv ~key:"TERM" ~data:"dumb"
+let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_syntax.ligo" ] ;

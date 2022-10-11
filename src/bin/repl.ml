@@ -14,7 +14,7 @@ let get_declarations_core (core_prg : Ast_core.program )=
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
     let module_variable = try Module_var.to_name_exn module_variable with _ -> "" in
-    not @@ Caml.Sys.file_exists module_variable in
+    not @@ (Caml.Sys.file_exists module_variable) in
 
   let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
   let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
@@ -298,5 +298,5 @@ let main (raw_options : Raw_options.t) display_format now amount balance sender 
       try
         loop ~raw_options syntax display_format term history state 1
       with | LTerm_read_line.Interrupt -> Ok("","")
-           | Sys.Break -> Ok("","")
+           | Sys_unix.Break -> Ok("","")
     end

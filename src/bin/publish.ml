@@ -186,10 +186,10 @@ let os_type =
   | _ -> Gz.Unix
 
 let gzip fname fd =
-  let file_size = Int.of_int64_exn (Unix.stat fname).st_size in
+  let file_size = Int.of_int64_exn (Core_unix.stat fname).st_size in
   let level = 4 in
   let buffer_len = De.io_buffer_size in
-  let time () = Int32.of_float (Unix.gettimeofday ()) in
+  let time () = Int32.of_float (Core_unix.gettimeofday ()) in
   let i = De.bigstring_create buffer_len in
   let o = De.bigstring_create buffer_len in
   let w = De.Lz77.make_window ~bits:15 in
@@ -201,7 +201,7 @@ let gzip fname fd =
     let len = min (file_size - !p) buffer_len in
     if len <= 0 then 0 else
     let bytes = Bytes.create len in
-    let len = Caml.Unix.read fd bytes 0 len in
+    let len = Caml_unix.read fd bytes 0 len in
     Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len ;
     p := !p + len ; len in
   let flush buf len =
@@ -223,7 +223,7 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   | S_DIR ->
     if SSet.mem ignore_dirs (Filename.basename file_or_dir) 
     then Lwt.return [] else 
-    let all = Sys.ls_dir file_or_dir in
+    let all = Sys_unix.ls_dir file_or_dir in
     let* files = 
     Lwt_list.fold_left_s (fun acc f -> 
       let* fs = get_all_files (Filename.concat file_or_dir f) in
@@ -244,22 +244,22 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   Lwt.return files
 
 let from_dir ~dir f =
-  let pwd = Unix.getcwd () in
-  let () = Sys.chdir dir in
+  let pwd = Core_unix.getcwd () in
+  let () = Sys_unix.chdir dir in
   let result = f () in
-  let () = Sys.chdir pwd in
+  let () = Sys_unix.chdir pwd in
   result
 
 let tar_gzip ~name ~version dir = 
   let open Lwt.Syntax in
   let* files = from_dir ~dir (fun () -> get_all_files ".") in
-  let fname = Filename.temp_file name version in
-  let fd = Caml.Unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
+  let fname = Filename_unix.temp_file name version in
+  let fd = Caml_unix.openfile fname [ Core_unix.O_CREAT ; Core_unix.O_RDWR ] 0o666 in
   let () = Tar_unix.Archive.create files fd in
-  let () = Caml.Unix.close fd in
-  let fd = Caml.Unix.openfile fname [ Unix.O_RDWR ] 0o666 in
+  let () = Caml_unix.close fd in
+  let fd = Caml_unix.openfile fname [ Core_unix.O_RDWR ] 0o666 in
   let buf = gzip fname fd in
-  let () = Caml.Unix.close fd in
+  let () = Caml_unix.close fd in
   Lwt.return (Buffer.contents_bytes buf)
 
 let publish ~project_root ~token ~ligo_registry ~manifest =

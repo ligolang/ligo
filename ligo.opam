@@ -11,7 +11,9 @@ license      : "MIT"
 # If you change the dependencies, run `opam lock` in the root
 depends: [
   # Jane Street Core
-  "core" {= "v0.14.1"}
+  "core" {>= "v0.15.0" & < "v0.16.0"}
+  "core_kernel" { >= "v0.15.0" & < "v0.16.0"}
+  "core_unix" { >= "v0.15.0"  & < "v0.16.0"}
   # Tooling
   "odoc" { build }
   "ocamlfind" { build }

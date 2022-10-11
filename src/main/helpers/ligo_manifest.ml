@@ -40,7 +40,7 @@ let validate t =
 
 
 let try_readme ~project_root =
-  let ls = Sys.ls_dir project_root in
+  let ls = Sys_unix.ls_dir project_root in
   match
     List.find ls ~f:(fun d ->
         String.equal "readme.md" (String.lowercase d)

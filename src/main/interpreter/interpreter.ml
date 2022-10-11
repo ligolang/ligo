@@ -18,14 +18,14 @@ let not_comparable_string = v_string "Not comparable"
    if that fails it tries to resolve it as a relative path w.r.t. directory of [source_file]
    if that fails it tries to resolve it as a package path using [mod_res] *)
 let resolve_contract_file ~mod_res ~source_file ~contract_file =
-  match Sys.file_exists contract_file with
+  match Sys_unix.file_exists contract_file with
   | `Yes -> contract_file
   | `No | `Unknown ->
     (match source_file with
      | Some source_file ->
        let d = Filename.dirname source_file in
        let s = Filename.concat d contract_file in
-       (match Sys.file_exists s with
+       (match Sys_unix.file_exists s with
         | `Yes -> s
         | `No | `Unknown ->
           ModRes.Helpers.resolve ~file:contract_file mod_res)
@@ -1229,8 +1229,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let id = Fuzz.Ast_aggregated.get_mutation_id mutation in
     let file_path = reg#file in
     (try
-       let odir = Sys.getcwd () in
-       let () = Sys.chdir dir in
+       let odir = Sys_unix.getcwd () in
+       let () = Sys_unix.chdir dir in
        let file_path = Filename.basename file_path in
        let file_path =
          Caml.Filename.remove_extension file_path
@@ -1240,7 +1240,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
        in
        let out_chan = Out_channel.create file_path in
        let () = Caml.Buffer.output_buffer out_chan file_contents in
-       let () = Sys.chdir odir in
+       let () = Sys_unix.chdir odir in
        return (v_some (v_string file_path))
      with
      | Sys_error _ -> return (v_none ()))

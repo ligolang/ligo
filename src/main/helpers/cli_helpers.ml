@@ -5,7 +5,7 @@ module RepositoryUrl = Repository_url
 module Constants = struct
   type command = (string * string array)
   let ligo_install_path = "./.ligo"
-  let ligo_rc_path = Filename.concat (Sys.home_directory ()) ".ligorc"
+  let ligo_rc_path = Filename.concat (Sys_unix.home_directory ()) ".ligorc"
   let ligo_registry = "https://packages.ligolang.org/-/api"
   let esy = "esy"
   let windows = "Win32"
@@ -25,9 +25,9 @@ module Constants = struct
 end
 
 let find_project_root () =
-  let pwd = Unix.getcwd in
+  let pwd = Sys_unix.getcwd in
   let rec aux p =
-    let dirs = Sys.ls_dir p in
+    let dirs = Sys_unix.ls_dir p in
     if List.exists ~f:(String.equal "package.json") dirs
     then Some p
     else
@@ -94,7 +94,7 @@ let run_command (cmd : command) =
     (fun p -> Lwt.map  
       (fun status -> 
         match status with
-          Caml.Unix.WEXITED 0 -> Ok ()
+          Caml_unix.WEXITED 0 -> Ok ()
         | _ -> Error ("unknown error"))
         p#status) in
   Lwt_main.run status
