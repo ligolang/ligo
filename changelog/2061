@@ -1,0 +1,5 @@
+author: ulrikstrid
+description: Updated Core to the latest release
+merge_request: '2061'
+title: Upgrade Core to v0.15.0
+type: internal
