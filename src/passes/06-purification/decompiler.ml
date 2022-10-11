@@ -43,7 +43,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
 
 let decompile_pattern_to_string ~syntax pattern =
-  let pattern = Helpers.Conv.record_to_list pattern in
+  let pattern = Helpers.Conv.o_to_i pattern in
   let p = I.Pattern.map (decompile_type_expression_option) pattern in
   let s = match syntax with
     Some Syntax_types.JsLIGO ->
@@ -104,7 +104,7 @@ let rec decompile_expression : O.expression -> I.expression =
   | O.E_matching m ->
     let O.Match_expr.{matchee;cases} = O.Match_expr.map self self_type_opt m in
     let cases = List.map cases ~f:(fun {pattern;body} -> 
-      let pattern = Helpers.Conv.record_to_list pattern in
+      let pattern = Helpers.Conv.o_to_i pattern in
       I.Match_expr.{pattern;body}) in
     return @@ I.E_matching {matchee;cases}
   | O.E_record recd ->

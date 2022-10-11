@@ -137,7 +137,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_matching {matchee;cases} ->
       let matchee = self matchee in
       let aux I.Match_expr.{pattern;body} =
-        let pattern = Helpers.Conv.list_to_record pattern in
+        let pattern = Helpers.Conv.i_to_o pattern in
         let pattern = O.Pattern.map (Option.map ~f:(compile_type_expression ~raise)) pattern in
         O.Match_expr.{pattern;body = self body} in
       let cases   = List.map ~f:aux cases in
