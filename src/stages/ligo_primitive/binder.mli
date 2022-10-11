@@ -1,11 +1,10 @@
 module Option = Simple_utils.Option
 
 type 'a t
-  [@@deriving eq,compare,yojson,hash,fold,map]
+  [@@deriving eq,compare,yojson,hash,fold,map,iter]
 
 val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 val fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
-val iter : ('a -> unit) -> 'a t -> unit
 
 val make : Var.Value_var.t -> 'a -> 'a t
 val set_var : 'a t -> Var.Value_var.t -> 'a t
