@@ -13,6 +13,6 @@
   desugaring
   syntax_types
   simple-diff
-  ocaml-compiler-libs)
+  ocaml-compiler-libs.common)
  (preprocess
   (pps ppx_poly_constructor ppx_compare ppx_let ppx_here ppx_hash)))
