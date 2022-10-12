@@ -1110,7 +1110,7 @@ and infer_pattern
   let open Elaboration.Let_syntax in
   let loc = pat.location in
   let return content =
-    return @@ (Location.wrap ~loc content : O.type_expression I.Pattern.t)
+    return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t)
   in
   let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
   let check ~ctx pat type_ = check_pattern ~raise ~ctx pat type_ in
@@ -1264,7 +1264,7 @@ and check_pattern
   let err () = pattern_do_not_conform_type pat type_ in
   let fail () = raise.error (err ()) in
   let return content =
-    return @@ (Location.wrap ~loc content : O.type_expression I.Pattern.t)
+    return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t)
   in
   let self ?(raise = raise) = check_pattern ~raise in
   let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
