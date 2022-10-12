@@ -6,8 +6,6 @@ module I = Ast_imperative
 module O = Ast_sugar
 open Ligo_prim
 
-module Helpers = Ast_sugar.Helpers
-
 let rec decompile_type_expression : O.type_expression -> I.type_expression =
   fun te ->
   let self = decompile_type_expression in
@@ -41,22 +39,6 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
       return @@ I.T_for_all {x with type_}
 
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
-
-let decompile_pattern_to_string ~syntax pattern =
-  let pattern = Helpers.Conv.o_to_i pattern in
-  let p = I.Pattern.map (decompile_type_expression_option) pattern in
-  let s = match syntax with
-    Some Syntax_types.JsLIGO ->
-      Tree_abstraction.Jsligo.decompile_pattern_to_string p
-  | Some CameLIGO ->
-      Tree_abstraction.Cameligo.decompile_pattern_to_string p
-  | Some ReasonLIGO ->
-      Tree_abstraction.Reasonligo.decompile_pattern_to_string p
-  | Some PascaLIGO ->
-      Tree_abstraction.Pascaligo.decompile_pattern_to_string p
-  | None ->
-      Tree_abstraction.Cameligo.decompile_pattern_to_string p
-  in s
 
 let rec decompile_expression : O.expression -> I.expression =
   fun e ->
@@ -102,11 +84,8 @@ let rec decompile_expression : O.expression -> I.expression =
     let const = Constructor.map self const in
     return @@ I.E_constructor const
   | O.E_matching m ->
-    let O.Match_expr.{matchee;cases} = O.Match_expr.map self self_type_opt m in
-    let cases = List.map cases ~f:(fun {pattern;body} -> 
-      let pattern = Helpers.Conv.o_to_i pattern in
-      I.Match_expr.{pattern;body}) in
-    return @@ I.E_matching {matchee;cases}
+    let m = decompile_match_expr m in
+    return @@ I.E_matching m
   | O.E_record recd ->
     let recd = Record.map self recd in
     return @@ I.E_record (Record.LMap.to_kv_list recd)
@@ -171,6 +150,47 @@ let rec decompile_expression : O.expression -> I.expression =
     let let_result = decompile_expression let_result in
     return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result }
 
+and decompile_match_expr 
+  : (O.expression, O.type_expression option) O.Match_expr.t 
+      -> (I.expression, I.type_expression option) I.Match_expr.t
+  = fun m ->
+    let O.Match_expr.{ matchee ; cases } = m in
+    let matchee = decompile_expression matchee in
+    let cases = List.map cases 
+      ~f:(fun { pattern ; body } -> 
+        let pattern = decompile_pattern pattern in
+        let body = decompile_expression body in
+        I.Match_expr.{ pattern ; body }
+    ) in
+    { matchee ; cases }
+
+and decompile_pattern 
+  : O.type_expression option O.Pattern.t -> I.type_expression option I.Pattern.t 
+  = fun p ->
+    let loc = Location.get_location p in
+    match (Location.unwrap p) with
+    | P_unit -> Location.wrap ~loc I.Pattern.P_unit
+    | P_var b -> 
+      let b = Binder.map decompile_type_expression_option b in
+      Location.wrap ~loc (I.Pattern.P_var b)
+    | P_list Cons (h, t) ->
+        let h = decompile_pattern h in
+        let t = decompile_pattern t in
+        Location.wrap ~loc (I.Pattern.P_list (Cons(h, t)))
+    | P_list List ps ->
+        let ps = List.map ~f:decompile_pattern ps in
+        Location.wrap ~loc (I.Pattern.P_list (List ps))
+    | P_variant (l, p) ->
+        let p = decompile_pattern p in
+        Location.wrap ~loc (I.Pattern.P_variant (l, p))
+    | P_tuple ps -> 
+        let ps = List.map ~f:decompile_pattern ps in
+        Location.wrap ~loc (I.Pattern.P_tuple ps)
+    | P_record lps ->
+        let lps = Container.Record.map decompile_pattern lps in
+        let lps = Container.List.of_list (Container.Record.to_list lps) in
+        Location.wrap ~loc (I.Pattern.P_record lps)
+
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in
   match Location.unwrap d with
@@ -195,9 +215,24 @@ and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
       return @@ M_variable mv
   | M_module_path mp ->
       return @@ M_module_path mp
-
+      
 and decompile_decl : O.decl -> I.decl = fun d -> decompile_declaration d
 and decompile_module : O.module_ -> I.module_ = fun m ->
   List.map ~f:decompile_decl m
 
 let decompile_program = List.map ~f:decompile_declaration
+
+let decompile_pattern_to_string ~syntax pattern =
+  let pattern = decompile_pattern pattern in
+  let s = match syntax with
+    Some Syntax_types.JsLIGO ->
+      Tree_abstraction.Jsligo.decompile_pattern_to_string pattern
+  | Some CameLIGO ->
+      Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
+  | Some ReasonLIGO ->
+      Tree_abstraction.Reasonligo.decompile_pattern_to_string pattern
+  | Some PascaLIGO ->
+      Tree_abstraction.Pascaligo.decompile_pattern_to_string pattern
+  | None ->
+      Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
+  in s
