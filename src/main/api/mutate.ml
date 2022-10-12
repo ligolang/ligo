@@ -25,7 +25,7 @@ let mutate_ast (raw_options : Raw_options.t) source_file display_format seed () 
     let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options  = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
     let meta     = Compile.Of_source.extract_meta syntax in
-    let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
+    let c_unit,_ = Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file in
     let imperative_prg = Compile.Utils.to_imperative ~raise ~options ~meta c_unit source_file in
     let _, imperative_prg = Fuzzer.mutate_program ?n:seed imperative_prg in
     let syntax  = Syntax.to_string meta.syntax in
@@ -45,7 +45,7 @@ let mutate_cst (raw_options : Raw_options.t) source_file display_format seed () 
     let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options  = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
     let meta     = Compile.Of_source.extract_meta syntax in
-    let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
+    let c_unit,_ = Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file in
     match meta with
     | {syntax = CameLIGO} ->
        begin
