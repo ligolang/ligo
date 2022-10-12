@@ -180,21 +180,21 @@ let record_access_to_lr ~raise ~layout ty m_ty index =
       aux index ty last
     )
 
-let record_to_pairs ~raise compile_expression return record_t record : Mini_c.expression =
+let record_to_pairs (type exp) ~raise (compile_expression : _ -> exp) (ec_pair : exp -> exp -> exp) (e_tuple : exp list -> exp) record_t record : exp =
   let open AST.Helpers in
   let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.fields record in
   match record_t.layout with
   | L_tree -> (
     let node = Append_tree.of_list lst in
-    let aux a b : expression =
-      return @@ ec_pair a b
+    let aux a b : exp =
+      ec_pair a b
     in
     trace ~raise (fun _ -> corner_case ~loc:__LOC__ "record build") @@
     (fun ~raise:_-> Append_tree.fold_ne (compile_expression) aux node)
   )
   | L_comb -> (
       let exprs = List.map ~f:compile_expression lst in
-      return (E_tuple exprs)
+      e_tuple exprs
     )
 
 let constructor_to_lr ~raise ~(layout) ty m_ty index =

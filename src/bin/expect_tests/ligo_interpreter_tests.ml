@@ -973,12 +973,17 @@ let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
 let%expect_test _ =
 run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+  File "typed_addr_in_bytes_pack.mligo", line 14, character 17 to line 18, character 5:
+   13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
    15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
    16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
+   17 |         | None ->  ([] : operation list)
+   18 |     ) in
+   19 |     let () = Test.log(packed) in
 
-  Invalid usage of a Test primitive or type in object ligo. |}]
+  Cannot decompile typed_address (unit ,
+  unit) |}]
 
 let () = Sys_unix.chdir pwd
 
