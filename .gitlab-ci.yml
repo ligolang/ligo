@@ -306,7 +306,7 @@ deploy-handoff:
 # After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs
 build-preview-ligo-webide-front-end:
   stage: deploy
-  image: node:16.17.0-buster
+  image: node:12.20.0-buster
   tags:
     - docker
   script:
@@ -336,7 +336,7 @@ build-preview-ligo-webide-front-end:
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
 build-ligo-webide-front-end:
   stage: deploy
-  image: node:16.17.0-buster
+  image: node:12.20.0-buster
   tags:
     - docker
   script:
