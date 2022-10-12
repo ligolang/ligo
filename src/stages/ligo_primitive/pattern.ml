@@ -53,7 +53,7 @@ module Container = struct
   end
 end
 
-module type P = sig
+module type S = sig
   type 't t
   [@@deriving eq, compare, yojson, hash, iter]
 
@@ -64,7 +64,6 @@ module type P = sig
   val binders : 'a t -> 'a Binder.t list
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
-module type S = functor (C : Container.S) -> P
 
 module Make (Container : Container.S) () = struct
   type 'ty_exp list_pattern =
