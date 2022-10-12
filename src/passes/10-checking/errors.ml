@@ -623,6 +623,7 @@ let rec error_ppformat
        let ps =
          List.fold ps ~init:"" ~f:(fun s p ->
            let s' =
+             let p = Untyper.untype_pattern p in
              Desugaring.Decompiler.decompile_pattern_to_string ~syntax p
            in
            s ^ "- " ^ s' ^ "\n")
@@ -1194,6 +1195,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
     let message = `String "pattern-matching is not exhaustive." in
     let patterns =
       List.map ps ~f:(fun p ->
+        let p = Untyper.untype_pattern p in
         `String (Desugaring.Decompiler.decompile_pattern_to_string ~syntax p))
     in
     let content =

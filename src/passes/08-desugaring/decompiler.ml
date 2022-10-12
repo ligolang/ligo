@@ -83,9 +83,6 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
         return @@ I.T_for_all { x with type_ }
 
 let decompile_type_expression_option = Option.map ~f:decompile_type_expression
-let decompile_pattern_to_string pattern =
-  let p = O.Pattern.map (decompile_type_expression_option) pattern in
-  Purification.Decompiler.decompile_pattern_to_string p
 
 let rec decompile_expression : O.expression -> I.expression =
   fun e ->
@@ -141,7 +138,7 @@ let rec decompile_expression : O.expression -> I.expression =
       let const = Constructor.map self const in
       return @@ I.E_constructor const
     | O.E_matching m ->
-      let m = I.Match_expr.map self self_type_opt m in
+      let m = decompile_match_expr m in
       return @@ I.E_matching m
     | O.E_record recd ->
       let recd = Record.map self recd in
@@ -179,6 +176,44 @@ let rec decompile_expression : O.expression -> I.expression =
       let attributes = decompile_exp_attributes attr in
       return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result }
 
+and decompile_match_expr 
+  : (O.expression, O.type_expression option) O.Match_expr.t
+  -> (I.expression, I.type_expression option) I.Match_expr.t
+  = fun { matchee ; cases } ->
+    let matchee = decompile_expression matchee in
+    let cases = List.map cases ~f:(fun { pattern ; body } -> 
+      let pattern = O.Pattern.map decompile_type_expression_option pattern in
+      let pattern = decompile_pattern pattern in
+      let body = decompile_expression body in
+      I.Match_expr.{ pattern ; body }
+    ) in
+    I.Match_expr.{ matchee ; cases }
+
+and decompile_pattern 
+  : _ O.Pattern.t -> _ I.Pattern.t
+  = fun p ->
+    let self = decompile_pattern in
+    let loc = Location.get_location p in
+     match (Location.unwrap p) with
+     | P_unit -> Location.wrap ~loc I.Pattern.P_unit
+     | P_var b -> Location.wrap ~loc (I.Pattern.P_var b)
+     | P_list Cons (h, t) ->
+         let h = self h in
+         let t = self t in
+         Location.wrap ~loc (I.Pattern.P_list (Cons(h, t)))
+     | P_list List ps ->
+         let ps = List.map ~f:self ps in
+         Location.wrap ~loc (I.Pattern.P_list (List ps))
+     | P_variant (l, p) ->
+         let p = self p in
+         Location.wrap ~loc (I.Pattern.P_variant (l, p))
+     | P_tuple ps -> 
+         let ps = List.map ~f:self ps in
+         Location.wrap ~loc (I.Pattern.P_tuple ps)
+     | P_record lps ->
+         let lps = Ligo_prim.Container.Record.map self lps in
+         Location.wrap ~loc (I.Pattern.P_record lps)
+
 and decompile_declaration : O.declaration -> I.declaration = fun d ->
   let return wrap_content : I.declaration = {d with wrap_content} in
   match Location.unwrap d with
@@ -212,3 +247,8 @@ and decompile_module : O.module_ -> I.module_ = fun m ->
   List.map ~f:decompile_decl m
 
 let decompile_program = List.map ~f:decompile_declaration
+
+let decompile_pattern_to_string pattern =
+  let pattern = O.Pattern.map decompile_type_expression_option pattern in
+  let pattern = decompile_pattern pattern in
+  Purification.Decompiler.decompile_pattern_to_string pattern

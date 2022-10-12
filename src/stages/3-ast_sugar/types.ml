@@ -38,8 +38,8 @@ module Module_decl= Module_decl(Attr)
 module Accessor = Accessor(Access_path)
 module Update   = Update(Access_path)
 
-module Match_expr = Match_expr.Make(Pattern.Make)(Pattern.Container.Record)
-module Pattern = Pattern.Make(Pattern.Container.Record)
+module Pattern = Pattern.Make(Pattern.Container.Record)()
+module Match_expr = Match_expr.Make(Pattern)
 
 
 type expression_content =

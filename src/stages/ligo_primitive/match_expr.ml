@@ -1,8 +1,6 @@
 module Container = Pattern.Container
 
-module Make (Pattern : Pattern.S) (Container : Container.S) = struct
-  module Pattern = Pattern (Container)
-
+module Make (Pattern : Pattern.S) = struct
   type ('e, 't) match_case =
     { pattern : 't Pattern.t
     ; body : 'e
