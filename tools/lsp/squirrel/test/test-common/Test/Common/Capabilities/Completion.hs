@@ -262,6 +262,14 @@ caseInfos =
       ]
     , tiGraph = Includes G.empty
     }
+  , TestInfo
+    { tiContract = "module-field.mligo"
+    , tiPosition = (8, 26)
+    , tiExpected =
+      [ Completion (Just CiVariable) (NameCompletion "baz") (Just $ TypeCompletion "int") (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
   ]
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree

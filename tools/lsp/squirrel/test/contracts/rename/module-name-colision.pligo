@@ -1,0 +1,10 @@
+module Top is {
+  const some_name: string = "Don't rename me"
+}
+
+module Top is {
+  const some_name: string = "Rename me"
+}
+
+function main(const _: string; const _: string): list(operation) * string is
+  (nil, Top.some_name)

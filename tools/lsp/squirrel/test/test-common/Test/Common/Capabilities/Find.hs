@@ -511,6 +511,12 @@ invariants =
       , interval 15 14 18, interval 19 23 27, interval 19 31 35 -- interval 19 42 46
       ]
     }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "nested-modules.jsligo"
+    , driDesc = "Modules, Cz.nested resolves in A.B.C.nested"
+    , driDef = Just (interval 4 18 24)
+    , driRefs = [interval 15 20 26]
+    }
   ]
 
 findDefinitionAndGoToReferencesCorrespondence
