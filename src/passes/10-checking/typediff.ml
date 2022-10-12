@@ -19,6 +19,8 @@ module TyExprDiffComparable = struct
   let compare = compare_type_expression
 end
 
+module D = Diffing (* Try to see if module Diffing is found *)
+
 module Diff = Simple_diff.Make(TyExprDiffComparable)
 
 type t = Diff.diff list

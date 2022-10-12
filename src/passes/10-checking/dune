@@ -12,6 +12,7 @@
   main_warnings
   desugaring
   syntax_types
-  simple-diff)
+  simple-diff
+  ocaml-compiler-libs)
  (preprocess
   (pps ppx_poly_constructor ppx_compare ppx_let ppx_here ppx_hash)))
