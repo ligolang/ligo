@@ -79,3 +79,4 @@ const main21 =
       storage]): return_ => 
     match(action, {Action_A: n => entry_A([n, store]),
      Action_B: s => entry_B([s, store])});
+

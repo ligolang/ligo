@@ -93,8 +93,8 @@ let rec print cst = print_declarations cst.decl
 (* DECLARATIONS (top-level) *)
 
 and print_declarations (node : declarations) =
-  let declarations = Utils.nseq_to_list node in
-  List.filter_map ~f:print_declaration declarations
+    Utils.nseq_to_list node
+  |> List.map ~f:print_declaration
   |> separate_map (hardline ^^ hardline) group
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
@@ -102,19 +102,18 @@ and print_declarations (node : declarations) =
 
 and print_declaration = function
   D_Attr      d -> print_D_Attr d
-| D_Const     d -> Some (print_D_Const d)
-| D_Directive _ -> None
-| D_Fun       d -> Some (print_D_Fun d)
-| D_Module    d -> Some (print_D_Module d)
-| D_Type      d -> Some (print_D_Type d)
+| D_Const     d -> print_D_Const d 
+| D_Directive d -> string (Directive.to_lexeme d).Region.value
+| D_Fun       d -> print_D_Fun d
+| D_Module    d -> print_D_Module d
+| D_Type      d -> print_D_Type d
 
 (* Attributed declaration *)
 
 and print_D_Attr (node : attribute * declaration) =
   let attributes, declaration = unroll_D_Attr node in
-  match print_declaration declaration with
-    Some thread -> Some (print_attributes thread attributes)
-  | None        -> None
+  let thread = print_declaration declaration
+  in print_attributes thread attributes
 
 and print_attribute (node : Attr.t reg) =
   let key, val_opt = node.value in
@@ -455,24 +454,23 @@ and print_in_block (node : block reg) =
 
 and print_statements (node : statements) =
   let statements = Utils.nsepseq_to_list node in
-  let sep        = string ";" ^^ hardline ^^ hardline
-  in List.filter_map ~f:print_statement statements
-     |> separate_map sep group
+  let sep        = string ";"
+  in List.map ~f:(fun s -> print_statement s ^^ sep) statements
+     |> separate_map (hardline ^^ hardline) group
 
 and print_statement (node : statement) =
   match node with
-    S_Attr    s -> print_S_Attr s
-  | S_Decl    s -> print_S_Decl s
-  | S_Instr   s -> Some (print_S_Instr   s)
-  | S_VarDecl s -> Some (print_S_VarDecl s)
+    S_Attr    s -> print_S_Attr    s
+  | S_Decl    s -> print_S_Decl    s
+  | S_Instr   s -> print_S_Instr   s
+  | S_VarDecl s -> print_S_VarDecl s
 
 (* Attributed declarations *)
 
 and print_S_Attr (node : attribute * statement) =
   let attributes, statement = unroll_S_Attr node in
-  match print_statement statement with
-    Some thread -> Some (print_attributes thread attributes)
-  | None        -> None
+  let thread = print_statement statement
+  in print_attributes thread attributes
 
 (* Declaration as a statement *)
 

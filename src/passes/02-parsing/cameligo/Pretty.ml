@@ -16,18 +16,18 @@ let pp_par printer {value; _} =
 (* The CST *)
 
 let rec print cst =
-  let decl = Utils.nseq_to_list cst.decl in
-  let decl = List.filter_map ~f:pp_declaration decl
-  in separate_map (hardline ^^ hardline) group decl
+    Utils.nseq_to_list cst.decl
+  |> List.map ~f:pp_declaration
+  |> separate_map hardline group
 
 (* Declarations *)
 
 and pp_declaration = function
-  Let         decl -> Some (pp_let_decl     decl)
-| TypeDecl    decl -> Some (pp_type_decl    decl)
-| ModuleDecl  decl -> Some (pp_module_decl  decl)
-| ModuleAlias decl -> Some (pp_module_alias decl)
-| Directive      _ -> None
+  Let         decl -> pp_let_decl     decl ^^ hardline
+| TypeDecl    decl -> pp_type_decl    decl ^^ hardline
+| ModuleDecl  decl -> pp_module_decl  decl ^^ hardline
+| ModuleAlias decl -> pp_module_alias decl ^^ hardline
+| Directive   dir  -> string (Directive.to_lexeme dir).Region.value
 
 (* Variables *)
 

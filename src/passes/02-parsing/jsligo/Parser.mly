@@ -204,6 +204,9 @@ toplevel_stmts:
 | stmt_or_namespace ";"? {
     TopLevel ($1, $2), []
   }
+| "<directive>" {
+    Directive $1, []
+  }
 | "<directive>" toplevel_stmts {
     Utils.nseq_cons (Directive $1) $2 }
 
@@ -302,10 +305,10 @@ expr_stmt:
 | ternary_expr                 { $1 }
 
 ternary_expr:
-| as_expr_level "?" expr_stmt ":" expr_stmt {   
+| as_expr_level "?" expr_stmt ":" expr_stmt {
   let start = expr_to_region $1 in
   let stop  = expr_to_region $5 in
-  ETernary { 
+  ETernary {
     value = {
       condition = $1;
       qmark = $2;
@@ -316,7 +319,7 @@ ternary_expr:
     region = cover start stop
   }
 }
-  
+
 | as_expr_level               { $1 }
 
 as_expr_level:
@@ -787,8 +790,8 @@ core_type:
 | "_"                   { TVar    {value="_"; region=$1#region} }
 | type_name             { TVar    $1 }
 | module_access_t       { TModA   $1 }
-| nsepseq(object_type, "|") { 
-    match $1 with 
+| nsepseq(object_type, "|") {
+    match $1 with
       (obj, []) -> TObject obj
     | _ as u    -> TDisc u
   }
@@ -880,10 +883,10 @@ import_stmt:
     in {region; value} }
 | "import" "*" "as" module_name "from" "<string>" {
     let kwd_import = $1 in
-    let times = $2 in 
+    let times = $2 in
     let kwd_as = $3 in
     let alias   = $4 in
-    let kwd_from = $5 in 
+    let kwd_from = $5 in
     let module_path = unwrap $6 in
     let region = cover kwd_import#region module_path.region in
     let value = Import_all_as {
@@ -894,15 +897,15 @@ import_stmt:
       kwd_from;
       module_path
     }
-    in 
+    in
     {region; value}
   }
 | "import" braces(nsepseq(field_name, ",")) "from" "<string>" {
-  let kwd_import  = $1 in 
+  let kwd_import  = $1 in
 
-  let imported: (field_name, comma) Utils.nsepseq braces reg   = $2 in 
+  let imported: (field_name, comma) Utils.nsepseq braces reg   = $2 in
 
-  let kwd_from    = $3 in 
+  let kwd_from    = $3 in
   let module_path = unwrap $4 in
   let region = cover kwd_import#region module_path.region in
   let value = Import_selected {
@@ -911,7 +914,7 @@ import_stmt:
     kwd_from;
     module_path
   }
-  in 
+  in
   {region; value}
 }
 
