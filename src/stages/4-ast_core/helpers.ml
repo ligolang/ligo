@@ -56,31 +56,3 @@ module Free_type_variables = struct
   let type_expression : Type_var.t list -> type_expression -> Type_var.t list = fun type_env t ->
     VarSet.fold (fun v r -> v :: r) (map_type_expression type_env t) []
 end
-
-module Conv = struct
-   module O = Types
-   module I = Ast_sugar
-   let rec i_to_o (pl : _ I.Pattern.t) : _ O.Pattern.t =
-     let loc = Location.get_location pl in
-     match (Location.unwrap pl) with
-     | P_unit -> Location.wrap ~loc O.Pattern.P_unit
-     | P_var b -> Location.wrap ~loc (O.Pattern.P_var b)
-     | P_list Cons (h, t) ->
-         let h = i_to_o h in
-         let t = i_to_o t in
-         Location.wrap ~loc (O.Pattern.P_list (Cons(h, t)))
-     | P_list List ps ->
-         let ps = List.map ~f:i_to_o ps in
-         Location.wrap ~loc (O.Pattern.P_list (List ps))
-     | P_variant (l, p) ->
-         let p = i_to_o p in
-         Location.wrap ~loc (O.Pattern.P_variant (l, p))
-     | P_tuple ps -> 
-         let ps = List.map ~f:i_to_o ps in
-         Location.wrap ~loc (O.Pattern.P_tuple ps)
-     | P_record lps ->
-         let lps = Ligo_prim.Container.Record.map i_to_o lps in
-         Location.wrap ~loc (O.Pattern.P_record lps)
- 
-     
- end
