@@ -46,8 +46,11 @@ module PP = struct
     let pp_array pp_content ppf arr =
       PP_helpers.list_sep_d pp_content ppf (Array.to_list arr)
     in
+    let pp_ty_expr_custom ppf (te : ty_expr) : unit =
+      Format.fprintf ppf "%a <hash:%d>" Ast_typed.PP.type_expression te (hash_type_expression te)
+    in
     let pp_te_array ppf (tes : ty_expr array) =
-      pp_array Ast_typed.PP.type_expression ppf tes
+      pp_array pp_ty_expr_custom ppf tes
     in
     match c with
     | Deleted tes -> (
