@@ -210,6 +210,7 @@ and compile_match_expr ~raise ~last
   = fun { matchee ; cases} ->
     let matchee = compile_expression ~raise ~last matchee in
     let aux I.Match_expr.{ pattern ; body } =
+      let pattern = I.Pattern.map (compile_type_expression_option ~raise) pattern in
       let pattern = compile_pattern ~raise pattern in
       let body = compile_expression ~raise ~last body in
       O.Match_expr.{ pattern ; body } 
@@ -218,15 +219,13 @@ and compile_match_expr ~raise ~last
     { matchee ; cases }
 
 and compile_pattern ~raise
-  : I.type_expression option I.Pattern.t -> O.type_expression option O.Pattern.t
+  : _ I.Pattern.t -> _ O.Pattern.t
   = fun p ->
     let self = compile_pattern ~raise in
     let loc = Location.get_location p in
     match (Location.unwrap p) with
     | P_unit -> Location.wrap ~loc O.Pattern.P_unit
-    | P_var b -> 
-      let b = Binder.map (compile_type_expression_option ~raise) b in
-      Location.wrap ~loc (O.Pattern.P_var b)
+    | P_var b -> Location.wrap ~loc (O.Pattern.P_var b)
     | P_list Cons (h, t) ->
       let h = self h in
       let t = self t in

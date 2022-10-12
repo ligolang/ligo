@@ -157,7 +157,8 @@ and decompile_match_expr
     let O.Match_expr.{ matchee ; cases } = m in
     let matchee = decompile_expression matchee in
     let cases = List.map cases 
-      ~f:(fun { pattern ; body } -> 
+      ~f:(fun { pattern ; body } ->
+        let pattern = O.Pattern.map decompile_type_expression_option pattern in
         let pattern = decompile_pattern pattern in
         let body = decompile_expression body in
         I.Match_expr.{ pattern ; body }
@@ -165,14 +166,12 @@ and decompile_match_expr
     { matchee ; cases }
 
 and decompile_pattern 
-  : O.type_expression option O.Pattern.t -> I.type_expression option I.Pattern.t 
+  : _ O.Pattern.t -> _ I.Pattern.t 
   = fun p ->
     let loc = Location.get_location p in
     match (Location.unwrap p) with
     | P_unit -> Location.wrap ~loc I.Pattern.P_unit
-    | P_var b -> 
-      let b = Binder.map decompile_type_expression_option b in
-      Location.wrap ~loc (I.Pattern.P_var b)
+    | P_var b -> Location.wrap ~loc (I.Pattern.P_var b)
     | P_list Cons (h, t) ->
         let h = decompile_pattern h in
         let t = decompile_pattern t in
@@ -223,6 +222,7 @@ and decompile_module : O.module_ -> I.module_ = fun m ->
 let decompile_program = List.map ~f:decompile_declaration
 
 let decompile_pattern_to_string ~syntax pattern =
+  let pattern = O.Pattern.map decompile_type_expression_option pattern in
   let pattern = decompile_pattern pattern in
   let s = match syntax with
     Some Syntax_types.JsLIGO ->

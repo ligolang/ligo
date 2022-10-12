@@ -88,15 +88,8 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
     let r' = self r in
     let e = self e in
     return (e_record_update r' (Label l) e)
-  | E_matching {matchee;cases} ->
-    let matchee = self matchee in
-    let cases = List.map cases 
-      ~f:(O.Match_expr.map_match_case 
-            untype_expression untype_type_expression_option) in
-    let cases = List.map cases 
-      ~f:(fun {pattern;body} -> 
-        let pattern = O.Helpers.Conv.o_to_i pattern in
-        I.Match_expr.{pattern;body}) in
+  | E_matching m ->
+    let I.Match_expr.{ matchee ; cases } = untype_match_expr m in 
     return (e_matching matchee cases)
   | E_let_in {let_binder;rhs;let_result; attr} ->
       let tv = self_type rhs.type_expression in
@@ -147,7 +140,43 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       self forall
     | _ ->
       failwith "Impossible case: cannot untype a type instance of a non polymorphic type"
-
+and untype_match_expr 
+  : (O.expression, O.type_expression) O.Match_expr.t 
+  -> (I.expression, I.type_expression option) I.Match_expr.t
+  = fun { matchee ; cases } ->
+    let matchee = untype_expression matchee in
+    let cases = List.map cases 
+      ~f:(fun { pattern ; body } ->
+        let pattern = O.Pattern.map untype_type_expression_option pattern in
+        let pattern = untype_pattern pattern in
+        let body = untype_expression body in
+        I.Match_expr.{ pattern ; body }
+    ) in
+    I.Match_expr.{ matchee ; cases }
+and untype_pattern 
+  : _ O.Pattern.t -> _ I.Pattern.t
+  = fun p ->
+    let self = untype_pattern in
+    let loc = Location.get_location p in
+    match (Location.unwrap p) with
+    | P_unit -> Location.wrap ~loc I.Pattern.P_unit
+    | P_var b -> Location.wrap ~loc (I.Pattern.P_var b)
+    | P_list Cons (h, t) ->
+      let h = self h in
+      let t = self t in
+      Location.wrap ~loc (I.Pattern.P_list (Cons(h, t)))
+    | P_list List ps ->
+      let ps = List.map ~f:self ps in
+      Location.wrap ~loc (I.Pattern.P_list (List ps))
+    | P_variant (l, p) ->
+      let p = self p in
+      Location.wrap ~loc (I.Pattern.P_variant (l, p))
+    | P_tuple ps -> 
+      let ps = List.map ~f:self ps in
+      Location.wrap ~loc (I.Pattern.P_tuple ps)
+    | P_record lps ->
+      let lps = Ligo_prim.Container.Record.map self lps in
+      Location.wrap ~loc (I.Pattern.P_record lps)
 and untype_module_expr : O.module_expr -> I.module_expr =
   fun module_expr ->
     let return wrap_content : I.module_expr = { module_expr with wrap_content } in
