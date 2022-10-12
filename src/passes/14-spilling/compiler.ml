@@ -278,7 +278,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_record m -> (
       let record_t = trace_option ~raise (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record_opt ae.type_expression) in
       (* Note: now returns E_tuple, not pairs, for combs *)
-      Layout.record_to_pairs ~raise self return record_t m
+      Layout.record_to_pairs ~raise self (fun e1 e2 -> return @@ ec_pair e1 e2) (fun es -> return @@ E_tuple es) record_t m
     )
   | E_accessor {struct_; path} -> (
     let ty' = compile_type ~raise (get_type struct_) in

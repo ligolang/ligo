@@ -27,8 +27,7 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
        let s = Filename.concat d contract_file in
        (match Sys.file_exists s with
         | `Yes -> s
-        | `No | `Unknown ->
-          ModRes.Helpers.resolve ~file:contract_file mod_res)
+        | `No | `Unknown -> ModRes.Helpers.resolve ~file:contract_file mod_res)
      | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
 
 
@@ -222,7 +221,7 @@ let bind_param
       in_ env
     | Mutable ->
       let@ loc = Alloc val_ in
-      let env = Env.extend env var (type_, V_location loc) in
+      let env = Env.extend env var (type_, V_Location loc) in
       let* result = in_ env in
       let@ () = Free loc in
       return result
@@ -1323,7 +1322,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
            "Storage in bootstrap contract does not match")
       @@ AST.Helpers.assert_type_expression_eq (storage_ty, storage_ty')
     in
-    return (v_address address)
+    return (v_typed_address address)
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_RANDOM, [ V_Ct (C_bool small) ] ->
     let* gen_type =
@@ -1357,7 +1356,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       @@ Ast_aggregated.get_t_typed_address expr_ty
     in
     let>> () = Add_cast (loc, x, ty) in
-    return @@ v_address x
+    return @@ v_typed_address x
   | C_TEST_CAST_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_ADD_ACCOUNT, [ V_Ct (C_string sk); V_Ct (C_key pk) ] ->
     let>> () = Add_account (loc, calltrace, sk, pk) in
@@ -1475,8 +1474,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       | C_SET_DELEGATE
       | C_CREATE_CONTRACT
       | C_OPEN_CHEST
-      | C_VIEW
-      | C_GLOBAL_CONSTANT )
+      | C_GLOBAL_CONSTANT
+      | C_VIEW )
     , _ ) -> fail @@ Errors.generic_error loc "Unbound primitive."
 
 
@@ -1544,14 +1543,6 @@ and eval_ligo ~raise ~steps ~options
     else return ()
   in
   match term.expression_content with
-  | E_type_inst _ ->
-    fail
-    @@ Errors.generic_error
-         term.location
-         "Polymorphism not supported: polymorphic expressions should be \
-          monomorphized before being interpreted. This could mean that the \
-          expression that you are trying to interpret is too generic, try \
-          adding a type annotation."
   | E_application { lamb = f; args } ->
     let* f' = eval_ligo f calltrace env in
     let* args' = eval_ligo args calltrace env in
@@ -1625,8 +1616,6 @@ and eval_ligo ~raise ~steps ~options
          ; body = result
          ; env
          }
-  | E_type_abstraction { type_binder = _; result } ->
-    eval_ligo result calltrace env
   | E_let_in
       { let_binder
       ; rhs
@@ -1825,7 +1814,7 @@ and eval_ligo ~raise ~steps ~options
   | E_assign { binder; expression } ->
     let loc =
       match Env.lookup env (Binder.get_var binder) with
-      | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
+      | Some ({ eval_term = V_Location loc; _ }, _, _) -> loc
       | _ ->
         failwith
           (Format.asprintf
@@ -1841,7 +1830,7 @@ and eval_ligo ~raise ~steps ~options
   | E_deref mut_var ->
     let loc =
       match Env.lookup env mut_var with
-      | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
+      | Some ({ eval_term = V_Location loc; _ }, _, _) -> loc
       | _ ->
         failwith
           (Format.asprintf
@@ -1863,7 +1852,7 @@ and eval_ligo ~raise ~steps ~options
         (Env.extend
            env
            (Binder.get_var let_binder)
-           (rhs.type_expression, V_location loc))
+           (rhs.type_expression, V_Location loc))
     in
     let@ () = Free loc in
     return let_result
@@ -1934,6 +1923,16 @@ and eval_ligo ~raise ~steps ~options
        in
        loop start
      | _ -> failwith (Format.asprintf "Expected int types for for loop"))
+  | E_type_abstraction { type_binder = _; result } ->
+    eval_ligo result calltrace env
+  | E_type_inst _ ->
+    fail
+    @@ Errors.generic_error
+         term.location
+         "Polymorphism not supported: polymorphic expressions should be \
+          monomorphized before being interpreted. This could mean that the \
+          expression that you are trying to interpret is too generic, try \
+          adding a type annotation."
 
 
 and try_eval ~raise ~steps ~options expr env state r =
@@ -1943,6 +1942,29 @@ and try_eval ~raise ~steps ~options expr env state r =
     (eval_ligo ~raise ~steps ~options expr [] env)
     state
     r
+
+
+let eval_expression ~raise ~steps ~options
+  : Ast_typed.program -> Ast_typed.expression -> value
+  =
+ fun prg expr ->
+  (* Compile new context *)
+  let initial_state = Execution_monad.make_state ~raise ~options in
+  let expr =
+    Ligo_compile.Of_typed.compile_expression_in_context
+      ~raise
+      ~options:options.middle_end
+      prg
+      expr
+  in
+  let expr =
+    trace ~raise Main_errors.self_ast_aggregated_tracer
+    @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
+  in
+  let value, _ =
+    try_eval ~raise ~steps ~options expr Env.empty_env initial_state None
+  in
+  value
 
 
 let eval_test ~raise ~steps ~options
@@ -1968,28 +1990,13 @@ let eval_test ~raise ~steps ~options
   in
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
-  let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
     let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
     Record.LMap.add (Label s) (Ast_typed.e_a_variable (Binder.get_var n) t) r
   in
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
-  let expr =
-    Ligo_compile.Of_typed.compile_expression_in_context
-      ~raise
-      ~options:options.middle_end
-      decl_lst
-      expr
-  in
-  let expr =
-    trace ~raise Main_errors.self_ast_aggregated_tracer
-    @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
-  in
-  let value, _ =
-    try_eval ~raise ~steps ~options expr Env.empty_env initial_state None
-  in
-  match value with
+  match eval_expression ~raise ~steps ~options decl_lst expr with
   | V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
