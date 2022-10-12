@@ -393,7 +393,7 @@ module.exports = grammar({
       prec.right(13, mkOp($, "^")),
       prec.left(12, mkOp($, choice("=", "<>", "<", "<=", ">", ">="))),
       prec.left(11, mkOp($, "&&")),
-      prec.left(10, mkOp($, choice("or", "||"))),
+      prec.left(10, mkOp($, choice("or", "||", "|>"))),
     ),
 
     tup_expr: $ => prec.right(9, seq(

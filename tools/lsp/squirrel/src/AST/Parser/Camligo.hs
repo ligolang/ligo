@@ -130,6 +130,7 @@ recognise (SomeRawTree dialect rawTree)
         ("!=", _)     -> return $ Op "!="
         ("<>", _)     -> return $ Op "<>"
         ("||", _)     -> return $ Op "||"
+        ("|>", _)     -> return $ Op "|>"
         ("&&", _)     -> return $ Op "&&"
         ("not", _)    -> return $ Op "not"
         ("lsl", _)    -> return $ Op "lsl"
