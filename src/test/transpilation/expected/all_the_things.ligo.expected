@@ -39,6 +39,7 @@ function transfer (const p : transfer; const s : storage)
   : list (operation) * storage is
 {
   var new_allowances : allowances := Big_map.empty;
+
   if Tezos.get_sender () = p.address_from
   then {
     new_allowances := s.allowances;
@@ -51,6 +52,7 @@ function transfer (const p : transfer; const s : storage)
       of [
         Some (value) -> value | None -> 0n
       ];
+
     if (authorized_value < p.value)
     then {
       failwith ("Not Enough Allowance");
@@ -63,11 +65,14 @@ function transfer (const p : transfer; const s : storage)
            s.allowances);
     };
   };
+
   var sender_balance : nat
   := case (Big_map.find_opt (p.address_from, s.tokens)) of [
       Some (value) -> value | None -> 0n
     ];
+
   var new_tokens : tokens := Big_map.empty;
+
   if (sender_balance < p.value)
   then failwith ("Not Enough Balance")
   else {
@@ -76,10 +81,12 @@ function transfer (const p : transfer; const s : storage)
         (p.address_from,
          (Some (abs (sender_balance - p.value))),
          s.tokens);
+
     var receiver_balance : nat
     := case (Big_map.find_opt (p.address_to, s.tokens)) of [
         Some (value) -> value | None -> 0n
       ];
+
     new_tokens :=
       Big_map.update
         (p.address_to,
@@ -104,7 +111,9 @@ function approve (const p : approve; const s : storage)
     of [
       Some (value) -> value | None -> 0n
     ];
+
   var new_allowances : allowances := Big_map.empty;
+
   if previous_value > 0n and p.value > 0n
   then failwith ("Unsafe Allowance Change")
   else {
@@ -129,6 +138,7 @@ function getAllowance
     of [
       Some (value) -> value | None -> 0n
     ];
+
   var op : operation
   := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op], s)
@@ -141,6 +151,7 @@ function getBalance
   := case Big_map.find_opt (p.owner, s.tokens) of [
       Some (value) -> value | None -> 0n
     ];
+
   var op : operation
   := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op], s)
@@ -150,6 +161,7 @@ function getTotalSupply
    const s : storage) : list (operation) * storage is
 {
   var total : nat := s.total_amount;
+
   var op : operation
   := Tezos.transaction (total, 0mutez, p.callback);
 } with (list [op], s)
@@ -172,6 +184,7 @@ function main (const p : key_hash) : address is
 function check (const p : unit) : int is
 {
   var result : int := 0;
+
   if amount = 100000000mutez
   then result := 42
   else result := 0;
@@ -273,7 +286,9 @@ function main (const p : parameter; var s : storage)
   : return is
 {
   var toto : option (int) := Some (0);
+
   toto := s.0 [23] ;
+
   s.0 [2]  := 444;
 } with ((nil : list (operation)), s)
 
@@ -301,7 +316,9 @@ const big_map1 : big_map (int, int)
 function mutimaps (const m : foo; var n : foo) : foo is
 {
   var bar : foo := m;
+
   bar [42]  := 0;
+
   n [42]  := get_force (42, bar);
 } with n
 
@@ -371,19 +388,23 @@ function foo (const i : int) : int is
 function foobar (const i : int) : int is
 {
   const j : int = 3;
+
   function add (const k : int) : int is i + j + k;
 } with add (42)
 
 function foobar (const i : int) : int is
 {
   const j : int = 3;
+
   const k : int = 4;
+
   function add (const l : int) : int is i + j + k + l;
 } with add (42)
 
 function toto (const i : int) : int is
 {
   function tata (const j : int) : int is i + j;
+
   function titi (const j : int) : int is i + j;
 } with tata (i) + titi (i)
 
@@ -431,16 +452,21 @@ function transfer_single
    var s : storage) : return is
 {
   var cards : cards := s.cards;
+
   var card : card
   := case cards [action.card_to_transfer]  of [
       Some (card) -> card
     | None ->
         (failwith ("transfer_single: No card.") : card)
     ];
+
   if card.card_owner =/= sender
   then failwith ("This card doesn't belong to you");
+
   card.card_owner := action.destination;
+
   cards [action.card_to_transfer]  := card;
+
   s.cards := cards;
 } with ((nil : list (operation)), s)
 
@@ -453,8 +479,10 @@ function sell_single
       Some (card) -> card
     | None -> (failwith ("sell_single: No card.") : card)
     ];
+
   if card.card_owner =/= sender
   then failwith ("This card doesn't belong to you");
+
   var card_pattern : card_pattern
   := case s.card_patterns [card.card_pattern]  of [
       Some (pattern) -> pattern
@@ -462,15 +490,24 @@ function sell_single
         (failwith ("sell_single: No card pattern.")
          : card_pattern)
     ];
+
   card_pattern.quantity := abs (card_pattern.quantity - 1n);
+
   var card_patterns : card_patterns := s.card_patterns;
+
   card_patterns [card.card_pattern]  := card_pattern;
+
   s.card_patterns := card_patterns;
+
   var cards : cards := s.cards;
+
   remove action.card_to_sell from map cards;
+
   s.cards := cards;
+
   const price : tez
   = card_pattern.coefficient * card_pattern.quantity;
+
   const receiver : contract (unit)
   = case (Tezos.get_contract_opt (Tezos.get_sender ())
           : option (contract (unit)))
@@ -480,8 +517,10 @@ function sell_single
         (failwith ("sell_single: No contract.")
          : contract (unit))
     ];
+
   const op : operation
   = Tezos.transaction (unit, price, receiver);
+
   const operations : list (operation) = list [op];
 } with (operations, s)
 
@@ -496,20 +535,30 @@ function buy_single
         (failwith ("buy_single: No card pattern.")
          : card_pattern)
     ];
+
   const price : tez
   = card_pattern.coefficient * (card_pattern.quantity + 1n);
+
   if price > amount then failwith ("Not enough money");
+
   card_pattern.quantity := card_pattern.quantity + 1n;
+
   var card_patterns : card_patterns := s.card_patterns;
+
   card_patterns [action.card_to_buy]  := card_pattern;
+
   s.card_patterns := card_patterns;
+
   var cards : cards := s.cards;
+
   cards [s.next_id]  :=
     record [
       card_owner = sender;
       card_pattern = action.card_to_buy
     ];
+
   s.cards := cards;
+
   s.next_id := s.next_id + 1n;
 } with ((nil : list (operation)), s)
 
@@ -527,6 +576,7 @@ function main (const i : int) : int is
 function main (const i : int) : int is
 {
   var result : int := 23;
+
   if i = 2 then result := 42 else result := 0;
 } with result
 
@@ -569,6 +619,7 @@ function main (const toto : unit) : int is
   var a : ppp
   := (record [x = (0, 1); y = (10, 11)],
      record [x = (100, 101); y = (110, 111)]);
+
   a.0. x. 0 := 2;
 } with a.0. x. 0
 
@@ -637,6 +688,7 @@ function main (const action : unit; const store : storage)
   : return is
 {
   const foo : storage = (M_right ("one") : storage);
+
   const bar : foobar = (M_right (1) : foobar);
 } with ((nil : list (operation)), (foo : storage))
 
@@ -674,6 +726,7 @@ function cbo (const a : address; const s : storage)
 function main (const a : bool; const b : bool) : int is
 {
   var result : int := 27;
+
   if a = b then result := 999 else result := 1;
 } with result
 
@@ -701,13 +754,17 @@ function main (const p : parameter; const s : storage)
 function foobar (var i : int) : int is
 {
   var p : parameter := Zero (42n);
+
   if i > 0
   then {
     i := i + 1;
+
     if i > 10
     then {
       i := 20;
+
       failwith ("who knows");
+
       i := 30;
     };
   }
@@ -740,8 +797,11 @@ const x : int
 function main (const i : int) : int is
 {
   var j : int := 0;
+
   var k : int := 1;
+
   j := k + i;
+
   k := i + j;
 } with k + j
 
@@ -792,32 +852,46 @@ function get_top (const h : heap) : heap_elt is
 function pop_switch (var h : heap) : heap is
 {
   const result : heap_elt = get_top (h);
+
   const s : nat = Map.size (h);
+
   const last : heap_elt
   = case h [s]  of [
       Some (e) -> e
     | None -> (failwith ("No element.") : heap_elt)
     ];
+
   remove 1n from map h;
+
   h [1n]  := last;
 } with h
 
 function pop_ (var h : heap) : nat is
 {
   const result : heap_elt = get_top (h);
+
   const s : nat = Map.size (h);
+
   var current : heap_elt
   := case h [s]  of [
       Some (e) -> e
     | None -> (failwith ("No element.") : heap_elt)
     ];
+
   const i : nat = 1n;
+
   const left : nat = 2n * i;
+
   const right : nat = left + 1n;
+
   remove 1n from map h;
+
   h [1n]  := current;
+
   var largest : nat := i;
+
   const tmp : heap_elt = get_force (s, h);
+
   if left <= s and heap_elt_lt (tmp, get_force (left, h))
   then largest := left
   else
@@ -829,13 +903,19 @@ function pop_ (var h : heap) : nat is
 function insert (var h : heap; const e : heap_elt) : heap is
 {
   var i : nat := size (h) + 1n;
+
   h [i]  := e;
+
   var largest : nat := i;
+
   var parent : nat := 0n;
+
   while largest =/= i
   {
     parent := i / 2n;
+
     largest := i;
+
     if parent >= 1n
     then {
       if heap_elt_lt
@@ -843,8 +923,11 @@ function insert (var h : heap; const e : heap_elt) : heap is
             get_force (i, h))
       then {
         largest := parent;
+
         const tmp : heap_elt = get_force (i, h);
+
         h [i]  := get_force (parent, h);
+
         h [parent]  := tmp;
       };
     };
@@ -854,29 +937,47 @@ function insert (var h : heap; const e : heap_elt) : heap is
 function pop (var h : heap) : heap * heap_elt * nat is
 {
   const result : heap_elt = get_top (h);
+
   var s : nat := size (h);
+
   const last : heap_elt = get_force (s, h);
+
   remove s from map h;
+
   h [1n]  := last;
+
   s := size (h);
+
   var i : nat := 0n;
+
   var largest : nat := 1n;
+
   var left : nat := 0n;
+
   var right : nat := 0n;
+
   var c : nat := 0n;
+
   while largest =/= i
   {
     c := c + 1n;
+
     i := largest;
+
     left := 2n * i;
+
     right := left + 1n;
+
     if left <= s
     then {
       if heap_elt_lt (get_force (left, h), get_force (i, h))
       then {
         largest := left;
+
         const tmp : heap_elt = get_force (i, h);
+
         h [i]  := get_force (left, h);
+
         h [left]  := tmp;
       };
     }
@@ -888,8 +989,11 @@ function pop (var h : heap) : heap * heap_elt * nat is
               get_force (i, h))
         then {
           largest := right;
+
           const tmp : heap_elt = get_force (i, h);
+
           h [i]  := get_force (right, h);
+
           h [left]  := tmp;
         };
       };
@@ -899,6 +1003,7 @@ function pop (var h : heap) : heap * heap_elt * nat is
 function foobar (const i : int) : int is
 {
   function foo (const i : int) : int is i;
+
   function bar (const f : int -> int) : int is f (i);
 } with bar (foo)
 
@@ -931,7 +1036,9 @@ function higher3
 function foobar5 (const i : int) : int is
 {
   const a : int = 0;
+
   function foo (const i : int) : int is a + i;
+
   function goo (const i : int) : int is foo (i);
 } with higher3 (i, foo, goo)
 
@@ -979,22 +1086,29 @@ function buy
 {
   if amount =/= storage.name_price
   then failwith ("Incorrect amount paid.");
+
   const profile : bytes = parameter.profile;
+
   const initial_controller : option (address)
   = parameter.initial_controller;
+
   var identities : big_map (id, id_details)
   := storage.identities;
+
   const new_id : int = storage.next_id;
+
   const controller : address
   = case initial_controller of [
       Some (addr) -> addr | None -> sender
     ];
+
   const new_id_details : id_details
   = record [
       owner = sender;
       controller = controller;
       profile = profile
     ];
+
   identities [new_id]  := new_id_details;
 } with
     ((nil : list (operation)),
@@ -1012,19 +1126,26 @@ function update_owner
   then {
     failwith ("Updating owner doesn't cost anything.");
   };
+
   const id : int = parameter.id;
+
   const new_owner : address = parameter.new_owner;
+
   var identities : big_map (id, id_details)
   := storage.identities;
+
   var id_details : id_details
   := case identities [id]  of [
       Some (id_details) -> id_details
     | None ->
         (failwith ("This ID does not exist.") : id_details)
     ];
+
   if sender =/= id_details.owner
   then failwith ("You are not the owner of this ID.");
+
   id_details.owner := new_owner;
+
   identities [id]  := id_details;
 } with
     ((nil : list (operation)),
@@ -1036,38 +1157,51 @@ function update_details
 {
   if amount =/= 0mutez
   then failwith ("Updating details doesn't cost anything.");
+
   const id : int = parameter.id;
+
   const new_profile : option (bytes) = parameter.new_profile;
+
   const new_controller : option (address)
   = parameter.new_controller;
+
   var identities : big_map (id, id_details)
   := storage.identities;
+
   var id_details : id_details
   := case identities [id]  of [
       Some (id_details) -> id_details
     | None ->
         (failwith ("This ID does not exist.") : id_details)
     ];
+
   if (sender = id_details.controller)
      or (sender = id_details.owner)
   then skip
   else
     failwith
       ("You are not the owner or controller of this ID.");
+
   const owner : address = id_details.owner;
+
   const profile : bytes
   = case new_profile of [
       None -> id_details.profile
     | Some (new_profile) -> new_profile
     ];
+
   const controller : address
   = case new_controller of [
       None -> id_details.controller
     | Some (new_controller) -> new_controller
     ];
+
   id_details.owner := owner;
+
   id_details.controller := controller;
+
   id_details.profile := profile;
+
   identities [id]  := id_details;
 } with
     ((nil : list (operation)),
@@ -1150,10 +1284,12 @@ function fold_op (const s : list (int)) : int is
 function iter_op (const s : list (int)) : int is
 {
   var r : int := 0;
+
   function aggregate (const i : int) : unit is
   {
     skip;
   } with unit;
+
   List.iter (aggregate, s);
 } with r
 
@@ -1165,13 +1301,16 @@ function map_op (const s : list (int)) : list (int) is
 function local_type (var u : unit) : int is
 {
   type toto is int;
+
   var titi : toto := 1;
+
   titi := titi + 2;
 } with titi
 
 function counter (var n : nat) : nat is
 {
   var i : nat := 0n;
+
   while i < n
   {
     i := i + 1n;
@@ -1181,10 +1320,13 @@ function counter (var n : nat) : nat is
 function while_sum (var n : nat) : nat is
 {
   var i : nat := 0n;
+
   var r : nat := 0n;
+
   while i < n
   {
     i := i + 1n;
+
     r := r + i;
   };
 } with r
@@ -1192,6 +1334,7 @@ function while_sum (var n : nat) : nat is
 function for_sum (var n : nat) : int is
 {
   var acc : int := 0;
+
   for
     i := 1 to int (n)
     {
@@ -1202,6 +1345,7 @@ function for_sum (var n : nat) : int is
 function for_sum_step (var n : nat) : int is
 {
   var acc : int := 0;
+
   for
     i := 1 to int (2n * n) step 2
     {
@@ -1213,11 +1357,15 @@ function for_collection_list (var nee : unit)
   : (int * string) is
 {
   var acc : int := 0;
+
   var st : string := "to";
+
   var mylist : list (int) := list [1; 1; 1];
+
   for x in list mylist
   {
     acc := acc + x;
+
     st := st ^ "to";
   };
 } with (acc, st)
@@ -1226,11 +1374,15 @@ function for_collection_set (var nee : unit)
   : int * string is
 {
   var acc : int := 0;
+
   var st : string := "to";
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
   {
     acc := acc + x;
+
     st := st ^ "to";
   };
 } with (acc, st)
@@ -1239,9 +1391,13 @@ function for_collection_if_and_local_var (var nee : unit)
   : int is
 {
   var acc : int := 0;
+
   const theone : int = 1;
+
   const thetwo : int = 2;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
   {
     if x = theone
@@ -1257,8 +1413,11 @@ function for_collection_rhs_capture (var nee : unit)
   : int is
 {
   var acc : int := 0;
+
   const mybigint : int = 1000;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
   {
     if x = 1 then acc := acc + mybigint else acc := acc + 10;
@@ -1268,7 +1427,9 @@ function for_collection_rhs_capture (var nee : unit)
 function for_collection_proc_call (var nee : unit) : int is
 {
   var acc : int := 0;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
   {
     if x = 1
@@ -1281,7 +1442,9 @@ function for_collection_comp_with_acc (var nee : unit)
   : int is
 {
   var myint : int := 0;
+
   var mylist : list (int) := list [1; 10; 15];
+
   for x in list mylist
   {
     if x < myint then skip else myint := myint + 10;
@@ -1292,8 +1455,11 @@ function for_collection_with_patches (var nee : unit)
   : map (string, int) is
 {
   var myint : int := 12;
+
   var mylist : list (string) := list ["I"; "am"; "foo"];
+
   var mymap : map (string, int) := map [];
+
   for x in list mylist
   {
     patch mymap with map [x -> myint];
@@ -1303,7 +1469,9 @@ function for_collection_with_patches (var nee : unit)
 function for_collection_empty (var nee : unit) : int is
 {
   var acc : int := 0;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
   {
     skip;
@@ -1314,12 +1482,16 @@ function for_collection_map_kv (var nee : unit)
   : int * string is
 {
   var acc : int := 0;
+
   var st : string := "";
+
   var mymap : map (string, int)
   := map ["1" -> 1; "2" -> 2; "3" -> 3];
+
   for k -> v in map mymap
   {
     acc := acc + v;
+
     st := st ^ k;
   };
 } with (acc, st)
@@ -1328,18 +1500,26 @@ function nested_for_collection (var nee : unit)
   : int * string is
 {
   var myint : int := 0;
+
   var mystoo : string := "";
+
   var mylist : list (int) := list [1; 2; 3];
+
   var mymap : map (string, string)
   := map [" one" -> ","; "two" -> " "];
+
   for i in list mylist
   {
     myint := myint + i;
+
     var myset : set (string) := set ["1"; "2"; "3"];
+
     for st in set myset
     {
       myint := myint + i;
+
       mystoo := mystoo ^ st;
+
       for k -> v in map mymap
       {
         mystoo := mystoo ^ k ^ v;
@@ -1352,18 +1532,26 @@ function nested_for_collection_local_var (var nee : unit)
   : int * string is
 {
   var myint : int := 0;
+
   var myst : string := "";
+
   var mylist : list (int) := list [1; 2; 3];
+
   for i in list mylist
   {
     var myst_loc : string := "";
+
     myint := myint + i;
+
     var myset : set (string) := set ["1"; "2"; "3"];
+
     for st in set myset
     {
       myint := myint + i;
+
       myst_loc := myst_loc ^ st;
     };
+
     myst := myst_loc ^ myst;
   };
 } with (myint, myst)
@@ -1380,14 +1568,18 @@ function inner_capture_in_conditional_block (var nee : unit)
   : bool * int is
 {
   var count : int := 1;
+
   var ret : bool := False;
+
   var mylist : list (int) := list [1; 2; 3];
+
   for it1 in list mylist
   {
     for it2 in list mylist
     {
       if count = it2 then ret := not (ret);
     };
+
     count := count + 1;
   };
 } with (ret, count)
@@ -1395,10 +1587,13 @@ function inner_capture_in_conditional_block (var nee : unit)
 function shadowing_in_body (var nee : unit) : string is
 {
   var st : string := "";
+
   var list1 : list (string) := list ["to"; "to"];
+
   for x in list list1
   {
     const x : string = "ta";
+
     st := st ^ x;
   };
 } with st
@@ -1407,11 +1602,15 @@ function shadowing_assigned_in_body (var nee : unit)
   : string is
 {
   var st : string := "";
+
   var list1 : list (string) := list ["to"; "to"];
+
   for x in list list1
   {
     st := st ^ x;
+
     var st : string := "ta";
+
     st := st ^ x;
   };
 } with st
@@ -1479,13 +1678,16 @@ function fold_op (const m : foobar) : int is
 function deep_op (var m : foobar) : foobar is
 {
   var coco : int * foobar := (0, m);
+
   remove 42 from map coco.1;
+
   coco.1 [32]  := 16;
 } with coco.1
 
 function match_bool (const i : int) : int is
 {
   var result : int := 23;
+
   case i = 2 of [
     True -> result := 42 | False -> result := 0
   ];
@@ -1494,6 +1696,7 @@ function match_bool (const i : int) : int is
 function match_option (const o : option (int)) : int is
 {
   var result : int := 23;
+
   case o of [
     None -> skip | Some (s) -> result := s
   ];
@@ -1637,11 +1840,16 @@ function send (const param : send_pt; var s : storage)
        (Tezos.get_sender (),
         s.authorized_addresses)
   then failwith ("Unauthorized address");
+
   var message : message := param;
+
   const packed_msg : bytes = Bytes.pack (message);
+
   if Bytes.length (packed_msg) > s.max_message_size
   then failwith ("Message size exceed maximum limit");
+
   var new_store : addr_set := set [];
+
   case map_get (packed_msg, s.message_store) of [
     Some (voters) ->
       {
@@ -1652,6 +1860,7 @@ function send (const param : send_pt; var s : storage)
               (Tezos.get_sender (),
                s.proposal_counters)
             + 1n;
+
         new_store := Set.add (Tezos.get_sender (), voters);
       }
   | None ->
@@ -1661,21 +1870,29 @@ function send (const param : send_pt; var s : storage)
             (Tezos.get_sender (),
              s.proposal_counters)
           + 1n;
+
         new_store := set [Tezos.get_sender ()];
       }
   ];
+
   var sender_proposal_counter : nat
   := get_force (Tezos.get_sender (), s.proposal_counters);
+
   if sender_proposal_counter > s.max_proposal
   then failwith ("Maximum number of proposal reached");
+
   var ret_ops : list (operation) := nil;
+
   if Set.cardinal (new_store) >= s.threshold
   then {
     remove packed_msg from map s.message_store;
+
     ret_ops := message (s.state_hash);
+
     s.state_hash :=
       Crypto.sha256
         (Bytes.concat (s.state_hash, packed_msg));
+
     for addr -> ctr in map s.proposal_counters
     {
       if Set.mem (addr, new_store)
@@ -1690,12 +1907,15 @@ function withdraw
    var s : storage) : return is
 {
   var message : message := param;
+
   const packed_msg : bytes = Bytes.pack (message);
+
   case s.message_store [packed_msg]  of [
     Some (voters) ->
       {
         const new_set : addr_set
         = Set.remove (Tezos.get_sender (), voters);
+
         if Set.cardinal (voters) =/= Set.cardinal (new_set)
         then
           s.proposal_counters [Tezos.get_sender ()]  :=
@@ -1704,6 +1924,7 @@ function withdraw
                  (Tezos.get_sender (),
                   s.proposal_counters)
                - 1n);
+
         if Set.cardinal (new_set) = 0n
         then remove packed_msg from map s.message_store
         else s.message_store [packed_msg]  := new_set;
@@ -1759,6 +1980,7 @@ function check_message
    var s : storage) : return is
 {
   var message : message := param.message;
+
   if param.counter =/= s.counter
   then failwith ("Counters does not match")
   else {
@@ -1766,8 +1988,11 @@ function check_message
     = Bytes.pack
         ((message, param.counter, s.id,
           Tezos.get_chain_id ()));
+
     var valid : nat := 0n;
+
     var keys : authorized_keys := s.auth;
+
     for pkh_sig in list param.signatures
     {
       case keys of [
@@ -1775,6 +2000,7 @@ function check_message
       | key # tl ->
           {
             keys := tl;
+
             if pkh_sig.0 = Crypto.hash_key (key)
             then
               if Crypto.check
@@ -1786,6 +2012,7 @@ function check_message
           }
       ];
     };
+
     if valid < s.threshold
     then failwith ("Not enough signatures passed the check")
     else s.counter := s.counter + 1n;
@@ -1807,7 +2034,9 @@ const n : foobar = None
 function assign (var m : int) : foobar is
 {
   var coco : foobar := None;
+
   coco := Some (m);
+
   coco := (None : foobar);
 } with coco
 
@@ -1846,6 +2075,7 @@ function modify (var r : foobar) : foobar is
 function modify_abc (var r : abc) : abc is
 {
   const c : int = 42;
+
   r := r with record [b = 2048; c = c];
 } with r
 
@@ -1906,6 +2136,7 @@ function pass_message
    const s : storage_t) : contract_return_t is
 {
   if sender =/= s then failwith ("Unauthorized sender");
+
   var message : pass_message_pt := param;
 } with (param (unit), s)
 
@@ -1944,6 +2175,7 @@ function main (const p : parameter; const s : storage)
 {
   const self_contract : contract (int)
   = Tezos.self ("%toto");
+
   const op : operation
   = Tezos.transaction (2, 300000000mutez, self_contract);
 } with (list [op], s)
@@ -1959,6 +2191,7 @@ function main (const p : parameter; const s : storage)
 {
   const self_contract : contract (int)
   = Tezos.self ("%default");
+
   const op : operation
   = Tezos.transaction (2, 300000000mutez, self_contract);
 } with (list [op], s)
@@ -1966,10 +2199,12 @@ function main (const p : parameter; const s : storage)
 function iter_op (const s : set (int)) : int is
 {
   var r : int := 0;
+
   function aggregate (const i : int) : unit is
   {
     skip;
   } with unit;
+
   set_iter (aggregate, s);
 } with r
 
@@ -2018,6 +2253,7 @@ function mem_op (const s : set (string)) : bool is
 function main (const p : key_hash) : list (operation) is
 {
   const unused : operation = set_delegate (Some (p));
+
   const dummy : list (operation) = nil;
 } with dummy
 
@@ -2035,10 +2271,15 @@ type mpi is map (string, int)
 function main (const toto : tpi) : int is
 {
   var a : tpi := toto;
+
   var b : rpi := record [x = 0; y = 1];
+
   var m : mpi := map ["y" -> 1];
+
   a.0 := 2;
+
   b.x := a.0;
+
   m ["x"]  := b.x;
 } with
     case m ["x"]  of [
@@ -2111,7 +2352,9 @@ function call (const p : call_pt; const s : storage_t)
 {
   if s >= now
   then failwith ("Contract is still time locked");
+
   const message : message_t = p;
+
   const ret_ops : list (operation) = message (unit);
 } with (ret_ops, s)
 

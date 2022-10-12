@@ -30,9 +30,9 @@ PASS,missing_then_kw.ligo,2,13,7,89,0
 PASS,missing_vertical_bar.ligo,2,22,14,150,1
 PASS,missing_with_kw_in_block_expr.ligo,0,0,0,181,0
 PASS,typo_in_case_kw.ligo,4,32,24,150,4
-PASS,typo_in_function_kw.ligo,3,58,16,181,1
+PASS,typo_in_function_kw.ligo,4,58,16,181,1
 PASS,typo_in_with_kw_in_record_update.ligo,2,24,14,150,0
-PASS,unfinished_code00.ligo,1,6,6,391,0
+PASS,unfinished_code00.ligo,2,6,6,391,0
 PASS,unfinished_code01.ligo,2,2,2,389,0
 PASS,unfinished_code02.ligo,2,11,9,389,0
 PASS,unfinished_code03.ligo,3,8,6,389,0
@@ -45,5 +45,5 @@ PASS,unfinished_code09.ligo,2,2,2,103,0
 PASS,unfinished_code10.ligo,5,29,29,391,0
 PASS,unfinished_code11.ligo,2,5,5,389,0
 PASS,unfinished_code12.ligo,2,7,7,181,0
-PASS,unfinished_code13.ligo,40,346,24,181,2
+PASS,unfinished_code13.ligo,38,346,24,181,2
 FAIL,unreadable_symbol.ligo,-1,-1,-1,-1,-1

@@ -456,7 +456,7 @@ and print_statements (node : statements) =
   let statements = Utils.nsepseq_to_list node in
   let sep        = string ";"
   in List.map ~f:(fun s -> print_statement s ^^ sep) statements
-     |> separate_map hardline group
+     |> separate_map (hardline ^^ hardline) group
 
 and print_statement (node : statement) =
   match node with
