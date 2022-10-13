@@ -656,7 +656,7 @@ let print_ast =
   Command.basic ~summary ~readme @@
   (f <$> source_file <*> syntax <*> display_format)
 
-
+(* 
 let print_ast_sugar =
   let f source_file syntax display_format self_pass () =
     let raw_options = Raw_options.make ~syntax ~self_pass () in
@@ -667,7 +667,7 @@ let print_ast_sugar =
   let readme () = "This sub-command prints the source file in the AST \
                   stage, after desugaring step is applied." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format <*> self_pass)
+  (f <$> source_file <*> syntax <*> display_format <*> self_pass) *)
 
 let print_ast_core =
   let f source_file syntax display_format self_pass project_root () =
@@ -729,7 +729,7 @@ let print_group =
     "dependency-graph", print_graph;
     "cst"             , print_cst;
     "ast-imperative"  , print_ast;
-    "ast-sugar"       , print_ast_sugar;
+    (* "ast-sugar"       , print_ast_sugar; *)
     "ast-core"        , print_ast_core;
     "ast-typed"       , print_ast_typed;
     "ast-aggregated"  , print_ast_aggregated;

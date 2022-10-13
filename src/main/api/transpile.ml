@@ -11,8 +11,7 @@ let contract source_file new_syntax syntax display_format () =
       let meta       = Compile.Of_source.extract_meta syntax in
       let c_unit,_   = Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file in
       let core       = Compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
-      let sugar      = Decompile.Of_core.decompile core in
-      let imperative = Decompile.Of_sugar.decompile sugar in
+      let imperative = Decompile.Of_core.decompile core in
       let buffer     =
         Decompile.Of_imperative.decompile ~raise imperative (Syntax_name new_syntax) in
       buffer
@@ -26,11 +25,9 @@ let expression expression new_syntax syntax display_format () =
       let meta          = Compile.Of_source.make_meta syntax in
       let c_unit_expr,_ = Compile.Of_source.preprocess_string ~raise ~options:options.frontend ~meta expression in
       let imperative    = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_expr in
-      let sugar         = Compile.Of_imperative.compile_expression ~raise imperative in
-      let core          = Compile.Of_sugar.compile_expression ~raise sugar in
+      let core          = Compile.Of_imperative.compile_expression ~raise imperative in
       (* Decompiling chain *)
       let n_syntax      = Syntax.of_string_opt ~raise (Syntax_name new_syntax) None in
-      let sugar         = Decompile.Of_core.decompile_expression core in
-      let imperative    = Decompile.Of_sugar.decompile_expression sugar in
+      let imperative    = Decompile.Of_core.decompile_expression core in
       let buffer        = Decompile.Of_imperative.decompile_expression imperative n_syntax in
       buffer

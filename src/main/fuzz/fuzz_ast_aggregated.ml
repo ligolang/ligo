@@ -50,8 +50,7 @@ let expression_to_string ~syntax aggregated =
   let aggregated   = Reduplicate_binders.reduplicate ~raise aggregated in
   let typed        = Aggregation.decompile ~raise aggregated in
   let core         = Decompile.Of_typed.decompile_expression typed in
-  let sugar        = Decompile.Of_core.decompile_expression core in
-  let imperative   = Decompile.Of_sugar.decompile_expression sugar in
+  let imperative   = Decompile.Of_core.decompile_expression core in
   let buffer       = Decompile.Of_imperative.decompile_expression imperative syntax in
   Buffer.contents buffer
 

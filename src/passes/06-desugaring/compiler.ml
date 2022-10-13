@@ -457,6 +457,4 @@ and compile_module ~raise : I.module_ -> O.module_ =
 
 
 let compile_program ~raise : I.program -> O.program =
- fun p ->
-  Simple_utils.Trace.collect ~raise
-  @@ List.map ~f:(fun a ~raise -> compile_declaration ~raise a) p
+ fun p -> List.map ~f:(fun decl -> compile_declaration ~raise decl) p
