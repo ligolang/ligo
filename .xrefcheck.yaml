@@ -33,10 +33,12 @@ verification:
     - .gitlab/merge_request_templates/
     - .gitlab/issue_templates/
 
+    # For some reason glob patterns don't work :(
     - static.esy.esy.lock/overrides/5a340488c657db45d2ed088d31b1c36d/Readme.md
     - static.esy.esy.lock/overrides/c96ee6805a1ac070e5ef89cd99c2f722/Readme.md
     - src/README.md
-    - ./vendors/tezos-ligo/*
+    - src/coq/README.md
+    - vendors/tezos-ligo/src/lib_webassembly/bin/test/README.md
 
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
