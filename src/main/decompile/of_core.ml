@@ -1,8 +1,7 @@
 open Ast_core
 open Desugaring
 
-let decompile (m : program) : Ast_sugar.program =
-  decompile_program m
+let decompile (m : program) : Ast_imperative.program = decompile_program m
 
-let decompile_expression (e : expression) : Ast_sugar.expression  =
+let decompile_expression (e : expression) : Ast_imperative.expression =
   decompile_expression e
