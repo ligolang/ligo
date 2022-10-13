@@ -462,30 +462,19 @@ class MultiStepInput<S> {
 					...(buttons || [])
 				];
 				input.ignoreFocusOut = ignoreFocusOut;
-				let validating = validate(value);
 
-				interface LastValidationResult {
-					value: string,
-					result: boolean
-				}
+				const validationTrigger = new class extends ValidationTrigger<string>{
+					validate = validate
 
-				let lastValidationResult: Maybe<LastValidationResult> = undefined;
+					isObviouslyInvalid(text): boolean {
+						return text.trim() === '';
+					}
 
-				let emitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
-				emitter.event(async text => {
-					const current = validate(text);
-					validating = current;
-					const validationMessage = await current;
-					if (current === validating) {
-						if (text.trim() === '') {
-							input.validationMessage = undefined;
-							return;
-						}
-
-						lastValidationResult = { value: text, result: !validationMessage };
+					onValidationResult(validationMessage: string | undefined): void {
 						input.validationMessage = validationMessage;
 					}
-				});
+				}
+				validationTrigger.fire(value);
 
 				disposables.push(
 					input.onDidTriggerButton(item => {
@@ -500,41 +489,114 @@ class MultiStepInput<S> {
 						input.enabled = false;
 						input.busy = true;
 
-						if (isDefined(lastValidationResult)) {
-							if (lastValidationResult.value === value && lastValidationResult.result) {
-								resolve(value);
-							}
-						} else {
-							const result: boolean = !(await validate(value));
-							lastValidationResult = { value, result };
-							if (result) {
-								resolve(value);
-							}
+						if (await validationTrigger.checkResult(value)) {
+							resolve(value)
 						}
 
 						input.enabled = true;
 						input.busy = false;
 					}),
-					input.onDidChangeValue(async text => {
-						emitter.fire(text);
-					}),
+					input.onDidChangeValue(value => validationTrigger.fire(value)),
 					input.onDidHide(() => {
 						(async () => {
 							reject(InputFlowAction.cancel);
 						})()
 							.catch(reject);
 					}),
-					emitter
+					validationTrigger
 				);
 				if (this.current) {
 					this.current.dispose();
 				}
 				this.current = input;
-				emitter.fire(value);
+				validationTrigger.fire(value);
 				this.current.show();
 			});
 		} finally {
 			disposables.forEach(d => d.dispose());
 		}
+	}
+}
+
+// This class provides functionality close to EventEmitter but specialized to
+// events validation.
+//
+// Validation is a user-defined asynchronous action, and this class helps
+// to work with such validation in a safe manner, avoiding bugs due to race
+// conditions.
+abstract class ValidationTrigger<V> implements vscode.Disposable {
+	// An inner events emitter that helps to keep `fire` of non-Promise type.
+	private emitter: vscode.EventEmitter<V> = new vscode.EventEmitter();
+
+	// The last run validating function.
+	validating: Promise<string | undefined>
+
+	// The thing we last validated and the validation outcome.
+	lastValidationResult: Maybe<{ value: V, result: boolean }>
+
+	constructor() {
+		this.emitter.event(v => this.executeValidation(v));
+	}
+
+	// Submit a value for validation.
+	fire(value: V): void {
+		this.emitter.fire(value)
+	}
+
+	// Validation function.
+	abstract validate(value: V): Promise<string | undefined>
+
+	// Values that are obviously invalid and we don't want to show a "bad value"
+	// error for them.
+	isObviouslyInvalid(value: V): boolean { return false; }
+
+	// Invoked when some validation function is completed.
+	//
+	// This will be run in the same order in which values were passed for
+	// validation. TODO: this property actually holds only if validation
+	// function is sequencial and processes requests in FIFO
+	// (our backend works exactly this way), this does not seem good.
+	abstract onValidationResult(validationMessage: string | undefined): void
+
+	// Safely run validation for a new value.
+	private async executeValidation(value: V): Promise<void> {
+		try {
+			const current = this.validate(value);
+			this.validating = current;
+			const validationMessage = await current;
+
+			// During validation a new value could come in - in this case the current
+			// value can be skipped.
+			if (current == this.validating) {
+				if (this.isObviouslyInvalid(value)) {
+					this.onValidationResult(undefined);
+					return;
+				}
+
+				this.lastValidationResult = { value: value, result: !validationMessage };
+				this.onValidationResult(validationMessage);
+			}
+		} catch (err) {
+			vscode.window.showWarningMessage("Internal error in validation: " + err)
+		}
+
+	}
+
+	// Checks that the given value is the one that has been validated last
+	// and that it passed validation.
+	//
+	// This must be called when no new value can come in.
+	async checkResult(value: V): Promise<boolean> {
+		if (isDefined(this.lastValidationResult)) {
+			return this.lastValidationResult.value === value && this.lastValidationResult.result
+		} else {
+			const result: boolean = !(await this.validate(value));
+			this.lastValidationResult = { value, result };
+			return result;
+		}
+	}
+
+	dispose() {
+		this.emitter.dispose();
 	}
 }
