@@ -41,31 +41,34 @@ let rec decompile_type_expression (type_ : O.type_expression)
   let self = decompile_type_expression in
   let loc = type_.location in
   let return content = I.make_t ~loc content in
-  match type_.type_content with
-  | O.T_variable type_variable -> return @@ T_variable type_variable
-  | O.T_app tc ->
-    let tc = Type_app.map self tc in
-    return @@ I.T_app tc
-  | O.T_sum row ->
-    (* Bug: this type sum could be a michelson_or, we should use is_michelson_or *)
-    let row = decompile_row row in
-    return @@ I.T_sum row
-  | O.T_record row ->
-    (* Bug: this record could be a michelson_pair, we should use is_michelson_pair *)
-    (* Bug: this record could be a tuple, we should use is_tuple *)
-    let row = decompile_row row in
-    return @@ I.T_record row
-  | O.T_arrow arr ->
-    let arr = Arrow.map self arr in
-    return @@ T_arrow arr
-  | O.T_module_accessor ma -> return @@ I.T_module_accessor ma
-  | O.T_singleton x -> return @@ I.T_singleton x
-  | O.T_abstraction abs ->
-    let abs = Abstraction.map decompile_type_expression abs in
-    return @@ I.T_abstraction abs
-  | O.T_for_all for_all ->
-    let for_all = Abstraction.map decompile_type_expression for_all in
-    return @@ I.T_for_all for_all
+  match type_.sugar with
+  | Some ret -> ret
+  | None ->
+    (match type_.type_content with
+    | O.T_variable type_variable -> return @@ T_variable type_variable
+    | O.T_app tc ->
+      let tc = Type_app.map self tc in
+      return @@ I.T_app tc
+    | O.T_sum row ->
+      (* Bug: this type sum could be a michelson_or, we should use is_michelson_or *)
+      let row = decompile_row row in
+      return @@ I.T_sum row
+    | O.T_record row ->
+      (* Bug: this record could be a michelson_pair, we should use is_michelson_pair *)
+      (* Bug: this record could be a tuple, we should use is_tuple *)
+      let row = decompile_row row in
+      return @@ I.T_record row
+    | O.T_arrow arr ->
+      let arr = Arrow.map self arr in
+      return @@ T_arrow arr
+    | O.T_module_accessor ma -> return @@ I.T_module_accessor ma
+    | O.T_singleton x -> return @@ I.T_singleton x
+    | O.T_abstraction abs ->
+      let abs = Abstraction.map decompile_type_expression abs in
+      return @@ I.T_abstraction abs
+    | O.T_for_all for_all ->
+      let for_all = Abstraction.map decompile_type_expression for_all in
+      return @@ I.T_for_all for_all)
 
 
 and decompile_row ({ fields; layout } : O.rows) : _ I.non_linear_rows =
@@ -91,90 +94,95 @@ let rec decompile_expression (expr : O.expression) : I.expression =
   let loc = expr.location in
   let self = decompile_expression in
   let return content = I.make_e ~loc content in
-  match expr.expression_content with
-  | O.E_literal lit -> return @@ I.E_literal lit
-  | O.E_variable name -> return @@ I.E_variable name
-  | O.E_constant { cons_name; arguments } ->
-    let cons_name = Constant.Const cons_name in
-    let arguments = List.map ~f:decompile_expression arguments in
-    return @@ I.E_constant { cons_name; arguments }
-  | O.E_application app ->
-    let app = Application.map self app in
-    return @@ I.E_application app
-  | O.E_lambda lamb ->
-    let lamb = Lambda.map self (Option.map ~f:decompile_type_expression) lamb in
-    return @@ I.E_lambda lamb
-  | O.E_type_abstraction ta ->
-    let ta = Type_abs.map self ta in
-    return @@ I.E_type_abstraction ta
-  | O.E_recursive recs ->
-    let recs = Recursive.map self decompile_type_expression recs in
-    return @@ I.E_recursive recs
-  | O.E_let_in { let_binder; attr; rhs; let_result } ->
-    let let_binder =
-      Binder.map (Option.map ~f:decompile_type_expression) let_binder
-    in
-    let rhs = decompile_expression rhs in
-    let let_result = decompile_expression let_result in
-    let attributes = decompile_value_attributes attr in
-    return @@ I.E_let_in { let_binder; attributes; rhs; let_result }
-  | O.E_type_in ti ->
-    let ti = Type_in.map self decompile_type_expression ti in
-    return @@ I.E_type_in ti
-  | O.E_mod_in { module_binder; rhs; let_result } ->
-    let rhs = decompile_module_expr rhs in
-    let let_result = self let_result in
-    return @@ I.E_mod_in { module_binder; rhs; let_result }
-  | O.E_raw_code rc ->
-    let rc = Raw_code.map self rc in
-    return @@ I.E_raw_code rc
-  | O.E_constructor const ->
-    let const = Constructor.map self const in
-    return @@ I.E_constructor const
-  | O.E_matching m ->
-    let m = decompile_match_expr m in
-    return @@ I.E_matching m
-  | O.E_record record ->
-    let record = Record.map self record in
-    return @@ I.E_record (Record.to_list record)
-  | O.E_accessor { struct_; path } ->
-    let struct_ = self struct_ in
-    let (Label path) = path in
-    return @@ I.E_accessor { struct_; path = [ Access_record path ] }
-  | O.E_update { struct_; path; update } ->
-    let struct_ = self struct_ in
-    let update = self update in
-    let (Label path) = path in
-    return @@ I.E_update { struct_; path = [ Access_record path ]; update }
-  | O.E_ascription ascr ->
-    let ascr = Ascription.map self decompile_type_expression ascr in
-    return @@ I.E_ascription ascr
-  | O.E_module_accessor ma -> return @@ I.E_module_accessor ma
-  | O.E_assign a ->
-    let a = Assign.map self (Option.map ~f:decompile_type_expression) a in
-    return @@ I.E_assign a
-  | O.E_for { binder; start; final; incr; f_body } ->
-    let start = self start in
-    let final = self final in
-    let incr = self incr in
-    let f_body = self f_body in
-    return @@ I.E_for { binder; start; final; incr; f_body }
-  | O.E_for_each { fe_binder; collection; collection_type; fe_body } ->
-    let collection = self collection in
-    let fe_body = self fe_body in
-    return @@ I.E_for_each { fe_binder; collection; collection_type; fe_body }
-  | O.E_while { cond; body } ->
-    let cond = self cond in
-    let body = self body in
-    return @@ I.E_while { cond; body }
-  | O.E_let_mut_in { let_binder; attr; rhs; let_result } ->
-    let let_binder =
-      Binder.map (Option.map ~f:decompile_type_expression) let_binder
-    in
-    let rhs = decompile_expression rhs in
-    let let_result = decompile_expression let_result in
-    let attributes = decompile_value_attributes attr in
-    return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result }
+  match expr.sugar with
+  | Some ret -> ret
+  | None ->
+    (match expr.expression_content with
+    | O.E_literal lit -> return @@ I.E_literal lit
+    | O.E_variable name -> return @@ I.E_variable name
+    | O.E_constant { cons_name; arguments } ->
+      let cons_name = Constant.Const cons_name in
+      let arguments = List.map ~f:decompile_expression arguments in
+      return @@ I.E_constant { cons_name; arguments }
+    | O.E_application app ->
+      let app = Application.map self app in
+      return @@ I.E_application app
+    | O.E_lambda lamb ->
+      let lamb =
+        Lambda.map self (Option.map ~f:decompile_type_expression) lamb
+      in
+      return @@ I.E_lambda lamb
+    | O.E_type_abstraction ta ->
+      let ta = Type_abs.map self ta in
+      return @@ I.E_type_abstraction ta
+    | O.E_recursive recs ->
+      let recs = Recursive.map self decompile_type_expression recs in
+      return @@ I.E_recursive recs
+    | O.E_let_in { let_binder; attr; rhs; let_result } ->
+      let let_binder =
+        Binder.map (Option.map ~f:decompile_type_expression) let_binder
+      in
+      let rhs = decompile_expression rhs in
+      let let_result = decompile_expression let_result in
+      let attributes = decompile_value_attributes attr in
+      return @@ I.E_let_in { let_binder; attributes; rhs; let_result }
+    | O.E_type_in ti ->
+      let ti = Type_in.map self decompile_type_expression ti in
+      return @@ I.E_type_in ti
+    | O.E_mod_in { module_binder; rhs; let_result } ->
+      let rhs = decompile_module_expr rhs in
+      let let_result = self let_result in
+      return @@ I.E_mod_in { module_binder; rhs; let_result }
+    | O.E_raw_code rc ->
+      let rc = Raw_code.map self rc in
+      return @@ I.E_raw_code rc
+    | O.E_constructor const ->
+      let const = Constructor.map self const in
+      return @@ I.E_constructor const
+    | O.E_matching m ->
+      let m = decompile_match_expr m in
+      return @@ I.E_matching m
+    | O.E_record record ->
+      let record = Record.map self record in
+      return @@ I.E_record (Record.to_list record)
+    | O.E_accessor { struct_; path } ->
+      let struct_ = self struct_ in
+      let (Label path) = path in
+      return @@ I.E_accessor { struct_; path = [ Access_record path ] }
+    | O.E_update { struct_; path; update } ->
+      let struct_ = self struct_ in
+      let update = self update in
+      let (Label path) = path in
+      return @@ I.E_update { struct_; path = [ Access_record path ]; update }
+    | O.E_ascription ascr ->
+      let ascr = Ascription.map self decompile_type_expression ascr in
+      return @@ I.E_ascription ascr
+    | O.E_module_accessor ma -> return @@ I.E_module_accessor ma
+    | O.E_assign a ->
+      let a = Assign.map self (Option.map ~f:decompile_type_expression) a in
+      return @@ I.E_assign a
+    | O.E_for { binder; start; final; incr; f_body } ->
+      let start = self start in
+      let final = self final in
+      let incr = self incr in
+      let f_body = self f_body in
+      return @@ I.E_for { binder; start; final; incr; f_body }
+    | O.E_for_each { fe_binder; collection; collection_type; fe_body } ->
+      let collection = self collection in
+      let fe_body = self fe_body in
+      return @@ I.E_for_each { fe_binder; collection; collection_type; fe_body }
+    | O.E_while { cond; body } ->
+      let cond = self cond in
+      let body = self body in
+      return @@ I.E_while { cond; body }
+    | O.E_let_mut_in { let_binder; attr; rhs; let_result } ->
+      let let_binder =
+        Binder.map (Option.map ~f:decompile_type_expression) let_binder
+      in
+      let rhs = decompile_expression rhs in
+      let let_result = decompile_expression let_result in
+      let attributes = decompile_value_attributes attr in
+      return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result })
 
 
 and decompile_match_expr
@@ -186,7 +194,9 @@ and decompile_match_expr
   let matchee = decompile_expression matchee in
   let cases =
     List.map cases ~f:(fun { pattern; body } ->
-        let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
+        let pattern =
+          O.Pattern.map (Option.map ~f:decompile_type_expression) pattern
+        in
         let pattern = decompile_pattern pattern in
         let body = decompile_expression body in
         I.Match_expr.{ pattern; body })
@@ -258,7 +268,9 @@ and decompile_module : O.module_ -> I.module_ =
 let decompile_program = List.map ~f:decompile_declaration
 
 let decompile_pattern_to_string ~syntax pattern =
-  let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
+  let pattern =
+    O.Pattern.map (Option.map ~f:decompile_type_expression) pattern
+  in
   let pattern = decompile_pattern pattern in
   let s =
     match syntax with

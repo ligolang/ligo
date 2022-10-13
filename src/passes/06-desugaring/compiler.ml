@@ -76,7 +76,7 @@ let rec compile_type_expression ~raise (type_ : I.type_expression)
   let loc = type_.location in
   let compile_type_expression = compile_type_expression ~raise in
   let compile_row = compile_row ~raise in
-  let return content = O.make_t ~loc content in
+  let return content = O.make_t ~loc ~sugar:type_ content in
   match type_.type_content with
   | I.T_sum row ->
     let row = compile_row row in
@@ -173,7 +173,7 @@ let rec compile_expression ~raise : I.expression -> O.expression =
   let self = compile_expression ~raise in
   let self_type = compile_type_expression ~raise in
   let self_type_option = compile_type_expression_option ~raise in
-  let return expr = O.make_e ~loc expr in
+  let return content = O.make_e ~loc ~sugar:expr content in
   match expr.expression_content with
   | I.E_literal literal -> return @@ O.E_literal literal
   | I.E_constant { cons_name; arguments } ->
@@ -320,7 +320,7 @@ let rec compile_expression ~raise : I.expression -> O.expression =
     let let_result = self let_result in
     let attributes = compile_value_attributes attributes in
     return @@ O.E_let_mut_in { let_binder; attr = attributes; rhs; let_result }
-  | I.E_skip () -> O.e_unit ~loc ()
+  | I.E_skip () -> O.e_unit ~loc ~sugar:expr ()
 
 
 and compile_match_expr ~raise
