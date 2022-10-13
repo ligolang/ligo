@@ -45,6 +45,8 @@ verification:
     - vendors/tezos-ligo/README.md
     - tools/webide-new/.github/pull_request_template.md
     - tools/vim/ligo/README.md
+    - vendors/tezos-ligo/devtools/protocol-print/README.md
+    - vendors/tezos-ligo/devtools/protocol-print/README.md
 
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
