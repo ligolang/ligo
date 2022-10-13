@@ -86,23 +86,28 @@ let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
   | _ -> [] (* Don't display any difference in other cases *)
 
 module PP = struct
-  let change ppf (c : Define.change ) : unit =
-    let pp_te_custom ppf (te : ty_expr) : unit =
-      Format.fprintf ppf "%a <hash:%d>" Ast_typed.PP.type_expression te (hash_type_expression te)
-    in
+
+  let pp_list_newline pp_content ppf content =
+    PP_helpers.list_sep pp_content (PP_helpers.tag "@,") ppf content
+  let pp_te = Ast_typed.PP.type_expression
+  let _pp_te_debug ppf (te : ty_expr) : unit =
+    Format.fprintf ppf "%a <hash:%d>" pp_te te (hash_type_expression te)
+
+  let rec change ppf (c : Define.change ) : unit =
+    let self = change in
     (* type ('left,'right,'eq,'diff) change =
     | Delete of 'left
     | Insert of 'right
     | Keep of 'left * 'right *' eq
     | Change of 'left * 'right * 'diff *)
     match c with
-    | Delete  l              -> Format.fprintf ppf "Delete : %a@." pp_te_custom l
-    | Insert  r              -> Format.fprintf ppf "Insert : %a@." pp_te_custom r
-    | Keep    (l, r, _eq)    -> Format.fprintf ppf "Keep   : %a = %a@." pp_te_custom l pp_te_custom r
-    | Change  (l, r, _diff)  -> Format.fprintf ppf "Change : %a vs. %a@." pp_te_custom l pp_te_custom r
+    | Delete  l              -> Format.fprintf ppf "- %a" pp_te l
+    | Insert  r              -> Format.fprintf ppf "+ %a" pp_te r
+    | Keep    (l, _r, _eq)   -> Format.fprintf ppf "  %a" pp_te l
+    | Change  (l, r, _diff)  -> pp_list_newline self ppf [Delete l; Insert r]
 
   let t ppf (patch : t) : unit =
     match patch with
     | [] -> Format.fprintf ppf "@.No patch"
-    | _ -> Format.fprintf ppf "@.Diff: @.%a" (PP_helpers.list_sep_d change) patch
+    | _ -> Format.fprintf ppf "@[<v>Diff:@,%a@]" (pp_list_newline change)  patch
 end
