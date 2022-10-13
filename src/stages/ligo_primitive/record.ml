@@ -42,6 +42,10 @@ let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
     fun _ a acc -> f acc a
   ) ~init:acc record
 
+let iter : ('a -> unit) -> 'a t -> unit
+= fun f record ->
+  LMap.iter (fun _ a -> f a) record
+
 let of_list = LMap.of_list
 
 let is_tuple m =
@@ -54,6 +58,8 @@ let tuple_of_record (m: _ t) =
     Option.bind ~f:(fun opt -> Some ((label,opt),i+1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
+
+let to_list = LMap.to_kv_list
 
 module PP = struct
   open Format

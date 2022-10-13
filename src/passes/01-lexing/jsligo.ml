@@ -1,11 +1,9 @@
-(* Interfacing the JsLIGO lexer. *)
+(* Interfacing the JsLIGO lexer with the rest of the compiler. *)
 
 (* LIGO dependencies *)
 
-module Comments = Preprocessing_jsligo.Comments
+module Config = Preprocessing_jsligo.Config
 
 (* Internal dependencies *)
 
-module Token = Lexing_jsligo.Token
-
-include Lexing_shared.Common.Make (Comments) (Token)
+include Lexing_shared.Common.Make (Config) (Lexing_jsligo.Token)

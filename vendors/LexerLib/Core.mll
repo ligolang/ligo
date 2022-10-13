@@ -5,499 +5,265 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Pos    = Simple_utils.Pos
-module FQueue = Simple_utils.FQueue
-module Utils  = Simple_utils.Utils
-module Array  = Caml.Array
+module Region    = Simple_utils.Region
+module Pos       = Simple_utils.Pos
+module Lexbuf    = Simple_utils.Lexbuf
+module Directive = Preprocessor.Directive
+module Config    = Preprocessor.Config
 
-(* Rolling back one lexeme _within the current semantic action_ *)
+(* Third-party libraries *)
 
-let rollback lexbuf =
-  let open Lexing in
-  let len = String.length (lexeme lexbuf) in
-  let pos_cnum = lexbuf.lex_curr_p.pos_cnum - len in
-  lexbuf.lex_curr_pos <- lexbuf.lex_curr_pos - len;
-  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_cnum}
+module Array  = Caml.Array  (* Used in the generated code only *)
 
-(* LEXER ENGINE *)
+(* UTILITIES *)
 
-(* Resetting file name and line number in the lexing buffer
+let (let*) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result =
+  fun r f ->
+    match r with
+      Ok x         -> f x
+    | Error _ as e -> e
 
-   The call [reset ~file ~line lexbuf] modifies in-place the lexing
-   buffer [lexbuf] so the lexing engine records that the file
-   associated with [lexbuf] is named [file], and the current line is
-   [line]. *)
+(* The functor return signature *)
 
-let reset_file file lexbuf =
-  let open Lexing in
-  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname = file}
+module type S =
+  sig
+    (* Lexical units *)
 
-let reset_line line lexbuf =
-  assert (line >= 0);
-  let open Lexing in
-  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_lnum = line}
+    type lex_unit
 
-let reset_offset offset lexbuf =
-  assert (offset >= 0);
-  let open Lexing in
-  let bol = lexbuf.lex_curr_p.pos_bol in
-  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_cnum = bol + offset }
+    (* Utility types *)
 
-let reset ?file ?(line=1) ?offset lexbuf =
-  let () =
-    match file with
-      Some file -> reset_file file lexbuf
-    |      None -> () in
-  let () = reset_line line lexbuf in
-  match offset with
-    Some offset -> reset_offset offset lexbuf
-  |        None -> ()
+    type file_path = string
+    type message   = string Region.reg
 
-(* Utility types *)
+    type units = lex_unit list
 
-type file_path = string
-type lexeme = string
+    (* LEXER INSTANCE (see README.md) *)
 
-(* THREAD FOR STRUCTURED CONSTRUCTS (STRINGS, COMMENTS) *)
+    (* Errors *)
 
-type thread = <
-  opening     : Region.t;
-  length      : int;
-  acc         : char list;
-  to_string   : string;
-  push_char   : char -> thread;
-  push_string : string -> thread;
-  set_opening : Region.t -> thread
->
+    type error = {
+      used_units : units;
+      message    : message
+    }
 
-let mk_thread region : thread =
-  (* The call [explode s a] is the list made by pushing the characters
-     in the string [s] on top of [a], in reverse order. For example,
-     [explode "ba" ['c';'d'] = ['a'; 'b'; 'c'; 'd']]. *)
+    (* Instances *)
 
-  let explode s acc =
-    let rec push = function
-      0 -> acc
-    | i -> s.[i-1] :: push (i-1)
-    in push (String.length s) in
-  object
-    val opening = region
-    method opening = opening
+    type instance = {
+      input      : Lexbuf.input;
+      read_units : Lexing.lexbuf -> (units, error) result;
+      lexbuf     : Lexing.lexbuf;
+      close      : Lexbuf.close
+    }
 
-    val length = 0
-    method length = length
-
-    val acc = []
-    method acc = acc
-
-    method set_opening opening = {< opening; length; acc >}
-
-    method push_char char =
-      {< opening; length=length+1; acc=char::acc >}
-
-    method push_string str =
-      {< opening;
-         length = length + String.length str;
-         acc = explode str acc >}
-
-    (* The value of [thread#to_string] is a string of length
-       [thread#length] containing the characters in the list
-       [thread#acc], in reverse order. For instance, [thread#to_string
-       = "abc"] if [thread#length = 3] and [thread#acc =
-       ['c';'b';'a']]. *)
-
-    method to_string =
-      let bytes = Bytes.make length ' ' in
-      let rec fill i = function
-        [] -> bytes
-      | char::l -> Bytes.set bytes i char; fill (i-1) l
-      in fill (length-1) acc |> Bytes.to_string
+    val open_stream : Lexbuf.input -> (instance, message) result
   end
 
-(* STATE *)
+(* THE FUNCTOR *)
 
-type 'token window = <
-  last_token    : 'token option;
-  current_token : 'token           (* Including EOF *)
->
+module Make (Config : Config.S) (Client : Client.S) =
+  struct
+    type lex_unit = Client.token Unit.t
 
-type line_comment  = string (* Opening of a line comment *)
-type block_comment = <opening : string; closing : string>
+    type units = lex_unit list
 
-type command = [`Copy | `Units | `Tokens] option
+    (* Errors *)
 
-type 'token config = <
-  block     : block_comment option;
-  line      : line_comment option;
-  input     : file_path option;
-  offsets   : bool;
-  mode      : [`Byte | `Point];
-  command   : command;
-  is_eof    : 'token -> bool;
-  to_region : 'token -> Region.t;
-  to_lexeme : 'token -> string;
-  to_string : offsets:bool -> [`Byte | `Point] -> 'token -> string
->
+    type message = string Region.reg
 
-type 'token lex_unit =
-  Token     of 'token
-| Markup    of Markup.t
-| Directive of Directive.t
+    type error = {
+      used_units : units;
+      message    : message
+    }
 
-type 'token state = <
-  config       : 'token config;
-  window       : 'token window option;
-  pos          : Pos.t;
-  set_pos      : Pos.t -> 'token state;
-  slide_window : 'token -> 'token state;
-  sync         : Lexing.lexbuf -> 'token sync;
-  decoder      : Uutf.decoder;
-  supply       : Bytes.t -> int -> int -> unit;
-  mk_line      :        thread -> 'token lex_unit * 'token state;
-  mk_block     :        thread -> 'token lex_unit * 'token state;
-  mk_newline   : Lexing.lexbuf -> 'token lex_unit * 'token state;
-  mk_space     : Lexing.lexbuf -> 'token lex_unit * 'token state;
-  mk_tabs      : Lexing.lexbuf -> 'token lex_unit * 'token state;
-  mk_bom       : Lexing.lexbuf -> 'token lex_unit * 'token state
->
+    (* Failure *)
 
-and 'token sync = {
-  region : Region.t;
-  lexeme : lexeme;
-  state  : 'token state
-}
+    let fail state region error =
+      let value      = Error.to_string error in
+      let message    = Region.{value; region} in
+      let used_units = List.rev state#lexical_units
+      in Stdlib.Error {used_units; message}
 
-type message = string Region.reg
+    (* Auxiliary functions for preprocessing directives *)
 
-type 'token scanner =
-  'token state ->
-  Lexing.lexbuf ->
-  ('token lex_unit * 'token state, message) Stdlib.result
+    let handle_ending state lexbuf = function
+      `EOL (state', ending) ->
+         (state#push_newline (Some ending) lexbuf)#set_pos state'#pos
+    | `EOF (state', region) ->
+         (state#push_token (Client.mk_eof region))#set_pos state'#pos
 
-type 'token cut =
-  thread * 'token state -> 'token lex_unit * 'token state
+    let scan_dir ~callback scan (state: Client.token State.t) lexbuf =
+      let state, Region.{region; _} = state#sync lexbuf in
+      let state' = new Preprocessor.State.t state#pos in
+      match scan region#start state' lexbuf with
+        Stdlib.Error (region, err) ->
+          fail state region (Error.Invalid_directive err)
+      | Ok (state', _, dir, ending) ->
+          let state = state#set_pos state'#pos in
+          let state = state#push_directive dir in
+          let state = handle_ending state lexbuf ending
+          in callback state lexbuf
 
-(* The type [client] gathers the arguments to the lexer in this
-    module. *)
+    let scan_if   = scan_dir
+    let scan_elif = scan_dir
 
-type 'token client = <
-  mk_string                : 'token cut;
-  mk_eof                   : 'token scanner;
-  callback                 : 'token scanner;
-  support_string_delimiter : char -> bool
->
+    let scan_else ~callback scan state lexbuf =
+      let state, Region.{region; _} = state#sync lexbuf in
+      let state' = new Preprocessor.State.t state#pos in
+      let _, dir, ending = scan region#start state' lexbuf in
+      let state = state#push_directive dir in
+      let state = handle_ending state lexbuf ending
+      in callback state lexbuf
 
-type 'token internal_scanner =
-  'token state -> Lexing.lexbuf -> 'token lex_unit * 'token state
+    let scan_endif = scan_else
 
-type 'token internal_client = <
-  mk_string                : 'token cut;
-  mk_eof                   : 'token internal_scanner;
-  callback                 : 'token internal_scanner;
-  support_string_delimiter : char -> bool
->
+    let scan_linemarker ~callback region linenum state lexbuf =
 
-let mk_state ~config ~window ~pos ~decoder ~supply : 'token state =
-  object (self)
-    method config  = config
-    val window     = window
-    method window  = window
-    val pos        = pos
-    method pos     = pos
-    method decoder = decoder
-    method supply  = supply
+      let length   = String.length linenum in
+      let start    = region#stop#shift_bytes (-length) in
+      let line_reg = Region.make ~start ~stop:region#stop in
+      let linenum  = Region.{region=line_reg; value=linenum} in
 
-    method set_pos pos = {< pos = pos >}
 
-    method slide_window new_token =
-      let new_window =
-        match self#window with
-          None ->
-            object
-              method last_token    = None
-              method current_token = new_token
-            end
-        | Some window ->
-            object
-              method last_token    = Some window#current_token
-              method current_token = new_token
-            end
-      in {< window = Some new_window >}
+      (* We save the state and position before the lexing buffer was
+         matched. *)
 
-    method sync lexbuf : 'token sync =
-      let lexeme = Lexing.lexeme lexbuf in
-      let length = String.length lexeme
-      and start  = pos in
-      let stop   = start#shift_bytes length in
-      let state  = {< pos = stop >}
-      and region = Region.make ~start:pos ~stop
-      in {region; lexeme; state}
+      let hash_state = state in
 
-    (* MARKUP *)
+      (* We make a preprocessing state and scan the expected
+         linemarker. *)
 
-    (* Committing markup to the current logical state *)
+      let preproc_state = new Preprocessor.State.t state#pos in
 
-    method mk_newline lexbuf =
-      let ()     = Lexing.new_line lexbuf in
-      let value  = Lexing.lexeme lexbuf in
-      let start  = self#pos in
-      let stop   = start#new_line value in
-      let region = Region.make ~start ~stop in
-      let markup = Markup.Newline Region.{region; value}
-      in Markup markup, self#set_pos stop
+      match Directive.scan_linemarker
+              hash_state#pos linenum preproc_state lexbuf
+      with
+        Stdlib.Error (region, error) ->
+          fail hash_state region (Error.Invalid_directive error)
 
-    method mk_line thread =
-      let start  = thread#opening#start in
-      let region = Region.make ~start ~stop:self#pos
-      and value  = thread#to_string in
-      let markup = Markup.LineCom Region.{region; value}
-      in Markup markup, self
+      | Ok (preproc_state, args, directive, ending) ->
+          (* We use the current position (after reading the linemarker)
+             of the preprocessing state [preproc_state] to reset the
+             position of saved lexing state [hash_state]. (Remember that
+             positions contain the file name.) We push the linemarker in
+             that updated lexing state. *)
 
-    method mk_block thread =
-      let start  = thread#opening#start in
-      let region = Region.make ~start ~stop:self#pos
-      and value  = thread#to_string in
-      let markup = Markup.BlockCom Region.{region; value}
-      in Markup markup, self
+          let state = hash_state#set_pos preproc_state#pos in
+          let state = state#push_directive directive in
+          let state = state#push_newline None lexbuf in
 
-    method mk_space lexbuf =
-      let {region; lexeme; state} = self#sync lexbuf in
-      let value  = String.length lexeme in
-      let markup = Markup.Space Region.{region; value}
-      in Markup markup, state
+          let arg_file = args#file_path.Region.value in
 
-    method mk_tabs lexbuf =
-      let {region; lexeme; state} = self#sync lexbuf in
-      let value  = String.length lexeme in
-      let markup = Markup.Tabs Region.{region; value}
-      in Markup markup, state
+          let push state =
+            let pos   = state#pos in
+            let pos   = pos#set_file arg_file in
+            let pos   = pos#set_line args#linenum.Region.value in
+            let pos   = pos#reset_cnum in
+            let state = state#set_pos pos in
+            let ()    = Lexbuf.reset_file arg_file lexbuf
+            in state in
 
-    method mk_bom lexbuf =
-      let {region; lexeme; state} = self#sync lexbuf in
-      let value  = lexeme in
-      let markup = Markup.BOM Region.{region; value}
-      in Markup markup, state
-  end
+          match args#flag with
+            Some Region.{value=Directive.Pop; _} ->
+              (* The linemarker has been produced by the end of the
+                 preprocessing of an #include directive. We assume that
+                 the user never writes one, otherwise preprocessing
+                 may fail. More precisely, we assume that each [Push]
+                 (below) is associate to one [Pop] (this case). *)
+              Lexbuf.reset_file arg_file lexbuf;
+              Ok state
 
-(* LEXER INSTANCE *)
+          | None ->
+              (* The linemarker is the one generated at the start of
+                 the file or one written by the user. *)
+              callback (push state) lexbuf
 
-(* Pretty-printing a lexical unit *)
+          | Some Region.{value=Directive.Push; _} ->
+              (* The linemarker has been produced by the start of the
+                 preprocessing of an #include directive. See case above
+                 ([Pop]).
 
-let output_unit config out_channel lex_unit =
-  let output    str = Printf.fprintf out_channel "%s%!" str in
-  let output_nl str = output (str ^ "\n")
-  and offsets = config#offsets
-  and mode    = config#mode in
-  match config#command with
-    Some `Tokens ->
-      (match lex_unit with
-         Token token ->
-           config#to_string ~offsets mode token |> output_nl
-       | Markup _ | Directive _ -> ()) (* Only tokens *)
-  | Some `Copy ->
-     let lexeme =
-       match lex_unit with
-         Token token -> config#to_lexeme token
-       | Markup m    -> Markup.to_lexeme m
-       | Directive d -> Directive.to_lexeme d
-     in output lexeme
-  | Some `Units ->
-      let string =
-        match lex_unit with
-          Token token -> config#to_string ~offsets mode token
-        | Markup m    -> Markup.to_string ~offsets mode m
-        | Directive d -> Directive.to_string ~offsets mode d
-      in output_nl string
-  | None -> ()
+                   We call recursively [callback] to scan until a
+                 linemarker with a flag "2" is found, that is, the case
+                 [Pop] above. Between a [Push] linemarker and a [Pop],
+                 we assume that we scan the contents of the included
+                 file. *)
+              let* state = callback (push state) lexbuf in
 
-(* The lexer instance: the main exported data type *)
+              (* The contents of the included file was scanned
+                 successfully, that is, the case [Pop] above was
+                 hit. We restore the position saved at the start of
+                 this semantic action, that is, just before the "#" of
+                 the [Push] linemarker. With that position committed
+                 to the state, we call recursively [callback] to
+                 resume scanning the rest of the file corresponding to
+                 what was just after the original #include. *)
 
-type input =
-  File    of file_path
-| String  of string
-| Channel of in_channel
-| Buffer  of Lexing.lexbuf
+            callback (state#set_pos hash_state#pos) lexbuf
 
-type 'token instance = {
-  input      : input;
-  read_token : Lexing.lexbuf -> ('token, message) result;
-  read_unit  : Lexing.lexbuf -> ('token lex_unit, message) result;
-  lexbuf     : Lexing.lexbuf;
-  close      : unit -> unit;
-  window     : unit -> 'token window option
-}
+    (* Internal client *)
 
-let lexbuf_from_input config = function
-  String s ->
-    Ok (Lexing.from_string s, fun () -> ())
-| Channel chan ->
-    let close () = close_in chan in
-    Ok (Lexing.from_channel chan, close)
-| Buffer b ->
-    let () =
-      match config#input with
-        None | Some "" -> ()
-      | Some path -> reset ~file:path b
-    in Ok (b, fun () -> ())
-| File "" ->
-    Stdlib.Error (Region.wrap_ghost "File not found.")
-| File path ->
-    try
-      let channel  = open_in path in
-      let close () = close_in channel in
-      let lexbuf   = Lexing.from_channel channel in
-      let ()       = reset ~file:path lexbuf
-      in Ok (lexbuf, close)
-    with Sys_error msg -> Stdlib.Error (Region.wrap_ghost msg)
+    module Client =
+      struct
+        let mk_string = Client.mk_string
+        let mk_eof    = Client.mk_eof
 
-(* Errors (NOT EXPORTED) *)
+        let callback state lexbuf =
+          match Client.callback state lexbuf with
+            Ok (token, state) ->
+              Ok (state#push_token token)
+          | Error message ->
+              let used_units = List.rev state#lexical_units
+              in Error {used_units; message}
+      end
 
-exception Error of string Region.reg
+    (* Client callback with local continuation [scan] *)
 
-(* Encoding a function call in exception-raising style (ERS) to
-   error-passing style (EPS) *)
+    let callback_with_cont scan state lexbuf =
+      let ()     = Lexbuf.rollback lexbuf in
+      let* state = Client.callback state lexbuf
+      in scan state lexbuf
 
-let lift scanner lexbuf =
-  try Stdlib.Ok (scanner lexbuf) with
-    Error msg -> Stdlib.Error msg
+    (* The lexer instance: the main exported data type *)
 
-(* Decoding a function call in EPS to ERS *)
+    type file_path = string
 
-let drop scanner lexbuf =
-  match scanner lexbuf with
-    Stdlib.Ok state -> state
-  | Error msg -> raise (Error msg)
+    type instance = {
+      input      : Lexbuf.input;
+      read_units : Lexing.lexbuf -> (units, error) result;
+      lexbuf     : Lexing.lexbuf;
+      close      : Lexbuf.close
+    }
 
-(* The main function *)
+    (* The main function *)
 
-let open_stream config ~scan input =
-  let log       = output_unit config stdout
-  and scan      = Utils.(drop <@ scan)
-  and file_path = match config#input with
-                    Some path -> path
-                  | _ -> ""
-  and   decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in
-  let    supply = Uutf.Manual.src decoder in
-  let     state = ref (mk_state
-                         ~config
-                         ~window:None
-                         ~pos:(Pos.min ~file:file_path)
-                         ~decoder
-                         ~supply) in
-  let window () = !state#window in
+    let open_stream scan input : (instance, message) result =
+      let file = Lexbuf.file_from_input input in
+      let read_units lexbuf =
+        let state  = State.empty ~file in
+        let* state = scan state lexbuf in
+        Ok (List.rev state#lexical_units) in
+      let* lexbuf, close = Lexbuf.from_input input
+      in Ok {read_units; input; lexbuf; close}
 
-  let read_unit lexbuf =
-    let unit, state' = scan !state lexbuf in
-    let () = log unit in
-    let () = state := state' in
-    let () =
-      match unit with
-        Token token -> state := !state#slide_window token
-      | Markup _ | Directive _ -> ()
-    in unit in
+    (* Reading UTF-8 encoded characters *)
 
-  let rec read_token lexbuf =
-    match read_unit lexbuf with
-                 Token token -> token
-    | Markup _ | Directive _ -> read_token lexbuf in
+    let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
+      let ()  = Lexbuf.rollback lexbuf in
+      let len = thread#length in
+      match scan_utf8 thread state lexbuf with
+        Stdlib.Ok (thread, state) ->
+          let delta = thread#length - len in
+          let stop  = state#pos#shift_one_uchar delta
+          in callback thread (state#set_pos stop) lexbuf
+      | Error (thread, state, error) ->
+          let delta  = thread#length - len in
+          let stop   = state#pos#shift_one_uchar delta in
+          let region = Region.make ~start:state#pos ~stop
+          in fail state region error
 
-  match lexbuf_from_input config input with
-    Stdlib.Ok (lexbuf, close) ->
-      let read_unit  = lift read_unit
-      and read_token = lift read_token in
-      Ok {read_unit; read_token; input; lexbuf; close; window}
-  | Error _ as e -> e
-
-(* LEXING COMMENTS AND STRINGS *)
-
-(* Errors *)
-
-type error =
-  Invalid_utf8_sequence
-| Unterminated_comment of string
-| Unterminated_string
-| Broken_string
-| Invalid_character_in_string
-| Undefined_escape_sequence
-| Invalid_linemarker_argument
-
-let sprintf = Printf.sprintf
-
-let error_to_string = function
-  Invalid_utf8_sequence ->
-    "Invalid UTF-8 sequence."
-| Undefined_escape_sequence ->
-    "Undefined escape sequence.\n\
-     Hint: Remove or replace the sequence."
-| Unterminated_string ->
-    "Unterminated string.\n\
-     Hint: Close with double quotes."
-| Unterminated_comment ending ->
-    sprintf "Unterminated comment.\n\
-             Hint: Close with %S." ending
-| Broken_string ->
-    "The string starting here is interrupted by a line break.\n\
-     Hint: Remove the break, close the string before or insert a \
-     backslash."
-| Invalid_character_in_string ->
-    "Invalid character in string.\n\
-     Hint: Remove or replace the character."
-| Invalid_linemarker_argument ->
-    "Unexpected or invalid linemarker argument.\n\
-     Hint: The optional argument is either 1 or 2."
-
-let fail region error =
-  let value = error_to_string error in
-  raise (Error Region.{value; region})
-
-(* Reading UTF-8 encoded characters *)
-
-let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
-  let ()             = rollback lexbuf in
-  let len            = thread#length in
-  let thread, status = scan_utf8 thread state lexbuf in
-  let delta          = thread#length - len in
-  let stop           = state#pos#shift_one_uchar delta in
-  match status with
-    Ok () -> callback thread (state#set_pos stop) lexbuf
-  | Stdlib.Error error ->
-      let region = Region.make ~start:state#pos ~stop
-      in fail region error
-
-(* An input program may contain preprocessing directives, and the
-   entry modules (named *Main.ml) run the preprocessor on them, as if
-   using the GNU C preprocessor in traditional mode:
-
-   https://gcc.gnu.org/onlinedocs/cpp/Traditional-Mode.html
-
-     The main interest in using a preprocessor is that it can stand
-   for a poor man's (flat) module system thanks to #include
-   directives, and the equivalent of the traditional mode leaves the
-   markup undisturbed.
-
-     Linemarkers (that is, line directives) may carry some additional
-   flags:
-
-   https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
-
-   of which we will retain in our context 1 and 2 (either 1 or 2),
-   indicating, respectively, the start of a new file and the return
-   from a file (after its inclusion has been processed). *)
-
-let linemarker prefix ~line ~file ?flag state lexbuf =
-  let {state; region; _} = state#sync lexbuf in
-  let flag      = match flag with
-                    Some '1' -> Some Directive.Push
-                  | Some '2' -> Some Directive.Pop
-                  | _        -> None in
-  let linenum   = int_of_string line in
-  let value     = linenum, file, flag in
-  let region    = Region.cover prefix region in
-  let directive = Directive.Linemarker Region.{value; region} in
-  let pos       = region#start#add_nl in
-  let pos       = (pos#set_file file)#set_line linenum
-  in Directive directive, state#set_pos pos
+    let open_block thread state =
+      Stdlib.Error (thread, state, Error.Unterminated_comment)
 
 (* END HEADER *)
 }
@@ -506,264 +272,296 @@ let linemarker prefix ~line ~file ?flag state lexbuf =
 
 (* NAMED REGULAR EXPRESSIONS *)
 
-let utf8_bom   = "\xEF\xBB\xBF" (* Byte Order Mark for UTF-8 *)
-let nl         = ['\n' '\r'] | "\r\n"
-let blank      = ' ' | '\t'
-let digit      = ['0'-'9']
-let natural    = digit | digit (digit | '_')* digit
-let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
-let hexa_digit = digit | ['A'-'F' 'a'-'f']
-let byte       = hexa_digit hexa_digit
-let flag       = '1' | '2' (* Linemarkers *)
+let utf8_bom = "\xEF\xBB\xBF" (* Byte Order Mark for UTF-8 *)
+let nl       = ['\n' '\r'] | "\r\n"
+let blank    = ' ' | '\t'
+let digit   = ['0'-'9']
+let natural = digit | digit+ digit (* Linemarkers *)
 
 (* Comment delimiters *)
 
 let pascaligo_block_comment_opening  = "(*"
 let pascaligo_block_comment_closing  = "*)"
-let pascaligo_line_comment           = "//"
+let pascaligo_line_comment_opening   = "//"
 
 let cameligo_block_comment_opening   = "(*"
 let cameligo_block_comment_closing   = "*)"
-let cameligo_line_comment            = "//"
+let cameligo_line_comment_opening    = "//"
 
 let reasonligo_block_comment_opening = "/*"
 let reasonligo_block_comment_closing = "*/"
-let reasonligo_line_comment          = "//"
+let reasonligo_line_comment_opening  = "//"
 
-let michelson_block_comment_opening = "/*"
-let michelson_block_comment_closing = "*/"
-let michelson_line_comment          = "#"
+let jsligo_block_comment_opening     = "/*"
+let jsligo_block_comment_closing     = "*/"
+let jsligo_line_comment_opening      = "//"
 
-let jsligo_block_comment_opening    = "/*"
-let jsligo_block_comment_closing    = "*/"
-let jsligo_line_comment             = "//"
-
-let block_comment_openings =
-  pascaligo_block_comment_opening
-| cameligo_block_comment_opening
+let block_comment_opening =
+   pascaligo_block_comment_opening
+|   cameligo_block_comment_opening
 | reasonligo_block_comment_opening
-| michelson_block_comment_opening
-| jsligo_block_comment_opening
+|     jsligo_block_comment_opening
 
-let block_comment_closings =
-  pascaligo_block_comment_closing
-| cameligo_block_comment_closing
+let block_comment_closing =
+   pascaligo_block_comment_closing
+|   cameligo_block_comment_closing
 | reasonligo_block_comment_closing
-| michelson_block_comment_closing
-| jsligo_block_comment_opening
+|     jsligo_block_comment_closing
 
-let line_comments =
-  pascaligo_line_comment
-| cameligo_line_comment
-| reasonligo_line_comment
-| michelson_line_comment
-| jsligo_line_comment
+let line_comment_opening =
+   pascaligo_line_comment_opening
+|   cameligo_line_comment_opening
+| reasonligo_line_comment_opening
+|     jsligo_line_comment_opening
+
+(* String delimiters *)
+
+let  pascaligo_string_delimiter = "\""
+let   cameligo_string_delimiter = "\""
+let reasonligo_string_delimiter = "\""
+let     jsligo_string_delimiter = "\""
+
+let string_delimiter =
+   pascaligo_string_delimiter
+|   cameligo_string_delimiter
+| reasonligo_string_delimiter
+|     jsligo_string_delimiter
+
+(* Preprocessing directives *)
+
+let directive =
+  "include"
+| "import"
+| "if"
+| "elif"
+| "else"
+| "endif"
+| "define"
+| "undef"
+| "error"
 
 (* RULES (SCANNERS) *)
 
-rule scan client state = parse
+rule scan state = parse
   (* Markup *)
 
-  nl    { state#mk_newline lexbuf }
-| ' '+  { state#mk_space   lexbuf }
-| '\t'+ { state#mk_tabs    lexbuf }
+  nl    { scan (state#push_newline None lexbuf) lexbuf }
+| ' '+  { scan (state#push_space        lexbuf) lexbuf }
+| '\t'+ { scan (state#push_tabs         lexbuf) lexbuf }
 
   (* Strings *)
-| '\''
-| '"' as lexeme {
-  if client#support_string_delimiter lexeme then
-    let {region; state; _} = state#sync lexbuf in
-    let thread             = mk_thread region in
-    scan_string lexeme thread state lexbuf |> client#mk_string
-  else (rollback lexbuf; client#callback state lexbuf)
-}
 
-  (* Comment *)
+| string_delimiter {
+    let lexeme = Lexing.lexeme lexbuf in
+    match Config.string with
+      Some delimiter when String.(delimiter = lexeme) ->
+        let state, Region.{region; _} = state#sync lexbuf in
+        let thread = Thread.make ~opening:region in
+        let* thread, state = in_string thread state lexbuf in
+        let token = Client.mk_string thread
+        in scan (state#push_token token) lexbuf
+    | Some _ | None -> callback_with_cont scan state lexbuf }
 
-| block_comment_openings as lexeme {
-    match state#config#block with
-      Some block when String.equal block#opening lexeme ->
-        let {region; state; _} = state#sync lexbuf in
-        let thread             = mk_thread region in
-        let thread             = thread#push_string lexeme in
-        let thread, state      = scan_block block thread state lexbuf
-        in state#mk_block thread
-    | Some _ | None -> (* Not a comment for this syntax *)
-        rollback lexbuf; client#callback state lexbuf }
+  (* Comments *)
 
-| line_comments as lexeme {
-    match state#config#line with
-      Some line when String.equal line lexeme ->
-        let {region; state; _} = state#sync lexbuf in
-        let thread             = mk_thread region in
-        let thread             = thread#push_string lexeme in
-        let thread, state      = scan_line thread state lexbuf
-        in state#mk_line thread
-    | Some _ | None -> (* Not a comment for this syntax *)
-        rollback lexbuf; client#callback state lexbuf }
+| block_comment_opening {
+    let lexeme = Lexing.lexeme lexbuf in
+    match Config.block with
+      Some block when String.(block#opening = lexeme) ->
+        let state, Region.{region; _} = state#sync lexbuf in
+        let thread = Thread.make ~opening:region in
+        let thread = thread#push_string lexeme in
+        let* thread, state = in_block block thread state lexbuf
+        in scan (state#push_block thread) lexbuf
+    | Some _ | None -> callback_with_cont scan state lexbuf }
+
+| line_comment_opening {
+    let lexeme = Lexing.lexeme lexbuf in
+    match Config.line with
+      Some opening when String.(opening = lexeme) ->
+        let state, Region.{region; _} = state#sync lexbuf in
+        let thread = Thread.make ~opening:region in
+        let thread = thread#push_string lexeme in
+        let* state = in_line thread state lexbuf
+        in scan state lexbuf
+    | Some _ | None -> callback_with_cont scan state lexbuf }
+
+| '#' blank* (directive as id) {
+    match id with
+      "include" ->
+        scan_dir   ~callback:scan Directive.scan_include state lexbuf
+    | "import" ->
+        scan_dir   ~callback:scan Directive.scan_import  state lexbuf
+    | "if" ->
+        scan_if    ~callback:scan Directive.scan_if      state lexbuf
+    | "elif" ->
+        scan_elif  ~callback:scan Directive.scan_elif    state lexbuf
+    | "else" ->
+        scan_else  ~callback:scan Directive.scan_else    state lexbuf
+    | "endif" ->
+        scan_endif ~callback:scan Directive.scan_endif   state lexbuf
+    | "define" ->
+        scan_dir   ~callback:scan Directive.scan_define  state lexbuf
+    | "undef" ->
+        scan_dir   ~callback:scan Directive.scan_undef   state lexbuf
+    | "error" ->
+        scan_dir   ~callback:scan Directive.scan_error   state lexbuf
+    | _ ->
+        callback_with_cont scan state lexbuf }
 
   (* Linemarkers preprocessing directives (from #include) *)
 
-| '#' blank* (natural as line) blank+ '"' (string as file) '"'
-  (blank+ (('1' | '2') as flag))? blank* {
-    let {state; region; _} = state#sync lexbuf
-    in eol region line file flag state lexbuf }
+| '#' blank* (natural as linenum) {
+    let state, Region.{region; _} = state#sync lexbuf in
+    scan_linemarker ~callback:scan region linenum state lexbuf }
+
+  (* End-of-File: we return the final state *)
+
+| eof { Client.callback state lexbuf }
 
   (* Other tokens *)
 
-| eof { client#mk_eof state lexbuf }
+| _ { callback_with_cont scan state lexbuf }
 
-| _ { rollback lexbuf;
-      client#callback state lexbuf (* May raise exceptions *) }
+(* Block comments *)
 
-(* Finishing a linemarker *)
+and in_block block thread state = parse
+  string_delimiter {
+    let lexeme = Lexing.lexeme lexbuf in
+    match Config.string with
+      Some delimiter when String.(delimiter = lexeme) ->
+        let opening = thread#opening in
+        let state, Region.{region; _} = state#sync lexbuf in
+        let thread = thread#push_string lexeme in
+        let thread = thread#set_opening region in
+        let* thread, state = in_string thread state lexbuf in
+        let thread = thread#push_string lexeme in
+        let thread = thread#set_opening opening
+        in in_block block thread state lexbuf
+    | Some _ | None ->
+        scan_utf8_wrap (scan_utf8 open_block) (in_block block)
+                       thread state lexbuf }
 
-and eol region line file flag state = parse
-  nl | eof { linemarker region ~line ~file ?flag state lexbuf }
-| _        { let {region; _} = state#sync lexbuf
-             in fail region Invalid_linemarker_argument }
+| block_comment_opening {
+    let lexeme = Lexing.lexeme lexbuf in
+    if   String.(block#opening = lexeme)
+    then let opening = thread#opening in
+         let state, Region.{region; _} = state#sync lexbuf in
+         let thread = thread#push_string lexeme in
+         let thread = thread#set_opening region in
+         let* thread, state = in_block block thread state lexbuf in
+         let thread = thread#set_opening opening
+         in in_block block thread state lexbuf
+    else scan_utf8_wrap (scan_utf8 open_block) (in_block block)
+                        thread state lexbuf }
 
-(* Block comments
-
-   (For Emacs: ("(*") The lexing of block comments must take care of
-   embedded block comments that may occur within, as well as strings,
-   so no substring "*/" or "*)" may inadvertently close the
-   block. This is the purpose of the first case of the scanner
-   [scan_block]. *)
-
-and scan_block block thread state = parse
-  block_comment_openings as lexeme {
-    if   String.equal block#opening lexeme
-    then let opening            = thread#opening in
-         let {region; state; _} = state#sync lexbuf in
-         let thread             = thread#push_string lexeme in
-         let thread             = thread#set_opening region in
-         let scan_next          = scan_block block in
-         let thread, state      = scan_next thread state lexbuf in
-         let thread             = thread#set_opening opening
-         in scan_block block thread state lexbuf
-    else begin
-           rollback lexbuf;
-           scan_char_in_block block thread state lexbuf
-         end }
-
-| block_comment_closings as lexeme {
-    if   String.equal block#closing lexeme
-    then thread#push_string lexeme, (state#sync lexbuf).state
-    else begin
-           rollback lexbuf;
-           scan_char_in_block block thread state lexbuf
-         end }
-
+| block_comment_closing {
+    let state, Region.{value=lexeme; _} = state#sync lexbuf in
+    if   String.(block#closing = lexeme)
+    then Ok (thread#push_string lexeme, state)
+    else scan_utf8_wrap (scan_utf8 open_block)
+                        (in_block block)
+                        thread state lexbuf }
 | nl as nl {
-    let ()     = Lexing.new_line lexbuf
-    and state  = state#set_pos (state#pos#new_line nl)
-    and thread = thread#push_string nl in
-    scan_block block thread state lexbuf }
+    let thread = thread#push_string nl
+    and state  = state#newline lexbuf
+    in in_block block thread state lexbuf }
 
-| eof { let err = Unterminated_comment block#closing
-        in fail thread#opening err }
+| eof { fail state thread#opening Error.Unterminated_comment }
 
-| _ { rollback lexbuf;
-      scan_char_in_block block thread state lexbuf }
-
-and scan_char_in_block block thread state = parse
-  _ { let if_eof thread =
-        let err = Unterminated_comment block#closing
-        in fail thread#opening err in
-      let scan_utf8 = scan_utf8_char if_eof
-      and callback  = scan_block block in
-      scan_utf8_wrap scan_utf8 callback thread state lexbuf }
+| _ { scan_utf8_wrap (scan_utf8 open_block)
+                     (in_block block)
+                     thread state lexbuf }
 
 (* Line comments *)
 
-and scan_line thread state = parse
-  nl as nl { let ()     = Lexing.new_line lexbuf
-             and thread = thread#push_string nl
-             and state  = state#set_pos (state#pos#new_line nl)
-             in thread, state }
-| eof      { thread, state }
-| _        { let scan_utf8 = scan_utf8_char (fun _ -> Stdlib.Ok ())
-             in scan_utf8_wrap scan_utf8 scan_line thread state lexbuf }
+and in_line thread state = parse
+  nl as nl { let state = state#push_line thread in
+             Ok (state#push_newline None lexbuf) }
+| eof      { Ok (state#push_line thread) }
+| _        { let scan_utf8 =
+               scan_utf8 (fun thread state -> Ok (thread, state))
+             in scan_utf8_wrap scan_utf8 in_line thread state lexbuf }
 
 (* Scanning UTF-8 encoded characters *)
 
-and scan_utf8_char if_eof thread state = parse
-     eof { thread, if_eof thread }
-| _ as c { let thread = thread#push_char c in
-           let lexeme = Lexing.lexeme lexbuf in
-           let () = state#supply (Bytes.of_string lexeme) 0 1 in
-           match Uutf.decode state#decoder with
-             `Uchar _     -> thread, Stdlib.Ok ()
-           | `Malformed _
-           | `End         -> thread, Stdlib.Error Invalid_utf8_sequence
-           | `Await       -> scan_utf8_char if_eof thread state lexbuf }
+and scan_utf8 if_eof thread state = parse
+  eof { if_eof thread state }
+| _   { let lexeme = Lexing.lexeme lexbuf in
+        let thread = thread#push_string lexeme in
+        let     () = state#supply (Bytes.of_string lexeme) 0 1 in
+        match Uutf.decode state#decoder with
+          `Uchar _     -> Ok (thread, state)
+        | `Malformed _
+        | `End         -> Error (thread, state,
+                                 Error.Invalid_utf8_sequence)
+        | `Await       -> scan_utf8 if_eof thread state lexbuf }
 
 (* Scanning strings *)
 
-and scan_string delimiter thread state = parse
-  nl     { fail thread#opening Broken_string }
-| eof    { fail thread#opening Unterminated_string }
-| ['\t' '\r' '\b']
-         { let {region; _} = state#sync lexbuf in
-           fail region Invalid_character_in_string }
-| ['\000' - '\031'] | ['\128' - '\255']
+and in_string thread state = parse
+  string_delimiter {
+         let state, Region.{value; region} = state#sync lexbuf in
+         let lexeme = value in
+         match Config.string with
+           Some delimiter when String.(delimiter = lexeme) ->
+             (* Closing the string *)
+             Ok (thread#set_closing region, state)
+         | Some _ | None -> (* Still inside the string *)
+             let thread = thread#push_string lexeme
+             in in_string thread state lexbuf }
+| '\\' { let state, Region.{region; _} = state#sync lexbuf
+         in unescape region thread state lexbuf }
+| nl   { fail state thread#opening Error.Newline_in_string }
+| eof  { fail state thread#opening Error.Unterminated_string }
+| ['\000' - '\031'] | ['\128' - '\255'] as c
            (* Control characters and 8-bit ASCII *)
-         { let {region; _} = state#sync lexbuf in
-           fail region Invalid_character_in_string }
-| '"'    { let {state; _} = state#sync lexbuf in
-           if Char.(=) delimiter '"' then thread, state
-           else
-             let thread = thread#push_char '"' in
-             scan_string delimiter thread state lexbuf }
-| '\\'   { let {state; region; _} = state#sync lexbuf
-           in unescape region delimiter thread state lexbuf }
-| _ as c { let {state; _} = state#sync lexbuf in
-           scan_string delimiter (thread#push_char c) state lexbuf }
+       { let _, Region.{region; _} = state#sync lexbuf in
+         fail state region (Error.Invalid_character_in_string c) }
+| _    { let state, Region.{value; _} = state#sync lexbuf in
+         in_string (thread#push_string value) state lexbuf }
 
-and unescape backslash delimiter thread state = parse
-  '"'  { let {state; lexeme; _} = state#sync lexbuf in
+and unescape backslash thread state = parse
+  string_delimiter {
+         let state, Region.{value=lexeme; _} = state#sync lexbuf in
          let interpretation =
-           if Char.(=) delimiter '"' then
-             lexeme (* E.g. unescaped \" into " *)
-           else "\\" ^ lexeme (* verbatim *) in
+           match Config.string with
+             Some delimiter when String.(delimiter = lexeme) ->
+               lexeme (* E.g. unescaped \" into " *)
+           | Some _ | None -> "\\" ^ lexeme (* verbatim *) in
          let thread = thread#push_string interpretation
-         in scan_string delimiter thread state lexbuf }
-| 'n'  { let {state; _} = state#sync lexbuf
-         and thread = thread#push_char '\n' (* Unescaped "\n" into '\010' *)
-         in scan_string delimiter thread state lexbuf }
-| '\\' { let {state; lexeme; _} = state#sync lexbuf in
-         let thread = thread#push_string lexeme (* Unescaped "\\" into '\\' *)
-         in scan_string delimiter thread state lexbuf }
-| _    { let {region; _} = state#sync lexbuf in
+         in in_string thread state lexbuf }
+| 'n'  { let state, _ = state#sync lexbuf
+         (* Unescaped "\n" into '\010': *)
+         and thread = thread#push_char '\n'
+         in in_string thread state lexbuf }
+| '\\' { let state, Region.{value=lexeme; _} = state#sync lexbuf in
+         (* Unescaped "\\" into '\\': *)
+         let thread = thread#push_string lexeme
+         in in_string thread state lexbuf }
+| _    { let _, Region.{region; _} = state#sync lexbuf in
          let region = Region.cover backslash region in
-         fail region Undefined_escape_sequence }
+         fail state region Undefined_escape_sequence }
 
 (* Scanner called first *)
 
-and init client state = parse
-  utf8_bom { state#mk_bom lexbuf                       }
-| _        { rollback lexbuf; scan client state lexbuf }
+and init state = parse
+  utf8_bom { scan (state#push_bom lexbuf) lexbuf       }
+| eof      { Client.callback state lexbuf              }
+| _        { Lexbuf.rollback lexbuf; scan state lexbuf }
 
 (* END LEXER DEFINITION *)
 
 {
 (* START TRAILER *)
 
-let mk_scan (client: 'token client) =
-  let internal_client : 'token internal_client =
-    let open Utils in
-    object
-      method mk_string                = client#mk_string
-      method mk_eof                   = drop <@ client#mk_eof
-      method callback                 = drop <@ client#callback
-      method support_string_delimiter = client#support_string_delimiter
-    end
-  and first_call = ref true in
-  fun state ->
-    let scanner =
-      if !first_call then (first_call := false; init) else scan
-    in lift (scanner internal_client state)
+    let open_stream : Lexbuf.input -> (instance, message) result =
+      let first_call = ref true in
+      let scan state =
+        (if !first_call then (first_call := false; init) else scan)
+        state
+      in open_stream scan
 
+  end (* of functor [Make] *)
 (* END TRAILER *)
 }

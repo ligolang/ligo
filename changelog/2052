@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '2052'
+title: 'Refactor: move pattern matching compilation to ast-aggregated'
+type: internal

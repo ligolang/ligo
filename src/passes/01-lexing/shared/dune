@@ -2,34 +2,25 @@
 
 (ocamllex Lexer)
 
-;; Build of the lexer as a library
+;; Build of the common lexer facilities as a library
 
 (library
- (name lexing_shared)
- (public_name ligo.lexing.shared)
- (instrumentation
-  (backend bisect_ppx))
- (libraries
-  ;; Vendors
-  simple-utils
-  Preprocessor
-  LexerLib
-  ;; LIGO
-  preprocessing_shared
-  main_warnings
-  ;; Third party
-  zarith
-  str)
- (modules
-  Errors
-  Warnings
-  Formatter
-  Token
-  Common
-  Attr
-  Wrap
-  Lexer
-  Self_tokens
-  LexerMainGen
-  UnlexerGen)
- (modules_without_implementation Token Self_tokens))
+  (name lexing_shared)
+  (public_name ligo.lexing.shared)
+  (modules
+     Errors Warnings Formatter Token Common Attr
+     Wrap Style Lexer Pipeline TopAPI UnlexerGen)
+  (modules_without_implementation
+     Token)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+     ;; Vendors
+     simple-utils
+     Preprocessor
+     LexerLib
+     ;; LIGO
+     preprocessing_shared
+     main_warnings
+     ;; Third party
+     zarith
+     str))

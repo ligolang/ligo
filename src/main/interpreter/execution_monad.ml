@@ -272,7 +272,7 @@ module Command = struct
         @@ Ast_aggregated.get_t_option value_ty
       in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
-      let mich = Michelson_backend.compile_value ~raise ~options expr in
+      let mich = Michelson_backend.compile_ast ~raise ~options expr in
       let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
       let ret_co, ret_ty =
         Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich
@@ -570,17 +570,10 @@ module Command = struct
         @@ Self_ast_aggregated.expression_obj func_typed_exp
       in
       let func_code =
-        Michelson_backend.compile_value ~raise ~options func_typed_exp
+        Michelson_backend.compile_ast ~raise ~options func_typed_exp
       in
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
       let { code = arg_code; _ } =
-        Michelson_backend.compile_simple_value
-          ~raise
-          ~options
-          ~run_options
-          ~loc
-          v
-          in_ty
+        Michelson_backend.compile_value ~raise ~options ~loc v in_ty
       in
       let input_ty, _ =
         Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty
@@ -609,15 +602,8 @@ module Command = struct
       in
       ret, ctxt
     | Eval (loc, v, expr_ty) ->
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
       let value =
-        Michelson_backend.compile_simple_value
-          ~raise
-          ~options
-          ~run_options
-          ~loc
-          v
-          expr_ty
+        Michelson_backend.compile_value ~raise ~options ~loc v expr_ty
       in
       LT.V_Michelson (Ty_code value), ctxt
     | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) ->
@@ -715,7 +701,7 @@ module Command = struct
       ret, ctxt
     | To_contract (loc, v, entrypoint, _ty_expr) ->
       (match v with
-       | LT.V_Ct (LT.C_address address) ->
+       | LT.V_Typed_address address ->
          let contract : LT.constant_val =
            LT.C_contract { address; entrypoint }
          in
@@ -907,7 +893,7 @@ module Command = struct
               (e_a_address @@ Michelson_backend.string_of_contract addr)
               value_ty)
       in
-      let mich = Michelson_backend.compile_value ~raise ~options expr in
+      let mich = Michelson_backend.compile_ast ~raise ~options expr in
       let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
       let ret_co, ret_ty =
         Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich

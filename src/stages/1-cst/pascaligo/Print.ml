@@ -1,18 +1,10 @@
 (* PRINTING THE CST *)
 
-(* This module produces an arborescent, textual representation of a
-   subset of the Concrete Abstract Tree (CST). It aims at a readable
-   format with the most relevant nodes, with source locations. This
-   functionality is most useful when testing the parser, for example,
-   checking that a particular node corresponding to an operator has
-   the expected associativity with the same kind, or the expected
-   priority over another. *)
-
 [@@@coverage exclude_file]
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 
@@ -1221,15 +1213,16 @@ and print_E_Verbatim state (node : lexeme wrap) =
 
 type ('src, 'dst) printer = Tree.state -> 'src -> 'dst
 
-let print_pattern_to_string state pattern =
-  print_pattern state pattern; Buffer.contents(state#buffer)
-
 let print_to_buffer state cst = print_cst state cst; state#buffer
 
 let print_to_string state cst =
   Buffer.contents (print_to_buffer state cst)
 
+let print_pattern_to_string state pattern =
+  print_pattern state pattern; Buffer.contents state#buffer
+
 (* Aliases *)
 
 let to_buffer = print_to_buffer
 let to_string = print_to_string
+let pattern_to_string = print_pattern_to_string

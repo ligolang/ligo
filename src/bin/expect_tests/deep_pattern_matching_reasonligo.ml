@@ -39,7 +39,7 @@ let%expect_test _ =
       7 |   | (xs  , Nil) => 2
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#417 , b -> ^gen#418 , c -> ^gen#419] with
+    Cannot unify record[a -> ^gen#496 , b -> ^gen#497 , c -> ^gen#498] with
     sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
@@ -51,7 +51,7 @@ let%expect_test _ =
       6 |   | (xs  , Nil) => 2
 
     Invalid type(s)
-    Cannot unify ( ^gen#417 * ^gen#418 * ^gen#419 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify ( ^gen#496 * ^gen#497 * ^gen#498 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -137,7 +137,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a : None,b : _} |}]
+    - {b : _,a : None} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;
@@ -362,6 +362,14 @@ let%expect_test _ =
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     Reasonligo is depreacted, support will be dropped in a few versions.
+
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.religo", line 8, characters 27-32:
+      7 |   | { myt : _myt , mynat : mynat } , None     => ([]: list(operation), mynat)
+      8 |   | { myt : _myt , mynat : mynat } , Some (x) => ([]: list(operation), x    )
+      9 |   }
+    :
+    Warning: unused variable "mynat".
+    Hint: replace it by "_mynat" to prevent this warning.
 
     { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
       storage nat ;

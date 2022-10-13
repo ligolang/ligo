@@ -1,9 +1,9 @@
 [@@@coverage exclude_file]
 module Int64 = Caml.Int64
+open Ligo_prim
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Ligo_prim
 
 type 'a pretty_printer = Format.formatter -> 'a -> unit
 

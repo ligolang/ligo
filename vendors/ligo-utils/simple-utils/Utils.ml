@@ -161,7 +161,7 @@ let gen_sym =
 
 let trace text = function
        None -> ()
-| Some chan -> output_string chan text; flush chan
+| Some chan -> Core.(output_string chan text; flush chan)
 
 (* Printing a string in red to standard error *)
 
