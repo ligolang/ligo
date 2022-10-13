@@ -39,6 +39,9 @@ verification:
     - src/README.md
     - src/coq/README.md
     - vendors/tezos-ligo/src/lib_webassembly/bin/test/README.md
+    - vendors/tezos-ligo/src/lib_webassembly/bin/README.md
+    - vendors/tezos-ligo/src/README.md
+    - vendors/tezos-ligo/devtools/README.md
 
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
