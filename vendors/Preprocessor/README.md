@@ -583,7 +583,7 @@ standalone preprocessor, and also export data structures about the
 configuration meant for the library client, for example, the LIGO
 compiler.
 
-#### The Interface
+#### The Interface (CLI)
 
 The module signature `COMMENTS` is
 
@@ -722,7 +722,7 @@ command-line: another parse is now possible by another client.
 
 ### API
 
-#### The Interface
+#### The Interface (API)
 
 The `API` module is the heart of the preprocessor. Perhaps it is best
 to start from its interface. The type of a preprocessor is
@@ -1029,7 +1029,7 @@ As we saw in the section about
 [preprocessing strings and comments](#preprocessing-strings-and-comments),
 several combinations of block and line comments are possible. We also
 saw above how the type `API.config`, in the section
-[The Interface](#the-interface-1), gathers parametric information about
+[The Interface](#the-interface-api), gathers parametric information about
 the behaviour of the preprocessor. In particular, we saw the signature
 `COMMENTS` in the section [CLI](#cli) signature that gathers the
 comment opening and closing markers from the client's perspective. It
