@@ -9,17 +9,18 @@ let is_layout = String.chop_prefix ~prefix:"layout:"
 
 let get_layout : string list -> Layout.t option =
  fun attributes ->
-  let rec aux lst =
-    match lst with
-    | hd :: tl ->
-      (match is_layout hd with
+  List.find_map attributes ~f:(fun attr ->
+      match is_layout attr with
       | Some "tree" -> Some Layout.L_tree
       | Some "comb" -> Some Layout.L_comb
-      (*deal with wrong layout*)
-      | None | Some _ -> aux tl)
-    | [] -> None
-  in
-  aux attributes
+      | _ -> None)
+
+
+let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
+
+let compile_row_elem_attributes : string list -> string option =
+ fun attributes ->
+  List.find_map attributes ~f:(fun attr -> is_michelson_annotation attr)
 
 
 let compile_value_attributes : I.Attr.t -> O.ValueAttr.t =
@@ -136,11 +137,12 @@ and compile_row ~raise ({ fields; attributes } : _ I.non_linear_rows) : O.rows =
     List.Assoc.map
       fields
       ~f:(fun
-           ({ associated_type; decl_pos; attributes = _ } : _ Rows.row_element)
+           ({ associated_type; decl_pos; attributes } : _ Rows.row_element)
            : _ Rows.row_element_mini_c
          ->
         let associated_type = compile_type_expression ~raise associated_type in
-        { associated_type; decl_pos; michelson_annotation = None })
+        let michelson_annotation = compile_row_elem_attributes attributes in
+        { associated_type; decl_pos; michelson_annotation })
     |> Record.of_list
   in
   let layout = compile_row_attributes attributes in
@@ -281,7 +283,7 @@ let rec compile_expression ~raise : I.expression -> O.expression =
     |> Set_expr.map self
     |> List.fold
          ~init:(return @@ E_constant { cons_name = C_SET_EMPTY; arguments = [] })
-         ~f:(fun elem set ->
+         ~f:(fun set elem ->
            return
            @@ E_constant { cons_name = C_SET_ADD; arguments = [ elem; set ] })
   | I.E_ascription ascr ->

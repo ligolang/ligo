@@ -301,7 +301,7 @@ let t_michelson_pair ?loc l l_ann r r_ann =
     ; michelson_annotation = Some michelson_annotation
     }
   in
-  t_sum
+  t_record
     ?loc
     (Record.of_list
         [ Label "0", row 0 l l_ann; Label "1", row 1 r r_ann ])

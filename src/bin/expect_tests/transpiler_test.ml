@@ -22,8 +22,8 @@ let%expect_test _ =
 
     type storage is
       record [
-        card_patterns : card_patterns;
         cards : cards;
+        card_patterns : card_patterns;
         next_id : nat
       ]
 
@@ -491,7 +491,7 @@ block {
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;
   [%expect{|
-    type parameter is Pos of nat | Zero of nat
+    type parameter is Zero of nat | Pos of nat
 
     type storage is unit
 

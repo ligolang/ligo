@@ -1859,7 +1859,7 @@ let%expect_test _ =
 (* annotations and self *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "self_annotations.mligo" ] ;
-  [%expect {|
+  [%expect{|
     { parameter (or (unit %foo) (unit %b)) ;
       storage unit ;
       code { DROP ;
@@ -1875,7 +1875,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "error_self_annotations.mligo" ] ;
-  [%expect {|
+  [%expect{|
     File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 22-26:
       5 | let main (_,_ : param * unit) : operation list * unit =
       6 |   let c = (Tezos.self("%a") : unit contract) in
