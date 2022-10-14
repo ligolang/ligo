@@ -28,7 +28,14 @@ end
 
 module Define = Diffing.Define(Defs)
 
-module TeArg = struct
+
+
+module rec TeArg : sig
+  val weight : Define.change -> int
+  val test :
+    unit -> type_expression -> type_expression -> (unit, unit) result
+  val update : Define.change -> unit -> unit
+end = struct
   (*
     The module will try to find the simplest diff between the two lists.
     To find the simplest one, we tell it how costly is a change.
@@ -49,10 +56,10 @@ module TeArg = struct
     see : https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
   *)
   let weight : Define.change -> int = function
-    | Delete _ -> 1
-    | Insert _ -> 1
+    | Delete te -> List.length ( M.get_diff te (t_unit ()) )
+    | Insert te -> List.length ( M.get_diff te (t_unit ()) )
     | Keep   _ -> 0
-    | Change _ -> 1
+    | Change (te1, te2, _) -> List.length (M.get_diff te1 te2)
 
   let test : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result =
     fun _state te_l te_r ->
@@ -63,15 +70,24 @@ module TeArg = struct
   let update : Define.change -> Defs.state -> Defs.state = fun _change _state -> ()
 end
 
-module Diff = Define.Simple(TeArg)
+and Diff : sig
+  val diff :
+    unit -> type_expression array -> type_expression array -> Define.patch
+end = Define.Simple(TeArg)
 
-type t = Define.patch
+(* [t] and [get_diff] are put in this module [M]
+   for enabling mutual recursivity with above modules.
+   Because weights depend on [get_diff]
+   and [get_diff] depends on weights.
+   *)
+and M : sig
+  type t = Define.patch
+  val get_diff : type_expression -> type_expression -> t
+end = struct
 
-let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
-  match t1.type_content, t2.type_content with
-  | T_record r1, T_record r2
-    when (Record.is_tuple r1.fields)
-    &&   (Record.is_tuple r2.fields) ->
+  type t = Define.patch
+
+  let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
     let rows_to_te_array : rows -> ty_expr array = fun r ->
       let fields : row_element Record.t    = r.fields in
       let l : (Label.t * row_element) list = Record.to_list fields in
@@ -79,11 +95,36 @@ let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
       let l : type_expression list         = List.map ~f:(fun re -> re.associated_type) l in
       Array.of_list @@ List.rev l
     in
-    let r1 : ty_expr array = rows_to_te_array r1 in
-    let r2 : ty_expr array = rows_to_te_array r2 in
-    let diff : t = Diff.diff () r1 r2 in
-    List.rev diff
-  | _ -> [] (* Don't display any difference in other cases *)
+    List.rev @@
+    match t1.type_content, t2.type_content with
+    | T_record r1, T_record r2
+      when (Record.is_tuple r1.fields)
+      &&   (Record.is_tuple r2.fields) ->
+      let r1 : ty_expr array = rows_to_te_array r1 in
+      let r2 : ty_expr array = rows_to_te_array r2 in
+      let diff : t = Diff.diff () r1 r2 in
+       diff
+    (* If one is a record and not the other
+       the weight of the changes is basically the number of nodes
+       of the type_expression tree *)
+    | T_record r, _ ->
+      let r : ty_expr array = rows_to_te_array r in
+      let diff : t = Diff.diff () r (Array.of_list [t2]) in
+      diff
+    | _, T_record r -> 
+      let r : ty_expr array = rows_to_te_array r in
+      let diff : t = Diff.diff () r (Array.of_list [t1]) in
+      diff
+    | _ ->
+      let r1 : ty_expr array = Array.of_list [t1] in
+      let r2 : ty_expr array = Array.of_list [t2] in
+      let diff : t = Diff.diff () r1 r2 in
+      diff
+
+end
+
+type t = M.t
+let get_diff = M.get_diff
 
 module PP = struct
 
