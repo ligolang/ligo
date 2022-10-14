@@ -5,7 +5,7 @@ let output_null_char () =
   Out_channel.flush stderr
 
 let main ~ligo_bin_path () =
-  let () = Sys.catch_break true in
+  let () = Sys_unix.catch_break true in
   let stdin = In_channel.stdin in
   let exception Break in
   try
@@ -28,7 +28,7 @@ let main ~ligo_bin_path () =
     done in Ok("\x00", "\x00")
   with 
     Break
-  | Sys.Break -> 
+  | Sys_unix.Break -> 
     output_null_char ();
     Ok("\x00", "\x00") 
   | _ -> 

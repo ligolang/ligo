@@ -1,8 +1,8 @@
 [@@@coverage exclude_file]
+open Ligo_prim
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Ligo_prim
 
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->

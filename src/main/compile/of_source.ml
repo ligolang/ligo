@@ -15,11 +15,9 @@ let make_meta syntax : meta =
 let make_meta_from_syntax syntax : meta =
   {syntax}
 
-let compile ~raise ~options ~meta (source_filename:string) : c_unit  =
-  preprocess_file ~raise ~options ~meta source_filename
+let preprocess_file = Helpers.preprocess_file
 
-let compile_string ~raise ~options ~meta source : c_unit  =
-  preprocess_string ~raise ~options ~meta source
+let preprocess_string = Helpers.preprocess_string
 
 let compile_string_without_preproc source : c_unit  =
   let buffer = Buffer.create 0 in
@@ -28,4 +26,6 @@ let compile_string_without_preproc source : c_unit  =
 
 let compile_contract_input ~raise : options:Compiler_options.t -> meta:meta -> string -> string -> c_unit * c_unit =
     fun ~options ~meta parameter storage ->
-  Simple_utils.Pair.map ~f:(compile_string ~raise ~options:options.frontend ~meta) (parameter,storage)
+      Simple_utils.Pair.map
+        ~f:(preprocess_string ~raise ~options:options.frontend ~meta)
+        (parameter, storage)

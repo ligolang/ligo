@@ -137,8 +137,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Construct ("Right", b)
   | Prim (_, "int", [], _), Int (_, n) -> V_Ct (C_int n)
   | Prim (_, "nat", [], _), Int (_, n) -> V_Ct (C_nat n)
-  | Prim (_, "chain_id", _, _), String (_, id) ->
-    V_Ct (C_chain_id id)
+  | Prim (_, "chain_id", _, _), String (_, id) -> V_Ct (C_chain_id id)
   | Prim (_, "key_hash", [], _), String (_, n) ->
     V_Ct (C_key_hash (key_hash_of_string ~raise n))
   | Prim (_, "key_hash", [], _), Bytes (_, b) ->

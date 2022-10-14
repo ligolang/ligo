@@ -1,7 +1,3 @@
-(* Interfacing the PascaLIGO preprocessor. *)
+(* Interfacing the PascaLIGO preprocessor with the compiler *)
 
-module File     = Preprocessing_pascaligo.File
-module Comments = Preprocessing_pascaligo.Comments
-module Modules  = Preprocessing_pascaligo.Modules
-
-include Preprocessing_shared.Common.Make (File) (Comments) (Modules)
+include Preprocessing_shared.Common.Make (Preprocessing_pascaligo.Config)

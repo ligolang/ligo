@@ -217,7 +217,7 @@ let build_expression ~raise : options:Compiler_options.t -> Syntax_types.t -> st
     let mini_c_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     (mini_c_exp ,aggregated)
 
-let rec build_contract_ ~raise : options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Stacking.compiled_expression * _ ) * ((Value_var.t * Stacking.compiled_expression) list * _) =
+let rec build_contract_aggregated ~raise : options:Compiler_options.t -> string -> string list -> Source_input.file_name -> _ =
   fun ~options entry_point cli_views file_name ->
     let entry_point = Value_var.of_input_var entry_point in
     let typed_prg = qualified_typed ~raise ~options Ligo_compile.Of_core.Env file_name in
@@ -237,20 +237,25 @@ let rec build_contract_ ~raise : options:Compiler_options.t -> string -> string 
       let* { type1 = input_ty ; _ }= Ast_aggregated.get_t_arrow aggregated_contract.type_expression in
       Ast_aggregated.get_t_pair input_ty ) in
     let aggregated = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty aggregated_contract in
+    let agg_views = build_aggregated_views ~raise ~options typed_views in
+    (parameter_ty, storage_ty), aggregated, agg_views
+
+and build_contract_stacking ~raise : options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Stacking.compiled_expression * _ ) * ((Value_var.t * Stacking.compiled_expression) list * _) =
+  fun ~options entry_point cli_views file_name ->
+    let _, aggregated, agg_views = build_contract_aggregated ~raise ~options entry_point cli_views file_name in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let contract = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
-    let agg_views = build_aggregated_views ~raise ~options typed_views in
     let views = build_views ~raise ~options agg_views in
     (contract,aggregated),(views,agg_views)
 
 (* building a contract in michelson *)
 and build_contract ~raise ~options entry_point views file_name =
-  let (contract,_),(views,_) = build_contract_ ~raise ~options entry_point views file_name in
+  let (contract,_),(views,_) = build_contract_stacking ~raise ~options entry_point views file_name in
   contract,views
 
 (* Meta ligo needs contract and views as aggregated programs *)
 and build_contract_meta_ligo ~raise ~options entry_point views file_name =
-  let (_,contract),(_,views) = build_contract_ ~raise ~options entry_point views file_name in
+  let (_,contract),(_,views) = build_contract_stacking ~raise ~options entry_point views file_name in
   contract,views
 
 and build_aggregated_views ~raise :

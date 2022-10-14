@@ -340,7 +340,8 @@ let main (p, s : bool * unit) =
 
 let some (o : unit option) = assert_some o
 
-[@inline] let x = 1
+[@inline]
+let x = 1
 
 [@inline]
 let foo (a : int) : int =
@@ -348,7 +349,9 @@ let foo (a : int) : int =
    let test = 2 + a in
    test)
 
-[@inline][@other] let y = 1
+[@inline]
+[@other]
+let y = 1
 
 let bar (b : int) : int =
   [@inline]
@@ -1960,3 +1963,4 @@ let main (p, s : parameter * storage) =
       Increment n -> add (s, n)
     | Decrement n -> sub (s, n) in
   ([] : operation list), storage
+

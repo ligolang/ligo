@@ -6,7 +6,7 @@ exception Should_exit_good
 exception Should_exit_bad
 
 (* ugh, can we avoid this? *)
-let () = Unix.putenv ~key:"TERM" ~data:"dumb"
+let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let bad_test basename =
   "../../test/contracts/negative/" ^ basename

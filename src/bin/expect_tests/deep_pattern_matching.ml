@@ -83,7 +83,9 @@ let%expect_test _ =
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type myt |}]
+    Invalid type(s)
+    Cannot unify record[a -> ^gen#496 , b -> ^gen#497 , c -> ^gen#498] with
+    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
@@ -93,7 +95,8 @@ let%expect_test _ =
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type myt |}]
+    Invalid type(s)
+    Cannot unify ( ^gen#496 * ^gen#497 * ^gen#498 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -165,7 +168,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {a = None; b = _} |}]
+    - {b = _; a = None} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
@@ -392,6 +395,20 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;
   [%expect{|
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 28-33:
+      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+    :
+    Warning: unused variable "mynat".
+    Hint: replace it by "_mynat" to prevent this warning.
+
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 14-17:
+      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+    :
+    Warning: unused variable "myt".
+    Hint: replace it by "_myt" to prevent this warning.
+
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
       6 |   match p with
       7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)

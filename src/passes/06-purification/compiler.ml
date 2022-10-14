@@ -132,13 +132,9 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_constructor const ->
       let const = Constructor.map self const in
       return @@ O.E_constructor const
-    | I.E_matching {matchee;cases} ->
-      let matchee = self matchee in
-      let aux Match_expr.{pattern;body} =
-        let pattern = Pattern.map (Option.map ~f:(compile_type_expression ~raise)) pattern in
-        Match_expr.{pattern;body = self body} in
-      let cases   = List.map ~f:aux cases in
-      return @@ O.E_matching {matchee;cases}
+    | I.E_matching m ->
+      let m = compile_match_expr ~raise ~last m in 
+      return @@ O.E_matching m
     | I.E_record recd ->
       (* at this point record expression become linear wrt labels *)
       let recd = List.map ~f:(fun (l,e) -> l, self e) recd in
@@ -207,6 +203,46 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let rhs = self rhs in
       let let_result = self let_result in
       return @@ O.E_let_mut_in {let_binder;attributes; rhs; let_result}
+
+and compile_match_expr ~raise ~last
+  : (I.expression, I.type_expression option) I.Match_expr.t ->
+      (O.expression, O.type_expression option) O.Match_expr.t
+  = fun { matchee ; cases} ->
+    let matchee = compile_expression ~raise ~last matchee in
+    let aux I.Match_expr.{ pattern ; body } =
+      let pattern = I.Pattern.map (compile_type_expression_option ~raise) pattern in
+      let pattern = compile_pattern ~raise pattern in
+      let body = compile_expression ~raise ~last body in
+      O.Match_expr.{ pattern ; body } 
+    in
+    let cases = List.map ~f:aux cases in
+    { matchee ; cases }
+
+and compile_pattern ~raise
+  : _ I.Pattern.t -> _ O.Pattern.t
+  = fun p ->
+    let self = compile_pattern ~raise in
+    let loc = Location.get_location p in
+    match (Location.unwrap p) with
+    | P_unit -> Location.wrap ~loc O.Pattern.P_unit
+    | P_var b -> Location.wrap ~loc (O.Pattern.P_var b)
+    | P_list Cons (h, t) ->
+      let h = self h in
+      let t = self t in
+      Location.wrap ~loc (O.Pattern.P_list (Cons(h, t)))
+    | P_list List ps ->
+      let ps = List.map ~f:self ps in
+      Location.wrap ~loc (O.Pattern.P_list (List ps))
+    | P_variant (l, p) ->
+      let p = self p in
+      Location.wrap ~loc (O.Pattern.P_variant (l, p))
+    | P_tuple ps -> 
+      let ps = List.map ~f:self ps in
+      Location.wrap ~loc (O.Pattern.P_tuple ps)
+    | P_record lps ->
+      let lps = Container.List.map self lps in
+      let lps = Container.Record.of_list (Container.List.to_list lps) in
+      Location.wrap ~loc (O.Pattern.P_record lps)
 
 and compile_declaration ~raise : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in

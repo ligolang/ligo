@@ -86,7 +86,8 @@ and value =
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Gen of gen
-  | V_location of location
+  | V_Location of location
+  | V_Typed_address of mcontract (* This is a copy of C_address in constant *)
 
 and calltrace = Location.t list
 

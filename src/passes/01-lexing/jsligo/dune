@@ -1,46 +1,20 @@
-;; Generate ['a terminal] type to complete inspection API in parsing stage
-
-(rule
-  (targets MenhirToken.ml MenhirToken.mli)
-  (deps (:ParToken ../../02-parsing/jsligo/ParToken.mly))
-  (action (run menhir %{ParToken} --only-tokens --inspection --table
-               --base MenhirToken)))
-
-;; Pre-Parser
-(menhir
- (merge_into PreParser)
- (modules ../../02-parsing/jsligo/ParToken PreParser)
- (flags -la 1 --table --strict --explain --inspection --cmly
-   --external-tokens Token))
-
-(library
-  (name menhir_jsligo_tokens)
-  (public_name ligo.lexing.menhir_jsligo_tokens)
-  (modules MenhirToken)
-  (libraries
-     lexing_shared
-     hex)
-  (flags (:standard
-            -open Lexing_shared
-            -open Wrap)))     ;; for [wrap]
-
 ;; Build of the JsLIGO lexer as a library
 
 (library
   (name lexing_jsligo)
   (public_name ligo.lexing.jsligo)
-  (modules Token Self_tokens Style PreParser State)
+  (modules Token)
   (libraries
     ;; LIGO
     lexing_shared
     menhir_jsligo_tokens
+    lexing_jsligo_self_units
+    lexing_jsligo_self_tokens
     ;; Third party
-    menhirLib
     str
-    hex)
-)
+    hex))
 
-;; Build of a standalone lexer for JsLIGO
+;; Build of a standalone lexer for CameLIGO
 
 (executable
   (name LexerMain)
@@ -53,18 +27,19 @@
     str)
   (modules Version LexerMain))
 
-;; Build of the unlexer (for covering the
-;; error states of the LR automaton)
+;; --------------------------------------------------------------------
+;; Build of the unlexer (for covering the error states of the LR
+;; automaton)
 
 (executable
- (name Unlexer)
- (libraries
-  ;; LIGO
-  lexing_shared
-  lexing_jsligo
-  ;; Third party
-  str)
- (modules Unlexer))
+  (name Unlexer)
+  (libraries
+    ;; LIGO
+    lexing_shared
+    lexing_jsligo
+    ;; Third party
+    str)
+  (modules Unlexer))
 
 ;; --------------------------------------------------------------------
 ;; Build of the version source (for the user, as a CLI option)

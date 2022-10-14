@@ -59,8 +59,11 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." Snippet.pp l s
   | V_Gen _ ->
      Format.fprintf ppf "Generator"
-  | V_location _ -> 
+  | V_Location _ ->
      Format.fprintf ppf "Heap location"
+  | V_Typed_address c ->
+    Format.fprintf ppf "%a" Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.pp c
+
 
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term

@@ -15,7 +15,7 @@ let entry_point =
 let source_file =
     let name = "SOURCE_FILE" in
     let _doc = "the path to the smart contract file." in
-    Command.Param.(anon (name %: Filename.arg_type))
+    Command.Param.(anon (name %: Filename_unix.arg_type))
 
 let package_name =
   let name = "PACKAGE_NAME" in
@@ -844,7 +844,7 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
   ]
 
 let run ?argv () =
-  Command.run ~version:Version.version ?argv main;
+  Command_unix.run ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
     Done -> 0;

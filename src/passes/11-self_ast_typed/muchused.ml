@@ -207,38 +207,19 @@ let rec muchuse_of_expr expr : muchuse =
 and muchuse_of_lambda t {binder; output_type = _; result} =
   muchuse_of_binder (Param.get_var binder) t (muchuse_of_expr result)
 
-and muchuse_of_cases = function
-  | Match_variant x -> muchuse_of_variant x
-  | Match_record  x -> muchuse_of_record x
-
-and muchuse_of_variant {cases;tv} =
-  match get_t_sum tv with
-  | None -> begin
-      match get_t_list tv with
-      | None -> muchuse_neutral
-      | Some tv' ->
-         let get_c_body (case : _ matching_content_case) = (case.constructor, (case.body, case.pattern)) in
-         let c_body_lst = Record.of_list (List.map ~f:get_c_body cases) in
-         let get_case c =  Record.LMap.find (Label c) c_body_lst in
-         let match_nil,_ = get_case "Nil" in
-         let match_cons,v = get_case "Cons" in
-         muchuse_max (muchuse_of_binder v (t_pair tv' tv) (muchuse_of_expr match_cons)) (muchuse_of_expr match_nil)
-    end
-  | Some ts ->
-     let case_ts ({constructor;_} : _ matching_content_case) =
-       let row_element = Record.LMap.find constructor ts.fields in
-       row_element.associated_type in
-     let cases_ts = List.map ~f:case_ts cases in
-     muchuse_maxs @@
-       Stdlib.List.map2
-         (fun t ({pattern;body;_} : _ matching_content_case) ->
-           muchuse_of_binder pattern t (muchuse_of_expr body))
-         cases_ts cases
-
-and muchuse_of_record {body;fields;_} =
-  let typed_vars = Record.LMap.to_list fields in
-  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder (Binder.get_var b) (Binder.get_ascr b) (c,m))
-    ~init:(muchuse_of_expr body) typed_vars
+and muchuse_of_cases cases =
+  muchuse_maxs @@ List.map cases
+    ~f:(fun {pattern;body} ->
+      let muchuse = muchuse_of_expr body in
+      let binders = Pattern.binders pattern in
+      let muchuse = 
+        List.fold_left binders ~init:muchuse
+          ~f:(fun muchuse b ->
+            muchuse_of_binder (Binder.get_var b) (Binder.get_ascr b) muchuse 
+          )
+          in
+      muchuse
+    )
 
 let rec get_all_declarations (module_name : Module_var.t) : module_ ->
                                (Value_var.t * type_expression) list =

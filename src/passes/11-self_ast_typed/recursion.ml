@@ -49,15 +49,11 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
   (* Wtf?? *)
   | E_assign _ | _ -> ()
 
-and check_recursive_call_in_matching ~raise = fun n final_path c ->
-  match c with
-  | Match_variant {cases;tv=_} ->
-    let aux {constructor=_; pattern=_; body} =
-      check_recursive_call ~raise n final_path body
-    in
-    List.iter ~f:aux cases
-  | Match_record {fields = _; body; tv = _} ->
+and check_recursive_call_in_matching ~raise = fun n final_path ms ->
+  let aux Match_expr.{pattern=_; body} =
     check_recursive_call ~raise n final_path body
+  in
+  List.iter ~f:aux ms
 
 let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
   let _, fv, _ = FV.expression lambda.result in

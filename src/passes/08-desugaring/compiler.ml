@@ -162,7 +162,7 @@ let rec compile_expression : I.expression -> O.expression =
       let const = Constructor.map self const in
       return @@ O.E_constructor const
     | I.E_matching m ->
-      let m = Match_expr.map self self_type_opt m in
+      let m = compile_match_expr m in
       return @@ O.E_matching m
     | I.E_record recd ->
       let recd = Record.map self recd in
@@ -251,8 +251,8 @@ let rec compile_expression : I.expression -> O.expression =
       return @@ O.E_matching {
           matchee ;
           cases = [
-            { pattern = Location.wrap @@ Pattern.P_variant (Label "True" , Location.wrap Pattern.P_unit) ; body = match_true  } ;
-            { pattern = Location.wrap @@ Pattern.P_variant (Label "False", Location.wrap Pattern.P_unit) ; body = match_false } ;
+            { pattern = Location.wrap @@ O.Pattern.P_variant (Label "True" , Location.wrap O.Pattern.P_unit) ; body = match_true  } ;
+            { pattern = Location.wrap @@ O.Pattern.P_variant (Label "False", Location.wrap O.Pattern.P_unit) ; body = match_false } ;
           ]
         }
     | I.E_sequence {expr1; expr2} ->
@@ -286,6 +286,44 @@ let rec compile_expression : I.expression -> O.expression =
       let let_result = self let_result in
       let attr = compile_exp_attributes attributes in
       return @@ O.E_let_mut_in { let_binder; attr; rhs; let_result }
+
+and compile_match_expr
+  : (I.expression, I.type_expression option) I.Match_expr.t 
+  -> (O.expression, O.type_expression option) O.Match_expr.t
+  = fun { matchee ; cases } ->
+    let matchee = compile_expression matchee in
+    let cases = List.map cases 
+      ~f:(fun { pattern ; body } ->
+        let pattern = I.Pattern.map compile_type_expression_option pattern in
+        let pattern = compile_pattern pattern in
+        let body = compile_expression body in
+        O.Match_expr.{ pattern ; body }
+    ) in
+    O.Match_expr.{ matchee ; cases }
+
+and compile_pattern : _ I.Pattern.t -> _ O.Pattern.t
+  = fun p ->
+    let self = compile_pattern in
+    let loc = Location.get_location p in
+     match (Location.unwrap p) with
+     | P_unit -> Location.wrap ~loc O.Pattern.P_unit
+     | P_var b -> Location.wrap ~loc (O.Pattern.P_var b)
+     | P_list Cons (h, t) ->
+         let h = self h in
+         let t = self t in
+         Location.wrap ~loc (O.Pattern.P_list (Cons(h, t)))
+     | P_list List ps ->
+         let ps = List.map ~f:self ps in
+         Location.wrap ~loc (O.Pattern.P_list (List ps))
+     | P_variant (l, p) ->
+         let p = self p in
+         Location.wrap ~loc (O.Pattern.P_variant (l, p))
+     | P_tuple ps -> 
+         let ps = List.map ~f:self ps in
+         Location.wrap ~loc (O.Pattern.P_tuple ps)
+     | P_record lps ->
+         let lps = Ligo_prim.Container.Record.map self lps in
+         Location.wrap ~loc (O.Pattern.P_record lps)
 
 and compile_declaration : I.declaration -> O.declaration = fun d ->
   let return wrap_content : O.declaration = {d with wrap_content} in
