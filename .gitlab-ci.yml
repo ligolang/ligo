@@ -141,9 +141,7 @@ xrefcheck:
     # nix run github:serokell/xrefcheck
     # Once flakes roll out to stable
     # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
-    - chmod 777 ./xrefcheck-x86_64-linux
-    - ./xrefcheck-x86_64-linux
+    - NIXPKGS_ALLOW_BROKEN=1 nix-shell -p haskellPackages.xrefcheck --run xrefcheck 
 
 .docker-image:
   stage: push
