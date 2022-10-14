@@ -67,6 +67,48 @@ let error_ppformat : display_format:string display_format ->
         (printable (fun s -> s) (strip_locations code))
   )
 
+let error_json : spilling_error -> Error.t = fun e ->
+  let open Error in
+  match e with
+  | `Spilling_corner_case (loc,desc) ->
+    let message = Format.asprintf "%s\n corner case: %s\n%s" loc desc (corner_case_message ()) in
+    let content = make_content ~message () in
+    make ~stage ~content
+  | `Spilling_no_type_variable tv ->
+    let message = Format.asprintf "Type \"%a\" not found (should not happen and be caught earlier)." Type_var.pp tv in
+    let location = Type_var.get_location tv in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Spilling_unsupported_pattern_matching location ->
+    let message = Format.sprintf "Invalid pattern matching.@Tuple patterns are not (yet) supported." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Spilling_unsupported_recursive_function (location,var) ->
+    let message = Format.asprintf "Invalid recursive function \"%a\".@.A recursive function can only have one argument." Value_var.pp var in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Spilling_wrong_mini_c_value (expected , actual) ->
+    let message = Format.asprintf "Invalid type.@.Expected \"%a\",@.but got \"%a\"."
+      Ast_aggregated.PP.type_expression expected
+      Mini_c.PP.value actual in
+    let content = make_content ~message () in
+    make ~stage ~content
+  | `Spilling_bad_decompile bad ->
+    let message = Format.asprintf "Cannot untranspile: %a" Mini_c.PP.value bad in
+    let content = make_content ~message () in
+    make ~stage ~content
+  | `Spilling_could_not_parse_raw_michelson (location, code) ->
+    let message = Format.asprintf "Could not parse raw Michelson:@.\"%s\"." code in
+    let content = make_content ~message ~location () in
+    make ~stage ~content 
+  | `Spilling_raw_michelson_must_be_seq (location, code) ->
+    let open Tezos_micheline in
+    let message = Format.asprintf "Raw Michelson must be seq (with curly braces {}), got: %a."
+      Micheline_printer.print_expr 
+      (Micheline_printer.printable Fn.id (Micheline.strip_locations code)) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content 
+
 let error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [

@@ -38,7 +38,7 @@ let error_ppformat : display_format:string display_format ->
         Simple_utils.Snippet.pp e.location
   )
 
-  let error_json : self_mini_c_error -> Ligo_prim.Error.t = fun e ->
+  let error_json : self_mini_c_error -> Error.t = fun e ->
     let open Error in
     match e with
     | `Self_mini_c_corner_case message ->
