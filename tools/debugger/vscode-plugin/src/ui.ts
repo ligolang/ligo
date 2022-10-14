@@ -561,6 +561,12 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
 	// Safely run validation for a new value.
 	private async executeValidation(value: V): Promise<void> {
 		try {
+			// TODO: This actually breaks FIFO order of 'onValidationResult' calls.
+			if (this.isObviouslyInvalid(value)) {
+				this.onValidationResult(undefined);
+				return;
+			}
+
 			const current = this.validate(value);
 			this.validating = current;
 			const validationMessage = await current;
@@ -568,11 +574,6 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
 			// During validation a new value could come in - in this case the current
 			// value can be skipped.
 			if (current == this.validating) {
-				if (this.isObviouslyInvalid(value)) {
-					this.onValidationResult(undefined);
-					return;
-				}
-
 				this.lastValidationResult = { value: value, result: !validationMessage };
 				this.onValidationResult(validationMessage);
 			}
