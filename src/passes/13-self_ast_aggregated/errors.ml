@@ -76,6 +76,64 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp e.location Constant.pp_constant' c
   )
 
+let error_json : self_ast_aggregated_error -> Error.t =
+  fun e ->
+  let open Error in
+  match e with
+  | `Self_ast_aggregated_expected_obj_ligo location ->
+    let message = "Invalid usage of a Test primitive or type in object ligo." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_polymorphism_unresolved location ->
+    let message = "Can't infer the type of this value, please add a type annotation." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_fvs_in_create_contract_lambda (_,v) ->
+    let location = Value_var.get_location v in
+    let message  = "Free variable usage is not allowed in call to Tezos.create_contract." in
+    let content  = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_create_contract_lambda (_cst,e) ->
+    let location = e.location in
+    let message = Format.sprintf "Invalid usage of Tezos.create_contract.@.The first argument must be an inline function." in 
+    let content  = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_bad_format_entrypoint_ann (ep,location) ->
+    let message = Format.sprintf "Invalid entrypoint \"%s\". One of the following patterns is expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when no entrypoint is used." ep in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_entrypoint_ann_not_literal location ->
+    let message = Format.sprintf "Invalid entrypoint value.@.The entrypoint value must be a string literal." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_emit_tag_not_literal location ->
+    let message = Format.sprintf "Invalid event tag.@.The tag must be a string literal." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_unmatched_entrypoint location ->
+    let message = Format.sprintf "Invalid entrypoint value.@.The entrypoint value does not match a constructor of the contract parameter." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_corner_case desc ->
+    let message = Format.sprintf "Internal error: %s" desc in
+    let content = make_content ~message () in
+    make ~stage ~content
+  | `Self_ast_aggregated_bad_single_arity (c, e) ->
+    let location = e.location in 
+    let message = Format.asprintf "Ill-formed \"%a\" expression@.One function argument is expected." Constant.pp_constant' c in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_bad_map_param_type (c,e) ->
+    let location = e.location in
+    let message = Format.asprintf "Ill-formed \"%a\" expression.@.A list of pair parameters is expected." Constant.pp_constant' c in 
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_bad_set_param_type (c,e) ->
+    let location = e.location in
+    let message = Format.asprintf "Ill-formed \"%a\" expression.@.A list of pair parameters is expected." Constant.pp_constant' c in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+
 let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
