@@ -41,6 +41,8 @@ okayTests =
       , "build" </> "type_B.mligo"
       , "build" </> "Xfoo.mligo"
       , "build" </> "Xmain.mligo"
+      , "build" </> "common" </> "storage.mligo"
+      , "build" </> "instance" </> "main.mligo"
       , "interpreter_tests" </> "A.mligo"
       , "interpreter_tests" </> "C.mligo"
       , "interpreter_tests" </> "imported_modules" </> "a.mligo"
@@ -83,13 +85,6 @@ okayTests =
       , "negative" </> "polymorphism" </> "constants.mligo"
       , "negative" </> "polymorphism" </> "error_monad.mligo"
       , "negative" </> "polymorphism" </> "unresolved" </> "contract2.mligo"
-
-        -- LIGO-757
-      , "negative" </> "error_reverse_app.mligo"
-      , "negative" </> "error_reverse_app_2.mligo"
-      , "reverse_app.mligo"
-      , "build" </> "common" </> "storage.mligo"
-      , "build" </> "instance" </> "main.mligo"
 
         -- LIGO-808
       , "jsligo_destructure_object.jsligo"

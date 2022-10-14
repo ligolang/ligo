@@ -393,7 +393,7 @@ module.exports = grammar({
       prec.right(13, mkOp($, "^")),
       prec.left(12, mkOp($, choice("=", "<>", "<", "<=", ">", ">="))),
       prec.left(11, mkOp($, "&&")),
-      prec.left(10, mkOp($, choice("or", "||"))),
+      prec.left(10, mkOp($, choice("or", "||", "|>"))),
     ),
 
     tup_expr: $ => prec.right(9, seq(
@@ -448,17 +448,20 @@ module.exports = grammar({
       ")",
     ),
 
-    // { p with a.x = b; c = d }
+    // { p with a.x = b; c = d; e }
     record_expr: $ => seq(
       "{",
       field("subject", $._path),
       "with",
-      common.sepEndBy1(";", field("field", $.record_path_assignment)),
+      common.sepEndBy1(";", field("field", choice($.record_path_assignment, $.record_capture))),
       "}"
     ),
 
+    record_capture: $ => field("accessor", $.FieldName),
+
     // a.x = b;
     // a = b;
+    // a;
     record_path_assignment: $ => seq(
       $._path,
       "=",
@@ -467,14 +470,15 @@ module.exports = grammar({
 
     _path: $ => choice($.Name, $.data_projection),
 
-    // { a = b; c = d }
+    // { a = b; c = d; e }
     record_literal: $ => seq(
       "{",
-      common.sepEndBy1(";", field("field", $.record_assignment)),
+      common.sepEndBy1(";", field("field", choice($.record_assignment, $.record_capture))),
       "}"
     ),
 
     // a = b;
+    // a;
     record_assignment: $ => seq(
       field("accessor", $.FieldName),
       "=",

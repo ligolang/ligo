@@ -109,8 +109,9 @@ recognise (SomeRawTree dialect rawTree)
     -- Record fields
   , Descent do
       boilerplate $ \case
-        "record_assignment"      -> FieldAssignment <$> (pure <$> field "accessor") <*> field "value"
+        "record_assignment"      -> FieldAssignment <$> fields "accessor" <*> field "value"
         "record_path_assignment" -> FieldAssignment <$> fields "accessor" <*> field "value"
+        "record_capture"         -> Capture <$> field "accessor"
         _                        -> fallthrough
 
   , Descent do
@@ -130,6 +131,7 @@ recognise (SomeRawTree dialect rawTree)
         ("!=", _)     -> return $ Op "!="
         ("<>", _)     -> return $ Op "<>"
         ("||", _)     -> return $ Op "||"
+        ("|>", _)     -> return $ Op "|>"
         ("&&", _)     -> return $ Op "&&"
         ("not", _)    -> return $ Op "not"
         ("lsl", _)    -> return $ Op "lsl"
