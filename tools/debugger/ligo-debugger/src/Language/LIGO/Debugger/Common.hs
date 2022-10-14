@@ -36,19 +36,21 @@ import Text.Interpolation.Nyan
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Debugger.Core.Snapshots (SourceType (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Interpret (StkEl (StkEl, seValue))
 import Morley.Michelson.Parser (utypeQ)
 import Morley.Michelson.Text (MText)
-import Morley.Michelson.Typed (EpAddress (..), Value, Value' (..))
+import Morley.Michelson.Typed
+  (EpAddress (..), Instr, RemFail, SomeConstrainedValue (SomeValue), SomeValue, T (TLambda), Value,
+  Value' (..), rfAnyInstr, rfMapAnyInstr, withValueTypeSanity)
+import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (Address, mformatAddress, ta)
-import Morley.Michelson.Interpret (StkEl (StkEl, seValue))
-import Morley.Michelson.Typed qualified as T
 
 import Language.LIGO.Debugger.CLI.Types
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.
-type EmbeddedLigoMeta = LigoIndexedInfo
+type EmbeddedLigoMeta = LigoIndexedInfo 'Unique
 
 ligoPositionToSrcPos :: HasCallStack => LigoPosition -> SrcPos
 ligoPositionToSrcPos (LigoPosition l c) =
@@ -160,7 +162,7 @@ replacementErrorValueToException = \case
   _ -> Nothing
 
 embedFunctionNameIntoLambda
-  :: Maybe LigoVariable
+  :: Maybe (LigoVariable 'Unique)
   -> Value t
   -> Value t
 embedFunctionNameIntoLambda mVar (VLam rf) = VLam $ embedIntoRemFail rf
@@ -185,14 +187,14 @@ embedFunctionNameIntoLambda mVar (VLam rf) = VLam $ embedIntoRemFail rf
     lambdaVar@(LigoVariable lambdaName) = fromMaybe (LigoVariable (Name internalStackFrameName)) mVar
 embedFunctionNameIntoLambda _ val = val
 
-tryToEmbedEnvIntoLambda :: (LigoStackEntry, StkEl t) -> StkEl t
+tryToEmbedEnvIntoLambda :: (LigoStackEntry 'Unique, StkEl t) -> StkEl t
 tryToEmbedEnvIntoLambda (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
   case leseType of
     LTArrow{} -> StkEl $ embedFunctionNameIntoLambda leseDeclaration val
     _ -> stkEl
 tryToEmbedEnvIntoLambda (_, stkEl) = stkEl
 
-embedFunctionNames :: Rec StkEl t -> LigoStack -> Rec StkEl t
+embedFunctionNames :: Rec StkEl t -> LigoStack 'Unique -> Rec StkEl t
 embedFunctionNames (x :& xs) (y : ys) = tryToEmbedEnvIntoLambda (y, x) :& embedFunctionNames xs ys
 embedFunctionNames stack [] = stack
 embedFunctionNames RNil _ = RNil

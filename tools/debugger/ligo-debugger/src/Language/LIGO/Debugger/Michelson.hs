@@ -375,14 +375,14 @@ michelsonInstrInnerBranches = \case
 --    wrappers that carry the debug info.
 -- 3. All contract filepaths that would be used in debugging session.
 readLigoMapper
-  :: LigoMapper
+  :: LigoMapper 'Unique
   -> (U.T -> U.T)
   -> (forall meta. (Default meta) => U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
   -> Either DecodeError (Set SourceLocation, SomeContract, [FilePath])
 readLigoMapper ligoMapper typeRules instrRules = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
-  metaPerInstr :: [LigoIndexedInfo] <-
+  metaPerInstr :: [LigoIndexedInfo 'Unique] <-
     forM indexes \i ->
       maybe (Left $ InsufficientMeta i) pure $
         lmLocations ligoMapper V.!? unTableEncodingIdx i
@@ -410,7 +410,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   return $! force (exprLocs, extendedContract, allFiles)
 
   where
-    mentionedSourceLocs :: LigoIndexedInfo -> [SourceLocation]
+    mentionedSourceLocs :: LigoIndexedInfo 'Unique -> [SourceLocation]
     mentionedSourceLocs LigoIndexedInfo{..} =
       maybeToList $ ligoRangeToSourceLocation <$> liiLocation
 

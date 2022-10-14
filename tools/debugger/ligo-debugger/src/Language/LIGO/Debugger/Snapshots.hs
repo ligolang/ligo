@@ -12,6 +12,7 @@ module Language.LIGO.Debugger.Snapshots
   , runInstrCollect
   , runCollectInterpretSnapshots
   , collectInterpretSnapshots
+  , stripSuffixHashFromSnapshots
 
     -- * Lenses
   , siLigoDescL
@@ -42,7 +43,8 @@ module Language.LIGO.Debugger.Snapshots
 import AST (Binding, Expr, LIGO)
 import AST qualified
 import Control.Lens
-  (At (at), Ixed (ix), Zoom (zoom), has, lens, makeLensesWith, makePrisms, (%=), (.=), (?=))
+  (At (at), Each (each), Ixed (ix), Zoom (zoom), has, lens, makeLensesWith, makePrisms, (%=), (.=),
+  (?=))
 import Control.Lens.Prism (Prism', _Just)
 import Control.Monad.Except (throwError)
 import Control.Monad.RWS.Strict (RWST (..))
@@ -51,9 +53,8 @@ import Data.Conduit qualified as C
 import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.HashSet qualified as HS
-import Data.List.NonEmpty qualified as NE
-import Data.Typeable (cast)
 import Data.List.NonEmpty (cons)
+import Data.List.NonEmpty qualified as NE
 import Data.Vinyl (Rec (..))
 import Duplo (layer)
 import Fmt (Buildable (..), genericF, pretty)
@@ -61,7 +62,6 @@ import Parser (Info)
 import Range (HasRange (getRange), Range (..))
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, throwIO)
-import Unsafe qualified
 
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
@@ -71,7 +71,7 @@ import Morley.Debugger.Core.Snapshots (InterpretHistory (..), twoElemFromList)
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsFailed), MorleyLogsBuilder,
-  StkEl, initInterpreterState, mkInitStack, runInstrImpl, seValue)
+  StkEl (StkEl), initInterpreterState, mkInitStack, runInstrImpl)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
@@ -80,12 +80,14 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 
 -- | Stack element, likely with an associated variable.
-data StackItem = StackItem
-  { siLigoDesc :: LigoStackEntry
+data StackItem u = StackItem
+  { siLigoDesc :: LigoStackEntry u
   , siValue :: SomeValue
-  } deriving stock (Show, Eq, Generic)
+  } deriving stock (Show, Generic)
 
-instance Buildable StackItem where
+deriving stock instance Eq (StackItem 'Concise)
+
+instance (SingI u) => Buildable (StackItem u) where
   build = genericF
 
 -- | Stack frame provides information about execution in some scope.
@@ -95,17 +97,19 @@ instance Buildable StackItem where
 --
 -- When we execute a function call, the current stack frame gets frozen and
 -- a new one is added for the scope of that function call.
-data StackFrame = StackFrame
+data StackFrame u = StackFrame
   { sfName :: Text
     -- ^ Stack frame name.
   , sfLoc :: LigoRange
     -- ^ Source location related to the current snapshot
     -- (and referred by 'sfInstrNo').
-  , sfStack :: [StackItem]
+  , sfStack :: [StackItem u]
     -- ^ Ligo stack available at the current position of this stack frame.
-  } deriving stock (Show, Eq, Generic)
+  } deriving stock (Show, Generic)
 
-instance Buildable StackFrame where
+deriving stock instance Eq (StackFrame 'Concise)
+
+instance (SingI u) => Buildable (StackFrame u) where
   build = genericF
 
 -- | Snapshot type, depends on which event has triggered the snapshot
@@ -169,17 +173,19 @@ instance Buildable InterpretEvent where
 
 -- | Information about execution state at a point where the debugger can
 -- potentially stop.
-data InterpretSnapshot = InterpretSnapshot
+data InterpretSnapshot u = InterpretSnapshot
   { isStatus :: InterpretStatus
     -- ^ Type of snapshot.
-  , isStackFrames :: NonEmpty StackFrame
+  , isStackFrames :: NonEmpty (StackFrame u)
     -- ^ Stack frames, top-level frame goes last.
-  } deriving stock (Show, Eq, Generic)
+  } deriving stock (Show, Generic)
 
-instance Buildable InterpretSnapshot where
+deriving stock instance Eq (InterpretSnapshot 'Concise)
+
+instance (SingI u) => Buildable (InterpretSnapshot u) where
   build = genericF
 
-instance NavigableSnapshot InterpretSnapshot where
+instance NavigableSnapshot (InterpretSnapshot u) where
   getExecutedPosition = do
     locRange <- sfLoc . head . isStackFrames <$> curSnapshot
     return . Just $ ligoRangeToSourceLocation locRange
@@ -194,7 +200,7 @@ instance NavigableSnapshot InterpretSnapshot where
     InterpretTerminatedOk -> SnapshotAtEnd pass
     InterpretFailed err -> SnapshotAtEnd (Left err)
 
-instance NavigableSnapshotWithMethods InterpretSnapshot where
+instance NavigableSnapshotWithMethods (InterpretSnapshot u) where
   getCurMethodBlockLevel = length . isStackFrames <$> curSnapshot
 
 -- | An entry for each recursive function or cycle.
@@ -212,9 +218,9 @@ data RecursiveOrCycleEntry = RecursiveOrCycleEntry
 data CollectorState m = CollectorState
   { csInterpreterState :: InterpreterState
     -- ^ State of the Morley interpreter.
-  , csStackFrames :: NonEmpty StackFrame
+  , csStackFrames :: NonEmpty (StackFrame 'Unique)
     -- ^ Stack frames at this point, top-level frame goes last.
-  , csLastRecordedSnapshot :: Maybe InterpretSnapshot
+  , csLastRecordedSnapshot :: Maybe (InterpretSnapshot 'Unique)
     -- ^ Last recorded snapshot.
     -- We can pick @[operation] * storage@ value from it.
   , csParsedFiles :: HashMap FilePath (LIGO Info)
@@ -226,7 +232,7 @@ data CollectorState m = CollectorState
     -- recursive function expression.
   , csLoggingFunction :: String -> m ()
     -- ^ Function for logging some useful debugging info.
-  , csMainFunctionName :: Text
+  , csMainFunctionName :: Name 'Unique
     -- ^ Name of main entrypoint.
     -- We need to store it in order not to create an extra stack frame.
   }
@@ -237,9 +243,13 @@ makeLensesWith postfixLFields ''InterpretSnapshot
 makeLensesWith postfixLFields ''RecursiveOrCycleEntry
 makeLensesWith postfixLFields ''CollectorState
 
+stripSuffixHashFromSnapshots :: InterpretSnapshot 'Unique -> InterpretSnapshot 'Concise
+stripSuffixHashFromSnapshots snap =
+  snap & isStackFramesL . each . sfStackL . each . siLigoDescL %~ stripSuffixHashLigoStackEntry
+
 -- | Lens giving an access to the top-most frame - which is also
 -- the only active one.
-csActiveStackFrameL :: Lens' (CollectorState m) StackFrame
+csActiveStackFrameL :: Lens' (CollectorState m) (StackFrame 'Unique)
 csActiveStackFrameL = csStackFramesL . __head
   where
     __head :: Lens' (NonEmpty a) a
@@ -255,7 +265,7 @@ type CollectingEvalOp m =
   -- Normally ConduitT lies on top of the stack, but here we put it under
   -- ExceptT to make it record things even when a failure occurs.
   ExceptT MichelsonFailureWithStack $
-  ConduitT () InterpretSnapshot $
+  ConduitT () (InterpretSnapshot 'Unique) $
   RWST ContractEnv MorleyLogsBuilder (CollectorState m) $
   m
 
@@ -294,7 +304,7 @@ runInstrCollect = \case
   other -> runInstrImpl runInstrCollect other
   where
     -- What is done upon executing instruction.
-    preExecutedStage :: LigoIndexedInfo -> Rec StkEl i -> Instr i o -> CollectingEvalOp m ()
+    preExecutedStage :: LigoIndexedInfo 'Unique -> Rec StkEl i -> Instr i o -> CollectingEvalOp m ()
     preExecutedStage LigoIndexedInfo{..} stack instr = do
       case (instr, stack) of
         -- We're on a way to execute a function.
@@ -324,7 +334,7 @@ runInstrCollect = \case
 
             mainFunctionName <- use csMainFunctionNameL
 
-            when (mainFunctionName /= lvName name) do
+            unless (mainFunctionName `compareUniqueNames` lvName name) do
               logMessage
                 [int||
                   Created new stack frame #{newStackFrame}
@@ -355,7 +365,7 @@ runInstrCollect = \case
         csActiveStackFrameL . sfStackL .= stackHere
 
     -- What is done right after the instruction is executed.
-    postExecutedStage :: LigoIndexedInfo -> Rec StkEl i -> Rec StkEl o -> Instr i o -> CollectingEvalOp m (Rec StkEl o)
+    postExecutedStage :: LigoIndexedInfo 'Unique -> Rec StkEl i -> Rec StkEl o -> Instr i o -> CollectingEvalOp m (Rec StkEl o)
     postExecutedStage LigoIndexedInfo{..} oldStack newStack instr = do
       returnStack <-
         case (instr, oldStack, newStack) of
@@ -533,7 +543,7 @@ runCollectInterpretSnapshots
   -> ContractEnv
   -> CollectorState m
   -> Value st
-  -> m (InterpretHistory InterpretSnapshot)
+  -> m (InterpretHistory (InterpretSnapshot 'Unique))
 runCollectInterpretSnapshots act env initSt initStorage =
   -- This should be safe because in practice we yield at least two snapshots
   InterpretHistory . fromMaybe (error "Unexpectedly < 2 snapshots") . twoElemFromList .
@@ -598,14 +608,14 @@ runCollectInterpretSnapshots act env initSt initStorage =
 -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
 -- both having the same @location@ meta; we don't want the user to
 -- see that.
-filterDupLocSnapshots :: [InterpretSnapshot] -> [InterpretSnapshot]
+filterDupLocSnapshots :: [InterpretSnapshot u] -> [InterpretSnapshot u]
 filterDupLocSnapshots = \snaps -> snaps
   & NE.groupBy ((==) `on` stackFrameId . isStackFrames)
   & concatMap (cleanupGroup . toList)
   where
     stackFrameId = sfLoc . head &&& length &&& length . sfStack . head
 
-    cleanupGroup :: [InterpretSnapshot] -> [InterpretSnapshot]
+    cleanupGroup :: [InterpretSnapshot u] -> [InterpretSnapshot u]
     cleanupGroup = \snaps -> snaps
       & reverse
       & dropAllMatchingExceptFirst
@@ -634,7 +644,7 @@ collectInterpretSnapshots
   -> ContractEnv
   -> HashMap FilePath (LIGO Info)
   -> (String -> m ())
-  -> m (InterpretHistory InterpretSnapshot)
+  -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger =
   runCollectInterpretSnapshots
     (runInstrCollect (unContractCode cCode) initStack)
@@ -660,5 +670,5 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       , csRecordedRanges = HS.empty
       , csRecursiveOrCycleEntries = mempty
       , csLoggingFunction = logger
-      , csMainFunctionName = entrypoint
+      , csMainFunctionName = Name entrypoint
       }

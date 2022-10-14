@@ -8,7 +8,7 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Control.Lens (Each (each), has, ix, makeLensesWith, (?~), (^?!))
+import Control.Lens (has, ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
 import Fmt (pretty)
@@ -100,7 +100,7 @@ test_Snapshots = testGroup "Snapshots collection"
                     ( case siLigoDesc of
                         LigoHiddenStackEntry -> Nothing
                         LigoStackEntry LigoExposedStackEntry{..} ->
-                          LigoVariable . pretty <$> leseDeclaration
+                          LigoVariable . pretty @_ @(Name 'Concise) <$> leseDeclaration
                     , siValue
                     )
                 )
@@ -281,7 +281,7 @@ test_Snapshots = testGroup "Snapshots collection"
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 13) (Pos 0))
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 18) (Pos 0))
 
-        let checkStackItem :: Text -> SomeValue -> StackItem -> Bool
+        let checkStackItem :: Name 'Concise -> SomeValue -> StackItem 'Concise -> Bool
             checkStackItem expectedVar expectedVal = \case
               StackItem
                 { siLigoDesc = LigoStackEntry LigoExposedStackEntry
@@ -344,9 +344,9 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         -- Predicate for @moveTill@ which stops on a snapshot with specified file name in loc.
         let stopAtFile
-              :: (MonadState (DebuggerState InterpretSnapshot) m)
+              :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
               => FilePath
-              -> FrozenPredicate (DebuggerState InterpretSnapshot) m
+              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
             stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
               let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
@@ -770,10 +770,10 @@ test_Snapshots = testGroup "Snapshots collection"
 
         lift $ step [int||Extract variables|]
         checkSnapshot \snap -> do
-          -- TODO: extract variables in a neat way when LIGO-758 is merged
-          let vars =
-                snap ^.. isStackFramesL . ix 0 . sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
-                <&> maybe ("?" :: Text) pretty
+          let vars = snap
+                & isStackFrames
+                & head
+                & getVariableNamesFromStackFrame
 
           vars @~=? ["a", "b"]
 
@@ -853,7 +853,7 @@ test_Snapshots = testGroup "Snapshots collection"
             , crdStorage = 0 :: Integer
             }
 
-      let stackFramesCheck :: ([[Text]] -> Bool) -> StateT (DebuggerState InterpretSnapshot) IO ()
+      let stackFramesCheck :: ([[Text]] -> Bool) -> StateT (DebuggerState (InterpretSnapshot u)) IO ()
           stackFramesCheck namesCheck = do
             (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <- moveTill Forward (FrozenPredicate $ pure False)
             lift $
@@ -901,15 +901,15 @@ test_Snapshots = testGroup "Snapshots collection"
 
         moveTill Forward $
           goesAfter (SrcPos (Pos 4) (Pos 0)) && matchesSrcType (N.SourcePath nestedFile2)
-        lift $ step [int||Check variables for "#{internalStackFrameName}" snapshot|]
+        lift $ step [int||Check variables for "strange" snapshot|]
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = stackFrame@StackFrame
-                { sfName = name
+                { sfName = "strange"
                 , sfLoc = LigoRange file' _ _
                 } :| _
-            } | file' == nestedFile2 && name == internalStackFrameName ->
-                  getVariableNamesFromStackFrame stackFrame @~=? [unknownVariable, "acc", "i", "a"]
+            } | file' == nestedFile2 ->
+                  getVariableNamesFromStackFrame stackFrame @~=? ["acc", "c", "b", "a"]
           snap -> unexpectedSnapshot snap
 
   , testCaseSteps "Two \"main\" stack frames" \step -> do

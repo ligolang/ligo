@@ -16,7 +16,7 @@ import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuil
 import Morley.Debugger.Protocol.DAP (Variable)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Typed
-  (EntrypointCallT (..), EpAddress (..), SomeConstrainedValue (SomeValue),
+  (EntrypointCallT (..), EpAddress (..), SingI, SomeConstrainedValue (SomeValue),
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
 import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
@@ -30,7 +30,7 @@ import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 --
 -- This creates a map @varaibles references -> [variable]@, where root always has
 -- largest reference.
-createVariables :: [StackItem] -> VariableBuilder Int
+createVariables :: (SingI u) => [StackItem u] -> VariableBuilder Int
 createVariables st = do
   topVarsMb <-
     forM st \(StackItem desc (SomeValue v)) -> do

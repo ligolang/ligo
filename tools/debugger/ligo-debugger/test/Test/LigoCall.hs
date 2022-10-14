@@ -21,7 +21,7 @@ test_Compilation = testGroup "Getting debug info"
       let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
       res <- compileLigoContractDebug "main" file
-      take 15 (toList $ lmLocations res) @?= mconcat
+      take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry]          ]
@@ -40,11 +40,11 @@ test_ExpressionCompilation = testGroup "Compiling expression"
   in
   [ testCase "Evaluating pure values" do
       res <- evalExprOverContract1 "(5n, \"abc\")"
-      res @?= (U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|]))
+      res @?= U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|])
 
   , testCase "Relying on constants defined in the contract" do
       res <- evalExprOverContract1 "defEmptyStorage"
-      res @?= (U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|]))
+      res @?= U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|])
 
   , testCase "Relying on functions defined in the contract" do
       res <- try @_ @LigoException $ evalExprOverContract1 "defStorage \"a\""

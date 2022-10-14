@@ -89,6 +89,7 @@ library:
     - scientific
     - semver
     - singletons
+    - singletons-th
     - stm
     - syb
     - template-haskell

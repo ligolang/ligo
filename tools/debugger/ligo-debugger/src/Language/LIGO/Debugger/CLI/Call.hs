@@ -48,7 +48,7 @@ withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
 -}
 
 -- | Run ligo to compile the contract with all the necessary debug info.
-compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m LigoMapper
+compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m (LigoMapper 'Unique)
 compileLigoContractDebug entrypoint file = withMapLigoExc $
   callLigoImplBS Nothing
     [ "compile", "contract"
