@@ -861,110 +861,100 @@ let rec error_json : typer_error -> Error.t = fun e ->
         two element are allowed to be compared." in
     let content = make_content ~message ~location () in
     make ~stage ~content
-  | `Typer_assert_equal (loc, expected, actual) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
-      Snippet.pp
-      loc
+  | `Typer_assert_equal (location, expected, actual) ->
+    let message = Format.asprintf
+      ".Invalid type(s).@.Expected: \"%a\", but got: \"%a\"."
       Ast_typed.PP.type_expression_orig
       (type_improve expected)
       Ast_typed.PP.type_expression_orig
-      (type_improve actual)
-  | `Typer_expected_record (loc, t) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument \
+      (type_improve actual) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_expected_record (location, t) ->
+    let message = Format.asprintf
+      "Invalid argument.@.Expected a record, but got an argument \
         of type \"%a\". @]"
-      Snippet.pp
-      loc
       Ast_typed.PP.type_expression
-      (type_improve t)
-  | `Typer_expected_variant (loc, t) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Invalid argument.@.Expected a variant, but got an argument \
-        of type \"%a\". @]"
-      Snippet.pp
-      loc
+      (type_improve t) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_expected_variant (location, t) ->
+    let message = Format.asprintf
+      "Invalid argument.@.Expected a variant, but got an argument \
+        of type \"%a\"."
       Ast_typed.PP.type_expression
-      (type_improve t)
-  | `Typer_wrong_param_number (loc, name, expected, actual) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Function \"%s\" called with wrong number of \
-        arguments.@.Expected %d arguments, got %d arguments. @]"
-      Snippet.pp
-      loc
+      (type_improve t) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_wrong_param_number (location, name, expected, actual) ->
+    let message = Format.asprintf
+      "Function \"%s\" called with wrong number of \
+        arguments.@.Expected %d arguments, got %d arguments."
       name
       expected
-      (List.length actual)
-  | `Typer_expected_map (loc, e) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Incorrect argument.@.Expected a map, but got an argument \
-        of type \"%a\". @]"
-      Snippet.pp
-      loc
+      (List.length actual) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_expected_map (location, e) ->
+    let message = Format.asprintf
+      "Incorrect argument.@.Expected a map, but got an argument \
+        of type \"%a\"."
       Ast_typed.PP.type_expression
-      (type_improve e)
-  | `Typer_expected_option (loc, e) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Incorrect argument.@.Expected an option, but got an \
-        argument of type \"%a\". @]"
-      Snippet.pp
-      loc
+      (type_improve e) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_expected_option (location, e) ->
+    let message = Format.asprintf
+      "Incorrect argument.@.Expected an option, but got an \
+        argument of type \"%a\"."
       Ast_typed.PP.type_expression
-      (type_improve e)
-  | `Typer_not_matching (loc, t1, t2) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.These types are not matching:@. - %a@. - %a@]"
-      Snippet.pp
-      loc
+      (type_improve e) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_not_matching (location, t1, t2) ->
+    let message = Format.asprintf
+      "These types are not matching:@. - %a@. - %a"
       Ast_typed.PP.type_expression
       (type_improve t1)
       Ast_typed.PP.type_expression
-      (type_improve t2)
-  | `Typer_uncomparable_types (loc, a, b) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Invalid arguments.@.These types cannot be compared: \"%a\" \
-        and \"%a\". @]"
-      Snippet.pp
-      loc
+      (type_improve t2) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_uncomparable_types (location, a, b) ->
+    let message = Format.asprintf
+      "Invalid arguments.@.These types cannot be compared: \"%a\" \
+        and \"%a\"."
       Ast_typed.PP.type_expression
       (type_improve a)
       Ast_typed.PP.type_expression
-      (type_improve b)
-  | `Typer_typeclass_error (loc, exps, acts) ->
+      (type_improve b) in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_typeclass_error (location, exps, acts) ->
     let open Simple_utils.PP_helpers in
     let printl printer ppf args =
       Format.fprintf ppf "(%a)" (list_sep printer (const ", ")) args
     in
-    Format.fprintf
-      f
-      "@[<hv>%a@.Invalid arguments.@.Expected an argument of type %a, but \
-        got an argument of type %a. @]"
-      Snippet.pp
-      loc
+    let message = Format.asprintf
+      "Invalid arguments.@.Expected an argument of type %a, but \
+        got an argument of type %a."
       (list_sep (printl Ast_typed.PP.type_expression) (const " or "))
       exps
       (list_sep Ast_typed.PP.type_expression (const ", "))
-      acts
-  | `Typer_expected (loc, exps, acts) ->
+      acts in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_expected (location, exps, acts) ->
     let open Simple_utils.PP_helpers in
-    Format.fprintf
-      f
-      "@[<hv>%a@.Cannot match arguments for operation.@.Expected arguments \
-        with types:%a@.but got arguments with types:%a. @]"
-      Snippet.pp
-      loc
+    let message = Format.asprintf
+      "Cannot match arguments for operation.@.Expected arguments \
+        with types:%a@.but got arguments with types:%a."
       (list_sep_prep Ast_typed.PP.type_expression (tag "@.- "))
       exps
       (list_sep_prep Ast_typed.PP.type_expression (tag "@.- "))
-      acts
+      acts in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
   | `Typer_pattern_do_not_conform_type (p, t) ->
     let pf ppf value =
       match p.location with
@@ -976,16 +966,16 @@ let rec error_json : typer_error -> Error.t = fun e ->
           value
       | File _ -> ()
     in
-    Format.fprintf
-      f
-      "@[<hv>%a@.Pattern %anot of the expected type %a @]"
-      Snippet.pp
-      p.location
+    let message = Format.asprintf
+      "Pattern %anot of the expected type %a"
       pf
       p
       Ast_typed.PP.type_expression
-      (type_improve t)
-  | `Typer_pattern_missing_cases (loc, syntax, ps) ->
+      (type_improve t) in
+    let location = p.location in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_pattern_missing_cases (location, syntax, ps) ->
     let ps =
       List.fold ps ~init:"" ~f:(fun s p ->
         let s' =
@@ -994,39 +984,33 @@ let rec error_json : typer_error -> Error.t = fun e ->
         in
         s ^ "- " ^ s' ^ "\n")
     in
-    Format.fprintf
-      f
-      "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are \
-        examples of cases that are not matched:@.%s@]"
-      Snippet.pp
-      loc
-      ps
-  | `Typer_pattern_redundant_case loc ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Error : this match case is unused.@]"
-      Snippet.pp
-      loc
-  | `Typer_constant_since_protocol (loc, constant, protocol) ->
+    let message = Format.asprintf
+      "Error : this pattern-matching is not exhaustive.@.Here are \
+        examples of cases that are not matched:@.%s" ps in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_pattern_redundant_case location ->
+    let message = Format.asprintf "Error : this match case is unused." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_constant_since_protocol (location, constant, protocol) ->
     let protocol_name = Environment.Protocols.variant_to_string protocol in
-    Format.fprintf
-      f
-      "@[<hv>%a@.%s is supported in protocol %s onwards.@.Hint: pass the \
-        compiler option `--protocol %s`.@]"
-      Snippet.pp
-      loc
+    let message = Format.asprintf
+      "%s is supported in protocol %s onwards.@.Hint: pass the \
+        compiler option `--protocol %s`."
       constant
       (String.capitalize protocol_name)
-      protocol_name
-  | `Typer_mut_is_polymorphic (loc, type_) ->
-    Format.fprintf
-      f
-      "@[<hv>%a@.Mutable binding has the polymorphic type %a@.Hint: Add an \
-        annotation.@]"
-      Snippet.pp
-      loc
+      protocol_name in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Typer_mut_is_polymorphic (location, type_) ->
+    let message = Format.asprintf
+      "Mutable binding has the polymorphic type %a@.Hint: Add an \
+        annotation."
       Ast_typed.PP.type_expression
-      type_
+      type_ in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t =
  fun a ->
