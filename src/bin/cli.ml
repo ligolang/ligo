@@ -314,6 +314,13 @@ let ligorc_path =
   let spec = optional_with_default Constants.ligo_rc_path string in
   flag ~doc name spec
 
+let ligo_bin_path =
+  let open Command.Param in
+  let name = "--ligo-bin-path" in
+  let doc  = "PATH path to LIGO executable." in
+  let spec = optional_with_default "ligo" string in
+  flag ~doc name spec
+
 module Api = Ligo_api
 let (<*>) = Command.Param.(<*>)
 let (<$>) f a = Command.Param.return f <*> a
@@ -814,9 +821,9 @@ let login =
 let daemon =
   let summary   = "launch a long running LIGO process" in
   let readme () = "Run LIGO subcommands without exiting the process" in
-  let f _ () =
-    return_result ~return @@ fun () -> Daemon.main () in
-  Command.basic ~summary ~readme (f <$> Command.Param.return ())
+  let f ligo_bin_path () =
+    return_result ~return @@ fun () -> Daemon.main ~ligo_bin_path () in
+  Command.basic ~summary ~readme (f <$> ligo_bin_path)
 
 let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
