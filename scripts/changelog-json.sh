@@ -60,4 +60,4 @@ for VERSION in "${VERSIONS[@]}"; do
 done
 
 set -e
-sed -E -e 's/\\\\n/\\n/g' -e 's/\\\\//g' <<< $(jq "to_entries | .[] | { version: .key, changes: .value }" <<< "$TEMP_VERSION" | jq -s | jq "{ changelog: . }")
+sed -E -e 's/\\\\n/\\n/g' -e 's/\\\\//g' <<< $(jq "to_entries | .[] | { version: .key, is_next: .value.is_next ,changes: .value }" <<< "$TEMP_VERSION" | jq -s | jq "{ changelog: . }")
