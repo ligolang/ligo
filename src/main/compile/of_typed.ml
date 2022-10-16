@@ -81,7 +81,7 @@ let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | D_value {binder;attr;expr} when attr.public ->
+      | D_value {binder;attr;expr} when attr.public && not attr.hidden ->
         if only_ep then (
           if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content) then
             (Binder.get_var binder)::prev else prev
