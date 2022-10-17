@@ -213,7 +213,6 @@ webide-backend-build-and-push-backend:
   needs:
     - job: changelog
       artifacts: true
-    - job: xrefcheck
   script:
     - export DOC_PATH=./gitlab-pages/docs
     - export WEBSITE_PATH=./gitlab-pages/website
@@ -237,6 +236,8 @@ pages:
 
 pages-attempt:
   extends: .website
+  needs:
+    - job: xrefcheck
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
