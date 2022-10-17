@@ -136,14 +136,13 @@ xrefcheck:
   stage: tooling
   only:
     - merge_requests
+  needs:
+    - job: changelog
+      artifacts: true
   script:
-    # Should be replaced with
-    # nix run github:serokell/xrefcheck
-    # Once flakes roll out to stable
-    # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
-    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
-    - xrefcheck/bin/xrefcheck
-  allow_failure: true #TODO could be better if we do not allow failure for realeases
+    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
+    - chmod 777 ./xrefcheck-x86_64-linux
+    - ./xrefcheck-x86_64-linux
 
 .docker-image:
   stage: push
@@ -214,6 +213,7 @@ webide-backend-build-and-push-backend:
   needs:
     - job: changelog
       artifacts: true
+    - job: xrefcheck
   script:
     - export DOC_PATH=./gitlab-pages/docs
     - export WEBSITE_PATH=./gitlab-pages/website

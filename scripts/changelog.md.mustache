@@ -1,7 +1,12 @@
 # LIGO Changelog
 
 {{#changelog}}
+{{#is_next}}
+## <ins>[{{{version}}}](https://gitlab.com/ligolang/ligo/-/commits/dev)</ins>
+{{/is_next}}
+{{^is_next}}
 ## <ins>[{{{version}}}](https://gitlab.com/ligolang/ligo/-/releases/{{{version}}})</ins>
+{{/is_next}}
 > Run this release with Docker: `docker run ligolang/ligo:{{{version}}}`
 
 {{#changes}}
