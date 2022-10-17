@@ -21,7 +21,6 @@ export default function makeSdk({
   Client,
   Contract,
   TxManager,
-  BrowserExtension,
 }) {
   let browserExtension;
 
@@ -38,14 +37,10 @@ export default function makeSdk({
       return customNetworks;
     }
 
-    static InitBrowserExtension(networkManager) {
-      browserExtension = BrowserExtension && BrowserExtension.Init(networkManager);
-    }
-
-    constructor({ id, ...option }) {
-      this.client = new Client({ networkId: id, ...option });
+    constructor({ id, ...option }, browserExtension) {
+      this.client = new Client({ networkId: id, ...option }, browserExtension);
       this.networkId = id;
-      this.txManager = new TxManager(this.client);
+      // this.txManager = new TxManager(this.client);
     }
 
     dispose() {

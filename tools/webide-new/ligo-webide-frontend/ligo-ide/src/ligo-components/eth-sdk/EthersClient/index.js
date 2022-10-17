@@ -1,5 +1,4 @@
-import { ethers } from "ethers";
-
+import { TezosToolkit } from "@taquito/taquito";
 import platform from "~/base-components/platform";
 import { IpcChannel } from "~/base-components/ipc";
 import redux from "~/base-components/redux";
@@ -8,34 +7,32 @@ import utils from "../utils";
 import tokenlist from "./tokenlist.json";
 
 export default class EthersClient {
-  constructor(option) {
+  constructor(option, browserExtension) {
     const { networkId = "", chainId, url } = option;
     this.networkId = networkId;
     this.chainId = chainId;
 
     if (url) {
-      this.provider = ethers.getDefaultProvider(url);
-    } else if (window.ethereum) {
-      this.provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-      this.provider.isMetaMask = true;
+      this.provider = new TezosToolkit(url);
+    } else if (browserExtension) {
+      this.provider = new TezosToolkit(url);
+      this.provider.setWalletProvider(browserExtension.ethereum);
     } else {
-      this.provider = new ethers.providers.InfuraProvider(networkId, {
-        projectId: process.env.INFURA_PROJECT_ID,
-      });
+      throw Error("No chain info");
     }
 
-    this.explorer = new ExplorerProxy(networkId);
+    // this.explorer = new ExplorerProxy(networkId);
 
-    if (platform.isDesktop) {
-      this.channel = new IpcChannel("sdk");
-      this.channel.invoke("setNetwork", option);
-    } else {
-      this.channel = new IpcChannel();
-    }
+    // if (platform.isDesktop) {
+    //   this.channel = new IpcChannel("sdk");
+    //   this.channel.invoke("setNetwork", option);
+    // } else {
+    //   this.channel = new IpcChannel();
+    // }
   }
 
   get url() {
-    return this.provider && this.provider.connection && this.provider.connection.url;
+    return this.provider && this.provider.rpc && this.provider.rpc.url;
   }
 
   dispose() {
@@ -45,11 +42,12 @@ export default class EthersClient {
   }
 
   async networkInfo() {
-    return this.provider.getNetwork();
+    const chainId = await this.provider.rpc.getChainId();
+    return { chainId };
   }
 
   async getStatus() {
-    return this.provider.getBlock("latest");
+    return this.provider.rpc.getBlock();
   }
 
   async latest() {

@@ -15,7 +15,7 @@ export class HeaderActions {
   }
 
   updateNetwork(networkId) {
-    if (this?.history?.location?.pathname?.startsWith("/network")) {
+    if (this?.history?.location?.pathname?.startsWith("/network") && networkId !== "custom") {
       this.history.push(`/network/${networkId}`);
     }
   }
