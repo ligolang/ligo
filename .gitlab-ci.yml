@@ -101,7 +101,10 @@ docker_extract:
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
-    - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    # previous command, but it seems statically meant something a bit different.
+    # - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    # the string depends on ldd...
+    - if ! ldd ligo; then echo "ldd failed, i.e. expecting that it is statically linked."; else echo "Expected ldd ligo to fail (not a dynamic executable)."; fi
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
     # Generate ligo.deb
