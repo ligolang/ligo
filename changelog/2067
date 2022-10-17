@@ -1,0 +1,5 @@
+author: alistair.obrien
+description: \nRemove dead passes and code from the frontend
+merge_request: '2067'
+title: Frontend Pruning
+type: internal
