@@ -40,7 +40,8 @@ let core_program_string ~raise ~options syntax expression =
   let meta          = Of_source.make_meta_from_syntax syntax in
   let c_unit, _     = Of_source.preprocess_string ~raise ~options:(Compiler_options.(options.frontend)) ~meta expression in
   let imperative    = Of_c_unit.compile_string ~raise ~meta c_unit in
-  Of_imperative.compile ~raise imperative
+  let typed         = Of_imperative.compile ~raise imperative in
+  typed
 
 
 let type_program_string ~raise ~options syntax expression =
