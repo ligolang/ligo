@@ -238,6 +238,8 @@ pages-attempt:
   extends: .website
   needs:
     - job: xrefcheck
+    - job: changelog
+      artifacts: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
