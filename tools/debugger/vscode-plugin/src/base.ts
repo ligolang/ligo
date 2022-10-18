@@ -55,6 +55,12 @@ export type InputBoxType = "parameter" | "storage"
 
 export type InputValueType = "LIGO" | "Michelson";
 
+/** The type of validation in an input box.
+ *
+ * `undefined` would stand for validation pass, and a `string` would mean
+ * the reason of a failure.
+ */
+export type InputValidationResult = Maybe<string>
 
 type BinaryInfo = {
   name: string,

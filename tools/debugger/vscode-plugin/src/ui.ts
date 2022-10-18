@@ -11,7 +11,7 @@
 
 import * as vscode from 'vscode';
 import { QuickPickItem } from 'vscode';
-import { DebuggedContractSession, Maybe, Ref, isDefined, InputBoxType, InputValueType } from './base'
+import { DebuggedContractSession, Maybe, Ref, isDefined, InputBoxType, InputValueType, InputValidationResult } from './base'
 import { LigoDebugContext, ValueAccess } from './LigoDebugContext'
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
@@ -330,7 +330,7 @@ interface InputBoxParameters {
 	totalSteps: number;
 	value: string;
 	prompt: string;
-	validate: (value: string) => Promise<string | undefined>;
+	validate: (value: string) => Promise<InputValidationResult>;
 	buttons?: vscode.QuickInputButton[];
 	ignoreFocusOut: boolean;
 }
@@ -462,30 +462,19 @@ class MultiStepInput<S> {
 					...(buttons || [])
 				];
 				input.ignoreFocusOut = ignoreFocusOut;
-				let validating = validate(value);
 
-				interface LastValidationResult {
-					value: string,
-					result: boolean
-				}
+				const validationTrigger = new class extends ValidationTrigger<string>{
+					validate = validate
 
-				let lastValidationResult: Maybe<LastValidationResult> = undefined;
+					isObviouslyInvalid(text: string): boolean {
+						return text.trim() === '';
+					}
 
-				let emitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
-				emitter.event(async text => {
-					const current = validate(text);
-					validating = current;
-					const validationMessage = await current;
-					if (current === validating) {
-						if (text.trim() === '') {
-							input.validationMessage = undefined;
-							return;
-						}
-
-						lastValidationResult = { value: text, result: !validationMessage };
+					onValidationResult(validationMessage: InputValidationResult): void {
 						input.validationMessage = validationMessage;
 					}
-				});
+				}
+				validationTrigger.fire(value);
 
 				disposables.push(
 					input.onDidTriggerButton(item => {
@@ -496,45 +485,194 @@ class MultiStepInput<S> {
 						}
 					}),
 					input.onDidAccept(async () => {
-						const value = input.value;
+						validationTrigger.fire(input.value);
+
+						// Note: turns out, "enabled" flag does not really work
+						// and so the user's input is not blocked, see
+						// https://github.com/microsoft/vscode/issues/159906
+						//
+						// This means that the user can type something after
+						// hitting Enter and that will be accepted, however only
+						// if it passes validation.
+						//
+						// Let's treat it as a feature rather than a bug?
 						input.enabled = false;
 						input.busy = true;
 
-						if (isDefined(lastValidationResult)) {
-							if (lastValidationResult.value === value && lastValidationResult.result) {
-								resolve(value);
-							}
-						} else {
-							const result: boolean = !(await validate(value));
-							lastValidationResult = { value, result };
-							if (result) {
-								resolve(value);
-							}
+						const passingValue = await validationTrigger.stablePassingValue()
+						if (isDefined(passingValue)) {
+							resolve(passingValue)
 						}
 
 						input.enabled = true;
 						input.busy = false;
 					}),
-					input.onDidChangeValue(async text => {
-						emitter.fire(text);
-					}),
+					input.onDidChangeValue(value => validationTrigger.fire(value)),
 					input.onDidHide(() => {
 						(async () => {
 							reject(InputFlowAction.cancel);
 						})()
 							.catch(reject);
 					}),
-					emitter
+					validationTrigger
 				);
 				if (this.current) {
 					this.current.dispose();
 				}
 				this.current = input;
-				emitter.fire(value);
+				validationTrigger.fire(value);
 				this.current.show();
 			});
 		} finally {
 			disposables.forEach(d => d.dispose());
 		}
+	}
+}
+
+// This class provides functionality close to EventEmitter but specialized to
+// events validation.
+//
+// Validation is a user-defined asynchronous and potentially long action,
+// and this class helps to work with such validation in a safe manner,
+// avoiding bugs due to race conditions.
+//
+// This is implemented via sequentially processing the values, keeping a queue
+// of values that are pending for validation, however this queue has capacity 1
+// and older values are dropped.
+abstract class ValidationTrigger<V> implements vscode.Disposable {
+	// An inner events emitter that helps to keep `fire` of non-Promise type.
+	private emitter: vscode.EventEmitter<V> = new vscode.EventEmitter();
+
+	// What are we doing at the moment / what we just did.
+	private status:
+		| { type: "neverCalled" }
+		| { type: "busy" }
+		| { type: "validated", value: V, successfull: boolean }
+		= { type: "neverCalled" }
+
+	// The last value that has been submitted for validation, given that
+	// we are already busy validating something.
+	private pendingValue: Maybe<V>
+
+	// Callbacks added by `awaitResult` that are yet waiting.
+	private resultWaiters: ((passingValue: Maybe<V>) => void)[] = new Array();
+
+	public constructor() {
+		this.emitter.event(v => this.executeValidation(v));
+	}
+
+	// Submit a value for validation.
+	public fire(value: V): void {
+		this.emitter.fire(value)
+	}
+
+	// Validation function.
+	protected abstract validate(value: V): Promise<InputValidationResult>
+
+	// Values that are obviously invalid and we don't want to show a "bad value"
+	// error for them.
+	protected isObviouslyInvalid(value: V): boolean { return false; }
+
+	// Invoked when some validation function is completed.
+	//
+	// This will be run in the same order in which values were passed for
+	// validation.
+	protected abstract onValidationResult(validationResult: InputValidationResult): void
+
+	// Safely run validation for a new value.
+	private async executeValidation(value: V): Promise<void> {
+		try {
+			// Check if we are busy validating something.
+			if (this.status.type == "busy") {
+				this.pendingValue = value;
+
+				// We exit, relying on the function that runs `this.executeValidation`
+				// to also run validation for the new value later.
+				return;
+			}
+
+			// The validation queue is empty, we can start the validation of
+			// the new value.
+
+			if (this.isObviouslyInvalid(value)) {
+				// Report that validation succeeded, making any old validation
+				// error disappear
+				this.onValidationResult(undefined);
+				this.status = { type: "validated", value: value, successfull: false };
+			} else {
+				const oldStatus = this.status;
+				this.status = { type: "busy" };
+				try {
+					const validationMessage = await this.validate(value);
+					this.onValidationResult(validationMessage);
+					this.status =
+						{ type: "validated", value: value
+						, successfull: !isDefined(validationMessage)
+						};
+				} catch (err) {
+					this.status = oldStatus;
+					throw err;
+				}
+			}
+
+			await this.keepValidatingPending(this.status.value, this.status.successfull);
+		} catch (err) {
+			vscode.window.showWarningMessage("Internal error in validation: " + err)
+		}
+
+	}
+
+	// Keep processing the values that are pending for validation.
+	//
+	// This function may execute for an arbitrary amount of time, so it must
+	// appear only as the last action in the sequence or in a separate thread.
+	private async keepValidatingPending(lastValidatedValue: V, lastValidationSuccessful: boolean): Promise<void> {
+		if (isDefined(this.pendingValue)) {
+			// Continue with validating a new value.
+			const pending = this.pendingValue
+			this.pendingValue = undefined;
+			this.executeValidation(pending);
+		} else {
+			// Pending values queue is empty.
+
+			// Call result waiters.
+			const passingValue = lastValidationSuccessful ? lastValidatedValue : undefined;
+			this.resultWaiters.forEach(waiter => waiter(passingValue));
+			this.resultWaiters = new Array();
+		}
+
+	}
+
+	// Awaits for a moment when we have validated all the values and no new values
+	// yet come, and returns the last value if it passed validation, and
+	// `undefined` otherwise.
+	//
+	// This rejects if no value has ever been validated.
+	public stablePassingValue(): Thenable<Maybe<V>> {
+		const this0 = this;
+		return {
+			// This is not entirely correct definition, it should be generic in
+			// the type of returned `Thenable`; but for our cases this is enough.
+			then(onFulfilled: (passingValue: Maybe<V>) => void, onRejected: (reason: any) => void): Thenable<void> {
+				switch (this0.status.type) {
+					case "neverCalled":
+						onRejected("Validation has never been called");
+						break;
+					case "validated":
+						const passingValue = this0.status.successfull ? this0.status.value : undefined
+						onFulfilled(passingValue);
+						break;
+					case "busy":
+						this0.resultWaiters.push(onFulfilled);
+						break;
+				}
+
+				return this;
+			}
+		}
+	}
+
+	public dispose() {
+		this.emitter.dispose();
 	}
 }

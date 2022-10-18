@@ -6,9 +6,9 @@ import { ValidateValueCategory } from './messages'
 import LigoDebugAdapterServerDescriptorFactory from './LigoDebugAdapterDescriptorFactory'
 import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoDebugConfigurationProvider'
 import LigoProtocolClient from './LigoProtocolClient'
-import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, InputValueType } from './ui'
+import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage } from './ui'
 import LigoServer from './LigoServer'
-import { Ref, DebuggedContractSession, Maybe, getBinaryPath, getCommand, isDefined } from './base'
+import { Ref, DebuggedContractSession, Maybe, getBinaryPath, getCommand, isDefined, InputValueType, InputValidationResult } from './base'
 import { LigoDebugContext } from './LigoDebugContext'
 
 let server: LigoServer
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(factory)
 	}
 
-	const validateInput = (category: ValidateValueCategory, valueType: InputValueType) => async (value: string): Promise<Maybe<string>> => {
+	const validateInput = (category: ValidateValueCategory, valueType: InputValueType) => async (value: string): Promise<InputValidationResult> => {
 		if (client) {
 			const pickedMichelsonEntrypoint = debuggedContractSession.ref.pickedMichelsonEntrypoint
 			return (await client.sendMsg('validateValue', { value, category, valueType, pickedMichelsonEntrypoint })).message
@@ -79,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return undefined
 	}
 
-	const validateEntrypoint = async (entrypoint: string): Promise<Maybe<string>> => {
+	const validateEntrypoint = async (entrypoint: string): Promise<InputValidationResult> => {
 		if (client) {
 			return (await client.sendMsg('validateEntrypoint', { entrypoint })).message;
 		}
