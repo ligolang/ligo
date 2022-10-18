@@ -1444,6 +1444,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_INT64_TO_INT, [ V_Ct (C_int64 n) ] ->
     return @@ V_Ct (C_int (Z.of_int64 n))
   | C_TEST_INT64_TO_INT, _ -> fail @@ error_type ()
+  | C_TEST_SET_PRINT_VALUES, [ V_Ct (C_bool b) ] ->
+    let@ b = Set_print_values b in
+    return @@ v_bool b
+  | C_TEST_SET_PRINT_VALUES, _ -> fail @@ error_type ()
   | (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE), _ ->
     fail @@ Errors.generic_error loc "Sapling is not supported."
   | C_EMIT_EVENT, _ -> fail @@ Errors.generic_error loc "Can't emit event here"
@@ -1945,7 +1949,7 @@ and try_eval ~raise ~steps ~options expr env state r =
 
 
 let eval_expression ~raise ~steps ~options
-  : Ast_typed.program -> Ast_typed.expression -> value
+  : Ast_typed.program -> Ast_typed.expression -> bool * value
   =
  fun prg expr ->
   (* Compile new context *)
@@ -1961,14 +1965,14 @@ let eval_expression ~raise ~steps ~options
     trace ~raise Main_errors.self_ast_aggregated_tracer
     @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
   in
-  let value, _ =
+  let value, st =
     try_eval ~raise ~steps ~options expr Env.empty_env initial_state None
   in
-  value
+  st.print_values, value
 
 
 let eval_test ~raise ~steps ~options
-  : Ast_typed.program -> (string * value) list
+  : Ast_typed.program -> bool * (string * value) list
   =
  fun prg ->
   let decl_lst = prg in
@@ -1997,14 +2001,14 @@ let eval_test ~raise ~steps ~options
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
   match eval_expression ~raise ~steps ~options decl_lst expr with
-  | V_Record m ->
+  | b, V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
       match Record.LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r
     in
-    List.fold_right ~f ~init:[] @@ lst
+    b, List.fold_right ~f ~init:[] @@ lst
   | _ -> failwith "Not a tuple?"
 
 
