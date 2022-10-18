@@ -6,7 +6,7 @@
     nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
     tezos-packaging.url = "github:serokell/tezos-packaging";
   };
-  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils, tezos-packaging }@inputs:
+  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils, tezos-packaging, deploy-rs }@inputs:
   {
     nixosModules.default = { config, pkgs, lib, ... }:
       let system = pkgs.system; in
@@ -85,6 +85,25 @@
 
         };
       };
+    deploy = {
+      sshOpts = [ "-p 17788" ];
+      nodes.webide = {
+        # TODO: perhaps it should be moved to a dedicated server
+        hostname = "tejat-prior.gemini.serokell.team";
+        user = "deploy";
+        profiles = {
+          backend.path = deploy-rs.lib.x86_64-linux.activate.custom
+            self.packages.x86_64-linux.backend
+            "sudo /run/current-system/sw/bin/systemctl restart container@ligo-webide-thing.service";
+          frontend.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.frontend;
+          ligo.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.ligo-bin;
+          tezos-client.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.tezos-client;
+        };
+      };
+    };
   } // (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system :
     let
       pkgs = import nixpkgs {
@@ -121,6 +140,11 @@
       checks = {
         frontend-tscompile = frontendCheck "yarn run tscompile";
         frontend-tslint = frontendCheck "yarn run tslint";
+      } // deploy-rs.lib.${system}.deployChecks self.deploy;
+      devShell = pkgs.mkShell {
+        buildInputs = [
+          deploy-rs.defaultPackage.${system}
+        ];
       };
     }
   ));
