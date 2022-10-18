@@ -20,3 +20,6 @@ let fold_map : 'a t -> init:'b -> f:('b -> 'a -> 'b * 'c) -> 'b * 'c t =
       let init, t = f init t in
       init, (l, t))
     ~init
+
+
+let to_list xs = xs

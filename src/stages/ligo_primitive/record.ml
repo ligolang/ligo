@@ -18,7 +18,7 @@ end
 module LSet = Caml.Set.Make(struct type t = Label.t [@@deriving compare] end)
 
 type 'a t = 'a LMap.t
-  [@@deriving eq,yojson,hash,map]
+  [@@deriving eq,yojson,hash]
 
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
 

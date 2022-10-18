@@ -7,6 +7,7 @@ module type Container = sig
   val map : 'a t -> f:('a -> 'b) -> 'b t
   val fold : 'a t -> init:'b -> f:('b -> 'a -> 'b) -> 'b
   val fold_map : 'a t -> init:'b -> f:('b -> 'a -> 'b * 'c) -> 'b * 'c t
+  val to_list : 'a t -> (Label.t * 'a) list
 end
 
 module type S = sig
@@ -66,12 +67,11 @@ module Make (Container : Container) () = struct
       let aux ppf (l, p) =
         fprintf ppf "%a = %a" Label.pp l (pp type_expression) p
       in
-      let kvs = [] (*Container.to_list lps*) in
       fprintf
         ppf
         "{ %a }"
         Simple_utils.PP_helpers.(list_sep aux (tag " ; "))
-        kvs
+        (Container.to_list lps)
 
 
   let rec iter : ('a -> unit) -> 'a t -> unit =
