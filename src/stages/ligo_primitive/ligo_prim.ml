@@ -48,7 +48,6 @@ module Assign     = Assign
 module Map_expr = Map_expr
 module Set_expr = Set_expr
 module List_expr = List_expr
-module Label_list = Label_list
 
 (* Module language *)
 module Module_var    = Var.Module_var
