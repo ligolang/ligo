@@ -32,11 +32,13 @@ class KeypairManager {
   getKeypairFromRedux(networkId) {
     const keypairsState = redux.getState().keypairs;
     const formatjs = Object.values(keypairsState.toJS());
-    const unsorted = formatjs.map((keypair) => ({
+    let unsorted = formatjs.map((keypair) => ({
       address: keypair.address,
       name: keypair.name,
+      secret: keypair.secret,
       balance: (keypair.balance && keypair.balance[networkId]) || "0",
     }));
+    unsorted = unsorted.filter((item) => item.address && item);
     return unsorted.sort((a, b) => {
       if (!a.name || !b.name) {
         return 0;
@@ -49,25 +51,19 @@ class KeypairManager {
     try {
       const { networkManager } = require("~/ligo-components/eth-network");
       const networkId = networkManager?.network?.id;
-      let keypairs = await this.channel.invoke("get");
-      keypairs = keypairs.filter((item) => item.address !== "");
-      redux.dispatch("UPDATE_FROM_REMOTE", keypairs);
-
-      keypairs.forEach(
-        (item) =>
-          (item.address = networkManager?.sdk?.utils?.simplifyAddress(item.address) || item.address)
-      );
       const sorted = this.getKeypairFromRedux(networkId);
 
       const updating = sorted.map(async (keypair) => {
         if (networkId === void 0) return;
-        const { address } = keypair;
+        const address = keypair.address;
+        const secret = keypair.secret;
         const account = await (networkManager?.sdk?.client?.getAccount(address) || {
           balance: "0.0",
         });
         redux.dispatch("UPDATE_KEYPAIR_BALANCE", {
           address,
           networkId,
+          secret,
           balance: account.balance,
         });
       });
@@ -78,13 +74,13 @@ class KeypairManager {
       });
       return sorted;
     } catch (e) {
-      // notification.error('Error', e.message)
+      console.error(e);
       return [];
     }
   }
 
   async newKeypair(kp, chain, secretType) {
-    return kp.newKeypair(chain, secretType);
+    return kp.newKeypair(secretType);
   }
 
   async loadAndUpdateKeypairs() {
@@ -98,19 +94,19 @@ class KeypairManager {
 
   async saveKeypair(name, keypair) {
     keypair.name = name;
-    await this.channel.invoke("post", "", keypair);
-    redux.dispatch("UPDATE_KEYPAIR", { address: keypair.address, name });
+    // await this.channel.invoke("post", "", keypair);
+    redux.dispatch("UPDATE_KEYPAIR", { address: keypair.address, secret: keypair.secret, name });
     await this.loadAndUpdateKeypairs();
   }
 
   async updateKeypairName(address, name) {
     redux.dispatch("UPDATE_KEYPAIR", { address, name });
-    await this.channel.invoke("put", address, { name });
+    // await this.channel.invoke("put", address, { name });
     await this.loadAndUpdateKeypairs();
   }
 
   async deleteKeypair(keypair) {
-    await this.channel.invoke("delete", keypair.address);
+    // await this.channel.invoke("delete", keypair.address);
     redux.dispatch("REMOVE_KEYPAIR", { address: keypair.address });
     await this.loadAndUpdateKeypairs();
   }
@@ -120,7 +116,9 @@ class KeypairManager {
   }
 
   async getKeypair(address) {
-    const keypair = await this.channel.invoke("get", address);
+    const keypairs = await this.loadAllKeypairs();
+    const keypair = keypairs.find((k) => k.address === address);
+    // const keypair = await this.channel.invoke("get", address);
     if (!keypair) {
       throw new Error(`No keypair for <b>${address}</b>`);
     }

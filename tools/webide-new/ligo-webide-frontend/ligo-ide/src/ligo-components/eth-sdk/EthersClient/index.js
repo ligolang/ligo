@@ -56,18 +56,19 @@ export default class EthersClient {
   }
 
   async getAccount(address) {
-    const balance = await this.provider.getBalance(address);
-    const code = await this.provider.getCode(address);
-    const nonce = await this.provider.getTransactionCount(address);
-    const codeHash = ethers.utils.keccak256(code);
+    const balance = await this.provider.rpc.getBalance(address);
+    // const code = await this.provider.getCode(address);
+    // const nonce = await this.provider.getTransactionCount(address);
+    // const codeHash = ethers.utils.keccak256(code);
+    const regtry = this.provider.format("mutez", "tz", balance).toString();
     return {
       address,
-      balance: utils.unit.fromValue(balance),
-      nonce: BigInt(nonce).toString(10),
-      codeHash:
-        codeHash === "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-          ? null
-          : codeHash,
+      balance: regtry,
+      // nonce: BigInt(nonce).toString(10),
+      // codeHash:
+      //   codeHash === "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+      //     ? null
+      //     : codeHash,
     };
   }
 

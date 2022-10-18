@@ -8,11 +8,11 @@ import headerActions, { Header, NavGuard } from "~/ligo-components/eth-header";
 import { networkManager } from "~/ligo-components/eth-network";
 import { ProjectManager, actions } from "~/base-components/workspace";
 import { createProject } from "../lib/bsn";
-// import keypairManager from '~/base-components/keypair'
+import keypairManager from "~/base-components/keypair";
 
 import EthSdk from "~/ligo-components/eth-sdk";
 
-// keypairManager.kp = EthSdk.kp
+keypairManager.kp = EthSdk.kp;
 
 networkManager.addSdk(EthSdk, EthSdk.networks);
 networkManager.addSdk(EthSdk, EthSdk.customNetworks);

@@ -97,7 +97,7 @@ export default class KeypairSelector extends PureComponent {
             {iconComponent}
             {k.name}
             <div className={classnames("small code", !disabled && "text-muted")}>
-              {networkManager?.sdk.utils.formatAddress(k.address)}
+              {networkManager?.sdk?.utils?.formatAddress(k.address)}
             </div>
           </div>
         </DropdownItem>

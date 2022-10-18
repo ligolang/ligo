@@ -5,6 +5,7 @@ import { Modal, DebouncedFormGroup, ButtonOptions, Label } from "~/base-componen
 import notification from "~/base-components/notification";
 
 import keypairManager from "./keypairManager";
+import { keypairNameValidator } from "./helper";
 
 export default class ImportKeypairModal extends PureComponent {
   constructor(props) {
@@ -29,35 +30,29 @@ export default class ImportKeypairModal extends PureComponent {
     if (chain) {
       this.setState({ chain });
     }
-    this.setState({
-      name: "",
-      secret: "",
-      keypair: null,
-      valid: false,
-      feedback: "",
-    });
+    this.setState({ name: "", secret: "", keypair: null, valid: false, feedback: "" });
     setTimeout(() => this.input.current?.focus(), 100);
     return new Promise((resolve) => (this.onResolve = resolve));
   }
 
-  onChange = (secret) => {
+  onChange = async (secret) => {
     this.setState({ secret });
-    this.refreshKeypair(secret, this.state.chain);
+    await this.refreshKeypair(secret, this.state.chain);
   };
 
-  setChain = (chain) => {
-    const { secret } = this.state;
+  setChain = async (chain) => {
+    const secret = this.state.secret;
     this.setState({ chain });
-    this.refreshKeypair(secret, chain);
+    await this.refreshKeypair(secret, chain);
   };
 
-  refreshKeypair = (secret, chain) => {
+  refreshKeypair = async (secret, chain) => {
     if (!secret) {
       this.setState({ keypair: null, valid: false, feedback: "" });
       return;
     }
     try {
-      const keypair = this.props.kp.importKeypair(secret, chain);
+      const keypair = await this.props.kp.importKeypair(secret, chain);
       this.setState({
         keypair,
         valid: true,
@@ -149,7 +144,9 @@ export default class ImportKeypairModal extends PureComponent {
           label="Name"
           maxLength="200"
           placeholder="Please enter a name for the keypair"
+          value={this.state.name}
           onChange={(name) => this.setState({ name })}
+          validator={keypairNameValidator}
         />
         {this.renderChainOptions()}
         <DebouncedFormGroup

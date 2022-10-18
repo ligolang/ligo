@@ -5,11 +5,11 @@ import { connect } from "~/base-components/redux";
 
 import { KeypairButton } from "~/base-components/keypair";
 import { TerminalButton } from "~/base-components/workspace";
+import { UncontrolledTooltip } from "~/base-components/ui-components";
 import ProtocolSelector from "~/ligo-components/eth-compiler/bottombar/ProtocolSelector";
 
 // import { NetworkStatus } from '~/ligo-components/eth-network'
 // import { QueueButton } from '~/ligo-components/eth-queue'
-// import { AbiStorage } from '~/ligo-components/eth-contract'
 // import { CompilerSelectors } from "~/ligo-components/eth-compiler";
 
 export default connect(["network", "queue", "projects", "uiState"])(function BottomBar(props) {
@@ -48,19 +48,16 @@ export default connect(["network", "queue", "projects", "uiState"])(function Bot
 
   return (
     <>
-      {/* <KeypairButton mnemonic={mnemonic} secretName={secretName} chains={chains}>
-        <div className="btn btn-primary btn-sm btn-flat">
+      <KeypairButton mnemonic={mnemonic} secretName={secretName} chains={chains}>
+        <div className="btn btn-primary btn-sm btn-flat" id="keypair-manager">
           <i className="fas fa-key" />
         </div>
-      </KeypairButton> */}
+        <UncontrolledTooltip placement="bottom" target="keypair-manager">
+          Keypair Manager
+        </UncontrolledTooltip>
+      </KeypairButton>
       {/* { !noNetwork && <NetworkStatus /> }
-    <QueueButton txs={txs} />
-    <AbiStorage>
-      <div className='btn btn-default btn-sm btn-flat text-muted'>
-        <i className='fas fa-list mr-1' />
-        ABI Storage
-      </div>
-    </AbiStorage> */}
+    <QueueButton txs={txs} /> */}
       <div className="flex-1" />
       {projectButtons}
     </>
