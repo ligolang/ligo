@@ -71,8 +71,11 @@ if __name__ == "__main__":
     type = TYPE_MAP[checks[0]]
 
     # Get changelog details
-    changelog = get_prefixed_elem(markdown.children, "Changelog", elements.Paragraph)
-    changelog_details = changelog.children[0].children
+    if type != "none":
+        changelog = get_prefixed_elem(markdown.children, "Changelog", elements.Paragraph)
+        changelog_details = changelog.children[0].children
+    else:   
+        changelog_details = None
 
     print(
         json.dumps(
