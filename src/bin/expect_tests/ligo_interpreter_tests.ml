@@ -718,6 +718,10 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value 0x050a0000000400000000. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_print_values.mligo" ] ;
+  [%expect {| aloh |}]
+
 (* do not remove that :) *)
 let () = Sys_unix.chdir pwd
 

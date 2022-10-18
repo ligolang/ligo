@@ -6,11 +6,11 @@ val eval_expression
   -> options:Compiler_options.t
   -> Ast_typed.program
   -> Ast_typed.expression
-  -> Ligo_interpreter.Types.value
+  -> bool * Ligo_interpreter.Types.value
 
 val eval_test
   :  raise:(interpreter_error, Main_warnings.all) Simple_utils.Trace.raise
   -> steps:int
   -> options:Compiler_options.t
   -> Ast_typed.program
-  -> (string * Ligo_interpreter.Types.value) list
+  -> bool * (string * Ligo_interpreter.Types.value) list

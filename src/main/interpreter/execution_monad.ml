@@ -66,6 +66,7 @@ type state =
   { tezos_context : Tezos_state.context
   ; mod_res : ModRes.t option
   ; heap : Heap.t
+  ; print_values : bool
   }
 
 let make_state ~raise ~(options : Compiler_options.t) =
@@ -73,7 +74,7 @@ let make_state ~raise ~(options : Compiler_options.t) =
     Tezos_state.init_ctxt ~raise options.backend.protocol_version []
   in
   let mod_res = Option.bind ~f:ModRes.make options.frontend.project_root in
-  { tezos_context; mod_res; heap = Heap.empty }
+  { tezos_context; mod_res; heap = Heap.empty ; print_values = true }
 
 
 let clean_locations ty =
@@ -239,6 +240,7 @@ module Command = struct
     | Free : LT.location -> unit t
     | Set : LT.location * LT.value -> unit t
     | Deref : LT.location -> LT.value t
+    | Set_print_values : bool -> bool t
 
   let eval_tezos
     : type a.
@@ -996,7 +998,6 @@ module Command = struct
          Tezos_state.contexts := ctxts;
          (), ctxt)
 
-
   let eval
     : type a.
       raise:(Errors.interpreter_error, Main_warnings.all) raise
@@ -1032,6 +1033,9 @@ module Command = struct
     | Deref var ->
       let val_ = Heap.deref state.heap var in
       val_, state
+    | Set_print_values print_values ->
+      let prev = state.print_values in
+      prev, { state with print_values }
 end
 
 type 'a t =

@@ -385,6 +385,9 @@ module Test = struct
   let nl = [%external ("TEST_UNESCAPE_STRING", "\n")]
   let println (v : string) : unit =
     print (v ^ nl)
+(* one day we might be able to write  `[@private] let print_values : ref bool = true` or something *)
+  let set_print_values (_ : unit) : unit = let _ = [%external ("TEST_SET_PRINT_VALUES", true)] in ()
+  let unset_print_values (_ : unit) : unit = let _ = [%external ("TEST_SET_PRINT_VALUES", false)] in ()
 
   module PBT = struct
     let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
