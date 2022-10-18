@@ -8,7 +8,6 @@
   ast_typed
   predefined
   environment
-  self_ast_core
   compiler_options
   main_warnings
   desugaring

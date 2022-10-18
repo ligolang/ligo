@@ -11,8 +11,8 @@ In this tutorial, we will go through the following step :
 -	Deploying the contract to Tezos
 
 # Setting up the development environment.
-At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
-More on [installation](https://ligolang.org/docs/intro/installation) and [editor support](https://ligolang.org/docs/intro/editor-support)
+At the present moment, we recommand the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
+More on [installation](../../intro/installation.md) and [editor support](../../intro/editor-support.md)
 
 Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). This can be useful for testing or for small project. However, it doesn't scale well for bigger size project as you won't be able to spread your project across multiple files and use your own libraries.
 
@@ -87,7 +87,7 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 ## Setting up the editor
 
-  You can see the updated list of supported editor [here](https://ligolang.org/docs/intro/editor-support)
+  You can see the updated list of supported editor [here](../../intro/editor-support.md
 
 
   In this tutorial, we will use vs-code.
@@ -581,12 +581,12 @@ const test_increment = (() : unit => {
 
 For deploying the contract on Tezos, we will use the `tezos-client` interface like we did on the previous section.
 
-First, you will need an account address. You can get one for testing at the [faucet](https://faucet.tzalpha.net/).
+First, you will need an account address. You can get one for testing at the [faucet](https://teztnets.xyz/ghostnet-faucet).
 Download the json file and place it in the `ligo_tutorial` folder. $!$ The account that you get from the faucet are only temporary
 
 Then we are going to point the client on a Tezos node
 ```zsh
-tezos-client --endpoint https://testnet-tezos.giganode.io config update
+tezos-client --endpoint https://rpc.ghostnet.teztnets.xyz config update 
 ```
 This is the testnet, which is a separate network from Tezos, use for testing.
 

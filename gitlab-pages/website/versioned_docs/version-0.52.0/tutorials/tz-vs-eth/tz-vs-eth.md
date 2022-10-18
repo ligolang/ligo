@@ -1017,7 +1017,7 @@ However, here you leave your contract in an _intermediate_ state before making a
 
 By making contract interactions harder, Tezos incentives you to simplify your architecture. Think about whether you can use lambdas or merge your contracts to avoid complex inter-contract dependencies. If it is possible to _not_ split your logic into multiple contracts, then avoid the split.
 
-You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](https://ligolang.org/docs/tutorials/inter-contract-calls/inter-contract-calls) article.
+You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](../inter-contract-calls/inter-contract-calls.md) article.
 
 ## Fees
 
@@ -1026,7 +1026,7 @@ Fee model in Tezos is more complicated than the Ethereum one. The most important
 2. When you call a contract, the transaction spends gas for reading, deserialising and type-checking the storage. Also, a certain amount of gas gets spent for serialising and writing the storage back to the context. In practice, it means that **the larger your code and storage are, the more expensive it is to call your contract,** regardless of the number of computations performed. If you have big or unbounded containers in storage, you should most probably use `big_map`.
 3. Emitting internal operations is very expensive in terms of gas: there is a fixed cost of 10000 gas for `Tezos.get_{contract, entrypoint}_opt` plus the cost of reading, deserialising, and type-checking the parameter of the callee.
 
-Always test for gas consumption and strive to minimise the size of the data stored on chain and the number of internal operations emitted. You can read more on fees in our [Optimisation guide](https://ligolang.org/docs/tutorials/optimisation/optimisation) or in the [Serokell blog post](https://medium.com/tqtezos/how-to-minimize-transaction-costs-of-tezos-smart-contracts-9962347faf64).
+Always test for gas consumption and strive to minimise the size of the data stored on chain and the number of internal operations emitted. You can read more on fees in our [Optimisation guide](../optimisation/optimisation.md) or in the [Serokell blog post](https://medium.com/tqtezos/how-to-minimize-transaction-costs-of-tezos-smart-contracts-9962347faf64).
 
 ## Conclusion
 
