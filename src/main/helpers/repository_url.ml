@@ -157,7 +157,6 @@ let parse' j : t option =
 let parse j : (t, string) result =
   match type_url_directory_of_yojson j with
   | Ok { type_; url; directory } ->
-    Format.printf "%s\n" url;
     (match parse_uri_with_scheme url with
     | Some _ -> Ok { type_; url; directory = Some directory }
     | None -> Error "repository url is invalid")

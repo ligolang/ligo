@@ -18,7 +18,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
     let res = fold_cases f res cases in
     res
   )
-  | E_record    m -> Record.fold self init m
+  | E_record    m -> Record.fold ~f:self ~init m
   | E_update    u -> Types.Update.fold self init u
   | E_accessor  a -> Types.Accessor.fold self init a
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
@@ -66,7 +66,7 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     return @@ E_matching {matchee=e';cases=cases'}
   )
   | E_record m -> (
-    let m' = Record.map self m in
+    let m' = Record.map ~f:self m in
     return @@ E_record m'
   )
   | E_accessor acc -> (
@@ -186,7 +186,7 @@ module Free_variables :
     | E_matching {matchee; cases} ->
       VarSet.union (self matchee)(get_fv_cases cases)
     | E_record m ->
-      let res = Record.map self m in
+      let res = Record.map ~f:self m in
       let res = Record.LMap.to_list res in
       unions res
     | E_accessor {struct_} ->

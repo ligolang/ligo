@@ -225,10 +225,10 @@ let rec compile_type_expression ~raise path scope (type_expression : I.type_expr
     let parameters = List.map ~f:self parameters in
     return @@ T_constant {language;injection;parameters}
   | T_sum      {fields;layout} ->
-    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
     return @@ T_sum      {fields;layout}
   | T_record   {fields;layout} ->
-    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
     return @@ T_record   {fields;layout}
   | T_arrow    {type1;type2} ->
     let type1 = self type1 in
@@ -307,7 +307,7 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ cases
   (* Record *)
   | E_record record ->
-    let record = Record.map self record in
+    let record = Record.map ~f:self record in
     return @@ E_record record
   | E_accessor {struct_;path} ->
     let struct_ = self struct_ in

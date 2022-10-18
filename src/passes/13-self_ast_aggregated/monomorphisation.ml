@@ -70,7 +70,7 @@ let apply_table_expr table (expr : AST.expression) =
       | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
          return @@ E_matching { matchee ; cases = Match_variant { cases ; tv = apply_table_type tv } }
       | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
-         let fields = Record.map (Binder.map apply_table_type) fields in
+         let fields = Record.map ~f:(Binder.map apply_table_type) fields in
          return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = apply_table_type tv } }
       | E_assign { binder ; expression } ->
          let binder = Binder.map apply_table_type binder in
@@ -107,11 +107,11 @@ let rec subst_external_type et t (u : AST.type_expression) =
       let parameters = List.map ~f:(self et t) parameters in
       { u with type_content = T_constant {language;injection;parameters} }
    | T_sum {fields; layout} ->
-      let fields = AST.(Record.map (fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
+      let fields = AST.(Record.map ~f:(fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
                         {associated_type = self et t associated_type; michelson_annotation;decl_pos}) fields) in
       { u with type_content = T_sum {fields; layout} }
    | T_record {fields; layout} ->
-      let fields = AST.(Record.map (fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
+      let fields = AST.(Record.map ~f:(fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
                         {associated_type = self et t associated_type; michelson_annotation;decl_pos}) fields) in
       { u with type_content = T_record {fields; layout} }
    | _ -> u
@@ -133,7 +133,7 @@ let subst_external_term et t (e : AST.expression) =
       | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
          return @@ E_matching { matchee ; cases = Match_variant { cases ; tv =  subst_external_type et t tv } }
       | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
-         let fields = Record.map (Binder.map (subst_external_type et t)) fields in
+         let fields = Record.map ~f:(Binder.map (subst_external_type et t)) fields in
          return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = subst_external_type et t tv } }
       | E_assign { binder ; expression } ->
          let binder = Binder.map (subst_external_type et t) binder in
@@ -215,7 +215,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
       let data, matchee = self data matchee in
       data, return (E_matching { matchee ; cases })
    | E_record lmap ->
-      let data, lmap = Record.fold_map self data lmap in
+      let data, lmap = Record.fold_map ~f:self ~init:data lmap in
       data, return (E_record lmap)
    | E_accessor { struct_ ; path } ->
       let data, struct_ = self data struct_ in
