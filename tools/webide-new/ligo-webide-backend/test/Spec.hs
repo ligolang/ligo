@@ -41,7 +41,7 @@ main = do
   hspec $ do
     describe "standard LIGO" (spec config)
     describe "dockerized LIGO"
-      (spec config {cDockerizedLigoVersion = Just "0.50.0"})
+      (spec config {cDockerizedLigoVersion = Just "0.53.0"})
 
 post :: BS.ByteString -> LBS.ByteString -> WaiSession () SResponse
 post path =
