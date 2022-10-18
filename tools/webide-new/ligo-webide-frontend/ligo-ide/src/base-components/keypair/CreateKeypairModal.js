@@ -16,7 +16,7 @@ import {
 
 import notification from "~/base-components/notification";
 
-import keypairManager from "./keypairManager";
+import keypairManager, { KeypairManager } from "./keypairManager";
 import { keypairNameValidator } from "./helper";
 
 export default class CreateKeypairModal extends PureComponent {
@@ -47,11 +47,7 @@ export default class CreateKeypairModal extends PureComponent {
   }
 
   regenerateKeypair = async () => {
-    const keypair = await keypairManager.newKeypair(
-      this.props.kp,
-      this.state.chain,
-      this.state.secretType
-    );
+    const keypair = await KeypairManager.newKeypair(this.props.kp, this.state.secretType);
     this.setState({ keypair });
   };
 

@@ -9,7 +9,7 @@ export interface OpenProjectProps {
   projectLink: string;
 }
 
-function OpenProject({ projectLink }: OpenProjectProps) {
+const OpenProject = ({ projectLink }: OpenProjectProps) => {
   const [loading, setLoading] = useState(true);
   const [pm, setPm] = useState("");
 
@@ -47,6 +47,6 @@ function OpenProject({ projectLink }: OpenProjectProps) {
   }, [projectLink]);
 
   return loading ? <LoadingScreen /> : <Redirect to={`/local/${pm}`} />;
-}
+};
 
 export default OpenProject;
