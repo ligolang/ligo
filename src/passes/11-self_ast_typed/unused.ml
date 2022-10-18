@@ -89,7 +89,7 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_union (defuse_of_expr defuse matchee) (defuse_of_cases defuse cases)
   | E_record re ->
      Record.fold
-       (fun acc x -> defuse_union (defuse_of_expr defuse x) acc) defuse_neutral re
+       ~f:(fun acc x -> defuse_union (defuse_of_expr defuse x) acc) ~init:defuse_neutral re
   | E_accessor {struct_;_} ->
      defuse_of_expr defuse struct_
   | E_update {struct_;update;_} ->

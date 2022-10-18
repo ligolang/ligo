@@ -113,7 +113,7 @@ end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
 
-module Pattern = Pattern.Make(Pattern.Container.Record)()
+module Pattern = Pattern.Make(Record)()
 module Match_expr = Match_expr.Make(Pattern)
 
 type expression_content =

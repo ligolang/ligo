@@ -84,12 +84,11 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
         let body = decompile ~raise body in
         let case = match Record.is_tuple fields with
           | false ->
-            let fields = Record.map aux fields in
-            let fields = Pattern.Container.Record.of_record fields in
+            let fields = Record.map ~f:aux fields in
             let pattern = Location.wrap (O.Pattern.P_record fields) in
             ({ pattern ; body } : _ O.Match_expr.match_case)
           | true ->
-            let patterns = Record.map aux fields in
+            let patterns = Record.map ~f:aux fields in
             let patterns = Record.LMap.values patterns in
             let pattern = Location.wrap (O.Pattern.P_tuple patterns) in
             ({ pattern ; body } : _ O.Match_expr.match_case)
@@ -98,7 +97,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        return (O.E_matching { matchee ; cases })
     (* Record *)
     | E_record map ->
-       let map = Record.map (decompile ~raise) map in
+       let map = Record.map ~f:(decompile ~raise) map in
        return (O.E_record map)
     | E_accessor { struct_ ; path } ->
        let struct_ = decompile ~raise struct_ in
@@ -145,13 +144,13 @@ and decompile_type ~raise : Ast_aggregated.type_expression -> Ast_typed.type_exp
      let f ({ associated_type ; michelson_annotation ; decl_pos } : I.row_element) : O.row_element =
        let associated_type = decompile_type ~raise associated_type in
        { associated_type ; michelson_annotation ; decl_pos } in
-     let fields = Record.map f fields in
+     let fields = Record.map ~f fields in
      return (O.T_sum { fields ; layout })
   | T_record { fields ; layout } ->
      let f ({ associated_type ; michelson_annotation ; decl_pos } : I.row_element) : O.row_element =
        let associated_type = decompile_type ~raise associated_type in
        { associated_type ; michelson_annotation ; decl_pos } in
-     let fields = Record.map f fields in
+     let fields = Record.map ~f fields in
      return (O.T_record { fields ; layout })
   | T_arrow { type1 ; type2 } ->
      let type1 = decompile_type ~raise type1 in

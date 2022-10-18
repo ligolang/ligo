@@ -47,6 +47,22 @@ let repeat x n =
   in
   aux n []
 
+let to_yojson f xs = `List (List.map ~f xs)
+let of_yojson f = function 
+  `List xs -> 
+    let rec aux xs =
+      match xs with
+        [] -> Ok []
+      | x::xs ->
+        (* TODO: clean this up *)
+        let ( let* ) = Caml.Result.bind in
+        let* x = f x in
+        let* xs = aux xs in
+        Ok (x :: xs)
+    in
+    aux xs
+  | _ -> Error "not a list"
+
 module Ne = struct
 
   type 'a t = 'a * 'a list

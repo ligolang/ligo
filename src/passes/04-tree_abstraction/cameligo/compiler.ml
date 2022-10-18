@@ -594,7 +594,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
       (Label field_name.value , pattern)
     in
     let lst = List.Ne.map aux @@ npseq_to_ne_list inj.ne_elements in
-    let lst = Container.List.of_list (List.Ne.to_list lst) in
+    let lst = List.Ne.to_list lst in
     Location.wrap ~loc @@ P_record lst
   | CST.PConstr pattern ->
       let (constr, p_opt), loc = r_split pattern in

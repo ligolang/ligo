@@ -836,7 +836,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
         CST.PVar var -> Label.of_string var.value.variable.value 
       | _ -> raise.error @@ unsupported_pattern_type p in
       l, conv ~raise p) @@ Utils.nsepseq_to_list record.inside in
-    Location.wrap ~loc (Pattern.P_record (Container.List.of_list lps))
+    Location.wrap ~loc (Pattern.P_record lps)
   | (PRest _|PAssign _|PConstr _|PDestruct _) ->
     raise.error @@ unsupported_pattern_type p
 

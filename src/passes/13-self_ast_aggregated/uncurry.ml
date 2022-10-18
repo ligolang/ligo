@@ -277,7 +277,7 @@ let rec uncurry_in_expression ~raise
     let body = self_binder (List.map ~f:Binder.get_var (Record.LMap.to_list fields)) body in
     return (E_matching { matchee; cases = Match_record { fields; body; tv } })
   | E_record fields ->
-    let fields = Record.map self fields in
+    let fields = Record.map ~f:self fields in
     return (E_record fields)
   | E_accessor { struct_; path } ->
     let struct_ = self struct_ in
