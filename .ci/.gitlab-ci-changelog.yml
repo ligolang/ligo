@@ -1,12 +1,11 @@
 # We abort pipeline if the MR last commit of MR is pushed by human and not by bot.
 .export-mr-info: &export-mr-info
+    - pip3 install -r ./ci/scripts/requirements.txt
     - MR_INFO='$(./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API})'
-    - export MR_AUTHOR_USERNAME=$(nix-shell -p jq --run "jq \".author.username\" <<< ${MR_INFO}")
+    - export MR_AUTHOR_USERNAME=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
     - export MR_TITLE=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
-    - MR_RAW_DESCRIPTION=$(nix-shell -p jq --run "jq \".description\" <<< ${MR_INFO}")
-    - export MR_TYPE=$(sed  -e 's/.*type:\(breaking\|added\|fixed\|changed\|deprecated\|removed\|performance\|internal\|other\|none\).*/\L\1/I' <<< $MR_RAW_DESCRIPTION)
-    - MD_DESC_SEPARATOR="Changelog details:\n"
-    - export MR_DESC=$(sed -e '/.*Changelog details:\\n\(.*\)/!d;s//\1/' <<< $MR_RAW_DESCRIPTION)
+    - export MR_TYPE=$(nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}")
+    - export MR_DESC=$(nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}")
     
 add-changelog-entry:
   stage: post-build-action
