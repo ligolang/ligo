@@ -89,9 +89,6 @@ module Command = struct
     | Set_big_map :
         Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Unpack :
-        Location.t * bytes * Ast_aggregated.type_expression
-        -> LT.value tezos_command
     | Bootstrap_contract :
         int * LT.value * LT.value * Ast_aggregated.type_expression
         -> unit tezos_command
@@ -266,27 +263,6 @@ module Command = struct
         Tezos_state.set_big_map ~raise ctxt (Z.to_int id) kv k_ty v_ty
       in
       (), ctxt
-    | Unpack (loc, bytes, value_ty) ->
-      let value_ty =
-        trace_option
-          ~raise
-          (Errors.generic_error loc "Expected return type is not an option")
-        @@ Ast_aggregated.get_t_option value_ty
-      in
-      let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
-      let mich = Michelson_backend.compile_ast ~raise ~options expr in
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
-      let ret_co, ret_ty =
-        Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich
-      in
-      let ret =
-        Michelson_to_value.decompile_to_untyped_value
-          ~raise
-          ~bigmaps:ctxt.transduced.bigmaps
-          ret_ty
-          ret_co
-      in
-      ret, ctxt
     | Nth_bootstrap_contract n ->
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
       contract, ctxt
@@ -886,13 +862,13 @@ module Command = struct
         | None ->
           Ast_aggregated.(
             e_a_contract_opt
-              (e_a_address @@ Michelson_backend.string_of_contract addr)
+              (Michelson_backend.string_of_contract addr)
               value_ty)
         | Some entrypoint ->
           Ast_aggregated.(
             e_a_contract_entrypoint_opt
-              (e_a_string (Ligo_string.standard entrypoint))
-              (e_a_address @@ Michelson_backend.string_of_contract addr)
+              entrypoint
+              (Michelson_backend.string_of_contract addr)
               value_ty)
       in
       let mich = Michelson_backend.compile_ast ~raise ~options expr in

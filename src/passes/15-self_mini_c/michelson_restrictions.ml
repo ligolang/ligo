@@ -7,8 +7,14 @@ let self_in_lambdas ~raise : expression -> expression =
     match e.content with
     | E_closure {binder=_ ; body} ->
       let f = fun ~raise e -> match e.content with
-				| E_constant {cons_name=C_SELF; _} -> raise.error (bad_self_address Ligo_prim.Constant.C_SELF)
-				| _ -> e
+        | E_raw_michelson (code, _) ->
+          let code = Tezos_utils.Michelson.lseq Location.generated code in
+          let code = Tezos_micheline.Micheline.(map_node (fun _ -> ()) (fun x -> x) code) in
+          if Tezos_utils.Michelson.has_prim "SELF" code then
+            raise.error bad_self_address
+          else
+            e
+	| _ -> e
 			in
       let _self_in_lambdas : expression = Helpers.map_expression
         (f ~raise)

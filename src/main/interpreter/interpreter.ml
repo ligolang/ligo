@@ -297,14 +297,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_ABS, _ -> fail @@ error_type ()
   | C_SOME, [ v ] -> return @@ v_some v
   | C_SOME, _ -> fail @@ error_type ()
-  | C_ADDRESS, [ V_Ct (C_contract { address; entrypoint = _ }) ] ->
-    return (V_Ct (C_address address))
-  | C_ADDRESS, _ -> fail @@ error_type ()
-  | C_BYTES_UNPACK, [ V_Ct (C_bytes bytes) ] ->
-    let value_ty = expr_ty in
-    let>> value = Unpack (loc, bytes, value_ty) in
-    return value
-  | C_BYTES_UNPACK, _ -> fail @@ error_type ()
   | C_MAP_FIND_OPT, [ k; V_Map l ] ->
     (match List.Assoc.find ~equal:LC.equal_value l k with
      | Some v -> return @@ v_some v
@@ -871,121 +863,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_OPTION_MAP, [ V_Func_val _; (V_Construct ("None", V_Ct C_unit) as v) ] ->
     return v
   | C_OPTION_MAP, _ -> fail @@ error_type ()
-  | C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] ->
-    let>> value = Implicit_account kh in
-    return @@ value
-  | C_IMPLICIT_ACCOUNT, _ -> fail @@ error_type ()
-  | C_CONTRACT_ENTRYPOINT_OPT, [ V_Ct (C_string e); V_Ct (C_address a) ] ->
-    let contract_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an option")
-      @@ Ast_aggregated.get_t_option expr_ty
-    in
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract contract_ty
-    in
-    let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
-    return @@ value
-  | C_CONTRACT_ENTRYPOINT_OPT, _ -> fail @@ error_type ()
-  | C_CONTRACT_ENTRYPOINT, [ V_Ct (C_string e); V_Ct (C_address a) ] ->
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract expr_ty
-    in
-    let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
-    let* v =
-      monad_option (Errors.generic_error loc "Expected option")
-      @@ LC.get_option value
-    in
-    (match v with
-     | None ->
-       fail
-       @@ Errors.meta_lang_failwith
-            loc
-            calltrace
-            (LC.v_string "bad address for get_entrypoint")
-     | Some value -> return @@ value)
-  | C_CONTRACT_ENTRYPOINT, _ -> fail @@ error_type ()
-  | C_CONTRACT_OPT, [ V_Ct (C_address a) ] ->
-    let contract_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an option")
-      @@ Ast_aggregated.get_t_option expr_ty
-    in
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract contract_ty
-    in
-    let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
-    return @@ value
-  | C_CONTRACT_OPT, _ -> fail @@ error_type ()
-  | C_CONTRACT, [ V_Ct (C_address a) ] ->
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract expr_ty
-    in
-    let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
-    let* v =
-      monad_option (Errors.generic_error loc "Expected option")
-      @@ LC.get_option value
-    in
-    (match v with
-     | None ->
-       fail
-       @@ Errors.meta_lang_failwith
-            loc
-            calltrace
-            (LC.v_string "bad address for get_contract")
-     | Some value -> return @@ value)
-  | C_CONTRACT, _ -> fail @@ error_type ()
-  | C_CONTRACT_WITH_ERROR, [ V_Ct (C_address a); V_Ct (C_string msg) ] ->
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract expr_ty
-    in
-    let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
-    let* v =
-      monad_option (Errors.generic_error loc "Expected option")
-      @@ LC.get_option value
-    in
-    (match v with
-     | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string msg)
-     | Some value -> return @@ value)
-  | C_CONTRACT_WITH_ERROR, _ -> fail @@ error_type ()
   | C_LIST_SIZE, [ V_List l ] -> return @@ v_nat (Z.of_int @@ List.length l)
   | C_LIST_SIZE, _ -> fail @@ error_type ()
   | C_SET_SIZE, [ V_Set l ] -> return @@ v_nat (Z.of_int @@ List.length l)
@@ -1013,6 +890,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       Test operators
     >>>>>>>>
     *)
+  | C_TEST_ADDRESS, [ V_Ct (C_contract { address; entrypoint = _ }) ] ->
+    return (V_Ct (C_address address))
+  | C_TEST_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_FAILWITH, [ v ] -> fail @@ Errors.meta_lang_failwith loc calltrace v
   | C_TEST_FAILWITH, _ -> fail @@ error_type ()
   | ( C_TEST_TRY_WITH
@@ -1444,15 +1324,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_INT64_TO_INT, [ V_Ct (C_int64 n) ] ->
     return @@ V_Ct (C_int (Z.of_int64 n))
   | C_TEST_INT64_TO_INT, _ -> fail @@ error_type ()
+  | C_CHECK_ENTRYPOINT, _ -> return @@ v_unit ()
+  | (C_CHECK_SELF | C_CHECK_EMIT_EVENT), _ ->
+    fail
+    @@ Errors.generic_error loc "Check should not be present in testing mode."
   | C_TEST_SET_PRINT_VALUES, [ V_Ct (C_bool b) ] ->
     let@ b = Set_print_values b in
     return @@ v_bool b
   | C_TEST_SET_PRINT_VALUES, _ -> fail @@ error_type ()
-  | (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE), _ ->
-    fail @@ Errors.generic_error loc "Sapling is not supported."
-  | C_EMIT_EVENT, _ -> fail @@ Errors.generic_error loc "Can't emit event here"
-  | (C_SELF | C_SELF_ADDRESS), _ ->
-    fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
   | C_POLYMORPHIC_ADD, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->
@@ -1474,12 +1353,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       | C_MAP_GET_FORCE
       | C_BIG_MAP
       | C_BIG_MAP_LITERAL
-      | C_CALL
-      | C_SET_DELEGATE
       | C_CREATE_CONTRACT
-      | C_OPEN_CHEST
-      | C_GLOBAL_CONSTANT
-      | C_VIEW )
+      | C_GLOBAL_CONSTANT )
     , _ ) -> fail @@ Errors.generic_error loc "Unbound primitive."
 
 
@@ -1797,6 +1672,107 @@ and eval_ligo ~raise ~steps ~options
          ; body = lambda.result
          ; env
          }
+  | E_raw_code { language; code = { expression_content = m; _ } }
+    when Option.is_some (AST.get_e_tuple m) ->
+    let open AST in
+    let tuple = Option.value ~default:[] (AST.get_e_tuple m) in
+    let code, args =
+      match tuple with
+      | [] ->
+        raise.error
+          (Errors.generic_error
+             term.location
+             "expected non-empty tuple in %Michelson")
+      | hd :: tl -> hd, tl
+    in
+    let rec bind_list = function
+      | [] -> return []
+      | hd :: tl ->
+        let* hd = hd in
+        let* tl = bind_list tl in
+        return @@ (hd :: tl)
+    in
+    let bind_map_list ~f lst = bind_list (List.map ~f lst) in
+    let* args =
+      bind_map_list
+        ~f:(fun e ->
+          let* v = eval_ligo e calltrace env in
+          return
+            ( v
+            , Stacking.To_micheline.translate_type
+                (Scoping.translate_type
+                   (trace ~raise Main_errors.spilling_tracer
+                   @@ Spilling.compile_type e.type_expression)) ))
+        args
+    in
+    (match code.expression_content with
+     | E_literal (Literal_string x)
+       when String.equal language Backend.Michelson.name
+            && (is_t_arrow (get_type code) || is_t_arrow term.type_expression)
+       ->
+       let ast_ty = get_type code in
+       let exp_as_string = Ligo_string.extract x in
+       let code, code_ty =
+         Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
+       in
+       let replace m =
+         let open Tezos_micheline.Micheline in
+         match m with
+         | Prim (_, s, [], [ id ])
+           when String.equal "type" s && String.is_prefix ~prefix:"$" id ->
+           let id = String.chop_prefix_exn ~prefix:"$" id in
+           let id = Int.of_string id in
+           (match List.nth args id with
+            | None ->
+              raise.error
+                (Errors.generic_error
+                   term.location
+                   (Format.sprintf "could not resolve (type %d)" id))
+            | Some (_, t) ->
+              Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) t)
+         | Prim (_, s, [], [ id ])
+           when String.equal "litstr" s && String.is_prefix ~prefix:"$" id ->
+           let id = String.chop_prefix_exn ~prefix:"$" id in
+           let id = Int.of_string id in
+           (match List.nth args id with
+            | Some (V_Ct (C_string s), _) ->
+              Tezos_micheline.Micheline.String ((), s)
+            | _ ->
+              raise.error
+                (Errors.generic_error
+                   term.location
+                   (Format.sprintf "could not resolve (litstr %d)" id)))
+         | Prim (a, b, c, d) ->
+           let open Tezos_micheline.Micheline in
+           let f arg (c, d) =
+             match arg with
+             | Prim (_, s, [], [ id ])
+               when String.equal "annot" s && String.is_prefix ~prefix:"$" id ->
+               let id = String.chop_prefix_exn ~prefix:"$" id in
+               let id = Int.of_string id in
+               let annot =
+                 match List.nth args id with
+                 | Some (V_Ct (C_string s), _) -> s
+                 | _ ->
+                   raise.error
+                     (Errors.generic_error
+                        term.location
+                        (Format.sprintf "could not resolve (annot %d)" id))
+               in
+               c, annot :: d
+             | m -> m :: c, d
+           in
+           let c, d = List.fold_right ~f ~init:([], d) c in
+           Prim (a, b, c, d)
+         | m -> m
+       in
+       let code = Tezos_utils.Michelson.map replace code in
+       return @@ V_Michelson (Ty_code { code; code_ty; ast_ty })
+     | _ ->
+       raise.error
+       @@ Errors.generic_error
+            term.location
+            "Embedded raw code can only have a functional type")
   | E_raw_code { language; code } ->
     let open AST in
     (match code.expression_content with

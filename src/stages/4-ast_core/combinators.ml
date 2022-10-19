@@ -109,7 +109,6 @@ let tuple_of_record (m: _ Rows.row_element_mini_c Record.t) =
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
   List.map ~f:(fun Rows.{associated_type;_} -> associated_type) l
 
-
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
   | T_record struct_ -> Some (tuple_of_record struct_.fields)
   | _ -> None
