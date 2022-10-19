@@ -82,7 +82,7 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp_lift reg
   )
 
-let error_ppformat : abs_error -> Ligo_prim.Error.t =
+let error_json : abs_error -> Ligo_prim.Error.t =
   fun e ->
     let open Ligo_prim.Error in
     match e with

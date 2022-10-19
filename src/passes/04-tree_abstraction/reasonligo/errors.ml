@@ -73,6 +73,53 @@ let error_ppformat : display_format:string display_format ->
     )
   )
 
+let error_json : abs_error -> Ligo_prim.Error.t =
+  fun e ->
+    let open Ligo_prim.Error in
+    match e with
+    | `Concrete_reasonligo_expected_access_to_variable reg ->
+      let message = "Expected access to a variable." in
+      let location = Location.File reg in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_unknown_constant (s,location) ->
+      let message = Format.sprintf "Unknown constant: %s" s in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_untyped_recursive_fun location ->
+      let message = Format.sprintf "Invalid function declaration.@.Recursive functions are required to have a type annotation (for now)." in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_unsupported_pattern_type pl ->
+      let message = "Invalid pattern matching.@.Can't match on values." in
+      let reg = Raw.pattern_to_region pl in
+      let location = Location.File reg in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_unsupported_string_singleton te ->
+      let message = Format.sprintf "Invalid type. @.It's not possible to assign a string to a type." in
+      let location = Location.File (Raw.type_expr_to_region te) in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_recursion_on_non_function location ->
+      let message = "Invalid let declaration.@.Only functions can be recursive." in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_michelson_type_wrong (location,name) ->
+      let message = Format.sprintf "Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type." name in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_michelson_type_wrong_arity (location,name) ->
+      let message = Format.sprintf "Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string." name in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
+    | `Concrete_reasonligo_funarg_tuple_type_mismatch (region, pattern, texpr) ->
+      let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
+      let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
+      let message = Format.sprintf "The tuple \"%s\" does not have the expected type \"%s\"." p t in
+      let location = Location.File region in
+      let content = make_content ~message ~location () in
+      make ~stage ~content
 
 let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
