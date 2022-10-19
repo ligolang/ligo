@@ -27,31 +27,32 @@ module Cli.Json
   )
 where
 
-import Control.Monad.State
+import Control.Lens (over, _head)
+import Control.Monad.State (State, evalState, get, gets, modify)
 import Data.Aeson.Types hiding (Error)
 import Data.Aeson.KeyMap (toAscList)
 import Data.Char (isUpper, toLower)
 import Data.Foldable (toList)
-import Data.Function
+import Data.Function (on, (&))
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe)
-import Data.Proxy (Proxy(..))
+import Data.Proxy (Proxy (..))
 import Data.Text (Text)
-import GHC.Generics
+import GHC.Generics (Generic, Rep)
 import GHC.TypeLits (Nat, KnownNat, natVal)
 import Language.LSP.Types qualified as J
 import Prelude hiding (sum)
 
 import AST.Skeleton hiding (CString)
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
-import Duplo.Lattice
-import Duplo.Pretty
-import Duplo.Tree
+import Duplo.Lattice (leq)
+import Duplo.Pretty (Pretty (..), text, (<+>))
+import Duplo.Tree (Apply, Cofree (..), Element, Tree, extract, inject)
 import Parser (CodeSource (..), Info)
-import Product
+import Product (Product (..), getElem, putElem)
 import Range hiding (startLine)
 
 ----------------------------------------------------------------------------
@@ -532,7 +533,8 @@ fromLigoTypeFull = enclose . \case
       -> State (Product Info) (LIGO Info)
     fromLigoType = \case
       LTCConstant LigoTypeConstant {..} ->
-        fromLigoConstant (NE.head _ltcInjection) _ltcParameters
+        -- See: https://gitlab.com/ligolang/ligo/-/issues/1478
+        fromLigoConstant (NE.head _ltcInjection & over _head toLower) _ltcParameters
 
       LTCVariable variable ->
         fromLigoPrimitive Nothing $ _ltvName variable

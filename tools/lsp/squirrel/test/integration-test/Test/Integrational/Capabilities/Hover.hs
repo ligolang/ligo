@@ -42,17 +42,13 @@ unit_hover_apply_type = do
 
 unit_hover_inferred_simple_from_compiler :: Assertion
 unit_hover_inferred_simple_from_compiler = do
-  -- FIXME: LIGO-760
-  --Hover.unit_hover_inferred_simple @Standard
-  --Hover.unit_hover_inferred_simple @FromCompiler
-  pure ()
+  Hover.unit_hover_inferred_simple @Standard
+  Hover.unit_hover_inferred_simple @FromCompiler
 
 unit_hover_inferred_recursion_from_compiler :: Assertion
 unit_hover_inferred_recursion_from_compiler = do
-  -- FIXME: LIGO-760
-  --Hover.unit_hover_inferred_recursion @Standard
-  --Hover.unit_hover_inferred_recursion @FromCompiler
-  pure ()
+  Hover.unit_hover_inferred_recursion @Standard
+  Hover.unit_hover_inferred_recursion @FromCompiler
 
 unit_hover_inferred_recursion_fallback :: Assertion
 unit_hover_inferred_recursion_fallback =
