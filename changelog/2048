@@ -3,5 +3,5 @@ description: '### An empty annot attribute (`[@annot:]`) on record fields and va
   cases now means that there will be no annot at all. Previously, it was ignored,
   and the field/case name would be used as usual.'
 merge_request: '2048'
-title: 'Draft: Make [@annot:] mean no annot'
+title: 'Make [@annot:] mean no annot'
 type: breaking
