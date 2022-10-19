@@ -40,6 +40,8 @@ import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (Handler), catches, fromEither, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
+import Cli qualified as LSP.Cli
+
 import Language.LIGO.DAP.Variables
 
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -263,24 +265,26 @@ instance HasSpecificMessages LIGO where
         }
       }
 
-  handlersWrapper RequestBase{..} = flip catches
-    [ Handler \(e :: LigoException) -> do
-        let msg = pretty e
+  handlersWrapper RequestBase{..} =
+    let
+      writeErrResponse :: Text -> DAP.Message -> RIO ext ()
+      writeErrResponse msgTag fullMsg =
         writeResponse $ ErrorResponse DAP.defaultErrorResponse
           { DAP.request_seqErrorResponse = seqRequestBase
           , DAP.commandErrorResponse = commandRequestBase
-          , DAP.messageErrorResponse = Just $ toString $ leMessage e
-          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
+          , DAP.messageErrorResponse = Just (toString msgTag)
+          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just fullMsg
           }
+    in flip catches
+      [ Handler \(e :: LigoException) -> do
+          writeErrResponse (leMessage e) (pretty e)
 
-    , Handler \(DapMessageException msg :: DapMessageException) -> do
-        writeResponse $ ErrorResponse DAP.defaultErrorResponse
-          { DAP.request_seqErrorResponse = seqRequestBase
-          , DAP.commandErrorResponse = commandRequestBase
-          , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
-          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
-          }
-    ]
+      , Handler \(DapMessageException msg :: DapMessageException) -> do
+          writeErrResponse (toText $ DAP.formatMessage msg) msg
+
+      , Handler \(e :: UnsupportedLigoVersionException) -> do
+          writeErrResponse (pretty e) (pretty e)
+      ]
 
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
@@ -347,7 +351,6 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   let binaryPath = Debug.show @Text binaryPathMb
 
   lServVar <- asks _rcLSState
-
   atomically $ writeTVar lServVar $ Just LigoLanguageServerState
     { lsProgram = Nothing
     , lsContract = Nothing
@@ -356,13 +359,22 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsBinaryPath = binaryPathMb
     , lsParsedContracts = Nothing
     }
+  logMessage [int||Set LIGO binary path: #{binaryPath}|]
+
+  rawVersion <- getLigoVersion
+  logMessage [int||Ligo version: #{LSP.Cli.getVersion rawVersion}|]
+
+  -- Pro-actively check that ligo version is supported
+  runMaybeT do
+    Just ligoVer <- pure $ parseLigoVersion rawVersion
+    VersionUnsupported <- pure $ isSupportedVersion ligoVer
+    throwIO $ UnsupportedLigoVersionException ligoVer
 
   writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
     { seqLigoSetLigoBinaryPathResponse = 0
     , request_seqLigoSetLigoBinaryPathResponse = seqLigoSetLigoBinaryPathRequest
     , successLigoSetLigoBinaryPathResponse = True
     }
-  logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
 handleSetProgramPath :: LigoSetProgramPathRequest -> RIO LIGO ()
 handleSetProgramPath LigoSetProgramPathRequest{..} = do

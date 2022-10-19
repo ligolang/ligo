@@ -84,10 +84,14 @@ library:
     - morley-debugger
     - mtl
     - nyan-interpolation
+    - nyan-interpolation-core
     - process
     - scientific
+    - semver
     - singletons
     - stm
+    - template-haskell
+    - th-utilities
     - text
     - unliftio
     - unordered-containers
@@ -109,6 +113,7 @@ executables:
       - ligo-debugger
       - morley
       - morley-debugger
+      - semver
 
     source-dirs:
       - app/ligo-debugger

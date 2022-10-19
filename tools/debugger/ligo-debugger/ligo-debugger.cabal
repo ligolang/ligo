@@ -94,11 +94,15 @@ library
     , morley-prelude
     , mtl
     , nyan-interpolation
+    , nyan-interpolation-core
     , process
     , scientific
+    , semver
     , singletons
     , stm
+    , template-haskell
     , text
+    , th-utilities
     , unliftio
     , unordered-containers
     , vector
@@ -163,6 +167,7 @@ executable ligo-debugger
     , morley
     , morley-debugger
     , morley-prelude
+    , semver
   default-language: Haskell2010
 
 test-suite ligo-debugger-test
