@@ -498,6 +498,40 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         infer ~ctx:Context.(ctx |:: C_type (tvar, rhs)) let_result
       in
       ctx, res_type, lift let_result
+    | E_raw_code { language; code = { expression_content = m ; _ } } when Option.is_some (S.get_e_tuple m) ->
+      let tuple = Option.value ~default:[] (S.get_e_tuple m) in
+      let code, args = match tuple with
+        | [] -> raise.error (corner_case "expected non-empty tuple in %Michelson")
+        | hd :: tl -> hd, tl in
+      let code, code_type =
+        trace_option ~raise (not_annotated loc)
+        @@ I.get_e_ascription code.expression_content
+      in
+      let code_type = evaluate_type ~raise ~ctx code_type in
+      let ctx, _code_type, code = infer code in
+      let ctx, args =
+        List.fold_map
+          args
+          ~init:ctx
+          ~f:(fun ctx expr ->
+              let expr, type_expression =
+                trace_option ~raise (not_annotated loc)
+                @@ I.get_e_ascription expr.expression_content in
+              let ctx, _expr_type, expr = infer ~ctx expr in
+              let type_expression = evaluate_type ~raise ~ctx type_expression in
+              let expr = let%bind expr = expr in return expr.expression_content type_expression in
+              ctx, expr)
+      in
+      let args = Elaboration.all_list args in
+      ( ctx
+      , code_type
+      , let%bind code = code in
+        let%bind args = args in
+        let tuple = e_a_record @@ Record.record_of_tuple (code :: args) in
+        return
+          (E_raw_code
+             { language; code = { tuple with type_expression = code_type } })
+          code_type )
     | E_raw_code { language; code } ->
       let code, code_type =
         trace_option ~raise (not_annotated loc)

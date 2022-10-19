@@ -23,7 +23,7 @@ let external_contract =
 let from_  = e_address @@ addr 5
 let to_    = e_address @@ addr 2
 let sender = e_address @@ sender
-let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ()))
+(* let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ())) *)
 
 let transfer ~raise f s () =
   let program = get_program ~raise f ~st:s () in
@@ -54,31 +54,31 @@ let transfer_not_e_balance ~raise f s () =
   expect_string_failwith ~raise ~options program "transfer" input
   "NotEnoughBalance"
 
-let get_balance ~raise f s () =
-  let program = get_program ~raise f ~st:s () in
-  let storage = e_record_ez [
-    ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
-    ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
-    ("total_supply",e_nat 300);
-  ] in
-  let parameter = e_record_ez [("owner", from_);("callback", external_contract)] in
-  let input = e_pair parameter storage in
-  let expected = e_pair (e_typed_list [] (t_operation ())) storage in
-  let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "getBalance" input expected
-
-let get_total_supply ~raise f s () =
-  let program = get_program ~raise f ~st:s () in
-  let storage = e_record_ez [
-    ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
-    ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
-    ("total_supply",e_nat 300);
-  ] in
-  let parameter = e_record_ez [("callback", external_contract)] in
-  let input = e_pair parameter storage in
-  let expected = e_pair (e_typed_list [] (t_operation ())) storage in
-  let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "getTotalSupply" input expected
+(* let get_balance ~raise f s () =
+ *   let program = get_program ~raise f ~st:s () in
+ *   let storage = e_record_ez [
+ *     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
+ *     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
+ *     ("total_supply",e_nat 300);
+ *   ] in
+ *   let parameter = e_record_ez [("owner", from_);("callback", external_contract)] in
+ *   let input = e_pair parameter storage in
+ *   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
+ *   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
+ *   expect_eq ~raise program ~options "getBalance" input expected
+ * 
+ * let get_total_supply ~raise f s () =
+ *   let program = get_program ~raise f ~st:s () in
+ *   let storage = e_record_ez [
+ *     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
+ *     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
+ *     ("total_supply",e_nat 300);
+ *   ] in
+ *   let parameter = e_record_ez [("callback", external_contract)] in
+ *   let input = e_pair parameter storage in
+ *   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
+ *   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
+ *   expect_eq ~raise program ~options "getTotalSupply" input expected *)
 
 let main = test_suite "tzip-5" [
   test_w "compile"                           (compile_main             mfile_FA1 "cameligo");

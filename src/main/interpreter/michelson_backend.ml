@@ -523,30 +523,8 @@ let rec val_to_ast ~raise ~loc
             "Expected address or typed address but got %a"
             Ast_aggregated.PP.type_expression
             ty)
-  | V_Ct (C_contract c) when is_t_contract ty ->
-    let ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           loc
-           (Format.asprintf
-              "Expected contract but got %a"
-              Ast_aggregated.PP.type_expression
-              ty))
-        (get_t_contract ty)
-    in
-    let x = string_of_contract c.address in
-    (* TODO-er: if we want support for entrypoints, this should be fixed: *)
-    let t =
-      match c.entrypoint with
-      | None -> e_a_contract (e_a_address x) ty
-      | Some e ->
-        e_a_contract_entrypoint
-          (e_a_string (Ligo_string.Standard ("%" ^ e)))
-          (e_a_address x)
-          ty
-    in
-    t
+  | V_Ct (C_contract _) when is_t_contract ty ->
+    raise.error (Errors.generic_error loc "Not implemented: contract to ast")
   | V_Ct (C_contract _) ->
     raise.error
     @@ Errors.generic_error

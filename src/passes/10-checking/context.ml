@@ -1310,6 +1310,7 @@ module Elaboration = struct
 
 
   let all_lmap lmap ~raise = Record.LMap.map (fun t -> t ~raise) lmap
+  let all_list l ~raise = List.map ~f:(fun t -> t ~raise) l
 
   (* A pass to check all existentials are resolved *)
   let type_pass ~raise (type_ : type_expression) : unit =

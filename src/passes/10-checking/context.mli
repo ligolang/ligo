@@ -124,6 +124,10 @@ module Elaboration : sig
     :  ('a, 'err, 'wrn) t Rows.LMap.t
     -> ('a Rows.LMap.t, 'err, 'wrn) t
 
+  val all_list
+    :  (('a, 'err, 'wrn) t) list
+    -> ('a list, 'err, 'wrn) t
+
   val run_expr
     :  (expression, ([> error ] as 'err), 'wrn) t
     -> ctx:context

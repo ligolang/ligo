@@ -694,7 +694,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "get_contract.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -1013,6 +1013,15 @@ let%expect_test _ =
      15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
      16 |   ()
 
-    Test failed with "foo"
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
+     14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
+     15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
+     16 |   ()
+
+    An uncaught error occured:
+    Failwith: "foo"
     Trace:
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]

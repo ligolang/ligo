@@ -62,6 +62,9 @@ let tuple_of_record (m: _ t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
+let record_of_tuple (l : _ list) =
+  of_list @@ List.mapi ~f:(fun i v -> (Label.of_int i, v)) l
+
 let to_list = LMap.to_kv_list
 
 module PP = struct

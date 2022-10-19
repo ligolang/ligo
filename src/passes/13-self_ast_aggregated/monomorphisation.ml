@@ -85,6 +85,17 @@ let apply_table_expr table (expr : AST.expression) =
       | E_let_mut_in { let_binder; rhs; let_result; attr } ->
          let let_binder = Binder.map apply_table_type let_binder in
          return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+      | E_raw_code { language ; code = { expression_content = m ; _ } as expr } when Option.is_some (AST.get_e_tuple m) ->
+        let tuple = Option.value ~default:[] (AST.get_e_tuple m) in
+        let code, args = match tuple with
+          | [] -> failwith "expected non-empty tuple in %Michelson"
+          | hd :: tl -> hd, tl in
+        let args = List.map ~f:(fun t ->
+            let te = t.type_expression in
+            let te = List.fold ~init:te table ~f:(fun (te) (v,t) -> AST.Helpers.subst_type v t te) in
+            { t with type_expression = te }) args in
+        let tuple = { expr with expression_content = E_record (Record.record_of_tuple (code :: args)) } in
+        return @@ E_raw_code { language ; code = tuple }
       | E_deref _ | E_while _ | E_for _ | E_for_each _
       | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
       | E_raw_code _ | E_constructor _ | E_record _

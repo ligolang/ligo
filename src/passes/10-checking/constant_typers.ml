@@ -786,11 +786,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                [ t_string () ^-> t_string () ^~> t_string ()
                ; t_bytes () ^-> t_bytes () ^~> t_bytes ()
                ]) )
-    ; ( C_BYTES_UNPACK
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create ~mode_annot:[ Checked ] ~types:[ t_bytes () ^~> t_option a ]) )
       (* Option *)
     ; ( C_NONE
       , of_type
@@ -810,75 +805,17 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           create
             ~mode_annot:[ Checked; Inferred ]
             ~types:[ (a @-> b) ^-> t_option a ^~> t_option b ]) )
-      (* Contract *)
-    ; ( C_ADDRESS
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked ]
-            ~types:[ t_contract a ^~> t_address () ]) )
-    ; ( C_CONTRACT
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked ]
-            ~types:[ t_address () ^~> t_contract a ]) )
-    ; ( C_CONTRACT_OPT
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked ]
-            ~types:[ t_address () ^~> t_option (t_contract a) ]) )
-    ; ( C_CONTRACT_WITH_ERROR
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked; Checked ]
-            ~types:[ t_address () ^-> t_string () ^~> t_contract a ]) )
-    ; ( C_CONTRACT_ENTRYPOINT_OPT
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked; Checked ]
-            ~types:[ t_string () ^-> t_address () ^~> t_option (t_contract a) ]
-          ) )
-    ; ( C_CONTRACT_ENTRYPOINT
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked; Checked ]
-            ~types:[ t_string () ^-> t_address () ^~> t_contract a ]) )
-    ; ( C_IMPLICIT_ACCOUNT
+    ; ( C_CHECK_ENTRYPOINT
       , of_type
           (create
-             ~mode_annot:[ Checked ]
-             ~types:[ t_key_hash () ^~> t_contract (t_unit ()) ]) )
-    ; ( C_SET_DELEGATE
-      , of_type
-          (create
-             ~mode_annot:[ Checked ]
-             ~types:[ t_option (t_key_hash ()) ^~> t_operation () ]) )
-    ; ( C_SELF
+            ~mode_annot:[ Checked ]
+            ~types:[ t_string () ^~> t_unit () ]) )
+    ; ( C_CHECK_SELF
       , of_type
           (for_all "a"
           @@ fun a ->
-          create ~mode_annot:[ Checked ] ~types:[ t_string () ^~> t_contract a ]
+          create ~mode_annot:[ Checked ] ~types:[ t_string () ^~> t_option a ]
           ) )
-    ; ( C_SELF_ADDRESS
-      , of_type (create ~mode_annot:[] ~types:[ return @@ t_address () ]) )
-    ; ( C_CALL
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Checked; Checked; Inferred ]
-            ~types:[ a ^-> t_mutez () ^-> t_contract a ^~> t_operation () ]) )
     ; ( C_CREATE_CONTRACT
       , of_type
           (for_all "a"
@@ -894,37 +831,17 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                 ^-> b
                 ^~> t_pair (t_operation ()) (t_address ())
               ]) )
-    ; ( C_EMIT_EVENT
+    ; ( C_CHECK_EMIT_EVENT
       , of_type
           (for_all "a"
           @@ fun a ->
           create
             ~mode_annot:[ Checked; Inferred ]
-            ~types:[ t_string () ^-> a ^~> t_operation () ]) )
+            ~types:[ t_string () ^-> a ^~> t_unit () ]) )
       (* Primitives *)
     ; C_UNIT, of_type (create ~mode_annot:[] ~types:[ return @@ t_unit () ])
     ; C_TRUE, of_type (create ~mode_annot:[] ~types:[ return @@ t_bool () ])
     ; C_FALSE, of_type (create ~mode_annot:[] ~types:[ return @@ t_bool () ])
-      (* Views & Chests *)
-    ; ( C_OPEN_CHEST
-      , of_type
-          (create
-             ~mode_annot:[ Checked; Checked; Checked ]
-             ~types:
-               [ t_chest_key ()
-                 ^-> t_chest ()
-                 ^-> t_nat ()
-                 ^~> t_chest_opening_result ()
-               ]) )
-    ; ( C_VIEW
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          for_all "b"
-          @@ fun b ->
-          create
-            ~mode_annot:[ Checked; Inferred; Checked ]
-            ~types:[ t_string () ^-> a ^-> t_address () ^~> t_option b ]) )
     ; ( C_POLYMORPHIC_ADD
       , of_type
           (create
@@ -1126,6 +1043,13 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; t_int64 () ^-> t_nat () ^~> t_int64 ()
                ]) )
       (* Tests *)
+    ; ( C_TEST_ADDRESS
+      , of_type
+          (for_all "a"
+          @@ fun a ->
+          create
+            ~mode_annot:[ Checked ]
+            ~types:[ t_contract a ^~> t_address () ]) )
     ; ( C_TEST_COMPILE_CONTRACT
       , of_type
           (for_all "a"
@@ -1484,25 +1408,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           create
             ~mode_annot:[ Checked ]
             ~types:[ t_contract a ^~> t_option (t_string ()) ]) )
-    ; ( C_SAPLING_EMPTY_STATE
-      , of_type
-          (for_all ~kind:Singleton "a"
-          @@ fun a ->
-          create ~mode_annot:[] ~types:[ return @@ t_sapling_state a ]) )
-    ; ( C_SAPLING_VERIFY_UPDATE
-      , of_type
-          (for_all ~kind:Singleton "a"
-          @@ fun a ->
-          create
-            ~mode_annot:[ Inferred; Checked ]
-            ~types:
-              [ t_sapling_transaction a
-                ^-> t_sapling_state a
-                ^~> t_option
-                      (t_pair
-                         (t_bytes ())
-                         (t_pair (t_int ()) (t_sapling_state a)))
-              ]) )
     ; C_EQ, of_comparator (Comparable.comparator ~cmp:"EQ")
     ; C_NEQ, of_comparator (Comparable.comparator ~cmp:"NEQ")
     ; C_LT, of_comparator (Comparable.comparator ~cmp:"LT")
