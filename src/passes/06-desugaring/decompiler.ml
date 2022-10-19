@@ -75,7 +75,7 @@ and decompile_row ({ fields; layout } : O.rows) : _ I.non_linear_rows =
   let fields =
     fields
     |> Record.map
-         (fun
+         ~f:(fun
            ({ associated_type; decl_pos; michelson_annotation } :
              _ Rows.row_element_mini_c)
          ->
@@ -143,7 +143,7 @@ let rec decompile_expression (expr : O.expression) : I.expression =
       let m = decompile_match_expr m in
       return @@ I.E_matching m
     | O.E_record record ->
-      let record = Record.map self record in
+      let record = Record.map ~f:self record in
       return @@ I.E_record (Record.to_list record)
     | O.E_accessor { struct_; path } ->
       let struct_ = self struct_ in
@@ -224,8 +224,8 @@ and decompile_pattern : _ O.Pattern.t -> _ I.Pattern.t =
     let ps = List.map ~f:decompile_pattern ps in
     Location.wrap ~loc (I.Pattern.P_tuple ps)
   | P_record lps ->
-    let lps = Container.Record.map decompile_pattern lps in
-    let lps = Container.List.of_list (Container.Record.to_list lps) in
+    let lps = Record.map ~f:decompile_pattern lps in
+    let lps = Record.to_list lps  in
     Location.wrap ~loc (I.Pattern.P_record lps)
 
 

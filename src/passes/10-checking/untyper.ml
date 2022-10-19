@@ -15,14 +15,14 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
         let associated_type = self associated_type in
         let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
         v' in
-      let x' = Record.map aux fields in
+      let x' = Record.map ~f:aux fields in
       return @@ I.T_sum { fields = x' ; layout = Some layout }
   | O.T_record {fields;layout} -> (
     let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
       let associated_type = self associated_type in
       let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
       v' in
-    let x' = Record.map aux fields in
+    let x' = Record.map ~f:aux fields in
     return @@ I.T_record {fields = x' ; layout = Some layout}
   )
   | O.T_variable name -> return @@ I.T_variable name
@@ -78,7 +78,7 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       let p' = self element in
       return (e_constructor constructor p')
   | E_record r ->
-    let r' = Record.map self r in
+    let r' = Record.map ~f:self r in
     return (e_record r' ())
   | E_accessor {struct_; path} ->
       let r' = self struct_ in
@@ -175,7 +175,7 @@ and untype_pattern
       let ps = List.map ~f:self ps in
       Location.wrap ~loc (I.Pattern.P_tuple ps)
     | P_record lps ->
-      let lps = Ligo_prim.Container.Record.map self lps in
+      let lps = Record.map ~f:self lps in
       Location.wrap ~loc (I.Pattern.P_record lps)
 and untype_module_expr : O.module_expr -> I.module_expr =
   fun module_expr ->

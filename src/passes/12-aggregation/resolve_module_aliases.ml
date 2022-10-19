@@ -22,10 +22,10 @@ let rec type_expression : Aliases.t -> AST.type_expression -> AST.type_expressio
     T_variable type_variable ->
     return @@ T_variable type_variable
   | T_sum {fields;layout} ->
-    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
     return @@ T_sum {fields;layout}
   | T_record {fields;layout} ->
-    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
     return @@ T_record {fields;layout}
   | T_arrow {type1;type2} ->
     let type1 = self type1 in
@@ -88,7 +88,7 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
     let cases = matching_cases aliases cases in
     return @@ E_matching {matchee;cases}
   | E_record record ->
-    let record = Record.map self record in
+    let record = Record.map ~f:self record in
     return @@ E_record record
   | E_accessor {struct_;path} ->
     let struct_ = self struct_ in

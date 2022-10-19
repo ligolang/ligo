@@ -769,7 +769,7 @@ and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern 
             let field_pattern 
               = CST.{ field_name ; eq = Token.ghost_eq ; pattern } in 
             (wrap field_pattern) :: acc)
-          (Container.List.to_list lps) ~init:[]
+          lps ~init:[]
       in
       let field_patterns = list_to_nsepseq field_patterns in
       let inj = ne_inject braces field_patterns ~attr:[] in

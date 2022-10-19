@@ -269,7 +269,7 @@ and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern 
           let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_eq ; field_rhs ; attributes = [] } in
           (Region.wrap_ghost full_field)::acc
       in
-      let field_patterns = List.fold ~f:aux (Container.List.to_list lps) ~init:[] in
+      let field_patterns = List.fold ~f:aux lps ~init:[] in
       let inj = inject Token.ghost_record (list_to_sepseq ~sep:Token.ghost_semi field_patterns) in
       CST.P_Record (Region.wrap_ghost inj)
 

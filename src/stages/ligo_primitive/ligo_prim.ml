@@ -2,7 +2,6 @@
 module Label = Label
 module Binder = Binder
 module Param = Param
-module Container = Pattern.Container
 module Pattern = Pattern
 module Access_path = Access_path
 module Layout = Layout
@@ -49,7 +48,6 @@ module Assign     = Assign
 module Map_expr = Map_expr
 module Set_expr = Set_expr
 module List_expr = List_expr
-
 
 (* Module language *)
 module Module_var    = Var.Module_var

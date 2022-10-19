@@ -314,7 +314,7 @@ let e_a_constructor constructor element t = e_constructor { constructor = (Label
 
 let e_a_record ?(layout=default_layout) r = e_record r (t_record ~layout
   (Record.map
-    (fun t ->
+    ~f:(fun t ->
       let associated_type = get_type t in
       Rows.{associated_type ; michelson_annotation=None ; decl_pos = 0} )
     r ))
