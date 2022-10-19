@@ -13,9 +13,17 @@ let error_ppformat
   match display_format with
   | Human_readable | Dev ->
     (match a with
-    | `Desugaring_corner_case s ->
-      Format.fprintf f "@[<hv>Corner case: %s@]" s)
+    | `Desugaring_corner_case s -> Format.fprintf f "@[<hv>Corner case: %s@]" s)
 
+
+let rec error_json : desugaring_error -> Ligo_prim.Error.t =
+ fun e ->
+  let open Ligo_prim.Error in
+  match e with
+  | `Desugaring_corner_case e ->
+    let message = Format.asprintf "Corner case: %s" e in
+    let content = make_content ~message () in
+    make ~stage ~content
 
 let error_jsonformat : desugaring_error -> Yojson.Safe.t =
  fun a ->
