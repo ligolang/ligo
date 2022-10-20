@@ -51,15 +51,19 @@ let try_readme ~project_root =
     let contents = In_channel.read_all (Filename.concat project_root r) in
     String.escaped contents
 
-
 let read ~project_root =
   match project_root with
   | None -> failwith "No package.json found!"
   | Some project_root ->
     let ligo_manifest_path = Filename.concat project_root "package.json" in
+    let () = 
+      match Sys_unix.file_exists ligo_manifest_path with
+        `No | `Unknown -> failwith "Unable to find package.json!"
+      | `Yes -> ()
+    in
     let json =
       try Yojson.Safe.from_file ligo_manifest_path with
-      | _ -> failwith "No package.json found!"
+      | _ -> failwith "Error in parsing package.json (invalid json)"
     in
     (try
        let module Util = Yojson.Safe.Util in
@@ -123,7 +127,7 @@ let read ~project_root =
        in
        let main =
          try Some (json |> Util.member "main" |> Util.to_string) with
-         | _ -> None
+         | _ -> failwith "No main field in package.json"
        in
        let license =
          try json |> Util.member "license" |> Util.to_string with

@@ -21,7 +21,8 @@ module Constants = struct
     ("", [|"git"; "clone"; project_url ; project_name|])
   let git_checkout = fun ~dir_path ~ref -> 
     ("", [|"git"; "--git-dir"; dir_path ;"checkout"; ref|])  
-  
+  let ligo_compile_storage = fun ?(ligo = "ligo") ~main ~expression () ->
+    ("", [|ligo; "compile"; "storage"; main; expression|])
 end
 
 let find_project_root () =

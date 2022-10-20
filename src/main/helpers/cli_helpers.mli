@@ -19,6 +19,13 @@ module Constants : sig
   val esy_install : cache_path:string -> ligo_registry:string -> command
   val git_clone : project_url:string -> project_name:string -> command
   val git_checkout : dir_path:string -> ref:string -> command
+
+  val ligo_compile_storage
+    :  ?ligo:string
+    -> main:string
+    -> expression:string
+    -> unit
+    -> command
 end
 
 val find_project_root : unit -> string option

@@ -176,7 +176,8 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
     |> body_to_yojson 
     |> Yojson.Safe.to_string 
     |> Cohttp_lwt.Body.of_string in
-  Client.put ~headers ~body uri
+  let r = Client.put ~headers ~body uri in
+  Lwt.map (fun r -> Ok r) r
 
 let os_type =
   match Sys.os_type with
@@ -262,6 +263,30 @@ let tar_gzip ~name ~version dir =
   let () = Caml_unix.close fd in
   Lwt.return (Buffer.contents_bytes buf)
 
+let validate_storage ~manifest = 
+  let open LigoManifest in
+  let { main ; storage_fn ; storage_arg } = manifest in
+  match main, storage_fn, storage_arg with
+  Some main, Some storage_fn, Some storage_arg ->
+    let () = Printf.printf "Validating storage... %!" in
+    let expression = Format.sprintf "%s %s" storage_fn storage_arg in
+    let ligo = Sys_unix.executable_name in
+    let cmd = Cli_helpers.Constants.ligo_compile_storage ~ligo ~main ~expression () in
+    let status = Lwt_process.with_process_none ~stdout:`Dev_null ~stderr:`Dev_null cmd 
+      (fun p -> Lwt.map  
+        (fun status -> 
+          match status with
+            Caml_unix.WEXITED 0 -> Ok ()
+          | _ -> Error ("unknown error"))
+          p#status) in
+    let open Lwt.Syntax in
+    let* result = status in
+    (match result with
+      Ok _ -> Lwt.return @@ Ok (Printf.printf "Done\n%!")
+    | Error _ -> Lwt.return 
+      @@ Error "\nError: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression")
+  | _ -> Lwt.return @@ Ok ()
+
 let publish ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name ; version ; _ } = manifest in
@@ -275,8 +300,12 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
   let sha512 = gzipped_tarball 
     |> Digestif.SHA512.digest_bytes ~off:0 ~len
     |> Digestif.SHA512.to_raw_string in
-  let () = Printf.printf "Uploading package... %!" in
-  http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
+  let* result = validate_storage ~manifest in
+  match result with
+  Ok () ->
+    let () = Printf.printf "Uploading package... %!" in
+    http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
+  | Error e -> Lwt.return @@ Error e
 
 let handle_server_response ~name response body =
   let open Cohttp_lwt in
@@ -293,6 +322,7 @@ let handle_server_response ~name response body =
   | `Gateway_timeout -> Error ("\nRegistry seems down. Contact the developers", "")
   | _ -> Error (body, "")
 
+
 let publish ~ligo_registry ~ligorc_path ~project_root =
   let manifest = LigoManifest.read ~project_root in
   let manifest = Result.bind manifest ~f:LigoManifest.validate in
@@ -306,5 +336,6 @@ let publish ~ligo_registry ~ligorc_path ~project_root =
       None -> Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user", "")
     | Some token ->
       let project_root = Option.value_exn project_root in
-      let response, body = Lwt_main.run (publish ~project_root ~token ~ligo_registry ~manifest) in
-      handle_server_response ~name:manifest.name response body)
+      match Lwt_main.run (publish ~project_root ~token ~ligo_registry ~manifest) with
+        Ok (response, body) -> handle_server_response ~name:manifest.name response body
+      | Error e -> Error (e, ""))
