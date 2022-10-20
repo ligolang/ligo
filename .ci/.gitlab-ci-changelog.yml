@@ -16,12 +16,15 @@ add-changelog-entry:
   # Check if type is None, if None, skip changelog generation
     - "[[ $MR_TYPE = \"none\" ]] && exit 0"
     - echo $MR_TYPE
-    - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
-    - ./scripts/add-changelog-entry.sh "$MR_TYPE" "$CI_MERGE_REQUEST_IID" "$MR_AUTHOR_USERNAME" "$MR_TITLE" "$MR_DESC"
-    - git add changelog/*
-    - git commit -m "[Bot] add changelog entry"
-    - git push origin HEAD:$CI_COMMIT_REF_NAME
-    - echo "Changelog has been pushed which cause a new pipeline triggering, to preserve resources this one will be exited with code 1."
+    - echo $MR_TITLE
+    - echo $MR_AUTHOR_USERNAME
+    - echo $MR_DESC
+    # - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
+    # - ./scripts/add-changelog-entry.sh "$MR_TYPE" "$CI_MERGE_REQUEST_IID" "$MR_AUTHOR_USERNAME" "$MR_TITLE" "$MR_DESC"
+    # - git add changelog/*
+    # - git commit -m "[Bot] add changelog entry"
+    # - git push origin HEAD:$CI_COMMIT_REF_NAME
+    # - echo "Changelog has been pushed which cause a new pipeline triggering, to preserve resources this one will be exited with code 1."
     - exit 1
   rules:
     - if: ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^release/)
