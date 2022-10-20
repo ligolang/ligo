@@ -4,6 +4,7 @@ module Language.LIGO.Debugger.Snapshots
   , StackFrame (..)
   , InterpretStatus (..)
   , InterpretEvent (..)
+  , statusExpressionEvaluatedP
   , InterpretSnapshot (..)
   , CollectorState (..)
   , InterpretHistory (..)
@@ -40,8 +41,9 @@ module Language.LIGO.Debugger.Snapshots
 
 import AST (Binding, Expr, LIGO)
 import AST qualified
-import Control.Lens (At (at), Ixed (ix), Zoom (zoom), makeLensesWith, makePrisms, (%=), (.=), (?=))
-import Control.Lens.Prism (_Just)
+import Control.Lens
+  (At (at), Ixed (ix), Zoom (zoom), has, makeLensesWith, makePrisms, (%=), (.=), (?=))
+import Control.Lens.Prism (Prism', _Just)
 import Control.Monad.Except (throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
@@ -49,6 +51,7 @@ import Data.Conduit qualified as C
 import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.HashSet qualified as HS
+import Data.List.NonEmpty qualified as NE
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
 import Duplo (layer)
@@ -254,6 +257,12 @@ type CollectingEvalOp m =
 instance {-# OVERLAPS #-} (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
   stateInterpreterState f =
     lift $ lift $ zoom csInterpreterStateL $ state f
+
+makePrisms ''InterpretStatus
+makePrisms ''InterpretEvent
+
+statusExpressionEvaluatedP :: Prism' InterpretStatus SomeValue
+statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _Just
 
 stkElValue :: StkEl v -> SomeValue
 stkElValue stkEl = let v = seValue stkEl in withValueTypeSanity v (SomeValue v)
@@ -489,8 +498,9 @@ runCollectInterpretSnapshots
   -> Value st
   -> m (InterpretHistory InterpretSnapshot)
 runCollectInterpretSnapshots act env initSt initStorage =
-  -- This is safe because we yield at least two snapshots
-  InterpretHistory . Unsafe.fromJust . twoElemFromList <$>
+  -- This should be safe because in practice we yield at least two snapshots
+  InterpretHistory . fromMaybe (error "Unexpectedly < 2 snapshots") . twoElemFromList .
+  filterDupLocSnapshots <$>
   lazyConsume do
     C.yield InterpretSnapshot
       { isStackFrames = csStackFrames initSt
@@ -537,6 +547,36 @@ runCollectInterpretSnapshots act env initSt initStorage =
           , ..
           }
 
+{-# ANN filterDupLocSnapshots ("HLint: ignore Redundant lambda" :: Text) #-}
+
+-- | Strip adjacent snapshots that point to the same location.
+--
+-- In practice it happens that LIGO produces snapshots for intermediate
+-- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
+-- both having the same @location@ meta; we don't want the user to
+-- see that.
+filterDupLocSnapshots :: [InterpretSnapshot] -> [InterpretSnapshot]
+filterDupLocSnapshots = \snaps -> snaps
+  & NE.groupBy ((==) `on` stackFrameId . isStackFrames)
+  & concatMap (cleanupGroup . toList)
+  where
+    stackFrameId = sfLoc . head &&& length &&& length . sfStack . head
+
+    cleanupGroup :: [InterpretSnapshot] -> [InterpretSnapshot]
+    cleanupGroup = \snaps -> snaps
+      & reverse
+      & dropAllMatchingExceptFirst
+        (isStatusL . _InterpretRunning . _EventExpressionPreview)
+      & dropAllMatchingExceptFirst
+        (isStatusL . _InterpretRunning . _EventExpressionEvaluated)
+      & reverse
+
+    dropAllMatchingExceptFirst pri =
+      evaluatingState False . filterM \e -> state \alreadyFaced ->
+        ( not $ has pri e && alreadyFaced  -- whether to retain
+        , alreadyFaced || has pri e  -- new state
+        )
+
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.
 collectInterpretSnapshots
@@ -578,6 +618,3 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       , csRecursiveOrCycleEntries = mempty
       , csLoggingFunction = logger
       }
-
-makePrisms ''InterpretStatus
-makePrisms ''InterpretEvent
