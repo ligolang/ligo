@@ -214,11 +214,6 @@ webide-new-backend-build-and-push-backend:
     - job: changelog
       artifacts: false
   rules:
-    # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      changes:
-        - tools/webide-new/ligo-webide-backend/**/*
-      when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
@@ -230,18 +225,13 @@ webide-new-backend-build-and-push-backend:
   after_script:
     - docker image rm "${WEBIDE_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
 
-webide-new-backend-build-and-push-frontend:
+webide-new-frontend-build-and-push:
   extends: .docker-image
   stage: deploy
   needs:
     - job: changelog
       artifacts: false
   rules:
-    # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      changes:
-        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
-      when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
