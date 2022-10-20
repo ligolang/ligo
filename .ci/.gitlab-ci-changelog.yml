@@ -4,9 +4,8 @@
     - MR_INFO='$(./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API})'
     - export MR_AUTHOR_USERNAME=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
     - export MR_TITLE=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
-    # echo these, since sed wasn't returning string literals
-    - export MR_TYPE=$(echo `nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}"`)
-    - export MR_DESC=$(echo `nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}"`)
+    - export MR_TYPE=$(nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}")
+    - export MR_DESC=$(nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}")
     
 add-changelog-entry:
   stage: post-build-action
@@ -15,7 +14,7 @@ add-changelog-entry:
     - *export-mr-info
   script:
   # Check if type is None, if None, skip changelog generation
-    - "[[ $MR_TYPE = none ]] && exit 0"
+    - "[[ $MR_TYPE = "none" ]] && exit 0"
     - echo $MR_TYPE
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
     - ./scripts/add-changelog-entry.sh "$MR_TYPE" "$CI_MERGE_REQUEST_IID" "$MR_AUTHOR_USERNAME" "$MR_TITLE" "$MR_DESC"
