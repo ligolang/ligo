@@ -2,11 +2,15 @@
 .export-mr-info: &export-mr-info
     - pip3 install -r ./.ci/scripts/requirements.txt
     - MR_INFO='$(./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API})'
-    - export MR_AUTHOR_USERNAME=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
-    - export MR_TITLE=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
-    - export MR_TYPE=$(nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}")
-    - export MR_DESC=$(nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}")
-    
+    - MR_AUTHOR_USERNAME_Q=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
+    - export MR_AUTHOR_USERNAME=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_AUTHOR_USERNAME_Q})
+    - MR_TITLE_Q=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
+    - export MR_TITLE=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_TITLE_Q})
+    - MR_TYPE_Q=$(nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}")
+    - export MR_TYPE=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_TYPE_Q})
+    - MR_DESC_Q=$(nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}")
+    - export MR_DESC=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_DESC_Q})
+
 add-changelog-entry:
   stage: post-build-action
   extends : .nix
@@ -14,7 +18,7 @@ add-changelog-entry:
     - *export-mr-info
   script:
   # Check if type is None, if None, skip changelog generation
-    - "[[ $MR_TYPE == \"none\" ]] && exit 0"
+    - "[[ $MR_TYPE = none ]] && exit 0"
     - echo $MR_TYPE
     - echo $MR_TITLE
     - echo $MR_AUTHOR_USERNAME
