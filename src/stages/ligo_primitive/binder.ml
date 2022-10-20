@@ -3,7 +3,7 @@ module Option = Simple_utils.Option
 type 'a t = {
   var  : Var.Value_var.t ;
   ascr : 'a ;
-  } [@@deriving eq,compare,yojson,hash,fold,map]
+  } [@@deriving eq,compare,yojson,hash,fold,map,iter]
 
 let make var ascr = {
   var ; ascr 

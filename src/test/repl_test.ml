@@ -49,11 +49,6 @@ let test_stdlib ~raise ~raw_options () =
   then ()
   else raise.error @@ `Test_repl (["\"Hello world!\""], [s])
 
-let test_empty ~raise ~raw_options () =
-  test_seq ~raise ~raw_options init_state_cameligo [""]
-                               ["unexpected error, missing expression?"]
-                               ()
-
 let test_def ~raise () =
   test_seq ~raise init_state_cameligo ["let f (x : int) = x * 2"; "f 3"]
                                ["f"; "6"]
@@ -116,11 +111,6 @@ let test_stdlib_jsligo ~raise ~raw_options () =
   if (String.compare s "\"Hello world!\"" = 0)
   then ()
   else raise.error @@ `Test_repl (["\"Hello world!\""], [s])
-
-let test_empty_jsligo ~raise ~raw_options () =
-  test_seq ~raise ~raw_options init_state_jsligo [""]
-                               ["unexpected error, missing expression?"]
-                               ()
 
 let test_def_jsligo ~raise ~raw_options () =
   test_seq ~raise ~raw_options init_state_jsligo ["let f = (x : int) : int => x * 2"; "f(3)"]
@@ -252,7 +242,6 @@ let () =
     test_suite "REPL (cameligo)" [
         test "basic" (test_basic ~raw_options);
         test "stdlib" (test_stdlib ~raw_options);
-        test "empty" (test_empty ~raw_options);
         test "def&eval" (test_def ~raw_options);
         test "mod" (test_mod ~raw_options);
         test "use" (test_use ~raw_options);
@@ -261,7 +250,6 @@ let () =
     test_suite "REPL (jsligo)" [
         test "basic" (test_basic_jsligo ~raw_options);
         test "stdlib" (test_stdlib_jsligo ~raw_options);
-        test "empty" (test_empty_jsligo ~raw_options);
         test "def&eval" (test_def_jsligo ~raw_options);
         test "mod" (test_mod_jsligo ~raw_options);
         test "use" (test_use_jsligo ~raw_options);

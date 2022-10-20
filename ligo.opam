@@ -1,16 +1,19 @@
-name: "ligo"
-opam-version: "2.0"
-maintainer: "Galfour <contact@ligolang.org>"
-authors: [ "Galfour" ]
-homepage: "https://gitlab.com/ligolang/tezos"
-bug-reports: "https://gitlab.com/ligolang/tezos/issues"
-synopsis: "A high-level language which compiles to Michelson"
-dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
-license: "MIT"
+name         : "ligo"
+opam-version : "2.0"
+maintainer   : "Galfour <contact@ligolang.org>"
+authors      : [ "Gabriel Alfour" "Christian Rinderknecht"]
+homepage     : "https://gitlab.com/ligolang/tezos"
+bug-reports  : "https://gitlab.com/ligolang/tezos/issues"
+synopsis     : "A high-level language which compiles to Michelson"
+dev-repo     : "git+https://gitlab.com/ligolang/tezos.git"
+license      : "MIT"
+
 # If you change the dependencies, run `opam lock` in the root
 depends: [
   # Jane Street Core
-  "core" {= "v0.14.1"}
+  "core" {>= "v0.15.0" & < "v0.16.0"}
+  "core_kernel" { >= "v0.15.0" & < "v0.16.0"}
+  "core_unix" { >= "v0.15.0"  & < "v0.16.0"}
   # Tooling
   "odoc" { build }
   "ocamlfind" { build }
@@ -22,7 +25,6 @@ depends: [
   "coq" { build & >= "8.12" & < "8.14" }
   # I/O
   "bos"
-  "getopt"
   "tezos-clic"
   "qcheck"
   "terminal_size"
@@ -47,7 +49,7 @@ depends: [
   "ppx_import"
   "ppx_inline_test"
   # work around tezos' failure to constrain
-  "lwt" { = "5.5.0" }
+  "lwt" {= "5.6.1"}
   "bisect_ppx" {>= "2.3"}
   "irmin"
   "cmdliner" {= "1.1.0"}
@@ -91,7 +93,7 @@ pin-depends: [
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-plugin-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]

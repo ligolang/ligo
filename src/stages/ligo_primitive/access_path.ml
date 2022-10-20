@@ -1,3 +1,5 @@
+module Z = Simple_utils.Z
+
 module type S = sig
   type 'a t
   [@@deriving eq,compare,yojson,hash,fold,map]
@@ -6,7 +8,7 @@ module type S = sig
 end
 
 type 'e access =
-  | Access_tuple of X_z.t
+  | Access_tuple of Z.t
   | Access_record of string
   | Access_map of 'e
   [@@deriving eq,compare,yojson,hash,fold,map]

@@ -213,7 +213,7 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
   match instr with
   (* TODO... *)
   | I_FUNC (l, cs, a, b, proj1, proj2, body) ->
-    let weight p = List.length (List.filter ~f:ident p) in
+    let weight p = List.length (List.filter ~f:Fn.id p) in
     let n = List.length cs in
     if n = 0
     then

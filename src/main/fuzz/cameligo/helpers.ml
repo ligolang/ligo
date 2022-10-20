@@ -193,8 +193,13 @@ module Fold_helpers(M : Monad) = struct
        return @@ EConstr {value;region}
     | ERecord  {value;region} ->
        let aux (e : field_assign reg) =
-         let* field_expr = self e.value.field_expr in
-         ok @@ {e with value = {e.value with field_expr}}
+         ( match e.value with 
+            Property ({field_expr; _} as e_value) ->
+            let* field_expr = self field_expr in
+            ok @@ {e with value = Property {e_value with field_expr}}
+         | Punned_property _ -> 
+            ok @@ e
+         )
        in
        let* ne_elements = bind_map_npseq aux value.ne_elements in
        let value = {value with ne_elements} in
@@ -202,8 +207,14 @@ module Fold_helpers(M : Monad) = struct
     | EProj    _  as e -> return @@ e
     | EUpdate  {value;region} ->
        let aux (e : field_path_assignment reg) =
-         let* field_expr = self e.value.field_expr in
-         ok @@ {e with value = {e.value with field_expr}}
+         (
+            match e.value with 
+              Path_property ({field_expr; _} as e_value) ->
+               let* field_expr = self field_expr in
+               ok @@ {e with value = Path_property {e_value with field_expr}}
+            | Path_punned_property _ ->
+               ok @@ e
+         )
        in
        let* ne_elements = bind_map_npseq aux value.updates.value.ne_elements in
        let updates = {value.updates with value = {value.updates.value with ne_elements}} in

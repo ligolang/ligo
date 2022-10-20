@@ -1,4 +1,4 @@
-FROM alpine:3.12 as ligo-builder
+FROM alpine:3.16 as ligo-builder
 
 WORKDIR /ligo
 

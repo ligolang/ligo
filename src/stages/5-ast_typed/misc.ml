@@ -73,16 +73,18 @@ module Free_variables = struct
   and expression : bindings -> expression -> bindings = fun b e ->
     expression_content b e.expression_content
 
-    and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> _ matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
-      f (union (singleton pattern) b) body
+  and matching_case : (bindings -> expression -> bindings) -> bindings -> _ Types.Match_expr.match_case -> bindings
+    = fun f b m ->
+        let b' = Types.Pattern.binders m.pattern |> List.map ~f:Binder.get_var in
+        let bs = union b b' in 
+        f bs m.body
 
-    and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
-      match m with
-      | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
-      | Match_record {fields; body; tv = _} ->
-        f (union (List.map ~f:(Binder.get_var) (Record.LMap.to_list fields)) b) body
+  and matching : (bindings -> expression -> bindings) -> bindings -> _ Types.Match_expr.match_case list -> bindings 
+    = fun f b ms ->
+        List.fold_left ms ~init:b
+          ~f:(matching_case f)
 
-    and matching_expression = fun x -> matching expression x
+  and matching_expression = fun x -> matching expression x
 
 end
 

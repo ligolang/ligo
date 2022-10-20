@@ -2,9 +2,9 @@
 # dependencies in /ligo.opam and run [opam lock].
 opam-version : "2.0"
 name         : "Preprocessor"
-version      : "1.1"
+version      : "1.2"
 synopsis     : "A C#-like preprocessor"
-description  : "The following preprocessing directives are supported: #define,  #elif, #else, #endif, #endregion, #error, #if, #include, #region, #undef."
+description  : "The following C# preprocessing directives are supported: #define,  #elif, #else, #endif, #error, #if, #include, #undef."
 maintainer   : "rinderknecht@free.fr"
 authors      : "Christian Rinderknecht"
 license      : "MIT"
@@ -12,7 +12,7 @@ homepage     : "https://gitlab.com/ligolang/Preprocessor"
 bug-reports  : "https://gitlab.com/ligolang/Preprocessor/issues"
 # If you change the dependencies, run `opam lock` in the root
 depends      : ["dune" "base" "ocaml" "simple-utils"
-                "menhir" "getopt" "fpath"]
+                "menhir" "GetoptLib" "fpath"]
 build        : [
                 [ "dune" "build" "-p" name "-j" jobs ]
                ]

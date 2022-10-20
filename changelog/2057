@@ -1,0 +1,5 @@
+author: SanderSpies
+description: 'CameLIGO: add punning support for records.'
+merge_request: '2057'
+title: Cameligo punning
+type: added

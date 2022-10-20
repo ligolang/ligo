@@ -1,6 +1,6 @@
-(* Filtering the array [Sys.argv]. *)
+(* Filtering the array [Core.Sys.argv]. *)
 
-let argv_list = Array.to_list Sys.argv |> List.tl_exn (* Cannot fail *)
+let argv_list = Array.to_list Core.Sys.argv |> List.tl_exn (* Cannot fail *)
 
 module SSet = Caml.Set.Make (String)
 
@@ -45,10 +45,10 @@ let filter ~opt_with_arg ~opt_wo_arg : unit =
             else (* [opt] has an argument [arg]: we skip it too. *)
               filter acc opts in
   let filtered =
-    filter [] argv_list |> List.rev |> List.cons Sys.argv.(0) in
+    filter [] argv_list |> List.rev |> List.cons Core.Sys.argv.(0) in
   let last =
-    let patch i e = Sys.argv.(i) <- e; i+1 in
+    let patch i e = Core.Sys.argv.(i) <- e; i+1 in
     List.fold_left ~f:patch ~init:0 filtered
-  in for i = last to Array.length Sys.argv - 1 do
-       Sys.argv.(i) <- ""
+  in for i = last to Array.length Core.Sys.argv - 1 do
+       Core.Sys.argv.(i) <- ""
      done

@@ -11,4 +11,4 @@ val compile_program    : raise:(Errors.abs_error list,Main_warnings.all) Simple_
 val decompile_expression: AST.expr -> CST.expr list
 val decompile_program: AST.program -> CST.ast
 
-val decompile_pattern_to_string : AST.type_expression option Ligo_prim.Pattern.t -> string
+val decompile_pattern_to_string : AST.type_expression option AST.Pattern.t -> string

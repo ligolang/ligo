@@ -159,10 +159,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Cit_reasonligo_tracer e -> List.iter ~f:(Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f) e
     | `Cit_jsligo_tracer     e -> List.iter ~f:(Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f) e
     | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
-    | `Purification_tracer e -> List.iter ~f:(Purification.Errors.error_ppformat ~display_format f) e
-    | `Depurification_tracer _e -> () (*no error in this pass*)
-    | `Desugaring_tracer _e -> () (*no error in this pass*)
-    | `Sugaring_tracer _e -> () (*no error in this pass*)
+    | `Desugaring_tracer e -> Desugaring.Errors.error_ppformat ~display_format f e
     | `Checking_tracer e -> Checking.Errors.error_ppformat ~display_format f e
     | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
     | `Aggregation_tracer e -> Aggregation.Errors.error_ppformat ~display_format f e
@@ -404,10 +401,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Cit_reasonligo_tracer e -> `List (List.map ~f:Tree_abstraction.Reasonligo.Errors.error_jsonformat e)
   | `Cit_jsligo_tracer     e -> `List (List.map ~f:Tree_abstraction.Jsligo.Errors.error_jsonformat e)
   | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_jsonformat e
-  | `Purification_tracer e -> `List (List.map ~f:Purification.Errors.error_jsonformat e)
-  | `Depurification_tracer _ -> `Null (*no error in this pass*)
-  | `Desugaring_tracer _ -> `Null (*no error in this pass*)
-  | `Sugaring_tracer _ -> `Null (*no error in this pass*)
+  | `Desugaring_tracer e -> Desugaring.Errors.error_jsonformat e
   | `Checking_tracer e -> Checking.Errors.error_jsonformat e
   | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_jsonformat e
   | `Aggregation_tracer e -> Aggregation.Errors.error_jsonformat e

@@ -73,7 +73,7 @@ let mutate_all_value
 
 let rec value_gen
   :  raise:(interpreter_error, _) raise -> ?small:bool
-  -> ?known_addresses:LT.mcontract list -> Ast_aggregated.type_expression
+  -> ?known_addresses:LT.Contract.t list -> Ast_aggregated.type_expression
   -> LT.value QCheck.Gen.t
   =
  fun ~raise ?(small = true) ?known_addresses type_expr ->

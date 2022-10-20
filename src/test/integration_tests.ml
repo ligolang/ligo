@@ -2341,6 +2341,14 @@ let switch_return_jsligo ~raise () : unit =
 
   ()
 
+let transitive_jsligo ~raise () : unit = 
+  let program = type_file ~raise "./contracts/transitive.jsligo" in
+  (* let data = e_constructor "Increment" (e_record_ez [("amount" , e_int 42)]) in *)
+  let _ = expect_eq ~raise program "var" (e_unit ()) (e_tuple [e_int 2; e_int 2; e_int 2]) in
+  let _ = expect_eq ~raise program "tuple" (e_unit ()) (e_tuple [e_int 7; e_int 0; e_int 7]) in
+  ()
+
+
 let main = test_suite "Integration (End to End)"
   @@ [
 
@@ -2536,4 +2544,6 @@ let main = test_suite "Integration (End to End)"
     test_w "destruct func object param (jsligo)" func_object_destruct_jsligo;
     test_w "destruct func tuple param (jsligo)" func_tuple_destruct_jsligo;
     test_w "switch_return (jsligo)" switch_return_jsligo;
+    test_w "transitive (jsligo)" transitive_jsligo;
+
   ]

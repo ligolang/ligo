@@ -1,7 +1,7 @@
 module Pair = Simple_utils.Pair
 module Var  = Simple_utils.Var
-open Ast_imperative
 open Ligo_prim
+open Ast_imperative
 
 include Ast_imperative.Helpers
 

@@ -33,3 +33,33 @@ let extract_constructor
        lst
        Ligo_interpreter.Combinators.get_left
        Ligo_interpreter.Combinators.get_right
+
+
+let constructor_to_lr
+  ~raise
+  ~(layout : Layout.t)
+  (ty : _)
+  (fields : AST.Types.row_element Record.t)
+  (ctor : Label.t)
+  : _
+  =
+  trace ~raise Main_errors.spilling_tracer
+  @@ Spilling.Layout.constructor_to_lr ~layout ty fields ctor
+
+
+let record_to_pairs
+  ~raise
+  (compile_expression : _ -> 'exp)
+  e_pair
+  e_tuple
+  record_t
+  record
+  : _
+  =
+  trace ~raise Main_errors.spilling_tracer
+  @@ Spilling.Layout.record_to_pairs
+       compile_expression
+       e_pair
+       e_tuple
+       record_t
+       record

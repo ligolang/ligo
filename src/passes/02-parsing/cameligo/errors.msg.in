@@ -3629,6 +3629,7 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ##
 ## Ends in an error in state: 1082.
 ##
+## field_assignment -> Ident . [ SEMI RBRACE ]
 ## field_assignment -> Ident . EQ expr [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3636,13 +3637,16 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ##
 
 Ill-formed assignment to a field in a record.
-At this point, the assignment symbol '=' is expected, followed by an
-expression.
+At this point, one of the following is expected:
+  * an assignment symbol '=', followed by an expression;
+  * a semicolon ';', followed by another assignment;
+  * a closing brace, if the assignments are complete.
 
 interactive_expr: LBRACE Ident WILD
 ##
 ## Ends in an error in state: 274.
 ##
+## field_assignment -> Ident . [ SEMI RBRACE ]
 ## field_assignment -> Ident . EQ expr [ SEMI RBRACE ]
 ## path -> Ident . [ With ]
 ## projection -> Ident . DOT nsepseq(selection,DOT) [ With ]
@@ -3653,11 +3657,13 @@ interactive_expr: LBRACE Ident WILD
 
 Ill-formed record expression or record update.
 At this point, one of the following is expected:
+  * a semicolon ';', followed by another assignment;  
   * the assignment symbol '=' followed by an expression, if defining
     a record (as opposed to a record update);
   * the keyword 'with' followed by field updates (assignments);
   * the selection symbol '.' if the record to update is not fully
     qualified.
+  * a closing brace, if the record update is complete.
 
 interactive_expr: LBRACE Ident With Ident DOT Ident With
 ##
@@ -3711,6 +3717,7 @@ interactive_expr: LBRACE Ident With Ident With
 ##
 ## Ends in an error in state: 1063.
 ##
+## field_path_assignment -> Ident . [ SEMI RBRACE ]
 ## path -> Ident . [ EQ ]
 ## projection -> Ident . DOT nsepseq(selection,DOT) [ EQ ]
 ##
@@ -3723,6 +3730,8 @@ At this point, one of the following is expected:
   * the assignment symbol '=' if the field to update is fully
     qualified;
   * the selection symbol '.' to further qualify the field to update.
+  * a semicolon, followed by another assignment;
+  * a closing brace '}', if the update is complete.
 
 interactive_expr: LBRACE Ident With With
 ##

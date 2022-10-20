@@ -333,9 +333,14 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let (record, loc) = r_split record in
     let aux (fa : CST.field_assign CST.reg) =
       let (fa, _) = r_split fa in
-      let (name, _) = r_split fa.field_name in
-      let expr = self fa.field_expr in
-      return (name, expr)
+      match fa with 
+        Property fa -> 
+          let (name, _) = r_split fa.field_name in
+          let expr = self fa.field_expr in
+          return (name, expr)
+      | Punned_property name ->
+          let expr = self (CST.EVar name) in
+          return (name.value, expr)
     in
     let record = List.map ~f:aux @@ npseq_to_list record.ne_elements in
     return @@ e_record_ez ~loc record
@@ -370,17 +375,24 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let (updates, _loc) = r_split update.updates in
     let aux (up : CST.field_path_assignment CST.reg) =
       let (up, loc) = r_split up in
-      let path = up.field_path in
-      let expr = self up.field_expr in
-      let path = (match path with
-        Name var -> [Access_path.Access_record var.value]
-      | Path proj ->
-        let (proj, _) = r_split proj in
-        let (path, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
-        (Access_path.Access_record proj.struct_name.value)::path
+      (match up with 
+        Path_property up ->
+          let path = up.field_path in
+          let expr = self up.field_expr in
+          let path = (match path with
+            Name var -> [Access_path.Access_record var.value]
+          | Path proj ->
+            let (proj, _) = r_split proj in
+            let (path, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
+            (Access_path.Access_record proj.struct_name.value)::path
+          )
+          in
+          return (path, expr, loc)
+      | Path_punned_property up -> 
+        let path = [Access_path.Access_record up.value] in
+        let expr = self (EVar up) in
+        return (path, expr, loc)
       )
-      in
-      return (path, expr, loc)
     in
     let updates = List.map ~f:aux @@ npseq_to_list updates.ne_elements in
     let aux e (path, update, loc) = e_update ~loc e path update in
@@ -582,7 +594,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
       (Label field_name.value , pattern)
     in
     let lst = List.Ne.map aux @@ npseq_to_ne_list inj.ne_elements in
-    let lst = Record.of_list (List.Ne.to_list lst) in
+    let lst = List.Ne.to_list lst in
     Location.wrap ~loc @@ P_record lst
   | CST.PConstr pattern ->
       let (constr, p_opt), loc = r_split pattern in

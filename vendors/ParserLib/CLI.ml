@@ -2,98 +2,22 @@
 
 (* Vendor dependencies *)
 
-module Argv = Simple_utils.Argv
+module Argv   = Simple_utils.Argv
+module Getopt = GetoptLib.Getopt
 
-(* Comments *)
+(* Parser parameters *)
 
-module type COMMENTS =
+module type PARAMETERS =
   sig
-    type line_comment  = string (* Opening of a line comment *)
-    type block_comment = <opening : string; closing : string>
-
-    val block : block_comment option
-    val line  : line_comment option
-  end
-
-module type MODULES =
-  sig
-    val mk_module : string -> string -> string
-  end
-
-(* Preprocessor CLI *)
-
-module type PREPROCESSING_CLI =
-  sig
-    include COMMENTS
-    include MODULES
-
-    val input        : string option (* input file         *)
-    val extension    : string option (* file extension     *)
-    val dirs         : string list   (* -I                 *)
-    val project_root : string option (* --project-root     *)
-    val show_pp      : bool          (* --show-pp          *)
-    val offsets      : bool          (* neg --columns      *)
-
-    type status = [
-      `Done
-    | `Version      of string
-    | `Help         of Buffer.t
-    | `CLI          of Buffer.t
-    | `SyntaxError  of string
-    | `FileNotFound of string
-    ]
-
-    val status : status
-  end
-
-(* Lexer CLI *)
-
-module type LEXER_CLI =
-  sig
-    module Preprocessor_CLI : PREPROCESSING_CLI
-
-    val preprocess : bool
-    val mode       : [`Byte | `Point]
-    val command    : [`Copy | `Units | `Tokens] option
-
-    type status = [
-      Preprocessor_CLI.status
-    | `Conflict of string * string
-    ]
-
-    val status : status
-  end
-
-(* Parser CLI *)
-
-module type S =
-  sig
-    module Lexer_CLI : LEXER_CLI
-
-    val mono       : bool
-    val pretty     : bool
-    val cst        : bool
-    val recovery   : bool
-
-    (* Debug options *)
-
-    val trace_recovery        : bool
-    val trace_recovery_output : string option
-
-    type status = [
-      Lexer_CLI.status
-    | `DependsOnOtherOption of string * string
-    ]
-
-    val status : status
+    module Config  : Preprocessor.Config.S
+    module Options : Options.S
+    module Status  : module type of Status
   end
 
 (* Parsing the command line options *)
 
-module Make (Lexer_CLI: LEXER_CLI) : S =
+module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
   struct
-    module Lexer_CLI = Lexer_CLI
-
     (* Auxiliary functions *)
 
     let sprintf = Printf.sprintf
@@ -107,11 +31,12 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         "      --pretty       Pretty-print the input";
         "      --recovery     Enable error recovery";
         "      Debug options:";
+        "      --used-tokens  Print the tokens up to the syntax error";
         "      --trace-recovery [output_file]";
-        "                     Enable verbose printing of intermediate steps\n                     of error recovery algorithm to output_file\n                     if provided, or stdout otherwise"
+        "                     Enable verbose printing of intermediate steps\n                     of the error recovery algorithm to output_file\n                     if provided, or stdout otherwise"
       ] in
       begin
-        Buffer.add_string buffer (String.concat "\n" options);
+        Buffer.add_string buffer (String.concat ~sep:"\n" options);
         Buffer.add_char   buffer '\n';
         buffer
       end
@@ -125,94 +50,46 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
 
     (* Debug options *)
 
-    and trace_recovery        = ref false
-    and trace_recovery_output = ref None
+    and used_tokens    = ref false
+    and trace_recovery = ref (None : string option option)
 
-    and help       = ref false
-    and version    = ref false
-    and cli        = ref false
+    (* Others *)
 
-    (* The following has been copied and pasted from the
-       implementation of the module [Getopt], under the original
-       licence, namely:
+    and help    = ref false
+    and version = ref false
+    and cli     = ref false
 
-       Copyright (C) 2000-2004 Alain Frisch. Distributed under the
-       terms of the MIT license.
+    (* --trace_recovery *)
 
-       Layout of the command line
+    let print_trace_recovery = function
+      None -> "None"
+    | Some None -> "Some None"
+    | Some Some path -> "Some (Some " ^ path ^ ")"
 
-         There are two types of argument on the command line: options
-         and anonymous arguments. Options may have two forms: a short
-         one introduced by a single dash character (-) and a long one
-         introduced by a double dash (--).
+    let set_trace_recovery path =
+      match !trace_recovery with
+        None -> trace_recovery := Some (Some path)
+      | _ -> raise (Getopt.Error "Only one --trace-recovery option allowed.")
 
-         Options may have an argument attached. For the long form, the
-         syntax is "--option=argument". For the short form, there are
-         two possible syntaxes: "-o argument" (argument doesn't start
-         with a dash) and "-oargument"
+    (* Specifying the command-line options a la GNU
 
-         Short options that refuse arguments may be concatenated, as in
-         "-opq".
-
-         The special argument -- interrupts the parsing of options:
-         all the remaining arguments are arguments even they start
-         with a dash.
-
-       Command line specification
-
-         A specification lists the possible options and describe what
-         to do when they are found; it also gives the action for
-         anonymous arguments and for the special option - (a single
-         dash alone).
-
-         The specification for a single option is a tuple
-         [(short_form, long_form, action, handler)] where:
-
-         - [short_form] is the character for the short form of the
-           option without the leading - (or [noshort='\000'] if the
-           option does not have a short form)
-
-         - [long_form] is the string for the long form of the option
-           without the leading -- (or [nolong=""] if no long form)
-
-         - [(action : (unit -> unit) option)] gives the action to be
-           executed when the option is found without an argument
-
-         - [(handler : (string -> unit) option)] specifies how to
-           handle the argument when the option is found with the
-           argument
-
-         According to the pair [(action, handler)], the corresponding
-         option may, must or mustn't have an argument :
-
-         - [(Some _, Some _)]: the option may have an argument; the
-           short form can't be concatenated with other options (even
-           if the user does not want to provide an argument). The
-           behaviour (handler/action) is determined by the presence of
-           the argument.
-
-         - [(Some _, None)]: the option must not have an argument; the
-           short form, if it exists, may be concatenated
-
-         - [(None, Some _)]: the option must have an argument; the
-           short form can't be concatenated
-
-         - [(None, None)]: not allowed *)
+       See [GetoptLib.Getopt] for the layout of the command line and
+       the specification of the options. *)
 
     let specs =
-      let open! Getopt in [
-        noshort, "mono",       set mono true, None;
-        noshort, "pretty",     set pretty true, None;
-        noshort, "cst",        set cst true, None;
-        noshort, "recovery",   set recovery true, None;
-        noshort, "trace-recovery", set trace_recovery true,
-          Some (fun path -> trace_recovery := true;
-                            trace_recovery_output := Some path);
+      Getopt.[
+        noshort, "mono",           set mono true, None;
+        noshort, "pretty",         set pretty true, None;
+        noshort, "cst",            set cst true, None;
+        noshort, "recovery",       set recovery true, None;
+        noshort, "trace-recovery", set trace_recovery (Some None),
+                                   Some set_trace_recovery;
+        noshort, "used-tokens",    set used_tokens true, None;
 
-        noshort, "cli",        set cli true, None;
-        'h',     "help",       set help true, None;
-        'v',     "version",    set version true, None
-        ]
+        noshort, "cli",            set cli true, None;
+        'h',     "help",           set help true, None;
+        'v',     "version",        set version true, None
+      ]
 
      (* Handler of anonymous arguments: those have been handled by a
         previous IO *)
@@ -235,10 +112,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
        We make a copy of [Sys.argv], we filter it in a list, the
        resulting list is copied to [Sys.argv] (with the remaning cells
        set to [""]), we parse the options with [Getopt.parse_cmdline]
-       and we finally restore [Sys.argv] from its original copy.
-
-       Before parsing the command-line, we assign the status with the
-       status of the previous CLI (here, [Lexer_CLI.status]). *)
+       and we finally restore [Sys.argv] from its original copy. *)
 
     module SSet = Argv.SSet
     let opt_wo_arg =
@@ -249,25 +123,28 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
       |> add "--cst"
       |> add "--recovery"
       |> add "--trace-recovery"
+      |> add "--used-tokens"
 
       (* The following options are present in all CLI *)
+
       |> add "--cli"
-      |> add "--help" |> add "-h"
+      |> add "--help"    |> add "-h"
       |> add "--version" |> add "-v"
 
-    let opt_with_arg = SSet.empty
-                       |> SSet.add "--trace-recovery"
+    let opt_with_arg =
+      SSet.empty
+      |> SSet.add "--trace-recovery"
 
     let argv_copy = Array.copy Sys.argv
 
     let () = Argv.filter ~opt_wo_arg ~opt_with_arg
 
     type status = [
-      Lexer_CLI.status
-    | `DependsOnOtherOption of string * string
+      LexerParams.Status.t
+    | `DependsOn of string * string
     ]
 
-    let status = (Lexer_CLI.status :> status)
+    let status = (LexerParams.Status.status :> status)
 
     let status =
       try
@@ -281,48 +158,44 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
 
     (* Re-exporting immutable fields with their CLI value *)
 
-    let mono       = !mono
-    and pretty     = !pretty
-    and cst        = !cst
-    and recovery   = !recovery
+    let mono        = !mono
+    and pretty      = !pretty
+    and cst         = !cst
+    and recovery    = !recovery
 
     (* Debug options *)
 
-    and trace_recovery        = !trace_recovery
-    and trace_recovery_output = !trace_recovery_output
+    and used_tokens    = !used_tokens
+    and trace_recovery = !trace_recovery
 
     (* Re-exporting and printing on stdout the CLI options *)
 
     let make_cli buffer : Buffer.t =
       (* Options "help", "version" and "cli" are not given. *)
       let options = [
-        sprintf "mono       = %b" mono;
-        sprintf "pretty     = %b" pretty;
-        sprintf "cst        = %b" cst;
-        sprintf "recovery   = %b" recovery;
-        sprintf "trace_recovery = %b" trace_recovery;
-        sprintf "trace_recovery_output = %s" @@
-          Option.value trace_recovery_output ~default:"None"
-      ] in
+        sprintf "mono         = %b" mono;
+        sprintf "pretty       = %b" pretty;
+        sprintf "cst          = %b" cst;
+        sprintf "recovery     = %b" recovery;
+        sprintf "used_tokens  = %b" used_tokens;
+        sprintf "trace_recovery = %s" (print_trace_recovery trace_recovery)] in
     begin
-      Buffer.add_string buffer (String.concat "\n" options);
+      Buffer.add_string buffer (String.concat ~sep:"\n" options);
       Buffer.add_char   buffer '\n';
       buffer
     end
+
+    (* STATUS *)
 
     (* Checking combinations of options *)
 
     let status =
       match
         mono, pretty,  cst, recovery, trace_recovery with
-           _,   true, true,        _,    _ -> `Conflict ("--pretty", "--cst")
-      | true,      _,    _,     true,    _ -> `Conflict ("--mono", "--recovery")
-      |    _,      _,    _,    false, true -> `DependsOnOtherOption
-                                                 ("--trace-recovery", "--recovery")
-      |    _,     _,     _,     _,     _ -> status
-
-
-    (* Status *)
+      |    _,  true,  true,        _,     _ -> `Conflict ("--pretty", "--cst")
+      | true,     _,     _,     true,     _ -> `Conflict ("--mono", "--recovery")
+      |    _,     _,     _,    false,  Some _ -> `DependsOn ("--trace-recovery", "--recovery")
+      |    _,     _,     _,        _,     _ -> status
 
     let status =
       match status with
@@ -330,4 +203,42 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
       | `CLI buffer   -> `CLI (make_cli buffer)
       | `Version _    -> `Version Version.version
       | _             -> status
+
+    (* Packaging *)
+
+    module Config = LexerParams.Config
+
+    module Options =
+      struct
+        include LexerParams.Options
+        let mono           = mono
+        let pretty         = pretty
+        let cst            = cst
+        let recovery       = recovery
+        let trace_recovery = trace_recovery
+        let used_tokens    = used_tokens
+      end
+
+    module Status =
+      struct
+        type t = status
+        type nonrec status = status
+        let status = status
+      end
+  end
+
+
+(* Default parameters (without actually reading the CLI) *)
+
+module MakeDefault (LexerParams: LexerLib.CLI.PARAMETERS) =
+  struct
+    module Config  = LexerParams.Config
+    module Options = Options.MakeDefault (LexerParams.Options)
+
+    module Status =
+      struct
+        type t = Status.t
+        type status = t
+        let status = `Done
+      end
   end

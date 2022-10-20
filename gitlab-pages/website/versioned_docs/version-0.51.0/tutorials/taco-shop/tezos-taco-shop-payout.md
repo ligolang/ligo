@@ -299,7 +299,7 @@ let receiver : contract<unit> =
 
 > Would you like to learn more about addresses, contracts and
 > operations in LIGO? Check out the
-> [LIGO cheat sheet](api/cheat-sheet.md)
+> [LIGO cheat sheet](../../api/cheat-sheet.md)
 
 ### Adding the Transaction to the List of Output Operations
 

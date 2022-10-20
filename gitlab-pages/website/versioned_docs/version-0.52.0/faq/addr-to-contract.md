@@ -61,4 +61,4 @@ const test = _test();
 
 </Syntax>
 
-Check out the reference of the `Test` framework for exact signature of the functions [here](../reference/test).
+Check out the reference of the `Test` framework for exact signature of the functions [here](../reference/test.md).

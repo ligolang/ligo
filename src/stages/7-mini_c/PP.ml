@@ -58,6 +58,7 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_chest -> "chest"
     | TB_chest_key -> "chest_key"
     | TB_tx_rollup_l2_address -> "tx_rollup_l2_address"
+    | TB_type_int _ -> "type_int"
     in
   fprintf ppf "%s" s
 
@@ -161,7 +162,7 @@ and expression_content ppf (e:expression_content) = match e with
     fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Value_var.pp name expression body
   | E_fold_right (((name , _) , body) , (collection,_) , initial) ->
     fprintf ppf "@[fold_right %a on %a with %a do ( %a )@]" expression collection expression initial Value_var.pp name expression body
-  | E_raw_michelson code ->
+  | E_raw_michelson (code, _) ->
     let open Tezos_micheline in
     let code = Micheline.Seq (Location.generated, code) in
     let code = Micheline.strip_locations code in

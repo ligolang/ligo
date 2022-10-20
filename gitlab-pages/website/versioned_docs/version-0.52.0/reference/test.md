@@ -9,7 +9,7 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-> Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing).
+> Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing.md).
 
 <SyntaxTitle syntax="pascaligo">
 type michelson_program
@@ -718,8 +718,7 @@ let register_constant = (constant : michelson_program) => string
 </SyntaxTitle>
 Registers a global constant `constant`, returns its hash as a string.
 
-See the [documentation for global
-constants](../advanced/global-constants#global-constants-in-the-testing-framework)
+See the [documentation for global constants](../advanced/global-constants.md#global-constants-in-the-testing-framework)
 for an example of usage.
 
 <SyntaxTitle syntax="pascaligo">
