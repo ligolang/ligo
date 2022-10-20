@@ -1,4 +1,7 @@
 import { ethers } from "ethers";
+import { importKey } from "@taquito/signer";
+import keypairManager from "~/base-components/keypair";
+import kp from "../kp";
 
 import utils from "../utils";
 import signatureProvider from "./signatureProvider";
@@ -60,16 +63,63 @@ export default class EthTxManager {
     }
   }
 
-  async estimate({ tx }) {
-    // const gasPrice = await this.client.callRpc('eth_gasPrice', [])
-    const result = await this.provider.estimateGas(tx);
-    const feeData = await this.provider.getFeeData();
+  async estimateContract(isWallet, selectedSigner, tzfile, storage) {
+    if (isWallet) {
+      return await this.provider.estimate.originate({
+        code: tzfile,
+        init: storage,
+      });
+    }
+    const secret = await keypairManager.getSecret(selectedSigner);
+    const secretKey = secret.includes(" ") ? kp.secretFromMnemonic(secret) : secret;
+    await importKey(this.provider, secretKey);
+    return await this.provider.estimate.originate({
+      code: tzfile,
+      init: storage,
+    });
+  }
 
-    return {
-      gasLimit: result.toString(),
-      maxFeePerGas: BigInt(feeData.maxFeePerGas).toString(10),
-      maxPriorityFeePerGas: BigInt(feeData.maxPriorityFeePerGas).toString(10),
-    };
+  async originate(
+    tzfile,
+    storage,
+    selectedSigner,
+    isWallet,
+    delegateAddress,
+    balance,
+    gasLimit,
+    storageLimit,
+    suggestedFeeMutez
+  ) {
+    if (isWallet) {
+      return await this.provider.wallet
+        .originate({
+          code: tzfile,
+          init: storage,
+          balance: balance || undefined,
+          delegate: delegateAddress || undefined,
+          fee: suggestedFeeMutez || undefined,
+          gasLimit: gasLimit || undefined,
+          storageLimit: storageLimit || undefined,
+        })
+        .send()
+        .then((originationOp) => originationOp.contract())
+        .then((contract) => contract.address);
+    }
+    const secret = await keypairManager.getSecret(selectedSigner);
+    const secretKey = secret.includes(" ") ? kp.secretFromMnemonic(secret) : secret;
+    await importKey(this.provider, secretKey);
+    return await this.provider.contract
+      .originate({
+        code: tzfile,
+        init: storage,
+        balance: balance || undefined,
+        delegate: delegateAddress || undefined,
+        fee: suggestedFeeMutez || undefined,
+        gasLimit: gasLimit || undefined,
+        storageLimit: storageLimit || undefined,
+      })
+      .then((originationOp) => originationOp.contract())
+      .then((contract) => contract.address);
   }
 
   sendTransaction({ tx, getResult }, browserExtension) {

@@ -358,7 +358,7 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
     treeRef.current.setUncontrolledState({ indent: 0 });
     if (initFetch) {
       setSelectedKeys([initialPath]);
-      setSelectNode(findChildren(treeData, initialPath));
+      setSelectNode(findInTree(treeData.children, (node) => node.path === initialPath));
     }
   };
 

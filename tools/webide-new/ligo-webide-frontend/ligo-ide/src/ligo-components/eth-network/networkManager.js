@@ -113,13 +113,15 @@ class NetworkManager {
     if (this.browserExtension && network.chainId && this.isWallet) {
       const chain = await this.browserExtension.getChain();
       if (!chain || `${chain.name}+${chain.rpcUrl}` !== network.chainId) {
-        this.browserExtension.ethereum.requestPermissions({
+        await this.browserExtension.ethereum.requestPermissions({
           network: {
             name: network.fullName,
             rpcUrl: network.url,
             type: network.type ? network.type : "custom",
           },
         });
+        const acc = await this.browserExtension.currentAccount;
+        redux.dispatch("UPDATE_UI_STATE", { signer: acc });
         // try {
         //   await window.ethereum.request({
         //     method: "wallet_switchEthereumChain",

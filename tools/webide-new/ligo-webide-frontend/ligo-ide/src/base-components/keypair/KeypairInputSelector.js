@@ -17,7 +17,6 @@ export default class KeypairInputSelector extends PureComponent {
     this.initKeyPair();
     const { networkManager } = require("~/ligo-components/eth-network");
     this.networkManager = networkManager;
-    this.abbriviFunc = this.abbriviFunc.bind(this);
     this.findPlaceholder = this.findPlaceholder.bind(this);
     this.findExtraOptions = this.findExtraOptions.bind(this);
   }
@@ -50,12 +49,6 @@ export default class KeypairInputSelector extends PureComponent {
       options: keypairs.map(this.mapKeyToOption),
     });
   };
-
-  abbriviFunc(address) {
-    return `${utils.isValidAddressReturn(address).substr(0, 6)}...${utils
-      .isValidAddressReturn(address)
-      .substr(-6)}`;
-  }
 
   findExtraOptions() {
     let extraAddress = [];
@@ -94,37 +87,11 @@ export default class KeypairInputSelector extends PureComponent {
   renderDisplay = (key) => {
     const { name } = key;
     const abbreviationOption = this.props.abbreviationOption;
-    const address = utils.formatAddress(key.address, this.networkManager?.current?.chainId);
-    return (highlight, active) => {
-      let highlightAddress = address;
-      if (!active && highlight) {
-        highlightAddress = [];
-        let reg = new RegExp(highlight, "ig");
-        let tempArr = address.replaceAll(reg, (text) => `,spc-${text},`);
-        tempArr.split(",").forEach((part) => {
-          if (part === "") return;
-          if (part.indexOf("spc") !== -1) {
-            let splitAddress = part.split("spc-")[1];
-            splitAddress = abbreviationOption ? this.abbriviFunc(splitAddress) : splitAddress;
-            highlightAddress.push(<b className="text-primary">{splitAddress}</b>);
-          } else {
-            highlightAddress.push(part);
-          }
-        });
-      }
-
-      if (abbreviationOption) {
-        if (highlightAddress && typeof highlightAddress[0] === "string") {
-          const validValue = Array.isArray(highlightAddress)
-            ? highlightAddress[0]
-            : highlightAddress;
-          highlightAddress = this.abbriviFunc(validValue);
-        }
-      }
-
+    const address = key.address;
+    return () => {
       return (
         <div className="w-100 d-flex align-items-center justify-content-between">
-          <code className="text-overflow-dots mr-1">{highlightAddress}</code>
+          <code className="text-overflow-dots mr-1">{address}</code>
           <Badge color="info" style={{ top: 0 }}>
             {name}
           </Badge>
@@ -138,6 +105,7 @@ export default class KeypairInputSelector extends PureComponent {
       id: key.address,
       badge: key.name,
       display: this.renderDisplay(key),
+      onClick: key.onClick || undefined,
     };
   };
 
@@ -182,10 +150,7 @@ export default class KeypairInputSelector extends PureComponent {
         }
         noCaret={typeof noCaret === "boolean" ? noCaret : size === "sm"}
         options={[...this.state.options, ...this.state.extraOptions]}
-        renderText={
-          !editable &&
-          ((option) => (option ? <code>{utils.isValidAddressReturn(option.id)}</code> : null))
-        }
+        renderText={!editable && ((option) => (option ? <code>{option.id}</code> : null))}
         value={value}
         onChange={onChange}
         invalid={invalid}
