@@ -173,3 +173,10 @@ let get_json ?(comment : 'meta Data_encoding.t option) (michelson : ('meta, stri
 let pp_json ?comment ppf michelson =
   let json = get_json ?comment michelson in
   Format.fprintf ppf "%a" Data_encoding.Json.pp json
+
+let michelson_to_yojson _a_to_yojson m =
+  let pp_json = pp_json ?comment:None in
+  let s = Format.asprintf "%a" pp_json m in
+  Yojson.Safe.from_string s
+
+let michelson_of_yojson _ = failwith "michelson_of_yojson: not implemented"

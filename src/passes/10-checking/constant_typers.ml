@@ -1157,7 +1157,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (for_all "a"
           @@ fun a ->
-          create ~mode_annot:[ Inferred ] ~types:[ a ^~> t_string () ]) )
+          create ~mode_annot:[ Inferred; Checked ] ~types:[ a ^-> t_int () ^~> t_string () ]) )
     ; ( C_TEST_UNESCAPE_STRING
       , of_type
           (create

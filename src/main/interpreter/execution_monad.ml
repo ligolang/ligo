@@ -74,7 +74,7 @@ let make_state ~raise ~(options : Compiler_options.t) =
     Tezos_state.init_ctxt ~raise options.backend.protocol_version []
   in
   let mod_res = Option.bind ~f:ModRes.make options.frontend.project_root in
-  { tezos_context; mod_res; heap = Heap.empty ; print_values = true }
+  { tezos_context; mod_res; heap = Heap.empty; print_values = true }
 
 
 let clean_locations ty =
@@ -184,7 +184,7 @@ module Command = struct
         Location.t * LT.calltrace * string * bytes
         -> LT.value tezos_command
     | Add_cast :
-        Location.t * LT.mcontract * Ast_aggregated.type_expression
+        Location.t * LT.Contract.t * Ast_aggregated.type_expression
         -> unit tezos_command
     | Michelson_equal : Location.t * LT.value * LT.value -> bool tezos_command
     | Implicit_account :
@@ -193,7 +193,7 @@ module Command = struct
     | Contract :
         Location.t
         * LT.calltrace
-        * LT.mcontract
+        * LT.Contract.t
         * string option
         * Ast_aggregated.type_expression
         -> LT.value tezos_command
@@ -301,7 +301,8 @@ module Command = struct
         trace_option ~raise (corner_case ())
         @@ Ast_aggregated.get_t_pair input_ty
       in
-      let ({ code = storage; ast_ty = storage_ty; _ } : LT.typed_michelson_code)
+      let ({ micheline_repr = { code = storage; _ }; ast_ty = storage_ty }
+            : LT.typed_michelson_code)
         =
         trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage
       in
@@ -398,7 +399,10 @@ module Command = struct
             let code_ty = Michelson_backend.storage_retreival_dummy_ty in
             let v =
               LT.V_Michelson
-                (Ty_code { code; code_ty; ast_ty = Ast_aggregated.t_int () })
+                (Ty_code
+                   { micheline_repr = { code; code_ty }
+                   ; ast_ty = Ast_aggregated.t_int ()
+                   })
             in
             let rej = LC.v_ctor "Rejected" (LC.v_pair (v, contract_failing)) in
             fail_ctor rej, ctxt
@@ -410,7 +414,7 @@ module Command = struct
            (Contract_storage.Balance_too_low
              (contract_too_low, contract_balance, spend_request))
          :: _ ->
-         let contract_too_low : LT.mcontract =
+         let contract_too_low : LT.Contract.t =
            Michelson_backend.contract_to_contract contract_too_low
          in
          let contract_too_low = LT.V_Ct (C_address contract_too_low) in
@@ -483,7 +487,8 @@ module Command = struct
              addr
       in
       let ret =
-        LT.V_Michelson (Ty_code { code = storage; code_ty = ty; ast_ty })
+        LT.V_Michelson
+          (Ty_code { micheline_repr = { code = storage; code_ty = ty }; ast_ty })
       in
       ret, ctxt
     | Get_size contract_code ->
@@ -550,7 +555,7 @@ module Command = struct
       let func_code =
         Michelson_backend.compile_ast ~raise ~options func_typed_exp
       in
-      let { code = arg_code; _ } =
+      let { micheline_repr = { code = arg_code; _ }; _ } =
         Michelson_backend.compile_value ~raise ~options ~loc v in_ty
       in
       let input_ty, _ =
@@ -576,7 +581,9 @@ module Command = struct
       let ret =
         LT.V_Michelson
           (Ty_code
-             { code = expr; code_ty = expr_ty; ast_ty = f.body.type_expression })
+             { micheline_repr = { code = expr; code_ty = expr_ty }
+             ; ast_ty = f.body.type_expression
+             })
       in
       ret, ctxt
     | Eval (loc, v, expr_ty) ->
@@ -799,11 +806,13 @@ module Command = struct
       let internals = { ctxt.internals with storage_tys } in
       (), { ctxt with internals }
     | Michelson_equal (loc, a, b) ->
-      let ({ code; _ } : LT.typed_michelson_code) =
+      let ({ micheline_repr = { code; _ }; _ } : LT.typed_michelson_code) =
         trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
         @@ LC.get_michelson_expr a
       in
-      let ({ code = code'; _ } : LT.typed_michelson_code) =
+      let ({ micheline_repr = { code = code'; _ }; _ }
+            : LT.typed_michelson_code)
+        =
         trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
         @@ LC.get_michelson_expr b
       in
@@ -973,6 +982,7 @@ module Command = struct
        | _ :: ctxts ->
          Tezos_state.contexts := ctxts;
          (), ctxt)
+
 
   let eval
     : type a.
