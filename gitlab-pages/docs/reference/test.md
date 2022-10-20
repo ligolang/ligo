@@ -569,6 +569,20 @@ let to_string = (a: 'a) => string
 Convert a value to a string (same conversion as used by `log`).
 
 <SyntaxTitle syntax="pascaligo">
+val to_json&lt;a&gt; : a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val to_json : 'a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let to_json: 'a => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let to_json = (a: 'a) => string
+</SyntaxTitle>
+Convert a value to its JSON representation (as a string).
+
+<SyntaxTitle syntax="pascaligo">
 val print : string -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

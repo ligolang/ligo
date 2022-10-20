@@ -969,7 +969,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
     , [ V_Ct (C_address address)
       ; entrypoint
-      ; V_Michelson (Ty_code { code = param; _ })
+      ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
       ] ) ->
     let entrypoint = Option.join @@ LC.get_string_option entrypoint in
@@ -980,7 +980,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS
     , [ V_Ct (C_address address)
       ; entrypoint
-      ; V_Michelson (Ty_code { code = param; _ })
+      ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
       ] ) ->
     let entrypoint = Option.join @@ LC.get_string_option entrypoint in
@@ -1013,9 +1013,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     return @@ v_unit ()
   | C_TEST_PRINT, _ -> fail @@ error_type ()
-  | C_TEST_TO_STRING, [ v ] ->
-    let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
-    return (v_string s)
+  | C_TEST_TO_STRING, [ v; V_Ct (C_int z) ] ->
+    (match Z.to_int z with
+     | 1 ->
+       let json = Ligo_interpreter.Types.value_to_yojson v in
+       return (v_string @@ Yojson.Safe.to_string json)
+     | _ ->
+       let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
+       return (v_string s))
   | C_TEST_TO_STRING, _ -> fail @@ error_type ()
   | C_TEST_UNESCAPE_STRING, [ V_Ct (C_string s) ] ->
     return (v_string (Scanf.unescaped s))
@@ -1144,7 +1149,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> code = Run (loc, f, v) in
     return code
   | C_TEST_RUN, _ -> fail @@ error_type ()
-  | C_TEST_DECOMPILE, [ V_Michelson (Ty_code { code_ty; code; ast_ty }) ] ->
+  | ( C_TEST_DECOMPILE
+    , [ V_Michelson (Ty_code { micheline_repr = { code_ty; code }; ast_ty }) ] )
+    ->
     let () =
       trace_option
         ~raise
@@ -1277,7 +1284,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return tvp
   | C_TEST_GET_TOTAL_VOTING_POWER, _ -> fail @@ error_type ()
   | ( C_TEST_REGISTER_CONSTANT
-    , [ V_Michelson (Ty_code { code; _ } | Untyped_code code) ] ) ->
+    , [ V_Michelson
+          (Ty_code { micheline_repr = { code; _ }; _ } | Untyped_code code)
+      ] ) ->
     let>> s = Register_constant (loc, calltrace, code) in
     return @@ v_string s
   | C_TEST_REGISTER_CONSTANT, _ -> fail @@ error_type ()
@@ -1459,7 +1468,8 @@ and eval_ligo ~raise ~steps ~options
            { body with location = term.location }
            (term.location :: calltrace)
            f_env'')
-     | V_Michelson (Ty_code { code; code_ty = _; ast_ty = _ }) ->
+     | V_Michelson
+         (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty = _ }) ->
        let () =
          match code with
          | Seq (_, [ Prim (_, "FAILWITH", _, _) ]) ->
@@ -1767,7 +1777,8 @@ and eval_ligo ~raise ~steps ~options
          | m -> m
        in
        let code = Tezos_utils.Michelson.map replace code in
-       return @@ V_Michelson (Ty_code { code; code_ty; ast_ty })
+       return
+       @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
      | _ ->
        raise.error
        @@ Errors.generic_error
@@ -1785,7 +1796,8 @@ and eval_ligo ~raise ~steps ~options
        let code, code_ty =
          Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
        in
-       return @@ V_Michelson (Ty_code { code; code_ty; ast_ty })
+       return
+       @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
      | _ ->
        raise.error
        @@ Errors.generic_error

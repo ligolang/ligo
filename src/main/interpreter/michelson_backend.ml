@@ -667,7 +667,7 @@ let rec val_to_ast ~raise ~loc
       v.arg_binder
       v.body
       v.orig_lambda
-  | V_Michelson (Ty_code { code; code_ty = _; ast_ty }) ->
+  | V_Michelson (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty }) ->
     let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
     let s = Ligo_string.verbatim s in
     e_a_raw_code Backend.Michelson.name (make_e (e_string s) ast_ty) ast_ty
@@ -1466,7 +1466,8 @@ let compile_value ~raise ~options ~loc
   let expr_ty = Ligo_compile.Of_aggregated.compile_type ~raise ty in
   let expr_ty = Ligo_compile.Of_mini_c.compile_type expr_ty in
   let expr_ty = clean_location_with () expr_ty in
-  Ligo_interpreter.Types.{ code = expr; code_ty = expr_ty; ast_ty = ty }
+  Ligo_interpreter.Types.
+    { micheline_repr = { code = expr; code_ty = expr_ty }; ast_ty = ty }
 
 
 let run_michelson_func
@@ -1481,7 +1482,7 @@ let run_michelson_func
   =
   let open Ligo_interpreter.Types in
   let run_options = make_options ~raise (Some ctxt) in
-  let { code = arg; code_ty = arg_ty; _ } =
+  let { micheline_repr = { code = arg; code_ty = arg_ty }; _ } =
     compile_value ~raise ~options ~loc arg arg_ty
   in
   let func_ty = compile_type ~raise func_ty in
