@@ -44,6 +44,11 @@ type sem_ver = string [@@deriving to_yojson]
 
 type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 
+type object_ = (string * string) list
+
+let object__to_yojson o  =
+  `Assoc (List.fold o ~init:[] ~f:(fun kvs (k, v) -> (k, `String v ):: kvs))
+
 type dist = 
   { integrity : string
   ; shasum    : string
@@ -53,19 +58,21 @@ type author = {
     name : string
 } [@@deriving to_yojson]
 type version = 
-  { name        : string
-  ; author      : author
-  ; main        : string option
-  ; type_       : string [@key "type"]
-  ; storage_fn  : string option
-  ; storage_arg : string option
-  ; repository  : RepositoryUrl.t
-  ; version     : sem_ver
-  ; description : string
-  ; scripts     : (string * string) list
-  ; readme      : string
-  ; id          : string [@key "_id"]
-  ; dist        : dist
+  { name             : string
+  ; author           : author
+  ; main             : string option
+  ; type_            : string [@key "type"]
+  ; storage_fn       : string option
+  ; storage_arg      : string option
+  ; repository       : RepositoryUrl.t
+  ; version          : sem_ver
+  ; description      : string
+  ; scripts          : object_
+  ; dependencies     : object_
+  ; dev_dependencies : object_ [@key "devDependencies"]
+  ; readme           : string
+  ; id               : string [@key "_id"]
+  ; dist             : dist
   } [@@deriving to_yojson]
  
 type attachment =
@@ -102,7 +109,7 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts ~dependencies ~dev_dependencies = {
   id = name ;
   name ;
   description ;
@@ -122,6 +129,8 @@ let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme
     version ;
     description ;
     scripts ;
+    dependencies ;
+    dev_dependencies ;
     readme ;
     id = Format.sprintf "%s@%s" name version ;
     dist = {
@@ -138,13 +147,17 @@ let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme
   } SMap.empty
 }
 
+
+
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
   let LigoManifest.{ name 
   ; version 
   ; main
   ; scripts 
-  ; description 
+  ; dependencies
+  ; dev_dependencies
+  ; description
   ; readme 
   ; author
   ; type_
@@ -166,6 +179,8 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
     ~repository
     ~version
     ~scripts
+    ~dependencies
+    ~dev_dependencies
     ~main
     ~description 
     ~readme
