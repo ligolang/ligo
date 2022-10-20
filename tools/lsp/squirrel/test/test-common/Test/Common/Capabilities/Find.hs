@@ -22,6 +22,7 @@ module Test.Common.Capabilities.Find
   ) where
 
 import Data.Foldable (for_)
+import Data.Functor ((<&>))
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
 import Test.Tasty (TestTree, testGroup)
@@ -29,15 +30,19 @@ import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
 import AST.Capabilities.Find (definitionOf, findScopedDecl, referencesOf, typeDefinitionAt)
+import AST.Scope.Common (contractTree, lookupContract)
 import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..)
   )
+import Cli (TempDir (..), TempSettings (..))
 import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations
   (expectationFailure, shouldBe, shouldContain, shouldMatchList)
-import Test.Common.Util (ScopeTester, readContractWithScopes)
+import Test.Common.Util
+  ( ScopeTester, parseContractsWithDependenciesScopes, readContractWithScopes, tempTemplate
+  )
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "find"
@@ -65,18 +70,20 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
   -- ^ references ranges
   }
 
--- | Check that the given @DefinitionReferenceInvariant@ holds.
-checkDefinitionReferenceInvariant
-  :: forall parser. ScopeTester parser => DefinitionReferenceInvariant -> Assertion
-checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = test
-  where
-    test :: Assertion
-    test = do
+-- | Check that the given @DefinitionReferenceInvariant@s hold.
+checkDefinitionReferenceInvariants
+  :: forall parser. ScopeTester parser => [DefinitionReferenceInvariant] -> IO [TestTree]
+checkDefinitionReferenceInvariants tests = do
+  let temp = TempSettings contractsDir $ GenerateDir tempTemplate
+  contractsDir' <- makeAbsolute contractsDir
+  graph <- parseContractsWithDependenciesScopes @parser temp contractsDir'
+  pure $ tests <&> \DefinitionReferenceInvariant{..} ->
+    testCase (driFile <> ": " <> driDesc) do
       driFile' <- makeAbsolute driFile
       -- a tree parser labels ranges with files, so we should too to preserve equality
       driRefs' <- traverse (label driFile') driRefs
 
-      tree <- readContractWithScopes @parser driFile'
+      let Just tree = contractTree <$> lookupContract driFile' graph
       case driDef of
         Nothing ->
           for_ driRefs' \mention ->
@@ -337,21 +344,12 @@ invariants =
     , driDef  = Just (interval 5 7 13)
     , driRefs = [interval 6 3 9]
     }
-
-
-
-
-  -- FIXME:
-  -- * Does not pass because we have troubles with recursive functions
-  -- * in ReasonLIGO: https://issues.serokell.io/issue/LIGO-70
-  --
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "recursion.religo"
-  --   , driDesc = "sum"
-  --   , driDef = Just (interval 1 9 12)
-  --   , driRefs = [interval 2 29 32]
-  --   }
-
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "recursion.religo"
+    , driDesc = "sum"
+    , driDef = Just (interval 1 9 12)
+    , driRefs = [interval 2 29 32]
+    }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-constructor.ligo"
     , driDesc = "Increment, type constructor"
@@ -376,19 +374,159 @@ invariants =
     , driDef = Just (interval 2 4 15)
     , driRefs = [interval 5 18 27]
     }
+
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 17 21)
+    , driRefs = [interval 6 26 30]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 16 19)
+    , driRefs = [interval 20 48 51]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 20 24)
+    , driRefs = [interval 18 7 11]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 22 23)
+    , driRefs = [interval 15 14 15]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.jsligo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 17 21)
+    , driRefs =
+      -- FIXME (LIGO-754): Handle references in lambdas to uncomment these two
+      -- intervals.
+      [ interval 8 26 30, interval 10 26 30, interval 10 35 39 -- interval 10 43 47
+      , interval 17 14 18, interval 20 17 21, interval 20 28 32 -- interval 20 38 42
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 10 14)
+    , driRefs = [interval 6 20 24]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 14 17)
+    , driRefs = [interval 19 65 68]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 15 19)
+    , driRefs = [interval 17 10 14]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 12 13)
+    , driRefs = [interval 16 19 20]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.ligo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 10 14)
+    , driRefs =
+      [ interval 8 22 26, interval 10 29 33, interval 10 45 49, interval 10 53 57
+      , interval 15 16 20, interval 19 27 31, interval 19 45 49, interval 19 55 59
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 10 14)
+    , driRefs = [interval 6 19 23]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 9 12)
+    , driRefs = [interval 19 47 50]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 13 17)
+    , driRefs = [interval 17 7 11]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 12 13)
+    , driRefs = [interval 16 18 19]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.mligo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 10 14)
+    , driRefs =
+      [ interval 8 19 23, interval 10 16 20, interval 10 25 29, interval 10 33 37
+      , interval 15 14 18, interval 19 19 23, interval 19 28 32, interval 19 38 42
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, B.titi"
+    , driDef = Just (interval 2 10 14)
+    , driRefs = [interval 6 19 23]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, A.add"
+    , driDef = Just (interval 10 9 12)
+    , driRefs = [interval 19 52 55]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, E.toto resolves in A.C.toto"
+    , driDef = Just (interval 8 13 17)
+    , driRefs = [interval 17 7 11]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, D.C resolves in A.C"
+    , driDef = Just (interval 7 12 13)
+    , driRefs = [interval 16 18 19]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "modules.religo"
+    , driDesc = "Modules, A.titi can be referenced within A.C"
+    , driDef = Just (interval 6 10 14)
+    , driRefs =
+      -- FIXME (LIGO-754): Handle references in lambdas to uncomment these two
+      -- intervals.
+      [ interval 8 19 23, interval 10 25 29, interval 10 30 34 -- interval 10 39 43
+      , interval 15 14 18, interval 19 23 27, interval 19 31 35 -- interval 19 42 46
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "nested-modules.jsligo"
+    , driDesc = "Modules, Cz.nested resolves in A.B.C.nested"
+    , driDef = Just (interval 4 18 24)
+    , driRefs = [interval 15 20 26]
+    }
   ]
 
 findDefinitionAndGoToReferencesCorrespondence
   :: forall impl
    . ScopeTester impl
   => [DefinitionReferenceInvariant]
-  -> TestTree
-findDefinitionAndGoToReferencesCorrespondence testInvariants =
-  testGroup "Definition and References Correspondence" testCases
-  where
-    testCases = map makeTestCase testInvariants
-    makeTestCase inv = testCase name (checkDefinitionReferenceInvariant @impl inv)
-      where name = driFile inv <> ": " <> driDesc inv
+  -> IO TestTree
+findDefinitionAndGoToReferencesCorrespondence =
+  fmap (testGroup "Definition and References Correspondence")
+  . checkDefinitionReferenceInvariants @impl
 
 definitionOfId :: forall impl. ScopeTester impl => Assertion
 definitionOfId = checkIfDefinition @impl

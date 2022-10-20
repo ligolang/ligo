@@ -12,7 +12,7 @@ import Data.Maybe (mapMaybe)
 import Data.Text (Text)
 import Language.LSP.Types qualified as J
 
-import AST.Capabilities.Find (CanSearch, findScopedDecl, rangeOf)
+import AST.Capabilities.Find (CanSearch, definitionOf, findScopedDecl)
 import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdRefs))
 import AST.Skeleton (SomeLIGO)
 import Range (Range, _rFile, toLspRange)
@@ -46,4 +46,4 @@ renameDeclarationAt pos tree newName =
 prepareRenameDeclarationAt
   :: CanSearch xs
   => Range -> SomeLIGO xs -> Maybe Range
-prepareRenameDeclarationAt = rangeOf
+prepareRenameDeclarationAt = definitionOf

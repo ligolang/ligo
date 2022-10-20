@@ -72,12 +72,12 @@ data DeclarationSpecifics
   = TypeSpec (Maybe TypeParams) (TypeDeclSpecifics Type)
   | ModuleSpec ModuleDeclSpecifics
   | ValueSpec ValueDeclSpecifics
-  deriving stock (Show)
+  deriving stock (Eq, Show)
 
 data TypeParams
   = TypeParam (TypeDeclSpecifics TypeVariable)
   | TypeParams [TypeDeclSpecifics TypeVariable]
-  deriving stock (Show)
+  deriving stock (Eq, Show)
 
 newtype TypeVariable = TypeVariable
   { _tvName :: Text

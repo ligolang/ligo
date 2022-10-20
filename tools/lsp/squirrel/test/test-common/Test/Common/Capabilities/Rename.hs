@@ -5,6 +5,7 @@ module Test.Common.Capabilities.Rename
   , renameInIncludedFile
   , renameNestedInclude
   , renameTypeVariable
+  , renameConflictingModuleName
   ) where
 
 import Control.Arrow ((***))
@@ -117,4 +118,16 @@ renameTypeVariable = do
   fp <- makeAbsolute (contractsDir </> "parametric.religo")
   testRenameOk @impl (point 1 36){_rFile = fp} "a" (point 1 36){_rFile = fp} "key"
     [ (fp, [(interval 1 36 37){_rFile = fp}, (interval 1 11 12){_rFile = fp}])
+    ]
+
+renameConflictingModuleName :: forall impl. ScopeTester impl => Assertion
+renameConflictingModuleName = do
+  fp <- makeAbsolute (contractsDir </> "module-name-colision.pligo")
+  -- Rename the module field name:
+  testRenameOk @impl (point 10 13){_rFile = fp} "some_name" (point 6 9){_rFile = fp} "renamed"
+    [ (fp, [(interval 10 13 22){_rFile = fp}, (interval 6 9 18){_rFile = fp}])
+    ]
+  -- Rename the module as well:
+  testRenameOk @impl (point 10 9){_rFile = fp} "Top" (point 5 8){_rFile = fp} "Module"
+    [ (fp, [(interval 10 9 12){_rFile = fp}, (interval 5 8 11){_rFile = fp}])
     ]

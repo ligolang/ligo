@@ -6,6 +6,7 @@ import Control.Arrow ((&&&))
 import Control.Category ((>>>))
 import Control.Comonad.Cofree (Cofree (..), _extract)
 import Control.Lens (view)
+import Control.Monad.Reader (runReader)
 import Data.Either (partitionEithers)
 import Data.Foldable (foldlM)
 import Data.Function (on)
@@ -21,7 +22,7 @@ import UnliftIO.Directory (canonicalizePath)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), ScopedDecl (..), Type (ArrowType), Module (..)
-  , ModuleDeclSpecifics (..), Namespace (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..)
+  , ModuleDeclSpecifics (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..)
   , _tdsInit
   )
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
@@ -85,7 +86,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       r <- normalizeRange . fromLigoRangeOrDef $ orig
       rs <- mapM (normalizeRange . fromLigoRangeOrDef) refs
       let _vdsInitRange = mbFromLigoRange bodyR
-          _vdsTspec = Just $ parseTypeDeclSpecifics $ fromLigoTypeFull ty
+          _vdsTspec = Just $ runReader (parseTypeDeclSpecifics $ fromLigoTypeFull ty) dialect
           -- `get scope` doesn't provide information about arguments.
           -- `_vdsParams` equals to `Nothing` maeans that it isn't a function.
           -- FIXME (LIGO-679)

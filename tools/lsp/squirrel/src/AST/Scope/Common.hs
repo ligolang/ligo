@@ -7,6 +7,7 @@ module AST.Scope.Common
   , ParsedContract (..)
   , FindFilepath (..)
   , HasScopeForest (..)
+  , Namespace (..)
   , Level (..)
   , Info'
   , ScopeForest (..)
@@ -57,7 +58,7 @@ import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
-import Data.Functor.Identity (runIdentity)
+import Data.Functor.Identity (Identity (..))
 import Data.List (sortOn)
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -75,10 +76,12 @@ import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics(..))
+import AST.Scope.ScopedDecl
+  ( DeclarationSpecifics (..), Namespace (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..)
+  )
 import AST.Skeleton
-  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, TypeName (..)
-  , TypeVariableName (..), withNestedLIGO
+  ( Ctor, LIGO, Name, NameDecl, ModuleName, RawLigoList, SomeLIGO, TypeName, TypeVariableName
+  , withNestedLIGO
   )
 import Cli.Types
 import Diagnostic (Message)
@@ -161,7 +164,7 @@ class HasLigoClient m => HasScopeForest impl m where
     -- ^ Inclusion graph of the parsed contracts.
     -> m (FindFilepath ScopeForest)
 
-data Level = TermLevel | TypeLevel
+data Level = TermLevel | TypeLevel | ModuleLevel
   deriving stock (Eq, Show)
   deriving Pretty via ShowPP Level
 
@@ -169,6 +172,7 @@ ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
   (TermLevel, ValueSpec{}) -> True
   (TypeLevel, TypeSpec{}) -> True
+  (ModuleLevel, ModuleSpec{}) -> True
   _ -> False
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
@@ -300,10 +304,10 @@ instance Pretty ScopeForest where
 
       decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
-lookupEnv :: Text -> Scope -> Maybe ScopedDecl
-lookupEnv name = getFirst . foldMap \decl ->
+lookupEnv :: Text -> Range -> Scope -> Maybe ScopedDecl
+lookupEnv name pos = getFirst . foldMap \decl@ScopedDecl{..} ->
   First do
-    guard (_sdName decl == name)
+    guard (_sdName == name && (_sdOrigin == pos || pos `elem` _sdRefs))
     return decl
 
 -- | return scoped declarations related to the range
@@ -329,30 +333,36 @@ addLocalScopes tree forest =
       fs' <- traverse f fs
       let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
+
+    insertScope
+      :: (Element f RawLigoList, Pretty (f (LIGO xs)))
+      => Level
+      -> Product ParsedInfo
+      -> f (LIGO xs)
+      -> Identity (Product Info', f (LIGO xs))
+    insertScope level i name = do
+      let env = envAtPoint (getPreRange i) forest
+      -- TODO: This is temporary solution developed in LIGO-700, and should be fixed in LIGO-830
+      let declaredScope = Map.lookup (DeclRef (ppToText name) (getRange i)) (sfDecls forest)
+      return ((toList declaredScope <> env) :> Just level :> i, name)
+
+    insertTerm, insertType, insertModule
+      :: (Element f RawLigoList, Pretty (f (LIGO xs)))
+      => Product ParsedInfo
+      -> f (LIGO xs)
+      -> Identity (Product Info', f (LIGO xs))
+    insertTerm   = insertScope TermLevel
+    insertType   = insertScope TypeLevel
+    insertModule = insertScope ModuleLevel
   in
   runIdentity $ withNestedLIGO tree $
     descent' @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
-    [ Descent \i (Name t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, Name t)
-
-    , Descent \i (NameDecl t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        -- TODO: This is temporary solution developed in LIGO-700, and should be fixed in LIGO-830
-        let declaredScope = Map.lookup (DeclRef t (getRange i)) (sfDecls forest)
-        return ((toList declaredScope <> env) :> Just TermLevel :> i, NameDecl t)
-
-    , Descent \i (Ctor t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, Ctor t)
-
-    , Descent \i (TypeName t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TypeLevel :> i, TypeName t)
-
-    , Descent \i (TypeVariableName t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TypeLevel :> i, TypeVariableName t)
+    [ Descent @Name insertTerm
+    , Descent @NameDecl insertTerm
+    , Descent @Ctor insertTerm
+    , Descent @TypeName insertType
+    , Descent @TypeVariableName insertType
+    , Descent @ModuleName insertModule
     ]
 
 addScopes

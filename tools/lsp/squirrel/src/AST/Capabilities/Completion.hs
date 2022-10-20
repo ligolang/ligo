@@ -12,12 +12,10 @@ module AST.Capabilities.Completion
   , withCompleterM
   ) where
 
-import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
-
 import Algebra.Graph.AdjacencyMap qualified as G
+import Control.Applicative ((<|>))
 import Control.Lens (_2, (^?), element)
 import Control.Monad.Reader
-import Control.Applicative
 import Data.Char (isUpper)
 import Data.Bool (bool)
 import Data.Foldable (asum)
@@ -32,11 +30,13 @@ import Data.Text qualified as Text
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
+import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 import System.FilePath
 import Text.Regex.TDFA ((=~))
 
 import AST.Capabilities.Find
-  ( TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf
+  ( CanSearch, TypeDefinitionRes (..), dereferenceTspec, findModuleDecl, findNodeAtPoint
+  , typeDefinitionOf
   )
 import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
@@ -68,7 +68,7 @@ withCompleterM :: (MonadIO m, Logger m) => CompleterEnv xs -> CompleterM xs a ->
 withCompleterM complEnv action = do
   env <- getLogEnv
   liftIO $ runReaderT
-     (runKatipContextT env () (Namespace ["Completion"]) $ runCompleterM action)
+     (runKatipContextT env () (Log.Namespace ["Completion"]) $ runCompleterM action)
      complEnv
 
 newtype NameCompletion = NameCompletion { getNameCompletion :: Text } deriving newtype (Eq, Show)
@@ -92,8 +92,7 @@ completionName (ImportCompletion name) = name
 completionName (CompletionKeyword name) = name
 
 type CompletionLIGO info =
-  ( Contains Scope info
-  , Contains (Maybe Level) info
+  ( CanSearch info
   , PPableLIGO info
   )
 
@@ -117,7 +116,6 @@ complete = do
       ImportCompletion{} -> True
       otherCompl -> (isSubseqOf (ppToText node) . getNameCompletion . completionName) otherCompl
 
-
 getPossibleCompletions
   :: CompletionLIGO xs
   => Scope -> Maybe Level -> CompleterM xs (Maybe [Completion])
@@ -126,9 +124,11 @@ getPossibleCompletions scope level = do
   tree <- asks ceTree
   source <- asks ceSource
 
-  let cf = completeField scope pos tree
-      cfs = completeFromScope scope level
-      c = cf <|> cfs
+  let
+    cmf = completeModuleField scope pos tree
+    cfta = completeFieldTypeAware scope pos tree
+    cfs = completeFromScope scope level pos tree
+    c = cmf <|> cfta <|> cfs
   ci <- completeImport pos source
   return $ mconcat
     [ ci
@@ -196,10 +196,6 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
       Reason -> reasonLIGOKeywords
       Js     -> jsLIGOKeywords
 
-completeField
-  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
-completeField = completeFieldTypeAware
-
 completeFieldTypeAware
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
 completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
@@ -215,7 +211,7 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
     covers = spineTo (leq pos . getRange) nested
 
     toTspec TypeNotFound = Nothing
-    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec . _2  -- TODO
+    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec . _2  -- TODO (LIGO-331): Check this case
     toTspec (TypeInlined tspec) = Just tspec
 
     accessAndDereference :: TypeDeclSpecifics Type -> Accessor -> Maybe (TypeDeclSpecifics Type)
@@ -229,9 +225,48 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
       (TypeCompletion . docToText . lppLigoLike dialect <$> _tfTspec field)
       (DocCompletion "")
 
-completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]
-completeFromScope scope level
-  = Just [asCompletion decl | decl <- scope, decl `fitsLevel` level]
+extractType :: ScopedDecl -> Maybe Type
+extractType ScopedDecl{_sdSpec} = case _sdSpec of
+  TypeSpec _ TypeDeclSpecifics{_tdsInit} -> Just _tdsInit
+  ModuleSpec _ -> Nothing
+  ValueSpec ValueDeclSpecifics{_vdsTspec} -> _tdsInit <$> _vdsTspec
+
+-- TODO: support completing module aliases, such as `module A = B._`, where `_`
+-- is where the cursor is.
+completeModuleField
+  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeModuleField scope pos tree@(SomeLIGO dialect nested) = do
+  ModuleAccess{maPath} <- asum (map layer covers)
+  let lastModuleName = last maPath
+  moduleDecl <- findModuleDecl (getRange $ extract lastModuleName) tree
+  let namespace = _sdNamespace moduleDecl <> AST.Scope.Namespace [_sdName moduleDecl]
+  let decls = filter (\decl -> _sdNamespace decl == namespace) scope
+  pure $ mkCompletion <$> decls
+  where
+    covers = spineTo (leq pos . getRange) nested
+
+    mkCompletion :: ScopedDecl -> Completion
+    mkCompletion decl = Completion
+      (completionKind decl)
+      (NameCompletion $ _sdName decl)
+      (TypeCompletion . docToText . lppLigoLike dialect <$> extractType decl)
+      (DocCompletion "")
+
+completeFromScope
+  :: CompletionLIGO xs => Scope -> Maybe Level -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeFromScope scope level pos (SomeLIGO _ nested) = Just
+  [ asCompletion decl
+  | decl <- scope
+  , decl `fitsLevel` level
+  , _sdNamespace decl == currentNamespace
+  ]
+  where
+    nodes = spineTo (leq pos . getRange) nested
+    currentNamespace = AST.Scope.Namespace $ foldr appendNamespace [] nodes
+    appendNamespace node namespace = fromMaybe namespace do
+      BModuleDecl moduleDecl _ <- layer node
+      ModuleName moduleName <- layer moduleDecl
+      pure $ moduleName : namespace
 
 isLikelyConstr :: Text -> Bool
 isLikelyConstr = maybe False (isUpper . fst) . Text.uncons
@@ -240,8 +275,8 @@ completionKind :: ScopedDecl -> Maybe CompletionItemKind
 completionKind ScopedDecl {_sdName, _sdSpec} = case _sdSpec of
   TypeSpec _typeParams spec ->
     Just $ completeFromTSpec spec
-  ModuleSpec _ ->
-    Nothing
+  ModuleSpec _mspec ->
+    Just CiModule
   ValueSpec ValueDeclSpecifics {_vdsParams, _vdsTspec} ->
     let completion = completeFromTSpec <$> _vdsTspec in
     bool

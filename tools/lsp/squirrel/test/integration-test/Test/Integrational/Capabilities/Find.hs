@@ -94,9 +94,9 @@ includeInvariants =
     }
   ]
 
-test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
+test_findDefinitionAndGoToReferencesCorrespondence :: IO TestTree
 test_findDefinitionAndGoToReferencesCorrespondence =
-  testGroup "Find definition and go to references correspondence"
+  testGroup "Find definition and go to references correspondence" <$> sequenceA
     [ findDefinitionAndGoToReferencesCorrespondence @Standard allVariants
     --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-592) (LIGO-596) (LIGO-679)
     ]
@@ -105,7 +105,7 @@ test_findDefinitionAndGoToReferencesCorrespondence =
 
 -- Since we require `ligo preprocess` for includes, we run `Fallback` tests for
 -- includes in integration tests.
-test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback :: TestTree
+test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback :: IO TestTree
 test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback =
   findDefinitionAndGoToReferencesCorrespondence @Fallback includeInvariants
 

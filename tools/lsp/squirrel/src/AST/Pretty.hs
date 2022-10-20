@@ -126,7 +126,8 @@ instance LPP1 d Error where
 ----------------------------------------------------------------------------
 
 sexpr :: Text -> [Doc] -> Doc
-sexpr header items = "(" <.> pp header `indent` foldr above empty items <.> ")"
+sexpr header [] = "(" <.> pp header <.> ")"
+sexpr header items = "(" <.> pp header `indent` foldr1 above items <.> ")"
 
 sop :: Doc -> Text -> [Doc] -> Doc
 sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
@@ -279,7 +280,7 @@ instance Pretty1 Constant where
 
 instance Pretty1 ModuleAccess where
   pp1 = \case
-    ModuleAccess path field -> sexpr "." (path <> [field])
+    ModuleAccess path field -> sexpr "::" (path <> [field])
 
 instance Pretty1 QualifiedName where
   pp1 = \case
@@ -375,7 +376,7 @@ instance Pretty J.UInt where
 
 instance LPP1 d ModuleAccess where
   lpp1 = \case
-    ModuleAccess path field -> mconcat (punctuate "." path) <> lpp field
+    ModuleAccess path field -> mconcat (punctuate "." path) <> "." <> lpp field
 
 instance LPP1 d QualifiedName where
   lpp1 = \case
