@@ -14,7 +14,7 @@ add-changelog-entry:
     - *export-mr-info
   script:
   # Check if type is None, if None, skip changelog generation
-    - "[[ $MR_TYPE = \"none\" ]] && exit 0"
+    - "[[ $MR_TYPE == \"none\" ]] && exit 0"
     - echo $MR_TYPE
     - echo $MR_TITLE
     - echo $MR_AUTHOR_USERNAME
