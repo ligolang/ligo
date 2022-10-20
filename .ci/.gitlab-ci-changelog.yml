@@ -5,7 +5,7 @@
     - export MR_AUTHOR_USERNAME=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
     - export MR_TITLE=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
     # echo these, since sed wasn't returning string literals
-    - export MR_TYPE=$echo `nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}"`)
+    - export MR_TYPE=$(echo `nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}"`)
     - export MR_DESC=$(echo `nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}"`)
     
 add-changelog-entry:
