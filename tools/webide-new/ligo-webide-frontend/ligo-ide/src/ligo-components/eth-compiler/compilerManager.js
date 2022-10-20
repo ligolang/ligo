@@ -184,25 +184,6 @@ export class CompilerManager {
     }
   }
 
-  parseSolcJSBuild(error) {
-    const { prefix: projectPrefix, userId, projectId } = modelSessionManager.projectManager;
-    const [prefix] = error.formattedMessage.match(/(?<=:).+(?=:)/g);
-    const filePath = error.sourceLocation.file;
-    const [row, column] = prefix.split(":");
-    const lines = error.formattedMessage.split("\n");
-    const { length } = lines[lines.length - 1].trim();
-
-    return {
-      filePath: `${projectPrefix}/${userId}/${projectId}/${filePath.replace("./", "")}`,
-      text: `[Solcjs Compiler]: ${error.message}`,
-      row: Number(row),
-      length,
-      type: "error",
-      column: Number(column),
-      from: "compiler",
-    };
-  }
-
   parseBuildLogs(msg) {
     let index;
     index = msg.indexOf("Compiling your contracts...");
