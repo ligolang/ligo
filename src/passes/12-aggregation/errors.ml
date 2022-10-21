@@ -34,24 +34,3 @@ let error_json : aggregation_error -> Simple_utils.Error.t =
     let content = make_content ~message ~location () in
     make ~stage ~content
 
-let error_jsonformat : aggregation_error -> Yojson.Safe.t = fun a ->
-  let json_error ~stage ~content =
-    `Assoc [
-      ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
-  in
-  match a with
-  | `Aggregation_corner_case desc ->
-    let message = `String desc in
-    let content = `Assoc [
-      ("message", message);
-    ] in
-    json_error ~stage ~content
-  | `Aggregation_redundant_pattern loc ->
-    let message = "Redundant pattern matching" in
-    let content =
-      `Assoc [ "message", `String message; "location", Location.to_yojson loc ]
-    in
-    json_error ~stage ~content
-

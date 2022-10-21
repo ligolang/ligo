@@ -402,7 +402,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
     let content = make_content ~message:"Missing entrypoint" () in
     [make ~stage:"top-level glue" ~content]
   | `Preproc_tracer e -> [Preprocessing.Errors.error_json e]
-  | `Parser_tracer e -> [Parsing.Errors.error_jsonformat e]
+  | `Parser_tracer e -> [Parsing.Errors.error_json e]
   | `Pretty_tracer _ ->
     let content = make_content ~message:"Pretty printing tracer" () in
     [make ~stage:"pretty" ~content]

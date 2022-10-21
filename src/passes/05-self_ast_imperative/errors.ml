@@ -154,7 +154,3 @@ let rec error_json : self_ast_imperative_error -> Simple_utils.Error.t =
       let message  = "Cannot redeclare block-scoped variable." in
       let content  = make_content ~message ~location () in
       make ~stage ~content
-
-let error_jsonformat : self_ast_imperative_error -> json = fun e ->
-  let error = error_json e in
-  Simple_utils.Error.to_yojson error

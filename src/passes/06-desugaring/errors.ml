@@ -24,15 +24,3 @@ let rec error_json : desugaring_error -> Simple_utils.Error.t =
     let message = Format.asprintf "Corner case: %s" e in
     let content = make_content ~message () in
     make ~stage ~content
-
-let error_jsonformat : desugaring_error -> Yojson.Safe.t =
- fun a ->
-  let json_error ~stage ~content =
-    `Assoc
-      [ "status", `String "error"; "stage", `String stage; "content", content ]
-  in
-  match a with
-  | `Desugaring_corner_case s ->
-    let message = `String "corner case" in
-    let content = `Assoc [ "message", message; "value", `String s ] in
-    json_error ~stage ~content

@@ -42,7 +42,7 @@ let error_ppformat :
 
 (* JSON *)
 
-let error_jsonformat : error -> Yojson.Safe.t =
+let error_json : error -> Yojson.Safe.t =
   fun error ->
     let json_error ~stage ~content =
       `Assoc [

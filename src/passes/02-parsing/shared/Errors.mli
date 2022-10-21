@@ -26,4 +26,4 @@ val to_ppformat    : pp_formater (* Alias of [error_ppformat] *)
 
 (* JSON *)
 
-val error_jsonformat : t -> Simple_utils.Error.t
+val error_json : t -> Simple_utils.Error.t

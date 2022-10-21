@@ -36,7 +36,7 @@ let to_ppformat = error_ppformat
 
 (* JSON *)
 
-let error_jsonformat : t -> Simple_utils.Error.t =
+let error_json : t -> Simple_utils.Error.t =
   fun error ->
   let open Simple_utils.Error in
   match error with
