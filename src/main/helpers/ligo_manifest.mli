@@ -1,4 +1,6 @@
-module Bugs : sig type t [@@deriving to_yojson] end
+module Bugs : sig
+  type t [@@deriving to_yojson]
+end
 
 type t =
   { name : string
