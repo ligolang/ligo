@@ -79,10 +79,6 @@ let rec error_ppformat : display_format:string display_format ->
       "@[<hv>Invalid protocol version '%s'. Available versions: %a"
         actual
         (Simple_utils.PP_helpers.list_sep_d Format.pp_print_string) possible
-    | `Main_invalid_typer_switch actual ->
-      Format.fprintf f
-      "@[<hv>Invalid typer switch '%s'. Available: 'new' 'old'"
-        actual
     | `Main_invalid_extension extension ->
       Format.fprintf f
         "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, '.jsligo' for JsLIGO, or the --syntax option.@]"
@@ -267,24 +263,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Ligo_init_unrecognized_template lststr -> Format.fprintf f "Template unrecognized please select one of the following list : \n%s" @@ String.concat ~sep:"\n" lststr
   )
 
-let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=[]) () =
-  let append_opt ~f xs opt = Option.fold opt ~init:xs ~f:(fun xs x -> f x :: xs) in
-  let content = extra_content in
-  let content = append_opt content message  ~f:(fun msg -> ("message", `String msg)) in
-  let content = append_opt content child ~f:(fun err -> ("children", err))
-  in
-  `Assoc [
-    ("status",  `String "error") ;
-    ("stage",   `String stage)   ;
-    ("content", `Assoc content) ;
-    ("location", Location.to_yojson loc)]
-
-
-let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
+let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
+  let open Simple_utils.Error in
   match a with
   | `Test_err_tracer (name,err) ->
-    json_error ~stage:"test_tracer" ~message:name ~child:(error_jsonformat err) ()
-
+    let children = error_json err in
+    let message = name in
+    let errors = List.map children ~f:(fun children -> 
+      let content = make_content ~message ~children () in
+      make ~stage:"" ~content 
+    ) in
+    errors
   | `Test_run_tracer _
   | `Test_expect_tracer _
   | `Test_expect_n_tracer _
@@ -296,120 +285,128 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Test_expected_to_fail
   | `Test_not_expected_to_fail
   | `Test_repl _
-  -> `Null
-
+  ->
+    let content = make_content ~message:"Test module tracer" () in
+    [make ~stage:"" ~content]
   (* Top-level errors *)
-  | `Build_error_tracer e -> json_error ~stage:"build system" ~child:(BuildSystem.Errors.error_jsonformat e) ()
+  | `Build_error_tracer e -> 
+    [BuildSystem.Errors.error_json e]
   | `Main_invalid_generator_name _ ->
-    json_error ~stage:"command line interpreter" ~message:"bad generator name" ()
+    let content = make_content ~message:"bad generator name" () in
+    [make ~stage:"command line interpreter" ~content]
   | `Main_invalid_syntax_name _ ->
-    json_error ~stage:"command line interpreter" ~message:"bad syntax name" ()
+    let content = make_content ~message:"bad syntax name" () in
+    [make ~stage:"command line interpreter" ~content]
   | `Main_invalid_dialect_name _ ->
-    json_error ~stage:"command line interpreter" ~message:"bad dialect name" ()
+    let content = make_content ~message:"bad dialect name" () in
+    [make ~stage:"command line interpreter" ~content]
   | `Main_invalid_protocol_version _ ->
-    json_error ~stage:"command line interpreter" ~message:"bad protocol version" ()
-  | `Main_invalid_typer_switch _ ->
-    json_error ~stage:"command line interpreter" ~message:"bad typer switch" ()
+    let content = make_content ~message:"bad protocol version" () in
+    [make ~stage:"command line interpreter" ~content]
   | `Main_invalid_extension _ ->
-    json_error ~stage:"command line interpreter" ~message:"bad file extension" ()
-
+    let content = make_content ~message:"bad file extension" () in
+    [make ~stage:"command line interpreter" ~content]
   | `Main_unparse_tracer _ ->
-    json_error ~stage:"michelson contract build" ~message:"could not unparse michelson type" ()
-
-  | `Main_typecheck_contract_tracer (c,_) ->
-    let code = Format.asprintf "%a" Tezos_utils.Michelson.pp c in
-    let extra_content = [("code", `String code)] in
-    json_error ~stage:"michelson contract build" ~message:"Could not typecheck michelson code" ~extra_content ()
-
+    let content = make_content ~message:"could not unparse michelson type" () in
+    [make ~stage:"michelson contract build" ~content]
+  | `Main_typecheck_contract_tracer (_c,_) ->
+    let content = make_content ~message:"Could not typecheck michelson code" () in
+    [make ~stage:"michelson contract build" ~content]
   | `Main_could_not_serialize _errs ->
-    json_error ~stage:"michelson serialization" ~message:"Could not serialize michelson code" ()
-
+    let content = make_content ~message:"Could not serialize michelson code" () in
+    [make ~stage:"michelson serialization" ~content]
   | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_parameter, err) ->
-    json_error ~stage:"contract argument typechecking"
-        ~message:"Passed parameter does not match the contract type"
-        ~child:(error_jsonformat err) ()
-
+    let children = error_json err in
+    let message = "Passed parameter does not match the contract type" in
+    let errors = List.map children ~f:(fun children -> 
+      let content = make_content ~message ~children () in
+      make ~stage:"contract argument typechecking" ~content 
+    ) in
+    errors
   | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_storage, err) ->
-    json_error ~stage:"contract argument typechecking"
-        ~message:"Passed storage does not match the contract type"
-        ~child:(error_jsonformat err) ()
-
+    let children = error_json err in
+    let message = "Passed storage does not match the contract type" in
+    let errors = List.map children ~f:(fun children -> 
+      let content = make_content ~message ~children () in
+      make ~stage:"contract argument typechecking" ~content 
+    ) in
+    errors
   | `Main_unknown ->
-    json_error ~stage:"michelson execution" ~message:"unknown error" ()
-
-  | `Main_execution_failed v ->
-    let value =
-      Format.asprintf "%a"
-      Tezos_utils.Michelson.pp v
-    in
-    let extra_content = [("failwith", `String value)] in
-    json_error ~stage:"michelson execution" ~extra_content ()
-
-  | `Main_invalid_amount a ->
-    let message = "invalid amount" in
-    let extra_content = [("value", `String a)] in
-    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
-  | `Main_invalid_balance a ->
-    let message = "invalid balance" in
-    let extra_content = [("value", `String a)] in
-    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
-  | `Main_invalid_source a ->
-    let message = "invalid source" in
-    let extra_content = [("value", `String a)] in
-    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
-  | `Main_invalid_sender a ->
-    let message = "invalid sender" in
-    let extra_content = [("value", `String a)] in
-    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
-  | `Main_invalid_timestamp t ->
-    let message = "invalid timestamp notation" in
-    let extra_content = [("value", `String t)] in
-    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
+    let content = make_content ~message:"unknown error" () in
+    [make ~stage:"michelson execution" ~content]
+  | `Main_execution_failed _ ->
+    let content = make_content ~message:"main execution failed" () in
+    [make ~stage:"michelson execution" ~content]
+  | `Main_invalid_amount _ ->
+    let content = make_content ~message:"invalid amount" () in
+    [make ~stage:"parsing command line parameters" ~content]
+  | `Main_invalid_balance _ ->
+    let content = make_content ~message:"invalid balance" () in
+    [make ~stage:"parsing command line parameters" ~content]
+  | `Main_invalid_source _ ->
+    let content = make_content ~message:"invalid source" () in
+    [make ~stage:"parsing command line parameters" ~content]
+  | `Main_invalid_sender _ ->
+    let content = make_content ~message:"invalid sender" () in
+    [make ~stage:"parsing command line parameters" ~content]
+  | `Main_invalid_timestamp _ ->
+    let content = make_content ~message:"invalid timestamp notation" () in
+    [make ~stage:"parsing command line parameters" ~content]
   | `Main_cannot_open_global_constants _ ->
-    json_error ~stage:"global constants parsing" ~message:"cannot open global constants file" ()
+    let content = make_content ~message:"cannot open global constants file" () in
+    [make ~stage:"global constants parsing" ~content]
   | `Main_cannot_parse_global_constants _ ->
-    json_error ~stage:"global constants parsing" ~message:"cannot parse global constants file" ()
-
+    let content = make_content ~message:"cannot parse global constants file" () in
+    [make ~stage:"global constants parsing" ~content]
   | `Unparsing_michelson_tracer _ ->
-    json_error ~stage:"michelson execution" ~message:"error unparsing michelson result" ()
-
+    let content = make_content ~message:"error unparsing michelson result" () in
+    [make ~stage:"michelson execution" ~content]
   | `Parsing_payload_tracer _ ->
-    json_error ~stage:"michelson execution" ~message:"error parsing message" ()
-
+    let content = make_content ~message:"error parsing message" () in
+    [make ~stage:"michelson execution" ~content]
   | `Packing_payload_tracer _ ->
-    json_error ~stage:"michelson execution" ~message:"error packing message" ()
-
+    let content = make_content ~message:"error packing message" () in
+    [make ~stage:"michelson execution" ~content]
   | `Parsing_input_tracer _ ->
-    json_error ~stage:"michelson execution" ~message:"error parsing input" ()
-
+    let content = make_content ~message:"error parsing input" () in
+    [make ~stage:"michelson execution" ~content]
   | `Parsing_code_tracer _ ->
-    json_error ~stage:"michelson execution" ~message:"error parsing program code" ()
-
+    let content = make_content ~message:"error parsing program code" () in
+    [make ~stage:"michelson execution" ~content]
   | `Error_of_execution_tracer _ ->
-    json_error ~stage:"michelson execution" ~message:"error of execution" ()
-
-  | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~message:"given entrypoint is not a function" ()
-  | `Main_view_not_a_function _str -> json_error ~stage:"top-level glue" ~message:"given view is not a function" ()
-  | `Main_view_rule_violated loc -> json_error ~loc ~stage:"top-level glue" ~message:"view rule violated" ()
-  | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~message:"Missing entrypoint" ()
-
-  | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
-  | `Parser_tracer e -> Parsing.Errors.error_jsonformat e
-  | `Pretty_tracer _ -> `Null (*no error in this pass*)
-  | `Cit_pascaligo_tracer  e -> `List (List.map ~f:Tree_abstraction.Pascaligo.Errors.error_jsonformat e)
-  | `Cit_cameligo_tracer   e -> `List (List.map ~f:Tree_abstraction.Cameligo.Errors.error_jsonformat e)
-  | `Cit_reasonligo_tracer e -> `List (List.map ~f:Tree_abstraction.Reasonligo.Errors.error_jsonformat e)
-  | `Cit_jsligo_tracer     e -> `List (List.map ~f:Tree_abstraction.Jsligo.Errors.error_jsonformat e)
-  | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_jsonformat e
-  | `Desugaring_tracer e -> Desugaring.Errors.error_jsonformat e
-  | `Checking_tracer e -> Checking.Errors.error_jsonformat e
-  | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_jsonformat e
-  | `Aggregation_tracer e -> Aggregation.Errors.error_jsonformat e
-  | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_jsonformat e
-  | `Spilling_tracer e -> Spilling.Errors.error_jsonformat e
-  | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_jsonformat e
-  | `Scoping_tracer e -> Scoping.Errors.error_jsonformat e
-  | `Stacking_tracer e -> Stacking.Errors.error_jsonformat e
+    let content = make_content ~message:"error of execution" () in
+    [make ~stage:"michelson execution" ~content]
+  | `Main_entrypoint_not_a_function -> 
+    let content = make_content ~message:"given entrypoint is not a function" () in
+    [make ~stage:"top-level glue" ~content]
+  | `Main_view_not_a_function _str -> 
+    let content = make_content ~message:"given view is not a function" () in
+    [make ~stage:"top-level glue" ~content]
+  | `Main_view_rule_violated location -> 
+    let content = make_content ~message:"view rule violated" ~location () in
+    [make ~stage:"top-level glue" ~content]
+  | `Main_entrypoint_not_found -> 
+    let content = make_content ~message:"Missing entrypoint" () in
+    [make ~stage:"top-level glue" ~content]
+  | `Preproc_tracer e -> [Preprocessing.Errors.error_json e]
+  | `Parser_tracer e -> [Parsing.Errors.error_json e]
+  | `Pretty_tracer _ ->
+    let content = make_content ~message:"Pretty printing tracer" () in
+    [make ~stage:"pretty" ~content]
+  | `Cit_pascaligo_tracer  e -> List.map ~f:Tree_abstraction.Pascaligo.Errors.error_json e
+  | `Cit_cameligo_tracer   e -> List.map ~f:Tree_abstraction.Cameligo.Errors.error_json e
+  | `Cit_reasonligo_tracer e -> List.map ~f:Tree_abstraction.Reasonligo.Errors.error_json e
+  | `Cit_jsligo_tracer     e -> List.map ~f:Tree_abstraction.Jsligo.Errors.error_json e
+  | `Self_ast_imperative_tracer e -> [Self_ast_imperative.Errors.error_json e]
+  | `Desugaring_tracer e -> [Desugaring.Errors.error_json e]
+  | `Checking_tracer e -> [Checking.Errors.error_json e]
+  | `Self_ast_typed_tracer e -> [Self_ast_typed.Errors.error_json e]
+  | `Aggregation_tracer e -> [Aggregation.Errors.error_json e]
+  | `Self_ast_aggregated_tracer e -> [Self_ast_aggregated.Errors.error_json e]
+  | `Spilling_tracer e -> [Spilling.Errors.error_json e]
+  | `Self_mini_c_tracer e -> [Self_mini_c.Errors.error_json e]
+  | `Scoping_tracer e -> [Scoping.Errors.error_json e]
+  | `Stacking_tracer e -> [Stacking.Errors.error_json e]
 
   | `Main_interpret_test_entry_not_found _
   | `Main_interpret_target_lang_error _
@@ -421,16 +418,25 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_interpret_literal _
   | `Main_interpret_modules_not_supported _
   | `Main_interpret_not_enough_initial_accounts _
-   -> `Null
-
-  | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
-  | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
-  | `Main_decompile_aggregated e -> Aggregation.Errors.error_jsonformat e
-  | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
-  | `Ligo_init_unrecognized_template _lsttr -> `Null
+   ->
+    let content = make_content ~message:"Intrepret tracer" () in
+    [make ~stage:"testing framwork" ~content]
+  | `Main_decompile_michelson e -> [Stacking.Errors.error_json e]
+  | `Main_decompile_mini_c e -> [Spilling.Errors.error_json e]
+  | `Main_decompile_aggregated e -> [Aggregation.Errors.error_json e]
+  | `Main_decompile_typed e -> [Checking.Errors.error_json e]
+  | `Ligo_init_unrecognized_template _lsttr ->
+    let content = make_content ~message:"Ligo init tracer" () in
+    [make ~stage:"typer" ~content]
   | `Repl_unexpected ->
-     let message = "unexpected error" in
-     json_error ~stage:"evaluating expression" ~message ()
+    let content = make_content ~message:"REPL tracer" () in
+    [make ~stage:"repl" ~content]
+
+let error_jsonformat : Types.all -> Yojson.Safe.t
+  = fun e ->
+      let errors = error_json e in
+      let errors = List.map errors ~f:Simple_utils.Error.to_yojson in
+      `List errors
 
 let error_format : _ Simple_utils.Display.format = {
   pp = error_ppformat;

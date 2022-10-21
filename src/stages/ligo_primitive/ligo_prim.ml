@@ -59,3 +59,6 @@ module Mod_in        = Mod_in
 module Value_decl (Attr:Declaration.Attr) = Declaration.Value_decl(Attr)
 module Type_decl  (Attr:Declaration.Attr) = Declaration.Type_decl(Attr)
 module Module_decl(Attr:Declaration.Attr) = Declaration.Module_decl(Attr)
+
+(* Misc *)
+module Error = Error

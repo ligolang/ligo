@@ -84,7 +84,11 @@ let rec extract_variable_types
       then return [ binder, Ast_typed.get_t_set_exn type_ ]
       else if Ast_typed.is_t_list type_
       then return [ binder, Ast_typed.get_t_list_exn type_ ]
-      else failwith "E_for_each type with 1 binder should have set or list type"
+      else if Ast_typed.is_t_map type_
+      then 
+        let (k, v) = Ast_typed.get_t_map_exn type_ in
+        return [ binder, Ast_typed.t_pair k v ]
+      else failwith "E_for_each type with 1 binder should have map, set or list type"
   in
   match decl with
   | D_value { attr = { hidden = true; _ }; _ } -> prev

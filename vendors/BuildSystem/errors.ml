@@ -20,25 +20,23 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>Building corner case at %s : %s@]" loc msg
   )
 
-let rec error_jsonformat : t -> Yojson.Safe.t = fun a ->
-  let json_error ~stage ~content =
-    `Assoc [
-      ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
-  in
-  match a with
+let rec error_json : t -> Simple_utils.Error.t =
+  fun e ->
+  let open Simple_utils.Error in
+  let stage = "build system" in
+  match e with
   | `Build_dependency_cycle trace ->
-    let content = `Assoc [
-      ("message", `String "dependency cycle detected") ;
-      ("cycle",    `String trace) ; ] in
-    json_error ~stage:"build system" ~content
+    let message = Format.asprintf "@[<hv>Dependency cycle detected :@, %s@]" trace in
+    let content = make_content ~message () in
+    make ~stage ~content
   | `Build_corner_case (loc,msg) ->
-    let content = `Assoc [
-      ("message", `String msg) ;
-      ("location", `String loc) ]
-    in
-    json_error ~stage:"build system" ~content
+    let message = Format.asprintf "@[<hv>Building corner case at %s : %s@]" loc msg in
+    let content = make_content ~message () in
+    make ~stage ~content
+
+let error_jsonformat : t -> Yojson.Safe.t =
+  fun e ->
+    Simple_utils.Error.to_yojson (error_json e)
 
 let error_format : _ format = {
   pp = error_ppformat;
