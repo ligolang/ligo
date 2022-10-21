@@ -44,7 +44,7 @@ end = struct
     from :  a  b  c  d  e
     to :    a  b  c  e
     The most trivial patch is :
-    patch 1 : (keep a) (keep b) (keep c) (keep d) (REMOVE D) (keep e)
+    patch 1 : (keep a) (keep b) (keep c) (REMOVE D) (keep e)
     But another possible patch is :
     patch 2 : (keep a) (keep b) (keep c) (REPLACE d BY e) (REMOVE e)
 
