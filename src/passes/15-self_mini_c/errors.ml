@@ -4,7 +4,7 @@ open Ligo_prim
 let stage = "self_mini_c"
 
 type self_mini_c_error = [
-  | `Self_mini_c_bad_self_address of Constant.constant'
+  | `Self_mini_c_bad_self_address
   | `Self_mini_c_not_a_function
   | `Self_mini_c_not_a_pair
   | `Self_mini_c_could_not_aggregate_entry
@@ -21,7 +21,7 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Self_mini_c_corner_case str ->
       Format.fprintf f "%s" str
-    | `Self_mini_c_bad_self_address _cst ->
+    | `Self_mini_c_bad_self_address ->
       let s = Format.asprintf "\"Tezos.self\" must be used directly and cannot be used via another function." in
       Format.pp_print_string f s ;
     | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operation list * storage\"."
@@ -79,8 +79,8 @@ let error_jsonformat : self_mini_c_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Self_mini_c_bad_self_address cst ->
-    let msg = Format.asprintf "%a is only allowed at top-level" Constant.pp_constant' cst in
+  | `Self_mini_c_bad_self_address ->
+    let msg = Format.asprintf "SELF is only allowed at top-level" in
     let content = `Assoc [
       ("message", `String msg); ]
     in

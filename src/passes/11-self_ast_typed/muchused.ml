@@ -144,7 +144,7 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_union (muchuse_of_expr matchee) (muchuse_of_cases cases)
   | E_record re ->
      Record.fold
-       (fun acc x -> muchuse_union (muchuse_of_expr x) acc) muchuse_neutral re
+       ~f:(fun acc x -> muchuse_union (muchuse_of_expr x) acc) ~init:muchuse_neutral re
   | E_raw_code {code;_} ->
      muchuse_of_expr code
   | E_accessor {struct_;_} ->

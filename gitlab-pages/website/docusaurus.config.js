@@ -60,6 +60,7 @@ const config = {
         items: [
           { type: 'docsVersionDropdown', position: 'left' },
           { href: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
+          { href: 'https://ide-v2-beta.ligolang.org/', label: 'WebIde V2 beta', position: 'left', target: '_self' },
           { to: 'docs/intro/installation', label: 'Install', position: 'left' },
           { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
           {

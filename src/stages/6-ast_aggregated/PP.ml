@@ -53,7 +53,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_arrow            a -> Arrow.pp      type_expression ppf a
   | T_constant        tc -> type_injection ppf tc
   | T_singleton       x  -> Literal_value.pp            ppf x
-  | T_for_all         x  -> Abstraction.pp   type_expression ppf x
+  | T_for_all         x  -> Abstraction.pp_forall type_expression ppf x
 
 and row : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
@@ -86,7 +86,7 @@ let rec type_content_orig : formatter -> type_content -> unit =
   | T_arrow            a -> Arrow.pp      type_expression ppf a
   | T_constant        tc -> type_injection ppf tc
   | T_singleton       x  -> Literal_value.pp            ppf x
-  | T_for_all         x  -> Abstraction.pp   type_expression ppf x
+  | T_for_all         x  -> Abstraction.pp_forall type_expression ppf x
 
 
 and type_expression_orig ppf (te : type_expression) : unit =
@@ -104,8 +104,8 @@ let type_expression_annot ppf (te : type_expression) : unit =
   fprintf ppf " : %a" type_expression te
 
 let rec expression ppf (e : expression) =
-  fprintf ppf "%a"
-    expression_content e.expression_content
+  fprintf ppf "%a : %a"
+    expression_content e.expression_content type_expression e.type_expression
 
 and expression_content ppf (ec: expression_content) =
   match ec with

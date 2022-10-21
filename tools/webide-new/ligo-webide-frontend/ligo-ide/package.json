@@ -46,7 +46,7 @@
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "1.0.0-beta.10",
     "prop-types": "^15.8.1",
-    "rc-tree": "git+ssh://git@gitlab.com:ligolang/react-component-tree.git",
+    "rc-tree": "git+https://git@gitlab.com/ligolang/react-component-tree.git",
     "react": "^17.0.1",
     "react-contexify": "^5.0.0",
     "react-dnd": "^14.0.4",

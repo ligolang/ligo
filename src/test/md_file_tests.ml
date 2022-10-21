@@ -129,7 +129,7 @@ let compile_groups ~raise filename grp_list =
         let options = Compiler_options.set_test_flag options true in
         let typed = Build.qualified_typed_str ~raise ~options contents in
         Format.printf "Typed AST: %a\n" (Ast_typed.PP.program ~use_hidden:true) typed;
-        let _ : (group_name * Ligo_interpreter.Types.value) list = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
+        let _ : bool * (group_name * Ligo_interpreter.Types.value) list = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()
       | Object ->
         let typed = Build.qualified_typed_str ~raise ~options contents in

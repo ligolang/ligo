@@ -1628,7 +1628,7 @@ File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, ch
 Warning: unused variable "p".
 Hint: replace it by "_p" to prevent this warning.
 
-File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 4-59:
   7 |   {
   8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
   9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
@@ -1876,7 +1876,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "error_self_annotations.mligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 22-26:
+    File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 10-44:
       5 | let main (_,_ : param * unit) : operation list * unit =
       6 |   let c = (Tezos.self("%a") : unit contract) in
       7 |   let op = Tezos.transaction () 0mutez c in
@@ -1888,10 +1888,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_get_entrypoint.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 3, characters 11-16:
+    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 2, character 10 to line 4, character 85:
+      1 | let main ((_, _) : (unit * unit)) : operation list * unit =
       2 |   let v = (Tezos.get_entrypoint_opt
       3 |            "foo"
       4 |            ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit contract option) in
+      5 |   let u : unit = match v with
 
     Invalid entrypoint "foo". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
@@ -1936,7 +1938,7 @@ let%expect_test _ =
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
     Invalid type(s)
-    Cannot unify option (^gen#495) with string. |}]
+    Cannot unify option (^gen#491) with string. |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =

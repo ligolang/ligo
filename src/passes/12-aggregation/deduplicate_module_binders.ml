@@ -36,13 +36,13 @@ let rec type_expression : Scope.t -> AST.type_expression -> AST.type_expression 
     T_variable type_variable ->
     return @@ T_variable type_variable
   | T_sum {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
     return @@ T_sum {fields;layout}
   | T_record {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
@@ -110,7 +110,7 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
     let cases = matching_cases scope cases in
     return @@ E_matching {matchee;cases}
   | E_record record ->
-    let record = Record.map self record in
+    let record = Record.map ~f:self record in
     return @@ E_record record
   | E_accessor {struct_;path} ->
     let struct_ = self struct_ in

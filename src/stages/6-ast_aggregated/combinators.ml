@@ -234,13 +234,12 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [p] }
-[@@map (_ct_, ("some", "contract_opt", "contract"))]
+[@@map (_ct_, ("some"))]
 
 let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; arguments = [p; p']}
-[@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]
+[@@map (_ct_, ("cons", "set_add", "map_remove"))]
 
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
-let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
 [@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
@@ -280,6 +279,7 @@ let e_a_bool b = make_e (e_bool b) (t_bool ())
 
 (* Constants *)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
+let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
 let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
 let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)
@@ -288,11 +288,18 @@ let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.ty
 let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
 let e_a_big_map_add k v tl = make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
 let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
+let e_contract_opt a : expression_content =
+  let language = "Michelson" in
+  let code = Format.asprintf "{ PUSH address \"%s\" ; CONTRACT }" a in
+  let code = e_a_string @@ Ligo_string.verbatim code in
+  E_raw_code { language ; code }
 let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
-let e_a_contract a t = make_e (e_contract a) (t_contract t)
-let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
+let e_contract_entrypoint_opt e a : expression_content =
+  let language = "Michelson" in
+  let code = Format.asprintf "{ PUSH address \"%s\" ; CONTRACT %%%s }" a e in
+  let code = e_a_string @@ Ligo_string.verbatim code in
+  E_raw_code { language ; code }
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =
   match t.expression_content with
@@ -382,3 +389,8 @@ let context_apply (p : context) (e : expression) : expression =
   let f d e = match Location.unwrap d with
     | D_value { binder ; expr ; attr } -> e_a_let_in binder expr e attr in
   List.fold_right ~f ~init:e p
+
+let get_e_tuple = fun t ->
+  match t with
+  | E_record r -> Some (List.map ~f:snd @@ Record.tuple_of_record r)
+  | _ -> None

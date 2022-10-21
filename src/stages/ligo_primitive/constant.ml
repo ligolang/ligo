@@ -38,7 +38,6 @@ type constant' =
   | C_GE
   (* Bytes/ String *)
   | C_CONCAT
-  | C_BYTES_UNPACK
   | C_CONS
   | C_SIZE
   | C_SLICE
@@ -93,21 +92,13 @@ type constant' =
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
   (* Blockchain *)
-  | C_CALL
-  | C_CONTRACT
-  | C_CONTRACT_OPT
-  | C_CONTRACT_WITH_ERROR
-  | C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT
-  | C_ADDRESS
-  | C_SELF
-  | C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT
-  | C_SET_DELEGATE
   | C_CREATE_CONTRACT
-  | C_OPEN_CHEST
-  | C_VIEW
+  (* Check - used for checking conditions and giving errors *)
+  | C_CHECK_SELF
+  | C_CHECK_EMIT_EVENT
+  | C_CHECK_ENTRYPOINT
   (* Tests - ligo interpreter only *)
+  | C_TEST_ADDRESS [@only_interpreter]
   | C_TEST_SIZE [@only_interpreter]
   | C_TEST_ORIGINATE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
@@ -163,11 +154,9 @@ type constant' =
   | C_TEST_INT64_TO_INT [@only_interpreter]
   | C_TEST_LAST_EVENTS [@only_interpreter]
   | C_TEST_TRY_WITH [@only_interpreter]
+  | C_TEST_SET_PRINT_VALUES [@only_interpreter]
   (* New with EDO*)
-  | C_SAPLING_VERIFY_UPDATE
-  | C_SAPLING_EMPTY_STATE
   | C_GLOBAL_CONSTANT
-  | C_EMIT_EVENT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]

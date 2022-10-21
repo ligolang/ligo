@@ -18,7 +18,7 @@ end
 module LSet = Caml.Set.Make(struct type t = Label.t [@@deriving compare] end)
 
 type 'a t = 'a LMap.t
-  [@@deriving eq,yojson,hash,map]
+  [@@deriving eq,yojson,hash]
 
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
 
@@ -30,21 +30,24 @@ let compare compare lma lmb =
   List.compare aux ra rb
 
 
-let fold : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc
-= fun f acc record ->
+let fold : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc) -> 'acc
+= fun record ~init ~f ->
   LMap.fold (
     fun _ a acc -> f acc a
-  ) record acc
+  ) record init
 
-let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
-= fun f acc record ->
+let fold_map : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc * 'b) -> 'acc * 'b t
+= fun record ~init ~f ->
   LMap.fold_map ~f:(
     fun _ a acc -> f acc a
-  ) ~init:acc record
+  ) ~init record
 
-let iter : ('a -> unit) -> 'a t -> unit
-= fun f record ->
+let iter :  'a t -> f:('a -> unit) -> unit
+= fun record ~f ->
   LMap.iter (fun _ a -> f a) record
+
+let map : 'a t -> f:('a -> 'b) -> 'b t
+= fun record ~f -> LMap.map f record
 
 let of_list = LMap.of_list
 
@@ -58,6 +61,9 @@ let tuple_of_record (m: _ t) =
     Option.bind ~f:(fun opt -> Some ((label,opt),i+1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
+
+let record_of_tuple (l : _ list) =
+  of_list @@ List.mapi ~f:(fun i v -> (Label.of_int i, v)) l
 
 let to_list = LMap.to_kv_list
 
