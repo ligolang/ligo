@@ -419,7 +419,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
   | `Spilling_tracer e -> [Spilling.Errors.error_json e]
   | `Self_mini_c_tracer e -> [Self_mini_c.Errors.error_json e]
   | `Scoping_tracer e -> [Scoping.Errors.error_json e]
-  | `Stacking_tracer e -> Stacking.Errors.error_jsonformat e
+  | `Stacking_tracer e -> [Stacking.Errors.error_json e]
 
   | `Main_interpret_test_entry_not_found _
   | `Main_interpret_target_lang_error _
@@ -434,7 +434,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
    ->
     let content = make_content ~message:"Intrepret tracer" () in
     [make ~stage:"" ~content]
-  | `Main_decompile_michelson e -> [Stacking.Errors.error_jsonformat e]
+  | `Main_decompile_michelson e -> [Stacking.Errors.error_json e]
   | `Main_decompile_mini_c e -> [Spilling.Errors.error_json e]
   | `Main_decompile_aggregated e -> [Aggregation.Errors.error_json e]
   | `Main_decompile_typed e -> [Checking.Errors.error_json e]
