@@ -263,19 +263,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Ligo_init_unrecognized_template lststr -> Format.fprintf f "Template unrecognized please select one of the following list : \n%s" @@ String.concat ~sep:"\n" lststr
   )
 
-let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=[]) () =
-  let append_opt ~f xs opt = Option.fold opt ~init:xs ~f:(fun xs x -> f x :: xs) in
-  let content = extra_content in
-  let content = append_opt content message  ~f:(fun msg -> ("message", `String msg)) in
-  let content = append_opt content child ~f:(fun err -> ("children", err))
-  in
-  `Assoc [
-    ("status",  `String "error") ;
-    ("stage",   `String stage)   ;
-    ("content", `Assoc content) ;
-    ("location", Location.to_yojson loc)]
-
-
 let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
   let open Simple_utils.Error in
   match a with
