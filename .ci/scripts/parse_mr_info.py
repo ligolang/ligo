@@ -1,10 +1,14 @@
 from argparse import ArgumentParser
 from gitlab import Gitlab
-from marko.ext.gfm import gfm, elements
-from marko import block, inline
+from marko.ext.gfm import GFM, elements
+from marko.md_renderer import MarkdownRenderer
+from marko import block, inline, Markdown
 import json
 import re
 import sys
+
+
+gfm = Markdown(renderer=MarkdownRenderer, extensions=[ GFM ])
 
 
 parser = ArgumentParser(
@@ -72,18 +76,17 @@ if __name__ == "__main__":
 
     # Get changelog details
     if type != "none":
-        changelog = get_prefixed_elem(markdown.children, "Changelog", elements.Paragraph)
-        changelog_details = changelog.children[0].children
+        changelog = get_prefixed_elem(markdown.children, "Changelog", elements.Paragraph)    
+        changelog_details = gfm.renderer.render_children(changelog)
     else:   
         changelog_details = None
 
     print(
-        json.dumps(
             {
                 "title": title,
                 "author": author,
                 "changelog": changelog_details,
                 "type": type,
             }
-        )
+        
     )
