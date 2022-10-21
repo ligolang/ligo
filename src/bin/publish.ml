@@ -64,6 +64,7 @@ type version =
   ; description : string
   ; scripts     : (string * string) list
   ; readme      : string
+  ; bugs        : LigoManifest.Bugs.t 
   ; id          : string [@key "_id"]
   ; dist        : dist
   } [@@deriving to_yojson]
@@ -102,7 +103,7 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts ~bugs = {
   id = name ;
   name ;
   description ;
@@ -123,6 +124,7 @@ let body ~name ~author ~type_ ~storage_fn ~storage_arg ~repository ~main ~readme
     description ;
     scripts ;
     readme ;
+    bugs ;
     id = Format.sprintf "%s@%s" name version ;
     dist = {
       integrity = Format.sprintf "sha512-%s" (Base64.encode_exn sha512) ;
@@ -150,7 +152,8 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   ; type_
   ; repository 
   ; storage_fn
-  ; storage_arg ; _ } = manifest in
+  ; storage_arg 
+  ; bugs ; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
@@ -173,6 +176,7 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
     ~sha512
     ~sha1
     ~gzipped_tarball
+    ~bugs
     |> body_to_yojson 
     |> Yojson.Safe.to_string 
     |> Cohttp_lwt.Body.of_string in

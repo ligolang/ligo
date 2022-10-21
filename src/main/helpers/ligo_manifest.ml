@@ -1,3 +1,19 @@
+module Bugs = struct
+  type t = 
+    { email : string
+    ; url : string
+    }
+    [@@deriving yojson]
+
+  let email_re = Str.regexp "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,10}$"
+  let url_re = Str.regexp "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
+
+  let validate { email ; url } =
+    Str.string_match email_re email 0 &&
+    Str.string_match url_re url 0
+
+end
+
 type t =
   { name : string
   ; version : string
@@ -12,8 +28,9 @@ type t =
   ; license : string
   ; readme : string
   ; ligo_manifest_path : string
-  }
-[@@deriving to_yojson]
+  ; bugs : Bugs.t
+  } 
+  [@@deriving to_yojson]
 
 let is_empty field value =
   if String.equal value ""
@@ -61,6 +78,7 @@ let read ~project_root =
       try Yojson.Safe.from_file ligo_manifest_path with
       | _ -> failwith "No package.json found!"
     in
+    (* instead of catching failwith and turning it to Error use result let-syntax  *)
     (try
        let module Util = Yojson.Safe.Util in
        let name =
@@ -133,6 +151,20 @@ let read ~project_root =
          try json |> Util.member "readme" |> Util.to_string with
          | _ -> try_readme ~project_root
        in
+       let bugs =
+        let result = 
+          try json |> Util.member "bugs" |> (fun b ->
+            match Bugs.of_yojson b with
+            | Ok bugs when Bugs.validate bugs -> Ok bugs
+            | Ok _
+            | Error _ -> Error "Invalid `bugs` fields.\nemail & url (bug tracker url) needs to be provided\ne.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \"email\" : \"foo@bar.com\" }"  
+          ) with
+          | _ -> Error "No license field in package.json"
+        in
+        match result with
+        | Ok bugs -> bugs
+        | Error e -> failwith e
+       in
        Ok
          { name
          ; version
@@ -147,6 +179,7 @@ let read ~project_root =
          ; license
          ; readme
          ; ligo_manifest_path
+         ; bugs
          }
      with
     | Failure e -> Error e)
