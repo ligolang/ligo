@@ -10,14 +10,13 @@ COPY . .
 
 RUN yarn install
 
-ENV NODE_ENV production
-RUN yarn build:web
+ 
+RUN yarn build:react-prod
 
 FROM ${RUNNER_IMAGE}
 
 ENV NODE_ENV production
 ENV SERVER_FALLBACK_PAGE /public/index.html
-
 COPY --from=builder /app/build /public
 
 EXPOSE 3000
