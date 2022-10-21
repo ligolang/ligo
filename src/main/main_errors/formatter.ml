@@ -420,14 +420,14 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
   | `Main_interpret_not_enough_initial_accounts _
    ->
     let content = make_content ~message:"Intrepret tracer" () in
-    [make ~stage:"" ~content]
+    [make ~stage:"testing framwork" ~content]
   | `Main_decompile_michelson e -> [Stacking.Errors.error_json e]
   | `Main_decompile_mini_c e -> [Spilling.Errors.error_json e]
   | `Main_decompile_aggregated e -> [Aggregation.Errors.error_json e]
   | `Main_decompile_typed e -> [Checking.Errors.error_json e]
   | `Ligo_init_unrecognized_template _lsttr ->
     let content = make_content ~message:"Ligo init tracer" () in
-    [make ~stage:"" ~content]
+    [make ~stage:"typer" ~content]
   | `Repl_unexpected ->
     let content = make_content ~message:"REPL tracer" () in
     [make ~stage:"repl" ~content]

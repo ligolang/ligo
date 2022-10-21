@@ -99,7 +99,7 @@ let pp : display_format:string display_format ->
       Format.fprintf f "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]"
     
   )
-let to_warning : all -> Simple_utils.Warning.t list = fun w ->
+let to_warning : all -> Simple_utils.Warning.t = fun w ->
   let open Simple_utils.Warning in
   match w with
   | `Use_meta_ligo location ->
@@ -107,7 +107,7 @@ let to_warning : all -> Simple_utils.Warning.t list = fun w ->
     Consider using `Test.failwith` for throwing a testing framework failure.@."
     in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"testing framework" ~content
   | `Michelson_typecheck_failed_with_different_protocol (user_proto,errs) ->
     let open Environment.Protocols in
     let message = Format.asprintf
@@ -121,50 +121,50 @@ let to_warning : all -> Simple_utils.Warning.t list = fun w ->
     in
     let location = Location.dummy in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"michelson typecheck" ~content
   | `Checking_ambiguous_constructor (location,tv_chosen,tv_possible) ->
     let message = Format.asprintf "Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @."
       Type_var.pp tv_chosen
       Type_var.pp tv_possible
     in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"typer" ~content
   | `Main_view_ignored location ->
     let message = Format.sprintf "Warning: This view will be ignored, command line option override [@ view] annotation@." in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"view compilation" ~content
   | `Self_ast_typed_warning_unused (location, variable) ->
     let message = Format.sprintf
       "@.Warning: unused variable \"%s\".@.Hint: replace it by \"_%s\" to prevent this warning.\n"
       variable variable
     in
     let content = make_content ~message ~location ~variable () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"parsing command line parameters" ~content
   | `Self_ast_typed_warning_muchused (location, s) ->
     let message = Format.sprintf
         "@.Warning: variable \"%s\" cannot be used more than once.\n@]" s in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"typer" ~content
   | `Self_ast_typed_warning_unused_rec (location, s) ->
     let message = Format.sprintf
       "Warning: unused recursion .@.Hint: remove recursion from the function \"%s\" to prevent this warning.\n"
       s 
     in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"parsing command line parameters" ~content
   | `Self_ast_imperative_warning_layout (location,Label s) ->
       let message = Format.sprintf
         "Warning: layout attribute only applying to %s, probably ignored.@." s
     in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"typer" ~content
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable (location, variable) ->
     let variable = Format.asprintf "%a" Type_var.pp variable in  
     let message = Format.sprintf
       "Warning: %s is not recognize as a polymorphic variable anymore. If you want to make a polymorphic function, please consult the online documentation @." variable
     in
     let content = make_content ~message ~location ~variable () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"abstractor" ~content
   | `Self_ast_imperative_warning_deprecated_constant (location, curr, alt, ty) ->
       let message = Format.asprintf
         "Warning: the constant %a is soon to be deprecated. Use instead %a : %a."
@@ -172,35 +172,34 @@ let to_warning : all -> Simple_utils.Warning.t list = fun w ->
         Ast_imperative.PP.expression alt
         Ast_imperative.PP.type_expression ty in
       let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"abstractor" ~content
   | `Jsligo_deprecated_failwith_no_return location ->
     let message = Format.sprintf "Deprecated `failwith` without `return`: `failwith` is just a function.@.Please add an explicit `return` before `failwith` if you meant the built-in `failwith`.@.For now, compilation proceeds adding such `return` automatically.@" in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"abstractor" ~content
   | `Jsligo_deprecated_toplevel_let location ->
     let message = Format.sprintf "Toplevel let declaration are silently change to const declaration.@" in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"abstractor" ~content
   | `Jsligo_unreachable_code location ->
     let message = "Warning: Unreachable code." in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"abstractor" ~content
   | `Self_ast_aggregated_warning_bad_self_type (got,expected,location) ->
     let message = Format.asprintf
       "Warning: Tezos.self type annotation.@.Annotation \"%a\" was given, but contract being compiled would expect \"%a\".@.Note that \"Tezos.self\" refers to the current contract, so the parameters should be generally the same."
       Ast_aggregated.PP.type_expression got
       Ast_aggregated.PP.type_expression expected in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"aggregation" ~content
   | `Deprecated_reasonligo ->
     let message = Format.sprintf "Reasonligo is depreacted, support will be dropped in a few versions.@" in
     let location = Location.dummy in
     let content = make_content ~message ~location () in
-    [make ~stage:"parsing command line parameters" ~content]
+    make ~stage:"cli parsing" ~content
 
 let to_json : all -> Yojson.Safe.t = fun w ->
-  let warnings = to_warning w in
-  let warnings = List.map warnings ~f:Simple_utils.Warning.to_yojson in
-  `List warnings
+  let warning = to_warning w in
+  Simple_utils.Warning.to_yojson warning
 
 let format = {pp;to_json}
