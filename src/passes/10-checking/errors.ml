@@ -627,8 +627,8 @@ let rec error_ppformat
          Ast_typed.PP.type_expression
          type_)
 
-let rec error_json : typer_error -> Error.t = fun e ->
-  let open Error in
+let rec error_json : typer_error -> Simple_utils.Error.t = fun e ->
+  let open Simple_utils.Error in
   match e with
   | `Typer_mut_var_captured (location, var) ->
     let message = Format.asprintf "Invalid capture of mutable variable \"%a\"" Value_var.pp var in

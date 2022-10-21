@@ -82,18 +82,18 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp_lift reg
   )
 
-let error_json : abs_error -> Ligo_prim.Error.t =
+let error_json : abs_error -> Simple_utils.Error.t =
   fun e ->
-    let open Ligo_prim.Error in
+    let open Simple_utils.Error in
     match e with
     | `Concrete_cameligo_expected_access_to_variable reg ->
       let message = "Expected access to a variable." in
-      let location = Location.File reg in
+      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_untyped_recursive_fun reg ->
       let message = "Invalid function declaration.@.Recursive functions are required to have a type annotation (for now)." in
-      let location = Location.File reg in
+      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_unknown_constant (s,location) ->
@@ -103,12 +103,12 @@ let error_json : abs_error -> Ligo_prim.Error.t =
     | `Concrete_cameligo_unsupported_pattern_type pl ->
       let message = "Invalid pattern.@.Can't match on values." in
       let reg = List.fold_left ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p)) ~init:Region.ghost pl in
-      let location = Location.File reg in
+      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_unsupported_string_singleton te ->
       let message = "Invalid type. @.It's not possible to assign a string to a type." in
-      let location = Location.File (Raw.type_expr_to_region te) in
+      let location = Location.lift (Raw.type_expr_to_region te) in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_recursion_on_non_function location ->
@@ -117,7 +117,7 @@ let error_json : abs_error -> Ligo_prim.Error.t =
       make ~stage ~content
     | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
       let message = Format.sprintf "Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type." name in
-      let location = Location.File (Raw.type_expr_to_region texpr) in
+      let location = Location.lift (Raw.type_expr_to_region texpr) in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_michelson_type_wrong_arity (location,name) ->
@@ -126,19 +126,19 @@ let error_json : abs_error -> Ligo_prim.Error.t =
       make ~stage ~content
     | `Concrete_cameligo_missing_funarg_annotation v ->
       let message = Format.sprintf "Missing a type annotation for argument \"%s\"." v.value in
-      let location = Location.File v.region in
+      let location = Location.lift v.region in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) ->
       let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
       let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       let message = Format.sprintf "The tuple \"%s\" does not have the expected type \"%s\"." p t in
-      let location = Location.File region in
+      let location = Location.lift region in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_cameligo_type_params_not_annotated reg ->
       let message = "Functions with type parameters need to be annotated." in
-      let location = Location.File reg in
+      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content
 

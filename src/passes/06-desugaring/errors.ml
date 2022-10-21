@@ -16,9 +16,9 @@ let error_ppformat
     | `Desugaring_corner_case s -> Format.fprintf f "@[<hv>Corner case: %s@]" s)
 
 
-let rec error_json : desugaring_error -> Ligo_prim.Error.t =
+let rec error_json : desugaring_error -> Simple_utils.Error.t =
  fun e ->
-  let open Ligo_prim.Error in
+  let open Simple_utils.Error in
   match e with
   | `Desugaring_corner_case e ->
     let message = Format.asprintf "Corner case: %s" e in

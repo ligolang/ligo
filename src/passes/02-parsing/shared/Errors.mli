@@ -26,5 +26,4 @@ val to_ppformat    : pp_formater (* Alias of [error_ppformat] *)
 
 (* JSON *)
 
-val error_jsonformat : t -> Yojson.Safe.t
-val to_json : t -> Yojson.Safe.t  (* Alias of [error_jsonformat] *)
+val error_jsonformat : t -> Simple_utils.Error.t

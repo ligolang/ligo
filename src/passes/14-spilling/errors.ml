@@ -67,8 +67,8 @@ let error_ppformat : display_format:string display_format ->
         (printable (fun s -> s) (strip_locations code))
   )
 
-let error_json : spilling_error -> Error.t = fun e ->
-  let open Error in
+let error_json : spilling_error -> Simple_utils.Error.t = fun e ->
+  let open Simple_utils.Error in
   match e with
   | `Spilling_corner_case (loc,desc) ->
     let message = Format.asprintf "%s\n corner case: %s\n%s" loc desc (corner_case_message ()) in

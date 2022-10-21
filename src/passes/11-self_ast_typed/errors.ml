@@ -126,9 +126,9 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp loc
   )
 
-let error_json : self_ast_typed_error -> Error.t =
+let error_json : self_ast_typed_error -> Simple_utils.Error.t =
   fun e ->
-  let open Error in
+  let open Simple_utils.Error in
   match e with
   | `Self_ast_typed_annotated_declaration_shadowed location ->
     let message = "This declaration holds an annotation and is later shadowed." in

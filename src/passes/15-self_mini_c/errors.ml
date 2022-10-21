@@ -38,13 +38,13 @@ let error_ppformat : display_format:string display_format ->
         Simple_utils.Snippet.pp e.location
   )
 
-  let error_json : self_mini_c_error -> Error.t = fun e ->
-    let open Error in
+  let error_json : self_mini_c_error -> Simple_utils.Error.t = fun e ->
+    let open Simple_utils.Error in
     match e with
     | `Self_mini_c_corner_case message ->
       let content = make_content ~message () in
       make ~stage ~content
-    | `Self_mini_c_bad_self_address _ ->
+    | `Self_mini_c_bad_self_address ->
       let message = "\"Tezos.self\" must be used directly and cannot be used via another function." in
       let content = make_content ~message () in
       make ~stage ~content

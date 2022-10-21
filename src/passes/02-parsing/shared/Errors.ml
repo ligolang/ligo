@@ -36,19 +36,12 @@ let to_ppformat = error_ppformat
 
 (* JSON *)
 
-let error_jsonformat : t -> Yojson.Safe.t =
+let error_jsonformat : t -> Simple_utils.Error.t =
   fun error ->
-  let json_error ~stage ~content =
-    `Assoc [
-      ("status",  `String "error");
-      ("stage",   `String stage);
-      ("content",  content)] in
+  let open Simple_utils.Error in
   match error with
     `Parsing Region.{value; region} ->
-       let loc = Location.lift region in
-       let content = `Assoc [
-         ("message",  `String value);
-         ("location", Location.to_yojson loc)]
-       in json_error ~stage ~content
-
-let to_json = error_jsonformat
+      let location = Location.lift region in
+      let message = value in
+      let content = make_content ~message ~location () in
+      make ~stage ~content

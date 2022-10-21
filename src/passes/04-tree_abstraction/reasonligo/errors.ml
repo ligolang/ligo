@@ -73,13 +73,13 @@ let error_ppformat : display_format:string display_format ->
     )
   )
 
-let error_json : abs_error -> Ligo_prim.Error.t =
+let error_json : abs_error -> Simple_utils.Error.t =
   fun e ->
-    let open Ligo_prim.Error in
+    let open Simple_utils.Error in
     match e with
     | `Concrete_reasonligo_expected_access_to_variable reg ->
       let message = "Expected access to a variable." in
-      let location = Location.File reg in
+      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_reasonligo_unknown_constant (s,location) ->
@@ -93,12 +93,12 @@ let error_json : abs_error -> Ligo_prim.Error.t =
     | `Concrete_reasonligo_unsupported_pattern_type pl ->
       let message = "Invalid pattern matching.@.Can't match on values." in
       let reg = Raw.pattern_to_region pl in
-      let location = Location.File reg in
+      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_reasonligo_unsupported_string_singleton te ->
       let message = Format.sprintf "Invalid type. @.It's not possible to assign a string to a type." in
-      let location = Location.File (Raw.type_expr_to_region te) in
+      let location = Location.lift (Raw.type_expr_to_region te) in
       let content = make_content ~message ~location () in
       make ~stage ~content
     | `Concrete_reasonligo_recursion_on_non_function location ->
@@ -117,7 +117,7 @@ let error_json : abs_error -> Ligo_prim.Error.t =
       let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
       let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       let message = Format.sprintf "The tuple \"%s\" does not have the expected type \"%s\"." p t in
-      let location = Location.File region in
+      let location = Location.lift region in
       let content = make_content ~message ~location () in
       make ~stage ~content
 

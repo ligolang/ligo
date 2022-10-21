@@ -1,5 +1,3 @@
-open Simple_utils
-
 type content =
   { message : string
   ; location : Location.t option

@@ -276,8 +276,8 @@ let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=
     ("location", Location.to_yojson loc)]
 
 
-let rec error_json : Types.all -> Ligo_prim.Error.t list = fun a ->
-  let open Ligo_prim.Error in
+let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
+  let open Simple_utils.Error in
   match a with
   | `Test_err_tracer (name,err) ->
     let children = error_json err in
@@ -303,7 +303,7 @@ let rec error_json : Types.all -> Ligo_prim.Error.t list = fun a ->
     [make ~stage:"" ~content]
   (* Top-level errors *)
   | `Build_error_tracer e -> 
-    json_error ~stage:"build system" ~child:(BuildSystem.Errors.error_jsonformat e) ()
+    [BuildSystem.Errors.error_json e]
   | `Main_invalid_generator_name _ ->
     let content = make_content ~message:"bad generator name" () in
     [make ~stage:"command line interpreter" ~content]
@@ -401,8 +401,8 @@ let rec error_json : Types.all -> Ligo_prim.Error.t list = fun a ->
   | `Main_entrypoint_not_found -> 
     let content = make_content ~message:"Missing entrypoint" () in
     [make ~stage:"top-level glue" ~content]
-  | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
-  | `Parser_tracer e -> Parsing.Errors.error_jsonformat e
+  | `Preproc_tracer e -> [Preprocessing.Errors.error_json e]
+  | `Parser_tracer e -> [Parsing.Errors.error_jsonformat e]
   | `Pretty_tracer _ ->
     let content = make_content ~message:"Pretty printing tracer" () in
     [make ~stage:"pretty" ~content]
@@ -418,7 +418,7 @@ let rec error_json : Types.all -> Ligo_prim.Error.t list = fun a ->
   | `Self_ast_aggregated_tracer e -> [Self_ast_aggregated.Errors.error_json e]
   | `Spilling_tracer e -> [Spilling.Errors.error_json e]
   | `Self_mini_c_tracer e -> [Self_mini_c.Errors.error_json e]
-  | `Scoping_tracer e -> Scoping.Errors.error_jsonformat e
+  | `Scoping_tracer e -> [Scoping.Errors.error_json e]
   | `Stacking_tracer e -> Stacking.Errors.error_jsonformat e
 
   | `Main_interpret_test_entry_not_found _
@@ -448,7 +448,7 @@ let rec error_json : Types.all -> Ligo_prim.Error.t list = fun a ->
 let error_jsonformat : Types.all -> Yojson.Safe.t
   = fun e ->
       let errors = error_json e in
-      let errors = List.map errors ~f:Ligo_prim.Error.to_yojson in
+      let errors = List.map errors ~f:Simple_utils.Error.to_yojson in
       `List errors
 
 let error_format : _ Simple_utils.Display.format = {

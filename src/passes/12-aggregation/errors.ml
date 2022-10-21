@@ -21,9 +21,9 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>%a@.Redundant pattern matching@]" Snippet.pp loc
   )
 
-let error_json : aggregation_error -> Ligo_prim.Error.t =
+let error_json : aggregation_error -> Simple_utils.Error.t =
   fun e ->
-  let open Ligo_prim.Error in
+  let open Simple_utils.Error in
   match e with
   | `Aggregation_corner_case desc ->
     let message = Format.sprintf "@[<hv>An aggregation corner case occurred:@.%s@]" desc in

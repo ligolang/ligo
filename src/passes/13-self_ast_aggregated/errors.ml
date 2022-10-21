@@ -76,9 +76,9 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp e.location Constant.pp_constant' c
   )
 
-let error_json : self_ast_aggregated_error -> Error.t =
+let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
   fun e ->
-  let open Error in
+  let open Simple_utils.Error in
   match e with
   | `Self_ast_aggregated_expected_obj_ligo location ->
     let message = "Invalid usage of a Test primitive or type in object ligo." in
