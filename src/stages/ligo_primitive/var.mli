@@ -1,6 +1,6 @@
 module Location = Simple_utils.Location
 module type VAR = sig
-   type t [@@deriving eq, compare, yojson, hash]
+   type t [@@deriving compare, yojson, hash]
    (* Create a compiler generated variable *)
    val reset_counter : unit -> unit
    val fresh : ?loc:Location.t -> ?name:string -> unit -> t
@@ -19,6 +19,8 @@ module type VAR = sig
    val is_generated     : t -> bool
    (* Prints vars as %s or %s#%d *)
    val pp : Format.formatter -> t -> unit
+
+   include Comparable.S with type t := t
 end
 
 module Value_var : sig
@@ -42,4 +44,8 @@ module Module_var : sig
    include VAR
 
    val is_name    : t -> string -> bool
+end
+
+module Layout_var : sig
+   include VAR
 end

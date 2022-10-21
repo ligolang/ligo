@@ -22,16 +22,24 @@ module type VAR = sig
 
   (* Prints vars as %s or %s#%d *)
   val pp : Format.formatter -> t -> unit
+
+  include Comparable.S with type t := t
 end
 
 module Internal () = struct
-  type t =
-    { name : string
-    ; counter : int
-    ; generated : bool
-    ; location : Location.t [@equal.ignore] [@compare.ignore] [@hash.ignore]
-    }
-  [@@deriving equal, compare, yojson, hash]
+  module T = struct
+    type t =
+      { name : string
+      ; counter : int
+      ; generated : bool
+      ; location :
+          (Location.t
+          [@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
+      }
+    [@@deriving equal, compare, yojson, hash, sexp]
+  end
+
+  include T
 
   let global_counter = ref 1
   let reset_counter () = global_counter := 1
@@ -58,6 +66,7 @@ module Internal () = struct
   let fresh_exists ?(loc = Location.dummy) () =
     fresh ~loc ~name:exists_prefix ()
 
+
   (* should be removed in favor of a lift pass before ast_imperative *)
   let of_input_var ?(loc = Location.dummy) name =
     if String.equal name "_"
@@ -75,11 +84,9 @@ module Internal () = struct
 
 
   (* TODO remove this *)
-  let internal_get_name_and_counter var = (var.name, var.counter)
-
+  let internal_get_name_and_counter var = var.name, var.counter
   let get_location var = var.location
-  let set_location location var = {var with location}
-
+  let set_location location var = { var with location }
   let is_generated var = var.generated
 
   let is_exists { name; generated; _ } =
@@ -99,9 +106,15 @@ module Internal () = struct
 
 
   let _pp ppf v = Format.fprintf ppf "%s#%d" v.name v.counter
-  let wildcard = { name = "_"; counter = 0; location = Location.dummy; generated = false }
+
+  let wildcard =
+    { name = "_"; counter = 0; location = Location.dummy; generated = false }
+
+
+  include Comparable.Make (T)
 end
 
 module Module_var = Internal ()
 module Value_var = Internal ()
 module Type_var = Internal ()
+module Layout_var = Internal ()
