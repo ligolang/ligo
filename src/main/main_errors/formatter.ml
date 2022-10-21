@@ -281,7 +281,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
   match a with
   | `Test_err_tracer (name,err) ->
     let children = error_json err in
-    let message = "test_tracer" in
+    let message = name in
     let errors = List.map children ~f:(fun children -> 
       let content = make_content ~message ~children () in
       make ~stage:"" ~content 
@@ -347,22 +347,22 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
   | `Main_unknown ->
     let content = make_content ~message:"unknown error" () in
     [make ~stage:"michelson execution" ~content]
-  | `Main_execution_failed v ->
+  | `Main_execution_failed _ ->
     let content = make_content ~message:"main execution failed" () in
     [make ~stage:"michelson execution" ~content]
-  | `Main_invalid_amount a ->
+  | `Main_invalid_amount _ ->
     let content = make_content ~message:"invalid amount" () in
     [make ~stage:"parsing command line parameters" ~content]
-  | `Main_invalid_balance a ->
+  | `Main_invalid_balance _ ->
     let content = make_content ~message:"invalid balance" () in
     [make ~stage:"parsing command line parameters" ~content]
-  | `Main_invalid_source a ->
+  | `Main_invalid_source _ ->
     let content = make_content ~message:"invalid source" () in
     [make ~stage:"parsing command line parameters" ~content]
-  | `Main_invalid_sender a ->
+  | `Main_invalid_sender _ ->
     let content = make_content ~message:"invalid sender" () in
     [make ~stage:"parsing command line parameters" ~content]
-  | `Main_invalid_timestamp t ->
+  | `Main_invalid_timestamp _ ->
     let content = make_content ~message:"invalid timestamp notation" () in
     [make ~stage:"parsing command line parameters" ~content]
   | `Main_cannot_open_global_constants _ ->
@@ -395,8 +395,8 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
   | `Main_view_not_a_function _str -> 
     let content = make_content ~message:"given view is not a function" () in
     [make ~stage:"top-level glue" ~content]
-  | `Main_view_rule_violated loc -> 
-    let content = make_content ~message:"view rule violated" () in
+  | `Main_view_rule_violated location -> 
+    let content = make_content ~message:"view rule violated" ~location () in
     [make ~stage:"top-level glue" ~content]
   | `Main_entrypoint_not_found -> 
     let content = make_content ~message:"Missing entrypoint" () in

@@ -42,28 +42,17 @@ let error_ppformat :
 
 (* JSON *)
 
-let error_json : error -> Yojson.Safe.t =
+let error_json : error -> Simple_utils.Error.t =
   fun error ->
-    let json_error ~stage ~content =
-      `Assoc [
-         ("status", `String "error");
-         ("stage",  `String stage);
-         ("content", content)] in
+    let open Simple_utils.Error in
     match error with
       `Lexing_generic Region.{region; value} ->
-         let loc =
-           Format.asprintf "%a" Location.pp_lift @@ region in
-         let content =
-           `Assoc [
-              ("message",  `String value);
-              ("location", `String loc)]
-         in json_error ~stage ~content
+         let location = Location.lift region in
+         let message = value in
+         let content = make_content ~message ~location () in
+         make ~stage ~content
     | `Unbalanced_token region ->
-        let loc =
-          Format.asprintf "%a" Location.pp_lift @@ region in
-        let value = "Unbalanced token" in
-        let content =
-          `Assoc [
-            ("message",  `String value);
-            ("location", `String loc)]
-        in json_error ~stage ~content
+        let location = Location.lift region in
+        let message = "Unbalanced token" in 
+        let content = make_content ~message ~location () in
+        make ~stage ~content

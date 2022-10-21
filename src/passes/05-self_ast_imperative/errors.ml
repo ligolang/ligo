@@ -88,7 +88,7 @@ let error_ppformat : display_format:string display_format ->
             Snippet.pp l
   )
 
-let rec error_json : self_ast_imperative_error -> Simple_utils.Error.t =
+let error_json : self_ast_imperative_error -> Simple_utils.Error.t =
   fun e ->
     let open Simple_utils.Error in
     match e with

@@ -16,7 +16,7 @@ let error_ppformat
     | `Desugaring_corner_case s -> Format.fprintf f "@[<hv>Corner case: %s@]" s)
 
 
-let rec error_json : desugaring_error -> Simple_utils.Error.t =
+let error_json : desugaring_error -> Simple_utils.Error.t =
  fun e ->
   let open Simple_utils.Error in
   match e with
