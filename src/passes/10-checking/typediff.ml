@@ -28,7 +28,15 @@ end
 
 module Define = Diffing.Define(Defs)
 
+let rows_to_te_list : rows -> ty_expr list = fun r ->
+  let fields : row_element Record.t    = r.fields in
+  let l : (Label.t * row_element) list = Record.to_list fields in
+  let l : row_element list             = List.map ~f:snd l in
+  let l : type_expression list         = List.map ~f:(fun re -> re.associated_type) l in
+  l
 
+let rows_to_te_array : rows -> ty_expr array = fun r ->
+  Array.of_list @@ List.rev @@ rows_to_te_list r
 
 module rec TeArg : sig
   val weight : Define.change -> int
@@ -41,12 +49,12 @@ end = struct
     To find the simplest one, we tell it how costly is a change.
 
     For example,
-    from :  a  b  c  d  e
-    to :    a  b  c  e
+      from :  a  b  c  d  e
+      to :    a  b  c  e
     The most trivial patch is :
-    patch 1 : (keep a) (keep b) (keep c) (REMOVE D) (keep e)
+      patch 1 : (keep a) (keep b) (keep c) (REMOVE D) (keep e)
     But another possible patch is :
-    patch 2 : (keep a) (keep b) (keep c) (REPLACE d BY e) (REMOVE e)
+      patch 2 : (keep a) (keep b) (keep c) (REPLACE d BY e) (REMOVE e)
 
     For the first  patch, cost = 1 REMOVE = 1
     For the second patch, cost = 1 REPLACE + 1 REMOVE = 2
@@ -54,13 +62,61 @@ end = struct
 
     Weights will be used to construct a "cost matrix" to find the lightest patch,
     see : https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
-  *)
-  let weight : Define.change -> int = function
-    | Delete te -> List.length ( M.get_diff te (t_unit ()) )
-    | Insert te -> List.length ( M.get_diff te (t_unit ()) )
-    | Keep   _ -> 0
-    | Change (te1, te2, _) -> List.length (M.get_diff te1 te2)
 
+    ---
+
+    In above example, the weight of a INSERT/DELETE/CHANGE was assumed to always be 1,
+    but all changes are not created equal.
+    In below example, there is a [string] added, and a [nat->int] change in the big tuple.
+      from :          tuple1=(int * tez * int * nat)
+      to   : string * tuple2=(int * tez * nat * nat) 
+             ^^^^^^                       ^^^
+    Here, if all changes are weighted 1, then the diff would be :
+      patch 1 : (CHANGE tuple1 to STRING), (ADD tuple2)
+    However, we would rather like the following patch :
+      patch 2 : (ADD string), (CHANGE tuple1 to tuple2)
+    
+    More generally, in those cases when two big tuples t1 and t2 are similar, we prefer a (CHANGE t1 to t2).
+    To do this, we account for the type_expression in the computation of the weight. For example :
+      1. weight of (INSERT  int)                     = 1
+      2. weight of (INSERT  nat * int * tez)         = 3
+      3. weight of (CHANGE  string TO int)           = 1
+      4. weight of (CHANGE  int    * int * tez
+                        TO  string * nat * string)   = 3
+                            ^^^^^^   ^^^   ^^^^^^
+      5. weight of (CHANGE  int * int * tez
+                        TO  int * int * nat)         = 1
+                                        ^^^
+    In this last example (5.), the only real change is [tez] -> [nat], so its weight is 1.
+    More generally :
+      * For singleton types, weights of changes is 1
+      * For tuples, weight of INSERT / DELETE is the length of the tuple
+      * Weight of CHANGE tuple_a to tuple_b is the number of changes to do within the two tuples (see example 5. above)
+
+  *)
+
+  (* let weight_simple : Define.change -> int = function
+    | Delete _ -> 1
+    | Insert _ -> 1
+    | Keep   _ -> 0
+    | Change _ -> 1 *)
+
+  let weight : Define.change -> int = function
+    | Delete te
+    | Insert te -> (
+        match te.type_content with
+        | T_record r -> List.length @@ rows_to_te_list r
+        | _          -> 1
+        )
+    | Keep   _ -> 0
+    | Change (te1, te2, _) -> (
+        match te1.type_content, te2.type_content with
+        | T_record _, T_record _ -> List.length @@ M.get_diff te1 te2
+        | T_record r, _
+        | _         , T_record r -> List.length @@ rows_to_te_list r
+        | _                      -> 1
+        )
+  
   let test : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result =
     fun _state te_l te_r ->
     match type_expression_eq (te_l, te_r) with
@@ -70,6 +126,10 @@ end = struct
   let update : Define.change -> Defs.state -> Defs.state = fun _change _state -> ()
 end
 
+(*
+  The [Diff] module will compute the minimal list of changes between two lists of type_expressions,
+  using the above computation of "weights" of type_expression changes.
+*)
 and Diff : sig
   val diff :
     unit -> type_expression array -> type_expression array -> Define.patch
@@ -88,37 +148,29 @@ end = struct
   type t = Define.patch
 
   let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
-    let rows_to_te_array : rows -> ty_expr array = fun r ->
-      let fields : row_element Record.t    = r.fields in
-      let l : (Label.t * row_element) list = Record.to_list fields in
-      let l : row_element list             = List.map ~f:snd l in
-      let l : type_expression list         = List.map ~f:(fun re -> re.associated_type) l in
-      Array.of_list @@ List.rev l
-    in
+    (* let () = Printf.printf "[DEBUG] Calling get_diff <%d> <%d> )\n" (hash_ty_expr t1) (hash_ty_expr t2) in *)
     List.rev @@
     match t1.type_content, t2.type_content with
     | T_record r1, T_record r2
       when (Record.is_tuple r1.fields)
       &&   (Record.is_tuple r2.fields) ->
+      (* let () = Printf.printf "[DEBUG] Matching get_diff case (T_record, T_record) <%d> <%d> )\n" (hash_ty_expr t1) (hash_ty_expr t2) in *)
       let r1 : ty_expr array = rows_to_te_array r1 in
       let r2 : ty_expr array = rows_to_te_array r2 in
       let diff : t = Diff.diff () r1 r2 in
-       diff
-    (* If one is a record and not the other
-       the weight of the changes is basically the number of nodes
-       of the type_expression tree *)
-    | T_record r, _ ->
-      let r : ty_expr array = rows_to_te_array r in
-      let diff : t = Diff.diff () r (Array.of_list [t2]) in
       diff
-    | _, T_record r -> 
-      let r : ty_expr array = rows_to_te_array r in
-      let diff : t = Diff.diff () r (Array.of_list [t1]) in
-      diff
-    | _ ->
-      let r1 : ty_expr array = Array.of_list [t1] in
+    | T_record r1, _ ->
+      let r1 : ty_expr array = rows_to_te_array r1 in
       let r2 : ty_expr array = Array.of_list [t2] in
       let diff : t = Diff.diff () r1 r2 in
+      diff
+    | _, T_record r2 ->
+      let r1 : ty_expr array = Array.of_list [t1] in
+      let r2 : ty_expr array = rows_to_te_array r2 in
+      let diff : t = Diff.diff () r1 r2 in
+      diff
+    | _ -> 
+      let diff : t = [Change (t1, t2, ())] in
       diff
 
 end
