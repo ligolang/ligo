@@ -150,5 +150,5 @@ module PP = struct
   let t ppf (patch : t) : unit =
     match patch with
     | [] -> Format.fprintf ppf "@.No patch"
-    | _ -> Format.fprintf ppf "@[<v>Diff:@,%a@]" (pp_list_newline change)  patch
+    | _ -> Format.fprintf ppf "@.@[<v>Difference between the types:@,%a@]" (pp_list_newline change)  patch
 end
