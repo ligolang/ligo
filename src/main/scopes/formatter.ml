@@ -42,11 +42,14 @@ let json_list (list : 'a list) (format : 'a format) =
     (List.map list ~f:(fun value ->
          convert ~display_format:Json (Displayable { value; format })))
 
+let to_errors list =
+  let value = List.map list ~f:Main_errors.Formatter.error_json |> List.concat in
+  `List (List.map ~f:Simple_utils.Error.to_yojson value)
 
 let get_scope_output_to_json : get_scope_output -> json =
  fun { errors; warns; info } ->
   let content =
-    [ "errors", json_list errors error_format
+    [ "errors", to_errors errors
     ; "warnings", json_list warns warn_format
     ]
   in
