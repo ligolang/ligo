@@ -92,8 +92,6 @@ export class CompilerManager {
     // const evmVersion = projectManager.projectSettings.get("compilers.evmVersion");
     // const optimizer = projectManager.projectSettings.get("compilers.optimizer");
 
-    CompilerManager.button.setState({ building: true });
-
     this.notification = notification.info("Building Project", "Building...", 0);
 
     let contractFiles = [];
@@ -127,7 +125,6 @@ export class CompilerManager {
       });
 
     this.notification.dismiss();
-    CompilerManager.button.setState({ building: false });
   }
 
   async saveCompiledContract(data, projectManager) {

@@ -2,9 +2,9 @@ import React, { PureComponent } from "react";
 
 import { WorkspaceContext } from "~/base-components/workspace";
 import { ToolbarButton, DropdownToolbarButton } from "~/base-components/ui-components";
-import { CompilerButton } from "~/ligo-components/eth-compiler";
 import keypairManager from "~/base-components/keypair";
 import DeployScriptModal from "./DeployScriptModal";
+import CompileModal from "./CompileModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
 
 // import DeployButton from './DeployButton'
@@ -18,15 +18,23 @@ export default class ProjectToolbar extends PureComponent {
     super(props);
     this.deployScriptModal = React.createRef();
     this.expressionManagerModal = React.createRef();
+    this.compileModalRef = React.createRef();
     this.state = {
       isExpressionManagerModalOpen: false,
       currentTab: "",
       expressionManagerType: "",
+      tzFilePath: "",
     };
   }
 
   gistUploadFileModal = () => {
     this.deployScriptModal.current.openModal();
+  };
+
+  compileModalOpen = () => {
+    const tzFilePath = this.context.projectSettings?.get("main") || "";
+    this.setState({ tzFilePath });
+    this.compileModalRef.current.openModal();
   };
 
   expressionExecutionModal = (type) => {
@@ -45,15 +53,13 @@ export default class ProjectToolbar extends PureComponent {
 
     return (
       <>
-        {!noBuild && (
-          <CompilerButton
-            className="rounded-0 border-0 flex-none w-5"
-            truffle={compilers[process.env.COMPILER_VERSION_KEY]}
-            solc={compilers.solc}
-            onClick={() => projectManager.compile(null, this.props.finalCall)}
-            readOnly={readOnly}
-          />
-        )}
+        <ToolbarButton
+          id="compile"
+          icon="fas fa-hammer"
+          tooltip="Compile"
+          readOnly={readOnly}
+          onClick={() => this.compileModalOpen()}
+        />
         <ToolbarButton
           id="deploy-script"
           icon="fas fa-file-export"
@@ -85,6 +91,11 @@ export default class ProjectToolbar extends PureComponent {
           onClick={() => projectManager.openProjectSettings()}
         />
         <SignRequestModal ref={keypairManager.signReqModal} />
+        <CompileModal
+          modalRef={this.compileModalRef}
+          tzFilePath={this.state.tzFilePath}
+          onCompile={() => projectManager.compile(null, this.props.finalCall)}
+        />
         <DeployScriptModal
           modalRef={this.deployScriptModal}
           projectSettings={projectSettings}
