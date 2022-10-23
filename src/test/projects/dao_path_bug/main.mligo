@@ -1,4 +1,6 @@
-#import "@ligo/dao/src/errors.mligo" "Errors"
+#import "@ligo/dao/src/token.mligo" "Token"
 
-let main (_,_ : unit * string) : operation list * string 
-  = [], Errors.fa2_total_supply_not_found
+type storage = nat option
+
+let main (_,_ : unit * storage) : operation list * storage 
+  = [], Token.get_total_supply (Tezos.get_sender ())
