@@ -187,3 +187,42 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "import_include/main.mligo" ; "--project-root" ; "import_include" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "World" ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "import_include"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "World" ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+let () = Sys_unix.chdir pwd
