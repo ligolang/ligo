@@ -94,3 +94,30 @@ let%expect_test _ =
       storage (option nat) ;
       code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
 let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "include_include/main.mligo" ; "--project-root" ; "include_include" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "include_include"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+let () = Sys_unix.chdir pwd

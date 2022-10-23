@@ -171,10 +171,7 @@ module Make (Config : Config.S) (Options : Options.S) =
             (* We resolve the file names to be included. *)
 
             let external_dirs =
-              let file =
-                match state#parent with
-                  Some parent -> parent
-                | None        -> state#pos#file in
+              let file = path in
               ModRes.get_dependencies ~file state#mod_res in
 
             (* We try to find the file to include. If missing, the
