@@ -1,6 +1,6 @@
 {
-  "checksum": "9ac3c8475c274de19b396de5a27eb586",
-  "root": "dao_bug@link-dev:./package.json",
+  "checksum": "236cd3ef677e0a02655a611bb99e43f0",
+  "root": "dao_path_bug@link-dev:./package.json",
   "node": {
     "tezos-ligo-fa2@1.0.4@d41d8cd9": {
       "id": "tezos-ligo-fa2@1.0.4@d41d8cd9",
@@ -16,9 +16,9 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "dao_bug@link-dev:./package.json": {
-      "id": "dao_bug@link-dev:./package.json",
-      "name": "dao_bug",
+    "dao_path_bug@link-dev:./package.json": {
+      "id": "dao_path_bug@link-dev:./package.json",
+      "name": "dao_path_bug",
       "version": "link-dev:./package.json",
       "source": {
         "type": "link-dev",

@@ -1,1 +1,1 @@
-{ "dependencies": { "@ligo/dao": "1.0.9" } }
+{ "dependencies": { "@ligo/dao": "^1.0.9" } }
