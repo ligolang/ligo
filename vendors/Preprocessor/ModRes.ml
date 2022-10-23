@@ -103,17 +103,6 @@ module Path =
 
     let segs : t -> string list option = Option.map ~f:Fpath.segs
 
-    (* The predicate [is_prefix] checks if its first argument is a
-       prefix of the second. For example, given [prefix = "/a/b/c/"]
-       and [p = "/a/b/c/d/e.ligo"], then [is_prefix prefix p =
-       true]. (Remember that in this module we work with optional
-       paths.) *)
-
-    let is_prefix p1 p2 =
-      match p1, p2 with
-        Some p1, Some p2 -> Fpath.is_prefix p1 p2
-      | _ -> false
-
     (* The predicate [is_abs] checks if a path is absolute. *)
 
     let is_abs : t -> bool =
@@ -165,21 +154,27 @@ module Path =
     let to_string path =
       let* path = path in Some (Fpath.to_string path)
 
-    (* ... *)
+    (* The function [dirpath] drops the last segment from a path
+       e.g. "/a/b/c.mligo" yields "/a/b" *)
+
     let dirpath path = 
       path
     |> Option.map ~f:Fpath.split_base
     |> Option.map ~f:fst
     |> Option.map ~f:Fpath.rem_empty_seg
 
-    (* ... *)
+    (* The predicate [equal] checks if the two given path [p1] & [p2]
+       are equal *)
+
     let equal p1 p2 =
       match p1, p2 with
         Some p1, Some p2 -> 
           Fpath.equal (Fpath.normalize p1) (Fpath.normalize p2)
       | _ -> false
 
-    (* ... *)
+    (* The predicate [is_root] checks in the given path is the root 
+       directory *)
+
     let is_root = function None -> false | Some p -> Fpath.is_root p
 
   end
