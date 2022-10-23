@@ -1,0 +1,8 @@
+{
+  "pkg-a@1.0.0@d41d8cd9": "./.ligo/source/i/pkg_a__1.0.0__831aace8",
+  "import_import@link-dev:./package.json":
+    ".",
+  "import-import@1.0.0@d41d8cd9":
+    "./.ligo/source/i/import_import__1.0.0__9d021d0d",
+  "import-a@1.0.1@d41d8cd9": "./.ligo/source/i/import_a__1.0.1__83ddab61"
+}
