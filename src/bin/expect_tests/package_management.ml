@@ -77,3 +77,20 @@ let%expect_test _ =
   [%expect{|
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "dao_path_bug/main.mligo" ; "--project-root" ; "dao_path_bug" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ; PUSH string "FA2_TOTAL_SUPPLY_NOT_FOUND" ; NIL operation ; PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "dao_path_bug"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ; PUSH string "FA2_TOTAL_SUPPLY_NOT_FOUND" ; NIL operation ; PAIR } } |}]
+let () = Sys_unix.chdir pwd

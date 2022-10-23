@@ -1,0 +1,47 @@
+{
+  "checksum": "9ac3c8475c274de19b396de5a27eb586",
+  "root": "dao_bug@link-dev:./package.json",
+  "node": {
+    "tezos-ligo-fa2@1.0.4@d41d8cd9": {
+      "id": "tezos-ligo-fa2@1.0.4@d41d8cd9",
+      "name": "tezos-ligo-fa2",
+      "version": "1.0.4",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://beta.packages.ligolang.org/-/api/tezos-ligo-fa2/-/tezos-ligo-fa2-1.0.4.tgz#sha1:05e8ae8baf69910ad2b498c69fa15e942e613a5e"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "dao_bug@link-dev:./package.json": {
+      "id": "dao_bug@link-dev:./package.json",
+      "name": "dao_bug",
+      "version": "link-dev:./package.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "package.json"
+      },
+      "overrides": [],
+      "dependencies": [ "@ligo/dao@1.0.9@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "@ligo/dao@1.0.9@d41d8cd9": {
+      "id": "@ligo/dao@1.0.9@d41d8cd9",
+      "name": "@ligo/dao",
+      "version": "1.0.9",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://beta.packages.ligolang.org/-/api/@ligo/dao/-/@ligo/dao-1.0.9.tgz#sha1:ae500c5b5e32347c05d056eccc253ca9edbfbeb6"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [ "tezos-ligo-fa2@1.0.4@d41d8cd9" ],
+      "devDependencies": []
+    }
+  }
+}
