@@ -1,19 +1,12 @@
 module Method.GenerateDeployScript (generateDeployScript) where
 
 import Control.Arrow ((>>>))
-import Control.Monad ((>=>))
 import Control.Monad.Except (runExcept, throwError)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, runReaderT)
-import Control.Monad.Trans (lift)
 import Data.Aeson (decodeStrict)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as LBS
-import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NonEmpty
-import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Numeric (showFFloat)
@@ -33,7 +26,7 @@ import Morley.Michelson.Macro (expandContract)
 import Morley.Michelson.Parser
   (MichelsonSource(MSUnspecified), ParserException(..), parseExpandValue, parseNoEnv, program)
 import Morley.Michelson.Printer (renderDoc)
-import Morley.Michelson.Printer.Util (doesntNeedParens)
+import Morley.Michelson.Printer.Util (doesntNeedParens, printDocS)
 import Morley.Michelson.TypeCheck (TypeCheckOptions(..), typeCheckContractAndStorage)
 import Morley.Michelson.Typed (SomeContractAndStorage(..))
 import Morley.Michelson.Untyped (Contract, Value)
@@ -112,7 +105,7 @@ generateDeployScript request = do
              $ runReaderT (typeCheckContractAndStorage contract storage) options
        in case typeCheck of
             Left tcError -> lift . throwError $
-              err400 {errBody = LBS.pack (show (renderDoc doesntNeedParens tcError))}
+              err400 {errBody = LBS.pack (printDocS True (renderDoc doesntNeedParens tcError))}
             Right good -> pure good
 
   let originationData :: OriginationData
@@ -151,7 +144,7 @@ generateDeployScript request = do
         \ from $YOUR_SOURCE_ACCOUNT \\\
         \ running '" ++ Text.unpack (removeExcessWhitespace michelsonCode) ++ "' \\\
         \ --init '" ++ Text.unpack (removeExcessWhitespace michelsonStorage) ++ "' \\\
-        \ --burn-cap " ++ showFFloat (Just 5) (fromIntegral burnFee / (1e6 :: Double)) "" ++ "\n"
+        \ --burn-cap " ++ showFFloat (Just 5) (fromIntegralToRealFrac burnFee / (1e6 :: Double)) "" ++ "\n"
 
   pure $ DeployScript
     { dsScript = script

@@ -4,9 +4,6 @@ module Server
   )
 where
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (runReaderT)
-import Data.Proxy (Proxy(Proxy))
 import Katip (Environment(..), initLogEnv, runKatipT)
 import Network.Wai (Middleware)
 import Network.Wai.Handler.Warp (run)

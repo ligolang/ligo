@@ -1,7 +1,6 @@
 module Method.CompileExpression (compileExpression) where
 
 import Control.Monad.Except (throwError)
-import Control.Monad.Trans (lift)
 import Data.Text qualified as Text
 import Servant (err400, errBody)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))

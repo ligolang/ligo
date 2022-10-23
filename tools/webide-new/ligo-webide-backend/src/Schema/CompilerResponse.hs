@@ -7,8 +7,6 @@ import Data.Swagger.ParamSchema (ToParamSchema)
 import Data.Swagger.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, genericDeclareNamedSchema,
   unwrapUnaryRecords)
-import Data.Text (Text)
-import GHC.Generics (Generic)
 
 newtype CompilerResponse = CompilerResponse {unCompilerResponse :: Text}
   deriving stock (Show, Generic, Eq)

@@ -7,7 +7,6 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Swagger.Schema
   (ToSchema, constructorTagModifier, declareNamedSchema, defaultSchemaOptions,
   genericDeclareNamedSchema)
-import GHC.Generics (Generic)
 
 import Util (prepareField)
 

@@ -82,7 +82,7 @@ library
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   build-depends:
       aeson
-    , base >=4.7 && <5
+    , base-noprelude >=4.9 && <5
     , bytestring
     , containers
     , directory
@@ -92,6 +92,7 @@ library
     , megaparsec
     , morley
     , morley-client
+    , morley-prelude
     , mtl
     , process
     , servant-client
@@ -101,6 +102,7 @@ library
     , swagger2
     , temporary
     , text
+    , universum
     , wai
     , wai-cors
     , wai-extra
@@ -157,9 +159,11 @@ executable ligo-webide-backend
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base-noprelude >=4.9 && <5
     , ligo-webide-backend
+    , morley-prelude
     , optparse-applicative
+    , universum
   default-language: Haskell2010
 
 test-suite ligo-webide-backend-test
@@ -214,13 +218,15 @@ test-suite ligo-webide-backend-test
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
-    , base >=4.7 && <5
+    , base-noprelude >=4.9 && <5
     , bytestring
     , filepath
     , hspec
     , hspec-wai
     , http-types
     , ligo-webide-backend
+    , morley-prelude
     , text
+    , universum
     , wai-extra
   default-language: Haskell2010

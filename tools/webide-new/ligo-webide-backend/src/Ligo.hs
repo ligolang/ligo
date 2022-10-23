@@ -1,9 +1,6 @@
 module Ligo (runLigo) where
 
 import Control.Monad.Except (throwError)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
-import Control.Monad.Trans (lift)
 import Servant (err500, errBody)
 import System.Exit (ExitCode)
 import System.Process (proc, readCreateProcessWithExitCode)

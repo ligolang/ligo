@@ -1,7 +1,9 @@
 name:                ligo-webide-backend
 
 dependencies:
-- base >= 4.7 && < 5
+- base-noprelude >= 4.9 && < 5
+- morley-prelude
+- universum
 
 default-extensions:
   - AllowAmbiguousTypes

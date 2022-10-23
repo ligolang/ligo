@@ -8,8 +8,6 @@ import Data.Aeson
 import Data.Swagger.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema)
-import Data.Text (Text)
-import GHC.Generics (Generic)
 
 import Source (Project(..))
 import Util (prepareField)
