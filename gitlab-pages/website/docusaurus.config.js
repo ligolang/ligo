@@ -152,10 +152,10 @@ const config = {
       },
       algolia: {
         // The application ID provided by Algolia
-        appId: 'BH4D9OD16A',
+        appId: 'ZJTW93II01',
 
         // Public API key: it is safe to commit it
-        apiKey: 'b773aa611ab70b8e44a657eae5539176',
+        apiKey: '666cd6151b57b31964fece17ad094ba9',
 
         indexName: 'ligolang',
 
@@ -181,7 +181,6 @@ const config = {
       './src/plugins/syntax', {},
     ],
     // '@aldridged/docusaurus-plugin-lunr'
-    require.resolve("@cmfcmf/docusaurus-search-local")
   ]
 };
 
