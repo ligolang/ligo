@@ -1,0 +1,3 @@
+let main = ([p, _] : [int, bool]) : [list<operation>, bool] => {
+  return [(list([]) as list<operation>), p > 0]
+};
