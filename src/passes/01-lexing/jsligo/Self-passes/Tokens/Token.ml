@@ -249,9 +249,9 @@ module T =
 
     (* Virtual tokens *)
 
-    | ZWSP _ 
+    | ZWSP _
     | ES6FUN _ -> ""
-    
+
 
     (* End-Of-File *)
 
@@ -838,7 +838,7 @@ module T =
 
     (* Virtual tokens *)
 
-    | "ZWSP" 
+    | "ZWSP"
     | "ES6FUN" -> ""
 
     (* End-Of-File *)
@@ -1140,7 +1140,7 @@ module T =
 
     (* Verbatim strings *)
 
-    let verbatim_delimiters = ("`", "`")
+    let verbatim_delimiters = ("{|", "|}")
   end
 
 include T

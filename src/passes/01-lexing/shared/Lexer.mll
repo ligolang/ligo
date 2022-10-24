@@ -347,7 +347,7 @@ and scan_verbatim verb_close thread state = parse
             let state = hash_state#newline lexbuf in
             scan_verbatim verb_close thread state lexbuf) }
 
-| "`" | "|}" as lexeme {
+| "|}" as lexeme {
     if String.(verb_close = lexeme) then
       thread, fst (state#sync lexbuf)
     else
