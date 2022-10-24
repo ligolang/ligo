@@ -59,8 +59,7 @@ const config = {
         },
         items: [
           { type: 'docsVersionDropdown', position: 'left' },
-          { href: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
-          { href: 'https://ide-v2-beta.ligolang.org/', label: 'WebIde V2 beta', position: 'left', target: '_self' },
+          { to: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
           { to: 'docs/intro/installation', label: 'Install', position: 'left' },
           { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
           {
@@ -68,8 +67,8 @@ const config = {
             label: 'Tutorials',
             position: 'left'
           },
-          { href: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
-          { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog', position: 'left' },
+          { to: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
+          { to: 'https://ide-v2-beta.ligolang.org/', label: 'IdeV2 beta', position: 'left', target: '_self' },
           { to: '/contact', label: 'Ask Questions', position: 'left' },
           { to: 'docs/faq/intro', label: 'FAQ', position: 'left' },
           { to: 'docs/next/intro/changelog', label: 'Changelog', position: 'left' }
