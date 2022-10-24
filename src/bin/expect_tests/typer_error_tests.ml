@@ -95,7 +95,11 @@ let%expect_test _ =
       4 |
 
     Invalid type(s)
-    Cannot unify ( int * string ) with ( int * string * bool ). |} ] ;
+    Cannot unify ( int * string ) with ( int * string * bool ).
+    Difference between the types:
+      int
+      string
+    + bool |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|

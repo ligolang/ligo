@@ -4,16 +4,18 @@
     For example when type [a * b * c * d * e] cannot unify with [c * d * e],
     the module will find the "diff" between the two, [a * b] here,
     so the message can be augmented into :
-    > Cannot unify a * b * c * d * e with c * d * e
+    > Cannot unify a * b * c * d * e * y * z with c * d * f * y * z
     > Diff :
-    a  <
-    b  <
-    c  =  c
-    d  =  d
-    e  =  e
+    - a
+    - b
+      c
+      d
+    - e
+    + f
+      y
+      z
 *)
 
-(* module Location = Simple_utils.Location *)
 open Ast_typed
 open Ligo_prim
 open Simple_utils
@@ -111,7 +113,7 @@ end = struct
     | Keep   _ -> 0
     | Change (te1, te2, _) -> (
         match te1.type_content, te2.type_content with
-        | T_record _, T_record _ -> List.length @@ M.get_diff te1 te2
+        | T_record r1, T_record r2 -> List.length @@ Diff.diff () (rows_to_te_array r1) (rows_to_te_array r2)
         | T_record r, _
         | _         , T_record r -> List.length @@ rows_to_te_list r
         | _                      -> 1
@@ -135,48 +137,26 @@ and Diff : sig
     unit -> type_expression array -> type_expression array -> Define.patch
 end = Define.Simple(TeArg)
 
-(* [t] and [get_diff] are put in this module [M]
-   for enabling mutual recursivity with above modules.
-   Because weights depend on [get_diff]
-   and [get_diff] depends on weights.
-   *)
-and M : sig
-  type t = Define.patch
-  val get_diff : type_expression -> type_expression -> t
-end = struct
 
-  type t = Define.patch
+type t = Define.patch
 
-  let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
-    (* let () = Printf.printf "[DEBUG] Calling get_diff <%d> <%d> )\n" (hash_ty_expr t1) (hash_ty_expr t2) in *)
-    List.rev @@
-    match t1.type_content, t2.type_content with
-    | T_record r1, T_record r2
-      when (Record.is_tuple r1.fields)
-      &&   (Record.is_tuple r2.fields) ->
-      (* let () = Printf.printf "[DEBUG] Matching get_diff case (T_record, T_record) <%d> <%d> )\n" (hash_ty_expr t1) (hash_ty_expr t2) in *)
-      let r1 : ty_expr array = rows_to_te_array r1 in
-      let r2 : ty_expr array = rows_to_te_array r2 in
-      let diff : t = Diff.diff () r1 r2 in
-      diff
-    | T_record r1, _ ->
-      let r1 : ty_expr array = rows_to_te_array r1 in
-      let r2 : ty_expr array = Array.of_list [t2] in
-      let diff : t = Diff.diff () r1 r2 in
-      diff
-    | _, T_record r2 ->
-      let r1 : ty_expr array = Array.of_list [t1] in
-      let r2 : ty_expr array = rows_to_te_array r2 in
-      let diff : t = Diff.diff () r1 r2 in
-      diff
-    | _ -> 
-      let diff : t = [Change (t1, t2, ())] in
-      diff
-
-end
-
-type t = M.t
-let get_diff = M.get_diff
+let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
+  List.rev @@
+  match t1.type_content, t2.type_content with
+  (* When the two types are records, call the [Diffing] to get the optimal diff *)
+  | T_record r1, T_record r2
+    when (Record.is_tuple r1.fields)
+    &&   (Record.is_tuple r2.fields) ->
+    (* let () = Printf.printf "[DEBUG] Matching get_diff case (T_record, T_record) <%d> <%d> )\n" (hash_ty_expr t1) (hash_ty_expr t2) in *)
+    let r1 : ty_expr array = rows_to_te_array r1 in
+    let r2 : ty_expr array = rows_to_te_array r2 in
+    let diff : t = Diff.diff () r1 r2 in
+    diff
+  (* Other types are considered "singletons", in the sense they are not a collection of te themselves, so there is no need to diff them.
+     TODO NP : Actually that's wrong, if we get a (a * b * c * d * e) list vs. (b * a * c * d * e) list,
+    a [list] contains only one type but we'd like to diff the inner type, i.e. the two confusing tuples inside the list type. *)
+  (* TODO NP : Arrow types can be diffed too *)
+  | _ -> []
 
 module PP = struct
 
@@ -188,11 +168,6 @@ module PP = struct
 
   let rec change ppf (c : Define.change ) : unit =
     let self = change in
-    (* type ('left,'right,'eq,'diff) change =
-    | Delete of 'left
-    | Insert of 'right
-    | Keep of 'left * 'right *' eq
-    | Change of 'left * 'right * 'diff *)
     match c with
     | Delete  l              -> Format.fprintf ppf "- %a" pp_te l
     | Insert  r              -> Format.fprintf ppf "+ %a" pp_te r
@@ -201,6 +176,6 @@ module PP = struct
 
   let t ppf (patch : t) : unit =
     match patch with
-    | [] -> Format.fprintf ppf "@.No patch"
+    | [] -> Format.fprintf ppf ""
     | _ -> Format.fprintf ppf "@.@[<v>Difference between the types:@,%a@]" (pp_list_newline change)  patch
 end
