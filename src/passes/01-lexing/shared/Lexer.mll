@@ -312,7 +312,7 @@ rule scan state = parse
       | Some string -> Some (Attr.String string)
     in mk_attr key value state lexbuf }
 
-| "{|" as lexeme {
+| "`" | "{|" as lexeme {
     let verb_open, verb_close = Token.verbatim_delimiters in
     if String.(lexeme = verb_open) then
       let state, Region.{region; _} = state#sync lexbuf in
@@ -347,7 +347,7 @@ and scan_verbatim verb_close thread state = parse
             let state = hash_state#newline lexbuf in
             scan_verbatim verb_close thread state lexbuf) }
 
-| "|}" as lexeme {
+| "`" | "|}" as lexeme {
     if String.(verb_close = lexeme) then
       thread, fst (state#sync lexbuf)
     else

@@ -50,7 +50,7 @@ let michelson_add = (n : (nat, nat)) : nat =>
 
 ```jsligo
 const michelson_add = n =>
-  (Michelson {| { UNPAIR ; ADD } |} as ((n: [nat, nat]) => nat))(n);
+  (Michelson `{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
 ```
 
 </Syntax>

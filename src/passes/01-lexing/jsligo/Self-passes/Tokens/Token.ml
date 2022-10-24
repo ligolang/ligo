@@ -1140,7 +1140,7 @@ module T =
 
     (* Verbatim strings *)
 
-    let verbatim_delimiters = ("{|", "|}")
+    let verbatim_delimiters = ("`", "`")
   end
 
 include T
