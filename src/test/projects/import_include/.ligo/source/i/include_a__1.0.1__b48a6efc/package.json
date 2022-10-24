@@ -1,0 +1,9 @@
+{
+  "name": "include-a",
+  "version": "1.0.1",
+  "author": "foo",
+  "main" : "index.mligo",
+  "repository": "gist:1234",
+  "license": "MIT",
+  "dependencies": { "pkg-a": "^1.0.0" }
+}
