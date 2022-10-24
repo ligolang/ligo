@@ -4,7 +4,8 @@ import Data.Aeson
   (FromJSON, ToJSON, defaultOptions, genericParseJSON, genericToJSON, parseJSON, toJSON,
   unwrapUnaryRecords)
 import Data.Swagger.ParamSchema (ToParamSchema)
-import Data.Swagger.Schema
+--import Data.Swagger.Schema
+import Data.OpenApi.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, genericDeclareNamedSchema,
   unwrapUnaryRecords)
 

@@ -31,6 +31,7 @@ library
       Schema.ListDeclarationsResponse
       Server
       Source
+      SwaggerSchema
       Types
       Util
   other-modules:
@@ -86,23 +87,23 @@ library
     , bytestring
     , containers
     , directory
-    , exceptions
     , filepath
     , katip
+    , loot-prelude
     , megaparsec
+    , microlens-platform
     , morley
     , morley-client
-    , morley-prelude
     , mtl
+    , openapi3
     , process
     , servant-client
+    , servant-openapi3
     , servant-server
-    , servant-swagger
     , servant-swagger-ui
     , swagger2
     , temporary
     , text
-    , universum
     , wai
     , wai-cors
     , wai-extra
@@ -161,9 +162,64 @@ executable ligo-webide-backend
   build-depends:
       base-noprelude >=4.9 && <5
     , ligo-webide-backend
-    , morley-prelude
+    , loot-prelude
     , optparse-applicative
-    , universum
+  default-language: Haskell2010
+
+executable swagger-gen
+  main-is: Main.hs
+  other-modules:
+      Paths_ligo_webide_backend
+  hs-source-dirs:
+      scripts/swagger-gen
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      StrictData
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
+  build-depends:
+      aeson
+    , base-noprelude >=4.9 && <5
+    , ligo-webide-backend
+    , loot-prelude
   default-language: Haskell2010
 
 test-suite ligo-webide-backend-test
@@ -225,8 +281,7 @@ test-suite ligo-webide-backend-test
     , hspec-wai
     , http-types
     , ligo-webide-backend
-    , morley-prelude
+    , loot-prelude
     , text
-    , universum
     , wai-extra
   default-language: Haskell2010

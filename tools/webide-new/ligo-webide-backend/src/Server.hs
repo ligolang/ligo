@@ -10,7 +10,6 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (cors, corsRequestHeaders, simpleCorsResourcePolicy)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Servant (Application, Handler(..), Server, hoistServer, serve, (:<|>)((:<|>)))
-import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (swaggerSchemaUIServer)
 
 import Api (API, SwaggeredAPI)
@@ -21,6 +20,7 @@ import Method.CompileExpression (compileExpression)
 import Method.DryRun (dryRun)
 import Method.GenerateDeployScript (generateDeployScript)
 import Method.ListDeclarations (listDeclarations)
+import SwaggerSchema (webIdeOpenApi)
 
 startApp :: Config -> IO ()
 startApp config = run (cPort config) (mkApp config)
@@ -44,7 +44,7 @@ mkApp config =
 
     server :: Server SwaggeredAPI
     server =
-      swaggerSchemaUIServer (toSwagger (Proxy @API))
+      swaggerSchemaUIServer webIdeOpenApi
         :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression :<|> dryRun :<|> listDeclarations)
 
     hoist :: WebIDEM a -> Handler a

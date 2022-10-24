@@ -8,7 +8,8 @@ module Source
 import Data.Aeson
   (FromJSON, Options(..), ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON,
   genericToJSON, parseJSON, toJSON)
-import Data.Swagger.Schema
+--import Data.Swagger.Schema
+import Data.OpenApi.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema, unwrapUnaryRecords)
 import Data.Text.IO qualified as Text

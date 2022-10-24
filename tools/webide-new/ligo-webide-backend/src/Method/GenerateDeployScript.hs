@@ -144,7 +144,7 @@ generateDeployScript request = do
         \ from $YOUR_SOURCE_ACCOUNT \\\
         \ running '" ++ Text.unpack (removeExcessWhitespace michelsonCode) ++ "' \\\
         \ --init '" ++ Text.unpack (removeExcessWhitespace michelsonStorage) ++ "' \\\
-        \ --burn-cap " ++ showFFloat (Just 5) (fromIntegralToRealFrac burnFee / (1e6 :: Double)) "" ++ "\n"
+        \ --burn-cap " ++ showFFloat (Just 5) (fromIntegral burnFee / (1e6 :: Double)) "" ++ "\n"
 
   pure $ DeployScript
     { dsScript = script
