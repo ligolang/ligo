@@ -72,7 +72,7 @@
                 index = "index.html";
                 tryFiles = "$uri $uri/ /index.html =404";
               };
-              locations."~ ^/local(?<route>/static/.*)" = {
+              locations."~ ^/(local|share)(?<route>/static/.*)" = {
                 alias = frontend-cfg.package + "$route";
               };
               locations."~ ^/api(?<route>/.*)" = {
