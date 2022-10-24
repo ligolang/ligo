@@ -92,7 +92,9 @@ module Path =
        string. *)
 
     let v : string -> t =
-      fun s -> try Some (Fpath.v s |> Fpath.normalize) with _ -> None
+      fun s -> 
+        try Some (Fpath.v s |> Fpath.normalize |> Fpath.rem_empty_seg) 
+        with _ -> None
 
     (* Alias of [Filename.dir_sep]. *)
 
@@ -100,17 +102,6 @@ module Path =
        e.g. "/a/b/c.ligo" yields [["a";"b";"c.ligo"]]. *)
 
     let segs : t -> string list option = Option.map ~f:Fpath.segs
-
-    (* The predicate [is_prefix] checks if its first argument is a
-       prefix of the second. For example, given [prefix = "/a/b/c/"]
-       and [p = "/a/b/c/d/e.ligo"], then [is_prefix prefix p =
-       true]. (Remember that in this module we work with optional
-       paths.) *)
-
-    let is_prefix p1 p2 =
-      match p1, p2 with
-        Some p1, Some p2 -> Fpath.is_prefix p1 p2
-      | _ -> false
 
     (* The predicate [is_abs] checks if a path is absolute. *)
 
@@ -162,6 +153,29 @@ module Path =
 
     let to_string path =
       let* path = path in Some (Fpath.to_string path)
+
+    (* The function [dirpath] drops the last segment from a path
+       e.g. "/a/b/c.mligo" yields "/a/b" *)
+
+    let dirpath path = 
+      path
+    |> Option.map ~f:Fpath.split_base
+    |> Option.map ~f:fst
+    |> Option.map ~f:Fpath.rem_empty_seg
+
+    (* The predicate [equal] checks if the two given path [p1] & [p2]
+       are equal *)
+
+    let equal p1 p2 =
+      match p1, p2 with
+        Some p1, Some p2 -> 
+          Fpath.equal (Fpath.normalize p1) (Fpath.normalize p2)
+      | _ -> false
+
+    (* The predicate [is_root] checks in the given path is the root 
+       directory *)
+
+    let is_root = function None -> false | Some p -> Fpath.is_root p
 
   end
 
@@ -440,12 +454,16 @@ let get_dependencies ~file = function
   None -> []
 | Some {resolutions; _} ->
     let path = Path.get_absolute_path file in
-    let predicate (Path mod_path, _) =
-      Path.is_prefix (Path.v mod_path) path in
-    let resolution = List.find resolutions ~f:predicate
-    in match resolution with
-         Some (_, paths) -> paths
-       | None -> []
+    let rec aux path =
+      let predicate (Path mod_path, _) =
+        Path.equal (Path.v mod_path) path in
+      let resolution = List.find resolutions ~f:predicate
+      in match resolution with
+          Some (_, paths) -> paths
+        | None when Path.is_root path -> []
+        | None -> aux (Path.dirpath path)
+    in
+    aux path
 
 (* The call [find_external_file ~file ~inclusion_paths] specifically
    resolves files for LIGO packages downloaded via esy.

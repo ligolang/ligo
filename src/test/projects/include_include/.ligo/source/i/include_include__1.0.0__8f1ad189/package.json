@@ -1,0 +1,9 @@
+{
+  "name": "include-include",
+  "version": "1.0.0",
+  "author": "foo",
+  "repository": "gist:1234",
+  "license": "MIT",
+  "main": "index.json",
+  "dependencies": { "include-a": "^1.0.1" }
+}
