@@ -675,7 +675,7 @@ unit_Contracts_locations_are_sensible = do
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
       (locations, _, _) <-
-        case readLigoMapper ligoMapper of
+        case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
 
@@ -697,15 +697,15 @@ unit_Contracts_locations_are_sensible = do
       -- we use built-in functions in next contract and they are having weird source locations.
       , ("built-ins", def & coCheckSourceLocationsL .~ False)
       , ("poly", def & coCheckSourceLocationsL .~ False)
+      , ("self", def & coCheckSourceLocationsL .~ False)
+      , ("iterate-big-map", def & coCheckSourceLocationsL .~ False)
       , ("two-entrypoints", def & coEntrypointL ?~ "main1")
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
     badContracts :: [FilePath]
     badContracts = combine contractsDir <$>
-      [ "self.mligo" -- this contract doesn't typecheck in Michelson
-      , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
-      , "no-entrypoint.mligo" -- this file doesn't have any entrypoint
+      [ "no-entrypoint.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
       ]

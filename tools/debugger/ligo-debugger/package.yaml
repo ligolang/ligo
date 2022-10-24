@@ -90,6 +90,7 @@ library:
     - semver
     - singletons
     - stm
+    - syb
     - template-haskell
     - th-utilities
     - text

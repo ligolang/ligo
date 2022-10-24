@@ -25,6 +25,7 @@ import Text.Interpolation.Nyan (int, rmode')
 
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
+import Morley.Michelson.Text (MText)
 import Morley.Util.Lens
 
 import Util
@@ -366,6 +367,9 @@ data LigoIndexedInfo = LigoIndexedInfo
 
 makeLensesWith postfixLFields ''LigoIndexedInfo
 
+instance Default LigoIndexedInfo where
+  def = LigoIndexedInfo Nothing Nothing
+
 instance Buildable LigoIndexedInfo where
   build = \case
     LigoEmptyLocationInfo -> "none"
@@ -476,6 +480,13 @@ newtype DapMessageException = DapMessageException DAP.Message
 instance Exception DapMessageException where
   displayException (DapMessageException msg) = DAP.formatMessage msg
 
+newtype ReplacementException = ReplacementException MText
+  deriving newtype (Show, Buildable)
+  deriving anyclass (DebuggerException)
+
+instance Exception ReplacementException where
+  displayException = pretty
+
 data SomeDebuggerException where
   SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
 
@@ -489,5 +500,6 @@ instance Exception SomeDebuggerException where
       [ SomeDebuggerException <$> fromException @LigoException e
       , SomeDebuggerException <$> fromException @DapMessageException e
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
+      , SomeDebuggerException <$> fromException @ReplacementException e
       , cast @_ @SomeDebuggerException e'
       ]

@@ -56,7 +56,7 @@ import Fmt (Buildable (..), genericF)
 import Parser (Info)
 import Range (HasRange (getRange), Range (..))
 import Text.Interpolation.Nyan
-import UnliftIO (MonadUnliftIO)
+import UnliftIO (MonadUnliftIO, throwIO)
 import Unsafe qualified
 
 import Morley.Debugger.Core.Navigate
@@ -66,8 +66,8 @@ import Morley.Debugger.Core.Navigate
 import Morley.Debugger.Core.Snapshots (InterpretHistory (..), twoElemFromList)
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailureWithStack, MorleyLogsBuilder, StkEl, initInterpreterState, mkInitStack,
-  runInstrImpl, seValue)
+  MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsFailed), MorleyLogsBuilder,
+  StkEl, initInterpreterState, mkInitStack, runInstrImpl, seValue)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
@@ -499,7 +499,13 @@ runCollectInterpretSnapshots act env initSt initStorage =
 
     (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT act
     case outcome of
-      Left stack ->
+      Left stack -> do
+        case mfwsFailed stack of
+          MichelsonFailedWith val -> do
+            whenJust (replacementErrorValueToException val) \exc -> do
+              throwIO exc
+          _ -> pass
+
         C.yield InterpretSnapshot
           { isStatus = InterpretFailed stack
           , isStackFrames = csStackFrames endState
