@@ -200,6 +200,7 @@ recognise (SomeRawTree dialect rawTree)
         "record_type"      -> TRecord        <$> fields "field_decl"
         "tuple_type"       -> TProduct       <$> fields "element"
         "sum_type"         -> TSum           <$> fields1 "variant"
+        "disc_union_type"  -> TSum           <$> fields1 "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable      <$> field  "name"
         "domain"           -> TProduct       <$> fields "type"

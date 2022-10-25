@@ -292,6 +292,7 @@ module.exports = grammar({
       $.string_type,
       $.module_access_t,
       $.record_type,
+      $.disc_union_type,
       $.app_type,
       $.tuple_type,
       $.paren_type
@@ -304,6 +305,8 @@ module.exports = grammar({
     module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.TypeName)),
 
     record_type: $ => withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
+
+    disc_union_type: $ => common.sepBy2('|', field("variant", $.record_type)),
 
     field_decl: $ => withAttrs($, choice(
       field("field_name", $.FieldName),
