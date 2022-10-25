@@ -8,7 +8,7 @@ import re
 import sys
 
 
-gfm = Markdown(renderer=MarkdownRenderer, extensions=[ GFM ])
+gfm = Markdown(renderer=MarkdownRenderer, extensions=[GFM])
 
 
 parser = ArgumentParser(
@@ -76,17 +76,20 @@ if __name__ == "__main__":
 
     # Get changelog details
     if type != "none":
-        changelog = get_prefixed_elem(markdown.children, "Changelog", elements.Paragraph)    
+        changelog = get_prefixed_elem(
+            markdown.children, "Changelog", elements.Paragraph
+        )
         changelog_details = gfm.renderer.render_children(changelog)
-    else:   
+    else:
         changelog_details = None
 
     print(
+        json.dumps(
             {
                 "title": title,
                 "author": author,
                 "changelog": changelog_details,
                 "type": type,
             }
-        
+        )
     )
