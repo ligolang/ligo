@@ -1,15 +1,16 @@
-.PHONY: all copy-bin package
+.PHONY: all copy-bin prepare-vscode package install-plugin
 
 all: package
 
 copy-bin:
 	cd ligo-debugger; cp -r $$(stack path --local-install-root)/bin ../vscode-plugin
 
-package:
+prepare-for-vscode:
 	$(MAKE) -C ligo-debugger build STACK_DEV_OPTIONS='--fast'
 	$(MAKE) copy-bin
-	cd vscode-plugin && yarn package && cd ..
 
-install-plugin: package
-	@# TODO: this will behave improperly in case of multiple versions of *.vsix
-	code --install-extension vscode-plugin/*.vsix
+package: prepare-for-vscode
+	$(MAKE) -C vscode-plugin package
+
+install-plugin: prepare-for-vscode
+	$(MAKE) -C vscode-plugin install-plugin
