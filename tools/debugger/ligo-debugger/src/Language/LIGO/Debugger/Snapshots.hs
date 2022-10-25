@@ -505,7 +505,7 @@ runInstrCollect = \case
               let recNode = xs
                     & find \el ->
                       case layer @Binding el of
-                        Just (AST.BFunction isRec _ _ _ _) -> isRec && containsNode el x
+                        Just (AST.BFunction isRec _ _ _ _ _) -> isRec && containsNode el x
                         _ -> False
 
               ranges <- use csRecordedRangesL

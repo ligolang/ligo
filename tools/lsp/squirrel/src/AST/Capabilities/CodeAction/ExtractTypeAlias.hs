@@ -144,8 +144,8 @@ constructTypeAlias dialect alias typeVars t Range{_rStart = (sl, sc, _)} =
   where
     typeVarNode = case (defaultState :<) . inject . TypeVariableName <$> HS.toList typeVars of
       []     -> Nothing
-      [tVar] -> Just $ defaultState :< inject (TypeParam tVar)
-      tVars  -> Just $ defaultState :< inject (TypeParams tVars)
+      [tVar] -> Just $ defaultState :< inject (QuotedTypeParam tVar)
+      tVars  -> Just $ defaultState :< inject (QuotedTypeParams tVars)
 
 defaultState :: Product Info'
 defaultState = [] :> Nothing :> PreprocessedRange (point 1 1) :> [] :> [] :> point 1 1 :> CodeSource "" :> Nil

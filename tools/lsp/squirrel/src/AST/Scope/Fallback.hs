@@ -26,8 +26,8 @@ import AST.Scope.ScopedDecl
   Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..),
   _ModuleSpec, mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec)
 import AST.Scope.ScopedDecl.Parser (parseModule, parseParameters, parseTypeDeclSpecifics)
-import AST.Skeleton hiding (Type, TypeParams (..))
-import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))
+import AST.Skeleton hiding (QuotedTypeParams (..), Type)
+import AST.Skeleton qualified as Skeleton (QuotedTypeParams (..), Type (..))
 import Cli.Types
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
@@ -452,7 +452,8 @@ instance HasGo Expr where
       (sts, refs) <- processSequence decls
       pure $ Just ((Set.empty, getRange r) :< sts, Set.toList refs)
     Block {} -> pure Nothing
-    Lambda params typ body -> do
+    -- TODO (LIGO-331): Support polymorphism.
+    Lambda params _tys typ body -> do
       paramRefs <- scopeParams params typ
       subforest <- fmap (fmap getTree) $ do
         void (maybe (pure Nothing) walk typ)
@@ -558,7 +559,8 @@ walkConstTuple r names typ vals = do
 
 instance HasGo Binding where
   walk' r = \case
-    BFunction isRec name params typ body ->
+    -- TODO (LIGO-331): Support polymorphism.
+    BFunction isRec name _tys params typ body ->
       mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
           functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
@@ -575,7 +577,8 @@ instance HasGo Binding where
       void (walk name)
       maybe (pure Nothing) walk typ
 
-    BVar pat typ mexpr ->
+    -- TODO (LIGO-331): Support polymorphism.
+    BVar pat _tys typ mexpr ->
       mkDecl (valueScopedDecl [] pat typ mexpr)
         >>= maybe (pure Nothing) \scopedDecl -> do
           declRef <- insertScope (OrdinaryRef TermLevel) scopedDecl
@@ -586,7 +589,8 @@ instance HasGo Binding where
           pure $ Just
             ((Set.singleton declRef, getRange r) :< maybeToList subforest, [declRef])
 
-    BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
+    -- TODO (LIGO-331): Support polymorphism.
+    BConst name _tys typ (Just (layer -> Just (Lambda params _tys' _ body))) ->
       mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
           functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
@@ -599,13 +603,16 @@ instance HasGo Binding where
           pure $ Just ((Set.singleton functionRef, getRange r) :<
             [(Set.fromList paramRefs, getRange r) :< maybeToList subforest], [functionRef])
 
-    BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) typ (Just (layer -> Just (Tuple vals))) ->
+    -- TODO (LIGO-331): Support polymorphism.
+    BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) _tys typ (Just (layer -> Just (Tuple vals))) ->
       walkConstTuple r names typ vals
 
-    BConst (layer -> Just (IsTuple names)) typ (Just (layer -> Just (Tuple vals))) ->
+    -- TODO (LIGO-331): Support polymorphism.
+    BConst (layer -> Just (IsTuple names)) _tys typ (Just (layer -> Just (Tuple vals))) ->
       walkConstTuple r names typ vals
 
-    BConst pat ty mexpr -> do
+    -- TODO (LIGO-331): Support polymorphism.
+    BConst pat _tys ty mexpr -> do
       refs <- scopeParams [pat] ty
       void $ withScopes refs (walk pat)
       whenJust ty $ void . walk
@@ -636,8 +643,8 @@ instance HasGo Binding where
         maybe (pure Nothing) \scopedDecl -> do
           declRef <- insertScope (OrdinaryRef TypeLevel) scopedDecl
           let params = case mparams of
-                Just (layer -> Just (Skeleton.TypeParams ps)) -> ps
-                Just (layer -> Just (Skeleton.TypeParam p)) -> [p]
+                Just (layer -> Just (Skeleton.QuotedTypeParams ps)) -> ps
+                Just (layer -> Just (Skeleton.QuotedTypeParam p)) -> [p]
                 _ -> []
 
           paramRefs <- scopeParams params Nothing
@@ -767,10 +774,10 @@ walkModuleAccess path accessorM = go path
 instance HasGo ModuleAccess where
   walk' _ (ModuleAccess path accessor) = Nothing <$ walkModuleAccess path (Just accessor)
 
-instance HasGo Skeleton.TypeParams where
+instance HasGo Skeleton.QuotedTypeParams where
   walk' _ = \case
-    Skeleton.TypeParam  {} -> pure Nothing
-    Skeleton.TypeParams {} -> pure Nothing
+    Skeleton.QuotedTypeParam  {} -> pure Nothing
+    Skeleton.QuotedTypeParams {} -> pure Nothing
 
 instance HasGo CaseOrDefaultStm where
   walk' r = \case

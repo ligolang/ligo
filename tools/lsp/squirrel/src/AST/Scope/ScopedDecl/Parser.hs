@@ -1,7 +1,7 @@
 module AST.Scope.ScopedDecl.Parser
   ( parseType
   , parseTypeDeclSpecifics
-  , parseTypeParams
+  , parseQuotedTypeParams
   , parseParameters
   , parseModule
   ) where
@@ -121,14 +121,14 @@ parseAliasType node = do
 
 -- * Parsers for type variables.
 
-parseTypeParams :: Contains Range info => LIGO info -> Parser (Maybe TypeParams)
-parseTypeParams node = runMaybeT $ asum
+parseQuotedTypeParams :: Contains Range info => LIGO info -> Parser (Maybe QuotedTypeParams)
+parseQuotedTypeParams node = runMaybeT $ asum
   [ do
-      LIGO.TypeParam t <- hoistMaybe $ layer node
-      TypeParam <$> MaybeT (parseTypeVariableSpecifics t)
+      LIGO.QuotedTypeParam t <- hoistMaybe $ layer node
+      QuotedTypeParam <$> MaybeT (parseTypeVariableSpecifics t)
   , do
-      LIGO.TypeParams ts <- hoistMaybe $ layer node
-      TypeParams <$> lift (wither parseTypeVariableSpecifics ts)
+      LIGO.QuotedTypeParams ts <- hoistMaybe $ layer node
+      QuotedTypeParams <$> lift (wither parseTypeVariableSpecifics ts)
   ]
 
 parseTypeVariableSpecifics

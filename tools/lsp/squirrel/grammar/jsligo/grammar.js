@@ -140,7 +140,7 @@ module.exports = grammar({
     ),
 
     list_case: $ => seq(
-      common.par(seq(field("pattern", $.list_pattern), ':', $._type_expr)),
+      common.par(seq(field("pattern", $.list_pattern), optional(seq(':', $._type_expr)))),
       '=>',
       field("expr", $._body)
     ),
@@ -336,7 +336,7 @@ module.exports = grammar({
         choice($._Let_kwd, $._Const_kwd),
         field("binding_pattern", $._binding_pattern),
         optional(
-          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+          seq(':', optional($._type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)
@@ -348,7 +348,7 @@ module.exports = grammar({
         $._Let_kwd,
         field("binding_pattern", $._binding_pattern),
         optional(
-          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+          seq(':', optional($._type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)
@@ -360,16 +360,23 @@ module.exports = grammar({
         $._Const_kwd,
         field("binding_pattern", $._binding_pattern),
         optional(
-          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+          seq(':', optional($._type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)
       )
     ),
 
-    type_decl: $ => seq("type", field("type_name", $.TypeName), optional(field("params", $.type_params)), '=', field("type_value", $._type_expr)),
+    type_decl: $ => seq(
+      'type',
+      field("type_name", $.TypeName),
+      optional(field("params", $.type_params)),
+      '=',
+      field("type_value", $._type_expr),
+    ),
 
-    type_params: $ => common.chev(common.sepBy1(',', field("param", $.var_type))),
+    _type_params: $ => common.chev(common.sepBy1(',', field("param", $.var_type))),
+    type_params:  $ => $._type_params,
 
     var_type: $ => field("name", $.TypeVariableName),
 

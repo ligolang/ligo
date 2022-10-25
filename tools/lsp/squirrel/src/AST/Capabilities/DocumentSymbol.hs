@@ -40,7 +40,7 @@ extractDocumentSymbols uri tree =
 
     collectDecl :: LIGO Info' -> Writer [SymbolInformation] ()
     collectDecl (match @Binding -> Just (_, binding)) = case binding of
-          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
+          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _ _) ->
             tellScopedDecl
               r
               J.SkFunction
@@ -65,15 +65,15 @@ extractDocumentSymbols uri tree =
               J.SkTypeParameter
               (const Nothing)
 
-          (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
+          (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          (BConst p _ _) -> collectDecl p
+          (BConst p _ _ _) -> collectDecl p
 
-          (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
+          (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
               r
               J.SkConstant
