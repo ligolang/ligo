@@ -230,7 +230,7 @@ module.exports = grammar({
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
-    fun_arg: $ => seq(field("argument", $._binding_pattern), ':', optional($.type_params), field("type", $._type_expr)),
+    fun_arg: $ => seq(field("argument", $._binding_pattern), optional(seq(':', optional($.type_params), field("type", $._type_expr)))),
 
     return_statement: $ => prec.right(seq('return', optional(field("expr", $._expr)))),
 
