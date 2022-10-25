@@ -214,7 +214,7 @@ module.exports = grammar({
         field("body", $._body),
       ),
       seq(
-        field("argument", $.Name), '=>',
+        field("argument", choice($.wildcard, $.Name)), '=>',
         field("body", $._body),
       )
     ),
