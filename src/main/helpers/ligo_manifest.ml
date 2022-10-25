@@ -1,3 +1,21 @@
+module Bugs = struct
+  type t =
+    { email : string
+    ; url : string
+    }
+  [@@deriving yojson]
+
+  let email_re = Str.regexp "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,10}$"
+
+  let url_re =
+    Str.regexp
+      "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
+
+
+  let validate { email; url } =
+    Str.string_match email_re email 0 && Str.string_match url_re url 0
+end
+
 type t =
   { name : string
   ; version : string
@@ -14,6 +32,7 @@ type t =
   ; license : string
   ; readme : string
   ; ligo_manifest_path : string
+  ; bugs : Bugs.t
   }
 [@@deriving to_yojson]
 
@@ -67,6 +86,7 @@ let read ~project_root =
       try Yojson.Safe.from_file ligo_manifest_path with
       | _ -> failwith "Error in parsing package.json (invalid json)"
     in
+    (* instead of catching failwith and turning it to Error use result let-syntax  *)
     (try
        let module Util = Yojson.Safe.Util in
        let name =
@@ -113,31 +133,39 @@ let read ~project_root =
          | _ -> failwith "No author field  in package.json"
        in
        let type_ =
-         try json |> Util.member "type" |> Util.to_string
-          |> (fun t ->
-                if String.(t = "contract" || t = "library") 
-                then t 
-                else failwith "Type can be either library or contract") with
-          | Failure s -> failwith s      
-          | _ -> "library"
+         try
+           json
+           |> Util.member "type"
+           |> Util.to_string
+           |> fun t ->
+           if String.(t = "contract" || t = "library")
+           then t
+           else failwith "Type can be either library or contract"
+         with
+         | Failure s -> failwith s
+         | _ -> "library"
        in
-       let storage_fn = 
-          try Some (json |> Util.member "storage_fn" |> Util.to_string) with
-          | _ -> None in
+       let storage_fn =
+         try Some (json |> Util.member "storage_fn" |> Util.to_string) with
+         | _ -> None
+       in
        let storage_arg =
-          try Some (json |> Util.member "storage_arg" |> Util.to_string) with
-          | _ -> None in
-       let () = 
-          match type_, storage_fn, storage_arg with
-            "contract", Some _, Some _ -> ()
-          | "contract", (None | Some _), (None | Some _) -> 
-            failwith "In case of a contract a `storage_fn` & `storage_arg` needs to provided"
-          | ("library" | _), _, _ -> ()
+         try Some (json |> Util.member "storage_arg" |> Util.to_string) with
+         | _ -> None
+       in
+       let () =
+         match type_, storage_fn, storage_arg with
+         | "contract", Some _, Some _ -> ()
+         | "contract", (None | Some _), (None | Some _) ->
+           failwith
+             "In case of a contract a `storage_fn` & `storage_arg` needs to \
+              provided"
+         | ("library" | _), _, _ -> ()
        in
        let repository =
          let repo =
            match json |> Util.member "repository" with
-            `Null -> failwith "No repository field in package.json"
+           | `Null -> failwith "No repository field in package.json"
            | repo -> repo
            | exception _ -> failwith "Invalid repository field in package.json"
          in
@@ -157,6 +185,27 @@ let read ~project_root =
          try json |> Util.member "readme" |> Util.to_string with
          | _ -> try_readme ~project_root
        in
+       let bugs =
+         let result =
+           try
+             json
+             |> Util.member "bugs"
+             |> fun b ->
+             match Bugs.of_yojson b with
+             | Ok bugs when Bugs.validate bugs -> Ok bugs
+             | Ok _ | Error _ ->
+               Error
+                 "Invalid `bugs` fields.\n\
+                  email & url (bug tracker url) needs to be provided\n\
+                  e.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \
+                  \"email\" : \"foo@bar.com\" }"
+           with
+           | _ -> Error "No license field in package.json"
+         in
+         match result with
+         | Ok bugs -> bugs
+         | Error e -> failwith e
+       in
        Ok
          { name
          ; version
@@ -173,6 +222,7 @@ let read ~project_root =
          ; license
          ; readme
          ; ligo_manifest_path
+         ; bugs
          }
      with
     | Failure e -> Error e)

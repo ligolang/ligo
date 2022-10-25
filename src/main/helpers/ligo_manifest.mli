@@ -1,3 +1,7 @@
+module Bugs : sig
+  type t [@@deriving to_yojson]
+end
+
 type t =
   { name : string
   ; version : string
@@ -14,6 +18,7 @@ type t =
   ; license : string
   ; readme : string
   ; ligo_manifest_path : string
+  ; bugs : Bugs.t
   }
 [@@deriving to_yojson]
 
