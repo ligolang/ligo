@@ -15,6 +15,7 @@ import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
 import Data.Bool (bool)
 import Data.Foldable (for_, traverse_)
+import Data.Hashable (Hashable)
 import Data.HashMap.Lazy (HashMap)
 import Data.HashMap.Lazy qualified as HashMap
 import Data.Kind qualified (Type)
@@ -28,6 +29,7 @@ import Data.Set qualified as Set
 import Data.Text (Text)
 import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<+>), (<.>))
 import Duplo.Tree hiding (loop)
+import GHC.Generics (Generic)
 import Prelude hiding (unzip)
 import Witherable (wither)
 
@@ -74,7 +76,7 @@ data ExtendedDeclRef = ExtendedDeclRef
     deriving stock (Eq, Ord)
 
 data RefKind
-  = OrdinaryRef
+  = OrdinaryRef Level
   | ModuleAliasRef (Maybe ExtendedDeclRef)
   deriving Show via PP RefKind
   deriving stock (Eq, Ord)
@@ -83,7 +85,7 @@ instance Pretty ExtendedDeclRef where
   pp (ExtendedDeclRef ref ns rk) = pp ns <.> "." <.> pp ref <+> pp rk
 
 instance Pretty RefKind where
-  pp OrdinaryRef = "ref"
+  pp (OrdinaryRef l) = pp l <+> "ref"
   pp (ModuleAliasRef ns) = "alias" <+> maybe "unresolved" pp ns
 
 type ExtendedScopeInfo = (Set ExtendedDeclRef, Range)
@@ -110,10 +112,17 @@ mapInUnqualified, mapInQualified :: (Namespace -> Namespace) -> Qualified -> Qua
 mapInUnqualified f (Qualified uns qns) = Qualified (f uns) qns
 mapInQualified   f (Qualified uns qns) = Qualified uns (f qns)
 
+data RefKey = RefKey
+  { rkNamespace :: Namespace
+  , rkName :: Text
+  , rkLevel :: Level
+  } deriving stock (Eq, Generic, Show)
+    deriving anyclass (Hashable)
+
 -- | The scoping environment, that may be locally updated at each subnode.
 data ScopeEnv = ScopeEnv
   { _seNamespace :: Qualified
-  , _seInScope :: HashMap (Namespace, Text) InScopeRef
+  , _seInScope :: HashMap RefKey InScopeRef
   , _seDialect :: Lang
   }
 
@@ -143,7 +152,7 @@ askNamespace :: ScopeM Qualified
 askNamespace = asks (view seNamespace)
 {-# INLINE askNamespace #-}
 
-askInScope :: ScopeM (HashMap (Namespace, Text) InScopeRef)
+askInScope :: ScopeM (HashMap RefKey InScopeRef)
 askInScope = asks (view seInScope)
 {-# INLINE askInScope #-}
 
@@ -167,7 +176,7 @@ mapQualified f = local (seNamespace %~ f)
 
 -- | Apply some transformation to the current scope.
 mapInScope
-  :: (HashMap (Namespace, Text) InScopeRef -> HashMap (Namespace, Text) InScopeRef)
+  :: (HashMap RefKey InScopeRef -> HashMap RefKey InScopeRef)
   -> ScopeM a
   -> ScopeM a
 mapInScope f = local (seInScope %~ f)
@@ -202,7 +211,7 @@ insertScope edrRefKind scopedDecl = do
 resolveModuleAlias :: Text -> ScopeM (Maybe Namespace)
 resolveModuleAlias moduleName = do
   namespace <- askNamespace
-  lookupInOuterModules namespace moduleName <&> \case
+  lookupInOuterModules ModuleLevel namespace moduleName <&> \case
     Nothing -> Nothing
     Just (InScopeOrdinaryRef _, ns) -> Just $ ns <> Namespace [moduleName]
     Just (InScopeModuleAliasRef _ ref, _) -> expandAliasRef ref
@@ -210,8 +219,10 @@ resolveModuleAlias moduleName = do
     expandAliasRef :: Maybe ExtendedDeclRef -> Maybe Namespace
     expandAliasRef Nothing =
       Nothing
-    expandAliasRef (Just ExtendedDeclRef{edrDeclRef = DeclRef{drName}, edrNamespace, edrRefKind = OrdinaryRef}) =
+    expandAliasRef (Just ExtendedDeclRef{edrDeclRef = DeclRef{drName}, edrNamespace, edrRefKind = OrdinaryRef ModuleLevel}) =
       Just $ edrNamespace <> Namespace [drName]
+    expandAliasRef (Just ExtendedDeclRef{edrRefKind = OrdinaryRef _}) =
+      Nothing
     expandAliasRef (Just ExtendedDeclRef{edrRefKind = ModuleAliasRef refM}) =
       expandAliasRef refM
 
@@ -239,28 +250,28 @@ expandModuleAlias (Namespace (base : nested)) =
 
 withScope :: ExtendedDeclRef -> ScopeM a -> ScopeM a
 withScope ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..} =
-  mapInScope (HashMap.insert (edrNamespace, drName) ref)
+  mapInScope (HashMap.insert (RefKey edrNamespace drName level) ref)
   where
-    ref = case edrRefKind of
-      OrdinaryRef -> InScopeOrdinaryRef drRange
-      ModuleAliasRef rhs -> InScopeModuleAliasRef drRange rhs
+    (ref, level) = case edrRefKind of
+      OrdinaryRef l -> (InScopeOrdinaryRef drRange, l)
+      ModuleAliasRef rhs -> (InScopeModuleAliasRef drRange rhs, ModuleLevel)
 
 withScopes :: [ExtendedDeclRef] -> ScopeM a -> ScopeM a
 withScopes declRefs m = foldl' (flip withScope) m declRefs
 
-inScopeRefToRef :: InScopeRef -> (Range, RefKind)
-inScopeRefToRef = \case
-  InScopeOrdinaryRef range -> (range, OrdinaryRef)
+inScopeRefToRef :: Level -> InScopeRef -> (Range, RefKind)
+inScopeRefToRef level = \case
+  InScopeOrdinaryRef range -> (range, OrdinaryRef level)
   InScopeModuleAliasRef range ref -> (range, ModuleAliasRef ref)
 
-insertRef :: Text -> PreprocessedRange -> ScopeM ()
-insertRef name (PreprocessedRange refRange) = do
+insertRef :: Level -> Text -> PreprocessedRange -> ScopeM ()
+insertRef level name (PreprocessedRange refRange) = do
   namespace <- askNamespace
-  lookupInOuterModules namespace name >>= \case
+  lookupInOuterModules level namespace name >>= \case
     Nothing -> pure ()
     Just (inScopeRef, declNamespace) -> do
       let
-        (declRange, refKind) = inScopeRefToRef inScopeRef
+        (declRange, refKind) = inScopeRefToRef level inScopeRef
         ref = ExtendedDeclRef (DeclRef name declRange) declNamespace refKind
       modify $ Map.adjust (sdRefs %~ (refRange :)) ref
 
@@ -268,15 +279,15 @@ insertRef name (PreprocessedRange refRange) = do
 -- namespace in non-qualified, then it continues searching as @A.n@, and then as
 -- @n@, in this order, stopping the lookup on the first occurrence that was
 -- found, if any. Returns the namespace in which it was found.
-lookupInOuterModules :: Qualified -> Text -> ScopeM (Maybe (InScopeRef, Namespace))
-lookupInOuterModules namespace name = do
+lookupInOuterModules :: Level -> Qualified -> Text -> ScopeM (Maybe (InScopeRef, Namespace))
+lookupInOuterModules level namespace name = do
   inScope <- askInScope
   let namespaceName = unqualified namespace <> qualified namespace
-  case HashMap.lookup (namespaceName, name) inScope of
+  case HashMap.lookup (RefKey namespaceName name level) inScope of
     Nothing -> case namespace of
       Qualified (Namespace uns) qns
         | null uns  -> pure Nothing
-        | otherwise -> lookupInOuterModules (Qualified (Namespace $ init uns) qns) name
+        | otherwise -> lookupInOuterModules level (Qualified (Namespace $ init uns) qns) name
     Just inScopeRef -> pure $ Just (inScopeRef, namespaceName)
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
@@ -309,7 +320,7 @@ class HasGo (f :: Data.Kind.Type -> Data.Kind.Type) where
   walk' :: Product ParsedInfo -> f (LIGO ParsedInfo) -> ScopeM (Maybe ScopeRet)
 
 instance HasGo Name where
-  walk' r (Name name) = walkName r name
+  walk' r (Name name) = walkName TermLevel r name
 
 instance HasGo QualifiedName where
   walk' _ QualifiedName {..} = do
@@ -526,14 +537,14 @@ scopeParams args ty = foldMapM go args
         foldMapM go xs
       (match -> Just (_, BParameter name mType)) -> do
         mkDecl (valueScopedDecl [] name mType Nothing)
-          >>= maybe (pure []) (fmap (:[]) . insertScope OrdinaryRef)
+          >>= maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
       (match -> Just (_, IsAnnot pat _)) -> go pat
       (match -> Just (_, IsTuple xs)) -> foldMapM go xs
       (match -> Just (_, IsParen x)) -> go x
       (match -> Just (_, IsVar x)) -> go x
       (match -> Just (_, NameDecl _)) -> do
         mkDecl (valueScopedDecl [] node ty Nothing) >>=
-          maybe (pure []) (fmap (:[]) . insertScope OrdinaryRef)
+          maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
       (match -> Just (_, IsRecord rfps)) -> do
         flip foldMapM rfps $ \case
           (layer -> Just x) -> case x of
@@ -542,7 +553,7 @@ scopeParams args ty = foldMapM go args
           _ -> pure []
       (match -> Just (r, TVariable (layer -> Just (TypeVariableName name)))) -> do
         scopedDecl <- mkTypeVariableScope name (getRange r)
-        (:[]) <$> insertScope OrdinaryRef scopedDecl
+        (:[]) <$> insertScope (OrdinaryRef TypeLevel) scopedDecl
       _ -> pure []
 
 walkConstTuple
@@ -555,7 +566,7 @@ walkConstTuple r names typ vals = do
   declRefs <- flip wither (zip names vals) \(name, val) ->
     mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
       maybe (pure Nothing) \scopedDecl -> do
-        declRef <- insertScope OrdinaryRef scopedDecl
+        declRef <- insertScope (OrdinaryRef TermLevel) scopedDecl
         withScope declRef (walk name)
         pure (Just declRef)
   maybe (pure ()) (void . walk) typ
@@ -567,7 +578,7 @@ instance HasGo Binding where
     BFunction isRec name params typ body ->
       mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope OrdinaryRef functionDecl
+          functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
           paramRefs <- scopeParams params typ
           subforest <- fmap (fmap getTree) $ do
             void $ withScope functionRef (walk name)
@@ -584,7 +595,7 @@ instance HasGo Binding where
     BVar pat typ mexpr ->
       mkDecl (valueScopedDecl [] pat typ mexpr)
         >>= maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope OrdinaryRef scopedDecl
+          declRef <- insertScope (OrdinaryRef TermLevel) scopedDecl
           subforest <- fmap (fmap getTree) $ withScope declRef $ do
             void (walk pat)
             maybe (pure Nothing) walk mexpr
@@ -595,7 +606,7 @@ instance HasGo Binding where
     BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
       mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope OrdinaryRef functionDecl
+          functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
           paramRefs <- scopeParams params typ
           subforest <- fmap (fmap getTree) $ do
             void $ withScope functionRef (walk name)
@@ -624,7 +635,7 @@ instance HasGo Binding where
             (layer -> Just (Variant vname vtype)) ->
               mkDecl (functionScopedDecl [] vname (maybeToList vtype) (Just name) Nothing)
                 >>= maybe (pure Nothing) \decl -> do
-                  ref <- insertScope OrdinaryRef decl
+                  ref <- insertScope (OrdinaryRef TermLevel) decl
                   withScope ref (walk vname)
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
             _ -> pure Nothing
@@ -632,7 +643,7 @@ instance HasGo Binding where
             (layer -> Just (TField fname ftype)) ->
               mkDecl (valueScopedDecl [] fname ftype Nothing)
                 >>= maybe (pure Nothing) \decl -> do
-                  ref <- insertScope OrdinaryRef decl
+                  ref <- insertScope (OrdinaryRef TermLevel) decl
                   withScope ref (walk fname)
                   traverse_ walk ftype
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
@@ -640,7 +651,7 @@ instance HasGo Binding where
 
       mkDecl (typeScopedDecl (getElem r) name expr) >>=
         maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope OrdinaryRef scopedDecl
+          declRef <- insertScope (OrdinaryRef TypeLevel) scopedDecl
           let params = case mparams of
                 Just (layer -> Just (Skeleton.TypeParams ps)) -> ps
                 Just (layer -> Just (Skeleton.TypeParam p)) -> [p]
@@ -676,7 +687,7 @@ instance HasGo Binding where
           (declTree, declRefs) <-
             mapQualified (mapInUnqualified (\(Namespace ns) -> Namespace (ns |> moduleName)))
             $ processSequence decls
-          moduleRef <- insertScope OrdinaryRef moduleDecl
+          moduleRef <- insertScope (OrdinaryRef ModuleLevel) moduleDecl
           void $ withScope moduleRef $ walk name
           pure $ Just
             ( (Set.singleton moduleRef, getRange r) :< declTree
@@ -699,9 +710,10 @@ instance HasGo Binding where
             (ref, edrNamespace) <- MaybeT do
               currentNamespace <- askNamespace
               lookupInOuterModules
+                ModuleLevel
                 (mapInQualified (<> Namespace aliasNamespace) currentNamespace)
                 drName
-            let (drRange, edrRefKind) = inScopeRefToRef ref
+            let (drRange, edrRefKind) = inScopeRefToRef ModuleLevel ref
             pure ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..}
 
           moduleRef <- insertScope (ModuleAliasRef declRefM) moduleDecl
@@ -716,14 +728,14 @@ instance HasGo RawContract where
     xs <- view _1 <$> processSequence statements
     pure $ Just ((Set.empty, getRange r) :< xs, [])
 
-walkName :: Product ParsedInfo -> Text -> ScopeM (Maybe ScopeRet)
-walkName r name = Nothing <$ insertRef name (getElem @PreprocessedRange r)
+walkName :: Level -> Product ParsedInfo -> Text -> ScopeM (Maybe ScopeRet)
+walkName level r name = Nothing <$ insertRef level name (getElem @PreprocessedRange r)
 
 instance HasGo TypeName where
-  walk' r (TypeName name) = walkName r name
+  walk' r (TypeName name) = walkName TypeLevel r name
 
 instance HasGo TypeVariableName where
-  walk' r (TypeVariableName decl) = walkName r decl
+  walk' r (TypeVariableName decl) = walkName TypeLevel r decl
 
 instance HasGo FieldName where
   walk' _ _ = pure Nothing
@@ -738,10 +750,10 @@ instance HasGo Error where
   walk' _ _ = pure Nothing
 
 instance HasGo Ctor where
-  walk' r (Ctor name) = walkName r name
+  walk' r (Ctor name) = walkName TermLevel r name
 
 instance HasGo NameDecl where
-  walk' r (NameDecl decl) = walkName r decl
+  walk' r (NameDecl decl) = walkName TermLevel r decl
 
 instance HasGo Preprocessor where
   walk' _ _ = pure Nothing
@@ -753,7 +765,7 @@ instance HasGo PatchableExpr where
   walk' _ (PatchableExpr _ expr) = Nothing <$ walk expr
 
 instance HasGo ModuleName where
-  walk' r (ModuleName name) = walkName r name
+  walk' r (ModuleName name) = walkName ModuleLevel r name
 
 -- | Given a module access such as `A.B.C` ('Nothing' case) or `A.B.C.x` ('Just'
 -- case), add references to each module in the chain and maybe walk over the

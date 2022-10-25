@@ -58,6 +58,7 @@ import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
 import Data.Functor.Identity (Identity (..))
+import Data.Hashable (Hashable)
 import Data.List (sortOn)
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -65,6 +66,7 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text)
+import GHC.Generics (Generic)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
 import UnliftIO.Exception (Exception (..), throwIO)
 import UnliftIO.MVar (modifyMVar, newMVar)
@@ -156,8 +158,13 @@ class HasLigoClient m => HasScopeForest impl m where
     -> m (FindFilepath ScopeForest)
 
 data Level = TermLevel | TypeLevel | ModuleLevel
-  deriving stock (Eq, Show)
-  deriving Pretty via ShowPP Level
+  deriving stock (Eq, Generic, Ord, Show)
+  deriving anyclass (Hashable)
+
+instance Pretty Level where
+  pp TermLevel   = "term"
+  pp TypeLevel   = "type"
+  pp ModuleLevel = "module"
 
 ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
