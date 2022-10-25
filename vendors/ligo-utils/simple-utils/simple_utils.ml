@@ -10,6 +10,7 @@ module Triple = X_triple
 module Option = X_option
 module Map = X_map
 module Ligo_string = X_string
+module Z = X_z
 
 module Tuple = Tuple
 module Tree = Tree
@@ -17,6 +18,9 @@ module Var = Var
 module Display = Display
 module Runned_result = Runned_result
 module Snippet = Snippet
+
+module Error = Error
+module Warning = Warning
 
 (* Originally by Christian Rinderknecht *)
 

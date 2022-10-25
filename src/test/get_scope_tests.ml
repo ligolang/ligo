@@ -123,6 +123,8 @@ let main =
             (* TODO: 04-tree_abstraction/pascaligo/errors.ml:error_format *)
             "error-recovery/simple/pascaligo/match_kw_instead_of_case_kw.ligo";
             "error-recovery/simple/pascaligo/typo_in_function_kw.ligo";
+            "error-recovery/simple/jsligo/missing_semicolon_before_return_on_same_line.jsligo"; (* was fixed by changes to jsligo ASI recently *)
+            "error-recovery/simple/jsligo/missing_type_annotation_in_lambda_in_match.jsligo" (* was fixed by recent change to jsligo parser *)
           ])
         ~f:(fun file -> schema_test_negative
                             ~with_types:true

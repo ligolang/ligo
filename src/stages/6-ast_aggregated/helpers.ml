@@ -87,14 +87,14 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
       let associated_type = self associated_type in
       ({associated_type;michelson_annotation;decl_pos} : row_element)
     in
-    return @@ T_sum { m with fields = Record.map aux m.fields }
+    return @@ T_sum { m with fields = Record.map ~f:aux m.fields }
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
       let associated_type = self associated_type in
       ({associated_type;michelson_annotation;decl_pos} : row_element)
     in
-    return @@ T_record { m with fields = Record.map aux m.fields }
+    return @@ T_record { m with fields = Record.map ~f:aux m.fields }
   )
   | T_for_all {ty_binder;kind;type_} ->
     let type_ = self type_ in
@@ -208,7 +208,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record m -> (
-    let (res, m') = Record.fold_map self init m in
+    let (res, m') = Record.fold_map ~f:self ~init m in
     (res, return @@ E_record m')
   )
   | E_accessor acc -> (

@@ -73,7 +73,8 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
       Label.of_int i, Ast_typed.(e_a_variable (Binder.get_var view_binder) ty)
     in
     let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views_info) in
-    compile_expression_in_context ~raise ~options prg tuple_view
+    let e = compile_expression_in_context ~raise ~options prg tuple_view in
+    Self_ast_aggregated.remove_check_self e
 
 (* if only_ep, we only list the declarations with types fiting an entrypoint *)
 let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list =

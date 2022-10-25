@@ -1,4 +1,4 @@
-module Z = X_z
+module Z = Simple_utils.Z
 
 type ligo_string = Simple_utils.Ligo_string.t [@@deriving eq, compare, yojson, hash]
 

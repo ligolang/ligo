@@ -595,7 +595,7 @@ let rec apply t (type_ : type_expression) : type_expression =
   | T_sum rows ->
     let fields =
       Record.map
-        (fun (row_elem : _ Rows.row_element_mini_c) ->
+        ~f:(fun (row_elem : _ Rows.row_element_mini_c) ->
           let associated_type = self row_elem.associated_type in
           { row_elem with associated_type })
         rows.fields
@@ -604,7 +604,7 @@ let rec apply t (type_ : type_expression) : type_expression =
   | T_record rows ->
     let fields =
       Record.map
-        (fun (row_elem : _ Rows.row_element_mini_c) ->
+        ~f:(fun (row_elem : _ Rows.row_element_mini_c) ->
           let associated_type = self row_elem.associated_type in
           { row_elem with associated_type })
         rows.fields
@@ -1230,7 +1230,7 @@ module Elaboration = struct
     | E_matching { matchee; cases } ->
       E_matching
         { matchee = self matchee; cases = matching_expr_apply ctx cases }
-    | E_record expr_label_map -> E_record (Record.map self expr_label_map)
+    | E_record expr_label_map -> E_record (Record.map ~f:self expr_label_map)
     | E_accessor { struct_; path } ->
       E_accessor { struct_ = self struct_; path }
     | E_update { struct_; path; update } ->
@@ -1310,6 +1310,7 @@ module Elaboration = struct
 
 
   let all_lmap lmap ~raise = Record.LMap.map (fun t -> t ~raise) lmap
+  let all_list l ~raise = List.map ~f:(fun t -> t ~raise) l
 
   (* A pass to check all existentials are resolved *)
   let type_pass ~raise (type_ : type_expression) : unit =

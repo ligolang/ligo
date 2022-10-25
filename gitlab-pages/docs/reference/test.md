@@ -569,6 +569,20 @@ let to_string = (a: 'a) => string
 Convert a value to a string (same conversion as used by `log`).
 
 <SyntaxTitle syntax="pascaligo">
+val to_json&lt;a&gt; : a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val to_json : 'a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let to_json: 'a => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let to_json = (a: 'a) => string
+</SyntaxTitle>
+Convert a value to its JSON representation (as a string).
+
+<SyntaxTitle syntax="pascaligo">
 val print : string -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -1302,7 +1316,6 @@ let assert: (condition: bool) => unit
 Check if a certain condition has been met. If not the testing framework will fail.
 
 
-
 <SyntaxTitle syntax="pascaligo">
 val assert_with_error : bool -> string -> unit
 </SyntaxTitle>
@@ -1317,3 +1330,35 @@ let assert_with_error: (condition: bool, message: string) => unit
 </SyntaxTitle>
 
 Check if a certain condition has been met. If not the testing framework will fail with the string passed as message.
+
+
+<SyntaxTitle syntax="pascaligo">
+val set_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val set_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let set_print_values: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let set_print_values = (u: unit) => unit
+</SyntaxTitle>
+
+Turns on the printing of `test` prefixed values at the end of tests. This is the default behaviour.
+
+
+<SyntaxTitle syntax="pascaligo">
+val unset_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val unset_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let unset_print_values: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let unset_print_values = (u: unit) => unit
+</SyntaxTitle>
+
+Turns off the printing of `test` prefixed values at the end of tests.

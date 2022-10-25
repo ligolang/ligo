@@ -59,7 +59,7 @@ const config = {
         },
         items: [
           { type: 'docsVersionDropdown', position: 'left' },
-          { href: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
+          { to: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
           { to: 'docs/intro/installation', label: 'Install', position: 'left' },
           { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
           {
@@ -67,8 +67,8 @@ const config = {
             label: 'Tutorials',
             position: 'left'
           },
-          { href: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
-          { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog', position: 'left' },
+          { to: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
+          { to: 'https://ide-v2-beta.ligolang.org/', label: 'IdeV2 beta', position: 'left', target: '_self' },
           { to: '/contact', label: 'Ask Questions', position: 'left' },
           { to: 'docs/faq/intro', label: 'FAQ', position: 'left' },
           { to: 'docs/next/intro/changelog', label: 'Changelog', position: 'left' }
@@ -151,10 +151,10 @@ const config = {
       },
       algolia: {
         // The application ID provided by Algolia
-        appId: 'BH4D9OD16A',
+        appId: 'ZJTW93II01',
 
         // Public API key: it is safe to commit it
-        apiKey: 'b773aa611ab70b8e44a657eae5539176',
+        apiKey: '666cd6151b57b31964fece17ad094ba9',
 
         indexName: 'ligolang',
 
@@ -180,7 +180,6 @@ const config = {
       './src/plugins/syntax', {},
     ],
     // '@aldridged/docusaurus-plugin-lunr'
-    require.resolve("@cmfcmf/docusaurus-search-local")
   ]
 };
 

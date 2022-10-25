@@ -70,7 +70,7 @@ let apply_table_expr table (expr : AST.expression) =
       | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
          return @@ E_matching { matchee ; cases = Match_variant { cases ; tv = apply_table_type tv } }
       | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
-         let fields = Record.map (Binder.map apply_table_type) fields in
+         let fields = Record.map ~f:(Binder.map apply_table_type) fields in
          return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = apply_table_type tv } }
       | E_assign { binder ; expression } ->
          let binder = Binder.map apply_table_type binder in
@@ -85,6 +85,17 @@ let apply_table_expr table (expr : AST.expression) =
       | E_let_mut_in { let_binder; rhs; let_result; attr } ->
          let let_binder = Binder.map apply_table_type let_binder in
          return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+      | E_raw_code { language ; code = { expression_content = m ; _ } as expr } when Option.is_some (AST.get_e_tuple m) ->
+        let tuple = Option.value ~default:[] (AST.get_e_tuple m) in
+        let code, args = match tuple with
+          | [] -> failwith "expected non-empty tuple in %Michelson"
+          | hd :: tl -> hd, tl in
+        let args = List.map ~f:(fun t ->
+            let te = t.type_expression in
+            let te = List.fold ~init:te table ~f:(fun (te) (v,t) -> AST.Helpers.subst_type v t te) in
+            { t with type_expression = te }) args in
+        let tuple = { expr with expression_content = E_record (Record.record_of_tuple (code :: args)) } in
+        return @@ E_raw_code { language ; code = tuple }
       | E_deref _ | E_while _ | E_for _ | E_for_each _
       | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
       | E_raw_code _ | E_constructor _ | E_record _
@@ -107,11 +118,11 @@ let rec subst_external_type et t (u : AST.type_expression) =
       let parameters = List.map ~f:(self et t) parameters in
       { u with type_content = T_constant {language;injection;parameters} }
    | T_sum {fields; layout} ->
-      let fields = AST.(Record.map (fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
+      let fields = AST.(Record.map ~f:(fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
                         {associated_type = self et t associated_type; michelson_annotation;decl_pos}) fields) in
       { u with type_content = T_sum {fields; layout} }
    | T_record {fields; layout} ->
-      let fields = AST.(Record.map (fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
+      let fields = AST.(Record.map ~f:(fun Rows.{associated_type; michelson_annotation; decl_pos} : row_element ->
                         {associated_type = self et t associated_type; michelson_annotation;decl_pos}) fields) in
       { u with type_content = T_record {fields; layout} }
    | _ -> u
@@ -133,7 +144,7 @@ let subst_external_term et t (e : AST.expression) =
       | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
          return @@ E_matching { matchee ; cases = Match_variant { cases ; tv =  subst_external_type et t tv } }
       | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
-         let fields = Record.map (Binder.map (subst_external_type et t)) fields in
+         let fields = Record.map ~f:(Binder.map (subst_external_type et t)) fields in
          return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = subst_external_type et t tv } }
       | E_assign { binder ; expression } ->
          let binder = Binder.map (subst_external_type et t) binder in
@@ -215,7 +226,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
       let data, matchee = self data matchee in
       data, return (E_matching { matchee ; cases })
    | E_record lmap ->
-      let data, lmap = Record.fold_map self data lmap in
+      let data, lmap = Record.fold_map ~f:self ~init:data lmap in
       data, return (E_record lmap)
    | E_accessor { struct_ ; path } ->
       let data, struct_ = self data struct_ in

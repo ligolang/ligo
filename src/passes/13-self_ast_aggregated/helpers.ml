@@ -7,7 +7,8 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
   let self_type = Fun.const in
   let init = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_raw_code _ -> init
+  | E_literal _ | E_variable _ -> init
+  | E_raw_code { language = _ ; code } -> self init code
   | E_constant c -> Constant.fold self init c
   | E_application app -> Application.fold self init app
   | E_lambda l -> Lambda.fold self self_type init l
@@ -18,7 +19,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
     let res = fold_cases f res cases in
     res
   )
-  | E_record    m -> Record.fold self init m
+  | E_record    m -> Record.fold ~f:self ~init m
   | E_update    u -> Types.Update.fold self init u
   | E_accessor  a -> Types.Accessor.fold self init a
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
@@ -66,7 +67,7 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     return @@ E_matching {matchee=e';cases=cases'}
   )
   | E_record m -> (
-    let m' = Record.map self m in
+    let m' = Record.map ~f:self m in
     return @@ E_record m'
   )
   | E_accessor acc -> (
@@ -126,8 +127,11 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let rhs = self rhs in
     let let_result = self let_result in
     return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+  | E_raw_code { language ; code } ->
+    let code = self code in
+    return @@ E_raw_code { language ; code }
   | E_deref _
-  | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
+  | E_literal _ | E_variable _ as e' -> return e'
 
 
 and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
@@ -165,8 +169,10 @@ module Free_variables :
     match e.expression_content with
     | E_variable v ->
       VarSet.singleton v
-    | E_literal _ | E_raw_code _ ->
+    | E_literal _ ->
       VarSet.empty
+    | E_raw_code { language = _ ; code } ->
+      self code
     | E_constant {arguments} ->
       unions @@ List.map ~f:self arguments
     | E_application {lamb; args} ->
@@ -186,7 +192,7 @@ module Free_variables :
     | E_matching {matchee; cases} ->
       VarSet.union (self matchee)(get_fv_cases cases)
     | E_record m ->
-      let res = Record.map self m in
+      let res = Record.map ~f:self m in
       let res = Record.LMap.to_list res in
       unions res
     | E_accessor {struct_} ->

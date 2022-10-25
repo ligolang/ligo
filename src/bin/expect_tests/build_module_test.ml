@@ -15,16 +15,10 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "cycle_A.mligo"; "--format" ; "json" ] ;
   [%expect {|
     {
-      "root": "../../test/contracts/build/cycle_A.mligo",
-      "child": {
-        "file": "../../test/contracts/build/cycle_B.mligo",
-        "child": {
-          "file": "../../test/contracts/build/cycle_C.mligo",
-          "child": {
-            "file": "../../test/contracts/build/cycle_A.mligo",
-            "child": { "file": "../../test/contracts/build/cycle_B.mligo" }
-          }
-        }
+      "status": "error",
+      "stage": "build system",
+      "content": {
+        "message": "`-- 3 -- ../../test/contracts/build/cycle_A.mligo\n    `-- 2 -- ../../test/contracts/build/cycle_B.mligo\n        `-- 1 -- ../../test/contracts/build/cycle_C.mligo\n            `-- 3 -- ../../test/contracts/build/cycle_A.mligo\n"
       }
     } |}]
 
@@ -44,19 +38,10 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "D.mligo"; "--format" ; "json" ] ;
   [%expect {|
     {
-      "root": "../../test/contracts/build/D.mligo",
-      "child": {
-        "file": "../../test/contracts/build/C.mligo",
-        "child": { "file": "../../test/contracts/build/A.mligo" },
-        "child": {
-          "file": "../../test/contracts/build/B.mligo",
-          "child": { "file": "../../test/contracts/build/A.mligo" }
-        }
-      },
-      "child": {
-        "file": "../../test/contracts/build/E.mligo",
-        "child": { "file": "../../test/contracts/build/F.mligo" },
-        "child": { "file": "../../test/contracts/build/G.mligo" }
+      "status": "error",
+      "stage": "build system",
+      "content": {
+        "message": "`-- 7 -- ../../test/contracts/build/D.mligo\n    |-- 5 -- ../../test/contracts/build/C.mligo\n    |   |-- 1 -- ../../test/contracts/build/A.mligo\n    |   `-- 2 -- ../../test/contracts/build/B.mligo\n    |       `-- 1 -- ../../test/contracts/build/A.mligo\n    `-- 6 -- ../../test/contracts/build/E.mligo\n        |-- 3 -- ../../test/contracts/build/F.mligo\n        `-- 4 -- ../../test/contracts/build/G.mligo\n"
       }
     } |}]
 

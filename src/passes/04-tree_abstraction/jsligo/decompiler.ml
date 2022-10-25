@@ -908,7 +908,7 @@ let rec decompile_pattern p =
       CST.PVar (
         Region.wrap_ghost
           { CST.variable = Region.wrap_ghost x
-          ; attributes = [] })) (List.map ~f:fst (Container.List.to_list lps)) in
+          ; attributes = [] })) (List.map ~f:fst lps) in
     let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
     let inj = Region.wrap_ghost @@ braced inj in
     Ok (CST.PObject inj)

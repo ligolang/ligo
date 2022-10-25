@@ -117,18 +117,23 @@ module Make (Config : Config.S) (Client : Client.S) =
 
     let scan_endif = scan_else
 
-    let scan_linemarker ~callback region linenum state lexbuf =
+    let scan_linemarker ~callback linenum state lexbuf =
+      (* We save the state and position before the lexing buffer was
+         matched. *)
+
+      let hash_state = state in
+
+      (* We syncronise the logical state with the matched string *)
+
+      let state, Region.{region; _} = state#sync lexbuf in
+
+      (* We determine the regon of the line number *)
 
       let length   = String.length linenum in
       let start    = region#stop#shift_bytes (-length) in
       let line_reg = Region.make ~start ~stop:region#stop in
       let linenum  = Region.{region=line_reg; value=linenum} in
 
-
-      (* We save the state and position before the lexing buffer was
-         matched. *)
-
-      let hash_state = state in
 
       (* We make a preprocessing state and scan the expected
          linemarker. *)
@@ -412,8 +417,7 @@ rule scan state = parse
   (* Linemarkers preprocessing directives (from #include) *)
 
 | '#' blank* (natural as linenum) {
-    let state, Region.{region; _} = state#sync lexbuf in
-    scan_linemarker ~callback:scan region linenum state lexbuf }
+    scan_linemarker ~callback:scan linenum state lexbuf }
 
   (* End-of-File: we return the final state *)
 

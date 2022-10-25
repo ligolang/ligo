@@ -69,11 +69,11 @@ let rec reduplicate ~raise : expression -> expression =
     | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
        let matchee = self matchee in
        let body = self body in
-       let fields = Record.map binder_remove_counter fields in
+       let fields = Record.map ~f:binder_remove_counter fields in
        return (E_matching { matchee ; cases = Match_record { fields ; body ; tv } })
     (* Record *)
     | E_record map ->
-       let map = Record.map (self) map in
+       let map = Record.map ~f:self map in
        return (E_record map)
     | E_accessor { struct_ ; path } ->
        let struct_ = self struct_ in

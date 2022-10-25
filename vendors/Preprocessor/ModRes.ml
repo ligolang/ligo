@@ -50,8 +50,8 @@ type lock_file = {
 
 let compact : 'a option list -> 'a list option =
   let folded x acc =
-    let* acc = acc in
-    let* x   = x in
+    let* acc in
+    let* x   in
     Some (x :: acc)
   in List.fold_right ~f:folded ~init:(Some [])
 
@@ -92,7 +92,9 @@ module Path =
        string. *)
 
     let v : string -> t =
-      fun s -> try Some (Fpath.v s |> Fpath.normalize) with _ -> None
+      fun s ->
+        try Some (Fpath.v s |> Fpath.normalize |> Fpath.rem_empty_seg)
+        with _ -> None
 
     (* Alias of [Filename.dir_sep]. *)
 
@@ -100,17 +102,6 @@ module Path =
        e.g. "/a/b/c.ligo" yields [["a";"b";"c.ligo"]]. *)
 
     let segs : t -> string list option = Option.map ~f:Fpath.segs
-
-    (* The predicate [is_prefix] checks if its first argument is a
-       prefix of the second. For example, given [prefix = "/a/b/c/"]
-       and [p = "/a/b/c/d/e.ligo"], then [is_prefix prefix p =
-       true]. (Remember that in this module we work with optional
-       paths.) *)
-
-    let is_prefix p1 p2 =
-      match p1, p2 with
-        Some p1, Some p2 -> Fpath.is_prefix p1 p2
-      | _ -> false
 
     (* The predicate [is_abs] checks if a path is absolute. *)
 
@@ -162,6 +153,29 @@ module Path =
 
     let to_string path =
       let* path = path in Some (Fpath.to_string path)
+
+    (* The function [dirpath] drops the last segment from a path
+       e.g. "/a/b/c.mligo" yields "/a/b" *)
+
+    let dirpath path =
+      path
+    |> Option.map ~f:Fpath.split_base
+    |> Option.map ~f:fst
+    |> Option.map ~f:Fpath.rem_empty_seg
+
+    (* The predicate [equal] checks if the two given path [p1] & [p2]
+       are equal *)
+
+    let equal p1 p2 =
+      match p1, p2 with
+        Some p1, Some p2 ->
+          Fpath.equal (Fpath.normalize p1) (Fpath.normalize p2)
+      | _ -> false
+
+    (* The predicate [is_root] checks in the given path is the root
+       directory *)
+
+    let is_root = function None -> false | Some p -> Fpath.is_root p
 
   end
 
@@ -265,7 +279,7 @@ let clean_installation_json abs_path_to_project_root installation_json =
   let* installation_json = installation_json in
   let kvs = Yojson.Basic.Util.to_assoc installation_json in
   let folded map (key, value) =
-    let* map   = map in
+    let* map   in
     let  key   = Package key in
     let* value = JsonHelpers.string_of value in
     let  abs_p = Path.get_absolute_path ~root:abs_path_to_project_root value in
@@ -318,14 +332,14 @@ let clean_installation_json abs_path_to_project_root installation_json =
   }] *)
 
 let clean_lock_file_json lock_json =
-  let* lock_json = lock_json in
+  let* lock_json in
   let  module Util = Yojson.Basic.Util in
   let* root = Util.member "root" lock_json |> JsonHelpers.string_of in
   let  root = Package root in
   let  node = Util.member "node" lock_json in
   let  kvs  = Util.to_assoc node in
   let  folded map (key, value) =
-    let* map = map in
+    let* map in
     let  key = Package key in
     let  dependencies = Util.member "dependencies" value in
     let* dependencies = JsonHelpers.string_list_of dependencies in
@@ -340,7 +354,8 @@ let clean_lock_file_json lock_json =
 
 let resolve_path abs_path_to_project_root installation pkg_name =
   let* Path path = PackageMap.find_opt pkg_name installation in
-  let  path = Path.get_absolute_path ~root:abs_path_to_project_root path in
+  let  path = Path.get_absolute_path
+                ~root:abs_path_to_project_root path in
   let* path = Path.to_string path
   in Some path
 
@@ -352,10 +367,10 @@ let resolve_path abs_path_to_project_root installation pkg_name =
 let resolve_paths abs_path_to_project_root installation graph
     : resolution list option =
   let folded key value entries =
-    let* entries  = entries in
-    let  mapped   = resolve_path abs_path_to_project_root installation in
+    let* entries in
+    let  mapped = resolve_path abs_path_to_project_root installation in
     let* resolved = compact @@ List.map value ~f:mapped in
-    let* key   = resolve_path abs_path_to_project_root installation key in
+    let* key = resolve_path abs_path_to_project_root installation key in
     let  key   = Path key in
     let  paths = List.sort ~compare:String.compare resolved in
     let  paths = List.map ~f:(fun p -> Path p) paths
@@ -390,7 +405,8 @@ let find_dependencies (lock_file : lock_file) : package list PackageMap.t =
 
 let make project_root : t option =
   let  abs_path_to_project_root = Path.get_absolute_path project_root in
-  let* abs_path_to_project_root = Path.to_string abs_path_to_project_root in
+  let* abs_path_to_project_root =
+    Path.to_string abs_path_to_project_root in
   let* installation_json =
     Esy.installation_json_path project_root
     |> JsonHelpers.from_file_opt
@@ -400,12 +416,13 @@ let make project_root : t option =
     |> JsonHelpers.from_file_opt
     |> clean_lock_file_json
   in
-  let  root = lock_file_json.root in
-  let  dependencies = find_dependencies lock_file_json in
+  let root = lock_file_json.root in
+  let dependencies = find_dependencies lock_file_json in
   let* resolutions =
-    resolve_paths abs_path_to_project_root installation_json dependencies in
+    resolve_paths abs_path_to_project_root installation_json
+                  dependencies in
   let* root_path =
-    resolve_path  abs_path_to_project_root installation_json root in
+    resolve_path abs_path_to_project_root installation_json root in
   let  root_path = Path root_path
   in Some {root_path; resolutions}
 
@@ -440,12 +457,16 @@ let get_dependencies ~file = function
   None -> []
 | Some {resolutions; _} ->
     let path = Path.get_absolute_path file in
-    let predicate (Path mod_path, _) =
-      Path.is_prefix (Path.v mod_path) path in
-    let resolution = List.find resolutions ~f:predicate
-    in match resolution with
-         Some (_, paths) -> paths
-       | None -> []
+    let rec aux path =
+      let predicate (Path mod_path, _) =
+        Path.equal (Path.v mod_path) path in
+      let resolution = List.find resolutions ~f:predicate
+      in match resolution with
+          Some (_, paths) -> paths
+        | None when Path.is_root path -> []
+        | None -> aux (Path.dirpath path)
+    in
+    aux path
 
 (* The call [find_external_file ~file ~inclusion_paths] specifically
    resolves files for LIGO packages downloaded via esy.
