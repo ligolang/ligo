@@ -1,6 +1,9 @@
 -- | Implementation of DAP handlers.
 module Language.LIGO.Debugger.Handlers.Impl
   ( LIGO
+
+    -- * Helpers
+  , initDebuggerState
   ) where
 
 import Prelude hiding (try)
@@ -14,10 +17,10 @@ import Data.Map qualified as M
 import Data.Singletons (demote)
 import Data.Text qualified as Text
 import Fmt (Builder, blockListF, pretty)
-import Morley.Debugger.Core (slSrcPos)
-import Morley.Debugger.Core.Navigate
-  (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition), curSnapshot,
-  frozen, groupSourceLocations, playInterpretHistory)
+import Morley.Debugger.Core
+  (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
+  SourceLocation, SourceType, curSnapshot, frozen, groupSourceLocations, playInterpretHistory,
+  slEnd)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
@@ -57,6 +60,7 @@ import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
 
 data LIGO
@@ -81,6 +85,7 @@ instance HasSpecificMessages LIGO where
   type LanguageServerStateExt LIGO = LigoLanguageServerState
   type InterpretSnapshotExt LIGO = InterpretSnapshot 'Unique
   type StopEventExt LIGO = InterpretEvent
+  type StepGranularityExt LIGO = LigoStepGranularity
 
   reportErrorAndStoppedEvent = \case
     ExceptionMet exception -> writeException exception
@@ -151,7 +156,7 @@ instance HasSpecificMessages LIGO where
       writeException exception = do
         st <- get
         let msg = pretty exception
-        mSrcLoc <- view slSrcPos <<$>> uses dsDebuggerState getLastExecutedPosition
+        mSrcLoc <- view slEnd <<$>> uses dsDebuggerState getLastExecutedPosition
         pushMessage $ DAPEvent $ StoppedEvent $ DAP.defaultStoppedEvent
           { DAP.bodyStoppedEvent = DAP.defaultStoppedEventBody
             { DAP.reasonStoppedEventBody = "exception"
@@ -226,6 +231,7 @@ instance HasSpecificMessages LIGO where
             , DAP.columnStackFrame = Unsafe.fromIntegral $ lpCol lrStart + 1
             , DAP.endLineStackFrame = Unsafe.fromIntegral $ lpLine lrEnd
             , DAP.endColumnStackFrame = Unsafe.fromIntegral $ lpCol lrEnd + 1
+            , DAP.canRestartStackFrame = False
             }
 
   handleScopesRequest DAP.ScopesRequest{..} = do
@@ -329,6 +335,8 @@ instance HasSpecificMessages LIGO where
           , DAP.request_seqVariablesResponse = seqVariablesRequest
           , DAP.bodyVariablesResponse = DAP.VariablesResponseBody vs
           }
+
+  processStep = processLigoStep
 
   handleSetPreviousStack = pure ()
 
@@ -612,14 +620,18 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
               parsedContracts
               (unlifter . logMessage)
 
-        let ds = DebuggerState
-              { _dsSnapshots = playInterpretHistory his
-              , _dsSources =
-                  DebugSource mempty <$>
-                  groupSourceLocations (toList allLocs)
-              }
+        let ds = initDebuggerState his allLocs
 
         pure $ DAPSessionState ds mempty mempty program
+
+initDebuggerState :: InterpretHistory is -> Set SourceLocation -> DebuggerState is
+initDebuggerState his allLocs = DebuggerState
+  { _dsSnapshots = playInterpretHistory his
+  , _dsSources =
+      fmap @(Map SourceType)
+        (DebugSource mempty . fromList . map fst . toList @(Set _))
+        (groupSourceLocations $ toList allLocs)
+  }
 
 checkArgument :: MonadIO m => Text -> Maybe a -> m a
 checkArgument _    (Just a) = pure a

@@ -28,18 +28,18 @@ test_test =
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 2) (Pos 0))
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 5) (Pos 0))
 
-        lift $ step "Visiting 1st breakpoint"
+        liftIO $ step "Visiting 1st breakpoint"
         N.continueUntilBreakpoint N.NextBreak
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
           -- here and further we don't expect any concrete column number
-          view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 2))
+          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 2))
 
-        lift $ step "Visiting 2nd breakpoint"
+        liftIO $ step "Visiting 2nd breakpoint"
         N.continueUntilBreakpoint N.NextBreak
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
-          view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 5) (Pos 3))
+          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 5) (Pos 3))
 
         -- TODO: uncomment this when visiting multiple source locations is available in morley-debugger
 
@@ -95,43 +95,94 @@ test_test =
 
         N.switchBreakpoint (N.SourcePath nestedFile2) (SrcPos (Pos 0) (Pos 0))
 
-        lift $ step "Go to first breakpoint"
+        liftIO $ step "Go to first breakpoint"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 5) (Pos 2)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 5) (Pos 2))
+              (SrcPos (Pos 5) (Pos 26))
+            )
 
-        lift $ step "Go to next breakpoint (switch file)"
+        liftIO $ step "Go to next breakpoint (switch file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 14) (Pos 5)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath nestedFile)
+              (SrcPos (Pos 14) (Pos 5))
+              (SrcPos (Pos 14) (Pos 10))
+            )
 
-        lift $ step "Go to next breakpoint (go to start file)"
+        liftIO $ step "Go to next breakpoint (go to start file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 7) (Pos 2)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 7) (Pos 2))
+              (SrcPos (Pos 7) (Pos 30))
+            )
 
-        lift $ step "Go to next breakpoint (switch file)"
+        replicateM 4 do
+          liftIO $ step "Go to next breakpoint (nested file)"
+          goToNextBreakpoint
+          N.frozen do
+            N.getExecutedPosition @@?= Just
+              (N.SourceLocation
+                (N.SourcePath nestedFile)
+                (SrcPos (Pos 11) (Pos 18))
+                (SrcPos (Pos 11) (Pos 25))
+              )
+
+          liftIO $ step "Go to next breakpoint (outer expression)"
+          goToNextBreakpoint
+          N.frozen do
+            N.getExecutedPosition @@?= Just
+              (N.SourceLocation
+                (N.SourcePath nestedFile)
+                (SrcPos (Pos 11) (Pos 18))
+                (SrcPos (Pos 11) (Pos 28))
+              )
+
+        liftIO $ step "Go to next breakpoint (go to start file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 11) (Pos 18)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 8) (Pos 2))
+              (SrcPos (Pos 8) (Pos 45))
+            )
 
-        lift $ step "Go to next breakpoint (go to start file)"
+        liftIO $ step "Go to next breakpoint (more nested file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 8) (Pos 2)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath nestedFile2)
+              (SrcPos (Pos 1) (Pos 2))
+              (SrcPos (Pos 1) (Pos 20))
+            )
 
-        lift $ step "Go to next breakpoint (more nested file)"
+        liftIO $ step "Go to next breakpoint (go back)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 1) (Pos 2)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath nestedFile)
+              (SrcPos (Pos 18) (Pos 45))
+              (SrcPos (Pos 18) (Pos 88))
+            )
 
-        lift $ step "Go to next breakpoint (go back)"
-        goToNextBreakpoint
-        N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 18) (Pos 45)))
-
-        lift $ step "Go to previous breakpoint"
+        liftIO $ step "Go to previous breakpoint"
         goToPreviousBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 1) (Pos 2)))
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath nestedFile2)
+              (SrcPos (Pos 1) (Pos 2))
+              (SrcPos (Pos 1) (Pos 20))
+            )
   ]

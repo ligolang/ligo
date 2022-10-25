@@ -29,7 +29,6 @@ module Language.LIGO.Debugger.Snapshots
   , csStackFramesL
   , csActiveStackFrameL
 
-  , _InterpretStarted
   , _InterpretRunning
   , _InterpretTerminatedOk
   , _InterpretFailed
@@ -63,9 +62,9 @@ import UnliftIO (MonadUnliftIO, throwIO)
 
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
-  NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, move,
+  NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (InterpretHistory (..), twoElemFromList)
+import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsFailed), MorleyLogsBuilder,
@@ -113,12 +112,9 @@ instance (SingI u) => Buildable (StackFrame u) where
 -- | Snapshot type, depends on which event has triggered the snapshot
 -- recording.
 data InterpretStatus
-    -- | Just started interpretation.
-  = InterpretStarted
-
-    -- | Interpretation is in the middle, we made a snapshot because of
+    -- | Interpretation is in progress, we made a snapshot because of
     -- the given event.
-  | InterpretRunning InterpretEvent
+  = InterpretRunning InterpretEvent
 
     -- | Termination finished successfully.
   | InterpretTerminatedOk
@@ -130,7 +126,6 @@ data InterpretStatus
 
 instance Buildable InterpretStatus where
   build = \case
-    InterpretStarted -> "started"
     InterpretRunning ev -> "running / " <> build ev
     InterpretTerminatedOk -> "terminated ok"
     InterpretFailed err -> "failed with " <> build err
@@ -188,12 +183,11 @@ instance NavigableSnapshot (InterpretSnapshot u) where
     locRange <- sfLoc . head . isStackFrames <$> curSnapshot
     return . Just $ ligoRangeToSourceLocation locRange
   getLastExecutedPosition = unfreezeLocally do
-    move Backward >>= \case
+    moveRaw Backward >>= \case
       ReachedBoundary -> return Nothing
       _ -> frozen getExecutedPosition
 
   pickSnapshotEdgeStatus is = case isStatus is of
-    InterpretStarted -> SnapshotAtStart
     InterpretRunning _ -> SnapshotIntermediate
     InterpretTerminatedOk -> SnapshotAtEnd pass
     InterpretFailed err -> SnapshotAtEnd (Left err)
@@ -543,14 +537,9 @@ runCollectInterpretSnapshots
   -> Value st
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 runCollectInterpretSnapshots act env initSt initStorage =
-  -- This should be safe because in practice we yield at least two snapshots
-  InterpretHistory . fromMaybe (error "Unexpectedly < 2 snapshots") . twoElemFromList <$>
+  -- This should be safe because we yield at least one snapshot in the end
+  InterpretHistory . fromList <$>
   lazyConsume do
-    C.yield InterpretSnapshot
-      { isStackFrames = csStackFrames initSt
-      , isStatus = InterpretStarted
-      }
-
     (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT act
     case outcome of
       Left stack -> do

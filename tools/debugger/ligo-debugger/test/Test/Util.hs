@@ -54,10 +54,9 @@ import Text.Show qualified
 import Morley.Debugger.Core.Breakpoint
   (BreakpointSelector (NextBreak), continueUntilBreakpoint, reverseContinue)
 import Morley.Debugger.Core.Navigate
-  (DebugSource (DebugSource), DebuggerState (..), Direction (Backward, Forward),
-  FrozenPredicate (FrozenPredicate), NavigableSnapshot (getExecutedPosition), SourceLocation,
-  curSnapshot, frozen, goesAfter, goesBefore, groupSourceLocations, isAtBreakpoint, moveTill,
-  playInterpretHistory)
+  (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
+  HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition), SourceLocation,
+  curSnapshot, evalWriterT, frozen, goesAfter, goesBefore, isAtBreakpoint, moveTill)
 import Morley.Michelson.ErrorPos (SrcPos)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
@@ -68,6 +67,7 @@ import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
+import Language.LIGO.Debugger.Handlers.Impl
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
@@ -184,14 +184,14 @@ compareWithCurLocation
 compareWithCurLocation oldSrcLoc = FrozenPredicate $
   getExecutedPosition >>= maybe (pure False) (pure . (/= oldSrcLoc))
 
-goToNextBreakpoint :: (MonadState (DebuggerState (InterpretSnapshot u)) m) => m ()
+goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToNextBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
   void $ case oldSrcLocMb of
     Just oldSrcLoc -> moveTill Forward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
     Nothing -> continueUntilBreakpoint NextBreak
 
-goToPreviousBreakpoint :: (MonadState (DebuggerState (InterpretSnapshot u)) m) => m ()
+goToPreviousBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToPreviousBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
   void $ case oldSrcLocMb of
@@ -265,19 +265,15 @@ mkSnapshotsForLogging = mkSnapshotsForImpl putStrLn
 withSnapshots
   :: (Monad m)
   => (Set SourceLocation, InterpretHistory (InterpretSnapshot u))
-  -> StateT (DebuggerState (InterpretSnapshot u)) m a
+  -> HistoryReplayM (InterpretSnapshot u) m a
   -> m a
-withSnapshots (allLocs, his) action = do
-  let st = DebuggerState
-        { _dsSnapshots = playInterpretHistory his
-        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
-        }
-  evalStateT action st
+withSnapshots (allLocs, his) action =
+  evalWriterT $ evalStateT action (initDebuggerState his allLocs)
 
 testWithSnapshotsImpl
   :: (String -> IO ())
   -> ContractRunData
-  -> StateT (DebuggerState (InterpretSnapshot 'Unique)) IO ()
+  -> HistoryReplayM (InterpretSnapshot 'Unique) IO ()
   -> Assertion
 testWithSnapshotsImpl logger runData action = do
   locsAndHis <- mkSnapshotsForImpl logger runData
@@ -285,14 +281,14 @@ testWithSnapshotsImpl logger runData action = do
 
 testWithSnapshots
   :: ContractRunData
-  -> StateT (DebuggerState (InterpretSnapshot 'Unique)) IO ()
+  -> HistoryReplayM (InterpretSnapshot 'Unique) IO ()
   -> Assertion
 testWithSnapshots = testWithSnapshotsImpl dummyLoggingFunction
 
 {-# WARNING testWithSnapshotsLogging "'testWithSnapshotsLogging' remains in code" #-}
 testWithSnapshotsLogging
   :: ContractRunData
-  -> StateT (DebuggerState (InterpretSnapshot 'Unique)) IO ()
+  -> HistoryReplayM (InterpretSnapshot 'Unique) IO ()
   -> Assertion
 testWithSnapshotsLogging = testWithSnapshotsImpl putStrLn
 
