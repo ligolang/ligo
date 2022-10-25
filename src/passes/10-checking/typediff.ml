@@ -103,7 +103,7 @@ end = struct
     | Keep   _ -> 0
     | Change _ -> 1 *)
 
-  let weight : Define.change -> int = function
+  let rec weight : Define.change -> int = function
     | Delete te
     | Insert te -> (
         match te.type_content with
@@ -113,7 +113,14 @@ end = struct
     | Keep   _ -> 0
     | Change (te1, te2, _) -> (
         match te1.type_content, te2.type_content with
-        | T_record r1, T_record r2 -> List.length @@ Diff.diff () (rows_to_te_array r1) (rows_to_te_array r2)
+        | T_record r1, T_record r2 ->
+          (* We consider the weight to change a record into another
+             as the weight of the diff between them,
+             so that "close" records are gather together in the diff *)
+          let diff = Diff.diff () (rows_to_te_array r1) (rows_to_te_array r2) in
+          let diff_weights = List.map ~f:(fun change -> weight change) diff in
+          let total_weight = List.fold ~init:0 ~f:(+) diff_weights in
+          total_weight
         | T_record r, _
         | _         , T_record r -> List.length @@ rows_to_te_list r
         | _                      -> 1
