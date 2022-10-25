@@ -16,6 +16,7 @@
   "scripts": {
     "dev:react": "react-app-rewired start",
     "build:react": "react-app-rewired build",
+    "build:react-prod": "NODE_ENV=production PUBLIC_URL=/ react-app-rewired build",
     "build:web": "PUBLIC_URL=/ CDN=true yarn build:react",
     "eject": "react-scripts eject",
     "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json",
