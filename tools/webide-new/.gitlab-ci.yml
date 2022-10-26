@@ -34,8 +34,10 @@ webide-frontend-checks:
   only: [ merge_requests ]
   needs: [ print-nix-version ]
   script:
-    - nix build ./tools/webide-new#checks.x86_64-linux.frontend-tscompile
-    - nix build ./tools/webide-new#checks.x86_64-linux.frontend-tslint
+    - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-tscompile
+    - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-tslint
+    - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-openapi
+
 
 webide-deploy:
   stage: webide
