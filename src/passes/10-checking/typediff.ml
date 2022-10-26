@@ -167,6 +167,61 @@ let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
 
 module PP = struct
 
+  (* The [ANSI] module uses Ocaml Format's semantic tags to enable styling of output.
+     After calling [add_ansi_marking] on the given [ppf],
+     you can add colored text by enclosing it with a semantic tag, like this :
+      [Format.fprintf ppf "normal text, @{<red>some red text@}, normal text again"
+
+    The module will basically surround "some red text"
+    with [mark_open_stag "red"] string output as prefix
+    and [mark_close_stag "red"] string output as suffix.
+
+    See :
+    https://ocamlpro.com/blog/2020_06_01_fr_tutoriel_format
+    https://hal.archives-ouvertes.fr/hal-01503081/file/format-unraveled.pdf
+  *)
+  module ANSI = struct
+
+    type style =
+    | Normal
+    | Red
+    | Green
+
+    let style_of_stag = function
+    | Format.String_tag s ->
+      begin match s with
+      | "normal" -> Normal
+      | "red"    -> Red
+      | "green"  -> Green
+      | _ -> failwith "Unknown ANSI style" (* TODO NP : How to report errors properly ? *)
+      end
+    | _ -> failwith "Unknown ANSI semantic tag" (* TODO NP : How to report errors properly ? *)
+
+    let closing_style = function
+    | Red | Green | Normal -> Normal
+
+    let code_of_style = function
+    | Normal -> 0
+    | Red    -> 31
+    | Green  -> 32
+
+    let ansi_of_code code =
+      Format.sprintf "\027[%dm" code
+
+    let ansi_of_style style = ansi_of_code @@ code_of_style style
+
+    let mark_open_stag t = ansi_of_style @@ style_of_stag t
+    let mark_close_stag t = ansi_of_style @@ closing_style @@ style_of_stag t
+
+    let add_ansi_marking ppf =
+      let open Format in
+      pp_set_mark_tags ppf true;
+      let old_fs = pp_get_formatter_stag_functions ppf () in
+      pp_set_formatter_stag_functions ppf
+        {old_fs with mark_open_stag; mark_close_stag}
+
+  end
+
   let pp_list_newline pp_content ppf content =
     PP_helpers.list_sep pp_content (PP_helpers.tag "@,") ppf content
   let pp_te = Ast_typed.PP.type_expression
@@ -176,12 +231,13 @@ module PP = struct
   let rec change ppf (c : Define.change ) : unit =
     let self = change in
     match c with
-    | Delete  l              -> Format.fprintf ppf "- %a" pp_te l
-    | Insert  r              -> Format.fprintf ppf "+ %a" pp_te r
+    | Delete  l              -> Format.fprintf ppf "@{<red>- %a@}" pp_te l
+    | Insert  r              -> Format.fprintf ppf "@{<green>+ %a@}" pp_te r 
     | Keep    (l, _r, _eq)   -> Format.fprintf ppf "  %a" pp_te l
     | Change  (l, r, _diff)  -> pp_list_newline self ppf [Delete l; Insert r]
 
   let t ppf (patch : t) : unit =
+    ANSI.add_ansi_marking ppf; (* TODO NP : Add option to disable coloring *)
     match patch with
     | [] -> Format.fprintf ppf ""
     | _ -> Format.fprintf ppf "@.@[<v>Difference between the types:@,%a@]" (pp_list_newline change)  patch
