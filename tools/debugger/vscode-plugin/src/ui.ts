@@ -11,7 +11,7 @@
 
 import * as vscode from 'vscode';
 import { QuickPickItem } from 'vscode';
-import { DebuggedContractSession, Maybe, Ref, isDefined, InputBoxType, InputValueType, InputValidationResult } from './base'
+import { Maybe, Ref, isDefined, InputBoxType, InputValueType, InputValidationResult, ContractMetadata } from './base'
 import { LigoDebugContext, ValueAccess } from './LigoDebugContext'
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
@@ -58,17 +58,13 @@ const oldValueSelection = (mitype: string, oldVal: string): Maybe<[number, numbe
 
 // Create QuickPick which remembers previously
 // inputted value in workspace storage.
-export const createRememberingQuickPick =
-	(debuggedContract: Ref<DebuggedContractSession>,
+export async function createRememberingQuickPick (
+		contractMetadata : ContractMetadata,
 		placeHolder: string
-	) => async (config: any): Promise<Maybe<string>> => {
-
-		if (!isDefined(debuggedContract.ref.contractMetadata)) {
-			throw new Error("Internal error: metadata is not defined at the moment of user input")
-		}
+	) : Promise<Maybe<string>> {
 
 		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-		const entrypoints = currentFilePath && debuggedContract.ref.contractMetadata.michelsonEntrypoints
+		const entrypoints = currentFilePath && contractMetadata.michelsonEntrypoints
 		const pickerOptions: QuickPickItem[] =
 			entrypoints ?
 				Object.entries(entrypoints).map(([name, _michelsonType]) => {
@@ -91,37 +87,26 @@ export const createRememberingQuickPick =
 					)
 
 		return quickpick.then(newVal => {
-			// Recreate an object to make it immune to changes of 'newVal'
-			if (newVal) {
-				debuggedContract.ref.pickedMichelsonEntrypoint = newVal.label
-			} else {
-				debuggedContract.ref.pickedMichelsonEntrypoint = undefined
-			}
-
 			if (newVal && newVal.label === "default") {
-				newVal.label = ""
+				newVal.label = "";
 			}
-			return newVal?.label
+			return newVal?.label;
 		})
 	}
 
-export const getEntrypoint = (
+export async function getEntrypoint (
 		context: LigoDebugContext,
 		validateEntrypoint: (entrypoint: string) => Promise<Maybe<string>>,
-		getContractMetadata: (entrypoint: string) => Promise<void>,
-		debuggedContract: Ref<DebuggedContractSession>
-	) => async (_config: any): Promise<Maybe<String>> => {
+		entrypointsList: string[]
+	) : Promise<Maybe<string>> {
 
 		interface State {
 			pickedEntrypoint: string;
 		}
 
 		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
-			if (!isDefined(debuggedContract.ref.entrypoints)) {
-				throw new Error("Internal error: entrypoints must be defined");
-			}
-
-			const entrypoints: QuickPickItem[] = debuggedContract.ref.entrypoints.map(label => ({ label }));
+			const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
+			const entrypoints: QuickPickItem[] = currentFilePath && entrypointsList.map(label => ({ label }));
 
 			const remembered = context.workspaceState.lastEntrypoint();
 
@@ -166,27 +151,19 @@ export const getEntrypoint = (
 				(input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state)
 			) as State;
 
-		if (isDefined(result.pickedEntrypoint)) {
-			await getContractMetadata(result.pickedEntrypoint);
-			debuggedContract.ref.pickedLigoEntrypoint = result.pickedEntrypoint;
-			return result.pickedEntrypoint;
-		}
+		return result.pickedEntrypoint;
 }
 
-export const getParameterOrStorage = (
+export async function getParameterOrStorage(
 		context: LigoDebugContext,
-		validateInput: (boxType: InputBoxType, valueType: InputValueType) => (value: string) => Promise<Maybe<string>>,
+		validateInput: (inputType: InputBoxType, valueType: InputValueType) => (value: string) => Promise<Maybe<string>>,
 		inputBoxType: InputBoxType,
 		placeHolder: string,
 		prompt: string,
-		debuggedContract: Ref<DebuggedContractSession>
-	) => async (_config: any): Promise<Maybe<string>> => {
-
-	if (!isDefined(debuggedContract.ref.pickedLigoEntrypoint)) {
-		throw new Error("Internal error: LIGO entrypoint is not defined");
-	}
-
-	const ligoEntrypoint: string = debuggedContract.ref.pickedLigoEntrypoint;
+		ligoEntrypoint: string,
+		contractMetadata: ContractMetadata,
+		michelsonEntrypoint: Maybe<string>
+	): Promise<Maybe<string>> {
 
 	const totalSteps = 1;
 	const rememberedFormat = context.workspaceState.lastParameterOrStorageFormat(inputBoxType, ligoEntrypoint)
@@ -217,30 +194,22 @@ export const getParameterOrStorage = (
 	}
 
 	async function askValue(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
-		if (!isDefined(debuggedContract.ref.contractMetadata)) {
-			throw new Error("Internal error: metadata is not defined at the moment of user input")
-		}
-		if (!isDefined(state.ref.currentSwitch)) {
-			throw new Error("Internal error: debugging state is not initialized")
-		}
-
 		var rememberedVal: ValueAccess<string>;
 
 		let placeholderExtra: string = ''
 		let michelsonType: string = ''
 		switch (inputBoxType) {
 			case "parameter":
-				michelsonType = debuggedContract.ref.contractMetadata.parameterMichelsonType
+				michelsonType = contractMetadata.parameterMichelsonType
 				// Consider picked entrypoint in the key to remember value depending on an entrypoint
-				const entrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
-				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, entrypoint);
-				if (entrypoint) {
-					placeholderExtra = " for '" + entrypoint + "' entrypoint"
+				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, michelsonEntrypoint);
+				if (michelsonEntrypoint) {
+					placeholderExtra = " for '" + michelsonEntrypoint + "' entrypoint"
 				}
 				break
 
 			case "storage":
-				michelsonType = debuggedContract.ref.contractMetadata.storageMichelsonType
+				michelsonType = contractMetadata.storageMichelsonType
 				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint);
 				break;
 		}
