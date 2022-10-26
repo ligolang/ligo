@@ -22,7 +22,8 @@
     "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json",
     "tscompile": "tsc --noEmit --skipLibCheck",
     "tslint": "eslint src/ --ext ts,tsx,js,jsx",
-    "tslint:fix": "yarn tslint --fix"
+    "tslint:fix": "yarn tslint --fix",
+    "openapi-client-local": "cd ../../ligo-webide-backend && stack exec swagger-gen > tmp.json && openapi-generator-cli generate -i tmp.json -g typescript-axios -o ../ligo-webide-frontend/ligo-ide/src/components/api/generated && rm tmp.json"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.0",
