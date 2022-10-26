@@ -16,6 +16,7 @@
   "scripts": {
     "dev:react": "react-app-rewired start",
     "build:react": "react-app-rewired build",
+    "build:react-prod": "NODE_ENV=production PUBLIC_URL=/ react-app-rewired build",
     "build:web": "PUBLIC_URL=/ CDN=true yarn build:react",
     "eject": "react-scripts eject",
     "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json",
@@ -46,7 +47,7 @@
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "1.0.0-beta.10",
     "prop-types": "^15.8.1",
-    "rc-tree": "git+https://gitlab.com/ligolang/react-component-tree.git",
+    "rc-tree": "git+https://git@gitlab.com/ligolang/react-component-tree.git",
     "react": "^17.0.1",
     "react-contexify": "^5.0.0",
     "react-dnd": "^14.0.4",

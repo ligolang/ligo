@@ -28,9 +28,9 @@
         "properties": {
           "message": { "type": "string" },
           "location": { "$ref": "#/$defs/location" },
-          "variable": { "type": "string" },
-          "required": ["message", "location"]
-        }
+          "variable": { "type": "string" }
+        },
+        "required": ["message", "location"]
       },
       "required": ["status", "stage", "content"]
     },

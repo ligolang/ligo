@@ -36,18 +36,19 @@ let pp_get_scope_output : get_scope_output pp =
       warn_format.pp ~display_format f warn;
       Format.fprintf f "\n")
 
+let to_errors list =
+  let value = List.map list ~f:Main_errors.Formatter.error_json |> List.concat in
+  `List (List.map ~f:Simple_utils.Error.to_yojson value)
 
-let json_list (list : 'a list) (format : 'a format) =
-  `List
-    (List.map list ~f:(fun value ->
-         convert ~display_format:Json (Displayable { value; format })))
-
+let to_warnings list =
+  let warnings = List.map list ~f:Main_warnings.to_json in
+  `List warnings
 
 let get_scope_output_to_json : get_scope_output -> json =
  fun { errors; warns; info } ->
   let content =
-    [ "errors", json_list errors error_format
-    ; "warnings", json_list warns warn_format
+    [ "errors", to_errors errors
+    ; "warnings", to_warnings warns
     ]
   in
   let info_json =

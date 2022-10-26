@@ -19,6 +19,9 @@ module Display = Display
 module Runned_result = Runned_result
 module Snippet = Snippet
 
+module Error = Error
+module Warning = Warning
+
 (* Originally by Christian Rinderknecht *)
 
 module Pos    = Pos

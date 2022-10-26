@@ -171,10 +171,7 @@ module Make (Config : Config.S) (Options : Options.S) =
             (* We resolve the file names to be included. *)
 
             let external_dirs =
-              let file =
-                match state#parent with
-                  Some parent -> parent
-                | None        -> state#pos#file in
+              let file = state#pos#file in
               ModRes.get_dependencies ~file state#mod_res in
 
             (* We try to find the file to include. If missing, the
@@ -245,7 +242,7 @@ module Make (Config : Config.S) (Options : Options.S) =
             (* We set the first position to 1 in the file to
                include. *)
 
-            let pos'   = (state#pos#set_file incl_file)#set_line 1 in
+            let pos'   = (state#pos#set_file incl_path)#set_line 1 in
             let state' = state'#set_pos pos' in
 
             (* We perform a recursive call which will preprocess the
