@@ -1,5 +1,6 @@
 {
     "name": "ligo-debugger-vscode",
+    "displayName": "LIGO debugger",
     "description": "VSCode debugger extension for LIGO.",
     "author": "Serokell",
     "license": "MIT",
@@ -13,7 +14,9 @@
         "Programming Languages",
         "Debuggers"
     ],
-    "keywords": [],
+    "keywords": [
+        "ligo"
+    ],
     "engines": {
         "vscode": "^1.67.0"
     },
