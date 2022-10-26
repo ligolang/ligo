@@ -1,12 +1,10 @@
 module Method.ListDeclarations (listDeclarations) where
 
-import Control.Monad.Except (throwError)
-import Data.ByteString.Lazy.Char8 qualified as LBS
 import Data.Text qualified as Text
-import Servant (err400, errBody)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
 import Common (WebIDEM)
+import Error (LigoCompilerError(..))
 import Ligo (runLigo)
 import Schema.ListDeclarationsRequest (ListDeclarationsRequest(..))
 import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
@@ -18,7 +16,7 @@ listDeclarations request =
     (ec, out, err) <- runLigo dirPath $
       [ "info", "list-declarations" , fullMainPath]
       ++ ["--display-format", "dev"]
-      ++ ["--only-ep" | ldrOnlyEndpoint request]
+      ++ ["--only-ep" | fromMaybe False $ ldrOnlyEndpoint request]
 
     case ec of
       ExitSuccess -> do
@@ -26,5 +24,4 @@ listDeclarations request =
         case Text.lines . Text.strip . Text.pack $ out of
           _ : xs -> pure xs
           _ -> pure []
-      ExitFailure _ -> lift . throwError $ err400
-        {errBody = LBS.pack err}
+      ExitFailure _ -> throwM $ LigoCompilerError $ Text.pack err

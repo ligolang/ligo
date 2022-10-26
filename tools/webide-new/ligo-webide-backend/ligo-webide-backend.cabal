@@ -15,6 +15,7 @@ library
       Api
       Common
       Config
+      Error
       Ligo
       Method.Compile
       Method.CompileExpression
@@ -87,7 +88,9 @@ library
     , bytestring
     , containers
     , directory
+    , exceptions
     , filepath
+    , fmt
     , katip
     , loot-prelude
     , megaparsec
@@ -101,7 +104,6 @@ library
     , servant-openapi3
     , servant-server
     , servant-swagger-ui
-    , swagger2
     , temporary
     , text
     , wai

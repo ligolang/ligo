@@ -69,7 +69,9 @@ library:
   - bytestring
   - containers
   - directory
+  - exceptions
   - filepath
+  - fmt
   - katip
   - megaparsec
   - microlens-platform
@@ -82,7 +84,6 @@ library:
   - servant-swagger-ui
   - servant-openapi3
   - openapi3
-  - swagger2
   - temporary
   - text
   - wai

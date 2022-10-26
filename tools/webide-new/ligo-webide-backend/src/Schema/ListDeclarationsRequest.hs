@@ -3,7 +3,6 @@ module Schema.ListDeclarationsRequest (ListDeclarationsRequest (..)) where
 import Data.Aeson
   (FromJSON, ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON, genericToJSON, parseJSON,
   toJSON)
---import Data.Swagger.Schema
 import Data.OpenApi.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema)
@@ -13,7 +12,7 @@ import Util (prepareField)
 
 data ListDeclarationsRequest = ListDeclarationsRequest
   { ldrProject :: Project
-  , ldrOnlyEndpoint :: Bool
+  , ldrOnlyEndpoint :: Maybe Bool
   } deriving stock (Eq, Show, Ord, Generic)
 
 instance FromJSON ListDeclarationsRequest where

@@ -5,7 +5,6 @@ module Schema.GenerateDeployScriptRequest
 import Data.Aeson
   (FromJSON, ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON, genericToJSON, parseJSON,
   toJSON)
---import Data.Swagger.Schema
 import Data.OpenApi.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema)

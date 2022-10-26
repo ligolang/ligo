@@ -184,7 +184,7 @@ spec config = with (return (mkApp config)) $ do
                   , pSourceFiles =
                      [SourceFile "main.mligo" (Source source)]
                   }
-              , ldrOnlyEndpoint = False
+              , ldrOnlyEndpoint = Just False
               }
       response <- post "/list-declarations" (Aeson.encode input)
       expected <- liftIO . fmap Text.lines

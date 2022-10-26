@@ -1,12 +1,11 @@
 module Ligo (runLigo) where
 
-import Control.Monad.Except (throwError)
-import Servant (err500, errBody)
 import System.Exit (ExitCode)
 import System.Process (proc, readCreateProcessWithExitCode)
 
 import Common (WebIDEM)
 import Config (cDockerizedLigoVersion, cLigoPath)
+import Error (LigoCompilerError(..))
 
 runLigo :: FilePath -> [String] -> WebIDEM (ExitCode, String, String)
 runLigo dirPath commands = do
@@ -28,7 +27,6 @@ runLigo dirPath commands = do
     Nothing -> do
       mLigoPath <- lift (asks cLigoPath)
       case mLigoPath of
-        Nothing -> lift $ throwError err500
-          {errBody = "server doesn't have access to LIGO binary."}
+        Nothing -> throwM NoLigoBinary
         Just ligoPath ->
           liftIO $ readCreateProcessWithExitCode (proc ligoPath commands) ""
