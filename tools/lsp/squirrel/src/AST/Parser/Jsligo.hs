@@ -34,6 +34,7 @@ recognise (SomeRawTree dialect rawTree)
         "list_literal"        -> List       <$> fields "element"
         "annot_expr"          -> Annot      <$> field  "subject"     <*> field    "type"
         "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then_branch" <*> fieldOpt "else_branch"
+        "ternary_expr"        -> Ternary    <$> field  "selector"    <*> field    "then_branch" <*> field "else_branch"
         "record"              -> Record     <$> fields "assignment"
         "record_update"       -> RecordUpd  <$> field  "subject"     <*> fields   "field"
         "paren_expr"          -> Paren      <$> field  "expr"

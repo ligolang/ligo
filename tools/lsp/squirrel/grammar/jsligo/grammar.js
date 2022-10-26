@@ -66,7 +66,16 @@ module.exports = grammar({
       $.list_literal,
       $.pattern_match,
       $._member_expr,
+      $.ternary_expr,
     ),
+
+    ternary_expr: $ => prec.right(seq(
+      field("selector", $._expr),
+      '?',
+      field("then_branch", $._expr),
+      ':',
+      field("else_branch", $._expr)
+    )),
 
     list_literal: $ => seq('list', common.par($._list_elements)),
 

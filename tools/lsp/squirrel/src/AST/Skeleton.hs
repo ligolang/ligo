@@ -168,6 +168,7 @@ data Expr it
   | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
+  | Ternary   it it it -- (Expr) (Expr) (Expr)
   | Assign    it it    -- (Name) (Expr)
   | AssignOp  it it it -- (Name) Text (Expr)
   | List      [it] -- [Expr]

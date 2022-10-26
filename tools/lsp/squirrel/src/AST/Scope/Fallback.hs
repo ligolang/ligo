@@ -402,6 +402,10 @@ instance HasGo Expr where
       walk true
       maybe (pure ()) (void . walk) false
       pure Nothing
+    Ternary clause true false -> do
+      walk clause
+      walk true
+      walk false
     Assign name expr' -> do
       void (walk name)
       walk expr'
