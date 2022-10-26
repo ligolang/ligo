@@ -3,8 +3,7 @@
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module AST.Scope.Common
-  ( MarkerInfo (..)
-  , ParsedContract (..)
+  ( ParsedContract (..)
   , FindFilepath (..)
   , HasScopeForest (..)
   , Namespace (..)
@@ -87,7 +86,7 @@ import Cli.Types
 import Diagnostic (Message)
 import Log qualified
 import ParseTree
-import Parser (Info, LineMarker, ParsedInfo)
+import Parser (Info, ParsedInfo)
 import Product
 import Progress (Progress (..), ProgressCallback, (%))
 import Range
@@ -96,12 +95,6 @@ import Util.Graph (forAMConcurrently, traverseAMConcurrently)
 
 -- TODO: Many of these datatypes don't make sense to be defined here. Consider
 -- moving into different or new modules.
-data MarkerInfo = MarkerInfo
-  { miMarker    :: LineMarker
-  , miLastRange :: Range
-  , miDepth     :: Int
-  } deriving stock (Show)
-
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
   , _cTree :: info -- ^ The payload of the contract.

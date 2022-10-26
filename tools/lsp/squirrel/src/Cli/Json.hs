@@ -484,14 +484,14 @@ mbFromLigoRange (LRVirtual _) = Nothing
 mbFromLigoRange
   (LRFile
     (LigoFileRange
-      (LigoRangeInner LigoByte { _lbPosLnum = startLine , _lbPosFname = startFilePath } startCNum startBol)
-      (LigoRangeInner LigoByte { _lbPosLnum = endLine   , _lbPosFname = endFilePath   } endCNum   endBol)
+      (LigoRangeInner LigoByte{_lbPosLnum = startLine, _lbPosFname = startFilePath} startNum startBol)
+      (LigoRangeInner LigoByte{_lbPosLnum = endLine  , _lbPosFname = endFilePath  } endNum   endBol)
     )
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
   | otherwise = Just Range
-      { _rStart = (startLine, abs (startCNum - startBol) + 1, 0)
-      , _rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
+      { _rStart = (startLine, startNum - startBol + 1, 0)
+      , _rFinish = (endLine, endNum - endBol + 1, 0)
       , _rFile = startFilePath
       }
 
