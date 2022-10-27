@@ -112,19 +112,18 @@ executables:
 
 tests:
   ligo-webide-backend-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Main.hs
+    source-dirs: test
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - aeson
-    - bytestring
     - filepath
-    - http-types
-    - hspec
-    - hspec-wai
     - ligo-webide-backend
+    - req
+    - tasty
+    - tasty-hunit
     - text
-    - wai-extra
+    - warp
