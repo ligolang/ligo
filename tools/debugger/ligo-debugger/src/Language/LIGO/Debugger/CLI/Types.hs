@@ -432,11 +432,17 @@ instance FromJSON LigoMapper where
 class (Exception e) => DebuggerException e
 
 newtype LigoException = LigoException { leMessage :: Text }
-  deriving newtype (Eq, Show, FromBuilder, Buildable)
+  deriving newtype (Eq, Show, FromBuilder)
   deriving anyclass (DebuggerException)
 
 instance Default LigoException where
   def = LigoException ""
+
+instance Buildable LigoException where
+  -- Here we need to strip that prefix in order to escape
+  -- tautology "Internal error: failed to handle: Internal error: %some LIGO error message%"
+  build (LigoException (T.stripPrefix "Internal error: " -> Just stripped)) = build stripped
+  build LigoException{..} = build leMessage
 
 instance Exception LigoException where
   displayException = pretty
