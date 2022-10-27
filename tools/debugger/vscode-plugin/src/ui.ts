@@ -101,12 +101,11 @@ export async function getEntrypoint (
 	) : Promise<Maybe<string>> {
 
 		interface State {
-			pickedEntrypoint: string;
+			pickedEntrypoint?: string;
 		}
 
-		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
-			const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-			const entrypoints: QuickPickItem[] = currentFilePath && entrypointsList.map(label => ({ label }));
+		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<State>) {
+			const entrypoints: QuickPickItem[] = entrypointsList.map(label => ({ label }));
 
 			const remembered = context.workspaceState.lastEntrypoint();
 
@@ -139,7 +138,7 @@ export async function getEntrypoint (
 			if (validateResult) {
 				vscode.window.showWarningMessage(validateResult);
 				input.doNotRecordStep();
-				return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state);
+				return (input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state);
 			} else {
 				remembered.value = pick.label;
 				state.ref.pickedEntrypoint = pick.label;
@@ -148,8 +147,8 @@ export async function getEntrypoint (
 
 		const result: State =
 			await MultiStepInput.run(
-				(input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state)
-			) as State;
+				(input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state), {}
+			);
 
 		return result.pickedEntrypoint;
 }
@@ -166,7 +165,26 @@ export async function getParameterOrStorage(
 	): Promise<Maybe<string>> {
 
 	const totalSteps = 1;
-	const rememberedFormat = context.workspaceState.lastParameterOrStorageFormat(inputBoxType, ligoEntrypoint)
+
+	let rememberedVal: ValueAccess<[string, InputValueType]>;
+	let michelsonType: string;
+	switch(inputBoxType) {
+		case "parameter":
+			// Consider picked entrypoint in the key to remember value depending on an entrypoint
+			rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, michelsonEntrypoint);
+			michelsonType = contractMetadata.parameterMichelsonType;
+			break;
+		case "storage":
+			rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint);
+			michelsonType = contractMetadata.storageMichelsonType;
+			break;
+	}
+
+	// These null checks is just a legacy. We can put them
+	// into the context before by the accident and now we don't want to fail.
+	if (!isDefined(rememberedVal.value) || rememberedVal.value[0] == null || rememberedVal.value[1] == null) {
+		rememberedVal.value = [suggestTypeValue(michelsonType).value, "LIGO"];
+	}
 
 	class SwitchButton implements vscode.QuickInputButton {
 		public typ: InputValueType;
@@ -189,36 +207,24 @@ export async function getParameterOrStorage(
 	}
 
 	interface State {
-		value: string;
+		value?: string;
 		currentSwitch: SwitchButton;
 	}
 
-	async function askValue(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
-		var rememberedVal: ValueAccess<string>;
-
-		let placeholderExtra: string = ''
-		let michelsonType: string = ''
-		switch (inputBoxType) {
-			case "parameter":
-				michelsonType = contractMetadata.parameterMichelsonType
-				// Consider picked entrypoint in the key to remember value depending on an entrypoint
-				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, michelsonEntrypoint);
-				if (michelsonEntrypoint) {
-					placeholderExtra = " for '" + michelsonEntrypoint + "' entrypoint"
-				}
-				break
-
-			case "storage":
-				michelsonType = contractMetadata.storageMichelsonType
-				rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint);
-				break;
+	async function askValue(input: MultiStepInput<State>, state: Ref<State>) {
+		// This check seems redundant but without it
+		// `tsc` will coplain about `rememberVal.value may be undefined`.
+		if (!isDefined(rememberedVal.value)) {
+			return;
 		}
 
-		const previousVal = rememberedVal.value
-		const defaultValue =
-			isDefined(previousVal)
-				? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
-				: suggestTypeValue(michelsonType)
+		let placeholderExtra: string = ''
+		if (inputBoxType == "parameter" && michelsonEntrypoint) {
+			placeholderExtra = " for '" + michelsonEntrypoint + "' entrypoint";
+		}
+
+		const [previousVal, _] = rememberedVal.value
+		const defaultValue = { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
 
 		// Unfortunately, we can't use 'valueSelection' in low-level 'createInputBox'.
 		// (https://github.com/microsoft/vscode/issues/56759)
@@ -233,8 +239,9 @@ export async function getParameterOrStorage(
 			ignoreFocusOut: true
 		});
 
-		if (isDefined(input.getCurrentValue())) {
-			rememberedVal.value = input.getCurrentValue();
+		const currentValue = input.getCurrentValue();
+		if (isDefined(currentValue)) {
+			rememberedVal.value[0] = currentValue;
 		}
 
 		input.doNotRecordStep();
@@ -249,18 +256,15 @@ export async function getParameterOrStorage(
 					break;
 			}
 
-			rememberedFormat.value = state.ref.currentSwitch.typ;
-
-			return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askValue(input, state);
+			return (input: MultiStepInput<State>, state: Ref<State>) => askValue(input, state);
 		} else {
 			state.ref.value = pick;
 		}
 	}
 
 	let switchButton: SwitchButton;
-	switch(rememberedFormat.value) {
+	switch(rememberedVal.value[1]) {
 		case "LIGO":
-		case undefined:
 			switchButton = SwitchButton.LigoSwitch;
 			break;
 		case "Michelson":
@@ -272,9 +276,10 @@ export async function getParameterOrStorage(
 		await MultiStepInput.run(
 			(input: MultiStepInput<State>, state) => askValue(input, state),
 			{ currentSwitch: switchButton }
-		) as State;
+		);
 
 	if (isDefined(result.value) && isDefined(result.currentSwitch.typ)) {
+		rememberedVal.value[1] = result.currentSwitch.typ;
 		return result.value + '@' + result.currentSwitch.typ;
 	}
 }
@@ -284,7 +289,7 @@ class InputFlowAction {
 	static cancel = new InputFlowAction();
 }
 
-type InputStep<S> = (input: MultiStepInput<S>, state: Ref<Partial<S>>) => Thenable<InputStep<S> | void>;
+type InputStep<S> = (input: MultiStepInput<S>, state: Ref<S>) => Thenable<InputStep<S> | void>;
 
 interface QuickPickParameters<T extends QuickPickItem> {
 	totalSteps: number;
@@ -305,16 +310,14 @@ interface InputBoxParameters {
 }
 
 class MultiStepInput<S> {
-
-	static async run<S>(start: InputStep<S>, state?: Partial<S>) {
+	static async run<S>(start: InputStep<S>, state: S) {
 		const input = new MultiStepInput<S>();
-		if (state) {
-			input.state.ref = state
-		}
+		input.state = { ref: state };
+
 		return input.stepThrough(start);
 	}
 
-	private state: Ref<Partial<S>> = { ref: {} }
+	private state: Ref<S>;
 	private current?: vscode.QuickInput;
 	private steps: InputStep<S>[] = [];
 	private shouldRecordStep: boolean = true;
@@ -366,7 +369,7 @@ class MultiStepInput<S> {
 			this.current.dispose();
 		}
 
-		return this.state.ref as S
+		return this.state.ref;
 	}
 
 	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({ totalSteps, items, activeItem, buttons, placeholder }: P) {
