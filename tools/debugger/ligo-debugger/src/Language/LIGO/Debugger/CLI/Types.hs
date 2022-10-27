@@ -5,7 +5,7 @@ module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
   ) where
 
-import Control.Lens (AsEmpty (..), forOf, prism)
+import Control.Lens (AsEmpty (..), forOf, makePrisms, prism)
 import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
@@ -277,6 +277,8 @@ data LigoExposedStackEntry = LigoExposedStackEntry
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
+makeLensesWith postfixLFields ''LigoExposedStackEntry
+
 instance Buildable LigoExposedStackEntry where
   build (LigoExposedStackEntry decl ty) =
     let declB = maybe "?" build decl
@@ -298,6 +300,8 @@ data LigoStackEntry
     -- reusable functions or part of sum type when unfolding via @IF_LEFT@s.
   deriving stock (Show, Eq, Generic)
   deriving anyclass (NFData)
+
+makePrisms ''LigoStackEntry
 
 instance Buildable LigoStackEntry where
   build = \case

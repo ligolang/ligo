@@ -8,7 +8,7 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Control.Lens (has, ix, makeLensesWith, (?~), (^?!))
+import Control.Lens (Each (each), has, ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
 import Fmt (pretty)
@@ -753,6 +753,27 @@ test_Snapshots = testGroup "Snapshots collection"
             "Duplicated source range for different snapshots"
             (srcLocAtDiv /= srcLocAtBack)
 
+    , testCaseSteps "Variables in pattern match" \step -> do
+        let file = contractsDir </> "variables-in-pattern-match.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          void $ moveTill Forward $
+            goesAfter (SrcPos (Pos 4) (Pos 0))
+
+          lift $ step [int||Extract variables|]
+          checkSnapshot \snap -> do
+            -- TODO: extract variables in a neat way when LIGO-758 is merged
+            let vars =
+                  snap ^.. isStackFramesL . ix 0 . sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
+                  <&> maybe ("?" :: Text) pretty
+
+            vars @~=? ["a", "b"]
     ]
 
   ]
