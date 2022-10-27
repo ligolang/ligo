@@ -4,7 +4,7 @@ all: build
 
 package:
 	# Prerequisites: the Haskell adapter executable must be present
-	rm -r build
+	rm -rf build
 	mkdir -p build
 	yarn package --out=build
 
