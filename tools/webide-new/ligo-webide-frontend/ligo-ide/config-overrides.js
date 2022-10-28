@@ -166,12 +166,16 @@ if (process.env.CDN) {
     )
   );
 }
-
 module.exports = {
   webpack: override(...overrides),
   devServer: function (configFunction) {
     return function (proxy, allowedHost) {
-      const config = configFunction(proxy, allowedHost);
+      const config = configFunction({
+        '/api': {
+          target: 'http://localhost:8080',
+          pathRewrite: { '^/api': '' },
+        },
+      }, allowedHost);
       config.headers = {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
