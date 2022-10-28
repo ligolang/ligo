@@ -89,6 +89,9 @@ let all_aggregated_expression ~raise e =
   let e = thunk e in
   let e = Helpers.map_expression (Literal_replace.expression ~raise) e in
   let e = Helpers.map_expression Pattern_matching_simpl.peephole_expression e in
+  let e = Helpers.map_expression (Contract_passes.entrypoint_typing ~raise) e in
+  let e = Helpers.map_expression (Contract_passes.emit_event_typing ~raise) e in
+  let e = Helpers.map_expression (Contract_passes.self_literal_typing ~raise) e in
   e
 
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
@@ -113,6 +116,9 @@ let all_program ~raise ~(options : Compiler_options.middle_end) (prg : Ast_aggre
 
 let contract_passes ~raise = [
   Contract_passes.self_typing ~raise ;
+]
+
+let contract_passes_map ~raise = [
   Contract_passes.entrypoint_typing ~raise ;
   Contract_passes.emit_event_typing ~raise ;
 ]
@@ -121,5 +127,7 @@ let all_contract ~raise parameter storage prg =
   let contract_type : Contract_passes.contract_type = { parameter ; storage } in
   let all_p = List.map ~f:(fun pass -> Ast_aggregated.Helpers.fold_map_expression pass contract_type) @@ contract_passes ~raise in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
+  let all_p = List.map ~f:(fun pass -> Helpers.map_expression pass) @@ contract_passes_map ~raise in
+  let prg = List.fold ~f:(fun x f -> f x) all_p ~init:prg in
   let prg = Helpers.map_expression Pattern_matching_simpl.peephole_expression prg in
   prg
