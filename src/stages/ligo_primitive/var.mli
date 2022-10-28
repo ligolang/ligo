@@ -1,6 +1,6 @@
 module Location = Simple_utils.Location
 module type VAR = sig
-   type t [@@deriving compare, yojson, hash]
+   type t [@@deriving compare, yojson, hash, sexp]
    (* Create a compiler generated variable *)
    val reset_counter : unit -> unit
    val fresh : ?loc:Location.t -> ?name:string -> unit -> t
