@@ -12,7 +12,7 @@ import { getExamples } from "./examples";
 import redux from "~/base-components/redux";
 
 import { networkManager } from "~/ligo-components/eth-network";
-import compilerManager, { CompilerManager } from "~/ligo-components/eth-compiler";
+import compilerManager from "~/ligo-components/eth-compiler";
 import queue from "~/ligo-components/eth-queue";
 
 import ProjectSettings from "../ProjectSettings";
@@ -534,14 +534,6 @@ export default class ProjectManager {
   lint() {}
 
   async compile(sourceFile?: string, finalCall?: () => void) {
-    /* eslint-disable */
-    // @ts-ignore
-    if (CompilerManager.button.state.building) {
-      /* eslint-enable */
-      notification.error("Build Failed", "Another build task is running now.");
-      return false;
-    }
-
     const settings = await this.checkSettings();
 
     await this.project.saveAll();
