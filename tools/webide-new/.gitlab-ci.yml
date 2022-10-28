@@ -36,3 +36,15 @@ webide-frontend-checks:
   script:
     - nix build ./tools/webide-new#checks.x86_64-linux.frontend-tscompile
     - nix build ./tools/webide-new#checks.x86_64-linux.frontend-tslint
+
+webide-deploy:
+  stage: webide
+  only: [ tooling ]
+  needs: [ print-nix-version ]
+  # Should we make this automatical? Or perhaps deploy on some other branch changes
+  when: manual
+  script:
+    - eval "$(ssh-agent -s)"
+    - echo "$WEBIDE_DEPLOYMENT_KEY" | base64 --decode | env SSH_ASKPASS="$(command -v false)" ssh-add -
+    - nix develop ./tools/webide-new -c deploy ./tools/webide-new#webide --ssh-user deploy --skip-checks
+    - kill "$SSH_AGENT_PID"
