@@ -25,6 +25,8 @@ const config = {
     locales: ['en'],
   },
 
+  plugins: ["@ligo/syntax"],
+
   presets: [
     [
       'classic',
