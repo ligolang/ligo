@@ -41,6 +41,7 @@ import Prelude hiding (Product (..), Type)
 import Control.Monad.Trans.Writer (execWriter, tell)
 import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
+import Data.Maybe (fromMaybe, isJust, listToMaybe)
 import Data.Text qualified as T
 import Duplo
 import Language.LSP.Types qualified as J
@@ -57,36 +58,24 @@ extractedTypeNameAlias = "extractedTypeName"
 
 -- | Construct all code actions regarding type extraction for the contract.
 typeExtractionCodeAction :: Range -> J.Uri -> SomeLIGO Info' -> [J.CodeAction]
-typeExtractionCodeAction at uri (SomeLIGO dialect tree) =
+typeExtractionCodeAction at uri (SomeLIGO dialect tree) = fromMaybe [] do
+  (i, RawContract xs) <- match tree
   let
-    isPreprocessor = \case
-      (match -> Just (_, Preprocessor _)) -> True
-      _ -> False
-  in case match tree of
-    (Just (i, RawContract xs)) -> do
-      let
-        filteredSubtree = dropWhile isPreprocessor xs
-        filteredSubtreeRange = case filteredSubtree of
-          [] -> getElem @Range i
-          (x:_) -> getElem @Range $ extract x
-        strippedTree = fastMake i (RawContract filteredSubtree)
-        typeAliasName = genTypeName tree
-        typeVars = extractTypeVariableNames strippedTree
-      case spineTo (leq at . getElem) strippedTree of
-        ((match -> Just (info, TypeName tn)):_) -> do
-          let
-            typeEdits = makeReplaceTypeEdits typeAliasName (Right tn) strippedTree
-            replaceRange = getElem @Range info
-            typeAlias = constructTypeAlias dialect typeAliasName typeVars (Left tn) filteredSubtreeRange
-          mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
-        (typeNode@(match @Type -> Just (info, exactType)):_) -> do
-          let
-            typeEdits = makeReplaceTypeEdits typeAliasName (Left exactType) strippedTree
-            replaceRange = getElem @Range info
-            typeAlias = constructTypeAlias dialect typeAliasName typeVars (Right typeNode) filteredSubtreeRange
-          mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
-        _ -> [] -- Matched everything but type, ignore
-    _ -> [] -- Malformed tree with error nodes passed, ignore
+    isPreprocessor = isJust . layer @Preprocessor
+    typeAliasName = genTypeName tree
+    filteredSubtree = dropWhile isPreprocessor xs
+    filteredSubtreeRange = getRange $ maybe i extract $ listToMaybe filteredSubtree
+    strippedTree = fastMake i (RawContract filteredSubtree)
+    typeVars = extractTypeVariableNames strippedTree
+  (info, exactType, typeNode) <- case spineTo (leq at . getRange) strippedTree of
+    (match -> Just (info, TypeName tn)) : _ -> Just (info, Right tn, Left tn)
+    typeNode@(match @Type -> Just (info, exactType)) : _ -> Just (info, Left exactType, Right typeNode)
+    _ -> Nothing  -- Matched everything but type, ignore
+  let
+    typeEdits = makeReplaceTypeEdits typeAliasName exactType strippedTree
+    replaceRange = getRange info
+    typeAlias = constructTypeAlias dialect typeAliasName typeVars typeNode filteredSubtreeRange
+  pure $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
 
 extractTypeVariableNames :: LIGO Info' -> HS.HashSet T.Text
 extractTypeVariableNames = execWriter . visit'
