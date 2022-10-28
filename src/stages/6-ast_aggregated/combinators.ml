@@ -279,7 +279,7 @@ let e_a_bool b = make_e (e_bool b) (t_bool ())
 
 (* Constants *)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
-let e_a_none t = make_e (e_none ()) (t_option t)
+let e_a_none ?location t = make_e ?location (e_none ()) (t_option t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
 let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
 let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)
