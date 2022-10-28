@@ -19,46 +19,46 @@ packages:
   original:
     hackage: hspec-wai-json-0.11.0@sha256:1fdd66a61c84a9ba6f2e1673ed49b2da1f57f025cd3fb9a46d62620ff9259d63,1629
 - completed:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     name: lorentz
     pantry-tree:
-      sha256: 5bbe591eda9c1d30cd184fec9fc960692e082fb8c8c2a88128549eecce341985
+      sha256: f9ad176951f227c4b4101e3f22f8e45302fc5feca1adc3251cf5766ec00cc215
       size: 4457
     subdir: code/lorentz
-    version: 0.14.0
+    version: 0.14.1
   original:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     subdir: code/lorentz
 - completed:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     name: morley
     pantry-tree:
-      sha256: d9a02a9c08a904bcd6ffe6cc7ad0004c2c9ee4413754079a1a54f97cd7a326b0
-      size: 10975
+      sha256: 411f379140411ae9f8b64cf54d8fb735893afb74d97761f7c752e16282851596
+      size: 11111
     subdir: code/morley
-    version: 1.17.0
+    version: 1.18.0
   original:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     subdir: code/morley
 - completed:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     name: morley-client
     pantry-tree:
-      sha256: b656df239f2f4d86d84d685624b00cfa2c587fb429fe7f8ee5e81548b3c0cea2
+      sha256: 25f4203e0f9b541370de62903548784c06bdea271baf9f677ee8eac4bf6d7a2e
       size: 3926
     subdir: code/morley-client
-    version: 0.2.0
+    version: 0.2.1
   original:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     subdir: code/morley-client
 - completed:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     name: morley-prelude
     pantry-tree:
@@ -67,7 +67,7 @@ packages:
     subdir: code/morley-prelude
     version: 0.5.1
   original:
-    commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
     git: https://gitlab.com/morley-framework/morley.git
     subdir: code/morley-prelude
 - completed:

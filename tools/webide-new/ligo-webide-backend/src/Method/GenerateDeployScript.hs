@@ -23,10 +23,11 @@ import Text.Megaparsec (errorBundlePretty)
 
 import Morley.Client
   (MorleyClientConfig(..), MorleyClientEnv, MorleyClientM, OperationInfo(OpOriginate),
-  OriginationData(..), dryRunOperationsNonEmpty, getProtocolParameters, importKey,
-  mkMorleyClientEnv, revealKeyUnlessRevealed, runMorleyClientM)
+  OriginationData(..), dryRunOperationsNonEmpty, getProtocolParameters, mkMorleyClientEnv,
+  revealKeyUnlessRevealed, runMorleyClientM)
 import Morley.Client.Action.Common (computeStorageLimit)
 import Morley.Client.RPC (AppliedResult, ProtocolParameters(ppCostPerByte))
+import Morley.Client.TezosClient.Impl as TezosClient (importKey)
 import Morley.Micheline (StringEncode(..), TezosMutez(..))
 import Morley.Michelson.Macro (expandContract)
 import Morley.Michelson.Parser
@@ -124,7 +125,7 @@ generateDeployScript request = do
 
   let morleyConfig :: MorleyClientConfig
       morleyConfig = MorleyClientConfig
-        { mccEndpointUrl = Just (BaseUrl Https "jakarta.testnet.tezos.serokell.team" 443 "")
+        { mccEndpointUrl = Just (BaseUrl Https "kathmandu.testnet.tezos.serokell.team" 443 "")
         , mccTezosClientPath = tezosClientPath
         , mccMbTezosClientDataDir = Nothing
         , mccVerbosity = 0
