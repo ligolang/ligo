@@ -1,5 +1,5 @@
 export default {
-  default: atob("Z2hwX05aa0h5MzBUN1RMTVRoRGh0MGpRTmF5ZFF1TWg3ajF3bEpGVw=="),
+  default: atob("Z2hwXzl4c2dpZ0p4MVBMNmo3a285WHUxeFgxTWlyZzhSMjRaZ0trMA=="),
   persist: true,
   actions: {
     SET_GIST_TOKEN: {
