@@ -43,7 +43,10 @@ const config = {
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
-        }
+        },
+        gtag: {
+          trackingID: 'G-V5S4SDLK4Z'
+        },
       }),
     ],
   ],
@@ -168,19 +171,7 @@ const config = {
         searchPagePath: 'search',
 
       },
-    }),
-  plugins: [
-    [
-      '@docusaurus/plugin-google-analytics',
-      {
-        trackingID: 'UA-205736400-1'
-      }
-    ],
-    [
-      './src/plugins/syntax', {},
-    ],
-    // '@aldridged/docusaurus-plugin-lunr'
-  ]
+    })
 };
 
 module.exports = config;

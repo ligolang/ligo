@@ -17,7 +17,6 @@
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^0.11.0",
     "@docusaurus/core": "^2.1.0",
-    "@docusaurus/plugin-google-analytics": "^2.1.0",
     "@docusaurus/preset-classic": "^2.1.0",
     "@ligo/syntax": "file:src/plugins/syntax",
     "@mdx-js/react": "^1.6.22",
