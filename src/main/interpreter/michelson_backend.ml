@@ -1170,6 +1170,32 @@ let rec compile_value ~raise ~options ~loc
     in
     let x = bytes_of_bls12_381_fr b in
     Tezos_micheline.Micheline.Bytes ((), x)
+  | V_Ct (C_timestamp t) ->
+    let () =
+      trace_option
+        ~raise
+        (Errors.generic_error
+            loc
+            (Format.asprintf
+              "Expected timestamp but got %a"
+              Ast_aggregated.PP.type_expression
+              ty))
+        (get_t_timestamp ty)
+    in
+    Tezos_micheline.Micheline.Int ((),t)
+  | V_Ct (C_int64 x) ->
+    let () =
+      trace_option
+        ~raise
+        (Errors.generic_error
+            loc
+            (Format.asprintf
+              "Expected timestamp but got %a"
+              Ast_aggregated.PP.type_expression
+              ty))
+        (get_t_int ty)
+    in
+    Tezos_micheline.Micheline.Int ((),Z.of_int64 x)
   | V_Construct (ctor, arg) when Option.is_some (get_t_option ty) ->
     (match ctor with
      | "None" -> Tezos_micheline.Micheline.Prim ((), "None", [], [])
@@ -1349,7 +1375,7 @@ let rec compile_value ~raise ~options ~loc
         map
     in
     Tezos_micheline.Micheline.Seq ((), map)
-  | V_Func_val v ->
+  | V_Func_val v -> (
     let make_subst_ast_env_exp ~raise env =
       let open Ligo_interpreter.Types in
       let rec aux acc = function
@@ -1435,7 +1461,7 @@ let rec compile_value ~raise ~options ~loc
         v.orig_lambda
     in
     let compiled_exp = compile_ast ~raise ~options typed_exp in
-    (match compiled_exp.expr with
+    match compiled_exp.expr with
      | Seq (_, [ Prim (_, "LAMBDA", [ _; _; compiled_exp ], _) ]) ->
        let compiled_exp =
          Tezos_micheline.Micheline.map_node
@@ -1447,14 +1473,14 @@ let rec compile_value ~raise ~options ~loc
      | _ ->
        raise.error
        @@ Errors.generic_error loc (Format.asprintf "Expected LAMBDA"))
-  | _ ->
+  | v ->
     raise.error
     @@ Errors.generic_error
          loc
          (Format.asprintf
-            "Cannot decompile %a"
-            Ast_aggregated.PP.type_expression
-            ty)
+            "Cannot decompile value %a of type %a"
+            Ligo_interpreter.PP.pp_value v
+            Ast_aggregated.PP.type_expression ty)
 
 
 let compile_value ~raise ~options ~loc
