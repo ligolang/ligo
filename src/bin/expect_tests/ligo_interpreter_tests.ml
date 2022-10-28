@@ -11,6 +11,14 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_foo exited with value 3n. |}]
 
+(* decompilation of timestamp *)
+let%expect_test _ =
+  run_ligo_good ["run" ; "test" ; test "test_timestamp_contract.mligo" ] ;
+  [%expect {|
+    Success (2109n)
+    Everything at the top-level was executed.
+    - test_timestamp exited with value (). |}]
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
   [%expect{|
@@ -993,7 +1001,7 @@ run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
    18 |     ) in
    19 |     let () = Test.log(packed) in
 
-  Cannot decompile typed_address (unit ,
+  Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
   unit) |}]
 
 let () = Sys_unix.chdir pwd
