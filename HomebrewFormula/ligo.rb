@@ -3,10 +3,10 @@ class Ligo < Formula
   homepage "https://ligolang.org/"
 
   # We clone repo explicitely to preserve the information about git submodules
-  url "https://gitlab.com/ligolang/ligo.git", tag: "0.54.0", revision: "fd5cf1017066f693baee637a689b65d4d8174797"
+  url "https://gitlab.com/ligolang/ligo.git", tag: "0.54.1", revision: "4fc28fce66405b0edbd9e1f536a8bd6bd8bacee7"
 
   bottle do
-    root_url "https://gitlab.com/ligolang/ligo/-/jobs/3230410748/artifacts/raw/ligo"
+    root_url "https://gitlab.com/ligolang/ligo/-/jobs/3245121952/artifacts/raw/ligo"
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]
@@ -26,7 +26,7 @@ class Ligo < Formula
 
   def install
     # ligo version is taken from the environment variable in build-time
-    ENV["LIGO_VERSION"] = "0.54.0"
+    ENV["LIGO_VERSION"] = "0.54.1"
     # avoid opam prompts
     ENV["OPAMYES"] = "true"
 
