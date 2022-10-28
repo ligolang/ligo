@@ -1,31 +1,8 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
-open Simple_utils.Trace
-open Ast_typed
+module List = Simple_utils.List
+open Type
 open Ligo_prim
-module ValueMap = Simple_utils.Map.Make (Value_var)
-module TypeMap = Ast_typed.Helpers.IdMap.Make (Type_var)
-module ModuleMap = Ast_typed.Helpers.IdMap.Make (Module_var)
-
-module Exists_var = struct
-  type t = Type_var.t [@@deriving compare, hash]
-
-  module Map = Simple_utils.Map.Make (struct
-    type nonrec t = t [@@deriving compare]
-  end)
-
-  let equal t1 t2 = compare t1 t2 = 0
-  let yojson_of_t t = Type_var.to_yojson t
-  let loc = Type_var.get_location
-  let of_type_var tvar = if Type_var.is_exists tvar then Some tvar else None
-  let pp ppf t = Format.fprintf ppf "%a" Type_var.pp t
-  let fresh = Type_var.fresh_exists
-
-  let of_type_var_exn tvar =
-    if not (Type_var.is_exists tvar)
-    then failwith "Invalid existential variable";
-    tvar
-end
 
 type 'a hashable = (module Caml.Hashtbl.HashedType with type t = 'a)
 
@@ -41,12 +18,31 @@ let memoize (type a b) ?(size = 100) (key : a hashable) (f : a -> b) =
       result
 
 
+let rec_memoize
+    (type a b)
+    ?(size = 100)
+    (key : a hashable)
+    (f : (a -> b) -> a -> b)
+  =
+  let module Hashtbl = Caml.Ephemeron.K1.Make ((val key)) in
+  let table : b Hashtbl.t = Hashtbl.create size in
+  let rec memo_f key =
+    match Hashtbl.find_opt table key with
+    | Some result -> result
+    | None ->
+      let result = f memo_f key in
+      Hashtbl.add table key result;
+      result
+  in
+  memo_f
+
+
 let memoize2
-  (type a b c)
-  ?(size = 100)
-  (key1 : a hashable)
-  (key2 : b hashable)
-  (f : a -> b -> c)
+    (type a b c)
+    ?(size = 100)
+    (key1 : a hashable)
+    (key2 : b hashable)
+    (f : a -> b -> c)
   =
   let module Hashtbl = Caml.Ephemeron.K2.Make ((val key1)) ((val key2)) in
   let table : c Hashtbl.t = Hashtbl.create size in
@@ -58,26 +54,6 @@ let memoize2
       Hashtbl.add table (key1, key2) result;
       result
 
-
-(* 
-let rec_memoize2
-  (type a b c)
-  ?(size = 100)
-  (key1 : a hashable)
-  (key2 : b hashable)
-  (f : (a -> b -> c) -> a -> b -> c)
-  =
-  let module Hashtbl = Caml.Ephemeron.K2.Make ((val key1)) ((val key2)) in
-  let table : c Hashtbl.t = Hashtbl.create size in
-  let rec memo_f key1 key2 =
-    match Hashtbl.find_opt table (key1, key2) with
-    | Some result -> result
-    | None ->
-      let result = f memo_f key1 key2 in
-      Hashtbl.add table (key1, key2) result;
-      result
-  in
-  memo_f *)
 
 module Phys_hashable (T : T) = struct
   include T
@@ -91,9 +67,9 @@ module Signature = struct
     type t = item list
 
     and item =
-      | S_value of expression_variable * type_expression
-      | S_type of type_variable * type_expression
-      | S_module of module_variable * t
+      | S_value of Value_var.t * Type.t
+      | S_type of Type_var.t * Type.t
+      | S_module of Module_var.t * t
     [@@deriving hash]
   end
 
@@ -108,8 +84,8 @@ module Signature = struct
       (module Value_var)
       (fun t var ->
         (find_map t ~f:(function
-          | S_value (var', type_) when Value_var.equal var var' -> Some type_
-          | _ -> None) [@landmark "get_value"]))
+            | S_value (var', type_) when Value_var.equal var var' -> Some type_
+            | _ -> None) [@landmark "get_value"]))
 
 
   let get_type =
@@ -118,8 +94,8 @@ module Signature = struct
       (module Type_var)
       (fun t tvar ->
         (find_map t ~f:(function
-          | S_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
-          | _ -> None) [@landmark "get_type"]))
+            | S_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
+            | _ -> None) [@landmark "get_type"]))
 
 
   let get_module =
@@ -128,17 +104,26 @@ module Signature = struct
       (module Module_var)
       (fun t mvar ->
         (find_map t ~f:(function
-          | S_module (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
-          | _ -> None) [@landmark "get_module"]))
+            | S_module (mvar', sig_) when Module_var.equal mvar mvar' ->
+              Some sig_
+            | _ -> None) [@landmark "get_module"]))
+
+
+  let get_module_types =
+    rec_memoize hashable (fun get_types t ->
+        List.concat_map t ~f:(function
+            | S_type (tvar, type_) -> [ tvar, type_ ]
+            | S_module (_, t) -> get_types t
+            | S_value _ -> []))
 
 
   let rec equal_item : item -> item -> bool =
    fun item1 item2 ->
     match item1, item2 with
     | S_value (var1, type1), S_value (var2, type2) ->
-      Value_var.equal var1 var2 && type_expression_eq (type1, type2)
+      Value_var.equal var1 var2 && Type.equal type1 type2
     | S_type (tvar1, type1), S_type (tvar2, type2) ->
-      Type_var.equal tvar1 tvar2 && type_expression_eq (type1, type2)
+      Type_var.equal tvar1 tvar2 && Type.equal type1 type2
     | S_module (mvar1, sig1), S_module (mvar2, sig2) ->
       Module_var.equal mvar1 mvar2 && equal sig1 sig2
     | _, _ -> false
@@ -148,23 +133,21 @@ module Signature = struct
 
   let to_type_map =
     memoize hashable (fun t ->
-      (List.fold_right t ~init:TypeMap.empty ~f:(fun item map ->
-         match item with
-         | S_type (tvar, type_) -> TypeMap.add map tvar type_
-         | _ -> map) [@landmark "to_type_map"]))
+        (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
+             match item with
+             | S_type (tvar, type_) -> Map.set map ~key:tvar ~data:type_
+             | _ -> map) [@landmark "to_type_map"]))
 
 
   let to_module_map =
     memoize hashable (fun t ->
-      (List.fold_right t ~init:ModuleMap.empty ~f:(fun item map ->
-         match item with
-         | S_module (mvar, t) -> ModuleMap.add map mvar t
-         | _ -> map) [@landmark "to_module_map"]))
+        (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
+             match item with
+             | S_module (mvar, t) -> Map.set map ~key:mvar ~data:t
+             | _ -> map) [@landmark "to_module_map"]))
 
 
   include struct
-    open Ast_typed.PP
-
     let list ~pp ppf xs =
       let rec loop ppf = function
         | [] -> Format.fprintf ppf ""
@@ -176,9 +159,9 @@ module Signature = struct
     let rec pp_item ppf item =
       match item with
       | S_value (var, type_) ->
-        Format.fprintf ppf "%a : %a" Value_var.pp var type_expression type_
+        Format.fprintf ppf "%a : %a" Value_var.pp var Type.pp type_
       | S_type (tvar, type_) ->
-        Format.fprintf ppf "type %a = %a" Type_var.pp tvar type_expression type_
+        Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
       | S_module (mvar, sig_) ->
         Format.fprintf ppf "module %a = %a" Module_var.pp mvar pp sig_
 
@@ -187,31 +170,28 @@ module Signature = struct
   end
 end
 
-type exists_variable = Exists_var.t [@@deriving hash]
-
 type mutable_flag = Param.mutable_flag =
   | Mutable
   | Immutable
 [@@deriving hash]
 
 type pos = int [@@deriving hash]
+type mut_lock = int [@@deriving hash]
 
 module T = struct
-  type t =
-    { items : item list
-    ; solved : (Kind.t * type_expression) Exists_var.Map.t [@hash.ignore]
-    }
+  type t = item list
 
   and item =
-    | C_value of expression_variable * mutable_flag * type_expression
-    | C_type of type_variable * type_expression
-    | C_type_var of type_variable * Kind.t
-    | C_exists_var of exists_variable * Kind.t
-    | C_exists_eq of exists_variable * Kind.t * type_expression
-    | C_marker of exists_variable
-    | C_module of module_variable * Signature.t
+    | C_value of Value_var.t * mutable_flag * Type.t
+    | C_type of Type_var.t * Type.t
+    | C_type_var of Type_var.t * Kind.t
+    | C_module of Module_var.t * Signature.t
+    | C_texists_var of Type_var.t * Kind.t
+    | C_texists_eq of Type_var.t * Kind.t * Type.t
+    | C_lexists_var of Layout_var.t
+    | C_lexists_eq of Layout_var.t * Type.layout
     | C_pos of pos
-    | C_mut_pos of pos
+    | C_mut_lock of mut_lock
   [@@deriving hash]
 end
 
@@ -220,8 +200,6 @@ include T
 let hashable : t hashable = (module Phys_hashable (T))
 
 module PP = struct
-  open Ast_typed.PP
-
   let list ~pp ppf xs =
     let rec loop ppf = function
       | [] -> Format.fprintf ppf ""
@@ -231,189 +209,126 @@ module PP = struct
 
 
   let context ppf t =
-    list ppf t.items ~pp:(fun ppf item ->
-      match item with
-      | C_value (evar, mut_flag, type_) ->
-        Format.fprintf
-          ppf
-          "%a%a : %a"
-          Param.pp_mutable_flag
-          mut_flag
-          Value_var.pp
-          evar
-          type_expression
-          type_
-      | C_type (tvar, type_) ->
-        Format.fprintf ppf "type %a = %a" Type_var.pp tvar type_expression type_
-      | C_type_var (tvar, kind) ->
-        Format.fprintf ppf "%a :: %a" Type_var.pp tvar Kind.pp kind
-      | C_exists_var (evar, kind) ->
-        Format.fprintf ppf "%a ^: %a" Exists_var.pp evar Kind.pp kind
-      | C_exists_eq (evar, kind, type_) ->
-        Format.fprintf
-          ppf
-          "%a :: %a = %a"
-          Exists_var.pp
-          evar
-          Kind.pp
-          kind
-          type_expression
-          type_
-      | C_marker evar -> Format.fprintf ppf "|>%a" Exists_var.pp evar
-      | C_module (mvar, sig_) ->
-        Format.fprintf ppf "module %a = %a" Module_var.pp mvar Signature.pp sig_
-      | C_pos _ | C_mut_pos _ -> ())
-
-
-  let context_local ~pos ppf t =
-    let rec loop ppf items =
-      match items with
-      | [] -> Format.fprintf ppf ""
-      | C_value (evar, mut_flag, type_) :: items ->
-        Format.fprintf
-          ppf
-          "%a%a : %a@,%a"
-          Param.pp_mutable_flag
-          mut_flag
-          Value_var.pp
-          evar
-          type_expression
-          type_
-          loop
-          items
-      | C_type_var (tvar, kind) :: items ->
-        Format.fprintf
-          ppf
-          "%a :: %a@,%a"
-          Type_var.pp
-          tvar
-          Kind.pp
-          kind
-          loop
-          items
-      | C_exists_var (evar, kind) :: items ->
-        Format.fprintf
-          ppf
-          "%a :: %a@,%a"
-          Exists_var.pp
-          evar
-          Kind.pp
-          kind
-          loop
-          items
-      | C_exists_eq (evar, kind, type_) :: items ->
-        Format.fprintf
-          ppf
-          "%a :: %a = %a@,%a"
-          Exists_var.pp
-          evar
-          Kind.pp
-          kind
-          type_expression
-          type_
-          loop
-          items
-      | C_marker evar :: items ->
-        Format.fprintf ppf "|>%a@,%a" Exists_var.pp evar loop items
-      | C_type (tvar, type_) :: items ->
-        Format.fprintf
-          ppf
-          "type %a = %a@,%a"
-          Type_var.pp
-          tvar
-          type_expression
-          type_
-          loop
-          items
-      | (C_pos pos' | C_mut_pos pos') :: _items when pos = pos' ->
-        Format.fprintf ppf ""
-      | _ :: items -> loop ppf items
-    in
-    Format.fprintf ppf "@[<hv>%a@]" loop t.items
+    list ppf t ~pp:(fun ppf item ->
+        match item with
+        | C_value (evar, mut_flag, type_) ->
+          Format.fprintf
+            ppf
+            "%a%a : %a"
+            Param.pp_mutable_flag
+            mut_flag
+            Value_var.pp
+            evar
+            Type.pp
+            type_
+        | C_type (tvar, type_) ->
+          Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
+        | C_type_var (tvar, kind) ->
+          Format.fprintf ppf "%a :: %a" Type_var.pp tvar Kind.pp kind
+        | C_texists_var (evar, kind) ->
+          Format.fprintf ppf "^%a :: %a" Type_var.pp evar Kind.pp kind
+        | C_texists_eq (evar, kind, type_) ->
+          Format.fprintf
+            ppf
+            "^%a :: %a = %a"
+            Type_var.pp
+            evar
+            Kind.pp
+            kind
+            Type.pp
+            type_
+        | C_lexists_var lvar ->
+          Format.fprintf ppf "layout ^%a" Layout_var.pp lvar
+        | C_lexists_eq (lvar, layout) ->
+          Format.fprintf
+            ppf
+            "layout ^%a = %a"
+            Layout_var.pp
+            lvar
+            Type.pp_layout
+            layout
+        | C_module (mvar, sig_) ->
+          Format.fprintf
+            ppf
+            "module %a = %a"
+            Module_var.pp
+            mvar
+            Signature.pp
+            sig_
+        | C_pos _ | C_mut_lock _ -> ())
 end
 
 let pp = PP.context
-let pp_ = PP.context_local
-let empty = { items = []; solved = Exists_var.Map.empty }
-let add t item = { t with items = item :: t.items }
-
-let join t1 t2 =
-  { items = t2.items @ t1.items
-  ; solved =
-      Exists_var.Map.merge
-        (fun _ eq1 eq2 ->
-          match eq1, eq2 with
-          | eq1, None -> eq1
-          | _, eq2 -> eq2)
-        t1.solved
-        t2.solved
-  }
-
-
-let of_list items = { empty with items = List.rev items }
+let empty = []
+let add t item = item :: t
+let join t1 t2 = t2 @ t1
+let of_list items = List.rev items
 
 (* Inifix notations for [add] and [join] *)
 let ( |:: ) = add
 let ( |@ ) = join
-let add_value t evar mut_flag type_ = t |:: C_value (evar, mut_flag, type_)
-let add_imm t evar type_ = t |:: C_value (evar, Immutable, type_)
-let add_mut t evar type_ = t |:: C_value (evar, Mutable, type_)
+let add_value t var mut_flag type_ = t |:: C_value (var, mut_flag, type_)
+let add_imm t var type_ = t |:: C_value (var, Immutable, type_)
+let add_mut t var type_ = t |:: C_value (var, Mutable, type_)
 let add_type t tvar type_ = t |:: C_type (tvar, type_)
 let add_type_var t tvar kind = t |:: C_type_var (tvar, kind)
-let add_exists_var t evar kind = t |:: C_exists_var (evar, kind)
-let add_marker t evar = t |:: C_marker evar
+let add_texists_var t tvar kind = t |:: C_texists_var (tvar, kind)
 let add_module t mvar mctx = t |:: C_module (mvar, mctx)
+let add_lexists_var t lvar = t |:: C_lexists_var lvar
+
+let item_of_signature_item (sig_item : Signature.item) : item =
+  match sig_item with
+  | S_value (var, type_) -> C_value (var, Immutable, type_)
+  | S_type (tvar, type_) -> C_type (tvar, type_)
+  | S_module (mvar, sig_) -> C_module (mvar, sig_)
+
 
 let add_signature_item t (sig_item : Signature.item) =
-  match sig_item with
-  | S_value (var, type_) -> add_imm t var type_
-  | S_type (tvar, type_) -> add_type t tvar type_
-  | S_module (mvar, sig_) -> add_module t mvar sig_
+  add t (item_of_signature_item sig_item)
 
 
 let get_value =
   memoize2
     hashable
     (module Value_var)
-    (fun t evar ->
-      let[@landmark "get_value"] rec loop ?(mut_allowed = true) items =
+    (fun t var ->
+      let[@landmark "get_value"] rec loop ?(locked = false) items =
         match items with
-        | C_value (evar', mut_flag, type_) :: _ when Value_var.equal evar evar'
-          ->
-          (match mut_flag, mut_allowed with
-           | Mutable, false -> Error `Mut_var_captured
-           | _ -> Ok (mut_flag, type_))
-        | C_mut_pos _ :: items -> loop ~mut_allowed:false items
-        | _ :: items -> loop ~mut_allowed items
+        | C_value (var', mut_flag, type_) :: _ when Value_var.equal var var' ->
+          (match mut_flag, locked with
+          | Mutable, true -> Error `Mut_var_captured
+          | _ -> Ok (mut_flag, type_))
+        | C_mut_lock _ :: items -> loop ~locked:true items
+        | _ :: items -> loop ~locked items
         | [] -> Error `Not_found
       in
-      loop t.items)
+      loop t)
 
 
 let get_imm =
   memoize2
     hashable
     (module Value_var)
-    (fun t evar ->
-      List.find_map t.items ~f:(function
-        | C_value (evar', Immutable, type_) when Value_var.equal evar evar' ->
-          Some type_
-        | _ -> None))
+    (fun t var ->
+      List.find_map t ~f:(function
+          | C_value (var', Immutable, type_) when Value_var.equal var var' ->
+            Some type_
+          | _ -> None))
 
 
 let get_mut =
   memoize2
     hashable
     (module Value_var)
-    (fun t evar ->
+    (fun t var ->
       let rec loop = function
-        | C_value (evar', Mutable, type_) :: _ when Value_var.equal evar evar'
-          -> Some type_
-        | C_mut_pos _ :: _ -> None
+        | C_value (var', Mutable, type_) :: _ when Value_var.equal var var' ->
+          Some type_
+        | C_mut_lock _ :: _ -> None
         | _ :: items -> loop items
         | [] -> None
       in
-      loop t.items)
+      loop t)
 
 
 let get_type =
@@ -421,9 +336,9 @@ let get_type =
     hashable
     (module Type_var)
     (fun t tvar ->
-      (List.find_map t.items ~f:(function
-        | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
-        | _ -> None) [@landmark "get_type"]))
+      (List.find_map t ~f:(function
+          | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
+          | _ -> None) [@landmark "get_type"]))
 
 
 let get_module =
@@ -431,41 +346,55 @@ let get_module =
     hashable
     (module Module_var)
     (fun t mvar ->
-      (List.find_map t.items ~f:(function
-        | C_module (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
-        | _ -> None) [@landmark "get_module"]))
+      (List.find_map t ~f:(function
+          | C_module (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
+          | _ -> None) [@landmark "get_module"]))
 
 
 let get_type_vars =
   memoize hashable (fun t ->
-    (List.filter_map t.items ~f:(function
-      | C_type_var (tvar, _) -> Some tvar
-      | _ -> None) [@landmark "get_type_vars"]))
+      (List.filter_map t ~f:(function
+          | C_type_var (tvar, _) -> Some tvar
+          | _ -> None) [@landmark "get_type_vars"])
+      |> Type_var.Set.of_list)
 
 
-let get_exists_vars =
+let get_texists_vars =
   memoize hashable (fun t ->
-    (List.filter_map t.items ~f:(function
-      | C_exists_var (evar, _) -> Some evar
-      | _ -> None) [@landmark "get_exists_vars"]))
+      (List.filter_map t ~f:(function
+          | C_texists_var (tvar, _) | C_texists_eq (tvar, _, _) -> Some tvar
+          | _ -> None) [@landmark "get_texists_vars"])
+      |> Type_var.Set.of_list)
 
 
-let get_markers =
+let get_lexists_vars =
   memoize hashable (fun t ->
-    (List.filter_map t.items ~f:(function
-      | C_marker evar -> Some evar
-      | _ -> None) [@landmark "get_markers"]))
+      (List.filter_map t ~f:(function
+          | C_lexists_var lvar | C_lexists_eq (lvar, _) -> Some lvar
+          | _ -> None) [@landmark "get_lexists_vars"])
+      |> Layout_var.Set.of_list)
 
 
-let get_exists_var =
+let get_texists_var =
   memoize2
     hashable
-    (module Exists_var)
-    (fun t evar ->
-      (List.find_map t.items ~f:(function
-        | (C_exists_var (evar', kind) | C_exists_eq (evar', kind, _))
-          when Exists_var.equal evar evar' -> Some kind
-        | _ -> None) [@landmark "get_exists_var"]))
+    (module Type_var)
+    (fun t tvar ->
+      (List.find_map t ~f:(function
+          | C_texists_var (tvar', kind) when Type_var.equal tvar tvar' ->
+            Some kind
+          | _ -> None) [@landmark "get_exists_var"]))
+
+
+let get_texists_eq =
+  memoize2
+    hashable
+    (module Type_var)
+    (fun t tvar ->
+      (List.find_map t ~f:(function
+          | C_texists_eq (tvar', _kind, type_) when Type_var.equal tvar tvar' ->
+            Some type_
+          | _ -> None) [@landmark "get_exists_eq"]))
 
 
 let get_type_var =
@@ -473,72 +402,115 @@ let get_type_var =
     hashable
     (module Type_var)
     (fun t tvar ->
-      (List.find_map t.items ~f:(function
-        | C_type_var (tvar', kind) when Type_var.equal tvar tvar' -> Some kind
-        | _ -> None) [@landmark "get_type_var"]))
+      (List.find_map t ~f:(function
+          | C_type_var (tvar', kind) when Type_var.equal tvar tvar' -> Some kind
+          | _ -> None) [@landmark "get_type_var"]))
 
 
-let get_exists_eq =
+let get_lexists_eq =
   memoize2
     hashable
-    (module Exists_var)
-    (fun t evar ->
-      (List.find_map t.items ~f:(function
-        | C_exists_eq (evar', _kind, type_) when Exists_var.equal evar evar' ->
-          Some type_
-        | _ -> None) [@landmark "get_exists_eq"]))
+    (module Layout_var)
+    (fun t lvar ->
+      (List.find_map t ~f:(function
+          | C_lexists_eq (lvar', layout) when Layout_var.equal lvar lvar' ->
+            Some layout
+          | _ -> None) [@landmark "get_layout_exists_eq"]))
 
+
+module Apply = struct
+  let rec type_ ctx (t : Type.t) : Type.t =
+    let apply = type_ ctx in
+    let return content = { t with content } in
+    match t.content with
+    | T_exists tvar ->
+      (match get_texists_eq ctx tvar with
+      | Some t -> apply t
+      | None -> t)
+    | T_variable _tvar -> t
+    | T_construct construct ->
+      let parameters = List.map ~f:apply construct.parameters in
+      return @@ T_construct { construct with parameters }
+    | T_sum row' ->
+      let row = row ctx row' in
+      return @@ T_sum row
+    | T_record row' ->
+      let row = row ctx row' in
+      return @@ T_record row
+    | T_arrow arr ->
+      let arr = Arrow.map apply arr in
+      return @@ T_arrow arr
+    | T_singleton _ -> t
+    | T_abstraction abs ->
+      let abs = Abstraction.map apply abs in
+      return @@ T_abstraction abs
+    | T_for_all for_all ->
+      let for_all = Abstraction.map apply for_all in
+      return @@ T_for_all for_all
+
+
+  and row ctx (t : Type.row) : Type.row =
+    let fields = Record.map ~f:(row_elem ctx) t.fields in
+    { t with fields }
+
+
+  and row_elem ctx (t : Type.row_element) : Type.row_element =
+    Rows.map_row_element_mini_c (type_ ctx) t
+
+
+  let rec sig_item ctx (sig_item : Signature.item) : Signature.item =
+    match sig_item with
+    | S_type (tvar, type') -> S_type (tvar, type_ ctx type')
+    | S_value (var, type') -> S_value (var, type_ ctx type')
+    | S_module (mvar, sig') -> S_module (mvar, sig_ ctx sig')
+
+
+  and sig_ ctx (sig_ : Signature.t) : Signature.t =
+    List.map sig_ ~f:(sig_item ctx)
+end
 
 let equal_item : item -> item -> bool =
  fun item1 item2 ->
   match item1, item2 with
-  | C_value (x1, mut_flag1, type1), C_value (x2, mut_flag2, type2) ->
-    Value_var.equal x1 x2
-    && Param.compare_mutable_flag mut_flag1 mut_flag2 = 0
-    && compare_type_expression type1 type2 = 0
+  | C_value (var1, mut_flag1, type1), C_value (var2, mut_flag2, type2) ->
+    Value_var.equal var1 var2
+    && Param.equal_mutable_flag mut_flag1 mut_flag2
+    && Type.equal type1 type2
   | C_type (tvar1, type1), C_type (tvar2, type2) ->
-    Type_var.equal tvar1 tvar2 && compare_type_expression type1 type2 = 0
+    Type_var.equal tvar1 tvar2 && Type.equal type1 type2
   | C_type_var (tvar1, kind1), C_type_var (tvar2, kind2) ->
-    Type_var.equal tvar1 tvar2 && Kind.compare kind1 kind2 = 0
-  | C_exists_var (evar1, kind1), C_exists_var (evar2, kind2) ->
-    Exists_var.equal evar1 evar2 && Kind.compare kind1 kind2 = 0
-  | C_exists_eq (evar1, kind1, type1), C_exists_eq (evar2, kind2, type2) ->
-    Exists_var.equal evar1 evar2
-    && Kind.compare kind1 kind2 = 0
-    && compare_type_expression type1 type2 = 0
-  | C_marker evar1, C_marker evar2 -> Exists_var.equal evar1 evar2
+    Type_var.equal tvar1 tvar2 && Kind.equal kind1 kind2
+  | C_texists_var (tvar1, kind1), C_texists_var (tvar2, kind2) ->
+    Type_var.equal tvar1 tvar2 && Kind.equal kind1 kind2
+  | C_texists_eq (evar1, kind1, type1), C_texists_eq (evar2, kind2, type2) ->
+    Type_var.equal evar1 evar2
+    && Kind.equal kind1 kind2
+    && Type.equal type1 type2
   | C_module (mvar1, sig1), C_module (mvar2, sig2) ->
     Module_var.equal mvar1 mvar2 && Signature.equal sig1 sig2
   | C_pos pos1, C_pos pos2 -> pos1 = pos2
-  | C_mut_pos pos1, C_mut_pos pos2 -> pos1 = pos2
+  | C_mut_lock lock1, C_mut_lock lock2 -> lock1 = lock2
   | _, _ -> false
 
 
-let drop_until t ~pos =
+let drop_until t ~f =
   let rec loop t =
-    match t.items with
-    | [] -> t
-    | (C_pos pos' | C_mut_pos pos') :: items when pos = pos' -> { t with items }
-    | item :: items ->
-      loop
-        { items
-        ; solved =
-            (match item with
-             | C_exists_eq (evar, kind, type_) ->
-               Exists_var.Map.add evar (kind, type_) t.solved
-             | _ -> t.solved)
-        }
+    match t with
+    | [] -> t, Substitution.empty
+    | item :: t when f item -> t, Substitution.empty
+    | item :: t ->
+      let t, subst = loop t in
+      let subst =
+        match item with
+        | C_texists_eq (tvar, kind, type_) ->
+          Substitution.add_texists_eq subst tvar kind type_
+        | C_lexists_eq (lvar, layout) ->
+          Substitution.add_lexists_eq subst lvar layout
+        | _ -> subst
+      in
+      t, subst
   in
   loop t
-
-
-let remove_pos t ~pos =
-  { t with
-    items =
-      List.filter t.items ~f:(function
-        | C_pos pos' when pos = pos' -> false
-        | _ -> true)
-  }
 
 
 let split_at t ~at =
@@ -552,20 +524,82 @@ let split_at t ~at =
         let t1, t2 = loop t in
         t1, item :: t2)
   in
-  (* Left context gets solved *)
-  let solved = t.solved in
-  let l, r = loop t.items in
-  { items = l; solved }, { empty with items = r }
+  loop t
 
+
+let unsolved t =
+  let rec loop t =
+    match t with
+    | [] -> [], Substitution.empty
+    | item :: t ->
+      let t, subst = loop t in
+      let t =
+        match item with
+        | C_texists_var _ | C_lexists_var _ -> item :: t
+        | _ -> t
+      in
+      let subst =
+        match item with
+        | C_texists_eq (tvar, kind, type_) ->
+          Substitution.add_texists_eq subst tvar kind type_
+        | C_lexists_eq (lvar, layout) ->
+          Substitution.add_lexists_eq subst lvar layout
+        | _ -> subst
+      in
+      t, subst
+  in
+  loop t
+
+
+let lift t type_ ~apply ~at =
+  let t1, t2 = split_at t ~at in
+  let type_ = apply t2 type_ in
+  let unsolved, subst = unsolved t2 in
+  (t1 |@ unsolved, type_), subst
+
+
+type 'a apply = t -> 'a -> 'a
+
+type 'a exit =
+  | Drop : t exit
+  | Lift : 'a apply -> (t * 'a) exit
 
 let mark =
   let next = ref 0 in
-  fun t ~mut ->
+  fun t ->
     let pos =
       Int.incr next;
       !next
     in
-    (t |:: if mut then C_mut_pos pos else C_pos pos), pos
+    t |:: C_pos pos, pos
+
+
+let lock =
+  let next = ref 0 in
+  fun t ->
+    let lock =
+      Int.incr next;
+      !next
+    in
+    t |:: C_mut_lock lock, lock
+
+
+let unlock (type a) (t : a) ~(on_exit : a exit) ~lock : a * Substitution.t =
+  match on_exit, t with
+  | Drop, t ->
+    drop_until t ~f:(function
+        | C_mut_lock lock' -> lock = lock'
+        | _ -> false)
+  | Lift apply, (t, x) -> lift t x ~apply ~at:(C_mut_lock lock)
+
+
+let drop_until (type a) (t : a) ~(on_exit : a exit) ~pos : a * Substitution.t =
+  match on_exit, t with
+  | Drop, t ->
+    drop_until t ~f:(function
+        | C_pos pos' -> pos = pos'
+        | _ -> false)
+  | Lift apply, (t, x) -> lift t x ~apply ~at:(C_pos pos)
 
 
 let insert_at t ~at ~hole =
@@ -573,94 +607,43 @@ let insert_at t ~at ~hole =
   t1 |@ hole |@ t2
 
 
-let add_exists_eq t evar kind type_ =
-  let t1, t2 = split_at t ~at:(C_exists_var (evar, kind)) in
-  t1 |@ of_list [ C_exists_eq (evar, kind, type_) ] |@ t2
+let add_texists_eq t evar kind type_ =
+  let t1, t2 = split_at t ~at:(C_texists_var (evar, kind)) in
+  t1 |@ of_list [ C_texists_eq (evar, kind, type_) ] |@ t2
 
 
-let rec apply t (type_ : type_expression) : type_expression =
-  let self = apply t in
-  let return content = { type_ with type_content = content } in
-  match type_.type_content with
-  | T_variable tvar ->
-    (match Exists_var.of_type_var tvar with
-     | Some evar ->
-       (match get_exists_eq t evar with
-        | Some type_' -> self type_'
-        | None -> type_)
-     | None -> type_)
-  | T_constant inj ->
-    let parameters = List.map ~f:self inj.parameters in
-    return @@ T_constant { inj with parameters }
-  | T_sum rows ->
-    let fields =
-      Record.map
-        ~f:(fun (row_elem : _ Rows.row_element_mini_c) ->
-          let associated_type = self row_elem.associated_type in
-          { row_elem with associated_type })
-        rows.fields
-    in
-    return @@ T_sum { rows with fields }
-  | T_record rows ->
-    let fields =
-      Record.map
-        ~f:(fun (row_elem : _ Rows.row_element_mini_c) ->
-          let associated_type = self row_elem.associated_type in
-          { row_elem with associated_type })
-        rows.fields
-    in
-    return @@ T_record { rows with fields }
-  | T_arrow { type1; type2 } ->
-    let type1 = self type1 in
-    let type2 = self type2 in
-    return @@ T_arrow { type1; type2 }
-  | T_singleton _ -> type_
-  | T_abstraction abs ->
-    let type_ = self abs.type_ in
-    return @@ T_abstraction { abs with type_ }
-  | T_for_all for_all ->
-    let type_ = self for_all.type_ in
-    return @@ T_for_all { for_all with type_ }
-
-
-let rec signature_item_apply t (sig_item : Signature.item) : Signature.item =
-  match sig_item with
-  | S_type (tvar, type_) -> S_type (tvar, apply t type_)
-  | S_value (var, type_) -> S_value (var, apply t type_)
-  | S_module (mvar, sig_) -> S_module (mvar, signature_apply t sig_)
-
-
-and signature_apply t (sig_ : Signature.t) : Signature.t =
-  List.map sig_ ~f:(signature_item_apply t)
+let add_lexists_eq t lvar layout =
+  let t1, t2 = split_at t ~at:(C_lexists_var lvar) in
+  t1 |@ of_list [ C_lexists_eq (lvar, layout) ] |@ t2
 
 
 let to_type_map =
   memoize hashable (fun t ->
-    (List.fold_right t.items ~init:TypeMap.empty ~f:(fun item map ->
-       match item with
-       | C_type (tvar, type_) -> TypeMap.add map tvar type_
-       | _ -> map) [@landmark "to_type_map"]))
+      (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
+           match item with
+           | C_type (tvar, type_) -> Map.set map ~key:tvar ~data:type_
+           | _ -> map) [@landmark "to_type_map"]))
 
 
 let to_module_map =
   memoize hashable (fun t ->
-    (List.fold_right t.items ~init:ModuleMap.empty ~f:(fun item map ->
-       match item with
-       | C_module (mvar, mctx) -> ModuleMap.add map mvar mctx
-       | _ -> map) [@landmark "to_module_map"]))
+      (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
+           match item with
+           | C_module (mvar, sig_) -> Map.set map ~key:mvar ~data:sig_
+           | _ -> map) [@landmark "to_module_map"]))
 
 
 let get_signature t ((local_module, path) : Module_var.t List.Ne.t) =
   let open Option.Let_syntax in
   List.fold path ~init:(get_module t local_module) ~f:(fun sig_ mvar ->
-    let%bind sig_ = sig_ in
-    Signature.get_module sig_ mvar)
+      let%bind sig_ = sig_ in
+      Signature.get_module sig_ mvar)
 
 
 type ('a, 'ret) contextual =
   'a
-  -> to_type_map:('a -> type_expression TypeMap.t)
-  -> to_module_map:('a -> Signature.t ModuleMap.t)
+  -> to_type_map:('a -> Type.t Type_var.Map.t)
+  -> to_module_map:('a -> Signature.t Module_var.Map.t)
   -> 'ret
 
 let ctx_contextual f t = f t ~to_type_map ~to_module_map
@@ -672,31 +655,12 @@ let sig_contextual f sig_ =
     ~to_module_map:Signature.to_module_map
 
 
-(* Recursively fetches all types from the given module and its submodules
-
-    For example, to get the list of all types declared in a module and its submodules,
-    we perform a recusive search in the context maps and accumulate the types found.
-    Then, in order to convert those maps into a id-sorted list, we can :
-    1. Use [merge], and convert the merged map into a (sorted) kv_list. This will remove duplicate eponym types
-    2. Use [to_kvi_list], append all the kvi_lists, and sort the resulting kvi_list by id, into a kv_list, this keeps duplicates
-*)
-let get_module_types : t -> (type_variable * type_expression) list =
-  memoize hashable (fun ctx ->
-    let rec signature : Signature.t -> type_expression TypeMap.kvi_list =
-     fun sig_ ->
-      (* Types in the current signature *)
-      let local_types = TypeMap.to_kvi_list @@ Signature.to_type_map sig_ in
-      (* Recursively fetch types from submodules *)
-      let modules = ModuleMap.to_kv_list @@ Signature.to_module_map sig_ in
-      List.fold modules ~init:local_types ~f:(fun types (_, sig_) ->
-        List.rev_append types @@ signature sig_)
-    in
-    let local_types = TypeMap.to_kvi_list @@ to_type_map ctx in
-    let modules = ModuleMap.to_kv_list @@ to_module_map ctx in
-    TypeMap.sort_to_kv_list
-    @@ (List.fold modules ~init:local_types ~f:(fun types (_, sig_) ->
-          List.rev_append types @@ signature sig_) [@landmark
-                                                     "get_module_types"]))
+let get_module_types =
+  memoize hashable (fun t ->
+      List.concat_map (List.rev t) ~f:(function
+          | C_type (tvar, type_) -> [ tvar, type_ ]
+          | C_module (_, sig_) -> Signature.get_module_types sig_
+          | _ -> []))
 
 
 (*
@@ -717,85 +681,38 @@ let get_module_types : t -> (type_variable * type_expression) list =
   Here, for [a], we find a matching type [ty] in the current scope, but we still want to warn the user that type [Mod_a.tx] matches too.
 *)
 let get_sum
-  :  Label.t -> t
-  -> (type_variable * type_variable list * type_expression * type_expression)
-     list
+    : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
   =
+  let dedup =
+    List.stable_dedup_staged ~compare:(fun (_, _, _, tsum1) (_, _, _, tsum2) ->
+        Type.compare tsum1 tsum2)
+    |> Staged.unstage
+  in
   memoize2
-    (module Label)
     hashable
-    (fun ctor ctxt ->
+    (module Label)
+    (fun ctx constr ->
       (let filter_tsum (var, type_) =
-         let t_params, type_ =
-           Ast_typed.Helpers.destruct_type_abstraction type_
-         in
-         match type_.type_content with
+         let t_params, type_ = Type.destruct_type_abstraction type_ in
+         match type_.content with
          | T_sum m ->
-           (match Record.LMap.find_opt ctor m.fields with
-            | Some { associated_type; _ } ->
-              Some (var, t_params, associated_type, type_)
-            | None -> None)
+           (match Record.LMap.find_opt constr m.fields with
+           | Some { associated_type; _ } ->
+             Some (var, t_params, associated_type, type_)
+           | None -> None)
          | _ -> None
        in
-       (* Format.printf "Fetching module types...\n"; *)
-       (* Format.print_flush (); *)
-       (* Fetch all types declared in current module and its submodules *)
-       let module_types = get_module_types ctxt in
-       (* Format.printf "Found all module types\n"; *)
-       (* Format.print_flush (); *)
-       (*  Also add the shadowed t_sum types nested in the fetched types.
-        Since context is made of maps, all shadowed types are absent from the context.
-        However we still want the shadowed nested t_sum, see [add_shadowed_nested_t_sum] *)
-       let module_types =
-         List.fold
-           (List.rev module_types)
-           ~init:[]
-           ~f:Ast_typed.Helpers.add_shadowed_nested_t_sum
+       (* 1. Fetch all types declared in current module and its submodules in [ctx] *)
+       let module_types = get_module_types ctx in
+       (* 2. For all types found, pick only the T_sum, and make 4-tuple out of them  *)
+       let matching_t_sum =
+         List.rev_filter_map ~f:filter_tsum @@ module_types
        in
-       (* Format.printf "Module Types:\n";
-  List.iter module_types ~f:(fun (tvar, type_) ->
-    Format.printf
-      "@[Type Variable: %a@.Type: %a@]\n"
-      Type_var.pp
-      tvar
-      Ast_typed.PP.type_expression
-      type_); *)
-       (* For all types found, pick only the T_sum, and make 4-uple out of them  *)
-       let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
-       (* Filter out duplicates (this prevents false warnings of "infered type is X but could also be X"
-       when a same type is present several times in the context) *)
-       let remove_doubles l
-         : (type_variable
-           * type_variable list
-           * type_expression
-           * type_expression)
-         list
-         =
-         let add_no_dup l elt
-           : (type_variable
-             * type_variable list
-             * type_expression
-             * type_expression)
-           list
-           =
-           let (_tv, _tvs, _te, te)
-                 : type_variable
-                   * type_variable list
-                   * type_expression
-                   * type_expression
-             =
-             elt
-           in
-           match
-             List.find l ~f:(fun (_tv, _tvs, _te, te') ->
-               hash_type_expression te = hash_type_expression te')
-           with
-           | Some _ -> l
-           | None -> elt :: l
-         in
-         List.rev @@ List.fold l ~f:add_no_dup ~init:[]
-       in
-       let matching_t_sum = remove_doubles matching_t_sum in
+       (* 3. Filter out duplicates (this prevents false warnings of "infered type is X 
+             but could also be X" when a same type is present several times in the 
+             context) 
+       *)
+       let matching_t_sum = dedup matching_t_sum in
        let general_type_opt =
          List.find
            ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs)
@@ -806,244 +723,179 @@ let get_sum
        | None -> matching_t_sum) [@landmark "get_sum"])
 
 
-let get_record : _ Record.t -> t -> (type_variable option * rows) option =
-  let record_hashable
-    : type_expression Rows.row_element_mini_c Record.t hashable
-    =
+let get_record
+    : t -> Type.row_element Record.t -> (Type_var.t option * Type.row) option
+  =
+  let record_hashable : Type.row_element Record.t hashable =
     (module struct
-      type t = type_expression Rows.row_element_mini_c Record.t
-
-      let equal =
-        Record.equal (Rows.equal_row_element_mini_c equal_type_expression)
-
-
-      let hash =
-        Hash.of_fold
-          (Record.hash_fold_t
-             (Rows.hash_fold_row_element_mini_c hash_fold_type_expression))
+      type t = Type.t Rows.row_element_mini_c Record.t [@@deriving equal, hash]
     end)
   in
-  memoize2 record_hashable hashable (fun record_type ctx ->
-    (let record_type_kv : (Label.t * _ Rows.row_element_mini_c) list =
-       Record.LMap.to_kv_list_rev record_type
-     in
-     (* [is_record_type type_] returns true if [type_] corresponds to [record_type] *)
-     let is_record_type type_ =
-       match type_.type_content with
-       | T_record record_type' ->
-         let record_type_kv' : (Label.t * _ Rows.row_element_mini_c) list =
-           Record.LMap.to_kv_list_rev record_type'.fields
-         in
-         (match
-            List.for_all2
-              record_type_kv
-              record_type_kv'
-              ~f:(fun (ka, va) (kb, vb) ->
-              let (Label ka) = ka in
-              let (Label kb) = kb in
-              String.(ka = kb)
-              && type_expression_eq (va.associated_type, vb.associated_type))
-          with
-          | Ok result -> Option.some_if result (type_.orig_var, record_type')
-          | Unequal_lengths -> None)
-       | _ -> None
-     in
-     (* [find t ~to_type_map ~to_module_map] finds a record type matching [record_type] *)
-     let rec find : type a. (a, (Type_var.t option * t_sum) option) contextual =
-      fun t ~to_type_map ~to_module_map ->
-       match
-         to_type_map t
-         |> TypeMap.to_kv_list
-         |> List.find_map ~f:(fun (_, type_) -> is_record_type type_)
-       with
-       | Some _ as result -> result
-       | None ->
-         let modules = to_module_map t in
-         List.fold_left
-           ~f:(fun res (_, sig_) ->
-             match res with
-             | Some _ as s -> s
-             | None -> sig_contextual find @@ sig_)
-           ~init:None
-           (ModuleMap.to_kv_list modules)
-     in
-     ctx_contextual find @@ ctx) [@landmark "get_record"])
-
-
-let rec signature_of_module_expr : ctx:t -> Ast_typed.module_expr -> Signature.t
-  =
- fun ~ctx mod_expr ->
-  match mod_expr.wrap_content with
-  | M_struct decls -> signature_of_module ~ctx decls
-  | M_variable mvar ->
-    (match get_module ctx mvar with
-     | Some sig_ -> sig_
-     | None -> failwith "Unbounded module")
-  | M_module_path path ->
-    (match get_signature ctx path with
-     | Some sig_ -> sig_
-     | None ->
-       Format.kasprintf
-         failwith
-         "Unbounded signature path: %a"
-         Module_expr.pp_module_path
-         path)
-
-
-and signature_of_module : ctx:t -> Ast_typed.module_ -> Signature.t =
- fun ~ctx module_ ->
-  match module_ with
-  | [] -> []
-  | decl :: module_ ->
-    let public, sig_item = signature_item_of_decl ~ctx decl in
-    let sig_ =
-      signature_of_module ~ctx:(add_signature_item ctx sig_item) module_
-    in
-    if public then sig_item :: sig_ else sig_
-
-
-and signature_item_of_decl : ctx:t -> Ast_typed.decl -> bool * Signature.item =
- fun ~ctx decl ->
-  match Location.unwrap decl with
-  | D_value { binder; expr; attr = { public; _ } } ->
-    public, S_value (Binder.get_var binder, expr.type_expression)
-  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } }
-    -> public, S_type (tvar, type_)
-  | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
-    let sig_' = signature_of_module_expr ~ctx module_ in
-    public, S_module (mvar, sig_')
-
-
-(* Load context from the outside declarations *)
-let init ?env () =
-  match env with
-  | None -> empty
-  | Some env ->
-    Environment.fold env ~init:empty ~f:(fun ctx decl ->
-      (* Format.printf "%d: %a\n" i (Ast_typed.PP.declaration ~use_hidden:false) decl; *)
-      match Location.unwrap decl with
-      | D_value { binder; expr; attr = _ } ->
-        add_imm ctx (Binder.get_var binder) expr.type_expression
-      | D_type { type_binder; type_expr; type_attr = _ } ->
-        add_type ctx type_binder type_expr
-      | D_module { module_binder; module_; module_attr = _ } ->
-        let sig_ = signature_of_module_expr ~ctx module_ in
-        add_module ctx module_binder sig_)
+  memoize2 hashable record_hashable (fun ctx record_type ->
+      (let record_type_kv : (Label.t * _ Rows.row_element_mini_c) list =
+         Record.LMap.to_kv_list_rev record_type
+       in
+       (* [is_record_type type_] returns true if [type_] corresponds to [record_type] *)
+       let is_record_type type_ =
+         match type_.content with
+         | T_record record_type' ->
+           let record_type_kv' : (Label.t * _ Rows.row_element_mini_c) list =
+             Record.LMap.to_kv_list_rev record_type'.fields
+           in
+           (match
+              List.for_all2
+                record_type_kv
+                record_type_kv'
+                ~f:[%equal: Label.t * Type.t Rows.row_element_mini_c]
+            with
+           | Ok result -> Option.some_if result (type_.orig_var, record_type')
+           | Unequal_lengths -> None)
+         | _ -> None
+       in
+       (* [find t ~to_type_map ~to_module_map] finds a record type matching [record_type] *)
+       let rec find : type a. (a, (Type_var.t option * t_sum) option) contextual
+         =
+        fun t ~to_type_map ~to_module_map ->
+         match
+           to_type_map t
+           |> Map.to_alist
+           |> List.find_map ~f:(fun (_, type_) -> is_record_type type_)
+         with
+         | Some _ as result -> result
+         | None ->
+           let modules = to_module_map t in
+           List.fold_left
+             ~f:(fun res (_, sig_) ->
+               match res with
+               | Some _ as s -> s
+               | None -> sig_contextual find @@ sig_)
+             ~init:None
+             (Map.to_alist modules)
+       in
+       ctx_contextual find @@ ctx) [@landmark "get_record"])
 
 
 module Well_formed : sig
   val context : t -> bool
-  val type_expr : ctx:t -> type_expression -> Kind.t option
+  val type_ : ctx:t -> Type.t -> Kind.t option
 end = struct
   let rec context ctx =
     let rec loop t =
-      match t.items with
+      match t with
       | [] -> true
-      | item :: items ->
-        let t = { t with items } in
+      | item :: t ->
         loop t
         &&
         (match item with
-         | C_value (var, _, type_) ->
-           (match type_expr type_ ~ctx with
-            | Some Type -> true
-            | _ ->
-              Format.printf
-                "Value %a has non-type type %a"
-                Value_var.pp
-                var
-                Ast_typed.PP.type_expression
-                type_;
-              false)
-         | C_type (tvar, type_) ->
-           (match type_expr type_ ~ctx with
-            | Some _ -> true
-            | None ->
-              Format.printf
-                "Type %a = %a is ill-kinded"
-                Type_var.pp
-                tvar
-                Ast_typed.PP.type_expression
-                type_;
-              false)
-         | C_type_var _ ->
-           (* Shadowing permitted *)
-           true
-         | C_exists_var (evar, _) ->
-           if List.mem ~equal:Exists_var.equal (get_exists_vars t) evar
-           then (
-             Format.printf
-               "Existential variable %a is shadowed"
-               Exists_var.pp
-               evar;
-             false)
-           else true
-         | C_exists_eq (evar, kind, type_) ->
-           (not (List.mem ~equal:Exists_var.equal (get_exists_vars t) evar))
-           &&
-           (match type_expr type_ ~ctx with
-            | Some kind' -> Kind.compare kind kind' = 0
-            | _ ->
-              Format.printf
-                "Existential variable %a is ill-kinded. Expected: %a"
-                Exists_var.pp
-                evar
-                Kind.pp
-                kind;
-              false)
-         | C_marker evar ->
-           (not (List.mem ~equal:Exists_var.equal (get_markers t) evar))
-           && not (List.mem ~equal:Exists_var.equal (get_exists_vars t) evar)
-         | C_pos _ | C_mut_pos _ -> true
-         | C_module (_mvar, sig_) ->
-           (* Shadowing permitted *)
-           signature ~ctx sig_)
+        | C_value (var, _, type') ->
+          (match type_ type' ~ctx with
+          | Some Type -> true
+          | _ ->
+            Format.printf
+              "Value %a has non-type type %a"
+              Value_var.pp
+              var
+              Type.pp
+              type';
+            false)
+        | C_type (tvar, type') ->
+          (match type_ type' ~ctx with
+          | Some _ -> true
+          | None ->
+            Format.printf
+              "Type %a = %a is ill-kinded"
+              Type_var.pp
+              tvar
+              Type.pp
+              type';
+            false)
+        | C_type_var _ ->
+          (* Shadowing permitted *)
+          true
+        | C_texists_var (evar, _) ->
+          if Set.mem (get_texists_vars t) evar
+          then (
+            Format.printf
+              "Existential variable ^%a is shadowed"
+              Type_var.pp
+              evar;
+            false)
+          else true
+        | C_texists_eq (evar, kind, type') ->
+          (not (Set.mem (get_texists_vars t) evar))
+          &&
+          (match type_ type' ~ctx with
+          | Some kind' -> Kind.compare kind kind' = 0
+          | _ ->
+            Format.printf
+              "Existential variable ^%a is ill-kinded. Expected: %a"
+              Type_var.pp
+              evar
+              Kind.pp
+              kind;
+            false)
+        | C_pos _ | C_mut_lock _ -> true
+        | C_lexists_var lvar ->
+          if Set.mem (get_lexists_vars t) lvar
+          then (
+            Format.printf
+              "Existential layout variable ^%a is shadowed"
+              Layout_var.pp
+              lvar;
+            false)
+          else true
+        | C_lexists_eq (lvar, layout_) ->
+          (not (Set.mem (get_lexists_vars t) lvar)) && layout layout_ ~ctx
+        | C_module (_mvar, sig_) ->
+          (* Shadowing permitted *)
+          signature ~ctx sig_)
     in
     loop ctx
 
 
-  and type_expr ~ctx t : Kind.t option =
+  and layout ~ctx:_ (layout : Type.layout) : bool =
+    match layout with
+    | L_tree | L_comb -> true
+    | L_exists _lvar -> true
+
+
+  and type_ ~ctx t : Kind.t option =
     let open Option.Let_syntax in
     let open Kind in
-    let rec loop (t : type_expression) ~ctx =
-      let self ?(ctx = ctx) t = loop t ~ctx in
-      match t.type_content with
-      | T_variable tvar ->
-        (match Exists_var.of_type_var tvar with
-         | Some evar -> get_exists_var ctx evar
-         | None -> get_type_var ctx tvar)
-      | T_constant { parameters; _ } ->
+    let rec loop (t : Type.t) ~ctx =
+      let loop ?(ctx = ctx) t = loop t ~ctx in
+      match t.content with
+      | T_variable tvar -> get_type_var ctx tvar
+      | T_exists tvar -> get_texists_var ctx tvar
+      | T_construct { parameters; _ } ->
         (* Hack. No HKT parameters, so simply check if all params are
-           of kind: *. *)
+                 of kind: *. *)
         if List.for_all parameters ~f:(fun param ->
-             match self param with
-             | Some Type -> true
-             | _ ->
-               Format.printf
-                 "Ill-kinded parameter: %a\n"
-                 Ast_typed.PP.type_expression
-                 param;
-               false)
+               match loop param with
+               | Some Type -> true
+               | _ ->
+                 Format.printf "Ill-kinded parameter: %a\n" Type.pp param;
+                 false)
         then return Type
         else None
       | T_singleton _ -> return Singleton
       | T_arrow { type1 = arg_type; type2 = ret_type } ->
-        let%bind arg_kind = self arg_type in
-        let%bind ret_kind = self ret_type in
+        let%bind arg_kind = loop arg_type in
+        let%bind ret_kind = loop ret_type in
         (match arg_kind, ret_kind with
-         | Type, Type -> Some Type
-         | _ -> None)
+        | Type, Type -> Some Type
+        | _ -> None)
       | T_abstraction { ty_binder = tvar; kind; type_ } ->
-        let%bind kind' = self ~ctx:(ctx |:: C_type_var (tvar, kind)) type_ in
+        let%bind kind' = loop ~ctx:(ctx |:: C_type_var (tvar, kind)) type_ in
         return @@ Arrow (kind, kind')
       | T_for_all { ty_binder = tvar; kind; type_ } ->
-        (match%bind self ~ctx:(ctx |:: C_type_var (tvar, kind)) type_ with
-         | Type -> return Type
-         | _ -> None)
+        (match%bind loop ~ctx:(ctx |:: C_type_var (tvar, kind)) type_ with
+        | Type -> return Type
+        | _ -> None)
       | T_sum rows | T_record rows ->
         if Record.LMap.for_all
              (fun _label ({ associated_type; _ } : _ Rows.row_element_mini_c) ->
-               match self associated_type with
+               match loop associated_type with
                | Some Type -> true
                | _ -> false)
              rows.fields
@@ -1063,30 +915,22 @@ end = struct
 
   and signature_item ~ctx (sig_item : Signature.item) =
     match sig_item with
-    | S_value (_var, type_) ->
-      (match type_expr ~ctx type_ with
-       | Some Type -> true
-       | _ -> false)
-    | S_type (_tvar, type_) ->
-      (match type_expr ~ctx type_ with
-       | Some _ -> true
-       | _ -> false)
+    | S_value (_var, type') ->
+      (match type_ ~ctx type' with
+      | Some Type -> true
+      | _ -> false)
+    | S_type (_tvar, type') ->
+      (match type_ ~ctx type' with
+      | Some _ -> true
+      | _ -> false)
     | S_module (_mvar, sig_) -> signature ~ctx sig_
 end
 
 module Hashes = struct
-  module HTBL = Caml.Hashtbl.Make (struct
-    type t = type_expression
+  let table : (Type.t, Module_var.t list * Type_var.t) Hashtbl.t =
+    Hashtbl.create ~size:256 (module Type)
 
-    let hash = hash_type_expression
 
-    let equal t1 t2 =
-      match assert_type_expression_eq (t1, t2) with
-      | Some _ -> true
-      | None -> false
-  end)
-
-  let hashtbl : (module_variable list * type_variable) HTBL.t = HTBL.create 256
   let context = ref (false, empty)
   let set_context (t : t) : unit = context := false, t
 
@@ -1096,25 +940,202 @@ module Hashes = struct
     then ()
     else (
       let rec hash_types
-        : type a. (a, path:module_variable list -> unit) contextual
+          : type a. (a, path:Module_var.t list -> unit) contextual
         =
        fun t ~to_type_map ~to_module_map ~path ->
-        let types = TypeMap.to_kv_list @@ to_type_map t in
-        let modules = ModuleMap.to_kv_list @@ to_module_map t in
+        let types = Map.to_alist @@ to_type_map t in
+        let modules = Map.to_alist @@ to_module_map t in
         List.iter (List.rev types) ~f:(fun (v, t) ->
-          HTBL.add hashtbl t (path, v));
+            Hashtbl.set table ~key:t ~data:(path, v));
         List.iter (List.rev modules) ~f:(fun (v, t) ->
-          sig_contextual hash_types t ~path:(path @ [ v ]))
+            sig_contextual hash_types t ~path:(path @ [ v ]))
       in
-      HTBL.clear hashtbl;
+      Hashtbl.clear table;
       ctx_contextual hash_types t ~path:[];
       context := true, t)
 
 
-  let find_type (t : type_expression) : (Module_var.t list * Type_var.t) option =
-    HTBL.find_opt hashtbl t
+  let find_type (t : Type.t) : (Module_var.t list * Type_var.t) option =
+    Hashtbl.find table t
+end
+(* 
+module Codec = struct
+  module I = Type
+  module O = Ast_typed
+
+  let rec encode : O.type_expression -> I.t =
+   fun type_ ->
+    let return content : I.t =
+      { content
+      ; meta = type_.type_meta
+      ; orig_var = type_.orig_var
+      ; location = type_.location
+      }
+    in
+    match type_.type_content with
+    | O.T_variable tvar -> return @@ I.T_variable tvar
+    | O.T_singleton lit -> return @@ I.T_singleton lit
+    | O.T_constant { language; injection; parameters } ->
+      let parameters = List.map ~f:encode parameters in
+      return @@ I.T_construct { language; constructor = injection; parameters }
+    | O.T_arrow arr ->
+      let arr = Arrow.map encode arr in
+      return @@ I.T_arrow arr
+    | O.T_abstraction abs ->
+      let abs = Abstraction.map encode abs in
+      return @@ I.T_abstraction abs
+    | O.T_for_all abs ->
+      let abs = Abstraction.map encode abs in
+      return @@ I.T_for_all abs
+    | O.T_sum row ->
+      let row = encode_row row in
+      return @@ I.T_sum row
+    | O.T_record row ->
+      let row = encode_row row in
+      return @@ I.T_record row
+
+
+  and encode_row ({ fields; layout } : O.rows) : I.row =
+    let fields = Record.map ~f:encode_row_elem fields in
+    let layout = encode_layout layout in
+    { fields; layout }
+
+
+  and encode_row_elem (row_elem : O.row_element) : I.row_element =
+    Rows.map_row_element_mini_c encode row_elem
+
+
+  and encode_layout (layout : Layout.t) : I.layout =
+    match layout with
+    | L_comb -> L_comb
+    | L_tree -> L_tree
+
+
+  let rec decode : raise:(_, _) raise -> ctx:t -> I.t -> O.type_expression =
+   fun ~raise ~ctx type_ ->
+    let decode = decode ~raise ~ctx in
+    let decode_row = decode_row ~raise ~ctx in
+    let return type_content : O.type_expression =
+      { type_content
+      ; type_meta = type_.meta
+      ; orig_var = type_.orig_var
+      ; location = type_.location
+      }
+    in
+    let fail () =
+      raise.error (`Typer_existential_found (type_.location, type_))
+    in
+    match type_.content with
+    | I.T_variable tvar -> return @@ O.T_variable tvar
+    | I.T_exists tvar ->
+      (match Map.find ctx.solved tvar with
+      | Some (_, type_) -> decode type_
+      | None -> fail ())
+    | I.T_singleton lit -> return @@ O.T_singleton lit
+    | I.T_construct { language; constructor; parameters } ->
+      let parameters = List.map ~f:decode parameters in
+      return @@ O.T_constant { language; injection = constructor; parameters }
+    | I.T_arrow arr ->
+      let arr = Arrow.map decode arr in
+      return @@ O.T_arrow arr
+    | I.T_abstraction abs ->
+      let abs = Abstraction.map decode abs in
+      return @@ O.T_abstraction abs
+    | I.T_for_all for_all ->
+      let for_all = Abstraction.map decode for_all in
+      return @@ O.T_for_all for_all
+    | I.T_record row ->
+      let row = decode_row row in
+      return @@ O.T_record row
+    | I.T_sum row ->
+      let row = decode_row row in
+      return @@ O.T_sum row
+
+
+  and decode_row ~raise ~ctx ({ fields; layout } : I.row) : O.rows =
+    let fields = Record.map ~f:(decode_row_elem ~raise ~ctx) fields in
+    let layout = decode_layout ~ctx layout in
+    O.{ fields; layout }
+
+
+  and decode_row_elem ~raise ~ctx (row_elem : I.row_element) : O.row_element =
+    Rows.map_row_element_mini_c (decode ~raise ~ctx) row_elem
+
+
+  and decode_layout ~ctx (layout : I.layout) : Layout.t =
+    match layout with
+    | L_tree -> L_tree
+    | L_comb -> L_comb
+    | L_exists lvar ->
+      (match get_layout_exists_eq ctx lvar with
+      | Some layout -> decode_layout ~ctx layout
+      | None -> O.default_layout)
 end
 
+let rec signature_of_module_expr : ctx:t -> Ast_typed.module_expr -> Signature.t
+  =
+ fun ~ctx mod_expr ->
+  match mod_expr.wrap_content with
+  | M_struct decls -> signature_of_module ~ctx decls
+  | M_variable mvar ->
+    (match get_module ctx mvar with
+    | Some sig_ -> sig_
+    | None -> failwith "Unbounded module")
+  | M_module_path path ->
+    (match get_signature ctx path with
+    | Some sig_ -> sig_
+    | None ->
+      Format.kasprintf
+        failwith
+        "Unbounded signature path: %a"
+        Module_expr.pp_module_path
+        path)
+
+
+and signature_of_module : ctx:t -> Ast_typed.module_ -> Signature.t =
+ fun ~ctx module_ ->
+  match module_ with
+  | [] -> []
+  | decl :: module_ ->
+    let public, sig_item = signature_item_of_decl ~ctx decl in
+    let sig_ =
+      signature_of_module ~ctx:(add_signature_item ctx sig_item) module_
+    in
+    if public then sig_item :: sig_ else sig_
+
+
+and signature_item_of_decl : ctx:t -> Ast_typed.decl -> bool * Signature.item =
+ fun ~ctx decl ->
+  match Location.unwrap decl with
+  | D_value { binder; expr; attr = { public; _ } } ->
+    public, S_value (Binder.get_var binder, Codec.encode expr.type_expression)
+  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } }
+    -> public, S_type (tvar, Codec.encode type_)
+  | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
+    let sig_' = signature_of_module_expr ~ctx module_ in
+    public, S_module (mvar, sig_')
+
+
+(* Load context from the outside declarations *)
+let init ?env () =
+  match env with
+  | None -> empty
+  | Some env ->
+    Environment.fold env ~init:empty ~f:(fun ctx decl ->
+        (* Format.printf "%d: %a\n" i (Ast_typed.PP.declaration ~use_hidden:false) decl; *)
+        match Location.unwrap decl with
+        | D_value { binder; expr; attr = _ } ->
+          add_imm
+            ctx
+            (Binder.get_var binder)
+            (Codec.encode expr.type_expression)
+        | D_type { type_binder; type_expr; type_attr = _ } ->
+          add_type ctx type_binder (Codec.encode type_expr)
+        | D_module { module_binder; module_; module_attr = _ } ->
+          let sig_ = signature_of_module_expr ~ctx module_ in
+          add_module ctx module_binder sig_) *)
+
+(* 
 module Elaboration = struct
   type ('a, 'err, 'wrn) t = raise:('err, 'wrn) raise -> 'a
 
@@ -1143,14 +1164,14 @@ module Elaboration = struct
     match type_.type_content with
     | T_variable tvar ->
       (match Exists_var.of_type_var tvar with
-       | Some evar ->
-         (match Exists_var.Map.find_opt evar ctx.solved with
-          | Some (_, type_') -> self type_'
-          | None ->
-            (match get_exists_eq ctx evar with
-             | Some type_' -> self type_'
-             | None -> type_))
-       | None -> type_)
+      | Some evar ->
+        (match Exists_var.Map.find_opt evar ctx.solved with
+        | Some (_, type_') -> self type_'
+        | None ->
+          (match get_exists_eq ctx evar with
+          | Some type_' -> self type_'
+          | None -> type_))
+      | None -> type_)
     | T_constant inj ->
       let parameters = List.map ~f:self inj.parameters in
       return @@ T_constant { inj with parameters }
@@ -1268,8 +1289,10 @@ module Elaboration = struct
 
 
   and matching_expr_apply ctx match_exprs =
-    List.map match_exprs 
+    List.map
+      match_exprs
       ~f:(Types.Match_expr.map_match_case (e_apply ctx) (t_apply ctx))
+
 
   and decl_apply ctx (decl : decl) = declaration_apply ctx decl
 
@@ -1413,8 +1436,13 @@ module Elaboration = struct
 
 
   and matching_expr_pass ~raise match_exprs =
-    List.iter match_exprs
-      ~f:(Types.Match_expr.iter_match_case (expression_pass ~raise) (type_pass ~raise))
+    List.iter
+      match_exprs
+      ~f:
+        (Types.Match_expr.iter_match_case
+           (expression_pass ~raise)
+           (type_pass ~raise))
+
 
   and decl_pass ~raise (decl : decl) = declaration_pass ~raise decl
 
@@ -1473,15 +1501,15 @@ end
 let unsolved { items; solved } =
   let solved =
     List.fold items ~init:solved ~f:(fun solved item ->
-      match item with
-      | C_exists_eq (evar, kind, type_) ->
-        Exists_var.Map.add evar (kind, type_) solved
-      | _ -> solved)
+        match item with
+        | C_exists_eq (evar, kind, type_) ->
+          Exists_var.Map.add evar (kind, type_) solved
+        | _ -> solved)
   in
   { items =
       List.filter items ~f:(function
-        | C_exists_var _ -> true
-        | _ -> false)
+          | C_exists_var _ -> true
+          | _ -> false)
   ; solved
   }
 
@@ -1534,16 +1562,16 @@ module Generalization = struct
   let unsolved { items; solved } =
     let solved =
       List.fold items ~init:solved ~f:(fun solved item ->
-        match item with
-        | C_exists_eq (evar, kind, type_) ->
-          Exists_var.Map.add evar (kind, type_) solved
-        | _ -> solved)
+          match item with
+          | C_exists_eq (evar, kind, type_) ->
+            Exists_var.Map.add evar (kind, type_) solved
+          | _ -> solved)
     in
     let tvars =
       List.fold items ~init:Exists_var.Map.empty ~f:(fun tvars item ->
-        match item with
-        | C_exists_var (evar, kind) -> Exists_var.Map.add evar kind tvars
-        | _ -> tvars)
+          match item with
+          | C_exists_var (evar, kind) -> Exists_var.Map.add evar kind tvars
+          | _ -> tvars)
     in
     { empty with solved }, tvars
 
@@ -1581,4 +1609,4 @@ module Generalization = struct
                (t_for_all tvar kind expr.type_expression))
            tvars
            expr )
-end
+end *)
