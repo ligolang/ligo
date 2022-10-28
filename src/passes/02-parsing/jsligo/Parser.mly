@@ -251,7 +251,7 @@ base_stmt(right_stmt):
 | switch_stmt                { SSwitch $1 }
 | import_stmt                { SImport $1 }
 | export_decl                { SExport $1 }
-| declaration
+| attributes declaration     { $2 $1      }
 | if_else_stmt(right_stmt)
 | for_of_stmt(right_stmt)
 | while_stmt(right_stmt)     { $1 }
@@ -500,10 +500,12 @@ ctor_arg:
 (* Export Declaration *)
 
 export_decl:
-  "export" declaration {
-    let kwd_export = $1 in
-    let region = cover kwd_export#region (statement_to_region $2)
-    in {region; value=(kwd_export,$2)} }
+  attributes "export" declaration {
+    let declaration = $3 $1 in
+    let kwd_export = $2 in
+    let region =
+      cover kwd_export#region (statement_to_region declaration)
+    in {region; value = (kwd_export,declaration)} }
 
 (* Block of Statements *)
 
@@ -627,20 +629,21 @@ declaration:
   let_decl | const_decl | type_decl { $1 }
 
 let_decl:
-  attributes "let" binding_list {
-    let kwd_let = $2 in
-    let stop   = nsepseq_to_region (fun e -> e.region) $3 in
+  "let" binding_list {
+    let kwd_let = $1 in
+    let stop   = nsepseq_to_region (fun e -> e.region) $2 in
     let region = cover kwd_let#region stop
-    and value  = {kwd_let; bindings=$3; attributes=private_attribute::$1}
-    in SLet {region; value} }
+    and mk_value attr =
+      {kwd_let; bindings=$2; attributes=private_attribute::attr}
+    in fun attr -> SLet {region; value = mk_value attr} }
 
 const_decl:
-  attributes "const" binding_list {
-    let kwd_const = $2 in
-    let stop   = nsepseq_to_region (fun e -> e.region) $3 in
+  "const" binding_list {
+    let kwd_const = $1 in
+    let stop   = nsepseq_to_region (fun e -> e.region) $2 in
     let region = cover kwd_const#region stop
-    and value  = {kwd_const; bindings=$3; attributes=$1}
-    in SConst {region; value} }
+    and mk_value attributes = {kwd_const; bindings=$2; attributes}
+    in fun attr -> SConst {region; value = mk_value attr} }
 
 (* PATTERNS *)
 
@@ -719,13 +722,14 @@ object_rest_pattern:
 (* Type declarations *)
 
 type_decl:
-  attributes "type" type_name ioption(type_params) "=" type_expr {
-    let kwd_type = $2 in
-    let eq = $5 in
-    let region = cover kwd_type#region (type_expr_to_region $6) in
-    let value  = {kwd_type; name=$3; params=$4; eq; type_expr=$6;
-                  attributes=private_attribute::$1}
-    in SType {region; value} }
+  "type" type_name ioption(type_params) "=" type_expr {
+    let kwd_type = $1 in
+    let eq = $4 in
+    let region = cover kwd_type#region (type_expr_to_region $5) in
+    let mk_value attr =
+      {kwd_type; name=$2; params=$3; eq; type_expr=$5;
+       attributes=private_attribute::attr}
+    in fun attr -> SType {region; value = mk_value attr} }
 
 type_params:
   chevrons(nsepseq(type_param,",")) { $1 }
