@@ -106,8 +106,7 @@ parseTupleType node = runMaybeT do
 
 parseVariableType :: Contains Range info => LIGO info -> Parser (Maybe Type)
 parseVariableType node = runMaybeT do
-  LIGO.TVariable t <- hoistMaybe $ layer node
-  var <- MaybeT $ parseTypeVariable t
+  var <- MaybeT $ parseTypeVariable node
   pure $ VariableType var
 
 -- Since we don't care right now about distinguishing functions or whatever, we
