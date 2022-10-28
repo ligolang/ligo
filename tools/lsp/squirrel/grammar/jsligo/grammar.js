@@ -66,7 +66,16 @@ module.exports = grammar({
       $.list_literal,
       $.pattern_match,
       $._member_expr,
+      $.ternary_expr,
     ),
+
+    ternary_expr: $ => prec.right(seq(
+      field("selector", $._expr),
+      '?',
+      field("then_branch", $._expr),
+      ':',
+      field("else_branch", $._expr)
+    )),
 
     list_literal: $ => seq('list', common.par($._list_elements)),
 
@@ -214,7 +223,7 @@ module.exports = grammar({
         field("body", $._body),
       ),
       seq(
-        field("argument", $.Name), '=>',
+        field("argument", choice($.wildcard, $.Name)), '=>',
         field("body", $._body),
       )
     ),
@@ -230,7 +239,7 @@ module.exports = grammar({
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
-    fun_arg: $ => seq(field("argument", $._binding_pattern), ':', optional($.type_params), field("type", $._type_expr)),
+    fun_arg: $ => seq(field("argument", $._binding_pattern), optional(seq(':', optional($.type_params), field("type", $._type_expr)))),
 
     return_statement: $ => prec.right(seq('return', optional(field("expr", $._expr)))),
 
@@ -292,6 +301,7 @@ module.exports = grammar({
       $.string_type,
       $.module_access_t,
       $.record_type,
+      $.disc_union_type,
       $.app_type,
       $.tuple_type,
       $.paren_type
@@ -304,6 +314,8 @@ module.exports = grammar({
     module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.TypeName)),
 
     record_type: $ => withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
+
+    disc_union_type: $ => common.sepBy2('|', field("variant", $.record_type)),
 
     field_decl: $ => withAttrs($, choice(
       field("field_name", $.FieldName),

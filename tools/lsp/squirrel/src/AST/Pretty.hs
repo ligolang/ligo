@@ -212,6 +212,7 @@ instance Pretty1 Expr where
     Op          o        -> pp o
     Record    az         -> sexpr "record" az
     If        b t e      -> sexpr "if" [b, t, pp e]
+    Ternary   b t e      -> "(" <> pp b <> "?" <> pp t <> ":" <> pp e <> ")"
     Assign    l r        -> sop l ":=" [r]
     List      l          -> sexpr "list" l
     ListAccess l ids     -> sexpr "get" (l : ids)
@@ -760,6 +761,7 @@ instance LPP1 'Js Expr where
     Op          o        -> lpp o
     Record    az         -> "{" `indent` blockWith (<.> ",") az `above` "}"
     If        b t e      -> "if" <+> parens b <+> braces (lpp t) <+> "else" <+> braces (lpp e)
+    Ternary   b t e      -> lpp b <+> "?" <+> lpp t <+> ":" <+> lpp e
     List      l          -> lpp l
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tupleJsLIGO l
