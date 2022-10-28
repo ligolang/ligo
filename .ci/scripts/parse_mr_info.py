@@ -42,9 +42,35 @@ def is_heading(elem, title):
 
 
 def get_prefixed_elem(elems, title, type):
-    idx = next(i for i, elem in enumerate(markdown.children) if is_heading(elem, title))
+    idx = next(i for i, elem in enumerate(elems) if is_heading(elem, title))
 
     return next(elem for elem in elems[idx:] if isinstance(elem, type))
+
+
+def get_changelog(elems):
+    idx1 = next(i for i, elem in enumerate(elems) if is_heading(elem, "Changelog"))
+
+    # Find next lvl2 heading
+    idx2 = (
+        idx1
+        + 1
+        + next(
+            i
+            for i, elem in enumerate(elems[idx1 + 1 :])
+            if isinstance(elem, block.Heading) and elem.level == 2
+        )
+    )
+
+    # Elems for changelog are the range (idx1, idx2) (hence [idx1 + 1, idx2))
+    elems = elems[idx1 + 1 : idx2]
+
+    # Call to __enter__ required to set prefixes to ""
+    gfm.renderer.__enter__()
+
+    # Render the elems
+    changelog_details = "".join([gfm.renderer.render(elem) for elem in elems])
+
+    return changelog_details
 
 
 if __name__ == "__main__":
@@ -64,6 +90,8 @@ if __name__ == "__main__":
     author = mr.author["username"]
     raw_description = mr.description
 
+    print(raw_description)
+
     markdown = gfm.parse(raw_description)
 
     # Get type details
@@ -76,10 +104,8 @@ if __name__ == "__main__":
 
     # Get changelog details
     if type != "none":
-        changelog = get_prefixed_elem(
-            markdown.children, "Changelog", elements.Paragraph
-        )
-        changelog_details = gfm.renderer.render_children(changelog)
+        changelog_details = get_changelog(markdown.children)
+        print(changelog_details)
     else:
         changelog_details = None
 
