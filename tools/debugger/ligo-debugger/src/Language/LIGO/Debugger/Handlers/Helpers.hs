@@ -11,6 +11,7 @@ import Control.Lens (Each (each))
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI)
+import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Log (runNoLoggingT)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
@@ -31,6 +32,7 @@ import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Error
 
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
@@ -152,3 +154,21 @@ parseContracts allFiles = do
   let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
 
   pure $ HM.fromList $ zip allFiles parsedFiles
+
+-- | Some exception in debugger logic.
+data SomeDebuggerException where
+  SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
+
+deriving stock instance Show SomeDebuggerException
+
+instance Exception SomeDebuggerException where
+  displayException (SomeDebuggerException e) = displayException e
+
+  fromException e@(SomeException e') =
+    asum
+      [ SomeDebuggerException <$> fromException @LigoException e
+      , SomeDebuggerException <$> fromException @DapMessageException e
+      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
+      , SomeDebuggerException <$> fromException @ReplacementException e
+      , cast @_ @SomeDebuggerException e'
+      ]

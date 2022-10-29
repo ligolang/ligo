@@ -54,6 +54,7 @@ import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common (getStatementLocs)
+import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson

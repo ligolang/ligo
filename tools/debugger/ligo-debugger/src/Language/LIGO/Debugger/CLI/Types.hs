@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-{-# LANGUAGE StandaloneKindSignatures, TypeFamilyDependencies, UndecidableInstances #-}
+{-# LANGUAGE StandaloneKindSignatures, UndecidableInstances #-}
 
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
@@ -21,7 +21,6 @@ import Data.Scientific qualified as Sci
 import Data.SemVer qualified as SemVer
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
-import Data.Typeable (cast)
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
@@ -34,8 +33,9 @@ import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Michelson.Text (MText)
 import Morley.Util.Lens
-import Morley.Util.TypeLits (ErrorMessage (Text), Symbol, TypeError)
+import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
+import Language.LIGO.Debugger.Error
 import Util
 
 -- | Sometimes numbers are carries as strings in order to fit into
@@ -529,9 +529,6 @@ instance FromJSON (LigoMapper u) where
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
 
-class (Exception e) => DebuggerException e where
-  type ExceptionTag e = (r :: Symbol) | r -> e
-
 newtype LigoException = LigoException { leMessage :: Text }
   deriving newtype (Eq, Show, FromBuilder)
 
@@ -610,20 +607,3 @@ instance DebuggerException ReplacementException where
 
 instance Exception ReplacementException where
   displayException = pretty
-
-data SomeDebuggerException where
-  SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
-
-deriving stock instance Show SomeDebuggerException
-
-instance Exception SomeDebuggerException where
-  displayException (SomeDebuggerException e) = displayException e
-
-  fromException e@(SomeException e') =
-    asum
-      [ SomeDebuggerException <$> fromException @LigoException e
-      , SomeDebuggerException <$> fromException @DapMessageException e
-      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
-      , SomeDebuggerException <$> fromException @ReplacementException e
-      , cast @_ @SomeDebuggerException e'
-      ]
