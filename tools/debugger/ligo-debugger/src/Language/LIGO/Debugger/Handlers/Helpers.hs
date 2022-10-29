@@ -41,6 +41,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO Info))
+  , lsSwallowedException :: Maybe SomeDebuggerException
   }
 
 instance Buildable LigoLanguageServerState where

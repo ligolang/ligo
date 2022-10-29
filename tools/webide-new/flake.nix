@@ -6,13 +6,18 @@
     nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
     tezos-packaging.url = "github:serokell/tezos-packaging";
   };
-  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils, tezos-packaging }@inputs:
+  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils, tezos-packaging, deploy-rs }@inputs:
   {
     nixosModules.default = { config, pkgs, lib, ... }:
       let system = pkgs.system; in
       with pkgs.lib; {
         options.services.ligo-webide-frontend = {
           enable = mkEnableOption "ligo-webide service";
+
+          package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.frontend;
+          };
 
           serverName = mkOption {
             type = types.str;
@@ -25,6 +30,18 @@
 
         options.services.ligo-webide = {
           enable = mkEnableOption "ligo-webide service";
+          package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.backend;
+          };
+          ligo-package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.ligo-bin;
+          };
+          tezos-client-package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.tezos-client;
+          };
         };
 
         config = with pkgs.lib; let
@@ -36,9 +53,11 @@
           systemd.services.ligo-webide = {
             after = [ "network.target" ];
             wantedBy = [ "multi-user.target" ];
+            # Don't attempt to start
+            unitConfig.ConditionPathExists = [ webide-cfg.package webide-cfg.ligo-package webide-cfg.tezos-client-package ];
             script =
               ''
-                ${packages.backend}/bin/ligo-webide-backend --ligo-path ${packages.ligo-bin}/bin/ligo --tezos-client-path ${packages.tezos-client}/bin/tezos-client
+                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --tezos-client-path ${webide-cfg.tezos-client-package}/bin/tezos-client
               '';
 
           };
@@ -48,13 +67,13 @@
             # recommendedProxySettings = true;
             virtualHosts.ligo-webide = {
               serverName = frontend-cfg.serverName;
-              root = packages.frontend;
+              root = frontend-cfg.package;
               locations."/" = {
                 index = "index.html";
                 tryFiles = "$uri $uri/ /index.html =404";
               };
-              locations."~ ^/local(?<route>/static/.*)" = {
-                alias = packages.frontend + "$route";
+              locations."~ ^/(local|share)(?<route>/static/.*)" = {
+                alias = frontend-cfg.package + "$route";
               };
               locations."~ ^/api(?<route>/.*)" = {
                 proxyPass = "http://127.0.0.1:8080$route";
@@ -66,6 +85,25 @@
 
         };
       };
+    deploy = {
+      sshOpts = [ "-p 17788" ];
+      nodes.webide = {
+        # TODO: perhaps it should be moved to a dedicated server
+        hostname = "tejat-prior.gemini.serokell.team";
+        user = "deploy";
+        profiles = {
+          backend.path = deploy-rs.lib.x86_64-linux.activate.custom
+            self.packages.x86_64-linux.backend
+            "sudo /run/current-system/sw/bin/systemctl restart container@ligo-webide-thing.service";
+          frontend.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.frontend;
+          ligo.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.ligo-bin;
+          tezos-client.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.tezos-client;
+        };
+      };
+    };
   } // (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system :
     let
       pkgs = import nixpkgs {
@@ -102,6 +140,11 @@
       checks = {
         frontend-tscompile = frontendCheck "yarn run tscompile";
         frontend-tslint = frontendCheck "yarn run tslint";
+      } // deploy-rs.lib.${system}.deployChecks self.deploy;
+      devShell = pkgs.mkShell {
+        buildInputs = [
+          deploy-rs.defaultPackage.${system}
+        ];
       };
     }
   ));

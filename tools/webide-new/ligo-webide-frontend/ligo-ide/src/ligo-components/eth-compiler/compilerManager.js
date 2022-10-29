@@ -92,8 +92,6 @@ export class CompilerManager {
     // const evmVersion = projectManager.projectSettings.get("compilers.evmVersion");
     // const optimizer = projectManager.projectSettings.get("compilers.optimizer");
 
-    CompilerManager.button.setState({ building: true });
-
     this.notification = notification.info("Building Project", "Building...", 0);
 
     let contractFiles = [];
@@ -127,7 +125,6 @@ export class CompilerManager {
       });
 
     this.notification.dismiss();
-    CompilerManager.button.setState({ building: false });
   }
 
   async saveCompiledContract(data, projectManager) {
@@ -185,25 +182,6 @@ export class CompilerManager {
       await CompilerManager.terminal.stop();
       // await CompilerManager.terminal.execAsChildProcess(`docker rm $(docker ps --filter status=exited --filter ancestor=ethereum/solc:${compilers.solc} -q)`)
     }
-  }
-
-  parseSolcJSBuild(error) {
-    const { prefix: projectPrefix, userId, projectId } = modelSessionManager.projectManager;
-    const [prefix] = error.formattedMessage.match(/(?<=:).+(?=:)/g);
-    const filePath = error.sourceLocation.file;
-    const [row, column] = prefix.split(":");
-    const lines = error.formattedMessage.split("\n");
-    const { length } = lines[lines.length - 1].trim();
-
-    return {
-      filePath: `${projectPrefix}/${userId}/${projectId}/${filePath.replace("./", "")}`,
-      text: `[Solcjs Compiler]: ${error.message}`,
-      row: Number(row),
-      length,
-      type: "error",
-      column: Number(column),
-      from: "compiler",
-    };
   }
 
   parseBuildLogs(msg) {

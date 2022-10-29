@@ -93,5 +93,5 @@ export interface GetContractMetadataArguments {
 }
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
-	contractMetadata: ContractMetadata
+	contractMetadata?: ContractMetadata
 }

@@ -56,7 +56,6 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-
 loadPreprocessed
   :: (HasLigoClient m, Log m)
   => TempSettings

@@ -6,13 +6,13 @@ import notification from "~/base-components/notification";
 import { modelSessionManager } from "~/base-components/code-editor";
 import { IpcChannel } from "~/base-components/ipc";
 
-import { sortFile } from "./helper";
+import { sortFile, getProjectName, getProjectNumber } from "./helper";
 import { getExamples } from "./examples";
 
 import redux from "~/base-components/redux";
 
 import { networkManager } from "~/ligo-components/eth-network";
-import compilerManager, { CompilerManager } from "~/ligo-components/eth-compiler";
+import compilerManager from "~/ligo-components/eth-compiler";
 import queue from "~/ligo-components/eth-queue";
 
 import ProjectSettings from "../ProjectSettings";
@@ -86,19 +86,14 @@ export default class ProjectManager {
     if (!projectsNames.includes(projectNameFromParams)) {
       projectName = projectNameFromParams;
     } else {
-      const getProjectNameRegex = new RegExp(/^.*(?=\((0|[1-9]{1}[0-9]*)\)$)/g);
-      const isNumericProjectName = projectNameFromParams.match(getProjectNameRegex) !== null;
+      const isNumericProjectName = getProjectName(projectNameFromParams) !== null;
       const baseProjectName = isNumericProjectName
-        ? projectNameFromParams.match(getProjectNameRegex)[0]
+        ? getProjectName(projectNameFromParams)
         : projectNameFromParams;
 
-      const getNumberRegex = new RegExp(
-        `(?<=^${baseProjectName}\\()(0|[1-9]{1}[0-9]*)(?=\\)$)`,
-        "g"
-      );
       const sameProjectNumbers = projectsNames
-        .filter((pn) => pn.match(getNumberRegex) !== null)
-        .map((pn) => Number(pn.match(getNumberRegex)));
+        .filter((pn) => getProjectNumber(baseProjectName, pn) !== null)
+        .map((pn) => Number(getProjectNumber(baseProjectName, pn)));
 
       if (sameProjectNumbers.length === 0) {
         projectName = `${baseProjectName}(1)`;
@@ -534,14 +529,6 @@ export default class ProjectManager {
   lint() {}
 
   async compile(sourceFile?: string, finalCall?: () => void) {
-    /* eslint-disable */
-    // @ts-ignore
-    if (CompilerManager.button.state.building) {
-      /* eslint-enable */
-      notification.error("Build Failed", "Another build task is running now.");
-      return false;
-    }
-
     const settings = await this.checkSettings();
 
     await this.project.saveAll();

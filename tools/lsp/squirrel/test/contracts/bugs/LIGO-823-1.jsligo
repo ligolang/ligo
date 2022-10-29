@@ -1,0 +1,3 @@
+const main = (a, b) : int => {
+  if (a == b) { return 999; } else { return 1; };
+};
