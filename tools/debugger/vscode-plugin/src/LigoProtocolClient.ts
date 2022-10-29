@@ -64,6 +64,7 @@ function processErrorResponse(response: DebugProtocol.ErrorResponse) {
 			case "Replacement":
 				vscode.window.showErrorMessage("Internal error", { detail: formattedMessage, modal: true });
 				break;
+			// TODO: Add more exception types
 			default:
 				vscode.window.showWarningMessage(formattedMessage);
 		}

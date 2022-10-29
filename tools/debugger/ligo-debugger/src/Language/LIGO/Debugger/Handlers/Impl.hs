@@ -44,7 +44,7 @@ import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (withRunInIO)
 import UnliftIO.Directory (doesFileExist)
-import UnliftIO.Exception (Handler (Handler), catches, fromEither, throwIO, try)
+import UnliftIO.Exception (Handler (Handler), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
@@ -298,6 +298,10 @@ instance HasSpecificMessages LIGO where
             (pretty e)
               { variablesMessage = Just $ M.fromList [("recommendedVersion", [int||#semv{recommendedVersion}|])]
               }
+
+      , Handler \(e :: MichelsonDecodeException) -> do
+          writeErrResponse (demote @(ExceptionTag MichelsonDecodeException))
+            [int||Failed to process the contract: #exc{e}|]
       ]
 
   handleRequestExt = \case
@@ -457,8 +461,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
 
       (exprLocs, someContract, allFiles) <-
         readLigoMapper ligoDebugInfo typesReplaceRules instrReplaceRules
-        & first [int|m|Failed to process contract: #{id}|]
-        & fromEither @DapMessageException
+        & either (throwIO . MichelsonDecodeException) pure
 
       do
         SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract

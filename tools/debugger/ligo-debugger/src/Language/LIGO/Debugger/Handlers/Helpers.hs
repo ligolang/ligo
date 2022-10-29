@@ -34,6 +34,7 @@ import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Michelson
 
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
@@ -168,6 +169,7 @@ instance Exception SomeDebuggerException where
   fromException e@(SomeException e') =
     asum
       [ SomeDebuggerException <$> fromException @LigoException e
+      , SomeDebuggerException <$> fromException @MichelsonDecodeException e
       , SomeDebuggerException <$> fromException @DapMessageException e
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
       , SomeDebuggerException <$> fromException @ReplacementException e

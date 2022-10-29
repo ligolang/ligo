@@ -1,5 +1,6 @@
 module Language.LIGO.Debugger.Michelson
   ( DecodeError (..)
+  , MichelsonDecodeException (..)
   , EmbedError
   , typesReplaceRules
   , instrReplaceRules
@@ -20,9 +21,10 @@ import Data.Map qualified as M
 import Data.Set qualified as Set
 import Data.Text qualified as Text
 import Data.Vector qualified as V
-import Fmt (Buildable (..), Builder, genericF)
+import Fmt (Buildable (..), Builder, genericF, pretty)
 import Generics.SYB (everywhere, everywhereM, mkM, mkT)
 import Text.Interpolation.Nyan
+import Text.Show qualified
 import Util (everywhereM')
 
 import Morley.Debugger.Core.Common (debuggerTcOptions)
@@ -41,6 +43,7 @@ import Morley.Util.Lens (makeLensesWith, postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Error
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list
@@ -114,6 +117,25 @@ instance Buildable DecodeError where
         #{err}
       |]
     decodeError -> genericF decodeError
+
+newtype MichelsonDecodeException = MichelsonDecodeException DecodeError
+  deriving stock (Eq, Generic)
+  deriving newtype Buildable
+
+instance Show MichelsonDecodeException where
+  show = pretty
+
+instance Exception MichelsonDecodeException
+
+instance DebuggerException MichelsonDecodeException where
+  type ExceptionTag MichelsonDecodeException = "MichelsonDecode"
+  debuggerExceptionType (MichelsonDecodeException err) = case err of
+    FromExpressionFailed{} -> MidLigoLayerException
+    TypeCheckFailed{} -> MidLigoLayerException
+    -- TODO: print better message for ticket
+    InsufficientMeta{} -> MidLigoLayerException
+    MetaEmbeddingError{} -> MidLigoLayerException
+    PreprocessError EntrypointTypeNotFound{} -> UserException
 
 fromExpressionToTyped
   :: (Default meta)
