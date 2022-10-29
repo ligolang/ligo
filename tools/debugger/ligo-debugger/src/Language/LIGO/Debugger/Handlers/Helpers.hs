@@ -65,19 +65,21 @@ withMichelsonEntrypoint
   -> (forall arg. SingI arg => T.Notes arg -> T.EntrypointCallT param arg -> m a)
   -> m a
 withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
-  let noParseEntrypointErr = [int|m|Could not parse entrypoint: #{id}|]
+  let noParseEntrypointErr = ConfigurationException .
+        [int|m|Could not parse entrypoint: #{id}|]
   michelsonEntrypoint <- case mEntrypoint of
     Nothing -> pure U.DefEpName
     -- extension may return default entrypoints as "default"
     Just "default" -> pure U.DefEpName
     Just ep -> U.buildEpName (toText $ firstLetterToLowerCase ep)
       & first noParseEntrypointErr
-      & fromEither @DapMessageException
+      & fromEither
 
-  let noEntrypointErr = [int||Entrypoint `#{michelsonEntrypoint}` not found|]
+  let noEntrypointErr = ConfigurationException
+        [int||Entrypoint `#{michelsonEntrypoint}` not found|]
   T.MkEntrypointCallRes notes call <-
     T.mkEntrypointCall michelsonEntrypoint (cParamNotes contract)
-    & maybe (throwIO @_ @DapMessageException noEntrypointErr) pure
+    & maybe (throwIO noEntrypointErr) pure
 
   cont notes call
   where
@@ -111,17 +113,19 @@ parseValue ctxContractPath category val valueType = do
     "Michelson" ->
       P.parseExpandValue src val
         & first (pretty . MD.prettyFirstError)
-        & fromEither @DapMessageException
+        & fromEither @ConfigurationException
 
-    _ -> throwIO @_ @DapMessageException [int||
+    _ -> throwIO $ ConfigurationException [int||
         Expected "LIGO" or "Michelson" in field "valueType" \
         but got #{valueType}
       |]
 
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
-    & first (\msg -> [int||Typechecking as #{category} failed: #{msg}|])
-    & fromEither @DapMessageException
+    & first do \msg -> ConfigurationException [int||
+        Typechecking as #{category} failed: #{msg}
+      |]
+    & fromEither
 
 getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
 getServerState = asks _rcLSState >>= readTVarIO >>= \case
@@ -170,8 +174,9 @@ instance Exception SomeDebuggerException where
     asum
       [ SomeDebuggerException <$> fromException @LigoException e
       , SomeDebuggerException <$> fromException @MichelsonDecodeException e
-      , SomeDebuggerException <$> fromException @DapMessageException e
+      , SomeDebuggerException <$> fromException @ConfigurationException e
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
       , SomeDebuggerException <$> fromException @ReplacementException e
+      , SomeDebuggerException <$> fromException @PluginCommunicationException e
       , cast @_ @SomeDebuggerException e'
       ]

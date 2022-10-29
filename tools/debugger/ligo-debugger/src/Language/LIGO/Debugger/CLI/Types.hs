@@ -592,12 +592,24 @@ instance FromBuilder DAP.Message where
     { DAP.formatMessage = fromBuilder txt
     }
 
-newtype DapMessageException = DapMessageException DAP.Message
+-- | Invalid debugger configuration provided.
+newtype ConfigurationException = ConfigurationException Text
   deriving newtype (Show, Buildable, FromBuilder)
 
-instance Exception DapMessageException where
-  displayException (DapMessageException msg) = DAP.formatMessage msg
+instance Exception ConfigurationException where
+  displayException (ConfigurationException msg) = pretty msg
 
-instance DebuggerException DapMessageException where
-  type ExceptionTag DapMessageException = "DapMessage"
-  debuggerExceptionType = undefined
+instance DebuggerException ConfigurationException where
+  type ExceptionTag ConfigurationException = "Configuration"
+  debuggerExceptionType _ = UserException
+
+-- | Some unexpected error in communication with the plugin.
+newtype PluginCommunicationException = PluginCommunicationException Text
+  deriving newtype (Show, Buildable, FromBuilder)
+
+instance Exception PluginCommunicationException where
+  displayException = pretty
+
+instance DebuggerException PluginCommunicationException where
+  type ExceptionTag PluginCommunicationException = "PluginComminication"
+  debuggerExceptionType _ = MidPluginLayerException

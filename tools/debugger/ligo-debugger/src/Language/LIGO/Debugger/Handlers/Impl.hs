@@ -290,8 +290,11 @@ instance HasSpecificMessages LIGO where
       [ Handler \(e :: LigoException) -> do
           writeErrResponse (demote @(ExceptionTag LigoException)) (pretty e)
 
-      , Handler \(DapMessageException msg :: DapMessageException) -> do
-          writeErrResponse (demote @(ExceptionTag DapMessageException)) msg
+      , Handler \(ConfigurationException msg) -> do
+          writeErrResponse (demote @(ExceptionTag ConfigurationException)) (pretty msg)
+
+      , Handler \(PluginCommunicationException msg) -> do
+          writeErrResponse (demote @(ExceptionTag PluginCommunicationException)) (pretty msg)
 
       , Handler \(e :: UnsupportedLigoVersionException) -> do
           writeErrResponse (demote @(ExceptionTag UnsupportedLigoVersionException)) $
@@ -351,7 +354,7 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
   whenJust logFileMb openLogHandle
 
   unlessM (doesFileExist file) do
-    throwIO $ DapMessageException $ DAP.mkErrorMessage "Contract file not found" $ toText file
+    throwIO $ ConfigurationException [int||Contract file not found: #{toText file}|]
 
   writeResponse $ ExtraResponse $ InitializeLoggerResponse LigoInitializeLoggerResponse
     { seqLigoInitializeLoggerResponse = 0
@@ -440,7 +443,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
   program <- getProgram
 
   unlessM (doesFileExist program) $
-    throwIO @_ @DapMessageException [int||Contract file not found: #{toText program}|]
+    throwIO $ ConfigurationException [int||Contract file not found: #{toText program}|]
 
   -- Here we're catching exception explicitly in order to store it
   -- inside language server state and rethrow it in @initDebuggerSession@
@@ -551,7 +554,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
   lServVar <-
     asks _rcLSState >>= readTVarIO >>= \case
-      Nothing -> throwIO @_ @DapMessageException [int||Language server state is not initialized|]
+      Nothing -> throwIO @_ @PluginCommunicationException [int||
+        Language server state is not initialized
+        |]
       Just var -> pure var
 
   program <- getProgram
@@ -565,7 +570,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
           -- Sometimes we can find '@' in LIGO values but the last one should be definitely value type
           pure $ first (Text.dropEnd 1) $ Text.breakOnEnd "@" value
         else do
-          throwIO @_ @DapMessageException [int||
+          throwIO $ ConfigurationException [int||
             Can't find value type in #{what}.
             It should be separated with '@' sign.
           |]
@@ -628,5 +633,5 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
 checkArgument :: MonadIO m => Text -> Maybe a -> m a
 checkArgument _    (Just a) = pure a
-checkArgument name Nothing  = throwIO @_ @DapMessageException
+checkArgument name Nothing  = throwIO $ ConfigurationException
   [int||Required configuration option "#{name}" not found in launch.json.|]
