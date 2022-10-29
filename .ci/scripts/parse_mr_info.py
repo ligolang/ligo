@@ -90,8 +90,6 @@ if __name__ == "__main__":
     author = mr.author["username"]
     raw_description = mr.description
 
-    print(raw_description)
-
     markdown = gfm.parse(raw_description)
 
     # Get type details
@@ -105,7 +103,6 @@ if __name__ == "__main__":
     # Get changelog details
     if type != "none":
         changelog_details = get_changelog(markdown.children)
-        print(changelog_details)
     else:
         changelog_details = None
 
