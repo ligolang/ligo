@@ -178,5 +178,6 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
       , SomeDebuggerException <$> fromException @ReplacementException e
       , SomeDebuggerException <$> fromException @PluginCommunicationException e
+      , SomeDebuggerException <$> fromException @ImpossibleHappened e
       , cast @_ @SomeDebuggerException e'
       ]

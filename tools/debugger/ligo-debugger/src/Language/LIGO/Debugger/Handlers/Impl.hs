@@ -95,54 +95,45 @@ instance HasSpecificMessages LIGO where
         InterpretSnapshot{..} <- zoom dsDebuggerState $ frozen curSnapshot
         let someValues = head isStackFrames ^.. sfStackL . each . siValueL
 
-        let result = case someValues of
-              [someValue, someStorage] -> buildStoreOps someValue someStorage
-              _ -> Left
-                  [int||
-                  Internal Error: Expected the stack to only have 2 elements, but its length is \
-                  #{length someValues}.
-                  |]
+        (opsText, storeText, oldStoreText) <- case someValues of
+          [someValue, someStorage] -> buildStoreOps someValue someStorage
+          _ -> throwM $ ImpossibleHappened [int||
+            Expected the stack to only have 2 elements, but its length is \
+            #{length someValues}.
+            |]
 
-        case result of
-          Right (opsText, storeText, oldStoreText) -> do
-            pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
-              { DAP.bodyOutputEvent = DAP.defaultOutputEventBody
-                { DAP.categoryOutputEventBody = "stdout"
-                , DAP.outputOutputEventBody =
-                    [int||
-                    Execution completed.
-                    Operations:
-                    #{opsText}
-                    Storage:
-                    #{storeText}
+        pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
+          { DAP.bodyOutputEvent = DAP.defaultOutputEventBody
+            { DAP.categoryOutputEventBody = "stdout"
+            , DAP.outputOutputEventBody =
+                [int||
+                Execution completed.
+                Operations:
+                #{opsText}
+                Storage:
+                #{storeText}
 
-                    Old storage:
-                    #{oldStoreText}
-                    |]
-                }
-              }
-            pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
-
-          Left errMsg ->
-            pushMessage . DAPResponse $ ErrorResponse DAP.defaultErrorResponse
-            { DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just
-                (DAP.defaultMessage { DAP.formatMessage = errMsg })
+                Old storage:
+                #{oldStoreText}
+                |]
             }
+          }
+        pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
           where
-            buildStoreOps :: T.SomeValue -> T.SomeValue -> Either String (Builder, Builder, Builder)
+            buildStoreOps :: MonadThrow m => T.SomeValue -> T.SomeValue -> m (Builder, Builder, Builder)
             buildStoreOps (SomeValue val) (SomeValue (st :: T.Value r')) = case val of
               (T.VPair (T.VList ops, r :: T.Value r)) ->
                 case (T.valueTypeSanity r, T.valueTypeSanity st) of
                   (T.Dict, T.Dict) ->
                     case (T.checkOpPresence (T.sing @r), T.checkOpPresence (T.sing @r')) of
-                      (T.OpAbsent, T.OpAbsent) -> Right
+                      (T.OpAbsent, T.OpAbsent) -> pure
                         ( blockListF ops
                         , printDocB False $ renderDoc doesntNeedParens r
                         , printDocB False $ renderDoc doesntNeedParens st
                         )
-                      _ -> Left "Internal Error: Invalid storage type."
+                      _ -> throwM $ ImpossibleHappened "Invalid storage type"
 
-              _ -> Left "Internal Error: Expected the last element to be a pair of operations and storage."
+              _ -> throwM $ ImpossibleHappened "Expected the last element to be a pair of operations and storage"
 
       writeStoppedEvent reason = do
         (mDesc, mLongDesc) <- zoom dsDebuggerState $ frozen (getStopEventInfo @LIGO Proxy)
@@ -331,11 +322,8 @@ instance HasSpecificMessages LIGO where
     let ref = DAP.variablesReferenceVariablesRequestArguments argumentsVariablesRequest
     vars <- gets _dsVariables
     case vars ^? ix ref of
-      Nothing -> do
-        pushMessage $ DAPResponse $ ErrorResponse $ DAP.defaultErrorResponse
-          { DAP.request_seqErrorResponse = seqVariablesRequest
-          , DAP.commandErrorResponse = commandVariablesRequest
-          }
+      Nothing ->
+        throwM $ PluginCommunicationException "The referred variable does not exist"
       Just vs ->
         pushMessage $ DAPResponse $ VariablesResponse $ DAP.defaultVariablesResponse
           { DAP.successVariablesResponse = True
@@ -535,7 +523,8 @@ handleValidateValue LigoValidateValueRequest {..} = do
     "storage" ->
       void $ parseValue @storage program category (toText value) valueType
 
-    other -> error [int||Unexpected category #{other}|]
+    other ->
+      throwIO $ PluginCommunicationException [int||Unexpected category #{other}|]
 
   writeResponse $ ExtraResponse $ ValidateValueResponse LigoValidateValueResponse
     { seqLigoValidateValueResponse = 0

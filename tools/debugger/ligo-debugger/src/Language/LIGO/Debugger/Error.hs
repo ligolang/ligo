@@ -3,8 +3,12 @@
 module Language.LIGO.Debugger.Error
   ( DebuggerException(..)
   , DebuggerExceptionType(..)
+
+  , ImpossibleHappened(..)
   ) where
 
+import Fmt (Buildable (..), pretty)
+import Fmt.Internal.Core (FromBuilder)
 import GHC.TypeLits (Symbol)
 
 -- | Exceptions allowed in debugger logic.
@@ -48,3 +52,16 @@ data DebuggerExceptionType
     -- prefer the other one, since otherwise any exception can be put
     -- into this category, as always remains a chance of a bug taking place
     -- in our code.
+
+-- | Something unexpected happened disregard the input from other places
+-- (plugin or LIGO).
+newtype ImpossibleHappened = ImpossibleHappened Text
+  deriving stock (Eq, Show)
+  deriving newtype (FromBuilder, Buildable)
+
+instance Exception ImpossibleHappened where
+  displayException = pretty
+
+instance DebuggerException ImpossibleHappened where
+  type ExceptionTag ImpossibleHappened = "ImpossibleHappened"
+  debuggerExceptionType _ = AdapterInternalException
