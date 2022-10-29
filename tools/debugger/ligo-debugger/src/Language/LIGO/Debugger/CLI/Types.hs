@@ -532,9 +532,6 @@ instance FromJSON (LigoMapper u) where
 newtype LigoException = LigoException { leMessage :: Text }
   deriving newtype (Eq, Show, FromBuilder)
 
-instance DebuggerException LigoException where
-  type ExceptionTag LigoException = "Ligo"
-
 instance Default LigoException where
   def = LigoException ""
 
@@ -556,12 +553,13 @@ instance Buildable LigoException where
 instance Exception LigoException where
   displayException = pretty
 
+instance DebuggerException LigoException where
+  type ExceptionTag LigoException = "Ligo"
+  debuggerExceptionType _ = LigoLayerException
+
 newtype UnsupportedLigoVersionException =
     UnsupportedLigoVersionException SemVer.Version
   deriving stock (Show)
-
-instance DebuggerException UnsupportedLigoVersionException where
-  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
 
 instance Buildable UnsupportedLigoVersionException where
   build (UnsupportedLigoVersionException ver) =
@@ -569,6 +567,11 @@ instance Buildable UnsupportedLigoVersionException where
 
 instance Exception UnsupportedLigoVersionException where
   displayException = pretty
+
+instance DebuggerException UnsupportedLigoVersionException where
+  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
+  debuggerExceptionType _ = UserException
+
 
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
   deriving newtype (Buildable)
@@ -593,17 +596,19 @@ instance FromBuilder DAP.Message where
 newtype DapMessageException = DapMessageException DAP.Message
   deriving newtype (Show, Buildable, FromBuilder)
 
-instance DebuggerException DapMessageException where
-  type ExceptionTag DapMessageException = "DapMessage"
-
 instance Exception DapMessageException where
   displayException (DapMessageException msg) = DAP.formatMessage msg
+
+instance DebuggerException DapMessageException where
+  type ExceptionTag DapMessageException = "DapMessage"
+  debuggerExceptionType = undefined
 
 newtype ReplacementException = ReplacementException MText
   deriving newtype (Show, Buildable)
 
-instance DebuggerException ReplacementException where
-  type ExceptionTag ReplacementException = "Replacement"
-
 instance Exception ReplacementException where
   displayException = pretty
+
+instance DebuggerException ReplacementException where
+  type ExceptionTag ReplacementException = "Replacement"
+  debuggerExceptionType _ = MidLigoLayerException
