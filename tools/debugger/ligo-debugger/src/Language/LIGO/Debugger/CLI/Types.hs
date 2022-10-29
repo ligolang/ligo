@@ -31,7 +31,6 @@ import Text.Interpolation.Nyan (int, rmode')
 
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
-import Morley.Michelson.Text (MText)
 import Morley.Util.Lens
 import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
@@ -602,13 +601,3 @@ instance Exception DapMessageException where
 instance DebuggerException DapMessageException where
   type ExceptionTag DapMessageException = "DapMessage"
   debuggerExceptionType = undefined
-
-newtype ReplacementException = ReplacementException MText
-  deriving newtype (Show, Buildable)
-
-instance Exception ReplacementException where
-  displayException = pretty
-
-instance DebuggerException ReplacementException where
-  type ExceptionTag ReplacementException = "Replacement"
-  debuggerExceptionType _ = MidLigoLayerException

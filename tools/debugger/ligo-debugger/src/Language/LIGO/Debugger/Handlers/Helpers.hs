@@ -32,6 +32,7 @@ import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 
 -- | LIGO-debugger-specific state that we initialize before debugger session
