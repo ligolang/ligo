@@ -3,11 +3,14 @@ module Language.LIGO.Debugger.Handlers.Helpers
   ( module Language.LIGO.Debugger.Handlers.Helpers
   ) where
 
+import Prelude hiding (try)
+
 import AST (LIGO, nestedLIGO, parse)
 import AST.Scope.Common qualified as AST.Common
 import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (writeTChan)
 import Control.Lens (Each (each))
+import Control.Monad.Except (liftEither, throwError)
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI)
@@ -28,7 +31,7 @@ import Morley.Michelson.Untyped qualified as U
 import ParseTree (pathToSrc)
 import Parser (Info)
 import Text.Interpolation.Nyan
-import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
+import UnliftIO.Exception (fromEither, throwIO, try)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
@@ -98,34 +101,34 @@ parseValue
   -> Text
   -> Text
   -> Text
-  -> m (T.Value t)
-parseValue ctxContractPath category val valueType = do
+  -> m (Either Text (T.Value t))
+parseValue ctxContractPath category val valueType = runExceptT do
   let src = P.MSName category
   uvalue <- case valueType of
-    "LIGO" ->
-      mapExceptionM @LigoCallException @LigoCallException
-      do \e -> [int||
-        Error parsing #{category}:
+    "LIGO" -> do
+      lift (try $ compileLigoExpression src ctxContractPath val) >>= \case
+        Right x -> pure x
+        Left (err :: LigoCallException) -> throwError [int||
+            Error parsing #{category}:
 
-        #{e}
-        |]
-      do compileLigoExpression src ctxContractPath val
+            #{err}
+          |]
     "Michelson" ->
       P.parseExpandValue src val
         & first (pretty . MD.prettyFirstError)
-        & fromEither @ConfigurationException
+        & liftEither
 
-    _ -> throwIO $ ConfigurationException [int||
+    _ -> throwError [int||
         Expected "LIGO" or "Michelson" in field "valueType" \
         but got #{valueType}
       |]
 
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
-    & first do \msg -> ConfigurationException [int||
+    & first do \msg -> [int||
         Typechecking as #{category} failed: #{msg}
       |]
-    & fromEither
+    & liftEither
 
 getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
 getServerState = asks _rcLSState >>= readTVarIO >>= \case

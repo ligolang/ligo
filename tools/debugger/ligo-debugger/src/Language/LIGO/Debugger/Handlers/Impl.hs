@@ -519,14 +519,14 @@ handleValidateValue LigoValidateValueRequest {..} = do
   SomeContract (contract@Contract{} :: Contract param storage) <- getContract
   program <- getProgram
 
-  parseRes <- try @_ @SomeDebuggerException case category of
+  parseRes <- case category of
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint $
         \(_ :: T.Notes arg) _ ->
-        void $ parseValue @arg program category (toText value) valueType
+        void <$> parseValue @arg program category (toText value) valueType
 
     "storage" ->
-      void $ parseValue @storage program category (toText value) valueType
+      void <$> parseValue @storage program category (toText value) valueType
 
     other ->
       throwIO $ PluginCommunicationException [int||Unexpected category #{other}|]
@@ -535,7 +535,7 @@ handleValidateValue LigoValidateValueRequest {..} = do
     { seqLigoValidateValueResponse = 0
     , request_seqLigoValidateValueResponse = seqLigoValidateValueRequest
     , successLigoValidateValueResponse = True
-    , messageLigoValidateValueResponse = displayException <$> leftToMaybe parseRes
+    , messageLigoValidateValueResponse = toString <$> leftToMaybe parseRes
     }
 
 initDebuggerSession
@@ -582,7 +582,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
       \(_ :: T.Notes arg) epc -> do
 
         arg <- parseValue program "parameter" parameter parameterType
+          >>= either (throwIO . ConfigurationException) pure
         storage <- parseValue program "storage" stor storageType
+          >>= either (throwIO . ConfigurationException) pure
 
         allLocs <- getAllLocs
         parsedContracts <- getParsedContracts
