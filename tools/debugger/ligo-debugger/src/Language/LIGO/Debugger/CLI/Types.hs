@@ -529,11 +529,12 @@ instance FromJSON (LigoMapper u) where
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
 
-newtype LigoException = LigoException { leMessage :: Text }
+-- | Something got wrong on @ligo@ executable's side.
+newtype LigoCallException = LigoCallException { leMessage :: Text }
   deriving newtype (Eq, Show, FromBuilder)
 
-instance Default LigoException where
-  def = LigoException ""
+instance Default LigoCallException where
+  def = LigoCallException ""
 
 -- | If we have malformed LIGO contract then we'll see
 -- in error @ligo@ binary output a red-colored text
@@ -544,17 +545,17 @@ replaceANSI =
   . T.replace
       [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
 
-instance Buildable LigoException where
+instance Buildable LigoCallException where
   -- Here we need to strip that prefix in order to escape
   -- tautology "Internal error: failed to handle: Internal error: %some LIGO error message%"
-  build (LigoException (T.stripPrefix "Internal error: " -> Just stripped)) = build $ replaceANSI stripped
-  build LigoException{..} = build $ replaceANSI leMessage
+  build (LigoCallException (T.stripPrefix "Internal error: " -> Just stripped)) = build $ replaceANSI stripped
+  build LigoCallException{..} = build $ replaceANSI leMessage
 
-instance Exception LigoException where
+instance Exception LigoCallException where
   displayException = pretty
 
-instance DebuggerException LigoException where
-  type ExceptionTag LigoException = "Ligo"
+instance DebuggerException LigoCallException where
+  type ExceptionTag LigoCallException = "LigoCall"
   debuggerExceptionType _ = LigoLayerException
 
 -- | Failed to decode LIGO output.

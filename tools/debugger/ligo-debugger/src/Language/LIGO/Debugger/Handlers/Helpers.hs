@@ -103,7 +103,7 @@ parseValue ctxContractPath category val valueType = do
   let src = P.MSName category
   uvalue <- case valueType of
     "LIGO" ->
-      mapExceptionM @LigoException @LigoException
+      mapExceptionM @LigoCallException @LigoCallException
       do \e -> [int||
         Error parsing #{category}:
 
@@ -172,7 +172,7 @@ instance Exception SomeDebuggerException where
 
   fromException e@(SomeException e') =
     asum
-      [ SomeDebuggerException <$> fromException @LigoException e
+      [ SomeDebuggerException <$> fromException @LigoCallException e
       , SomeDebuggerException <$> fromException @LigoDecodeException e
       , SomeDebuggerException <$> fromException @MichelsonDecodeException e
       , SomeDebuggerException <$> fromException @ConfigurationException e

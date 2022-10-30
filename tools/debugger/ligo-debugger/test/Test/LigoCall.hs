@@ -50,11 +50,11 @@ test_ExpressionCompilation = testGroup "Compiling expression"
       res @?= U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|])
 
   , testCase "Relying on functions defined in the contract" do
-      res <- try @_ @LigoException $ evalExprOverContract1 "defStorage \"a\""
+      res <- try @_ @LigoCallException $ evalExprOverContract1 "defStorage \"a\""
       res @? isRight
 
   , testCase "Non-existing variable" do
-      res <- try @_ @LigoException $ evalExprOverContract1 "absentStorage"
+      res <- try @_ @LigoCallException $ evalExprOverContract1 "absentStorage"
       res @? isLeft
 
   ]
@@ -103,7 +103,7 @@ test_Regressions = testGroup "Regressions"
 test_ANSISequencesReplace :: TestTree
 test_ANSISequencesReplace = testGroup "ANSI replacements"
   [ testCase "Check replacement" do
-      Left (exc :: LigoException) <- try (compileLigoContractDebug "main" (contractsDir </> "malformed.mligo"))
+      Left (exc :: LigoCallException) <- try (compileLigoContractDebug "main" (contractsDir </> "malformed.mligo"))
 
       let actual = pretty exc
             & T.splitOn "-->"

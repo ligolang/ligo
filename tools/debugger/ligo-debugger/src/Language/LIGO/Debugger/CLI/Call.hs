@@ -35,7 +35,7 @@ import Util
 
 withMapLigoExc :: (MonadUnliftIO m) => m a -> m a
 withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
-  [int||#{cfeStderr e}|] :: LigoException
+  [int||#{cfeStderr e}|] :: LigoCallException
 
 {-
   Here and in the next calling @ligo@ binary functions
