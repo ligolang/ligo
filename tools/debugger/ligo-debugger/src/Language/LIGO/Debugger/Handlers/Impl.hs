@@ -25,8 +25,7 @@ import Morley.Debugger.DAP.Types
   DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
   HasSpecificMessages (..), RIO, RequestBase (..), RioContext (..), StopEventDesc (..),
   StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
-import Morley.Debugger.Protocol.DAP
-  (Message (variablesMessage), ScopesRequestArguments (frameIdScopesRequestArguments))
+import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret (ContractEnv (ceSelf), ceContracts)
@@ -44,7 +43,7 @@ import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (withRunInIO)
 import UnliftIO.Directory (doesFileExist)
-import UnliftIO.Exception (Handler (Handler), catches, throwIO, try)
+import UnliftIO.Exception (handle, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
@@ -59,8 +58,6 @@ import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
-
-import Util (rmode'semv)
 
 data LIGO
 
@@ -268,35 +265,43 @@ instance HasSpecificMessages LIGO where
       }
 
   handlersWrapper RequestBase{..} =
-    let
-      writeErrResponse :: Text -> DAP.Message -> RIO ext ()
-      writeErrResponse tag fullMsg =
+    handle \(SomeDebuggerException (err :: excType)) -> do
+      fullMsg <-
+        let
+          mentionErrorAsInternal = [int|m|
+            Internal error #{id}
+
+            Please contact us.
+            |]
+          excTypeUpdate = case debuggerExceptionType err of
+            UserException -> pure
+            LigoLayerException ->
+              pure . ("LIGO reported error: \n\n" <>)
+            MidLigoLayerException ->
+              -- TODO: make this pure, carry version in the LS state
+              mentionVersionIssues . ("Unexpected output of LIGO: " <>)
+            MidPluginLayerException ->
+              pure . mentionErrorAsInternal
+            AdapterInternalException ->
+              pure . mentionErrorAsInternal
+        in excTypeUpdate $ toText (displayException err)
+
+      writeErrResponse @excType $ DAP.defaultMessage
+        { DAP.formatMessage = toString fullMsg
+        , DAP.variablesMessage = debuggerExceptionData err
+        }
+    where
+      writeErrResponse
+        :: forall e ext. DebuggerException e
+        => DAP.Message -> RIO ext ()
+      writeErrResponse errBody =
         writeResponse $ ErrorResponse DAP.defaultErrorResponse
           { DAP.request_seqErrorResponse = seqRequestBase
           , DAP.commandErrorResponse = commandRequestBase
-          , DAP.messageErrorResponse = Just (toString tag)
-          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just fullMsg
+          , DAP.messageErrorResponse = Just $ toString $ demote @(ExceptionTag e)
+          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just errBody
           }
-    in flip catches
-      [ Handler \(e :: LigoException) -> do
-          writeErrResponse (demote @(ExceptionTag LigoException)) (pretty e)
 
-      , Handler \(ConfigurationException msg) -> do
-          writeErrResponse (demote @(ExceptionTag ConfigurationException)) (pretty msg)
-
-      , Handler \(PluginCommunicationException msg) -> do
-          writeErrResponse (demote @(ExceptionTag PluginCommunicationException)) (pretty msg)
-
-      , Handler \(e :: UnsupportedLigoVersionException) -> do
-          writeErrResponse (demote @(ExceptionTag UnsupportedLigoVersionException)) $
-            (pretty e)
-              { variablesMessage = Just $ M.fromList [("recommendedVersion", [int||#semv{recommendedVersion}|])]
-              }
-
-      , Handler \(e :: MichelsonDecodeException) -> do
-          writeErrResponse (demote @(ExceptionTag MichelsonDecodeException))
-            [int||Failed to process the contract: #exc{e}|]
-      ]
 
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
@@ -378,7 +383,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   runMaybeT do
     Just ligoVer <- pure $ parseLigoVersion rawVersion
     VersionUnsupported <- pure $ isSupportedVersion ligoVer
-    throwIO $ UnsupportedLigoVersionException ligoVer
+    throwIO $ UnsupportedLigoVersionException ligoVer recommendedVersion
 
   writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
     { seqLigoSetLigoBinaryPathResponse = 0

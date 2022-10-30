@@ -12,6 +12,7 @@ module Language.LIGO.Debugger.CLI.Call
   , isSupportedVersion
   , minimalSupportedVersion
   , recommendedVersion
+  , mentionVersionIssues
   ) where
 
 import Data.Aeson qualified as Aeson
@@ -104,10 +105,9 @@ getAvailableEntrypoints file = withMapLigoExc $
 -- we fail to parse.
 throwUnexpectedLigoOutput :: (HasLigoClient m) => Text -> Text -> m a
 throwUnexpectedLigoOutput source err =
-  throwIO @_ @LigoException =<< mentionVersionIssues [int||
-    Unexpected output of `ligo` from #{source}:
-    #{err}
-   |]
+  -- TODO: We want @source@ to be propagated to the place where we print
+  -- the exception, in handlersWrapper
+  throwIO $ LigoException err
 
 -- Versions
 ----------------------------------------------------------------------------
@@ -208,7 +208,7 @@ recommendedVersion =
 
 -- | Update an error so that it mentions issues with ligo version being
 -- unsupported in case any such issues take place.
-mentionVersionIssues :: (HasLigoClient m) => LigoException -> m LigoException
+mentionVersionIssues :: (HasLigoClient m) => Text -> m Text
 mentionVersionIssues exc = do
   mVer <- parseLigoVersion <$> getLigoVersion
   let verNote = case mVer of
@@ -231,5 +231,5 @@ mentionVersionIssues exc = do
             the extension is released.
             |]
           VersionSupported -> Nothing
-  return . LigoException $
-    maybe id (flip (<>)) (mappend "\n" <$> verNote) (leMessage exc)
+  return $
+    maybe id (\note' e -> e <> "\n" <> note') verNote exc

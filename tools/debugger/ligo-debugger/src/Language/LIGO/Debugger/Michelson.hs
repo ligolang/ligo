@@ -22,7 +22,7 @@ import Data.Map qualified as M
 import Data.Set qualified as Set
 import Data.Text qualified as Text
 import Data.Vector qualified as V
-import Fmt (Buildable (..), Builder, genericF, pretty)
+import Fmt (Buildable (..), Builder, pretty)
 import Generics.SYB (everywhere, everywhereM, mkM, mkT)
 import Text.Interpolation.Nyan
 import Text.Show qualified
@@ -112,13 +112,16 @@ data DecodeError
 
 instance Buildable DecodeError where
   build = \case
+    FromExpressionFailed err ->
+      [int||Failed to parse Micheline expression: #{err}|]
     TypeCheckFailed err ->
-      [int||
-        Something went wrong: LIGO executable produced \
-        badly typed Michelson contract. Please contact us.
-        #{err}
-      |]
-    decodeError -> genericF decodeError
+      [int||Failed to typecheck the Michelson contract: #{err}|]
+    InsufficientMeta idx ->
+      [int||Not enough metadata, missing at index #{idx}|]
+    MetaEmbeddingError err ->
+      pretty err
+    PreprocessError err ->
+      pretty err
 
 newtype MichelsonDecodeException = MichelsonDecodeException DecodeError
   deriving stock (Eq, Generic)

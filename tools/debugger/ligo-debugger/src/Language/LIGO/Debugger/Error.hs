@@ -9,15 +9,19 @@ module Language.LIGO.Debugger.Error
 
 import Fmt (Buildable (..), pretty)
 import Fmt.Internal.Core (FromBuilder)
-import GHC.TypeLits (Symbol)
+import GHC.TypeLits (KnownSymbol, Symbol)
 
 -- | Exceptions allowed in debugger logic.
-class (Exception e) => DebuggerException e where
+class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
   -- | Unique name of the exception type.
   type ExceptionTag e = (r :: Symbol) | r -> e
 
   -- | Category of exception.
   debuggerExceptionType :: e -> DebuggerExceptionType
+
+  -- | Additional data that will be provided to the plugin.
+  debuggerExceptionData :: e -> Maybe (Map String String)
+  debuggerExceptionData _ = Nothing
 
 -- | Classification of exceptions by who is guilty in that it occured.
 data DebuggerExceptionType
