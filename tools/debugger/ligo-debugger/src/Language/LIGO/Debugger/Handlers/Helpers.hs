@@ -173,6 +173,7 @@ instance Exception SomeDebuggerException where
   fromException e@(SomeException e') =
     asum
       [ SomeDebuggerException <$> fromException @LigoException e
+      , SomeDebuggerException <$> fromException @LigoDecodeException e
       , SomeDebuggerException <$> fromException @MichelsonDecodeException e
       , SomeDebuggerException <$> fromException @ConfigurationException e
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e

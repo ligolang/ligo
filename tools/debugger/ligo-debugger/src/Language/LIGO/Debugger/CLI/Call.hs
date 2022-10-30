@@ -22,7 +22,7 @@ import Fmt (Buildable, build, pretty)
 import System.FilePath ((</>))
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO)
-import UnliftIO.Exception (mapExceptionM, throwIO)
+import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
 
 import Cli (HasLigoClient, LigoClientFailureException (..), callLigo, callLigoBS)
 import Cli qualified as LSP
@@ -62,8 +62,8 @@ compileLigoContractDebug entrypoint file = withMapLigoExc $
     , "--disable-michelson-typechecking"
     , file
     ] Nothing
-    >>= either (throwUnexpectedLigoOutput "decoding source mapper") pure
-      . first toText . Aeson.eitherDecode
+    >>= either (throwIO . LigoDecodeException "decoding source mapper" . toText) pure
+      . Aeson.eitherDecode
 
 -- | Run ligo to compile expression into Michelson in the context of the
 -- given file.
@@ -82,7 +82,8 @@ compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
     decodeOutput :: Text -> m MU.Value
     decodeOutput txt =
       MP.parseExpandValue valueOrigin txt
-        & either (throwUnexpectedLigoOutput "parsing Michelson value" . pretty) pure
+        & first (LigoDecodeException "parsing Michelson value" .  pretty)
+        & fromEither
 
 getAvailableEntrypoints :: forall m. (HasLigoClient m)
                         => FilePath -> m EntrypointsList
@@ -97,17 +98,9 @@ getAvailableEntrypoints file = withMapLigoExc $
     decodeOutput :: Text -> m EntrypointsList
     decodeOutput txt =
       maybe
-        do throwUnexpectedLigoOutput "decoding list declarations" txt
+        do throwIO $ LigoDecodeException "decoding list declarations" txt
         pure
         do parseEntrypointsList txt
-
--- | Throw an error about ligo producing unexpected output which
--- we fail to parse.
-throwUnexpectedLigoOutput :: (HasLigoClient m) => Text -> Text -> m a
-throwUnexpectedLigoOutput source err =
-  -- TODO: We want @source@ to be propagated to the place where we print
-  -- the exception, in handlersWrapper
-  throwIO $ LigoException err
 
 -- Versions
 ----------------------------------------------------------------------------

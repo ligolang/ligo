@@ -557,6 +557,26 @@ instance DebuggerException LigoException where
   type ExceptionTag LigoException = "Ligo"
   debuggerExceptionType _ = LigoLayerException
 
+-- | Failed to decode LIGO output.
+data LigoDecodeException = LigoDecodeException
+  { ldeSource :: Text
+    -- ^ What we were trying to decode.
+  , ldeMessage :: Text
+    -- ^ The error message.
+  } deriving stock (Show)
+
+instance Buildable LigoDecodeException where
+  build LigoDecodeException{..} =
+    [int||Failed to parse LIGO output (#{ldeSource}): #{ldeMessage}|]
+
+instance Exception LigoDecodeException where
+  displayException = pretty
+
+instance DebuggerException LigoDecodeException where
+  type ExceptionTag LigoDecodeException = "LigoDecode"
+  debuggerExceptionType _ = MidLigoLayerException
+
+-- | The current LIGO version is completely unsupported.
 data UnsupportedLigoVersionException = UnsupportedLigoVersionException
   { uveActual :: SemVer.Version
   , uveRecommended :: SemVer.Version
