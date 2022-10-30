@@ -43,7 +43,7 @@ import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (withRunInIO)
 import UnliftIO.Directory (doesFileExist)
-import UnliftIO.Exception (handle, throwIO, try)
+import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
@@ -264,8 +264,8 @@ instance HasSpecificMessages LIGO where
         }
       }
 
-  handlersWrapper RequestBase{..} =
-    handle \(SomeDebuggerException (err :: excType)) -> do
+  handlersWrapper RequestBase{..} = flip catches
+    [ Handler \(SomeDebuggerException (err :: excType)) -> do
       fullMsg <-
         let
           mentionErrorAsInternal = [int|m|
@@ -290,6 +290,11 @@ instance HasSpecificMessages LIGO where
         { DAP.formatMessage = toString fullMsg
         , DAP.variablesMessage = debuggerExceptionData err
         }
+
+    , Handler \(SomeException err) -> do
+        writeErrResponse @ImpossibleHappened
+          [int||Internal (unhandled) error: #exc{err}|]
+    ]
     where
       writeErrResponse
         :: forall e ext. DebuggerException e
