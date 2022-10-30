@@ -1,7 +1,8 @@
 module Language.LIGO.Debugger.Michelson
   ( DecodeError (..)
   , MichelsonDecodeException (..)
-  , EmbedError
+  , EmbedError (..)
+  , PreprocessError (..)
   , typesReplaceRules
   , instrReplaceRules
   , readLigoMapper
@@ -33,11 +34,12 @@ import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
 import Morley.Michelson.Text (mt)
-import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
+import Morley.Michelson.TypeCheck
+  (TCError (..), TCTypeError (..), typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
-  (Contract' (..), ContractCode' (ContractCode, unContractCode), CtorEffectsApp (..),
-  DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta), dfsFoldInstr,
-  dfsTraverseInstr, isMichelsonInstr)
+  (BadTypeForScope (BtHasTicket), Contract' (..), ContractCode' (ContractCode, unContractCode),
+  CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta),
+  dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Util.Lens (makeLensesWith, postfixLFields)
 
@@ -132,10 +134,17 @@ instance DebuggerException MichelsonDecodeException where
   debuggerExceptionType (MichelsonDecodeException err) = case err of
     FromExpressionFailed{} -> MidLigoLayerException
     TypeCheckFailed{} -> MidLigoLayerException
-    -- TODO: print better message for ticket
     InsufficientMeta{} -> MidLigoLayerException
     MetaEmbeddingError{} -> MidLigoLayerException
-    PreprocessError EntrypointTypeNotFound{} -> UserException
+    PreprocessError err' -> case err' of
+      EntrypointTypeNotFound{} -> UserException
+      UnsupportedTicketDup -> UserException
+
+wrapTypeCheckFailed :: TCError -> DecodeError
+wrapTypeCheckFailed = \case
+  TCFailedOnInstr _ _ _ _ (Just (UnsupportedTypeForScope _ BtHasTicket)) ->
+    PreprocessError UnsupportedTicketDup
+  other -> TypeCheckFailed other
 
 fromExpressionToTyped
   :: (Default meta)
@@ -147,11 +156,12 @@ fromExpressionToTyped
 fromExpressionToTyped expr metas typeRules instrRules = do
   uContract <- first FromExpressionFailed $ fromExpression expr
   (processedUContract, newMetas, oldMetas) <- first PreprocessError $ preprocessContract uContract metas typeRules instrRules
-  contract <- first TypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
+  contract <- first wrapTypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
   pure (contract, reverse newMetas <> oldMetas)
 
-newtype PreprocessError
+data PreprocessError
   = EntrypointTypeNotFound U.EpName
+  | UnsupportedTicketDup
   deriving stock (Eq, Generic)
 
 instance Buildable PreprocessError where
@@ -160,6 +170,12 @@ instance Buildable PreprocessError where
       [int||
         SELF instruction have the entrypoint #{epName} \
         that the contract's parameter doesn't declare.
+      |]
+    UnsupportedTicketDup ->
+      [int||
+        Typechecking failed due to `DUP` being used on a non-dupable value
+        (e.g. ticket). This case may not work in the debugger even if the
+        contract actually compiles.
       |]
 
 type PreprocessMonad meta =

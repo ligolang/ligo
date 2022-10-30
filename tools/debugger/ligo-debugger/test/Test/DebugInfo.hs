@@ -138,3 +138,14 @@ test_SourceMapper = testGroup "Reading source mapper"
         , SrcPos (Pos 3) (Pos 3)
         ]
   ]
+
+
+test_Errors :: TestTree
+test_Errors = testGroup "Errors"
+  [ testCase "duplicated ticket error is recognized" do
+      let file = contractsDir </> "dupped-ticket.mligo"
+      ligoMapper <- compileLigoContractDebug "main" file
+      void (readLigoMapper ligoMapper typesReplaceRules instrReplaceRules)
+        @?= Left (PreprocessError UnsupportedTicketDup)
+
+  ]

@@ -1141,4 +1141,5 @@ unit_Contracts_are_sensible = do
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
       , "malformed.mligo" -- incorrect contract
+      , "dupped-ticket.mligo" -- illegal intentionally
       ]
