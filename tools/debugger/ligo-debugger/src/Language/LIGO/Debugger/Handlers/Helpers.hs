@@ -5,7 +5,7 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import AST (LIGO, nestedLIGO, parse)
 import AST.Scope.Common qualified as AST.Common
-import Cli (HasLigoClient)
+import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (writeTChan)
 import Control.Lens (Each (each))
 import Data.Char qualified as C
@@ -180,5 +180,6 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @ReplacementException e
       , SomeDebuggerException <$> fromException @PluginCommunicationException e
       , SomeDebuggerException <$> fromException @ImpossibleHappened e
+      , SomeDebuggerException <$> fromException @LigoIOException e
       , cast @_ @SomeDebuggerException e'
       ]

@@ -11,6 +11,8 @@ import Fmt (Buildable (..), pretty)
 import Fmt.Internal.Core (FromBuilder)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
+import Cli.Impl qualified as LSP
+
 -- | Exceptions allowed in debugger logic.
 class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
   -- | Unique name of the exception type.
@@ -69,3 +71,14 @@ instance Exception ImpossibleHappened where
 instance DebuggerException ImpossibleHappened where
   type ExceptionTag ImpossibleHappened = "ImpossibleHappened"
   debuggerExceptionType _ = AdapterInternalException
+
+----------------------------------------------------------------------------
+-- Instances for LSP types
+----------------------------------------------------------------------------
+
+instance DebuggerException LSP.LigoIOException where
+  type ExceptionTag LSP.LigoIOException = "LIGO-IO"
+  debuggerExceptionType _ =
+    -- This is usually some "ligo executable not found in path", i.e.
+    -- something to be fixed by the user
+    UserException
