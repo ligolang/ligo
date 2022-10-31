@@ -6,6 +6,7 @@ export { redux as tokens } from "~/ligo-components/eth-explorer";
 export { redux as abis } from "~/ligo-components/eth-sdk";
 export { redux as customNetworks } from "~/ligo-components/eth-network";
 export { redux as queue } from "~/base-components/queue";
+export { redux as gistToken } from "~/base-components/file-ops";
 export { redux as protocol } from "~/ligo-components/eth-compiler";
 
 export const version = {

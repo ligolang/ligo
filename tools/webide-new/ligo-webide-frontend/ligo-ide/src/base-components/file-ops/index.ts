@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable class-methods-use-this */
 import pathHelper from "path-browserify";
-import GistFs, { GistData } from "~/base-components/file-ops/GistFs";
+import GistFs, { GistContent, GistData } from "~/base-components/file-ops/GistFs";
 import IndexedLocalFs from "./IndexedLocalFs";
 
 export type FolderInfo = {
@@ -17,6 +17,7 @@ export type FolderInfo = {
   path: string;
   loading: boolean;
   remote: boolean;
+  pathInProject?: string;
 };
 
 export type FileInfo = {
@@ -27,6 +28,7 @@ export type FileInfo = {
   path: string;
   remote: boolean;
   isLeaf: boolean;
+  pathInProject?: string;
 };
 
 class FileManager {
@@ -36,13 +38,10 @@ class FileManager {
 
   workspace: string;
 
-  pathHelper: any;
-
   constructor() {
     this.localFs = new IndexedLocalFs();
     this.gistFs = new GistFs();
     this.workspace = ""; // TODO use ./workspaces as workspace root instead of full path
-    this.pathHelper = pathHelper;
   }
 
   async isDirectory(path: string): Promise<boolean> {
@@ -146,7 +145,7 @@ class FileManager {
 
   async writeFile(path: string, content: string) {
     await IndexedLocalFs.writeFile(path, content).catch((e) => {
-      throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`);
+      throw new Error(`Fail to save the file <b>${JSON.stringify(e)}</b>.`);
     });
   }
 
@@ -251,6 +250,21 @@ class FileManager {
     }
   }
 
+  async getProjectNames() {
+    const dirFiles: { [a: string]: { isDirectory: boolean } } = await IndexedLocalFs.readDirectory(
+      ".workspaces"
+    ).catch((e) => {
+      throw new Error(`Fail to fetch directory: <b>${JSON.stringify(e)}</b>.`);
+    });
+
+    return Object.keys(dirFiles)
+      .filter((item) => dirFiles[item].isDirectory)
+      .map((item) => {
+        const dirPath = item;
+        return dirPath.replace(".workspaces/", "");
+      });
+  }
+
   async loadGistProject(gistId: string) {
     const data = await GistFs.loadData(gistId)
       .then((dt: GistData) => {
@@ -265,7 +279,7 @@ class FileManager {
         throw new Error(`<b>${e.message}</b>`);
       });
 
-    const obj: { [a: string]: string } = {};
+    const obj: GistContent = {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     Object.keys(data).forEach((element) => {
       const path = element.replace(/\.\.\./g, "/");
@@ -274,7 +288,7 @@ class FileManager {
     return obj;
   }
 
-  async uploadGistProject(token: string, projectRoot: string): Promise<string> {
+  async uploadGistProject(token: string, projectRoot: string, gistId?: string): Promise<string> {
     if (await this.isFile(projectRoot)) {
       throw Error(`${projectRoot} is not a directory`);
     }
@@ -285,14 +299,13 @@ class FileManager {
       packagedObject[path] = { content };
     });
     const description = "Description";
-    return GistFs.uploadData(packagedObject, description, token);
+    return GistFs.uploadData(packagedObject, description, token, gistId);
   }
 
   async copyFolderToJson(path: string): Promise<{ path: string; content: string }[]> {
     const files = await this.collectFiles(path);
-    const regex = new RegExp(path);
     return files.map(({ path: filePath, content }) => {
-      const gistFilePath = filePath.replace(regex, "").replace(/\//g, "...");
+      const gistFilePath = filePath.replace(path, "").replace(/\//g, "...");
       const gistFileContent =
         /^\s+$/.test(content) || !content.length
           ? "// this line is added to create a gist. Empty file is not allowed."
@@ -307,7 +320,6 @@ class FileManager {
     if (await this.exists(path)) {
       const items = await this.readDirectory(path);
       if (items.length !== 0) {
-        /* eslint-disable no-await-in-loop */
         for (let i = 0; i < items.length; i++) {
           const curPath = items[i].key;
           if (await this.isDirectory(curPath)) {
@@ -318,7 +330,6 @@ class FileManager {
             files.push({ path: curPath, content: fileContent });
           }
         }
-        /* eslint-enable no-await-in-loop */
       }
     }
 
@@ -346,3 +357,4 @@ export default new FileManager();
 
 export { fileSystems, fileSystem } from "./filesystems/fileSystem";
 export { indexedDBFileSystem } from "./filesystems/indexedDB";
+export { default as redux } from "./redux";

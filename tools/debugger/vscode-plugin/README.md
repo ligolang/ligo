@@ -24,6 +24,12 @@ At this moment running `ligo` from docker is slow, so, it's better to use static
 
 Currently, simple contracts are supported, with support for more complex contracts on the way.
 
+Due to some limitations on `ligo` executable's side and on our side an invalid `Michelson` code may be produced. If you encounter this problem, please contact us.
+
+We slightly change the `Michelson` code, which may result in minor differences (e.g. `PACK`ed code may result in a different bytestring).
+
+At this moment contracts with tickets have very limited support.
+
 ## Running the debugger
 
 You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `${command:AskForEntrypoint}`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.

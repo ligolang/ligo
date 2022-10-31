@@ -4,6 +4,7 @@ import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import actions from "../actions";
+import ProjectManager from "../ProjectManager/ProjectManager";
 
 export default class CreateFileOrFolderModals extends PureComponent {
   constructor(props) {
@@ -48,7 +49,7 @@ export default class CreateFileOrFolderModals extends PureComponent {
     if (this.state.type === "file") {
       let filePath;
       try {
-        filePath = await this.props.projectManager.createNewFile(basePath, name);
+        filePath = await ProjectManager.createNewFile(basePath, name);
       } catch (e) {
         notification.error("Cannot Create File", e.message);
         return;
@@ -58,7 +59,7 @@ export default class CreateFileOrFolderModals extends PureComponent {
       }, 500);
     } else if (this.state.type === "folder") {
       try {
-        await this.props.projectManager.writeDirectory(basePath, name);
+        await ProjectManager.writeDirectory(basePath, name);
       } catch (e) {
         notification.error("Cannot Create Folder", e.message);
         return;

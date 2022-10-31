@@ -6,6 +6,7 @@ module Test.Capabilities.Rename
   ) where
 
 import Control.Lens hiding ((:>))
+import Data.List ((\\))
 import Data.Text (Text)
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
@@ -19,7 +20,7 @@ import Language.LSP.Types.Lens qualified as LSP
 import Test.HUnit (Assertion)
 
 import qualified Test.Common.Capabilities.Util as Common (contractsDir)
-import Test.Common.FixedExpectations (expectationFailure, shouldBe, shouldThrow, anyException)
+import Test.Common.FixedExpectations (expectationFailure, shouldSatisfy, shouldThrow, anyException)
 import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
@@ -43,7 +44,10 @@ testRename fp pos newName edits = do
     getRename doc pos newName
   case workspaceEdit ^. LSP.changes of
     Nothing -> expectationFailure "should be able to rename"
-    Just weMap -> weMap `shouldBe` toWorkspaceEditMap newName edits
+    Just weMap ->
+      let expected = toWorkspaceEditMap newName edits
+          isSubsetOf (LSP.List a) (LSP.List b) = null $ a \\ b
+      in weMap `shouldSatisfy` HashMap.isSubmapOfBy isSubsetOf expected
 
 toWorkspaceEditMap :: Text -> [(FilePath, [LSP.Range])] -> WorkspaceEditMap
 toWorkspaceEditMap newName = HashMap.fromList . fmap toKeyValue

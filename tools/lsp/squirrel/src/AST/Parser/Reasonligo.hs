@@ -201,7 +201,7 @@ recognise (SomeRawTree dialect rawTree)
         "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
         "record_type"      -> TRecord  <$> fields "field"
         "tuple_type"       -> TProduct <$> fields "element"
-        "sum_type"         -> TSum     <$> fields "variant"
+        "sum_type"         -> TSum     <$> fields1 "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable <$> field "name"
         _                  -> fallthrough

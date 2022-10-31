@@ -34,6 +34,6 @@ let uno : storage = EURO.one
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (module_access (ModuleName) (FieldName))
+    (module_access (ModuleName) (Name))
   )
 )
