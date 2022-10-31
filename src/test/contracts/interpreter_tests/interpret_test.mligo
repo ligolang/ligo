@@ -418,3 +418,7 @@ let test_int_bls =
   let alpha_int = int alpha in
   let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
   assert (Test.eval alpha_int = mich_int)
+
+let test_not =
+  let f ((x, y) : nat * int) : int = x * not y in
+  assert (Test.eval (f (313n , 2938818607801353443)) = Test.run f (313n , 2938818607801353443))
