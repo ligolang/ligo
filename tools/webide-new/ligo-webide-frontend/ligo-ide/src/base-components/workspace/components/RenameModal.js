@@ -3,6 +3,7 @@ import React, { PureComponent } from "react";
 import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
+import ProjectManager from "../ProjectManager/ProjectManager";
 
 export default class RenameModal extends PureComponent {
   constructor(props) {
@@ -29,7 +30,7 @@ export default class RenameModal extends PureComponent {
     const { oldPath, name, type } = this.state;
     this.setState({ loading: true });
     try {
-      await this.props.projectManager.rename(oldPath, name, { type });
+      await ProjectManager.rename(oldPath, name, { type });
     } catch (e) {
       notification.error("Cannot Rename File", e.message);
       return;

@@ -6,5 +6,5 @@
     =
     (let
       (const
-        (? c) (contract $ unit) (apply (. Tezos implicit_account) p))
-    (apply (. Tezos address) c))))
+        (? c) (contract $ unit) (apply (:: Tezos implicit_account) p))
+    (apply (:: Tezos address) c))))

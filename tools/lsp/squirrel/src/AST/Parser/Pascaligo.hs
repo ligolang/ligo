@@ -226,7 +226,7 @@ recognise (SomeRawTree dialect rawTree)
         "prod_type"        -> TProduct <$> fields "element"
         "app_type"         -> TApply   <$> field  "name" <*> fields "arg"
         "record_type"      -> TRecord  <$> fields "field"
-        "sum_type"         -> TSum     <$> fields "variant"
+        "sum_type"         -> TSum     <$> fields1 "variant"
         "type_group"       -> TProduct <$> (pure <$> field "type")
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable <$> field "name"

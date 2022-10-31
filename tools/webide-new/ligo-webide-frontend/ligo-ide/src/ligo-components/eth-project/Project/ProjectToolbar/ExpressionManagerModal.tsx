@@ -50,11 +50,9 @@ function ExpressionManagerModal({
       setFiles(contractFiles);
 
       const decls = await Api.listDeclarations({
-        /* eslint-disable */
-        sources: contractFiles,
-        main: projectManager.mainFilePath,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        project: { sourceFiles: contractFiles, main: projectManager.mainFilePath },
         onlyEndpoint: false,
-        /* eslint-enable */
       });
       setDeclarations(
         decls.map((d) => {
@@ -84,15 +82,17 @@ function ExpressionManagerModal({
 
     await (managerType === "dryRun"
       ? Api.dryRun({
-        /* eslint-disable */
           entrypoint: name,
-          sources: files,
-          main: projectManager.mainFilePath,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          project: { sourceFiles: files, main: projectManager.mainFilePath },
           storage,
           parameters: params,
         })
-      : Api.compileExpression({ function: name, sources: files, main: projectManager.mainFilePath })
-      /* eslint-enable */
+      : Api.compileExpression({
+          function: name,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          project: { sourceFiles: files, main: projectManager.mainFilePath },
+        })
     )
       .then((resp) => setResult(resp))
       .catch((e: Error) => {
@@ -160,7 +160,12 @@ function ExpressionManagerModal({
           />
         </>
       )}
-      {result && <code className="user-select">{result}</code>}
+      {result && (
+        <>
+          <div>Result</div>
+          <pre className="pre-box pre-wrap break-all bg-primary text-body">{result}</pre>
+        </>
+      )}
     </Modal>
   );
 }

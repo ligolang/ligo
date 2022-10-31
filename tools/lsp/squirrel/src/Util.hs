@@ -10,6 +10,7 @@ module Util
   , traverseJsonText
   , lazyBytesToText
   , textToLazyBytes
+  , (<<&>>)
 
   -- * Debugging utilities
   , validate
@@ -90,6 +91,10 @@ traverseJsonText f = \case
   n@(Aeson.Number _) -> pure n
   b@(Aeson.Bool _) -> pure b
   Aeson.Null -> pure Aeson.Null
+
+(<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
+a <<&>> f = fmap (fmap f) a
+{-# INLINE (<<&>>) #-}
 
 -- | Throws an error if the tree contains any subtrees such that the ranges are
 -- not smaller than its parent nodes, or returns the tree unmodified, otherwise.

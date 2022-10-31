@@ -1,6 +1,7 @@
 module Test.Capabilities.Folding
   ( unit_folding_range
   , unit_folding_range_jsligo
+  , unit_modules
   ) where
 
 import Language.LSP.Test
@@ -11,7 +12,7 @@ import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
@@ -30,7 +31,7 @@ unit_folding_range = do
   foldingRanges <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
     getFoldingRanges doc
-  foldingRanges `shouldBe`
+  foldingRanges `shouldMatchList`
     [ FoldingRange { _startLine = 0
                    , _startCharacter = Just 0
                    , _endLine = 4
@@ -58,7 +59,7 @@ unit_folding_range_jsligo = do
   foldingRanges <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
     getFoldingRanges doc
-  foldingRanges `shouldBe`
+  foldingRanges `shouldMatchList`
     [ FoldingRange { _startLine = 2
                    , _startCharacter = Just 11
                    , _endLine = 4
@@ -87,6 +88,28 @@ unit_folding_range_jsligo = do
                    , _startCharacter = Just 35
                    , _endLine = 3
                    , _endCharacter = Just 48
+                   , _kind = Just FoldingRangeRegion
+                   }
+    ]
+
+unit_modules :: Assertion
+unit_modules = do
+  let filename = "modules.mligo"
+
+  foldingRanges <- runHandlersTest contractsDir $ do
+    doc <- openLigoDoc filename
+    getFoldingRanges doc
+  foldingRanges `shouldMatchList`
+    [ FoldingRange { _startLine = 0
+                   , _startCharacter = Just 0
+                   , _endLine = 6
+                   , _endCharacter = Just 3
+                   , _kind = Just FoldingRangeRegion
+                   }
+    , FoldingRange { _startLine = 2
+                   , _startCharacter = Just 2
+                   , _endLine = 4
+                   , _endCharacter = Just 5
                    , _kind = Just FoldingRangeRegion
                    }
     ]

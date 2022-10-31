@@ -6,16 +6,17 @@
     { "include": "#string" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
+    { "include": "#uppercaseidentifier" },
     { "include": "#attribute" },
     { "include": "#macro" },
     { "include": "#letbinding" },
     { "include": "#lambda" },
     { "include": "#typedefinition" },
     { "include": "#controlkeywords" },
+    { "include": "#moduledeclaration" },
+    { "include": "#structurekeywords" },
     { "include": "#numericliterals" },
     { "include": "#operators" },
-    { "include": "#identifierconstructor" },
-    { "include": "#module" },
     { "include": "#typeannotation" }
   ],
   "repository": {
@@ -55,8 +56,17 @@
     },
     "controlkeywords": {
       "name": "keyword.control.mligo",
-      "match": "\\b(match|with|if|then|else|assert|failwith|begin|end|in)\\b",
+      "match": "\\b(match|with|if|then|else|assert|failwith|begin)\\b",
       "captures": {}
+    },
+    "structurekeywords": {
+      "name": "keyword.other.mligo",
+      "match": "\\b(struct|end|in)\\b",
+      "captures": {}
+    },
+    "moduledeclaration": {
+      "match": "\\b(module)\\b",
+      "captures": { "1": { "name": "keyword.other.mligo" } }
     },
     "letbinding": {
       "match": "\\b(let)\\b\\s*(\\brec\\b|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
@@ -92,20 +102,13 @@
         { "include": "#typeannotationlambda" }
       ]
     },
-    "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
-      "captures": {
-        "2": { "name": "storage.var.mligo" },
-        "1": { "name": "storage.class.mligo" }
-      }
-    },
-    "identifier": {
-      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
-      "captures": {}
-    },
-    "identifierconstructor": {
+    "uppercaseidentifier": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
-      "captures": { "1": { "name": "variable.other.enummember.mligo" } }
+      "captures": { "1": { "name": "entity.name.type.mligo" } }
+    },
+    "lowercaseidentifier": {
+      "match": "\\b([a-z$_][a-zA-Z0-9$_]*)\\b",
+      "captures": { "1": { "name": "variable.mligo" } }
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
@@ -115,9 +118,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -135,9 +137,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -155,9 +156,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -190,9 +190,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -201,11 +200,6 @@
         { "include": "#typeproduct" },
         { "include": "#string" }
       ]
-    },
-    "typemodule": {
-      "name": "storage.var.mligo",
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
-      "captures": {}
     },
     "typeint": {
       "name": "constant.numeric.mligo",
@@ -220,7 +214,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#identifier" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeannotation" },
         { "include": "#semicolon" }
       ]

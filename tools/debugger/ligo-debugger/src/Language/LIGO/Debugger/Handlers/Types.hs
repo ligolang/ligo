@@ -203,7 +203,7 @@ data LigoGetContractMetadataResponse = LigoGetContractMetadataResponse
   { seqLigoGetContractMetadataResponse :: Int
   , request_seqLigoGetContractMetadataResponse :: Int
   , successLigoGetContractMetadataResponse :: Bool
-  , contractMetadataLigoGetContractMetadataResponse :: ContractMetadata
+  , contractMetadataLigoGetContractMetadataResponse :: Maybe ContractMetadata
   } deriving stock (Show, Eq, Generic)
     deriving Buildable via (GenericBuildable LigoGetContractMetadataResponse)
 

@@ -7,6 +7,7 @@ module Test.Integrational.Capabilities.Rename
   , unit_rename_nested_include
   , unit_rename_nested_include_fallback
 --  , unit_rename_type_variable
+  , unit_rename_conflicting_module_name
   ) where
 
 import AST.Scope (Fallback, FromCompiler, Standard)
@@ -52,3 +53,8 @@ unit_rename_nested_include_fallback = renameNestedInclude @Fallback
 --unit_rename_type_variable = do
 --  renameTypeVariable @Standard
 --  --renameTypeVariable @FromCompiler -- FIXME (LIGO-93)
+
+unit_rename_conflicting_module_name :: Assertion
+unit_rename_conflicting_module_name = do
+  renameConflictingModuleName @Standard
+  renameConflictingModuleName @FromCompiler

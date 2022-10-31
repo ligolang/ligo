@@ -8,16 +8,16 @@
     { "include": "#string" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
+    { "include": "#uppercaseidentifier" },
     { "include": "#attribute" },
     { "include": "#macro" },
     { "include": "#letbinding" },
     { "include": "#typedefinition" },
     { "include": "#typeannotation" },
     { "include": "#controlkeywords" },
+    { "include": "#moduledeclaration" },
     { "include": "#numericliterals" },
     { "include": "#operators" },
-    { "include": "#identifierconstructor" },
-    { "include": "#module" },
     { "include": "#recordorblock" }
   ],
   "repository": {
@@ -60,6 +60,10 @@
       "match": "\\b(switch|if|else|assert|failwith)\\b",
       "captures": {}
     },
+    "moduledeclaration": {
+      "match": "\\b(module)\\b",
+      "captures": { "1": { "name": "keyword.other.religo" } }
+    },
     "letbinding": {
       "match": "\\b(let)\\b\\s*(\\brec\\b|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {
@@ -79,20 +83,13 @@
       "captures": {}
     },
     "comma": { "match": "(,)", "captures": {} },
-    "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
-      "captures": {
-        "2": { "name": "storage.var.religo" },
-        "1": { "name": "storage.class.religo" }
-      }
-    },
-    "identifier": {
-      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
-      "captures": {}
-    },
-    "identifierconstructor": {
+    "uppercaseidentifier": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
-      "captures": { "1": { "name": "variable.other.enummember.religo" } }
+      "captures": { "1": { "name": "entity.name.type.religo" } }
+    },
+    "lowercaseidentifier": {
+      "match": "\\b([a-z$_][a-zA-Z0-9$_]*)\\b",
+      "captures": { "1": { "name": "variable.religo" } }
     },
     "recordorblock": {
       "begin": "({)",
@@ -126,8 +123,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
-        { "include": "#identifierconstructor" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -145,8 +141,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
-        { "include": "#identifierconstructor" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -179,8 +174,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
-        { "include": "#identifierconstructor" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
@@ -189,11 +183,6 @@
         { "include": "#typeproduct" },
         { "include": "#string" }
       ]
-    },
-    "typemodule": {
-      "name": "storage.var.religo",
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
-      "captures": {}
     },
     "typeint": {
       "name": "constant.numeric.religo",
@@ -208,7 +197,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#identifier" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeannotation" },
         { "include": "#comma" }
       ]

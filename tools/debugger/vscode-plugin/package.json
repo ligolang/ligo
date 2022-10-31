@@ -1,9 +1,10 @@
 {
     "name": "ligo-debugger-vscode",
+    "displayName": "LIGO debugger",
     "description": "VSCode debugger extension for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -13,7 +14,9 @@
         "Programming Languages",
         "Debuggers"
     ],
-    "keywords": [],
+    "keywords": [
+        "ligo"
+    ],
     "engines": {
         "vscode": "^1.67.0"
     },
@@ -21,11 +24,7 @@
         "onDebugResolve:ligo",
         "onDebugResolve:mligo",
         "onDebugResolve:religo",
-        "onDebugResolve:jsligo",
-        "onCommand:extension.ligo-debugger.requestEntrypoint",
-        "onCommand:extension.ligo-debugger.requestMichelsonEntrypoint",
-        "onCommand:extension.ligo-debugger.requestParameterValue",
-        "onCommand:extension.ligo-debugger.requestStorageValue"
+        "onDebugResolve:jsligo"
     ],
     "icon": "logo.png",
     "main": "./out/extension",
@@ -125,22 +124,22 @@
                             "entrypoint": {
                                 "type": "string",
                                 "description": "Entry point of the contract (`main` method)",
-                                "default": "${command:AskForEntrypoint}"
+                                "default": "{AskForEntrypoint}"
                             },
                             "michelsonEntrypoint": {
                                 "type": "string",
                                 "description": "Michelson entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
-                                "default": "${command:AskForMichelsonEntrypoint}"
+                                "default": "{AskForMichelsonEntrypoint}"
                             },
                             "parameter": {
                                 "type": "string",
                                 "description": "Parameter value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
-                                "default": "${command:AskForParameter}"
+                                "default": "{AskForParameter}"
                             },
                             "storage": {
                                 "type": "string",
                                 "description": "Initial storage value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
-                                "default": "${command:AskForStorage}"
+                                "default": "{AskForStorage}"
                             },
                             "logDir": {
                                 "type": "string",
@@ -207,9 +206,9 @@
                         "request": "launch",
                         "name": "Launch LIGO",
                         "logDir": "",
-                        "entrypoint": "${command:AskForEntrypoint}",
-                        "parameter": "${command:AskForParameter}",
-                        "storage": "${command:AskForStorage}"
+                        "entrypoint": "{AskForEntrypoint}",
+                        "parameter": "{AskForParameter}",
+                        "storage": "{AskForStorage}"
                     }
                 ],
                 "configurationSnippets": [
@@ -220,9 +219,9 @@
                             "type": "ligo",
                             "request": "launch",
                             "name": "Launch ${1:LIGO contract}",
-                            "entrypoint": "${2|${command:AskForEntrypoint}|}",
-                            "parameter": "${3|${command:AskForParameter}|}",
-                            "storage": "${4|${command:AskForStorage}|}"
+                            "entrypoint": "${2|{AskForEntrypoint}|}",
+                            "parameter": "${3|{AskForParameter}|}",
+                            "storage": "${4|{AskForStorage}|}"
                         }
                     },
                     {
@@ -235,10 +234,10 @@
                             "logDir": "",
                             "program": "^\"\\${file}\"",
                             "stopOnEntry": true,
-                            "michelsonEntrypoint": "${2|${command:AskForMichelsonEntrypoint},default|}",
-                            "entrypoint": "${3|${command:AskForEntrypoint}|}",
-                            "parameter": "${4|${command:AskForParameter}|}",
-                            "storage": "${5|${command:AskForStorage}|}",
+                            "michelsonEntrypoint": "${2|{AskForMichelsonEntrypoint},default|}",
+                            "entrypoint": "${3|{AskForEntrypoint}|}",
+                            "parameter": "${4|{AskForParameter}|}",
+                            "storage": "${5|{AskForStorage}|}",
                             "contractEnv": {
                                 "now": "${6:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
                                 "level": "${7:10000}",
@@ -257,13 +256,7 @@
                             }
                         }
                     }
-                ],
-                "variables": {
-                    "AskForMichelsonEntrypoint": "extension.ligo-debugger.requestMichelsonEntrypoint",
-                    "AskForEntrypoint": "extension.ligo-debugger.requestEntrypoint",
-                    "AskForParameter": "extension.ligo-debugger.requestParameterValue",
-                    "AskForStorage": "extension.ligo-debugger.requestStorageValue"
-                }
+                ]
             }
         ]
     },

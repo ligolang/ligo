@@ -20,7 +20,7 @@ import Test.Common.Capabilities.Find
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (Assertion)
 
-test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
+test_findDefinitionAndGoToReferencesCorrespondence :: IO TestTree
 test_findDefinitionAndGoToReferencesCorrespondence =
   findDefinitionAndGoToReferencesCorrespondence @Fallback invariants
 

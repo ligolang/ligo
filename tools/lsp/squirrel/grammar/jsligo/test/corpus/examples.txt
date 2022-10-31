@@ -44,7 +44,7 @@ let foo = x as my_typ;
   (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
-    (module_access (ModuleName) (FieldName)))
+    (module_access (ModuleName) (Name)))
   (toplevel_binding
     (var_pattern (NameDecl))
     (type_as_annotation (Name) (TypeName))))
@@ -83,7 +83,7 @@ let x : int = int(List.List.List.length(x))
     (apply
       (Name)
       (apply
-        (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName))
+        (module_access (ModuleName) (ModuleName) (ModuleName) (Name))
         (Name)))))
 
 =========
@@ -113,7 +113,7 @@ let foo = () : int => 1
   (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
-    (module_access (ModuleName) (FieldName)))
+    (module_access (ModuleName) (Name)))
   (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
