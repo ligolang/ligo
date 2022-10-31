@@ -511,7 +511,7 @@ export default class ProjectManager {
   onEditorReady(editor: monaco.editor.IStandaloneCodeEditor, editorComponent: MonacoEditor) {
     modelSessionManager.decorationMap = {};
     // eslint-disable-next-line no-bitwise
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       editorComponent.props.onCommand("save");
       this.lint();

@@ -30,9 +30,6 @@ export class WorkspaceLoader extends PureComponent {
 
   componentDidMount() {
     this.prepareProject(this.props);
-    if (this.props.addLanguages) {
-      this.props.addLanguages();
-    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -117,6 +114,7 @@ export class WorkspaceLoader extends PureComponent {
       <WorkspaceContext.Provider value={context}>
         <Workspace
           ref={this.workspace}
+          addLanguagesCallback={this.props.addLanguages}
           theme={this.props.theme}
           initial={initial}
           terminal={terminal}

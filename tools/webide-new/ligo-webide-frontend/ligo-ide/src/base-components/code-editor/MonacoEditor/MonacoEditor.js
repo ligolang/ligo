@@ -6,7 +6,7 @@ import * as monaco from "monaco-editor";
 import throttle from "lodash/throttle";
 
 import modelSessionManager from "./modelSessionManager";
-import registerThemes from "./languages/registerThemes";
+import { theme } from "./theme";
 
 export default class MonacoEditor extends Component {
   static propTypes = {
@@ -18,12 +18,14 @@ export default class MonacoEditor extends Component {
   };
 
   componentDidMount() {
-    registerThemes();
+    monaco.editor.defineTheme("obsidians", theme);
 
     this.throttledLayoutEditor = throttle(this.layoutEditor, 500);
     this.monacoEditor = this.createEditorWith(this.props.modelSession.model);
 
     this.monacoEditor.onDidChangeModelDecorations(this.props.onChangeDecorations);
+
+    this.props.addLanguagesCallback(this.monacoEditor);
 
     this.throttledLayoutEditor();
     // api.bridge.send('languageClient.create')
