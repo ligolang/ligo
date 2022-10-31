@@ -11,6 +11,7 @@ module Test.Common.Capabilities.Hover
   , unit_hover_arrow_type_jsligo
   , unit_hover_sum_type_jsligo
   , unit_hover_sum_type_mligo
+  , unit_hover_parametric_type_ligo
   ) where
 
 import Prelude hiding (Type)
@@ -106,3 +107,9 @@ unit_hover_sum_type_mligo = do
   fp <- makeAbsolute $ contractsDir </> "sum.mligo"
   let type' = AliasType "parameter"
   checkHover @parser fp (point 13 12){_rFile = fp} (hover' (interval 10 11 17){_rFile = fp} "action" type' Caml)
+
+unit_hover_parametric_type_ligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_parametric_type_ligo = do
+  fp <- makeAbsolute $ contractsDir </> "parametric.ligo"
+  let type' = AliasType "a"
+  checkHover @parser fp (point 1 56){_rFile = fp} (hover' (interval 1 12 13){_rFile = fp} "a" type' Pascal)
