@@ -52,6 +52,11 @@ function addWasmLoader(options) {
         }
       });
     });
+    config.module.rules.push({
+      test: /node_modules[\\/]onigasm[\\/]lib[\\/]onigasm\.wasm$/,
+      loader: "file-loader",
+      type: "javascript/auto",
+    })
     return config;
   };
 }
