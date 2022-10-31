@@ -15,7 +15,7 @@ let protocol_to_variant ~raise : string -> Environment.Protocols.t =
 type options = Compiler_options.t
 
 let preprocess_file ~raise ~(options:Compiler_options.frontend) ~(meta: meta) file_path
-  : Preprocessing.Pascaligo.success =
+  : Preprocessor.LowAPI.success =
   let open Preprocessing in
   let Compiler_options.{ project_root ; libraries ; _ } = options in
   let preprocess_file =
@@ -237,11 +237,11 @@ let pretty_print_reasonligo =
 let pretty_print_jsligo =
   Parsing.Jsligo.pretty_print_file
 
-let pretty_print ~raise ~(meta: meta) buffer file_path =
+let pretty_print ?preprocess ~raise ~(meta: meta) buffer file_path =
   let print =
     match meta.syntax with
       PascaLIGO  -> pretty_print_pascaligo
     | CameLIGO   -> pretty_print_cameligo
     | ReasonLIGO -> pretty_print_reasonligo
     | JsLIGO     -> pretty_print_jsligo
-  in trace ~raise parser_tracer @@ print buffer file_path
+  in trace ~raise parser_tracer @@ print ?preprocess buffer file_path

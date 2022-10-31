@@ -89,7 +89,7 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_union (defuse_of_expr defuse matchee) (defuse_of_cases defuse cases)
   | E_record re ->
      Record.fold
-       (fun acc x -> defuse_union (defuse_of_expr defuse x) acc) defuse_neutral re
+       ~f:(fun acc x -> defuse_union (defuse_of_expr defuse x) acc) ~init:defuse_neutral re
   | E_accessor {struct_;_} ->
      defuse_of_expr defuse struct_
   | E_update {struct_;update;_} ->
@@ -149,25 +149,16 @@ and defuse_of_binders defuse binders in_ =
   let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse binders' in
   (defuse, unused)
 
-and defuse_of_cases defuse = function
-  | Match_variant x -> defuse_of_variant defuse x
-  | Match_record  x -> defuse_of_record defuse x
-
-and defuse_of_variant defuse {cases;_} =
-  defuse_unions defuse @@
-    List.map
-      ~f:(fun ({pattern;body;_}: _ matching_content_case) ->
-        remove_defined_var_after defuse pattern defuse_of_expr body)
-      cases
-
-and defuse_of_record defuse {body;fields;_} =
-  let vars = Record.LMap.to_list fields |> List.map ~f:(Binder.get_var) in
-  let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
-  let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
-  let defuse,unused = defuse_of_expr map body in
-  let unused = List.fold_left ~f:(fun m v -> add_if_not_generated v m (M.find v defuse)) ~init:unused vars in
-  let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
-  (defuse, unused)
+and defuse_of_cases defuse cases = 
+  List.fold_left cases ~init:(defuse,[])
+    ~f:(fun (defuse,unused_) {pattern;body} ->
+      let vars = Pattern.binders pattern |> List.rev_map ~f:Binder.get_var in
+      let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
+      let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
+      let defuse,unused = defuse_of_expr map body in
+      let unused = List.fold_left ~f:(fun m v -> add_if_not_generated v m (M.find v defuse)) ~init:unused vars in
+      let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
+      (defuse, unused_ @ unused))
 
 let defuse_of_expr defuse expr =
   let _,unused = defuse_of_expr defuse expr in

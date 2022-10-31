@@ -8,13 +8,13 @@ let schema = "../main/scopes/schema.json"
 let validate_json_file file_name =
   let command_str = Format.sprintf "python3 -m jsonschema -i %s %s" file_name schema in
   Format.printf "command: %s\n" command_str;
-  let status = Sys.command @@ command_str in
+  let status = Sys_unix.command @@ command_str in
   if status > 0
   then Alcotest.fail "JSON schema validation failed"
 
 let schema_test_positive ?(with_types=false) ?(speed=`Quick) source_file =
   let _test () =
-    let temp_file_name = Filename.temp_file ~in_dir:"./" "get_scope_test" ".json" in
+    let temp_file_name = Filename_unix.temp_file ~in_dir:"./" "get_scope_test" ".json" in
     let write data = Out_channel.write_all temp_file_name ~data:data in
     let options = Raw_options.make
                       ~with_types ~protocol_version:"current" ()  in
@@ -27,7 +27,7 @@ let schema_test_positive ?(with_types=false) ?(speed=`Quick) source_file =
 let schema_test_negative ?(with_types=false) ?(speed=`Quick)
         ?(expected_status=Some true) ?error_cnt source_file =
   let _test () =
-    let temp_file_name = Filename.temp_file ~in_dir:"./" "get_scope_test" ".json" in
+    let temp_file_name = Filename_unix.temp_file ~in_dir:"./" "get_scope_test" ".json" in
     let write data = Out_channel.write_all temp_file_name ~data:data in
     let options = Raw_options.make
                       ~with_types ~protocol_version:"current" ()  in
@@ -54,7 +54,7 @@ let schema_test_negative ?(with_types=false) ?(speed=`Quick)
   in Alcotest.test_case (Filename.basename source_file) speed _test
 
 let files_in_dir dir_path =
-  Sys.readdir dir_path
+  Sys_unix.readdir dir_path
   |> Array.to_list
   |> List.filter
          ~f:(fun x -> match (Filename.split_extension x) with
@@ -123,6 +123,8 @@ let main =
             (* TODO: 04-tree_abstraction/pascaligo/errors.ml:error_format *)
             "error-recovery/simple/pascaligo/match_kw_instead_of_case_kw.ligo";
             "error-recovery/simple/pascaligo/typo_in_function_kw.ligo";
+            "error-recovery/simple/jsligo/missing_semicolon_before_return_on_same_line.jsligo"; (* was fixed by changes to jsligo ASI recently *)
+            "error-recovery/simple/jsligo/missing_type_annotation_in_lambda_in_match.jsligo" (* was fixed by recent change to jsligo parser *)
           ])
         ~f:(fun file -> schema_test_negative
                             ~with_types:true

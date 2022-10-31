@@ -4,9 +4,9 @@ module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 
 
-type sugar_type_expression_option = Ast_sugar.type_expression option
+type sugar_type_expression_option = Ast_imperative.type_expression option
   [@@deriving eq,compare,yojson,hash]
-type sugar_expression_option = Ast_sugar.expression option
+type sugar_expression_option = Ast_imperative.expression option
   [@@deriving eq,compare,yojson,hash]
 
 type string_option = string option
@@ -106,6 +106,10 @@ module Access_label = struct
 end
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
+
+module Pattern = Pattern.Make(Record)()
+module Match_expr = Match_expr.Make(Pattern)
+
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t

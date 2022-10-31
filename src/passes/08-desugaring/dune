@@ -1,6 +1,0 @@
-(library
- (name desugaring)
- (public_name ligo.desugaring)
- (instrumentation
-  (backend bisect_ppx))
- (libraries simple-utils ast_sugar ast_core purification))

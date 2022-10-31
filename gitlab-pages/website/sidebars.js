@@ -71,7 +71,6 @@ const sidebars = {
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
       "manpages/print ast-imperative",
-      "manpages/print ast-sugar",
       "manpages/print ast-typed",
       "manpages/print cst",
       "manpages/print dependency-graph",

@@ -1,9 +1,9 @@
 module Var = Simple_utils.Var
 module Trace = Simple_utils.Trace
+open Ligo_prim
 open Ast_imperative
 open Errors
 open Simple_utils.Trace
-open Ligo_prim
 
 let check_linearity_record_fields ~raise : expression -> unit = fun exp ->
   match exp.expression_content with
@@ -25,7 +25,7 @@ let check_linearity_patterns ~raise : expression -> unit = fun exp ->
         List.fold ~init:vlst ~f:aux [p1;p2]
       | P_list (List lst) | P_tuple lst ->
         List.fold ~init:vlst ~f:aux lst
-      | P_record lps -> Record.fold aux vlst lps 
+      | P_record lps -> Label.Assoc.fold ~f:aux ~init:vlst lps 
     in
     List.iter _patterns
       ~f:(fun p ->

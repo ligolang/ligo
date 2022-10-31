@@ -8,61 +8,83 @@ module Tezos = struct
   let get_sender (_u : unit) : address = [%Michelson ({| { DROP ; SENDER } |} : unit -> address)] ()
   let get_source (_u : unit) : address = [%Michelson ({| { DROP ; SOURCE } |} : unit -> address)] ()
   let get_level (_u : unit) : nat = [%Michelson ({| { DROP ; LEVEL } |} : unit -> nat)] ()
-  let get_self_address (_u : unit) : address = [%external ("SELF_ADDRESS")]
+  let get_self_address (_u : unit) : address = [%Michelson ({| { DROP ; SELF_ADDRESS } |} : unit -> address)] ()
   let get_chain_id (_u : unit) : chain_id = [%Michelson ({| { DROP ; CHAIN_ID } |} : unit -> chain_id)] ()
   let get_total_voting_power (_u : unit) : nat = [%Michelson ({| { DROP ; TOTAL_VOTING_POWER } |} : unit -> nat)] ()
   let get_min_block_time (_u : unit) : nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ] ()
   let voting_power (kh : key_hash) : nat = [%Michelson ({| { VOTING_POWER } |} : key_hash -> nat)] kh
-  let address (type a) (c : a contract) : address = [%external ("ADDRESS", c)]
-  let implicit_account (kh : key_hash) : unit contract = [%external ("IMPLICIT_ACCOUNT", kh)]
+  let address (type a) (c : a contract) : address = [%Michelson ({| { ADDRESS } |} : a contract -> address)] c
+  let implicit_account (kh : key_hash) : unit contract = [%Michelson ({| { IMPLICIT_ACCOUNT } |} : key_hash -> unit contract)] kh
   let join_tickets (type a) (t : a ticket * a ticket) : (a ticket) option = [%Michelson ({| { JOIN_TICKETS } |} : a ticket * a ticket -> a ticket option)] t
   let read_ticket (type a) (t : a ticket) : (address * (a * nat)) * a ticket =
     [%Michelson ({| { READ_TICKET ; PAIR } |} : a ticket -> (address * (a * nat)) * a ticket)] t
-  (* let create_contract (type a b) (c : a * b -> operation list * b) (kh : key_hash) (mu : tez) (s : b) : operation * address = [%external ("CREATE_CONTRACT", c, kh, mu, s)] *)
   let never (type a) (n : never) : a = [%Michelson ({| { NEVER } |} : never -> a)] n
   let pairing_check (l : (bls12_381_g1 * bls12_381_g2) list) : bool = [%Michelson ({| { PAIRING_CHECK } |} : (bls12_381_g1 * bls12_381_g2) list -> bool)] l
-  let constant (type a) (s : string) : a = [%external ("GLOBAL_CONSTANT", s)]
-  let set_delegate (o : key_hash option) : operation = [%external ("SET_DELEGATE", o)]
-  [@inline] [@thunk] let self (type a) (s : string) : a contract = [%external ("SELF", s)]
+  let set_delegate (o : key_hash option) : operation = [%Michelson ({| { SET_DELEGATE } |} : key_hash option -> operation)] o
+  [@inline] [@thunk] let self (type a) (s : string) : a contract =
+    let _ : a option = [%external ("CHECK_SELF", s)] in
+    [%Michelson (({| { DROP ; SELF (annot $0) } |} : unit -> a contract), (s : string))] ()
   [@inline] [@thunk] let constant (type a) (s : string) : a = [%external ("GLOBAL_CONSTANT", s)]
-  [@inline] [@thunk] let sapling_empty_state (type sap_a) : sap_a sapling_state = [%external ("SAPLING_EMPTY_STATE")]
+  [@inline] [@thunk] let sapling_empty_state (type sap_a) : sap_a sapling_state =
+    [%Michelson (({| { DROP ; SAPLING_EMPTY_STATE (type $0) } |} : unit -> sap_a sapling_state), (() : sap_a))] ()
+  [@inline] [@thunk] let get_contract_opt (type p) (a : address) : (p contract) option =
+    [%Michelson (({| { CONTRACT (type $0) } |} : address -> (p contract) option), (() : p))] a
+  [@inline] [@thunk] let get_contract (type a) (a : address) : (a contract) =
+    let v = get_contract_opt a in
+    match v with | None -> failwith "bad address for get_contract" | Some c -> c
 
 #if CURRY
-  let get_contract (type a) (a : address) : (a contract) = [%external ("CONTRACT", a)]
-  let get_contract_opt (type a) (a : address) : (a contract) option = [%external ("CONTRACT_OPT", a)]
-  let get_contract_with_error (type a) (a : address) (s : string) : a contract = [%external ("CONTRACT_WITH_ERROR", a, s)]
+  let get_contract_with_error (type a) (a : address) (s : string) : a contract =
+    let v = get_contract_opt a in
+    match v with | None -> failwith s | Some c -> c
   let create_ticket (type a) (v : a) (n : nat) : a ticket = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> a ticket)] (v, n)
-  let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation = [%external ("CALL", a, mu, c)]
-  let open_chest (ck : chest_key) (c : chest) (n : nat) : chest_opening_result = [%external ("OPEN_CHEST", ck, c, n)]
-  let call_view (type a b) (s : string) (x : a) (a : address)  : b option = [%external ("VIEW", s, x, a)]
+  let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
+    [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+  let open_chest (ck : chest_key) (c : chest) (n : nat) : chest_opening_result =
+    [%Michelson ({| { UNPAIR ; UNPAIR ; OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} : chest_key * chest * nat -> chest_opening_result)] (ck, c, n)
+  [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
+    [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (s : string), (() : b))] (x, a)
   let split_ticket (type a) (t : a ticket) (p : nat * nat) : (a ticket * a ticket) option =
-      [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
+    [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
   [@inline] [@thunk] let create_contract (type p s) (f : p * s -> operation list * s) (kh : key_hash option) (t : tez) (s : s) : (operation * address) =
       [%external ("CREATE_CONTRACT", f, kh, t, s)]
-  [@inline] [@thunk] let get_entrypoint_opt (type p) (e : string) (a : address) : p contract option = [%external ("CONTRACT_ENTRYPOINT_OPT", e, a)]
-  [@inline] [@thunk] let get_entrypoint (type p) (e : string) (a : address) : p contract = [%external ("CONTRACT_ENTRYPOINT", e, a)]
-  [@inline] [@thunk] let call_view (type a b) (s : string) (v : a) (a : address) : b option = [%external ("VIEW", s, v, a)]
-  [@inline] [@thunk] let emit (type a) (s : string) (v : a) : operation = [%external ("EMIT_EVENT", s, v)]
-  [@inline] [@thunk] let sapling_verify_update (type sap_a) (t : sap_a sapling_transaction) (s : sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%external ("SAPLING_VERIFY_UPDATE", t, s)]
+  [@inline] [@thunk] let get_entrypoint_opt (type p) (e : string) (a : address) : p contract option =
+    let _ : unit = [%external ("CHECK_ENTRYPOINT", e)] in
+    [%Michelson (({| { CONTRACT (annot $0) (type $1) } |} : address -> (p contract) option), (e : string), (() : p))] a
+  [@inline] [@thunk] let get_entrypoint (type p) (e : string) (a : address) : p contract =
+    let v = get_entrypoint_opt e a in
+    match v with | None -> failwith "bad address for get_entrypoint" | Some c -> c
+  [@inline] [@thunk] let emit (type a) (s : string) (v : a) : operation =
+    let _ : unit = [%external ("CHECK_EMIT_EVENT", s, v)] in
+    [%Michelson (({| { EMIT (annot $0) (type $1) } |} : a -> operation), (s : string), (() : a))] v
+  [@inline] [@thunk] let sapling_verify_update (type sap_a) (t : sap_a sapling_transaction) (s : sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%Michelson ({| { UNPAIR ; SAPLING_VERIFY_UPDATE } |} : (sap_a sapling_transaction) * (sap_a sapling_state) -> (bytes * (int * sap_a sapling_state)) option)] (t, s)
 #endif
 
 #if UNCURRY
-  let get_contract (type a) (a : address) : (a contract) = [%external ("CONTRACT", a)]
-  let get_contract_opt (type a) (a : address) : (a contract) option = [%external ("CONTRACT_OPT", a)]
-  let get_contract_with_error (type a) ((a, s) : address * string) : a contract = [%external ("CONTRACT_WITH_ERROR", a, s)]
+  let get_contract_with_error (type a) ((a, s) : address * string) : a contract =
+    let v = get_contract_opt a in
+    match v with | None -> failwith s | Some c -> c
   let create_ticket (type a) ((v, n) : a * nat) : a ticket = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> a ticket)] (v, n)
-  let transaction (type a) ((a, mu, c) : a * tez * a contract) : operation = [%external ("CALL", a, mu, c)]
-  let open_chest ((ck, c, n) : chest_key * chest * nat) : chest_opening_result = [%external ("OPEN_CHEST", ck, c, n)]
-  let call_view (type a b) ((s, x, a) : string * a * address)  : b option = [%external ("VIEW", s, x, a)]
+  let transaction (type a) ((a, mu, c) : a * tez * a contract) : operation =
+    [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+  let open_chest ((ck, c, n) : chest_key * chest * nat) : chest_opening_result =
+    [%Michelson ({| { UNPAIR ; UNPAIR ; OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} : chest_key * chest * nat -> chest_opening_result)] (ck, c, n)
+  [@inline] [@thunk] let call_view (type a b) ((s, x, a) : string * a * address)  : b option =
+    [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (s : string), (() : b))] (x, a)
   let split_ticket (type a) ((t, p) : (a ticket) * (nat * nat)) : (a ticket * a ticket) option =
     [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
   [@inline] [@thunk] let create_contract (type p s) ((f, kh, t, s) : (p * s -> operation list * s) * key_hash option * tez * s) : (operation * address) =
       [%external ("CREATE_CONTRACT", f, kh, t, s)]
-  [@inline] [@thunk] let get_entrypoint_opt (type p) ((e, a) : string * address) : p contract option = [%external ("CONTRACT_ENTRYPOINT_OPT", e, a)]
-  [@inline] [@thunk] let get_entrypoint (type p) ((e, a) : string * address) : p contract = [%external ("CONTRACT_ENTRYPOINT", e, a)]
-  [@inline] [@thunk] let call_view (type a b) ((s, v, a) : string * a * address) : b option = [%external ("VIEW", s, v, a)]
-  [@inline] [@thunk] let emit (type a) ((s, v) : string * a) : operation = [%external ("EMIT_EVENT", s, v)]
-  [@inline] [@thunk] let sapling_verify_update (type sap_a) ((t, s) : sap_a sapling_transaction * sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%external ("SAPLING_VERIFY_UPDATE", t, s)]
+  [@inline] [@thunk] let get_entrypoint_opt (type p) ((e, a) : string * address) : p contract option =
+    let _ : unit = [%external ("CHECK_ENTRYPOINT", e)] in
+    [%Michelson (({| { CONTRACT (annot $0) (type $1) } |} : address -> (p contract) option), (e : string), (() : p))] a
+  [@inline] [@thunk] let get_entrypoint (type p) ((e, a) : string * address) : p contract =
+    let v = get_entrypoint_opt (e, a) in
+    match v with | None -> failwith "bad address for get_entrypoint" | Some c -> c
+  [@inline] [@thunk] let emit (type a) (p : string * a) : operation =
+    let _ : unit = [%external ("CHECK_EMIT_EVENT", p.0, p.1)] in
+    [%Michelson (({| { EMIT (annot $0) (type $1) } |} : a -> operation), (p.0 : string), (() : a))] p.1
+  [@inline] [@thunk] let sapling_verify_update (type sap_a) ((t, s) : sap_a sapling_transaction * sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%Michelson ({| { UNPAIR ; SAPLING_VERIFY_UPDATE } |} : (sap_a sapling_transaction) * (sap_a sapling_state) -> (bytes * (int * sap_a sapling_state)) option)] (t, s)
 #endif
 
 end
@@ -234,7 +256,7 @@ end
 
 module Bytes = struct
   let pack (type a) (v : a) : bytes = [%Michelson ({| { PACK } |} : a -> bytes)] v
-  let unpack (type a) (b : bytes) : a option = [%external ("BYTES_UNPACK", b)]
+  let unpack (type a) (b : bytes) : a option = [%Michelson (({| { UNPACK (type $0) } |} : bytes -> a option), (() : a))] b
   let length (b : bytes) : nat = [%external ("SIZE", b)]
 
 #if CURRY
@@ -359,10 +381,11 @@ module Test = struct
   let restore_context (u : unit) : unit = [%external ("TEST_POP_CONTEXT", u)]
   let save_context (u : unit) : unit = [%external ("TEST_PUSH_CONTEXT", u)]
   let drop_context (u : unit) : unit = [%external ("TEST_DROP_CONTEXT", u)]
-  let to_string (type a) (v : a) : string = [%external ("TEST_TO_STRING", v)]
+  let to_string (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 0)]
+  let to_json (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 1)]
   let get_storage (type p s) (t : (p, s) typed_address) : s =
     let c : p contract = to_contract t in
-    let a : address = [%external ("ADDRESS", c)] in
+    let a : address = [%external ("TEST_ADDRESS", c)] in
     let s : michelson_program = get_storage_of_address a in
     (decompile s : s)
   let set_baker_policy (bp : test_baker_policy) : unit = [%external ("TEST_SET_BAKER", bp)]
@@ -385,6 +408,9 @@ module Test = struct
   let nl = [%external ("TEST_UNESCAPE_STRING", "\n")]
   let println (v : string) : unit =
     print (v ^ nl)
+(* one day we might be able to write  `[@private] let print_values : ref bool = true` or something *)
+  let set_print_values (_ : unit) : unit = let _ = [%external ("TEST_SET_PRINT_VALUES", true)] in ()
+  let unset_print_values (_ : unit) : unit = let _ = [%external ("TEST_SET_PRINT_VALUES", false)] in ()
 
   module PBT = struct
     let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
@@ -448,12 +474,12 @@ module Test = struct
   let create_chest (b : bytes) (n : nat) : chest * chest_key = [%external ("TEST_CREATE_CHEST", b, n)]
   let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
   let transfer_to_contract (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
-    let a : address = [%external ("ADDRESS", c)] in
+    let a : address = [%external ("TEST_ADDRESS", c)] in
     let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
     let s : michelson_program = eval s in
     [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, e, s, t)]
   let transfer_to_contract_exn (type p) (c : p contract) (s : p) (t : tez) : nat =
-      let a : address = [%external ("ADDRESS", c)] in
+      let a : address = [%external ("TEST_ADDRESS", c)] in
       let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
       let s : michelson_program = eval s in
       [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, e, s, t)]
@@ -575,12 +601,12 @@ module Test = struct
   let create_chest ((b, n) : bytes * nat) : chest * chest_key = [%external ("TEST_CREATE_CHEST", b, n)]
   let create_chest_key ((c, n) : chest * nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
   let transfer_to_contract (type p) ((c, s, t) : p contract * p * tez) : test_exec_result =
-      let a : address = [%external ("ADDRESS", c)] in
+      let a : address = [%external ("TEST_ADDRESS", c)] in
       let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
       let s : michelson_program = eval s in
       [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, e, s, t)]
   let transfer_to_contract_exn (type p) ((c, s, t) : p contract * p * tez) : nat =
-      let a : address = [%external ("ADDRESS", c)] in
+      let a : address = [%external ("TEST_ADDRESS", c)] in
       let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
       let s : michelson_program = eval s in
       [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, e, s, t)]
@@ -671,6 +697,22 @@ module Test = struct
       | Continue -> mutation_nth acc (n + 1n)
       | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
     mutation_nth ([] : (b * mutation) list) 0n
+#endif
+
+  let assert (b : bool) : unit = if b then () else failwith "failed assertion"
+  let assert_some (type a) (v : a option) : unit = match v with | None -> failwith "failed assert some" | Some _ -> ()
+  let assert_none (type a) (v : a option) : unit = match v with | None -> () | Some _ -> failwith "failed assert none"
+
+#if CURRY
+  let assert_with_error (b : bool) (s : string) = if b then () else failwith s
+  let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> failwith s | Some _ -> ()
+  let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
+#endif
+
+#if UNCURRY
+  let assert_with_error ((b, s) : bool * string) = if b then () else failwith s
+  let assert_some_with_error (type a) ((v, s) : a option * string) : unit = match v with | None -> failwith s | Some _ -> ()
+  let assert_none_with_error (type a) ((v, s) : a option * string) : unit = match v with | None -> () | Some _ -> failwith s
 #endif
 
 end

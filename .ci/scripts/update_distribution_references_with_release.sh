@@ -20,12 +20,15 @@ BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts
 FILES_PATH_TO_EDIT=(
     "$ROOT_FOLDER/tools/webide/Dockerfile"
     "$ROOT_FOLDER/gitlab-pages/docs/intro/installation.md"
+    "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
     "$ROOT_FOLDER/nix/get_ligo_light.nix"
+    "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
 )
 
 for VERSION_FOLDER in `ls $ROOT_FOLDER/gitlab-pages/website/versioned_docs/`
 do
     FILES_PATH_TO_EDIT+=("$ROOT_FOLDER/gitlab-pages/website/versioned_docs/$VERSION_FOLDER/intro/installation.md")
+    FILES_PATH_TO_EDIT+=("$ROOT_FOLDER/gitlab-pages/website/versioned_docs/$VERSION_FOLDER/tutorials/getting-started/getting-started.md")
 done
  
 SED_IN_PLACE_COMMAND=(sed -i)

@@ -88,9 +88,11 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
     let body = if List.mem ~equal:( = ) binders x then body else replace body in
     return @@ E_matching { matchee; cases = Match_record { fields; body; tv } }
   | E_literal _ -> e
-  | E_raw_code _ -> e
+  | E_raw_code { language ; code } ->
+    let code = replace code in
+    return @@ E_raw_code { language ; code }
   | E_record m ->
-    let m = Record.map (fun x -> replace x) m in
+    let m = Record.map ~f:(fun x -> replace x) m in
     return @@ E_record m
   | E_accessor { struct_; path } ->
     let struct_ = replace struct_ in
@@ -275,9 +277,12 @@ let rec subst_expression
     in
     let fields = Record.LMap.of_list fields in
     return @@ E_matching { matchee; cases = Match_record { fields; body; tv } }
-  | E_literal _ | E_raw_code _ -> return_id
+  | E_literal _ -> return_id
+  | E_raw_code { language ; code } ->
+    let code = self code in
+    return @@ E_raw_code { language ; code }
   | E_record m ->
-    let m = Record.map self m in
+    let m = Record.map ~f:self m in
     return @@ E_record m
   | E_accessor { struct_; path } ->
     let struct_ = self struct_ in

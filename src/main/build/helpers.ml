@@ -42,7 +42,7 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
     | D_value x ->
       let binder = sap_for_all x.binder in
       let binder = at_prefix binder in
-      let attr : ValueAttr.t = { x.attr with inline = true } in
+      let attr : ValueAttr.t = { x.attr with inline = true ; hidden = true } in
       D_value { x with attr ; binder }
   and declaration (d : declaration) = Simple_utils.Location.map f d
   and decl d = declaration d

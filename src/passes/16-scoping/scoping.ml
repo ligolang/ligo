@@ -66,6 +66,7 @@ let rec translate_type ?var : I.type_expression -> oty =
   | I.T_base I.TB_chest -> T_base (nil, Prim (nil, "chest", [], []))
   | I.T_base I.TB_chest_key -> T_base (nil, Prim (nil, "chest_key", [], []))
   | I.T_base I.TB_tx_rollup_l2_address -> T_base (nil, Prim (nil, "tx_rollup_l2_address", [], []))
+  | I.T_base I.TB_type_int memo_size -> T_base (nil, Int (nil, memo_size))
   | I.T_ticket x -> T_ticket (nil, translate_type x)
   | I.T_sapling_transaction memo_size -> T_base (nil, Prim (nil, "sapling_transaction", [Int (nil, memo_size)], []))
   | I.T_sapling_state memo_size -> T_base (nil, Prim (nil, "sapling_state", [Int (nil, memo_size)], []))
@@ -208,14 +209,45 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
   | E_update (e1, i, e2, n) ->
     let args = translate_args [e2; e1] env in
     E_update (meta, args, int_to_nat i, int_to_nat n)
-  | E_raw_michelson code ->
+  | E_raw_michelson (code, args) ->
+    let args = List.map ~f:(fun e -> (translate_expression e env, Stacking.To_micheline.translate_type (translate_type e.type_expression))) args in
     (* maybe should move type into syntax? *)
     let (a, b) = match Mini_c.get_t_function ty with
-      | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
+      | None -> internal_error __LOC__ (Format.asprintf "type of Michelson insertion ([%%Michelson ...]) is not a function type = %a" Mini_c.PP.type_expression ty)
       | Some (a, b) -> (a, b) in
     let wipe_locations l e =
       Tezos_micheline.Micheline.(inject_locations (fun _ -> l) (strip_locations e)) in
     let code = List.map ~f:(wipe_locations nil) code in
+    let replace m = let open Tezos_micheline.Micheline in match m with
+     | Prim (_, s, [], [id]) when String.equal "type" s && String.is_prefix ~prefix:"$" id ->
+       let id = String.chop_prefix_exn ~prefix:"$" id in
+       let id = Int.of_string id in
+       (match List.nth args id with
+        | None -> internal_error __LOC__ (Format.sprintf "could not resolve (type %d)" id)
+        | Some (_, t) -> t)
+     | Prim (_, s, [], [id]) when String.equal "litstr" s && String.is_prefix ~prefix:"$" id ->
+       let id = String.chop_prefix_exn ~prefix:"$" id in
+       let id = Int.of_string id in
+       (match List.nth args id with
+        | Some (E_literal (m, Literal_string s), _) -> String (m, Ligo_string.extract s)
+        | _ -> internal_error __LOC__ (Format.sprintf "could not resolve (litstr %d)" id))
+     | Prim (a, b, c, d) ->
+       let open Tezos_micheline.Micheline in
+       let f arg (c, d) =
+         match arg with
+         | Prim (_, s, [], [id]) when String.equal "annot" s && String.is_prefix ~prefix:"$" id ->
+           let id = String.chop_prefix_exn ~prefix:"$" id in
+           let id = Int.of_string id in
+           let annot = match List.nth args id with
+             | Some (E_literal (_, Literal_string s), _) -> Ligo_string.extract s
+             | _ -> internal_error __LOC__ (Format.sprintf "could not resolve (annot %d)" id) in
+           c, annot :: d
+         | m -> m :: c, d in
+       let c, d = List.fold_right ~f ~init:([], d) c in
+       Prim (a, b, c, d)
+     | m -> m
+    in
+    let code = List.map ~f:(Tezos_utils.Michelson.map replace) code in
     E_raw_michelson (meta, translate_type a, translate_type b, code)
   | E_global_constant (hash, args) ->
     let args = translate_args args env in
@@ -328,22 +360,7 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
         return (Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
       | _ -> None
     )
-    | C_VIEW -> (
-      match expr.arguments with
-      | { content = E_literal (Literal_string view_name); type_expression = _; location=_} :: arguments ->
-        let* view_ret_t = Mini_c.get_t_option ty in
-        let view_name = Ligo_string.extract view_name in
-        return (Type_args (None, [String (nil, view_name) ; translate_type view_ret_t]), arguments)
-      | _ -> None
-    )
-    | C_SELF -> (
-      match expr.arguments with
-      | { content = E_literal (Literal_string annot) ; _ } :: arguments ->
-        let annot = Ligo_string.extract annot in
-        return (Type_args (Some annot, []), arguments)
-      | _ -> None
-    )
-    | C_NONE | C_BYTES_UNPACK ->
+    | C_NONE ->
       let* a = Mini_c.get_t_option ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_NIL | C_LIST_EMPTY ->
@@ -366,35 +383,6 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
       let* (_, b) =
         Option.(map_pair_or (Mini_c.get_t_map , Mini_c.get_t_big_map) ty) in
       return (Type_args (None, [translate_type b]), expr.arguments)
-    | C_CONTRACT | C_CONTRACT_WITH_ERROR ->
-      let* a = Mini_c.get_t_contract ty in
-      return (Type_args (None, [translate_type a]), expr.arguments)
-    | C_CONTRACT_OPT ->
-      let* a = Mini_c.get_t_option ty in
-      let* a = Mini_c.get_t_contract a in
-      Some (O.Type_args (None, [translate_type a]), expr.arguments)
-    | C_CONTRACT_ENTRYPOINT ->
-      let* a = Mini_c.get_t_contract ty in
-      (match expr.arguments with
-       | { content = E_literal (Literal_string annot); type_expression = _; location = _ } :: arguments ->
-         let annot = Ligo_string.extract annot in
-         return (O.Type_args (Some annot, [translate_type a]), arguments)
-       | _ -> None)
-    | C_EMIT_EVENT -> (
-      match expr.arguments with
-       | { content = E_literal (Literal_string tag); type_expression = _; location = _ } :: [data] ->
-         let tag = Ligo_string.extract tag in
-         return (O.Type_args (Some tag, [translate_type data.type_expression]), [data])
-       | _ -> None
-    )
-    | C_CONTRACT_ENTRYPOINT_OPT ->
-      let* a = Mini_c.get_t_option ty in
-      let* a = Mini_c.get_t_contract a in
-      (match expr.arguments with
-       | { content = E_literal (Literal_string annot); type_expression = _ ; location = _} :: arguments ->
-         let annot = Ligo_string.extract annot in
-         return (O.Type_args (Some annot, [translate_type a]), arguments)
-       | _ -> None)
     (* TODO handle CREATE_CONTRACT sooner *)
     (* | C_CREATE_CONTRACT -> *)
     (*   (match expr.arguments with *)
@@ -404,9 +392,6 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
     (*      let body = translate_closed_function ~raise ~proto body input_ty in *)
     (*      return (Script_arg (O.Script (translate_type p, translate_type s, body)), arguments) *)
     (*    | _ -> None) *)
-    | C_SAPLING_EMPTY_STATE ->
-      let* memo_size = Mini_c.get_t_sapling_state ty in
-      return (Type_args (None, [Int (nil, memo_size)]), expr.arguments)
     | _ -> None in
   (* Either we got static args, or none: *)
   let static_args = match special with

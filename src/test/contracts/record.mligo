@@ -51,7 +51,7 @@ type account = {
   preferences: preferences;
 }
 
-let acc : account = { id = 1 ; preferences = { color = Blue ; other = 1}}
+let acc : account = { id = 1 ; preferences = let color = Blue in { color ; other = 1}}
 
 let change_color_preference (account : account) (color : color) : account =
   { account with preferences.color = color }

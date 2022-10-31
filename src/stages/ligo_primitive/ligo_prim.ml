@@ -49,7 +49,6 @@ module Map_expr = Map_expr
 module Set_expr = Set_expr
 module List_expr = List_expr
 
-
 (* Module language *)
 module Module_var    = Var.Module_var
 module Module_access = Module_access
@@ -60,3 +59,6 @@ module Mod_in        = Mod_in
 module Value_decl (Attr:Declaration.Attr) = Declaration.Value_decl(Attr)
 module Type_decl  (Attr:Declaration.Attr) = Declaration.Type_decl(Attr)
 module Module_decl(Attr:Declaration.Attr) = Declaration.Module_decl(Attr)
+
+(* Misc *)
+module Error = Error

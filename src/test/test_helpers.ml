@@ -133,14 +133,12 @@ let get_program ~raise ?(st = "auto") f entry =
 
 let get_program f ?st = get_program ?st f (Contract (Ligo_prim.Value_var.of_input_var "main"))
 let expression_to_core ~raise expression =
-  let sugar = Ligo_compile.Of_imperative.compile_expression ~raise expression in
-  let core  = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
+  let core = Ligo_compile.Of_imperative.compile_expression ~raise expression in
   core
 
 let pack_payload ~raise (program:Ast_typed.program) (payload:Ast_imperative.expression) : bytes =
   let code =
-    let sugar     = Ligo_compile.Of_imperative.compile_expression ~raise payload in
-    let core      = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
+    let core       = Ligo_compile.Of_imperative.compile_expression ~raise payload in
     let typed      = Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program core in
     let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end typed in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
@@ -192,8 +190,7 @@ let typed_program_to_michelson ~raise (program, env) =
 
 let typed_program_with_imperative_input_to_michelson ~raise (program : Ast_typed.program) (entry_point: string) (input: Ast_imperative.expression) : Stacking.compiled_expression *  Ast_aggregated.type_expression =
   Printexc.record_backtrace true;
-  let sugar            = Ligo_compile.Of_imperative.compile_expression ~raise input in
-  let core             = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
+  let core             = Ligo_compile.Of_imperative.compile_expression ~raise input in
   let app              = Ligo_compile.Of_core.apply entry_point core in
   let typed_app        = Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program app in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)

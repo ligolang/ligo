@@ -1,5 +1,5 @@
 # What's In This Document
-* [Website](#Website)
+* [Website](#website)
 * [Get Started in 5 Minutes](#get-started-in-5-minutes)
 * [Directory Structure](#directory-structure)
 * [Editing Content](#editing-content)

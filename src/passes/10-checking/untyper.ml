@@ -15,14 +15,14 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
         let associated_type = self associated_type in
         let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
         v' in
-      let x' = Record.map aux fields in
+      let x' = Record.map ~f:aux fields in
       return @@ I.T_sum { fields = x' ; layout = Some layout }
   | O.T_record {fields;layout} -> (
     let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
       let associated_type = self associated_type in
       let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
       v' in
-    let x' = Record.map aux fields in
+    let x' = Record.map ~f:aux fields in
     return @@ I.T_record {fields = x' ; layout = Some layout}
   )
   | O.T_variable name -> return @@ I.T_variable name
@@ -78,7 +78,7 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       let p' = self element in
       return (e_constructor constructor p')
   | E_record r ->
-    let r' = Record.map self r in
+    let r' = Record.map ~f:self r in
     return (e_record r' ())
   | E_accessor {struct_; path} ->
       let r' = self struct_ in
@@ -88,49 +88,9 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
     let r' = self r in
     let e = self e in
     return (e_record_update r' (Label l) e)
-  | E_matching {matchee;cases} -> (
-    let matchee = self matchee in
-    match cases with
-    | Match_variant {cases ; tv} ->
-      (*
-        If one day this code is actually executed, and if the list type is still not a tuple type.
-        A special case for lists might be required here
-      *)
-      let aux : _ Ast_typed.matching_content_case -> _ Match_expr.match_case =
-        fun { constructor ; pattern ; body } -> (
-          let pattern =
-            match tv with
-            | _ ->
-              let proj = Location.wrap @@ Pattern.P_var (Binder.make pattern None) in
-              Location.wrap @@ Pattern.P_variant (constructor, proj)
-          in
-          let body = self body in
-          ({pattern ; body } : (Ast_core.expression, Ast_core.type_expression option) Match_expr.match_case)
-        )
-      in
-      let cases = List.map ~f:aux cases in
-      return (e_matching matchee cases)
-    | Match_record {fields ; body ; tv=_} -> (
-      let aux : (Ast_typed.type_expression Binder.t) -> Ast_core.type_expression option Pattern.t =
-        fun binder -> (
-          let proj = Location.wrap @@ Pattern.P_var (Binder.map (Fn.compose Option.return self_type) binder) in
-          proj
-        )
-      in
-      let body = self body in
-      let case = match Record.is_tuple fields with
-        | false ->
-          let pattern = Location.wrap (Pattern.P_record (Record.map aux fields)) in
-          ({ pattern ; body } : _ Match_expr.match_case)
-        | true ->
-          let patterns = Record.map aux fields in
-          let patterns = Record.LMap.values patterns in
-          let pattern = Location.wrap (Pattern.P_tuple patterns) in
-          ({ pattern ; body } : _ Match_expr.match_case)
-      in
-      return (e_matching matchee [case])
-    )
-  )
+  | E_matching m ->
+    let I.Match_expr.{ matchee ; cases } = untype_match_expr m in 
+    return (e_matching matchee cases)
   | E_let_in {let_binder;rhs;let_result; attr} ->
       let tv = self_type rhs.type_expression in
       let rhs = self rhs in
@@ -180,7 +140,43 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       self forall
     | _ ->
       failwith "Impossible case: cannot untype a type instance of a non polymorphic type"
-
+and untype_match_expr 
+  : (O.expression, O.type_expression) O.Match_expr.t 
+  -> (I.expression, I.type_expression option) I.Match_expr.t
+  = fun { matchee ; cases } ->
+    let matchee = untype_expression matchee in
+    let cases = List.map cases 
+      ~f:(fun { pattern ; body } ->
+        let pattern = O.Pattern.map untype_type_expression_option pattern in
+        let pattern = untype_pattern pattern in
+        let body = untype_expression body in
+        I.Match_expr.{ pattern ; body }
+    ) in
+    I.Match_expr.{ matchee ; cases }
+and untype_pattern 
+  : _ O.Pattern.t -> _ I.Pattern.t
+  = fun p ->
+    let self = untype_pattern in
+    let loc = Location.get_location p in
+    match (Location.unwrap p) with
+    | P_unit -> Location.wrap ~loc I.Pattern.P_unit
+    | P_var b -> Location.wrap ~loc (I.Pattern.P_var b)
+    | P_list Cons (h, t) ->
+      let h = self h in
+      let t = self t in
+      Location.wrap ~loc (I.Pattern.P_list (Cons(h, t)))
+    | P_list List ps ->
+      let ps = List.map ~f:self ps in
+      Location.wrap ~loc (I.Pattern.P_list (List ps))
+    | P_variant (l, p) ->
+      let p = self p in
+      Location.wrap ~loc (I.Pattern.P_variant (l, p))
+    | P_tuple ps -> 
+      let ps = List.map ~f:self ps in
+      Location.wrap ~loc (I.Pattern.P_tuple ps)
+    | P_record lps ->
+      let lps = Record.map ~f:self lps in
+      Location.wrap ~loc (I.Pattern.P_record lps)
 and untype_module_expr : O.module_expr -> I.module_expr =
   fun module_expr ->
     let return wrap_content : I.module_expr = { module_expr with wrap_content } in

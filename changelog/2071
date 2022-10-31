@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '2071'
+title: Load stdlib modules in list-declarations
+type: fixed

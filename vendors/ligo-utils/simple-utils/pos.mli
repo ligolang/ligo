@@ -73,6 +73,8 @@ type t = <
 
   set : file:string -> line:int -> offset:int -> t;
 
+  reset_cnum : t;
+
   new_line : string -> t;   (* String must be "\n" or "\c\r" *)
   add_nl   : t;
 

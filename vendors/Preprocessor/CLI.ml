@@ -1,58 +1,26 @@
-(* Parsing the command-line options *)
+(* Command-Line Interface (CLI) *)
 
 (* Vendor dependencies *)
 
-module Argv = Simple_utils.Argv
+module Argv   = Simple_utils.Argv  (* Filters the command line *)
+module Getopt = GetoptLib.Getopt   (* GNU Getopt *)
 
-(* The signature [COMMENTS] specifies the kind of comments
-   expected. Those fields do not correspond to CLI (command-line
-   options), as they are for internal use. *)
+(* Configuration, options and the parsing status of the latter *)
 
-module type COMMENTS =
+module type PARAMETERS =
   sig
-    type line_comment  = string (* Opening of a line comment *)
-    type block_comment = <opening : string; closing : string>
-
-    val block : block_comment option
-    val line  : line_comment option
-  end
-
-module type MODULES =
-  sig
-    val mk_module : string -> string -> string
-  end
-(* Command-Line Interface (CLI) options *)
-
-module type S =
-  sig
-    include COMMENTS
-    include MODULES
-
-    val input        : string option (* input file     *)
-    val extension    : string option (* file extension *)
-    val dirs         : string list   (* -I             *)
-    val project_root : string option (* --project-root *)
-    val show_pp      : bool          (* --show-pp      *)
-    val offsets      : bool          (* neg --columns  *)
-
-    type status = [
-      `Done
-    | `Version      of string
-    | `Help         of Buffer.t
-    | `CLI          of Buffer.t
-    | `SyntaxError  of string
-    | `FileNotFound of string
-    ]
-
-    val status : status
+    module Config  : Config.S
+    module Options : Options.S
+    module Status  : module type of Status
   end
 
 (* Parsing the command line options *)
 
-module Make (Comments: COMMENTS) (Modules : MODULES): S =
+module Make (Config : Config.S) : PARAMETERS =
   struct
-    include Comments
-    include Modules
+    (* General configuration *)
+
+    module Config = Config
 
     (* Auxiliary functions and modules *)
 
@@ -60,7 +28,11 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
 
     let split_at_colon = Str.(split (regexp ":"))
 
-    let add_path dirs path = dirs := !dirs @ split_at_colon path
+    let add_elem elems list = elems := !elems @ split_at_colon list
+
+    let add_path = add_elem
+
+    let add_def = add_elem
 
     let set_path project_root path = project_root := Some path
 
@@ -74,6 +46,7 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
                 file
       and options = [
         "  -I <paths>         Inclusion paths (colon-separated)";
+        "  -D <symbols>       Predefined symbols (colon-separated)";
         "  -h, --help         This help";
         "  -v, --version      Commit hash on stdout";
         "      --cli          Print given options (debug)";
@@ -83,8 +56,8 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
       ] in
       begin
         Buffer.add_string buffer header;
-        Buffer.add_string buffer (String.concat "\n" options);
-        Buffer.add_char   buffer '\n';
+        Buffer.add_string buffer (String.concat ~sep:"\n" options);
+        Buffer.add_char buffer '\n';
         buffer
       end
 
@@ -92,6 +65,7 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
 
     let input        = ref None
     and dirs         = ref []
+    and define       = ref []
 
     and project_root = ref None
     and columns      = ref false
@@ -103,19 +77,20 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
 
     (* Specifying the command-line options a la GNU
 
-       See [Getopt] for the layout of the command line and
+       See [GetoptLib.Getopt] for the layout of the command line and
        the specification of the options. *)
 
     let specs =
-      let open Getopt in [
+      Getopt.[
         'I',     nolong,         None,             Some (add_path dirs);
+        'D',     nolong,         None,             Some (add_def define);
         noshort, "columns",      set columns true, None;
         noshort, "show-pp",      set show_pp true, None;
 
         noshort, "cli",          set cli true,     None;
         'h',     "help",         set help true,    None;
         'v',     "version",      set version true, None;
-        noshort, "project-root", None,             Some (set_path project_root);
+        noshort, "project-root", None, Some (set_path project_root)
       ]
 
     (* Handler of anonymous arguments.
@@ -124,7 +99,7 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
        error "Multiple inputs" for erased options. *)
 
     let anonymous arg =
-      if arg <> "" then
+      if String.(arg <> "") then
         match !input with
           None -> input := Some arg
         | Some _ -> raise (Getopt.Error "Multiple inputs.")
@@ -168,6 +143,7 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
       let open Argv.SSet in
       empty
       |> add "-I"
+      |> add "-D"
       |> add "--project-root"
 
     let argv_copy = Array.copy Sys.argv
@@ -181,6 +157,7 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
     | `CLI          of Buffer.t
     | `SyntaxError  of string
     | `FileNotFound of string
+    | `WrongFileExt of string
     ]
 
     let status =
@@ -197,59 +174,110 @@ module Make (Comments: COMMENTS) (Modules : MODULES): S =
     (* Re-exporting immutable fields with their CLI value *)
 
     let dirs         = !dirs
+    and define       = !define
     and project_root = !project_root
     and offsets      = not !columns
     and show_pp      = !show_pp
     and help         = !help
-    and version = !version
+    and version      = !version
+
+    (* Optional arguments *)
 
     let string_of_opt convert = function
-      None -> "None"
+      None   -> "None"
     | Some x -> sprintf "Some %S" (convert x)
 
-    let string_of_dirs = sprintf "[%s]" (String.concat ";" dirs)
+    let string_of_input        = string_of_opt (fun x -> x) !input
+    let string_of_project_root = string_of_opt (fun x -> x) project_root
+
+    (* Lists *)
+
+    let string_of_list list = sprintf "[%s]" (String.concat ~sep:";" list)
+
+    let string_of_dirs   = string_of_list dirs
+    let string_of_define = string_of_list define
 
     (* Re-exporting and printing on stdout the CLI options *)
 
-    let cli_buffer = Buffer.create 131
-
-    let () =
-      (* Options "help", "version" and "cli" are not given. *)
+    let make_cli () =
+      let buffer = Buffer.create 131 in
+      (* Options "help", "version" and "cli" are not given.
+         Do not change the spacing before "=" *)
       let options = [
-        "CLI options";
-        sprintf "input        = %s" (string_of_opt (fun x -> x) !input);
+        sprintf "input        = %s" string_of_input;
         sprintf "dirs         = %s" string_of_dirs;
+        sprintf "define       = %s" string_of_define;
         sprintf "show-pp      = %b" show_pp;
         sprintf "columns      = %b" (not offsets);
-        sprintf "project-root = %s" (string_of_opt (fun x -> x) project_root)
+        sprintf "project-root = %s" string_of_project_root
       ] in
     begin
-      Buffer.add_string cli_buffer (String.concat "\n" options);
-      Buffer.add_char   cli_buffer '\n'
+      Buffer.add_string buffer (String.concat ~sep:"\n" options);
+      Buffer.add_char   buffer '\n';
+      buffer
     end
+
+    (* Checking the input file (if any) *)
+
+    let check_file file_path =
+      let actual = Caml.Filename.extension file_path in
+      match Config.file_ext with
+        Some expected when String.(expected <> actual) ->
+          let msg = sprintf "Expected file extension %S." expected
+          in `WrongFileExt msg
+      | Some _ | None ->
+          if   Caml.Sys.file_exists file_path
+          then `Done
+          else `FileNotFound "Source file not found."
 
     (* Input and status *)
 
+    (* At this point, [status] can either be [`Done] or
+       [`SyntaxError]. See assignment to [status] above. *)
+
     let input, status =
       match status with
-        `SyntaxError _  -> !input, status
-      | _ when help     -> !input, `Help (make_help ())
-      | _ when !cli     -> !input, `CLI cli_buffer
-      | _ when version  -> !input, `Version Version.version
-      | _ -> match !input with
-               None | Some "-" -> None, `Done
-             | Some file_path ->
-                 !input,
-                 if   Sys.file_exists file_path
-                 then `Done
-                 else `FileNotFound "Source file not found."
+        `SyntaxError _     -> !input, status
+      | `Done when help    -> !input, `Help (make_help ())
+      | `Done when !cli    -> !input, `CLI (make_cli ())
+      | `Done when version -> !input, `Version Version.version
+      | `Done -> match !input with
+                   None | Some "-" -> None, `Done
+                 | Some file_path -> !input, check_file file_path
 
-    (* File extension (must come after handling of input above) *)
+    (* Packaging the CLI options *)
 
-    let extension =
-      match input with
-        None -> None
-      | Some file_path ->
-          let x = Filename.extension file_path
-          in if x = "" then None else Some x
+    module Options =
+      struct
+        let input        = input
+        and dirs         = dirs
+        and define       = define
+        and project_root = project_root
+        and show_pp      = show_pp
+        and offsets      = offsets
+      end
+
+    (* Packaging the parsing status *)
+
+    module Status =
+      struct
+        type t = status
+        type status = t
+        let status = status
+      end
    end
+
+(* Default parameters (without actually reading the CLI) *)
+
+module MakeDefault (Config : Config.S) =
+  struct
+    module Config  = Config
+    module Options = Options.Default
+
+    module Status =
+      struct
+        type t = Status.t
+        type status = t
+        let status = `Done
+      end
+  end

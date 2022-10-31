@@ -1,11 +1,9 @@
-(* Interfacing the ReasonLIGO lexer. *)
+(* Interfacing the ReasonLIGO lexer with the rest of the compiler. *)
 
 (* LIGO dependencies *)
 
-module Comments = Preprocessing_reasonligo.Comments
+module Config = Preprocessing_reasonligo.Config
 
 (* Internal dependencies *)
 
-module Token = Lexing_reasonligo.Token
-
-include Lexing_shared.Common.Make (Comments) (Token)
+include Lexing_shared.Common.Make (Config) (Lexing_reasonligo.Token)

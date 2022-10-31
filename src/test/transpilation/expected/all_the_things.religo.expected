@@ -1471,3 +1471,4 @@ let a =
   switch  x {
   | Nil(foo), U(bar) => 4
   };
+

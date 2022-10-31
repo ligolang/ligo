@@ -1,0 +1,35 @@
+;; Build of the self passes on the tokens of CameLIGO
+
+(library
+  (name lexing_cameligo_self_tokens)
+  (public_name ligo.lexing.cameligo.self.tokens)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+     ;; Vendors
+     simple-utils
+     LexerLib
+     ;; LIGO
+     lexing_shared
+     menhir_cameligo_tokens)
+  (modules Token Self))
+
+;; --------------------------------------------------------------------
+;; Build the type ['a terminal] to complete the inspection API of
+;; Menhir
+
+(rule
+  (targets MenhirToken.ml MenhirToken.mli)
+  (deps (:ParToken ../../../../02-parsing/cameligo/ParToken.mly))
+  (action (run menhir %{ParToken} --only-tokens --inspection
+                                  --table --base MenhirToken)))
+
+(library
+  (name menhir_cameligo_tokens)
+  (public_name ligo.lexing.menhir_cameligo_tokens)
+  (modules MenhirToken)
+  (libraries
+    ;; LIGO
+    lexing_shared
+    ;; Third party
+    hex)
+  (flags (:standard -open Lexing_shared -open Wrap)))

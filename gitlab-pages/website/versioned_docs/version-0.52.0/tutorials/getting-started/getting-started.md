@@ -12,48 +12,82 @@ In this tutorial, we will go through the following step :
 
 # Setting up the development environment.
 At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
-More on [installation](https://ligolang.org/docs/intro/installation) and [editor support](https://ligolang.org/docs/intro/editor-support)
+More on [installation](../../intro/installation.md) and [editor support](../../intro/editor-support.md)
 
 Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). This can be useful for testing or for small project. However, it doesn't scale well for bigger size project as you won't be able to spread your project across multiple files and use your own libraries.
 
 
 ## Install ligo
 
-  If you are on Linux, we have a `.deb` package ready for you. Those package are widely supported by Linux distribution
+### Static Linux binary
 
-  * On Debian or Ubuntu, download [the package](https://ligolang.org/deb/ligo.deb), and then install using:
-    ```zsh
-    sudo apt install ./ligo.deb
-    ```
+The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-  * If you are using another distribution, refer to their doc on how to install `.deb` packages.
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/3161940921/artifacts/raw/ligo), make it executable, and you are done!
 
-  * Alternatively, you can download the program and install it by hand by running
-    ```zsh
-    wget https://ligolang.org/bin/linux/ligo
-    chmod +x ./ligo
-    ```
-    Move it to you path for global install
-    ```zsh
-    sudo cp ./ligo /usr/local/bin
-    ```
-    If you choose this method, you will have to manually update the program by reproducing those step.
+```zsh
+wget https://gitlab.com/ligolang/ligo/-/jobs/3161940921/artifacts/raw/ligo
+chmod +x ./ligo
+```
 
+For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).  
+Optionally, you can put it somewhere in your `PATH` for easy access:
 
+```zsh
+sudo cp ./ligo /usr/local/bin
+```
 
+### MacOS
 
-  Check that the installation is correct by opening a terminal and running the command
-  ```zsh
-  ligo --version
-  ```
-  If you get an error message, start again.
-  If you don't, then let setup our editor.
+Try our tap,
 
+```
+brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
+brew install ligolang/ligo/ligo
+```
+
+### Debian Linux package installation
+
+A `.deb` package containing the static `ligo` executable is also available.
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3161940921/artifacts/raw/ligo.deb), and then install using: 
+
+```zsh
+sudo apt install ./ligo.deb
+```
+
+### Dockerised installation
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.53.0](https://ligolang.org/docs/next/intro/changelog):
+
+Linux or OSX:
+> ```sh
+> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.53.0
+> ```
+> For convenience you can alias the above command
+> ```sh
+> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.53.0"
+> ```
+> To make this `alias` persistent across terminal sessions you need to configure your shell.     
+> Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.
+
+Windows:
+> ```dos
+> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.53.0`
+> ```
+> For convenience you can alias the above command
+> ```dos
+> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.53.0 $*
+> ```
+> To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.  
+> Follow [this stackoverflow answer](https://stackoverflow.com/a/21040825) for the steps on how to do that.
+
+Or if you want the development version, replace the version above with `next`.
+
+Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
 
 ## Setting up the editor
 
-  You can see the updated list of supported editor [here](https://ligolang.org/docs/intro/editor-support)
+  You can see the updated list of supported editor [here](../../intro/editor-support.md)
 
 
   In this tutorial, we will use vs-code.
@@ -547,12 +581,12 @@ const test_increment = (() : unit => {
 
 For deploying the contract on Tezos, we will use the `tezos-client` interface like we did on the previous section.
 
-First, you will need an account address. You can get one for testing at the [faucet](https://faucet.tzalpha.net/).
+First, you will need an account address. You can get one for testing at the [faucet](https://teztnets.xyz/ghostnet-faucet).
 Download the json file and place it in the `ligo_tutorial` folder. $!$ The account that you get from the faucet are only temporary
 
 Then we are going to point the client on a Tezos node
 ```zsh
-tezos-client --endpoint https://testnet-tezos.giganode.io config update
+tezos-client --endpoint https://rpc.ghostnet.teztnets.xyz config update
 ```
 This is the testnet, which is a separate network from Tezos, use for testing.
 

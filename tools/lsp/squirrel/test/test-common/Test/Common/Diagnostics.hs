@@ -80,7 +80,7 @@ treeDoesNotContainNameTest = do
         [ Message (FromLIGO "Syntax error #200.") SeverityError (mkRange (1, 14) (1, 16) dtFile)
         , Message (FromLIGO "Syntax error #233.") SeverityError (mkRange (1, 17) (1, 18) dtFile)
         , Message
-          (FromLIGO "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]")
+          (FromLIGO "Reasonligo is depreacted, support will be dropped in a few versions.@")
           SeverityWarning
           (mkRange (0, 0) (0, 0) "")
         ]

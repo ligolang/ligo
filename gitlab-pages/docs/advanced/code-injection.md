@@ -34,7 +34,7 @@ code.
 
 ```cameligo
 let michelson_add n =
-  [%Michelson ({| { UNPAIR ; ADD } |} : nat * nat -> nat) ] n
+  [%Michelson ({| { UNPAIR ; ADD } |} : nat * nat -> nat)] n
 ```
 
 </Syntax>
@@ -42,7 +42,7 @@ let michelson_add n =
 
 ```reasonligo
 let michelson_add = (n : (nat, nat)) : nat =>
-  [%Michelson ({| { UNPAIR ; ADD } |} : ((nat, nat) => nat)) ](n);
+  [%Michelson ({| { UNPAIR ; ADD } |} : ((nat, nat) => nat))](n);
 ```
 
 </Syntax>
@@ -50,7 +50,7 @@ let michelson_add = (n : (nat, nat)) : nat =>
 
 ```jsligo
 const michelson_add = n =>
-  (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
+  (Michelson `{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
 ```
 
 </Syntax>
@@ -145,7 +145,7 @@ Contracts with embedded Michelson code are compiled normally like any
 other contract. We give an example of a contract that uses the type
 `never`, a new Michelson type that represents the empty type. You can
 read more about it
-[here](https://tezos.gitlab.io/008/michelson.html#operations-on-type-never).
+[here](https://tezos.gitlab.io/active/michelson.html#operations-on-type-never).
 
 We will use the Michelson instruction `NEVER` to resolve a forbidden
 branch when matching on the parameter of our contract:
