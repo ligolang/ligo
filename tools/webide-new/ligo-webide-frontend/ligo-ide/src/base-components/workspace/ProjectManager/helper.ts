@@ -1,4 +1,4 @@
-import { FileInfo, FolderInfo } from "~base-components/file-ops";
+import { FileInfo, FolderInfo } from "~/base-components/file-ops";
 
 const filterFolder = (file: (FolderInfo | FileInfo)[]) => {
   return file.filter((item) => item.type === "folder");

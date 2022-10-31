@@ -19,9 +19,9 @@ import ProjectSettings from "../ProjectSettings";
 
 import type { WorkspaceLoader } from "../WorkspaceLoader";
 import type TerminalButton from "../components/TerminalButton";
-import { RefreshData } from "~base-components/filetree/types";
-import { GistContent } from "~base-components/file-ops/GistFs";
-import MonacoEditor from "~base-components/code-editor/MonacoEditor/MonacoEditor";
+import { RefreshData } from "~/base-components/filetree/types";
+import { GistContent } from "~/base-components/file-ops/GistFs";
+import MonacoEditor from "~/base-components/code-editor/MonacoEditor/MonacoEditor";
 
 export default class ProjectManager {
   static ProjectSettings = ProjectSettings;

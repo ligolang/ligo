@@ -36,7 +36,6 @@
     "gists": "^2.0.0",
     "immutable": "^4.0.0-rc.12",
     "js-base64": "^3.6.0",
-    "keytar": "7.7.0",
     "loadjs": "^4.2.0",
     "lodash": "^4.17.20",
     "mixpanel-browser": "^2.41.0",
@@ -76,11 +75,6 @@
     "remark-gfm": "^1.0.0",
     "remark-slug": "^6.1.0",
     "semver": "^7.3.7",
-    "solhint": "ObsidianLabs/solhint#obsidians",
-    "solium": "ObsidianLabs/Ethlint",
-    "solparse-exp-jb": "ObsidianLabs/solparse",
-    "strip-ansi": "^6.0.0",
-    "trash": "^7.0.0",
     "xterm": "^5.0.0",
     "xterm-addon-fit": "^0.6.0",
     "xterm-addon-search": "^0.10.0"
@@ -167,60 +161,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "build": {
-    "productName": "Black IDE",
-    "artifactName": "Black-IDE-${version}.${ext}",
-    "files": [
-      "build/**/*",
-      "node_modules/**/*"
-    ],
-    "publish": [
-      {
-        "provider": "generic",
-        "url": "http://www.obsidians.io"
-      }
-    ],
-    "directories": {
-      "buildResources": "assets"
-    },
-    "mac": {
-      "appId": "com.obsidians.ethereumstudio",
-      "category": "developer-tools",
-      "target": {
-        "target": "default",
-        "arch": [
-          "x64"
-        ]
-      }
-    },
-    "dmg": {
-      "contents": [
-        {
-          "x": 160,
-          "y": 220
-        },
-        {
-          "x": 380,
-          "y": 220,
-          "type": "link",
-          "path": "/Applications"
-        }
-      ]
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    },
-    "linux": {
-      "icon": "./assets/icon.icns",
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Development"
-    },
-    "extends": null
   }
 }
