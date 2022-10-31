@@ -6,6 +6,7 @@ const {
   addWebpackExternals,
   addWebpackAlias,
   addWebpackPlugin,
+  addExternalBabelPlugin
 } = require('customize-cra');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const BundleAnalyzerPlugin =
@@ -137,6 +138,7 @@ const overrides = [
     BUILD_TIME: JSON.stringify(process.env.BUILD_TIME),
     MEASUREMENT_ID: JSON.stringify(process.env.MEASUREMENT_ID),
   }),
+  addExternalBabelPlugin("@babel/plugin-proposal-class-properties"),
   enableTS(),
   turnOffMangle(),
   addWasmLoader(),
