@@ -546,9 +546,6 @@ replaceANSI =
       [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
 
 instance Buildable LigoCallException where
-  -- Here we need to strip that prefix in order to escape
-  -- tautology "Internal error: failed to handle: Internal error: %some LIGO error message%"
-  build (LigoCallException (T.stripPrefix "Internal error: " -> Just stripped)) = build $ replaceANSI stripped
   build LigoCallException{..} = build $ replaceANSI leMessage
 
 instance Exception LigoCallException where
