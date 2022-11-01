@@ -236,8 +236,8 @@ module PP = struct
     | Keep    (l, _r, _eq)   -> Format.fprintf ppf "  %a" pp_te l
     | Change  (l, r, _diff)  -> pp_list_newline self ppf [Delete l; Insert r]
 
-  let t ppf (patch : t) : unit =
-    ANSI.add_ansi_marking ppf; (* TODO NP : Add option to disable coloring *)
+  let t (no_color : bool) ppf (patch : t) : unit =
+    if not no_color then ANSI.add_ansi_marking ppf;
     match patch with
     | [] -> Format.fprintf ppf ""
     | _ -> Format.fprintf ppf "@.@[<v>Difference between the types:@,%a@]" (pp_list_newline change)  patch

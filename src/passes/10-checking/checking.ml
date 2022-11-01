@@ -376,6 +376,7 @@ let rec check_expression
       let ctx, f =
         subtype
           ~raise
+          ~options
           ~loc
           ~ctx
           ~received:(Context.apply ctx type_')
@@ -979,7 +980,7 @@ and check_lambda
       let ctx, arg_ascr = evaluate_type ~raise ~ctx arg_ascr in
       (* TODO: Kinding check for ascription *)
       let ctx, _f =
-        subtype ~raise ~loc ~ctx ~received:arg_type ~expected:arg_ascr
+        subtype ~raise ~options ~loc ~ctx ~received:arg_type ~expected:arg_ascr
       in
       (* Generate let binding for ascription subtyping, will be inlined later on *)
       ctx, arg_ascr, fun hole -> hole
@@ -1090,17 +1091,18 @@ and infer_application ~raise ~loc ~options ~ctx lamb_type args
           let ret_type = Context.apply ctx ret_type in
           match ret_type.type_content with
           | T_constant { injection = External "int"; parameters; _ } ->
-            Constant_typers.External_types.int_types ~raise ~loc ~ctx parameters
+            Constant_typers.External_types.int_types ~raise ~options ~loc ~ctx parameters
           | T_constant
               { injection = External ("ediv" | "u_ediv"); parameters; _ } ->
             Constant_typers.External_types.ediv_types
               ~raise
+              ~options
               ~loc
               ~ctx
               parameters
           | T_constant { injection = External ("and" | "u_and"); parameters; _ }
             ->
-            Constant_typers.External_types.and_types ~raise ~loc ~ctx parameters
+            Constant_typers.External_types.and_types ~raise ~options ~loc ~ctx parameters
           | _ -> ctx, ret_type)
         (fun ~catch:_ _ -> ctx, ret_type)
     in
@@ -1145,6 +1147,7 @@ and infer_application ~raise ~loc ~options ~ctx lamb_type args
 
 and infer_pattern
     ~(raise : raise)
+    ~(options : Compiler_options.middle_end)
     ~ctx
     (pat : I.type_expression option I.Pattern.t)
     : Context.t
@@ -1156,8 +1159,8 @@ and infer_pattern
   let return content =
     return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t)
   in
-  let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
-  let check ~ctx pat type_ = check_pattern ~raise ~ctx pat type_ in
+  let infer ~ctx pat = infer_pattern ~raise ~options ~ctx pat in
+  let check ~ctx pat type_ = check_pattern ~raise ~options ~ctx pat type_ in
   match pat.wrap_content with
   | P_unit -> ctx, t_unit ~loc (), return @@ P_unit
   | P_var binder ->
@@ -1299,6 +1302,7 @@ and infer_pattern
 
 and check_pattern
     ~(raise : raise)
+    ~(options : Compiler_options.middle_end)
     ~ctx
     (pat : I.type_expression option I.Pattern.t)
     (type_ : O.type_expression)
@@ -1311,8 +1315,8 @@ and check_pattern
   let return content =
     return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t)
   in
-  let self ?(raise = raise) = check_pattern ~raise in
-  let infer ~ctx pat = infer_pattern ~raise ~ctx pat in
+  let self ?(raise = raise) = check_pattern ~raise ~options in
+  let infer ~ctx pat = infer_pattern ~raise ~options ~ctx pat in
   let ctx, pat =
     match pat.wrap_content, type_.type_content with
     | P_unit, O.T_constant { injection = Literal_types.Unit; _ } ->
@@ -1386,6 +1390,7 @@ and check_pattern
       let ctx, _f =
         subtype
           ~raise
+          ~options
           ~loc
           ~ctx
           ~received:(Context.apply ctx type_')
@@ -1419,7 +1424,7 @@ and check_cases
         if debug
         then
           Format.printf "Matchee type: %a\n" O.PP.type_expression matchee_type;
-        let ctx, pattern = check_pattern ~raise ~ctx pattern matchee_type in
+        let ctx, pattern = check_pattern ~raise ~options ~ctx pattern matchee_type in
         let ctx, body = check_expression ~raise ~options ~ctx body ret_type in
         ( Context.drop_until ctx ~pos
         , let%map pattern = pattern

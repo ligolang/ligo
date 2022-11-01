@@ -54,7 +54,7 @@ module Comparable = struct
      returns type [bool] if argument types are of the form [ t1; t2 ]
      where [t1 = t2] and [t1, t2] in [ address ; bool ; bytes ; chain_id; int; key; key_hash; mutez; nat ; ... ].
   *)
-  let simple_comparator ~raise : Location.t -> string -> t =
+  let simple_comparator ~raise ~(options : Compiler_options.middle_end) : Location.t -> string -> t =
     let simple_types =
       List.Ne.of_list
         [ t_address ()
@@ -81,8 +81,8 @@ module Comparable = struct
             Trace.bind_exists ~raise
             @@ List.Ne.map
                  (fun type_ ~raise ->
-                   let ctx = unify ~raise ~loc ~ctx a type_ in
-                   let ctx = unify ~raise ~loc ~ctx b type_ in
+                   let ctx = unify ~raise ~options ~loc ~ctx a type_ in
+                   let ctx = unify ~raise ~options ~loc ~ctx b type_ in
                    ctx)
                  simple_types)
       in
@@ -90,11 +90,11 @@ module Comparable = struct
 
 
   (* [record_comparator] is a simple extension of [comparator] to record types. *)
-  let rec record_comparator ~raise ~test : Location.t -> string -> t =
+  let rec record_comparator ~raise ~options ~test : Location.t -> string -> t =
    fun loc s ~ctx a b ->
     let ctx =
       trace_compare ~raise ~loc a b ~in_:(fun ~raise ->
-          unify ~raise ~loc ~ctx a b)
+          unify ~raise ~options ~loc ~ctx a b)
     in
     let a_r =
       trace_option ~raise (comparator_composed loc a) @@ get_t_record a
@@ -109,6 +109,7 @@ module Comparable = struct
         comparator
           ~cmp:s
           ~raise
+          ~options
           ~test
           ~loc
           ~ctx
@@ -128,11 +129,11 @@ module Comparable = struct
 
 
   (* [sum_comparator] is a simple extension of [comparator] to sum types. *)
-  and sum_comparator ~raise ~test : Location.t -> string -> t =
+  and sum_comparator ~raise ~options ~test : Location.t -> string -> t =
    fun loc s ~ctx a b ->
     let ctx =
       trace_compare ~raise ~loc a b ~in_:(fun ~raise ->
-          unify ~raise ~loc ~ctx a b)
+          unify ~raise ~options ~loc ~ctx a b)
     in
     let a_r = trace_option ~raise (comparator_composed loc a) @@ get_t_sum a in
     let b_r = trace_option ~raise (comparator_composed loc b) @@ get_t_sum b in
@@ -143,6 +144,7 @@ module Comparable = struct
         comparator
           ~cmp:s
           ~raise
+          ~options
           ~test
           ~loc
           ~ctx
@@ -161,11 +163,11 @@ module Comparable = struct
     ctx, t_bool ()
 
 
-  and list_comparator ~raise ~test : Location.t -> string -> t =
+  and list_comparator ~raise ~options ~test : Location.t -> string -> t =
    fun loc s ~ctx a_lst b_lst ->
     let ctx =
       trace_compare ~raise ~loc a_lst b_lst ~in_:(fun ~raise ->
-          unify ~raise ~loc ~ctx a_lst b_lst)
+          unify ~raise ~options ~loc ~ctx a_lst b_lst)
     in
     let a =
       trace_option ~raise (comparator_composed loc a_lst) @@ get_t_list a_lst
@@ -173,14 +175,14 @@ module Comparable = struct
     let b =
       trace_option ~raise (comparator_composed loc b_lst) @@ get_t_list b_lst
     in
-    comparator ~cmp:s ~raise ~test ~loc ~ctx a b
+    comparator ~cmp:s ~raise ~options ~test ~loc ~ctx a b
 
 
-  and set_comparator ~raise ~test : Location.t -> string -> t =
+  and set_comparator ~raise ~options ~test : Location.t -> string -> t =
    fun loc s ~ctx a_set b_set ->
     let ctx =
       trace_compare ~raise ~loc a_set b_set ~in_:(fun ~raise ->
-          unify ~raise ~loc ~ctx a_set b_set)
+          unify ~raise ~options ~loc ~ctx a_set b_set)
     in
     let a =
       trace_option ~raise (comparator_composed loc a_set) @@ get_t_set a_set
@@ -188,14 +190,14 @@ module Comparable = struct
     let b =
       trace_option ~raise (comparator_composed loc b_set) @@ get_t_set b_set
     in
-    comparator ~cmp:s ~raise ~test ~loc ~ctx a b
+    comparator ~cmp:s ~raise ~options ~test ~loc ~ctx a b
 
 
-  and map_comparator ~raise ~test : Location.t -> string -> t =
+  and map_comparator ~raise ~options ~test : Location.t -> string -> t =
    fun loc s ~ctx a_map b_map ->
     let ctx =
       trace_compare ~raise ~loc a_map b_map ~in_:(fun ~raise ->
-          unify ~raise ~loc ~ctx a_map b_map)
+          unify ~raise ~options ~loc ~ctx a_map b_map)
     in
     let a_key, a_value =
       trace_option ~raise (comparator_composed loc a_map) @@ get_t_map a_map
@@ -203,16 +205,16 @@ module Comparable = struct
     let b_key, b_value =
       trace_option ~raise (comparator_composed loc b_map) @@ get_t_map b_map
     in
-    let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_key b_key in
-    let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_value b_value in
+    let ctx, _ = comparator ~cmp:s ~raise ~options ~test ~loc ~ctx a_key b_key in
+    let ctx, _ = comparator ~cmp:s ~raise ~options ~test ~loc ~ctx a_value b_value in
     ctx, t_bool ()
 
 
-  and big_map_comparator ~raise ~test : Location.t -> string -> t =
+  and big_map_comparator ~raise ~options ~test : Location.t -> string -> t =
    fun loc s ~ctx a_map b_map ->
     let ctx =
       trace_compare ~raise ~loc a_map b_map ~in_:(fun ~raise ->
-          unify ~raise ~loc ~ctx a_map b_map)
+          unify ~raise ~options ~loc ~ctx a_map b_map)
     in
     let a_key, a_value =
       trace_option ~raise (comparator_composed loc a_map) @@ get_t_big_map a_map
@@ -220,31 +222,31 @@ module Comparable = struct
     let b_key, b_value =
       trace_option ~raise (comparator_composed loc b_map) @@ get_t_big_map b_map
     in
-    let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_key b_key in
-    let ctx, _ = comparator ~cmp:s ~raise ~test ~loc ~ctx a_value b_value in
+    let ctx, _ = comparator ~cmp:s ~raise ~options ~test ~loc ~ctx a_key b_key in
+    let ctx, _ = comparator ~cmp:s ~raise ~options ~test ~loc ~ctx a_value b_value in
     ctx, t_bool ()
 
 
-  and comparator ~cmp ~raise ~test ~loc : t =
+  and comparator ~cmp ~raise ~options ~test ~loc : t =
    fun ~ctx a b ->
     if test
     then
       bind_exists ~raise
       @@ List.Ne.of_list
-           [ list_comparator ~test loc cmp ~ctx a b
-           ; set_comparator ~test loc cmp ~ctx a b
-           ; map_comparator ~test loc cmp ~ctx a b
-           ; simple_comparator loc cmp ~ctx a b
-           ; record_comparator ~test loc cmp ~ctx a b
-           ; sum_comparator ~test loc cmp ~ctx a b
-           ; big_map_comparator ~test loc cmp ~ctx a b
+           [ list_comparator ~options ~test loc cmp ~ctx a b
+           ; set_comparator ~options ~test loc cmp ~ctx a b
+           ; map_comparator ~options ~test loc cmp ~ctx a b
+           ; simple_comparator ~options loc cmp ~ctx a b
+           ; record_comparator ~options ~test loc cmp ~ctx a b
+           ; sum_comparator ~options ~test loc cmp ~ctx a b
+           ; big_map_comparator ~options ~test loc cmp ~ctx a b
            ]
     else
       bind_exists ~raise
       @@ List.Ne.of_list
-           [ simple_comparator loc cmp ~ctx a b
-           ; record_comparator ~test loc cmp ~ctx a b
-           ; sum_comparator ~test loc cmp ~ctx a b
+           [ simple_comparator ~options loc cmp ~ctx a b
+           ; record_comparator ~options ~test loc cmp ~ctx a b
+           ; sum_comparator ~options ~test loc cmp ~ctx a b
            ]
 end
 
@@ -344,7 +346,7 @@ let of_type ({ mode_annot; types } : Type.t) : _ t =
       try Hashtbl.find_exn table i with
       | _ -> raise.error (corner_case "bad mode annot")
   in
-  fun ~raise ~options:_ ~infer ~check ~loc ~ctx args ->
+  fun ~raise ~options ~infer ~check ~loc ~ctx args ->
     (* Instantiate prenex quantifier *)
     let inst ctx { Type.for_alls; arg_types; ret_type } =
       let exists =
@@ -415,6 +417,7 @@ let of_type ({ mode_annot; types } : Type.t) : _ t =
                  ~f:(fun ctx (arg_type1, arg_type2) ->
                    unify
                      ~raise
+                     ~options
                      ~loc
                      ~ctx
                      (Context.apply ctx arg_type1)
@@ -447,6 +450,7 @@ let of_comparator comparator : _ t =
     let ctx, ret_type =
       comparator
         ~raise
+        ~options
         ~test:options.test
         ~loc
         ~ctx
@@ -1511,13 +1515,14 @@ module External_types = struct
 
   type ('err, 'wrn) t =
     raise:('err, 'wrn) raise
+    -> options:Compiler_options.middle_end
     -> loc:Location.t
     -> ctx:Context.t
     -> type_expression list
     -> Context.t * type_expression
 
   let of_type (types : Type.t) : _ t =
-   fun ~raise ~loc ~ctx received_arg_types ->
+   fun ~raise ~options ~loc ~ctx received_arg_types ->
     Trace.bind_exists ~raise
     @@ List.Ne.map
          (fun (expected_arg_types, ret_type) ~raise ->
@@ -1534,6 +1539,7 @@ module External_types = struct
              List.fold arg_types ~init:ctx ~f:(fun ctx (received, expected) ->
                  unify
                    ~raise
+                   ~options
                    ~loc
                    ~ctx
                    (Context.apply ctx received)

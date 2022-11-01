@@ -78,6 +78,7 @@ let lift_layout ~loc ~ctx ~lvar (layout : Layout.t) : Context.t * Layout.t =
 
 let rec lift
     ~raise
+    ~options
     ~loc
     ~ctx
     ~(mode : Mode.t)
@@ -86,8 +87,8 @@ let rec lift
     (type_ : type_expression)
     : Context.t * type_expression
   =
-  let self ?(ctx = ctx) ~mode = lift ~raise ~loc ~ctx ~mode ~kind ~evar in
-  let self_row ~ctx = lift_row ~raise ~loc ~ctx ~kind ~evar in
+  let self ?(ctx = ctx) ~mode = lift ~raise ~options ~loc ~ctx ~mode ~kind ~evar in
+  let self_row ~ctx = lift_row ~raise ~options ~loc ~ctx ~kind ~evar in
   let return content = { type_ with type_content = content } in
   match type_.type_content with
   | T_variable tvar' ->
@@ -166,7 +167,7 @@ let rec lift
   | T_singleton _ -> ctx, type_
 
 
-and lift_row ~raise ~loc ~ctx ~kind ~evar ({ fields; layout } : rows)
+and lift_row ~raise ~options ~loc ~ctx ~kind ~evar ({ fields; layout } : rows)
     : Context.t * rows
   =
   let ctx, layout =
@@ -198,6 +199,7 @@ and lift_row ~raise ~loc ~ctx ~kind ~evar ({ fields; layout } : rows)
         let ctx, associated_type =
           lift
             ~raise
+            ~options
             ~ctx
             ~mode:Invariant
             ~kind
@@ -249,6 +251,7 @@ let unify_layout
 
 let rec unify
     ~raise
+    ~(options : Compiler_options.middle_end)
     ~loc
     ~(ctx : Context.t)
     (type1 : type_expression)
@@ -256,8 +259,8 @@ let rec unify
     : Context.t
   =
   let unify = unify ~loc in
-  let self ?(ctx = ctx) type1 type2 = unify ~raise ~ctx type1 type2 in
-  let fail () = raise.error (cannot_unify loc type1 type2) in
+  let self ?(ctx = ctx) type1 type2 = unify ~raise ~options ~ctx type1 type2 in
+  let fail () = raise.error (cannot_unify options.no_color loc type1 type2) in
   let unify_evar evar type_ =
     occurs_check ~raise ~loc ~evar type_;
     let kind =
@@ -266,7 +269,7 @@ let rec unify
            ~raise
            (unbound_exists_variable (Exists_var.loc evar) evar)
     in
-    let ctx, type_ = lift ~raise ~loc ~ctx ~mode:Invariant ~evar ~kind type_ in
+    let ctx, type_ = lift ~raise ~options ~loc ~ctx ~mode:Invariant ~evar ~kind type_ in
     if not
          (match Well_formed.type_expr ~ctx type_ with
          | Some kind' -> Kind.equal kind kind'
@@ -331,6 +334,7 @@ let rec unify
 
 let rec subtype
     ~raise
+    ~options
     ~loc
     ~ctx
     ~(received : type_expression)
@@ -339,14 +343,14 @@ let rec subtype
   =
   (* Format.printf "Subtype: %a, %a\n" PP.type_expression received PP.type_expression expected; *)
   let self ?(ctx = ctx) received expected =
-    subtype ~raise ~loc ~ctx ~received ~expected
+    subtype ~raise ~options ~loc ~ctx ~received ~expected
   in
   let subtype_evar ~mode evar type_ =
     let kind =
       Context.get_exists_var ctx evar
       |> trace_option ~raise (unbound_exists_variable loc evar)
     in
-    let ctx, type_ = lift ~raise ~loc ~ctx ~mode ~evar ~kind type_ in
+    let ctx, type_ = lift ~raise ~options ~loc ~ctx ~mode ~evar ~kind type_ in
     occurs_check ~raise ~loc ~evar type_;
     Context.add_exists_eq ctx evar kind type_, fun x -> x
   in
@@ -396,4 +400,4 @@ let rec subtype
     subtype_evar ~mode:Contravariant (Exists_var.of_type_var_exn tvar1) expected
   | _, T_variable tvar2 when Type_var.is_exists tvar2 ->
     subtype_evar ~mode:Covariant (Exists_var.of_type_var_exn tvar2) received
-  | _, _ -> unify ~raise ~loc ~ctx received expected, fun x -> x
+  | _, _ -> unify ~raise ~options ~loc ~ctx received expected, fun x -> x
