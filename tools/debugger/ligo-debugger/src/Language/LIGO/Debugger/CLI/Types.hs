@@ -25,6 +25,9 @@ import Data.Typeable (cast)
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
+import System.Console.ANSI
+  (Color (Red), ColorIntensity (Dull), ConsoleIntensity (BoldIntensity), ConsoleLayer (Foreground),
+  SGR (Reset, SetColor, SetConsoleIntensity))
 import Text.Interpolation.Nyan (int, rmode')
 
 import Morley.Debugger.Protocol.DAP qualified as DAP
@@ -538,11 +541,20 @@ instance DebuggerException LigoException where
 instance Default LigoException where
   def = LigoException ""
 
+-- | If we have malformed LIGO contract then we'll see
+-- in error @ligo@ binary output a red-colored text
+-- which represents a place where error occurred.
+replaceANSI :: Text -> Text
+replaceANSI =
+    T.replace [int||#ansi{[Reset]}|] "<--"
+  . T.replace
+      [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
+
 instance Buildable LigoException where
   -- Here we need to strip that prefix in order to escape
   -- tautology "Internal error: failed to handle: Internal error: %some LIGO error message%"
-  build (LigoException (T.stripPrefix "Internal error: " -> Just stripped)) = build stripped
-  build LigoException{..} = build leMessage
+  build (LigoException (T.stripPrefix "Internal error: " -> Just stripped)) = build $ replaceANSI stripped
+  build LigoException{..} = build $ replaceANSI leMessage
 
 instance Exception LigoException where
   displayException = pretty

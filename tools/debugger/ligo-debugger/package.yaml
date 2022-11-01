@@ -66,6 +66,7 @@ ghc-options:
 library:
   dependencies:
     - aeson
+    - ansi-terminal
     - bytestring
     - conduit
     - conduit-extra

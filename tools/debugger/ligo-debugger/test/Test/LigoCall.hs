@@ -4,9 +4,12 @@ module Test.LigoCall
 
 import Prelude hiding (try)
 
+import Data.Text qualified as T
+import Fmt (pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
 import UnliftIO.Exception (try)
+import Unsafe qualified
 
 import Morley.Michelson.Parser (MichelsonSource (MSName))
 import Morley.Michelson.Text (mt)
@@ -95,4 +98,18 @@ test_Regressions = testGroup "Regressions"
 
       EntrypointsList _res <- getAvailableEntrypoints file
       pass
+  ]
+
+test_ANSISequencesReplace :: TestTree
+test_ANSISequencesReplace = testGroup "ANSI replacements"
+  [ testCase "Check replacement" do
+      Left (exc :: LigoException) <- try (compileLigoContractDebug "main" (contractsDir </> "malformed.mligo"))
+
+      let actual = pretty exc
+            & T.splitOn "-->"
+            & flip (Unsafe.!!) 1
+            & T.splitOn "<--"
+            & Unsafe.head
+
+      "Hello" @?= actual
   ]
