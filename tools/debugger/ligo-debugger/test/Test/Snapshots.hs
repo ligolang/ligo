@@ -1129,4 +1129,5 @@ unit_Contracts_locations_are_sensible = do
       [ "no-entrypoint.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
+      , "malformed.mligo" -- incorrect contract
       ]
