@@ -21,6 +21,9 @@ module Test.Util
   , HUnit.testCaseSteps
   , HUnit.assertFailure
   , HUnit.assertBool
+  , goesBetween
+  , getStackFrameNames
+  , getVariableNamesFromStackFrame
     -- * Common snippets
   , intType
     -- * Helpers for breakpoints
@@ -38,6 +41,7 @@ module Test.Util
   , unexpectedSnapshot
   ) where
 
+import Control.Lens (each)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
 import System.FilePath (takeExtension, (</>))
@@ -52,7 +56,9 @@ import Morley.Debugger.Core.Breakpoint
 import Morley.Debugger.Core.Navigate
   (DebugSource (DebugSource), DebuggerState (..), Direction (Backward, Forward),
   FrozenPredicate (FrozenPredicate), NavigableSnapshot (getExecutedPosition), SourceLocation,
-  curSnapshot, frozen, groupSourceLocations, isAtBreakpoint, moveTill, playInterpretHistory)
+  curSnapshot, frozen, goesAfter, goesBefore, groupSourceLocations, isAtBreakpoint, moveTill,
+  playInterpretHistory)
+import Morley.Michelson.ErrorPos (SrcPos)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
@@ -167,20 +173,25 @@ intType = LTConstant $
     , ltcInjection = "Int" :| []
     }
 
+goesBetween
+  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
+  => SrcPos -> SrcPos -> FrozenPredicate (DebuggerState is) m
+goesBetween left right = goesAfter left && goesBefore right
+
 compareWithCurLocation
-  :: (MonadState (DebuggerState InterpretSnapshot) m)
-  => SourceLocation -> FrozenPredicate (DebuggerState InterpretSnapshot) m
+  :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
+  => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
 compareWithCurLocation oldSrcLoc = FrozenPredicate $
   getExecutedPosition >>= maybe (pure False) (pure . (/= oldSrcLoc))
 
-goToNextBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
+goToNextBreakpoint :: (MonadState (DebuggerState (InterpretSnapshot u)) m) => m ()
 goToNextBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
   void $ case oldSrcLocMb of
     Just oldSrcLoc -> moveTill Forward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
     Nothing -> continueUntilBreakpoint NextBreak
 
-goToPreviousBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
+goToPreviousBreakpoint :: (MonadState (DebuggerState (InterpretSnapshot u)) m) => m ()
 goToPreviousBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
   void $ case oldSrcLocMb of
@@ -206,7 +217,7 @@ dummyLoggingFunction = const $ pure ()
 
 mkSnapshotsForImpl
   :: HasCallStack
-  => (String -> IO ()) -> ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
+  => (String -> IO ()) -> ContractRunData -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique))
 mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
   ligoMapper <- compileLigoContractDebug entrypoint file
@@ -240,7 +251,7 @@ mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st
 -- | Make snapshots history for simple contract.
 mkSnapshotsFor
   :: HasCallStack
-  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
+  => ContractRunData -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique))
 mkSnapshotsFor = mkSnapshotsForImpl dummyLoggingFunction
 
 -- | Same as @mkSnapshotsFor@ but prints
@@ -248,13 +259,13 @@ mkSnapshotsFor = mkSnapshotsForImpl dummyLoggingFunction
 {-# WARNING mkSnapshotsForLogging "'mkSnapshotsForLogging' remains in code" #-}
 mkSnapshotsForLogging
   :: HasCallStack
-  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
+  => ContractRunData -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique))
 mkSnapshotsForLogging = mkSnapshotsForImpl putStrLn
 
 withSnapshots
   :: (Monad m)
-  => (Set SourceLocation, InterpretHistory InterpretSnapshot)
-  -> StateT (DebuggerState InterpretSnapshot) m a
+  => (Set SourceLocation, InterpretHistory (InterpretSnapshot u))
+  -> StateT (DebuggerState (InterpretSnapshot u)) m a
   -> m a
 withSnapshots (allLocs, his) action = do
   let st = DebuggerState
@@ -266,7 +277,7 @@ withSnapshots (allLocs, his) action = do
 testWithSnapshotsImpl
   :: (String -> IO ())
   -> ContractRunData
-  -> StateT (DebuggerState InterpretSnapshot) IO ()
+  -> StateT (DebuggerState (InterpretSnapshot 'Unique)) IO ()
   -> Assertion
 testWithSnapshotsImpl logger runData action = do
   locsAndHis <- mkSnapshotsForImpl logger runData
@@ -274,25 +285,25 @@ testWithSnapshotsImpl logger runData action = do
 
 testWithSnapshots
   :: ContractRunData
-  -> StateT (DebuggerState InterpretSnapshot) IO ()
+  -> StateT (DebuggerState (InterpretSnapshot 'Unique)) IO ()
   -> Assertion
 testWithSnapshots = testWithSnapshotsImpl dummyLoggingFunction
 
 {-# WARNING testWithSnapshotsLogging "'testWithSnapshotsLogging' remains in code" #-}
 testWithSnapshotsLogging
   :: ContractRunData
-  -> StateT (DebuggerState InterpretSnapshot) IO ()
+  -> StateT (DebuggerState (InterpretSnapshot 'Unique)) IO ()
   -> Assertion
 testWithSnapshotsLogging = testWithSnapshotsImpl putStrLn
 
 checkSnapshot
-  :: (MonadState (DebuggerState InterpretSnapshot) m, MonadIO m)
-  => (InterpretSnapshot -> Assertion)
+  :: (MonadState (DebuggerState (InterpretSnapshot 'Unique)) m, MonadIO m)
+  => (InterpretSnapshot 'Concise -> Assertion)
   -> m ()
-checkSnapshot check = frozen curSnapshot >>= liftIO . check
+checkSnapshot check = frozen curSnapshot >>= liftIO . check . stripSuffixHashFromSnapshots
 
 unexpectedSnapshot
-  :: HasCallStack => InterpretSnapshot -> Assertion
+  :: HasCallStack => (SingI u) => InterpretSnapshot u -> Assertion
 unexpectedSnapshot sp =
   HUnit.assertFailure $ "Unexpected snapshot:\n" <> pretty sp
 
@@ -308,3 +319,14 @@ pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
 isPermutationOf :: (Ord a) => [a] -> [a] -> Bool
 isPermutationOf xs ys = sort xs == sort ys
 
+getStackFrameNames :: InterpretSnapshot u -> [Text]
+getStackFrameNames snap =
+  snap ^.. isStackFramesL . each . sfNameL
+
+-- These functions are needed to strip hashes from variables
+-- E.g. varName#123 -> varName
+
+getVariableNamesFromStackFrame :: (SingI u) => StackFrame u -> [Text]
+getVariableNamesFromStackFrame stackFrame = maybe unknownVariable pretty <$> variablesMb
+  where
+    variablesMb = stackFrame ^.. sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL

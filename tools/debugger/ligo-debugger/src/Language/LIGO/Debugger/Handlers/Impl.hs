@@ -49,12 +49,11 @@ import Cli qualified as LSP.Cli
 
 import Language.LIGO.DAP.Variables
 
-import Language.LIGO.Debugger.Handlers.Helpers
-import Language.LIGO.Debugger.Handlers.Types
-
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common (getStatementLocs)
+import Language.LIGO.Debugger.Handlers.Helpers
+import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
@@ -78,7 +77,7 @@ instance HasSpecificMessages LIGO where
   type ExtraEventExt LIGO = Void
   type ExtraResponseExt LIGO = LigoSpecificResponse
   type LanguageServerStateExt LIGO = LigoLanguageServerState
-  type InterpretSnapshotExt LIGO = InterpretSnapshot
+  type InterpretSnapshotExt LIGO = InterpretSnapshot 'Unique
   type StopEventExt LIGO = InterpretEvent
 
   reportErrorAndStoppedEvent = \case
@@ -246,11 +245,13 @@ instance HasSpecificMessages LIGO where
 
     let builder =
           case isStatus snap of
-            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value))) -> do
-              idx <- createVariables stackItems
-              -- TODO: get the type of "$it" value
-              itVar <- buildVariable LTUnresolved value "$it"
-              insertToIndex idx [itVar]
+            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value)))
+              -- We want to show $it variable only in the top-most stack frame.
+              | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
+                idx <- createVariables stackItems
+                -- TODO: get the type of "$it" value
+                itVar <- buildVariable LTUnresolved value "$it"
+                insertToIndex idx [itVar]
             _ -> createVariables stackItems
 
     let (varReference, variables) = runBuilder builder
@@ -531,7 +532,7 @@ handleValidateValue LigoValidateValueRequest {..} = do
 
 initDebuggerSession
   :: LigoLaunchRequestArguments
-  -> RIO LIGO (DAPSessionState InterpretSnapshot)
+  -> RIO LIGO (DAPSessionState (InterpretSnapshot 'Unique))
 initDebuggerSession LigoLaunchRequestArguments {..} = do
   storageT <- toText <$> checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- toText <$> checkArgument "parameter" parameterLigoLaunchRequestArguments

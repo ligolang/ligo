@@ -99,6 +99,7 @@ library
     , scientific
     , semver
     , singletons
+    , singletons-th
     , stm
     , syb
     , template-haskell
@@ -242,6 +243,7 @@ test-suite ligo-debugger-test
     , lens
     , ligo-debugger
     , ligo-squirrel
+    , lorentz
     , morley
     , morley-debugger
     , morley-prelude

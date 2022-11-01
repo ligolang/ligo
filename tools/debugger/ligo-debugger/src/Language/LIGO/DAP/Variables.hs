@@ -11,31 +11,32 @@ import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
 import Data.Text qualified as T
 import Fmt (pretty)
+
 import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuild)
 import Morley.Debugger.Protocol.DAP (Variable)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Typed
-  (EntrypointCallT (..), EpAddress (..), SomeConstrainedValue (SomeValue),
+  (EntrypointCallT (..), EpAddress (..), SingI, SomeConstrainedValue (SomeValue),
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
+import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
 import Language.LIGO.Debugger.CLI.Types
   (LigoExposedStackEntry (LigoExposedStackEntry, leseDeclaration, leseType),
   LigoStackEntry (LigoStackEntry), LigoType (LTApp, LTRecord, LTUnresolved),
-  LigoTypeApp (LigoTypeApp, ltaArguments))
+  LigoTypeApp (LigoTypeApp, ltaArguments), unknownVariable)
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
-import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
 --
 -- This creates a map @varaibles references -> [variable]@, where root always has
 -- largest reference.
-createVariables :: [StackItem] -> VariableBuilder Int
+createVariables :: (SingI u) => [StackItem u] -> VariableBuilder Int
 createVariables st = do
   topVarsMb <-
     forM st \(StackItem desc (SomeValue v)) -> do
       case desc of
         LigoStackEntry LigoExposedStackEntry{..} -> do
-          let name = maybe "?" pretty leseDeclaration
+          let name = maybe (pretty unknownVariable) pretty leseDeclaration
           Just <$> buildVariable leseType v name
         _ -> pure Nothing
   let topVars = catMaybes topVarsMb

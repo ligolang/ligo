@@ -8,21 +8,21 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Control.Lens (Each (each), has, ix, makeLensesWith, (?~), (^?!))
+import Control.Lens (has, ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
 import Fmt (pretty)
 import System.FilePath (combine, dropExtension, makeRelative)
 import System.Timeout (timeout)
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (Assertion)
+import Test.Tasty.HUnit (Assertion, (@=?))
 import Test.Util
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
   (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), MovementResult (..),
   NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
-  curSnapshot, frozen, goesAfter, move, moveTill, tsAfterInstrs, twoElemFromList)
+  curSnapshot, frozen, goesAfter, matchesSrcType, move, moveTill, tsAfterInstrs, twoElemFromList)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
@@ -30,6 +30,8 @@ import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
+
+import Lorentz qualified as L
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
@@ -98,7 +100,7 @@ test_Snapshots = testGroup "Snapshots collection"
                     ( case siLigoDesc of
                         LigoHiddenStackEntry -> Nothing
                         LigoStackEntry LigoExposedStackEntry{..} ->
-                          leseDeclaration
+                          LigoVariable . pretty @_ @(Name 'Concise) <$> leseDeclaration
                     , siValue
                     )
                 )
@@ -279,7 +281,7 @@ test_Snapshots = testGroup "Snapshots collection"
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 13) (Pos 0))
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 18) (Pos 0))
 
-        let checkStackItem :: Text -> SomeValue -> StackItem -> Bool
+        let checkStackItem :: Name 'Concise -> SomeValue -> StackItem 'Concise -> Bool
             checkStackItem expectedVar expectedVal = \case
               StackItem
                 { siLigoDesc = LigoStackEntry LigoExposedStackEntry
@@ -342,9 +344,9 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         -- Predicate for @moveTill@ which stops on a snapshot with specified file name in loc.
         let stopAtFile
-              :: (MonadState (DebuggerState InterpretSnapshot) m)
+              :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
               => FilePath
-              -> FrozenPredicate (DebuggerState InterpretSnapshot) m
+              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
             stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
               let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
@@ -378,7 +380,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStackFrames = StackFrame
                 { sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 20)
-                } :| []
+                } :| _
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
 
@@ -388,7 +390,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStackFrames = StackFrame
                 { sfLoc = LigoRange file' (LigoPosition 19 57) (LigoPosition 19 64)
-                } :| []
+                } :| _
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
 
@@ -555,9 +557,8 @@ test_Snapshots = testGroup "Snapshots collection"
 
             ( snaps
                 <&> do \InterpretSnapshot{..} ->
-                        toList isStackFrames
-                        <&> \StackFrame{..} -> sfLoc
-                & concat
+                        head isStackFrames
+                          & \StackFrame{..} -> sfLoc
               ) @?= locs
 
       let file = contractsDir </> "statement-visiting.mligo"
@@ -752,30 +753,318 @@ test_Snapshots = testGroup "Snapshots collection"
           lift $ assertBool
             "Duplicated source range for different snapshots"
             (srcLocAtDiv /= srcLocAtBack)
-
-    , testCaseSteps "Variables in pattern match" \step -> do
-        let file = contractsDir </> "variables-in-pattern-match.mligo"
-        let runData = ContractRunData
-              { crdProgram = file
-              , crdEntrypoint = Nothing
-              , crdParam = ()
-              , crdStorage = 0 :: Integer
-              }
-
-        testWithSnapshots runData do
-          void $ moveTill Forward $
-            goesAfter (SrcPos (Pos 4) (Pos 0))
-
-          lift $ step [int||Extract variables|]
-          checkSnapshot \snap -> do
-            -- TODO: extract variables in a neat way when LIGO-758 is merged
-            let vars =
-                  snap ^.. isStackFramesL . ix 0 . sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
-                  <&> maybe ("?" :: Text) pretty
-
-            vars @~=? ["a", "b"]
     ]
 
+  , testCaseSteps "Variables in pattern match" \step -> do
+      let file = contractsDir </> "variables-in-pattern-match.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        void $ moveTill Forward $
+          goesAfter (SrcPos (Pos 4) (Pos 0))
+
+        lift $ step [int||Extract variables|]
+        checkSnapshot \snap -> do
+          let vars = snap
+                & isStackFrames
+                & head
+                & getVariableNamesFromStackFrame
+
+          vars @~=? ["a", "b"]
+
+  , testCaseSteps "Check stack frames on function entering / exiting" \step -> do
+      let file = contractsDir </> "recursive.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
+        lift $ step [int||Check stack frame names on entering "recursive"|]
+        checkSnapshot ((@=?) ["recursive", "main"] . getStackFrameNames)
+
+        moveTill Forward $ goesAfter (SrcPos (Pos 4) (Pos 0))
+        lift $ step [int||Check that we have only "main" stack frame after leaving function|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+  , testCaseSteps "Calling local function" \step -> do
+      let file = contractsDir </> "local-function.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        move Forward
+
+        lift $ step [int||Check that we have only one "main" stack frame|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
+        lift $ step [int||Check that we have "f" stack frame on entering local function|]
+        checkSnapshot ((@=?) ["f", "main"] . getStackFrameNames)
+
+  , testCaseSteps "Function calling other function" \step -> do
+      let file = contractsDir </> "function-calling-function.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 2) (Pos 0)) (SrcPos (Pos 3) (Pos 0))
+        lift $ step [int||Calling top level function "complex"|]
+        checkSnapshot ((@=?) ["complex", "main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 0) (Pos 0)) (SrcPos (Pos 1) (Pos 0))
+        lift $ step [int||Calling function "add" from "complex"|]
+        checkSnapshot ((@=?) ["add", "complex", "main"] . getStackFrameNames)
+
+  , testCaseSteps "Lambda parameter" \step -> do
+      let file = contractsDir </> "lambda-parameter.mligo"
+
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = L.unpair @_ @_ @'[] L.# L.add @Integer @Integer
+            , crdStorage = 0 :: Integer
+            }
+
+      let runDataFailing = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = L.drop L.# L.push [L.mt|Stick bugged lol|] L.# L.failWith :: '[(Integer, Integer)] L.:-> '[Integer]
+            , crdStorage = 0 :: Integer
+            }
+
+      let stackFramesCheck :: ([[Text]] -> Bool) -> StateT (DebuggerState (InterpretSnapshot u)) IO ()
+          stackFramesCheck namesCheck = do
+            (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <- moveTill Forward (FrozenPredicate $ pure False)
+            lift $
+              assertBool
+                [int||Expected to have only one stack frame \
+                  with name "main" in each snapshot, got #{stackFrameNames}|]
+                (namesCheck stackFrameNames)
+
+      step [int||Check that all snapshots have exactly one stack frame with name "main"|]
+      testWithSnapshots runData $ stackFramesCheck (all (== ["main"]))
+
+      step [int||Check that all snapshots with failing lambda|]
+      testWithSnapshots runDataFailing $ stackFramesCheck \names ->
+        let
+          initElems = Unsafe.init names
+          lastElem = Unsafe.last names
+        in all (== ["main"]) initElems && lastElem == ["p", "main"]
+
+  , testCaseSteps "Check variables in stack frames" \step -> do
+      let dir = contractsDir </> "module_contracts"
+      let file = dir </> "importer.mligo"
+      let nestedFile = dir </> "imported.mligo"
+      let nestedFile2 = dir </> "imported2.ligo"
+
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 8) (Pos 0)) (SrcPos (Pos 12) (Pos 0))
+          && matchesSrcType (N.SourcePath nestedFile)
+        lift $ step [int||Check variables for "sum" snapshot|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = stackFrame@StackFrame
+                { sfName = "sum"
+                , sfLoc = LigoRange file' _ _
+                } :| _
+            } | file' == nestedFile -> getVariableNamesFromStackFrame stackFrame @~=? ["l", "x", "acc"]
+          snap -> unexpectedSnapshot snap
+
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 4) (Pos 0)) && matchesSrcType (N.SourcePath nestedFile2)
+        lift $ step [int||Check variables for "strange" snapshot|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = stackFrame@StackFrame
+                { sfName = "strange"
+                , sfLoc = LigoRange file' _ _
+                } :| _
+            } | file' == nestedFile2 ->
+                  getVariableNamesFromStackFrame stackFrame @~=? ["acc", "c", "b", "a"]
+          snap -> unexpectedSnapshot snap
+
+  , testCaseSteps "Two \"main\" stack frames" \step -> do
+      let file = contractsDir </> "two-functions-with-main-name.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 3) (Pos 0)) (SrcPos (Pos 5) (Pos 0))
+        lift $ step [int||Check that we have two stack frames with "main" name|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfName = "main"
+                , sfLoc = loc1
+                } :|
+                  [ StackFrame
+                      { sfName = "main"
+                      , sfLoc = loc2
+                      }
+                  ]
+            } | loc1 /= loc2 -> pass
+          snap -> unexpectedSnapshot snap
+        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+
+  , testCaseSteps "Stack frames in a contract with partially applied function" \step -> do
+      let file = contractsDir </> "apply.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 0) (Pos 0)) (SrcPos (Pos 1) (Pos 0))
+
+        lift $ step [int||Check stack frames after entering "add5"|]
+        checkSnapshot ((@=?) ["add", "add5", "main"] . getStackFrameNames)
+
+        moveTill Forward $ goesAfter (SrcPos (Pos 7) (Pos 0))
+        lift $ step [int||Check stack frames after leaving "add5"|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+  , testCaseSteps "Paritally applied function inside top level function" \step -> do
+      let file = contractsDir </> "complex-apply.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
+
+        lift $ step [int||Go into "add5"|]
+        checkSnapshot ((@=?) ["add", "add5", "myFunc", "main"] . getStackFrameNames)
+
+        moveTill Forward $ goesAfter (SrcPos (Pos 6) (Pos 0))
+
+        lift $ step [int||Leave "myFunc"|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+  , testCaseSteps "2 times curried function" \step -> do
+      let file = contractsDir </> "curry.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 7) (Pos 0)) (SrcPos (Pos 8) (Pos 0))
+
+        lift $ step [int||Check stack frames for inner "sub"|]
+        checkSnapshot ((@=?) ["sub", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 5) (Pos 0)) (SrcPos (Pos 6) (Pos 0))
+
+        lift $ step [int||Check stack frames for inner "add"|]
+        checkSnapshot ((@=?) ["add", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 12) (Pos 0))
+
+        lift $ step [int||Leave "applyOp" functions|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+  , testCaseSteps "2 times curried function inside lambda" \step -> do
+      let file = contractsDir </> "curry-inside-lambda.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 5) (Pos 0)) (SrcPos (Pos 6) (Pos 0))
+
+        lift $ step [int||Check "sub" stack frames inside "lambdaFun"|]
+
+        -- Actually here should be only one stack frame with name "f"
+        -- but LIGO source mapper treats these "f"s from this contract as different.
+        checkSnapshot ((@=?) ["sub", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 4) (Pos 0)) (SrcPos (Pos 5) (Pos 0))
+
+        lift $ step [int||Check "add" stack frames inside "lambdaFun"|]
+
+        -- The same here.
+        checkSnapshot ((@=?) ["add", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 7) (Pos 0))
+
+        lift $ step [int||Leave "lambdaFun"|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+  , testCaseSteps "Multiple currying" \step -> do
+      let file = contractsDir </> "advanced-curry.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        moveTill Forward $
+          goesBetween (SrcPos (Pos 7) (Pos 0)) (SrcPos (Pos 8) (Pos 0))
+
+        lift $ step [int||Check stack frames in inner "act"|]
+
+        -- The same as in the test above.
+        checkSnapshot ((@=?) ["act", "f", "f", "applyOnce", "applyTwice", "applyThrice", "apply", "main"] . getStackFrameNames)
+
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 10) (Pos 0))
+
+        lift $ step [int||Check stack frames after leaving "act"|]
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
   ]
 
 -- | Special options for checking contract.
