@@ -7,7 +7,7 @@ module AST.Capabilities.Hover
 import Language.LSP.Types qualified as LSP
 
 import AST.Capabilities.Find
-import AST.Scope.ScopedDecl (DeclarationSpecifics (ModuleSpec), ScopedDecl (..), lppDeclCategory)
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), lppDeclCategory)
 import AST.Skeleton
 
 import Duplo.Pretty
@@ -33,8 +33,9 @@ mkContents decl@ScopedDecl{ .. } = LSP.HoverContents $ LSP.MarkupContent
   where
     contentDoc = ppToText $ mconcat
       [ case _sdSpec of
+        TypeSpec{} -> "type " <> lppDeclCategory decl
         ModuleSpec{} -> "module " <> pp _sdName
-        _ -> pp _sdName <> " : " <> lppDeclCategory decl
+        ValueSpec{} -> pp _sdName <> " : " <> lppDeclCategory decl
       , "\n\n"
       , "*defined at* " <> pp _sdOrigin
       , if null _sdDoc
