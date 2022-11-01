@@ -186,6 +186,7 @@ test-suite ligo-debugger-test
       Test.Breakpoints
       Test.DebugInfo
       Test.LigoCall
+      Test.Navigation
       Test.Snapshots
       Test.Util
       Test.Variables
@@ -247,6 +248,7 @@ test-suite ligo-debugger-test
     , directory
     , filepath
     , fmt
+    , hedgehog
     , lens
     , ligo-debugger
     , ligo-squirrel
@@ -259,6 +261,7 @@ test-suite ligo-debugger-test
     , nyan-interpolation-core
     , singletons
     , tasty
+    , tasty-hedgehog
     , tasty-hunit-compat
     , text
     , unliftio

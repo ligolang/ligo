@@ -142,6 +142,7 @@ tests:
       - directory
       - filepath
       - fmt
+      - hedgehog
       - lens
       - ligo-debugger
       - ligo-squirrel
@@ -157,6 +158,7 @@ tests:
       - unliftio
       - unordered-containers
       - HUnit
+      - tasty-hedgehog
       - tasty-hunit-compat
 
     source-dirs:
