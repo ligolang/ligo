@@ -31,6 +31,10 @@ mkContents decl@ScopedDecl{ .. } = LSP.HoverContents $ LSP.MarkupContent
   , _value = contentDoc
   }
   where
+    -- TODO (LIGO-447): Display function parameters.
+    -- TODO (LIGO-695): Use syntax highlighting when printing.
+    -- TODO (LIGO-887): Print more information about declarations.
+    contentDoc :: Text
     contentDoc = ppToText $ mconcat
       [ case _sdSpec of
         TypeSpec{} -> "type " <> lppDeclCategory decl
