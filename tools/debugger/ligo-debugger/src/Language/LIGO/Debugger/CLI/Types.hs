@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE StandaloneKindSignatures, UndecidableInstances #-}
+
+{-# LANGUAGE StandaloneKindSignatures, TypeFamilyDependencies, UndecidableInstances #-}
 
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
@@ -30,7 +31,7 @@ import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Michelson.Text (MText)
 import Morley.Util.Lens
-import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
+import Morley.Util.TypeLits (ErrorMessage (Text), Symbol, TypeError)
 
 import Util
 
@@ -525,11 +526,14 @@ instance FromJSON (LigoMapper u) where
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
 
-class (Exception e) => DebuggerException e
+class (Exception e) => DebuggerException e where
+  type ExceptionTag e = (r :: Symbol) | r -> e
 
 newtype LigoException = LigoException { leMessage :: Text }
   deriving newtype (Eq, Show, FromBuilder)
-  deriving anyclass (DebuggerException)
+
+instance DebuggerException LigoException where
+  type ExceptionTag LigoException = "Ligo"
 
 instance Default LigoException where
   def = LigoException ""
@@ -546,7 +550,9 @@ instance Exception LigoException where
 newtype UnsupportedLigoVersionException =
     UnsupportedLigoVersionException SemVer.Version
   deriving stock (Show)
-  deriving anyclass (DebuggerException)
+
+instance DebuggerException UnsupportedLigoVersionException where
+  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
 
 instance Buildable UnsupportedLigoVersionException where
   build (UnsupportedLigoVersionException ver) =
@@ -577,14 +583,18 @@ instance FromBuilder DAP.Message where
 
 newtype DapMessageException = DapMessageException DAP.Message
   deriving newtype (Show, Buildable, FromBuilder)
-  deriving anyclass (DebuggerException)
+
+instance DebuggerException DapMessageException where
+  type ExceptionTag DapMessageException = "DapMessage"
 
 instance Exception DapMessageException where
   displayException (DapMessageException msg) = DAP.formatMessage msg
 
 newtype ReplacementException = ReplacementException MText
   deriving newtype (Show, Buildable)
-  deriving anyclass (DebuggerException)
+
+instance DebuggerException ReplacementException where
+  type ExceptionTag ReplacementException = "Replacement"
 
 instance Exception ReplacementException where
   displayException = pretty

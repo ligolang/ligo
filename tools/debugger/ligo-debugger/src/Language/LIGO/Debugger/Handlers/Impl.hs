@@ -11,6 +11,7 @@ import Unsafe qualified
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Data.Map qualified as M
+import Data.Singletons (demote)
 import Data.Text qualified as Text
 import Fmt (Builder, blockListF, pretty)
 import Morley.Debugger.Core (slSrcPos)
@@ -24,7 +25,8 @@ import Morley.Debugger.DAP.Types
   DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
   HasSpecificMessages (..), RIO, RequestBase (..), RioContext (..), StopEventDesc (..),
   StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
-import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
+import Morley.Debugger.Protocol.DAP
+  (Message (variablesMessage), ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret (ContractEnv (ceSelf), ceContracts)
@@ -56,6 +58,8 @@ import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
+
+import Util (rmode'semv)
 
 data LIGO
 
@@ -274,22 +278,25 @@ instance HasSpecificMessages LIGO where
   handlersWrapper RequestBase{..} =
     let
       writeErrResponse :: Text -> DAP.Message -> RIO ext ()
-      writeErrResponse msgTag fullMsg =
+      writeErrResponse tag fullMsg =
         writeResponse $ ErrorResponse DAP.defaultErrorResponse
           { DAP.request_seqErrorResponse = seqRequestBase
           , DAP.commandErrorResponse = commandRequestBase
-          , DAP.messageErrorResponse = Just (toString msgTag)
+          , DAP.messageErrorResponse = Just (toString tag)
           , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just fullMsg
           }
     in flip catches
       [ Handler \(e :: LigoException) -> do
-          writeErrResponse (leMessage e) (pretty e)
+          writeErrResponse (demote @(ExceptionTag LigoException)) (pretty e)
 
       , Handler \(DapMessageException msg :: DapMessageException) -> do
-          writeErrResponse (toText $ DAP.formatMessage msg) msg
+          writeErrResponse (demote @(ExceptionTag DapMessageException)) msg
 
       , Handler \(e :: UnsupportedLigoVersionException) -> do
-          writeErrResponse (pretty e) (pretty e)
+          writeErrResponse (demote @(ExceptionTag UnsupportedLigoVersionException)) $
+            (pretty e)
+              { variablesMessage = Just $ M.fromList [("recommendedVersion", [int||#semv{recommendedVersion}|])]
+              }
       ]
 
   handleRequestExt = \case
