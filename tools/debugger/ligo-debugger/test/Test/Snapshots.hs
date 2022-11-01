@@ -18,6 +18,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, (@=?))
 import Test.Util
 import Text.Interpolation.Nyan
+import UnliftIO (forConcurrently_)
 
 import Morley.Debugger.Core
   (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), MovementResult (..),
@@ -1071,6 +1072,7 @@ test_Snapshots = testGroup "Snapshots collection"
 data CheckingOptions = CheckingOptions
   { coEntrypoint :: Maybe String
   , coCheckSourceLocations :: Bool
+  , coCheckEntrypointsList :: Bool
   } deriving stock (Show)
 makeLensesWith postfixLFields ''CheckingOptions
 
@@ -1079,15 +1081,16 @@ instance Default CheckingOptions where
     CheckingOptions
       { coEntrypoint = Nothing
       , coCheckSourceLocations = True
+      , coCheckEntrypointsList = True
       }
 
 -- | This test is checking that @readLigoMapper@ produces ok result for all contracts from @contractsDir@.
 -- Also this test can check contracts with special options
 -- (for e.g. with special entrypoint or should it check source locations for sensibility)
-unit_Contracts_locations_are_sensible :: Assertion
-unit_Contracts_locations_are_sensible = do
+unit_Contracts_are_sensible :: Assertion
+unit_Contracts_are_sensible = do
   contracts <- makeRelative contractsDir <<$>> scanContracts (`notElem` badContracts) contractsDir
-  forM_ contracts testContract
+  forConcurrently_ contracts testContract
   where
     testContract :: FilePath -> Assertion
     testContract contractName = do
@@ -1110,6 +1113,14 @@ unit_Contracts_locations_are_sensible = do
                 assertFailure [int||Expected non-empty file name in loc #{srcLoc} in contract #{contractName}|]
             LorentzContract ->
               assertFailure [int||Unexpected "Lorentz contract" in loc #{srcLoc} in contract #{contractName}|]
+
+      when coCheckEntrypointsList do
+        try @_ @SomeException (getAvailableEntrypoints (contractsDir </> contractName)) >>= \case
+          Right _ -> pass
+          Left exc -> do
+            assertFailure [int||Something unexpected happened with contract #{contractName}:
+              #{displayException exc}
+            |]
 
     -- Contracts with special checking options
     specialContracts :: Map FilePath CheckingOptions
