@@ -105,3 +105,4 @@ end
 module Module_var = Internal ()
 module Value_var = Internal ()
 module Type_var = Internal ()
+module Layout_var = Internal ()

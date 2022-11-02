@@ -7,15 +7,6 @@ module O = Ast_core
 
 let is_layout = String.chop_prefix ~prefix:"layout:"
 
-let get_layout : string list -> Layout.t option =
- fun attributes ->
-  List.find_map attributes ~f:(fun attr ->
-      match is_layout attr with
-      | Some "tree" -> Some Layout.L_tree
-      | Some "comb" -> Some Layout.L_comb
-      | _ -> None)
-
-
 let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
 
 let compile_row_elem_attributes : string list -> string option =
@@ -66,7 +57,7 @@ let compile_row_attributes : string list -> Layout.t option =
  fun attributes ->
   List.find_map attributes ~f:(fun attr ->
       match is_layout attr with
-      | Some "tree" -> Some Layout.L_tree
+      | Some "tree" -> Some (Layout.L_tree : Layout.t)
       | Some "comb" -> Some Layout.L_comb
       | _ -> None)
 

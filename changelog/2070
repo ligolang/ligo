@@ -1,0 +1,6 @@
+author: alistair.obrien
+description: \nAdd layout unification to LIGO's type checker, which fixes existing
+  flaws in the propagation of layout annotations.
+merge_request: '2070'
+title: Layout Unification
+type: fixed

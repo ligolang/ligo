@@ -49,7 +49,7 @@ let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
 let t_mutez = t_tez
 
 let t_record ?loc ~layout fields  : type_expression = make_t ?loc (T_record {fields;layout})
-let default_layout = Layout.L_tree
+let default_layout : Layout.t = Layout.L_tree
 let make_t_ez_record ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = Record.of_list lst in

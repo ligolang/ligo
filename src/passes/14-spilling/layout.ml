@@ -16,7 +16,7 @@ let annotation_or_label annot label = nonempty (Option.value ~default:label anno
 let t_sum ~raise ~layout return compile_type m =
   let open AST.Helpers in
   let lst = kv_list_of_t_sum ~layout m in
-  match layout with
+  match Layout.view layout with
   | L_tree -> (
     let node = Append_tree.of_list lst in
     let aux a b : type_expression annotated =
@@ -72,7 +72,7 @@ let record_tree ~layout ?source_type compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = Record.is_tuple m in
   let lst = kv_list_of_t_record_or_tuple ~layout m in
-  match layout with
+  match Layout.view layout with
   | L_tree -> (
       let node = Append_tree.of_list lst in
       let aux (a_annot, a) (b_annot, b) =
@@ -103,7 +103,7 @@ let t_record_to_pairs ~layout return compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = Record.is_tuple m in
   let lst = kv_list_of_t_record_or_tuple ~layout m in
-  match layout with
+  match Layout.view layout with
   | L_tree -> (
       let node = Append_tree.of_list lst in
       let aux a b : type_expression annotated =
@@ -136,7 +136,7 @@ let t_record_to_pairs ~layout return compile_type m =
 let record_access_to_lr ~raise ~layout ty m_ty index =
   let open AST.Helpers in
   let lst = kv_list_of_t_record_or_tuple ~layout m_ty in
-  match layout with
+  match Layout.view layout with
   | L_tree -> (
       let node_tv = Append_tree.of_list lst in
       let path =
@@ -187,7 +187,7 @@ let record_access_to_lr ~raise ~layout ty m_ty index =
 let record_to_pairs (type exp) ~raise (compile_expression : _ -> exp) (ec_pair : exp -> exp -> exp) (e_tuple : exp list -> exp) record_t record : exp =
   let open AST.Helpers in
   let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.fields record in
-  match record_t.layout with
+  match Layout.view record_t.layout with
   | L_tree -> (
     let node = Append_tree.of_list lst in
     let aux a b : exp =
@@ -204,7 +204,7 @@ let record_to_pairs (type exp) ~raise (compile_expression : _ -> exp) (ec_pair :
 let constructor_to_lr ~raise ~(layout) ty m_ty index =
   let open AST.Helpers in
   let lst = kv_list_of_t_sum ~layout m_ty in
-  match layout with
+  match Layout.view layout with
   | L_tree -> (
       let node_tv = Append_tree.of_list lst in
       let path =
@@ -258,7 +258,7 @@ and variant_pair = variant_tree * Mini_c.type_expression
 
 (* TODO source_type propagation? *)
 let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
-  match (layout : Layout.t) with
+  match Layout.view (layout : Layout.t) with
   | L_tree -> (
       let kt_tree =
         let kt_list = List.map ~f:(fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (Record.LMap.to_kv_list content) in
@@ -304,7 +304,7 @@ let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
 
 let extract_record (type value) ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list)
   (get_pair : _) : _ list =
-  match layout with
+  match Layout.view layout with
   | L_tree -> (
     let open Append_tree in
     let tree = match Append_tree.of_list lst with
@@ -342,7 +342,7 @@ let extract_record (type value) ~raise ~(layout:Layout.t) (v : value) (lst : (La
   )
 
 let extract_constructor (type value) ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list) get_left get_right : (Label.t * value * AST.type_expression) =
-  match layout with
+  match Layout.view layout with
   | L_tree ->
     let open Append_tree in
     let tree = match Append_tree.of_list lst with
