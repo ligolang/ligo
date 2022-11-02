@@ -164,7 +164,10 @@ module.exports = grammar({
     constr_pattern: $ => seq(
       field("constructor", $.ConstrName),
       ':',
-      common.par(optional(field("arg", $.ctor_params)))
+      choice(
+        common.par(optional(field("arg", $.ctor_params))),
+        field("arg", $._binding_pattern)
+      )
     ),
 
     _member_expr: $ => choice(
