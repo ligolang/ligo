@@ -10,16 +10,144 @@ module State = struct
 end
 
 type ('a, 'err, 'wrn) t =
-  raise:('err, 'wrn) raise -> loc:Location.t -> State.t -> State.t * 'a
+  raise:('err, 'wrn) raise
+  -> options:Compiler_options.middle_end
+  -> loc:Location.t
+  -> State.t
+  -> State.t * 'a
+
+let rec encode (type_ : Ast_typed.type_expression) : Type.t =
+  let return content : Type.t =
+    { content
+    ; meta = type_.type_meta
+    ; orig_var = type_.orig_var
+    ; location = type_.location
+    }
+  in
+  match type_.type_content with
+  | T_variable tvar -> return @@ T_variable tvar
+  | T_arrow arr ->
+    let arr = Arrow.map encode arr in
+    return @@ T_arrow arr
+  | T_singleton lit -> return @@ T_singleton lit
+  | T_abstraction abs ->
+    let abs = Abstraction.map encode abs in
+    return @@ T_abstraction abs
+  | T_for_all abs ->
+    let abs = Abstraction.map encode abs in
+    return @@ T_for_all abs
+  | T_constant { language; injection; parameters } ->
+    let parameters = List.map parameters ~f:encode in
+    return @@ T_construct { language; constructor = injection; parameters }
+  | T_sum row ->
+    let row = encode_row row in
+    return @@ T_sum row
+  | T_record row ->
+    let row = encode_row row in
+    return @@ T_record row
+
+
+and encode_row ({ fields; layout } : Ast_typed.rows) : Type.row =
+  let fields = Record.map ~f:encode_row_elem fields in
+  let layout = encode_layout layout in
+  { Type.fields; layout }
+
+
+and encode_row_elem (row_elem : Ast_typed.row_element) : Type.row_element =
+  Rows.map_row_element_mini_c encode row_elem
+
+
+and encode_layout (layout : Layout.t) : Type.layout =
+  match layout with
+  | L_tree -> L_tree
+  | L_comb -> L_comb
+
+
+let rec signature_of_module_expr
+    : ctx:Context.t -> Ast_typed.module_expr -> Context.Signature.t
+  =
+ fun ~ctx mod_expr ->
+  match mod_expr.wrap_content with
+  | M_struct decls -> signature_of_module ~ctx decls
+  | M_variable mvar ->
+    (match Context.get_module ctx mvar with
+    | Some sig_ -> sig_
+    | None -> failwith "Unbounded module")
+  | M_module_path path ->
+    (match Context.get_signature ctx path with
+    | Some sig_ -> sig_
+    | None ->
+      Format.kasprintf
+        failwith
+        "Unbounded signature path: %a"
+        Module_expr.pp_module_path
+        path)
+
+
+and signature_of_module
+    : ctx:Context.t -> Ast_typed.module_ -> Context.Signature.t
+  =
+ fun ~ctx module_ ->
+  match module_ with
+  | [] -> []
+  | decl :: module_ ->
+    let public, sig_item = signature_item_of_decl ~ctx decl in
+    let sig_ =
+      signature_of_module ~ctx:(Context.add_signature_item ctx sig_item) module_
+    in
+    if public then sig_item :: sig_ else sig_
+
+
+and signature_item_of_decl
+    : ctx:Context.t -> Ast_typed.decl -> bool * Context.Signature.item
+  =
+ fun ~ctx decl ->
+  match Location.unwrap decl with
+  | D_value { binder; expr; attr = { public; _ } } ->
+    public, S_value (Binder.get_var binder, encode expr.type_expression)
+  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } }
+    -> public, S_type (tvar, encode type_)
+  | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
+    let sig_' = signature_of_module_expr ~ctx module_ in
+    public, S_module (mvar, sig_')
+
+
+(* Load context from the outside declarations *)
+let ctx_init ?env () =
+  match env with
+  | None -> Context.empty
+  | Some env ->
+    Environment.fold env ~init:Context.empty ~f:(fun ctx decl ->
+        (* Format.printf "%d: %a\n" i (Ast_typed.PP.declaration ~use_hidden:false) decl; *)
+        match Location.unwrap decl with
+        | D_value { binder; expr; attr = _ } ->
+          Context.add_imm
+            ctx
+            (Binder.get_var binder)
+            (encode expr.type_expression)
+        | D_type { type_binder; type_expr; type_attr = _ } ->
+          Context.add_type ctx type_binder (encode type_expr)
+        | D_module { module_binder; module_; module_attr = _ } ->
+          let sig_ = signature_of_module_expr ~ctx module_ in
+          Context.add_module ctx module_binder sig_)
+
+
+let run_elab t ~raise ~options ?env () =
+  let ctx = ctx_init ?env () in
+  let (_ctx, subst), elab =
+    t ~raise ~options ~loc:Location.generated (ctx, Substitution.empty)
+  in
+  Elaboration.run elab ~raise subst
+
 
 include Monad.Make3 (struct
   type nonrec ('a, 'err, 'wrn) t = ('a, 'err, 'wrn) t
 
-  let return result ~raise:_ ~loc:_ state = state, result
+  let return result ~raise:_ ~options:_ ~loc:_ state = state, result
 
-  let bind t ~f ~raise ~loc state =
-    let state, result = t ~raise ~loc state in
-    f result ~raise ~loc state
+  let bind t ~f ~raise ~options ~loc state =
+    let state, result = t ~raise ~options ~loc state in
+    f result ~raise ~options ~loc state
 
 
   let map = `Define_using_bind
@@ -27,41 +155,70 @@ end)
 
 type 'a with_loc = Location.t -> 'a
 
-let all_lmap _ = assert false
-let all_lmap_unit _ = assert false
+let all_lmap (lmap : ('a, 'err, 'wrn) t Record.LMap.t)
+    : ('a Record.LMap.t, 'err, 'wrn) t
+  =
+ fun ~raise ~options ~loc state ->
+  Record.LMap.fold_map lmap ~init:state ~f:(fun _label t state ->
+      t ~raise ~options ~loc state)
+
+
+let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Record.LMap.t)
+    : (unit, 'err, 'wrn) t
+  =
+ fun ~raise ~options ~loc state ->
+  let state =
+    Record.LMap.fold
+      (fun _label t state ->
+        let state, () = t ~raise ~options ~loc state in
+        state)
+      lmap
+      state
+  in
+  state, ()
+
 
 let context () : (Context.t, _, _) t =
- fun ~raise:_ ~loc:_ (ctx, subst) -> (ctx, subst), ctx
+ fun ~raise:_ ~options:_ ~loc:_ (ctx, subst) -> (ctx, subst), ctx
 
 
-let loc () : (Location.t, _, _) t = fun ~raise:_ ~loc state -> state, loc
+let options () : (Compiler_options.middle_end, _, _) t =
+ fun ~raise:_ ~options ~loc:_ state -> state, options
+
+
+let loc () : (Location.t, _, _) t =
+ fun ~raise:_ ~options:_ ~loc state -> state, loc
+
 
 let set_loc loc (in_ : ('a, 'err, 'wrn) t) : ('a, 'err, 'wrn) t =
- fun ~raise ~loc:_ state -> in_ ~raise ~loc state
+ fun ~raise ~options ~loc:_ state -> in_ ~raise ~options ~loc state
 
 
 let set_context ctx : (unit, _, _) t =
- fun ~raise:_ ~loc:_ (_ctx, subst) -> (ctx, subst), ()
+ fun ~raise:_ ~options:_ ~loc:_ (_ctx, subst) -> (ctx, subst), ()
 
 
-let lift_raise f : _ t = fun ~raise ~loc:_ state -> state, f raise
+let lift_raise f : _ t = fun ~raise ~options:_ ~loc:_ state -> state, f raise
 
 let raise_result result ~error : _ t =
- fun ~raise ~loc state ->
+ fun ~raise ~options:_ ~loc state ->
   match result with
   | Ok result -> state, result
   | Error err -> raise.error (error err loc)
 
 
 let raise_opt opt ~error : _ t =
- fun ~raise ~loc state -> state, trace_option ~raise (error loc) opt
+ fun ~raise ~options:_ ~loc state -> state, trace_option ~raise (error loc) opt
 
 
-let raise err : _ t = fun ~raise ~loc _state -> raise.error (err loc)
-let raise_l ~loc err : _ t = fun ~raise ~loc:_ _state -> raise.error (err loc)
+let raise err : _ t = fun ~raise ~options:_ ~loc _state -> raise.error (err loc)
+
+let raise_l ~loc err : _ t =
+ fun ~raise ~options:_ ~loc:_ _state -> raise.error (err loc)
+
 
 let warn wrn : _ t =
- fun ~raise ~loc state ->
+ fun ~raise ~options:_ ~loc state ->
   raise.warning (wrn loc);
   state, ()
 
@@ -86,6 +243,19 @@ let fresh_type_var () =
   let tvar = Type_var.fresh ~loc () in
   return tvar
 
+
+module Options = struct
+  let test () =
+    let open Let_syntax in
+    let%map options = options () in
+    options.test
+
+
+  let syntax () =
+    let open Let_syntax in
+    let%map options = options () in
+    options.syntax_for_errors
+end
 
 type (_, _) exit =
   | Drop : ('a, 'a) exit
@@ -217,9 +387,9 @@ end = struct
   let lock (type a b) ~(on_exit : (a, b) exit) ~(in_ : (a, _, _) t)
       : (b, _, _) t
     =
-   fun ~raise ~loc (ctx, subst) ->
+   fun ~raise ~options ~loc (ctx, subst) ->
     let ctx, lock = Context.lock ctx in
-    let (ctx, subst), result = in_ ~raise ~loc (ctx, subst) in
+    let (ctx, subst), result = in_ ~raise ~options ~loc (ctx, subst) in
     let ctx, subst', (result : b) =
       match on_exit, result with
       | Drop, result ->
@@ -243,12 +413,12 @@ end = struct
   let add (type a b) items ~(on_exit : (a, b) exit) ~(in_ : (a, _, _) t)
       : (b, _, _) t
     =
-   fun ~raise ~loc (ctx, subst) ->
+   fun ~raise ~options ~loc (ctx, subst) ->
     let ctx, pos = Context.mark ctx in
     let ctx =
       List.fold_right items ~init:ctx ~f:(fun item ctx -> Context.add ctx item)
     in
-    let (ctx, subst), result = in_ ~raise ~loc (ctx, subst) in
+    let (ctx, subst), result = in_ ~raise ~options ~loc (ctx, subst) in
     let ctx, subst', (result : b) =
       match on_exit, result with
       | Drop, result ->
@@ -273,7 +443,7 @@ end = struct
 
 
   let push items : _ t =
-   fun ~raise:_ ~loc:_ (ctx, subst) ->
+   fun ~raise:_ ~options:_ ~loc:_ (ctx, subst) ->
     (Context.(ctx |@ of_list items), subst), ()
 
 
@@ -322,18 +492,18 @@ end = struct
 
 
   let add_texists_eq tvar kind type_ : _ t =
-   fun ~raise:_ ~loc:_ (ctx, subst) ->
+   fun ~raise:_ ~options:_ ~loc:_ (ctx, subst) ->
     (Context.add_texists_eq ctx tvar kind type_, subst), ()
 
 
   let add_lexists_eq lvar layout : _ t =
-   fun ~raise:_ ~loc:_ (ctx, subst) ->
+   fun ~raise:_ ~options:_ ~loc:_ (ctx, subst) ->
     (Context.add_lexists_eq ctx lvar layout, subst), ()
 
 
   module Apply = struct
     let type_ type' : _ t =
-     fun ~raise:_ ~loc:_ (ctx, subst) ->
+     fun ~raise:_ ~options:_ ~loc:_ (ctx, subst) ->
       (ctx, subst), Context.Apply.type_ ctx type'
   end
 
@@ -467,8 +637,11 @@ and lift_row ~kind ~tvar ({ fields; layout } : Type.row) : (Type.row, _, _) t =
   let%bind fields =
     fields
     |> Record.map ~f:(fun (row_elem : Type.row_element) ->
-           Context.tapply row_elem.associated_type
-           >>= lift ~mode:Invariant ~kind ~tvar)
+           let%map associated_type =
+             Context.tapply row_elem.associated_type
+             >>= lift ~mode:Invariant ~kind ~tvar
+           in
+           { row_elem with associated_type })
     |> all_lmap
   in
   return { Type.fields; layout }
@@ -720,7 +893,13 @@ let hash_context () =
   return ()
 
 
-let generalize _ = assert false
+let generalize (t : (Type.t * 'a, _, _) t) : (Type.t * (Type_var.t * Kind.t) list * 'a, _, _) t =
+ fun ~raise ~options ~loc (ctx, subst) ->
+  let ctx, pos = Context_.mark ctx in
+  let (ctx, subst), (type_, result) = t ~raise ~options ~loc (ctx, subst) in
+  let ctx, type_, tvars, subst' = Context_.generalize ctx type_ ~pos ~loc in
+  (ctx, Substitution.merge subst subst'), (type_, tvars, result)
+
 
 let create_type ?meta (constr : Type.constr) =
   let open Let_syntax in
@@ -731,10 +910,19 @@ let create_type ?meta (constr : Type.constr) =
 let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err -> ('a, 'err, 'wrn) t)
     : ('a, 'err, 'wrn) t
   =
- fun ~raise ~loc state ->
+ fun ~raise ~options ~loc state ->
   Trace.try_with
-    (fun ~raise ~catch:_ -> body ~raise ~loc state)
-    (fun ~catch:_ err -> with_ err ~raise ~loc state)
+    (fun ~raise ~catch:_ -> body ~raise ~options ~loc state)
+    (fun ~catch:_ err -> with_ err ~raise ~options ~loc state)
+
+
+let try_all (ts : ('a, 'err, 'wrn) t list) : ('a, 'err, 'wrn) t =
+ fun ~raise ~options ~loc state ->
+  Trace.bind_exists
+    ~raise
+    ( (fun ~raise ->
+        raise.error (corner_case "Computation.try_all recieved empty list" loc))
+    , List.map ts ~f:(fun t ~raise -> t ~raise ~options ~loc state) )
 
 
 module With_frag = struct
@@ -768,8 +956,36 @@ module With_frag = struct
     let map = `Define_using_bind
   end)
 
-  let all_lmap _ = assert false
-  let all_lmap_unit _ = assert false
+  let all_lmap (lmap : ('a, 'err, 'wrn) t Record.LMap.t)
+      : ('a Record.LMap.t, 'err, 'wrn) t
+    =
+   fun ~raise ~options ~loc state ->
+    let (state, frag), lmap =
+      Record.LMap.fold_map
+        lmap
+        ~init:(state, [])
+        ~f:(fun _label t (state, frag) ->
+          let state, (frag', result) = t ~raise ~options ~loc state in
+          (state, frag @ frag'), result)
+    in
+    state, (frag, lmap)
+
+
+  let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Record.LMap.t)
+      : (unit, 'err, 'wrn) t
+    =
+   fun ~raise ~options ~loc state ->
+    let state, frag =
+      Record.LMap.fold
+        (fun _label t (state, frag) ->
+          let state, (frag', ()) = t ~raise ~options ~loc state in
+          state, frag @ frag')
+        lmap
+        (state, [])
+    in
+    state, (frag, ())
+
+
   let loc () = lift (loc ())
   let set_loc loc = lift_reader (set_loc loc)
   let raise_result result ~error = lift (raise_result result ~error)

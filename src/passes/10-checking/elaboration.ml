@@ -1,37 +1,28 @@
 module Location = Simple_utils.Location
 open Simple_utils.Trace
 open Ligo_prim
+open Errors
 module I = Type
 module O = Ast_typed
 
-type error = [ `Typer_cannot_decode_texists of Type.t * Location.t ]
-
-let cannot_decode_texists (type_ : Type.t) =
-  `Typer_cannot_decode_texists (type_, type_.location)
-
-
-type 'a t =
-  { f :
-      'err 'wrn.
-      raise:(([> error ] as 'err), 'wrn) raise -> Substitution.t -> 'a
-  }
-[@@unboxed]
+type error = Errors.typer_error
+type warning = Main_warnings.all
+type 'a t = raise:(error, warning) raise -> Substitution.t -> 'a
 
 include Monad.Make (struct
   type nonrec 'a t = 'a t
 
-  let return result = { f = (fun ~raise:_ _subst -> result) }
-
-  let bind t ~f =
-    { f = (fun ~raise subst -> (f (t.f ~raise subst)).f ~raise subst) }
-
-
+  let return result ~raise:_ _subst = result
+  let bind t ~f ~raise subst = (f (t ~raise subst)) ~raise subst
   let map = `Define_using_bind
 end)
 
+let all_lmap (lmap : 'a t Record.LMap.t) : 'a Record.LMap.t t =
+ fun ~raise subst -> Record.LMap.map (fun t -> t ~raise subst) lmap
 
-let all_lmap _ = assert false
-let all_lmap_unit _ = assert false
+
+let all_lmap_unit (lmap : unit t Record.LMap.t) : unit t =
+ fun ~raise subst -> Record.LMap.iter (fun _label t -> t ~raise subst) lmap
 
 
 include Let_syntax
@@ -51,7 +42,7 @@ let rec decode (type_ : Type.t) ~raise subst =
   | I.T_exists tvar ->
     (match Substitution.find_texists_eq subst tvar with
     | Some (_, type_) -> decode type_
-    | None -> raise.error (cannot_decode_texists type_))
+    | None -> raise.error (cannot_decode_texists type_ type_.location))
   | I.T_arrow arr ->
     let arr = Arrow.map decode arr in
     return @@ O.T_arrow arr
@@ -96,5 +87,10 @@ and decode_row ({ fields; layout } : Type.row) ~raise subst =
   O.{ fields; layout }
 
 
-let decode type_ = { f = (fun ~raise subst -> decode type_ ~raise subst) }
-let run t ~raise subst = t.f ~raise subst
+let decode type_ ~raise subst = decode type_ ~raise subst
+
+let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =
+  Pattern_anomalies.check_anomalies ~raise ~syntax ~loc eqs matchee_type
+
+
+let run t ~raise subst = t ~raise subst

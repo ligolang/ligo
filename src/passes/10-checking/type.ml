@@ -284,8 +284,11 @@ let t__type_ ?loc ?meta () : t =
       , "tx_rollup_l2_address"
       , "michelson_contract"
       , "ast_contract"
-      , "int64" )]
+      , "int64"
+      , "michelson_program" )]
 
+
+let t_michelson_code = t_michelson_program
 
 let t__type_ t ?loc ?meta () : t =
   t_construct ?loc ?meta Literal_types._type_ [ t ] ()
@@ -305,21 +308,7 @@ let t__type_ t t' ?loc ?meta () : t =
   [@@map _type_, ("map", "big_map", "typed_address")]
 
 
-let ez_t_record fields ?loc ?meta ?(layout = default_layout) () : t =
-  t_record ?loc ?meta { fields = Record.of_list fields; layout } ()
-
-
-let t_tuple ts ?loc ?meta () =
-  let row_fields =
-    List.mapi ts ~f:(fun i t ->
-        ( Label.of_int i
-        , Rows.
-            { associated_type = t; michelson_annotation = None; decl_pos = i } ))
-  in
-  ez_t_record ?loc ?meta row_fields ()
-
-
-let t_sum_ez fields ?loc ?meta ?(layout = default_layout) () =
+let row_ez fields ?(layout = default_layout) () =
   let fields =
     fields
     |> List.mapi ~f:(fun i (x, y) ->
@@ -328,15 +317,73 @@ let t_sum_ez fields ?loc ?meta ?(layout = default_layout) () =
                : row_element) ))
     |> Record.of_list
   in
-  t_sum ?loc ?meta { fields; layout } ()
+  { fields; layout }
+
+
+let t_record_ez fields ?loc ?meta ?layout () =
+  t_record ?loc ?meta (row_ez fields ?layout ()) ()
+
+
+let t_tuple ts ?loc ?meta () =
+  t_record_ez (List.mapi ts ~f:(fun i t -> Int.to_string i, t)) ?loc ?meta ()
+
+
+let t_pair t1 t2 ?loc ?meta () = t_tuple [ t1; t2 ] ?loc ?meta ()
+let t_triplet t1 t2 t3 ?loc ?meta () = t_tuple [ t1; t2; t3 ] ?loc ?meta ()
+
+let t_sum_ez fields ?loc ?meta ?layout () =
+  t_sum ?loc ?meta (row_ez fields ?layout ()) ()
 
 
 let t_bool ?loc ?meta () =
   t_sum_ez ?loc ?meta [ "True", t_unit (); "False", t_unit () ] ()
 
 
+let t_option t ?loc ?meta () =
+  t_sum_ez ?loc ?meta [ "Some", t; "None", t_unit ?loc () ] ()
+
+
+let t_mutez = t_tez
+
 let t_record_with_orig_var row ~orig_var ?loc ?meta () =
   { (t_record row ?loc ?meta ()) with orig_var }
+
+
+let t_test_baker_policy ?loc ?meta () =
+  t_sum_ez
+    ?loc
+    ?meta
+    [ "By_round", t_int ?loc ()
+    ; "By_account", t_address ?loc ()
+    ; "Excluding", t_list ?loc (t_address ?loc ()) ()
+    ]
+    ()
+
+
+let t_test_exec_error ?loc ?meta () =
+  t_sum_ez
+    ?loc
+    ?meta
+    [ "Rejected", t_pair ?loc (t_michelson_code ?loc ()) (t_address ?loc ()) ()
+    ; ( "Balance_too_low"
+      , t_record_ez
+          ?loc
+          [ "contract_too_low", t_address ?loc ()
+          ; "contract_balance", t_mutez ?loc ()
+          ; "spend_request", t_mutez ?loc ()
+          ]
+          () )
+    ; "Other", t_string ?loc ()
+    ]
+    ()
+
+
+let t_test_exec_result ?loc ?meta () =
+  t_sum_ez
+    ?loc
+    ?meta
+    [ "Success", t_nat ?loc (); "Fail", t_test_exec_error ?loc () ]
+    ()
 
 
 let get_t_construct t constr =

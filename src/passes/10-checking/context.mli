@@ -85,6 +85,13 @@ val split_at : t -> at:item -> t * t
 val mark : t -> t * pos
 val lock : t -> t * mut_lock
 
+val generalize
+  :  t
+  -> Type.t
+  -> pos:pos
+  -> loc:Location.t
+  -> t * Type.t * (Type_var.t * Kind.t) list * Substitution.t
+
 type 'a apply = t -> 'a -> 'a
 
 type _ exit =

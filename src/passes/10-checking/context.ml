@@ -451,11 +451,21 @@ module Apply = struct
 
   and row ctx (t : Type.row) : Type.row =
     let fields = Record.map ~f:(row_elem ctx) t.fields in
-    { t with fields }
+    let layout = layout ctx t.layout in
+    { fields; layout }
 
 
   and row_elem ctx (t : Type.row_element) : Type.row_element =
     Rows.map_row_element_mini_c (type_ ctx) t
+
+
+  and layout ctx (t : Type.layout) : Type.layout =
+    match t with
+    | L_tree | L_comb -> t
+    | L_exists lvar ->
+      (match get_lexists_eq ctx lvar with
+      | Some t -> layout ctx t
+      | None -> t)
 
 
   let rec sig_item ctx (sig_item : Signature.item) : Signature.item =
@@ -872,7 +882,7 @@ end = struct
                  of kind: *. *)
         if List.for_all parameters ~f:(fun param ->
                match loop param with
-               | Some Type -> true
+               | Some (Type | Singleton) -> true
                | _ ->
                  Format.printf "Ill-kinded parameter: %a\n" Type.pp param;
                  false)
@@ -958,6 +968,58 @@ module Hashes = struct
   let find_type (t : Type.t) : (Module_var.t list * Type_var.t) option =
     Hashtbl.find table t
 end
+
+let unsolved t =
+  List.fold_left
+    t
+    ~init:(Substitution.empty, [], [])
+    ~f:(fun (subst, tvars, lvars) item ->
+      match item with
+      | C_lexists_eq (lvar, layout) ->
+        Substitution.add_lexists_eq subst lvar layout, tvars, lvars
+      | C_texists_eq (tvar, kind, type_) ->
+        Substitution.add_texists_eq subst tvar kind type_, tvars, lvars
+      | C_texists_var (tvar, kind) -> subst, (tvar, kind) :: tvars, lvars
+      | C_lexists_var lvar -> subst, tvars, lvar :: lvars
+      | _ -> subst, tvars, lvars)
+
+
+let generalize_type ~loc ~tvars ~subst type_ =
+  (* Fully apply the type w/ the substitution *)
+  let type_ = Substitution.Apply.type_ subst type_ in
+  (* Generalize over [tvars] *)
+  List.fold_right tvars ~init:type_ ~f:(fun (_tvar, (tvar', kind)) type_ ->
+      Type.t_for_all ~loc { ty_binder = tvar'; kind; type_ } ())
+
+
+let generalize t type_ ~pos ~loc =
+  let ctxl, ctxr = split_at t ~at:(C_pos pos) in
+  (* Determine subst and generalizable vars of [ctxr] *)
+  let subst, tvars, lvars = unsolved ctxr in
+  (* Add equations from existential [tvars] (and [lvars])
+     to universal [tvars'] (and [default_layout]) *)
+  let tvars =
+    (* [exn] is safe since [tvar] in tvars shouldn't be duplicated *)
+    List.map tvars ~f:(fun (tvar, kind) ->
+        tvar, (Type_var.fresh_like ~loc tvar, kind))
+  in
+  (* Add layout substs *)
+  let subst =
+    List.fold_left lvars ~init:subst ~f:(fun subst lvar ->
+        Substitution.add_lexists_eq subst lvar Type.default_layout)
+  in
+  (* Add universal tvars *)
+  let subst =
+    List.fold_left tvars ~init:subst ~f:(fun subst (tvar, (tvar', kind)) ->
+        Substitution.add_texists_eq
+          subst
+          tvar
+          kind
+          (Type.t_variable ~loc tvar' ()))
+  in
+  let type_ = generalize_type ~loc ~tvars ~subst type_ in
+  ctxl, type_, List.map tvars ~f:snd, subst
+
 (* 
 module Codec = struct
   module I = Type

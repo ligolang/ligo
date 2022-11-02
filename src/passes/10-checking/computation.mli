@@ -27,6 +27,12 @@ val raise_opt : 'a option -> error:'err Errors.with_loc -> ('a, 'err, 'wrn) t
 val raise : 'err Errors.with_loc -> ('a, 'err, 'wrn) t
 val raise_l : loc:Location.t -> 'err Errors.with_loc -> ('a, 'err, 'wrn) t
 val warn : 'wrn Errors.with_loc -> (unit, 'err, 'wrn) t
+val options : unit -> (Compiler_options.middle_end, 'err, 'wrn) t
+
+module Options : sig
+  val test : unit -> (bool, 'err, 'wrn) t
+  val syntax : unit -> (Syntax_types.t option, 'err, 'wrn) t
+end
 
 type (_, _) exit =
   | Drop : ('a, 'a) exit
@@ -101,6 +107,7 @@ type unify_error =
   | `Typer_unbound_texists_var of Type_var.t * Location.t
   ]
 
+val unify_texists : Type_var.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
 val unify : Type.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
 
 type subtype_error = unify_error
@@ -153,7 +160,7 @@ val def_sig_item
 
 val generalize
   :  (Type.t * 'a, 'err, 'wrn) t
-  -> (Type.t * Type_var.t list * 'a, 'err, 'wrn) t
+  -> (Type.t * (Type_var.t * Kind.t) list * 'a, 'err, 'wrn) t
 
 val assert_ : bool -> error:'err Errors.with_loc -> (unit, 'err, 'wrn) t
 val fresh_type_var : unit -> (Type_var.t, 'err, 'wrn) t
@@ -161,6 +168,10 @@ val fresh_type_var : unit -> (Type_var.t, 'err, 'wrn) t
 val try_
   :  ('a, 'err, 'wrn) t
   -> with_:('err -> ('a, 'err, 'wrn) t)
+  -> ('a, 'err, 'wrn) t
+
+val try_all
+  :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
   -> ('a, 'err, 'wrn) t
 
 module With_frag : sig
@@ -222,3 +233,13 @@ module With_frag : sig
   val extend : fragment -> (unit, 'err, 'wrn) t
   val run : ('a, 'err, 'wrn) t -> (fragment * 'a, 'err, 'wrn) e
 end
+
+val encode : Ast_typed.type_expression -> Type.t
+
+val run_elab
+  :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t
+  -> raise:(Errors.typer_error, Main_warnings.all) raise
+  -> options:Compiler_options.middle_end
+  -> ?env:Environment.t
+  -> unit
+  -> 'a
