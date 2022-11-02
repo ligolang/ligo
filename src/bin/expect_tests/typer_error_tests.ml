@@ -323,11 +323,6 @@ let%expect_test _ =
 (*
   Here, the two tuples have 4 changes and different sizes.
   The diff should display these changes.
-
-  TODO : The diff shouldn't display the [+ tez; - tez],
-  it should choose [REMOVE nat; KEEP tez; ADD nat]
-  instead of [RELPACE nat BY tez; REPLACE tez BY nat]
-  there is a problem in the computation of change weights.
 *)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo" ] ;
@@ -344,8 +339,7 @@ let%expect_test _ =
     + tez
       int
     - nat
-    + tez
-    - tez
+      tez
     + nat
       string
     - int |}]
@@ -467,16 +461,14 @@ let%expect_test _ =
     cannot unify [tuple_a] with [tuple_b]
   and not the whole list types :
     cannot unify [tuple_a list] with [tuple_b list]
-
-  TODO : Below, it should be [- int + tez] and not [+ tez - int]
 *)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo", line 4, characters 65-66:
-      3 |   let x : (string * int * nat * int *       string * int) list = [ "foo" , 42  , 24n , 42 ,        "bar",  42 ] in
-      4 |   let y : (tez    * int       * tez * nat * string)       list = x in
-      5 |   ([] : operation list), s
+      3 |   let x : (string * int *       nat * int * string * int) list = [ "foo" , 42  , 24n , 42 ,        "bar",  42 ] in
+      4 |   let y : (tez    * int * tez * nat *       string)       list = x in
+      5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
     Invalid type(s)
     Cannot unify ( string * int * nat * int * string * int ) with ( tez * int * tez * nat * string ).
@@ -484,10 +476,9 @@ let%expect_test _ =
     - string
     + tez
       int
-    - nat
     + tez
+      nat
     - int
-    + nat
       string
     - int |}]
 

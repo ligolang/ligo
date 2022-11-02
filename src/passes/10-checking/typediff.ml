@@ -122,8 +122,8 @@ end = struct
           let total_weight = List.fold ~init:0 ~f:(+) diff_weights in
           total_weight
         | T_record r, _
-        | _         , T_record r -> List.length @@ rows_to_te_list r
-        | _                      -> 1
+        | _         , T_record r -> 1 + (List.length @@ rows_to_te_list r) (* one single insertion + n removals (or the contrary) *)
+        | _                      -> 1 + 1 (* one single insertion + one signle removal *)
         )
   
   let test : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result =
