@@ -1,5 +1,17 @@
 
 (*
+  In this case, the tuple is itself composed of several
+  long sub-tuples.
+
+  The diff will only display lines like
+  "REPLACE big_subtuple_a BY big_subtuple_b",
+
+  Ideally we would like to get a more precise
+  diff of the subtuples themselves.
+
+  But introducing "sub-diffs" (of the subtuples)
+  within the diff (of the two toplevel tuples)
+  may be confusing.
 *)
 
 type s       = nat * tez * tez * nat
