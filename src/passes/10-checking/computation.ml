@@ -134,10 +134,13 @@ let ctx_init ?env () =
 
 let run_elab t ~raise ~options ?env () =
   let ctx = ctx_init ?env () in
-  let (_ctx, subst), elab =
+  let ctx, pos = Context.mark ctx in
+  let (ctx, subst), elab =
     t ~raise ~options ~loc:Location.generated (ctx, Substitution.empty)
   in
-  Elaboration.run elab ~raise subst
+  (* Drop to get any remaining equations that relate to elaborated thing *)
+  let _ctx, subst' = Context.drop_until ctx ~pos ~on_exit:Drop in
+  Elaboration.run elab ~raise (Substitution.merge subst subst')
 
 
 include Monad.Make3 (struct
