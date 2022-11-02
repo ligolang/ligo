@@ -205,6 +205,14 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         let%bind type_ = decode type_ in
         return @@ O.make_e ~location:loc content type_)
   in
+  let const_with_type content type_ =
+    let%bind loc = loc () in
+    return
+      E.(
+        let%bind content = content in
+        let%bind type_ = decode type_ in
+        return @@ O.make_e ~location:loc content type_)
+  in
   match expr.expression_content, type_.content with
   | E_literal lit, T_construct _ ->
     let%bind lit_type, expr = infer_literal lit in
@@ -216,10 +224,18 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     return expr
   | ( E_type_abstraction { type_binder = tvar; result }
     , T_for_all { ty_binder = tvar'; kind; type_ } ) ->
-    def_type_var
-      [ tvar, kind ]
-      ~on_exit:Drop
-      ~in_:(check result (Type.subst_var type_ ~tvar:tvar' ~tvar':tvar))
+    let type_ = Type.subst_var type_ ~tvar:tvar' ~tvar':tvar in
+    let%bind result =
+      def_type_var [ tvar, kind ] ~on_exit:Drop ~in_:(check result type_)
+    in
+    let%bind type_ =
+      create_type @@ Type.t_for_all { ty_binder = tvar; kind; type_ }
+    in
+    const_with_type
+      E.(
+        let%bind result = result in
+        return @@ O.E_type_abstraction { type_binder = tvar; result })
+      type_
   | _, T_for_all { ty_binder = tvar; kind; type_ } ->
     let%bind tvar' = fresh_type_var () in
     let%bind result =
@@ -261,7 +277,6 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       raise_opt ~error:(bad_record_access path)
       @@ Record.LMap.find_opt path row.fields
     in
-    (* TODO: tapply? *)
     let%bind update = check update field_row_elem.associated_type in
     const
       E.(
@@ -360,8 +375,7 @@ and infer_expression (expr : I.expression)
        in
        let%bind ret_type =
          create_type
-         @@ Type.t_for_all
-              { ty_binder = tvar; kind = Type; type_ = ret_type }
+         @@ Type.t_for_all { ty_binder = tvar; kind = Type; type_ = ret_type }
        in
        const
          E.(
@@ -551,14 +565,13 @@ and infer_expression (expr : I.expression)
       raise_opt ~error:(bad_record_access path)
       @@ Record.LMap.find_opt path row.fields
     in
-    (* TODO: TAPPLY? *)
     let%bind update = check update field_row_elem.associated_type in
     const
       E.(
         let%bind struct_ = struct_
         and update = update in
         return @@ O.E_update { struct_; path; update })
-      field_row_elem.associated_type
+      record_type
   | E_constructor { constructor = Label label as constructor; _ }
     when String.(label = "M_right" || label = "M_left") ->
     raise (michelson_or_no_annotation constructor)
