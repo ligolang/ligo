@@ -117,6 +117,19 @@ packages:
   original:
     hackage: show-type-0.1.1
 - completed:
+    commit: 65b4d337285ec42d8e998ac141de39dc20ff6ea0
+    git: https://github.com/serokell/lootbox.git
+    name: loot-prelude
+    pantry-tree:
+      sha256: 47da19ed2f317b2f7c6f70a8517c275e7bd8bf25bd628cf271d08d6b5bc5b8ec
+      size: 264
+    subdir: code/prelude
+    version: 0.0.0.0
+  original:
+    commit: 65b4d337285ec42d8e998ac141de39dc20ff6ea0
+    git: https://github.com/serokell/lootbox.git
+    subdir: code/prelude
+- completed:
     commit: 0552a366b90be5c361f7394447291d8de3b9d0e2
     git: https://github.com/co-log/co-log.git
     name: co-log

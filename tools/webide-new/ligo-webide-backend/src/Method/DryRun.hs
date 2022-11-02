@@ -4,6 +4,7 @@ import Data.Text qualified as Text
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
 import Common (WebIDEM)
+import Error (LigoCompilerError(..))
 import Ligo (runLigo)
 import Schema.CompilerResponse (CompilerResponse(..))
 import Schema.DryRunRequest (DryRunRequest(..))
@@ -24,4 +25,4 @@ dryRun request =
 
     case ec of
       ExitSuccess -> pure (CompilerResponse $ Text.pack out)
-      ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
+      ExitFailure _ -> throwM $ LigoCompilerError $ Text.pack err

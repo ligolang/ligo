@@ -20,5 +20,5 @@ type API =
   :<|> "list-declarations" :> ReqBody '[JSON] ListDeclarationsRequest :> Post '[JSON] ListDeclarationsResponse
 
 type SwaggeredAPI =
-  SwaggerSchemaUI "swagger-ui" "swagger.json"
+  SwaggerSchemaUI "swagger-ui" "openapi.json"
     :<|> API

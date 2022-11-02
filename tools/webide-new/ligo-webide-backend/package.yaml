@@ -1,7 +1,8 @@
 name:                ligo-webide-backend
 
 dependencies:
-- base >= 4.7 && < 5
+- base-noprelude >= 4.9 && < 5
+- loot-prelude
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -70,17 +71,19 @@ library:
   - directory
   - exceptions
   - filepath
+  - fmt
   - katip
   - megaparsec
+  - microlens-platform
   - morley
   - morley-client
   - mtl
   - process
   - servant-client
   - servant-server
-  - servant-swagger
   - servant-swagger-ui
-  - swagger2
+  - servant-openapi3
+  - openapi3
   - temporary
   - text
   - wai
@@ -99,6 +102,13 @@ executables:
     dependencies:
     - ligo-webide-backend
     - optparse-applicative
+
+  swagger-gen:
+    main: Main.hs
+    source-dirs: scripts/swagger-gen
+    dependencies:
+      - aeson
+      - ligo-webide-backend
 
 tests:
   ligo-webide-backend-test:
