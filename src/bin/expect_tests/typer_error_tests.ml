@@ -227,35 +227,71 @@ let%expect_test _ =
 
 (* Note : Disabling color in below tests (through the [--no-color] option) prevents
    the introduction of ANSI escape sequences in the expected output *) 
+
+
+(* In this case, the types are not record types,
+   no diff should be displayed *)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo", line 6, characters 17-18:
-      5 |   let  x : int = 42 in
-      6 |   let _y : nat = x in
-      7 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo", line 4, characters 17-18:
+      3 |   let  x : int = 42 in
+      4 |   let _y : nat = x in
+      5 |   ([] : operation list), s
 
     Invalid type(s)
     Cannot unify int with nat. |}]
 
+(* In this case, one of the types is a tuple but not the other
+   no diff should be displayed *)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo", line 6, characters 32-33:
-      5 |   let  x = 42 in
-      6 |   let _y : nat * int * string = x in
-      7 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo", line 4, characters 32-33:
+      3 |   let  x = 42 in
+      4 |   let _y : nat * int * string = x in
+      5 |   ([] : operation list), s
 
     Invalid type(s)
     Cannot unify int with ( nat * int * string ). |}]
 
+(*
+  Here, the two tuples have no types in common and different sizes.
+  The diff should display deletion of all elements of first tuple
+  and insertion of all elements of the second.
+
+  TODO NP :
+  Instead of display - + - +... :
+    - string
+    + tez
+    - int
+    + nat
+    - int
+    + tez
+    - string
+  we want to display instead :
+    - string
+    - int
+    - int
+    + tez
+    + nat
+    + tez
+    - string
+  i.e., consecutive changes
+    CHANGE A1 TO B1; CHANGE A2 TO B2
+  shouldn't appear as 
+    DELETE A1; INSERT B1; DELETE A2; INSERT B2
+  but instead :
+    DELETE A1; DELETE A2; INSERT B1; INSERT B2
+
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo", line 34, characters 29-30:
-     33 |   let  x = "foo", 42, 24, "bar" in
-     34 |   let _y : tez * nat * tez = x in
-     35 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo", line 4, characters 40-41:
+      3 |   let y : string * int * int * string = "foo", 42, 24, "bar" in
+      4 |   let x : tez    * nat * tez          = y in
+      5 |   ([] : operation list), s
 
     Invalid type(s)
     Cannot unify ( string * int * int * string ) with ( tez * nat * tez ).
@@ -268,45 +304,60 @@ let%expect_test _ =
     + tez
     - string |}]
 
+(*
+  Here, the two tuples have some changes (1 change, 1 addition, 1 deletion)
+  but they have the *same size*, so the typer will only display an error
+  on the first difference only (here, [string] vs. [tez])
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo", line 9, characters 54-55:
-      8 |   let  x =  "foo" , 42  , 24n , 42 ,        "bar" in
-      9 |   let _y : (tez   * int       * tez * nat * string) = x in
-     10 |   //        ^^^^^         ^^^         ^^^
+    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo", line 4, characters 53-54:
+      3 |   let  x : string * int * nat * int *       string = "foo" , 42  , 24n , 42 ,        "bar" in
+      4 |   let _y : tez    * int       * tez * nat * string = x in
+      5 |   //        ^^^^^         ^^^         ^^^
 
     Invalid type(s)
     Cannot unify string with tez. |}]
 
+(*
+  Here, the two tuples have 4 changes and different sizes.
+  The diff should display these changes.
+
+  TODO : The diff shouldn't display the [+ tez; - tez],
+  it should choose [REMOVE nat; KEEP tez; ADD nat]
+  instead of [RELPACE nat BY tez; REPLACE tez BY nat]
+  there is a problem in the computation of change weights.
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo", line 8, characters 58-59:
-      7 |   let  x =  "foo" , 42  , 24n , 42 ,        "bar",  42 in
-      8 |   let _y : (tez   * int       * tez * nat * string)     = x in
-      9 |   //        ^^^^^         ^^^         ^^^           ^^
+    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo", line 4, characters 59-60:
+      3 |   let  x : string * int * nat * tez *       string * int =  "foo" , 42  , 24n , 42tez ,        "bar",  42 in
+      4 |   let _y : tez    * int       * tez * nat * string       = x in
+      5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
     Invalid type(s)
-    Cannot unify ( string * int * nat * int * string * int ) with ( tez * int * tez * nat * string ).
+    Cannot unify ( string * int * nat * tez * string * int ) with ( tez * int * tez * nat * string ).
     Difference between the types:
     - string
     + tez
       int
     - nat
     + tez
-    - int
+    - tez
     + nat
       string
     - int |}]
 
+(* Yet another example, with longer tuples this time *)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo", line 14, characters 15-16:
-     13 |   let x  : a = 42 , 4n , 42 , 24n , 42 , 24n in
-     14 |   let _y : b = x in
-     15 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo", line 4, characters 72-73:
+      3 |   let x  : int *                nat * int * nat     * int *       nat = 42 , 4n , 42 , 24n , 42 , 24n in
+      4 |   let _y : int * tez * string * nat * int * address * int * tez * nat = x in
+      5 | //               ^^^   ^^^^^^               ^^^^^^^         ^^^
 
     Invalid type(s)
     Cannot unify ( int * nat * int * nat * int * nat ) with ( int * tez * string * nat * int * address * int * tez * nat ).
@@ -322,13 +373,49 @@ let%expect_test _ =
     + tez
       nat |}]
 
+(*
+  Here we have a tuple nested inside another
+  The diff should suggest a [REPLACE subtuple_a BY subtuple_b]
+  
+  For example :
+    int * string * (nat * tez * nat) *          tez
+  vs.
+    int *          (nat * tez * int) * string * tez * address
+          ^^^^^^                ^^^
+  Here, we suppose the probable desired diff is :
+    DELETE string
+    CHANGE (nat * tez * nat) TO (nat * tez * int) (TODO NP : Ideally have diff of subtuples somehow)
+    ADD    string
+    keep   tez
+    ADD    address
+  But if all changes were considered equal, we would have :
+    CHANGE string            TO (nat * tez * int)
+    CHANGE (nat * tez * nat) TO string
+    keep   tez
+    ADD    address
+  
+  But weights are computed accordingly to the size of the types involved,
+  so the first diff should be chosen over the second.
+  In the first diff,
+    weight DELETE string = 1
+    weight CHANGE (nat * tez * nat) TO (nat * tez * int) = 0 + 0 + 1 = 1
+    weight ADD string = 1
+    total weight = 1 + 1 + 1 = 3
+  In the second diff, however
+    weight CHANGE string            TO (nat * tez * int) = 3
+    weight CHANGE (nat * tez * nat) TO string = 3
+    total weight = 3 + 3 = 6
+
+  Because both subtuples are similar, the weight to change subtuple_a
+  into subtuple_b is low (it's 0 + 0 + 1 = 1), so this diff is prefered.
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo", line 32, characters 15-16:
-     31 |   let  x : a = 1, "a", (1n, 1tez, 1n), 1tez in
-     32 |   let _y : b = x in
-     33 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo", line 4, characters 71-72:
+      3 |   let  x : int * string * (nat * tez * nat) *          tez           = 1, "a", (1n, 1tez, 1n), 1tez in
+      4 |   let _y : int *          (nat * tez * int) * string * tez * address = x in
+      5 |   //             ^^^^^^                ^^^    ^^^^^^         ^^^^^^^
 
     Invalid type(s)
     Cannot unify ( int * string * ( nat * tez * nat ) * tez ) with ( int * ( nat * tez * int ) * string * tez * address ).
@@ -341,13 +428,26 @@ let%expect_test _ =
       tez
     + address |}]
 
+(*
+  In this case, the tuple is itself composed of several
+  long sub-tuples.
+
+  Since [s] and [s_close] are similar types,
+  the weight to change one into another
+  should be less than to change [s] to [s1] or [s2] or [s3] etc.
+  So the diff should "match" [s] and [s_close] together,
+  in a [REPLACE s BY s_close]
+
+  TODO : Ideally we would like to get a more precise
+         diff of the subtuples themselves.
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo", line 27, characters 15-16:
-     26 |   let  x : a = 42, (1n, 1tez, 1tez, 1n), 1n in
-     27 |   let _y : b = x in
-     28 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo", line 9, characters 48-49:
+      8 |   let  x : int *           s       *      nat = 42, (1n, 1tez, 1tez, 1n), 1n in
+      9 |   let _y : int * s1 * s2 * s_close * s2 * nat = x in
+     10 |   ([] : operation list), s
 
     Invalid type(s)
     Cannot unify ( int * ( nat * tez * tez * nat ) * nat ) with ( int * ( string * address * string * tez ) * ( address * int * int * int ) * ( nat * tez * int * nat ) * ( address * int * int * int ) * nat ).
@@ -360,13 +460,23 @@ let%expect_test _ =
     + ( address * int * int * int )
       nat |}]
 
+(*
+  When two mismatching tuples are within lists,
+  here [tuple_a list] vs [tuple_b list]
+  the error should target the tuples themselves :
+    cannot unify [tuple_a] with [tuple_b]
+  and not the whole list types :
+    cannot unify [tuple_a list] with [tuple_b list]
+
+  TODO : Below, it should be [- int + tez] and not [+ tez - int]
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo", line 16, characters 15-16:
-     15 |   let  x = [ "foo" , 42  , 24n , 42 ,        "bar",  42 ] in
-     16 |   let _y : b = x in
-     17 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo", line 4, characters 65-66:
+      3 |   let x : (string * int * nat * int *       string * int) list = [ "foo" , 42  , 24n , 42 ,        "bar",  42 ] in
+      4 |   let y : (tez    * int       * tez * nat * string)       list = x in
+      5 |   ([] : operation list), s
 
     Invalid type(s)
     Cannot unify ( string * int * nat * int * string * int ) with ( tez * int * tez * nat * string ).
@@ -381,36 +491,62 @@ let%expect_test _ =
       string
     - int |}]
 
+(*
+  In this case,
+  the two records have the same field labels,
+  but with a type mismatch in one of their fields,
+  the typer will pinpoint the precise type mismatch :
+  here, [string] vs. [nat]
+
+  TODO : We should add location to show where is the
+  [string] and [nat] in the source code,
+  otherwise it can be difficult to see where is
+  the mismatch when the types are long.
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo", line 20, characters 14-15:
-     19 |   let y : a = {foo = 1 ; bar = (2n, "lol") } in
-     20 |   let x : b = y in
-     21 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo", line 4, characters 47-48:
+      3 |   let y : {foo : int ; bar : (nat * string)} = {foo = 1 ; bar = (2n, "lol") } in
+      4 |   let x : {foo : int ; bar : (nat * nat   )} = y in
+      5 |   //                                ^^^^^^
 
     Invalid type(s)
     Cannot unify string with nat. |}]
 
+(*
+  In this case, the two records DON'T have the same field labels.
+
+  TODO : Add a diff for records, just like tuples,
+  to clarify where is the mismatch.
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo", line 14, characters 14-15:
-     13 |   let y : a = {foo = 1 ; bar = (2n, "lol") ; third_field = 42tez } in
-     14 |   let x : b = y in
-     15 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo", line 4, characters 67-68:
+      3 |   let y : {foo : int ; bar : (nat * string) ; third_field : tez} = {foo = 1 ; bar = (2n, "lol") ; third_field = 42tez } in
+      4 |   let x : {foo : int ; bar : (nat * nat   )}                     = y in
+      5 |   //                                ^^^^^^    ^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify record[bar -> ( nat * string ) , foo -> int , third_field -> tez] with
     record[bar -> ( nat * nat ) , foo -> int]. |}]
 
+(*
+  In this case, the typer will stop at the first mismatch
+  between arrow components.
+  In below example, it will fail at [nat] vs. [int].
+
+  TODO : How can we make the error message more precise
+  and pinpoint a clear diff between both arrow types ?
+*)
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo", line 15, characters 15-16:
-     14 |   let  x : a = (fun _x _y _z -> 1tez) in
-     15 |   let _y : b = x in
-     16 |   ([] : operation list), s
+    File "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo", line 4, characters 45-46:
+      3 |   let  x : int -> nat -> nat -> tez        = (fun _x _y _z -> 1tez) in
+      4 |   let _y : int -> int -> int -> int -> nat = x in
+      5 |   //              ^^^    ^^^    ^^^    ^^^
 
     Invalid type(s)
     Cannot unify int with nat. |}]
