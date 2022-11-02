@@ -12,10 +12,12 @@ module Language.LIGO.Debugger.CLI.Call
   , isSupportedVersion
   , minimalSupportedVersion
   , recommendedVersion
-  , mentionVersionIssues
+  , getVersionIssuesDetails
+  , UnsupportedLigoVersionException (..)
   ) where
 
 import Data.Aeson qualified as Aeson
+import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
 import Data.Text qualified as T
 import Fmt (Buildable, build, pretty)
@@ -31,6 +33,7 @@ import Morley.Michelson.Parser qualified as MP
 import Morley.Michelson.Untyped qualified as MU
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Error
 import Util
 
 withMapLigoExc :: (MonadUnliftIO m) => m a -> m a
@@ -104,6 +107,25 @@ getAvailableEntrypoints file = withMapLigoExc $
 
 -- Versions
 ----------------------------------------------------------------------------
+
+-- | The current LIGO version is completely unsupported.
+data UnsupportedLigoVersionException = UnsupportedLigoVersionException SemVer.Version
+  deriving stock (Show)
+
+instance Buildable UnsupportedLigoVersionException where
+  build (UnsupportedLigoVersionException verActual) =
+    [int||Used `ligo` executable has #semv{verActual} version which is not supported|]
+
+instance Exception UnsupportedLigoVersionException where
+  displayException = pretty
+
+instance DebuggerException UnsupportedLigoVersionException where
+  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
+  debuggerExceptionType _ = UserException
+  debuggerExceptionData (UnsupportedLigoVersionException verActual) = M.fromList
+    [ ("actualVersion", [int||#semv{verActual}|])
+    , ("recommendedVersion", [int||#semv{recommendedVersion}|])
+    ]
 
 -- | Run ligo to get the version of executable.
 getLigoVersion :: (HasLigoClient m) => m LSP.Version
@@ -199,12 +221,11 @@ recommendedVersion :: SemVer.Version
 recommendedVersion =
   $$(readSemVerQ $ resourcesFolder </> "versions" </> "recommended")
 
--- | Update an error so that it mentions issues with ligo version being
--- unsupported in case any such issues take place.
-mentionVersionIssues :: (HasLigoClient m) => Text -> m Text
-mentionVersionIssues exc = do
-  mVer <- parseLigoVersion <$> getLigoVersion
-  let verNote = case mVer of
+-- | A clarifying message that mentions issues with ligo version being
+-- unsupported, in case any such issues take place.
+getVersionIssuesDetails :: (HasLigoClient m) => m (Maybe Text)
+getVersionIssuesDetails = do
+  (parseLigoVersion <$> getLigoVersion) <&> \case
         Nothing -> Just [int|n|
           You seem to be using not a stable release of ligo,
           consider trying #semv{recommendedVersion}.
@@ -224,5 +245,3 @@ mentionVersionIssues exc = do
             the extension is released.
             |]
           VersionSupported -> Nothing
-  return $
-    maybe id (\note' e -> e <> "\n" <> note') verNote exc

@@ -21,6 +21,7 @@ import stream from 'stream'
 import * as ee from 'events'
 import * as vscode from 'vscode'
 import { isDefined } from './base';
+import { version } from 'process';
 
 type LigoSpecificRequest
 	= 'initializeLogger'
@@ -31,43 +32,75 @@ type LigoSpecificRequest
 	| 'validateValue'
 	;
 
-function processErrorResponse(response: DebugProtocol.ErrorResponse) {
-	if (isDefined(response.body.error)) {
-		let formattedMessage = response.body.error.format;
-		switch (response.message) {
-			case "Ligo":
-				vscode.window.showErrorMessage("Error", { detail: formattedMessage, modal: true });
-				break;
-			case "DapMessage":
-				vscode.window.showErrorMessage(formattedMessage);
-				break;
-			case "UnsupportedLigoVersion":
-				vscode.window.showWarningMessage(formattedMessage, "Open latest supported release page")
-					.then(answer => {
-						if (isDefined(answer)) {
-							let latestSupported = response.body.error?.variables?.recommendedVersion;
-							if (!isDefined(latestSupported)) {
-								latestSupported = "";
-							}
+/**
+ * Make up a large text for an error.
+ *
+ * It will be marked to appear in a modal dialog box as other options do
+ * not allow for showing large texts conveniently.
+ */
+function largeError(...messageParts: string[]): vscode.MessageOptions {
+	return { modal: true, detail: messageParts.join("\n\n") }
+}
 
-							vscode.env.openExternal(vscode.Uri.parse("https://gitlab.com/ligolang/ligo/-/releases/" + latestSupported))
-								.then(result => {
-									if (!result) {
-										vscode.window.showErrorMessage("Failed to open LIGO releases page.");
-									}
+function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
+	if (!isDefined(response.body.error)) {
+		return
+	}
 
-									return result;
-								});
+	let formattedMessage = response.body.error.format;
+
+	// Special exception types
+	switch (response.message) {
+		case "UnsupportedLigoVersion":
+			vscode.window.showWarningMessage(formattedMessage, "Open latest supported release page")
+				.then(answer => {
+					if (isDefined(answer)) {
+						let latestSupported = response.body.error?.variables?.recommendedVersion;
+						if (!isDefined(latestSupported)) {
+							latestSupported = "";
 						}
-					});
-				break;
-			case "Replacement":
-				vscode.window.showErrorMessage("Internal error", { detail: formattedMessage, modal: true });
-				break;
-			// TODO: Add more exception types
-			default:
-				vscode.window.showWarningMessage(formattedMessage);
-		}
+
+						vscode.env.openExternal(vscode.Uri.parse("https://gitlab.com/ligolang/ligo/-/releases/" + latestSupported))
+							.then(result => {
+								if (!result) {
+									vscode.window.showErrorMessage("Failed to open LIGO releases page.");
+								}
+
+								return result;
+							});
+					}
+				});
+			return;
+	}
+
+	// Handling exception origins
+	switch (response.body.error?.variables?.origin) {
+		case "user":
+			vscode.window.showErrorMessage("Error", largeError(formattedMessage));
+			return;
+		case "ligo":
+			vscode.window.showErrorMessage("LIGO reported error", largeError(formattedMessage));
+			return;
+		case "adapter-ligo":
+			const versionIssues = response.body.error?.variables?.versionIssues
+			vscode.window.showErrorMessage("Unexpected output from LIGO", largeError
+				( isDefined(versionIssues)
+					? versionIssues
+					: "Some unexpected error when communicating with LIGO"
+				, "Details: " + formattedMessage
+				));
+			return;
+		case "adapter-plugin":
+		case "adapter":
+			// TODO [LIGO-892]: we need to provide details on how to reach us
+			vscode.window.showErrorMessage("Internal error happened", largeError
+				( "Please contact us."
+				, "Details: " + formattedMessage
+				));
+			return;
+		default:
+			vscode.window.showErrorMessage("Some error", largeError(formattedMessage));
+			return;
 	}
 }
 

@@ -266,30 +266,19 @@ instance HasSpecificMessages LIGO where
 
   handlersWrapper RequestBase{..} = flip catches
     [ Handler \(SomeDebuggerException (err :: excType)) -> do
-      fullMsg <-
-        let
-          mentionErrorAsInternal = [int|m|
-            Internal error #{id}
+        versionIssuesDetails <- case debuggerExceptionType err of
+          -- TODO: make this pure, carry version in the LS state
+          MidLigoLayerException -> getVersionIssuesDetails
+          _ -> pure Nothing
 
-            Please contact us.
-            |]
-          excTypeUpdate = case debuggerExceptionType err of
-            UserException -> pure
-            LigoLayerException ->
-              pure . ("LIGO reported error: \n\n" <>)
-            MidLigoLayerException ->
-              -- TODO: make this pure, carry version in the LS state
-              mentionVersionIssues . ("Unexpected output of LIGO: " <>)
-            MidPluginLayerException ->
-              pure . mentionErrorAsInternal
-            AdapterInternalException ->
-              pure . mentionErrorAsInternal
-        in excTypeUpdate $ toText (displayException err)
-
-      writeErrResponse @excType $ DAP.defaultMessage
-        { DAP.formatMessage = toString fullMsg
-        , DAP.variablesMessage = debuggerExceptionData err
-        }
+        writeErrResponse @excType $ DAP.defaultMessage
+          { DAP.formatMessage = displayException err
+          , DAP.variablesMessage = Just $ mconcat
+              [ one ("origin", pretty (debuggerExceptionType err))
+              , maybe mempty (one . ("versionIssues", ) . toString) versionIssuesDetails
+              , debuggerExceptionData err
+              ]
+          }
 
     , Handler \(SomeException err) -> do
         writeErrResponse @ImpossibleHappened
@@ -388,7 +377,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   runMaybeT do
     Just ligoVer <- pure $ parseLigoVersion rawVersion
     VersionUnsupported <- pure $ isSupportedVersion ligoVer
-    throwIO $ UnsupportedLigoVersionException ligoVer recommendedVersion
+    throwIO $ UnsupportedLigoVersionException ligoVer
 
   writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
     { seqLigoSetLigoBinaryPathResponse = 0

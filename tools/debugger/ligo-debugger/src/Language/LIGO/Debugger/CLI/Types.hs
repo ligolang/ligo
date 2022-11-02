@@ -17,9 +17,7 @@ import Data.Aeson.Types qualified as Aeson
 import Data.Char (isDigit)
 import Data.Default (Default (..))
 import Data.List qualified as L
-import Data.Map qualified as M
 import Data.Scientific qualified as Sci
-import Data.SemVer qualified as SemVer
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
 import Data.Vector qualified as V
@@ -573,27 +571,6 @@ instance Exception LigoDecodeException where
 instance DebuggerException LigoDecodeException where
   type ExceptionTag LigoDecodeException = "LigoDecode"
   debuggerExceptionType _ = MidLigoLayerException
-
--- | The current LIGO version is completely unsupported.
-data UnsupportedLigoVersionException = UnsupportedLigoVersionException
-  { uveActual :: SemVer.Version
-  , uveRecommended :: SemVer.Version
-  } deriving stock (Show)
-
-instance Buildable UnsupportedLigoVersionException where
-  build UnsupportedLigoVersionException{..} =
-    [int||Used `ligo` executable has #semv{uveActual} version which is not supported|]
-
-instance Exception UnsupportedLigoVersionException where
-  displayException = pretty
-
-instance DebuggerException UnsupportedLigoVersionException where
-  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
-  debuggerExceptionType _ = UserException
-  debuggerExceptionData UnsupportedLigoVersionException{..} = Just $ M.fromList
-    [ ("actualVersion", [int||#semv{uveActual}|])
-    , ("recommendedVersion", [int||#semv{uveRecommended}|])
-    ]
 
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
   deriving newtype (Buildable)

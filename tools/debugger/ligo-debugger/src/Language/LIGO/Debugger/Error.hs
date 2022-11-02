@@ -22,8 +22,8 @@ class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
   debuggerExceptionType :: e -> DebuggerExceptionType
 
   -- | Additional data that will be provided to the plugin.
-  debuggerExceptionData :: e -> Maybe (Map String String)
-  debuggerExceptionData _ = Nothing
+  debuggerExceptionData :: e -> Map String String
+  debuggerExceptionData _ = mempty
 
 -- | Classification of exceptions by who is guilty in that it occured.
 data DebuggerExceptionType
@@ -58,6 +58,15 @@ data DebuggerExceptionType
     -- prefer the other one, since otherwise any exception can be put
     -- into this category, as always remains a chance of a bug taking place
     -- in our code.
+  deriving stock (Eq)
+
+instance Buildable DebuggerExceptionType where
+  build = \case
+    UserException -> "user"
+    MidPluginLayerException -> "adapter-plugin"
+    MidLigoLayerException -> "adapter-ligo"
+    LigoLayerException -> "ligo"
+    AdapterInternalException -> "adapter"
 
 -- | Something unexpected happened disregard the input from other places
 -- (plugin or LIGO).
