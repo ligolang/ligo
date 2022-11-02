@@ -1645,9 +1645,10 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    File "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:
-      1 | type bar = big_map (nat, int);
-      2 |
+    File "../../test/contracts/negative/nested_bigmap_1.religo", line 4, characters 29-32:
+      3 | /* this should result in an error as nested big_maps are not supported: */
+      4 | type storage = big_map (int, bar);
+      5 |
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
@@ -1676,9 +1677,10 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    File "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:
-      1 | type bar = big_map (nat, int);
-      2 |
+    File "../../test/contracts/negative/nested_bigmap_3.religo", line 5, characters 7-10:
+      4 |     a: int,
+      5 |     b: bar
+      6 | };
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
@@ -2189,6 +2191,38 @@ let%expect_test _ =
                 { "start":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "1", "pos_bol": "1", "pos_cnum": "25" },
+                      "point_num": "101", "point_bol": "76" },
+                  "stop":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "1", "pos_bol": "1", "pos_cnum": "29" },
+                      "point_num": "105", "point_bol": "76" } } ] },
+          { "type_content":
+              [ "T_constant",
+                { "language": "Michelson", "injection": [ "Unit" ],
+                  "parameters": [] } ], "type_meta": null, "orig_var": null,
+            "location":
+              [ "File",
+                { "start":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "2", "pos_bol": "1", "pos_cnum": "13" },
+                      "point_num": "146", "point_bol": "133" },
+                  "stop":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "2", "pos_bol": "1", "pos_cnum": "17" },
+                      "point_num": "150", "point_bol": "133" } } ] },
+          { "type_content":
+              [ "T_constant",
+                { "language": "Michelson", "injection": [ "Unit" ],
+                  "parameters": [] } ], "type_meta": null, "orig_var": null,
+            "location":
+              [ "File",
+                { "start":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
                           "pos_lnum": "3", "pos_bol": "1", "pos_cnum": "18" },
                       "point_num": "184", "point_bol": "166" },
                   "stop":
@@ -2229,24 +2263,51 @@ let%expect_test _ =
                           "pos_lnum": "5", "pos_bol": "1", "pos_cnum": "14" },
                       "point_num": "231", "point_bol": "217" } } ] },
           { "type_content":
-              [ "T_constant",
-                { "language": "Michelson", "injection": [ "Unit" ],
-                  "parameters": [] } ], "type_meta": null, "orig_var": null,
-            "location": [ "Virtual", "generated" ] },
-          { "type_content":
               [ "T_arrow",
                 { "type1":
                     { "type_content":
                         [ "T_constant",
                           { "language": "Michelson", "injection": [ "Unit" ],
                             "parameters": [] } ], "type_meta": null,
-                      "orig_var": null, "location": [ "Virtual", "generated" ] },
+                      "orig_var": null,
+                      "location":
+                        [ "File",
+                          { "start":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "13" }, "point_num": "146",
+                                "point_bol": "133" },
+                            "stop":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "17" }, "point_num": "150",
+                                "point_bol": "133" } } ] },
                   "type2":
                     { "type_content":
                         [ "T_constant",
                           { "language": "Michelson", "injection": [ "Unit" ],
                             "parameters": [] } ], "type_meta": null,
-                      "orig_var": null, "location": [ "Virtual", "generated" ] } } ],
+                      "orig_var": null,
+                      "location":
+                        [ "File",
+                          { "start":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "21" }, "point_num": "154",
+                                "point_bol": "133" },
+                            "stop":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "25" }, "point_num": "158",
+                                "point_bol": "133" } } ] } } ],
             "type_meta":
               { "type_content":
                   [ "T_arrow",
@@ -2408,7 +2469,7 @@ let%expect_test _ =
                       { "prim": "PAIR" } ] ] } ],
           "locations":
             [ {}, {}, {}, {}, {}, {}, {}, { "environment": [ null ] }, {},
-              { "environment": [ { "source_type": "3" } ] },
+              { "environment": [ { "source_type": "0" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
@@ -2416,17 +2477,17 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "10" } } }, {}, {}, {},
-              { "environment": [ { "name": "x#9", "source_type": "3" } ] },
+              { "environment": [ { "name": "x#9", "source_type": "1" } ] },
               { "environment":
-                  [ { "name": "f#8", "source_type": "4" },
-                    { "source_type": "3" } ] }, {}, {}, {}, {}, {},
+                  [ { "name": "f#8", "source_type": "5" },
+                    { "source_type": "0" } ] }, {}, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2#10", "source_type": "0" },
-                    { "name": "f#8", "source_type": "4" } ] }, {}, {}, {}, {},
+                  [ { "name": "s2#10", "source_type": "2" },
+                    { "name": "f#8", "source_type": "5" } ] }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3#11", "source_type": "1" },
-                    { "name": "f#8", "source_type": "4" } ] }, {},
-              { "environment": [ { "name": "s#12", "source_type": "2" } ] },
+                  [ { "name": "s3#11", "source_type": "3" },
+                    { "name": "f#8", "source_type": "5" } ] }, {},
+              { "environment": [ { "name": "s#12", "source_type": "4" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",

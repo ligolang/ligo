@@ -89,48 +89,28 @@ let get_signature
 
 
 let rec evaluate_type ~raise ~(ctx : Context.t) (type_ : I.type_expression)
-    : O.type_expression
+    : Context.t * O.type_expression
   =
   let loc = type_.location in
   let self ?(ctx = ctx) = evaluate_type ~raise ~ctx in
   let return content = make_t ~loc:type_.location content (Some type_) in
   match type_.type_content with
   | T_arrow { type1; type2 } ->
-    let type1 = self type1 in
-    let type2 = self type2 in
-    return @@ T_arrow { type1; type2 }
-  | T_sum m ->
-    let rows =
-      let layout = Option.value ~default:default_layout m.layout in
-      let aux
-          ({ associated_type; michelson_annotation; decl_pos } : I.row_element)
-        =
-        let associated_type = self associated_type in
-        ({ associated_type; michelson_annotation; decl_pos } : O.row_element)
-      in
-      let fields = Record.LMap.map aux m.fields in
-      O.{ fields; layout }
-    in
-    return @@ T_sum rows
-  | T_record m ->
-    let rows =
-      let layout = Option.value ~default:default_layout m.layout in
-      let aux
-          ({ associated_type; michelson_annotation; decl_pos } : I.row_element)
-        =
-        let associated_type = self associated_type in
-        ({ associated_type; michelson_annotation; decl_pos } : O.row_element)
-      in
-      let fields = Record.LMap.map aux m.fields in
-      O.{ fields; layout }
-    in
-    return @@ T_record rows
+    let ctx, type1 = self ~ctx type1 in
+    let ctx, type2 = self ~ctx type2 in
+    ctx, return @@ T_arrow { type1; type2 }
+  | T_sum row ->
+    let ctx, row = evaluate_row ~raise ~loc ~ctx row in
+    ctx, return @@ T_sum row
+  | T_record row ->
+    let ctx, row = evaluate_row ~raise ~loc ~ctx row in
+    ctx, return @@ T_record row
   | T_variable name ->
     (match Context.get_type ctx name with
-    | Some x -> x
+    | Some type_ref -> ctx, { type_ref with location = type_.location }
     | None ->
       (match Context.get_type_var ctx name with
-      | Some _ -> return @@ T_variable name
+      | Some _ -> ctx, return @@ T_variable name
       | None -> raise.error (unbound_type_variable name type_.location)))
   | T_app { type_operator; arguments } ->
     (* TODO: Remove strong normalization (GA) *)
@@ -151,13 +131,12 @@ let rec evaluate_type ~raise ~(ctx : Context.t) (type_ : I.type_expression)
         raise.error (type_app_wrong_arity None expected 0 location)
       | _ -> ()
     in
-    let aux : I.type_expression -> O.type_expression =
-     fun t ->
-      let t' = self t in
-      is_fully_applied t.location t';
-      t'
+    let ctx, arguments =
+      List.fold_map arguments ~init:ctx ~f:(fun ctx type_ ->
+          let ctx, type_ = self ~ctx type_ in
+          is_fully_applied type_.location type_;
+          ctx, type_)
     in
-    let arguments = List.map ~f:aux arguments in
     let vars, ty_body = O.Helpers.destruct_type_abstraction operator in
     let vargs =
       match List.zip vars arguments with
@@ -179,20 +158,48 @@ let rec evaluate_type ~raise ~(ctx : Context.t) (type_ : I.type_expression)
       let table = O.Helpers.TMap.of_list vargs in
       O.Helpers.psubst_type table ty_body
     in
-    return res.type_content
+    ctx, return res.type_content
   | T_module_accessor { module_path; element } ->
     let sig_ = get_signature ~raise ~loc ctx (List.Ne.of_list module_path) in
-    trace_option ~raise (unbound_type_variable element type_.location)
-    @@ Signature.get_type sig_ element
-  | T_singleton x -> return (T_singleton x)
-  | T_abstraction x ->
-    let ctx = Context.add_type_var ctx x.ty_binder x.kind in
-    let type_ = self ~ctx x.type_ in
-    return @@ T_abstraction { x with type_ }
-  | T_for_all x ->
-    let ctx = Context.add_type_var ctx x.ty_binder x.kind in
-    let type_ = self ~ctx x.type_ in
-    return @@ T_for_all { x with type_ }
+    ( ctx
+    , trace_option ~raise (unbound_type_variable element type_.location)
+      @@ Signature.get_type sig_ element )
+  | T_singleton singleton -> ctx, return (T_singleton singleton)
+  | T_abstraction { ty_binder; kind; type_ } ->
+    let ctx = Context.add_type_var ctx ty_binder kind in
+    let ctx, type_ = self ~ctx type_ in
+    ctx, return @@ T_abstraction { ty_binder; kind; type_ }
+  | T_for_all { ty_binder; kind; type_ } ->
+    let ctx = Context.add_type_var ctx ty_binder kind in
+    let ctx, type_ = self ~ctx type_ in
+    ctx, return @@ T_for_all { ty_binder; kind; type_ }
+
+
+and evaluate_row ~raise ~loc ~ctx ({ fields; layout } : I.rows)
+    : Context.t * O.rows
+  =
+  let ctx, layout =
+    match layout with
+    | Some layout -> ctx, layout
+    | None ->
+      let lvar = Layout_var.fresh ~loc () in
+      Context.(ctx |:: C_layout_var lvar), L_variable lvar
+  in
+  let ctx, fields =
+    Record.LMap.fold_map
+      fields
+      ~init:ctx
+      ~f:(fun
+           _label
+           ({ associated_type; michelson_annotation; decl_pos } : I.row_element)
+           ctx
+         ->
+        let ctx, associated_type = evaluate_type ~raise ~ctx associated_type in
+        ( ctx
+        , ({ associated_type; michelson_annotation; decl_pos } : O.row_element)
+        ))
+  in
+  ctx, O.{ fields; layout }
 
 
 let type_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
@@ -493,7 +500,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
              })
           res_type )
     | E_type_in { type_binder = tvar; rhs; let_result } ->
-      let rhs = evaluate_type ~raise ~ctx rhs in
+      let ctx, rhs = evaluate_type ~raise ~ctx rhs in
       let ctx, res_type, let_result =
         infer ~ctx:Context.(ctx |:: C_type (tvar, rhs)) let_result
       in
@@ -507,8 +514,8 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         trace_option ~raise (not_annotated loc)
         @@ I.get_e_ascription code.expression_content
       in
-      let code_type = evaluate_type ~raise ~ctx code_type in
-      let ctx, _code_type, code = infer code in
+      let ctx, code_type = evaluate_type ~raise ~ctx code_type in
+      let ctx, _code_type, code = infer ~ctx code in
       let ctx, args =
         List.fold_map
           args
@@ -518,7 +525,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
                 trace_option ~raise (not_annotated loc)
                 @@ I.get_e_ascription expr.expression_content in
               let ctx, _expr_type, expr = infer ~ctx expr in
-              let type_expression = evaluate_type ~raise ~ctx type_expression in
+              let ctx, type_expression = evaluate_type ~raise ~ctx type_expression in
               let expr = let%bind expr = expr in return expr.expression_content type_expression in
               ctx, expr)
       in
@@ -537,8 +544,8 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
         trace_option ~raise (not_annotated loc)
         @@ I.get_e_ascription code.expression_content
       in
-      let code_type = evaluate_type ~raise ~ctx code_type in
-      let ctx, _code_type, code = infer code in
+      let ctx, code_type = evaluate_type ~raise ~ctx code_type in
+      let ctx, _code_type, code = infer ~ctx code in
       ( ctx
       , code_type
       , let%bind code = code in
@@ -547,11 +554,11 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
              { language; code = { code with type_expression = code_type } })
           code_type )
     | E_ascription { anno_expr; type_annotation } ->
-      let ascr = evaluate_type ~raise ~ctx type_annotation in
-      let ctx, expr = check anno_expr ascr in
+      let ctx, ascr = evaluate_type ~raise ~ctx type_annotation in
+      let ctx, expr = check ~ctx anno_expr ascr in
       ctx, ascr, lift expr
     | E_recursive { fun_name; fun_type; lambda } ->
-      let fun_type = evaluate_type ~raise ~ctx fun_type in
+      let ctx, fun_type = evaluate_type ~raise ~ctx fun_type in
       let ctx, lambda =
         check
           ~ctx:Context.(ctx |:: C_value (fun_name, Immutable, fun_type))
@@ -594,11 +601,14 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
             ( i + 1
             , { Rows.associated_type; michelson_annotation = None; decl_pos } ))
       in
-      let record_type =
+      let ctx, record_type =
         match Context.get_record row ctx with
-        | None -> t_record ~loc ~layout:default_layout row
+        | None ->
+          let lvar = Layout_var.fresh ~loc () in
+          ( Context.(ctx |:: C_layout_var lvar)
+          , t_record ~loc ~layout:(L_variable lvar) row )
         | Some (orig_var, row) ->
-          make_t_orig_var ~loc (T_record row) None orig_var
+          ctx, make_t_orig_var ~loc (T_record row) None orig_var
       in
       ( ctx
       , record_type
@@ -966,7 +976,7 @@ and check_lambda
   let ctx, arg_type, f =
     match Param.get_ascr binder with
     | Some arg_ascr ->
-      let arg_ascr = evaluate_type ~raise ~ctx arg_ascr in
+      let ctx, arg_ascr = evaluate_type ~raise ~ctx arg_ascr in
       (* TODO: Kinding check for ascription *)
       let ctx, _f =
         subtype ~raise ~loc ~ctx ~received:arg_type ~expected:arg_ascr
@@ -1017,7 +1027,7 @@ and infer_lambda
   Context.Generalization.enter ~ctx ~mut:true ~in_:(fun ctx ->
       let ctx, arg_type =
         match Param.get_ascr binder with
-        | Some arg_ascr -> ctx, evaluate_type ~raise ~ctx arg_ascr
+        | Some arg_ascr -> evaluate_type ~raise ~ctx arg_ascr
         | None ->
           let evar = Exists_var.fresh ~loc () in
           Context.(ctx |:: C_exists_var (evar, Type)), t_exists ~loc evar
@@ -1154,9 +1164,7 @@ and infer_pattern
     let var = Binder.get_var binder in
     let ctx, type_ =
       match Binder.get_ascr binder with
-      | Some ascr ->
-        let ascr = evaluate_type ~raise ~ctx ascr in
-        ctx, ascr
+      | Some ascr -> evaluate_type ~raise ~ctx ascr
       | None ->
         let evar = Exists_var.fresh ~loc () in
         Context.(ctx |:: C_exists_var (evar, Type)), t_exists ~loc evar
@@ -1240,6 +1248,7 @@ and infer_pattern
           (ctx, (Label.Label (Int.to_string i), row_elem) :: tuple_types), pat)
     in
     let tuple_type =
+      (* Tuples are the only place one can reasonably assume a default layout *)
       Record.of_list tuple_types |> t_record ~loc ~layout:default_layout
     in
     ( ctx
@@ -1270,11 +1279,14 @@ and infer_pattern
           in
           i + 1, { Rows.associated_type; michelson_annotation = None; decl_pos })
     in
-    let record_type =
+    let ctx, record_type =
       match Context.get_record row ctx with
-      | None -> t_record ~loc ~layout:default_layout row
+      | None ->
+        let lvar = Layout_var.fresh ~loc () in
+        ( Context.(ctx |:: C_layout_var lvar)
+        , t_record ~loc ~layout:(L_variable lvar) row )
       | Some (orig_var, row) ->
-        make_t_orig_var ~loc (T_record row) None orig_var
+        ctx, make_t_orig_var ~loc (T_record row) None orig_var
     in
     let labels, pats = List.unzip (Record.LMap.values record_pat) in
     ( ctx
@@ -1488,7 +1500,7 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
   let ctx, (sig_item : Signature.item), decl' =
     match decl.wrap_content with
     | D_type { type_binder; type_expr; type_attr = { public; hidden } } ->
-      let type_expr = evaluate_type ~raise ~ctx type_expr in
+      let ctx, type_expr = evaluate_type ~raise ~ctx type_expr in
       let type_expr = { type_expr with orig_var = Some type_binder } in
       ( ctx
       , S_type (type_binder, type_expr)
@@ -1501,7 +1513,13 @@ and infer_declaration ~(raise : raise) ~options ~ctx (decl : I.declaration)
         Option.value_map ascr ~default:expr ~f:(fun ascr ->
             I.e_ascription ~loc expr ascr)
       in
-      let ascr = Option.map ascr ~f:(evaluate_type ~raise ~ctx) in
+      let ctx, ascr =
+        match ascr with
+        | None -> ctx, None
+        | Some ascr ->
+          let ctx, ascr = evaluate_type ~raise ~ctx ascr in
+          ctx, Some ascr
+      in
       let ctx, expr_type, expr =
         trace ~raise (constant_declaration_tracer loc var expr ascr)
         @@ infer_expression ~options ~ctx expr
