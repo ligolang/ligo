@@ -234,9 +234,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo", line 4, characters 17-18:
-      3 |   let  x : int = 42 in
-      4 |   let _y : nat = x in
+    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo", line 4, characters 16-17:
+      3 |   let x : int = 42 in
+      4 |   let y : nat = x in
       5 |   ([] : operation list), s
 
     Invalid type(s)
@@ -247,9 +247,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "--no-color" ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo", line 4, characters 32-33:
-      3 |   let  x = 42 in
-      4 |   let _y : nat * int * string = x in
+    File "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo", line 4, characters 31-32:
+      3 |   let x : int                = 42 in
+      4 |   let y : nat * int * string = x in
       5 |   ([] : operation list), s
 
     Invalid type(s)
@@ -315,7 +315,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo", line 4, characters 53-54:
       3 |   let  x : string * int * nat * int *       string = "foo" , 42  , 24n , 42 ,        "bar" in
       4 |   let _y : tez    * int       * tez * nat * string = x in
-      5 |   //        ^^^^^         ^^^         ^^^
+      5 |   //       ^^^^^^         ^^^         ^^^
 
     Invalid type(s)
     Cannot unify string with tez. |}]
