@@ -10,8 +10,8 @@ module Language.LSP.Util
 import Control.Lens (dimap)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
-import Language.LSP.Types qualified as J
 import Language.LSP.Server qualified as S
+import Language.LSP.Types qualified as J
 
 sendMsg :: S.MonadLsp config m => J.MessageType -> Text -> m ()
 sendMsg msg = S.sendNotification J.SWindowShowMessage . J.ShowMessageParams msg

@@ -13,7 +13,7 @@ import Language.LSP.Types hiding (Range (..))
 import Language.LSP.Types qualified as LSP
 import Test.HUnit (Assertion)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
 import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 

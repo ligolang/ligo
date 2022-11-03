@@ -15,8 +15,8 @@ import Duplo.Lattice (leq)
 import Duplo.Tree (extract, spineTo)
 import Log (Log)
 import Log qualified
-import ParseTree (Source (..))
 import Parser (CodeSource (..))
+import ParseTree (Source (..))
 import Product (Product, getElem)
 import Range (Range (..), toLspRange)
 

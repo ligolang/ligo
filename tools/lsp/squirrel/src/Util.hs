@@ -17,8 +17,8 @@ module Util
   ) where
 
 import Data.Aeson qualified as Aeson
-import Data.Aeson.KeyMap qualified as KM
 import Data.Aeson.Key qualified as Key
+import Data.Aeson.KeyMap qualified as KM
 import Data.Bitraversable (bitraverse)
 import Data.ByteString.Lazy (ByteString)
 import Data.Foldable (foldlM)

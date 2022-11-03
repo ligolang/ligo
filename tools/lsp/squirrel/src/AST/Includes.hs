@@ -34,27 +34,23 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 import Duplo.Tree (Cofree ((:<)), fastMake)
 import Language.LSP.Types qualified as J
-import System.FilePath ((</>), takeDirectory)
+import System.FilePath (takeDirectory, (</>))
 import Text.Regex.TDFA (Regex, getAllTextMatches, makeRegexM, match)
 import UnliftIO.Directory (canonicalizePath)
 import Witherable (imapMaybe)
 
 import AST.Scope.Common
-  ( ContractInfo, pattern FindContract, Includes (..), ParsedContractInfo, contractFile
-  )
+  (ContractInfo, Includes (..), ParsedContractInfo, contractFile, pattern FindContract)
 import AST.Scope.Fallback (loopM, loopM_)
-import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
+import AST.Skeleton (Error (..), LIGO, Lang (..), SomeLIGO (..))
 import Diagnostic (Message (..), MessageDetail (MissingContract))
 import Parser
-  ( Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo
-  , parseLineMarkerText
-  )
+  (Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo, parseLineMarkerText)
 import ParseTree (Source (..))
 import Product (Contains, Product (..), getElem, modElem, putElem)
 import Range
-  ( PreprocessedRange (..), Range (..), getRange, rangeLines, rFile, rFinish, rStart
-  , startLine, finishLine
-  )
+  (PreprocessedRange (..), Range (..), finishLine, getRange, rFile, rFinish, rStart, rangeLines,
+  startLine)
 
 data ExtractionDepth
   = DirectInclusions

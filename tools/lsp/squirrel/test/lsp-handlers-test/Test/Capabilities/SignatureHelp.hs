@@ -6,7 +6,7 @@ module Test.Capabilities.SignatureHelp
 import Control.Lens ((^.))
 import Language.LSP.Test
 import Language.LSP.Types
-import Language.LSP.Types.Lens (activeSignature, activeParameter, signatures)
+import Language.LSP.Types.Lens (activeParameter, activeSignature, signatures)
 import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)

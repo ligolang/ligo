@@ -15,9 +15,9 @@ module Test.Common.Capabilities.Hover
 
 import Prelude hiding (lines)
 
+import Control.Monad (unless)
 import Data.List (find)
 import Data.Text (Text, lines)
-import Control.Monad (unless)
 import Language.LSP.Types (Hover (..), HoverContents (..), MarkupContent (..))
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))

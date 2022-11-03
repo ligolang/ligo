@@ -5,8 +5,7 @@ module Test.Common.Util.Parsers
 import System.FilePath (takeDirectory)
 
 import AST.Scope
-  ( pattern FindContract, HasScopeForest, ContractInfo, addShallowScopes, contractFile
-  )
+  (ContractInfo, HasScopeForest, addShallowScopes, contractFile, pattern FindContract)
 import Cli.Types (TempDir (..), TempSettings (..))
 import Diagnostic (Message)
 import Parser (collectTreeErrors)

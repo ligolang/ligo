@@ -18,7 +18,7 @@ import Witherable (wither)
 
 import AST.Pretty (PPableLIGO, lppDialect, ppToText)
 import AST.Scope.ScopedDecl
-import AST.Skeleton (Lang, LIGO)
+import AST.Skeleton (LIGO, Lang)
 import AST.Skeleton qualified as LIGO
 import Product (Contains)
 import Range (Range, getRange)

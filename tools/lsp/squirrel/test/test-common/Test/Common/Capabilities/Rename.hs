@@ -18,8 +18,9 @@ import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
-import AST.Capabilities.Rename (RenameDeclarationResult (NotFound, Ok), prepareRenameDeclarationAt, renameDeclarationAt)
-import Range (Range (..), toLspRange, interval, point)
+import AST.Capabilities.Rename
+  (RenameDeclarationResult (NotFound, Ok), prepareRenameDeclarationAt, renameDeclarationAt)
+import Range (Range (..), interval, point, toLspRange)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)

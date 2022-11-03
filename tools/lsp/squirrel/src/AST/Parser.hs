@@ -38,8 +38,8 @@ import Diagnostic (Message)
 import Extension
 import Log (Log, NoLoggingT (..), i)
 import Log qualified
-import ParseTree (Source (..), pathToSrc, toParseTree)
 import Parser (collectTreeErrors, parseLineMarkerText, runParserM)
+import ParseTree (Source (..), pathToSrc, toParseTree)
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
 

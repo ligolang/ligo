@@ -8,7 +8,8 @@ import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)
 
-import Test.Common.Capabilities.CodeAction.ExtractTypeAlias (extractTextEdits, testInfos, constructExpectedWorkspaceEdit, TestInfo (..))
+import Test.Common.Capabilities.CodeAction.ExtractTypeAlias
+  (TestInfo (..), constructExpectedWorkspaceEdit, extractTextEdits, testInfos)
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe, shouldMatchList)
 import Test.Common.LSP (openLigoDoc, runHandlersTest)

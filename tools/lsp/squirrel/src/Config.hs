@@ -7,8 +7,7 @@ module Config
   ) where
 
 import Data.Aeson
-  (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:),
-  (.:?), (.=))
+  (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:), (.:?), (.=))
 import Data.Default (Default (def))
 import Data.Set (Set)
 import Language.LSP.Types qualified as J

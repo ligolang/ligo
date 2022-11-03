@@ -4,8 +4,7 @@ module Test.Integrational.Diagnostics
   ) where
 
 import Test.Common.Diagnostics
-  ( DiagnosticSource (..), parseDiagnosticsDriver, simpleTest, treeDoesNotContainNameTest
-  )
+  (DiagnosticSource (..), parseDiagnosticsDriver, simpleTest, treeDoesNotContainNameTest)
 import Test.Common.FixedExpectations (HasCallStack)
 import Test.Tasty.HUnit (Assertion)
 

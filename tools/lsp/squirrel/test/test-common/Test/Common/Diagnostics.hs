@@ -16,7 +16,7 @@ import AST.Scope (Fallback, FromCompiler, Standard)
 import Diagnostic (Message (..), MessageDetail (..), Severity (..), filterDiagnostics)
 import Range
 
-import qualified Test.Common.Capabilities.Util as Util (contractsDir)
+import Test.Common.Capabilities.Util qualified as Util (contractsDir)
 import Test.Common.FixedExpectations (HasCallStack, shouldMatchList)
 import Test.Common.Util (ScopeTester)
 import Test.Tasty.HUnit (Assertion)

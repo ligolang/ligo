@@ -10,7 +10,7 @@ module AST.Capabilities.SignatureHelp
 
 import Language.LSP.Types qualified as LSP
   (List (..), ParameterInformation (..), ParameterLabel (..), SignatureHelp (..),
-   SignatureHelpDoc (..), SignatureInformation (..))
+  SignatureHelpDoc (..), SignatureInformation (..))
 
 import Control.Applicative ((<|>))
 import Control.Lens (_1, _Just, (^..), (^?))
@@ -29,9 +29,8 @@ import Duplo.Tree (extract, layer, match, spineTo)
 import AST.Capabilities.Find (CanSearch)
 import AST.Scope.Common (Level (TermLevel), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  ( Parameter (..), Pattern (..), ScopedDecl (..), Type (..), TypeDeclSpecifics (_tdsInit)
-  , lppLigoLike, _ValueSpec, vdsParams
-  )
+  (Parameter (..), Pattern (..), ScopedDecl (..), Type (..), TypeDeclSpecifics (_tdsInit),
+  _ValueSpec, lppLigoLike, vdsParams)
 import AST.Skeleton (Expr (Apply, Paren, Tuple), LIGO, Lang (..))
 import Product (Contains, Product, getElem)
 import Range (Range (..), getRange)

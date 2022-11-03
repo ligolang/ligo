@@ -15,7 +15,7 @@ import Test.HUnit (Assertion)
 
 import AST.Scope (Fallback, FromCompiler, Standard)
 
-import qualified Test.Common.Capabilities.Hover as Hover
+import Test.Common.Capabilities.Hover qualified as Hover
 import Test.Common.FixedExpectations (anyException, shouldThrow)
 
 unit_hover_arrow_type :: Assertion

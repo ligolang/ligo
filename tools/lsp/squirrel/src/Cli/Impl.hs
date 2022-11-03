@@ -56,16 +56,15 @@ import System.IO (Handle, hClose, hFlush, hGetChar)
 -- 'UnliftIO.Process' forgot to lift 'cleanupProcess'.
 import System.Process (cleanupProcess)
 import System.Process.ByteString.Lazy qualified as PExtras
-import Text.Regex.TDFA ((=~), getAllTextSubmatches)
+import Text.Regex.TDFA (getAllTextSubmatches, (=~))
 import UnliftIO.Concurrent (getNumCapabilities)
 import UnliftIO.Directory (canonicalizePath)
 import UnliftIO.Exception (Exception (..), SomeException (..), bracket, handle, throwIO, try)
 import UnliftIO.Pool (Pool)
 import UnliftIO.Pool qualified as Pool
 import UnliftIO.Process
-  ( CreateProcess (..), StdStream (CreatePipe), createProcess, getProcessExitCode, proc
-  , readCreateProcessWithExitCode
-  )
+  (CreateProcess (..), StdStream (CreatePipe), createProcess, getProcessExitCode, proc,
+  readCreateProcessWithExitCode)
 import UnliftIO.Temporary (withTempDirectory, withTempFile)
 import Witherable (hashNub)
 
@@ -74,8 +73,8 @@ import Cli.Json
 import Cli.Types
 import Log (Log, i)
 import Log qualified
-import ParseTree (Source (..))
 import Parser (LineMarker (lmFile))
+import ParseTree (Source (..))
 import Util (lazyBytesToText, traverseJsonText)
 
 ----------------------------------------------------------------------------

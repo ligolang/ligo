@@ -8,8 +8,8 @@ import AST.Skeleton
 
 import Duplo.Tree
 
-import ParseTree
 import Parser
+import ParseTree
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

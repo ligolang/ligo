@@ -9,9 +9,8 @@ import Data.Default (def)
 import GHC.Exts (fromList)
 import Language.LSP.Test (SessionException (..), getHover, sendNotification)
 import Language.LSP.Types
-  ( ErrorCode (..), LspId (..), Position (..), ResponseError (..)
-  , SomeClientMethod (..), SomeLspId (..), SMethod (..), DidChangeConfigurationParams (DidChangeConfigurationParams)
-  )
+  (DidChangeConfigurationParams (DidChangeConfigurationParams), ErrorCode (..), LspId (..),
+  Position (..), ResponseError (..), SMethod (..), SomeClientMethod (..), SomeLspId (..))
 
 import Test.HUnit (Assertion)
 
