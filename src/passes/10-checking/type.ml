@@ -164,6 +164,27 @@ and free_vars_row { fields; _ } =
 
 and free_vars_row_elem row_elem = free_vars row_elem.associated_type
 
+let rec orig_vars t =
+  let module Set = Type_var.Set in
+  Set.union (Set.of_list (Option.to_list t.orig_var))
+  @@
+  match t.content with
+  | T_variable _ | T_exists _ | T_singleton _ -> Set.empty
+  | T_construct { parameters; _ } ->
+    parameters |> List.map ~f:orig_vars |> Set.union_list
+  | T_sum row | T_record row -> orig_vars_row row
+  | T_arrow arr -> arr |> Arrow.map orig_vars |> Arrow.fold Set.union Set.empty
+  | T_for_all abs | T_abstraction abs ->
+    abs |> Abstraction.map orig_vars |> Abstraction.fold Set.union Set.empty
+
+
+and orig_vars_row { fields; _ } =
+  Record.fold fields ~init:Type_var.Set.empty ~f:(fun ovs row_elem ->
+      Set.union (orig_vars_row_elem row_elem) ovs)
+
+
+and orig_vars_row_elem row_elem = orig_vars row_elem.associated_type
+
 let rec subst ?(free_vars = Type_var.Set.empty) t ~tvar ~type_ =
   let subst t = subst t ~free_vars ~tvar ~type_ in
   let subst_abstraction abs = subst_abstraction abs ~free_vars ~tvar ~type_ in
@@ -235,6 +256,30 @@ and subst_row_elem ?(free_vars = Type_var.Set.empty) row_elem ~tvar ~type_ =
 let subst t ~tvar ~type_ =
   let free_vars = free_vars t in
   subst ~free_vars t ~tvar ~type_
+
+
+let rec fold : type a. t -> init:a -> f:(a -> t -> a) -> a =
+ fun t ~init ~f ->
+  let fold acc t = fold t ~f ~init:acc in
+  let init = f init t in
+  match t.content with
+  | T_variable _ | T_exists _ | T_singleton _ -> init
+  | T_construct { parameters; _ } -> List.fold parameters ~init ~f
+  | T_sum row | T_record row -> fold_row row ~init ~f
+  | T_arrow arr -> Arrow.fold fold init arr
+  | T_abstraction abs | T_for_all abs -> Abstraction.fold fold init abs
+
+
+and fold_row : type a. row -> init:a -> f:(a -> t -> a) -> a =
+ fun { fields; _ } ~init ~f ->
+  Record.LMap.fold
+    (fun _label row_elem init -> fold_row_elem row_elem ~init ~f)
+    fields
+    init
+
+
+and fold_row_elem : type a. row_element -> init:a -> f:(a -> t -> a) -> a =
+ fun row_elem ~init ~f -> f init row_elem.associated_type
 
 
 let destruct_type_abstraction t =

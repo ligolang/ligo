@@ -17,7 +17,7 @@ let memoize (type a b) ?(size = 100) (key : a hashable) (f : a -> b) =
       Hashtbl.add table key result;
       result
 
-
+(* 
 let rec_memoize
     (type a b)
     ?(size = 100)
@@ -34,7 +34,7 @@ let rec_memoize
       Hashtbl.add table key result;
       result
   in
-  memo_f
+  memo_f *)
 
 
 let memoize2
@@ -109,14 +109,6 @@ module Signature = struct
             | _ -> None) [@landmark "get_module"]))
 
 
-  let get_module_types =
-    rec_memoize hashable (fun get_types t ->
-        List.concat_map t ~f:(function
-            | S_type (tvar, type_) -> [ tvar, type_ ]
-            | S_module (_, t) -> get_types t
-            | S_value _ -> []))
-
-
   let rec equal_item : item -> item -> bool =
    fun item1 item2 ->
     match item1, item2 with
@@ -130,6 +122,26 @@ module Signature = struct
 
 
   and equal t1 t2 = List.equal equal_item t1 t2
+
+  let to_type_mapi =
+    let next = ref 0 in
+    memoize hashable (fun t ->
+        (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
+             Int.incr next;
+             match item with
+             | S_type (tvar, type_) -> Map.set map ~key:tvar ~data:(!next, type_)
+             | _ -> map) [@landmark "to_type_mapi"]))
+
+
+  let to_module_mapi =
+    let next = ref 0 in
+    memoize hashable (fun t ->
+        (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
+             Int.incr next;
+             match item with
+             | S_module (mvar, t) -> Map.set map ~key:mvar ~data:(!next, t)
+             | _ -> map) [@landmark "to_module_map"]))
+
 
   let to_type_map =
     memoize hashable (fun t ->
@@ -643,6 +655,26 @@ let to_module_map =
            | _ -> map) [@landmark "to_module_map"]))
 
 
+let to_type_mapi =
+  let next = ref 0 in
+  memoize hashable (fun t ->
+      (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
+           Int.incr next;
+           match item with
+           | C_type (tvar, type_) -> Map.set map ~key:tvar ~data:(!next, type_)
+           | _ -> map) [@landmark "to_type_mapi"]))
+
+
+let to_module_mapi =
+  let next = ref 0 in
+  memoize hashable (fun t ->
+      (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
+           Int.incr next;
+           match item with
+           | C_module (mvar, t) -> Map.set map ~key:mvar ~data:(!next, t)
+           | _ -> map) [@landmark "to_module_map"]))
+
+
 let get_signature t ((local_module, path) : Module_var.t List.Ne.t) =
   let open Option.Let_syntax in
   List.fold path ~init:(get_module t local_module) ~f:(fun sig_ mvar ->
@@ -665,12 +697,100 @@ let sig_contextual f sig_ =
     ~to_module_map:Signature.to_module_map
 
 
-let get_module_types =
-  memoize hashable (fun t ->
-      List.concat_map (List.rev t) ~f:(function
-          | C_type (tvar, type_) -> [ tvar, type_ ]
-          | C_module (_, sig_) -> Signature.get_module_types sig_
-          | _ -> []))
+(* Recursively fetches all types from the given module and its submodules
+
+    For example, to get the list of all types declared in a module and its submodules,
+    we perform a recusive search in the context maps and accumulate the types found.
+    Then, in order to convert those maps into a id-sorted list, we can :
+    1. Use [merge], and convert the merged map into a (sorted) kv_list. This will remove duplicate eponym types
+    2. Use [to_kvi_list], append all the kvi_lists, and sort the resulting kvi_list by id, into a kv_list, this keeps duplicates
+*)
+let get_module_types : t -> (Type_var.t * Type.t) list =
+  let sort_to_alist
+      :  (Type_var.t, int * Type.t) List.Assoc.t
+      -> (Type_var.t, Type.t) List.Assoc.t
+    =
+   fun list ->
+    let sorted_list =
+      List.sort list ~compare:(fun (_, (id1, _)) (_, (id2, _)) ->
+          Int.compare id2 id1)
+    in
+    List.map ~f:(fun (tvar, (_, type_)) -> tvar, type_) sorted_list
+  in
+  memoize hashable (fun ctx ->
+      let rec signature : Signature.t -> (Type_var.t, int * Type.t) List.Assoc.t
+        =
+       fun sig_ ->
+        (* Types in the current signature *)
+        let local_types = Map.to_alist @@ Signature.to_type_mapi sig_ in
+        (* Recursively fetch types from submodules *)
+        let modules = Map.to_alist @@ Signature.to_module_mapi sig_ in
+        List.fold modules ~init:local_types ~f:(fun types (_, (_, sig_)) ->
+            List.rev_append types @@ signature sig_)
+      in
+      let local_types = Map.to_alist @@ to_type_mapi ctx in
+      let modules = Map.to_alist @@ to_module_mapi ctx in
+      sort_to_alist
+      @@ (List.fold modules ~init:local_types ~f:(fun types (_, (_, sig_)) ->
+              List.rev_append types @@ signature sig_) [@landmark
+                                                         "get_module_types"]))
+
+
+(*
+    Add the shadowed t_sum types nested in the fetched types.
+
+    After using [get_modules_types], we have the ctxt types, i.e. all types declared current scope and submodules.
+    There is no shadowed type in ctxt types (since ctxt is a map, shadowed types are removed when adding the shadower).
+    However we want shadowed types when they are nested in another type :
+      type a = Foo of int | Bar of string
+      type a = a list
+    Here, we want [Foo of int | Bar of string] to be found
+    But we want to add nested t_sum types _only_ if they are shadowed, we don't want to add them in that case for example :
+      type foo_variant = Foo of int | Bar of string
+      type foo_record = { foo : foo_variant ; bar : foo_variant}
+    Because [foo_variant] would appear three times in the list instead of one.
+
+    NOTE : We could append nested types on top of the [module_types] list we have so far,
+    but having a final list with all nested-types before toplevel types triggers some errors.
+
+    NOTE : We can't just do a final id-sort of the list to have everything in declarartion order
+    because the fetched nested types don't have id, only the ones retrieved from the ctxt do.
+
+    So, if we have ctxt types :
+      [t1; t2; t3]
+    After adding the shadowed t_sums, we want the final list :
+      [t1; tsum_shadowed_by_t1; t2; tsum_shadowed_by_t2; t3; tsum_shadowed_by_t3]
+
+    NOTE : When [fold_type_expression] is used on t1, it will add tsum types nested in t1,
+    but it might also add t1 (or not), we don't know.
+    However, we want to make sure t1 is in the final list *exactly once*.
+      - If it's not here, we'll lose a type and have incorrect "type [t1] not found" errors
+      - If it's here more than once, we'll have a false "warning, [t1] inferred but could also be of type [t1]"
+    To ensure [t1] appears once exactly, we tweak the fold function by passing a [is_top] boolean
+    to ensure it will fold over all nested type in [t1] but not the toplevel one (i.e. [t1]),
+    we then add [t1] manually to the list.
+*)
+let add_shadowed_nested_t_sum tsum_list (tvar, type_) =
+  let add_if_shadowed_t_sum
+      :  Type_var.t -> (Type_var.t * Type.t) list * bool -> Type.t
+      -> (Type_var.t * Type.t) list * bool
+    =
+   fun shadower_tvar (acc, is_top_level) type_ ->
+    let return x = x, false in
+    match type_.content, type_.orig_var with
+    | T_sum _, Some tvar ->
+      if Type_var.equal tvar shadower_tvar && not is_top_level
+      then return ((tvar, type_) :: acc)
+      else return acc
+    | T_sum _, None ->
+      return acc
+      (* TODO : What should we do with those sum types with no binder ? *)
+    | _ -> return acc
+  in
+  let (nested_t_sums, _) : (Type_var.t * Type.t) list * bool =
+    Type.fold type_ ~init:(tsum_list, true) ~f:(add_if_shadowed_t_sum tvar)
+  in
+  (tvar, type_) :: nested_t_sums
 
 
 (*
@@ -712,16 +832,28 @@ let get_sum
            | None -> None)
          | _ -> None
        in
-       (* 1. Fetch all types declared in current module and its submodules in [ctx] *)
+       (* Format.printf "Fetching module types...\n"; *)
+       (* Format.print_flush (); *)
+       (* Fetch all types declared in current module and its submodules *)
        let module_types = get_module_types ctx in
-       (* 2. For all types found, pick only the T_sum, and make 4-tuple out of them  *)
-       let matching_t_sum =
-         List.rev_filter_map ~f:filter_tsum @@ module_types
+       (* Format.printf "Found all module types\n"; *)
+       (* Format.print_flush (); *)
+       (*  Also add the shadowed t_sum types nested in the fetched types.
+        Since context is made of maps, all shadowed types are absent from the context.
+        However we still want the shadowed nested t_sum, see [add_shadowed_nested_t_sum] *)
+       let module_types =
+         List.fold (List.rev module_types) ~init:[] ~f:add_shadowed_nested_t_sum
        in
-       (* 3. Filter out duplicates (this prevents false warnings of "infered type is X 
-             but could also be X" when a same type is present several times in the 
-             context) 
-       *)
+       (* Format.printf "Module Types:\n";
+  List.iter module_types ~f:(fun (tvar, type_) ->
+    Format.printf
+      "@[Type Variable: %a@.Type: %a@]\n"
+      Type_var.pp
+      tvar
+      Ast_typed.PP.type_expression
+      type_); *)
+       (* For all types found, pick only the T_sum, and make 4-uple out of them  *)
+       let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
        let matching_t_sum = dedup matching_t_sum in
        let general_type_opt =
          List.find
@@ -732,6 +864,144 @@ let get_sum
        | Some general_type -> [ general_type ]
        | None -> matching_t_sum) [@landmark "get_sum"])
 
+
+(* 
+let get_sum
+    : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
+  =
+  let dedup =
+    List.stable_dedup_staged ~compare:(fun (_, _, _, tsum1) (_, _, _, tsum2) ->
+        Type.compare tsum1 tsum2)
+    |> Staged.unstage
+  in
+  memoize2
+    hashable
+    (module Label)
+    (fun ctx constr ->
+      (let filter_tsum (var, type_) =
+         let t_params, type_ = Type.destruct_type_abstraction type_ in
+         match type_.content with
+         | T_sum m ->
+           (match Record.LMap.find_opt constr m.fields with
+           | Some { associated_type; _ } ->
+             Some (var, t_params, associated_type, type_)
+           | None -> None)
+         | _ -> None
+       in
+       Format.printf "Fetching module types for %a\n" Label.pp constr;
+       (* 1. Fetch all types declared in current scope and its submodules in [ctx] *)
+       let types_and_modules = get_types_and_modules ctx in
+       Format.printf "Module Types:\n";
+       List.iter types_and_modules ~f:(function
+           | `Type (tvar, type_) ->
+             Format.printf
+               "@[Type Variable: %a@.Type: %a@]@."
+               Type_var.pp
+               tvar
+               Type.pp
+               type_
+           | `Module (mvar, sig_) ->
+             Format.printf
+               "@[Module Variable: %a@.Sig: %a@]@."
+               Module_var.pp
+               mvar
+               Signature.pp
+               sig_);
+       Format.print_flush ();
+       (* 2. Inline the module types, filtering modules that have been shadowed  *)
+       let module_types =
+         let rec loop types_and_modules ~def_mod_set =
+           match types_and_modules with
+           | [] -> []
+           | `Type (tvar, type_) :: rest ->
+             (tvar, type_) :: loop rest ~def_mod_set
+           | `Module (mvar, _) :: rest when Set.mem def_mod_set mvar ->
+             loop rest ~def_mod_set
+           | `Module (mvar, sig_) :: rest ->
+             List.rev_append
+               (Signature.get_module_types sig_)
+               (loop rest ~def_mod_set:(Set.add def_mod_set mvar))
+         in
+         loop types_and_modules ~def_mod_set:Module_var.Set.empty
+       in
+       Format.printf "Module Types 2:\n";
+       List.iter module_types ~f:(fun (tvar, type_) ->
+           Format.printf
+             "@[Type Variable: %a@.Type: %a@]\n"
+             Type_var.pp
+             tvar
+             Type.pp
+             type_);
+       Format.print_flush ();
+       (* 3. Remove types that are shadowed *and* aren't referenced by the shaddowing type
+            For example, we should remove:
+            ```
+              type foobar = Foo of int | Bar of int
+              type foobar = int
+            ```   
+            but keep:
+            ```
+              type foobar = Foo of int | Bar of int
+              type foobar = { boxed : foobar }
+            ```
+       *)
+       let module_types =
+         let rec loop types ~def_set ~ref_set =
+           match types with
+           | [] -> []
+           | (tvar, _type_) :: types
+             when Set.mem def_set tvar && not (Set.mem ref_set tvar) ->
+             (* This is the case where [tvar] has been shadowed but not referenced *)
+             Format.printf "Type %a is shaddowed!\n" Type_var.pp tvar;
+             loop types ~def_set ~ref_set
+           | (tvar, type_) :: types ->
+             Format.printf
+               "@[Adding %a = %a to types@.Def Set: %a@.Ref Set:%a@.@]\n"
+               Type_var.pp
+               tvar
+               Type.pp
+               type_
+               Sexp.pp_hum
+               (Type_var.Set.sexp_of_t def_set)
+               Sexp.pp_hum
+               (Type_var.Set.sexp_of_t ref_set);
+             (tvar, type_)
+             :: loop
+                  types
+                  ~def_set:(Set.add def_set tvar)
+                  ~ref_set:
+                    Type_var.Set.(
+                      union_list
+                        [ remove ref_set tvar; remove (Type.orig_vars type_) tvar; Type.free_vars type_ ])
+         in
+         loop
+           module_types
+           ~def_set:Type_var.Set.empty
+           ~ref_set:Type_var.Set.empty
+       in
+       Format.printf "Module Types 3:\n";
+       List.iter module_types ~f:(fun (tvar, type_) ->
+           Format.printf
+             "@[Type Variable: %a@.Type: %a@]\n"
+             Type_var.pp
+             tvar
+             Type.pp
+             type_);
+       Format.print_flush ();
+       (* 4. For all types found, pick only the T_sum, and make 4-tuple out of them  *)
+       let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
+       (* 5. Filter out duplicates (this prevents false warnings of "infered type is X 
+             but could also be Y" where X and Y are transparently equal) 
+       *)
+       let matching_t_sum = dedup matching_t_sum in
+       let general_type_opt =
+         List.find
+           ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs)
+           matching_t_sum
+       in
+       match general_type_opt with
+       | Some general_type -> [ general_type ]
+       | None -> matching_t_sum) [@landmark "get_sum"]) *)
 
 let get_record
     : t -> Type.row_element Record.t -> (Type_var.t option * Type.row) option
