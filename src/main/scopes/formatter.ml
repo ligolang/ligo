@@ -5,7 +5,7 @@ let scope_ppformat ~display_format f (d, s) =
   | Human_readable ->
     Format.fprintf
       f
-      "there is to human-readable pretty printer for you, use --format=json"
+      "there is to human-readable pretty printer for you, use --format json"
   | Dev -> Format.fprintf f "@[<v>%a@ %a@]" PP.scopes s PP.definitions d
 
 

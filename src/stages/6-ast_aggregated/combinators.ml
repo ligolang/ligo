@@ -49,7 +49,7 @@ let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
 let t_mutez = t_tez
 
 let t_record ?loc ~layout fields  : type_expression = make_t ?loc (T_record {fields;layout})
-let default_layout = Layout.L_tree
+let default_layout : Layout.t = Layout.L_tree
 let make_t_ez_record ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = Record.of_list lst in
@@ -279,7 +279,7 @@ let e_a_bool b = make_e (e_bool b) (t_bool ())
 
 (* Constants *)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
-let e_a_none t = make_e (e_none ()) (t_option t)
+let e_a_none ?location t = make_e ?location (e_none ()) (t_option t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
 let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
 let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)

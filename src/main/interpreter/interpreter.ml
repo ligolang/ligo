@@ -277,9 +277,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_FALSE, _ -> fail @@ error_type ()
   (* unary *)
   | C_NOT, [ V_Ct (C_bool a') ] -> return @@ v_bool (not a')
-  (* TODO-er: fix two complements: *)
-  | C_NOT, [ V_Ct (C_int a') ] -> return @@ v_int (Z.neg a')
-  | C_NOT, [ V_Ct (C_nat a') ] -> return @@ v_int (Z.neg a')
+  | C_NOT, [ V_Ct (C_int a') ] -> return @@ v_int (Z.lognot a')
+  | C_NOT, [ V_Ct (C_nat a') ] -> return @@ v_int (Z.lognot a')
   | C_NOT, _ -> fail @@ error_type ()
   | C_NEG, [ V_Ct (C_int a') ] -> return @@ v_int (Z.neg a')
   | C_NEG, [ V_Ct (C_bls12_381_g1 a') ] ->
@@ -873,14 +872,18 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ v_nat (Z.of_int @@ String.length s)
   | C_SIZE, [ V_Ct (C_bytes b) ] -> return @@ v_nat (Z.of_int @@ Bytes.length b)
   | C_SIZE, _ -> fail @@ error_type ()
-  | C_SLICE, [ V_Ct (C_nat st); V_Ct (C_nat ed); V_Ct (C_string s) ] ->
-    (*TODO : allign with tezos*)
-    return @@ v_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed))
+  | C_SLICE, [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_string s) ] ->
+    let start = Z.to_int start in
+    let length = Z.to_int length in
+    if start >= String.length s || start + length > String.length s
+    then
+      fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
+    else return @@ v_string (String.sub s ~pos:start ~len:length)
   | C_SLICE, [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_bytes bytes) ]
     ->
     let start = Z.to_int start in
     let length = Z.to_int length in
-    if start > Bytes.length bytes || start + length > Bytes.length bytes
+    if start >= Bytes.length bytes || start + length > Bytes.length bytes
     then
       fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
     else return @@ v_bytes (Bytes.sub bytes ~pos:start ~len:length)

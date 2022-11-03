@@ -5,6 +5,7 @@ module Param = Param
 module Pattern = Pattern
 module Access_path = Access_path
 module Layout = Layout
+module Layout_var = Var.Layout_var
 
 (* Type level constructs *)
 module Type_var = Var.Type_var
