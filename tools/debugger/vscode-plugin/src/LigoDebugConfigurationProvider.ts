@@ -24,10 +24,7 @@ export type ConfigField
 	;
 
 export type ConfigCommand
-	= "AskForEntrypoint"
-	| "AskForMichelsonEntrypoint"
-	| "AskForParameter"
-	| "AskForStorage"
+	= "AskOnStart"
 	;
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -58,7 +55,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const entrypoint : string =
 			await tryExecuteCommand(
 				"entrypoint",
-				"AskForEntrypoint",
+				"AskOnStart",
 				config.entrypoint,
 				getEntrypoint(
 					this.context,
@@ -80,7 +77,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const michelsonEntrypoint : string =
 			await tryExecuteCommand(
 				"michelsonEntrypoint",
-				"AskForMichelsonEntrypoint",
+				"AskOnStart",
 				config.michelsonEntrypoint,
 				createRememberingQuickPick(
 					contractMetadata,
@@ -101,7 +98,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const parameter : string =
 			await tryExecuteCommand(
 				"parameter",
-				"AskForParameter",
+				"AskOnStart",
 				config.parameter,
 				getParameterOrStorage(
 					this.context,
@@ -119,7 +116,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const storage : string =
 			await tryExecuteCommand(
 				"storage",
-				"AskForStorage",
+				"AskOnStart",
 				config.storage,
 				getParameterOrStorage(
 					this.context,
@@ -149,9 +146,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
-				config.entrypoint = '{AskForEntrypoint}'
-				config.parameter = "{AskForParameter}"
-				config.storage = "{AskForStorage}"
+				config.entrypoint = '{AskOnStart}'
+				config.parameter = "{AskOnStart}"
+				config.storage = "{AskOnStart}"
 			}
 		}
 
@@ -160,7 +157,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
-		config.entrypoint ??= '{AskForEntrypoint}'
+		config.entrypoint ??= '{AskOnStart}'
 
 		if (config.logDir === '') {
 			config.logDir = undefined

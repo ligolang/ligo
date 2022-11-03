@@ -19,9 +19,7 @@ export function isDefined<T>(x: T | undefined | null): x is T {
   return x !== null && x !== undefined
 }
 
-// Sometimes we need to manually execute some commands.
-// For example, we want to execute `AskForEntrypoint` command
-// before other commands (like `AskForParameter` or `AskForStorage`).
+// Extract the name of a pseudo-command (like `{AskOnStart}`).
 export function getCommand(str: Maybe<string>): Maybe<string> {
   if (isDefined(str)) {
     const matches = str.match(/^\{(.*)\}$/);
