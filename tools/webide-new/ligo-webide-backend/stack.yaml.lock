@@ -268,7 +268,7 @@ packages:
     hackage: libsodium-1.0.18.2
 snapshots:
 - completed:
-    sha256: be747117bed6d462806c883352c3206325b23480825103f5c87884e97e52819a
-    size: 619173
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/20.yaml
-  original: lts-19.20
+    sha256: 0ced7f93245307212900d760c1322dfb527c4b902868c11ccac37f48b7d4ebb9
+    size: 619200
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/29.yaml
+  original: lts-19.29

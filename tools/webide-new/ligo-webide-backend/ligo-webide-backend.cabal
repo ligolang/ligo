@@ -226,8 +226,14 @@ executable swagger-gen
 
 test-suite ligo-webide-backend-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Main.hs
   other-modules:
+      Test.Common
+      Test.Method.Compile
+      Test.Method.CompileExpression
+      Test.Method.DryRun
+      Test.Method.GenerateDeployScript
+      Test.Method.ListDeclarations
       Paths_ligo_webide_backend
   hs-source-dirs:
       test
@@ -277,13 +283,12 @@ test-suite ligo-webide-backend-test
   build-depends:
       aeson
     , base-noprelude >=4.9 && <5
-    , bytestring
     , filepath
-    , hspec
-    , hspec-wai
-    , http-types
     , ligo-webide-backend
     , loot-prelude
+    , req
+    , tasty
+    , tasty-hunit
     , text
-    , wai-extra
+    , warp
   default-language: Haskell2010

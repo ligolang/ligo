@@ -25,6 +25,7 @@ webide-backend-checks:
     - nix build .#packages.x86_64-linux.tezos-client --out-link tezos-client
     - export LIGO_PATH=$PWD/ligo/bin/ligo
     - export TEZOS_CLIENT_PATH=$PWD/tezos-client/bin/tezos-client
+    - export DOCKER_LIGO_VERSION=0.54.1
     # These tests need docker, so they cannot be easily run as a flake check :(
     - nix build .#tests.x86_64-linux.ligo-webide-backend-test
     - cd ligo-webide-backend && ../result/bin/ligo-webide-backend-test
