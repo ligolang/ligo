@@ -582,7 +582,7 @@ instance HasGo Binding where
           paramRefs <- scopeParams params typ
           subforest <- fmap (fmap getTree) $ do
             void $ withScope functionRef (walk name)
-            mapM_ (withScopes paramRefs . walk) params
+            withScopes paramRefs $ traverse_ walk params
             maybe (pure ()) (void . walk) typ
             withScopes (bool id (functionRef :) isRec paramRefs) (walk body)
           pure $ Just ((Set.singleton functionRef, getRange r) :<
