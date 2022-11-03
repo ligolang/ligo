@@ -29,6 +29,7 @@ import UnliftIO.MVar (isEmptyMVar, putMVar, swapMVar, tryPutMVar, tryReadMVar, t
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
 import Witherable (ordNubOn)
 
+import Cli qualified
 import Language.LSP.Util (sendError, sendInfo)
 import Log qualified
 import RIO.Types (IndexOptions (..), ProjectSettings (..), RIO, RioEnv (..))
@@ -79,7 +80,7 @@ decodeProjectSettings projectDir = do
   eitherSettings <- liftIO $ eitherDecodeFileStrict' $ projectDir </> ligoProjectName
   case eitherSettings of
     Left err -> do
-      $(Log.err) [Log.i|Failed to read project settings.\n#{err}|]
+      $Log.err [Log.i|Failed to read project settings.\n#{err}|]
       sendError [Log.i|Failed to read project settings. Using default settings. Check the logs for more information.|]
       pure def
     Right settings -> do
@@ -103,14 +104,18 @@ getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
   indexOptsVar <- asks reIndexOpts
   tryReadMVar indexOptsVar >>= \case
-    Nothing -> checkForLigoProjectFile contractDir >>= \case
-      Nothing -> askForIndexDirectory contractDir
-      Just ligoProjectDir -> do
-        upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
-        projectSettings <- decodeProjectSettings ligoProjectDir
-        let indexOpts = FromLigoProject ligoProjectDir projectSettings
-        hasNoOpts <- isEmptyMVar indexOptsVar
-        indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+    Nothing -> do
+      newOpts <- checkForLigoProjectFile contractDir >>= \case
+        Nothing -> askForIndexDirectory contractDir
+        Just ligoProjectDir -> do
+          upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
+          projectSettings <- decodeProjectSettings ligoProjectDir
+          let indexOpts = FromLigoProject ligoProjectDir projectSettings
+          hasNoOpts <- isEmptyMVar indexOptsVar
+          indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+
+      -- A root directory was set; restart the daemon.
+      newOpts <$ Cli.cleanupLigoDaemon
     Just opts -> pure opts
 
 askForIndexDirectory :: FilePath -> RIO IndexOptions
@@ -167,7 +172,7 @@ askForIndexDirectory contractDir = do
 
     mkGitDirectory :: RIO (Maybe FilePath)
     mkGitDirectory = tryIO (readCreateProcess git "") >>= either
-      (\e -> Nothing <$ $(Log.warning) [Log.i|#{displayException e}|])
+      (\e -> Nothing <$ $Log.warning [Log.i|#{displayException e}|])
       -- The output includes a trailing newline, we remove it with `init`.
       (pure . Just . init)
       where
@@ -210,7 +215,7 @@ handleProjectFileChanged nfp change = do
   -- the trouble.
   _ <- tryTakeMVar indexOptsVar
   let fp = J.fromNormalizedFilePath nfp
-  $(Log.debug) case change of
+  $Log.debug case change of
     J.FcCreated -> [Log.i|Created #{fp}|]
     J.FcChanged -> [Log.i|Changed #{fp}|]
     J.FcDeleted -> [Log.i|Deleted #{fp}|]

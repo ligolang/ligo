@@ -23,7 +23,7 @@ import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO)
 import UnliftIO.Exception (mapExceptionM, throwIO)
 
-import Cli (HasLigoClient, LigoClientFailureException (..), callLigoImpl, callLigoImplBS)
+import Cli (HasLigoClient, LigoClientFailureException (..), callLigo, callLigoBS)
 import Cli qualified as LSP
 
 import Morley.Michelson.Parser qualified as MP
@@ -50,7 +50,7 @@ withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
 -- | Run ligo to compile the contract with all the necessary debug info.
 compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m (LigoMapper 'Unique)
 compileLigoContractDebug entrypoint file = withMapLigoExc $
-  callLigoImplBS Nothing
+  callLigoBS Nothing
     [ "compile", "contract"
     , "--no-warn"
     , "--michelson-format", "json"
@@ -69,7 +69,7 @@ compileLigoContractDebug entrypoint file = withMapLigoExc $
 compileLigoExpression :: forall m. (HasLigoClient m)
                       => MP.MichelsonSource -> FilePath -> Text -> m MU.Value
 compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
-  callLigoImpl Nothing
+  callLigo Nothing
     [ "compile", "expression"
     , "--no-warn"
     , "--init-file", ctxFile
@@ -86,7 +86,7 @@ compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
 getAvailableEntrypoints :: forall m. (HasLigoClient m)
                         => FilePath -> m EntrypointsList
 getAvailableEntrypoints file = withMapLigoExc $
-  callLigoImpl Nothing
+  callLigo Nothing
     [ "info", "list-declarations"
     , "--only-ep"
     , file

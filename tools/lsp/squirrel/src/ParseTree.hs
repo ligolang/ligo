@@ -83,7 +83,7 @@ pathToSrc p = do
   -- Is it valid UTF-8?
   fmap (Source p False) $ Text.decodeUtf8' raw & \case
     Left exception -> do
-      $(Log.err) [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
+      $Log.err [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
       -- Leniently decode the data so we can continue working even with invalid
       -- data. Note that this case means we'll decode the file two times; this
       -- is fine, as invalid data should be very uncommon.
@@ -122,7 +122,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
 toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
-  $(Log.debug) [Log.i|Reading #{fp}|]
+  $Log.debug [Log.i|Reading #{fp}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
@@ -134,7 +134,7 @@ toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go src)
 
-  $(Log.debug) [Log.i|Done reading #{fp}|]
+  $Log.debug [Log.i|Done reading #{fp}|]
   pure res
   where
     go :: ByteString -> Node -> IO RawTree
