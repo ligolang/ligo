@@ -78,6 +78,15 @@ lsp-lint:
     - cd tools/lsp
     - bash squirrel/scripts/check-trailing-whitespace.sh
 
+lsp-stylish:
+  stage: lsp
+  needs: []
+  only: [merge_requests, tooling]
+  script:
+    - cd tools/lsp/squirrel
+    - nix develop ..#ci -c ./scripts/validate-stylish.sh
+
+
 print-nix-version:
   stage: nix
   only: [merge_requests, tooling, vscode-production]
