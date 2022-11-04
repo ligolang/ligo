@@ -77,6 +77,7 @@ let%expect_test _ =
     - test_add_mutez exited with value ().
     - test_sub_mutez exited with value ().
     - test_div_mutez exited with value ().
+    - test_sub_timestamp exited with value ().
     - test_list_fold_left_sum exited with value ().
     - test_bytes_sub exited with value ().
     - test_with_error exited with value ().
