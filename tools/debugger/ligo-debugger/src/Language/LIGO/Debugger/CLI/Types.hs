@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-{-# LANGUAGE StandaloneKindSignatures, TypeFamilyDependencies, UndecidableInstances #-}
+{-# LANGUAGE StandaloneKindSignatures, UndecidableInstances #-}
 
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
@@ -18,10 +18,8 @@ import Data.Char (isDigit)
 import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
-import Data.SemVer qualified as SemVer
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
-import Data.Typeable (cast)
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
@@ -32,10 +30,10 @@ import Text.Interpolation.Nyan (int, rmode')
 
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
-import Morley.Michelson.Text (MText)
 import Morley.Util.Lens
-import Morley.Util.TypeLits (ErrorMessage (Text), Symbol, TypeError)
+import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
+import Language.LIGO.Debugger.Error
 import Util
 
 -- | Sometimes numbers are carries as strings in order to fit into
@@ -529,17 +527,12 @@ instance FromJSON (LigoMapper u) where
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
 
-class (Exception e) => DebuggerException e where
-  type ExceptionTag e = (r :: Symbol) | r -> e
-
-newtype LigoException = LigoException { leMessage :: Text }
+-- | Something got wrong on @ligo@ executable's side.
+newtype LigoCallException = LigoCallException { leMessage :: Text }
   deriving newtype (Eq, Show, FromBuilder)
 
-instance DebuggerException LigoException where
-  type ExceptionTag LigoException = "Ligo"
-
-instance Default LigoException where
-  def = LigoException ""
+instance Default LigoCallException where
+  def = LigoCallException ""
 
 -- | If we have malformed LIGO contract then we'll see
 -- in error @ligo@ binary output a red-colored text
@@ -550,28 +543,34 @@ replaceANSI =
   . T.replace
       [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
 
-instance Buildable LigoException where
-  -- Here we need to strip that prefix in order to escape
-  -- tautology "Internal error: failed to handle: Internal error: %some LIGO error message%"
-  build (LigoException (T.stripPrefix "Internal error: " -> Just stripped)) = build $ replaceANSI stripped
-  build LigoException{..} = build $ replaceANSI leMessage
+instance Buildable LigoCallException where
+  build LigoCallException{..} = build $ replaceANSI leMessage
 
-instance Exception LigoException where
+instance Exception LigoCallException where
   displayException = pretty
 
-newtype UnsupportedLigoVersionException =
-    UnsupportedLigoVersionException SemVer.Version
-  deriving stock (Show)
+instance DebuggerException LigoCallException where
+  type ExceptionTag LigoCallException = "LigoCall"
+  debuggerExceptionType _ = LigoLayerException
 
-instance DebuggerException UnsupportedLigoVersionException where
-  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
+-- | Failed to decode LIGO output.
+data LigoDecodeException = LigoDecodeException
+  { ldeSource :: Text
+    -- ^ What we were trying to decode.
+  , ldeMessage :: Text
+    -- ^ The error message.
+  } deriving stock (Show)
 
-instance Buildable UnsupportedLigoVersionException where
-  build (UnsupportedLigoVersionException ver) =
-    [int||Used `ligo` executable has #semv{ver} version which is not supported|]
+instance Buildable LigoDecodeException where
+  build LigoDecodeException{..} =
+    [int||Failed to parse LIGO output (#{ldeSource}): #{ldeMessage}|]
 
-instance Exception UnsupportedLigoVersionException where
+instance Exception LigoDecodeException where
   displayException = pretty
+
+instance DebuggerException LigoDecodeException where
+  type ExceptionTag LigoDecodeException = "LigoDecode"
+  debuggerExceptionType _ = MidLigoLayerException
 
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
   deriving newtype (Buildable)
@@ -593,37 +592,24 @@ instance FromBuilder DAP.Message where
     { DAP.formatMessage = fromBuilder txt
     }
 
-newtype DapMessageException = DapMessageException DAP.Message
+-- | Invalid debugger configuration provided.
+newtype ConfigurationException = ConfigurationException Text
   deriving newtype (Show, Buildable, FromBuilder)
 
-instance DebuggerException DapMessageException where
-  type ExceptionTag DapMessageException = "DapMessage"
+instance Exception ConfigurationException where
+  displayException (ConfigurationException msg) = pretty msg
 
-instance Exception DapMessageException where
-  displayException (DapMessageException msg) = DAP.formatMessage msg
+instance DebuggerException ConfigurationException where
+  type ExceptionTag ConfigurationException = "Configuration"
+  debuggerExceptionType _ = UserException
 
-newtype ReplacementException = ReplacementException MText
-  deriving newtype (Show, Buildable)
+-- | Some unexpected error in communication with the plugin.
+newtype PluginCommunicationException = PluginCommunicationException Text
+  deriving newtype (Show, Buildable, FromBuilder)
 
-instance DebuggerException ReplacementException where
-  type ExceptionTag ReplacementException = "Replacement"
-
-instance Exception ReplacementException where
+instance Exception PluginCommunicationException where
   displayException = pretty
 
-data SomeDebuggerException where
-  SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
-
-deriving stock instance Show SomeDebuggerException
-
-instance Exception SomeDebuggerException where
-  displayException (SomeDebuggerException e) = displayException e
-
-  fromException e@(SomeException e') =
-    asum
-      [ SomeDebuggerException <$> fromException @LigoException e
-      , SomeDebuggerException <$> fromException @DapMessageException e
-      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
-      , SomeDebuggerException <$> fromException @ReplacementException e
-      , cast @_ @SomeDebuggerException e'
-      ]
+instance DebuggerException PluginCommunicationException where
+  type ExceptionTag PluginCommunicationException = "PluginComminication"
+  debuggerExceptionType _ = MidPluginLayerException

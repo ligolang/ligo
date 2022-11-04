@@ -8,6 +8,7 @@ module Language.LIGO.Debugger.Common
   , isLigoStdLib
   , errorValueType
   , createErrorValue
+  , ReplacementException(..)
   , replacementErrorValueToException
   , internalStackFrameName
   , embedFunctionNames
@@ -28,6 +29,7 @@ import Data.List.NonEmpty (cons)
 import Data.Set qualified as Set
 import Data.Vinyl (Rec (RNil, (:&)))
 import Duplo (layer, leq, spineTo)
+import Fmt (Buildable (..), pretty)
 import Parser (Info)
 import Product (Contains)
 import Range (Range (..), getRange, point)
@@ -47,6 +49,7 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (Address, mformatAddress, ta)
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Error
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.
@@ -149,6 +152,18 @@ createErrorValue errMsg =
 
 errorAddress :: Address
 errorAddress = [ta|tz1fakefakefakefakefakefakefakcphLA5|]
+
+-- | Something was found to be wrong after replacing Michelson code
+-- in 'preprocessContract'.
+newtype ReplacementException = ReplacementException MText
+  deriving newtype (Show, Buildable)
+
+instance Exception ReplacementException where
+  displayException = pretty
+
+instance DebuggerException ReplacementException where
+  type ExceptionTag ReplacementException = "Replacement"
+  debuggerExceptionType _ = MidLigoLayerException
 
 -- | We're replacing some @Michelson@ instructions.
 -- Sometimes we perform unsafe unwrapping in the replaced code.

@@ -1,6 +1,8 @@
 module Language.LIGO.Debugger.Michelson
   ( DecodeError (..)
-  , EmbedError
+  , MichelsonDecodeException (..)
+  , EmbedError (..)
+  , PreprocessError (..)
   , typesReplaceRules
   , instrReplaceRules
   , readLigoMapper
@@ -20,9 +22,10 @@ import Data.Map qualified as M
 import Data.Set qualified as Set
 import Data.Text qualified as Text
 import Data.Vector qualified as V
-import Fmt (Buildable (..), Builder, genericF)
+import Fmt (Buildable (..), Builder, pretty)
 import Generics.SYB (everywhere, everywhereM, mkM, mkT)
 import Text.Interpolation.Nyan
+import Text.Show qualified
 import Util (everywhereM')
 
 import Morley.Debugger.Core.Common (debuggerTcOptions)
@@ -31,16 +34,18 @@ import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
 import Morley.Michelson.Text (mt)
-import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
+import Morley.Michelson.TypeCheck
+  (TCError (..), TCTypeError (..), typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
-  (Contract' (..), ContractCode' (ContractCode, unContractCode), CtorEffectsApp (..),
-  DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta), dfsFoldInstr,
-  dfsTraverseInstr, isMichelsonInstr)
+  (BadTypeForScope (BtHasTicket), Contract' (..), ContractCode' (ContractCode, unContractCode),
+  CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta),
+  dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Util.Lens (makeLensesWith, postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Error
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list
@@ -107,13 +112,42 @@ data DecodeError
 
 instance Buildable DecodeError where
   build = \case
+    FromExpressionFailed err ->
+      [int||Failed to parse Micheline expression: #{err}|]
     TypeCheckFailed err ->
-      [int||
-        Something went wrong: LIGO executable produced \
-        badly typed Michelson contract. Please contact us.
-        #{err}
-      |]
-    decodeError -> genericF decodeError
+      [int||Failed to typecheck the Michelson contract: #{err}|]
+    InsufficientMeta idx ->
+      [int||Not enough metadata, missing at index #{idx}|]
+    MetaEmbeddingError err ->
+      pretty err
+    PreprocessError err ->
+      pretty err
+
+newtype MichelsonDecodeException = MichelsonDecodeException DecodeError
+  deriving stock (Eq, Generic)
+  deriving newtype Buildable
+
+instance Show MichelsonDecodeException where
+  show = pretty
+
+instance Exception MichelsonDecodeException
+
+instance DebuggerException MichelsonDecodeException where
+  type ExceptionTag MichelsonDecodeException = "MichelsonDecode"
+  debuggerExceptionType (MichelsonDecodeException err) = case err of
+    FromExpressionFailed{} -> MidLigoLayerException
+    TypeCheckFailed{} -> MidLigoLayerException
+    InsufficientMeta{} -> MidLigoLayerException
+    MetaEmbeddingError{} -> MidLigoLayerException
+    PreprocessError err' -> case err' of
+      EntrypointTypeNotFound{} -> UserException
+      UnsupportedTicketDup -> UserException
+
+wrapTypeCheckFailed :: TCError -> DecodeError
+wrapTypeCheckFailed = \case
+  TCFailedOnInstr _ _ _ _ (Just (UnsupportedTypeForScope _ BtHasTicket)) ->
+    PreprocessError UnsupportedTicketDup
+  other -> TypeCheckFailed other
 
 fromExpressionToTyped
   :: (Default meta)
@@ -125,11 +159,12 @@ fromExpressionToTyped
 fromExpressionToTyped expr metas typeRules instrRules = do
   uContract <- first FromExpressionFailed $ fromExpression expr
   (processedUContract, newMetas, oldMetas) <- first PreprocessError $ preprocessContract uContract metas typeRules instrRules
-  contract <- first TypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
+  contract <- first wrapTypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
   pure (contract, reverse newMetas <> oldMetas)
 
-newtype PreprocessError
+data PreprocessError
   = EntrypointTypeNotFound U.EpName
+  | UnsupportedTicketDup
   deriving stock (Eq, Generic)
 
 instance Buildable PreprocessError where
@@ -138,6 +173,12 @@ instance Buildable PreprocessError where
       [int||
         SELF instruction have the entrypoint #{epName} \
         that the contract's parameter doesn't declare.
+      |]
+    UnsupportedTicketDup ->
+      [int||
+        Typechecking failed due to `DUP` being used on a non-dupable value
+        (e.g. ticket). This case may not work in the debugger even if the
+        contract actually compiles.
       |]
 
 type PreprocessMonad meta =
