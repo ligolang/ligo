@@ -1,13 +1,16 @@
 # We abort pipeline if the MR last commit of MR is pushed by human and not by bot.
 .export-mr-info: &export-mr-info
+    - pip3 install -r ./.ci/scripts/requirements.txt
     - MR_INFO='$(./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API})'
-    - export MR_AUTHOR_USERNAME=$(nix-shell -p jq --run "jq \".author.username\" <<< ${MR_INFO}")
-    - export MR_TITLE=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
-    - MR_RAW_DESCRIPTION=$(nix-shell -p jq --run "jq \".description\" <<< ${MR_INFO}")
-    - export MR_TYPE=$(sed  -e 's/.*type:\(breaking\|added\|fixed\|changed\|deprecated\|removed\|performance\|internal\|other\|none\).*/\L\1/I' <<< $MR_RAW_DESCRIPTION)
-    - MD_DESC_SEPARATOR="Changelog details:\n"
-    - export MR_DESC=$(sed -e '/.*Changelog details:\\n\(.*\)/!d;s//\1/' <<< $MR_RAW_DESCRIPTION)
-    
+    - MR_AUTHOR_USERNAME_Q=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
+    - export MR_AUTHOR_USERNAME=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_AUTHOR_USERNAME_Q})
+    - MR_TITLE_Q=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
+    - export MR_TITLE=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_TITLE_Q})
+    - MR_TYPE_Q=$(nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}")
+    - export MR_TYPE=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_TYPE_Q})
+    - MR_DESC_Q=$(nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}")
+    - export MR_DESC=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_DESC_Q})
+
 add-changelog-entry:
   stage: post-build-action
   extends : .nix
@@ -16,7 +19,10 @@ add-changelog-entry:
   script:
   # Check if type is None, if None, skip changelog generation
     - "[[ $MR_TYPE = none ]] && exit 0"
-    - echo $MR_TYPE
+    # - echo $MR_TYPE
+    # - echo $MR_TITLE
+    # - echo $MR_AUTHOR_USERNAME
+    # - echo $MR_DESC
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
     - ./scripts/add-changelog-entry.sh "$MR_TYPE" "$CI_MERGE_REQUEST_IID" "$MR_AUTHOR_USERNAME" "$MR_TITLE" "$MR_DESC"
     - git add changelog/*

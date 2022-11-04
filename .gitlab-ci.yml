@@ -137,18 +137,6 @@ check-generated-highlighting:
         - tools/ligo-syntax-highlighting/**/*
       when: always
 
-xrefcheck:
-  stage: tooling
-  only:
-    - merge_requests
-  needs:
-    - job: changelog
-      artifacts: true
-  script:
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
-    - chmod 777 ./xrefcheck-x86_64-linux
-    - ./xrefcheck-x86_64-linux
-
 .docker-image:
   stage: push
   image: docker:19.03.5
@@ -278,7 +266,6 @@ pages:
 pages-attempt:
   extends: .website
   needs:
-    - job: xrefcheck
     - job: changelog
       artifacts: true
   rules:
