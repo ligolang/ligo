@@ -319,6 +319,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_SUB, [ V_Ct (C_int a' | C_nat a'); V_Ct (C_int b' | C_nat b') ] ->
     return @@ v_int (Z.sub a' b')
   | ( C_SUB
+    , [ V_Ct (C_timestamp a'); V_Ct (C_timestamp b') ] )
+    ->
+    let res = Michelson_backend.Tezos_eq.timestamp_sub a' b' in
+    return @@ v_int res
+  | ( C_SUB
     , [ V_Ct (C_int a' | C_timestamp a'); V_Ct (C_timestamp b' | C_int b') ] )
     ->
     let res = Michelson_backend.Tezos_eq.timestamp_sub a' b' in
