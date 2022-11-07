@@ -76,4 +76,26 @@ let%expect_test _ =
 
     # 2 "../Root.ligo" 2 |}]
 
+let () = Sys_unix.chdir pwd ;
+         Sys_unix.chdir "../../test/contracts/include/missing_asi"
+
+let%expect_test _ =
+  run_ligo_good [ "print" ; "preprocessed" ;  "b.jsligo" ] ;
+  [%expect{|
+    # 1 "b.jsligo"
+
+    # 1 "a.jsligo" 1
+    const x = 1
+
+    const y = x + 1
+    # 2 "b.jsligo" 2
+
+    const z = y + x
+
+    const test = assert(z == 3) |}] ;
+  run_ligo_good [ "run" ; "test" ;  "b.jsligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 let () = Sys_unix.chdir pwd
