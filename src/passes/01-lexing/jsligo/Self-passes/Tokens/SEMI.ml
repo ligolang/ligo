@@ -47,6 +47,7 @@ let semicolon_insertion tokens =
   | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Return _ as r)  :: rest ->
     inner (r :: Token.ghost_SEMI :: rbrace :: result ) rest
+  | token :: (Directive _ as t) :: rest
   | token :: (Namespace _ as t) :: rest
   | token :: (Export _ as t) :: rest
   | token :: (Let _ as t) :: rest
