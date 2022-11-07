@@ -159,10 +159,10 @@ let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
     let r2 : ty_expr array = rows_to_te_array r2 in
     let diff : t = Diff.diff () r1 r2 in
     diff
-  (* Other types are considered "singletons", in the sense they are not a collection of te themselves, so there is no need to diff them.
-     TODO NP : Actually that's wrong, if we get a (a * b * c * d * e) list vs. (b * a * c * d * e) list,
-    a [list] contains only one type but we'd like to diff the inner type, i.e. the two confusing tuples inside the list type. *)
-  (* TODO NP : Arrow types can be diffed too *)
+  (* TODO : Add record and variant types *)
+  (* For types like [tuple_a list option] vs. [tuple_b list option] for example,
+     the typer will explore the types recursively to pinpoint the mismatch,
+     and [get_diff] will be called on [tuple_a] vs [tuple_b] *)
   | _ -> []
 
 module PP = struct
