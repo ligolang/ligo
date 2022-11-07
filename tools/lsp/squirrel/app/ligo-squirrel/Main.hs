@@ -4,17 +4,10 @@ module Main (main) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Colog.Core qualified as Colog
-import Control.Lens hiding ((:>))
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, void, when)
+import Control.Lens (folded, to)
 import Data.Aeson qualified as Aeson
-import Data.Bool (bool)
 import Data.Default (def)
-import Data.Foldable (for_, traverse_)
-import Data.Maybe (fromMaybe, isNothing)
-import Data.Monoid (All (..))
 import Data.Set qualified as Set
-import Data.Text qualified as T
 import Focus qualified
 import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
@@ -22,16 +15,15 @@ import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import Prettyprinter qualified as PP
 import StmContainers.Map qualified as StmMap
-import System.Exit (ExitCode (ExitFailure), exitSuccess, exitWith)
+import System.Exit (ExitCode (ExitFailure))
 import System.FilePath (splitDirectories, takeDirectory)
-import System.IO (stdin, stdout)
-import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (tryReadMVar)
-import UnliftIO.STM (atomically)
+import UnliftIO.Exception (withException)
 
 import AST
+import AST.Pretty ()
 import Cli (TempSettings, getLigoVersionSafe)
 import Config (Config (..))
+import Debug qualified (show)
 import Extension (isLigoFile)
 import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Log (i)
@@ -97,7 +89,7 @@ mainLoop =
           handler msg resp `withException` \(SomeException e) -> do
             $Log.critical [i|Handling `#{_method}`: #{displayException e}|]
             RIO.shutdownRio
-            resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
+            resp . Left $ J.ResponseError J.InternalError (toText $ displayException e) Nothing
 
         wrapNotif
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
@@ -106,7 +98,7 @@ mainLoop =
           handler msg `withException` \(SomeException e) -> do
             $Log.critical [i|Handling `#{_method}`: #{displayException e}|]
             RIO.shutdownRio
-            sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
+            sendError $ "Error handling `" <> show _method <> "` (see logs)."
 
         addReqLogging
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
@@ -127,7 +119,7 @@ mainLoop =
              S.Handler RIO meth -> S.Handler RIO meth
         handleDisabledReq handler msg@J.RequestMessage{_method} resp = do
           Config {_cDisabledFeatures} <- S.getConfig
-          let err = T.pack [i|Cannot handle #{_method}: disabled by user.|]
+          let err = [i|Cannot handle #{_method}: disabled by user.|]
           if Set.member (J.SomeClientMethod _method) _cDisabledFeatures
             then resp $ Left $ J.ResponseError J.RequestCancelled err Nothing
             else handler msg resp
@@ -135,7 +127,7 @@ mainLoop =
     lspLogger :: Colog.LogAction (S.LspM Config) (Colog.WithSeverity S.LspServerLog)
     lspLogger =
       Colog.filterBySeverity Colog.Error Colog.getSeverity
-      $ Colog.cmap (fmap (T.pack . show . PP.pretty)) L.logToLogMessage
+      $ Colog.cmap (fmap (Debug.show . PP.pretty)) L.logToLogMessage
 
 handlers :: S.Handlers RIO
 handlers = mconcat
@@ -165,7 +157,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
   , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
 
-  , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
+  , S.notificationHandler J.SCancelRequest (\_msg -> pass)
   , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
   , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
 
@@ -406,7 +398,7 @@ handleRenameRequest req respond = do
 
     case renameDeclarationAt pos tree newName of
       NotFound -> do
-        $Log.debug [i|Declaration not found for: #{show req}|]
+        $Log.debug [i|Declaration not found for: #{req}|]
         respond . Left $
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
       Ok edits -> do
@@ -451,7 +443,7 @@ handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
 handleDidChangeWatchedFiles notif = do
   let J.List changes = notif ^. J.params . J.changes
   for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) ->
-    for_ (J.uriToNormalizedFilePath uri) \nfp -> do
+    whenJust (J.uriToNormalizedFilePath uri) \nfp -> do
       let fp = J.fromNormalizedFilePath nfp
       -- We don't want to react on changes within the temporary directory.
       when (Document.tempDirTemplate `notElem` splitDirectories fp) $
@@ -473,7 +465,7 @@ handleCustomMethod'IndexDirectory
 handleCustomMethod'IndexDirectory _req respond = do
   indexOptsM <- tryReadMVar =<< asks reIndexOpts
   let pathM = Indexing.indexOptionsPath =<< indexOptsM
-  respond $ Right $ maybe Aeson.Null (Aeson.String . T.pack) pathM
+  respond $ Right $ maybe Aeson.Null (Aeson.String . toText) pathM
 
 -- | Handles whether a document is clean ('False') or dirty ('True'). If the
 -- provided file doesn't exist, returns null.
@@ -482,7 +474,7 @@ handleCustomMethod'IsDirty
 handleCustomMethod'IsDirty req respond =
   case req ^. J.params . to Aeson.fromJSON of
     Aeson.Error err ->
-      respond $ Left $ J.ResponseError J.InvalidParams (T.pack err) Nothing
+      respond $ Left $ J.ResponseError J.InvalidParams (toText err) Nothing
     Aeson.Success (params :: J.TextDocumentIdentifier) -> do
       let nuri = params ^. J.uri . to J.toNormalizedUri
       openDocM <- atomically . StmMap.lookup nuri =<< asks reOpenDocs

@@ -2,8 +2,7 @@ module AST.Scope.Standard
   ( Standard
   ) where
 
-import Data.Foldable (toList)
-import UnliftIO.Exception (Handler (..), catches, displayException)
+import UnliftIO.Exception (Handler (..), catches)
 
 import AST.Scope.Common
   (FindFilepath (..), HasScopeForest (..), MergeStrategy (..), ParsedContract (..), ScopeForest,

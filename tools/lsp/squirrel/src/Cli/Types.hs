@@ -10,14 +10,12 @@ module Cli.Types
   ) where
 
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Trans (lift)
 import Data.Default (Default (..))
 import System.Environment (getEnv)
-import System.IO (Handle)
 import System.IO.Error (isDoesNotExistError)
 import System.IO.Temp (getCanonicalTemporaryDirectory)
 import UnliftIO.Directory (getCurrentDirectory)
-import UnliftIO.Exception (catch, throwIO)
+import UnliftIO.Exception as UnliftIO (catch, throwIO)
 import UnliftIO.Pool (Pool)
 import UnliftIO.Process (ProcessHandle)
 
@@ -45,7 +43,7 @@ data LigoClientEnv = LigoClientEnv
 -- | Attempts to get the environment variable 'LIGO_BINARY_PATH'. If such
 -- variable is not present, defaults to "ligo", assuming it is in PATH.
 ligoBinaryPath :: IO FilePath
-ligoBinaryPath = getEnv "LIGO_BINARY_PATH" `catch` \e ->
+ligoBinaryPath = getEnv "LIGO_BINARY_PATH" `UnliftIO.catch` \e ->
   if isDoesNotExistError e
   then pure "ligo"
   else throwIO e

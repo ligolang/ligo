@@ -7,7 +7,6 @@ module Test.Common.Capabilities.DocumentLink
   , getContractsDir
   ) where
 
-import Control.Lens ((^.))
 import Language.LSP.Types (DocumentLink (..), UInt, uriToFilePath)
 import Language.LSP.Types.Lens (character, end, line, start)
 import System.Directory (canonicalizePath)

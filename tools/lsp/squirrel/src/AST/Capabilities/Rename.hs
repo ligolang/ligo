@@ -5,11 +5,8 @@ module AST.Capabilities.Rename
   , prepareRenameDeclarationAt
   ) where
 
-import Data.Function (on)
 import Data.HashMap.Strict qualified as HM
-import Data.List (groupBy, sortOn)
-import Data.Maybe (mapMaybe)
-import Data.Text (Text)
+import Data.List (groupBy)
 import Language.LSP.Types qualified as J
 
 import AST.Capabilities.Find (CanSearch, definitionOf, findScopedDecl)

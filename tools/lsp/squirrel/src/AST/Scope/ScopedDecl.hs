@@ -30,14 +30,10 @@ module AST.Scope.ScopedDecl
   , extractRefName
   ) where
 
-import Control.Applicative ((<|>))
-import Control.Lens ((%~), (&), (^?))
+import Prelude hiding (Type)
+
 import Control.Lens.TH (makeLenses, makePrisms)
-import Data.Hashable (Hashable)
-import Data.List (find)
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Sum (inject)
-import Data.Text (Text)
 import Duplo.Tree (Cofree ((:<)), Element)
 
 import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr, (<+>))
@@ -257,7 +253,7 @@ instance IsLIGO RecordFieldPattern where
   toLIGO (IsRecordField name body) = node (LIGO.IsRecordField (node (LIGO.FieldName name)) (toLIGO body))
   toLIGO (IsRecordCapture name) = node (LIGO.IsRecordCapture (node (LIGO.NameDecl name)))
 
-node :: Element f RawLigoList => f (LIGO '[]) -> LIGO '[]
+node :: Duplo.Tree.Element f RawLigoList => f (LIGO '[]) -> LIGO '[]
 node element = Nil :< inject element
 
 $(makeLenses ''ScopedDecl)

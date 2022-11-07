@@ -5,8 +5,10 @@ module AST.Capabilities.Format
   , formatAt
   ) where
 
+import Prelude hiding (Product (..))
+
 import Language.LSP.Types qualified as J
-import UnliftIO.Exception (Handler (..), catches, displayException)
+import UnliftIO.Exception (Handler (..), catches)
 
 import AST.Scope (ContractInfo', Info', pattern FindContract)
 import AST.Skeleton (SomeLIGO (..))

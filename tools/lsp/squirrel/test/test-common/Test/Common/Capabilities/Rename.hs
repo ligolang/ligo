@@ -10,8 +10,6 @@ module Test.Common.Capabilities.Rename
 
 import Control.Arrow ((***))
 import Data.HashMap.Strict qualified as HM
-import Data.List (sort)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Language.LSP.Types qualified as J
 import System.Directory (makeAbsolute)
@@ -71,12 +69,11 @@ testRenameFail
 testRenameFail fp pos = do
     tree <- readContractWithScopes @impl fp
 
-    case prepareRenameDeclarationAt (uncurry point pos) tree of
-      Nothing -> pure ()
-      Just _ -> expectationFailure "Should not be able to rename"
+    whenJust (prepareRenameDeclarationAt (uncurry point pos) tree) $
+      const $ expectationFailure "Should not be able to rename"
 
     case renameDeclarationAt (uncurry point pos) tree "<newName>" of
-      NotFound -> pure ()
+      NotFound -> pass
       Ok _ -> expectationFailure "Should not return edits"
 
 renameFail :: forall impl. ScopeTester impl => Assertion

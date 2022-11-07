@@ -11,6 +11,8 @@ module Product
   , modTag
   ) where
 
+import Prelude hiding (Product)
+
 import GHC.Types
 
 import Duplo.Lattice (Lattice (..))

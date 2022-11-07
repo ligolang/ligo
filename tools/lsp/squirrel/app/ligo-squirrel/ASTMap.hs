@@ -12,7 +12,7 @@ module ASTMap
 
     -- * Definition and creation
   , ASTMap
-  , empty
+  , ASTMap.empty
 
     -- * Insertion
   , insert
@@ -34,19 +34,12 @@ module ASTMap
   , invalidate
   ) where
 
-import Control.Concurrent.MVar
-import Control.Concurrent.STM (STM, retry)
-import Control.Monad (when)
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Functor (void, (<&>))
-import Data.Hashable (Hashable)
-import Data.Maybe (fromMaybe)
+import Control.Concurrent.STM (retry)
 import Focus (Focus)
 import Focus qualified
-import StmContainers.Map (Map)
-import StmContainers.Map qualified as Map
+import StmContainers.Map qualified as StmMap
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
-import UnliftIO (Async, MonadUnliftIO, async, atomically, wait)
+import UnliftIO (Async, MonadUnliftIO, async, wait)
 
 ----
 ---- Implementation notes:
@@ -78,15 +71,15 @@ getTimestamp = liftIO $ getTime Monotonic
 
 -- | The cache-map.
 data ASTMap k v m = ASTMap
-  { amValues :: Map k (v, Timestamp)
+  { amValues :: StmMap.Map k (v, Timestamp)
     -- ^ Cached values and when the actions that loaded them started.
-  , amLoadStarted :: Map k Timestamp
+  , amLoadStarted :: StmMap.Map k Timestamp
     -- ^ Who is loading what and when they started.
-  , amInvalid :: Map k Timestamp
+  , amInvalid :: StmMap.Map k Timestamp
     -- ^ When each value was invalidated last.
-  , amWorkers :: Map k (Async v)
+  , amWorkers :: StmMap.Map k (Async v)
     -- ^ Background threads loading values.
-  , amSyncValue :: Map k (MVar ())
+  , amSyncValue :: StmMap.Map k (MVar ())
     -- ^ MVar storage for synchronising multiple load requests
   , amLoad :: k -> m v
     -- ^ Loading action.
@@ -95,7 +88,7 @@ data ASTMap k v m = ASTMap
 -- | Construct a new empty 'ASTMap' given the loading action.
 empty :: (k -> m v) -> IO (ASTMap k v m)
 empty load = atomically $
-  ASTMap <$> Map.new <*> Map.new <*> Map.new <*> Map.new <*> Map.new <*> pure load
+  ASTMap <$> StmMap.new <*> StmMap.new <*> StmMap.new <*> StmMap.new <*> StmMap.new <*> pure load
 
 -- | Insert some value into an 'ASTMap'.
 insert
@@ -108,7 +101,7 @@ insert
   -> ASTMap k v m  -- ^ Map
   -> m ()
 insert k v time ASTMap{amValues} =
-  void $ atomically $ Map.focus (insertOrChooseNewer snd (v, time)) k amValues
+  void $ atomically $ StmMap.focus (insertOrChooseNewer snd (v, time)) k amValues
 
 -- | Delete a value from an 'ASTMap'. Returns the deleted value, if it exists.
 delete
@@ -123,10 +116,10 @@ delete k tmap@ASTMap{amValues, amLoadStarted, amInvalid, amSyncValue} = do
   go <- checkIfLoading time k tmap
   if go then
     atomically do
-      Map.delete k amLoadStarted
-      Map.delete k amInvalid
-      Map.delete k amSyncValue
-      v <- Map.focus Focus.lookupAndDelete k amValues
+      StmMap.delete k amLoadStarted
+      StmMap.delete k amInvalid
+      StmMap.delete k amSyncValue
+      v <- StmMap.focus Focus.lookupAndDelete k amValues
       pure $ fst <$> v
   else
     -- Someone started to load it... maybe the file was recreated after it was
@@ -139,7 +132,7 @@ checkIfLoading
      )
   => Timestamp -> k -> ASTMap k v m -> m Bool
 checkIfLoading vNew k ASTMap{amLoadStarted} =
-  atomically $ Map.focus go k amLoadStarted
+  atomically $ StmMap.focus go k amLoadStarted
   where
     go = Focus.cases (True, Focus.Leave) \vOld -> (vNew >= vOld, Focus.Leave)
 
@@ -159,16 +152,16 @@ loadValue
   -> Timestamp  -- ^ Current timestamp
   -> m v
 loadValue k ASTMap{amValues, amLoadStarted, amLoad} time = do
-    go <- atomically $ Map.focus (insertOrChooseNewer id time) k amLoadStarted
+    go <- atomically $ StmMap.focus (insertOrChooseNewer id time) k amLoadStarted
     if go then do
       v <- amLoad k
       -- Cache the value, but only if ours is newer than the current cache
-      atomically $ Map.focus (insertOrChooseNewer snd (v, time)) k amValues
+      atomically $ StmMap.focus (insertOrChooseNewer snd (v, time)) k amValues
       pure v
     else
       -- Someone else is loading it and they somehow managed to start later than
       -- we did, so... why not just wait for them?
-      atomically $ Map.lookup k amValues >>= \case
+      atomically $ StmMap.lookup k amValues >>= \case
         Just (v, _timestasmp) -> pure v
         Nothing -> retry
 
@@ -182,7 +175,7 @@ invalidate
   -> m ()
 invalidate k ASTMap{amInvalid} = do
   invTime <- getTimestamp
-  atomically $ void $ Map.focus (insertOrChooseNewer id invTime) k amInvalid
+  atomically $ void $ StmMap.focus (insertOrChooseNewer id invTime) k amInvalid
 
 -- | Fetch the version of the value which is up to date at the time
 -- of the call to this function.
@@ -213,7 +206,7 @@ fetchCurrent' k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
     let
       seeIfSomeoneIsFetchingIt :: STM (Maybe (v, Timestamp))
       seeIfSomeoneIsFetchingIt =
-        Map.lookup k amLoadStarted >>= \case
+        StmMap.lookup k amLoadStarted >>= \case
           Nothing ->
             -- Nope, no one is fetching it
             pure Nothing
@@ -221,19 +214,19 @@ fetchCurrent' k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
             | startTime >= time ->
                 -- Someone started fetching it after our current time!
                 -- They’ll get a value newer than current time and it works for us.
-                Map.lookup k amValues >>= \case
+                StmMap.lookup k amValues >>= \case
                   Just res -> pure $ Just res
                   Nothing -> retry
             | otherwise ->
                 -- They will get some value, but it will be outdated.
                 pure Nothing
-    mres <- atomically $ Map.lookup k amValues >>= \case
+    mres <- atomically $ StmMap.lookup k amValues >>= \case
       Nothing ->
         -- No value in the cache
         seeIfSomeoneIsFetchingIt
       Just res@(_, vTime) ->
         -- There is some value in the cache, but how good is it?
-        Map.lookup k amInvalid >>= \case
+        StmMap.lookup k amInvalid >>= \case
           Nothing ->
             -- The value is valid, because it has never been invalidated
             pure $ Just res
@@ -270,7 +263,7 @@ fetchLatest k tmap@ASTMap{amInvalid} = go
     go = do
       (v, vTime) <- fetchCurrent' k tmap
       again <- atomically $
-        Map.lookup k amInvalid <&> \case
+        StmMap.lookup k amInvalid <&> \case
           Nothing -> False
           Just invTime
             | vTime > invTime -> False
@@ -289,7 +282,7 @@ fetchCached
      )
   => k -> ASTMap k v m -> m v
 fetchCached k tmap@ASTMap{amValues} = do
-  mv <- atomically $ Map.lookup k amValues
+  mv <- atomically $ StmMap.lookup k amValues
   case mv of
     Nothing -> getTimestamp >>= loadValue k tmap
     Just (v, _) -> pure v
@@ -314,12 +307,12 @@ fetchBundled
   => k -> ASTMap k v m -> m v
 fetchBundled k tmap@ASTMap{amValues, amInvalid, amLoadStarted} = do
     mv <- atomically $ do
-      invTime <- fromMaybe 0 <$> Map.lookup k amInvalid
-      mres <- Map.lookup k amValues
+      invTime <- fromMaybe 0 <$> StmMap.lookup k amInvalid
+      mres <- StmMap.lookup k amValues
       case mres of
         Just (v, vTime) | vTime > invTime -> pure $ Just v  -- great success!
         _ -> do
-          mloadTime <- Map.lookup k amLoadStarted
+          mloadTime <- StmMap.lookup k amLoadStarted
           case (mloadTime, mres) of
             (Just loadTime, Nothing) -> Just <$> waitForOtherResult loadTime
             (Just loadTime, Just (_, vTime))
@@ -336,7 +329,7 @@ fetchBundled k tmap@ASTMap{amValues, amInvalid, amLoadStarted} = do
     -- | Wait for a value with timestamp at least @atTime@
     -- (we know someone is loading it)
     waitForOtherResult atTime =
-      Map.lookup k amValues >>= \case
+      StmMap.lookup k amValues >>= \case
         Just (v, vTime) | vTime >= atTime -> pure v
         _ -> retry
 
@@ -360,7 +353,7 @@ fetchFast
      , MonadUnliftIO m
      )
   => k -> ASTMap k v m -> m v
-fetchFast = fetchFastAndNotify (const $ pure ())
+fetchFast = fetchFastAndNotify (const pass)
 
 -- | Just like 'fetchFast', but also runs an action after it has finished
 -- loading.
@@ -391,9 +384,9 @@ fetchFastAndNotify
   => (v -> m ()) -> k -> ASTMap k v m -> m v
 fetchFastAndNotify notify k tmap@ASTMap{..} = do
   mv <- atomically do
-    invTime <- fromMaybe 0 <$> Map.lookup k amInvalid
-    mres <- Map.lookup k amValues
-    mLoadTime <- Map.lookup k amLoadStarted
+    invTime <- fromMaybe 0 <$> StmMap.lookup k amInvalid
+    mres <- StmMap.lookup k amValues
+    mLoadTime <- StmMap.lookup k amLoadStarted
     case mres of
       -- We have no option other than to load it and wait, or wait for someone
       -- else to finish loading it.
@@ -408,13 +401,13 @@ fetchFastAndNotify notify k tmap@ASTMap{..} = do
   let
     load :: v -> Bool -> m v
     load oldVar shouldWait = do
-      mVar <- fmap (fromMaybe (error "Impossible")) $ atomically $ Map.lookup k amSyncValue
+      mVar <- fmap (fromMaybe (error "Impossible")) $ atomically $ StmMap.lookup k amSyncValue
       if not shouldWait
       then do
-        liftIO $ putMVar mVar ()
+        putMVar mVar ()
         loadNoWait
       else do
-        lock <- liftIO $ tryTakeMVar mVar
+        lock <- tryTakeMVar mVar
         case lock of
           Just _ -> loadNoWait
           Nothing -> pure oldVar
@@ -431,18 +424,17 @@ fetchFastAndNotify notify k tmap@ASTMap{..} = do
         let
           noWait :: m ()
           noWait = do
-            mVar <- atomically $ Map.lookup k amSyncValue
-            liftIO $ maybe
-              (newEmptyMVar >>= \var -> atomically (Map.insert var k amSyncValue))
-              (\_ -> pure ()) mVar
+            mVar <- atomically $ StmMap.lookup k amSyncValue
+            liftIO $ whenNothing_ mVar $
+              newEmptyMVar >>= \var -> atomically (StmMap.insert var k amSyncValue)
 
             worker <- async (loadFunc False)
-            atomically $ Map.insert worker k amWorkers
+            atomically $ StmMap.insert worker k amWorkers
 
           waitFor :: Async v -> m ()
           waitFor worker = void $ async $ wait worker >> loadFunc True
 
-        mWorker <- atomically $ Map.focus Focus.lookupAndDelete k amWorkers
+        mWorker <- atomically $ StmMap.focus Focus.lookupAndDelete k amWorkers
         maybe noWait waitFor mWorker
 
 

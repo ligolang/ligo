@@ -3,7 +3,6 @@ module Test.Capabilities.SignatureHelp
   , unit_signature_help_jsligo
   ) where
 
-import Control.Lens ((^.))
 import Language.LSP.Test
 import Language.LSP.Types
 import Language.LSP.Types.Lens (activeParameter, activeSignature, signatures)

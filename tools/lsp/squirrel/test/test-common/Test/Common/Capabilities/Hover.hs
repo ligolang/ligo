@@ -13,11 +13,8 @@ module Test.Common.Capabilities.Hover
   , unit_hover_sum_type_mligo
   ) where
 
-import Prelude hiding (lines)
+import Prelude hiding (Type)
 
-import Control.Monad (unless)
-import Data.List (find)
-import Data.Text (Text, lines)
 import Language.LSP.Types (Hover (..), HoverContents (..), MarkupContent (..))
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))

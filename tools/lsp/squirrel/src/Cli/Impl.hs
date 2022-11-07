@@ -29,44 +29,33 @@ module Cli.Impl
   , withLigoDebug
   ) where
 
-import Control.Arrow ((&&&))
-import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
-import Control.Monad.Reader
 import Data.Aeson
   (FromJSON (..), ToJSON (..), Value, eitherDecode', eitherDecodeStrict', object, (.=))
 import Data.Aeson.Types (parseEither)
-import Data.Bool (bool)
-import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Lazy qualified as BSL
-import Data.Foldable (asum, toList)
-import Data.Function ((&))
-import Data.List.NonEmpty (NonEmpty)
-import Data.Monoid (Endo (..))
-import Data.Text (Text, pack, unpack)
 import Data.Text qualified as Text
-import Data.Text.Encoding (encodeUtf8)
 import Data.Text.IO qualified as Text
+import Debug qualified
 import Duplo.Pretty (pp)
 import GHC.IO.Exception qualified as IOException
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName)
-import System.IO (Handle, hClose, hFlush, hGetChar)
+import System.IO (hFlush, hGetChar)
 -- 'UnliftIO.Process' forgot to lift 'cleanupProcess'.
 import System.Process (cleanupProcess)
 import System.Process.ByteString.Lazy qualified as PExtras
 import Text.Regex.TDFA (getAllTextSubmatches, (=~))
 import UnliftIO.Concurrent (getNumCapabilities)
 import UnliftIO.Directory (canonicalizePath)
-import UnliftIO.Exception (Exception (..), SomeException (..), bracket, handle, throwIO, try)
+import UnliftIO.Exception qualified as UnliftIO (bracket, handle, throwIO, try)
 import UnliftIO.Pool (Pool)
 import UnliftIO.Pool qualified as Pool
 import UnliftIO.Process
   (CreateProcess (..), StdStream (CreatePipe), createProcess, getProcessExitCode, proc,
   readCreateProcessWithExitCode)
 import UnliftIO.Temporary (withTempDirectory, withTempFile)
-import Witherable (hashNub)
 
 import AST.Includes (extractIncludes)
 import Cli.Json
@@ -248,7 +237,7 @@ instance Exception LigoIOException where
 -- Execution
 ----------------------------------------------------------------------------
 
-callLigoBS :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m ByteString
+callLigoBS :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m LByteString
 callLigoBS _rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
@@ -264,13 +253,13 @@ callLigoBS _rootDir args conM = do
     (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process raw
       & rewrapIOError
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
-      throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM
+      UnliftIO.throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM
     pure lo
   where
-    rewrapIOError = handle \exc@IOException.IOError{} ->
-      throwIO LigoIOException
+    rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
+      UnliftIO.throwIO LigoIOException
         { lieType = IOException.ioe_type exc
-        , lieDescription = Text.pack $ IOException.ioe_description exc
+        , lieDescription = toText $ IOException.ioe_description exc
         }
 
 -- | Launches various @ligo daemon@ as background processes. If the processes
@@ -307,7 +296,7 @@ startLigoDaemon _getRootDir = do
 cleanupLigoDaemon :: HasLigoClient m => m ()
 cleanupLigoDaemon = do
   LigoClientEnv{_lceLigoProcesses} <- getLigoClientEnv
-  maybe (pure ()) cleanupLigoDaemonImpl _lceLigoProcesses
+  whenJust _lceLigoProcesses cleanupLigoDaemonImpl
 
 -- | The same as 'stopLigoDaemon', but takes a 'Pool LigoProcess' explictly.
 cleanupLigoDaemonImpl :: MonadUnliftIO m => Pool LigoProcess -> m ()
@@ -330,16 +319,16 @@ callLigo _rootDir args conM = do
   -- from `directory` is no help either, as it doesn't seem thread-safe either.
   case _lceLigoProcesses of
     Nothing -> do
-      let raw = maybe "" (unpack . srcText) conM
+      let raw = maybe "" (toString . srcText) conM
       let process = proc _lceClientPath args
       (ec, lo, le) <- readCreateProcessWithExitCode process raw
       unless (ec == ExitSuccess && null le) $ -- TODO: separate JSON errors and other ones
-        throwIO $ LigoClientFailureException (pack lo) (pack le) fpM
-      pure $ pack lo
+        UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM
+      pure $ toText lo
     Just ligoProcesses ->
       Pool.withResource ligoProcesses \LigoProcess{..} -> do
         liftIO do
-          Text.hPutStrLn _lpStdin $ Text.pack $ unwords $ map show args
+          Text.hPutStrLn _lpStdin $ unwords $ map Debug.show args
           hFlush _lpStdin
         lo <- readUntilNull _lpStdout
         le <- readUntilNull _lpStderr
@@ -347,7 +336,7 @@ callLigo _rootDir args conM = do
           Nothing | Text.null le -> pure lo
           -- We assume a failure even in the case of 'ExitSuccess' because LIGO
           -- should not quit.
-          _ -> throwIO $ LigoClientFailureException lo le fpM
+          _ -> UnliftIO.throwIO $ LigoClientFailureException lo le fpM
   where
     readLoop :: Handle -> IO String
     readLoop h =
@@ -356,7 +345,7 @@ callLigo _rootDir args conM = do
         c    -> fmap (c :) (readLoop h)
 
     readUntilNull :: Handle -> m Text
-    readUntilNull = liftIO . fmap Text.pack . readLoop
+    readUntilNull = liftIO . fmap toText . readLoop
 
 newtype Version = Version
   { getVersion :: Text
@@ -387,27 +376,27 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
       -- Create temporary file and call LIGO with it.
       $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
       liftIO (Text.hPutStr hnd contents *> hClose hnd)
-      try (callLigoBS (Just rootDir) (getArgs tempFp) (Just src)) >>= \case
+      UnliftIO.try (callLigoBS (Just rootDir) (getArgs tempFp) (Just src)) >>= \case
         -- LIGO produced output in stderr, or exited with non-zero exit code.
         Left LigoClientFailureException {cfeStderr} -> do
-          let fixMarkers' = Text.replace (pack tempFp) (pack fp)
+          let fixMarkers' = Text.replace (toText tempFp) (toText fp)
           handleLigoMessages fp (fixMarkers' cfeStderr)
         Right result -> case eitherDecode' result of
           -- Failed to decode as a Value, this indicates that the JSON output
           -- from LIGO is malformed. This is a bug in the LIGO binary and we
           -- should contact the LIGO team if it ever happens.
-          Left e -> throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
+          Left e -> UnliftIO.throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
           Right json -> decode (Source tempFp True (lazyBytesToText result)) json
   where
     withTempDirTemplate = case tempDirTemplate of
       GenerateDir template -> withTempDirectory rootDir template
       UseDir path -> ($ path)
 withLigo src@(Source fp False _) _ getArgs decode =
-  try (callLigoBS Nothing (getArgs fp) (Just src)) >>= \case
+  UnliftIO.try (callLigoBS Nothing (getArgs fp) (Just src)) >>= \case
     Left LigoClientFailureException{cfeStderr} ->
       handleLigoMessages fp cfeStderr
     Right result -> case eitherDecode' result of
-      Left e -> throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
+      Left e -> UnliftIO.throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
       Right json -> decode (Source fp False (lazyBytesToText result)) json
 
 fixMarkers
@@ -419,7 +408,7 @@ fixMarkers tempFp (Source fp dirty contents) = liftIO do  -- HACK: I use `liftIO
   markers <- extractIncludes contents
   let files = hashNub $ map lmFile markers
   filesRelation <- filter (uncurry (/=)) <$> traverse (sequenceA . (id &&& canonicalizePath)) files
-  let replace old new = Text.replace (pack old) (pack new)
+  let replace old new = Text.replace (toText old) (toText new)
   let go = mconcat $ map (\(old, new) -> Endo $ replace old new) ((tempFp, fp) : filesRelation)
   pure $ Source fp dirty $ appEndo go contents
 
@@ -444,7 +433,7 @@ getLigoVersionRaw =
 -- ```
 getLigoVersionSafe :: (HasLigoClient m, Log m) => m (Maybe Version)
 getLigoVersionSafe = Log.addNamespace "getLigoVersion" do
-  mbVersion <- try getLigoVersionRaw
+  mbVersion <- UnliftIO.try getLigoVersionRaw
   case mbVersion of
     Left (SomeException e) -> do
       $Log.err [i|Couldn't get LIGO version with: #{e}|]
@@ -476,7 +465,7 @@ callForFormat tempSettings source = Log.addNamespace "callForFormat" $ Log.addCo
       case parseValue json of
         Left err -> do
           $Log.err [i|Could not format document with error: #{err}|]
-          throwIO $ LigoFormatFailedException (pack err) fp
+          UnliftIO.throwIO $ LigoFormatFailedException (toText err) fp
         Right formatted
           | isDirty   -> srcText <$> fixMarkers tempFp (Source fp isDirty formatted)
           | otherwise -> pure formatted)
@@ -505,7 +494,7 @@ preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext 
       case parseValue json of
         Left err -> do
           $Log.err [i|Unable to preprocess source with: #{err}|]
-          throwIO $ LigoPreprocessFailedException (pack err) fp
+          UnliftIO.throwIO $ LigoPreprocessFailedException (toText err) fp
         Right newContract ->
           bool pure (fixMarkers tempFp) isDirty $ Source fp isDirty newContract)
   where
@@ -531,7 +520,7 @@ getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $
       case parseValue json' of
         Left err -> do
           $Log.err [i|Unable to parse ligo definitions with: #{err}|]
-          throwIO $ LigoDefinitionParseErrorException (pack err) output fp
+          UnliftIO.throwIO $ LigoDefinitionParseErrorException (toText err) output fp
         Right definitions -> pure definitions)
   where
     fp = srcPath source
@@ -540,14 +529,14 @@ getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
 handleLigoError :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
-handleLigoError path stderr = Log.addNamespace "handleLigoError" do
-  case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
+handleLigoError path encodedErr = Log.addNamespace "handleLigoError" do
+  case eitherDecodeStrict' @LigoError . encodeUtf8 $ encodedErr of
     Left err -> do
-      let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
+      let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ toString encodedErr
       case failureRecovery of
         Left failure -> do
           $Log.err [i|ligo error decoding failure: #{failure}|]
-          throwIO $ LigoErrorNodeParseErrorException (pack failure) stderr path
+          UnliftIO.throwIO $ LigoErrorNodeParseErrorException (toText failure) encodedErr path
         Right recovered -> do
           -- LIGO doesn't dump any information we can extract to figure out
           -- where this error occurred, so we just log it for now. E.g.: a
@@ -555,37 +544,42 @@ handleLigoError path stderr = Log.addNamespace "handleLigoError" do
           -- in the old typer. In the new typer, the error is the less
           -- intuitive "type error : break_ctor propagator".
           $Log.err [i|ligo crashed: #{recovered}|]
-          throwIO $ LigoUnexpectedCrashException (pack recovered) path
+          UnliftIO.throwIO $ LigoUnexpectedCrashException (toText recovered) path
     Right decodedError -> do
-      $Log.err [i|ligo error decoding successful with:\n#{decodedError}|]
-      throwIO $ LigoDecodedExpectedClientFailureException (pure decodedError) [] path
+      $Log.err
+        [i|ligo error decoding successful with:\n#{decodedError}|]
+      UnliftIO.throwIO $
+        LigoDecodedExpectedClientFailureException (pure decodedError) [] path
 
 -- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
 -- happen. On a decode failure, attempts to decode as a single LIGO error
 -- instead.
 handleLigoMessages :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
-handleLigoMessages path stderr = Log.addNamespace "handleLigoErrors" do
-  case eitherDecodeStrict' @LigoMessages $ encodeUtf8 stderr of
+handleLigoMessages path encodedErr = Log.addNamespace "handleLigoErrors" do
+  case eitherDecodeStrict' @LigoMessages $ encodeUtf8 encodedErr of
     Left err -> do
       $Log.err [i|ligo errors decoding failure: #{err}|]
       -- It's possible it's the old format, with only one error. Try to decode
       -- it instead:
-      handleLigoError path stderr
+      handleLigoError path encodedErr
     Right (LigoMessages decodedErrors decodedWarnings) -> do
-      $Log.err [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
-      throwIO $ LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
+      $Log.err
+        [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
+      UnliftIO.throwIO $
+        LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
 
 -- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to
 -- extract the error message that was included with the crash.
 -- Returns 'Left' if we failed to decode with the first parameter, otherwise
 -- returns 'Right' with the recovered crash message.
 attemptToRecoverFromPossibleLigoCrash :: String -> String -> Either String String
-attemptToRecoverFromPossibleLigoCrash errDecoded stdErr = case getAllTextSubmatches (stdErr =~ regex) of
-  [_, err] -> Right err
-  _        -> Left errDecoded
-  where
-    regex :: String
-    regex = "Fatal error: exception \\(Failure \"(.*)\"\\)"
+attemptToRecoverFromPossibleLigoCrash errDecoded stdErr =
+  case getAllTextSubmatches (stdErr =~ regex) of
+    [_, err] -> Right err
+    _        -> Left errDecoded
+    where
+      regex :: String
+      regex = "Fatal error: exception \\(Failure \"(.*)\"\\)"
 
 ----------------------------------------------------------------------------
 -- Debugging utilities
@@ -626,7 +620,7 @@ instance HasLigoClient WithLigoDebug where
 withLigoDebug :: WithLigoDebug a -> IO a
 withLigoDebug action =
   Log.runNoLoggingT $
-    bracket
+    UnliftIO.bracket
       (startLigoDaemon (pure Nothing))
       cleanupLigoDaemonImpl
       (runWithLigoDebug action)

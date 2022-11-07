@@ -22,18 +22,10 @@ module RIO.Document
 
 import Algebra.Graph.AdjacencyMap qualified as G hiding (empty, overlays)
 import Algebra.Graph.Class qualified as G hiding (overlay, vertex)
-import Control.Arrow ((&&&))
 import Control.Lens ((??))
-import Control.Monad (join, void, (<=<))
-import Control.Monad.Reader (asks)
-import Data.Bifunctor (first)
-import Data.Bool (bool)
-import Data.Foldable (find, for_, toList)
+import Data.DList qualified as DList (toList)
 import Data.HashSet qualified as HashSet
-import Data.List (isPrefixOf)
-import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Maybe (fromMaybe, isJust, isNothing)
 import Data.Semigroup (Arg (..))
 import Data.Set qualified as Set
 import Duplo.Tree (fastMake)
@@ -46,8 +38,7 @@ import UnliftIO.Directory
   (Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist,
   getPermissions, setPermissions)
 import UnliftIO.Exception (tryIO)
-import UnliftIO.MVar (modifyMVar, modifyMVar_, newMVar, readMVar, swapMVar, tryReadMVar, withMVar)
-import UnliftIO.STM (atomically)
+import UnliftIO.MVar (modifyMVar, modifyMVar_, withMVar)
 import Witherable (iwither)
 
 import AST
@@ -91,7 +82,7 @@ fetch effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
     LeastEffort  -> ASTMap.fetchFast uri tmap
     NormalEffort -> ASTMap.fetchCurrent uri tmap
     BestEffort   -> ASTMap.fetchLatest uri tmap
-forceFetch = forceFetchAndNotify (const $ pure ())
+forceFetch = forceFetchAndNotify (const pass)
 
 forceFetchAndNotify
   :: (ContractInfo' -> RIO ())
@@ -121,9 +112,7 @@ delete :: J.NormalizedUri -> RIO ()
 delete uri = do
   imap <- asks reIncludes
   let fpM = J.uriToFilePath $ J.fromNormalizedUri uri
-  case fpM of
-    Nothing -> pure ()
-    Just fp -> do
+  whenJust fpM $ \fp -> do
       let
         -- Dummy
         c = FindContract
@@ -140,7 +129,7 @@ delete uri = do
 
   -- Invalidate contracts that are in the same group as the deleted one, as
   -- references might have changed.
-  for_ deleted \(FindContract (Source fp _ _) _ _) ->
+  whenJust deleted \(FindContract (Source fp _ _) _ _) -> void $
     wccForFilePath fp >>= traverseAM \fp' ->
       ASTMap.invalidate (filePathToNormalizedUri fp') tmap
 
@@ -211,7 +200,7 @@ loadWithoutScopes normFp = Log.addNamespace "loadWithoutScopes" do
 -- return 'Nothing'.
 tryLoadWithoutScopes :: J.NormalizedFilePath -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes =
-  fmap (either (const Nothing) Just) . tryIO . (insertPreprocessorRanges <=< loadWithoutScopes)
+  fmap rightToMaybe . tryIO . (insertPreprocessorRanges <=< loadWithoutScopes)
 
 getFilePredicate :: RIO (FilePath -> Bool)
 getFilePredicate = do
@@ -251,14 +240,14 @@ loadDirectory root rootFileName includes = do
   buildGraphM <- tryReadMVar =<< asks reBuildGraph
   S.withProgress "Indexing directory" S.NotCancellable \reportProgress -> if
     | Just (Includes buildGraph) <- buildGraphM
-    , Just group <- wccFor rootFileName buildGraph -> do
+    , Just grp <- wccFor rootFileName buildGraph -> do
       let
-        group' = G.induce shouldIndexFile group
-        total = G.vertexCount group'
+        grp' = G.induce shouldIndexFile grp
+        total = G.vertexCount grp'
       progressVar <- newMVar 0
 
       msgsVar <- newMVar Map.empty
-      loaded <- forAMConcurrently group' \fp -> do
+      loaded <- forAMConcurrently grp' \fp -> do
         progress <- withMVar progressVar $ pure . succ
         reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
         (src, msg) <- lookupOrLoad =<< pathToSrc fp
@@ -317,11 +306,11 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
               parseCached (Arg fp' src) = do
                 let srcMsgs = Map.lookup fp' msgs
                 parsed <- parse src
-                insertPreprocessorRanges $ addLigoErrsToMsg (join $ toList srcMsgs) parsed
+                insertPreprocessorRanges $ addLigoErrsToMsg (join $ maybeToList srcMsgs) parsed
             Includes <$> traverseAMConcurrently parseCached connectedContracts
       -- We've cached this contract, incrementally update the inclusions graph.
       Just (Includes oldIncludes) -> do
-        (rootContract', toList -> includeEdges) <- extractIncludedFiles DirectInclusions rootContract
+        (rootContract', DList.toList -> includeEdges) <- extractIncludedFiles DirectInclusions rootContract
         let
           numNewContracts = length includeEdges
           lookupOrLoad fp = maybe
@@ -413,7 +402,7 @@ load uri = Log.addNamespace "load" do
     | otherwise -> do
       case rootIndex of
         IndexChoicePending -> $Log.debug [Log.i|Indexing directory has not been specified yet.|]
-        _ -> pure ()
+        _ -> pass
       loadWithoutIndexing
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
@@ -428,7 +417,7 @@ handleLigoFileChanged nfp = \case
       Nothing -> do
         $Log.debug [Log.i|Changed #{fp}|]
         void $ forceFetch BestEffort uri
-      _ -> pure ()
+      _ -> pass
   J.FcDeleted -> do
     $Log.debug [Log.i|Deleted #{fp}|]
     delete uri

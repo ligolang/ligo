@@ -5,9 +5,7 @@ module Test.Capabilities.Rename
   , unit_rename_example_in_included_file
   ) where
 
-import Control.Lens hiding ((:>))
 import Data.List ((\\))
-import Data.Text (Text)
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 
@@ -60,9 +58,8 @@ testRenameFail fp pos newName = do
   workspaceEdit <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc fp
     getRename doc pos newName
-  case workspaceEdit ^. LSP.changes of
-    Just _  -> expectationFailure "should not be able to edit"
-    Nothing -> pure ()
+  whenJust (workspaceEdit ^. LSP.changes) $
+    const $ expectationFailure "should not be able to edit"
 
 unit_rename_example_fail :: Assertion
 unit_rename_example_fail = do

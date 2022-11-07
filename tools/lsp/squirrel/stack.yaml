@@ -9,6 +9,8 @@ packages:
 - .
 
 extra-deps:
+- git: https://github.com/serokell/base-noprelude.git
+  commit: c8b06c4c8a271fce0c2f41ab18e88d58e64bac52
 - git: https://github.com/haskell/lsp.git
   commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   subdirs:
@@ -24,6 +26,8 @@ extra-deps:
   commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
   # nix-sha256: 16fgpzc0rrkypryapqh33dvj40bcp6biyp1janlwq34aj4yc4y8l
 - fastsum-0.2.0.0
+- morley-prelude-0.5.1
+- OddWord-1.0.2.0 # dependency of morley-prelude-0.5.1
 - stm-containers-1.2
 - stm-hamt-1.2.0.7
 - primitive-extras-0.10.1.4

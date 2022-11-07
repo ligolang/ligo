@@ -21,8 +21,6 @@ module Test.Common.Capabilities.Find
   , invariants
   ) where
 
-import Data.Foldable (for_)
-import Data.Functor ((<&>))
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
@@ -124,7 +122,7 @@ checkIfReference filepath expectedRef mention = test
       case referencesOf mention' tree of
         Nothing -> expectationFailure $
           printf "References in range '%s' from '%s' are not found."
-            (show mention') filepath'
+            (show @String mention') filepath'
         Just references -> references `shouldContain` [expectedRef']
 
 invariants :: [DefinitionReferenceInvariant]

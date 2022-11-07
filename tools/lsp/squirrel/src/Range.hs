@@ -29,12 +29,8 @@ module Range
 
 import Language.LSP.Types qualified as LSP
 
-import Control.Lens (Lens', Traversal', _1, makeLenses)
-import Data.ByteString (ByteString)
+import Control.Lens (makeLenses)
 import Data.ByteString qualified as BS
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
-import Data.Text.Encoding
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -63,13 +59,16 @@ rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
     <*> ((,,) <$> f fl <*> pure fc <*> pure fo)
     <*> pure file
 
+-- @UInt" is a newtype over @Int#@, so it can be converted to/from `Int` safely
+type instance IntBaseType LSP.UInt = IntBaseType Int
+
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
     text f <.> "@"
-    <.> int (fromIntegral ll) <.> ":"
-    <.> int (fromIntegral lc) <.> "-"
-    <.> int (fromIntegral rl) <.> ":"
-    <.> int (fromIntegral rc)
+    <.> int (fromIntegral @LSP.UInt @Int ll) <.> ":"
+    <.> int (fromIntegral @LSP.UInt @Int lc) <.> "-"
+    <.> int (fromIntegral @LSP.UInt @Int rl) <.> ":"
+    <.> int (fromIntegral @LSP.UInt @Int rc)
 
 -- | Like 'Range', but includes information on the preprocessed range of the
 -- file.

@@ -4,11 +4,11 @@ module Test.Common.Capabilities.Completion
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
-import Data.Maybe (fromJust)
 import Language.LSP.Types (CompletionItemKind (..), UInt)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
+import Unsafe qualified
 
 import AST.Capabilities.Completion
 import AST.Scope.Common
@@ -281,13 +281,13 @@ completionDriver testInfos = do
       testCase (tiContract info) do
         let fp = contractsDir </> tiContract info
             pos = uncurry point $ tiPosition info
-            contract = fromJust $ lookupContract fp graph
+            contract = Unsafe.fromJust $ lookupContract fp graph
             tree = contractTree contract
             source = _cFile $ _getContract contract
         results <- Log.runNoLoggingT $ withCompleterM (CompleterEnv pos tree source (tiGraph info)) complete
         case (results, tiExpected info) of
-          (Nothing, []) -> pure ()
+          (Nothing, []) -> pass
           (Nothing, _) -> expectationFailure "Expected completion items, but got none"
-          (Just [], []) -> pure ()
+          (Just [], []) -> pass
           (Just _, []) -> expectationFailure "Expected no completion items, but got them"
           (Just results', expected') -> results' `shouldMatchList` expected'

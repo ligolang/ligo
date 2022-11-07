@@ -3,8 +3,7 @@ module Test.Graph
   , test_WccProperty
   ) where
 
-import Algebra.Graph.AdjacencyMap
-import Data.List (sort)
+import Algebra.Graph.AdjacencyMap as AdjMap
 import Test.QuickCheck.Gen
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase)
@@ -60,7 +59,7 @@ test_WccProperty = testProperty "Graph WCC algorithm properties" runTest
       pure (graph == reconstructed)
 
 genGraph :: Int -> Gen (AdjacencyMap Int)
-genGraph graphSize = genGraph' graphSize graphSize empty
+genGraph graphSize = genGraph' graphSize graphSize AdjMap.empty
 
 genGraph' :: Int -> Int -> AdjacencyMap Int -> Gen (AdjacencyMap Int)
 genGraph' 0 _ m = return m
@@ -73,4 +72,4 @@ genGraph' iter size m = do
     1 -> connect (overlay v1 v2) <$> genGraph' (iter - 1) size m
     2 -> overlay (overlay v1 v2) <$> genGraph' (iter - 1) size m
     3 -> connect (connect v1 v2) <$> genGraph' (iter - 1) size m
-    x -> error ("Impossible, got " ++ show x)
+    x -> error ("Impossible, got " <> show x)

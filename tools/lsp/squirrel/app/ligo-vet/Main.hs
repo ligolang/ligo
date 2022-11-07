@@ -1,9 +1,5 @@
 module Main (main) where
 
-import Control.Arrow (first)
-import Control.Monad (unless, (<=<))
-import Control.Monad.Trans (liftIO)
-import Data.Foldable (for_)
 import Duplo.Pretty (Pretty, pp, render)
 import Main.Utf8 (withUtf8)
 import Options.Applicative
@@ -75,6 +71,6 @@ main = withUtf8 do
   liftIO do
     putStrLn (render (pp tree))
     unless (null messages) do
-      putStrLn "The following errors have been encountered: "
+      putTextLn "The following errors have been encountered: "
       for_ messages \(Message err _ range) ->
         putStrLn (render (pp range <> ": " <> pp err))

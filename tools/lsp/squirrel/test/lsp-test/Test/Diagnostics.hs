@@ -6,7 +6,6 @@ module Test.Diagnostics
 import Test.Common.Diagnostics
   (DiagnosticSource (FallbackSource), parseDiagnosticsDriver, simpleTest,
   treeDoesNotContainNameTest)
-import Test.Common.FixedExpectations (HasCallStack)
 import Test.Tasty.HUnit (Assertion)
 
 -- Try to parse a file, and check that the proper error messages are generated
