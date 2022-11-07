@@ -17,18 +17,21 @@ let semicolon_insertion tokens =
     inner (t :: result) rest
   | (_ as semi) :: (LineCom _ as t) :: rest
   | (_ as semi) :: (BlockCom _ as t) :: rest
+  | (SEMI _ as semi) :: (Directive _ as t)  :: rest
   | (SEMI _ as semi) :: (Namespace _ as t)  :: rest
   | (SEMI _ as semi) :: (Export _ as t)  :: rest
   | (SEMI _ as semi) :: (Let _ as t)  :: rest
   | (SEMI _ as semi) :: (Const _ as t)  :: rest
   | (SEMI _ as semi) :: (Type _ as t)  :: rest
   | (SEMI _ as semi) :: (Return _ as t)  :: rest
+  | (LBRACE _ as semi) :: (Directive _ as t)  :: rest
   | (LBRACE _ as semi) :: (Namespace _ as t)  :: rest
   | (LBRACE _ as semi) :: (Export _ as t)  :: rest
   | (LBRACE _ as semi) :: (Let _ as t)  :: rest
   | (LBRACE _ as semi) :: (Const _ as t)  :: rest
   | (LBRACE _ as semi) :: (Type _ as t)  :: rest
   | (LBRACE _ as semi) :: (Return _ as t)  :: rest
+  | (COLON _ as semi) :: (Directive _ as t)  :: rest  
   | (COLON _ as semi) :: (Namespace _ as t)  :: rest
   | (COLON _ as semi) :: (Export _ as t)  :: rest
   | (COLON _ as semi) :: (Let _ as t)  :: rest
@@ -40,6 +43,7 @@ let semicolon_insertion tokens =
   | (SEMI _) :: (Default _ as t) :: rest
   | (SEMI _) :: (Else _ as t) :: rest ->
     inner (t :: result) rest
+  | (RBRACE _ as rbrace) :: (Directive _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Namespace _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Export _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Let _ as r)  :: rest
