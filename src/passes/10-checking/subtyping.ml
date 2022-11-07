@@ -260,7 +260,7 @@ let rec unify
   =
   let unify = unify ~loc in
   let self ?(ctx = ctx) type1 type2 = unify ~raise ~options ~ctx type1 type2 in
-  let fail () = raise.error (cannot_unify options.no_color loc type1 type2) in
+  let fail () = raise.error (cannot_unify options.no_colour loc type1 type2) in
   let unify_evar evar type_ =
     occurs_check ~raise ~loc ~evar type_;
     let kind =
