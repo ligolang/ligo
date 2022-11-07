@@ -19,6 +19,7 @@ module Language.LIGO.Debugger.CLI.Call
 import Data.Aeson qualified as Aeson
 import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
+import Data.SemVer.QQ qualified as SemVer.QQ
 import Data.Text qualified as T
 import Fmt (Buildable, build, pretty)
 import System.FilePath ((</>))
@@ -182,6 +183,12 @@ isSupportedVersion ver = fromMaybe VersionSupported $ asum
   [
     -- Debug information in the necessary format is not available in old versions
     ver < minimalSupportedVersion
+      ?- noSupport
+
+    -- These versions are unsupported because of
+    -- wrong working "ligo info list-declarations" for
+    -- contracts with functions from stdlib (e.g. "Set" or "Tezos").
+  , [SemVer.QQ.version|0.51.0|] <= ver && ver <= [SemVer.QQ.version|0.53.0|]
       ?- noSupport
 
     -- Future versions that we didn't check yet

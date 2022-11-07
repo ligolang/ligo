@@ -43,9 +43,11 @@ readSemVerQ path = Code do
         & Text.unlines
         & Text.strip
 
-  ver <- SemVer.fromText clearContent
+  version <-
+    SemVer.fromText clearContent
     & either (\_ -> fail $ "Invalid version constant in the file: " <> Debug.show clearContent) pure
-  examineCode $ liftTyped ver
+
+  examineCode . liftTyped $ version
 
 resourcesFolder :: FilePath
 resourcesFolder = "src" </> "resources"
