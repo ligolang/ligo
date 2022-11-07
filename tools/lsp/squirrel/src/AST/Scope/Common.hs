@@ -51,7 +51,7 @@ import Algebra.Graph.ToGraph (ToGraph)
 import Algebra.Graph.ToGraph qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
-import Control.Lens.Operators ((&), (%~))
+import Control.Lens.Operators ((%~), (&))
 import Control.Monad.Reader
 import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.DList (DList, snoc)
@@ -76,17 +76,15 @@ import Duplo.Tree hiding (loop)
 
 import AST.Pretty
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), Namespace (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..)
-  )
+  (DeclarationSpecifics (..), Namespace (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..))
 import AST.Skeleton
-  ( Ctor, LIGO, Name, NameDecl, ModuleName, RawLigoList, SomeLIGO, TypeName, TypeVariableName
-  , withNestedLIGO
-  )
+  (Ctor, LIGO, ModuleName, Name, NameDecl, RawLigoList, SomeLIGO, TypeName, TypeVariableName,
+  withNestedLIGO)
 import Cli.Types
 import Diagnostic (Message)
 import Log qualified
-import ParseTree
 import Parser (Info, ParsedInfo)
+import ParseTree
 import Product
 import Progress (Progress (..), ProgressCallback, (%))
 import Range

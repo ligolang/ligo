@@ -12,8 +12,8 @@ import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, mapReaderT)
 import Control.Monad.Trans (lift)
 import Data.Aeson (Options (..), defaultOptions)
 import Data.Aeson.TH (deriveJSON)
-import Data.Default (Default (def))
 import Data.Char (toLower)
+import Data.Default (Default (def))
 import Katip (Katip (..), KatipContext (..))
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J

@@ -11,7 +11,7 @@ module AST.Capabilities.Find
   , findModuleDecl
   ) where
 
-import Control.Lens (_Just, _2, (^.), (^?))
+import Control.Lens (_2, _Just, (^.), (^?))
 import Control.Monad
 import Data.List (find)
 import Data.Maybe (fromMaybe, listToMaybe)
@@ -21,12 +21,9 @@ import Duplo.Tree
 
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  ( Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec
-  , _ValueSpec, extractRefName, sdSpec, vdsTspec
-  )
-import AST.Skeleton
-  ( Binding (BModuleAlias, BModuleDecl), LIGO, ModuleName, SomeLIGO, nestedLIGO
-  )
+  (Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec, _ValueSpec, extractRefName,
+  sdSpec, vdsTspec)
+import AST.Skeleton (Binding (BModuleAlias, BModuleDecl), LIGO, ModuleName, SomeLIGO, nestedLIGO)
 
 import Product
 import Range

@@ -3,7 +3,6 @@
 
      All datatypes here are strict.
 -}
-
 module ParseTree
   ( -- * Tree/Forest
     ParseTree (..)
@@ -21,6 +20,8 @@ module ParseTree
   )
   where
 
+import Control.Monad ((>=>))
+import Control.Monad.IO.Class (MonadIO (..))
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
@@ -31,8 +32,6 @@ import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Data.Text.Encoding.Error qualified as Text
 import Data.Traversable (for)
-import Control.Monad ((>=>))
-import Control.Monad.IO.Class (MonadIO (..))
 import Foreign.C.String (peekCString)
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)

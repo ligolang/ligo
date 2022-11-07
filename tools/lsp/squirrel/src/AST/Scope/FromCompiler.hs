@@ -21,10 +21,8 @@ import UnliftIO.Directory (canonicalizePath)
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), ScopedDecl (..), Type (ArrowType), Module (..)
-  , ModuleDeclSpecifics (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..)
-  , _tdsInit
-  )
+  (DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..),
+  Type (ArrowType), TypeDeclSpecifics (..), ValueDeclSpecifics (..), _tdsInit)
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli

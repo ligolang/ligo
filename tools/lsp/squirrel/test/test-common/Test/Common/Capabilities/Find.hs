@@ -23,26 +23,22 @@ module Test.Common.Capabilities.Find
 
 import Data.Foldable (for_)
 import Data.Functor ((<&>))
-import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
+import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
 import AST.Capabilities.Find (definitionOf, findScopedDecl, referencesOf, typeDefinitionAt)
 import AST.Scope.Common (contractTree, lookupContract)
-import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..)
-  )
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
 import Cli (TempDir (..), TempSettings (..))
 import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations
-  (expectationFailure, shouldBe, shouldContain, shouldMatchList)
+import Test.Common.FixedExpectations (expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Common.Util
-  ( ScopeTester, parseContractsWithDependenciesScopes, readContractWithScopes, tempTemplate
-  )
+  (ScopeTester, parseContractsWithDependenciesScopes, readContractWithScopes, tempTemplate)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "find"

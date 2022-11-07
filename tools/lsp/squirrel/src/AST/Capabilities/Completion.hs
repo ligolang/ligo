@@ -14,17 +14,17 @@ module AST.Capabilities.Completion
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Applicative ((<|>))
-import Control.Lens (_2, (^?), element)
+import Control.Lens (_2, element, (^?))
 import Control.Monad.Reader
-import Data.Char (isUpper)
 import Data.Bool (bool)
+import Data.Char (isUpper)
 import Data.Foldable (asum)
 import Data.Function (on)
 import Data.Functor ((<&>))
-import Data.List (isSubsequenceOf, nubBy)
-import Data.Maybe (catMaybes, fromMaybe)
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet (filter, toList)
+import Data.List (isSubsequenceOf, nubBy)
+import Data.Maybe (catMaybes, fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Duplo.Lattice
@@ -35,18 +35,16 @@ import System.FilePath
 import Text.Regex.TDFA ((=~))
 
 import AST.Capabilities.Find
-  ( CanSearch, TypeDefinitionRes (..), dereferenceTspec, findModuleDecl, findNodeAtPoint
-  , typeDefinitionOf
-  )
+  (CanSearch, TypeDefinitionRes (..), dereferenceTspec, findModuleDecl, findNodeAtPoint,
+  typeDefinitionOf)
 import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
 import AST.Scope.ScopedDecl
-  ( Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), Type, TypeDeclSpecifics (..)
-  , Type (..), TypeField (..), ValueDeclSpecifics (..), _RecordType, _TypeSpec, accessField
-  , lppDeclCategory, lppLigoLike, sdSpec, tdsInit
-  )
+  (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
+  TypeField (..), ValueDeclSpecifics (..), _RecordType, _TypeSpec, accessField, lppDeclCategory,
+  lppLigoLike, sdSpec, tdsInit)
 import AST.Skeleton hiding (Type)
-import Log (LogT, Log, Logger, Namespace (..), getLogEnv, runKatipContextT)
+import Log (Log, LogT, Logger, Namespace (..), getLogEnv, runKatipContextT)
 import ParseTree
 import Product
 import Range

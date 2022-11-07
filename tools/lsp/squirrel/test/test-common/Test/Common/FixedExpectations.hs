@@ -12,7 +12,8 @@ module Test.Common.FixedExpectations
 
 import Test.Hspec.Expectations (Expectation, HasCallStack)
 import Test.Hspec.Expectations qualified as H
-  (expectationFailure, shouldBe, shouldContain, shouldMatchList, shouldSatisfy, shouldThrow, Selector, anyException)
+  (Selector, anyException, expectationFailure, shouldBe, shouldContain, shouldMatchList,
+  shouldSatisfy, shouldThrow)
 import Test.HUnit.Lang qualified as H (HUnitFailure (..), formatFailureReason)
 import Test.Tasty.HUnit (HUnitFailure (..))
 import UnliftIO.Exception (Exception, catch, impureThrow)

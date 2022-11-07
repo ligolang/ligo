@@ -7,7 +7,7 @@ module AST.Scope.Fallback
 
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
-import Control.Lens (makeLenses, view, _1, (%~), (^.), (|>), (^?), (<&>))
+import Control.Lens (_1, makeLenses, view, (%~), (<&>), (^.), (^?), (|>))
 import Control.Monad.Reader (runReader)
 import Control.Monad.RWS.Strict (RWS, asks, evalRWS, get, local, modify, tell, void)
 import Control.Monad.Trans.Maybe (MaybeT (..))
@@ -15,18 +15,18 @@ import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
 import Data.Bool (bool)
 import Data.Foldable (for_, traverse_)
-import Data.Kind qualified (Type)
-import Data.HashMap.Lazy qualified as HashMap
 import Data.HashMap.Lazy (HashMap)
+import Data.HashMap.Lazy qualified as HashMap
+import Data.Kind qualified (Type)
 import Data.List (foldl')
 import Data.List.NonEmpty (toList, unzip)
-import Data.Map qualified as Map
 import Data.Map (Map)
+import Data.Map qualified as Map
 import Data.Maybe (catMaybes, fromMaybe, listToMaybe, maybeToList)
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<.>), (<+>))
+import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<+>), (<.>))
 import Duplo.Tree hiding (loop)
 import Prelude hiding (unzip)
 import Witherable (wither)
@@ -34,10 +34,9 @@ import Witherable (wither)
 import AST.Pretty (PPableLIGO)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..)
-  , Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..)
-  , mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec, _ModuleSpec
-  )
+  (DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..),
+  Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..),
+  _ModuleSpec, mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec)
 import AST.Scope.ScopedDecl.Parser (parseModule, parseParameters, parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type, TypeParams (..))
 import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))

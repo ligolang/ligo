@@ -36,12 +36,12 @@ import Extension (isLigoFile)
 import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Log (i)
 import Log qualified
+import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
 import RIO.Indexing qualified as Indexing
 import RIO.Types (RIO, RioEnv (..))
-import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import Util (foldMapM, toLocation)
 import Util.Graph (traverseAM)
 

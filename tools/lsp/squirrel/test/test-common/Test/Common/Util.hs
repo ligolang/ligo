@@ -30,9 +30,7 @@ import UnliftIO.Exception (catch, throwIO)
 import AST.Includes (Includes (..), includesGraph, insertPreprocessorRanges)
 import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
 import AST.Scope
-  ( ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo
-  , addScopes, contractTree
-  )
+  (ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo, addScopes, contractTree)
 import AST.Skeleton (SomeLIGO)
 import Cli.Types (TempDir (..), TempSettings (..))
 import Extension (supportedExtensions)

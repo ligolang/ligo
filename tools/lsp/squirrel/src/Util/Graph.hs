@@ -7,10 +7,10 @@ module Util.Graph
   , wccFor
   ) where
 
-import Algebra.Graph.NonEmpty.AdjacencyMap qualified as NEG
-import Algebra.Graph.AdjacencyMap.Algorithm (scc)
 import Algebra.Graph.AdjacencyMap as G
-import Control.Arrow ((&&&), second)
+import Algebra.Graph.AdjacencyMap.Algorithm (scc)
+import Algebra.Graph.NonEmpty.AdjacencyMap qualified as NEG
+import Control.Arrow (second, (&&&))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.List (find)
 import Data.Map qualified as Map

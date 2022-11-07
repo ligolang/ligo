@@ -9,8 +9,8 @@ import Duplo.Tree
 
 import Data.Text qualified as T
 
-import ParseTree
 import Parser
+import ParseTree
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

@@ -14,8 +14,7 @@ import Duplo (collect, match)
 import Language.LSP.Types qualified as J (DocumentLink (..), Uri, filePathToUri)
 
 import AST.Includes
-  ( ExtractionDepth (DirectInclusions), MarkerInfo (..), getMarkerInfos, getMarkers
-  )
+  (ExtractionDepth (DirectInclusions), MarkerInfo (..), getMarkerInfos, getMarkers)
 import AST.Skeleton (Binding (..), Constant (..), LIGO)
 import Parser (LineMarker (..), LineMarkerType (..))
 import Product (Contains)

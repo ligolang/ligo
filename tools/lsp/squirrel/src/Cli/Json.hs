@@ -27,9 +27,9 @@ module Cli.Json
   )
 where
 
-import Control.Lens (over, _head)
-import Data.Aeson.Types hiding (Error)
+import Control.Lens (_head, over)
 import Data.Aeson.KeyMap (toAscList)
+import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
 import Data.Foldable (toList)
 import Data.Function ((&))
@@ -41,7 +41,7 @@ import Data.Maybe (fromMaybe)
 import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import GHC.Generics (Generic, Rep)
-import GHC.TypeLits (Nat, KnownNat, natVal)
+import GHC.TypeLits (KnownNat, Nat, natVal)
 import Language.LSP.Types qualified as J
 import Prelude hiding (sum)
 

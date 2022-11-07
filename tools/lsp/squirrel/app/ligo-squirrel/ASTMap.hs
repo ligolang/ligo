@@ -36,11 +36,11 @@ module ASTMap
 
 import Control.Concurrent.MVar
 import Control.Concurrent.STM (STM, retry)
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Functor ((<&>), void)
+import Data.Functor (void, (<&>))
 import Data.Hashable (Hashable)
 import Data.Maybe (fromMaybe)
-import Control.Monad (when)
 import Focus (Focus)
 import Focus qualified
 import StmContainers.Map (Map)

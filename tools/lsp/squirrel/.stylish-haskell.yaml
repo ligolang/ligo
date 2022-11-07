@@ -1,8 +1,6 @@
-# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+# SPDX-FileCopyrightText: 2021 Serokell <https://serokell.io>
 #
 # SPDX-License-Identifier: Unlicense
-
-# Default stylish-haskell config used in Serokell.
 
 steps:
   - simple_align:
@@ -45,14 +43,16 @@ language_extensions:
   - FunctionalDependencies
   - GADTs
   - GeneralizedNewtypeDeriving
+  - ImportQualifiedPost
   - LambdaCase
   - MultiParamTypeClasses
   - MultiWayIf
   - NamedFieldPuns
-  - NoImplicitPrelude
+  - NumericUnderscores
   - OverloadedLabels
   - OverloadedStrings
   - PatternSynonyms
+  - QuantifiedConstraints
   - RebindableSyntax
   - RecordWildCards
   - RecursiveDo

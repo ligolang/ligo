@@ -4,9 +4,7 @@ module Test.Capabilities.Highlights
 
 import Language.LSP.Test
 import Language.LSP.Types
-  ( Range (..), List (..), Position (..)
-  , DocumentHighlight (..), DocumentHighlightKind (..)
-  )
+  (DocumentHighlight (..), DocumentHighlightKind (..), List (..), Position (..), Range (..))
 import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)

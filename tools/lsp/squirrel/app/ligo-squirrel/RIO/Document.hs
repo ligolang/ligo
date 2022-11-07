@@ -31,11 +31,11 @@ import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
 import Data.HashSet qualified as HashSet
 import Data.List (isPrefixOf)
-import Data.Semigroup (Arg (..))
-import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, isJust, isNothing)
+import Data.Semigroup (Arg (..))
+import Data.Set qualified as Set
 import Duplo.Tree (fastMake)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
@@ -43,29 +43,26 @@ import Language.LSP.VFS qualified as V
 import StmContainers.Map qualified as StmMap
 import System.FilePath (splitDirectories, takeDirectory, (</>))
 import UnliftIO.Directory
-  ( Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist
-  , getPermissions, setPermissions
-  )
+  (Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist,
+  getPermissions, setPermissions)
 import UnliftIO.Exception (tryIO)
 import UnliftIO.MVar (modifyMVar, modifyMVar_, newMVar, readMVar, swapMVar, tryReadMVar, withMVar)
 import UnliftIO.STM (atomically)
 import Witherable (iwither)
 
 import AST
-  ( ContractInfo, ContractInfo', pattern FindContract, FindFilepath (..), HasScopeForest
-  , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes
-  , addShallowScopes, contractFile, lookupContract
-  )
+  (ContractInfo, ContractInfo', FindFilepath (..), HasScopeForest, Includes (..),
+  ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes, addShallowScopes,
+  contractFile, lookupContract, pattern FindContract)
 import AST.Includes
-  ( ExtractionDepth (DirectInclusions), extractIncludedFiles, includesGraph'
-  , insertPreprocessorRanges
-  )
+  (ExtractionDepth (DirectInclusions), extractIncludedFiles, includesGraph',
+  insertPreprocessorRanges)
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
 import Cli (LigoClientEnv (..), TempDir (..), TempSettings (..), getLigoClientEnv)
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer))
-import Language.LSP.Util (filePathToNormalizedUri, sendWarning, reverseUriMap)
+import Language.LSP.Util (filePathToNormalizedUri, reverseUriMap, sendWarning)
 import Log qualified
 import Parser (emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
