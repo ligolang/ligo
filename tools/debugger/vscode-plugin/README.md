@@ -32,9 +32,9 @@ At this moment contracts with tickets have very limited support.
 
 ## Running the debugger
 
-You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `${command:AskForEntrypoint}`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
+You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `{AskOnStart}`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
 ```json
-"entrypoint": "${command:AskForEntrypoint}" <-- will ask you to choose an entrypoint via quickpick
+"entrypoint": "{AskOnStart}" <-- will ask you to choose an entrypoint via quickpick
 ```
 ```json
 "entrypoint": "main_1" <-- will use "main_1" as entrypoint
@@ -56,7 +56,7 @@ It is possible to hardcode a concrete value both in LIGO and Michelson. You just
 ...
 ```
 
-However, usually you might prefer using the auto-generated values like `${command:AskForParameter}` that would request the actual value upon starting a debug session.
+However, usually you might prefer using the auto-filled values like `{AskOnStart}` that would request the actual value upon starting a debug session.
 
 In both cases you can use complex expressions, e.g. `{ a = 1; b = 2 }` for record definition or even `let x = 9 in x * x + 5` in Cameligo.
 The dialect of the passed expressions must match the dialect of the contract.
