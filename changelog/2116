@@ -3,90 +3,16 @@ description: '<!--- Section under ## Changelog will be added to your changelog d
   --->\n\n### Feature description\n\n<p>The typer error message `Cannot unify X with
   Y` is now augmented with a diff between `X` and `Y` when those are tuples.</p>\n\n<p>For
   example, here is a before/after of the error message for the following code :</p>\n\n```\nlet
-  x : int auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
-  retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py release_metadata
-  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat = 42 , 4n , 42 , 24n , 42 , 24n\nlet y : int
-  auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
-  retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh tez auto_merge_request.sh homebrew parse_mr_info.py release_metadata
-  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh string auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh address auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh tez auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat = x\n```\n\n### Before\n\n```\nInvalid type(s)\nCannot
-  unify ( int auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
-  retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py release_metadata
-  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat ) with ( int auto_merge_request.sh homebrew
+  x : int * nat * int * nat * int * nat = 42 , 4n , 42 , 24n , 42 , 24n\nlet y : int
+  * tez * string * nat * int * address * int * tez * nat = x\n```\n\n### Before\n\n```\nInvalid type(s)\nCannot
+  unify ( int * nat * int * nat * int * nat ) with ( int auto_merge_request.sh homebrew
   parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
   update_distribution_references_with_release.sh versioning versioning_website.sh
-  tez auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
-  retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh string auto_merge_request.sh homebrew parse_mr_info.py release_metadata
-  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh address auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh tez auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat ).\n```\n\n### After\n\n```\nInvalid type(s)\nCannot
-  unify ( int auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
-  retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py release_metadata
-  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat ) with ( int auto_merge_request.sh homebrew
+  tez * string * nat * int * address * int * tez * nat ).\n```\n\n### After\n\n```\nInvalid type(s)\nCannot
+  unify ( int * nat * int * nat * int * nat ) with ( int auto_merge_request.sh homebrew
   parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
   update_distribution_references_with_release.sh versioning versioning_website.sh
-  tez auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
-  retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh string auto_merge_request.sh homebrew parse_mr_info.py release_metadata
-  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh address auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh int auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh tez auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh nat ).\nDifference between the types:\n int\n+
+  tez * string * nat * int * address * int * tez * nat ).\nDifference between the types:\n int\n+
   tez\n+ string\n nat\n int\n- nat\n+ address\n int\n+ tez\n nat\n```\n\n'
 merge_request: '2116'
 title: Diff of types in typer error messages
