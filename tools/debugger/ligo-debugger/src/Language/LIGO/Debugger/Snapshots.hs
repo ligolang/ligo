@@ -43,8 +43,7 @@ module Language.LIGO.Debugger.Snapshots
 import AST (Binding, Expr, LIGO)
 import AST qualified
 import Control.Lens
-  (At (at), Each (each), Ixed (ix), Zoom (zoom), has, lens, makeLensesWith, makePrisms, (%=), (.=),
-  (?=))
+  (At (at), Each (each), Ixed (ix), Zoom (zoom), lens, makeLensesWith, makePrisms, (%=), (.=), (?=))
 import Control.Lens.Prism (Prism', _Just)
 import Control.Monad.Except (throwError)
 import Control.Monad.RWS.Strict (RWST (..))
@@ -54,7 +53,6 @@ import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.HashSet qualified as HS
 import Data.List.NonEmpty (cons)
-import Data.List.NonEmpty qualified as NE
 import Data.Vinyl (Rec (..))
 import Duplo (layer)
 import Fmt (Buildable (..), genericF, pretty)
@@ -546,8 +544,7 @@ runCollectInterpretSnapshots
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 runCollectInterpretSnapshots act env initSt initStorage =
   -- This should be safe because in practice we yield at least two snapshots
-  InterpretHistory . fromMaybe (error "Unexpectedly < 2 snapshots") . twoElemFromList .
-  filterDupLocSnapshots <$>
+  InterpretHistory . fromMaybe (error "Unexpectedly < 2 snapshots") . twoElemFromList <$>
   lazyConsume do
     C.yield InterpretSnapshot
       { isStackFrames = csStackFrames initSt
@@ -599,36 +596,6 @@ runCollectInterpretSnapshots act env initSt initStorage =
           { isStatus = InterpretTerminatedOk
           , ..
           }
-
-{-# ANN filterDupLocSnapshots ("HLint: ignore Redundant lambda" :: Text) #-}
-
--- | Strip adjacent snapshots that point to the same location.
---
--- In practice it happens that LIGO produces snapshots for intermediate
--- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
--- both having the same @location@ meta; we don't want the user to
--- see that.
-filterDupLocSnapshots :: [InterpretSnapshot u] -> [InterpretSnapshot u]
-filterDupLocSnapshots = \snaps -> snaps
-  & NE.groupBy ((==) `on` stackFrameId . isStackFrames)
-  & concatMap (cleanupGroup . toList)
-  where
-    stackFrameId = sfLoc . head &&& length &&& length . sfStack . head
-
-    cleanupGroup :: [InterpretSnapshot u] -> [InterpretSnapshot u]
-    cleanupGroup = \snaps -> snaps
-      & reverse
-      & dropAllMatchingExceptFirst
-        (isStatusL . _InterpretRunning . _EventExpressionPreview)
-      & dropAllMatchingExceptFirst
-        (isStatusL . _InterpretRunning . _EventExpressionEvaluated)
-      & reverse
-
-    dropAllMatchingExceptFirst pri =
-      evaluatingState False . filterM \e -> state \alreadyFaced ->
-        ( not $ has pri e && alreadyFaced  -- whether to retain
-        , alreadyFaced || has pri e  -- new state
-        )
 
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.

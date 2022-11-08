@@ -18,6 +18,7 @@ import Data.Coerce (coerce)
 import Data.DList qualified as DL
 import Data.Data (cast)
 import Data.Default (Default, def)
+import Data.HashSet qualified as HS
 import Data.Map qualified as M
 import Data.Set qualified as Set
 import Data.Text qualified as Text
@@ -423,10 +424,12 @@ readLigoMapper
 readLigoMapper ligoMapper typeRules instrRules = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
-  metaPerInstr :: [LigoIndexedInfo 'Unique] <-
+  metaPerInstrWithDuplicateLocations :: [LigoIndexedInfo 'Unique] <-
     forM indexes \i ->
       maybe (Left $ InsufficientMeta i) pure $
         lmLocations ligoMapper V.!? unTableEncodingIdx i
+
+  let metaPerInstr = stripDuplicateLocations metaPerInstrWithDuplicateLocations
 
   (SomeContract contract, newMetas) <- fromExpressionToTyped (lmMichelsonCode ligoMapper) metaPerInstr typeRules instrRules
   extendedContract@(SomeContract extContract) <- first MetaEmbeddingError $
@@ -459,3 +462,26 @@ readLigoMapper ligoMapper typeRules instrRules = do
     getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
       Meta (SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) _ -> DL.singleton meta
       _ -> mempty
+
+
+    -- Strip duplicate locations.
+    --
+    -- In practice it happens that LIGO produces snapshots for intermediate
+    -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
+    -- both having the same @location@ meta; we don't want the user to
+    -- see that.
+    stripDuplicateLocations :: [EmbeddedLigoMeta] -> [EmbeddedLigoMeta]
+    stripDuplicateLocations metas = metas
+      & reverse
+      & do
+          evaluatingState HS.empty . mapM \el ->
+            case liiLocation el of
+              Just loc -> do
+                ifM (HS.member loc <$> get)
+                  do
+                    pure (el & liiLocationL .~ Nothing)
+                  do
+                    modify $ HS.insert loc
+                    pure el
+              Nothing -> pure el
+      & reverse
