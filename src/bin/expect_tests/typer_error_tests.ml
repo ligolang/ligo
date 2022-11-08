@@ -209,6 +209,16 @@ let%expect_test _ =
 
     Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/double_for_each.ligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/double_for_each.ligo", line 19, characters 23-28:
+     18 |       (* param was accidentally still in the typing context after this point *)
+     19 |       s.some_map[0] := param;
+     20 |     };
+
+    Variable "param" not found. |}]
+
 (* Compiles due to inference ;) *)
 (* let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;

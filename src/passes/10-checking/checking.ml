@@ -811,13 +811,14 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
       let ctx, start = check ~ctx start t_int in
       let ctx, final = check ~ctx final t_int in
       let ctx, incr = check ~ctx incr t_int in
+      let ctx, pos = Context.mark ctx ~mut:false in
       let ctx, f_body =
         check
           ~ctx:Context.(ctx |:: C_value (binder, Immutable, t_int))
           f_body
           t_unit
       in
-      ( ctx
+      ( Context.drop_until ctx ~pos
       , t_unit
       , let%bind start = start
         and final = final
@@ -838,6 +839,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
           (mismatching_for_each_collection_type loc collection_type type_)
         @@ get_t_map (Context.apply ctx type_)
       in
+      let ctx, pos = Context.mark ctx ~mut:false in
       let ctx, fe_body =
         check
           ~ctx:
@@ -848,7 +850,7 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
           fe_body
           t_unit
       in
-      ( ctx
+      ( Context.drop_until ctx ~pos
       , t_unit
       , let%bind collection = collection
         and fe_body = fe_body in
@@ -888,13 +890,14 @@ and infer_expression ~(raise : raise) ~options ~ctx (expr : I.expression)
             (get_t_set type_)
             (Option.first_some (get_t_list type_) (get_t_map type_))
       in
+      let ctx, pos = Context.mark ctx ~mut:false in
       let ctx, fe_body =
         check
           ~ctx:Context.(ctx |:: C_value (binder, Immutable, binder_type))
           fe_body
           t_unit
       in
-      ( ctx
+      ( Context.drop_until ctx ~pos
       , t_unit
       , let%bind collection = collection
         and fe_body = fe_body in
