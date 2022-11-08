@@ -98,4 +98,41 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
-let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir pwd ;
+         Sys_unix.chdir "../../test/contracts/include"
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "preprocessed" ;  "include_cycle1/a.mligo" ] ;
+  [%expect{|
+    File "include_cycle1/a.mligo", line 1, characters 9-18:
+      1 | #include "b.mligo"
+    Error: Dependency cycle between:
+    -> "include_cycle1/a.mligo"
+    -> "include_cycle1/b.mligo"
+    -> "include_cycle1/c.mligo" |}] ;
+
+  run_ligo_bad [ "print" ; "preprocessed" ;  "include_cycle2/a.mligo" ] ;
+  [%expect{|
+    File "include_cycle2/b.mligo", line 1, characters 9-18:
+      1 | #include "c.mligo"
+    Error: Dependency cycle between:
+    -> "include_cycle2/b.mligo"
+    -> "include_cycle2/c.mligo" |}] ;
+
+  run_ligo_bad [ "print" ; "preprocessed" ;  "include_cycle3/a.mligo" ] ;
+  [%expect{|
+    File "include_cycle3/c.mligo", line 1, characters 9-18:
+      1 | #include "c.mligo"
+    Error: Dependency cycle between:
+    -> "include_cycle3/c.mligo" |}] ;
+
+  run_ligo_bad [ "print" ; "preprocessed" ;  "mutual_incl/foo.mligo" ] ;
+  [%expect{|
+    File "mutual_incl/foo.mligo", line 1, characters 9-20:
+      1 | #include "bar.mligo"
+      2 |
+    Error: Dependency cycle between:
+    -> "mutual_incl/foo.mligo"
+    -> "mutual_incl/bar.mligo" |}]
+       
+let () = Sys_unix.chdir pwd ;
