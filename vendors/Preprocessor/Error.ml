@@ -27,7 +27,7 @@ type error =
 | Failed_opening of file * msg        (* #include #import *)
 | Missing_filename                    (* #include #import *)
 | Missing_module                      (* #import *)
-| Cycle_in_include of file list * file(* #include *)
+| Cyclic_inclusion of file list * file(* #include *)
 | Unexpected_argument                 (* #include and #import *)
 | Newline_in_string                   (* #include and #import *)
 | Unterminated_string of string       (* #include, #import and strings *)
@@ -86,7 +86,7 @@ let to_string = function
     sprintf "File name expected in a string literal."
 | Missing_module ->
     sprintf "Module name expected in a string literal."
-| Cycle_in_include (incls, file) ->
+| Cyclic_inclusion (incls, file) ->
     let cycle =
       incls
       |> List.take_while ~f:(fun i -> not @@ String.equal file i)

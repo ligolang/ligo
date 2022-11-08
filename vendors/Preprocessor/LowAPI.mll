@@ -210,13 +210,13 @@ module Make (Config : Config.S) (Options : Options.S) =
                     |> fail state incl_region in
             
             (* We check if the current file exists in the stack of ancestors 
-               then we [fail] with an Error
+               in which case we fail with the error [Error.Cyclic_inclusion]
             *)
             let () =
               if List.exists ~f:(String.equal state#pos#file) state#ancestors 
               then
                 fail state incl_region 
-                  (Error.Cycle_in_include (state#ancestors, state#pos#file)) 
+                  (Error.Cyclic_inclusion (state#ancestors, state#pos#file)) 
             in
 
             (* We are ready now to output the linemarker before
@@ -331,9 +331,6 @@ let import_action ~callback hash_pos state lexbuf =
       let state =
         if state#is_copy then
           let file = state#pos#file in
-            (* match state#parents with
-              Some parent -> parent
-            | None        ->  in *)
           (* We resolve the file names to be included. *)
           let external_dirs =
             ModRes.get_dependencies ~file state#mod_res in
