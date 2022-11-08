@@ -27,6 +27,7 @@ type error =
 | Failed_opening of file * msg        (* #include #import *)
 | Missing_filename                    (* #include #import *)
 | Missing_module                      (* #import *)
+| Cycle_in_include of file list * file(* #include *)
 | Unexpected_argument                 (* #include and #import *)
 | Newline_in_string                   (* #include and #import *)
 | Unterminated_string of string       (* #include, #import & strings *)
