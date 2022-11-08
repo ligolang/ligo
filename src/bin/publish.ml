@@ -1,37 +1,15 @@
 (* 
 
-TODO Checklist:
 
-CLI:
-- [ ] User facing docs
-- [ ] Devs facing docs
-- [ ] Code clean up
-- [X] Impl ligo publish
-  - [X] Use a semver library fro validating verison
-  - [X] Read package.json and prepare request body
-  - [X] Read .ligorc and get token
-  - [X] If no README (.md or any other extension) then "ERROR: No README data found!"
-  - [X] Impl shasum & integrity (sha-512)
-  - [X] Response Handling
-- [X] Impl ligo add-user
-  - [X] Response Handling
-- [X] Impl ligo login
-  - [X] Response Handling
-- [ ] Debatable - write tests
-- [ ] Write unit test for json body + headers
-- [X] Handle errors (duplicate package or version, not authorised, etc.)
-- [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
-- [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
-- [X] login & add-user: CLI prompt for username & password
-- [X] Better logging during publish (show tarball contents, size, etc. similar to npm publish)
-
-DOCS:
-- [X] Mention that only gloable ligorc (~/.ligorc) file
-
-UI:
-- [X] List packages
-- [ ] For a package list all versions
-- [X] Stats about pakage (user, downloads) stuff what npmjs website shows
+- [x] Add --dry-run CLI flag to ligo publish
+- [ ] when directory field is null don't send the key
+- [ ] Stat main file before publish
+- [ ] Add unit tests for manifest parsing & validation
+- [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
+- [ ] Add stats about packed size, upacked size, total files in json
+- [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
+- [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
+- [ ] Docs: Add note about #import/include"<pkg>/<path>"
 
 *)
 
@@ -421,7 +399,7 @@ let handle_server_response ~name response body =
   | _ -> Error (body, "")
 
 
-let publish ~ligo_registry ~ligorc_path ~project_root =
+let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
   let manifest = LigoManifest.read ~project_root in
   let manifest = Result.bind manifest ~f:LigoManifest.validate in
   match manifest with

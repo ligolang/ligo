@@ -283,6 +283,11 @@ let self_pass =
   let name = "--self-pass" in
   let doc  = "apply the self pass" in
   flag ~doc name no_arg
+let dry_run_flag =
+  let open Command.Param in
+  let name = "--dry-run" in
+  let doc  = "don't publish changes to LIGO registry." in
+  flag ~doc name no_arg
 
 let project_root =
   let open Command.Param in
@@ -788,9 +793,9 @@ let install =
 let publish =
   let summary   = "[BETA] publish the LIGO package declared in package.json" in
   let readme () = "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
-  let f ligo_registry ligorc_path project_root () =
-    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root in
-  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
+  let f ligo_registry ligorc_path project_root dry_run () =
+    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run in
+  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root <*> dry_run_flag)
 
 let add_user =
   let summary   = "[BETA] create a new user for the LIGO package registry" in
