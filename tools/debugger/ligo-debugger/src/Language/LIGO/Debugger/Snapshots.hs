@@ -300,11 +300,11 @@ runInstrCollect = \case
   where
     -- What is done upon executing instruction.
     preExecutedStage
-      :: LigoIndexedInfo 'Unique
+      :: EmbeddedLigoMeta
       -> Instr i o
       -> Rec StkEl i
       -> CollectingEvalOp m ()
-    preExecutedStage LigoIndexedInfo{..} _instr stack = do
+    preExecutedStage LigoIndexedInfo{..} instr stack = do
       whenJust liiLocation \loc -> do
         statements <- getStatements loc
 
@@ -312,7 +312,8 @@ runInstrCollect = \case
           recordSnapshot statement EventFacedStatement
           csRecordedRangesL %= HS.insert statement
 
-        recordSnapshot loc EventExpressionPreview
+        unless (shouldIgnoreMeta instr) do
+          recordSnapshot loc EventExpressionPreview
 
       whenJust liiEnvironment \env -> do
         -- Here stripping occurs, as the second list keeps the entire stack,
@@ -328,7 +329,7 @@ runInstrCollect = \case
 
     -- What is done right after the instruction is executed.
     postExecutedStage
-      :: LigoIndexedInfo 'Unique
+      :: EmbeddedLigoMeta
       -> Instr i o
       -> Rec StkEl i
       -> Rec StkEl o
@@ -361,7 +362,8 @@ runInstrCollect = \case
             Just evaluated: #{evaluatedVal}
           |]
 
-        recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
+        unless (shouldIgnoreMeta instr) do
+          recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
 
       pure returnStack
 
@@ -448,6 +450,11 @@ runInstrCollect = \case
             { isStatus = InterpretRunning event
             , ..
             }
+
+      logMessage
+        [int||
+          Recorded snapshot: #{newSnap}
+        |]
 
       csLastRecordedSnapshotL ?= newSnap
       lift $ C.yield newSnap

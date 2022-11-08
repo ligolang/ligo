@@ -13,6 +13,7 @@ module Language.LIGO.Debugger.Common
   , refineStack
   , ligoRangeToRange
   , rangeToLigoRange
+  , shouldIgnoreMeta
   ) where
 
 import Unsafe qualified
@@ -36,8 +37,8 @@ import Morley.Michelson.Interpret (StkEl (seValue))
 import Morley.Michelson.Parser (utypeQ)
 import Morley.Michelson.Text (MText)
 import Morley.Michelson.Typed
-  (EpAddress (..), SomeConstrainedValue (SomeValue), SomeValue, Value, Value' (..),
-  withValueTypeSanity)
+  (EpAddress (..), Instr (LAMBDA, PUSH), SomeConstrainedValue (SomeValue), SomeValue, Value,
+  Value' (..), withValueTypeSanity)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (Address, mformatAddress, ta)
 
@@ -207,3 +208,19 @@ rangeToLigoRange Range{..} = LigoRange
   }
   where
     toLigoPosition (line, col, _) = LigoPosition (Unsafe.fromIntegral line) (Unsafe.fromIntegral $ col - 1)
+
+-- | Sometimes we want to ignore metas for some instructions.
+shouldIgnoreMeta :: Instr i o -> Bool
+shouldIgnoreMeta = \case
+  -- We're ignoring @LAMBDA@ instruction here in order
+  -- not to stop on function assignment.
+  LAMBDA{} -> True
+
+  -- @PUSH@es have location metas that point to constants.
+  -- E.g. @PUSH int 42@ may have a location of @42@.
+  --
+  -- So, stopping at them and showing an evaluation
+  -- seems useless. I see that @42@ evaluates to @42@
+  -- without any debug info.
+  PUSH{} -> True
+  _ -> False
