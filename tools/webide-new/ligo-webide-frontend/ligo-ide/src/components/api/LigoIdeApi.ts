@@ -6,9 +6,13 @@ export type ProtocolArg = {
   protocol?: string;
 };
 
-export type CompileContractArgsApi = ProtocolArg & {
-  sources: [string, string][];
+export type Project = {
+  sourceFiles: { filePath: string; source: string }[];
   main: string;
+};
+
+export type CompileContractArgsApi = ProtocolArg & {
+  project: Project;
 };
 
 export type GenerateDeployScriptArgsApi = CompileContractArgsApi & {

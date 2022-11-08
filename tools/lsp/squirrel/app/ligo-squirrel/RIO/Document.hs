@@ -52,11 +52,14 @@ import UnliftIO.STM (atomically)
 import Witherable (iwither)
 
 import AST
- ( ContractInfo, ContractInfo', pattern FindContract, FindFilepath (..), HasScopeForest
- , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes
- , addShallowScopes, contractFile, lookupContract
- )
-import AST.Includes (extractIncludedFiles, includesGraph', insertPreprocessorRanges)
+  ( ContractInfo, ContractInfo', pattern FindContract, FindFilepath (..), HasScopeForest
+  , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes
+  , addShallowScopes, contractFile, lookupContract
+  )
+import AST.Includes
+  ( ExtractionDepth (DirectInclusions), extractIncludedFiles, includesGraph'
+  , insertPreprocessorRanges
+  )
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
@@ -321,7 +324,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
             Includes <$> traverseAMConcurrently parseCached connectedContracts
       -- We've cached this contract, incrementally update the inclusions graph.
       Just (Includes oldIncludes) -> do
-        (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
+        (rootContract', toList -> includeEdges) <- extractIncludedFiles DirectInclusions rootContract
         let
           numNewContracts = length includeEdges
           lookupOrLoad fp = maybe

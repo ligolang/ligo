@@ -42,7 +42,7 @@ extractDocumentSymbols uri tree =
 
     collectDecl :: LIGO Info' -> Writer [SymbolInformation] ()
     collectDecl (match @Binding -> Just (_, binding)) = case binding of
-          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _)->
+          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
               r
               J.SkFunction
@@ -80,6 +80,19 @@ extractDocumentSymbols uri tree =
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
+
+          BModuleDecl (match @ModuleName -> Just (getRange -> r, _)) decls -> do
+            tellScopedDecl
+              r
+              J.SkModule
+              (\ScopedDecl {_sdName} -> Just ("module " <> _sdName))
+            mapM_ collectDecl decls
+
+          BModuleAlias (match @ModuleName -> Just (getRange -> r, _)) _ ->
+            tellScopedDecl
+              r
+              J.SkModule
+              (\ScopedDecl {_sdName} -> Just ("module " <> _sdName))
 
           _ -> pure ()
 
@@ -164,4 +177,5 @@ extractDocumentSymbols uri tree =
       J.SkConstant -> Just "const declaration"
       J.SkVariable -> Just "var declaration"
       J.SkFunction -> Just "function"
+      J.SkModule -> Just "module"
       _ -> Nothing

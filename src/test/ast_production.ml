@@ -107,6 +107,7 @@ let typed_prod =
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
     ; type_file "deep_pattern_matching/pm_test.religo"
     ; type_tfile "pattern_match4.jsligo"
+    ; type_file "layout.pligo"
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
     ]
 

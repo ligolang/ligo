@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import pathHelper from "path-browserify";
 import fileOps from "~/base-components/file-ops";
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -69,7 +70,7 @@ export default class MonacoEditorModelSession {
         this._model.uri.path = this._model.uri.path.replace(/^\/private/, "private");
       }
     } else if (process.env.OS_IS_WINDOWS) {
-      filePath = fileOps.pathHelper.normalize(filePath.substr(1));
+      filePath = pathHelper.normalize(filePath.substr(1));
       const [root, others] = filePath.split(":");
       filePath = `${root.toUpperCase()}:${others}`;
     }

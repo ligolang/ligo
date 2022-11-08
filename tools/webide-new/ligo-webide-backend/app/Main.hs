@@ -1,8 +1,9 @@
 module Main (main) where
 
+import Config (Config(..))
 import Control.Monad (join)
-import Lib
 import Options.Applicative
+import Server
 
 main :: IO ()
 main =
@@ -17,18 +18,18 @@ main =
     parser :: Parser (IO ())
     parser = fmap startApp $
       Config
-        <$> (optional (strOption
+        <$> optional (strOption
           ( long "ligo-path"
             <> short 'l'
             <> metavar "STRING"
             <> help "path to LIGO binary"
-          )))
-        <*> (optional (strOption
+          ))
+        <*> optional (strOption
           ( long "tezos-client-path"
             <> short 't'
             <> metavar "STRING"
             <> help "path to tezos-client binary"
-          )))
+          ))
         <*> option auto
           ( long "port"
             <> short 'p'
@@ -42,11 +43,11 @@ main =
             <> short 'v'
             <> help "print received requests and the responses"
           )
-        <*> (optional (strOption
+        <*> optional (strOption
           ( long "dockerized-ligo-version"
           <> short 'd'
           <> metavar "LIGO_VERSION"
           <> help "use a LIGO from Docker instead of a \
                   \LIGO binary. If this is specified, 'ligo-path' \
                   \will be ignored."
-          )))
+          ))

@@ -592,13 +592,6 @@ let expr_to_region = function
 | EModA {region; _}
 | ECodeInj {region; _} -> region
 
-let declaration_to_region = function
-  ConstDecl   {region;_}
-| TypeDecl    {region;_}
-| ModuleDecl  {region;_}
-| ModuleAlias {region;_} -> region
-| Directive d -> Directive.to_region d
-
 let selection_to_region = function
   FieldName f -> f.region
 | Component c -> c.region

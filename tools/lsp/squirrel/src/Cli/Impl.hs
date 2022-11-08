@@ -5,6 +5,7 @@ module Cli.Impl
   , LigoClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
   , LigoUnexpectedCrashException (..)
+  , LigoIOException (..)
 
   , Version (..)
 
@@ -15,7 +16,8 @@ module Cli.Impl
   , callLigo
   , callLigoBS
   , callForFormat
-  , getLigoVersion
+  , getLigoVersionRaw
+  , getLigoVersionSafe
   , preprocess
   , getLigoDefinitions
   ) where
@@ -23,12 +25,14 @@ module Cli.Impl
 import Control.Arrow ((&&&))
 import Control.Monad
 import Control.Monad.Reader
-import Data.Aeson (FromJSON (..), ToJSON (..), Value, eitherDecode', eitherDecodeStrict', object, (.=))
+import Data.Aeson
+  (FromJSON (..), ToJSON (..), Value, eitherDecode', eitherDecodeStrict', object, (.=))
 import Data.Aeson.Types (parseEither)
 import Data.Bool (bool)
 import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Foldable (asum, toList)
+import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty)
 import Data.Monoid (Endo (..))
 import Data.Text (Text, pack, unpack)
@@ -36,15 +40,16 @@ import Data.Text qualified as Text
 import Data.Text.Encoding (encodeUtf8)
 import Data.Text.IO qualified as Text
 import Duplo.Pretty (pp)
+import GHC.IO.Exception qualified as IOException
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName)
 import System.IO (hClose)
 import System.Process
 import System.Process.ByteString.Lazy qualified as PExtras
-import Text.Regex.TDFA ((=~), getAllTextSubmatches)
+import Text.Regex.TDFA (getAllTextSubmatches, (=~))
 import UnliftIO.Directory (canonicalizePath)
-import UnliftIO.Exception (Exception (..), SomeException (..), throwIO, try)
+import UnliftIO.Exception (Exception (..), SomeException (..), handle, throwIO, try)
 import UnliftIO.Temporary (withTempDirectory, withTempFile)
 import Witherable (hashNub)
 
@@ -53,9 +58,9 @@ import Cli.Json
 import Cli.Types
 import Log (Log, i)
 import Log qualified
-import Parser (LineMarker (lmFile))
 import ParseTree (Source (..))
-import Util (traverseJsonText, lazyBytesToText)
+import Parser (LineMarker (lmFile))
+import Util (lazyBytesToText, traverseJsonText)
 
 ----------------------------------------------------------------------------
 -- Errors
@@ -95,6 +100,15 @@ data LigoPreprocessFailedException = LigoPreprocessFailedException
 data LigoFormatFailedException = LigoFormatFailedException
   { ffeMessage :: Text -- ^ Successfully decoded ligo error
   , ffeFile :: FilePath -- ^ File that caused the error
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
+
+-- | Starting @ligo@ executable failed - some system error.
+--
+-- Likely LIGO isn't installed or was not found.
+data LigoIOException = LigoIOException
+  { lieType :: IOException.IOErrorType
+  , lieDescription :: Text
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
@@ -144,6 +158,7 @@ instance Exception SomeLigoException where
       , SomeLigoException <$> fromException @LigoUnexpectedCrashException              e
       , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
       , SomeLigoException <$> fromException @LigoFormatFailedException                 e
+      , SomeLigoException <$> fromException @LigoIOException                           e
       ]
 
 instance Exception LigoClientFailureException where
@@ -210,6 +225,10 @@ instance Exception LigoFormatFailedException where
     [i|LIGO failed to format contract with: #{ffeMessage}
 Caused by: #{ffeFile}|]
 
+instance Exception LigoIOException where
+  displayException LigoIOException {..} =
+    [i|LIGO executable run failed: #{lieDescription}|]
+
 ----------------------------------------------------------------------------
 -- Execution
 ----------------------------------------------------------------------------
@@ -228,9 +247,16 @@ callLigoImplBS _rootDir args conM = do
     -- either, as it doesn't seem thread-safe either.
     let process = proc _lceClientPath args
     (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process raw
+      & rewrapIOError
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM
     pure lo
+  where
+    rewrapIOError = handle \exc@IOException.IOError{} ->
+      throwIO LigoIOException
+        { lieType = IOException.ioe_type exc
+        , lieDescription = Text.pack $ IOException.ioe_description exc
+        }
 
 callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
 callLigoImpl _rootDir args conM = lazyBytesToText <$> callLigoImplBS _rootDir args conM
@@ -268,10 +294,10 @@ withLigo
   -> m a
 withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) getArgs decode =
   withTempDirTemplate \tempDir ->
-    withTempFile tempDir (takeFileName fp) \tempFp handle -> do
+    withTempFile tempDir (takeFileName fp) \tempFp hnd -> do
       -- Create temporary file and call LIGO with it.
       $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
-      liftIO (Text.hPutStr handle contents *> hClose handle)
+      liftIO (Text.hPutStr hnd contents *> hClose hnd)
       try (callLigoBS (Just rootDir) (getArgs tempFp) src) >>= \case
         -- LIGO produced output in stderr, or exited with non-zero exit code.
         Left LigoClientFailureException {cfeStderr} -> do
@@ -316,16 +342,26 @@ fixMarkers tempFp (Source fp dirty contents) = liftIO do  -- HACK: I use `liftIO
 -- ```
 -- ligo --version
 -- ```
-getLigoVersion :: (HasLigoClient m, Log m) => m (Maybe Version)
-getLigoVersion = Log.addNamespace "getLigoVersion" do
-  mbOut <- try $ callLigoImpl Nothing ["--version"] Nothing
-  case mbOut of
-    -- We don't want to die if we failed to parse the version...
+--
+-- TODO: rename this back to @getLigoVersion@.
+getLigoVersionRaw :: (HasLigoClient m) => m Version
+getLigoVersionRaw =
+  Version . Text.strip <$> callLigoImpl Nothing ["--version"] Nothing
+
+-- | Get the current LIGO version, but in case of any failure return 'Nothing'.
+--
+-- ```
+-- ligo --version
+-- ```
+getLigoVersionSafe :: (HasLigoClient m, Log m) => m (Maybe Version)
+getLigoVersionSafe = Log.addNamespace "getLigoVersion" do
+  mbVersion <- try getLigoVersionRaw
+  case mbVersion of
     Left (SomeException e) -> do
       $(Log.err) [i|Couldn't get LIGO version with: #{e}|]
       pure Nothing
-    Right output ->
-      pure $ Just $ Version $ Text.strip output
+    Right version ->
+      pure $ Just version
 
 -- | Call LIGO's pretty printer on some contract.
 --

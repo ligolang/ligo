@@ -13,7 +13,7 @@ module JSON = struct
   | Number            -> "constant.numeric." ^ syntax
   | Boolean           -> "constant.language." ^ syntax
   | Float             -> "constant.numeric." ^ syntax
-  | Identifier        -> "storage.var." ^ syntax
+  | Identifier        -> "variable." ^ syntax
   | Function          -> "keyword.other.let-binding." ^ syntax
   | Statement         -> "keyword.other." ^ syntax
   | Conditional       -> "keyword.control." ^ syntax
@@ -26,7 +26,7 @@ module JSON = struct
   | Type              -> "entity.name.type." ^ syntax
   | Type_var          -> "variable.other.type." ^ syntax
   | StorageClass      -> "storage.modifier." ^ syntax
-  | Structure         -> "storage.class." ^ syntax
+  | Structure         -> "entity.name.type." ^ syntax
   | Typedef           -> "storage.type." ^ syntax
   | SpecialChar       -> "constant.character." ^ syntax
   | SpecialComment    -> "comment.other." ^ syntax

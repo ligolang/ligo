@@ -1,5 +1,3 @@
-import LocalProjectManager from "./LocalProjectManager";
+import ProjectManager from "./ProjectManager";
 
-export default {
-  Local: LocalProjectManager,
-};
+export { ProjectManager };

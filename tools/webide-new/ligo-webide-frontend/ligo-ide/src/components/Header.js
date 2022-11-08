@@ -5,7 +5,7 @@ import { IpcChannel } from "~/base-components/ipc";
 
 import headerActions, { Header, NavGuard } from "~/ligo-components/eth-header";
 // import { networkManager } from '~/ligo-components/eth-network'
-import { BaseProjectManager, actions } from "~/base-components/workspace";
+import { ProjectManager, actions } from "~/base-components/workspace";
 import { createProject } from "../lib/bsn";
 // import keypairManager from '~/base-components/keypair'
 
@@ -98,7 +98,7 @@ class HeaderWithRedux extends PureComponent {
         {
           networkManager: undefined,
           bsnChannel: new IpcChannel("bsn"),
-          projectChannel: BaseProjectManager.channel,
+          projectChannel: ProjectManager.channel,
         },
         params
       );

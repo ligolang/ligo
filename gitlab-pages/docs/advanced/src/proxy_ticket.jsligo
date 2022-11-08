@@ -41,10 +41,10 @@ type proxy_address<v> =  typed_address<[[v,nat] , address] , unit> ;
 const init_transfer :
   <vt, whole_p> ( mk_param : ((t:ticket<vt>) => whole_p)) => proxy_address<vt> =
   ( mk_param :  ((t:ticket<vt>) => whole_p)) => {
-    let proxy_transfer : ((x : ([[[vt , nat] , address] , unit])) => [list<operation> , unit]) =
+    const proxy_transfer : ((x : ([[[vt , nat] , address] , unit])) => [list<operation> , unit]) =
       proxy_transfer_contract (mk_param)
     ;
-    let [taddr_proxy, _, _] = Test.originate (proxy_transfer, unit, 1 as tez) ;
+    const [taddr_proxy, _, _] = Test.originate (proxy_transfer, unit, 1 as tez) ;
     return taddr_proxy
   };
 
@@ -60,13 +60,13 @@ const transfer :
 const originate : <vt, whole_s, vp>
     (x : [ [vt , nat] , (t:ticket<vt>) => whole_s, (ps:[vp , whole_s]) => [list<operation> , whole_s] ]) => address =
   ([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (ps:[vp , whole_s]) => [list<operation> , whole_s] ] ) => {
-      let proxy_origination : (x : ([[vt , nat] , option<address>])) => [list<operation> , option<address>] =
+      const proxy_origination : (x : ([[vt , nat] , option<address>])) => [list<operation> , option<address>] =
         proxy_originate_contract (mk_storage, contract) ;
-      let [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;
-      let _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0 as tez) ;
+      const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;
+      const _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0 as tez) ;
       match (Test.get_storage (taddr_proxy), {
         Some: (addr:address) => {
-        let _taddr = (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;
+        const _taddr = (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;
         return addr
         },
         None : (_:unit) => failwith ("internal error")

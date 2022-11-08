@@ -29,6 +29,28 @@ export default {
         return state;
       },
     },
+    RENAME_PROJECT: {
+      reducer: (state, { payload }) => {
+        const { id, newName } = payload;
+        let index = findIndex(state, id, "local");
+        if (index > -1) {
+          return state
+            .update("local", (projects = List()) =>
+              projects.set(
+                index,
+                Map({ id: newName, author: "local", name: newName, path: `.workspaces/${newName}` })
+              )
+            )
+            .update("selected", (selected) => {
+              if (selected && selected.get("id") === id) {
+                return;
+              }
+              return selected;
+            });
+        }
+        return state;
+      },
+    },
     REMOVE_PROJECT: {
       reducer: (state, { payload }) => {
         const { id } = payload;
