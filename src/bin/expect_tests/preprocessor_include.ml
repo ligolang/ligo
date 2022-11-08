@@ -98,4 +98,18 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
-let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir pwd ;
+         Sys_unix.chdir "../../test/contracts/include"
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "preprocessed" ;  "include_cycle1/a.mligo" ] ;
+  [%expect{|
+    File "include_cycle1/a.mligo", line 1, characters 9-18:
+      1 | #include "b.mligo"
+    Error: Dependency cycle between:
+    -> "include_cycle1/a.mligo"
+    -> "include_cycle1/b.mligo"
+    -> "include_cycle1/c.mligo" |}]
+       
+
+let () = Sys_unix.chdir pwd ;
