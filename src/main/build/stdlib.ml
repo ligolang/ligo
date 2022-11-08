@@ -57,7 +57,7 @@ let type_ ~options x =
 let get : options:Compiler_options.t -> unit -> t = fun ~options () ->
   let def str = "#define " ^ str ^ "\n" in
   let std = match options.middle_end.protocol_version with
-    | Environment.Protocols.Jakarta -> def "JAKARTA"
+    | Environment.Protocols.Lima -> def "LIMA"
     | Environment.Protocols.Kathmandu -> def "KATHMANDU"
   in
   let lib = Ligo_lib.get () in

@@ -21,16 +21,12 @@ let pp_ct : Format.formatter -> constant_val -> unit =
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | C_address c ->
-    Format.fprintf
-      ppf
-      "%a"
-      Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.pp
-      c
+    Format.fprintf ppf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp c
   | C_contract c ->
     Format.fprintf
       ppf
       "%a(%a)"
-      Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.pp
+      Tezos_protocol.Protocol.Alpha_context.Contract.pp
       c.address
       (PP_helpers.option PP_helpers.string)
       c.entrypoint
@@ -92,11 +88,7 @@ let rec pp_value : Format.formatter -> value -> unit =
   | V_Gen _ -> Format.fprintf ppf "Generator"
   | V_Location _ -> Format.fprintf ppf "Heap location"
   | V_Typed_address c ->
-    Format.fprintf
-      ppf
-      "%a"
-      Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.pp
-      c
+    Format.fprintf ppf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp c
 
 
 let pp_value_expr : Format.formatter -> value_expr -> unit =

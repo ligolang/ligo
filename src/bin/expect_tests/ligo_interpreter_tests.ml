@@ -6,7 +6,7 @@ let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 (* events payload being records and not decompiled to pairs in the interpreter *)
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ; "--protocol" ; "kathmandu" ] ;
+  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test_foo exited with value 3n. |}]
@@ -106,12 +106,6 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed.
-    - test exited with value (). |}]
-
-let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -499,7 +493,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value (1802n , 1985n , 1985n). |}]
+    - test exited with value (2136n , 2331n , 2331n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -602,12 +596,12 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1XhV1uDy9VDHHMCFwS6BaoY9yEhMxpZecN , { parameter unit ;
+    - test_x exited with value (KT19hFZZxPTue1oBw7cc46L1p6pJ3xTo3vRF , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
-              (map %secrets address chest)) ;
+              (map %secrets address bool)) ;
       code { CDR ;
              PUSH bool True ;
              DUP 2 ;
@@ -713,12 +707,12 @@ let%expect_test _ =
   [%expect {|
     edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
     Everything at the top-level was executed.
-    - test exited with value Success (2796n). |}]
+    - test exited with value Success (2797n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_tickets_and_bigmaps.mligo" ] ;
-  [%expect {|
-    Success (3497n)
+  [%expect{|
+    Success (3504n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 

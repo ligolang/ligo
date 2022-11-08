@@ -61,7 +61,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_015_PtLimaPt.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_014_PtKathma.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -93,11 +93,10 @@ let parse_michelson_fail (type aft aftr)
   canonical_of_strings michelson >>=? fun michelson ->
   (Alpha_context.Global_constants_storage.expand tezos_context michelson >>=? fun (tezos_context, michelson) ->
   let michelson = Tezos_micheline.Micheline.root michelson in
-  let elab_conf = Script_ir_translator_config.{ type_logger ; legacy ; keep_extra_types_for_interpreter_logging = false } in
   parse_instr
-    ~elab_conf
+    ?type_logger
     top_level tezos_context
-    michelson bef) >>=?? fun (j, _) ->
+    michelson bef ?legacy) >>=?? fun (j, _) ->
   match j with
   | Typed descr -> (
     Lwt.return (
@@ -112,8 +111,7 @@ let parse_michelson_fail (type aft aftr)
 let parse_michelson_data
     ?(tezos_context = (dummy_environment ()).tezos_context)
     michelson ty =
-  let elab_conf = Script_ir_translator_config.{ type_logger = None ; legacy = false ; keep_extra_types_for_interpreter_logging = false } in
-  parse_data tezos_context ty michelson ~elab_conf ~allow_forged:true >>=?? fun (data, _) ->
+  parse_data tezos_context ty michelson ~legacy:false ~allow_forged:true >>=?? fun (data, _) ->
   Lwt_result_syntax.return data
 
 let parse_michelson_ty
@@ -139,13 +137,12 @@ let unparse_michelson_data
     ty value =
   unparse_data tezos_context
     Readable ty value >>=?? fun (michelson, _) ->
-  let michelson = Tezos_micheline.Micheline.inject_locations (fun _ -> 0) michelson in
   Lwt_result_syntax.return (strings_of_prims michelson)
 
 let unparse_michelson_ty
     ?(tezos_context = (dummy_environment ()).tezos_context)
     ty =
-  Lwt.return @@ Script_ir_unparser.unparse_ty ~loc:() tezos_context ty >>=?? fun (michelson, _) ->
+  Lwt.return @@ Script_ir_translator.unparse_ty ~loc:() tezos_context ty >>=?? fun (michelson, _) ->
   Lwt_result_syntax.return (strings_of_prims michelson)
 
 type options = {
@@ -165,17 +162,6 @@ let default_self =
   force_ok_alpha ~msg:"bad default self"
     (Alpha_context.Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG")
 
-
-let begin_validation_and_application ctxt chain_id mode ~predecessor =
-  let open Lwt_result_syntax in
-  let* validation_state =
-    Main.begin_validation ctxt chain_id mode ~predecessor
-  in
-  let* application_state =
-    Main.begin_application ctxt chain_id mode ~predecessor
-  in
-  return (validation_state, application_state)
-
 (* fake bake a block in order to set the predecessor timestamp *)
 let fake_bake tezos_context chain_id now =
   let (>>=) = Lwt_syntax.(let*) in
@@ -189,23 +175,24 @@ let fake_bake tezos_context chain_id now =
     let open! Alpha_context.Block_header in {
       contents ;
       signature = Tezos_crypto.Signature.zero ;
-    } in
+  } in
   let tezos_context =
     force_lwt ~msg:("bad block "^__LOC__)
-      ((let predecessor_timestamp =
-          match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Script_timestamp.to_zint now)) with
-          | Some t -> t
-          | _ -> Stdlib.failwith "bad timestamp" in
-        let timestamp =
-          match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add (Z.of_int 30) (Script_timestamp.to_zint now))) with
-          | Some t -> t
-          | _ -> Stdlib.failwith "bad timestamp" in
-        let predecessor_context = tezos_context in
-        let header = { header with timestamp = predecessor_timestamp } in
-        let predecessor = hash in
-        begin_validation_and_application tezos_context Alpha_environment.Chain_id.zero (Construction { predecessor_hash = hash ; timestamp ; block_header_data = protocol_data }) ~predecessor:header
-       )
-      >>= fun x -> Lwt.return @@ Alpha_environment.wrap_tzresult x >>=? fun (_, state) ->
+      ((Protocol.Main.begin_construction
+        ~chain_id
+        ~predecessor_context:tezos_context
+        ~predecessor_timestamp:((match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Script_timestamp.to_zint now)) with
+                    | Some t -> t
+                    | _ -> Stdlib.failwith "bad timestamp"))
+        ~predecessor_fitness:header.fitness
+        ~predecessor_level:header.level
+        ~predecessor:hash
+        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add (Z.of_int 30) (Script_timestamp.to_zint now))) with
+                    | Some t -> t
+                    | _ -> Stdlib.failwith "bad timestamp")
+        ~protocol_data
+        ())
+      >>= fun x -> Lwt.return @@ Alpha_environment.wrap_tzresult x >>=? fun state ->
         Lwt_result_syntax.return state.ctxt) in
   tezos_context
 
@@ -303,16 +290,12 @@ let interpret ?(options = make_options ()) (instr:('a, 'b, 'c, 'd) kdescr) bef :
     | Implicit hash -> Contract_hash.zero
     | Originated hash -> hash
   in
-  let payer = match payer with
-    | Implicit hash -> hash
-    | Originated hash -> Tezos_crypto.Signature.Public_key_hash.zero
-  in
   let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now ; level } in
   Script_interpreter.Internals.step_descr no_trace_logger tezos_context step_constants instr bef (EmptyCell, EmptyCell) >>=??
   fun (stack, _, _) -> Lwt_result_syntax.return stack
 
 let unparse_ty_michelson ty =
-  Lwt.return @@ Script_ir_unparser.unparse_ty ~loc:() (dummy_environment ()).tezos_context ty >>=??
+  Lwt.return @@ Script_ir_translator.unparse_ty ~loc:() (dummy_environment ()).tezos_context ty >>=??
   fun (n,_) -> Lwt_result_syntax.return n
 
 type typecheck_res =
@@ -370,9 +353,9 @@ let failure_interpret
     kinstr;
   } in
   let instr = kdescr in
+
   let step_constants =
     let self = match self with Implicit hash -> Contract_hash.zero | Originated hash -> hash in
-    let payer = match payer with Implicit hash -> hash | Originated hash -> Tezos_crypto.Signature.Public_key_hash.zero in
     { source ; self ; payer ; amount ; chain_id ; balance ; now  ; level } in
   Script_interpreter.Internals.step_descr no_trace_logger tezos_context step_constants instr bef stackb >>= fun x ->
   match x with

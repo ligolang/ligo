@@ -7,7 +7,8 @@ const proxy_transfer_contract :
     (p : [[[vt , nat] , address] , unit] ) => {
     let [p,_] = p ;
     let [[v,amt],dst_addr] = p ;
-    let tx_param = mk_param (Tezos.create_ticket (v, amt)) ;
+    let ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
+    let tx_param = mk_param (ticket) ;
     let c : contract<whole_p> =
       Tezos.get_contract_with_error (dst_addr, "Testing proxy: you provided a wrong address") ;
     let op = Tezos.transaction (tx_param, 1 as mutez, c) ;
@@ -30,7 +31,8 @@ const proxy_originate_contract :
       (p : [[vt , nat] , option<address>]) => {
         let [p,_] = p;
         let [v,amt] = p ;
-        let init_storage : whole_s = mk_storage (Tezos.create_ticket (v, amt)) ;
+	let ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
+        let init_storage : whole_s = mk_storage (ticket) ;
         let [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), (0 as mutez), init_storage) ;
         return ([list([op]), Some(addr)])
   };

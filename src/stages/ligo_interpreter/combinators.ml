@@ -52,15 +52,11 @@ let v_ctor : string -> value -> value =
  fun ctor value -> V_Construct (ctor, value)
 
 
-let v_address
-  : Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t -> value
-  =
+let v_address : Tezos_protocol.Protocol.Alpha_context.Contract.t -> value =
  fun a -> V_Ct (C_address a)
 
 
-let v_typed_address
-  : Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t -> value
-  =
+let v_typed_address : Tezos_protocol.Protocol.Alpha_context.Contract.t -> value =
  fun a -> V_Typed_address a
 
 
@@ -106,8 +102,7 @@ let counter_of_address : string -> int =
 
 
 let get_address
-  :  value
-  -> Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t option
+  : value -> Tezos_protocol.Protocol.Alpha_context.Contract.t option
   = function
   | V_Ct (C_address x) -> Some x
   | _ -> None
@@ -299,12 +294,10 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   | C_bytes b, C_bytes b' -> Bytes.compare b b'
   | C_mutez m, C_mutez m' -> Z.compare m m'
   | C_address a, C_address a' ->
-    Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a'
+    Tezos_protocol.Protocol.Alpha_context.Contract.compare a a'
   | ( C_contract { address = a; entrypoint = e }
     , C_contract { address = a'; entrypoint = e' } ) ->
-    (match
-       Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a'
-     with
+    (match Tezos_protocol.Protocol.Alpha_context.Contract.compare a a' with
      | 0 -> Option.compare String.compare e e'
      | c -> c)
   | C_key_hash kh, C_key_hash kh' ->
@@ -423,7 +416,7 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Gen v, V_Gen v' -> Caml.compare v v'
   | V_Location loc, V_Location loc' -> Int.compare loc loc'
   | V_Typed_address a, V_Typed_address a' ->
-    Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a'
+    Tezos_protocol.Protocol.Alpha_context.Contract.compare a a'
   | ( ( V_Ct _
       | V_List _
       | V_Record _

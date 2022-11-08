@@ -1010,17 +1010,18 @@ let f = (tr : tr) =>
 ## Tickets
 
 <SyntaxTitle syntax="pascaligo">
-val create_ticket&lt;value&gt; : value -> nat -> ticket (value)
+val create_ticket&lt;value&gt; : value -> nat -> option (ticket (value))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val create_ticket : 'value -> nat -> 'value ticket
+val create_ticket : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let create_ticket : 'value => nat => ticket('value)
+let create_ticket : 'value => nat => option(ticket('value))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let create_ticket: 'value => nat => ticket&lt;'value&gt;
+let create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
+
 
 To create a ticket, the value and the amount of tickets to be created needs to be provided.
 The ticket will also contain the contract address it originated from (which corresponds to `Tezos.self`).
@@ -1328,76 +1329,6 @@ let main = (x: [parameter, storage]): return_ => {
 
 </Syntax>
 
-## Chest
-
-<SyntaxTitle syntax="pascaligo">
-type chest
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type chest
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chest
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-type chest
-</SyntaxTitle>
-A type for chests
-
-<SyntaxTitle syntax="pascaligo">
-type chest_key
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type chest_key
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chest_key
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-type chest_key
-</SyntaxTitle>
-A type for chest keys
-
-<SyntaxTitle syntax="pascaligo">
-type chest_opening_result is
-    Ok_opening of bytes
-  | Fail_decrypt
-  | Fail_timelock
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type chest_opening_result =
-    Ok_opening of bytes
-  | Fail_decrypt
-  | Fail_timelock
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chest_opening_result =
-    Ok_opening(bytes)
-  | Fail_decrypt
-  | Fail_timelock
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-type chest_opening_result =
-   ["Ok_opening", bytes]
- | ["Fail_decrypt"]
- | ["Fail_timelock"];
-</SyntaxTitle>
-
-A type for the result of chest opening, see `Tezos.open_chest`
-
-
-<SyntaxTitle syntax="pascaligo">
-val open_chest : chest_key -> chest -> nat -> chest_opening_result
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val open_chest : chest_key -> chest -> nat -> chest_opening_result
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let open_chest : chest_key => chest => nat => chest_opening_result
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let open_chest : chest_key => chest => nat => chest_opening_result
-</SyntaxTitle>
 
 ## On Chain Views
 
@@ -1434,3 +1365,20 @@ let constant : string => 'a
 
 The new primitive `Tezos.constant` allows you to use a predefined constant already registered on chain.
 It accepts a hash in the form of a string and will require a type annotation.
+
+## Events
+
+<SyntaxTitle syntax="pascaligo">
+val emit&lt;a&gt; :  string -> a -> operation
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val emit : string -> 'a -> operation
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let emit: string => 'a => operation
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let emit: string => &apos;a => operation
+</SyntaxTitle>
+
+Build an event operation. To actually emit an event, this operation must be returned the same way as other operations (origination / transfer ..)

@@ -3,7 +3,8 @@
     ( (p,_)    : ((vt * nat) * address) * unit )
     : operation list * unit =
   let ((v,amt),dst_addr) = p in
-  let tx_param = mk_param (Tezos.create_ticket v amt) in
+  let ticket = Option.unopt (Tezos.create_ticket v amt) in
+  let tx_param = mk_param ticket in
   let c : whole_p contract = Tezos.get_contract_with_error dst_addr "Testing proxy: you provided a wrong address" in
   let op = Tezos.transaction tx_param 1mutez c in
   [op], ()
@@ -14,7 +15,8 @@
     ( (p,_)      : (vt * nat) * address option )
     : operation list * address option =
   let (v,amt) = p in
-  let init_storage : whole_s = mk_storage (Tezos.create_ticket v amt) in
+  let ticket = Option.unopt (Tezos.create_ticket v amt) in
+  let init_storage : whole_s = mk_storage ticket in
   let op,addr = Tezos.create_contract main (None: key_hash option) 0mutez init_storage in
   [op], Some addr
 
