@@ -109,7 +109,14 @@ let%expect_test _ =
     Error: Dependency cycle between:
     -> "include_cycle1/a.mligo"
     -> "include_cycle1/b.mligo"
-    -> "include_cycle1/c.mligo" |}]
+    -> "include_cycle1/c.mligo" |}] ;
+  run_ligo_bad [ "print" ; "preprocessed" ;  "include_cycle2/a.mligo" ] ;
+  [%expect{|
+    File "include_cycle2/b.mligo", line 1, characters 9-18:
+      1 | #include "c.mligo"
+    Error: Dependency cycle between:
+    -> "include_cycle2/b.mligo"
+    -> "include_cycle2/c.mligo" |}]
        
 
 let () = Sys_unix.chdir pwd ;
