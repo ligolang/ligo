@@ -1,9 +1,9 @@
 # NOTE: dependencies added here are ignored in the LIGO build. Add
 # dependencies in /ligo.opam and run [opam lock].
 opam-version: "2.0"
-name: "memory-proto-alpha"
+name: "memory-proto-pre-alpha"
 version: "1.0"
-synopsis: "Tezos Protocol Alpha in memory"
+synopsis: "Tezos Protocol Pre Alpha in memory"
 maintainer: "Galfour <contact@ligolang.org>"
 authors: "Galfour <contact@ligolang.org>"
 license: "MIT"
@@ -13,7 +13,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
   "dune"
   "tezos-protocol-environment"
-  "tezos-protocol-015-PtLimaPt"
+  "tezos-protocol-014-PtKathma"
 ]
 build: [
   ["dune" "build" "-p" name]
