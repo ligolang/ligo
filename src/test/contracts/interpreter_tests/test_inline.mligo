@@ -1,6 +1,6 @@
 type storage = {
   participants : address set ;
-  secrets : (address, chest) map ;
+  secrets : (address, bool) map ;
   metadata: (string,bytes) big_map
 }
 type parameter = unit
@@ -22,7 +22,7 @@ let main ((), s : parameter * storage) : operation list * storage =
 
 let init_storage : storage = {
   participants = (Set.empty : address set) ;
-  secrets = (Map.empty : (address, chest) map) ;
+  secrets = (Map.empty : (address, bool) map) ;
   metadata = (Big_map.empty : (string,bytes) big_map) ;
 }
 

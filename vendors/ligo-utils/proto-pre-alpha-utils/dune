@@ -1,0 +1,14 @@
+(library
+  (name proto_pre_alpha_utils)
+  (public_name proto-pre-alpha-utils)
+  (libraries
+    tezos-error-monad
+    tezos-stdlib-unix
+    tezos-protocol-014-PtKathma
+    tezos-client-014-PtKathma
+    tezos-memory-proto-pre-alpha
+    data-encoding
+    simple-utils
+    tezos-utils
+  )
+)

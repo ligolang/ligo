@@ -171,7 +171,7 @@ Here is an example of a contract trying to open a chest and the corresponding te
 
 <Syntax test-ligo syntax="cameligo">
 
-```cameligo test-ligo group=timelock
+```cameligo skip
 type storage = bytes
 type parameter = chest_key * chest
 
@@ -219,7 +219,7 @@ let test =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=timelock
+```jsligo skip
 let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
   return (match ( Tezos.open_chest(ck,c,@time), {
     Ok_opening: (b:bytes) => b,
@@ -232,7 +232,7 @@ let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=timelock
+```reasonligo skip
 let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
   switch (Tezos.open_chest(ck,c,@time)) {
     | Ok_opening b => b
@@ -245,7 +245,7 @@ let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
 </Syntax>
 <Syntax syntax="pascaligo">
 
-```pascaligo group=timelock
+```pascaligo skip
 function open_or_fail (const ck : chest_key; const c : chest; const @time : nat) : bytes is
   case Tezos.open_chest (ck, c, @time) of [
     Ok_opening (b) -> b

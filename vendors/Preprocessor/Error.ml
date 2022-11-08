@@ -27,6 +27,7 @@ type error =
 | Failed_opening of file * msg        (* #include #import *)
 | Missing_filename                    (* #include #import *)
 | Missing_module                      (* #import *)
+| Cyclic_inclusion of file list * file(* #include *)
 | Unexpected_argument                 (* #include and #import *)
 | Newline_in_string                   (* #include and #import *)
 | Unterminated_string of string       (* #include, #import and strings *)
@@ -85,6 +86,16 @@ let to_string = function
     sprintf "File name expected in a string literal."
 | Missing_module ->
     sprintf "Module name expected in a string literal."
+| Cyclic_inclusion (incls, file) ->
+    let cycle =
+      incls
+      |> List.take_while ~f:(fun i -> not @@ String.equal file i)
+      |> List.rev
+      |> List.cons file
+      |> List.map ~f:(fun incl -> sprintf "-> %S" incl)
+      |> String.concat ~sep:"\n"
+    in
+    sprintf "Error: Dependency cycle between:\n%s" cycle
 | Unexpected_argument ->
     sprintf "Unexpected argument.\n\
              Hint: Remove it."

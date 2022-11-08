@@ -208,6 +208,16 @@ module Make (Config : Config.S) (Options : Options.S) =
                   with Sys_error msg ->
                     Error.Failed_opening (incl_path, msg)
                     |> fail state incl_region in
+            
+            (* We check if the current file exists in the stack of ancestors 
+               in which case we fail with the error [Error.Cyclic_inclusion]
+            *)
+            let () =
+              if List.exists ~f:(String.equal state#pos#file) state#ancestors 
+              then
+                fail state incl_region 
+                  (Error.Cyclic_inclusion (state#ancestors, state#pos#file)) 
+            in
 
             (* We are ready now to output the linemarker before
                including the file (as the rightmost flag [1]
@@ -238,6 +248,9 @@ module Make (Config : Config.S) (Options : Options.S) =
                current file cannot be closed in the included file. *)
 
             let state' = (state#set_mode State.Copy)#set_trace [] in
+
+            (* We push the current file into the ancestors stack *)
+            let state' = state'#push_ancestor state#pos#file in
 
             (* We set the first position to 1 in the file to
                include. *)
@@ -317,10 +330,7 @@ let import_action ~callback hash_pos state lexbuf =
       and import_module = import#module_name.Region.value in
       let state =
         if state#is_copy then
-          let file =
-            match state#parent with
-              Some parent -> parent
-            | None        -> state#pos#file in
+          let file = state#pos#file in
           (* We resolve the file names to be included. *)
           let external_dirs =
             ModRes.get_dependencies ~file state#mod_res in

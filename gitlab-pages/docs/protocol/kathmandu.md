@@ -7,7 +7,7 @@ description: Kathmandu changes
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-> Note: those feature are enabled when using the `--protocol kathmandu` flag in LIGO CLI
+> Note: as LIGO uses Lima protocol to Michelson type-check your programs, the flag `--disable-michelson-typechecking` is recommended to compile contracts to Kathmandu when using tickets / chest.
  
 ## API
 
@@ -59,7 +59,7 @@ Here is how you emit events and fetch them from your tests:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo test-ligo group=test_ex protocol=kathmandu
+```pascaligo test-ligo group=test_ex
 function main ( const x : (int*int) * unit ) is
   (list [Tezos.emit ("%foo", x.0) ; Tezos.emit ("%foo", x.0.0)], Unit)
 
@@ -74,7 +74,7 @@ const test_foo = {
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo test-ligo group=test_ex protocol=kathmandu
+```cameligo test-ligo group=test_ex
 let main (p,_ : (int*int) * unit ) =
   [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
 
@@ -87,7 +87,7 @@ let test_foo =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo test-ligo group=test_ex protocol=kathmandu
+```jsligo test-ligo group=test_ex
 let main = ([p, _] : [[int, int], unit]) => {
   let op1 = Tezos.emit("%foo", p);
   let op2 = Tezos.emit("%foo", p[0]);

@@ -4,7 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
-module Proto_env = Tezos_protocol_environment_014_PtKathma
+module Proto_env = Tezos_protocol_environment_015_PtLimaPt
 open Error_monad
 open Protocol
 
@@ -73,7 +73,7 @@ module Context_init = struct
     let open Lwt in
     let bootstrap_accounts =
       List.mapi ~f:(fun i ({ pk ; pkh ; _ }, amount) ->
-          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = if i > 0 then None else Some pk ; amount ; delegate_to = None }
+          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = if i > 0 then None else Some pk ; amount ; delegate_to = None ; consensus_key = None }
         ) initial_accounts
     in
     let json =
@@ -116,7 +116,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.Parametric.t = Tezos_protocol_014_PtKathma_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.Parametric.t = Tezos_protocol_015_PtLimaPt_parameters.Default_parameters.constants_test in
     let* () = check_constants_consistency constants in
     let hash =
       Alpha_environment.Block_hash.of_b58check_exn "BLockGenesisGenesisGenesisGenesisGenesisCCCCCeZiLHU"
@@ -166,6 +166,15 @@ module Context_init = struct
         liquidity_baking_toggle_vote ;
       })
 
+  let begin_validation_and_application ctxt chain_id mode ~predecessor =
+    let open Lwt_result_syntax in
+    let* validation_state =
+      Main.begin_validation ctxt chain_id mode ~predecessor
+    in
+    let* application_state =
+      Main.begin_application ctxt chain_id mode ~predecessor
+    in
+    return (validation_state, application_state)
 
   let begin_construction ?(round=Alpha_context.Round.zero) ~timestamp ~(header:Alpha_context.Block_header.shell_header) ~hash ctxt =
     let (>>=) = Lwt_syntax.( let* ) in
@@ -176,16 +185,9 @@ module Context_init = struct
         contents ;
         signature = Signature.zero ;
       } in
-    Main.begin_construction
-      ~chain_id: Alpha_environment.Chain_id.zero
-      ~predecessor_context: ctxt
-      ~predecessor_timestamp: header.timestamp
-      ~predecessor_fitness: header.fitness
-      ~predecessor_level: header.level
-      ~predecessor:hash
-      ~timestamp
-      ~protocol_data
-      () >>= fun x -> Lwt.return @@ Alpha_environment.wrap_tzresult x >>=? fun state ->
+    begin_validation_and_application ctxt Alpha_environment.Chain_id.zero
+      (Construction { predecessor_hash = hash ; timestamp ; block_header_data = protocol_data }) ~predecessor:header
+      >>= fun x -> Lwt.return @@ Alpha_environment.wrap_tzresult x >>=? fun (_, state) ->
         Lwt_result_syntax.return state.ctxt
 
   let main n =
