@@ -124,7 +124,15 @@ let%expect_test _ =
     File "include_cycle3/c.mligo", line 1, characters 9-18:
       1 | #include "c.mligo"
     Error: Dependency cycle between:
-    -> "include_cycle3/c.mligo" |}]
-       
+    -> "include_cycle3/c.mligo" |}] ;
 
+  run_ligo_bad [ "print" ; "preprocessed" ;  "mutual_incl/foo.mligo" ] ;
+  [%expect{|
+    File "mutual_incl/foo.mligo", line 1, characters 9-20:
+      1 | #include "bar.mligo"
+      2 |
+    Error: Dependency cycle between:
+    -> "mutual_incl/foo.mligo"
+    -> "mutual_incl/bar.mligo" |}]
+       
 let () = Sys_unix.chdir pwd ;
