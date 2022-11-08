@@ -21,3 +21,43 @@ let%expect_test _ =
       3 |
 
     Module "A" not found. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; "../../test/contracts/aggregation/nested_modules.mligo"];
+  [%expect{|
+    File "../../test/contracts/aggregation/nested_modules.mligo", line 59, characters 10-16:
+     58 |
+     59 | let main (action, store : int * int) : operation list * int =
+     60 |   [], A.Bx.nested + A.toto + A2.Cx.toto + A3.toto + A4.toto + End.Top.toto + M.titi
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
+
+    File "../../test/contracts/aggregation/nested_modules.mligo", line 59, characters 18-23:
+     58 |
+     59 | let main (action, store : int * int) : operation list * int =
+     60 |   [], A.Bx.nested + A.toto + A2.Cx.toto + A3.toto + A4.toto + End.Top.toto + M.titi
+    :
+    Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
+
+    { parameter int ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH int 0 ;
+             PUSH int 1 ;
+             PUSH int 0 ;
+             DUP 3 ;
+             DUP 4 ;
+             DIG 4 ;
+             DUP 6 ;
+             DIG 6 ;
+             ADD ;
+             ADD ;
+             ADD ;
+             ADD ;
+             ADD ;
+             ADD ;
+             NIL operation ;
+             PAIR } } |}]
