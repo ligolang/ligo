@@ -72,13 +72,14 @@ class t :
     method sync    : Lexing.lexbuf -> 'state * lexeme Region.reg
     method newline : Lexing.lexbuf -> 'state * lexeme Region.reg
 
-    method env       : Env.t
-    method mode      : mode
-    method trace     : trace
-    method out       : Buffer.t
-    method chans     : in_channel list
-    method incl      : file_path
-    method imports   : (file_path * module_name) list
+    method env     : Env.t
+    method mode    : mode
+    method trace   : trace
+    method out     : Buffer.t
+    method chans   : in_channel list
+    method incl    : file_path
+    method imports : (file_path * module_name) list
+
     method ancestors : file_path list
 
   (* DIRECTORIES *)

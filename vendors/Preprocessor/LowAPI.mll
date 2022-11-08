@@ -210,7 +210,7 @@ module Make (Config : Config.S) (Options : Options.S) =
                     |> fail state incl_region in
             
             (* We check if the current file exists in the stack of ancestors 
-               then 
+               then we [fail] with an Error
             *)
             let () =
               if List.exists ~f:(String.equal state#pos#file) state#ancestors 
