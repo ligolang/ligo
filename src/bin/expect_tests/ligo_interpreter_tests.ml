@@ -4,6 +4,15 @@ let test basename = "./" ^ basename
 let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
+(* test comparison on sum/record types *)
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "test_compare.mligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_cmp exited with value ().
+    - test_cmp_list exited with value ().
+    - test_cmp_record exited with value (). |}]
+
 (* events payload being records and not decompiled to pairs in the interpreter *)
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ] ;
