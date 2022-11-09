@@ -11,65 +11,39 @@ we may want to setup a situation where the contracts thinks `Tezos.now()` is in 
 Time advances by baking (protocol checks and enforces the timestamp makes sense)
 
 So, to bake and advance time, you can use :
-<Syntax syntax="pascaligo">
-
-```pascaligo
+<SyntaxTitle syntax="pascaligo">
 val bake_until_n_cycle_end : nat -> unit
-```
+</SyntaxTitle>
 
-</Syntax>
-<Syntax syntax="cameligo">
-
-```cameligo
+<SyntaxTitle syntax="cameligo">
 val bake_until_n_cycle_end : nat -> unit
-```
+</SyntaxTitle>
 
-</Syntax>
-<Syntax syntax="reasonligo">
-
-```reasonligo
+<SyntaxTitle syntax="reasonligo">
 let bake_until_n_cycle_end: nat => unit
-```
+</SyntaxTitle>
 
-</Syntax>
-<Syntax syntax="jsligo">
-
-```jsligo
+<SyntaxTitle syntax="jsligo">
 let bake_until_n_cycle_end = (cycles : nat) => unit
-```
-
-</Syntax>
+</SyntaxTitle>
 
 
 Depending on the situation, the following can be useful as well :
-<Syntax syntax="pascaligo">
-
-```pascaligo
+<SyntaxTitle syntax="pascaligo">
 val reset_state_at : timestamp -> nat -> list (tez) -> unit
-```
+</SyntaxTitle>
 
-</Syntax>
-<Syntax syntax="cameligo">
-
-```cameligo
+<SyntaxTitle syntax="cameligo">
 val reset_state_at : timestamp -> nat -> tez list -> unit
-```
+</SyntaxTitle>
 
-</Syntax>
-<Syntax syntax="reasonligo">
-
-```reasonligo
+<SyntaxTitle syntax="reasonligo">
 let reset_state_at: (timestamp, nat, list(tez)) => unit
-```
+</SyntaxTitle>
 
-</Syntax>
-<Syntax syntax="jsligo">
-
-```jsligo
+<SyntaxTitle syntax="jsligo">
 let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit
-```
-
-</Syntax>
+</SyntaxTitle>
 
 
 For more information on these function, see the [Test library](../reference/test.md)
