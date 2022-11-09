@@ -192,6 +192,12 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
   | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
   | _ -> None
 
+let get_t_map_or_big_map (t:type_expression) : (type_expression * type_expression) option =
+  match t.type_content with
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Map -> Some (k,v)
+  | _ -> None
+
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))

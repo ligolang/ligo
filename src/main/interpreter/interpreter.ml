@@ -11,8 +11,6 @@ module ModRes = Preprocessor.ModRes
 
 type interpreter_error = Errors.interpreter_error
 
-let not_comparable_string = v_string "Not comparable"
-
 (* [resolve_contract_file ~mod_res ~source_file ~contract_file] tries to resolve
    [contract_file] w.r.t. to process directory
    if that fails it tries to resolve it as a relative path w.r.t. directory of [source_file]
@@ -75,139 +73,143 @@ let wrap_compare_result comp cmpres loc calltrace =
   | C_LE -> return (cmpres <= 0)
   | C_GT -> return (cmpres > 0)
   | C_GE -> return (cmpres >= 0)
-  | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
+  | _ -> fail @@ Errors.meta_lang_eval loc calltrace @@ v_string "Only valid comparisons are: EQ, NEQ, LT, LE, GT, GE"
 
+let compare_constants ~raise o1 o2 loc calltrace =
+  match o1, o2 with
+  | V_Ct (C_int64 a'), V_Ct (C_int64 b') ->
+    Int64.compare a' b'
+  | V_Ct (C_int a'), V_Ct (C_int b')
+  | V_Ct (C_mutez a'), V_Ct (C_mutez b')
+  | V_Ct (C_timestamp a'), V_Ct (C_timestamp b')
+  | V_Ct (C_nat a'), V_Ct (C_nat b') ->
+    Z.compare a' b'
+  | V_Ct (C_bool a), V_Ct (C_bool b) ->
+    Bool.compare a b
+  | V_Ct (C_address a), V_Ct (C_address b) ->
+    Tezos_state.compare_account a b
+  | V_Ct (C_key_hash a), V_Ct (C_key_hash b) ->
+    Tezos_crypto.Signature.Public_key_hash.compare a b
+  | V_Ct C_unit, V_Ct C_unit ->
+    0
+  | V_Ct (C_string a'), V_Ct (C_string b') ->
+    String.compare a' b'
+  | V_Ct (C_bytes a'), V_Ct (C_bytes b') ->
+    Bytes.compare a' b'
+  | V_Ct (C_contract { address = addr1; entrypoint = entr1 })
+    , V_Ct (C_contract { address = addr2; entrypoint = entr2 })
+    -> Tuple2.compare ~cmp1:Tezos_state.compare_account ~cmp2:(Option.compare String.compare) (addr1, entr1) (addr2, entr2)
+  | operand, operand' ->
+    let msg =
+      Format.asprintf
+        "Comparison not supported: %a"
+        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (operand, operand') in
+    raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
-let compare_constants c o1 o2 loc calltrace =
-  let open Monad in
-  match c, [ o1; o2 ] with
-  | comp, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
-    let cmpres = Int64.compare a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_int a'); V_Ct (C_int b') ]
-  | comp, [ V_Ct (C_mutez a'); V_Ct (C_mutez b') ]
-  | comp, [ V_Ct (C_timestamp a'); V_Ct (C_timestamp b') ]
-  | comp, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
-    let cmpres = Z.compare a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_bool b); V_Ct (C_bool a) ] ->
-    let cmpres = Bool.compare b a in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_address b); V_Ct (C_address a) ] ->
-    let cmpres = Tezos_state.compare_account b a in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_key_hash b); V_Ct (C_key_hash a) ] ->
-    let cmpres = Tezos_crypto.Signature.Public_key_hash.compare b a in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct C_unit; V_Ct C_unit ] ->
-    let* x =
-      match comp with
-      | C_EQ -> return true
-      | C_NEQ -> return false
-      | C_LT -> return false
-      | C_LE -> return true
-      | C_GT -> return false
-      | C_GE -> return true
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-    in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_string a'); V_Ct (C_string b') ] ->
-    let* f_cmp = return @@ fun a b -> String.compare a b in
-    let* cmpres = return @@ f_cmp a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    Monad.return @@ v_bool x
-  | comp, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
-    let* f_cmp = return @@ fun a b -> Bytes.compare a b in
-    let* cmpres = return @@ f_cmp a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    Monad.return @@ v_bool x
-  | ( comp
-    , [ V_Ct (C_contract { address = addr1; entrypoint = entr1 })
-      ; V_Ct (C_contract { address = addr2; entrypoint = entr2 })
-      ] ) ->
-    let compare_opt_strings o1 o2 =
-      match o1, o2 with
-      | Some s1, Some s2 -> String.equal s1 s2
-      | _ -> false
-    in
-    let cmpres = Tezos_state.compare_account addr1 addr2 in
-    let* x =
-      match comp with
-      | C_EQ -> return (cmpres = 0 && compare_opt_strings entr1 entr2)
-      | C_NEQ -> return (cmpres <> 0 && compare_opt_strings entr1 entr2)
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-    in
-    return @@ v_bool x
-  | _, l ->
-    print_endline
-      (Format.asprintf
-         "%a"
-         (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
-         l);
-    fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-
-
-let rec apply_comparison
-    :  Location.t -> calltrace -> Ligo_prim.Constant.constant' -> value list
-    -> value Monad.t
+let rec apply_comparison ~raise
+  :  Location.t -> calltrace -> Ast_aggregated.type_expression -> value -> value
+  -> int
   =
- fun loc calltrace c operands ->
-  let open Monad in
-  match c, operands with
-  | C_EQ, [ (V_Michelson _ as a); (V_Michelson _ as b) ] ->
-    let>> b = Michelson_equal (loc, a, b) in
-    return @@ v_bool b
-  | C_NEQ, [ (V_Michelson _ as a); (V_Michelson _ as b) ] ->
-    let>> b = Michelson_equal (loc, a, b) in
-    return @@ v_bool (not b)
-  | comp, [ (V_Ct _ as v1); (V_Ct _ as v2) ] ->
-    compare_constants comp v1 v2 loc calltrace
-  | comp, [ (V_List _ as xs); (V_List _ as ys) ]
-  | comp, [ (V_Set _ as xs); (V_Set _ as ys) ]
-  | comp, [ (V_Map _ as xs); (V_Map _ as ys) ]
-  | comp, [ (V_Record _ as xs); (V_Record _ as ys) ] ->
-    let c = Ligo_interpreter.Combinators.equal_value xs ys in
-    let* v =
-      match comp with
-      | C_EQ -> return @@ v_bool c
-      | C_NEQ -> return @@ v_bool (not c)
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-    in
-    return v
-  | comp, [ V_Construct (ctor_a, args_a); V_Construct (ctor_b, args_b) ] ->
-    (match comp with
-    | C_EQ ->
-      if String.equal ctor_a ctor_b
-      then
-        let* r = apply_comparison loc calltrace c [ args_a; args_b ] in
-        Monad.return @@ v_bool @@ is_true r
-      else Monad.return @@ v_bool false
-    | C_NEQ ->
-      if not (String.equal ctor_a ctor_b)
-      then Monad.return @@ v_bool true
-      else
-        let* r = apply_comparison loc calltrace c [ args_a; args_b ] in
-        Monad.return @@ v_bool @@ is_true r
-    | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string)
-  | _, l ->
-    (* TODO: Don't know how to compare these *)
-    (* V_Func_val *)
-    (* V_Mutation *)
-    (* V_Failure *)
-    (* V_Michelson *)
-    (* V_BigMap *)
-    print_endline
-      (Format.asprintf
-         "%a"
-         (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
-         l);
-    fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
+ fun loc calltrace type_ operand operand' ->
+  match operand, operand' with
+  | (V_Michelson _ as a), (V_Michelson _ as b) ->
+    Michelson_backend.compare_michelson ~raise loc a b
+  | (V_Ct _ as v1), (V_Ct _ as v2) ->
+    compare_constants ~raise v1 v2 loc calltrace
+  | V_List xs, V_List ys ->
+    let type_ = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected list type") @@ AST.get_t_list type_ in
+    List.compare (apply_comparison ~raise loc calltrace type_) xs ys
+  | (V_Set s), (V_Set s') ->
+    let type_ = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected set type") @@ AST.get_t_set type_ in
+    List.compare
+      (apply_comparison ~raise loc calltrace type_)
+      (List.dedup_and_sort ~compare:(apply_comparison ~raise loc calltrace type_) s)
+      (List.dedup_and_sort ~compare:(apply_comparison ~raise loc calltrace type_) s')
+  | V_Map m, V_Map m' ->
+    let type_key, type_value = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected map or big_map type") @@ AST.get_t_map_or_big_map type_ in
+    let compare_key = apply_comparison ~raise loc calltrace type_key in
+    let compare_value = apply_comparison ~raise loc calltrace type_value in
+    let compare_kv = Tuple2.compare ~cmp1:compare_key ~cmp2:compare_value in
+    let m = List.sort ~compare:compare_kv m in
+    let m' = List.sort ~compare:compare_kv m' in
+    List.compare compare_kv m m'
+  | V_Record r, V_Record r' ->
+    let { fields : row_element Record.t ; layout } = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected a record type") (AST.get_t_record type_) in
+    let row_kv = AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
+    let rec aux (row_kv : (Label.t * row_element) list) =
+      match row_kv with
+      | [] -> 0
+      | (label, ({ associated_type ; _ } : row_element)) :: row_kv ->
+        let value_a = Record.LMap.find label r in
+        let value_b = Record.LMap.find label r' in
+        match apply_comparison ~raise loc calltrace associated_type value_a value_b with
+         | 0 -> aux row_kv
+         | c -> c in
+    aux row_kv
+  | V_Construct (ctor_a, args_a), V_Construct (ctor_b, args_b) ->
+    let { fields : row_element Record.t ; layout } = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected a sum type") (AST.get_t_sum type_) in
+    let order = AST.Helpers.kv_list_of_t_sum ~layout fields |> List.map ~f:fst in
+    let ith_a, _ = List.findi_exn order ~f:(fun _i (Label l) -> String.equal l ctor_a) in
+    let ith_b, _ = List.findi_exn order ~f:(fun _i (Label l) -> String.equal l ctor_b) in
+    (match Int.compare ith_a ith_b with
+     | 0 ->
+       let { associated_type ; _ } : row_element = Record.LMap.find (Label ctor_a) fields in
+       apply_comparison ~raise loc calltrace associated_type args_a args_b
+     | c -> c)
+  | V_Func_val _, V_Func_val _ | V_Gen _, V_Gen _ | V_Location _, V_Location _
+  | V_Typed_address _, V_Typed_address _ | V_Ast_contract _, V_Ast_contract _
+  | V_Mutation _, V_Mutation _ | V_Michelson_contract _, V_Michelson_contract _ ->
+    (* NOTE: These are not comparable, either meta-LIGO or not supporting natural comparison *)
+    let msg =
+      Format.asprintf
+        "Comparison not supported: %a"
+        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (operand, operand') in
+    raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
+  | ( ( V_Ct _
+      | V_List _
+      | V_Record _
+      | V_Map _
+      | V_Set _
+      | V_Construct _
+      | V_Michelson _
+      | V_Mutation _
+      | V_Func_val _
+      | V_Michelson_contract _
+      | V_Ast_contract _
+      | V_Gen _
+      | V_Location _
+      | V_Typed_address _ )
+    , ( V_Ct _
+      | V_List _
+      | V_Record _
+      | V_Map _
+      | V_Set _
+      | V_Construct _
+      | V_Michelson _
+      | V_Mutation _
+      | V_Func_val _
+      | V_Michelson_contract _
+      | V_Ast_contract _
+      | V_Gen _
+      | V_Location _
+      | V_Typed_address _ ) ) ->
+    let msg =
+      Format.asprintf
+        "Different value types, cannot be compared: %a"
+        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (operand, operand') in
+    raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
+let apply_comparison ~raise
+  :  Location.t -> calltrace -> Ast_aggregated.type_expression -> Ligo_prim.Constant.constant' -> value -> value
+  -> value Monad.t
+  = fun loc calltrace type_ c operand operand' ->
+    let open Monad in
+    let cmpres = apply_comparison ~raise loc calltrace type_ operand operand' in
+    let* b = wrap_compare_result c cmpres loc calltrace in
+    return @@ v_bool b
 
 let bind_param
     :  env -> Value_var.t -> Param.mutable_flag -> type_expression * value
@@ -325,8 +327,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
            (v_string @@ Predefined.Tree_abstraction.pseudo_module_to_string c))
   | C_MAP_FIND, _ -> fail @@ error_type ()
   (* binary *)
-  | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), _ ->
-    apply_comparison loc calltrace c operands
+  | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), [ operand ; operand' ] ->
+    (* we use the type of the first argument to guide comparison *)
+    let type_ = nth_type 0 in
+    apply_comparison ~raise loc calltrace type_ c operand operand'
+  | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), _ -> fail @@ error_type ()
   | C_SUB, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
     return @@ v_int64 Int64.(a' - b')
   | C_SUB, [ V_Ct (C_int a' | C_nat a'); V_Ct (C_int b' | C_nat b') ] ->
