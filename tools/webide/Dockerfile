@@ -23,7 +23,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get -y install perl6 libev-dev perl pkg-config libgmp-dev libhidapi-dev m4 libcap-dev bubblewrap rsync
 
-RUN curl https://gitlab.com/ligolang/ligo/-/jobs/3245121952/artifacts/raw/ligo.deb --output /tmp/ligo.deb && dpkg -i /tmp/ligo.deb && rm /tmp/ligo.deb
+RUN curl https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo.deb --output /tmp/ligo.deb && dpkg -i /tmp/ligo.deb && rm /tmp/ligo.deb
 
 COPY --from=builder /app/packages/client/build /app/client/build
 COPY --from=builder /app/node_modules /app/node_modules

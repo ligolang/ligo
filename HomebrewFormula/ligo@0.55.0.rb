@@ -1,4 +1,4 @@
-class Ligo < Formula
+class LigoAT0550 < Formula
   desc "Friendly Smart Contract Language for Tezos"
   homepage "https://ligolang.org/"
 
