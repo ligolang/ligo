@@ -12,37 +12,37 @@ Time advances by baking (protocol checks and enforces the timestamp makes sense)
 
 So, to bake and advance time, you can use :
 <SyntaxTitle syntax="pascaligo">
-val bake_until_n_cycle_end : nat -> unit
+val Test.bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val bake_until_n_cycle_end : nat -> unit
+val Test.bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="reasonligo">
-let bake_until_n_cycle_end: nat => unit
+let Test.bake_until_n_cycle_end: nat => unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let bake_until_n_cycle_end = (cycles : nat) => unit
+let Test.bake_until_n_cycle_end = (cycles : nat) => unit
 </SyntaxTitle>
 
 
 Depending on the situation, the following can be useful as well :
 <SyntaxTitle syntax="pascaligo">
-val reset_state_at : timestamp -> nat -> list (tez) -> unit
+val Test.reset_state_at : timestamp -> nat -> list (tez) -> unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val reset_state_at : timestamp -> nat -> tez list -> unit
+val Test.reset_state_at : timestamp -> nat -> tez list -> unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="reasonligo">
-let reset_state_at: (timestamp, nat, list(tez)) => unit
+let Test.reset_state_at: (timestamp, nat, list(tez)) => unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit
+let Test.reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit
 </SyntaxTitle>
 
 
