@@ -31,12 +31,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 8, characters 15-19:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 7, character 2 to line 9, character 25:
+      6 | let main (action : parameter) : int =
       7 |   match action with
       8 |   | Increment (n, m) -> 0
       9 |   | Reset            -> 0
 
-    Pattern not of the expected type ( int * int * int ) |}]
+    Invalid type(s)
+    Cannot unify ( ^gen#541 * ^gen#542 ) with ( int * int * int ). |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
@@ -48,7 +50,7 @@ let%expect_test _ =
       3 |   (([] : operation list), ())
 
     Invalid type(s).
-    Expected: "nat", but got: "unit". |}]
+    Expected "unit", but got: "nat". |}]
 
 
 (* Trying to match on values *)
@@ -78,25 +80,29 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail1.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.mligo", line 6, characters 10-33:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.mligo", line 5, character 2 to line 8, character 44:
+      4 | let t = fun (x: myt * myt) ->
       5 |   match x with
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
+      8 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#492 , b -> ^gen#493 , c -> ^gen#494] with
+    Cannot unify record[a -> ^gen#542 , b -> ^gen#543 , c -> ^gen#544] with
     sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.mligo", line 5, characters 11-16:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.mligo", line 4, character 2 to line 7, character 44:
+      3 | let t = fun (x: myt * myt) ->
       4 |   match x with
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
+      7 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
 
     Invalid type(s)
-    Cannot unify ( ^gen#492 * ^gen#493 * ^gen#494 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify ( ^gen#542 * ^gen#543 * ^gen#544 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -136,7 +142,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 6, characters 4-16:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
+      3 | let t = fun (x: myt * ( int * int * int)) ->
+      4 |   match x with
       5 |   | xs , (a,b,c) -> 1
       6 |   | xs , (c,b,a) -> 2
 

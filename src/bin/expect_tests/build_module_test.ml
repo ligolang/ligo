@@ -201,4 +201,4 @@ let%expect_test _ =
      23 |
      24 | let x = B.A.a
 
-    Module "A" not found. |}]
+     Module "B.A" not found. |}]

@@ -75,22 +75,22 @@ let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lor 2" ] ;
   [%expect{|
     Invalid type(s)
-    Cannot unify bool with nat. |}]
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 lor 2n" ] ;
   [%expect{|
     Invalid type(s)
-    Cannot unify bool with int. |}]
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lxor 2" ] ;
   [%expect{|
     Invalid type(s)
-    Cannot unify bool with nat. |}]
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 lxor 2n" ] ;
   [%expect{|
     Invalid type(s)
-    Cannot unify bool with int. |}]
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "4 lsr 0n" ] ;
   [%expect{|
@@ -223,7 +223,7 @@ let%expect_test _ =
 
 
     Invalid type(s)
-    Cannot unify bool with nat. |}]
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14 lor 2n" ] ;
   [%expect{|
@@ -231,7 +231,7 @@ let%expect_test _ =
 
 
     Invalid type(s)
-    Cannot unify bool with int. |}]
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lxor 2" ] ;
   [%expect{|
@@ -239,7 +239,7 @@ let%expect_test _ =
 
 
     Invalid type(s)
-    Cannot unify bool with nat. |}]
+    Cannot unify bool with int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14 lxor 2n" ] ;
   [%expect{|
@@ -247,7 +247,7 @@ let%expect_test _ =
 
 
     Invalid type(s)
-    Cannot unify bool with int. |}]
+    Cannot unify bool with nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "4 lsr 0n" ] ;
   [%expect{|

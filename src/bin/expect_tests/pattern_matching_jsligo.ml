@@ -42,7 +42,7 @@ let%expect_test _ =
       4 |     Failure: (_ : test_exec_error) => ""
       5 |   });
 
-    Pattern not of the expected type Uncurry_lib#3.test_exec_result |}]
+    Pattern not of the expected type sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
@@ -65,7 +65,8 @@ let%expect_test _ =
     File "../../test/contracts/negative/pattern_match7.jsligo", line 1, characters 11-20:
       1 | let foo = ([a,b,c,d] : [int,int,int]) : int => a + b + c + d;
 
-    Pattern not of the expected type ( int * int * int ) |}]
+    Invalid type(s)
+    Cannot unify ( ^gen#541 * ^gen#542 * ^gen#543 * ^gen#544 ) with ( int * int * int ). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;

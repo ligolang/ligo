@@ -10,7 +10,7 @@ let%expect_test _ =
       2 | let rec toto : unit -> int = fun () -> ()
 
     Invalid type(s).
-    Expected: "unit", but got: "int". |}]
+    Expected "int", but got: "unit". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; negative "regression_import_scope_B.mligo" ] ;
@@ -20,4 +20,4 @@ let%expect_test _ =
       2 | let b = A.a
       3 |
 
-    Module "A" not found. |}]
+     Module "A" not found. |}]

@@ -87,10 +87,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types4.mligo")] ;
   [%expect{|
-    File "../../test/contracts/negative/parametric_types4.mligo", line 1, characters 9-15:
+    File "../../test/contracts/negative/parametric_types4.mligo", line 1, characters 9-20:
       1 | type x = option list
 
-    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
+    Invalid type
+    Ill formed type funtype 'a : * . sum[None -> unit , Some -> 'a]. |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.mligo")] ;
   [%expect{|
@@ -126,10 +127,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types4.ligo")] ;
   [%expect{|
-    File "../../test/contracts/negative/parametric_types4.ligo", line 1, characters 15-21:
+    File "../../test/contracts/negative/parametric_types4.ligo", line 1, characters 10-22:
       1 | type x is list(option)
 
-    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
+    Invalid type
+    Ill formed type funtype 'a : * . sum[None -> unit , Some -> 'a]. |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.ligo")] ;
   [%expect{|
@@ -165,10 +167,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types4.religo")] ;
   [%expect{|
-    File "../../test/contracts/negative/parametric_types4.religo", line 1, characters 14-20:
+    File "../../test/contracts/negative/parametric_types4.religo", line 1, characters 9-21:
       1 | type x = list(option);
 
-    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
+    Invalid type
+    Ill formed type funtype 'a : * . sum[None -> unit , Some -> 'a]. |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.religo")] ;
   [%expect{|

@@ -95,7 +95,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s)
-    Cannot unify ( int * string ) with ( int * string * bool ). |} ] ;
+    Cannot unify ( int * string ) with ( int * string * sum[False -> unit , True -> unit] ). |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
@@ -105,7 +105,8 @@ let%expect_test _ =
       5 |
 
     Invalid type(s)
-    Cannot unify record[a -> int , b -> string , c -> bool] with record[a -> int , c -> bool , d -> string]. |} ] ;
+    Cannot unify record[a -> int , b -> string , c -> sum[False -> unit , True -> unit]] with
+    record[a -> int , c -> sum[False -> unit , True -> unit] , d -> string]. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_5.mligo" ] ;
   [%expect {|
@@ -169,7 +170,7 @@ let%expect_test _ =
      46 |   in
 
     Invalid type(s)
-    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#494). |}]
+    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#545). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -202,12 +203,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-55:
+    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-62:
       6 |      let receiver : contract =
       7 |       match (Tezos.get_contract_opt(s.owner) : contract option) with
       8 |         Some (contract) -> contract
 
-    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
+    Invalid type
+    Ill formed type funtype _a#18 : * . contract (_a#18). |}]
 
 (* Compiles due to inference ;) *)
 (* let%expect_test _ =

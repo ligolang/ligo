@@ -17,7 +17,7 @@ let%expect_test _ =
       4 | let typing_error = "Hello" |> f
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected "int", but got: "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (bad_test "error_reverse_app_2.mligo")] ;
