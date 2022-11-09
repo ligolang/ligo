@@ -55,56 +55,43 @@ let error_ppformat : display_format:string display_format ->
         Michelson.pp value
   )
 
-let error_jsonformat : stacking_error -> Yojson.Safe.t = fun a ->
-  let json_error ~stage ~content =
-    `Assoc [
-      ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
-  in
-  match a with
-  | `Stacking_unsupported_primitive (_,_) ->
-    let content = `Assoc [
-      ("message", `String "unsupported primitive" );
-      ]
-    in
-    json_error ~stage ~content
-  | `Stacking_corner_case (loc,msg) ->
-    let content = `Assoc [
-      ("location", `String loc);
-      ("message", `String msg); ] in
-    json_error ~stage ~content
-  | `Stacking_contract_entrypoint loc ->
-    let content = `Assoc [
-      ("location", `String loc);
-      ("message", `String "contract entrypoint must be given as literal string"); ] in
-    json_error ~stage ~content
-  | `Stacking_bad_iterator cst ->
-    let s = Format.asprintf "%a" Mini_c.PP.constant cst in
-    let content = `Assoc [
-       ("message", `String "bad iterator");
-       ("iterator", `String s); ]
-    in
-    json_error ~stage ~content
-  | `Stacking_not_comparable_pair_struct ->
-    let content = `Assoc [
-       ("message", `String "pair does not have a comparable structure");
-       ("hint", `String "use (a,(b,c)) instead of (a,b,c)"); ]
-    in
-    json_error ~stage ~content
-  | `Stacking_could_not_tokenize_michelson code ->
-    let content =
-      `Assoc [("message", `String "Could not tokenize raw Michelson");
-              ("code", `String code)] in
-    json_error ~stage ~content
-  | `Stacking_could_not_parse_michelson code ->
-    let content =
-      `Assoc [("message", `String "Could not parse raw Michelson");
-              ("code", `String code)] in
-    json_error ~stage ~content
-  | `Stacking_untranspilable (ty, value) ->
-    let content =
-      `Assoc [("message", `String "Could not untranspile Michelson value");
-              ("type", `String (Format.asprintf "%a" Michelson.pp ty));
-              ("value", `String (Format.asprintf "%a" Michelson.pp value))] in
-    json_error ~stage ~content
+let error_json : stacking_error -> Simple_utils.Error.t =
+  fun e ->
+    let open Simple_utils.Error in
+    match e with
+    | `Stacking_unsupported_primitive (c,p) ->
+      let message = Format.asprintf "@[<hv>unsupported primitive %a in protocol %s@]" Ligo_prim.Constant.pp_constant' c (Environment.Protocols.variant_to_string p) in
+      let content = make_content ~message () in
+      make ~stage ~content
+    | `Stacking_corner_case (loc,msg) ->
+      let message = Format.asprintf "Stacking corner case at %s : %s.\n%s"
+        loc msg (corner_case_msg ()) in
+      let content = make_content ~message () in
+      make ~stage ~content
+    | `Stacking_contract_entrypoint loc ->
+      let message = Format.asprintf "contract entrypoint must be given as a literal string: %s"
+        loc in
+      let content = make_content ~message () in
+      make ~stage ~content
+    | `Stacking_bad_iterator cst ->
+        let message = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
+        let content = make_content ~message () in
+        make ~stage ~content
+    | `Stacking_not_comparable_pair_struct ->
+      let message = "Invalid comparable value. When using a tuple with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
+      let content = make_content ~message () in
+      make ~stage ~content
+    | `Stacking_could_not_tokenize_michelson code ->
+      let message = Format.asprintf "Could not tokenize raw Michelson: %s" code in
+      let content = make_content ~message () in
+      make ~stage ~content
+    | `Stacking_could_not_parse_michelson code ->
+      let message = Format.asprintf "Could not parse raw Michelson: %s" code in
+      let content = make_content ~message () in
+      make ~stage ~content
+    | `Stacking_untranspilable (ty, value) ->
+      let message = Format.asprintf "Could not untranspile Michelson value: %a %a"
+        Michelson.pp ty
+        Michelson.pp value in
+      let content = make_content ~message () in
+      make ~stage ~content

@@ -1,8 +1,6 @@
 -- | ligo version: 0.51.0
 -- | The definition of type as is represented in ligo JSON output
 
-{-# LANGUAGE DeriveGeneric #-}
-
 module Cli.Json
   ( LigoError (..)
   , LigoErrorContent (..)
@@ -11,6 +9,8 @@ module Cli.Json
   , LigoDefinitions (..)
   , LigoDefinitionsInner (..)
   , LigoVariableDefinitionScope (..)
+  , LigoModuleDefinitionScope (..)
+  , LigoModuleAliasDefinitionScope (..)
   , LigoTypeDefinitionScope (..)
   , LigoTypeFull (..)
   , LigoTypeContent (..)
@@ -27,31 +27,32 @@ module Cli.Json
   )
 where
 
-import Control.Monad.State
+import Control.Lens (over, _head)
+import Control.Monad.State (State, evalState, get, gets, modify)
 import Data.Aeson.Types hiding (Error)
 import Data.Aeson.KeyMap (toAscList)
 import Data.Char (isUpper, toLower)
 import Data.Foldable (toList)
-import Data.Function
+import Data.Function (on, (&))
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe)
-import Data.Proxy (Proxy(..))
+import Data.Proxy (Proxy (..))
 import Data.Text (Text)
-import GHC.Generics
+import GHC.Generics (Generic, Rep)
 import GHC.TypeLits (Nat, KnownNat, natVal)
 import Language.LSP.Types qualified as J
 import Prelude hiding (sum)
 
 import AST.Skeleton hiding (CString)
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
-import Duplo.Lattice
-import Duplo.Pretty
-import Duplo.Tree
+import Duplo.Lattice (leq)
+import Duplo.Pretty (Pretty (..), text, (<+>))
+import Duplo.Tree (Apply, Cofree (..), Element, Tree, extract, inject)
 import Parser (CodeSource (..), Info)
-import Product
+import Product (Product (..), getElem, putElem)
 import Range hiding (startLine)
 
 ----------------------------------------------------------------------------
@@ -115,9 +116,13 @@ data LigoDefinitions = LigoDefinitions
 -- | First part under `"variables"` constraint
 data LigoDefinitionsInner = LigoDefinitionsInner
   { -- | `"variables"`
-    _ldiVariables :: HM.HashMap Text LigoVariableDefinitionScope
-    -- | `"types"`
-  , _ldiTypes     :: HM.HashMap Text LigoTypeDefinitionScope
+    _ldiVariables     :: HM.HashMap Text LigoVariableDefinitionScope
+  , -- | `"types"`
+    _ldiTypes         :: HM.HashMap Text LigoTypeDefinitionScope
+  , -- | `"modules"
+    _ldiModules       :: HM.HashMap Text LigoModuleDefinitionScope
+  , -- | `"module_aliases"
+    _ldiModuleAliases :: HM.HashMap Text LigoModuleAliasDefinitionScope
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 3 LigoDefinitionsInner
@@ -133,16 +138,17 @@ data LigoScope = LigoScope
     -- { "range": [ "<scope>", LigoRangeInner ] }
     -- ```
     _lsRange                 :: LigoRange
-    -- | `"expression_environment"`
-  , _lsExpressionEnvironment :: [Text]
-    -- | `"type_environment"`
-  , _lsTypeEnvironment       :: [Text]
+  , -- | `"expression_environment"`
+    _lsExpressionEnvironment :: [Text]
+  , -- | `"type_environment"`
+    _lsTypeEnvironment       :: [Text]
+  , -- | `"module_environment"`
+    _lsModuleEnvironment     :: [Text]
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 2 LigoScope
 
 -- | Definition declaration that goes from `"definitions"` constraint
-
 data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   { -- | `"name"`
     _lvdsName       :: Text
@@ -165,6 +171,26 @@ data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 4 LigoVariableDefinitionScope
+
+-- | Definition of a module from '_ldiModules'.
+data LigoModuleDefinitionScope = LigoModuleDefinitionScope
+  { -- | `"definition"`
+    _lmdsDefinition :: LigoVariableDefinitionScope
+  , -- | `"members"`
+    _lmdsMembers    :: LigoDefinitionsInner
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 4 LigoModuleDefinitionScope
+
+-- | Definition of a module from '_ldiModuleAliases'.
+data LigoModuleAliasDefinitionScope = LigoModuleAliasDefinitionScope
+  { -- | `"definition"`
+    _lmadsDefinition :: LigoVariableDefinitionScope
+  , -- | `"members"`
+    _lmadsAlias      :: [Text]
+  }
+  deriving stock (Generic, Show)
+  deriving (FromJSON) via LigoJSON 5 LigoModuleAliasDefinitionScope
 
 data LigoTypeDefinitionScope = LigoTypeDefinitionScope
   { -- | `"name"`
@@ -254,7 +280,7 @@ data LigoTypeApp = LigoTypeApp
   deriving (FromJSON) via LigoJSON 3 LigoTypeApp
 
 data LigoTypeModuleAccessor = LigoTypeModuleAccessor
-  { _ltmaModuleName :: Value -- TODO not used
+  { _ltmaModulePath :: Value -- TODO not used
   , _ltmaElement    :: Value -- TODO not used
   }
   deriving stock (Generic, Show)
@@ -264,7 +290,7 @@ type LigoTypeSum = LigoTypeTable
 type LigoTypeRecord = LigoTypeTable
 
 data LigoTypeTable = LigoTypeTable
-  { _lttContent :: HM.HashMap Text LigoTableField
+  { _lttFields :: HM.HashMap Text LigoTableField
   , _lttLayout  :: Value -- TODO not used
   }
   deriving stock (Generic, Show)
@@ -458,19 +484,21 @@ mbFromLigoRange (LRVirtual _) = Nothing
 mbFromLigoRange
   (LRFile
     (LigoFileRange
-      (LigoRangeInner LigoByte { _lbPosLnum = startLine , _lbPosFname = startFilePath } startCNum startBol)
-      (LigoRangeInner LigoByte { _lbPosLnum = endLine   , _lbPosFname = endFilePath   } endCNum   endBol)
+      (LigoRangeInner LigoByte{_lbPosLnum = startLine, _lbPosFname = startFilePath} startNum startBol)
+      (LigoRangeInner LigoByte{_lbPosLnum = endLine  , _lbPosFname = endFilePath  } endNum   endBol)
     )
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
   | otherwise = Just Range
-      { _rStart = (startLine, abs (startCNum - startBol) + 1, 0)
-      , _rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
+      { _rStart = (startLine, startNum - startBol + 1, 0)
+      , _rFinish = (endLine, endNum - endBol + 1, 0)
       , _rFile = startFilePath
       }
 
 fromLigoRangeOrDef :: LigoRange -> Range
 fromLigoRangeOrDef = fromMaybe (point 0 0) . mbFromLigoRange
+
+data FieldKind = FieldSum | FieldProduct
 
 -- | Reconstruct `LIGO` tree out of `LigoTypeFull`.
 fromLigoTypeFull :: LigoTypeFull -> LIGO Info
@@ -480,27 +508,23 @@ fromLigoTypeFull = enclose . \case
   LTFUnresolved   -> mkErr "unresolved type given"
   where
 
-    fromLigoPrimitive :: Text -> State (Product Info) (LIGO Info)
-    fromLigoPrimitive p = do
+    fromLigoPrimitive :: Maybe FieldKind -> Text -> State (Product Info) (LIGO Info)
+    fromLigoPrimitive fieldKind p = do
       st <- get
-      return $ make' (st, TypeName p)
+      return case fieldKind of
+        Just FieldSum     -> make' (st, Ctor p)
+        Just FieldProduct -> make' (st, FieldName p)
+        Nothing           -> make' (st, TypeName p)
 
-    fromLigoTypeExpression
-      LigoTypeExpression
-        { _lteTypeMeta = Just LigoTypeExpression { _lteTypeContent = t }
-        , _lteLocation
-        } = do
-          modify . putElem . fromLigoRangeOrDef $ _lteLocation
-          fromLigoType t
     fromLigoTypeExpression
       LigoTypeExpression {..} = do
         modify . putElem . fromLigoRangeOrDef $ _lteLocation
         fromLigoType _lteTypeContent
 
-    fromLigoConstant name [] = fromLigoPrimitive name
+    fromLigoConstant name [] = fromLigoPrimitive Nothing name
     fromLigoConstant name params = do
       st <- get
-      n <- fromLigoPrimitive name
+      n <- fromLigoPrimitive Nothing name
       p <- sequence $ fromLigoTypeExpression <$> params
       return $ make' (st, TApply n p)
 
@@ -509,29 +533,32 @@ fromLigoTypeFull = enclose . \case
       -> State (Product Info) (LIGO Info)
     fromLigoType = \case
       LTCConstant LigoTypeConstant {..} ->
-        fromLigoConstant (NE.head _ltcInjection) _ltcParameters
+        -- See: https://gitlab.com/ligolang/ligo/-/issues/1478
+        fromLigoConstant (NE.head _ltcInjection & over _head toLower) _ltcParameters
 
       LTCVariable variable ->
-        fromLigoPrimitive $ _ltvName variable
+        fromLigoPrimitive Nothing $ _ltvName variable
 
       LTCRecord record -> do
         st <- get
-        record' <- fromLigoTable record
+        record' <- fromLigoTable FieldProduct record
         return $ make' (st, TRecord record')
 
       LTCSum sum -> do
         st <- get
-        sum' <- fromLigoTable sum
-        return $ make' (st, TSum sum')
+        sum' <- fromLigoTable FieldSum sum
+        case sum' of
+          [] -> mkErr "malformed sum type, please report this as a bug"
+          v : vs -> pure $ make' (st, TSum (v :| vs))
 
       LTCSingleton      _ -> mkErr "unsupported type `Singleton`"      -- TODO not used
       LTCAbstraction    _ -> mkErr "unsupported type `Abstraction`"    -- TODO not used
       LTCForAll         _ -> mkErr "unsupported type `ForAll`"         -- TODO not used
-      LTCModuleAccessor _ -> mkErr "unsupported type `ModuelAccessor`" -- TODO not used
+      LTCModuleAccessor _ -> mkErr "unsupported type `ModuleAccessor`" -- TODO not used
 
       LTCApp LigoTypeApp{..} -> do
         st <- get
-        p <- fromLigoPrimitive (_ltvName _ltaTypeOperator)
+        p <- fromLigoPrimitive Nothing (_ltvName _ltaTypeOperator)
         return . make' . (st,) $
           TApply p (enclose . fromLigoTypeExpression <$> _ltaArguments)
 
@@ -540,17 +567,22 @@ fromLigoTypeFull = enclose . \case
         let mkArrow = TArrow `on` (enclose . fromLigoTypeExpression)
         return $ make' (st, mkArrow _ltaType1 _ltaType2)
 
-    fromLigoTable = traverse (uncurry fromLigoTableField) . HM.toList . _lttContent
+    fromLigoTable fieldKind =
+      traverse (uncurry (fromLigoTableField fieldKind)) . HM.toList . _lttFields
 
     fromLigoTableField
-      :: Text
+      :: FieldKind
+      -> Text
       -> LigoTableField
       -> State (Product Info) (LIGO Info)
-    fromLigoTableField name LigoTableField {..} = do
+    fromLigoTableField fieldKind name LigoTableField {..} = do
       st <- get
-      n <- fromLigoPrimitive name
+      n <- fromLigoPrimitive (Just fieldKind) name
       -- FIXME: Type annotation is optional.
-      return $ make' (st, TField n (Just $ enclose $ fromLigoTypeExpression _ltfAssociatedType))
+      let type' = Just $ enclose $ fromLigoTypeExpression _ltfAssociatedType
+      return case fieldKind of
+        FieldSum     -> make' (st, Variant n type')
+        FieldProduct -> make' (st, TField  n type')
 
     mkErr = gets . flip mkLigoError
 

@@ -105,7 +105,8 @@ const sidebars = {
       "protocol/hangzhou",
       "protocol/ithaca",
       "protocol/jakarta",
-      "protocol/kathmandu"
+      "protocol/kathmandu",
+      "protocol/lima"
     ]
   },
   "contributors-docs": {

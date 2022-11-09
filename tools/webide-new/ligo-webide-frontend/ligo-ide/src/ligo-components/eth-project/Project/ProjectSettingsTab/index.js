@@ -1,23 +1,24 @@
 import React from "react";
 
+import { connect } from "react-redux";
 import { DebouncedFormGroup, FormGroup, Label, CustomInput } from "~/base-components/ui-components";
 
 import {
   WorkspaceContext,
-  BaseProjectManager,
+  ProjectManager,
   AbstractProjectSettingsTab,
   ProjectPath,
 } from "~/base-components/workspace";
 
-export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
+class ProjectSettingsTab extends AbstractProjectSettingsTab {
   static contextType = WorkspaceContext;
 
   componentDidMount() {
-    BaseProjectManager.channel.on("settings", this.debouncedUpdate);
+    ProjectManager.channel.on("settings", this.debouncedUpdate);
   }
 
   componentWillUnmount() {
-    BaseProjectManager.channel.off("settings", this.debouncedUpdate);
+    ProjectManager.channel.off("settings", this.debouncedUpdate);
   }
 
   renderLanguageOption = (projectSettings) => {
@@ -73,6 +74,24 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 value={projectSettings?.get("deploy")}
                 onChange={this.onChange("deploy")}
                 placeholder="Path to the built contract to deploy"
+                readOnly={readOnly}
+              />
+
+              <h4 className="mt-4">Gist</h4>
+              <DebouncedFormGroup
+                label="Gist token (not stored in config)"
+                className="bg-black"
+                value={this.props.gistToken}
+                onChange={(t) => this.props.dispatch({ type: "SET_GIST_TOKEN", payload: t })}
+                placeholder="Token"
+                readOnly={readOnly}
+              />
+              <DebouncedFormGroup
+                label="Gist ID"
+                className="bg-black"
+                value={projectSettings?.get("gistId")}
+                onChange={this.onChange("gistId")}
+                placeholder="Gist id"
                 readOnly={readOnly}
               />
               {/* {
@@ -250,3 +269,11 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
     );
   }
 }
+
+const mapStateToProps = function (state) {
+  return {
+    gistToken: state.gistToken,
+  };
+};
+
+export default connect(mapStateToProps)(ProjectSettingsTab);

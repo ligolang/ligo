@@ -2,9 +2,6 @@ module Location = Simple_utils.Location
 module Var = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
-module Tezos_protocol = Tezos_protocol_014_PtKathma
-module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
-module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
@@ -12,30 +9,30 @@ let int_of_mutez t =
   Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 
 
-let tez_to_z : Tezos_protocol.Protocol.Tez_repr.t -> Z.t =
+let tez_to_z : Memory_proto_alpha.Protocol.Tez_repr.t -> Z.t =
  fun t ->
-  let enc = Tezos_protocol.Protocol.Tez_repr.encoding in
+  let enc = Memory_proto_alpha.Protocol.Tez_repr.encoding in
   let c = Data_encoding.Binary.to_bytes_exn enc t in
   int_of_mutez
   @@ Data_encoding.Binary.of_bytes_exn
-       Tezos_protocol.Protocol.Alpha_context.Tez.encoding
+       Memory_proto_alpha.Protocol.Alpha_context.Tez.encoding
        c
 
 
 let contract_to_contract
-  :  Tezos_protocol.Protocol.Contract_repr.t
-  -> Tezos_protocol.Protocol.Alpha_context.Contract.t
+  :  Memory_proto_alpha.Protocol.Contract_repr.t
+  -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t
   =
  fun t ->
-  let enc = Tezos_protocol.Protocol.Contract_repr.encoding in
+  let enc = Memory_proto_alpha.Protocol.Contract_repr.encoding in
   let c = Data_encoding.Binary.to_bytes_exn enc t in
   Data_encoding.Binary.of_bytes_exn
-    Tezos_protocol.Protocol.Alpha_context.Contract.encoding
+    Memory_proto_alpha.Protocol.Alpha_context.Contract.encoding
     c
 
 
 let string_of_contract t =
-  Format.asprintf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp t
+  Format.asprintf "%a" Memory_proto_alpha.Protocol.Alpha_context.Contract.pp t
 
 
 let string_of_key_hash t =
@@ -213,7 +210,7 @@ let make_options ~raise ?param ctxt =
     ; self = source
     ; amount =
         Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez_exn 100000000L
-    ; chain_id = Tezos_protocol_env.Chain_id.zero
+    ; chain_id = Memory_proto_alpha.Alpha_environment.Chain_id.zero
     ; balance = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
     ; now = timestamp
     ; level
@@ -254,8 +251,8 @@ let compile_type ~raise type_exp =
 
 let entrypoint_of_string x =
   match
-    Tezos_raw_protocol.Entrypoint_repr.of_annot_lax_opt
-      (Tezos_raw_protocol.Non_empty_string.of_string_exn x)
+    Memory_proto_alpha.Raw_protocol.Entrypoint_repr.of_annot_lax_opt
+      (Memory_proto_alpha.Raw_protocol.Non_empty_string.of_string_exn x)
   with
   | Some x -> x
   | None ->
@@ -1170,6 +1167,32 @@ let rec compile_value ~raise ~options ~loc
     in
     let x = bytes_of_bls12_381_fr b in
     Tezos_micheline.Micheline.Bytes ((), x)
+  | V_Ct (C_timestamp t) ->
+    let () =
+      trace_option
+        ~raise
+        (Errors.generic_error
+            loc
+            (Format.asprintf
+              "Expected timestamp but got %a"
+              Ast_aggregated.PP.type_expression
+              ty))
+        (get_t_timestamp ty)
+    in
+    Tezos_micheline.Micheline.Int ((),t)
+  | V_Ct (C_int64 x) ->
+    let () =
+      trace_option
+        ~raise
+        (Errors.generic_error
+            loc
+            (Format.asprintf
+              "Expected timestamp but got %a"
+              Ast_aggregated.PP.type_expression
+              ty))
+        (get_t_int ty)
+    in
+    Tezos_micheline.Micheline.Int ((),Z.of_int64 x)
   | V_Construct (ctor, arg) when Option.is_some (get_t_option ty) ->
     (match ctor with
      | "None" -> Tezos_micheline.Micheline.Prim ((), "None", [], [])
@@ -1349,7 +1372,7 @@ let rec compile_value ~raise ~options ~loc
         map
     in
     Tezos_micheline.Micheline.Seq ((), map)
-  | V_Func_val v ->
+  | V_Func_val v -> (
     let make_subst_ast_env_exp ~raise env =
       let open Ligo_interpreter.Types in
       let rec aux acc = function
@@ -1435,7 +1458,7 @@ let rec compile_value ~raise ~options ~loc
         v.orig_lambda
     in
     let compiled_exp = compile_ast ~raise ~options typed_exp in
-    (match compiled_exp.expr with
+    match compiled_exp.expr with
      | Seq (_, [ Prim (_, "LAMBDA", [ _; _; compiled_exp ], _) ]) ->
        let compiled_exp =
          Tezos_micheline.Micheline.map_node
@@ -1447,14 +1470,14 @@ let rec compile_value ~raise ~options ~loc
      | _ ->
        raise.error
        @@ Errors.generic_error loc (Format.asprintf "Expected LAMBDA"))
-  | _ ->
+  | v ->
     raise.error
     @@ Errors.generic_error
          loc
          (Format.asprintf
-            "Cannot decompile %a"
-            Ast_aggregated.PP.type_expression
-            ty)
+            "Cannot decompile value %a of type %a"
+            Ligo_interpreter.PP.pp_value v
+            Ast_aggregated.PP.type_expression ty)
 
 
 let compile_value ~raise ~options ~loc

@@ -6,10 +6,18 @@ let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 (* events payload being records and not decompiled to pairs in the interpreter *)
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ; "--protocol" ; "kathmandu" ] ;
+  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test_foo exited with value 3n. |}]
+
+(* decompilation of timestamp *)
+let%expect_test _ =
+  run_ligo_good ["run" ; "test" ; test "test_timestamp_contract.mligo" ] ;
+  [%expect {|
+    Success (2109n)
+    Everything at the top-level was executed.
+    - test_timestamp exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
@@ -69,6 +77,7 @@ let%expect_test _ =
     - test_add_mutez exited with value ().
     - test_sub_mutez exited with value ().
     - test_div_mutez exited with value ().
+    - test_sub_timestamp exited with value ().
     - test_list_fold_left_sum exited with value ().
     - test_bytes_sub exited with value ().
     - test_with_error exited with value ().
@@ -85,7 +94,8 @@ let%expect_test _ =
     - test_sha3 exited with value ().
     - test_key_hash exited with value ().
     - test_check exited with value ().
-    - test_int_bls exited with value (). |}]
+    - test_int_bls exited with value ().
+    - test_not exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
@@ -96,12 +106,6 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed.
-    - test exited with value (). |}]
-
-let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -193,26 +197,9 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "map_map.jsligo" ] ;
-  [%expect.unreachable]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
-  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 195, characters 2-57
-  Called from Expect_test_collector.Make.Instance_io.exec in file "collector/expect_test_collector.ml", line 262, characters 12-19
-
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  File "./map_map.jsligo", line 5, characters 19-21:
-    4 |     let fn = (_ : A, v : B) => f(v);
-    5 |     return Map.map(fn, m)
-    6 | }
-
-  unbound variable mutable: fn#3053. |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value ["one" -> "foo" ; "two" -> "foo"]. |}]
 
 (* DEPRECATED
 let%expect_test _ =
@@ -506,7 +493,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value (1802n , 1985n , 1985n). |}]
+    - test exited with value (2136n , 2331n , 2331n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -609,12 +596,12 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1XhV1uDy9VDHHMCFwS6BaoY9yEhMxpZecN , { parameter unit ;
+    - test_x exited with value (KT19hFZZxPTue1oBw7cc46L1p6pJ3xTo3vRF , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
-              (map %secrets address chest)) ;
+              (map %secrets address bool)) ;
       code { CDR ;
              PUSH bool True ;
              DUP 2 ;
@@ -720,12 +707,12 @@ let%expect_test _ =
   [%expect {|
     edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
     Everything at the top-level was executed.
-    - test exited with value Success (2796n). |}]
+    - test exited with value Success (2797n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_tickets_and_bigmaps.mligo" ] ;
-  [%expect {|
-    Success (3497n)
+  [%expect{|
+    Success (3504n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
@@ -1010,7 +997,7 @@ run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
    18 |     ) in
    19 |     let () = Test.log(packed) in
 
-  Cannot decompile typed_address (unit ,
+  Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
   unit) |}]
 
 let () = Sys_unix.chdir pwd

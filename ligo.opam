@@ -68,6 +68,13 @@ depends: [
   "crunch"
   "class_group_vdf"
   "tezos-plonk"
+  # dev dependencies (not labels as { dev } since this feature doesn't work 
+  # currently https://github.com/ocaml/opam/issues/5177).
+  # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
+  # 0.24.1 release
+  "ocamlformat" { = "0.21.0" }
+  "ocamlformat-rpc" { = "0.21.0" }
+  "ocaml-lsp-server" { >= "1.14.0" }
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

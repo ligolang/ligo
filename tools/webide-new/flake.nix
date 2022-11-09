@@ -1,162 +1,151 @@
 {
   nixConfig = {
-    extra-substituters = [
-      "https://hydra.iohk.io\?want-mass-query=1"
-    ];
-    extra-trusted-public-keys = ["hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="];
+    flake-registry = "https://github.com/serokell/flake-registry/raw/master/flake-registry.json";
   };
-
   inputs = {
-    haskell-nix.url = "github:input-output-hk/haskell.nix";
-    ligo = {
-      url = "git+https://gitlab.com/serokell/ligo/ligo";
-      flake = false;
-    };
+    nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
+    tezos-packaging.url = "github:serokell/tezos-packaging";
   };
+  outputs = { self, haskell-nix, nix-npm-buildpackage, nixpkgs, flake-utils, tezos-packaging, deploy-rs }@inputs:
+  {
+    nixosModules.default = { config, pkgs, lib, ... }:
+      let system = pkgs.system; in
+      with pkgs.lib; {
+        options.services.ligo-webide-frontend = {
+          enable = mkEnableOption "ligo-webide service";
 
-  outputs = { nixpkgs, haskell-nix, self, ... }:
-    let
-      ligo-binary = {
-        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/2385579945/artifacts/raw/ligo"; hash = "sha256-UFGPJTPxyyKvlcY8Lh3poY6anOtyErCUTfZi2BdkBM4="; };
-      };
-
-      platforms = [ "x86_64-linux" ];
-      filteredPlatforms = with builtins; listToAttrs (map (f: { name = f; value = nixpkgs.legacyPackages.${f}; }) platforms);
-      onPkgs = f: with builtins; mapAttrs f filteredPlatforms;
-      sources = builtins.path { path = ./.; filter = (path: type: (builtins.match "(.*\\.nix|.*\\.lock)" path) == null); };
-    in
-    {
-      nixosModules.default = { config, pkgs, lib, ... }:
-        let system = pkgs.system; in
-        {
-
-          options = with pkgs.lib; {
-
-            services.ligo-webide-frontend = {
-              enable = mkEnableOption "ligo-webide service";
-
-              serverName = mkOption {
-                type = types.str;
-                default = "localhost";
-                description = ''
-                  Name of the nginx virtualhost to use.
-                '';
-              };
-
-              listenHost = mkOption {
-                type = types.str;
-                default = "localhost";
-                description = ''
-                  Listen address for the virtualhost to use.
-                '';
-              };
-
-            };
-
-            services.ligo-webide = {
-              enable = mkEnableOption "ligo-webide service";
-            };
+          package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.frontend;
           };
 
-          config = with pkgs.lib; let
-            cfg_frontend = config.services.ligo-webide-frontend;
-            cfg = config.services.ligo-webide;
-            req = self.packages.${system};
-          in
-          lib.mkIf cfg.enable {
-            systemd.services.ligo-webide = {
-              after = [ "network.target" ];
-              wantedBy = [ "multi-user.target" ];
-              script =
-                ''
-                  ${req.backend}/bin/ligo-webide-backend --ligo-path ${req.ligo-bin}/bin/ligo
-                '';
-
-            };
-
-
-            services.nginx = {
-              enable = true;
-              # recommendedProxySettings = true;
-              virtualHosts.ligo-webide = {
-                serverName = cfg_frontend.serverName;
-                root = req.webide;
-                locations."/" = {
-                  index = "index.html";
-                  tryFiles = "$uri $uri/ /index.html =404";
-                };
-                locations."~ ^/local(?<route>/static/.*)" = {
-                  alias = req.webide + "$route";
-                };
-                locations."~ ^/api(?<route>/.*)" = {
-                  proxyPass = "http://127.0.0.1:8080$route";
-                };
-              };
-            };
-
-            networking.firewall.allowedTCPPorts = [ 80 443 ];
-
+          serverName = mkOption {
+            type = types.str;
+            default = "localhost";
+            description = ''
+              Name of the nginx virtualhost to use.
+            '';
           };
         };
 
-      packages = onPkgs (system: pkgs:
-        with pkgs;
-        let
-          a_haskell-nix = haskell-nix.legacyPackages.${system}.haskell-nix;
-          y2n = pkgs.yarn2nix-moretea;
+        options.services.ligo-webide = {
+          enable = mkEnableOption "ligo-webide service";
+          package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.backend;
+          };
+          ligo-package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.ligo-bin;
+          };
+          tezos-client-package = mkOption {
+            type = types.path;
+            default = self.packages.x86_64-linux.tezos-client;
+          };
+        };
+
+        config = with pkgs.lib; let
+          frontend-cfg = config.services.ligo-webide-frontend;
+          webide-cfg = config.services.ligo-webide;
+          packages = self.packages.${system};
         in
-        rec {
+        lib.mkIf webide-cfg.enable {
+          systemd.services.ligo-webide = {
+            after = [ "network.target" ];
+            wantedBy = [ "multi-user.target" ];
+            # Don't attempt to start
+            unitConfig.ConditionPathExists = [ webide-cfg.package webide-cfg.ligo-package webide-cfg.tezos-client-package ];
+            script =
+              ''
+                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --tezos-client-path ${webide-cfg.tezos-client-package}/bin/tezos-client
+              '';
 
-          ligo-bin = pkgs.runCommand "ligo-bin" { } ''
-            install -Dm777 ${pkgs.fetchurl ligo-binary.${system}} $out/bin/ligo
-          '';
+          };
 
-          backend =
-            let
-              name = "ligo-webide-backend";
-              proj = a_haskell-nix.stackProject {
-                src = a_haskell-nix.cleanSourceHaskell {
-                  src = ./ligo-webide-backend;
-                  inherit name;
-                };
+          services.nginx = {
+            enable = true;
+            # recommendedProxySettings = true;
+            virtualHosts.ligo-webide = {
+              serverName = frontend-cfg.serverName;
+              root = frontend-cfg.package;
+              locations."/" = {
+                index = "index.html";
+                tryFiles = "$uri $uri/ /index.html =404";
               };
-            in
-            proj.${name}.components.exes.ligo-webide-backend;
-
-          webide = y2n.mkYarnPackage {
-                src = ./ligo-webide-frontend/ligo-ide;
-                buildPhase = ''
-                  # moving all of the node_modules into a new, mutable folder,
-                  # because some weird npm (react-app-rewire iirc) thing decided that it needs node_modules/.cache
-
-                  pushd "$PWD/deps/ligo-ide"
-                    cp -raL "node_modules" "node_modules.mut"
-                    chmod -R +rw "node_modules.mut"
-
-                    # bin needs to stay symlinked
-                    rm -rf node_modules.mut/.bin
-                    cp -r "node_modules/.bin" "node_modules.mut/.bin"
-
-                    rm "node_modules"
-                    mv "node_modules.mut" "node_modules"
-                  popd
-
-                  # gotta love node's non-existent module isolation
-                  # hack in highlight.js from global deps
-                  cp -r node_modules/highlight.js "$PWD/deps/ligo-ide/node_modules"
-
-                  yarn --offline --frozen-lockfile build:react
-                '';
-                distPhase = ":";
-                installPhase = ''
-                  cp -rL $PWD/deps/ligo-ide/build $out
-                '';
+              locations."~ ^/(local|share)(?<route>/static/.*)" = {
+                alias = frontend-cfg.package + "$route";
               };
+              locations."~ ^/api(?<route>/.*)" = {
+                proxyPass = "http://127.0.0.1:8080$route";
+              };
+            };
+          };
 
-        }
+          networking.firewall.allowedTCPPorts = [ 80 443 ];
 
-      );
-
+        };
+      };
+    deploy = {
+      sshOpts = [ "-p 17788" ];
+      nodes.webide = {
+        # TODO: perhaps it should be moved to a dedicated server
+        hostname = "tejat-prior.gemini.serokell.team";
+        user = "deploy";
+        profiles = {
+          backend.path = deploy-rs.lib.x86_64-linux.activate.custom
+            self.packages.x86_64-linux.backend
+            "sudo /run/current-system/sw/bin/systemctl restart container@ligo-webide-thing.service";
+          frontend.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.frontend;
+          ligo.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.ligo-bin;
+          tezos-client.path = deploy-rs.lib.x86_64-linux.activate.noop
+            self.packages.x86_64-linux.tezos-client;
+        };
+      };
     };
-
+  } // (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system :
+    let
+      pkgs = import nixpkgs {
+        overlays = [ nix-npm-buildpackage.overlays.default haskell-nix.overlay ];
+        localSystem = system;
+      };
+      ligo-binary = {
+        # ligo 0.50.0
+        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/2959700000/artifacts/raw/ligo"; hash = "sha256-9AdoS8tUYeqdnCUSRbUxj3dZQLhk9pbEq93hFF6uSEI="; };
+      };
+      tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
+      frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { };
+      backend = pkgs.callPackage ./ligo-webide-backend { };
+      frontendCheck = checkPhase:
+        frontend.overrideAttrs (o: {
+          buildInputs = o.buildInputs ++ [ pkgs.nodePackages.typescript pkgs.nodePackages.eslint ];
+          buildPhase = "yarn";
+          doCheck = true;
+          doFixup = false;
+          installPhase = "touch $out";
+          inherit checkPhase;
+        });
+    in rec {
+      packages = {
+        ligo-bin = pkgs.runCommand "ligo-bin" { } ''
+          install -Dm777 ${pkgs.fetchurl ligo-binary.${system}} $out/bin/ligo
+        '';
+        inherit frontend tezos-client;
+        backend = backend.components.exes.ligo-webide-backend;
+      };
+      tests = {
+        ligo-webide-backend-test = backend.components.tests.ligo-webide-backend-test;
+      };
+      checks = {
+        frontend-tscompile = frontendCheck "yarn run tscompile";
+        frontend-tslint = frontendCheck "yarn run tslint";
+      } // deploy-rs.lib.${system}.deployChecks self.deploy;
+      devShell = pkgs.mkShell {
+        buildInputs = [
+          deploy-rs.defaultPackage.${system}
+        ];
+      };
+    }
+  ));
 }

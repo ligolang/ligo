@@ -20,7 +20,6 @@ export default class IndexedLocalFs {
         const trailFile = file.replace(/^\/|\/$/g, "");
         const absPath = `${trailPath}/${trailFile}`;
         result[absPath] = {
-          // eslint-disable-next-line no-await-in-loop
           isDirectory: await IndexedLocalFs.stat(absPath).isDirectory(),
         };
       }
@@ -41,9 +40,7 @@ export default class IndexedLocalFs {
     let curDir = "";
     for (const value of paths) {
       curDir = `${curDir}/${value}`;
-      // eslint-disable-next-line no-await-in-loop
       if (!(await IndexedLocalFs.exists(curDir))) {
-        // eslint-disable-next-line no-await-in-loop
         await window.ligoIdeFileSystem.mkdir(curDir);
       }
     }

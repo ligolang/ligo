@@ -903,7 +903,7 @@ let%expect_test _ =
                      PAIR } } } } } |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "ticket_builder.mligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "ticket_builder.mligo" ; "--protocol" ; "lima" ] ;
   [%expect {|
 File "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34:
  28 |       begin
@@ -943,6 +943,7 @@ Hint: replace it by "_ticket" to prevent this warning.
              CDR ;
              UNIT ;
              TICKET ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
              SWAP ;
              CAR ;
              PUSH mutez 0 ;
@@ -1042,7 +1043,12 @@ let%expect_test _ =
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+    Error(s) occurred while type checking the contract:
     Ill typed contract:
       1: { parameter int ;
       2:   storage address ;
@@ -1052,29 +1058,7 @@ let%expect_test _ =
     { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol kathmandu
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Warning: Error(s) occurred while type checking the produced michelson contract:
-    Ill typed contract:
-      1: { parameter int ;
-      2:   storage address ;
-      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-    At line 3 characters 38 to 50, value "KT1badaddr"
-    is invalid for type address.
-    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
-      "description":
-        "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol kathmandu |}]
+      "data": { "input": "KT1badaddr" } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -2606,14 +2590,14 @@ let%expect_test _ =
   [%expect{|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }  |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ; "--enable-michelson-typed-opt" ] ;
   [%expect{|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
            |}]
 
 let%expect_test _ =
@@ -2799,3 +2783,27 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ;  "cameligo" ; "tests" ; "--init-file" ; contract "bytes_literals.mligo" ] ;
   [%expect{| { True ; True ; True } |}]
+
+(* get_entrypoint_opt in uncurried language *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ;  contract "get_entrypoint.jsligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage address ;
+      code { DROP ;
+             SENDER ;
+             CONTRACT %foo int ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
+             ADDRESS ;
+             NIL operation ;
+             PAIR } } |}]
+
+(* make sure that in compile storage/expression we can check ENTRYPOINT/EMIT *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ;  contract "emit.mligo" ; "()" ] ;
+  [%expect{| Unit |}]
+
+(* make sure that in compile storage/expression we can check SELF *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ;  contract "self_annotations.mligo" ; "()" ] ;
+  [%expect{| Unit |}]

@@ -1,0 +1,2 @@
+marko == 1.2.2
+python-gitlab == 3.10.0

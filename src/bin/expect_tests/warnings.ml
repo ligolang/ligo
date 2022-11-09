@@ -49,7 +49,7 @@ run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; con
   Warning: variable "Foo.x" cannot be used more than once.
 
   Error(s) occurred while checking the contract:
-  At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
+  At (unshown) location 8, type option (ticket nat) cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
   At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
 
@@ -63,7 +63,7 @@ run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; con
   Warning: variable "x" cannot be used more than once.
 
   Error(s) occurred while checking the contract:
-  At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
+  At (unshown) location 8, type option (ticket nat) cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
   At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
   (* some check about the warnings of the E_constructor cases *)

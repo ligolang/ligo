@@ -130,6 +130,7 @@ const overrides = [
     BUILD_ID: process.env.BUILD_ID,
     COMMIT_ID: JSON.stringify(process.env.COMMIT_ID),
     BUILD_TIME: JSON.stringify(process.env.BUILD_TIME),
+    MEASUREMENT_ID: JSON.stringify(process.env.MEASUREMENT_ID),
   }),
   enableTS(),
   turnOffMangle(),
@@ -166,12 +167,16 @@ if (process.env.CDN) {
     )
   );
 }
-
 module.exports = {
   webpack: override(...overrides),
   devServer: function (configFunction) {
     return function (proxy, allowedHost) {
-      const config = configFunction(proxy, allowedHost);
+      const config = configFunction({
+        '/api': {
+          target: 'http://localhost:8080',
+          pathRewrite: { '^/api': '' },
+        },
+      }, allowedHost);
       config.headers = {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',

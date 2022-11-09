@@ -3,27 +3,30 @@ module AST.Capabilities.Find
   , TypeDefinitionRes (..)
   , findScopedDecl
   , findNodeAtPoint
-  , rangeOf
   , definitionOf
   , typeDefinitionOf
   , typeDefinitionAt
   , dereferenceTspec
   , referencesOf
+  , findModuleDecl
   ) where
 
 import Control.Lens (_Just, _2, (^.), (^?))
 import Control.Monad
+import Data.List (find)
 import Data.Maybe (fromMaybe, listToMaybe)
-import Data.Text (Text)
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  (Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec,
-   _ValueSpec, extractRefName, sdSpec, vdsTspec)
-import AST.Skeleton (LIGO, SomeLIGO, nestedLIGO)
+  ( Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec
+  , _ValueSpec, extractRefName, sdSpec, vdsTspec
+  )
+import AST.Skeleton
+  ( Binding (BModuleAlias, BModuleDecl), LIGO, ModuleName, SomeLIGO, nestedLIGO
+  )
 
 import Product
 import Range
@@ -32,7 +35,6 @@ type CanSearch xs =
   ( Contains Scope xs
   , Contains Range xs
   , Contains (Maybe Level) xs
-  , Contains [Text] xs
   )
 
 findScopedDecl
@@ -46,7 +48,7 @@ findScopedDecl pos tree = do
   let fullEnv = getElem info
   level <- getElem info
   let filtered = filter (ofLevel level) fullEnv
-  lookupEnv (ppToText $ void node) filtered
+  lookupEnv (ppToText $ void node) (getRange node) filtered
 
 findInfoAtPoint
   :: Contains Range xs
@@ -56,20 +58,12 @@ findInfoAtPoint pos tree = extract <$> findNodeAtPoint pos tree
 findNodeAtPoint
   :: Contains Range xs
   => Range -> SomeLIGO xs -> Maybe (LIGO xs)
-findNodeAtPoint pos tree =
-  listToMaybe (spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO))
+findNodeAtPoint pos tree = listToMaybe $ spineAtPoint pos tree
 
-rangeOf
-  :: CanSearch xs
-  => Range
-  -> SomeLIGO xs
-  -> Maybe Range
-rangeOf pos tree = do
-  refs <- _sdRefs <$> findScopedDecl pos tree
-  range <- getRange <$> findInfoAtPoint pos tree
-  if range `elem` refs
-    then Just range
-    else Nothing
+spineAtPoint
+  :: Contains Range xs
+  => Range -> SomeLIGO xs -> [LIGO xs]
+spineAtPoint pos tree = spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO)
 
 definitionOf
   :: CanSearch xs
@@ -93,14 +87,14 @@ typeDefinitionOf pos tree = fromMaybe TypeNotFound $ do
   scope <- getElem <$> findInfoAtPoint pos tree
   varDecl <- findScopedDecl pos tree
   tspec <- varDecl ^? sdSpec . _ValueSpec . vdsTspec . _Just
-  Just $ case findTypeRefDeclaration scope (_tdsInit tspec) of
+  Just $ case findTypeRefDeclaration scope (_tdsInit tspec) (_tdsInitRange tspec) of
     Nothing -> TypeInlined tspec
     Just decl -> TypeDeclared decl
 
-findTypeRefDeclaration :: Scope -> Type -> Maybe ScopedDecl
-findTypeRefDeclaration scope typ = do
+findTypeRefDeclaration :: Scope -> Type -> Range -> Maybe ScopedDecl
+findTypeRefDeclaration scope typ pos = do
   refName <- extractRefName typ
-  lookupEnv refName (filter (ofLevel TypeLevel) scope)
+  lookupEnv refName pos (filter (ofLevel TypeLevel) scope)
 
 typeDefinitionAt :: CanSearch xs => Range -> SomeLIGO xs -> Maybe Range
 typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
@@ -114,7 +108,7 @@ typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
 -- If the aliased name is undeclared, leave the type be.
 dereferenceTspec :: Scope -> TypeDeclSpecifics Type -> TypeDeclSpecifics Type
 dereferenceTspec scope tspec = fromMaybe tspec $ do
-  refDecl <- findTypeRefDeclaration scope (_tdsInit tspec)
+  refDecl <- findTypeRefDeclaration scope (_tdsInit tspec) (_tdsInitRange tspec)
   refDecl ^? sdSpec . _TypeSpec . _2
 
 referencesOf
@@ -124,3 +118,26 @@ referencesOf
   -> Maybe [Range]
 referencesOf pos tree =
   _sdRefs <$> findScopedDecl pos tree
+
+-- | Given a module name position, attempts to find where its origin
+-- 'ScopedDecl' is. This function will also try to resolve every module alias.
+findModuleDecl :: CanSearch xs => Range -> SomeLIGO xs -> Maybe ScopedDecl
+findModuleDecl pos tree = do
+  decl@ScopedDecl{..} <- findScopedDecl pos tree
+  -- Found a module, but is it an alias or declaration?
+  let spine = spineAtPoint _sdOrigin tree
+  moduleNode <- layer =<< find (maybe False isModule . layer) spine
+  case moduleNode of
+    -- OK, found what we were looking for:
+    BModuleDecl _ _ -> pure decl
+    -- Alias, must resolve it:
+    BModuleAlias _ path -> do
+      (aliasR, _aliasNode) <- match @ModuleName $ last path
+      findModuleDecl (getRange aliasR) tree
+    -- Impossible:
+    _ -> Nothing
+  where
+    isModule = \case
+      BModuleDecl _ _ -> True
+      BModuleAlias _ _ -> True
+      _ -> False

@@ -29,7 +29,7 @@ function ReduxApp(props: { history: any }) {
       await ligoIdeFileSystems.current.addFileSystem(indexedDB.current);
       ligoIdeFileSystems.current.setFileSystem([indexedDB.current]);
       if (!(await fileOps.exists(".workspaces/default-project"))) {
-        const Manager = ProjectManager.Local;
+        const Manager = ProjectManager;
         const defaultProject = await Manager.createProject("default-project", "increment");
         redux.dispatch("ADD_PROJECT", {
           type: "local",

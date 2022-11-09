@@ -77,3 +77,152 @@ let%expect_test _ =
   [%expect{|
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "dao_path_bug/main.mligo" ; "--project-root" ; "dao_path_bug" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage (option nat) ;
+      code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "dao_path_bug"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage (option nat) ;
+      code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
+let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "include_include/main.mligo" ; "--project-root" ; "include_include" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "include_include"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "include_import/main.mligo" ; "--project-root" ; "include_import" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "World" ;
+             DUP 2 ;
+             CONCAT ;
+             SWAP ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "include_import"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "World" ;
+             DUP 2 ;
+             CONCAT ;
+             SWAP ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "import_import/main.mligo" ; "--project-root" ; "import_import" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "World" ;
+             DUP 2 ;
+             CONCAT ;
+             SWAP ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "import_import"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "Hello" ;
+             PUSH string "World" ;
+             DUP 2 ;
+             CONCAT ;
+             SWAP ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "import_include/main.mligo" ; "--project-root" ; "import_include" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "World" ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "import_include"
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "World" ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             PUSH string " Work" ;
+             PUSH string "Hello" ;
+             CONCAT ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+let () = Sys_unix.chdir pwd

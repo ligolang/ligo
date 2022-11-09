@@ -1,9 +1,9 @@
 include Ast_aggregated.Types
 open Ligo_prim
 module Z = Simple_utils.Z
-module Tezos_protocol = Tezos_protocol_014_PtKathma
-module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
-module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
+module Tezos_protocol = Memory_proto_alpha
+module Tezos_raw_protocol = Memory_proto_alpha.Raw_protocol
+module Tez = Memory_proto_alpha.Protocol.Alpha_context.Tez
 module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Timestamp
 
 module Contract = struct

@@ -6,13 +6,14 @@ module Name = struct
   let let_binding               = "letbinding"
   let lambda                    = "lambda"
   let control_keywords          = "controlkeywords"
+  let structure_keywords        = "structurekeywords"
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
   let semicolon                 = "semicolon"
   let of_keyword                = "ofkeyword"
-  let identifier                = "identifier"
-  let identifier_constructor    = "identifierconstructor"
-  let module_                   = "module"
+  let lowercase_identifier      = "lowercaseidentifier"
+  let uppercase_identifier      = "uppercaseidentifier"
+  let module_declaration        = "moduledeclaration"
   let attribute                 = "attribute"
   (* Types *)
   let type_definition           = "typedefinition"
@@ -22,7 +23,6 @@ module Name = struct
   let type_var                  = "typevar"
   let type_parentheses          = "typeparentheses"
   let type_operator             = "typeoperator"
-  let type_module               = "typemodule"
   let type_int                  = "typeint"
   let type_product              = "typeproduct"
 end
@@ -30,11 +30,10 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
-    Name.type_module;
+    Name.uppercase_identifier;
 
     (* Sum type *)
     Name.of_keyword;
-    Name.identifier_constructor;
 
     Name.type_operator;
     Name.type_name;
@@ -134,16 +133,18 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
+      (* TODO: Name.lowercase_identifier; *)
+      Name.uppercase_identifier;
       Name.attribute;
       Name.macro;
       Name.let_binding;
       Name.lambda;
       Name.type_definition;
       Name.control_keywords;
+      Name.module_declaration;
+      Name.structure_keywords;
       Name.numeric_literals;
       Name.operators;
-      Name.identifier_constructor;
-      Name.module_;
       Name.type_annotation;
     ];
     repository = [
@@ -154,6 +155,20 @@ let syntax_highlighting =
         kind = Match {
           match_name = Some Conditional;
           match_ = [(Regexp.control_keywords_match, None)]
+        }
+      };
+      {
+        name = Name.structure_keywords;
+        kind = Match {
+          match_name = Some Keyword;
+          match_ = [(Regexp.structure_keywords_match, None)]
+        }
+      };
+      {
+        name = Name.module_declaration;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.module_keyword_match, Some Keyword)];
         }
       };
       {
@@ -199,27 +214,17 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.module_;
+        name = Name.uppercase_identifier;
         kind = Match {
-          match_     = [
-            (Regexp.module_match1, Some Structure);
-            (Regexp.module_match2, Some Identifier)
-          ];
-          match_name = None
+          match_name = None;
+          match_     = [(Regexp.identifier_constructor_match, Some Structure)];
         }
       };
       {
-        name = Name.identifier;
+        name = Name.lowercase_identifier;
         kind = Match {
           match_name = None;
-          match_ = [(Regexp.let_binding_match3, None)];
-        }
-      };
-      {
-        name = Name.identifier_constructor;
-        kind = Match {
-          match_name = None;
-          match_     = [(Regexp.identifier_constructor_match, Some Label)]
+          match_     = [(Regexp.identifier_match, Some Identifier)];
         }
       };
       (* Types *)
@@ -281,13 +286,6 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.type_module;
-        kind = Match {
-          match_name = Some Identifier;
-          match_ = [(Regexp.module_match1, None)];
-        }
-      };
-      {
         name = Name.type_int;
         kind = Match {
           match_name = Some Number;
@@ -300,7 +298,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.braces_begin, None)];
           end_ = [(Regexp.braces_end, None)];
-          patterns = [Name.identifier; Name.type_annotation; Name.semicolon];
+          patterns = [Name.uppercase_identifier; Name.type_annotation; Name.semicolon];
         }
       };
     ]

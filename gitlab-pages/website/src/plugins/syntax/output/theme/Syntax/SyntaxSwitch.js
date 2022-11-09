@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from './styles.module.css';
-
 function SyntaxSwitch(props) {
   return /*#__PURE__*/React.createElement("select", {
     className: styles.syntaxSwitch,
@@ -16,5 +15,4 @@ function SyntaxSwitch(props) {
     value: "jsligo"
   }, "JsLIGO"));
 }
-
 export default SyntaxSwitch;

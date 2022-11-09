@@ -26,7 +26,7 @@
         ligo-debugger-components = ligo-debugger-package (pkgs);
         ligo-debugger-test = ligo-debugger-components.checks.ligo-debugger-test.overrideAttrs(_: {
           # 'ligo' binary that is used in these tests need ca-certificates in runtime
-          NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
         });
         archOut = {
           devShells.default = pkgs.mkShell {

@@ -69,16 +69,15 @@ class t ?(project_root : file_path option)
     val imports : (file_path * module_name) list = []
     method imports = imports
 
-    val parent : file_path option = None
-    method parent = parent
+    val ancestors : file_path list = []
+    method ancestors = ancestors
 
     (* Directories *)
 
     method set_incl dir =
       if String.(dir = ".") then self else {< incl = dir >}
 
-    method set_parent path = {< parent = Some path >}
-    method orphan          = {< parent = None >}
+    method push_ancestor path = {< ancestors = path :: ancestors >}
 
     (* CONDITIONAL DIRECTIVES *)
 

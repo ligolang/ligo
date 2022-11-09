@@ -74,7 +74,7 @@ let t_abstraction2 ?loc name kind_l kind_r : type_expression =
 let t_for_all ty_binder kind type_ = t_for_all { ty_binder ; kind ; type_ } ()
 
 let t_record ?loc ?core ~layout fields  : type_expression = t_record ?loc { fields ; layout } ?type_meta:core ()
-let default_layout = Layout.L_tree
+let default_layout : Layout.t = Layout.L_tree
 let make_t_ez_record ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = Record.of_list lst in

@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '2106'
+title: '`NOT` instruction in testing framework''s interpreter'
+type: fixed

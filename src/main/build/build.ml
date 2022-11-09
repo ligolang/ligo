@@ -229,15 +229,14 @@ let rec build_contract_aggregated ~raise : options:Compiler_options.t -> string 
         Ligo_compile.Of_core.View { command_line_views ; contract_entry = entry_point }
       in  
       trace ~raise self_ast_typed_tracer @@ Ligo_compile.Of_core.specific_passes form typed_prg in
-    let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_contract entry_point in
-    let (parameter_ty, storage_ty) =
-    trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract")) (
-      let open Option in
-      let open Ast_aggregated in
-      let* { type1 = input_ty ; _ }= Ast_aggregated.get_t_arrow aggregated_contract.type_expression in
-      Ast_aggregated.get_t_pair input_ty ) in
-    let aggregated = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty aggregated_contract in
+    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end ~contract_pass:true typed_contract entry_point in
     let agg_views = build_aggregated_views ~raise ~options typed_views in
+    let (parameter_ty, storage_ty) =
+          trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract")) (
+            let open Simple_utils.Option in
+            let open Ast_aggregated in
+            let* { type1 = input_ty ; _ }= Ast_aggregated.get_t_arrow aggregated.type_expression in
+            Ast_aggregated.get_t_pair input_ty ) in
     (parameter_ty, storage_ty), aggregated, agg_views
 
 and build_contract_stacking ~raise : options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Stacking.compiled_expression * _ ) * ((Value_var.t * Stacking.compiled_expression) list * _) =

@@ -452,36 +452,315 @@ let error_ppformat
         lit_type)
 
 
-let error_jsonformat : typer_error -> Yojson.Safe.t =
+let error_json : typer_error -> Simple_utils.Error.t =
  fun err ->
-  let json_error ~stage ~content =
-    `Assoc
-      [ "status", `String "error"; "stage", `String stage; "content", content ]
-  in
+  let open Simple_utils.Error in
   match err with
   | `Typer_mut_var_captured (var, loc) ->
-    let message = "Invalid capture of mutable variable" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "location", Location.to_yojson loc
-        ; "var", Value_var.to_yojson var
-        ]
+    let message =
+      Format.asprintf
+        "@[Invalid capture of mutable variable \"%a\"@]"
+        Value_var.pp
+        var
     in
-    json_error ~stage ~content
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_ill_formed_type (type_, loc) ->
+    let message =
+      Format.asprintf "@[Invalid type@.Ill formed type %a.@]" Type.pp type_
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_record_mismatch (_record, type_, loc) ->
+    let message =
+      Format.asprintf
+        "@[Mismatching record labels. Expected record of type %a.@]"
+        Type.pp
+        type_
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_cannot_subtype (type1, type2, loc) ->
+    let message =
+      Format.asprintf
+        "@[Expected %a, but received %a. Types are not compatitable.@]"
+        Type.pp
+        type2
+        Type.pp
+        type1
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_corner_case (desc, loc) ->
+    let message =
+      Format.asprintf "@[A type system corner case occurred:@.%s@]" desc
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_occurs_check_failed (tvar, type_, loc) ->
+    let message =
+      Format.asprintf
+        "@[The type variable ^%a occurs inside %a.@]"
+        Type_var.pp
+        tvar
+        Type.pp
+        type_
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_pattern_missing_cases (syntax, ps, loc) ->
+    let ps =
+      List.fold ps ~init:"" ~f:(fun s p ->
+          let s' =
+            let p = Untyper.untype_pattern p in
+            Desugaring.Decompiler.decompile_pattern_to_string ~syntax p
+          in
+          s ^ "- " ^ s' ^ "\n")
+    in
+    let message =
+      Format.asprintf
+        "@[Error : this pattern-matching is not exhaustive.@.Here are examples \
+         of cases that are not matched:@.%s@]"
+        ps
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_pattern_redundant_case loc ->
+    let message = Format.asprintf "@[Error: this match case is unused.@]" in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_cannot_unify (type1, type2, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid type(s)@.Cannot unify %a with %a.@]"
+        Type.pp
+        type1
+        Type.pp
+        type2
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid type(s)@.Cannot unify %a with %a due to differing layouts \
+         (%a and %a).@]"
+        Type.pp
+        type1
+        Type.pp
+        type2
+        Type.pp_layout
+        layout1
+        Type.pp_layout
+        layout2
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_bad_constructor (label, type_, loc) ->
+    let message =
+      Format.asprintf
+        "@[Expected constructor %a in expected sum type %a.]"
+        Label.pp
+        label
+        Type.pp
+        type_
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_pattern_do_not_match loc ->
+    let message =
+      Format.asprintf "@[Pattern do not match returned expression.@]"
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_unbound_module_variable (mv, loc) ->
+    let message =
+      Format.asprintf "@[Module \"%a\" not found. @]" Module_var.pp mv
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_unbound_type_variable (tv, loc) ->
+    let message =
+      Format.asprintf "@[Type \"%a\" not found. @]" Type_var.pp tv
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_unbound_texists_var (tvar, loc) ->
+    let message =
+      Format.asprintf
+        "@[Existential variable \"^%a\" not found. @]"
+        Type_var.pp
+        tvar
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_unbound_variable (v, loc) ->
+    let message =
+      Format.asprintf "@[Variable \"%a\" not found. @]" Value_var.pp v
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_unbound_mut_variable (v, loc) ->
+    let message =
+      Format.asprintf "@[Mutable variable \"%a\" not found. @]" Value_var.pp v
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_mismatching_for_each_collection_type (collection_type, type_, loc) ->
+    let message =
+      Format.asprintf
+        "@[Expected collection of type \"%a\", but recieved collection of type \
+         %a.@]"
+        For_each_loop.pp_collect_type
+        collection_type
+        Type.pp
+        type_
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_mismatching_for_each_binder_arity
+      (expected_arity, recieved_arity, loc) ->
+    let message =
+      Format.asprintf
+        "@[Expected for each loop to bind %d variables, but loop binds %d \
+         variables.@]"
+        expected_arity
+        recieved_arity
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_unbound_constructor (c, loc) ->
+    let message =
+      Format.asprintf "@[Constructor \"%a\" not found. @]" Label.pp c
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_type_app_wrong_arity (op_opt, e, a, loc) ->
+    let aux : Format.formatter -> Type_var.t option -> unit =
+     fun ppf operator_opt ->
+      match operator_opt with
+      | Some v -> Format.fprintf ppf " %a" Type_var.pp v
+      | None -> ()
+    in
+    let message =
+      Format.asprintf
+        "@[Type %a is applied to a wrong number of arguments, expected: %i \
+         got: %i@]"
+        aux
+        op_opt
+        e
+        a
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_michelson_or_no_annotation (c, loc) ->
+    let message =
+      Format.asprintf
+        "@[Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" \
+         must be annotated with a variant type. @]"
+        Label.pp
+        c
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_should_be_a_function_type (lamb_type, _args, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid type.@.Expected a function type, but got \"%a\". @]"
+        Type.pp
+        (type_improve lamb_type)
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_bad_record_access (field, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid record field \"%a\" in record. @]"
+        Label.pp
+        field
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_not_annotated loc ->
+    let message =
+      Format.asprintf
+        "@[Can't infer the type of this value, please add a type annotation.@]"
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_comparator_composed (_a, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid arguments.@.Only composed types of not more than two \
+         element are allowed to be compared. @]"
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_assert_equal (expected, actual, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
+        Ast_typed.PP.type_expression_orig
+        expected
+        Ast_typed.PP.type_expression_orig
+        actual
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_expected_record (type_, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid argument.@.Expected a record, but got an argument of type \
+         \"%a\". @]"
+        Type.pp
+        (type_improve type_)
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_uncomparable_types (type1, type2, loc) ->
+    let message =
+      Format.asprintf
+        "@[Invalid arguments.@.These types cannot be compared: \"%a\" and \
+         \"%a\". @]"
+        Type.pp
+        (type_improve type1)
+        Type.pp
+        (type_improve type2)
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Typer_pattern_do_not_conform_type (pat, type_, loc) ->
+    let pf ppf value =
+      match pat.location with
+      | Virtual _ ->
+        Format.fprintf
+          ppf
+          "%a "
+          (Ast_core.Pattern.pp Ast_core.PP.type_expression_option)
+          value
+      | File _ -> ()
+    in
+    let message =
+      Format.asprintf
+        "@[Pattern %anot of the expected type %a @]"
+        pf
+        pat
+        Type.pp
+        (type_improve type_)
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
   | `Typer_mut_is_polymorphic (type_, loc) ->
-    let message = "Mutable binding is polymorphic" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "location", Location.to_yojson loc
-        ; "type", Type.to_yojson type_
-        ]
+    let message =
+      Format.asprintf
+        "@[Mutable binding has the polymorphic type %a@.Hint: Add an \
+         annotation.@]"
+        Type.pp
+        type_
     in
-    json_error ~stage ~content
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
   | `Typer_unbound_module (path, loc) ->
-    let message = `String "unbound module" in
-    let loc = Format.asprintf "%a" Location.pp loc in
     let rec pp_path ppf path =
       match path with
       | [] -> failwith "Empty path"
@@ -489,335 +768,26 @@ let error_jsonformat : typer_error -> Yojson.Safe.t =
       | mvar :: path ->
         Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
     in
-    let value = Format.asprintf "%a" pp_path path in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_should_be_a_function_type (lamb_type, args, loc) ->
-    let message = `String "expected a function type" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let expression =
-      `String (Format.asprintf "%a" Ast_core.PP.expression args)
-    in
-    let lamb_type = `String (Format.asprintf "%a" Type.pp lamb_type) in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "location", loc
-        ; "expression", expression
-        ; "actual", lamb_type
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_mismatching_for_each_binder_arity
-      (expected_arity, recieved_arity, loc) ->
-    let message = "Mismatching for-each collection type" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "location", Location.to_yojson loc
-        ; "expected_arity", `Int expected_arity
-        ; "recieved_arity", `Int recieved_arity
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_pattern_redundant_case loc ->
-    let message = `String "redundant case in pattern-matching" in
-    let content =
-      `Assoc [ "message", message; "location", Location.to_yojson loc ]
-    in
-    json_error ~stage ~content
-  | `Typer_unbound_type_variable (tv, loc) ->
-    let message = `String "unbound type variable" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Type_var.pp tv in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_record_mismatch (record, type_, loc) ->
-    let message = "Record mismatch" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "record", Ast_core.expression_to_yojson record
-        ; "type", Type.to_yojson type_
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_pattern_missing_cases (syntax, ps, loc) ->
-    let message = `String "pattern-matching is not exhaustive." in
-    let patterns =
-      List.map ps ~f:(fun p ->
-          let p = Untyper.untype_pattern p in
-          `String (Desugaring.Decompiler.decompile_pattern_to_string ~syntax p))
-    in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "patterns", `List patterns
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_uncomparable_types (a, b, loc) ->
-    let message = `String "those two types are not comparable" in
-    let t1 = `String (Format.asprintf "%a" Type.pp a) in
-    let t2 = `String (Format.asprintf "%a" Type.pp b) in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "location", Location.to_yojson loc
-        ; "type_1", t1
-        ; "type_2", t2
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_not_annotated loc ->
-    let message = `String "not annotated" in
-    let content =
-      `Assoc [ "message", message; "location", Location.to_yojson loc ]
-    in
-    json_error ~stage ~content
-  | `Typer_mismatching_for_each_collection_type (collection_type, type_, loc) ->
-    let message = "Mismatching for-each collection type" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "location", Location.to_yojson loc
-        ; ( "collection_type"
-          , For_each_loop.collect_type_to_yojson collection_type )
-        ; "type", Type.to_yojson type_
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_occurs_check_failed (evar, type_, loc) ->
-    let message = "Occurs check failed" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "evar", Type_var.to_yojson evar
-        ; "type", Type.to_yojson type_
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_cannot_subtype (type1, type2, loc) ->
-    let message = "Cannot subtype" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "type1", Type.to_yojson type1
-        ; "type2", Type.to_yojson type2
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_unbound_variable (v, loc) ->
-    let message = `String "unbound variable" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Value_var.pp v in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_cannot_unify (type1, type2, loc) ->
-    let message = "Cannot unify" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "type1", Type.to_yojson type1
-        ; "type2", Type.to_yojson type2
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_ill_formed_type (type_, loc) ->
-    let message = "Ill formed type" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "type", Type.to_yojson type_
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_michelson_or_no_annotation (c, loc) ->
-    let message = `String "michelson_or must be annotated with a sum type" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Label.pp c in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
+    let message = Format.asprintf "@[Module \"%a\" not found.@]" pp_path path in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
   | `Typer_cannot_decode_texists (type_, loc) ->
     let message =
-      `String "Underspecified type. Please add additional annotations."
+      Format.asprintf
+        "@[Underspecified type %a.@.Please add additional annotations.@]"
+        Type.pp
+        type_
     in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "location", Location.to_yojson loc
-        ; "type", Type.to_yojson type_
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_pattern_do_not_match loc ->
-    let message = Format.asprintf "Pattern do not match returned expression" in
-    let content =
-      `Assoc [ "message", `String message; "location", Location.to_yojson loc ]
-    in
-    json_error ~stage ~content
-  | `Typer_unbound_mut_variable (v, loc) ->
-    let message = `String "unbound mut variable" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Value_var.pp v in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_bad_record_access (field, loc) ->
-    let message = `String "invalid record field" in
-    let field = Label.to_yojson field in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let content =
-      `Assoc [ "message", message; "location", loc; "field", field ]
-    in
-    json_error ~stage ~content
-  | `Typer_unbound_module_variable (mv, loc) ->
-    let message = `String "unbound module" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Module_var.pp mv in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_assert_equal (expected, actual, loc) ->
-    let message = `String "bad types" in
-    let content =
-      `Assoc
-        [ "location", Location.to_yojson loc
-        ; "message", message
-        ; "expected", Ast_typed.type_expression_to_yojson expected
-        ; "actual", Ast_typed.type_expression_to_yojson actual
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_comparator_composed (_a, loc) ->
-    let message =
-      `String
-        "Only composed types of not more than two element are allowed to be \
-         compared"
-    in
-    let content =
-      `Assoc [ "message", message; "location", Location.to_yojson loc ]
-    in
-    json_error ~stage ~content
-  | `Typer_bad_constructor (label, type_, loc) ->
-    let message = `String "constructor not in expected type" in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "location", Location.to_yojson loc
-        ; ( "constructor"
-          , let (Label s) = label in
-            `String s )
-        ; "type", Type.to_yojson type_
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_type_app_wrong_arity (op, e, a, loc) ->
-    let message = `String "Wrong arity in type application" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let op = Option.value_map ~default:`Null ~f:Type_var.to_yojson op in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "location", `String loc
-        ; "type_constant", op
-        ; "expected", `Int e
-        ; "actuel", `Int a
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_pattern_do_not_conform_type (pat, type_, loc) ->
-    let message = `String "pattern not of the expected type" in
-    let pat =
-      (Ast_core.Pattern.to_yojson Ast_core.type_expression_option_to_yojson) pat
-    in
-    let content =
-      `Assoc
-        [ "message", message
-        ; "type", Type.to_yojson type_
-        ; "pattern", pat
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_unbound_constructor (c, loc) ->
-    let message = `String "unbound type variable" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Label.pp c in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_expected_record (t, loc) ->
-    let message = `String "expected a record" in
-    let value = `String (Format.asprintf "%a" Type.pp t) in
-    let content =
-      `Assoc
-        [ "location", Location.to_yojson loc
-        ; "message", message
-        ; "value", value
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_unbound_texists_var (evar, loc) ->
-    let message = `String "unbound existential variable" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Type_var.pp evar in
-    let content =
-      `Assoc
-        [ "message", message; "location", `String loc; "value", `String value ]
-    in
-    json_error ~stage ~content
-  | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
-    let message = "Cannot unify" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "type1", Type.to_yojson type1
-        ; "type2", Type.to_yojson type2
-        ; "layout1", Type.layout_to_yojson layout1
-        ; "layout2", Type.layout_to_yojson layout2
-        ; "location", Location.to_yojson loc
-        ]
-    in
-    json_error ~stage ~content
-  | `Typer_corner_case (desc, loc) ->
-    let message = `String desc in
-    let content =
-      `Assoc [ "message", message; "location", Location.to_yojson loc ]
-    in
-    json_error ~stage ~content
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
   | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
-    let message = "Literal type mismatch" in
-    let content =
-      `Assoc
-        [ "message", `String message
-        ; "lit_type", Type.to_yojson lit_type
-        ; "expected_type", Type.to_yojson expected_type
-        ; "location", Location.to_yojson loc
-        ]
+    let message =
+      Format.asprintf
+        "@[Invalid type(s).@.Expected \"%a\", but got: \"%a\".@]"
+        Type.pp
+        expected_type
+        Type.pp
+        lit_type
     in
-    json_error ~stage ~content
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
