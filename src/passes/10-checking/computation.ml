@@ -261,10 +261,10 @@ module Options = struct
     options.syntax_for_errors
 end
 
-type (_, _) exit =
-  | Drop : ('a, 'a) exit
-  | Lift_type : (Type.t * 'a, Type.t * 'a) exit
-  | Lift_sig : (Context.Signature.t * 'a, Context.Signature.t * 'a) exit
+type 'a exit =
+  | Drop : 'a exit
+  | Lift_type : (Type.t * 'a) exit
+  | Lift_sig : (Context.Signature.t * 'a) exit
 
 module Context_ = Context
 
@@ -289,16 +289,13 @@ module Context : sig
     -> hole:Context.item list
     -> (unit, 'err, 'wrn) t
 
-  val lock
-    :  on_exit:('a, 'b) exit
-    -> in_:('a, 'err, 'wrn) t
-    -> ('b, 'err, 'wrn) t
+  val lock : on_exit:'a exit -> in_:('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
 
   val add
     :  Context.item list
-    -> on_exit:('a, 'b) exit
+    -> on_exit:'a exit
     -> in_:('a, 'err, 'wrn) t
-    -> ('b, 'err, 'wrn) t
+    -> ('a, 'err, 'wrn) t
 
   val get_value
     :  Value_var.t
@@ -426,13 +423,11 @@ end = struct
     set_context @@ Context.insert_at ctx ~at ~hole:(Context.of_list hole)
 
 
-  let lock (type a b) ~(on_exit : (a, b) exit) ~(in_ : (a, _, _) t)
-      : (b, _, _) t
-    =
+  let lock (type a) ~(on_exit : a exit) ~(in_ : (a, _, _) t) : (a, _, _) t =
    fun ~raise ~options ~loc (ctx, subst) ->
     let ctx, lock = Context.lock ctx in
     let (ctx, subst), result = in_ ~raise ~options ~loc (ctx, subst) in
-    let ctx, subst', (result : b) =
+    let ctx, subst', (result : a) =
       match on_exit, result with
       | Drop, result ->
         let ctx, subst' = Context.unlock ctx ~on_exit:Drop ~lock in
@@ -452,16 +447,14 @@ end = struct
     (ctx, subst), result
 
 
-  let add (type a b) items ~(on_exit : (a, b) exit) ~(in_ : (a, _, _) t)
-      : (b, _, _) t
-    =
+  let add (type a) items ~(on_exit : a exit) ~(in_ : (a, _, _) t) : (a, _, _) t =
    fun ~raise ~options ~loc (ctx, subst) ->
     let ctx, pos = Context.mark ctx in
     let ctx =
       List.fold_right items ~init:ctx ~f:(fun item ctx -> Context.add ctx item)
     in
     let (ctx, subst), result = in_ ~raise ~options ~loc (ctx, subst) in
-    let ctx, subst', (result : b) =
+    let ctx, subst', (result : a) =
       match on_exit, result with
       | Drop, result ->
         let ctx, subst' = Context.drop_until ctx ~on_exit:Drop ~pos in

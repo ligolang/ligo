@@ -34,10 +34,10 @@ module Options : sig
   val syntax : unit -> (Syntax_types.t option, 'err, 'wrn) t
 end
 
-type (_, _) exit =
-  | Drop : ('a, 'a) exit
-  | Lift_type : (Type.t * 'a, Type.t * 'a) exit
-  | Lift_sig : (Context.Signature.t * 'a, Context.Signature.t * 'a) exit
+type 'a exit =
+  | Drop : 'a exit
+  | Lift_type : (Type.t * 'a) exit
+  | Lift_sig : (Context.Signature.t * 'a) exit
 
 module Context : sig
   module Signature = Context.Signature
@@ -109,9 +109,9 @@ module Context : sig
     -> ((Type_var.t option * Type.row) option, 'err, 'wrn) t
 
   val lock
-    :  on_exit:('a, 'b) exit
+    :  on_exit:'a exit
     -> in_:('a, 'err, 'wrn) t
-    -> ('b, 'err, 'wrn) t
+    -> ('a, 'err, 'wrn) t
 
   val tapply : Type.t -> (Type.t, 'err, 'wrn) t
 
@@ -154,33 +154,33 @@ val create_type
 
 val def
   :  (Value_var.t * Param.mutable_flag * Type.t) list
-  -> on_exit:('a, 'b) exit
+  -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
-  -> ('b, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
 
 val def_type
   :  (Type_var.t * Type.t) list
-  -> on_exit:('a, 'b) exit
+  -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
-  -> ('b, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
 
 val def_type_var
   :  (Type_var.t * Kind.t) list
-  -> on_exit:('a, 'b) exit
+  -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
-  -> ('b, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
 
 val def_module
   :  (Module_var.t * Context.Signature.t) list
-  -> on_exit:('a, 'b) exit
+  -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
-  -> ('b, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
 
 val def_sig_item
   :  Context.Signature.item list
-  -> on_exit:('a, 'b) exit
+  -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
-  -> ('b, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
 
 val generalize
   :  (Type.t * 'a, 'err, 'wrn) t
