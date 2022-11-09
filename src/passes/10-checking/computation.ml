@@ -117,7 +117,7 @@ let ctx_init ?env () =
   match env with
   | None -> Context.empty
   | Some env ->
-    Environment.fold env ~init:Context.empty ~f:(fun ctx decl ->
+    Environment.foldi env ~init:Context.empty ~f:(fun _i ctx decl ->
         (* Format.printf "%d: %a\n" i (Ast_typed.PP.declaration ~use_hidden:false) decl; *)
         match Location.unwrap decl with
         | D_value { binder; expr; attr = _ } ->
@@ -134,6 +134,7 @@ let ctx_init ?env () =
 
 let run_elab t ~raise ~options ?env () =
   let ctx = ctx_init ?env () in
+  (* Format.printf "@[Context:@.%a@]" Context.pp ctx; *)
   let ctx, pos = Context.mark ctx in
   let (ctx, subst), elab =
     t ~raise ~options ~loc:Location.generated (ctx, Substitution.empty)
@@ -301,22 +302,60 @@ module Context : sig
 
   val get_value
     :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err with_loc)
+    -> ( ( Context.mutable_flag * Type.t
+         , [ `Mut_var_captured | `Not_found ] )
+         result
+       , 'err
+       , 'wrn )
+       t
+
+  val get_value_exn
+    :  Value_var.t
+    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
     -> (Context.mutable_flag * Type.t, 'err, 'wrn) t
 
-  val get_imm : Value_var.t -> error:'err with_loc -> (Type.t, 'err, 'wrn) t
-  val get_mut : Value_var.t -> error:'err with_loc -> (Type.t, 'err, 'wrn) t
-  val get_type_var : Type_var.t -> error:'err with_loc -> (Kind.t, 'err, 'wrn) t
-  val get_type : Type_var.t -> error:'err with_loc -> (Type.t, 'err, 'wrn) t
+  val get_imm : Value_var.t -> (Type.t option, 'err, 'wrn) t
 
-  val get_module
+  val get_imm_exn
+    :  Value_var.t
+    -> error:'err Errors.with_loc
+    -> (Type.t, 'err, 'wrn) t
+
+  val get_mut : Value_var.t -> (Type.t option, 'err, 'wrn) t
+
+  val get_mut_exn
+    :  Value_var.t
+    -> error:'err Errors.with_loc
+    -> (Type.t, 'err, 'wrn) t
+
+  val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
+
+  val get_type_var_exn
+    :  Type_var.t
+    -> error:'err Errors.with_loc
+    -> (Kind.t, 'err, 'wrn) t
+
+  val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
+
+  val get_type_exn
+    :  Type_var.t
+    -> error:'err Errors.with_loc
+    -> (Type.t, 'err, 'wrn) t
+
+  val get_module : Module_var.t -> (Signature.t option, 'err, 'wrn) t
+
+  val get_module_exn
     :  Module_var.t
-    -> error:'err with_loc
+    -> error:'err Errors.with_loc
     -> (Signature.t, 'err, 'wrn) t
 
   val get_signature
     :  Module_var.t List.Ne.t
-    -> error:'err with_loc
+    -> (Signature.t option, 'err, 'wrn) t
+
+  val get_signature_exn
+    :  Module_var.t List.Ne.t
+    -> error:'err Errors.with_loc
     -> (Signature.t, 'err, 'wrn) t
 
   val get_texists_var
@@ -456,38 +495,35 @@ end = struct
     f ctx
 
 
-  let get_value var ~error : _ t =
-    lift_ctx (fun ctx -> Context.get_value ctx var) >>= raise_result ~error
+  let get_value var : _ t = lift_ctx (fun ctx -> Context.get_value ctx var)
+  let get_value_exn var ~error : _ t = get_value var >>= raise_result ~error
+  let get_imm var : _ t = lift_ctx (fun ctx -> Context.get_imm ctx var)
+  let get_imm_exn var ~error : _ t = get_imm var >>= raise_opt ~error
+  let get_mut var : _ t = lift_ctx (fun ctx -> Context.get_mut ctx var)
+  let get_mut_exn var ~error : _ t = get_mut var >>= raise_opt ~error
+
+  let get_type_var tvar : _ t =
+    lift_ctx (fun ctx -> Context.get_type_var ctx tvar)
 
 
-  let get_imm var ~error : _ t =
-    lift_ctx (fun ctx -> Context.get_imm ctx var) >>= raise_opt ~error
-
-
-  let get_mut var ~error : _ t =
-    lift_ctx (fun ctx -> Context.get_mut ctx var) >>= raise_opt ~error
-
-
-  let get_type_var tvar ~error =
-    lift_ctx (fun ctx -> Context.get_type_var ctx tvar) >>= raise_opt ~error
-
-
-  let get_type tvar ~error =
-    lift_ctx (fun ctx -> Context.get_type ctx tvar) >>= raise_opt ~error
-
+  let get_type_var_exn tvar ~error = get_type_var tvar >>= raise_opt ~error
+  let get_type tvar : _ t = lift_ctx (fun ctx -> Context.get_type ctx tvar)
+  let get_type_exn tvar ~error = get_type tvar >>= raise_opt ~error
 
   let get_texists_var tvar ~error : _ t =
     lift_ctx (fun ctx -> Context.get_texists_var ctx tvar) >>= raise_opt ~error
 
 
-  let get_signature path ~error : _ t =
-    lift_ctx (fun ctx -> Context.get_signature ctx path) >>= raise_opt ~error
+  let get_signature path : _ t =
+    lift_ctx (fun ctx -> Context.get_signature ctx path)
 
 
-  let get_module mvar ~error : _ t =
-    lift_ctx (fun ctx -> Context.get_module ctx mvar) >>= raise_opt ~error
+  let get_signature_exn path ~error : _ t =
+    get_signature path >>= raise_opt ~error
 
 
+  let get_module mvar : _ t = lift_ctx (fun ctx -> Context.get_module ctx mvar)
+  let get_module_exn mvar ~error : _ t = get_module mvar >>= raise_opt ~error
   let get_sum constr : _ t = lift_ctx (fun ctx -> Context.get_sum ctx constr)
 
   let get_record fields : _ t =
@@ -748,6 +784,12 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
   | _ -> fail ()
 
 
+(* let unify type1 type2 : (unit, _, _) t =
+ fun ~raise ~options ~loc state ->
+  Trace.try_with
+    (fun ~raise ~catch:_ -> unify type1 type2 ~raise ~options ~loc state)
+    (fun ~catch:_ _ -> raise.error (cannot_unify type1 type2 loc)) *)
+
 type subtype_error = unify_error
 
 module O = Ast_typed
@@ -848,6 +890,13 @@ let for_all kind =
   return (Type.t_variable ~loc:(Type_var.get_location tvar) tvar ())
 
 
+let lexists () =
+  let open Let_syntax in
+  let%bind lvar, layout = fresh_lexists () in
+  let%bind () = Context.push [ C_lexists_var lvar ] in
+  return layout
+
+
 let def bindings ~on_exit ~in_ =
   Context.add
     (List.map bindings ~f:(fun (var, mut_flag, type_) ->
@@ -896,7 +945,9 @@ let hash_context () =
   return ()
 
 
-let generalize (t : (Type.t * 'a, _, _) t) : (Type.t * (Type_var.t * Kind.t) list * 'a, _, _) t =
+let generalize (t : (Type.t * 'a, _, _) t)
+    : (Type.t * (Type_var.t * Kind.t) list * 'a, _, _) t
+  =
  fun ~raise ~options ~loc (ctx, subst) ->
   let ctx, pos = Context_.mark ctx in
   let (ctx, subst), (type_, result) = t ~raise ~options ~loc (ctx, subst) in
@@ -923,9 +974,8 @@ let try_all (ts : ('a, 'err, 'wrn) t list) : ('a, 'err, 'wrn) t =
  fun ~raise ~options ~loc state ->
   Trace.bind_exists
     ~raise
-    ( (fun ~raise ->
-        raise.error (corner_case "Computation.try_all recieved empty list" loc))
-    , List.map ts ~f:(fun t ~raise -> t ~raise ~options ~loc state) )
+    (List.Ne.of_list
+    @@ List.map ts ~f:(fun t ~raise -> t ~raise ~options ~loc state))
 
 
 module With_frag = struct
@@ -1006,6 +1056,7 @@ module With_frag = struct
   end
 
   let exists kind = lift (exists kind)
+  let lexists () = lift (lexists ())
   let unify type1 type2 = lift (unify type1 type2)
   let subtype ~received ~expected = lift (subtype ~received ~expected)
 end

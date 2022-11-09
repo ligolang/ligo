@@ -318,6 +318,7 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
             let%bind inferred = inferred in
             return ((i, arg) :: inferred)
           | Checked -> inferred)
+      >>| List.rev
     in
     (* [output_args] table is used to store elaborated arguments. Later used to sort arguments by position. *)
     let output_args = Hashtbl.create (module Int) in

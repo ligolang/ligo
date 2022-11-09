@@ -17,6 +17,7 @@ let memoize (type a b) ?(size = 100) (key : a hashable) (f : a -> b) =
       Hashtbl.add table key result;
       result
 
+
 (* 
 let rec_memoize
     (type a b)
@@ -35,7 +36,6 @@ let rec_memoize
       result
   in
   memo_f *)
-
 
 let memoize2
     (type a b c)
@@ -1026,7 +1026,11 @@ let get_record
               List.for_all2
                 record_type_kv
                 record_type_kv'
-                ~f:[%equal: Label.t * Type.t Rows.row_element_mini_c]
+                ~f:(fun (Label ka, va) (Label kb, vb) ->
+                  (* Cannot use [%equal: Label.t * Type.row_element] bcs we don't check equality
+                     of michelson annotation *)
+                  String.equal ka kb
+                  && Type.equal va.associated_type vb.associated_type)
             with
            | Ok result -> Option.some_if result (type_.orig_var, record_type')
            | Unequal_lengths -> None)

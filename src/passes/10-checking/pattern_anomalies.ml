@@ -102,16 +102,16 @@ let are_keys_numeric keys =
 
 let rec to_list_pattern ~(raise : raise) ~loc simple_pattern : _ AST.Pattern.t =
   match simple_pattern with
-    SP_Wildcard _ -> Location.wrap @@ AST.Pattern.P_var wild_binder
+    SP_Wildcard _ -> Location.wrap ~loc @@ AST.Pattern.P_var wild_binder
   | SP_Constructor (Label "#NIL", _, _) ->
-    Location.wrap @@ AST.Pattern.P_list (List [])
+    Location.wrap ~loc @@ AST.Pattern.P_list (List [])
   | SP_Constructor (Label "#CONS", sps, t) ->
     let rsps = List.rev sps in
     let tl = List.hd_exn rsps in
     let hd = List.rev (List.tl_exn rsps) in
     let hd = to_original_pattern ~raise ~loc hd (C.get_t_list_exn t) in
     let tl = to_list_pattern ~raise ~loc tl in
-    Location.wrap @@ AST.Pattern.P_list (Cons (hd, tl))
+    Location.wrap ~loc @@ AST.Pattern.P_list (Cons (hd, tl))
   | SP_Constructor (Label c, _, _) ->
     raise.error @@
       Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c) loc
@@ -121,15 +121,15 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
   match simple_patterns with
     [] -> raise.error @@
       Errors.corner_case "edge case: to_original_pattern empty patterns" loc
-  | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap @@ P_unit
-  | SP_Wildcard _::[] -> Location.wrap @@ P_var wild_binder
+  | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap ~loc @@ P_unit
+  | SP_Wildcard _::[] -> Location.wrap ~loc @@ P_var wild_binder
   | (SP_Constructor (Label "#CONS", _, _) as simple_pattern)::[]
   | (SP_Constructor (Label "#NIL", _, _) as simple_pattern)::[] ->
     to_list_pattern ~raise ~loc simple_pattern
   | SP_Constructor (c, sps, t)::[] ->
     let t = get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum t)) in
     let ps = to_original_pattern ~raise ~loc sps t in
-    Location.wrap @@ P_variant (c, ps)
+    Location.wrap ~loc @@ P_variant (c, ps)
   | _ ->
     (match ty.type_content with
     AST.T_record { fields ; _ } ->
@@ -145,9 +145,9 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
           )
       in
       if are_keys_numeric labels then
-        Location.wrap @@ P_tuple ps
+        Location.wrap ~loc @@ P_tuple ps
       else
-        Location.wrap @@ P_record (Record.of_list (List.zip_exn labels ps))
+        Location.wrap ~loc @@ P_record (Record.of_list (List.zip_exn labels ps))
     | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple" ty.location) 
 
 let print_matrix matrix =

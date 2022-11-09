@@ -44,35 +44,58 @@ module Context : sig
 
   val get_value
     :  Value_var.t
+    -> ( ( Context.mutable_flag * Type.t
+         , [ `Mut_var_captured | `Not_found ] )
+         result
+       , 'err
+       , 'wrn )
+       t
+
+  val get_value_exn
+    :  Value_var.t
     -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
     -> (Context.mutable_flag * Type.t, 'err, 'wrn) t
 
-  val get_imm
+  val get_imm : Value_var.t -> (Type.t option, 'err, 'wrn) t
+
+  val get_imm_exn
     :  Value_var.t
     -> error:'err Errors.with_loc
     -> (Type.t, 'err, 'wrn) t
 
-  val get_mut
+  val get_mut : Value_var.t -> (Type.t option, 'err, 'wrn) t
+
+  val get_mut_exn
     :  Value_var.t
     -> error:'err Errors.with_loc
     -> (Type.t, 'err, 'wrn) t
 
-  val get_type_var
+  val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
+
+  val get_type_var_exn
     :  Type_var.t
     -> error:'err Errors.with_loc
     -> (Kind.t, 'err, 'wrn) t
 
-  val get_type
+  val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
+
+  val get_type_exn
     :  Type_var.t
     -> error:'err Errors.with_loc
     -> (Type.t, 'err, 'wrn) t
 
-  val get_module
+  val get_module : Module_var.t -> (Signature.t option, 'err, 'wrn) t
+
+  val get_module_exn
     :  Module_var.t
     -> error:'err Errors.with_loc
     -> (Signature.t, 'err, 'wrn) t
 
   val get_signature
+    :  Module_var.t List.Ne.t
+    -> (Signature.t option, 'err, 'wrn) t
+
+  val get_signature_exn
     :  Module_var.t List.Ne.t
     -> error:'err Errors.with_loc
     -> (Signature.t, 'err, 'wrn) t
@@ -122,6 +145,7 @@ val subtype
 
 val exists : Kind.t -> (Type.t, 'err, 'wrn) t
 val for_all : Kind.t -> (Type.t, 'err, 'wrn) t
+val lexists : unit -> (Type.layout, 'err, 'wrn) t
 
 val create_type
   :  ?meta:Ast_core.type_expression
@@ -220,6 +244,7 @@ module With_frag : sig
   end
 
   val exists : Kind.t -> (Type.t, 'err, 'wrn) t
+  val lexists : unit -> (Type.layout, 'err, 'wrn) t
   val unify : Type.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
 
   val subtype

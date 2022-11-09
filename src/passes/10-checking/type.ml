@@ -61,88 +61,6 @@ and layout =
 
 type constr = ?loc:Location.t -> ?meta:Ast_core.type_expression -> unit -> t
 
-let pp_layout ppf layout =
-  match layout with
-  | L_comb -> Format.fprintf ppf "comb"
-  | L_tree -> Format.fprintf ppf "tree"
-  | L_exists lvar -> Format.fprintf ppf "^%a" Layout_var.pp lvar
-
-
-let pp_lmap_sep value sep ppf lmap =
-  let lst = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lmap in
-  let new_pp ppf (k, v) =
-    Format.fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v
-  in
-  Format.fprintf ppf "%a" (PP.list_sep new_pp sep) lst
-
-
-let pp_lmap_sep_d x = pp_lmap_sep x (PP.tag " ,@ ")
-
-let pp_record_sep value sep ppf (m : 'a Record.t) =
-  let lst = Record.LMap.to_kv_list m in
-  Format.fprintf ppf "%a" (pp_lmap_sep value sep) lst
-
-
-let pp_tuple_sep value sep ppf m =
-  assert (Record.is_tuple m);
-  let lst = Record.tuple_of_record m in
-  let new_pp ppf (_, v) = Format.fprintf ppf "%a" value v in
-  Format.fprintf ppf "%a" (PP.list_sep new_pp sep) lst
-
-
-let pp_tuple_or_record_sep_t
-    value
-    format_record
-    sep_record
-    format_tuple
-    sep_tuple
-    ppf
-    m
-  =
-  if Record.is_tuple m
-  then Format.fprintf ppf format_tuple (pp_tuple_sep value (PP.tag sep_tuple)) m
-  else
-    Format.fprintf ppf format_record (pp_record_sep value (PP.tag sep_record)) m
-
-
-let pp_tuple_or_record_sep_type value =
-  pp_tuple_or_record_sep_t
-    value
-    "@[<h>record[%a]@]"
-    " ,@ "
-    "@[<h>( %a )@]"
-    " *@ "
-
-
-let rec pp ppf t =
-  match t.content with
-  | T_variable tvar -> Type_var.pp ppf tvar
-  | T_exists tvar -> Format.fprintf ppf "^%a" Type_var.pp tvar
-  | T_arrow arr -> Arrow.pp pp ppf arr
-  | T_construct construct -> pp_construct ppf construct
-  | T_singleton lit -> Literal_value.pp ppf lit
-  | T_abstraction abs -> Abstraction.pp_type_abs pp ppf abs
-  | T_for_all for_all -> Abstraction.pp_forall pp ppf for_all
-  | T_sum row ->
-    Format.fprintf
-      ppf
-      "@[<h>sum[%a]@]"
-      (pp_lmap_sep_d pp_row_elem)
-      (Record.LMap.to_kv_list_rev row.fields)
-  | T_record row -> pp_tuple_or_record_sep_type pp_row_elem ppf row.fields
-
-
-and pp_construct ppf { constructor; parameters; _ } =
-  Format.fprintf
-    ppf
-    "%s %a"
-    (Literal_types.to_string constructor)
-    (PP.list_sep_d_par pp)
-    parameters
-
-
-and pp_row_elem ppf (row_elem : row_element) = pp ppf row_elem.associated_type
-
 let rec free_vars t =
   let module Set = Type_var.Set in
   match t.content with
@@ -463,3 +381,125 @@ let get_t__type_ t = get_t_unary_construct t Literal_types._type_
 
 let get_t__type_ t = get_t_binary_construct t Literal_types._type_
   [@@map _type_, ("map", "big_map")]
+
+
+let get_t_bool t : unit option =
+  match t.content with
+  | content when equal_content content (t_bool ()).content -> Some ()
+  | _ -> None
+
+
+let get_t_option t =
+  let l_none = Label.of_string "None" in
+  let l_some = Label.of_string "Some" in
+  match t.content with
+  | T_sum { fields; _ } ->
+    let keys = Record.LMap.keys fields in
+    (match keys with
+    | [ a; b ]
+      when (Label.equal a l_none && Label.equal b l_some)
+           || (Label.equal a l_some && Label.equal b l_none) ->
+      let some = Record.LMap.find l_some fields in
+      Some some.Rows.associated_type
+    | _ -> None)
+  | _ -> None
+
+
+let pp_layout ppf layout =
+  match layout with
+  | L_comb -> Format.fprintf ppf "comb"
+  | L_tree -> Format.fprintf ppf "tree"
+  | L_exists lvar -> Format.fprintf ppf "^%a" Layout_var.pp lvar
+
+
+let pp_lmap_sep value sep ppf lmap =
+  let lst = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lmap in
+  let new_pp ppf (k, v) =
+    Format.fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v
+  in
+  Format.fprintf ppf "%a" (PP.list_sep new_pp sep) lst
+
+
+let pp_lmap_sep_d x = pp_lmap_sep x (PP.tag " ,@ ")
+
+let pp_record_sep value sep ppf (m : 'a Record.t) =
+  let lst = Record.LMap.to_kv_list m in
+  Format.fprintf ppf "%a" (pp_lmap_sep value sep) lst
+
+
+let pp_tuple_sep value sep ppf m =
+  assert (Record.is_tuple m);
+  let lst = Record.tuple_of_record m in
+  let new_pp ppf (_, v) = Format.fprintf ppf "%a" value v in
+  Format.fprintf ppf "%a" (PP.list_sep new_pp sep) lst
+
+
+let pp_tuple_or_record_sep_t
+    value
+    format_record
+    sep_record
+    format_tuple
+    sep_tuple
+    ppf
+    m
+  =
+  if Record.is_tuple m
+  then Format.fprintf ppf format_tuple (pp_tuple_sep value (PP.tag sep_tuple)) m
+  else
+    Format.fprintf ppf format_record (pp_record_sep value (PP.tag sep_record)) m
+
+
+let pp_tuple_or_record_sep_type value =
+  pp_tuple_or_record_sep_t
+    value
+    "@[<h>record[%a]@]"
+    " ,@ "
+    "@[<h>( %a )@]"
+    " *@ "
+
+
+let rec pp ppf t =
+  match t.content with
+  | T_variable tvar -> Type_var.pp ppf tvar
+  | T_exists tvar -> Format.fprintf ppf "^%a" Type_var.pp tvar
+  | T_arrow arr -> Arrow.pp pp ppf arr
+  | T_construct construct -> pp_construct ppf construct
+  | T_singleton lit -> Literal_value.pp ppf lit
+  | T_abstraction abs -> Abstraction.pp_type_abs pp ppf abs
+  | T_for_all for_all -> Abstraction.pp_forall pp ppf for_all
+  | T_sum row ->
+    Format.fprintf
+      ppf
+      "@[<h>sum[%a]@]"
+      (pp_lmap_sep_d pp_row_elem)
+      (Record.LMap.to_kv_list_rev row.fields)
+  | T_record row ->
+    Format.fprintf ppf "%a" (pp_tuple_or_record_sep_type pp_row_elem) row.fields
+
+
+and pp_construct ppf { constructor; parameters; _ } =
+  Format.fprintf
+    ppf
+    "%s%a"
+    (Literal_types.to_string constructor)
+    (PP.list_sep_d_par pp)
+    parameters
+
+
+and pp_row_elem ppf (row_elem : row_element) = pp ppf row_elem.associated_type
+
+let bool ppf : unit = Format.fprintf ppf "%a" Type_var.pp Literal_types.v_bool
+
+and option ppf t : unit =
+  match get_t_option t with
+  | Some t -> Format.fprintf ppf "option (%a)" pp t
+  | None -> Format.fprintf ppf "option ('a)"
+
+
+let pp ppf t =
+  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
+  if Option.is_some (get_t_bool t)
+  then bool ppf
+  else if Option.is_some (get_t_option t)
+  then option ppf t
+  else pp ppf t
