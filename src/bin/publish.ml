@@ -31,12 +31,43 @@ let object__to_yojson o =
   `Assoc (List.fold o ~init:[] ~f:(fun kvs (k, v) -> (k, `String v) :: kvs))
 
 
-type dist =
-  { integrity : string
-  ; shasum : string
-  ; tarball : string
-  }
-[@@deriving to_yojson]
+module FilesInfo = struct
+  type t =
+    { file_count : int
+    ; unpacked_size : int
+    ; tarball_content : bytes
+    ; sha1 : string
+    ; sha512 : string
+    }
+
+  let make ~size ~fcount ~sha1 ~sha512 ~tarball =
+    { file_count = fcount
+    ; unpacked_size = size
+    ; sha1
+    ; sha512
+    ; tarball_content = tarball
+    }
+end
+
+module Dist = struct
+  type t =
+    { integrity : string
+    ; shasum : string
+    ; tarball : string
+    ; file_count : int [@key "fileCount"]
+    ; unpacked_size : int [@key "unpackedSize"]
+    }
+  [@@deriving to_yojson]
+
+  let make ~tarball ~files_info =
+    let FilesInfo.{ sha1; sha512; file_count; unpacked_size; _ } = files_info in
+    { integrity = Format.sprintf "sha512-%s" (Base64.encode_exn sha512)
+    ; shasum = sha1
+    ; tarball
+    ; file_count
+    ; unpacked_size
+    }
+end
 
 type author = { name : string } [@@deriving to_yojson]
 
@@ -57,9 +88,51 @@ module Version = struct
     ; readme : string
     ; bugs : LigoManifest.Bugs.t
     ; id : string [@key "_id"]
-    ; dist : dist
+    ; dist : Dist.t
     }
   [@@deriving to_yojson]
+
+  let make ~ligo_registry ~version ~files_info ~manifest =
+    let LigoManifest.
+          { name
+          ; version
+          ; main
+          ; scripts
+          ; dependencies
+          ; dev_dependencies
+          ; description
+          ; readme
+          ; author
+          ; type_
+          ; repository
+          ; storage_fn
+          ; storage_arg
+          ; bugs
+          ; _
+          }
+      =
+      manifest
+    in
+    let tarball =
+      Format.sprintf "%s/%s/-/%s-%s.tgz" ligo_registry name name version
+    in
+    { main
+    ; name
+    ; author = { name = author }
+    ; type_
+    ; storage_fn
+    ; storage_arg
+    ; repository
+    ; version
+    ; description
+    ; scripts
+    ; dependencies
+    ; dev_dependencies
+    ; readme
+    ; bugs
+    ; id = Format.sprintf "%s@%s" name version
+    ; dist = Dist.make ~tarball ~files_info
+    }
 end
 
 module Versions = struct
@@ -77,6 +150,12 @@ module Attachment = struct
     ; length : int
     }
   [@@deriving to_yojson]
+
+  let make ~gzipped_tarball ~size =
+    { content_type = "application/octet-stream"
+    ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
+    ; length = size
+    }
 end
 
 module Attachments = struct
@@ -101,7 +180,7 @@ module Body = struct
     }
   [@@deriving to_yojson]
 
-  let make ~ligo_registry ~sha512 ~sha1 ~gzipped_tarball ~manifest =
+  let make ~ligo_registry ~files_info ~manifest =
     let LigoManifest.
           { name
           ; version
@@ -122,43 +201,14 @@ module Body = struct
       =
       manifest
     in
+    let gzipped_tarball = files_info.FilesInfo.tarball_content in
+    let v = Version.make ~ligo_registry ~version ~files_info ~manifest in
+    let versions = SMap.add version v SMap.empty in
     { id = name
     ; name
     ; description
     ; dist_tags = { latest = version }
-    ; versions =
-        SMap.add
-          version
-          Version.
-            { main
-            ; name
-            ; author = { name = author }
-            ; type_
-            ; storage_fn
-            ; storage_arg
-            ; repository
-            ; version
-            ; description
-            ; scripts
-            ; dependencies
-            ; dev_dependencies
-            ; readme
-            ; bugs
-            ; id = Format.sprintf "%s@%s" name version
-            ; dist =
-                { integrity =
-                    Format.sprintf "sha512-%s" (Base64.encode_exn sha512)
-                ; shasum = sha1
-                ; tarball =
-                    Format.sprintf
-                      "%s/%s/-/%s-%s.tgz"
-                      ligo_registry
-                      name
-                      name
-                      version
-                }
-            }
-          SMap.empty
+    ; versions
     ; readme
     ; attachments =
         SMap.add
@@ -238,13 +288,13 @@ let ignore_dirs =
   SSet.of_list [ ".ligo"; "_esy"; "node_modules"; "esy.lock"; ".git" ]
 
 
-let rec get_all_files : string -> string list Lwt.t =
+let rec get_all_files : string -> (string * int) list Lwt.t =
  fun file_or_dir ->
   let open Lwt.Syntax in
   let* status = Lwt_unix.lstat file_or_dir in
   let* files =
     match status.st_kind with
-    | S_REG -> Lwt.return [ file_or_dir ]
+    | S_REG -> Lwt.return [ file_or_dir, status.st_size ]
     | S_DIR ->
       if SSet.mem ignore_dirs (Filename.basename file_or_dir)
       then Lwt.return []
@@ -281,20 +331,24 @@ let from_dir ~dir f =
 let tar ~name ~version dir =
   let open Lwt.Syntax in
   let* files = from_dir ~dir (fun () -> get_all_files ".") in
+  let files, sizes = List.unzip files in
+  let size = List.fold sizes ~init:0 ~f:( + ) in
+  let () = Format.printf "Size = %d\n" size in
+  let fcount = List.length files in
   let fname = Filename_unix.temp_file name version in
   let fd =
     Caml_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666
   in
   let () = Tar_unix.Archive.create files fd in
   let () = Caml_unix.close fd in
-  Lwt.return fname
+  Lwt.return (fcount, fname, size)
 
 
 let tar_gzip ~name ~version dir =
   let open Lwt.Syntax in
-  let* fname = tar ~name ~version dir in
+  let* fcount, fname, size = tar ~name ~version dir in
   let buf = gzip fname in
-  Lwt.return (Buffer.contents_bytes buf)
+  Lwt.return (fcount, Buffer.contents_bytes buf)
 
 
 let validate_storage ~manifest =
@@ -340,26 +394,23 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name; version; _ } = manifest in
   let () = Format.printf "Packing tarball... %!" in
-  let* gzipped_tarball = tar_gzip project_root ~name ~version in
+  let* fcount, tarball = tar_gzip project_root ~name ~version in
   let () = Printf.printf "Done\n%!" in
-  let len = Bytes.length gzipped_tarball in
+  let len = Bytes.length tarball in
   let sha1 =
-    gzipped_tarball
-    |> Digestif.SHA1.digest_bytes ~off:0 ~len
-    |> Digestif.SHA1.to_hex
+    tarball |> Digestif.SHA1.digest_bytes ~off:0 ~len |> Digestif.SHA1.to_hex
   in
   let sha512 =
-    gzipped_tarball
+    tarball
     |> Digestif.SHA512.digest_bytes ~off:0 ~len
     |> Digestif.SHA512.to_raw_string
   in
+  let files_info = FilesInfo.make ~size:len ~sha1 ~sha512 ~fcount ~tarball in
   let* result = validate_storage ~manifest in
   (* validate_main_file *)
   match result with
   | Ok () ->
-    let body =
-      Body.make ~ligo_registry ~sha512 ~sha1 ~gzipped_tarball ~manifest
-    in
+    let body = Body.make ~ligo_registry ~files_info ~manifest in
     Lwt.return @@ Ok body
   | Error e -> Lwt.return @@ Error e
 
@@ -400,11 +451,16 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
       (* Pattern match and show error if no project root *)
       let project_root = Option.value_exn project_root in
       let body = publish ~project_root ~token ~ligo_registry ~manifest in
+      let body =
+        (* TODO: fix this... *)
+        match Lwt_main.run body with
+        | Ok body -> body
+        | Error e -> failwith e
+      in
       let request =
-        Lwt.bind body (fun body ->
-            match body with
-            | Ok body -> http ~token ~body ~ligo_registry ~manifest
-            | Error e -> Lwt.return (Error e))
+        if dry_run
+        then Lwt.return (Error "TODO: dry-run")
+        else http ~token ~body ~ligo_registry ~manifest
       in
       let () = Printf.printf "Uploading package... %!" in
       (match Lwt_main.run request with
