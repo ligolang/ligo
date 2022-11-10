@@ -19,7 +19,7 @@ let toplevel : ?warning_as_error:bool -> display_format:ex_display_format -> dis
         | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t (Displayable {value;format=Main_warnings.format})) in
     let warns_str = String.concat ~sep:"\n" warns in
     if not (List.is_empty warns) && warning_as_error then
-        Error (warns_str,warns_str)
+        Error (warns_str ^ as_str,warns_str)
     else
     match value with
     | Ok _ -> Ok (as_str,warns_str)

@@ -1,0 +1,6 @@
+let check_list = (l, predicate) : unit =>
+    List.iter(predicate, l);
+
+let i_dont_care  = _ => assert(false);
+
+const main = l => check_list(l, i_dont_care)

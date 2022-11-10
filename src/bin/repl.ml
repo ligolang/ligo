@@ -3,7 +3,7 @@ open Ligo_prim
 
 (* Helpers *)
 
-module ModResHelpers = Preprocessor.ModRes.Helpers
+module ModRes = Preprocessor.ModRes
 
 let get_declarations_core (core_prg : Ast_core.program )=
   (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
@@ -14,7 +14,7 @@ let get_declarations_core (core_prg : Ast_core.program )=
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
     let module_variable = try Module_var.to_name_exn module_variable with _ -> "" in
-    not @@ Caml.Sys.file_exists module_variable in
+    not @@ (Caml.Sys.file_exists module_variable) in
 
   let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
   let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
@@ -139,7 +139,8 @@ let try_declaration ~raise ~raw_options state s =
      raise.error `Repl_unexpected
 
 let import_file ~raise ~raw_options state file_name module_name =
-  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
+  let file_name =
+    ModRes.Helpers.resolve ~file:file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
@@ -152,7 +153,8 @@ let import_file ~raise ~raw_options state file_name module_name =
   (state, Just_ok)
 
 let use_file ~raise ~raw_options state file_name =
-  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
+  let file_name =
+    ModRes.Helpers.resolve ~file:file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
@@ -296,5 +298,5 @@ let main (raw_options : Raw_options.t) display_format now amount balance sender 
       try
         loop ~raw_options syntax display_format term history state 1
       with | LTerm_read_line.Interrupt -> Ok("","")
-           | Sys.Break -> Ok("","")
+           | Sys_unix.Break -> Ok("","")
     end

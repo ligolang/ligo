@@ -146,6 +146,7 @@ intersects (Range (ll1, lc1, _) (ll2, lc2, _) lf) (Range (rl1, rc1, _) (rl2, rc2
   -- Otherwise, the ranges are disjoint.
   | otherwise = False
 
+-- | Inclusion order
 instance Lattice Range where
   Range (ll1, lc1, _) (ll2, lc2, _) _
     `leq` Range (rl1, rc1, _) (rl2, rc2, _) _ =
@@ -156,6 +157,7 @@ instance Eq Range where
   Range (l, c, _) (r, d, _) f == Range (l1, c1, _) (r1, d1, _) f1 =
     (l, c, r, d, f) == (l1, c1, r1, d1, f1)
 
+-- | Lexicographic order
 instance Ord Range where
   Range (l, c, _) (r, d, _) f `compare` Range (l1, c1, _) (r1, d1, _) f1 =
     compare l l1 <> compare c c1 <> compare r r1 <> compare d d1 <> compare f f1

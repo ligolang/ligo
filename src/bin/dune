@@ -29,7 +29,7 @@
  (name install)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix)
+ (libraries cli_helpers simple-utils lwt lwt.unix yojson)
  (modules install))
 
 (library
@@ -37,7 +37,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix decompress.gz
-   bigstringaf base64 cohttp-lwt-unix yojson digestif)
+   bigstringaf base64 cohttp-lwt-unix yojson digestif core_unix core_unix.command_unix core_unix.filename_unix)
  (preprocess (pps ppx_deriving_yojson))
  (modules publish))
 

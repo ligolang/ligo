@@ -7,29 +7,26 @@ module AST = Ast_aggregated
 include AST.Types
 module Env = Ligo_interpreter.Environment
 module Monad = Execution_monad
-module ModResHelpers = Preprocessor.ModRes.Helpers
+module ModRes = Preprocessor.ModRes
 
 type interpreter_error = Errors.interpreter_error
-
-let not_comparable_string = v_string "Not comparable"
 
 (* [resolve_contract_file ~mod_res ~source_file ~contract_file] tries to resolve
    [contract_file] w.r.t. to process directory
    if that fails it tries to resolve it as a relative path w.r.t. directory of [source_file]
    if that fails it tries to resolve it as a package path using [mod_res] *)
 let resolve_contract_file ~mod_res ~source_file ~contract_file =
-  match Sys.file_exists contract_file with
+  match Sys_unix.file_exists contract_file with
   | `Yes -> contract_file
   | `No | `Unknown ->
     (match source_file with
      | Some source_file ->
        let d = Filename.dirname source_file in
        let s = Filename.concat d contract_file in
-       (match Sys.file_exists s with
+       (match Sys_unix.file_exists s with
         | `Yes -> s
-        | `No | `Unknown ->
-          ModResHelpers.resolve_file_name contract_file mod_res)
-     | None -> ModResHelpers.resolve_file_name contract_file mod_res)
+        | `No | `Unknown -> ModRes.Helpers.resolve ~file:contract_file mod_res)
+     | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
 
 
 let get_file_from_location loc =
@@ -76,139 +73,143 @@ let wrap_compare_result comp cmpres loc calltrace =
   | C_LE -> return (cmpres <= 0)
   | C_GT -> return (cmpres > 0)
   | C_GE -> return (cmpres >= 0)
-  | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
+  | _ -> fail @@ Errors.meta_lang_eval loc calltrace @@ v_string "Only valid comparisons are: EQ, NEQ, LT, LE, GT, GE"
 
+let compare_constants ~raise o1 o2 loc calltrace =
+  match o1, o2 with
+  | V_Ct (C_int64 a'), V_Ct (C_int64 b') ->
+    Int64.compare a' b'
+  | V_Ct (C_int a'), V_Ct (C_int b')
+  | V_Ct (C_mutez a'), V_Ct (C_mutez b')
+  | V_Ct (C_timestamp a'), V_Ct (C_timestamp b')
+  | V_Ct (C_nat a'), V_Ct (C_nat b') ->
+    Z.compare a' b'
+  | V_Ct (C_bool a), V_Ct (C_bool b) ->
+    Bool.compare a b
+  | V_Ct (C_address a), V_Ct (C_address b) ->
+    Tezos_state.compare_account a b
+  | V_Ct (C_key_hash a), V_Ct (C_key_hash b) ->
+    Tezos_crypto.Signature.Public_key_hash.compare a b
+  | V_Ct C_unit, V_Ct C_unit ->
+    0
+  | V_Ct (C_string a'), V_Ct (C_string b') ->
+    String.compare a' b'
+  | V_Ct (C_bytes a'), V_Ct (C_bytes b') ->
+    Bytes.compare a' b'
+  | V_Ct (C_contract { address = addr1; entrypoint = entr1 })
+    , V_Ct (C_contract { address = addr2; entrypoint = entr2 })
+    -> Tuple2.compare ~cmp1:Tezos_state.compare_account ~cmp2:(Option.compare String.compare) (addr1, entr1) (addr2, entr2)
+  | operand, operand' ->
+    let msg =
+      Format.asprintf
+        "Comparison not supported: %a"
+        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (operand, operand') in
+    raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
-let compare_constants c o1 o2 loc calltrace =
-  let open Monad in
-  match c, [ o1; o2 ] with
-  | comp, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
-    let cmpres = Int64.compare a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_int a'); V_Ct (C_int b') ]
-  | comp, [ V_Ct (C_mutez a'); V_Ct (C_mutez b') ]
-  | comp, [ V_Ct (C_timestamp a'); V_Ct (C_timestamp b') ]
-  | comp, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
-    let cmpres = Z.compare a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_bool b); V_Ct (C_bool a) ] ->
-    let cmpres = Bool.compare b a in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_address b); V_Ct (C_address a) ] ->
-    let cmpres = Tezos_state.compare_account b a in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_key_hash b); V_Ct (C_key_hash a) ] ->
-    let cmpres = Tezos_crypto.Signature.Public_key_hash.compare b a in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    return @@ v_bool x
-  | comp, [ V_Ct C_unit; V_Ct C_unit ] ->
-    let* x =
-      match comp with
-      | C_EQ -> return true
-      | C_NEQ -> return false
-      | C_LT -> return false
-      | C_LE -> return true
-      | C_GT -> return false
-      | C_GE -> return true
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-    in
-    return @@ v_bool x
-  | comp, [ V_Ct (C_string a'); V_Ct (C_string b') ] ->
-    let* f_cmp = return @@ fun a b -> String.compare a b in
-    let* cmpres = return @@ f_cmp a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    Monad.return @@ v_bool x
-  | comp, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
-    let* f_cmp = return @@ fun a b -> Bytes.compare a b in
-    let* cmpres = return @@ f_cmp a' b' in
-    let* x = wrap_compare_result comp cmpres loc calltrace in
-    Monad.return @@ v_bool x
-  | ( comp
-    , [ V_Ct (C_contract { address = addr1; entrypoint = entr1 })
-      ; V_Ct (C_contract { address = addr2; entrypoint = entr2 })
-      ] ) ->
-    let compare_opt_strings o1 o2 =
-      match o1, o2 with
-      | Some s1, Some s2 -> String.equal s1 s2
-      | _ -> false
-    in
-    let cmpres = Tezos_state.compare_account addr1 addr2 in
-    let* x =
-      match comp with
-      | C_EQ -> return (cmpres = 0 && compare_opt_strings entr1 entr2)
-      | C_NEQ -> return (cmpres <> 0 && compare_opt_strings entr1 entr2)
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-    in
-    return @@ v_bool x
-  | _, l ->
-    print_endline
-      (Format.asprintf
-         "%a"
-         (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
-         l);
-    fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-
-
-let rec apply_comparison
-  :  Location.t -> calltrace -> Ligo_prim.Constant.constant' -> value list
-  -> value Monad.t
+let rec apply_comparison ~raise
+  :  Location.t -> calltrace -> Ast_aggregated.type_expression -> value -> value
+  -> int
   =
- fun loc calltrace c operands ->
-  let open Monad in
-  match c, operands with
-  | C_EQ, [ (V_Michelson _ as a); (V_Michelson _ as b) ] ->
-    let>> b = Michelson_equal (loc, a, b) in
-    return @@ v_bool b
-  | C_NEQ, [ (V_Michelson _ as a); (V_Michelson _ as b) ] ->
-    let>> b = Michelson_equal (loc, a, b) in
-    return @@ v_bool (not b)
-  | comp, [ (V_Ct _ as v1); (V_Ct _ as v2) ] ->
-    compare_constants comp v1 v2 loc calltrace
-  | comp, [ (V_List _ as xs); (V_List _ as ys) ]
-  | comp, [ (V_Set _ as xs); (V_Set _ as ys) ]
-  | comp, [ (V_Map _ as xs); (V_Map _ as ys) ]
-  | comp, [ (V_Record _ as xs); (V_Record _ as ys) ] ->
-    let c = Ligo_interpreter.Combinators.equal_value xs ys in
-    let* v =
-      match comp with
-      | C_EQ -> return @@ v_bool c
-      | C_NEQ -> return @@ v_bool (not c)
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
-    in
-    return v
-  | comp, [ V_Construct (ctor_a, args_a); V_Construct (ctor_b, args_b) ] ->
-    (match comp with
-     | C_EQ ->
-       if String.equal ctor_a ctor_b
-       then
-         let* r = apply_comparison loc calltrace c [ args_a; args_b ] in
-         Monad.return @@ v_bool @@ is_true r
-       else Monad.return @@ v_bool false
-     | C_NEQ ->
-       if not (String.equal ctor_a ctor_b)
-       then Monad.return @@ v_bool true
-       else
-         let* r = apply_comparison loc calltrace c [ args_a; args_b ] in
-         Monad.return @@ v_bool @@ is_true r
-     | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string)
-  | _, l ->
-    (* TODO: Don't know how to compare these *)
-    (* V_Func_val *)
-    (* V_Mutation *)
-    (* V_Failure *)
-    (* V_Michelson *)
-    (* V_BigMap *)
-    print_endline
-      (Format.asprintf
-         "%a"
-         (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
-         l);
-    fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
+ fun loc calltrace type_ operand operand' ->
+  match operand, operand' with
+  | (V_Michelson _ as a), (V_Michelson _ as b) ->
+    Michelson_backend.compare_michelson ~raise loc a b
+  | (V_Ct _ as v1), (V_Ct _ as v2) ->
+    compare_constants ~raise v1 v2 loc calltrace
+  | V_List xs, V_List ys ->
+    let type_ = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected list type") @@ AST.get_t_list type_ in
+    List.compare (apply_comparison ~raise loc calltrace type_) xs ys
+  | (V_Set s), (V_Set s') ->
+    let type_ = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected set type") @@ AST.get_t_set type_ in
+    List.compare
+      (apply_comparison ~raise loc calltrace type_)
+      (List.dedup_and_sort ~compare:(apply_comparison ~raise loc calltrace type_) s)
+      (List.dedup_and_sort ~compare:(apply_comparison ~raise loc calltrace type_) s')
+  | V_Map m, V_Map m' ->
+    let type_key, type_value = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected map or big_map type") @@ AST.get_t_map_or_big_map type_ in
+    let compare_key = apply_comparison ~raise loc calltrace type_key in
+    let compare_value = apply_comparison ~raise loc calltrace type_value in
+    let compare_kv = Tuple2.compare ~cmp1:compare_key ~cmp2:compare_value in
+    let m = List.sort ~compare:compare_kv m in
+    let m' = List.sort ~compare:compare_kv m' in
+    List.compare compare_kv m m'
+  | V_Record r, V_Record r' ->
+    let { fields : row_element Record.t ; layout } = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected a record type") (AST.get_t_record type_) in
+    let row_kv = AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
+    let rec aux (row_kv : (Label.t * row_element) list) =
+      match row_kv with
+      | [] -> 0
+      | (label, ({ associated_type ; _ } : row_element)) :: row_kv ->
+        let value_a = Record.LMap.find label r in
+        let value_b = Record.LMap.find label r' in
+        match apply_comparison ~raise loc calltrace associated_type value_a value_b with
+         | 0 -> aux row_kv
+         | c -> c in
+    aux row_kv
+  | V_Construct (ctor_a, args_a), V_Construct (ctor_b, args_b) ->
+    let { fields : row_element Record.t ; layout } = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected a sum type") (AST.get_t_sum type_) in
+    let order = AST.Helpers.kv_list_of_t_sum ~layout fields |> List.map ~f:fst in
+    let ith_a, _ = List.findi_exn order ~f:(fun _i (Label l) -> String.equal l ctor_a) in
+    let ith_b, _ = List.findi_exn order ~f:(fun _i (Label l) -> String.equal l ctor_b) in
+    (match Int.compare ith_a ith_b with
+     | 0 ->
+       let { associated_type ; _ } : row_element = Record.LMap.find (Label ctor_a) fields in
+       apply_comparison ~raise loc calltrace associated_type args_a args_b
+     | c -> c)
+  | V_Func_val _, V_Func_val _ | V_Gen _, V_Gen _ | V_Location _, V_Location _
+  | V_Typed_address _, V_Typed_address _ | V_Ast_contract _, V_Ast_contract _
+  | V_Mutation _, V_Mutation _ | V_Michelson_contract _, V_Michelson_contract _ ->
+    (* NOTE: These are not comparable, either meta-LIGO or not supporting natural comparison *)
+    let msg =
+      Format.asprintf
+        "Comparison not supported: %a"
+        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (operand, operand') in
+    raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
+  | ( ( V_Ct _
+      | V_List _
+      | V_Record _
+      | V_Map _
+      | V_Set _
+      | V_Construct _
+      | V_Michelson _
+      | V_Mutation _
+      | V_Func_val _
+      | V_Michelson_contract _
+      | V_Ast_contract _
+      | V_Gen _
+      | V_Location _
+      | V_Typed_address _ )
+    , ( V_Ct _
+      | V_List _
+      | V_Record _
+      | V_Map _
+      | V_Set _
+      | V_Construct _
+      | V_Michelson _
+      | V_Mutation _
+      | V_Func_val _
+      | V_Michelson_contract _
+      | V_Ast_contract _
+      | V_Gen _
+      | V_Location _
+      | V_Typed_address _ ) ) ->
+    let msg =
+      Format.asprintf
+        "Different value types, cannot be compared: %a"
+        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (operand, operand') in
+    raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
+let apply_comparison ~raise
+  :  Location.t -> calltrace -> Ast_aggregated.type_expression -> Ligo_prim.Constant.constant' -> value -> value
+  -> value Monad.t
+  = fun loc calltrace type_ c operand operand' ->
+    let open Monad in
+    let cmpres = apply_comparison ~raise loc calltrace type_ operand operand' in
+    let* b = wrap_compare_result c cmpres loc calltrace in
+    return @@ v_bool b
 
 let bind_param
   :  env -> Value_var.t -> Param.mutable_flag -> type_expression * value
@@ -222,10 +223,11 @@ let bind_param
       in_ env
     | Mutable ->
       let@ loc = Alloc val_ in
-      let env = Env.extend env var (type_, V_location loc) in
+      let env = Env.extend env var (type_, V_Location loc) in
       let* result = in_ env in
       let@ () = Free loc in
       return result
+
 
 let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   :  Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant'
@@ -277,9 +279,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_FALSE, _ -> fail @@ error_type ()
   (* unary *)
   | C_NOT, [ V_Ct (C_bool a') ] -> return @@ v_bool (not a')
-  (* TODO-er: fix two complements: *)
-  | C_NOT, [ V_Ct (C_int a') ] -> return @@ v_int (Z.neg a')
-  | C_NOT, [ V_Ct (C_nat a') ] -> return @@ v_int (Z.neg a')
+  | C_NOT, [ V_Ct (C_int a') ] -> return @@ v_int (Z.lognot a')
+  | C_NOT, [ V_Ct (C_nat a') ] -> return @@ v_int (Z.lognot a')
   | C_NOT, _ -> fail @@ error_type ()
   | C_NEG, [ V_Ct (C_int a') ] -> return @@ v_int (Z.neg a')
   | C_NEG, [ V_Ct (C_bls12_381_g1 a') ] ->
@@ -289,29 +290,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_NEG, [ V_Ct (C_bls12_381_fr a') ] ->
     return @@ v_bls12_381_fr (Bls12_381.Fr.negate a')
   | C_NEG, _ -> fail @@ error_type ()
+  | C_INT, [ V_Ct (C_nat a') ] -> return @@ v_int a'
+  | C_INT, [ V_Ct (C_bls12_381_fr a') ] ->
+    return @@ v_int (Bls12_381.Fr.to_z a')
+  | C_INT, _ -> fail @@ error_type ()
+  | C_ABS, [ V_Ct (C_int a') ] -> return @@ v_nat (Z.abs a')
+  | C_ABS, _ -> fail @@ error_type ()
   | C_SOME, [ v ] -> return @@ v_some v
   | C_SOME, _ -> fail @@ error_type ()
-  | C_ADDRESS, [ V_Ct (C_contract { address; entrypoint = _ }) ] ->
-    return (V_Ct (C_address address))
-  | C_ADDRESS, _ -> fail @@ error_type ()
-  | C_BYTES_UNPACK, [ V_Ct (C_bytes bytes) ] ->
-    let value_ty = expr_ty in
-    let>> value = Unpack (loc, bytes, value_ty) in
-    return value
-  | C_BYTES_UNPACK, _ -> fail @@ error_type ()
-  | C_UNOPT, [ v ] ->
-    (match get_option v with
-     | Some (Some value) -> return @@ value
-     | Some None ->
-       fail @@ Errors.meta_lang_eval loc calltrace (v_string "option is None")
-     | None -> fail @@ Errors.generic_error loc "Expected option type")
-  | C_UNOPT, _ -> fail @@ error_type ()
-  | C_UNOPT_WITH_ERROR, [ v; V_Ct (C_string s) ] ->
-    (match get_option v with
-     | Some (Some value) -> return @@ value
-     | Some None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string s)
-     | None -> fail @@ Errors.generic_error loc "Expected option type")
-  | C_UNOPT_WITH_ERROR, _ -> fail @@ error_type ()
   | C_MAP_FIND_OPT, [ k; V_Map l ] ->
     (match List.Assoc.find ~equal:LC.equal_value l k with
      | Some v -> return @@ v_some v
@@ -328,12 +314,20 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
             (v_string @@ Predefined.Tree_abstraction.pseudo_module_to_string c))
   | C_MAP_FIND, _ -> fail @@ error_type ()
   (* binary *)
-  | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), _ ->
-    apply_comparison loc calltrace c operands
+  | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), [ operand ; operand' ] ->
+    (* we use the type of the first argument to guide comparison *)
+    let type_ = nth_type 0 in
+    apply_comparison ~raise loc calltrace type_ c operand operand'
+  | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), _ -> fail @@ error_type ()
   | C_SUB, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
     return @@ v_int64 Int64.(a' - b')
   | C_SUB, [ V_Ct (C_int a' | C_nat a'); V_Ct (C_int b' | C_nat b') ] ->
     return @@ v_int (Z.sub a' b')
+  | ( C_SUB
+    , [ V_Ct (C_timestamp a'); V_Ct (C_timestamp b') ] )
+    ->
+    let res = Michelson_backend.Tezos_eq.timestamp_sub a' b' in
+    return @@ v_int res
   | ( C_SUB
     , [ V_Ct (C_int a' | C_timestamp a'); V_Ct (C_timestamp b' | C_int b') ] )
     ->
@@ -776,6 +770,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
        return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
      | _ -> assert false)
   | C_MAP_UPDATE, _ -> fail @@ error_type ()
+  | C_MAP_MEM, [ k; V_Map kvs ] ->
+    return @@ v_bool (List.Assoc.mem ~equal:LC.equal_value kvs k)
+  | C_MAP_MEM, _ -> fail @@ error_type ()
   | C_BIG_MAP_GET_AND_UPDATE, [ k; option; V_Map kvs ]
   | C_MAP_GET_AND_UPDATE, [ k; option; V_Map kvs ] ->
     let old_value = List.Assoc.find ~equal:LC.equal_value kvs k in
@@ -875,126 +872,40 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_OPTION_MAP, [ V_Func_val _; (V_Construct ("None", V_Ct C_unit) as v) ] ->
     return v
   | C_OPTION_MAP, _ -> fail @@ error_type ()
-  | C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] ->
-    let>> value = Implicit_account kh in
-    return @@ value
-  | C_IMPLICIT_ACCOUNT, _ -> fail @@ error_type ()
-  | C_CONTRACT_ENTRYPOINT_OPT, [ V_Ct (C_string e); V_Ct (C_address a) ] ->
-    let contract_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an option")
-      @@ Ast_aggregated.get_t_option expr_ty
-    in
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract contract_ty
-    in
-    let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
-    return @@ value
-  | C_CONTRACT_ENTRYPOINT_OPT, _ -> fail @@ error_type ()
-  | C_CONTRACT_ENTRYPOINT, [ V_Ct (C_string e); V_Ct (C_address a) ] ->
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract expr_ty
-    in
-    let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
-    let* v =
-      monad_option (Errors.generic_error loc "Expected option")
-      @@ LC.get_option value
-    in
-    (match v with
-     | None ->
-       fail
-       @@ Errors.meta_lang_failwith
-            loc
-            calltrace
-            (LC.v_string "bad address for get_entrypoint")
-     | Some value -> return @@ value)
-  | C_CONTRACT_ENTRYPOINT, _ -> fail @@ error_type ()
-  | C_CONTRACT_OPT, [ V_Ct (C_address a) ] ->
-    let contract_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an option")
-      @@ Ast_aggregated.get_t_option expr_ty
-    in
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract contract_ty
-    in
-    let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
-    return @@ value
-  | C_CONTRACT_OPT, _ -> fail @@ error_type ()
-  | C_CONTRACT, [ V_Ct (C_address a) ] ->
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract expr_ty
-    in
-    let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
-    let* v =
-      monad_option (Errors.generic_error loc "Expected option")
-      @@ LC.get_option value
-    in
-    (match v with
-     | None ->
-       fail
-       @@ Errors.meta_lang_failwith
-            loc
-            calltrace
-            (LC.v_string "bad address for get_contract")
-     | Some value -> return @@ value)
-  | C_CONTRACT, _ -> fail @@ error_type ()
-  | C_CONTRACT_WITH_ERROR, [ V_Ct (C_address a); V_Ct (C_string msg) ] ->
-    let parameter_ty =
-      trace_option
-        ~raise
-        (Errors.generic_error
-           ~calltrace
-           loc
-           "Expected return type is not an contract")
-      @@ Ast_aggregated.get_t_contract expr_ty
-    in
-    let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
-    let* v =
-      monad_option (Errors.generic_error loc "Expected option")
-      @@ LC.get_option value
-    in
-    (match v with
-     | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string msg)
-     | Some value -> return @@ value)
-  | C_CONTRACT_WITH_ERROR, _ -> fail @@ error_type ()
+  | C_LIST_SIZE, [ V_List l ] -> return @@ v_nat (Z.of_int @@ List.length l)
+  | C_LIST_SIZE, _ -> fail @@ error_type ()
+  | C_SET_SIZE, [ V_Set l ] -> return @@ v_nat (Z.of_int @@ List.length l)
+  | C_SET_SIZE, _ -> fail @@ error_type ()
+  | C_MAP_SIZE, [ V_Map l ] -> return @@ v_nat (Z.of_int @@ List.length l)
+  | C_MAP_SIZE, _ -> fail @@ error_type ()
+  | C_SIZE, [ V_Ct (C_string s) ] ->
+    return @@ v_nat (Z.of_int @@ String.length s)
+  | C_SIZE, [ V_Ct (C_bytes b) ] -> return @@ v_nat (Z.of_int @@ Bytes.length b)
+  | C_SIZE, _ -> fail @@ error_type ()
+  | C_SLICE, [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_string s) ] ->
+    let start = Z.to_int start in
+    let length = Z.to_int length in
+    if start >= String.length s || start + length > String.length s
+    then
+      fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
+    else return @@ v_string (String.sub s ~pos:start ~len:length)
+  | C_SLICE, [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_bytes bytes) ]
+    ->
+    let start = Z.to_int start in
+    let length = Z.to_int length in
+    if start >= Bytes.length bytes || start + length > Bytes.length bytes
+    then
+      fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
+    else return @@ v_bytes (Bytes.sub bytes ~pos:start ~len:length)
+  | C_SLICE, _ -> fail @@ error_type ()
   (*
     >>>>>>>>
       Test operators
     >>>>>>>>
     *)
+  | C_TEST_ADDRESS, [ V_Ct (C_contract { address; entrypoint = _ }) ] ->
+    return (V_Ct (C_address address))
+  | C_TEST_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_FAILWITH, [ v ] -> fail @@ Errors.meta_lang_failwith loc calltrace v
   | C_TEST_FAILWITH, _ -> fail @@ error_type ()
   | ( C_TEST_TRY_WITH
@@ -1071,7 +982,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
     , [ V_Ct (C_address address)
       ; entrypoint
-      ; V_Michelson (Ty_code { code = param; _ })
+      ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
       ] ) ->
     let entrypoint = Option.join @@ LC.get_string_option entrypoint in
@@ -1082,7 +993,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS
     , [ V_Ct (C_address address)
       ; entrypoint
-      ; V_Michelson (Ty_code { code = param; _ })
+      ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
       ] ) ->
     let entrypoint = Option.join @@ LC.get_string_option entrypoint in
@@ -1115,9 +1026,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     return @@ v_unit ()
   | C_TEST_PRINT, _ -> fail @@ error_type ()
-  | C_TEST_TO_STRING, [ v ] ->
-    let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
-    return (v_string s)
+  | C_TEST_TO_STRING, [ v; V_Ct (C_int z) ] ->
+    (match Z.to_int z with
+     | 1 ->
+       let json = Ligo_interpreter.Types.value_to_yojson v in
+       return (v_string @@ Yojson.Safe.to_string json)
+     | _ ->
+       let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
+       return (v_string s))
   | C_TEST_TO_STRING, _ -> fail @@ error_type ()
   | C_TEST_UNESCAPE_STRING, [ V_Ct (C_string s) ] ->
     return (v_string (Scanf.unescaped s))
@@ -1210,8 +1126,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let id = Fuzz.Ast_aggregated.get_mutation_id mutation in
     let file_path = reg#file in
     (try
-       let odir = Sys.getcwd () in
-       let () = Sys.chdir dir in
+       let odir = Sys_unix.getcwd () in
+       let () = Sys_unix.chdir dir in
        let file_path = Filename.basename file_path in
        let file_path =
          Caml.Filename.remove_extension file_path
@@ -1221,7 +1137,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
        in
        let out_chan = Out_channel.create file_path in
        let () = Caml.Buffer.output_buffer out_chan file_contents in
-       let () = Sys.chdir odir in
+       let () = Sys_unix.chdir odir in
        return (v_some (v_string file_path))
      with
      | Sys_error _ -> return (v_none ()))
@@ -1246,7 +1162,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> code = Run (loc, f, v) in
     return code
   | C_TEST_RUN, _ -> fail @@ error_type ()
-  | C_TEST_DECOMPILE, [ V_Michelson (Ty_code { code_ty; code; ast_ty }) ] ->
+  | ( C_TEST_DECOMPILE
+    , [ V_Michelson (Ty_code { micheline_repr = { code_ty; code }; ast_ty }) ] )
+    ->
     let () =
       trace_option
         ~raise
@@ -1304,7 +1222,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
            "Storage in bootstrap contract does not match")
       @@ AST.Helpers.assert_type_expression_eq (storage_ty, storage_ty')
     in
-    return (v_address address)
+    return (v_typed_address address)
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_RANDOM, [ V_Ct (C_bool small) ] ->
     let* gen_type =
@@ -1338,7 +1256,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       @@ Ast_aggregated.get_t_typed_address expr_ty
     in
     let>> () = Add_cast (loc, x, ty) in
-    return @@ v_address x
+    return @@ v_typed_address x
   | C_TEST_CAST_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_ADD_ACCOUNT, [ V_Ct (C_string sk); V_Ct (C_key pk) ] ->
     let>> () = Add_account (loc, calltrace, sk, pk) in
@@ -1379,7 +1297,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return tvp
   | C_TEST_GET_TOTAL_VOTING_POWER, _ -> fail @@ error_type ()
   | ( C_TEST_REGISTER_CONSTANT
-    , [ V_Michelson (Ty_code { code; _ } | Untyped_code code) ] ) ->
+    , [ V_Michelson
+          (Ty_code { micheline_repr = { code; _ }; _ } | Untyped_code code)
+      ] ) ->
     let>> s = Register_constant (loc, calltrace, code) in
     return @@ v_string s
   | C_TEST_REGISTER_CONSTANT, _ -> fail @@ error_type ()
@@ -1426,31 +1346,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_INT64_TO_INT, [ V_Ct (C_int64 n) ] ->
     return @@ V_Ct (C_int (Z.of_int64 n))
   | C_TEST_INT64_TO_INT, _ -> fail @@ error_type ()
-  (* Added only for performance *)
-  | C_TEST_INT, [ V_Ct (C_nat a') ] -> return @@ v_int a'
-  | C_TEST_INT, [ V_Ct (C_bls12_381_fr a') ] ->
-    return @@ v_int (Bls12_381.Fr.to_z a')
-  | C_TEST_INT, _ -> fail @@ error_type ()
-  | C_TEST_ABS, [ V_Ct (C_int a') ] -> return @@ v_nat (Z.abs a')
-  | C_TEST_ABS, _ -> fail @@ error_type ()
-  | C_TEST_SLICE, [ V_Ct (C_nat st); V_Ct (C_nat ed); V_Ct (C_string s) ] ->
-    (*TODO : allign with tezos*)
-    return
-    @@ V_Ct (C_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed)))
-  | ( C_TEST_SLICE
-    , [ V_Ct (C_nat start); V_Ct (C_nat length); V_Ct (C_bytes bytes) ] ) ->
-    let start = Z.to_int start in
-    let length = Z.to_int length in
-    if start > Bytes.length bytes || start + length > Bytes.length bytes
-    then
-      fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
-    else return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
-  | C_TEST_SLICE, _ -> fail @@ error_type ()
-  | (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE), _ ->
-    fail @@ Errors.generic_error loc "Sapling is not supported."
-  | C_EMIT_EVENT, _ -> fail @@ Errors.generic_error loc "Can't emit event here"
-  | (C_SELF | C_SELF_ADDRESS), _ ->
-    fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
+  | C_CHECK_ENTRYPOINT, _ -> return @@ v_unit ()
+  | (C_CHECK_SELF | C_CHECK_EMIT_EVENT), _ ->
+    fail
+    @@ Errors.generic_error loc "Check should not be present in testing mode."
+  | C_TEST_SET_PRINT_VALUES, [ V_Ct (C_bool b) ] ->
+    let@ b = Set_print_values b in
+    return @@ v_bool b
+  | C_TEST_SET_PRINT_VALUES, _ -> fail @@ error_type ()
   | C_POLYMORPHIC_ADD, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->
@@ -1472,11 +1375,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       | C_MAP_GET_FORCE
       | C_BIG_MAP
       | C_BIG_MAP_LITERAL
-      | C_CALL
-      | C_SET_DELEGATE
       | C_CREATE_CONTRACT
-      | C_OPEN_CHEST
-      | C_VIEW
       | C_GLOBAL_CONSTANT )
     , _ ) -> fail @@ Errors.generic_error loc "Unbound primitive."
 
@@ -1545,14 +1444,6 @@ and eval_ligo ~raise ~steps ~options
     else return ()
   in
   match term.expression_content with
-  | E_type_inst _ ->
-    fail
-    @@ Errors.generic_error
-         term.location
-         "Polymorphism not supported: polymorphic expressions should be \
-          monomorphized before being interpreted. This could mean that the \
-          expression that you are trying to interpret is too generic, try \
-          adding a type annotation."
   | E_application { lamb = f; args } ->
     let* f' = eval_ligo f calltrace env in
     let* args' = eval_ligo args calltrace env in
@@ -1590,7 +1481,8 @@ and eval_ligo ~raise ~steps ~options
            { body with location = term.location }
            (term.location :: calltrace)
            f_env'')
-     | V_Michelson (Ty_code { code; code_ty = _; ast_ty = _ }) ->
+     | V_Michelson
+         (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty = _ }) ->
        let () =
          match code with
          | Seq (_, [ Prim (_, "FAILWITH", _, _) ]) ->
@@ -1626,8 +1518,6 @@ and eval_ligo ~raise ~steps ~options
          ; body = result
          ; env
          }
-  | E_type_abstraction { type_binder = _; result } ->
-    eval_ligo result calltrace env
   | E_let_in
       { let_binder
       ; rhs
@@ -1805,6 +1695,108 @@ and eval_ligo ~raise ~steps ~options
          ; body = lambda.result
          ; env
          }
+  | E_raw_code { language; code = { expression_content = m; _ } }
+    when Option.is_some (AST.get_e_tuple m) ->
+    let open AST in
+    let tuple = Option.value ~default:[] (AST.get_e_tuple m) in
+    let code, args =
+      match tuple with
+      | [] ->
+        raise.error
+          (Errors.generic_error
+             term.location
+             "expected non-empty tuple in %Michelson")
+      | hd :: tl -> hd, tl
+    in
+    let rec bind_list = function
+      | [] -> return []
+      | hd :: tl ->
+        let* hd = hd in
+        let* tl = bind_list tl in
+        return @@ (hd :: tl)
+    in
+    let bind_map_list ~f lst = bind_list (List.map ~f lst) in
+    let* args =
+      bind_map_list
+        ~f:(fun e ->
+          let* v = eval_ligo e calltrace env in
+          return
+            ( v
+            , Stacking.To_micheline.translate_type
+                (Scoping.translate_type
+                   (trace ~raise Main_errors.spilling_tracer
+                   @@ Spilling.compile_type e.type_expression)) ))
+        args
+    in
+    (match code.expression_content with
+     | E_literal (Literal_string x)
+       when String.equal language Backend.Michelson.name
+            && (is_t_arrow (get_type code) || is_t_arrow term.type_expression)
+       ->
+       let ast_ty = get_type code in
+       let exp_as_string = Ligo_string.extract x in
+       let code, code_ty =
+         Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
+       in
+       let replace m =
+         let open Tezos_micheline.Micheline in
+         match m with
+         | Prim (_, s, [], [ id ])
+           when String.equal "type" s && String.is_prefix ~prefix:"$" id ->
+           let id = String.chop_prefix_exn ~prefix:"$" id in
+           let id = Int.of_string id in
+           (match List.nth args id with
+            | None ->
+              raise.error
+                (Errors.generic_error
+                   term.location
+                   (Format.sprintf "could not resolve (type %d)" id))
+            | Some (_, t) ->
+              Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) t)
+         | Prim (_, s, [], [ id ])
+           when String.equal "litstr" s && String.is_prefix ~prefix:"$" id ->
+           let id = String.chop_prefix_exn ~prefix:"$" id in
+           let id = Int.of_string id in
+           (match List.nth args id with
+            | Some (V_Ct (C_string s), _) ->
+              Tezos_micheline.Micheline.String ((), s)
+            | _ ->
+              raise.error
+                (Errors.generic_error
+                   term.location
+                   (Format.sprintf "could not resolve (litstr %d)" id)))
+         | Prim (a, b, c, d) ->
+           let open Tezos_micheline.Micheline in
+           let f arg (c, d) =
+             match arg with
+             | Prim (_, s, [], [ id ])
+               when String.equal "annot" s && String.is_prefix ~prefix:"$" id ->
+               let id = String.chop_prefix_exn ~prefix:"$" id in
+               let id = Int.of_string id in
+               let annot =
+                 match List.nth args id with
+                 | Some (V_Ct (C_string s), _) -> s
+                 | _ ->
+                   raise.error
+                     (Errors.generic_error
+                        term.location
+                        (Format.sprintf "could not resolve (annot %d)" id))
+               in
+               c, annot :: d
+             | m -> m :: c, d
+           in
+           let c, d = List.fold_right ~f ~init:([], d) c in
+           Prim (a, b, c, d)
+         | m -> m
+       in
+       let code = Tezos_utils.Michelson.map replace code in
+       return
+       @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
+     | _ ->
+       raise.error
+       @@ Errors.generic_error
+            term.location
+            "Embedded raw code can only have a functional type")
   | E_raw_code { language; code } ->
     let open AST in
     (match code.expression_content with
@@ -1817,7 +1809,8 @@ and eval_ligo ~raise ~steps ~options
        let code, code_ty =
          Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
        in
-       return @@ V_Michelson (Ty_code { code; code_ty; ast_ty })
+       return
+       @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
      | _ ->
        raise.error
        @@ Errors.generic_error
@@ -1826,7 +1819,7 @@ and eval_ligo ~raise ~steps ~options
   | E_assign { binder; expression } ->
     let loc =
       match Env.lookup env (Binder.get_var binder) with
-      | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
+      | Some ({ eval_term = V_Location loc; _ }, _, _) -> loc
       | _ ->
         failwith
           (Format.asprintf
@@ -1842,15 +1835,15 @@ and eval_ligo ~raise ~steps ~options
   | E_deref mut_var ->
     let loc =
       match Env.lookup env mut_var with
-      | Some ({ eval_term = V_location loc; _ }, _, _) -> loc
+      | Some ({ eval_term = V_Location loc; _ }, _, _) -> loc
       | _ ->
         failwith
-        (Format.asprintf
-           "@[<hv>%a@.unbound variable mutable: %a@]"
-           Snippet.pp
-           term.location
-           Value_var.pp
-           mut_var)
+          (Format.asprintf
+             "@[<hv>%a@.unbound variable mutable: %a@]"
+             Snippet.pp
+             term.location
+             Value_var.pp
+             mut_var)
     in
     let@ val_ = Deref loc in
     return val_
@@ -1861,7 +1854,10 @@ and eval_ligo ~raise ~steps ~options
       eval_ligo
         let_result
         calltrace
-        (Env.extend env (Binder.get_var let_binder) (rhs.type_expression, V_location loc))
+        (Env.extend
+           env
+           (Binder.get_var let_binder)
+           (rhs.type_expression, V_Location loc))
     in
     let@ () = Free loc in
     return let_result
@@ -1932,6 +1928,16 @@ and eval_ligo ~raise ~steps ~options
        in
        loop start
      | _ -> failwith (Format.asprintf "Expected int types for for loop"))
+  | E_type_abstraction { type_binder = _; result } ->
+    eval_ligo result calltrace env
+  | E_type_inst _ ->
+    fail
+    @@ Errors.generic_error
+         term.location
+         "Polymorphism not supported: polymorphic expressions should be \
+          monomorphized before being interpreted. This could mean that the \
+          expression that you are trying to interpret is too generic, try \
+          adding a type annotation."
 
 
 and try_eval ~raise ~steps ~options expr env state r =
@@ -1943,8 +1949,31 @@ and try_eval ~raise ~steps ~options expr env state r =
     r
 
 
+let eval_expression ~raise ~steps ~options
+  : Ast_typed.program -> Ast_typed.expression -> bool * value
+  =
+ fun prg expr ->
+  (* Compile new context *)
+  let initial_state = Execution_monad.make_state ~raise ~options in
+  let expr =
+    Ligo_compile.Of_typed.compile_expression_in_context
+      ~raise
+      ~options:options.middle_end
+      prg
+      expr
+  in
+  let expr =
+    trace ~raise Main_errors.self_ast_aggregated_tracer
+    @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
+  in
+  let value, st =
+    try_eval ~raise ~steps ~options expr Env.empty_env initial_state None
+  in
+  st.print_values, value
+
+
 let eval_test ~raise ~steps ~options
-  : Ast_typed.program -> (string * value) list
+  : Ast_typed.program -> bool * (string * value) list
   =
  fun prg ->
   let decl_lst = prg in
@@ -1966,36 +1995,21 @@ let eval_test ~raise ~steps ~options
   in
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
-  let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
     let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
     Record.LMap.add (Label s) (Ast_typed.e_a_variable (Binder.get_var n) t) r
   in
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
-  let expr =
-    Ligo_compile.Of_typed.compile_expression_in_context
-      ~raise
-      ~options:options.middle_end
-      decl_lst
-      expr
-  in
-  let expr =
-    trace ~raise Main_errors.self_ast_aggregated_tracer
-    @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
-  in
-  let value, _ =
-    try_eval ~raise ~steps ~options expr Env.empty_env initial_state None
-  in
-  match value with
-  | V_Record m ->
+  match eval_expression ~raise ~steps ~options decl_lst expr with
+  | b, V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
       match Record.LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r
     in
-    List.fold_right ~f ~init:[] @@ lst
+    b, List.fold_right ~f ~init:[] @@ lst
   | _ -> failwith "Not a tuple?"
 
 

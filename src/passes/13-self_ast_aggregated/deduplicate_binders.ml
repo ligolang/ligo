@@ -93,13 +93,13 @@ let rec swap_type_expression : Scope.swapper -> type_expression -> type_expressi
     let ty_var = swaper.type_ ty_var in
     return @@ T_variable ty_var
   | T_sum {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
     return @@ T_sum {fields;layout}
   | T_record {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
@@ -196,7 +196,7 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let cases = matching_cases swaper cases in
     return @@ E_matching {matchee;cases}
   | E_record record ->
-    let record = Record.map self record in
+    let record = Record.map ~f:self record in
     return @@ E_record record
   | E_accessor {struct_;path} ->
     let struct_ = self struct_ in
@@ -248,7 +248,7 @@ and matching_cases : Scope.swapper -> matching_expr -> matching_expr = fun swape
     let tv   = self_type tv in
     return @@ Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = Record.map (Binder.map self_type) fields in
+    let fields = Record.map ~f:(Binder.map self_type) fields in
     let body = self body in
     let tv   = self_type tv in
     return @@ Match_record {fields;body;tv}
@@ -268,13 +268,13 @@ let rec type_expression : Scope.t -> type_expression -> type_expression = fun sc
     let ty_var = Scope.get_type_var scope ty_var in
     return @@ T_variable ty_var
   | T_sum {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
     return @@ T_sum {fields;layout}
   | T_record {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos} : row_element) : row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
@@ -443,7 +443,7 @@ and matching_cases : Scope.t -> matching_expr -> matching_expr = fun scope me ->
     let tv   = self_type tv in
     return @@ Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let scope,fields = Record.fold_map (binder_new) scope fields in
+    let scope,fields = Record.fold_map ~f:(binder_new) ~init:scope fields in
     let _,body = self ~scope body in
     let tv   = self_type tv in
     return @@ Match_record {fields;body;tv}

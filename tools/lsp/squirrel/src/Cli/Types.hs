@@ -5,6 +5,7 @@ module Cli.Types
   , TempDir (..)
   , TempSettings (..)
   , ligoBinaryPath
+  , debugTempSettings
   ) where
 
 import Control.Monad.IO.Unlift (MonadUnliftIO)
@@ -12,6 +13,8 @@ import Control.Monad.Trans (lift)
 import Data.Default (Default (..))
 import System.Environment (getEnv)
 import System.IO.Error (isDoesNotExistError)
+import System.IO.Temp (getCanonicalTemporaryDirectory)
+import UnliftIO.Directory (getCurrentDirectory)
 import UnliftIO.Exception (catch, throwIO)
 
 import Log (LogT, NoLoggingT)
@@ -63,3 +66,10 @@ data TempSettings = TempSettings
   , tsTemporaryDir :: TempDir
     -- ^ The name template or path for the temporary directory.
   }
+
+-- | Returns a @TempSettings@ using the current directory for the project path
+-- and the canonical temporory directory for writing to the disk.
+-- For debugging.
+debugTempSettings :: IO TempSettings
+debugTempSettings =
+  TempSettings <$> getCurrentDirectory <*> fmap UseDir getCanonicalTemporaryDirectory

@@ -1,7 +1,7 @@
 # npm node_modules and results of building the VSCode extension
 /vscode-plugin/bin/
 /vscode-plugin/out/
-/vscode-plugin/ligo-debugger-vscode-*.vsix
+/vscode-plugin/build/
 /vscode-plugin/node_modules/
 
 # nix build results

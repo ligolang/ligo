@@ -1,6 +1,5 @@
 module Of_c_unit = Of_c_unit
 module Of_source = Of_source
-module Of_sugar = Of_sugar
 module Of_core = Of_core
 module Of_typed = Of_typed
 module Of_aggregated = Of_aggregated

@@ -2,7 +2,7 @@ open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
-let () = Unix.putenv ~key:"LIGO_FORCE_NEW_TYPER" ~data:"false"
+let () = Core_unix.putenv ~key:"LIGO_FORCE_NEW_TYPER" ~data:"false"
 type syntax = string
 type group_name = string
 type lang = Meta | Object (* Object = normal LIGO code ; Meta = ligo test framework code *)
@@ -23,6 +23,7 @@ let get_proto p =
   | Some x -> x
   | None -> failwith (Format.asprintf "unknown protocol %s" p)
 let current_proto = get_proto "current"
+let in_use_proto = Environment.Protocols.in_use
 (*
   Binds the snippets by (syntax, group_name).
   Syntax and group_name being retrieved from the .md file header & arguments
@@ -62,19 +63,9 @@ let get_groups md_file : snippetsmap =
             grp_map
         )
         | [Md.Field "skip"] -> grp_map
-        | [Md.Field "test-ligo" ; Md.NameValue ("group", name) ; Md.NameValue ("protocol",x)] -> (
-          let lang = Meta in
-          SnippetsGroup.update (s,name,get_proto x)
-            (fun arg_content ->
-              match arg_content with
-              | Some (lang',ct) when Caml.(=) lang lang' -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
-              | _ -> Some (lang, String.concat ~sep:"\n" el.contents)
-            )
-            grp_map
-        )
         | [Md.Field "test-ligo" ; Md.NameValue ("group", name)] -> (
           let lang = Meta in
-          SnippetsGroup.update (s,name,current_proto)
+          SnippetsGroup.update (s,name,in_use_proto)
             (fun arg_content ->
               match arg_content with
               | Some (lang',ct) when Caml.(=) lang lang' -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
@@ -129,7 +120,7 @@ let compile_groups ~raise filename grp_list =
         let options = Compiler_options.set_test_flag options true in
         let typed = Build.qualified_typed_str ~raise ~options contents in
         Format.printf "Typed AST: %a\n" (Ast_typed.PP.program ~use_hidden:true) typed;
-        let _ : (group_name * Ligo_interpreter.Types.value) list = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
+        let _ : bool * (group_name * Ligo_interpreter.Types.value) list = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()
       | Object ->
         let typed = Build.qualified_typed_str ~raise ~options contents in
@@ -153,7 +144,7 @@ let get_all_md_files () =
   let exclude_files = [
     "./gitlab-pages/docs/demo/ligo-snippet.md" ;
   ] in
-  let ic = Unix.open_process_in "find ./gitlab-pages/docs -iname \"*.md\"" in
+  let ic = Core_unix.open_process_in "find ./gitlab-pages/docs -iname \"*.md\"" in
   let all_input = ref [] in
   let () =
     try
@@ -171,7 +162,7 @@ let get_all_md_files () =
   !all_input
 
 let main =
-  Sys.chdir "../.." ;
+  Sys_unix.chdir "../.." ;
   test_suite "Markdown files" @@
     List.map
       ~f:(fun md_file ->

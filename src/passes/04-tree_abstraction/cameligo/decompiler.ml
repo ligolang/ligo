@@ -387,7 +387,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr_with_par @@ CST.EConstr (wrap (constr, Some element))
   | E_matching {matchee; cases} ->
     let expr  = decompile_expression matchee in
-    let aux : _ Match_expr.match_case -> _ CST.case_clause CST.reg =
+    let aux : _ AST.Match_expr.match_case -> _ CST.case_clause CST.reg =
       fun { pattern ; body } ->
         let rhs = decompile_expression body in
         let pattern = decompile_pattern pattern in
@@ -402,7 +402,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let aux (Label.Label str, expr) =
       let field_name = wrap str in
       let field_expr = decompile_expression expr in
-      let field : CST.field_assign = {field_name;assignment=Token.ghost_eq;field_expr} in
+      let field : CST.field_assign = Property {field_name;assignment=Token.ghost_eq;field_expr} in
       wrap field
     in
     let record = List.map ~f:aux record in
@@ -451,7 +451,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     in
     let field_path = decompile_to_path (Value_var.of_input_var var) path in
     let field_expr = decompile_expression update in
-    let field_assign : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
+    let field_assign : CST.field_path_assignment = Path_property {field_path;assignment=Token.ghost_eq;field_expr} in
     let updates = updates.value.ne_elements in
     let updates = wrap @@ ne_inject ~attr:[] braces @@ npseq_cons ~sep:Token.ghost_semi (wrap @@ field_assign) updates in
     let update : CST.update = {lbrace=Token.ghost_lbrace;record=struct_;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
@@ -473,14 +473,14 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         Access_record name ->
         let record : CST.path = Name struct_ in
         let field_path = CST.Name (wrap name) in
-        let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
+        let update : CST.field_path_assignment = Path_property {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
         return_expr @@ CST.EUpdate (wrap update)
       | Access_tuple i ->
         let record : CST.path = Name struct_ in
         let field_path = CST.Name (wrap @@ Z.to_string i) in
-        let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
+        let update : CST.field_path_assignment = Path_property {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
         return_expr @@ CST.EUpdate (wrap update)
@@ -511,7 +511,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let field_path : CST.projection = {struct_name; selector=Token.ghost_dot;field_path} in
         let field_path = CST.Path (wrap @@ field_path) in
         let record : CST.path = Name struct_ in
-        let update : CST.field_path_assignment = {field_path;assignment=Token.ghost_eq;field_expr} in
+        let update : CST.field_path_assignment = Path_property {field_path;assignment=Token.ghost_eq;field_expr} in
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=Token.ghost_lbrace;record;kwd_with=Token.ghost_with;updates;rbrace=Token.ghost_rbrace} in
         return_expr @@ CST.EUpdate (wrap update)
@@ -706,9 +706,9 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     )
   )
 
-and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
+and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern =
   fun pattern ->
-    let is_unit_pattern (p : AST.type_expression option Pattern.t) =
+    let is_unit_pattern (p : AST.type_expression option AST.Pattern.t) =
       match p.wrap_content with P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | P_unit -> CST.PUnit (wrap (Token.ghost_lpar, Token.ghost_rpar))
@@ -743,13 +743,16 @@ and decompile_pattern : AST.type_expression option Pattern.t -> CST.pattern =
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
       CST.PPar (wrap (par (CST.PTuple (wrap pl))))
-    | P_record (llst,lst) ->
-      let pl = List.map ~f:decompile_pattern lst in
-      let fields_name = List.map ~f:(fun (Label x) -> wrap x) llst in
+    | P_record lps ->
       let field_patterns =
-        List.map
-          ~f:(fun (field_name,pattern) -> wrap ({ field_name ; eq = Token.ghost_eq ; pattern }:CST.field_pattern))
-          (List.zip_exn fields_name pl)
+        List.fold
+          ~f:(fun acc (Label.Label x, pattern) -> 
+            let pattern = decompile_pattern pattern in
+            let field_name = wrap x in
+            let field_pattern 
+              = CST.{ field_name ; eq = Token.ghost_eq ; pattern } in 
+            (wrap field_pattern) :: acc)
+          lps ~init:[]
       in
       let field_patterns = list_to_nsepseq ~sep:Token.ghost_semi field_patterns in
       let inj = ne_inject braces field_patterns ~attr:[] in

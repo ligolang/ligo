@@ -211,7 +211,7 @@ type 'token client = <
 ```
 
 The type `cut` is the type of a function that takes a
-[thread](#type-thread) and returns the corresponding token, which can
+[thread](#the-thread-interface) and returns the corresponding token, which can
 only be a string (a comment is markup, therefore can only be made by
 the library, not the client lexer). The state is updated in the
 process, so it is given as an argument and its new version is
@@ -266,7 +266,7 @@ See the section about [the Client Interface](#the-client-interface).
 The functor `Make` is one of three tightly coupled components:
 
   1. a signature `LEXER`, which we just explained above in the
-     section about [the client-side](#the-client-side);
+     section about [the client-side](#the-client-interface);
 
   2. a signature `S`;
 
@@ -568,7 +568,7 @@ and 'token sync = {
 The fields and methods are as follows.
 
   * The field `config` is explained by the section on
-    [the type config](#type-config).
+    [the type config](#the-state-interface).
 
   * The field `window` is explained above in this section.
 

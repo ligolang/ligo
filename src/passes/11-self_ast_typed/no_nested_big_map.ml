@@ -21,7 +21,7 @@ let rec check_no_nested_bigmap ~raise is_in_bigmap e =
     let _ = List.map ~f:(fun l -> check_no_nested_bigmap ~raise is_in_bigmap l) es in
     ()
   | T_record {fields=elm;_} ->
-    let _ = Record.map (fun ({associated_type;_}: row_element) -> check_no_nested_bigmap ~raise is_in_bigmap associated_type) elm in
+    let _ = Record.map ~f:(fun ({associated_type;_}: row_element) -> check_no_nested_bigmap ~raise is_in_bigmap associated_type) elm in
     ()
   | T_arrow { type1; type2 } ->
     let _ = check_no_nested_bigmap ~raise false type1 in

@@ -45,10 +45,12 @@ and item =
   | C_type_var of type_variable * Kind.t
   | C_exists_var of exists_variable * Kind.t
   | C_exists_eq of exists_variable * Kind.t * type_expression
+  | C_layout_var of Layout_var.t
+  | C_layout_eq of Layout_var.t * Layout.t
   | C_marker of exists_variable
   | C_module of module_variable * Signature.t
   | C_pos of pos
-  (** A mutable position denotes a position in which we cannot search 
+      (** A mutable position denotes a position in which we cannot search 
       for mutable variables behind. This is a slightly hacky solution to
       ensure lambdas don't contain captured mutable variables. *)
   | C_mut_pos of pos
@@ -73,7 +75,9 @@ val add_module : t -> module_variable -> Signature.t -> t
 val get_value
   :  t
   -> expression_variable
-  -> (mutable_flag * type_expression, [> `Mut_var_captured | `Not_found ]) Result.t
+  -> ( mutable_flag * type_expression
+     , [> `Mut_var_captured | `Not_found ] )
+     Result.t
 
 val get_imm : t -> expression_variable -> type_expression option
 val get_mut : t -> expression_variable -> type_expression option
@@ -86,6 +90,9 @@ val get_exists_var : t -> exists_variable -> Kind.t option
 val add_exists_eq : t -> exists_variable -> Kind.t -> type_expression -> t
 val get_exists_eq : t -> exists_variable -> type_expression option
 val get_signature : t -> module_variable List.Ne.t -> Signature.t option
+val get_layout_vars : t -> Layout_var.t list
+val get_layout_eq : t -> Layout_var.t -> Layout.t option
+val add_layout_eq : t -> Layout_var.t -> Layout.t -> t
 val add_signature_item : t -> Signature.item -> t
 val remove_pos : t -> pos:pos -> t
 val insert_at : t -> at:item -> hole:t -> t
@@ -123,6 +130,10 @@ module Elaboration : sig
   val all_lmap
     :  ('a, 'err, 'wrn) t Rows.LMap.t
     -> ('a Rows.LMap.t, 'err, 'wrn) t
+
+  val all_list
+    :  (('a, 'err, 'wrn) t) list
+    -> ('a list, 'err, 'wrn) t
 
   val run_expr
     :  (expression, ([> error ] as 'err), 'wrn) t

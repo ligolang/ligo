@@ -44,33 +44,25 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_LEFT | C_RIGHT
   | C_TRUE | C_FALSE
   | C_UPDATE | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
-  | C_ADDRESS
   | C_CONCAT
   | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SET_UPDATE
   | C_LOOP_CONTINUE | C_LOOP_STOP
   | C_SUB_MUTEZ
-  | C_BYTES_UNPACK
-  | C_SET_EMPTY | C_SET_LITERAL
-  | C_LIST_EMPTY | C_LIST_LITERAL
-  | C_MAP_EMPTY | C_MAP_LITERAL
-  | C_MAP_GET | C_MAP_REMOVE
+  | C_SIZE | C_SLICE
+  | C_SET_EMPTY | C_SET_LITERAL | C_SET_SIZE
+  | C_LIST_EMPTY | C_LIST_LITERAL | C_LIST_SIZE
+  | C_MAP_EMPTY | C_MAP_LITERAL | C_MAP_SIZE
+  | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
   | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
   | C_BIG_MAP_EMPTY
-  | C_SAPLING_EMPTY_STATE
-  | C_SAPLING_VERIFY_UPDATE
-  | C_OPEN_CHEST
   | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
-  | C_EMIT_EVENT
     -> true
   (* unfortunately impure: *)
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
   | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
   (* impure: *)
-  | C_UNOPT
-  | C_UNOPT_WITH_ERROR
   | C_OPTION_MAP
   | C_MAP_FIND
-  | C_CALL
   | C_ITER
   | C_LOOP_LEFT
   | C_FOLD
@@ -88,22 +80,17 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_MAP_ITER
   | C_MAP_MAP
   | C_MAP_FOLD
-  | C_SET_DELEGATE
   | C_CREATE_CONTRACT
   (* TODO? *)
   | C_MAP
   | C_BIG_MAP
   | C_BIG_MAP_LITERAL
-  | C_CONTRACT
-  | C_CONTRACT_WITH_ERROR
-  | C_CONTRACT_OPT
-  | C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT
-  | C_SELF
-  | C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT
-  | C_VIEW
+  (* Check - these should be removed *)
+  | C_CHECK_SELF
+  | C_CHECK_EMIT_EVENT
+  | C_CHECK_ENTRYPOINT
   (* Test - ligo interpreter, should never end up here *)
+  | C_TEST_ADDRESS
   | C_TEST_SIZE
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE_OF_ADDRESS
@@ -159,9 +146,9 @@ let is_pure_constant : Constant.constant' -> bool =
   | C_TEST_INT64_TO_INT
   | C_TEST_LAST_EVENTS
   | C_TEST_TRY_WITH
-  | C_TEST_ABS
-  | C_TEST_INT
-  | C_TEST_SLICE
+  | C_TEST_SET_PRINT_VALUES
+  | C_ABS
+  | C_INT
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

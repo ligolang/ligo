@@ -1,0 +1,10 @@
+author: er433
+description: '### Testing framework: allow disabling of default printing.\n\nBy default,
+  LIGO''s testing framework will print the values prefixed with `test`. Now it is
+  possible to disable this output by using `Test.unset_print_values : unit -> unit`.
+  It can be turned on again using `Test.set_print_values : unit -> unit`. The values
+  prefixed with `test` will be printed or not at the end of execution, depending on
+  which of these commands was executed last.'
+merge_request: '2075'
+title: 'Testing framework: add option to remove default printing'
+type: added

@@ -1,9 +1,0 @@
-(library
- (name purification)
- (public_name ligo.purification)
- (instrumentation
-  (backend bisect_ppx))
- (libraries simple-utils ast_imperative ast_sugar
-   compiler_options tree_abstraction)
- (preprocess
-  (pps ppx_poly_constructor)))

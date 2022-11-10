@@ -3,10 +3,10 @@
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module AST.Scope.Common
-  ( MarkerInfo (..)
-  , ParsedContract (..)
+  ( ParsedContract (..)
   , FindFilepath (..)
   , HasScopeForest (..)
+  , Namespace (..)
   , Level (..)
   , Info'
   , ScopeForest (..)
@@ -39,7 +39,6 @@ module AST.Scope.Common
   , mergeScopeForest
   , withScopeForest
   , lookupEnv
-  , spine
   , addScopes
   , lookupContract
   ) where
@@ -58,7 +57,7 @@ import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
-import Data.Functor.Identity (runIdentity)
+import Data.Functor.Identity (Identity (..))
 import Data.List (sortOn)
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -76,16 +75,18 @@ import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics(..))
+import AST.Scope.ScopedDecl
+  ( DeclarationSpecifics (..), Namespace (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..)
+  )
 import AST.Skeleton
-  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, TypeName (..)
-  , TypeVariableName (..), withNestedLIGO
+  ( Ctor, LIGO, Name, NameDecl, ModuleName, RawLigoList, SomeLIGO, TypeName, TypeVariableName
+  , withNestedLIGO
   )
 import Cli.Types
 import Diagnostic (Message)
 import Log qualified
 import ParseTree
-import Parser (Info, LineMarker, ParsedInfo)
+import Parser (Info, ParsedInfo)
 import Product
 import Progress (Progress (..), ProgressCallback, (%))
 import Range
@@ -94,12 +95,6 @@ import Util.Graph (forAMConcurrently, traverseAMConcurrently)
 
 -- TODO: Many of these datatypes don't make sense to be defined here. Consider
 -- moving into different or new modules.
-data MarkerInfo = MarkerInfo
-  { miMarker    :: LineMarker
-  , miLastRange :: Range
-  , miDepth     :: Int
-  } deriving stock (Show)
-
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
   , _cTree :: info -- ^ The payload of the contract.
@@ -162,7 +157,7 @@ class HasLigoClient m => HasScopeForest impl m where
     -- ^ Inclusion graph of the parsed contracts.
     -> m (FindFilepath ScopeForest)
 
-data Level = TermLevel | TypeLevel
+data Level = TermLevel | TypeLevel | ModuleLevel
   deriving stock (Eq, Show)
   deriving Pretty via ShowPP Level
 
@@ -170,6 +165,7 @@ ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
   (TermLevel, ValueSpec{}) -> True
   (TypeLevel, TypeSpec{}) -> True
+  (ModuleLevel, ModuleSpec{}) -> True
   _ -> False
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
@@ -301,21 +297,23 @@ instance Pretty ScopeForest where
 
       decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
-lookupEnv :: Text -> Scope -> Maybe ScopedDecl
-lookupEnv name = getFirst . foldMap \decl ->
+lookupEnv :: Text -> Range -> Scope -> Maybe ScopedDecl
+lookupEnv name pos = getFirst . foldMap \decl@ScopedDecl{..} ->
   First do
-    guard (_sdName decl == name)
+    guard (_sdName == name && (_sdOrigin == pos || pos `elem` _sdRefs))
     return decl
 
+-- | return scoped declarations related to the range
 envAtPoint :: Range -> ScopeForest -> Scope
-envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= toList . spine r >>= Set.toList
+envAtPoint pos (ScopeForest sf ds) = do
+  let sp = sf >>= toList . spine pos >>= Set.toList
   map (ds Map.!) sp
-
-spine :: Range -> ScopeTree -> DList (Set DeclRef)
-spine r ((decls, r') :< trees)
-  | leq r r' = foldMap (spine r) trees `snoc` decls
-  | otherwise = mempty
+  where
+    -- find all nodes that spans the range and take their references
+    spine :: Range -> ScopeTree -> DList (Set DeclRef)
+    spine r ((decls, r') :< trees)
+      | leq r r' = foldMap (spine r) trees `snoc` decls
+      | otherwise = mempty
 
 addLocalScopes
   :: SomeLIGO ParsedInfo
@@ -328,28 +326,36 @@ addLocalScopes tree forest =
       fs' <- traverse f fs
       let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
+
+    insertScope
+      :: (Element f RawLigoList, Pretty (f (LIGO xs)))
+      => Level
+      -> Product ParsedInfo
+      -> f (LIGO xs)
+      -> Identity (Product Info', f (LIGO xs))
+    insertScope level i name = do
+      let env = envAtPoint (getPreRange i) forest
+      -- TODO: This is temporary solution developed in LIGO-700, and should be fixed in LIGO-830
+      let declaredScope = Map.lookup (DeclRef (ppToText name) (getRange i)) (sfDecls forest)
+      return ((toList declaredScope <> env) :> Just level :> i, name)
+
+    insertTerm, insertType, insertModule
+      :: (Element f RawLigoList, Pretty (f (LIGO xs)))
+      => Product ParsedInfo
+      -> f (LIGO xs)
+      -> Identity (Product Info', f (LIGO xs))
+    insertTerm   = insertScope TermLevel
+    insertType   = insertScope TypeLevel
+    insertModule = insertScope ModuleLevel
   in
   runIdentity $ withNestedLIGO tree $
     descent' @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
-    [ Descent \i (Name t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, Name t)
-
-    , Descent \i (NameDecl t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, NameDecl t)
-
-    , Descent \i (Ctor t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, Ctor t)
-
-    , Descent \i (TypeName t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TypeLevel :> i, TypeName t)
-
-    , Descent \i (TypeVariableName t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TypeLevel :> i, TypeVariableName t)
+    [ Descent @Name insertTerm
+    , Descent @NameDecl insertTerm
+    , Descent @Ctor insertTerm
+    , Descent @TypeName insertType
+    , Descent @TypeVariableName insertType
+    , Descent @ModuleName insertModule
     ]
 
 addScopes

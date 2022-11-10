@@ -16,8 +16,8 @@ let check_entrypoint_annotation_format ~raise ep (exp: expression) =
     | _ -> raise.error @@ Errors.bad_format_entrypoint_ann ep exp.location
 
 let self_typing ~raise : contract_type -> expression -> bool * contract_type * expression = fun dat e ->
-  let bad_self_err () = Main_warnings.warn_bad_self_type
-    e.type_expression
+  let bad_self_err t = Main_warnings.warn_bad_self_type
+    t
     {e.type_expression with
       type_content =
         T_constant {
@@ -28,12 +28,12 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
     }
     e.location
   in
-  match e.expression_content , e.type_expression with
-  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection=Ligo_prim.Literal_types.Contract;parameters=[t]} ; _}) ->
+  match e.expression_content, Ast_aggregated.get_t_option (e.type_expression) with
+  | E_constant {cons_name=C_CHECK_SELF ; arguments=[entrypoint_exp]}, Some t ->
     let entrypoint =
       match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
-      | _ -> raise.error @@ Errors.entrypoint_ann_not_literal entrypoint_exp.location
+      | _ -> raise.error @@ Errors.entrypoint_ann_not_literal e.location
     in
     let entrypoint_t =
       match dat.parameter.type_content with
@@ -49,26 +49,37 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
       | t -> {dat.parameter with type_content = t}
     in
     let () = if not @@ Ast_aggregated.equal_type_expression entrypoint_t t then
-               raise.Simple_utils.Trace.warning @@ bad_self_err () in
+               raise.Simple_utils.Trace.warning @@ bad_self_err Ast_aggregated.(t_contract t) in
+    let e = Ast_aggregated.e_a_none ~location:e.location e.type_expression in
     (true, dat, e)
   | _ -> (true,dat,e)
 
-let entrypoint_typing ~raise : contract_type -> expression -> bool * contract_type * expression = fun dat e ->
+let self_literal_typing ~raise : expression -> expression = fun e ->
   match e.expression_content with
-  | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
+  | E_constant {cons_name=C_CHECK_SELF ; arguments=[entrypoint_exp]} ->
     let _ = match entrypoint_exp.expression_content with
      | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
      | _ -> raise.error @@ Errors.entrypoint_ann_not_literal entrypoint_exp.location
     in
-    (true, dat, e)
-  | _ -> (true,dat,e)
+    e
+  | _ -> e
 
-let emit_event_typing ~raise : contract_type -> expression -> bool * contract_type * expression = fun dat e ->
+let entrypoint_typing ~raise : expression -> expression = fun e ->
   match e.expression_content with
-  | E_constant {cons_name=C_EMIT_EVENT ; arguments=tag::_} ->
+  | E_constant {cons_name=C_CHECK_ENTRYPOINT ; arguments=[entrypoint_exp]} ->
+    let _ = match entrypoint_exp.expression_content with
+     | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
+     | _ -> raise.error @@ Errors.entrypoint_ann_not_literal entrypoint_exp.location
+    in
+    Ast_aggregated.e_a_unit ()
+  | _ -> e
+
+let emit_event_typing ~raise : expression -> expression = fun e ->
+  match e.expression_content with
+  | E_constant {cons_name=C_CHECK_EMIT_EVENT ; arguments=tag::_} ->
     let _ : string = match tag.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) tag
       | _ -> raise.error @@ Errors.emit_tag_not_literal tag.location
     in
-    (true, dat, e)
-  | _ -> (true,dat,e)
+    Ast_aggregated.e_a_unit ()
+  | _ -> e

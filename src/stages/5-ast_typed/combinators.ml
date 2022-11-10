@@ -74,7 +74,7 @@ let t_abstraction2 ?loc name kind_l kind_r : type_expression =
 let t_for_all ty_binder kind type_ = t_for_all { ty_binder ; kind ; type_ } ()
 
 let t_record ?loc ?core ~layout fields  : type_expression = t_record ?loc { fields ; layout } ?type_meta:core ()
-let default_layout = Layout.L_tree
+let default_layout : Layout.t = Layout.L_tree
 let make_t_ez_record ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = Record.of_list lst in
@@ -212,7 +212,6 @@ let tuple_of_record (m: _ Record.t) =
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
   List.map ~f:(fun ({associated_type;_} : row_element) -> associated_type) l
 
-
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
   | T_record record -> Some (tuple_of_record record.fields)
   | _ -> None
@@ -284,13 +283,12 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [p] }
-[@@map (_ct_, ("some", "contract_opt", "contract"))]
+[@@map (_ct_, ("some"))]
 
 let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; arguments = [p; p']}
-[@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]
+[@@map (_ct_, ("cons", "set_add", "map_remove"))]
 
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
-let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
 [@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
@@ -314,7 +312,7 @@ let e_a_constructor constructor element t = e_constructor { constructor = (Label
 
 let e_a_record ?(layout=default_layout) r = e_record r (t_record ~layout
   (Record.map
-    (fun t ->
+    ~f:(fun t ->
       let associated_type = get_type t in
       Rows.{associated_type ; michelson_annotation=None ; decl_pos = 0} )
     r ))
@@ -338,11 +336,6 @@ let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.ty
 let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
 let e_a_big_map_add k v tl = make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
 let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
-let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
-let e_a_contract a t = make_e (e_contract a) (t_contract t)
-let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
-let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =
   match t.expression_content with
@@ -378,6 +371,12 @@ let get_record_fields (t : type_expression) : (Label.t * type_expression) list o
   | Some record ->
     let lst = Record.LMap.to_kv_list record.fields in
     Some (List.map ~f:(fun (k,x) -> k,x.Rows.associated_type) lst)
+
+
+let get_e_tuple = fun t ->
+  match t with
+  | E_record r -> Some (List.map ~f:snd @@ Record.tuple_of_record r)
+  | _ -> None
 
 let get_sum_label_type (t : type_expression) (label : Label.t) : type_expression option =
   match get_t_sum t with

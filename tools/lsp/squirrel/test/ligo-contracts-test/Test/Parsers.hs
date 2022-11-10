@@ -41,6 +41,8 @@ okayTests =
       , "build" </> "type_B.mligo"
       , "build" </> "Xfoo.mligo"
       , "build" </> "Xmain.mligo"
+      , "build" </> "common" </> "storage.mligo"
+      , "build" </> "instance" </> "main.mligo"
       , "interpreter_tests" </> "A.mligo"
       , "interpreter_tests" </> "C.mligo"
       , "interpreter_tests" </> "imported_modules" </> "a.mligo"
@@ -62,6 +64,7 @@ okayTests =
       , "polymorphism" </> "cases_annotation1.mligo"
       , "polymorphism" </> "cases_annotation2.mligo"
       , "polymorphism" </> "comb.ligo"
+      , "polymorphism" </> "comb.jsligo"
       , "polymorphism" </> "comb.mligo"
       , "polymorphism" </> "comb.religo"
       , "polymorphism" </> "ctrct.mligo"
@@ -83,22 +86,10 @@ okayTests =
       , "negative" </> "polymorphism" </> "error_monad.mligo"
       , "negative" </> "polymorphism" </> "unresolved" </> "contract2.mligo"
 
-        -- LIGO-757
-      , "negative" </> "error_reverse_app.mligo"
-      , "negative" </> "error_reverse_app_2.mligo"
-      , "reverse_app.mligo"
-      , "build" </> "common" </> "storage.mligo"
-      , "build" </> "instance" </> "main.mligo"
-
         -- LIGO-808
-      , "jsligo_destructure_object.jsligo"
-      , "switch_return.jsligo"
-      , "views_using_view.test.mligo"
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "a" </> "b" </> "test.mligo"
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "c" </> "d" </> "foo.mligo"
-      , "ternary.jsligo"
       , "infer_fun_application.mligo"
-      , "disc_union.jsligo"
 
         -- LIGO fails to parse these:
       , "match.ligo"

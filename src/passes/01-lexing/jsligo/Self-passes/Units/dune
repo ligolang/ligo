@@ -1,0 +1,14 @@
+;; Build of the self passes on the lexical units of JsLIGO
+
+(library
+  (name lexing_jsligo_self_units)
+  (public_name ligo.lexing.jsligo.self.units)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+     ;; Vendors
+     simple-utils
+     LexerLib
+     ;; LIGO
+     lexing_shared
+     lexing_jsligo_self_tokens)
+  (modules Self ZWSP Token_of))

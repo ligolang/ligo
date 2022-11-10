@@ -22,10 +22,10 @@ let rec type_expression : Aliases.t -> AST.type_expression -> AST.type_expressio
     T_variable type_variable ->
     return @@ T_variable type_variable
   | T_sum {fields;layout} ->
-    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
     return @@ T_sum {fields;layout}
   | T_record {fields;layout} ->
-    let fields = Record.map (Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
     return @@ T_record {fields;layout}
   | T_arrow {type1;type2} ->
     let type1 = self type1 in
@@ -88,7 +88,7 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
     let cases = matching_cases aliases cases in
     return @@ E_matching {matchee;cases}
   | E_record record ->
-    let record = Record.map self record in
+    let record = Record.map ~f:self record in
     return @@ E_record record
   | E_accessor {struct_;path} ->
     let struct_ = self struct_ in
@@ -130,23 +130,13 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
     let while_loop = While_loop.map self while_loop in
     return @@ E_while while_loop
 
-and matching_cases : Aliases.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
+and matching_cases 
+: Aliases.t -> (AST.expression, AST.type_expression) AST.Match_expr.match_case list
+  -> (AST.expression, AST.type_expression) AST.Match_expr.match_case list
+= fun scope me ->
   let self ?(scope = scope) = expression scope in
   let self_type ?(scope = scope) = type_expression scope in
-  let return x = x in
-  match me with
-    Match_variant {cases;tv} ->
-    let cases = List.map ~f:AST.(fun {constructor;pattern;body} ->
-        let body = self body in
-        {constructor;pattern;body}
-      ) cases in
-    let tv   = self_type tv in
-    return @@ AST.Match_variant {cases;tv}
-  | Match_record {fields;body;tv} ->
-    let fields = Record.map (Binder.map self_type) fields in
-    let body = self body in
-    let tv   = self_type tv in
-    return @@ AST.Match_record {fields;body;tv}
+  List.map me ~f:(AST.Match_expr.map_match_case self self_type)
 
 and compile_declaration aliases (d : AST.declaration) : Aliases.t * AST.declaration option =
   let return_s aliases wrap_content = aliases, Some {d with wrap_content} in

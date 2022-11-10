@@ -1,22 +1,22 @@
 open Types
 open Ligo_prim
 
-let kv_list_of_t_sum ?(layout = Layout.L_tree) (m: row_element Record.t) =
+let kv_list_of_t_sum ?(layout : Layout.t = Layout.L_tree) (m: row_element Record.t) =
   let lst = Record.LMap.to_kv_list m in
-  match layout with
+  match Layout.view layout with
   | L_tree -> lst
   | L_comb -> (
       let aux (_ , ({ associated_type = _ ; decl_pos = a ; _ }: row_element)) (_ , ({ associated_type = _ ; decl_pos = b ; _ } : row_element)) = Int.compare a b in
       List.sort ~compare:aux lst
     )
 
-let kv_list_of_t_record_or_tuple ?(layout = Layout.L_tree) (m: row_element Record.t) =
+let kv_list_of_t_record_or_tuple ?(layout : Layout.t = Layout.L_tree) (m: row_element Record.t) =
   let lst =
     if (Record.is_tuple m)
     then Record.tuple_of_record m
     else Record.LMap.to_kv_list m
   in
-  match layout with
+  match Layout.view layout with
   | L_tree -> lst
   | L_comb -> (
       let aux (_ , ({ associated_type = _ ; decl_pos = a ; _ }: row_element)) (_ , ({ associated_type = _ ; decl_pos = b ; _ } : row_element)) = Int.compare a b in
@@ -29,7 +29,7 @@ let kv_list_of_record_or_tuple ~layout record_t_content record =
     then Record.tuple_of_record record
     else Record.LMap.to_kv_list record
   in
-  match (layout : Layout.t) with
+  match Layout.view layout with
   | L_tree -> List.map ~f:snd exps
   | L_comb -> (
     let types = if (Record.is_tuple record)
@@ -87,14 +87,14 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
       let associated_type = self associated_type in
       ({associated_type;michelson_annotation;decl_pos} : row_element)
     in
-    return @@ T_sum { m with fields = Record.map aux m.fields }
+    return @@ T_sum { m with fields = Record.map ~f:aux m.fields }
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
       let associated_type = self associated_type in
       ({associated_type;michelson_annotation;decl_pos} : row_element)
     in
-    return @@ T_record { m with fields = Record.map aux m.fields }
+    return @@ T_record { m with fields = Record.map ~f:aux m.fields }
   )
   | T_for_all {ty_binder;kind;type_} ->
     let type_ = self type_ in
@@ -190,6 +190,100 @@ let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expressi
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
-
 and assert_literal_eq (a, b : Literal_value.t * Literal_value.t) : unit option =
   if Literal_value.equal a b then Some () else None
+
+type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
+let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
+  let self = fold_map_expression f in
+  let idle acc a = (acc,a) in
+  let (continue, init,e') = f a e in
+  if (not continue) then (init,e')
+  else
+  let return expression_content = { e' with expression_content } in
+  match e'.expression_content with
+  | E_matching {matchee=e;cases} -> (
+      let (res, e') = self init e in
+      let (res,cases') = fold_map_cases f res cases in
+      (res, return @@ E_matching {matchee=e';cases=cases'})
+    )
+  | E_record m -> (
+    let (res, m') = Record.fold_map ~f:self ~init m in
+    (res, return @@ E_record m')
+  )
+  | E_accessor acc -> (
+      let (res, acc) = Types.Accessor.fold_map self init acc in
+      (res, return @@ E_accessor acc)
+    )
+  | E_update u -> (
+    let res,u = Types.Update.fold_map self init u in
+    (res, return @@ E_update u)
+  )
+  | E_constructor c -> (
+      let (res,e') = self init c.element in
+      (res, return @@ E_constructor {c with element = e'})
+  )
+  | E_application {lamb;args} -> (
+      let ab = (lamb, args) in
+      let (res,(a,b)) = Simple_utils.Pair.fold_map ~f:self ~init ab in
+      (res, return @@ E_application {lamb=a;args=b})
+    )
+  | E_let_in { let_binder ; rhs ; let_result; attr } -> (
+      let (res,rhs) = self init rhs in
+      let (res,let_result) = self res let_result in
+      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
+    )
+  | E_type_inst { forall ; type_ } -> (
+    let (res, forall) = self init forall in
+    ( res, return @@ E_type_inst { forall ; type_ })
+  )
+  | E_lambda l -> (
+      let res,l = Lambda.fold_map self idle init l in
+      ( res, return @@ E_lambda l)
+    )
+  | E_type_abstraction ta -> (
+      let res, ta = Type_abs.fold_map self init ta in
+      res, return @@ E_type_abstraction ta
+    )
+  | E_recursive r ->
+      let res,r = Recursive.fold_map self idle init r in
+      ( res, return @@ E_recursive r)
+  | E_constant c -> (
+      let res,c = Constant.fold_map self init c in
+      (res, return @@ E_constant c)
+    )
+  | E_raw_code {language;code} -> (
+    let (res,code) = self init code in
+    (res, return @@ E_raw_code { language ; code }))
+  | E_assign a ->
+    let res, a = Assign.fold_map self idle init a in
+    res, return @@ E_assign a
+  | E_for f ->
+    let res, f = For_loop.fold_map self init f in
+    res, return @@ E_for f
+  | E_for_each fe ->
+    let res, fe = For_each_loop.fold_map self init fe in
+    res, return @@ E_for_each fe
+  | E_while w ->
+    let res, w = While_loop.fold_map self init w in
+    res, return @@ E_while w
+  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+    let res, rhs = self init rhs in
+    let res, let_result = self res let_result in
+    res, return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+  | E_deref _
+  | E_literal _ | E_variable _ as e' -> (init, return e')
+
+and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
+  match m with
+  | Match_variant {cases ; tv} -> (
+      let aux init {constructor ; pattern ; body} =
+        let (init, body) = fold_map_expression f init body in
+        (init, {constructor; pattern ; body})
+      in
+      let (init,cases) = List.fold_map ~f:aux ~init cases in
+      (init, Match_variant {cases ; tv})
+    )
+  | Match_record { fields; body; tv } ->
+      let (init, body) = fold_map_expression f init body in
+      (init, Match_record { fields ; body ; tv })

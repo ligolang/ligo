@@ -36,13 +36,13 @@ let rec type_expression : Scope.t -> AST.type_expression -> AST.type_expression 
     T_variable type_variable ->
     return @@ T_variable type_variable
   | T_sum {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
     return @@ T_sum {fields;layout}
   | T_record {fields;layout} ->
-    let fields = Record.map (fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
+    let fields = Record.map ~f:(fun ({associated_type;michelson_annotation;decl_pos}:AST.row_element) : AST.row_element ->
       let associated_type = self associated_type in
       {associated_type;michelson_annotation;decl_pos}
     ) fields in
@@ -110,7 +110,7 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
     let cases = matching_cases scope cases in
     return @@ E_matching {matchee;cases}
   | E_record record ->
-    let record = Record.map self record in
+    let record = Record.map ~f:self record in
     return @@ E_record record
   | E_accessor {struct_;path} ->
     let struct_ = self struct_ in
@@ -147,23 +147,13 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
     let while_loop = While_loop.map self while_loop in
     return @@ E_while while_loop
 
-and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
+and matching_cases 
+: Scope.t -> (AST.expression, AST.type_expression) AST.Match_expr.match_case list 
+  -> (AST.expression, AST.type_expression) AST.Match_expr.match_case list 
+= fun scope me ->
   let self ?(scope = scope) = expression scope in
   let self_type ?(scope = scope) = type_expression scope in
-  let return x = x in
-  match me with
-    Match_variant {cases;tv} ->
-    let cases = List.map ~f:AST.(fun {constructor;pattern;body} ->
-        let body = self body in
-        {constructor;pattern;body}
-      ) cases in
-    let tv   = self_type tv in
-    return @@ AST.Match_variant {cases;tv}
-  | Match_record {fields;body;tv} ->
-    let fields = Record.map (Binder.map self_type) fields in
-    let body = self body in
-    let tv   = self_type tv in
-    return @@ AST.Match_record {fields;body;tv}
+  List.map me ~f:(AST.Match_expr.map_match_case self self_type)
 
 and compile_declaration scope (d : AST.declaration) : Scope.t * AST.declaration =
   let return scope wrap_content = scope, {d with wrap_content} in

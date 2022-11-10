@@ -703,7 +703,7 @@ and decompile_lambda : (AST.expr, AST.ty_expr option) Lambda.t -> _ =
     let body = function_body body in
     (parameters, lhs_type, body)
 
-and decompile_matching_cases : _ Match_expr.match_case list -> CST.expr =
+and decompile_matching_cases : _ AST.Match_expr.match_case list -> CST.expr =
   fun m -> ignore m ; failwith "TODO: decompile matching cases"
     (* old version (before deep pattern matching) :
     let cases = match m with
@@ -872,7 +872,7 @@ let decompile_expression : AST.expression -> CST.expr list = fun expr ->
 
 let rec decompile_pattern p =
   match (Location.unwrap p) with
-  | Pattern.P_variant (constructor,_) -> (
+  | AST.Pattern.P_variant (constructor,_) -> (
       match constructor with
       | Label constructor -> (
         Ok (CST.PConstr (Region.wrap_ghost constructor))
@@ -903,12 +903,12 @@ let rec decompile_pattern p =
       CST.PArray (Region.wrap_ghost (brackets pl))
     )
   | P_list pl -> Error "no PList in JsLIGO CST"
-  | P_record (llst,_) ->
+  | P_record lps ->
     let fields_name = List.map ~f:(fun (Label x) ->
       CST.PVar (
         Region.wrap_ghost
           { CST.variable = Region.wrap_ghost x
-          ; attributes = [] })) llst in
+          ; attributes = [] })) (List.map ~f:fst lps) in
     let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
     let inj = Region.wrap_ghost @@ braced inj in
     Ok (CST.PObject inj)

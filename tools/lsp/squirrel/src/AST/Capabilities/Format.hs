@@ -10,7 +10,7 @@ import UnliftIO.Exception (Handler (..), catches, displayException)
 
 import AST.Scope (ContractInfo', Info', pattern FindContract)
 import AST.Skeleton (SomeLIGO (..))
-import Cli (HasLigoClient, SomeLigoException, TempSettings, callForFormat)
+import Cli (HasLigoClient, LigoIOException, SomeLigoException, TempSettings, callForFormat)
 import Duplo.Lattice (leq)
 import Duplo.Tree (extract, spineTo)
 import Log (Log)
@@ -30,10 +30,9 @@ formatImpl tempSettings src info = do
   let CodeSource source = getElem info
   let r@Range{_rFile} = getElem info
   out <- callForFormat tempSettings (Source _rFile (srcIsDirty src) source) `catches`
-    [ Handler \(_ :: SomeLigoException) -> pure source
-    -- Likely LIGO isn't installed or was not found.
-    , Handler \(e :: IOError) ->
-      source <$ $(Log.err) [Log.i|Couldn't call LIGO, failed with #{displayException e}|]
+    [ Handler \(e :: LigoIOException) ->
+      source <$ $(Log.err) [Log.i|#{displayException e}|]
+    , Handler \(_ :: SomeLigoException) -> pure source
     ]
   pure $ J.List [J.TextEdit (toLspRange r) out]
 

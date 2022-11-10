@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '2098'
+title: Do check removal of emit/entrypoint for expressions
+type: fixed

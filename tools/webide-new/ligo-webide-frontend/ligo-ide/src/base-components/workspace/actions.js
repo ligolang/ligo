@@ -2,13 +2,14 @@ import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";
 import fileOps from "~/base-components/file-ops";
 
-import BaseProjectManager from "./ProjectManager/BaseProjectManager";
+import ProjectManager from "./ProjectManager/ProjectManager";
 
 export class ProjectActions {
   constructor() {
     this.history = null;
     this.newProjectModal = null;
     this.openProjectModal = null;
+    this.renameProjectModal = null;
     this.workspace = null;
   }
 
@@ -21,7 +22,7 @@ export class ProjectActions {
   }
 
   async openProject() {
-    await this.processNewProject(this.openProjectModal);
+    await this.processNewProject(this.openProjectModal.current);
   }
 
   async processNewProject(modal) {
@@ -71,7 +72,7 @@ export class ProjectActions {
   }
 
   openTerminal() {
-    BaseProjectManager.instance?.toggleTerminal(true);
+    ProjectManager.instance?.toggleTerminal(true);
   }
 
   // TODO remove project from local storage
@@ -92,6 +93,11 @@ export class ProjectActions {
       notificationDescription = `You have permanently delete project <b>${name}</b>`;
     }
     notification.info(notificationTitle, notificationDescription);
+  }
+
+  async renameProjects(project) {
+    const newName = await this.renameProjectModal.openModal(project);
+    await ProjectManager.renameProject(project.id, newName);
   }
 }
 

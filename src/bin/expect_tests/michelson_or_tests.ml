@@ -6,7 +6,7 @@ let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
 (* avoid pretty printing *)
-let () = Unix.putenv ~key:"TERM" ~data:"dumb"
+let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "dry-run" ; contract "double_michelson_or.mligo" ; "unit" ; "(M_left (1) : storage)" ] ;

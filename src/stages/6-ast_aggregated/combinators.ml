@@ -49,7 +49,7 @@ let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
 let t_mutez = t_tez
 
 let t_record ?loc ~layout fields  : type_expression = make_t ?loc (T_record {fields;layout})
-let default_layout = Layout.L_tree
+let default_layout : Layout.t = Layout.L_tree
 let make_t_ez_record ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = Record.of_list lst in
@@ -192,6 +192,12 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
   | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
   | _ -> None
 
+let get_t_map_or_big_map (t:type_expression) : (type_expression * type_expression) option =
+  match t.type_content with
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Map -> Some (k,v)
+  | _ -> None
+
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
@@ -234,13 +240,12 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [p] }
-[@@map (_ct_, ("some", "contract_opt", "contract"))]
+[@@map (_ct_, ("some"))]
 
 let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; arguments = [p; p']}
-[@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]
+[@@map (_ct_, ("cons", "set_add", "map_remove"))]
 
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
-let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
 [@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
@@ -280,6 +285,7 @@ let e_a_bool b = make_e (e_bool b) (t_bool ())
 
 (* Constants *)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
+let e_a_none ?location t = make_e ?location (e_none ()) (t_option t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
 let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
 let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)
@@ -288,11 +294,18 @@ let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.ty
 let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
 let e_a_big_map_add k v tl = make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
 let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
+let e_contract_opt a : expression_content =
+  let language = "Michelson" in
+  let code = Format.asprintf "{ PUSH address \"%s\" ; CONTRACT }" a in
+  let code = e_a_string @@ Ligo_string.verbatim code in
+  E_raw_code { language ; code }
 let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
-let e_a_contract a t = make_e (e_contract a) (t_contract t)
-let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
+let e_contract_entrypoint_opt e a : expression_content =
+  let language = "Michelson" in
+  let code = Format.asprintf "{ PUSH address \"%s\" ; CONTRACT %%%s }" a e in
+  let code = e_a_string @@ Ligo_string.verbatim code in
+  E_raw_code { language ; code }
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =
   match t.expression_content with
@@ -382,3 +395,8 @@ let context_apply (p : context) (e : expression) : expression =
   let f d e = match Location.unwrap d with
     | D_value { binder ; expr ; attr } -> e_a_let_in binder expr e attr in
   List.fold_right ~f ~init:e p
+
+let get_e_tuple = fun t ->
+  match t with
+  | E_record r -> Some (List.map ~f:snd @@ Record.tuple_of_record r)
+  | _ -> None

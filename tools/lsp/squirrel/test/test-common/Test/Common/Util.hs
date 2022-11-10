@@ -2,6 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 module Test.Common.Util
   ( ScopeTester
+  , tempTemplate
   , testDir
   , contractsDir
   , getContractsWithExtension

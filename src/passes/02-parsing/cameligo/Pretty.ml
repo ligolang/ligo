@@ -16,32 +16,18 @@ let pp_par printer {value; _} =
 (* The CST *)
 
 let rec print cst =
-  let decl = Utils.nseq_to_list cst.decl in
-  let decl = List.filter_map ~f:pp_declaration decl
-  in separate_map (hardline ^^ hardline) group decl
+    Utils.nseq_to_list cst.decl
+  |> List.map ~f:pp_declaration
+  |> separate_map hardline group
 
 (* Declarations *)
 
 and pp_declaration = function
-  Let         decl -> Some (pp_let_decl     decl)
-| TypeDecl    decl -> Some (pp_type_decl    decl)
-| ModuleDecl  decl -> Some (pp_module_decl  decl)
-| ModuleAlias decl -> Some (pp_module_alias decl)
-| Directive      _ -> None
-
-(*
-and pp_dir_decl = function
-  Directive.Linemarker {value; _} ->
-    let open Directive in
-    let linenum, file_path, flag_opt = value in
-    let flag =
-      match flag_opt with
-        Some Push -> " 1"
-      | Some Pop  -> " 2"
-      | None      -> "" in
-    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
-    in string lexeme
-*)
+  Let         decl -> pp_let_decl     decl ^^ hardline
+| TypeDecl    decl -> pp_type_decl    decl ^^ hardline
+| ModuleDecl  decl -> pp_module_decl  decl ^^ hardline
+| ModuleAlias decl -> pp_module_alias decl ^^ hardline
+| Directive   dir  -> string (Directive.to_lexeme dir).Region.value
 
 (* Variables *)
 
@@ -344,8 +330,11 @@ and pp_constr_expr {value; _} =
 and pp_record_expr ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
 and pp_field_assign {value; _} =
-  let {field_name; field_expr; _} = value in
-  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
+  match value with 
+    Property {field_name; field_expr; _} -> 
+      prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
+  | Punned_property field_name ->
+    pp_ident field_name
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -402,9 +391,12 @@ and pp_code_inj {value; _} =
   string "[%" ^^ language ^/^ code ^^ string "]"
 
 and pp_field_path_assign {value; _} =
-  let {field_path; field_expr; _} = value in
-  let path = pp_path field_path in
-  prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
+  match value with 
+    Path_property {field_path; field_expr; _} ->
+      let path = pp_path field_path in 
+      prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
+  | Path_punned_property field_name ->
+    pp_ident field_name
 
 and pp_path = function
   Name v -> pp_ident v

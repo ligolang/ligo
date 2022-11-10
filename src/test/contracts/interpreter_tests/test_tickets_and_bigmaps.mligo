@@ -17,7 +17,7 @@ let buy_ticket ({data; tickets} : storage) : operation list * storage =
   let owner = (Tezos.get_sender()) in
   let (owned_tickets_opt, tickets) =
     Big_map.get_and_update owner (None : unit ticket option) tickets in
-  let new_ticket = Tezos.create_ticket unit 1n in
+  let new_ticket = Option.unopt (Tezos.create_ticket unit 1n) in
   let join_tickets =
     match owned_tickets_opt with
       None -> new_ticket

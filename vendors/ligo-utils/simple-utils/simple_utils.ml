@@ -10,6 +10,7 @@ module Triple = X_triple
 module Option = X_option
 module Map = X_map
 module Ligo_string = X_string
+module Z = X_z
 
 module Tuple = Tuple
 module Tree = Tree
@@ -18,6 +19,9 @@ module Display = Display
 module Runned_result = Runned_result
 module Snippet = Snippet
 
+module Error = Error
+module Warning = Warning
+
 (* Originally by Christian Rinderknecht *)
 
 module Pos    = Pos
@@ -25,3 +29,5 @@ module Region = Region
 module Utils  = Utils
 module FQueue = FQueue
 module Argv   = Argv
+module Std    = Std
+module Lexbuf = Lexbuf

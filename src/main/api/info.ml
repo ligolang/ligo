@@ -21,7 +21,7 @@ let list_declarations (raw_options : Raw_options.t) source_file display_format (
       fun ~raise ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options  = Compiler_options.make ~raw_options ~syntax () in
-      let prg = Build.unqualified_typed ~raise Env ~options source_file in
+      let prg = Build.qualified_typed ~raise Env ~options source_file in
       let declarations  = Compile.Of_typed.list_declarations raw_options.only_ep prg in
       (source_file, declarations)
 

@@ -7,9 +7,9 @@ open Simple_utils.Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_014_PtKathma
-module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
-module Tezos_client = Tezos_client_014_PtKathma
+module Tezos_protocol = Memory_proto_alpha
+module Tezos_protocol_env = Memory_proto_alpha.Alpha_environment
+module Tezos_client = Memory_proto_alpha.Client
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
 open Ligo_prim
@@ -66,6 +66,7 @@ type state =
   { tezos_context : Tezos_state.context
   ; mod_res : ModRes.t option
   ; heap : Heap.t
+  ; print_values : bool
   }
 
 let make_state ~raise ~(options : Compiler_options.t) =
@@ -73,7 +74,7 @@ let make_state ~raise ~(options : Compiler_options.t) =
     Tezos_state.init_ctxt ~raise options.backend.protocol_version []
   in
   let mod_res = Option.bind ~f:ModRes.make options.frontend.project_root in
-  { tezos_context; mod_res; heap = Heap.empty }
+  { tezos_context; mod_res; heap = Heap.empty; print_values = true }
 
 
 let clean_locations ty =
@@ -88,9 +89,6 @@ module Command = struct
     | Set_big_map :
         Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Unpack :
-        Location.t * bytes * Ast_aggregated.type_expression
-        -> LT.value tezos_command
     | Bootstrap_contract :
         int * LT.value * LT.value * Ast_aggregated.type_expression
         -> unit tezos_command
@@ -186,16 +184,15 @@ module Command = struct
         Location.t * LT.calltrace * string * bytes
         -> LT.value tezos_command
     | Add_cast :
-        Location.t * LT.mcontract * Ast_aggregated.type_expression
+        Location.t * LT.Contract.t * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Michelson_equal : Location.t * LT.value * LT.value -> bool tezos_command
     | Implicit_account :
         Tezos_protocol.Protocol.Alpha_context.public_key_hash
         -> LT.value tezos_command
     | Contract :
         Location.t
         * LT.calltrace
-        * LT.mcontract
+        * LT.Contract.t
         * string option
         * Ast_aggregated.type_expression
         -> LT.value tezos_command
@@ -239,6 +236,7 @@ module Command = struct
     | Free : LT.location -> unit t
     | Set : LT.location * LT.value -> unit t
     | Deref : LT.location -> LT.value t
+    | Set_print_values : bool -> bool t
 
   let eval_tezos
     : type a.
@@ -264,27 +262,6 @@ module Command = struct
         Tezos_state.set_big_map ~raise ctxt (Z.to_int id) kv k_ty v_ty
       in
       (), ctxt
-    | Unpack (loc, bytes, value_ty) ->
-      let value_ty =
-        trace_option
-          ~raise
-          (Errors.generic_error loc "Expected return type is not an option")
-        @@ Ast_aggregated.get_t_option value_ty
-      in
-      let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
-      let mich = Michelson_backend.compile_value ~raise ~options expr in
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
-      let ret_co, ret_ty =
-        Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich
-      in
-      let ret =
-        Michelson_to_value.decompile_to_untyped_value
-          ~raise
-          ~bigmaps:ctxt.transduced.bigmaps
-          ret_ty
-          ret_co
-      in
-      ret, ctxt
     | Nth_bootstrap_contract n ->
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
       contract, ctxt
@@ -323,7 +300,8 @@ module Command = struct
         trace_option ~raise (corner_case ())
         @@ Ast_aggregated.get_t_pair input_ty
       in
-      let ({ code = storage; ast_ty = storage_ty; _ } : LT.typed_michelson_code)
+      let ({ micheline_repr = { code = storage; _ }; ast_ty = storage_ty }
+            : LT.typed_michelson_code)
         =
         trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage
       in
@@ -420,7 +398,10 @@ module Command = struct
             let code_ty = Michelson_backend.storage_retreival_dummy_ty in
             let v =
               LT.V_Michelson
-                (Ty_code { code; code_ty; ast_ty = Ast_aggregated.t_int () })
+                (Ty_code
+                   { micheline_repr = { code; code_ty }
+                   ; ast_ty = Ast_aggregated.t_int ()
+                   })
             in
             let rej = LC.v_ctor "Rejected" (LC.v_pair (v, contract_failing)) in
             fail_ctor rej, ctxt
@@ -432,7 +413,7 @@ module Command = struct
            (Contract_storage.Balance_too_low
              (contract_too_low, contract_balance, spend_request))
          :: _ ->
-         let contract_too_low : LT.mcontract =
+         let contract_too_low : LT.Contract.t =
            Michelson_backend.contract_to_contract contract_too_low
          in
          let contract_too_low = LT.V_Ct (C_address contract_too_low) in
@@ -505,7 +486,8 @@ module Command = struct
              addr
       in
       let ret =
-        LT.V_Michelson (Ty_code { code = storage; code_ty = ty; ast_ty })
+        LT.V_Michelson
+          (Ty_code { micheline_repr = { code = storage; code_ty = ty }; ast_ty })
       in
       ret, ctxt
     | Get_size contract_code ->
@@ -570,17 +552,10 @@ module Command = struct
         @@ Self_ast_aggregated.expression_obj func_typed_exp
       in
       let func_code =
-        Michelson_backend.compile_value ~raise ~options func_typed_exp
+        Michelson_backend.compile_ast ~raise ~options func_typed_exp
       in
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
-      let { code = arg_code; _ } =
-        Michelson_backend.compile_simple_value
-          ~raise
-          ~options
-          ~run_options
-          ~loc
-          v
-          in_ty
+      let { micheline_repr = { code = arg_code; _ }; _ } =
+        Michelson_backend.compile_value ~raise ~options ~loc v in_ty
       in
       let input_ty, _ =
         Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty
@@ -605,19 +580,14 @@ module Command = struct
       let ret =
         LT.V_Michelson
           (Ty_code
-             { code = expr; code_ty = expr_ty; ast_ty = f.body.type_expression })
+             { micheline_repr = { code = expr; code_ty = expr_ty }
+             ; ast_ty = f.body.type_expression
+             })
       in
       ret, ctxt
     | Eval (loc, v, expr_ty) ->
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
       let value =
-        Michelson_backend.compile_simple_value
-          ~raise
-          ~options
-          ~run_options
-          ~loc
-          v
-          expr_ty
+        Michelson_backend.compile_value ~raise ~options ~loc v expr_ty
       in
       LT.V_Michelson (Ty_code value), ctxt
     | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) ->
@@ -715,7 +685,7 @@ module Command = struct
       ret, ctxt
     | To_contract (loc, v, entrypoint, _ty_expr) ->
       (match v with
-       | LT.V_Ct (LT.C_address address) ->
+       | LT.V_Typed_address address ->
          let contract : LT.constant_val =
            LT.C_contract { address; entrypoint }
          in
@@ -834,16 +804,6 @@ module Command = struct
       in
       let internals = { ctxt.internals with storage_tys } in
       (), { ctxt with internals }
-    | Michelson_equal (loc, a, b) ->
-      let ({ code; _ } : LT.typed_michelson_code) =
-        trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-        @@ LC.get_michelson_expr a
-      in
-      let ({ code = code'; _ } : LT.typed_michelson_code) =
-        trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-        @@ LC.get_michelson_expr b
-      in
-      Caml.( = ) code code', ctxt
     | Get_last_originations () ->
       let aux (src, lst) =
         let src = LC.v_address src in
@@ -898,16 +858,16 @@ module Command = struct
         | None ->
           Ast_aggregated.(
             e_a_contract_opt
-              (e_a_address @@ Michelson_backend.string_of_contract addr)
+              (Michelson_backend.string_of_contract addr)
               value_ty)
         | Some entrypoint ->
           Ast_aggregated.(
             e_a_contract_entrypoint_opt
-              (e_a_string (Ligo_string.standard entrypoint))
-              (e_a_address @@ Michelson_backend.string_of_contract addr)
+              entrypoint
+              (Michelson_backend.string_of_contract addr)
               value_ty)
       in
-      let mich = Michelson_backend.compile_value ~raise ~options expr in
+      let mich = Michelson_backend.compile_ast ~raise ~options expr in
       let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
       let ret_co, ret_ty =
         Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich
@@ -1046,6 +1006,9 @@ module Command = struct
     | Deref var ->
       let val_ = Heap.deref state.heap var in
       val_, state
+    | Set_print_values print_values ->
+      let prev = state.print_values in
+      prev, { state with print_values }
 end
 
 type 'a t =

@@ -59,7 +59,7 @@ let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression =
   t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_record ?loc ?sugar ?layout fields  : type_expression = make_t ?loc ?sugar @@ T_record {fields;layout}
-let default_layout = Layout.L_tree
+let default_layout : Layout.t = Layout.L_tree
 let make_t_ez_record ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label.of_string x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = Record.of_list lst in
@@ -108,7 +108,6 @@ let tuple_of_record (m: _ Rows.row_element_mini_c Record.t) =
   in
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
   List.map ~f:(fun Rows.{associated_type;_} -> associated_type) l
-
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
   | T_record struct_ -> Some (tuple_of_record struct_.fields)
@@ -281,3 +280,29 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
     | _ -> [None]
   in
   Option.all @@ aux e
+
+
+let t_michelson_sum ?loc l l_ann r r_ann =
+  let row decl_pos associated_type michelson_annotation : _ Rows.row_element_mini_c =
+    { associated_type; decl_pos 
+    ; michelson_annotation = Some michelson_annotation
+    }
+  in
+  t_sum
+    ?loc
+    (Record.of_list
+        [ Label "M_left", row 0 l l_ann; Label "M_right", row 1 r r_ann ])
+
+
+let t_michelson_pair ?loc l l_ann r r_ann =
+  let row decl_pos associated_type michelson_annotation : _ Rows.row_element_mini_c =
+    { associated_type; decl_pos 
+    ; michelson_annotation = Some michelson_annotation
+    }
+  in
+  t_record
+    ?loc
+    (Record.of_list
+        [ Label "0", row 0 l l_ann; Label "1", row 1 r r_ann ])
+
+  

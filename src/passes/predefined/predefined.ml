@@ -101,21 +101,14 @@ module Michelson = struct
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
-    | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
-    | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
     | C_CONS               , _   -> Some ( simple_binary @@ prim "CONS")
     | C_UNIT               , _   -> Some ( simple_constant @@ prim "UNIT")
-    | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")
-    | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
-    | C_IMPLICIT_ACCOUNT   , _   -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
-    | C_SET_DELEGATE       , _   -> Some ( simple_unary @@ prim "SET_DELEGATE")
-    | C_CALL               , _   -> Some ( simple_ternary @@ prim "TRANSFER_TOKENS")
     | C_SET_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
     | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
     | C_CONCAT             , _   -> Some ( simple_binary @@ prim "CONCAT")
-    | C_SELF               , _   -> Some (trivial_special "SELF")
+    | C_SLICE              , _   -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
     | C_NONE               , _   -> Some (trivial_special "NONE")
     | C_NIL                , _   -> Some (trivial_special "NIL")
     | C_LOOP_CONTINUE      , _   -> Some (trivial_special "LEFT")
@@ -124,51 +117,23 @@ module Michelson = struct
     | C_SET_EMPTY          , _   -> Some (trivial_special "EMPTY_SET")
     | C_MAP_EMPTY          , _   -> Some (trivial_special "EMPTY_MAP")
     | C_BIG_MAP_EMPTY      , _   -> Some (trivial_special "EMPTY_BIG_MAP")
-    | C_BYTES_UNPACK       , _   -> Some (trivial_special "UNPACK")
+    | C_LIST_SIZE          , _   -> Some (trivial_special "SIZE")
+    | C_SET_SIZE           , _   -> Some (trivial_special "SIZE")
+    | C_MAP_SIZE           , _   -> Some (trivial_special "SIZE")
+    | C_SIZE               , _   -> Some (trivial_special "SIZE")
+    | C_MAP_MEM            , _   -> Some (simple_binary @@ prim "MEM")
     | C_MAP_REMOVE         , _   -> Some (special (fun with_args -> seq [dip (with_args "NONE"); prim "UPDATE"]))
     | C_LEFT               , _   -> Some (trivial_special "LEFT")
     | C_RIGHT              , _   -> Some (trivial_special "RIGHT")
-    | C_SAPLING_EMPTY_STATE, _ -> Some (trivial_special "SAPLING_EMPTY_STATE")
-    | C_SAPLING_VERIFY_UPDATE , _ -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
-    | C_CONTRACT           , _   ->
-      Some (special
-              (fun with_args ->
-                 seq [with_args "CONTRACT";
-                      i_assert_some_msg (i_push_string "bad address for get_contract")]))
-    | C_CONTRACT_WITH_ERROR, _   ->
-      Some (special
-              (fun with_args ->
-                 seq [with_args "CONTRACT";
-                      i_if_none (i_failwith) (seq [i_swap; i_drop])]))
-    | C_CONTRACT_OPT         , _   -> Some (trivial_special "CONTRACT")
-    | C_CONTRACT_ENTRYPOINT , _  ->
-      Some (special
-              (fun with_args ->
-                 seq [with_args "CONTRACT";
-                      i_assert_some_msg (i_push_string "bad address for get_entrypoint")]))
-    | C_CONTRACT_ENTRYPOINT_OPT , _ -> Some (trivial_special "CONTRACT")
     | C_CREATE_CONTRACT , _ ->
       Some (special
               (fun with_args ->
                  seq [with_args "CREATE_CONTRACT";
                       i_pair]))
-    | C_OPEN_CHEST , _ -> (
-      Some (simple_ternary @@ seq [
-        prim "OPEN_CHEST" ;
-        i_if_left
-          ( prim "RIGHT" ~children:[t_or t_unit t_unit])
-          ( i_if
-            (seq [ i_push_unit ; prim "LEFT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
-            (seq [ i_push_unit ; prim "RIGHT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
-          )
-      ])
-    )
-    | C_VIEW , _ -> Some (trivial_special "VIEW")
     | C_GLOBAL_CONSTANT , _ ->
       Some (special
         (fun with_args ->  with_args "PUSH")
         )
-    | C_EMIT_EVENT , Kathmandu -> Some (trivial_special "EMIT")
     | _ -> None
 
 end

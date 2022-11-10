@@ -30,6 +30,7 @@ import Control.Lens.Lens (Lens, lens)
 import Data.Functor.Classes (Eq1 (..))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -74,7 +75,6 @@ type RawLigoList =
   , ModuleAccess, Attr, TypeParams, CaseOrDefaultStm
   ]
 
--- TODO (LIGO-169): Implement a parser for JsLIGO.
 data Lang
   = Pascal
   | Caml
@@ -140,7 +140,7 @@ type IsRec = Bool
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)
   | TRecord   [it]     -- ^ [TField]
-  | TSum      [it]     -- ^ [Variant]
+  | TSum      (NonEmpty it) -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
   | TApply    it [it]  -- ^ (Name) [Type]
   | TString   it       -- ^ (TString)
@@ -168,6 +168,7 @@ data Expr it
   | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
+  | Ternary   it it it -- (Expr) (Expr) (Expr)
   | Assign    it it    -- (Name) (Expr)
   | AssignOp  it it it -- (Name) Text (Expr)
   | List      [it] -- [Expr]
@@ -307,6 +308,7 @@ newtype TypeVariableName it = TypeVariableName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | Constructor node in AST
 newtype Ctor it = Ctor Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
@@ -335,6 +337,9 @@ liftEqList :: (a -> b -> Bool) -> [a] -> [b] -> Bool
 liftEqList _ []       []       = True
 liftEqList f (x : xs) (y : ys) = f x y && liftEqList f xs ys
 liftEqList _ _        _        = False
+
+liftEqNonEmpty :: (a -> b -> Bool) -> NonEmpty a -> NonEmpty b -> Bool
+liftEqNonEmpty f (x :| xs) (y :| ys) = f x y && liftEqList f xs ys
 
 liftEqMaybe :: (a -> b -> Bool) -> Maybe a -> Maybe b -> Bool
 liftEqMaybe _ Nothing  Nothing  = True
@@ -448,7 +453,7 @@ instance Eq1 TypeParams where
 instance Eq1 Type where
   liftEq f (TArrow a b) (TArrow c d) = f a c && f b d
   liftEq f (TRecord xs) (TRecord ys) = liftEqList f xs ys
-  liftEq f (TSum xs) (TSum ys) = liftEqList f xs ys
+  liftEq f (TSum xs) (TSum ys) = liftEqNonEmpty f xs ys
   liftEq f (TProduct xs) (TProduct ys) = liftEqList f xs ys
   liftEq f (TString x) (TString y) = f x y
   liftEq _ TWildcard TWildcard = True

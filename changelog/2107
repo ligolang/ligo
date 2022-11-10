@@ -1,0 +1,5 @@
+author: er433
+description: \n
+merge_request: '2107'
+title: '`SLICE` instruction in testing framework''s interpreter'
+type: fixed

@@ -211,7 +211,7 @@ mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st
   let entrypoint = mEntrypoint ?: "main"
   ligoMapper <- compileLigoContractDebug entrypoint file
   (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles) <-
-    case readLigoMapper ligoMapper of
+    case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
       Right v -> pure v
       Left err -> HUnit.assertFailure $ pretty err
   Refl <- sing @cp' `decideEquality` sing @(T.ToT param)

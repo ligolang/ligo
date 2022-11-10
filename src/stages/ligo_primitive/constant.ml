@@ -3,8 +3,6 @@ type constant' =
   | C_NIL
   | C_SOME
   | C_NONE
-  | C_UNOPT
-  | C_UNOPT_WITH_ERROR
   | C_UPDATE
   (* Loops *)
   | C_ITER
@@ -14,6 +12,9 @@ type constant' =
   | C_FOLD
   | C_FOLD_LEFT
   | C_FOLD_RIGHT
+  (* CONVERSION *)
+  | C_ABS
+  | C_INT
   (* MATH *)
   | C_NEG
   | C_ADD
@@ -37,8 +38,9 @@ type constant' =
   | C_GE
   (* Bytes/ String *)
   | C_CONCAT
-  | C_BYTES_UNPACK
   | C_CONS
+  | C_SIZE
+  | C_SLICE
   (* Pair *)
   | C_PAIR
   | C_CAR
@@ -57,6 +59,7 @@ type constant' =
   | C_SET_FOLD_DESC
   | C_SET_MEM
   | C_SET_UPDATE
+  | C_SET_SIZE
   (* List *)
   | C_LIST_EMPTY
   | C_LIST_LITERAL
@@ -65,6 +68,7 @@ type constant' =
   | C_LIST_FOLD
   | C_LIST_FOLD_LEFT
   | C_LIST_FOLD_RIGHT
+  | C_LIST_SIZE
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY
@@ -80,27 +84,21 @@ type constant' =
   | C_MAP_FIND
   | C_MAP_FIND_OPT
   | C_MAP_GET_AND_UPDATE
+  | C_MAP_SIZE
+  | C_MAP_MEM
   (* Big Maps *)
   | C_BIG_MAP
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
   (* Blockchain *)
-  | C_CALL
-  | C_CONTRACT
-  | C_CONTRACT_OPT
-  | C_CONTRACT_WITH_ERROR
-  | C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT
-  | C_ADDRESS
-  | C_SELF
-  | C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT
-  | C_SET_DELEGATE
   | C_CREATE_CONTRACT
-  | C_OPEN_CHEST
-  | C_VIEW
+  (* Check - used for checking conditions and giving errors *)
+  | C_CHECK_SELF
+  | C_CHECK_EMIT_EVENT
+  | C_CHECK_ENTRYPOINT
   (* Tests - ligo interpreter only *)
+  | C_TEST_ADDRESS [@only_interpreter]
   | C_TEST_SIZE [@only_interpreter]
   | C_TEST_ORIGINATE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
@@ -156,15 +154,9 @@ type constant' =
   | C_TEST_INT64_TO_INT [@only_interpreter]
   | C_TEST_LAST_EVENTS [@only_interpreter]
   | C_TEST_TRY_WITH [@only_interpreter]
-  (* Added only for performance in the interpreter, not exposed *)
-  | C_TEST_ABS [@only_interpreter]
-  | C_TEST_INT [@only_interpreter]
-  | C_TEST_SLICE [@only_interpreter]
+  | C_TEST_SET_PRINT_VALUES [@only_interpreter]
   (* New with EDO*)
-  | C_SAPLING_VERIFY_UPDATE
-  | C_SAPLING_EMPTY_STATE
   | C_GLOBAL_CONSTANT
-  | C_EMIT_EVENT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]

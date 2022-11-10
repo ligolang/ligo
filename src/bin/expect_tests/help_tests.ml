@@ -9,25 +9,31 @@ let%expect_test _ =
 
     === subcommands ===
 
-      compile    compile a ligo program to michelson
-      transpile  [BETA] transpile ligo code from a syntax to another
-      run        compile and interpret ligo code
-      info       tools to get information from contracts
-      mutate     create mutants of a ligo file
-      repl       interactive ligo interpreter
-      init       Initialize a new ligo project from template. Contract or library.
-      changelog  print the ligo changelog
-      print      print intermediary program representation.
-                 Warning: Intended for development of LIGO and can break at any time
-      install    install LIGO dependencies declared in package.json
-      publish    [BETA] publish the LIGO package declared in package.json
-      add-user   [BETA] create a new user for the LIGO package registry
-      login      [BETA] login to the LIGO package registry
-      daemon     launch a long running LIGO process
-      version    print version information
-      help       explain a given subcommand (perhaps recursively)
+      compile                    . compile a ligo program to michelson
+      transpile                  . [BETA] transpile ligo code from a syntax to
+                                   another
+      run                        . compile and interpret ligo code
+      info                       . tools to get information from contracts
+      mutate                     . create mutants of a ligo file
+      repl                       . interactive ligo interpreter
+      init                       . Initialize a new ligo project from template.
+                                   Contract or library.
+      changelog                  . print the ligo changelog
+      print                      . print intermediary program representation.
+                                   Warning: Intended for development of LIGO and can
+                                   break at any time
+      install                    . install LIGO dependencies declared in
+                                   package.json
+      publish                    . [BETA] publish the LIGO package declared in
+                                   package.json
+      add-user                   . [BETA] create a new user for the LIGO package
+                                   registry
+      login                      . [BETA] login to the LIGO package registry
+      daemon                     . launch a long running LIGO process
+      version                    . print version information
+      help                       . explain a given subcommand (perhaps recursively)
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; "-help" ] ;
@@ -40,113 +46,67 @@ This sub-command compiles a contract to Michelson code. It expects a source file
 
 === flags ===
 
-  [--constants CONSTANTS]                               A list of global
-                                                        constants that will be
-                                                        assumed in the context,
-                                                        separated by ','
-                                                        (alias: -c)
-  [--disable-michelson-typechecking]                    Disable Michelson
-                                                        typecking, this might
-                                                        produce ill-typed
-                                                        Michelson code.
-  [--display-format FORMAT]                             the format that will be
-                                                        used by the CLI.
-                                                        Available formats are
-                                                        'dev', 'json', and
-                                                        'human-readable'
-                                                        (default). When
-                                                        human-readable lacks
-                                                        details (we are still
-                                                        tweaking it), please
-                                                        contact us and use
-                                                        another format in the
-                                                        meanwhile.
-                                                        (alias: --format)
-  [--enable-michelson-typed-opt]                        Enable Michelson
-                                                        optimizations that work
-                                                        using typecking.
-  [--experimental-disable-optimizations-for-debugging]  Experimental: Disable
-                                                        certain optimizations in
-                                                        order to simplify the
-                                                        relationship between the
-                                                        source LIGO and the
-                                                        target Michelson.
-                                                        Intended for use with
-                                                        stepwise Michelson
-                                                        debuggers.
-  [--file-constants FILE_CONSTANTS]                     A file with a JSON list
-                                                        of strings with
-                                                        Michelson code. Those
-                                                        Michelson values will be
-                                                        registered as global
-                                                        constants in the
-                                                        context.
-  [--michelson-comments COMMENT_TYPE] ...               Selects kinds of
-                                                        comments to be added to
-                                                        the Michelson output.
-                                                        Currently 'location' and
-                                                        'env' are supported.
-                                                        'location' propagates
-                                                        original source
-                                                        locations. 'env' inserts
-                                                        additional empty Seq
-                                                        nodes with comments
-                                                        relating the Michelson
-                                                        stack to the source LIGO
-                                                        environment.
-  [--michelson-format CODE_FORMAT]                      format that will be used
-                                                        by compile-contract for
-                                                        the resulting Michelson.
-                                                        Available formats are
-                                                        'text' (default), 'json'
-                                                        and 'hex'.
-  [--no-stdlib]                                         disable stdlib
-                                                        inclusion.
-  [--no-warn]                                           disable warning messages
-  [--output-file FILENAME]                              if used, prints the
-                                                        output into the
-                                                        specified file instead
-                                                        of stdout
-                                                        (alias: -o)
-  [--project-root PATH]                                 The path to root of the
-                                                        project.
-  [--syntax SYNTAX]                                     the syntax that will be
-                                                        used. Currently
-                                                        supported syntaxes are
-                                                        "pascaligo", "cameligo",
-                                                        "reasonligo" and
-                                                        "jsligo". By default,
-                                                        the syntax is guessed
-                                                        from the extension
-                                                        (.ligo, .mligo, .religo,
-                                                        and .jsligo
-                                                        respectively).
-                                                        (alias: -s)
-  [--views VIEWS]                                       A list of declaration
-                                                        name that will be
-                                                        compiled as on-chain
-                                                        views, separated by ','
-                                                        (alias: -v)
-  [--warn-unused-rec]                                   warn about unused
-                                                        recursion in a recursive
-                                                        function
-  [--werror]                                            treat warnings as errors
-  [-e ENTRY-POINT]                                      the entry-point that
-                                                        will be compiled.
-                                                        (alias: --entry-point)
-  [-p PROTOCOL]                                         choose protocol's
-                                                        types/values pre-loaded
-                                                        into the LIGO
-                                                        environment (jakarta ,
-                                                        kathmandu). By default,
-                                                        the current protocol
-                                                        (jakarta) will be used
-                                                        (alias: --protocol)
-  [-help]                                               print this help text and
-                                                        exit
-                                                        (alias: -?)
+  [--constants CONSTANTS], -c
+                             . A list of global constants that will be assumed
+                               in the context, separated by ','
+  [--disable-michelson-typechecking]
+                             . Disable Michelson typecking, this might produce
+                               ill-typed Michelson code.
+  [--display-format FORMAT], --format
+                             . the format that will be used by the CLI.
+                               Available formats are 'dev', 'json', and
+                               'human-readable' (default). When human-readable
+                               lacks details (we are still tweaking it), please
+                               contact us and use another format in the
+                               meanwhile.
+  [--enable-michelson-typed-opt]
+                             . Enable Michelson optimizations that work using
+                               typecking.
+  [--experimental-disable-optimizations-for-debugging]
+                             . Experimental: Disable certain optimizations in
+                               order to simplify the relationship between the
+                               source LIGO and the target Michelson. Intended
+                               for use with stepwise Michelson debuggers.
+  [--file-constants FILE_CONSTANTS]
+                             . A file with a JSON list of strings with Michelson
+                               code. Those Michelson values will be registered
+                               as global constants in the context.
+  [--michelson-comments COMMENT_TYPE] ...
+                             . Selects kinds of comments to be added to the
+                               Michelson output. Currently 'location' and 'env'
+                               are supported. 'location' propagates original
+                               source locations. 'env' inserts additional empty
+                               Seq nodes with comments relating the Michelson
+                               stack to the source LIGO environment.
+  [--michelson-format CODE_FORMAT]
+                             . format that will be used by compile-contract for
+                               the resulting Michelson. Available formats are
+                               'text' (default), 'json' and 'hex'.
+  [--no-stdlib]              . disable stdlib inclusion.
+  [--no-warn]                . disable warning messages
+  [--output-file FILENAME], -o
+                             . if used, prints the output into the specified
+                               file instead of stdout
+  [--project-root PATH]      . The path to root of the project.
+  [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                               syntaxes are "pascaligo", "cameligo",
+                               "reasonligo" and "jsligo". By default, the syntax
+                               is guessed from the extension (.ligo, .mligo,
+                               .religo, and .jsligo respectively).
+  [--views VIEWS], -v        . A list of declaration name that will be compiled
+                               as on-chain views, separated by ','
+  [--warn-unused-rec]        . warn about unused recursion in a recursive
+                               function
+  [--werror]                 . treat warnings as errors
+  [-e ENTRY-POINT], --entry-point
+                             . the entry-point that will be compiled.
+  [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                               the LIGO environment (kathmandu ,
+                               lima). By default, the current protocol
+                               (kathmandu) will be used
+  [-help], -?                . print this help text and exit
 
-(src/command.ml.Exit_called (status 0)) |} ]
+(core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; "-help" ] ;
@@ -159,60 +119,56 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]                     the tezos amount the Michelson interpreter
-                                         will use for the transaction.
-      [--balance INT]                    the balance the Michelson interpreter will
-                                         use for the contract balance.
-      [--constants CONSTANTS]            A list of global constants that will be
-                                         assumed in the context, separated by ','
-                                         (alias: -c)
-      [--display-format FORMAT]          the format that will be used by the CLI.
-                                         Available formats are 'dev', 'json', and
-                                         'human-readable' (default). When
-                                         human-readable lacks details (we are still
-                                         tweaking it), please contact us and use
-                                         another format in the meanwhile.
-                                         (alias: --format)
-      [--file-constants FILE_CONSTANTS]  A file with a JSON list of strings with
-                                         Michelson code. Those Michelson values will
-                                         be registered as global constants in the
-                                         context.
-      [--michelson-format CODE_FORMAT]   format that will be used by
-                                         compile-contract for the resulting
-                                         Michelson. Available formats are 'text'
-                                         (default), 'json' and 'hex'.
-      [--no-warn]                        disable warning messages
-      [--now TIMESTAMP]                  the NOW value the Michelson interpreter
-                                         will use (e.g. '2000-01-01T10:10:10Z')
-      [--output-file FILENAME]           if used, prints the output into the
-                                         specified file instead of stdout
-                                         (alias: -o)
-      [--project-root PATH]              The path to root of the project.
-      [--sender ADDRESS]                 the sender the Michelson interpreter
-                                         transaction will use.
-      [--source ADDRESS]                 the source the Michelson interpreter
-                                         transaction will use.
-      [--syntax SYNTAX]                  the syntax that will be used. Currently
-                                         supported syntaxes are "pascaligo",
-                                         "cameligo", "reasonligo" and "jsligo". By
-                                         default, the syntax is guessed from the
-                                         extension (.ligo, .mligo, .religo, and
-                                         .jsligo respectively).
-                                         (alias: -s)
-      [--warn-unused-rec]                warn about unused recursion in a recursive
-                                         function
-      [--werror]                         treat warnings as errors
-      [-e ENTRY-POINT]                   the entry-point that will be compiled.
-                                         (alias: --entry-point)
-      [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (jakarta ,
-                                         kathmandu). By default, the current
-                                         protocol (jakarta) will be used
-                                         (alias: --protocol)
-      [-help]                            print this help text and exit
-                                         (alias: -?)
+      [--amount INT]             . the tezos amount the Michelson interpreter will
+                                   use for the transaction.
+      [--balance INT]            . the balance the Michelson interpreter will use
+                                   for the contract balance.
+      [--constants CONSTANTS], -c
+                                 . A list of global constants that will be assumed
+                                   in the context, separated by ','
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--file-constants FILE_CONSTANTS]
+                                 . A file with a JSON list of strings with Michelson
+                                   code. Those Michelson values will be registered
+                                   as global constants in the context.
+      [--michelson-format CODE_FORMAT]
+                                 . format that will be used by compile-contract for
+                                   the resulting Michelson. Available formats are
+                                   'text' (default), 'json' and 'hex'.
+      [--no-warn]                . disable warning messages
+      [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
+                                   (e.g. '2000-01-01T10:10:10Z')
+      [--output-file FILENAME], -o
+                                 . if used, prints the output into the specified
+                                   file instead of stdout
+      [--project-root PATH]      . The path to root of the project.
+      [--sender ADDRESS]         . the sender the Michelson interpreter transaction
+                                   will use.
+      [--source ADDRESS]         . the source the Michelson interpreter transaction
+                                   will use.
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "pascaligo", "cameligo",
+                                   "reasonligo" and "jsligo". By default, the syntax
+                                   is guessed from the extension (.ligo, .mligo,
+                                   .religo, and .jsligo respectively).
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [-e ENTRY-POINT], --entry-point
+                                 . the entry-point that will be compiled.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage" ; "-help" ] ;
@@ -225,60 +181,56 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]                     the tezos amount the Michelson interpreter
-                                         will use for the transaction.
-      [--balance INT]                    the balance the Michelson interpreter will
-                                         use for the contract balance.
-      [--constants CONSTANTS]            A list of global constants that will be
-                                         assumed in the context, separated by ','
-                                         (alias: -c)
-      [--display-format FORMAT]          the format that will be used by the CLI.
-                                         Available formats are 'dev', 'json', and
-                                         'human-readable' (default). When
-                                         human-readable lacks details (we are still
-                                         tweaking it), please contact us and use
-                                         another format in the meanwhile.
-                                         (alias: --format)
-      [--file-constants FILE_CONSTANTS]  A file with a JSON list of strings with
-                                         Michelson code. Those Michelson values will
-                                         be registered as global constants in the
-                                         context.
-      [--michelson-format CODE_FORMAT]   format that will be used by
-                                         compile-contract for the resulting
-                                         Michelson. Available formats are 'text'
-                                         (default), 'json' and 'hex'.
-      [--no-warn]                        disable warning messages
-      [--now TIMESTAMP]                  the NOW value the Michelson interpreter
-                                         will use (e.g. '2000-01-01T10:10:10Z')
-      [--output-file FILENAME]           if used, prints the output into the
-                                         specified file instead of stdout
-                                         (alias: -o)
-      [--project-root PATH]              The path to root of the project.
-      [--sender ADDRESS]                 the sender the Michelson interpreter
-                                         transaction will use.
-      [--source ADDRESS]                 the source the Michelson interpreter
-                                         transaction will use.
-      [--syntax SYNTAX]                  the syntax that will be used. Currently
-                                         supported syntaxes are "pascaligo",
-                                         "cameligo", "reasonligo" and "jsligo". By
-                                         default, the syntax is guessed from the
-                                         extension (.ligo, .mligo, .religo, and
-                                         .jsligo respectively).
-                                         (alias: -s)
-      [--warn-unused-rec]                warn about unused recursion in a recursive
-                                         function
-      [--werror]                         treat warnings as errors
-      [-e ENTRY-POINT]                   the entry-point that will be compiled.
-                                         (alias: --entry-point)
-      [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (jakarta ,
-                                         kathmandu). By default, the current
-                                         protocol (jakarta) will be used
-                                         (alias: --protocol)
-      [-help]                            print this help text and exit
-                                         (alias: -?)
+      [--amount INT]             . the tezos amount the Michelson interpreter will
+                                   use for the transaction.
+      [--balance INT]            . the balance the Michelson interpreter will use
+                                   for the contract balance.
+      [--constants CONSTANTS], -c
+                                 . A list of global constants that will be assumed
+                                   in the context, separated by ','
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--file-constants FILE_CONSTANTS]
+                                 . A file with a JSON list of strings with Michelson
+                                   code. Those Michelson values will be registered
+                                   as global constants in the context.
+      [--michelson-format CODE_FORMAT]
+                                 . format that will be used by compile-contract for
+                                   the resulting Michelson. Available formats are
+                                   'text' (default), 'json' and 'hex'.
+      [--no-warn]                . disable warning messages
+      [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
+                                   (e.g. '2000-01-01T10:10:10Z')
+      [--output-file FILENAME], -o
+                                 . if used, prints the output into the specified
+                                   file instead of stdout
+      [--project-root PATH]      . The path to root of the project.
+      [--sender ADDRESS]         . the sender the Michelson interpreter transaction
+                                   will use.
+      [--source ADDRESS]         . the source the Michelson interpreter transaction
+                                   will use.
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "pascaligo", "cameligo",
+                                   "reasonligo" and "jsligo". By default, the syntax
+                                   is guessed from the extension (.ligo, .mligo,
+                                   .religo, and .jsligo respectively).
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [-e ENTRY-POINT], --entry-point
+                                 . the entry-point that will be compiled.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "constant" ; "-help" ] ;
@@ -291,28 +243,28 @@ let%expect_test _ =
 
     === flags ===
 
-      [--display-format FORMAT]  the format that will be used by the CLI. Available
-                                 formats are 'dev', 'json', and 'human-readable'
-                                 (default). When human-readable lacks details (we
-                                 are still tweaking it), please contact us and use
-                                 another format in the meanwhile.
-                                 (alias: --format)
-      [--init-file FILENAME]     the path to the smart contract file to be used for
-                                 context initialization.
-      [--no-warn]                disable warning messages
-      [--project-root PATH]      The path to root of the project.
-      [--warn-unused-rec]        warn about unused recursion in a recursive function
-      [--werror]                 treat warnings as errors
-      [--without-run]            disable running of compiled expression.
-      [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (jakarta ,
-                                 kathmandu). By default, the current protocol
-                                 (jakarta) will be used
-                                 (alias: --protocol)
-      [-help]                    print this help text and exit
-                                 (alias: -?)
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--init-file FILENAME]     . the path to the smart contract file to be used
+                                   for context initialization.
+      [--no-warn]                . disable warning messages
+      [--project-root PATH]      . The path to root of the project.
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [--without-run]            . disable running of compiled expression.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "dry-run" ; "-help" ] ;
@@ -325,43 +277,42 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]             the tezos amount the Michelson interpreter will use
-                                 for the transaction.
-      [--balance INT]            the balance the Michelson interpreter will use for
-                                 the contract balance.
-      [--display-format FORMAT]  the format that will be used by the CLI. Available
-                                 formats are 'dev', 'json', and 'human-readable'
-                                 (default). When human-readable lacks details (we
-                                 are still tweaking it), please contact us and use
-                                 another format in the meanwhile.
-                                 (alias: --format)
-      [--no-warn]                disable warning messages
-      [--now TIMESTAMP]          the NOW value the Michelson interpreter will use
-                                 (e.g. '2000-01-01T10:10:10Z')
-      [--project-root PATH]      The path to root of the project.
-      [--sender ADDRESS]         the sender the Michelson interpreter transaction
-                                 will use.
-      [--source ADDRESS]         the source the Michelson interpreter transaction
-                                 will use.
-      [--syntax SYNTAX]          the syntax that will be used. Currently supported
-                                 syntaxes are "pascaligo", "cameligo", "reasonligo"
-                                 and "jsligo". By default, the syntax is guessed
-                                 from the extension (.ligo, .mligo, .religo, and
-                                 .jsligo respectively).
-                                 (alias: -s)
-      [--warn-unused-rec]        warn about unused recursion in a recursive function
-      [--werror]                 treat warnings as errors
-      [-e ENTRY-POINT]           the entry-point that will be compiled.
-                                 (alias: --entry-point)
-      [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (jakarta ,
-                                 kathmandu). By default, the current protocol
-                                 (jakarta) will be used
-                                 (alias: --protocol)
-      [-help]                    print this help text and exit
-                                 (alias: -?)
+      [--amount INT]             . the tezos amount the Michelson interpreter will
+                                   use for the transaction.
+      [--balance INT]            . the balance the Michelson interpreter will use
+                                   for the contract balance.
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--no-warn]                . disable warning messages
+      [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
+                                   (e.g. '2000-01-01T10:10:10Z')
+      [--project-root PATH]      . The path to root of the project.
+      [--sender ADDRESS]         . the sender the Michelson interpreter transaction
+                                   will use.
+      [--source ADDRESS]         . the source the Michelson interpreter transaction
+                                   will use.
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "pascaligo", "cameligo",
+                                   "reasonligo" and "jsligo". By default, the syntax
+                                   is guessed from the extension (.ligo, .mligo,
+                                   .religo, and .jsligo respectively).
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [-e ENTRY-POINT], --entry-point
+                                 . the entry-point that will be compiled.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "evaluate-call" ; "-help" ] ;
@@ -374,43 +325,42 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]             the tezos amount the Michelson interpreter will use
-                                 for the transaction.
-      [--balance INT]            the balance the Michelson interpreter will use for
-                                 the contract balance.
-      [--display-format FORMAT]  the format that will be used by the CLI. Available
-                                 formats are 'dev', 'json', and 'human-readable'
-                                 (default). When human-readable lacks details (we
-                                 are still tweaking it), please contact us and use
-                                 another format in the meanwhile.
-                                 (alias: --format)
-      [--no-warn]                disable warning messages
-      [--now TIMESTAMP]          the NOW value the Michelson interpreter will use
-                                 (e.g. '2000-01-01T10:10:10Z')
-      [--project-root PATH]      The path to root of the project.
-      [--sender ADDRESS]         the sender the Michelson interpreter transaction
-                                 will use.
-      [--source ADDRESS]         the source the Michelson interpreter transaction
-                                 will use.
-      [--syntax SYNTAX]          the syntax that will be used. Currently supported
-                                 syntaxes are "pascaligo", "cameligo", "reasonligo"
-                                 and "jsligo". By default, the syntax is guessed
-                                 from the extension (.ligo, .mligo, .religo, and
-                                 .jsligo respectively).
-                                 (alias: -s)
-      [--warn-unused-rec]        warn about unused recursion in a recursive function
-      [--werror]                 treat warnings as errors
-      [-e ENTRY-POINT]           the entry-point that will be compiled.
-                                 (alias: --entry-point)
-      [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (jakarta ,
-                                 kathmandu). By default, the current protocol
-                                 (jakarta) will be used
-                                 (alias: --protocol)
-      [-help]                    print this help text and exit
-                                 (alias: -?)
+      [--amount INT]             . the tezos amount the Michelson interpreter will
+                                   use for the transaction.
+      [--balance INT]            . the balance the Michelson interpreter will use
+                                   for the contract balance.
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--no-warn]                . disable warning messages
+      [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
+                                   (e.g. '2000-01-01T10:10:10Z')
+      [--project-root PATH]      . The path to root of the project.
+      [--sender ADDRESS]         . the sender the Michelson interpreter transaction
+                                   will use.
+      [--source ADDRESS]         . the source the Michelson interpreter transaction
+                                   will use.
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "pascaligo", "cameligo",
+                                   "reasonligo" and "jsligo". By default, the syntax
+                                   is guessed from the extension (.ligo, .mligo,
+                                   .religo, and .jsligo respectively).
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [-e ENTRY-POINT], --entry-point
+                                 . the entry-point that will be compiled.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 
 let%expect_test _ =
@@ -424,43 +374,42 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]             the tezos amount the Michelson interpreter will use
-                                 for the transaction.
-      [--balance INT]            the balance the Michelson interpreter will use for
-                                 the contract balance.
-      [--display-format FORMAT]  the format that will be used by the CLI. Available
-                                 formats are 'dev', 'json', and 'human-readable'
-                                 (default). When human-readable lacks details (we
-                                 are still tweaking it), please contact us and use
-                                 another format in the meanwhile.
-                                 (alias: --format)
-      [--no-warn]                disable warning messages
-      [--now TIMESTAMP]          the NOW value the Michelson interpreter will use
-                                 (e.g. '2000-01-01T10:10:10Z')
-      [--project-root PATH]      The path to root of the project.
-      [--sender ADDRESS]         the sender the Michelson interpreter transaction
-                                 will use.
-      [--source ADDRESS]         the source the Michelson interpreter transaction
-                                 will use.
-      [--syntax SYNTAX]          the syntax that will be used. Currently supported
-                                 syntaxes are "pascaligo", "cameligo", "reasonligo"
-                                 and "jsligo". By default, the syntax is guessed
-                                 from the extension (.ligo, .mligo, .religo, and
-                                 .jsligo respectively).
-                                 (alias: -s)
-      [--warn-unused-rec]        warn about unused recursion in a recursive function
-      [--werror]                 treat warnings as errors
-      [-e ENTRY-POINT]           the entry-point that will be compiled.
-                                 (alias: --entry-point)
-      [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (jakarta ,
-                                 kathmandu). By default, the current protocol
-                                 (jakarta) will be used
-                                 (alias: --protocol)
-      [-help]                    print this help text and exit
-                                 (alias: -?)
+      [--amount INT]             . the tezos amount the Michelson interpreter will
+                                   use for the transaction.
+      [--balance INT]            . the balance the Michelson interpreter will use
+                                   for the contract balance.
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--no-warn]                . disable warning messages
+      [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
+                                   (e.g. '2000-01-01T10:10:10Z')
+      [--project-root PATH]      . The path to root of the project.
+      [--sender ADDRESS]         . the sender the Michelson interpreter transaction
+                                   will use.
+      [--source ADDRESS]         . the source the Michelson interpreter transaction
+                                   will use.
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "pascaligo", "cameligo",
+                                   "reasonligo" and "jsligo". By default, the syntax
+                                   is guessed from the extension (.ligo, .mligo,
+                                   .religo, and .jsligo respectively).
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [-e ENTRY-POINT], --entry-point
+                                 . the entry-point that will be compiled.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "-help" ] ;
@@ -473,42 +422,40 @@ let%expect_test _ =
 
     === flags ===
 
-      [--constants CONSTANTS]            A list of global constants that will be
-                                         assumed in the context, separated by ','
-                                         (alias: -c)
-      [--display-format FORMAT]          the format that will be used by the CLI.
-                                         Available formats are 'dev', 'json', and
-                                         'human-readable' (default). When
-                                         human-readable lacks details (we are still
-                                         tweaking it), please contact us and use
-                                         another format in the meanwhile.
-                                         (alias: --format)
-      [--file-constants FILE_CONSTANTS]  A file with a JSON list of strings with
-                                         Michelson code. Those Michelson values will
-                                         be registered as global constants in the
-                                         context.
-      [--init-file FILENAME]             the path to the smart contract file to be
-                                         used for context initialization.
-      [--michelson-format CODE_FORMAT]   format that will be used by
-                                         compile-contract for the resulting
-                                         Michelson. Available formats are 'text'
-                                         (default), 'json' and 'hex'.
-      [--no-stdlib]                      disable stdlib inclusion.
-      [--no-warn]                        disable warning messages
-      [--project-root PATH]              The path to root of the project.
-      [--warn-unused-rec]                warn about unused recursion in a recursive
-                                         function
-      [--werror]                         treat warnings as errors
-      [--without-run]                    disable running of compiled expression.
-      [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (jakarta ,
-                                         kathmandu). By default, the current
-                                         protocol (jakarta) will be used
-                                         (alias: --protocol)
-      [-help]                            print this help text and exit
-                                         (alias: -?)
+      [--constants CONSTANTS], -c
+                                 . A list of global constants that will be assumed
+                                   in the context, separated by ','
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--file-constants FILE_CONSTANTS]
+                                 . A file with a JSON list of strings with Michelson
+                                   code. Those Michelson values will be registered
+                                   as global constants in the context.
+      [--init-file FILENAME]     . the path to the smart contract file to be used
+                                   for context initialization.
+      [--michelson-format CODE_FORMAT]
+                                 . format that will be used by compile-contract for
+                                   the resulting Michelson. Available formats are
+                                   'text' (default), 'json' and 'hex'.
+      [--no-stdlib]              . disable stdlib inclusion.
+      [--no-warn]                . disable warning messages
+      [--project-root PATH]      . The path to root of the project.
+      [--warn-unused-rec]        . warn about unused recursion in a recursive
+                                   function
+      [--werror]                 . treat warnings as errors
+      [--without-run]            . disable running of compiled expression.
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (kathmandu ,
+                                   lima). By default, the current protocol
+                                   (kathmandu) will be used
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "info" ; "list-declarations" ; "-help" ] ;
@@ -521,22 +468,21 @@ let%expect_test _ =
 
     === flags ===
 
-      [--display-format FORMAT]  the format that will be used by the CLI. Available
-                                 formats are 'dev', 'json', and 'human-readable'
-                                 (default). When human-readable lacks details (we
-                                 are still tweaking it), please contact us and use
-                                 another format in the meanwhile.
-                                 (alias: --format)
-      [--only-ep]                Only display declarations that have the type of an
-                                 entrypoint
-      [--syntax SYNTAX]          the syntax that will be used. Currently supported
-                                 syntaxes are "pascaligo", "cameligo", "reasonligo"
-                                 and "jsligo". By default, the syntax is guessed
-                                 from the extension (.ligo, .mligo, .religo, and
-                                 .jsligo respectively).
-                                 (alias: -s)
-      [-help]                    print this help text and exit
-                                 (alias: -?)
+      [--display-format FORMAT], --format
+                                 . the format that will be used by the CLI.
+                                   Available formats are 'dev', 'json', and
+                                   'human-readable' (default). When human-readable
+                                   lacks details (we are still tweaking it), please
+                                   contact us and use another format in the
+                                   meanwhile.
+      [--only-ep]                . Only display declarations that have the type of
+                                   an entrypoint
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "pascaligo", "cameligo",
+                                   "reasonligo" and "jsligo". By default, the syntax
+                                   is guessed from the extension (.ligo, .mligo,
+                                   .religo, and .jsligo respectively).
+      [-help], -?                . print this help text and exit
 
-    (src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |} ]
   

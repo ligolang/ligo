@@ -74,7 +74,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "emit.mligo" ; "--protocol" ; "kathmandu" ] ;
   [%expect{|
-    File "../../test/contracts/negative/emit.mligo", line 3, characters 14-15:
+    File "../../test/contracts/negative/emit.mligo", line 3, characters 3-18:
       2 |   let x = "%lol" in
       3 |   [Tezos.emit x 12],x
 

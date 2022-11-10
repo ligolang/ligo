@@ -71,7 +71,6 @@ const sidebars = {
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
       "manpages/print ast-imperative",
-      "manpages/print ast-sugar",
       "manpages/print ast-typed",
       "manpages/print cst",
       "manpages/print dependency-graph",
@@ -106,7 +105,8 @@ const sidebars = {
       "protocol/hangzhou",
       "protocol/ithaca",
       "protocol/jakarta",
-      "protocol/kathmandu"
+      "protocol/kathmandu",
+      "protocol/lima"
     ]
   },
   "contributors-docs": {

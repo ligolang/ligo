@@ -51,7 +51,7 @@ test_SourceMapper = testGroup "Reading source mapper"
       let file = contractsDir </> "simple-ops.mligo"
       ligoMapper <- compileLigoContractDebug "main" file
       (exprLocs, T.SomeContract contract, _) <-
-        case readLigoMapper ligoMapper of
+        case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
 

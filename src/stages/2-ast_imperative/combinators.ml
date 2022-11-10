@@ -1,3 +1,6 @@
+open Ligo_prim
+open Literal_types
+
 open Types
 module Option = Simple_utils.Option
 
@@ -37,8 +40,7 @@ type module_expr_content = [%import: Types.module_expr_content]
       wrap_get = ("module_content" , get) ;
     } ]
 
-open Ligo_prim
-open Literal_types
+
 
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
 let t_singleton ?loc x = make_t ?loc @@ T_singleton x
@@ -164,7 +166,7 @@ let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;case
 let e_matching_tuple ?loc matchee (binders: _ Binder.t list) body : expression =
   let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
   let pattern = Location.wrap ?loc @@ Pattern.P_tuple pv_lst in
-  let cases = [ Match_expr.{ pattern ; body } ] in
+  let cases = [ Types.Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 
 let e_param_matching_tuple ?loc matchee (params: _ Param.t list) body : expression =
@@ -181,26 +183,25 @@ let e_param_matching_tuple ?loc matchee (params: _ Param.t list) body : expressi
   make_e ?loc @@ E_matching {matchee;cases}
   
 let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : expression =
-  let labels,binders = List.unzip binders in
-  let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
-  let labels = List.map ~f:(fun s -> Label.of_string s) labels in
-  let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
+  let lps = List.map binders ~f:(fun (l,b) ->
+    Label.of_string l, Location.wrap ?loc (Pattern.P_var b)
+  ) in
+  let pattern = Location.wrap ?loc (Pattern.P_record lps) in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 
-
 let e_param_matching_record ?loc matchee (params: (string * _ Param.t) list) body : expression =
-  let labels,params = List.unzip params in
-  let pv_lst = List.map ~f:(fun (p:_ Param.t) -> Location.wrap ?loc @@ (Pattern.P_var (Param.to_binder p))) params in
-  let labels = List.map ~f:(fun s -> Label.of_string s) labels in
-  let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
   let body =
-    List.fold_left params ~init:body ~f:(fun body param ->
+    List.fold_left params ~init:body ~f:(fun body (_,param) ->
       match Param.get_mut_flag param with
       | Immutable -> body
       | Mutable -> e_let_mut_in ?loc (Param.to_binder param) [] (e_variable ?loc @@ Param.get_var param) body
       )
   in
+  let lps = List.map params ~f:(fun (l,p) ->
+    Label.of_string l, Location.wrap ?loc (Pattern.P_var (Param.to_binder p))
+  ) in
+  let pattern = Location.wrap ?loc @@ Types.Pattern.P_record lps in
   let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 

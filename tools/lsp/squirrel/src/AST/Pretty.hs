@@ -15,6 +15,7 @@ module AST.Pretty
   ) where
 
 import Data.Kind (Type)
+import Data.List.NonEmpty (NonEmpty (..), toList)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
@@ -125,7 +126,8 @@ instance LPP1 d Error where
 ----------------------------------------------------------------------------
 
 sexpr :: Text -> [Doc] -> Doc
-sexpr header items = "(" <.> pp header `indent` foldr above empty items <.> ")"
+sexpr header [] = "(" <.> pp header <.> ")"
+sexpr header items = "(" <.> pp header `indent` foldr1 above items <.> ")"
 
 sop :: Doc -> Text -> [Doc] -> Doc
 sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
@@ -187,7 +189,7 @@ instance Pretty1 AST.Type where
   pp1 = \case
     TArrow    dom codom -> sop dom "->" [codom]
     TRecord   fields    -> sexpr "RECORD" fields
-    TSum      variants  -> sexpr "SUM" variants
+    TSum      variants  -> sexpr "SUM" (toList variants)
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" xs
     TString   t         -> sexpr "TSTRING" [pp t]
@@ -210,6 +212,7 @@ instance Pretty1 Expr where
     Op          o        -> pp o
     Record    az         -> sexpr "record" az
     If        b t e      -> sexpr "if" [b, t, pp e]
+    Ternary   b t e      -> "(" <> pp b <> "?" <> pp t <> ":" <> pp e <> ")"
     Assign    l r        -> sop l ":=" [r]
     List      l          -> sexpr "list" l
     ListAccess l ids     -> sexpr "get" (l : ids)
@@ -278,7 +281,7 @@ instance Pretty1 Constant where
 
 instance Pretty1 ModuleAccess where
   pp1 = \case
-    ModuleAccess path field -> sexpr "." (path <> [field])
+    ModuleAccess path field -> sexpr "::" (path <> [field])
 
 instance Pretty1 QualifiedName where
   pp1 = \case
@@ -374,7 +377,7 @@ instance Pretty J.UInt where
 
 instance LPP1 d ModuleAccess where
   lpp1 = \case
-    ModuleAccess path field -> mconcat (punctuate "." path) <> lpp field
+    ModuleAccess path field -> mconcat (punctuate "." path) <> "." <> lpp field
 
 instance LPP1 d QualifiedName where
   lpp1 = \case
@@ -441,8 +444,7 @@ instance LPP1 'Pascal AST.Type where
     TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
     TProduct  [element] -> element
     TProduct  elements  -> parens $ train " *" elements
-    TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
-    TSum      []        -> error "looks like you've been given malformed AST" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("|"<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -594,8 +596,7 @@ instance LPP1 'Reason AST.Type where
     TArrow    dom codom -> dom <+> "=>" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  elements  -> tuple elements
-    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
-    TSum      []        -> error "malformed TSum type" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -719,8 +720,7 @@ instance LPP1 'Js AST.Type where
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  [element] -> element
     TProduct  elements  -> tupleJsLIGO elements
-    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
-    TSum      []        -> error "malformed TSum type" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -761,6 +761,7 @@ instance LPP1 'Js Expr where
     Op          o        -> lpp o
     Record    az         -> "{" `indent` blockWith (<.> ",") az `above` "}"
     If        b t e      -> "if" <+> parens b <+> braces (lpp t) <+> "else" <+> braces (lpp e)
+    Ternary   b t e      -> lpp b <+> "?" <+> lpp t <+> ":" <+> lpp e
     List      l          -> lpp l
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tupleJsLIGO l
@@ -851,8 +852,7 @@ instance LPP1 'Caml AST.Type where
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
     TProduct  elements  -> train " *" elements
-    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
-    TSum      []        -> error "malformed TSum type" -- never called
+    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
     TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"

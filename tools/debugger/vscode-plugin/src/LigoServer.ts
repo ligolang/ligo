@@ -29,7 +29,7 @@ export default class LigoServer implements vscode.Disposable {
 		this.createAdapterProcess(command, args)
 
 		// start listening on a random named pipe path
-		const pipeName = randomBytes(10).toString('hex')
+		const pipeName = "ligo-debugger-pipe-" + randomBytes(10).toString('hex')
 		const pipePath = platform === "win32" ? join('\\\\.\\pipe\\', pipeName) : join(tmpdir(), pipeName)
 
 		this.server = net.createServer(socket => {

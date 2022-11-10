@@ -12,13 +12,16 @@
   (* See [dune] file for [-open] flags for modules used in the
      semantic value of tokens, like [Wrap]. *)
 
-  module Directive = LexerLib.Directive
+  module Directive = Preprocessor.Directive
   module Region    = Simple_utils.Region
   module Token     = Lexing_jsligo.Token
 
   let mk_Directive region =
-    let value = 1, "file_path", None
-    in Directive.Linemarker Region.{value; region}
+    let linenum   = Region.wrap_ghost 1
+    and filename  = Region.wrap_ghost "_none_"
+    and flag      = None in
+    let open Directive in
+    PP_Linemarker (new mk_line_directive region linenum filename flag)
 
  (*
   let mk_lang region =
@@ -41,8 +44,10 @@
 
 ]
 
-(* Make the recovery pay more attention to the number of synthesized tokens than
-   production reducing because the latter often means only precedence level *)
+(* Make the recovery pay more attention to the number of synthesized
+   tokens than production reducing because the latter often means only
+   precedence level *)
+
 %[@recover.default_cost_of_symbol     1000]
 %[@recover.default_cost_of_production 1]
 
@@ -51,7 +56,7 @@
 %token             <string Wrap.t> BlockCom  "<block_comment>" [@recover.expr mk_block_com $loc]
 %token             <string Wrap.t> LineCom   "<line_comment>"  [@recover.expr mk_line_com  $loc]
 
-%token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive  $loc]
+%token     <Preprocessor.Directive.t> Directive "<directive>" [@recover.expr mk_Directive  $loc]
 %token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string     $loc]
 (* TODO: recovery annotation is turned off because it isn't supported in the pretty printer (see Pretty.pp_expr) *)
 %token                <string Wrap.t> Verbatim  "<verbatim>"  (* [@recover.expr mk_verbatim   $loc] *)
@@ -148,7 +153,7 @@
 
 (* Virtual tokens *)
 
-%token <string Wrap.t> ZWSP [@recover.expr Token.wrap_zwsp $loc]
+%token <string Wrap.t> ZWSP   [@recover.expr Token.wrap_zwsp   $loc]
 %token <string Wrap.t> ES6FUN [@recover.expr Token.wrap_es6fun $loc]
 
 (* End of File *)
