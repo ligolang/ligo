@@ -2,7 +2,7 @@
 
 
 - [x] Add --dry-run CLI flag to ligo publish
-- [ ] when directory field is null don't send the key
+- [x] when directory field is null don't send the key
 - [ ] Stat main file before publish
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
@@ -10,6 +10,7 @@
 - [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
+- [ ] Docs: Add not about `--registry`
 
 *)
 
@@ -372,6 +373,7 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
     |> Digestif.SHA512.to_raw_string
   in
   let* result = validate_storage ~manifest in
+  (* validate_main_file *)
   match result with
   | Ok () ->
     let () = Printf.printf "Uploading package... %!" in
@@ -412,6 +414,7 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
     | None ->
       Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user", "")
     | Some token ->
+      (* Pattern match and show error if no project root *)
       let project_root = Option.value_exn project_root in
       (match
          Lwt_main.run (publish ~project_root ~token ~ligo_registry ~manifest)

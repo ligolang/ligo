@@ -5,7 +5,19 @@ type t =
   ; url : string
   ; directory : string option
   }
-[@@deriving yojson]
+[@@deriving of_yojson]
+
+let to_yojson t =
+  let { type_; url; directory } = t in
+  let type_ = [ "type", `String type_ ] in
+  let url = [ "url", `String url ] in
+  let directory =
+    match directory with
+    | Some directory -> [ "directory", `String directory ]
+    | None -> []
+  in
+  `Assoc (type_ @ url @ directory)
+
 
 type type_url =
   { type_ : string [@key "type"]
@@ -345,3 +357,32 @@ let%test _ =
   match parse short with
   | Ok _ -> false
   | _ -> true
+
+(* to_yojson tests *)
+
+let%test _ =
+  let type_ = "git" in
+  let url = "https://github.com/npm/cli.git" in
+  let directory = None in
+  let t : t = { type_; url; directory } in
+  let json = to_yojson t in
+  let json' =
+    `Assoc
+      [ "type", `String "git"; "url", `String "https://github.com/npm/cli.git" ]
+  in
+  Yojson.Safe.equal json json'
+
+let%test _ =
+  let type_ = "git" in
+  let url = "https://github.com/npm/cli.git" in
+  let directory = Some "abc" in
+  let t : t = { type_; url; directory } in
+  let json = to_yojson t in
+  let json' =
+    `Assoc
+      [ "type", `String "git"
+      ; "url", `String "https://github.com/npm/cli.git"
+      ; "directory", `String "abc"
+      ]
+  in
+  Yojson.Safe.equal json json'
