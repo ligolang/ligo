@@ -4,6 +4,7 @@
 - [x] Add --dry-run CLI flag to ligo publish
 - [x] when directory field is null don't send the key
 - [ ] Stat main file before publish
+- [ ] Implement --dry-run flag
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] Add stats about packed size, upacked size, total files in json
@@ -11,6 +12,7 @@
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
 - [ ] Docs: Add not about `--registry`
+- [ ] Try to infer repository using git config --get remote.origin.url
 
 *)
 
@@ -36,151 +38,141 @@ type dist =
 
 type author = { name : string } [@@deriving to_yojson]
 
-type version =
-  { name : string
-  ; author : author
-  ; main : string option
-  ; type_ : string [@key "type"]
-  ; storage_fn : string option
-  ; storage_arg : string option
-  ; repository : RepositoryUrl.t
-  ; version : sem_ver
-  ; description : string
-  ; scripts : object_
-  ; dependencies : object_
-  ; dev_dependencies : object_ [@key "devDependencies"]
-  ; readme : string
-  ; bugs : LigoManifest.Bugs.t
-  ; id : string [@key "_id"]
-  ; dist : dist
-  }
-[@@deriving to_yojson]
-
-type attachment =
-  { content_type : string
-  ; data : string
-  ; length : int
-  }
-[@@deriving to_yojson]
+module Version = struct
+  type t =
+    { name : string
+    ; author : author
+    ; main : string option
+    ; type_ : string [@key "type"]
+    ; storage_fn : string option
+    ; storage_arg : string option
+    ; repository : RepositoryUrl.t
+    ; version : sem_ver
+    ; description : string
+    ; scripts : object_
+    ; dependencies : object_
+    ; dev_dependencies : object_ [@key "devDependencies"]
+    ; readme : string
+    ; bugs : LigoManifest.Bugs.t
+    ; id : string [@key "_id"]
+    ; dist : dist
+    }
+  [@@deriving to_yojson]
+end
 
 module Versions = struct
-  type t = version SMap.t
+  type t = Version.t SMap.t
 
   let to_yojson t =
-    let kvs = SMap.fold (fun k v xs -> (k, version_to_yojson v) :: xs) t [] in
+    let kvs = SMap.fold (fun k v xs -> (k, Version.to_yojson v) :: xs) t [] in
     `Assoc kvs
 end
 
+module Attachment = struct
+  type t =
+    { content_type : string
+    ; data : string
+    ; length : int
+    }
+  [@@deriving to_yojson]
+end
+
 module Attachments = struct
-  type t = attachment SMap.t
+  type t = Attachment.t SMap.t
 
   let to_yojson t =
     let kvs =
-      SMap.fold (fun k v xs -> (k, attachment_to_yojson v) :: xs) t []
+      SMap.fold (fun k v xs -> (k, Attachment.to_yojson v) :: xs) t []
     in
     `Assoc kvs
 end
 
-type body =
-  { id : string [@key "_id"]
-  ; name : string
-  ; description : string
-  ; dist_tags : dist_tag [@key "dist-tags"]
-  ; versions : Versions.t
-  ; readme : string
-  ; attachments : Attachments.t [@key "_attachments"]
-  }
-[@@deriving to_yojson]
+module Body = struct
+  type t =
+    { id : string [@key "_id"]
+    ; name : string
+    ; description : string
+    ; dist_tags : dist_tag [@key "dist-tags"]
+    ; versions : Versions.t
+    ; readme : string
+    ; attachments : Attachments.t [@key "_attachments"]
+    }
+  [@@deriving to_yojson]
 
-let body
-    ~name
-    ~author
-    ~type_
-    ~storage_fn
-    ~storage_arg
-    ~repository
-    ~main
-    ~readme
-    ~version
-    ~ligo_registry
-    ~description
-    ~sha512
-    ~sha1
-    ~gzipped_tarball
-    ~scripts
-    ~dependencies
-    ~dev_dependencies
-    ~bugs
-  =
-  { id = name
-  ; name
-  ; description
-  ; dist_tags = { latest = version }
-  ; versions =
-      SMap.add
-        version
-        { main
-        ; name
-        ; author = { name = author }
-        ; type_
-        ; storage_fn
-        ; storage_arg
-        ; repository
-        ; version
-        ; description
-        ; scripts
-        ; dependencies
-        ; dev_dependencies
-        ; readme
-        ; bugs
-        ; id = Format.sprintf "%s@%s" name version
-        ; dist =
-            { integrity = Format.sprintf "sha512-%s" (Base64.encode_exn sha512)
-            ; shasum = sha1
-            ; tarball =
-                Format.sprintf
-                  "%s/%s/-/%s-%s.tgz"
-                  ligo_registry
-                  name
-                  name
-                  version
+  let make ~ligo_registry ~sha512 ~sha1 ~gzipped_tarball ~manifest =
+    let LigoManifest.
+          { name
+          ; version
+          ; main
+          ; scripts
+          ; dependencies
+          ; dev_dependencies
+          ; description
+          ; readme
+          ; author
+          ; type_
+          ; repository
+          ; storage_fn
+          ; storage_arg
+          ; bugs
+          ; _
+          }
+      =
+      manifest
+    in
+    { id = name
+    ; name
+    ; description
+    ; dist_tags = { latest = version }
+    ; versions =
+        SMap.add
+          version
+          Version.
+            { main
+            ; name
+            ; author = { name = author }
+            ; type_
+            ; storage_fn
+            ; storage_arg
+            ; repository
+            ; version
+            ; description
+            ; scripts
+            ; dependencies
+            ; dev_dependencies
+            ; readme
+            ; bugs
+            ; id = Format.sprintf "%s@%s" name version
+            ; dist =
+                { integrity =
+                    Format.sprintf "sha512-%s" (Base64.encode_exn sha512)
+                ; shasum = sha1
+                ; tarball =
+                    Format.sprintf
+                      "%s/%s/-/%s-%s.tgz"
+                      ligo_registry
+                      name
+                      name
+                      version
+                }
             }
-        }
-        SMap.empty
-  ; readme
-  ; attachments =
-      SMap.add
-        (Format.sprintf "%s-%s.tgz" name version)
-        { content_type = "application/octet-stream"
-        ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
-        ; length = Bytes.length gzipped_tarball
-        }
-        SMap.empty
-  }
+          SMap.empty
+    ; readme
+    ; attachments =
+        SMap.add
+          (Format.sprintf "%s-%s.tgz" name version)
+          Attachment.
+            { content_type = "application/octet-stream"
+            ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
+            ; length = Bytes.length gzipped_tarball
+            }
+          SMap.empty
+    }
+end
 
-
-let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
+let http ~ligo_registry ~manifest ~body ~token =
   let open Cohttp_lwt_unix in
-  let LigoManifest.
-        { name
-        ; version
-        ; main
-        ; scripts
-        ; dependencies
-        ; dev_dependencies
-        ; description
-        ; readme
-        ; author
-        ; type_
-        ; repository
-        ; storage_fn
-        ; storage_arg
-        ; bugs
-        ; _
-        }
-    =
-    manifest
-  in
+  let LigoManifest.{ name } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers =
     Cohttp.Header.of_list
@@ -190,28 +182,7 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
       ]
   in
   let body =
-    body
-      ~name
-      ~author
-      ~type_
-      ~storage_fn
-      ~storage_arg
-      ~repository
-      ~main
-      ~readme
-      ~version
-      ~ligo_registry
-      ~description
-      ~sha512
-      ~sha1
-      ~gzipped_tarball
-      ~scripts
-      ~dependencies
-      ~dev_dependencies
-      ~bugs
-    |> body_to_yojson
-    |> Yojson.Safe.to_string
-    |> Cohttp_lwt.Body.of_string
+    body |> Body.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
   let r = Client.put ~headers ~body uri in
   Lwt.map (fun r -> Ok r) r
@@ -377,7 +348,10 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
   match result with
   | Ok () ->
     let () = Printf.printf "Uploading package... %!" in
-    http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
+    let body =
+      Body.make ~ligo_registry ~sha512 ~sha1 ~gzipped_tarball ~manifest
+    in
+    Lwt.return @@ Ok body
   | Error e -> Lwt.return @@ Error e
 
 
@@ -416,9 +390,14 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
     | Some token ->
       (* Pattern match and show error if no project root *)
       let project_root = Option.value_exn project_root in
-      (match
-         Lwt_main.run (publish ~project_root ~token ~ligo_registry ~manifest)
-       with
+      let body = publish ~project_root ~token ~ligo_registry ~manifest in
+      let request =
+        Lwt.bind body (fun body ->
+            match body with
+            | Ok body -> http ~token ~body ~ligo_registry ~manifest
+            | Error e -> Lwt.return (Error e))
+      in
+      (match Lwt_main.run request with
       | Ok (response, body) ->
         handle_server_response ~name:manifest.name response body
       | Error e -> Error (e, "")))
