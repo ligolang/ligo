@@ -13,6 +13,8 @@
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
 - [ ] Docs: Add not about `--registry`
 - [ ] Try to infer repository using git config --get remote.origin.url
+- [ ] Wrap logging message in a function ~before ~after
+- [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 
 *)
 
@@ -196,7 +198,8 @@ let os_type =
   | _ -> Gz.Unix
 
 
-let gzip fname fd =
+let gzip fname =
+  let fd = Caml_unix.openfile fname [ Core_unix.O_RDWR ] 0o666 in
   let file_size = Int.of_int64_exn (Core_unix.stat fname).st_size in
   let level = 4 in
   let buffer_len = De.io_buffer_size in
@@ -224,6 +227,7 @@ let gzip fname fd =
     Buffer.add_string r str
   in
   Gz.Higher.compress ~w ~q ~level ~refill ~flush () cfg i o;
+  let () = Caml_unix.close fd in
   r
 
 
@@ -274,7 +278,7 @@ let from_dir ~dir f =
   result
 
 
-let tar_gzip ~name ~version dir =
+let tar ~name ~version dir =
   let open Lwt.Syntax in
   let* files = from_dir ~dir (fun () -> get_all_files ".") in
   let fname = Filename_unix.temp_file name version in
@@ -283,9 +287,13 @@ let tar_gzip ~name ~version dir =
   in
   let () = Tar_unix.Archive.create files fd in
   let () = Caml_unix.close fd in
-  let fd = Caml_unix.openfile fname [ Core_unix.O_RDWR ] 0o666 in
-  let buf = gzip fname fd in
-  let () = Caml_unix.close fd in
+  Lwt.return fname
+
+
+let tar_gzip ~name ~version dir =
+  let open Lwt.Syntax in
+  let* fname = tar ~name ~version dir in
+  let buf = gzip fname in
   Lwt.return (Buffer.contents_bytes buf)
 
 
@@ -326,6 +334,8 @@ let validate_storage ~manifest =
   | _ -> Lwt.return @@ Ok ()
 
 
+let validate_main_file = ()
+
 let publish ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name; version; _ } = manifest in
@@ -347,7 +357,6 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
   (* validate_main_file *)
   match result with
   | Ok () ->
-    let () = Printf.printf "Uploading package... %!" in
     let body =
       Body.make ~ligo_registry ~sha512 ~sha1 ~gzipped_tarball ~manifest
     in
@@ -397,6 +406,7 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
             | Ok body -> http ~token ~body ~ligo_registry ~manifest
             | Error e -> Lwt.return (Error e))
       in
+      let () = Printf.printf "Uploading package... %!" in
       (match Lwt_main.run request with
       | Ok (response, body) ->
         handle_server_response ~name:manifest.name response body
