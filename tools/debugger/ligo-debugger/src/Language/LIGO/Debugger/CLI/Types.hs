@@ -409,6 +409,9 @@ instance FromJSON (LigoStackEntry u) where
       | otherwise    -> LigoStackEntry <$> parseJSON v
     other            -> Aeson.unexpected other
 
+-- | Variables associated with each element on stack.
+--
+-- Entries are listed in top-to-bottom order.
 type LigoStack u = [LigoStackEntry u]
 
 stripSuffixHashLigoStackEntry :: LigoStackEntry 'Unique -> LigoStackEntry 'Concise
