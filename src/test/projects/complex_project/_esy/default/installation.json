@@ -1,157 +1,157 @@
 {
   "webpack-sources@3.2.3@d41d8cd9":
-    "/foo/.esy/source/i/webpack_sources__3.2.3__cca07911",
+    "./.ligo/source/i/webpack_sources__3.2.3__cca07911",
   "webpack@5.68.0@d41d8cd9":
-    "/foo/.esy/source/i/webpack__5.68.0__95002730",
+    "./.ligo/source/i/webpack__5.68.0__95002730",
   "watchpack@2.3.1@d41d8cd9":
-    "/foo/.esy/source/i/watchpack__2.3.1__aa6c4723",
+    "./.ligo/source/i/watchpack__2.3.1__aa6c4723",
   "uri-js@4.4.1@d41d8cd9":
-    "/foo/.esy/source/i/uri_js__4.4.1__7918c241",
+    "./.ligo/source/i/uri_js__4.4.1__7918c241",
   "terser-webpack-plugin@5.3.0@d41d8cd9":
-    "/foo/.esy/source/i/terser_webpack_plugin__5.3.0__056b7832",
+    "./.ligo/source/i/terser_webpack_plugin__5.3.0__056b7832",
   "terser@5.10.0@d41d8cd9":
-    "/foo/.esy/source/i/terser__5.10.0__b15d52b8",
+    "./.ligo/source/i/terser__5.10.0__b15d52b8",
   "tapable@2.2.1@d41d8cd9":
-    "/foo/.esy/source/i/tapable__2.2.1__24e322f7",
+    "./.ligo/source/i/tapable__2.2.1__24e322f7",
   "supports-color@8.1.1@d41d8cd9":
-    "/foo/.esy/source/i/supports_color__8.1.1__5ab70466",
+    "./.ligo/source/i/supports_color__8.1.1__5ab70466",
   "source-map-support@0.5.21@d41d8cd9":
-    "/foo/.esy/source/i/source_map_support__0.5.21__c4490966",
+    "./.ligo/source/i/source_map_support__0.5.21__c4490966",
   "source-map@0.7.3@d41d8cd9":
-    "/foo/.esy/source/i/source_map__0.7.3__9662d268",
+    "./.ligo/source/i/source_map__0.7.3__9662d268",
   "source-map@0.6.1@d41d8cd9":
-    "/foo/.esy/source/i/source_map__0.6.1__20131c2b",
+    "./.ligo/source/i/source_map__0.6.1__20131c2b",
   "serialize-javascript@6.0.0@d41d8cd9":
-    "/foo/.esy/source/i/serialize_javascript__6.0.0__4ca96efc",
+    "./.ligo/source/i/serialize_javascript__6.0.0__4ca96efc",
   "schema-utils@3.1.1@d41d8cd9":
-    "/foo/.esy/source/i/schema_utils__3.1.1__448a4f1b",
+    "./.ligo/source/i/schema_utils__3.1.1__448a4f1b",
   "safe-buffer@5.2.1@d41d8cd9":
-    "/foo/.esy/source/i/safe_buffer__5.2.1__4598fe14",
+    "./.ligo/source/i/safe_buffer__5.2.1__4598fe14",
   "randombytes@2.1.0@d41d8cd9":
-    "/foo/.esy/source/i/randombytes__2.1.0__4558ce74",
+    "./.ligo/source/i/randombytes__2.1.0__4558ce74",
   "punycode@2.1.1@d41d8cd9":
-    "/foo/.esy/source/i/punycode__2.1.1__9d5f3bb8",
+    "./.ligo/source/i/punycode__2.1.1__9d5f3bb8",
   "picocolors@1.0.0@d41d8cd9":
-    "/foo/.esy/source/i/picocolors__1.0.0__e5c56b04",
+    "./.ligo/source/i/picocolors__1.0.0__e5c56b04",
   "node-releases@2.0.1@d41d8cd9":
-    "/foo/.esy/source/i/node_releases__2.0.1__9659195e",
+    "./.ligo/source/i/node_releases__2.0.1__9659195e",
   "neo-async@2.6.2@d41d8cd9":
-    "/foo/.esy/source/i/neo_async__2.6.2__0b3d63e9",
+    "./.ligo/source/i/neo_async__2.6.2__0b3d63e9",
   "mime-types@2.1.34@d41d8cd9":
-    "/foo/.esy/source/i/mime_types__2.1.34__990ad5eb",
+    "./.ligo/source/i/mime_types__2.1.34__990ad5eb",
   "mime-db@1.51.0@d41d8cd9":
-    "/foo/.esy/source/i/mime_db__1.51.0__abaae304",
+    "./.ligo/source/i/mime_db__1.51.0__abaae304",
   "merge-stream@2.0.0@d41d8cd9":
-    "/foo/.esy/source/i/merge_stream__2.0.0__c7946737",
+    "./.ligo/source/i/merge_stream__2.0.0__c7946737",
   "loader-runner@4.2.0@d41d8cd9":
-    "/foo/.esy/source/i/loader_runner__4.2.0__a6978a94",
+    "./.ligo/source/i/loader_runner__4.2.0__a6978a94",
   "ligo_test_1@1.0.0@d41d8cd9":
-    "/foo/.esy/source/i/ligo__test__1__1.0.0__a381d5ee",
+    "./.ligo/source/i/ligo__test__1__1.0.0__a381d5ee",
   "ligo-test_2@1.0.0@d41d8cd9":
-    "/foo/.esy/source/i/ligo_test__2__1.0.0__d841d05a",
+    "./.ligo/source/i/ligo_test__2__1.0.0__d841d05a",
   "ligo-set-helpers@1.0.3@d41d8cd9":
-    "/foo/.esy/source/i/ligo_set_helpers__1.0.3__6998bccf",
-  "ligo-main@link-dev:./package.json":
-    "/foo/projects/ligo-main",
+    "./.ligo/source/i/ligo_set_helpers__1.0.3__6998bccf",
+  "complex_project@link-dev:./package.json":
+    "./projects/complex_project",
   "ligo-list-helpers@1.0.1@d41d8cd9":
-    "/foo/.esy/source/i/ligo_list_helpers__1.0.1__6233bebd",
+    "./.ligo/source/i/ligo_list_helpers__1.0.1__6233bebd",
   "ligo-list-helpers@1.0.0@d41d8cd9":
-    "/foo/.esy/source/i/ligo_list_helpers__1.0.0__bf074147",
+    "./.ligo/source/i/ligo_list_helpers__1.0.0__bf074147",
   "ligo-foo@1.0.6@d41d8cd9":
-    "/foo/.esy/source/i/ligo_foo__1.0.6__2355cc08",
+    "./.ligo/source/i/ligo_foo__1.0.6__2355cc08",
   "json-schema-traverse@0.4.1@d41d8cd9":
-    "/foo/.esy/source/i/json_schema_traverse__0.4.1__43d23351",
+    "./.ligo/source/i/json_schema_traverse__0.4.1__43d23351",
   "json-parse-better-errors@1.0.2@d41d8cd9":
-    "/foo/.esy/source/i/json_parse_better_errors__1.0.2__c798f0f1",
+    "./.ligo/source/i/json_parse_better_errors__1.0.2__c798f0f1",
   "jest-worker@27.4.6@d41d8cd9":
-    "/foo/.esy/source/i/jest_worker__27.4.6__be55e76d",
+    "./.ligo/source/i/jest_worker__27.4.6__be55e76d",
   "has-flag@4.0.0@d41d8cd9":
-    "/foo/.esy/source/i/has_flag__4.0.0__2b4e2759",
+    "./.ligo/source/i/has_flag__4.0.0__2b4e2759",
   "graceful-fs@4.2.9@d41d8cd9":
-    "/foo/.esy/source/i/graceful_fs__4.2.9__3cdb218c",
+    "./.ligo/source/i/graceful_fs__4.2.9__3cdb218c",
   "glob-to-regexp@0.4.1@d41d8cd9":
-    "/foo/.esy/source/i/glob_to_regexp__0.4.1__693ffb62",
+    "./.ligo/source/i/glob_to_regexp__0.4.1__693ffb62",
   "fast-json-stable-stringify@2.1.0@d41d8cd9":
-    "/foo/.esy/source/i/fast_json_stable_stringify__2.1.0__e7b65021",
+    "./.ligo/source/i/fast_json_stable_stringify__2.1.0__e7b65021",
   "fast-deep-equal@3.1.3@d41d8cd9":
-    "/foo/.esy/source/i/fast_deep_equal__3.1.3__973bc016",
+    "./.ligo/source/i/fast_deep_equal__3.1.3__973bc016",
   "events@3.3.0@d41d8cd9":
-    "/foo/.esy/source/i/events__3.3.0__f337db48",
+    "./.ligo/source/i/events__3.3.0__f337db48",
   "estraverse@5.3.0@d41d8cd9":
-    "/foo/.esy/source/i/estraverse__5.3.0__f2da041e",
+    "./.ligo/source/i/estraverse__5.3.0__f2da041e",
   "estraverse@4.3.0@d41d8cd9":
-    "/foo/.esy/source/i/estraverse__4.3.0__539360ea",
+    "./.ligo/source/i/estraverse__4.3.0__539360ea",
   "esrecurse@4.3.0@d41d8cd9":
-    "/foo/.esy/source/i/esrecurse__4.3.0__905a981b",
+    "./.ligo/source/i/esrecurse__4.3.0__905a981b",
   "eslint-scope@5.1.1@d41d8cd9":
-    "/foo/.esy/source/i/eslint_scope__5.1.1__a46965eb",
+    "./.ligo/source/i/eslint_scope__5.1.1__a46965eb",
   "escalade@3.1.1@d41d8cd9":
-    "/foo/.esy/source/i/escalade__3.1.1__be4c030d",
+    "./.ligo/source/i/escalade__3.1.1__be4c030d",
   "es-module-lexer@0.9.3@d41d8cd9":
-    "/foo/.esy/source/i/es_module_lexer__0.9.3__36d4ce6e",
+    "./.ligo/source/i/es_module_lexer__0.9.3__36d4ce6e",
   "enhanced-resolve@5.8.3@d41d8cd9":
-    "/foo/.esy/source/i/enhanced_resolve__5.8.3__9ca9ed8e",
+    "./.ligo/source/i/enhanced_resolve__5.8.3__9ca9ed8e",
   "electron-to-chromium@1.4.59@d41d8cd9":
-    "/foo/.esy/source/i/electron_to_chromium__1.4.59__53d5e795",
+    "./.ligo/source/i/electron_to_chromium__1.4.59__53d5e795",
   "commander@2.20.3@d41d8cd9":
-    "/foo/.esy/source/i/commander__2.20.3__862c0525",
+    "./.ligo/source/i/commander__2.20.3__862c0525",
   "chrome-trace-event@1.0.3@d41d8cd9":
-    "/foo/.esy/source/i/chrome_trace_event__1.0.3__b08140d5",
+    "./.ligo/source/i/chrome_trace_event__1.0.3__b08140d5",
   "caniuse-lite@1.0.30001304@d41d8cd9":
-    "/foo/.esy/source/i/caniuse_lite__1.0.30001304__058424a3",
+    "./.ligo/source/i/caniuse_lite__1.0.30001304__058424a3",
   "buffer-from@1.1.2@d41d8cd9":
-    "/foo/.esy/source/i/buffer_from__1.1.2__f23dfc46",
+    "./.ligo/source/i/buffer_from__1.1.2__f23dfc46",
   "browserslist@4.19.1@d41d8cd9":
-    "/foo/.esy/source/i/browserslist__4.19.1__0406c242",
+    "./.ligo/source/i/browserslist__4.19.1__0406c242",
   "ajv-keywords@3.5.2@d41d8cd9":
-    "/foo/.esy/source/i/ajv_keywords__3.5.2__7394ed1b",
-  "ajv@6.12.6@d41d8cd9": "/foo/.esy/source/i/ajv__6.12.6__c3a69fc4",
+    "./.ligo/source/i/ajv_keywords__3.5.2__7394ed1b",
+  "ajv@6.12.6@d41d8cd9": "./.ligo/source/i/ajv__6.12.6__c3a69fc4",
   "acorn-import-assertions@1.8.0@d41d8cd9":
-    "/foo/.esy/source/i/acorn_import_assertions__1.8.0__22a1054d",
+    "./.ligo/source/i/acorn_import_assertions__1.8.0__22a1054d",
   "acorn@8.7.0@d41d8cd9":
-    "/foo/.esy/source/i/acorn__8.7.0__7ed94b53",
+    "./.ligo/source/i/acorn__8.7.0__7ed94b53",
   "@xtuc/long@4.2.2@d41d8cd9":
-    "/foo/.esy/source/i/xtuc__s__long__4.2.2__1008afb9",
+    "./.ligo/source/i/xtuc__s__long__4.2.2__1008afb9",
   "@xtuc/ieee754@1.2.0@d41d8cd9":
-    "/foo/.esy/source/i/xtuc__s__ieee754__1.2.0__2741d8fb",
+    "./.ligo/source/i/xtuc__s__ieee754__1.2.0__2741d8fb",
   "@webassemblyjs/wast-printer@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__wast_printer__1.11.1__7a236640",
+    "./.ligo/source/i/webassemblyjs__s__wast_printer__1.11.1__7a236640",
   "@webassemblyjs/wasm-parser@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__wasm_parser__1.11.1__383f9782",
+    "./.ligo/source/i/webassemblyjs__s__wasm_parser__1.11.1__383f9782",
   "@webassemblyjs/wasm-opt@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__wasm_opt__1.11.1__a7b50b88",
+    "./.ligo/source/i/webassemblyjs__s__wasm_opt__1.11.1__a7b50b88",
   "@webassemblyjs/wasm-gen@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__wasm_gen__1.11.1__7849eed3",
+    "./.ligo/source/i/webassemblyjs__s__wasm_gen__1.11.1__7849eed3",
   "@webassemblyjs/wasm-edit@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__wasm_edit__1.11.1__eeae5965",
+    "./.ligo/source/i/webassemblyjs__s__wasm_edit__1.11.1__eeae5965",
   "@webassemblyjs/utf8@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__utf8__1.11.1__a8f1fc9c",
+    "./.ligo/source/i/webassemblyjs__s__utf8__1.11.1__a8f1fc9c",
   "@webassemblyjs/leb128@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__leb128__1.11.1__c3f64d0b",
+    "./.ligo/source/i/webassemblyjs__s__leb128__1.11.1__c3f64d0b",
   "@webassemblyjs/ieee754@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__ieee754__1.11.1__6ce6fe1d",
+    "./.ligo/source/i/webassemblyjs__s__ieee754__1.11.1__6ce6fe1d",
   "@webassemblyjs/helper-wasm-section@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__helper_wasm_section__1.11.1__235f1b59",
+    "./.ligo/source/i/webassemblyjs__s__helper_wasm_section__1.11.1__235f1b59",
   "@webassemblyjs/helper-wasm-bytecode@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__helper_wasm_bytecode__1.11.1__5eda3286",
+    "./.ligo/source/i/webassemblyjs__s__helper_wasm_bytecode__1.11.1__5eda3286",
   "@webassemblyjs/helper-numbers@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__helper_numbers__1.11.1__4d3665cb",
+    "./.ligo/source/i/webassemblyjs__s__helper_numbers__1.11.1__4d3665cb",
   "@webassemblyjs/helper-buffer@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__helper_buffer__1.11.1__3f8ae42e",
+    "./.ligo/source/i/webassemblyjs__s__helper_buffer__1.11.1__3f8ae42e",
   "@webassemblyjs/helper-api-error@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__helper_api_error__1.11.1__87891606",
+    "./.ligo/source/i/webassemblyjs__s__helper_api_error__1.11.1__87891606",
   "@webassemblyjs/floating-point-hex-parser@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__floating_point_hex_parser__1.11.1__0648d7dc",
+    "./.ligo/source/i/webassemblyjs__s__floating_point_hex_parser__1.11.1__0648d7dc",
   "@webassemblyjs/ast@1.11.1@d41d8cd9":
-    "/foo/.esy/source/i/webassemblyjs__s__ast__1.11.1__11f91584",
+    "./.ligo/source/i/webassemblyjs__s__ast__1.11.1__11f91584",
   "@types/node@17.0.14@d41d8cd9":
-    "/foo/.esy/source/i/types__s__node__17.0.14__1fa0262e",
+    "./.ligo/source/i/types__s__node__17.0.14__1fa0262e",
   "@types/json-schema@7.0.9@d41d8cd9":
-    "/foo/.esy/source/i/types__s__json_schema__7.0.9__6a1437d2",
+    "./.ligo/source/i/types__s__json_schema__7.0.9__6a1437d2",
   "@types/estree@0.0.50@d41d8cd9":
-    "/foo/.esy/source/i/types__s__estree__0.0.50__90883c18",
+    "./.ligo/source/i/types__s__estree__0.0.50__90883c18",
   "@types/eslint-scope@3.7.3@d41d8cd9":
-    "/foo/.esy/source/i/types__s__eslint_scope__3.7.3__c9bd1289",
+    "./.ligo/source/i/types__s__eslint_scope__3.7.3__c9bd1289",
   "@types/eslint@8.4.1@d41d8cd9":
-    "/foo/.esy/source/i/types__s__eslint__8.4.1__f97803a1"
+    "./.ligo/source/i/types__s__eslint__8.4.1__f97803a1"
 }
