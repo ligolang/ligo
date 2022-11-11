@@ -6,8 +6,8 @@ title: Is there a way to advance time in Ligo tests ?
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-The `Tezos.now()` function can be used to get the current time, but in the tests,
-we may want to setup a situation where the contracts thinks `Tezos.now()` is in the future.
+The `Tezos.get_now` function can be used to get the current time, but in the tests,
+we may want to setup a situation where the contracts thinks `Tezos.get_now()` is in the future.
 
 Time advances by baking (protocol checks and enforces the timestamp makes sense)
 
