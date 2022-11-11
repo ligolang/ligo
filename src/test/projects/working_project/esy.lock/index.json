@@ -1,6 +1,6 @@
 {
   "checksum": "f9343036d86380341fe0404e33319116",
-  "root": "ligo-foo@link-dev:./package.json",
+  "root": "working_project@link-dev:./package.json",
   "node": {
     "ligo-set-helpers@1.0.2@d41d8cd9": {
       "id": "ligo-set-helpers@1.0.2@d41d8cd9",
@@ -30,8 +30,8 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "ligo-foo@link-dev:./package.json": {
-      "id": "ligo-foo@link-dev:./package.json",
+    "working_project@link-dev:./package.json": {
+      "id": "working_project@link-dev:./package.json",
       "name": "ligo-foo",
       "version": "link-dev:./package.json",
       "source": {
