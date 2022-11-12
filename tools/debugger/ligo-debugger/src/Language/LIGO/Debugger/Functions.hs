@@ -8,7 +8,7 @@ module Language.LIGO.Debugger.Functions
   , getLambdaMeta
   ) where
 
-import Control.Lens (makeLensesWith)
+import Control.Lens (lens, makeLensesWith)
 import Data.Default (Default (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Vinyl (Rec (RNil, (:&)))
@@ -43,32 +43,42 @@ instance Buildable LambdaMeta where
 instance Default LambdaMeta where
   def = LambdaMeta (LigoVariable (Name internalStackFrameName) :| [])
 
+-- | A lens for accessing the meta of a lambda.
+--
+-- Returns @Nothing@ when the lambda is unwrapped.
+lambdaMetaL :: Lens' (T.Value ('T.TLambda i o)) (Maybe LambdaMeta)
+lambdaMetaL = lens
+  do \(T.VLam lam) -> case T.rfAnyInstr lam of
+       T.ConcreteMeta meta _ -> Just meta
+       _ -> Nothing
+  do let replaceMeta mMeta instr =
+          let pureInstr = case instr of
+                T.ConcreteMeta (_ :: LambdaMeta) i -> i
+                i -> i
+          in maybe id (T.Meta . T.SomeMeta) mMeta pureInstr
+     \(T.VLam lam) mMeta -> T.VLam $ T.rfMapAnyInstr (replaceMeta mMeta) lam
+
+-- | Variation of 'lambdaMetaL' that can look into arbitrary value,
+-- doing nothing if it is not a lambda.
+mLambdaMetaL :: Traversal' (T.Value t) (Maybe LambdaMeta)
+mLambdaMetaL f = \case{ v@T.VLam{} -> lambdaMetaL f v; v -> pure v }
 
 embedFunctionNameIntoLambda
   :: Maybe (LigoVariable 'Unique)
   -> T.Value t
   -> T.Value t
-embedFunctionNameIntoLambda mVar (T.VLam rf) = T.VLam $ embedIntoRemFail rf
-  where
-    embedIntoRemFail :: T.RemFail T.Instr i o -> T.RemFail T.Instr i o
-    embedIntoRemFail = T.rfMapAnyInstr \case
-      T.ConcreteMeta (lambdaMeta :: LambdaMeta) instr ->
-        let
-          LigoVariable topLambdaName :| others = lambdaMeta ^. lmVariablesL
+embedFunctionNameIntoLambda mVar =
+  mLambdaMetaL %~ \mLambdaMeta ->
+    let
+      lambdaMeta = mLambdaMeta ?: def
+      LigoVariable topLambdaName :| others = lambdaMeta ^. lmVariablesL
+      lambdaVar@(LigoVariable lambdaName) = fromMaybe (LigoVariable (Name internalStackFrameName)) mVar
 
-          updatedMeta =
-            lambdaMeta
-              & lmVariablesL %~
-                  if | topLambdaName `compareUniqueNames` Name internalStackFrameName -> const (lambdaVar :| others)
-                      | lambdaName `compareUniqueNames` topLambdaName -> id
-                      | otherwise -> NE.cons lambdaVar
-
-        in T.Meta (T.SomeMeta updatedMeta) instr
-
-      instr -> T.Meta (T.SomeMeta $ LambdaMeta (lambdaVar :| [])) instr
-
-    lambdaVar@(LigoVariable lambdaName) = fromMaybe (LigoVariable (Name internalStackFrameName)) mVar
-embedFunctionNameIntoLambda _ val = val
+    in Just $ lambdaMeta
+          & lmVariablesL %~
+              if | topLambdaName `compareUniqueNames` Name internalStackFrameName -> const (lambdaVar :| others)
+                  | lambdaName `compareUniqueNames` topLambdaName -> id
+                  | otherwise -> NE.cons lambdaVar
 
 tryToEmbedEnvIntoLambda :: (LigoStackEntry 'Unique, StkEl t) -> StkEl t
 tryToEmbedEnvIntoLambda (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
@@ -83,7 +93,4 @@ embedFunctionNames stack [] = stack
 embedFunctionNames RNil _ = RNil
 
 getLambdaMeta :: T.Value ('T.TLambda i o) -> LambdaMeta
-getLambdaMeta (T.VLam (T.rfAnyInstr -> instr)) =
-  case instr of
-    T.ConcreteMeta meta _ -> meta
-    _ -> def
+getLambdaMeta = fromMaybe def . view lambdaMetaL
