@@ -10,7 +10,7 @@ module Language.LIGO.Debugger.Functions
   , getLambdaMeta
   ) where
 
-import Control.Lens (lens, makeLensesWith)
+import Control.Lens (AsEmpty (..), lens, makeLensesWith, non', prism)
 import Data.Default (Default (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Singletons (SingI)
@@ -70,6 +70,11 @@ instance Buildable LambdaMeta where
 instance Default LambdaMeta where
   def = LambdaMeta (LNameUnknown :| [])
 
+instance AsEmpty LambdaMeta where
+  _Empty = prism
+    (def)
+    \case{ LambdaMeta (LNameUnknown :| []) -> Right (); other -> Left other }
+
 -- | A lens for accessing the meta of a lambda.
 --
 -- Returns @Nothing@ when the lambda is unwrapped.
@@ -95,12 +100,11 @@ embedFunctionNameIntoLambda
   -> T.Value t
   -> T.Value t
 embedFunctionNameIntoLambda (LigoVariable newName) =
-  mLambdaMetaL %~ \mLambdaMeta ->
+  mLambdaMetaL . non' _Empty %~ \lambdaMeta ->
     let
-      lambdaMeta = mLambdaMeta ?: def
       mLastPresentName :| others = lambdaMeta ^. lmVariablesL
 
-    in Just $ lambdaMeta
+    in lambdaMeta
           & lmVariablesL %~ case mLastPresentName of
               LNameUnknown -> const (LName newName :| others)
               LName lastPresentName
