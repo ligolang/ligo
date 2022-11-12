@@ -2,6 +2,7 @@
 
 module Language.LIGO.Debugger.Functions
   ( LambdaMeta (..)
+  , matchesUniqueLambdaName
   , lambdaMetaL
   , internalStackFrameName
   , embedFunctionNames
@@ -12,6 +13,7 @@ module Language.LIGO.Debugger.Functions
 import Control.Lens (lens, makeLensesWith)
 import Data.Default (Default (..))
 import Data.List.NonEmpty qualified as NE
+import Data.Singletons (SingI)
 import Data.Vinyl (Rec (RNil, (:&)))
 import Fmt (Buildable (..))
 import Text.Interpolation.Nyan
@@ -22,14 +24,38 @@ import Morley.Util.Lens (postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Types
 
+-- | Registered name of a lambda.
+data LambdaName u
+  = LName (Name u)
+    -- ^ We know a particular name.
+  | LNameUnknown
+    -- ^ Name is yet unknown.
+    -- It be figured out later, or this lambda may be some LIGO-internal thing.
+  deriving stock (Show, Generic)
+  deriving anyclass (NFData)
+
+deriving stock instance Eq (LambdaName 'Concise)
+
+instance SingI u => Buildable (LambdaName u) where
+  build = \case
+    LName n -> build n
+    LNameUnknown -> build internalStackFrameName
+
+matchesUniqueLambdaName :: Name 'Unique -> LambdaName 'Unique -> Bool
+matchesUniqueLambdaName n1 = \case
+  LName n2 -> n1 `compareUniqueNames` n2
+  LNameUnknown -> False
+
 -- | A meta that we embed into @LAMBDA@ values when
 -- interpreting a contract.
 newtype LambdaMeta = LambdaMeta
-  { lmVariables :: NonEmpty (LigoVariable 'Unique)
+  { lmVariables :: NonEmpty (LambdaName 'Unique)
     -- ^ In this list we store names for stack frames
     -- that we should create when executing a lambda with this meta.
     -- The order of these names is reversed (e.g. if it is @["addImpl", "add"]@
     -- the next stack frames would be created: @["add", "addImpl"]@).
+    --
+    -- Sometimes the name remains unknown, this is represented by @Nothing@.
   } deriving stock (Show, Generic)
     deriving anyclass (NFData)
 
@@ -42,7 +68,7 @@ instance Buildable LambdaMeta where
       variables: #{toList lmVariables}|]
 
 instance Default LambdaMeta where
-  def = LambdaMeta (LigoVariable (Name internalStackFrameName) :| [])
+  def = LambdaMeta (LNameUnknown :| [])
 
 -- | A lens for accessing the meta of a lambda.
 --
@@ -65,26 +91,26 @@ mLambdaMetaL :: Traversal' (T.Value t) (Maybe LambdaMeta)
 mLambdaMetaL f = \case{ v@T.VLam{} -> lambdaMetaL f v; v -> pure v }
 
 embedFunctionNameIntoLambda
-  :: Maybe (LigoVariable 'Unique)
+  :: LigoVariable 'Unique
   -> T.Value t
   -> T.Value t
-embedFunctionNameIntoLambda mVar =
+embedFunctionNameIntoLambda (LigoVariable newName) =
   mLambdaMetaL %~ \mLambdaMeta ->
     let
       lambdaMeta = mLambdaMeta ?: def
-      LigoVariable topLambdaName :| others = lambdaMeta ^. lmVariablesL
-      lambdaVar@(LigoVariable lambdaName) = fromMaybe (LigoVariable (Name internalStackFrameName)) mVar
+      mLastPresentName :| others = lambdaMeta ^. lmVariablesL
 
     in Just $ lambdaMeta
-          & lmVariablesL %~
-              if | topLambdaName `compareUniqueNames` Name internalStackFrameName -> const (lambdaVar :| others)
-                  | lambdaName `compareUniqueNames` topLambdaName -> id
-                  | otherwise -> NE.cons lambdaVar
+          & lmVariablesL %~ case mLastPresentName of
+              LNameUnknown -> const (LName newName :| others)
+              LName lastPresentName
+                | lastPresentName `compareUniqueNames` newName -> id
+                | otherwise -> NE.cons (LName newName)
 
 tryToEmbedEnvIntoLambda :: (LigoStackEntry 'Unique, StkEl t) -> StkEl t
 tryToEmbedEnvIntoLambda (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
   case leseType of
-    LTArrow{} -> StkEl $ embedFunctionNameIntoLambda leseDeclaration val
+    LTArrow{} -> StkEl $ maybe id embedFunctionNameIntoLambda leseDeclaration val
     _ -> stkEl
 tryToEmbedEnvIntoLambda (_, stkEl) = stkEl
 

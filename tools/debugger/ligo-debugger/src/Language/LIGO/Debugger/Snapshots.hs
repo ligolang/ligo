@@ -404,7 +404,7 @@ runInstrCollect = \case
 
             mainFunctionName <- use csMainFunctionNameL
 
-            unless (mainFunctionName `compareUniqueNames` lvName name) do
+            unless (mainFunctionName `matchesUniqueLambdaName` name) do
               logMessage
                 [int||
                   Created new stack frame #{newStackFrame}
