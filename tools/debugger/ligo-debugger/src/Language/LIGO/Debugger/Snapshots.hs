@@ -363,9 +363,6 @@ runInstrCollect = \case
     postExecutedStage LigoIndexedInfo{..} oldStack newStack instr = do
       returnStack <-
         case (instr, oldStack, newStack) of
-          -- There might be a case when after executing function
-          -- we'll get another function. In order not to lose stack frames
-          -- we need to embed all future stack frame names into resulting function.
           (EXEC{}, _ :& StkEl oldLam :& _, StkEl lam :& stkEls) -> do
             let LambdaMeta{..} = getLambdaMeta oldLam
 
@@ -375,13 +372,18 @@ runInstrCollect = \case
                 _ :| (x : xs) -> x :| xs
                 other -> other
 
-            let embedAll = foldl1 (.) (embedFunctionNameIntoLambda . Just <$> lmVariables)
-            let embeddedLambda = embedAll lam
-
-            logMessage
-              [int||
-                Embedding #{toList lmVariables} into lambda #{embeddedLambda}
-              |]
+            -- There might be a case when after executing function
+            -- we'll get another function. In order not to lose stack frames
+            -- we need to embed all future stack frame names into resulting
+            -- function.
+            embeddedLambda <- case lam of
+              VLam{} -> do
+                let newLam = lam & lambdaMetaL .~ view lambdaMetaL oldLam
+                logMessage [int||
+                  Embedding old meta with #{toList lmVariables} into lambda #{newLam}
+                  |]
+                return newLam
+              _ -> pure lam
 
             pure $ StkEl embeddedLambda :& stkEls
           _ -> pure newStack

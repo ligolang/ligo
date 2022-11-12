@@ -2,6 +2,7 @@
 
 module Language.LIGO.Debugger.Functions
   ( LambdaMeta (..)
+  , lambdaMetaL
   , internalStackFrameName
   , embedFunctionNames
   , embedFunctionNameIntoLambda
