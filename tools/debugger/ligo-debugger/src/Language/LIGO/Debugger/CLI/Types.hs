@@ -192,28 +192,6 @@ internalStackFrameName = "<internal>"
 stripSuffixHashVariable :: LigoVariable 'Unique -> LigoVariable 'Concise
 stripSuffixHashVariable var = LigoVariable $ pretty var
 
--- | A meta that we embed into @LAMBDA@ values when
--- interpreting a contract.
-newtype LambdaMeta = LambdaMeta
-  { lmVariables :: NonEmpty (LigoVariable 'Unique)
-    -- ^ In this list we store names for stack frames
-    -- that we should create when executing a lambda with this meta.
-    -- The order of these names is reversed (e.g. if it is @["addImpl", "add"]@
-    -- the next stack frames would be created: @["add", "addImpl"]@).
-  } deriving stock (Show, Generic)
-    deriving anyclass (NFData)
-
-makeLensesWith postfixLFields ''LambdaMeta
-
-instance Buildable LambdaMeta where
-  build LambdaMeta{..} =
-    [int||
-    LambdaMeta
-      variables: #{toList lmVariables}|]
-
-instance Default LambdaMeta where
-  def = LambdaMeta (LigoVariable (Name internalStackFrameName) :| [])
-
 -- | Reference to type description in the types map.
 --
 -- Not used at the moment.

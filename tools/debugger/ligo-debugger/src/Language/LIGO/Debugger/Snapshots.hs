@@ -6,6 +6,7 @@ module Language.LIGO.Debugger.Snapshots
   , InterpretEvent (..)
   , statusExpressionEvaluatedP
   , InterpretSnapshot (..)
+  , LambdaMeta (..)
   , CollectorState (..)
   , InterpretHistory (..)
   , EmbeddedLigoMeta
@@ -75,6 +76,7 @@ import Morley.Util.Lens (postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Functions
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem

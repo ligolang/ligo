@@ -18,6 +18,7 @@ library
       Language.LIGO.Debugger.CLI.Types
       Language.LIGO.Debugger.Common
       Language.LIGO.Debugger.Error
+      Language.LIGO.Debugger.Functions
       Language.LIGO.Debugger.Handlers.Helpers
       Language.LIGO.Debugger.Handlers.Impl
       Language.LIGO.Debugger.Handlers.Types
