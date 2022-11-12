@@ -100,16 +100,11 @@ embedFunctionNameIntoLambda
   -> T.Value t
   -> T.Value t
 embedFunctionNameIntoLambda (LigoVariable newName) =
-  mLambdaMetaL . non' _Empty %~ \lambdaMeta ->
-    let
-      mLastPresentName :| others = lambdaMeta ^. lmVariablesL
-
-    in lambdaMeta
-          & lmVariablesL %~ case mLastPresentName of
-              LNameUnknown -> const (LName newName :| others)
-              LName lastPresentName
-                | lastPresentName `compareUniqueNames` newName -> id
-                | otherwise -> NE.cons (LName newName)
+  mLambdaMetaL . non' _Empty . lmVariablesL %~ \case
+    LNameUnknown :| others -> LName newName :| others
+    curNames@(LName lastPresentName :| _)
+      | lastPresentName `compareUniqueNames` newName -> curNames
+      | otherwise -> NE.cons (LName newName) curNames
 
 tryToEmbedEnvIntoLambda :: (LigoStackEntry 'Unique, StkEl t) -> StkEl t
 tryToEmbedEnvIntoLambda (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
