@@ -47,6 +47,7 @@ library
       DeriveTraversable
       DerivingStrategies
       DerivingVia
+      EmptyCase
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -139,6 +140,7 @@ executable ligo-debugger
       DeriveTraversable
       DerivingStrategies
       DerivingVia
+      EmptyCase
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -205,6 +207,7 @@ test-suite ligo-debugger-test
       DeriveTraversable
       DerivingStrategies
       DerivingVia
+      EmptyCase
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
