@@ -16,6 +16,8 @@ module Cli.Impl
   , cleanupLigoDaemon
 
     -- * Calling LIGO
+  , LigoCliArg (..)
+  , strArg
   , callLigo
   , callLigoBS
   , callForFormat
@@ -34,6 +36,7 @@ import Data.Aeson
   (FromJSON (..), ToJSON (..), Value, eitherDecode', eitherDecodeStrict', object, (.=))
 import Data.Aeson.Types (parseEither)
 import Data.ByteString.Lazy qualified as BSL
+import Data.Coerce (coerce)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Debug qualified
@@ -237,7 +240,28 @@ instance Exception LigoIOException where
 -- Execution
 ----------------------------------------------------------------------------
 
-callLigoBS :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m LByteString
+-- | A command line argument to @ligo@.
+--
+-- This newtype serves to protect us from passing user input to LIGO
+-- without the necessary preprocessing.
+--
+-- You can instantiate this with any concrete text without issues
+-- (as long as you understand its semantics),
+-- but to pass values that are known only at runtime use 'strArg' and family.
+-- Do not use 'fromString' manually!
+newtype LigoCliArg = LigoCliArg {unLigoCliArg :: String}
+  deriving stock (Eq, Show)
+  deriving newtype (IsString)
+
+-- | Turn a string into CLI argument for LIGO.
+strArg :: ToString s => s -> LigoCliArg
+strArg = LigoCliArg . protect . toString
+  where
+    protect arg = case arg of
+      ('-' : _) -> ' ' : arg
+      _ -> arg
+
+callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m LByteString
 callLigoBS _rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
@@ -249,7 +273,7 @@ callLigoBS _rootDir args conM = do
     -- running our tests with multiple threads.
     -- Additionally, using `withCurrentDirectory` from `directory` is no help
     -- either, as it doesn't seem thread-safe either.
-    let process = proc _lceClientPath args
+    let process = proc _lceClientPath (coerce args)
     (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process raw
       & rewrapIOError
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
@@ -308,7 +332,7 @@ cleanupLigoDaemonImpl = Pool.destroyAllResources
 -- If '_lceLigoProcesses' is 'Nothing', this function will make a blocking call
 -- to LIGO, otherwise it will use an unused process handle from the process
 -- pool.
-callLigo :: forall m. HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
+callLigo :: forall m. HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m Text
 callLigo _rootDir args conM = do
   LigoClientEnv{..} <- getLigoClientEnv
   let fpM = srcPath <$> conM
@@ -320,7 +344,7 @@ callLigo _rootDir args conM = do
   case _lceLigoProcesses of
     Nothing -> do
       let raw = maybe "" (toString . srcText) conM
-      let process = proc _lceClientPath args
+      let process = proc _lceClientPath (coerce args)
       (ec, lo, le) <- readCreateProcessWithExitCode process raw
       unless (ec == ExitSuccess && null le) $ -- TODO: separate JSON errors and other ones
         UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM
@@ -328,7 +352,7 @@ callLigo _rootDir args conM = do
     Just ligoProcesses ->
       Pool.withResource ligoProcesses \LigoProcess{..} -> do
         liftIO do
-          Text.hPutStrLn _lpStdin $ unwords $ map Debug.show args
+          Text.hPutStrLn _lpStdin $ unwords $ map (Debug.show . unLigoCliArg) args
           hFlush _lpStdin
         lo <- readUntilNull _lpStdout
         le <- readUntilNull _lpStderr
@@ -367,7 +391,7 @@ withLigo
   :: (HasLigoClient m, Log m)
   => Source
   -> TempSettings
-  -> (FilePath -> [String])
+  -> (FilePath -> [LigoCliArg])
   -> (Source -> Value -> m a)
   -> m a
 withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) getArgs decode =
@@ -460,7 +484,7 @@ callForFormat
   -> m Text
 callForFormat tempSettings source = Log.addNamespace "callForFormat" $ Log.addContext source $
   withLigo source tempSettings
-    (\tempFp -> ["print", "pretty", tempFp, "--format", "json"])
+    (\tempFp -> ["print", "pretty", strArg tempFp, "--format", "json"])
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
@@ -489,7 +513,7 @@ preprocess
 preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext source do
   $Log.debug [i|preprocessing the following source:\n#{fp}|]
   withLigo source tempSettings
-    (\tempFp -> ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"])
+    (\tempFp -> ["print", "preprocessed", strArg tempFp, "--lib", strArg dir, "--format", "json"])
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
@@ -510,7 +534,7 @@ getLigoDefinitions
 getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $ Log.addContext source do
   $Log.debug [i|parsing the following source:\n#{fp}|]
   withLigo source tempSettings
-    (\tempFp -> ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir])
+    (\tempFp -> ["info", "get-scope", strArg tempFp, "--format", "json", "--with-types", "--lib", strArg dir])
     (\(Source tempFp isDirty output) json -> do
       json' <- bool
         pure

@@ -61,10 +61,10 @@ compileLigoContractDebug entrypoint file = withMapLigoExc $
     , "--michelson-format", "json"
     , "--michelson-comments", "location"
     , "--michelson-comments", "env"
-    , "-e", entrypoint
+    , "-e", LSP.strArg entrypoint
     , "--experimental-disable-optimizations-for-debugging"
     , "--disable-michelson-typechecking"
-    , file
+    , LSP.strArg file
     ] Nothing
     >>= either (throwIO . LigoDecodeException "decoding source mapper" . toText) pure
       . Aeson.eitherDecode
@@ -77,9 +77,9 @@ compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
   callLigo Nothing
     [ "compile", "expression"
     , "--no-warn"
-    , "--init-file", ctxFile
+    , "--init-file", LSP.strArg ctxFile
     , "auto"  -- `syntax` argument, we can leave `auto` since context file is specified
-    , toString expr
+    , LSP.strArg expr
     ] Nothing
     >>= decodeOutput
   where
@@ -95,7 +95,7 @@ getAvailableEntrypoints file = withMapLigoExc $
   callLigo Nothing
     [ "info", "list-declarations"
     , "--only-ep"
-    , file
+    , LSP.strArg file
     ] Nothing
     >>= decodeOutput
   where
