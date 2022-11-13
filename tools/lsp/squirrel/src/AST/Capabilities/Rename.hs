@@ -1,7 +1,6 @@
 -- | Rename request implementation.
 module AST.Capabilities.Rename
-  ( RenameDeclarationResult (..)
-  , renameDeclarationAt
+  ( renameDeclarationAt
   , prepareRenameDeclarationAt
   ) where
 
@@ -15,20 +14,15 @@ import AST.Skeleton (SomeLIGO)
 import Range (Range, _rFile, toLspRange)
 import Util (toUri)
 
--- | Result of trying to rename declaration.
-data RenameDeclarationResult = Ok J.WorkspaceEditMap | NotFound
-  deriving stock (Eq, Show)
-
-
 -- | Rename the declaration at the given position.
 -- The position is given as a range, because that is how we do it, haha :/.
 renameDeclarationAt
   :: CanSearch xs
-  => Range -> SomeLIGO xs -> Text -> RenameDeclarationResult
+  => Range -> SomeLIGO xs -> Text -> Maybe J.WorkspaceEditMap
 renameDeclarationAt pos tree newName =
   case findScopedDecl pos tree of
-    Nothing -> NotFound
-    Just ScopedDecl{_sdRefs} -> Ok $
+    Nothing -> Nothing
+    Just ScopedDecl{_sdRefs} -> Just $
       -- XXX: _sdRefs includes the declaration itself too,
       -- so we do not add _sdOrigin.
       HM.fromList $ mapMaybe extractGroup $ groupBy ((==) `on` _rFile) $ sortOn _rFile _sdRefs

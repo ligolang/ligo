@@ -397,11 +397,11 @@ handleRenameRequest req respond = do
     tree <- contractTree <$> Document.fetch Document.NormalEffort nuri
 
     case renameDeclarationAt pos tree newName of
-      NotFound -> do
+      Nothing -> do
         $Log.debug [i|Declaration not found for: #{req}|]
         respond . Left $
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
-      Ok edits -> do
+      Just edits -> do
         let
           -- XXX: This interface has two benefits: it allows to refer to a specific
           -- document version and it allows the creation/deletion/renaming of files.
