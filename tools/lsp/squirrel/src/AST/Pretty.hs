@@ -10,7 +10,6 @@ module AST.Pretty
   , PPableLIGO
   , Pretty (..)
   , TotalLPP
-  , docToText
   , lppDialect
   , sexpr
   ) where
@@ -979,10 +978,6 @@ lppDialect dialect = case dialect of
   Caml   -> lpp @'Caml
   Reason -> lpp @'Reason
   Js     -> lpp @'Js
-
-
-docToText :: Doc -> Text
-docToText = show
 
 type PPableLIGO info =
   ( Contains [Text] info

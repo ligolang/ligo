@@ -31,7 +31,7 @@ import Unsafe qualified
 import AST.Capabilities.Find
   (CanSearch, TypeDefinitionRes (..), dereferenceTspec, findModuleDecl, findNodeAtPoint,
   typeDefinitionOf)
-import AST.Pretty (PPableLIGO, docToText)
+import AST.Pretty (PPableLIGO)
 import AST.Scope
 import AST.Scope.ScopedDecl
   (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
@@ -214,7 +214,7 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
     mkCompletion field = Completion
       (Just CiField)
       (NameCompletion $ _tfName field)
-      (TypeCompletion . docToText . lppLigoLike dialect <$> _tfTspec field)
+      (TypeCompletion . show . lppLigoLike dialect <$> _tfTspec field)
       (DocCompletion "")
 
 extractType :: ScopedDecl -> Maybe Type
@@ -241,7 +241,7 @@ completeModuleField scope pos tree@(SomeLIGO dialect nested) = do
     mkCompletion decl = Completion
       (completionKind decl)
       (NameCompletion $ _sdName decl)
-      (TypeCompletion . docToText . lppLigoLike dialect <$> extractType decl)
+      (TypeCompletion . show . lppLigoLike dialect <$> extractType decl)
       (DocCompletion "")
 
 completeFromScope
@@ -345,7 +345,7 @@ asCompletion :: ScopedDecl -> Completion
 asCompletion sd = Completion
   (completionKind sd)
   (NameCompletion $ ppToText (_sdName sd))
-  (Just $ TypeCompletion $ docToText (lppDeclCategory sd))
+  (Just $ TypeCompletion $ show (lppDeclCategory sd))
   (DocCompletion  $ ppToText (fsep $ map pp $ _sdDoc sd))
 
 isSubseqOf :: Text -> Text -> Bool

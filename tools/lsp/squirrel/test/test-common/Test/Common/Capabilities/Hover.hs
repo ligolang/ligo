@@ -22,7 +22,7 @@ import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
 import AST.Capabilities.Hover (hoverDecl)
-import AST.Pretty (docToText, ppToText)
+import AST.Pretty (ppToText)
 import AST.Scope.ScopedDecl (Type (..), lppLigoLike)
 import AST.Skeleton (Lang (..))
 
@@ -52,7 +52,7 @@ checkHover fp reference HoverTest{..} = do
   case hoverDecl reference contract of
     Nothing -> expectationFailure "Expected a hover definition, but got Nothing"
     Just (Hover (HoverContents (MarkupContent _ (lines -> (ty : _ : def : doc)))) _) -> do
-      ty `shouldBe` (htName <> " : " <> docToText (lppLigoLike htDialect htType))
+      ty `shouldBe` (htName <> " : " <> show (lppLigoLike htDialect htType))
       def `shouldBe` ("*defined at* " <> ppToText htDefinition)
       case doc of
         [] -> unless (null htDoc) $ expectationFailure "Expected no documentation, but got some"
