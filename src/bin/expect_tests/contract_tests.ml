@@ -1154,6 +1154,24 @@ let%expect_test _ =
   [%expect{| "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "not_comparable.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 21-28:
+      1 | let main ((_u, s) : (int set) set * unit) : operation list * unit = ([] : operation list), s
+      2 |
+
+    The set constructor needs a comparable type argument, but it was given a non-comparable one. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "not_comparable.mligo" ; "-e" ; "main2" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 22-29:
+      2 |
+      3 | let main2 ((_u, s) : (int set) ticket * unit) : operation list * unit = ([] : operation list), s
+
+    The ticket constructor needs a comparable type argument, but it was given a non-comparable one. |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "big_map.ligo" ; "(big_map1,unit)" ] ;
   [%expect {|
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
