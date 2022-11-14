@@ -2,6 +2,51 @@ module Pair   = Simple_utils.Pair
 module Triple = Simple_utils.Triple
 open Mini_c
 
+type mapper_type = type_expression -> type_expression
+
+let rec map_type_expression : mapper_type -> type_expression -> type_expression = fun f t ->
+  let self = map_type_expression f in
+  let self_annotated (a, b) = (a, self b) in
+  let t' = f t in
+  let return type_content = { t' with type_content } in
+  match t'.type_content with
+  | T_base _ as c -> return c
+  | T_or (t1, t2) ->
+    let t1 = self_annotated t1 in
+    let t2 = self_annotated t2 in
+    return @@ T_or (t1, t2)
+  | T_tuple ts ->
+    let ts = List.map ~f:self_annotated ts in
+    return @@ T_tuple ts
+  | T_function (t1, t2) ->
+    let t1 = self t1 in
+    let t2 = self t2 in
+    return @@ T_function (t1, t2)
+  | T_option t ->
+    let t = self t in
+    return @@ T_option t
+  | T_list t ->
+    let t = self t in
+    return @@ T_list t
+  | T_set t ->
+    let t = self t in
+    return @@ T_set t
+  | T_contract t ->
+    let t = self t in
+    return @@ T_contract t
+  | T_ticket t ->
+    let t = self t in
+    return @@ T_ticket t
+  | T_map (t1, t2) ->
+    let t1 = self t1 in
+    let t2 = self t2 in
+    return @@ T_map (t1, t2)
+  | T_big_map (t1, t2) ->
+    let t1 = self t1 in
+    let t2 = self t2 in
+    return @@ T_big_map (t1, t2)
+  | (T_sapling_state _ | T_sapling_transaction _) as c -> return c
+
 type mapper = expression -> expression
 
 let rec map_expression : mapper -> expression -> expression = fun f e ->
