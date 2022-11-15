@@ -91,8 +91,7 @@ test_Regressions = testGroup "Regressions"
   [ -- Getting entrypoints when a contract imports another contract of
     -- a different dialect
 
-    -- TODO: enable this test
-    testCase "ligolang#1461" $ when False do
+    testCase "ligolang#1461" do
 
       let file = contractsDir </> "module_contracts" </> "imported.mligo"
 
