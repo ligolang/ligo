@@ -70,7 +70,7 @@ let compile_expr env e =
   let p = compile_expr env e in
   let (rs, p) = To_micheline.strengthen_prog p [true] in
   (* TODO *)
-  let () = if List.length (List.filter ~f:ident rs) > 0 then failwith "TODO expr used something" else () in
+  let () = if List.length (List.filter ~f:Fn.id rs) > 0 then failwith "TODO expr used something" else () in
   (* hmm, why did this end up here *)
   let drops = Ligo_coq_ocaml.Compiler.compile_ope null rs in
   let drops = To_micheline.translate_prog drops in

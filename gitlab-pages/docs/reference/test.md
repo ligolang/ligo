@@ -9,7 +9,7 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-> Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing).
+> Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing.md).
 
 <SyntaxTitle syntax="pascaligo">
 type michelson_program
@@ -569,6 +569,20 @@ let to_string = (a: 'a) => string
 Convert a value to a string (same conversion as used by `log`).
 
 <SyntaxTitle syntax="pascaligo">
+val to_json&lt;a&gt; : a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val to_json : 'a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let to_json: 'a => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let to_json = (a: 'a) => string
+</SyntaxTitle>
+Convert a value to its JSON representation (as a string).
+
+<SyntaxTitle syntax="pascaligo">
 val print : string -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -718,8 +732,7 @@ let register_constant = (constant : michelson_program) => string
 </SyntaxTitle>
 Registers a global constant `constant`, returns its hash as a string.
 
-See the [documentation for global
-constants](../advanced/global-constants#global-constants-in-the-testing-framework)
+See the [documentation for global constants](../advanced/global-constants.md#global-constants-in-the-testing-framework)
 for an example of usage.
 
 <SyntaxTitle syntax="pascaligo">
@@ -1266,3 +1279,86 @@ let sign: (secret_key: string, data: bytes) => signature
 
 Creates a signature of `bytes` from a `string` representing a secret
 key, it can be checked with `Crypto.check`.
+
+
+### Failwith and asserts
+
+
+<SyntaxTitle syntax="pascaligo">
+val failwith&lt;a&gt; : a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val failwith : 'a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let failwith: 'a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let failwith: (message: &apos;a) => unit
+</SyntaxTitle>
+
+Cause the testing framework to fail.
+
+
+<SyntaxTitle syntax="pascaligo">
+val assert : bool -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val assert : bool -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let assert: bool => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let assert: (condition: bool) => unit
+</SyntaxTitle>
+
+Check if a certain condition has been met. If not the testing framework will fail.
+
+
+<SyntaxTitle syntax="pascaligo">
+val assert_with_error : bool -> string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val assert_with_error : bool -> string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let assert_with_error: (bool, string) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let assert_with_error: (condition: bool, message: string) => unit
+</SyntaxTitle>
+
+Check if a certain condition has been met. If not the testing framework will fail with the string passed as message.
+
+
+<SyntaxTitle syntax="pascaligo">
+val set_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val set_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let set_print_values: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let set_print_values = (u: unit) => unit
+</SyntaxTitle>
+
+Turns on the printing of `test` prefixed values at the end of tests. This is the default behaviour.
+
+
+<SyntaxTitle syntax="pascaligo">
+val unset_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val unset_print_values : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let unset_print_values: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let unset_print_values = (u: unit) => unit
+</SyntaxTitle>
+
+Turns off the printing of `test` prefixed values at the end of tests.

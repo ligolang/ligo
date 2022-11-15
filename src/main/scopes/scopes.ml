@@ -306,8 +306,8 @@ let rec expression : with_types:bool -> options:Compiler_options.middle_end -> t
         let scopes = merge_same_scopes scopes in
         let defs_cases, refs_cases, tenv, scopes' = List.fold_left cases ~init:([], [], tenv, [])
           ~f:(fun (defs, refs, tenv, scopes) { pattern ; body } ->
-            let defs_pat = Pattern.fold_pattern (
-              fun defs (p : _ Pattern.t) ->
+            let defs_pat = AST.Pattern.fold_pattern (
+              fun defs (p : _ AST.Pattern.t) ->
                 match p.wrap_content with
                 | P_var binder ->
                   let def =

@@ -12,7 +12,7 @@
 
 (* Vendor dependencies *)
 
-module Directive = LexerLib.Directive
+module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 
@@ -23,7 +23,6 @@ open! Region (* TODO: Remove *)
 module Tree = Cst_shared.Tree
 
 type state = Tree.state
-(*type label = Tree.label*)
 
 open CST (* THE ONLY GLOBAL OPENING *)
 
@@ -31,99 +30,8 @@ open CST (* THE ONLY GLOBAL OPENING *)
 
 let sprintf  = Printf.sprintf
 
-(*type ('a, 'sep) nsepseq = ('a, 'sep) Utils.nsepseq*)
-
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
-
-(* The function [swap] takes a function and two values which are
-   applied to the function in reverse order. It is useful when calling
-   a function whose arguments have no labels and we want to do an eta
-   expansion. For example,
-
-   [let mk_child print value = Some (swap print value)]
-
-   instead of
-
-   [let mk_child print value = Some (fun state -> print state value)].
-
-   We also use [swap] in arguments to calls to higher-order functions,
-   for instance:
-
-   [mk_child (swap print_then print) value.ifso]
- *)
-
-(*let swap = Utils.swap*)
-
-(* Printing nodes *)
-
-(* The call [print_long state reg] prints a node as a string and its
-   source region from [reg]. *)
-(*
-let print_long state {value; region} =
-  let reg  = compact state region in
-  let node = sprintf "%s%s (%s)\n" state#pad_path value reg
-  in Buffer.add_string state#buffer node
- *)
-(* The call [print_long' state value region] is for cases where the
-   value to print as a string, and the source region are given
-   separately. Compare with [print_long]. *)
-
-(*
-let print_long' state value region =
-  print_long state {value; region}
- *)
-
-(* The call [print_short state value] is the short version of
-   [print_long']: there is no source region to print. This is used
-   often when printing nodes whose aim is to guide the interpretation,
-   but do not correspond to a node in the CST, for example "<cst>", or
-   "<statements". *)
-(*
-let print_short state value =
-  let node = sprintf "%s%s\n" state#pad_path value
-  in Buffer.add_string state#buffer node
- *)
-(* Making subtrees (children) from general values ([mk_child]),
-   optional values ([mk_child_opt]) or list values
-   ([mk_child_list]). The type of a subtree ("child") is a ['a
-   option], with the interpretation that [None] means "no subtree
-   printed". In the case of a list, the empty list is interpreted as
-   meaning "no subtree printed." *)
-
-(*let mk_child print value = Some (swap print value)*)
-(*
-let mk_child_opt print = function
-        None -> None
-| Some value -> mk_child print value
-
-let mk_child_list print = function
-    [] -> None
-| list -> mk_child print list
- *)
-(* Printing trees (node + subtrees). The call [print_tree state label
-   ?region children] prints a node whose label is [label] and optional
-   region is [region], and whose subtrees are [children]. The latter
-   is a list of optional values, with the interpretation of [None] as
-   meaning "no subtree printed". *)
-
-(*
-let print_tree state label ?region children =
-  let () = match region with
-                    None -> print_short state label
-           | Some region -> print_long' state label region in
-  let children         = List.filter_map ~f:(fun x -> x) children in
-  let arity            = List.length children in
-  let apply rank print = print (state#pad arity rank)
-  in List.iteri ~f:apply children
- *)
-
-(* A special case of tree occurs often: the unary tree, that is, a
-   tree with exactly one subtree. *)
-(*
-let print_unary state label ?region print_sub node =
-  print_tree state label ?region [mk_child print_sub node]
- *)
 
 let print_attribute state (node : Attr.t reg) =
   let key, val_opt = node.value in
@@ -191,12 +99,12 @@ and print_declaration state = function
     print_loc_node    state "ModuleDecl" region;
     print_module_decl state value
 | ModuleAlias {value; region} ->
-    print_loc_node    state "ModuleDecl" region;
+    print_loc_node     state "ModuleDecl" region;
     print_module_alias state value
 | Directive dir ->
     let region, string = Directive.project dir in
     print_loc_node state "Directive" region;
-    print_node state string
+    print_node     (state#pad 1 0) string
 
 and print_let_binding state node attr =
   let {binders; type_params; rhs_type; let_rhs; _} = node in
@@ -224,7 +132,7 @@ and print_let_binding state node attr =
       None -> rank
     | Some (_, type_expr) ->
         let state = state#pad arity rank in
-        print_node state "<lhs type>";
+        print_node state "<rhs type>";
         print_type_expr (state#pad 1 0) type_expr;
         rank+1 in
   let rank =
@@ -658,15 +566,24 @@ and print_selection state = function
     print_int state c
 
 and print_field_assign state {value; _} =
-  print_node  state  "<field assignment>";
-  print_ident (state#pad 2 0) value.field_name;
-  print_expr  (state#pad 2 1) value.field_expr
+  match value with 
+    Property {field_name; field_expr; _} -> 
+      print_node  state  "<field assignment>";
+      print_ident (state#pad 2 0) field_name;
+      print_expr  (state#pad 2 1) field_expr
+  | Punned_property field_name ->
+    print_node  state  "<punned field assignment>";
+    print_ident (state#pad 2 0) field_name
 
 and print_field_path_assign state {value; _} =
-  let {field_path; field_expr; _} = value in
-  print_node state "<update>";
-  print_path (state#pad 2 0) field_path;
-  print_expr (state#pad 2 1) field_expr
+  match value with 
+    Path_property {field_path; field_expr; _} ->
+      print_node state "<update>";
+      print_path (state#pad 2 0) field_path;
+      print_expr (state#pad 2 1) field_expr
+  | Path_punned_property field_name ->
+    print_node state "<punned update>";
+    print_ident (state#pad 2 0) field_name
 
 and print_constr_expr state {value; _} =
   let constr, expr_opt = value in
@@ -822,8 +739,8 @@ and print_type_expr state = function
     print_record_type state value
 | TApp {value; region} ->
     let name, tuple = value in
-    print_loc_node   state "TApp" region;
-    print_ident      (state#pad 2 0) name;
+    print_loc_node        state "TApp" region;
+    print_ident           (state#pad 2 0) name;
     print_type_constr_arg (state#pad 2 1) tuple
 | TFun {value; region} ->
     print_loc_node state "TFun" region;
@@ -904,14 +821,16 @@ and print_variant state {constr; arg; attributes=attr} =
 
 type ('src, 'dst) printer = Tree.state -> 'src -> 'dst
 
-let print_pattern_to_string state pattern =
-  print_pattern state pattern; Buffer.contents(state#buffer)
 let print_to_buffer state cst = print_cst state cst; state#buffer
 
 let print_to_string state cst =
   Buffer.contents (print_to_buffer state cst)
 
+let print_pattern_to_string state pattern =
+  print_pattern state pattern; Buffer.contents state#buffer
+
 (* Aliases *)
 
 let to_buffer = print_to_buffer
 let to_string = print_to_string
+let pattern_to_string = print_pattern_to_string

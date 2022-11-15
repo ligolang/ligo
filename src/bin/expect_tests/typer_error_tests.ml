@@ -45,7 +45,7 @@ let%expect_test _ =
       3 | const foo : nat = 42 + "bar"
 
     Invalid type(s)
-    Cannot unify bls12_381_g1 with int. |} ] ;
+    Cannot unify int with string. |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_type_record_access.mligo" ] ;
   [%expect {|
@@ -169,7 +169,7 @@ let%expect_test _ =
      46 |   in
 
     Invalid type(s)
-    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#419). |}]
+    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#494). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage

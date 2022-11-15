@@ -101,7 +101,10 @@ docker_extract:
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
-    - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    # previous command, but it seems statically meant something a bit different.
+    # - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    # the string depends on ldd...
+    - if ! ldd ligo; then echo "ldd failed, i.e. expecting that it is statically linked."; else echo "Expected ldd ligo to fail (not a dynamic executable)."; fi
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
     # Generate ligo.deb
@@ -136,14 +139,13 @@ xrefcheck:
   stage: tooling
   only:
     - merge_requests
+  needs:
+    - job: changelog
+      artifacts: true
   script:
-    # Should be replaced with
-    # nix run github:serokell/xrefcheck
-    # Once flakes roll out to stable
-    # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
-    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
-    - xrefcheck/bin/xrefcheck
-  allow_failure: true #TODO could be better if we do not allow failure for realeases
+    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
+    - chmod 777 ./xrefcheck-x86_64-linux
+    - ./xrefcheck-x86_64-linux
 
 .docker-image:
   stage: push
@@ -237,6 +239,10 @@ pages:
 
 pages-attempt:
   extends: .website
+  needs:
+    - job: xrefcheck
+    - job: changelog
+      artifacts: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
@@ -319,7 +325,7 @@ build-preview-ligo-webide-front-end:
     - yarn install
     - CI= yarn workspaces run build
     - cd ./packages/client
-    - npm install netlify-cli
+    - npm install netlify-cli@11.1.0-rc.2
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json
     - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
@@ -346,7 +352,8 @@ build-ligo-webide-front-end:
     - yarn install
     - CI= yarn workspaces run build
     - cd ./packages/client
-    - npm install netlify-cli
+    # new version of CLI is incompatible with node:12:20. 
+    - npm install netlify-cli@11.1.0-rc.2
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --prod > netlify.json
   rules:
     - if: '$CI_COMMIT_BRANCH == "dev"'

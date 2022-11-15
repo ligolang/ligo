@@ -745,14 +745,14 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       in
       aux hd @@ tl
   )
-  | EAssign (EVar {value=_; region=_} as e1, op, (EAssign     (EVar _ as ev, _, _) as e2)) ->
+  | EAssign (e1, op, (EAssign     (EVar _ as ev, _, _) as e2)) ->
     let e2 = self e2 in
     let e1 = self (EAssign (e1, op, ev)) in
     e_sequence e2 e1
   | EAssign (EVar {value; region} as e1, op, e2) ->
     let loc = Location.lift region in
     let outer_loc = Location.lift op.region in
-    let e2 = (match op.value with
+    let e2x = (match op.value with
       Eq ->
         self e2
     | Assignment_operator ao ->
@@ -781,7 +781,26 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         region = op.region
       })
     in
-    e_assign ~loc:outer_loc (Binder.make (Value_var.of_input_var ~loc value) None) e2
+    (match e2 with 
+    | EAssign (EProj {value = {expr; selection}; region=_}, {value = Eq; _}, _) -> 
+      let (sels , _) = compile_selection ~raise selection in
+      let expr = self expr in
+      e_sequence 
+        e2x 
+        (e_assign ~loc:outer_loc (Binder.make (Value_var.of_input_var ~loc value) None) (e_accessor ~loc expr [sels]))
+
+    | _ -> 
+      e_assign ~loc:outer_loc (Binder.make (Value_var.of_input_var ~loc value) None) e2x  
+    )
+  | EAssign (
+      e1, 
+      ({value = Eq; _} as op), 
+      (EAssign ((EProj _ as eproj), _, _) as e2)
+    ) -> 
+    let e2 = self e2 in
+    let e1 = CST.EAssign (e1, op, eproj) in
+    let e1 = self e1 in
+    e_sequence e2 e1
 
   | EAssign (EProj {value = {expr = EVar {value = evar_value; _}; selection = Component {value = {inside = EArith (Int _); _}; _} as selection}; region=_}, ({value = Eq; _} as op), e2) ->
     let e2 = self e2 in
@@ -812,12 +831,12 @@ and conv ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
     Location.wrap ~loc (Pattern.P_tuple nested)
   | PObject record ->
     let (record, loc) = r_split record in
-    let ps = List.map ~f:(conv ~raise) @@ Utils.nsepseq_to_list record.inside in
-    let labels = List.map
-        (Utils.nsepseq_to_list record.inside)
-        ~f:(function PVar var -> Label.of_string var.value.variable.value | _ -> raise.error @@ unsupported_pattern_type p)
-    in
-    Location.wrap ~loc (Pattern.P_record (labels,ps))
+    let lps = List.map ~f:(fun p ->  
+      let l = match p with
+        CST.PVar var -> Label.of_string var.value.variable.value 
+      | _ -> raise.error @@ unsupported_pattern_type p in
+      l, conv ~raise p) @@ Utils.nsepseq_to_list record.inside in
+    Location.wrap ~loc (Pattern.P_record lps)
   | (PRest _|PAssign _|PConstr _|PDestruct _) ->
     raise.error @@ unsupported_pattern_type p
 
@@ -1036,7 +1055,7 @@ and filter_private (attributes: CST.attributes) =
   List.filter ~f:(fun v -> not @@ String.equal v.value "private") attributes
 
 and compile_let_binding ~raise : CST.attributes -> CST.expr -> (CST.colon * CST.type_expr) option -> CST.type_generics option -> CST.pattern -> Region.t -> (type_expression option Binder.t * Ast_imperative__.Types.attributes * _ * expression) list =
-  fun attributes let_rhs type_expr type_params binders _region ->
+  fun attributes let_rhs type_expr type_params binders region ->
   let attributes = compile_attributes attributes in
   let expr = compile_expression ~raise let_rhs in
   let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) type_expr in
@@ -1057,6 +1076,12 @@ and compile_let_binding ~raise : CST.attributes -> CST.expr -> (CST.colon * CST.
             let lambda = Lambda.{binder=Param.map (Fn.const type1) binder;result;output_type = type2} in
             e_recursive ~loc:(Location.lift name.region) fun_binder fun_type lambda
           else make_e ~loc:(Location.lift name.region) @@ E_lambda lambda
+        | EAssign (EVar _ as v, _, _) -> 
+          e_sequence expr (compile_expression ~raise v)
+        | EAssign (EProj {value = {expr = proj_expr; selection}; _}, _, _) -> 
+          let var = compile_expression ~raise proj_expr in
+          let (sels , _) = compile_selection ~raise selection in
+          e_sequence expr (e_accessor ~loc:(Location.lift region) var [sels])
         | _ -> expr
         )
       in
@@ -1140,10 +1165,10 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
             List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:rhs type_vars
           ) type_params in
           if const then
-          e_let_in ~loc: (Location.lift region) binder attr rhs expr
+            e_let_in ~loc: (Location.lift region) binder attr rhs expr
           else
-          e_let_mut_in ~loc:(Location.lift region) binder attr rhs expr
-        in
+            e_let_mut_in ~loc:(Location.lift region) binder attr rhs expr
+      in
       fun init -> List.fold_right ~f:aux ~init lst
   in
   let rec initializers ~const (result: expression -> expression) (rem: (CST.comma * CST.val_binding Region.reg) list) : expression -> expression =

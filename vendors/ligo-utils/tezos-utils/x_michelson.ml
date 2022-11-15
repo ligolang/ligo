@@ -30,6 +30,20 @@ let string s : unit michelson = String ((), s)
 let lstring l s : _ michelson = String (l, s)
 let bytes s : unit michelson = Bytes ((), s)
 
+let rec has_prim : string -> 'l michelson -> bool = fun s m ->
+  match m with
+  | Prim (_, p, _, _) when String.equal p s -> true
+  | Prim (_, _, r, _) -> List.exists r ~f:(has_prim s)
+  | Seq (_, r) -> List.exists r ~f:(has_prim s)
+  | _ -> false
+
+let rec map : ('l michelson -> 'l michelson) -> 'l michelson -> 'l michelson = fun f m ->
+  let m = f m in
+  match m with
+  | Prim (a, b, c, d) -> Prim (a, b, List.map ~f:(map f) c, d)
+  | Seq (a, b) -> Seq (a, List.map ~f:(map f) b)
+  | m -> m
+
 let contract parameter storage code views =
   let views = List.map
     ~f:(fun (name, t_arg, t_ret, code) -> 
@@ -159,3 +173,10 @@ let get_json ?(comment : 'meta Data_encoding.t option) (michelson : ('meta, stri
 let pp_json ?comment ppf michelson =
   let json = get_json ?comment michelson in
   Format.fprintf ppf "%a" Data_encoding.Json.pp json
+
+let michelson_to_yojson _a_to_yojson m =
+  let pp_json = pp_json ?comment:None in
+  let s = Format.asprintf "%a" pp_json m in
+  Yojson.Safe.from_string s
+
+let michelson_of_yojson _ = failwith "michelson_of_yojson: not implemented"

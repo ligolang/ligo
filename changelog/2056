@@ -1,0 +1,5 @@
+author: melwyn95
+description: Fix the check to detect duplicate bindinds in a pattern
+merge_request: '2056'
+title: Fix linearity check for patterns
+type: fixed

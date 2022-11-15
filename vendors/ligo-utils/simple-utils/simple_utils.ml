@@ -10,6 +10,7 @@ module Triple = X_triple
 module Option = X_option
 module Map = X_map
 module Ligo_string = X_string
+module Z = X_z
 
 module Tuple = Tuple
 module Tree = Tree
@@ -25,3 +26,5 @@ module Region = Region
 module Utils  = Utils
 module FQueue = FQueue
 module Argv   = Argv
+module Std    = Std
+module Lexbuf = Lexbuf

@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '2041'
+title: 'Refactor: record patterns now hold labels & patterns in a map'
+type: internal

@@ -1,8 +1,8 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
-let pwd = Sys.getcwd ()
-let () = Sys.chdir "../../test/contracts/interpreter_tests/"
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 (* events payload being records and not decompiled to pairs in the interpreter *)
 let%expect_test _ =
@@ -286,6 +286,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_mutate_from_file.mligo" ] ;
   [%expect{|
+    File "./test_mutate_from_file.mligo", line 7, character 2 to line 8, character 4:
+      6 |   let _ = Test.transfer_exn a (Test.eval 1) 0tez in
+      7 |   let () = assert (Test.get_storage_of_address a = (Test.eval 1)) in
+      8 |   ()
+      9 |
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
     Everything at the top-level was executed.
     - tester exited with value <fun>.
     - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 59-64:
@@ -685,7 +694,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "get_contract.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -699,7 +708,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_tickets_and_bigmaps.mligo" ] ;
   [%expect {|
-    Success (3498n)
+    Success (3497n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
@@ -709,10 +718,21 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value 0x050a0000000400000000. |}]
 
-(* do not remove that :) *)
-let () = Sys.chdir pwd
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_print_values.mligo" ] ;
+  [%expect {| aloh |}]
 
-let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_to_json.mligo" ] ;
+  [%expect {|
+    ["typed_address","KT1Eip4VjDintiWphUf9fAM7cCikw3NajBAG"]
+    ["record",{"foo":["constant",["int","42"]],"bar":["list",[["constant",["string","hello"]],["constant",["string","world"]]]]}] |}]
+
+(* do not remove that :) *)
+let () = Sys_unix.chdir pwd
+
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test.mligo" ] ;
   [%expect {|
@@ -724,9 +744,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
-let () = Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
-let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test/a/b/test.mligo" ] ;
   [%expect{|
@@ -738,7 +758,7 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
-let () = Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 
 let bad_test n = bad_test ("/interpreter_tests/"^n)
@@ -773,6 +793,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
+      1 | let test =
+      2 |     assert false
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
       2 |     assert false
@@ -950,21 +977,26 @@ let%expect_test _ =
 
     Not supported (yet) when the provided account has been fetched from Test.get_last_originations |}]
 
-let pwd = Sys.getcwd ()
-let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
 run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+  File "typed_addr_in_bytes_pack.mligo", line 14, character 17 to line 18, character 5:
+   13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
    15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
    16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
+   17 |         | None ->  ([] : operation list)
+   18 |     ) in
+   19 |     let () = Test.log(packed) in
 
-  Invalid usage of a Test primitive or type in object ligo. |}]
+  Cannot decompile typed_address (unit ,
+  unit) |}]
 
-let () = Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
@@ -988,6 +1020,15 @@ let%expect_test _ =
      15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
      16 |   ()
 
-    Test failed with "foo"
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
+     14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
+     15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
+     16 |   ()
+
+    An uncaught error occured:
+    Failwith: "foo"
     Trace:
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]

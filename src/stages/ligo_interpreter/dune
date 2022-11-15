@@ -9,4 +9,6 @@
   tezos-utils
   ast_aggregated
   ligo_prim
-  qcheck))
+  qcheck)
+ (preprocess
+  (pps ppx_deriving_yojson)))

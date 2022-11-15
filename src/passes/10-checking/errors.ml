@@ -130,13 +130,12 @@ type typer_error =
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of
-    Ast_core.type_expression option Pattern.t * Ast_typed.type_expression
+    Ast_core.type_expression option Ast_core.Pattern.t * Ast_typed.type_expression
   | `Typer_pattern_missing_cases of
     Location.t
     * Syntax_types.t option
-    * Ast_core.type_expression option Pattern.t list
+    * Ast_core.type_expression option Ast_typed.Pattern.t list
   | `Typer_pattern_redundant_case of Location.t
-  | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
   | `Typer_constant_since_protocol of
     Location.t * string * Environment.Protocols.t
@@ -607,7 +606,7 @@ let rec error_ppformat
            Format.fprintf
              ppf
              "%a "
-             (Pattern.pp Ast_core.PP.type_expression_option)
+             (Ast_core.Pattern.pp Ast_core.PP.type_expression_option)
              value
          | File _ -> ()
        in
@@ -620,12 +619,11 @@ let rec error_ppformat
          p
          Ast_typed.PP.type_expression
          (type_improve t)
-     | `Typer_redundant_pattern loc ->
-       Format.fprintf f "@[<hv>%a@.Redundant pattern matching@]" Snippet.pp loc
      | `Typer_pattern_missing_cases (loc, syntax, ps) ->
        let ps =
          List.fold ps ~init:"" ~f:(fun s p ->
            let s' =
+             let p = Untyper.untype_pattern p in
              Desugaring.Decompiler.decompile_pattern_to_string ~syntax p
            in
            s ^ "- " ^ s' ^ "\n")
@@ -767,12 +765,6 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
         ; "expected", Ast_typed.type_expression_to_yojson t
         ; "location", Location.to_yojson l
         ]
-    in
-    json_error ~stage ~content
-  | `Typer_redundant_pattern loc ->
-    let message = "Redundant pattern matching" in
-    let content =
-      `Assoc [ "message", `String message; "location", Location.to_yojson loc ]
     in
     json_error ~stage ~content
   | `Typer_pattern_do_not_match loc ->
@@ -1187,7 +1179,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
   | `Typer_pattern_do_not_conform_type (p, t) ->
     let message = `String "pattern not of the expected type" in
     let pattern =
-      (Pattern.to_yojson Ast_core.type_expression_option_to_yojson) p
+      (Ast_core.Pattern.to_yojson Ast_core.type_expression_option_to_yojson) p
     in
     let t = Ast_typed.type_expression_to_yojson t in
     let content =
@@ -1203,6 +1195,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t =
     let message = `String "pattern-matching is not exhaustive." in
     let patterns =
       List.map ps ~f:(fun p ->
+        let p = Untyper.untype_pattern p in
         `String (Desugaring.Decompiler.decompile_pattern_to_string ~syntax p))
     in
     let content =

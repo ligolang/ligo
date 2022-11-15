@@ -32,6 +32,8 @@
 
 (* The functorised interface *)
 
-module type S = LexerLib.API.LEXER
+module Options = LexerLib.Options
+module Client  = LexerLib.Client
 
-module Make (Token : Token.S) : S with type token = Token.t
+module Make (Options : Options.S) (Token : Token.S)
+       : Client.S with type token = Token.t

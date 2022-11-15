@@ -2,10 +2,8 @@
 
 (* LIGO dependencies *)
 
-module Comments = Preprocessing_pascaligo.Comments
+module Config = Preprocessing_pascaligo.Config
 
 (* Internal dependencies *)
 
-module Token = Lexing_pascaligo.Token
-
-include Lexing_shared.Common.Make (Comments) (Token)
+include Lexing_shared.Common.Make (Config) (Lexing_pascaligo.Token)

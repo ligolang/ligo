@@ -151,7 +151,7 @@ let originated_account
   | Originated x -> x
 
 
-let contract_of_hash ~raise : Tezos_raw_protocol.Contract_hash.t -> mcontract =
+let contract_of_hash ~raise : Tezos_raw_protocol.Contract_hash.t -> Contract.t =
  fun x ->
   Trace.trace_alpha_tzresult ~raise (fun _ -> corner_case ())
   @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check
@@ -257,7 +257,7 @@ let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
   { ctxt with transduced }
 
 
-let get_storage ~raise ~loc ~calltrace ctxt (m : mcontract) =
+let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
   let addr =
     originated_account ~raise ~loc ~calltrace "Trying to get a contract" m
   in
@@ -928,7 +928,7 @@ let originate_contract
   let contract =
     trace_option ~raise (corner_case ()) @@ get_michelson_contract contract
   in
-  let { code = storage; ast_ty = ligo_ty; _ } =
+  let { micheline_repr = { code = storage; _ }; ast_ty = ligo_ty } =
     trace_option ~raise (corner_case ()) @@ get_michelson_expr storage
   in
   let open Tezos_alpha_test_helpers in

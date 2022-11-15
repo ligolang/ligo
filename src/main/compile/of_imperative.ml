@@ -1,10 +1,10 @@
 open Main_errors
 open Simple_utils.Trace
 open Ast_imperative
-open Purification
+open Desugaring
 
-let compile ~raise (p : program) : Ast_sugar.program =
-  trace ~raise purification_tracer @@ compile_program p
+let compile ~raise (p : program) : Ast_core.program =
+  trace ~raise desugaring_tracer @@ compile_program p
 
-let compile_expression ~raise (e : expression) : Ast_sugar.expression =
-  trace ~raise (Fn.compose purification_tracer List.return) @@ compile_expression ~last:true e
+let compile_expression ~(raise : (Main_errors.all, Main_warnings.all) raise) (e : expression) : Ast_core.expression =
+  trace ~raise desugaring_tracer @@ compile_expression e

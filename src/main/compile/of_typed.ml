@@ -10,7 +10,7 @@ module SMap = Map.Make(String)
 
 let compile_expression_in_context ~raise ~options ?(self_pass = true) : Ast_typed.program -> Ast_typed.expression -> Ast_aggregated.expression =
   fun ctxt exp ->
-    let ctxt, exp = Aggregation.compile_program exp ctxt  in
+    let ctxt, exp = trace ~raise aggregation_tracer @@ Aggregation.compile_program exp ctxt  in
     let ctxt, exp =
       if self_pass then
         trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_program ~options (ctxt, exp)
@@ -73,7 +73,8 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
       Label.of_int i, Ast_typed.(e_a_variable (Binder.get_var view_binder) ty)
     in
     let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views_info) in
-    compile_expression_in_context ~raise ~options prg tuple_view
+    let e = compile_expression_in_context ~raise ~options prg tuple_view in
+    Self_ast_aggregated.remove_check_self e
 
 (* if only_ep, we only list the declarations with types fiting an entrypoint *)
 let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list =
@@ -81,7 +82,7 @@ let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | D_value {binder;attr;expr} when attr.public ->
+      | D_value {binder;attr;expr} when attr.public && not attr.hidden ->
         if only_ep then (
           if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content) then
             (Binder.get_var binder)::prev else prev

@@ -24,8 +24,10 @@ for VERSION in "${VERSIONS[@]}"; do
     export name
     if [[ "$PREV_VERSION" == "HEAD" ]]; then
         name="next"
+        is_next=true
     else
         name="$PREV_VERSION"
+        is_next=false
     fi
     # A Version is composed by list of change and indicator which determine in kind exist or not.  (Necessary for mustache processing)
     # Null_ind can exist in case of corrupted file without type. We want to know if it's occur.
@@ -39,6 +41,7 @@ for VERSION in "${VERSIONS[@]}"; do
         performance_ind: false,
         internal_ind: false,
         other_ind: false,
+        is_next: ${is_next},
         null_ind: false}" <<< "$TEMP_VERSION")"""
     TEMP_CATEGORIES="{}"
     for CHANGE in $CHANGES; do
@@ -57,4 +60,4 @@ for VERSION in "${VERSIONS[@]}"; do
 done
 
 set -e
-sed -E -e 's/\\\\n/\\n/g' -e 's/\\\\//g' <<< $(jq "to_entries | .[] | { version: .key, changes: .value }" <<< "$TEMP_VERSION" | jq -s | jq "{ changelog: . }")
+sed -E -e 's/\\\\n/\\n/g' -e 's/\\\\//g' <<< $(jq "to_entries | .[] | { version: .key, is_next: .value.is_next ,changes: .value }" <<< "$TEMP_VERSION" | jq -s | jq "{ changelog: . }")
