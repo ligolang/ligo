@@ -99,6 +99,14 @@ export default function Home() {
                 </li>
                 <li className="primary">
                   <a
+                    href="https://ide-v2-beta.ligolang.org/"
+                    target="_blank"
+                  >
+                    WebIde V2 beta
+                  </a>
+                </li>
+                <li className="primary">
+                  <a
                     href="https://gitpod.io/#https://gitlab.com/ligolang/template-ligo"
                     target="_blank"
                   >

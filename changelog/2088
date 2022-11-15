@@ -1,0 +1,5 @@
+author: melwyn95
+description: Fixes bug in resolution of external packages
+merge_request: '2088'
+title: '[Package Management]: Fix bug in dependency resolution in ModRes'
+type: fixed

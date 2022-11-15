@@ -1,0 +1,9 @@
+{
+  "name": "import-a",
+  "version": "1.0.1",
+  "author": "foo",
+  "repository": "gist:1234",
+  "license": "MIT",
+  "main":"index.mligo",
+  "dependencies": { "pkg-a": "^1.0.0" }
+}

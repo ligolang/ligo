@@ -37,11 +37,18 @@ module Tezos = struct
   let get_contract_with_error (type a) (a : address) (s : string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
+#if KATHMANDU
   let create_ticket (type a) (v : a) (n : nat) : a ticket = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> a ticket)] (v, n)
+#endif
+#if LIMA
+  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
+#endif
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
     [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+#if KATHMANDU
   let open_chest (ck : chest_key) (c : chest) (n : nat) : chest_opening_result =
     [%Michelson ({| { UNPAIR ; UNPAIR ; OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} : chest_key * chest * nat -> chest_opening_result)] (ck, c, n)
+#endif
   [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
     [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (s : string), (() : b))] (x, a)
   let split_ticket (type a) (t : a ticket) (p : nat * nat) : (a ticket * a ticket) option =
@@ -64,22 +71,29 @@ module Tezos = struct
   let get_contract_with_error (type a) ((a, s) : address * string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
+#if KATHMANDU
   let create_ticket (type a) ((v, n) : a * nat) : a ticket = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> a ticket)] (v, n)
+#endif
+#if LIMA
+  let create_ticket (type a) ((v, n) : a * nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
+#endif
   let transaction (type a) ((a, mu, c) : a * tez * a contract) : operation =
     [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+#if KATHMANDU
   let open_chest ((ck, c, n) : chest_key * chest * nat) : chest_opening_result =
     [%Michelson ({| { UNPAIR ; UNPAIR ; OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} : chest_key * chest * nat -> chest_opening_result)] (ck, c, n)
-  [@inline] [@thunk] let call_view (type a b) ((s, x, a) : string * a * address)  : b option =
-    [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (s : string), (() : b))] (x, a)
+#endif
+  [@inline] [@thunk] let call_view (type a b) (p : string * a * address)  : b option =
+    [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (p.0 : string), (() : b))] (p.1, p.2)
   let split_ticket (type a) ((t, p) : (a ticket) * (nat * nat)) : (a ticket * a ticket) option =
     [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
   [@inline] [@thunk] let create_contract (type p s) ((f, kh, t, s) : (p * s -> operation list * s) * key_hash option * tez * s) : (operation * address) =
       [%external ("CREATE_CONTRACT", f, kh, t, s)]
-  [@inline] [@thunk] let get_entrypoint_opt (type p) ((e, a) : string * address) : p contract option =
-    let _ : unit = [%external ("CHECK_ENTRYPOINT", e)] in
-    [%Michelson (({| { CONTRACT (annot $0) (type $1) } |} : address -> (p contract) option), (e : string), (() : p))] a
-  [@inline] [@thunk] let get_entrypoint (type p) ((e, a) : string * address) : p contract =
-    let v = get_entrypoint_opt (e, a) in
+  [@inline] [@thunk] let get_entrypoint_opt (type p) (p : string * address) : p contract option =
+    let _ : unit = [%external ("CHECK_ENTRYPOINT", p.0)] in
+    [%Michelson (({| { CONTRACT (annot $0) (type $1) } |} : address -> (p contract) option), (p.0 : string), (() : p))] p.1
+  [@inline] [@thunk] let get_entrypoint (type p) (p : string * address) : p contract =
+    let v = get_entrypoint_opt (p.0, p.1) in
     match v with | None -> failwith "bad address for get_entrypoint" | Some c -> c
   [@inline] [@thunk] let emit (type a) (p : string * a) : operation =
     let _ : unit = [%external ("CHECK_EMIT_EVENT", p.0, p.1)] in

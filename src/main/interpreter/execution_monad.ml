@@ -7,9 +7,9 @@ open Simple_utils.Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_014_PtKathma
-module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
-module Tezos_client = Tezos_client_014_PtKathma
+module Tezos_protocol = Memory_proto_alpha
+module Tezos_protocol_env = Memory_proto_alpha.Alpha_environment
+module Tezos_client = Memory_proto_alpha.Client
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
 open Ligo_prim
@@ -186,7 +186,6 @@ module Command = struct
     | Add_cast :
         Location.t * LT.Contract.t * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Michelson_equal : Location.t * LT.value * LT.value -> bool tezos_command
     | Implicit_account :
         Tezos_protocol.Protocol.Alpha_context.public_key_hash
         -> LT.value tezos_command
@@ -805,18 +804,6 @@ module Command = struct
       in
       let internals = { ctxt.internals with storage_tys } in
       (), { ctxt with internals }
-    | Michelson_equal (loc, a, b) ->
-      let ({ micheline_repr = { code; _ }; _ } : LT.typed_michelson_code) =
-        trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-        @@ LC.get_michelson_expr a
-      in
-      let ({ micheline_repr = { code = code'; _ }; _ }
-            : LT.typed_michelson_code)
-        =
-        trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-        @@ LC.get_michelson_expr b
-      in
-      Caml.( = ) code code', ctxt
     | Get_last_originations () ->
       let aux (src, lst) =
         let src = LC.v_address src in

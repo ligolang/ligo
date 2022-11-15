@@ -9,6 +9,8 @@ module Test.Common.Capabilities.Hover
   , unit_hover_arrow_type
   , unit_hover_arrow_type_mligo
   , unit_hover_arrow_type_jsligo
+  , unit_hover_sum_type_jsligo
+  , unit_hover_sum_type_mligo
   ) where
 
 import Prelude hiding (lines)
@@ -95,3 +97,15 @@ unit_hover_inferred_recursion = do
   fp <- makeAbsolute $ contractsDir </> "recursion.mligo"
   let type' = AliasType "int"
   checkHover @parser fp (point 2 21){_rFile = fp} (hover' (interval 1 18 21){_rFile = fp} "acc" type' Caml)
+
+unit_hover_sum_type_jsligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_sum_type_jsligo = do
+  fp <- makeAbsolute $ contractsDir </> "sum.jsligo"
+  let type' = AliasType "parameter"
+  checkHover @parser fp (point 13 12){_rFile = fp} (hover' (interval 10 16 22){_rFile = fp} "action" type' Js)
+
+unit_hover_sum_type_mligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_sum_type_mligo = do
+  fp <- makeAbsolute $ contractsDir </> "sum.mligo"
+  let type' = AliasType "parameter"
+  checkHover @parser fp (point 13 12){_rFile = fp} (hover' (interval 10 11 17){_rFile = fp} "action" type' Caml)

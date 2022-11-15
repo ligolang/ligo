@@ -1,0 +1,5 @@
+author: rinderkn
+description: ''
+merge_request: '2102'
+title: '[JsLIGO] Attributes can now occur before keyword \"export\".'
+type: fixed

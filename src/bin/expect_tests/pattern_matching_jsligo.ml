@@ -42,7 +42,7 @@ let%expect_test _ =
       4 |     Failure: (_ : test_exec_error) => ""
       5 |   });
 
-    Pattern not of the expected type Uncurry_lib#3.test_exec_result |}]
+    Pattern not of the expected type sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;

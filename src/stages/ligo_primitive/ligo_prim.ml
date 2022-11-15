@@ -5,6 +5,7 @@ module Param = Param
 module Pattern = Pattern
 module Access_path = Access_path
 module Layout = Layout
+module Layout_var = Var.Layout_var
 
 (* Type level constructs *)
 module Type_var = Var.Type_var
@@ -59,3 +60,6 @@ module Mod_in        = Mod_in
 module Value_decl (Attr:Declaration.Attr) = Declaration.Value_decl(Attr)
 module Type_decl  (Attr:Declaration.Attr) = Declaration.Type_decl(Attr)
 module Module_decl(Attr:Declaration.Attr) = Declaration.Module_decl(Attr)
+
+(* Misc *)
+module Error = Error

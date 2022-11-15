@@ -9,9 +9,9 @@ module Name = struct
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
   let comma                     = "comma"
-  let identifier                = "identifier"
-  let identifier_constructor    = "identifierconstructor"
-  let module_                   = "module"
+  let lowercase_identifier      = "lowercaseidentifier"
+  let uppercase_identifier      = "uppercaseidentifier"
+  let module_declaration        = "moduledeclaration"
   let record_or_block           = "recordorblock"
   let record_field              = "recordfield"
   let attribute                 = "attribute"
@@ -31,9 +31,7 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
-    Name.type_module;
-    (* Sum type *)
-    Name.identifier_constructor;
+    Name.uppercase_identifier;
 
     Name.type_operator;
     Name.type_name;
@@ -131,6 +129,8 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
+      (* TODO: Name.lowercase_identifier; *)
+      Name.uppercase_identifier;
       Name.attribute;
       Name.macro;
       Name.let_binding;
@@ -138,10 +138,9 @@ let syntax_highlighting =
       Name.type_definition;
       Name.type_annotation;
       Name.control_keywords;
+      Name.module_declaration;
       Name.numeric_literals;
       Name.operators;
-      Name.identifier_constructor;
-      Name.module_;
       Name.record_or_block;
     ];
     repository = [
@@ -152,6 +151,13 @@ let syntax_highlighting =
         kind = Match {
           match_name = Some Conditional;
           match_ = [(Regexp.control_keywords_match_reasonligo, None)]
+        }
+      };
+      {
+        name = Name.module_declaration;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.module_keyword_match, Some Keyword)];
         }
       };
       (* FIXME: breaks on patterns *)
@@ -191,27 +197,17 @@ let syntax_highlighting =
         }
       }; *)
       {
-        name = Name.module_;
+        name = Name.uppercase_identifier;
         kind = Match {
-          match_     = [
-            (Regexp.module_match1, Some Structure);
-            (Regexp.module_match2, Some Identifier)
-          ];
-          match_name = None
+          match_name = None;
+          match_     = [(Regexp.identifier_constructor_match, Some Structure)];
         }
       };
       {
-        name = Name.identifier;
+        name = Name.lowercase_identifier;
         kind = Match {
           match_name = None;
-          match_ = [(Regexp.let_binding_match3, None)];
-        }
-      };
-      {
-        name = Name.identifier_constructor;
-        kind = Match {
-          match_name = None;
-          match_     = [(Regexp.identifier_constructor_match, Some Label)]
+          match_     = [(Regexp.identifier_match, Some Identifier)];
         }
       };
       {
@@ -285,13 +281,6 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.type_module;
-        kind = Match {
-          match_name = Some Identifier;
-          match_ = [(Regexp.module_match1, None)];
-        }
-      };
-      {
         name = Name.type_int;
         kind = Match {
           match_name = Some Number;
@@ -304,7 +293,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.braces_begin, None)];
           end_ = [(Regexp.braces_end, None)];
-          patterns = [Name.identifier; Name.type_annotation; Name.comma];
+          patterns = [Name.uppercase_identifier; Name.type_annotation; Name.comma];
         }
       };
     ]

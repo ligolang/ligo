@@ -12,6 +12,10 @@ export default class ProjectList extends PureComponent {
     await actions.removeProject(project);
   };
 
+  renameProject = async (project) => {
+    await actions.renameProjects(project);
+  };
+
   renderProjectRow = (project, index) => {
     return <tr key={`project-row-${index}`}>{this.renderProjectListItem(project)}</tr>;
   };
@@ -47,10 +51,19 @@ export default class ProjectList extends PureComponent {
   renderRightButton = (project) => {
     if (!project.remote) {
       return (
-        <DeleteButton
-          textConfirm="Click again to remove"
-          onConfirm={() => this.removeProject(project)}
-        />
+        <div>
+          <DeleteButton
+            textConfirm="Click again to remove"
+            onConfirm={() => this.removeProject(project)}
+          />
+          <IconButton
+            color="transparent"
+            id={`confirm-delete-${project.id}`}
+            className="text-muted"
+            icon="fas fa-edit"
+            onClick={() => this.renameProject(project)}
+          />
+        </div>
       );
     }
 

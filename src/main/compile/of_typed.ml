@@ -8,7 +8,7 @@ module Var = Simple_utils.Var
 
 module SMap = Map.Make(String)
 
-let compile_expression_in_context ~raise ~options ?(self_pass = true) : Ast_typed.program -> Ast_typed.expression -> Ast_aggregated.expression =
+let compile_expression_in_context ~raise ~options ?(self_pass = true) ?(contract_pass = false) : Ast_typed.program -> Ast_typed.expression -> Ast_aggregated.expression =
   fun ctxt exp ->
     let ctxt, exp = trace ~raise aggregation_tracer @@ Aggregation.compile_program exp ctxt  in
     let ctxt, exp =
@@ -17,23 +17,35 @@ let compile_expression_in_context ~raise ~options ?(self_pass = true) : Ast_type
       else
         ctxt, exp in
     let exp = Ast_aggregated.context_apply ctxt exp in
-    if self_pass then
+    let exp = if self_pass then
       trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_aggregated_expression exp
     else
-      exp
+      exp in
+    let exp =
+      if contract_pass then
+        let (parameter_ty, storage_ty) =
+          trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract")) (
+            let open Simple_utils.Option in
+            let open Ast_aggregated in
+            let* { type1 = input_ty ; _ }= Ast_aggregated.get_t_arrow exp.type_expression in
+            Ast_aggregated.get_t_pair input_ty ) in
+        trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty exp
+      else
+        exp in
+    if self_pass then Self_ast_aggregated.remove_check_self exp else exp
 
 let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.expression = fun e ->
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
 
-let apply_to_entrypoint_contract ~raise ~options : Ast_typed.program -> Value_var.t -> Ast_aggregated.expression =
+let apply_to_entrypoint_contract ~raise ~options ?(contract_pass = false) : Ast_typed.program -> Value_var.t -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
   let ty = t_arrow (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
   let var_ep = Ast_typed.(e_a_variable entrypoint ty) in
-  compile_expression_in_context ~raise ~options prg var_ep
+  compile_expression_in_context ~raise ~options ~contract_pass prg var_ep
 
 let apply_to_entrypoint ~raise ~options : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->

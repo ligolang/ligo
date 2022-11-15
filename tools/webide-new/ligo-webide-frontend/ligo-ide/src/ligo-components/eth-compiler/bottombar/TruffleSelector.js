@@ -1,16 +1,16 @@
 import React from "react";
 
 import { DockerImageSelector } from "~/base-components/docker";
-import { BaseProjectManager } from "~/base-components/workspace";
+import { ProjectManager } from "~/base-components/workspace";
 import compilerManager from "../compilerManager";
 
 export default function () {
   const [framework, setFramework] = React.useState("");
   const [selected, onSelected] = React.useState("");
 
-  React.useEffect(BaseProjectManager.effect("settings:framework", setFramework), []);
+  React.useEffect(ProjectManager.effect("settings:framework", setFramework), []);
   React.useEffect(
-    BaseProjectManager.effect(`settings:compilers.${process.env.COMPILER_VERSION_KEY}`, onSelected),
+    ProjectManager.effect(`settings:compilers.${process.env.COMPILER_VERSION_KEY}`, onSelected),
     []
   );
 
@@ -30,7 +30,7 @@ export default function () {
       downloadingTitle={`Downloading ${process.env.COMPILER_NAME}`}
       selected={selected}
       onSelected={(v) =>
-        BaseProjectManager.instance.projectSettings?.set(
+        ProjectManager.instance.projectSettings?.set(
           `compilers.${process.env.COMPILER_VERSION_KEY}`,
           v
         )

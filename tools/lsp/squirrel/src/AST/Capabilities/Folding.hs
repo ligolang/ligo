@@ -24,7 +24,7 @@ foldingAST = execWriter . visit' handlers
       [ Visit @Binding \(getRange -> r) -> \case
           BFunction {} -> tell [r]
           BTypeDecl {} -> tell [r]
-          -- TODO: include blocks?
+          BModuleDecl {} -> tell [r]
           _ -> pure ()
       , Visit @Expr \(getRange -> r) -> \case
           If {} -> tell [r]

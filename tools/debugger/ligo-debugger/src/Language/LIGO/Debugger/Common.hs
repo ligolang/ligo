@@ -6,6 +6,9 @@ module Language.LIGO.Debugger.Common
   , spineAtPoint
   , getStatementLocs
   , isLigoStdLib
+  , errorValueType
+  , createErrorValue
+  , replacementErrorValueToException
   ) where
 
 import Unsafe qualified
@@ -23,6 +26,11 @@ import Text.Interpolation.Nyan
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Debugger.Core.Snapshots (SourceType (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Parser (utypeQ)
+import Morley.Michelson.Text (MText)
+import Morley.Michelson.Typed (EpAddress (..), Value, Value' (..))
+import Morley.Michelson.Untyped qualified as U
+import Morley.Tezos.Address (Address, mformatAddress, ta)
 
 import Language.LIGO.Debugger.CLI.Types
 
@@ -115,3 +123,26 @@ getStatementLocs locs parsedContracts =
 isLigoStdLib :: FilePath -> Bool
 isLigoStdLib path =
   path == ""
+
+errorValueType :: U.Ty
+errorValueType = [utypeQ|pair address string|]
+
+createErrorValue :: MText -> U.Value
+createErrorValue errMsg =
+  U.ValuePair (U.ValueString addrText) (U.ValueString errMsg)
+  where
+    addrText = mformatAddress errorAddress
+
+errorAddress :: Address
+errorAddress = [ta|tz1fakefakefakefakefakefakefakcphLA5|]
+
+-- | We're replacing some @Michelson@ instructions.
+-- Sometimes we perform unsafe unwrapping in the replaced code.
+-- In failure case we're doing something like @{ PUSH errValue; FAILWITH }@
+-- where @errValue@ has @address@ type. The entrypoint in this address
+-- contains the error message.
+replacementErrorValueToException :: Value t -> Maybe ReplacementException
+replacementErrorValueToException = \case
+  (VPair (VAddress (EpAddress addr _), VString errMsg)) | addr == errorAddress -> do
+    pure $ ReplacementException errMsg
+  _ -> Nothing

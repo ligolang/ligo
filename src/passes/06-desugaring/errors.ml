@@ -13,18 +13,14 @@ let error_ppformat
   match display_format with
   | Human_readable | Dev ->
     (match a with
-    | `Desugaring_corner_case s ->
-      Format.fprintf f "@[<hv>Corner case: %s@]" s)
+    | `Desugaring_corner_case s -> Format.fprintf f "@[<hv>Corner case: %s@]" s)
 
 
-let error_jsonformat : desugaring_error -> Yojson.Safe.t =
- fun a ->
-  let json_error ~stage ~content =
-    `Assoc
-      [ "status", `String "error"; "stage", `String stage; "content", content ]
-  in
-  match a with
-  | `Desugaring_corner_case s ->
-    let message = `String "corner case" in
-    let content = `Assoc [ "message", message; "value", `String s ] in
-    json_error ~stage ~content
+let error_json : desugaring_error -> Simple_utils.Error.t =
+ fun e ->
+  let open Simple_utils.Error in
+  match e with
+  | `Desugaring_corner_case e ->
+    let message = Format.asprintf "Corner case: %s" e in
+    let content = make_content ~message () in
+    make ~stage ~content

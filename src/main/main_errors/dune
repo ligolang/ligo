@@ -4,6 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries
+  proto-pre-alpha-utils
   simple-utils
   BuildSystem
   preprocessing

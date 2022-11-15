@@ -329,6 +329,12 @@ let test_div_mutez =
   let a = 1tez/2tez in
   assert (a = 0n)
 
+let test_sub_timestamp =
+  let today : timestamp = ("2001-01-01t10:10:10Z" : timestamp) in
+  let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp) in
+  let diff : int = today - some_date in
+  assert (diff = 31622400)
+
 let test_list_fold_left_sum =
   let xs = [1;2;3] in
   let sum = List.fold_left (fun (x,acc : (int * int)) -> x + acc) 0 xs in
@@ -418,3 +424,7 @@ let test_int_bls =
   let alpha_int = int alpha in
   let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
   assert (Test.eval alpha_int = mich_int)
+
+let test_not =
+  let f ((x, y) : nat * int) : int = x * not y in
+  assert (Test.eval (f (313n , 2938818607801353443)) = Test.run f (313n , 2938818607801353443))

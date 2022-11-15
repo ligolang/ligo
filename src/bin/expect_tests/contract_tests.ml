@@ -903,7 +903,7 @@ let%expect_test _ =
                      PAIR } } } } } |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "ticket_builder.mligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "ticket_builder.mligo" ; "--protocol" ; "lima" ] ;
   [%expect {|
 File "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34:
  28 |       begin
@@ -943,6 +943,7 @@ Hint: replace it by "_ticket" to prevent this warning.
              CDR ;
              UNIT ;
              TICKET ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
              SWAP ;
              CAR ;
              PUSH mutez 0 ;
@@ -1042,7 +1043,12 @@ let%expect_test _ =
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+    Error(s) occurred while type checking the contract:
     Ill typed contract:
       1: { parameter int ;
       2:   storage address ;
@@ -1052,29 +1058,7 @@ let%expect_test _ =
     { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol kathmandu
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Warning: Error(s) occurred while type checking the produced michelson contract:
-    Ill typed contract:
-      1: { parameter int ;
-      2:   storage address ;
-      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-    At line 3 characters 38 to 50, value "KT1badaddr"
-    is invalid for type address.
-    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
-      "description":
-        "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol kathmandu |}]
+      "data": { "input": "KT1badaddr" } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1645,9 +1629,10 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    File "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:
-      1 | type bar = big_map (nat, int);
-      2 |
+    File "../../test/contracts/negative/nested_bigmap_1.religo", line 4, characters 29-32:
+      3 | /* this should result in an error as nested big_maps are not supported: */
+      4 | type storage = big_map (int, bar);
+      5 |
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
@@ -1676,9 +1661,10 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    File "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:
-      1 | type bar = big_map (nat, int);
-      2 |
+    File "../../test/contracts/negative/nested_bigmap_3.religo", line 5, characters 7-10:
+      4 |     a: int,
+      5 |     b: bar
+      6 | };
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
@@ -2189,6 +2175,38 @@ let%expect_test _ =
                 { "start":
                     { "byte":
                         { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "1", "pos_bol": "1", "pos_cnum": "25" },
+                      "point_num": "101", "point_bol": "76" },
+                  "stop":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "1", "pos_bol": "1", "pos_cnum": "29" },
+                      "point_num": "105", "point_bol": "76" } } ] },
+          { "type_content":
+              [ "T_constant",
+                { "language": "Michelson", "injection": [ "Unit" ],
+                  "parameters": [] } ], "type_meta": null, "orig_var": null,
+            "location":
+              [ "File",
+                { "start":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "2", "pos_bol": "1", "pos_cnum": "13" },
+                      "point_num": "146", "point_bol": "133" },
+                  "stop":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
+                          "pos_lnum": "2", "pos_bol": "1", "pos_cnum": "17" },
+                      "point_num": "150", "point_bol": "133" } } ] },
+          { "type_content":
+              [ "T_constant",
+                { "language": "Michelson", "injection": [ "Unit" ],
+                  "parameters": [] } ], "type_meta": null, "orig_var": null,
+            "location":
+              [ "File",
+                { "start":
+                    { "byte":
+                        { "pos_fname": "../../test/contracts/noop.mligo",
                           "pos_lnum": "3", "pos_bol": "1", "pos_cnum": "18" },
                       "point_num": "184", "point_bol": "166" },
                   "stop":
@@ -2229,24 +2247,51 @@ let%expect_test _ =
                           "pos_lnum": "5", "pos_bol": "1", "pos_cnum": "14" },
                       "point_num": "231", "point_bol": "217" } } ] },
           { "type_content":
-              [ "T_constant",
-                { "language": "Michelson", "injection": [ "Unit" ],
-                  "parameters": [] } ], "type_meta": null, "orig_var": null,
-            "location": [ "Virtual", "generated" ] },
-          { "type_content":
               [ "T_arrow",
                 { "type1":
                     { "type_content":
                         [ "T_constant",
                           { "language": "Michelson", "injection": [ "Unit" ],
                             "parameters": [] } ], "type_meta": null,
-                      "orig_var": null, "location": [ "Virtual", "generated" ] },
+                      "orig_var": null,
+                      "location":
+                        [ "File",
+                          { "start":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "13" }, "point_num": "146",
+                                "point_bol": "133" },
+                            "stop":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "17" }, "point_num": "150",
+                                "point_bol": "133" } } ] },
                   "type2":
                     { "type_content":
                         [ "T_constant",
                           { "language": "Michelson", "injection": [ "Unit" ],
                             "parameters": [] } ], "type_meta": null,
-                      "orig_var": null, "location": [ "Virtual", "generated" ] } } ],
+                      "orig_var": null,
+                      "location":
+                        [ "File",
+                          { "start":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "21" }, "point_num": "154",
+                                "point_bol": "133" },
+                            "stop":
+                              { "byte":
+                                  { "pos_fname":
+                                      "../../test/contracts/noop.mligo",
+                                    "pos_lnum": "2", "pos_bol": "1",
+                                    "pos_cnum": "25" }, "point_num": "158",
+                                "point_bol": "133" } } ] } } ],
             "type_meta":
               { "type_content":
                   [ "T_arrow",
@@ -2408,7 +2453,7 @@ let%expect_test _ =
                       { "prim": "PAIR" } ] ] } ],
           "locations":
             [ {}, {}, {}, {}, {}, {}, {}, { "environment": [ null ] }, {},
-              { "environment": [ { "source_type": "3" } ] },
+              { "environment": [ { "source_type": "0" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
@@ -2416,17 +2461,17 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "10" } } }, {}, {}, {},
-              { "environment": [ { "name": "x#9", "source_type": "3" } ] },
+              { "environment": [ { "name": "x#9", "source_type": "1" } ] },
               { "environment":
-                  [ { "name": "f#8", "source_type": "4" },
-                    { "source_type": "3" } ] }, {}, {}, {}, {}, {},
+                  [ { "name": "f#8", "source_type": "5" },
+                    { "source_type": "0" } ] }, {}, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2#10", "source_type": "0" },
-                    { "name": "f#8", "source_type": "4" } ] }, {}, {}, {}, {},
+                  [ { "name": "s2#10", "source_type": "2" },
+                    { "name": "f#8", "source_type": "5" } ] }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3#11", "source_type": "1" },
-                    { "name": "f#8", "source_type": "4" } ] }, {},
-              { "environment": [ { "name": "s#12", "source_type": "2" } ] },
+                  [ { "name": "s3#11", "source_type": "3" },
+                    { "name": "f#8", "source_type": "5" } ] }, {},
+              { "environment": [ { "name": "s#12", "source_type": "4" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
@@ -2681,14 +2726,14 @@ let%expect_test _ =
   [%expect{|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }  |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ; "--enable-michelson-typed-opt" ] ;
   [%expect{|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
            |}]
 
 let%expect_test _ =
@@ -2874,3 +2919,27 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ;  "cameligo" ; "tests" ; "--init-file" ; contract "bytes_literals.mligo" ] ;
   [%expect{| { True ; True ; True } |}]
+
+(* get_entrypoint_opt in uncurried language *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ;  contract "get_entrypoint.jsligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage address ;
+      code { DROP ;
+             SENDER ;
+             CONTRACT %foo int ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
+             ADDRESS ;
+             NIL operation ;
+             PAIR } } |}]
+
+(* make sure that in compile storage/expression we can check ENTRYPOINT/EMIT *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ;  contract "emit.mligo" ; "()" ] ;
+  [%expect{| Unit |}]
+
+(* make sure that in compile storage/expression we can check SELF *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ;  contract "self_annotations.mligo" ; "()" ] ;
+  [%expect{| Unit |}]

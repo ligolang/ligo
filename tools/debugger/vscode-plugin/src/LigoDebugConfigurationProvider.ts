@@ -1,5 +1,10 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
+import { ContractMetadata, getBinaryPath, InputValueType, isDefined, Maybe, tryExecuteCommand } from './base'
+import { LigoDebugContext } from './LigoDebugContext'
+import LigoProtocolClient from './LigoProtocolClient'
+import { ValidateValueCategory } from './messages'
+import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage } from './ui'
 
 function createLogDir(logDir: string): void | undefined {
 	if (!fs.existsSync(logDir)) {
@@ -11,17 +16,125 @@ function createLogDir(logDir: string): void | undefined {
 	}
 }
 
-export interface AfterConfigResolvedInfo {
-	file: string,
-	entrypoint: string,
-	logDir: string
-}
+export type ConfigField
+	= "entrypoint"
+	| "michelsonEntrypoint"
+	| "parameter"
+	| "storage"
+	;
+
+export type ConfigCommand
+	= "AskForEntrypoint"
+	| "AskForMichelsonEntrypoint"
+	| "AskForParameter"
+	| "AskForStorage"
+	;
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
-	private readonly afterConfigResolved: (AfterConfigResolvedInfo) => Promise<string>
+	private client : LigoProtocolClient;
+	private context : LigoDebugContext;
 
-	constructor(afterConfigResolved: (AfterConfigResolvedInfo) => Promise<string>) {
-		this.afterConfigResolved = afterConfigResolved
+	constructor(client: LigoProtocolClient, context: LigoDebugContext) {
+		this.client = client;
+		this.context = context;
+	}
+
+	private async resolveConfig(config: vscode.DebugConfiguration) : Promise<vscode.DebugConfiguration> {
+		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
+		if (!isDefined(currentFilePath)) {
+			throw new Error("Can't find current file");
+		}
+
+		await this.client.sendMsg('initializeLogger', { file: currentFilePath, logDir: config.logDir });
+
+		const pluginConfig = vscode.workspace.getConfiguration();
+		const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, pluginConfig);
+		await this.client.sendMsg('setLigoBinaryPath', { binaryPath });
+
+		const entrypoints : string[] =
+			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).entrypoints.reverse();
+
+		const entrypoint : string =
+			await tryExecuteCommand(
+				"entrypoint",
+				"AskForEntrypoint",
+				config.entrypoint,
+				getEntrypoint(
+					this.context,
+					async (entrypoint) => {
+						return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).message;
+					},
+					entrypoints
+				)
+			);
+		config.entrypoint = entrypoint;
+
+		const contractMetadata : Maybe<ContractMetadata> =
+			(await this.client.sendMsg('getContractMetadata', { entrypoint })).contractMetadata;
+
+		if (!isDefined(contractMetadata)) {
+			return config;
+		}
+
+		const michelsonEntrypoint : string =
+			await tryExecuteCommand(
+				"michelsonEntrypoint",
+				"AskForMichelsonEntrypoint",
+				config.michelsonEntrypoint,
+				createRememberingQuickPick(
+					contractMetadata,
+					"Please pick a Michelson entrypoint to run"
+				)
+			);
+		config.michelsonEntrypoint = michelsonEntrypoint;
+
+		const validateInput = (category: ValidateValueCategory, valueType: InputValueType) => async (value: string): Promise<Maybe<string>> => {
+			return (
+				await this.client.sendMsg(
+					'validateValue',
+					{ value, category, valueType, pickedMichelsonEntrypoint: michelsonEntrypoint }
+				)
+			).message;
+		}
+
+		const parameter : string =
+			await tryExecuteCommand(
+				"parameter",
+				"AskForParameter",
+				config.parameter,
+				getParameterOrStorage(
+					this.context,
+					validateInput,
+					"parameter",
+					"Input the contract parameter",
+					"Parameter value",
+					entrypoint,
+					contractMetadata,
+					michelsonEntrypoint
+				)
+			);
+		config.parameter = parameter;
+
+		const storage : string =
+			await tryExecuteCommand(
+				"storage",
+				"AskForStorage",
+				config.storage,
+				getParameterOrStorage(
+					this.context,
+					validateInput,
+					"storage",
+					"Input the contract storage",
+					"Storage value",
+					entrypoint,
+					contractMetadata,
+					michelsonEntrypoint
+				)
+			);
+		config.storage = storage;
+
+		return config;
 	}
 
 	async resolveDebugConfiguration(
@@ -36,9 +149,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
-				config.entrypoint = '${command:AskForEntrypoint}'
-				config.parameter = "${command:AskForParameter}"
-				config.storage = "${command:AskForStorage}"
+				config.entrypoint = '{AskForEntrypoint}'
+				config.parameter = "{AskForParameter}"
+				config.storage = "{AskForStorage}"
 			}
 		}
 
@@ -47,7 +160,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
-		config.entrypoint ??= '${command:AskForEntrypoint}'
+		config.entrypoint ??= '{AskForEntrypoint}'
 
 		if (config.logDir === '') {
 			config.logDir = undefined
@@ -61,13 +174,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				createLogDir(logDir)
 			}
 
-			config.entrypoint = await this.afterConfigResolved(
-				{
-					file: currentFilePath,
-					entrypoint: config.entrypoint,
-					logDir
-				}
-			)
+			config = await this.resolveConfig(config);
 		}
 
 		return config

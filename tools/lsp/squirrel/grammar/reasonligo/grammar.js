@@ -418,7 +418,7 @@ module.exports = grammar({
     module_access: $ => seq(
       common.sepBy1('.', field("path", $.ModuleName)),
       '.',
-      field("field", $.FieldName),
+      field("field", $.Name),
     ),
 
     _expr_term: $ => choice(
