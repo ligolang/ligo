@@ -200,12 +200,12 @@ test_Snapshots = testGroup "Snapshots collection"
                   , sfStack =
                     [ StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
-                            { leseType = LTConstant (LigoTypeConstant [] ("Int" :| []))
+                            { leseType = typ
                             }
                         }
                     ]
                   } :| []
-              } -> pass
+              } | typ == intType -> pass
             sp -> unexpectedSnapshot sp
 
   , testCaseSteps "pattern-match on option" \_step -> do

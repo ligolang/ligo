@@ -23,8 +23,6 @@ module Test.Util
   , HUnit.assertBool
   , getStackFrameNames
   , getVariableNamesFromStackFrame
-    -- * Common snippets
-  , intType
     -- * Helpers for breakpoints
   , goToNextBreakpoint
   , goToPreviousBreakpoint
@@ -44,9 +42,23 @@ module Test.Util
     -- * Lower-lever interface
   , mkSnapshotsForImpl
   , dummyLoggingFunction
+  -- * LIGO types construct helpers
+  , mkConstantType
+  , mkArrowType
+  , mkRecordType
+    -- * Common snippets
+  , mkSimpleConstantType
+  , mkPairType
+  , intType'
+  , unitType'
+  , intType
+  , unitType
   ) where
 
 import Control.Lens (each)
+import Data.Aeson (Value (Null))
+import Data.HashMap.Strict qualified as HM
+import Data.List.NonEmpty (singleton)
 import Data.Singletons (demote)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
@@ -68,6 +80,11 @@ import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Typeable
+
+import Cli.Json
+  (LigoRange (LRVirtual), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
+  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord), LigoTypeExpression (..),
+  LigoTypeTable (LigoTypeTable), _ltcInjection, _ltcParameters)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
@@ -172,13 +189,6 @@ infixl 0 @?==
   HUnit.assertBool
     [int||Expected #tb{xs} to be a permutation of #tb{ys}|]
     (xs `isPermutationOf` ys)
-
-intType :: LigoType
-intType = LTConstant $
-  LigoTypeConstant
-    { ltcParameters = []
-    , ltcInjection = "Int" :| []
-    }
 
 goesBetween
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
@@ -362,3 +372,62 @@ getVariableNamesFromStackFrame :: (SingI u) => StackFrame u -> [Text]
 getVariableNamesFromStackFrame stackFrame = maybe unknownVariable pretty <$> variablesMb
   where
     variablesMb = stackFrame ^.. sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
+
+mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
+mkTypeExpression content = LigoTypeExpression
+  { _lteTypeContent = content
+  , _lteLocation = LRVirtual "dummy"
+  , _lteSugar = Nothing
+  , _lteTypeMeta = Nothing
+  , _lteOrigVar = Nothing
+  }
+
+mkConstantType :: Text -> [LigoTypeExpression] -> LigoTypeExpression
+mkConstantType typeName parameters = mkTypeExpression $ LTCConstant $
+  LigoTypeConstant
+    { _ltcParameters = parameters
+    , _ltcLanguage = "Michelson"
+    , _ltcInjection = singleton typeName
+    }
+
+mkArrowType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
+mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
+  LigoTypeArrow
+    { _ltaType2 = codomain
+    , _ltaType1 = domain
+    }
+
+mkRecordType :: [(Text, LigoTypeExpression)] -> LigoTypeExpression
+mkRecordType record = map (second mkTableField) record
+  & HM.fromList
+  & flip LigoTypeTable Null
+  & LTCRecord
+  & mkTypeExpression
+  where
+    mkTableField :: LigoTypeExpression -> LigoTableField
+    mkTableField expr = LigoTableField
+      { _ltfDeclPos = 0
+      , _lrfMichelsonAnnotation = Null
+      , _ltfAssociatedType = expr
+      }
+
+mkSimpleConstantType :: Text -> LigoTypeExpression
+mkSimpleConstantType typ = mkConstantType typ []
+
+mkPairType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
+mkPairType fstElem sndElem = mkRecordType
+  [ ("0", fstElem)
+  , ("1", sndElem)
+  ]
+
+intType' :: LigoTypeExpression
+intType' = mkSimpleConstantType "Int"
+
+unitType' :: LigoTypeExpression
+unitType' = mkSimpleConstantType "Unit"
+
+intType :: LigoType
+intType = LigoTypeResolved intType'
+
+unitType :: LigoType
+unitType = LigoTypeResolved unitType'
