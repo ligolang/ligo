@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SyntaxContext from "@theme/Syntax/SyntaxContext";
 
 let defaultSyntax = (() => {
@@ -20,6 +20,18 @@ let defaultSyntax = (() => {
 // Default implementation, that you can customize
 export default function Root({ children }) {
   const [syntax, setSyntax] = useState(defaultSyntax);
+
+  useEffect(() => {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+      get: (searchParams, prop) => searchParams.get(prop),
+    });
+
+    if (!!params.lang) return;
+
+    const url = new URL(window.location);
+    url.searchParams.set("lang", syntax);
+    window.history.pushState(null, "", url.toString());
+  });
 
   return (
     <SyntaxContext.Provider value={{ syntax, setSyntax }}>
