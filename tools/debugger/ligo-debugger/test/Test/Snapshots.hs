@@ -9,6 +9,7 @@ import Unsafe qualified
 
 import AST (scanContracts)
 import Control.Lens (has, ix, makeLensesWith, (?~), (^?!))
+import Control.Monad.Writer (listen)
 import Data.Default (Default (def))
 import Data.Map qualified as M
 import Fmt (pretty)
@@ -21,9 +22,10 @@ import Text.Interpolation.Nyan
 import UnliftIO (forConcurrently_)
 
 import Morley.Debugger.Core
-  (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), MovementResult (..),
-  NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
-  curSnapshot, frozen, goesAfter, matchesSrcType, move, moveTill, tsAfterInstrs, twoElemFromList)
+  (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), HistoryReplayM,
+  MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation),
+  SourceType (..), curSnapshot, frozen, goesAfter, matchesSrcType, move, moveTill, tsAfterInstrs,
+  tsAllVisited)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
@@ -37,11 +39,12 @@ import Lorentz qualified as L
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
 
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
-  [ testCaseSteps "noop.mligo contract" \step -> do
+  [ testCaseSteps "noop.mligo contract" \_step -> do
       let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
@@ -51,25 +54,6 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        let step' txt = lift $ step txt
-        step' "Initial snapshot"
-        checkSnapshot \case
-          InterpretSnapshot
-            { isStatus = InterpretStarted
-            , isStackFrames = StackFrame
-                { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 1 0) (LigoPosition 1 0)
-                  -- ↑ We likely want to change this as soon as debug info
-                  -- contains info about entering methods
-                , sfStack = []
-                } :| []
-            } | file == file'
-              -> pass
-          sp -> unexpectedSnapshot sp
-
-        _ <- move Forward
-        lift $ step "Intermediate snapshots"
-
         checkSnapshot \case
           InterpretSnapshot
             { isStatus = InterpretRunning EventFacedStatement
@@ -91,7 +75,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
-        (_, tsAfterInstrs -> restSnapshots) <- moveTill Forward (FrozenPredicate $ pure False)
+        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
 
         ( restSnapshots <&> \InterpretSnapshot{..} ->
             ( isStatus
@@ -203,9 +187,6 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        -- Skip starting snapshot
-        _ <- move Forward
-
         checkSnapshot \case
           InterpretSnapshot
             { isStatus = InterpretRunning EventFacedStatement
@@ -227,9 +208,6 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         testWithSnapshots runData do
-          -- Skipping snapshots till snapshot with 'int' variable
-          _ <- move Forward
-
           checkSnapshot \case
             InterpretSnapshot
               { isStatus = InterpretRunning EventFacedStatement
@@ -256,9 +234,6 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        -- Skip starting snapshot
-        _ <- move Forward
-
         checkSnapshot \case
           InterpretSnapshot
             { isStatus = InterpretRunning EventFacedStatement
@@ -323,6 +298,10 @@ test_Snapshots = testGroup "Snapshots collection"
             assertFailure [int||Expected 1 "s1" variable, found #{s1Count} "s1" variables|]
 
         goToNextBreakpoint
+        -- TODO [LIGO-552] We somehow appear at weird place
+        -- Breakpoint was pointing to body of `switch`, but we stopped at the switch itself
+        _ <- move Forward
+        _ <- move Forward
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -355,7 +334,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 Just loc -> pure $ lrFile loc == filePath
                 Nothing -> pure False
 
-        lift $ step "Go to nested contract"
+        liftIO $ step "Go to nested contract"
         _ <- moveTill Forward $ stopAtFile nestedFile
         checkSnapshot \case
           InterpretSnapshot
@@ -365,7 +344,7 @@ test_Snapshots = testGroup "Snapshots collection"
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
 
-        lift $ step "Make sure that we went back"
+        liftIO $ step "Make sure that we went back"
         _ <- moveTill Forward $ stopAtFile file
         checkSnapshot \case
           InterpretSnapshot
@@ -375,7 +354,7 @@ test_Snapshots = testGroup "Snapshots collection"
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
 
-        lift $ step "Check that we can go to more nested contract (and in another dialect)"
+        liftIO $ step "Check that we can go to more nested contract (and in another dialect)"
         _ <- moveTill Forward $ stopAtFile nestedFile2
         checkSnapshot \case
           InterpretSnapshot
@@ -385,7 +364,7 @@ test_Snapshots = testGroup "Snapshots collection"
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
 
-        lift $ step "Make sure that we went back to \"imported.mligo\""
+        liftIO $ step "Make sure that we went back to \"imported.mligo\""
         _ <- moveTill Forward $ stopAtFile nestedFile
         checkSnapshot \case
           InterpretSnapshot
@@ -395,7 +374,7 @@ test_Snapshots = testGroup "Snapshots collection"
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
 
-        lift $ step "Make sure that we went back to \"importer.mligo\""
+        liftIO $ step "Make sure that we went back to \"importer.mligo\""
         _ <- moveTill Forward $ stopAtFile file
         checkSnapshot \case
           InterpretSnapshot
@@ -424,23 +403,26 @@ test_Snapshots = testGroup "Snapshots collection"
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
 
         let checkLinePosition pos = do
-              goToNextBreakpoint
               frozen getExecutedPosition >>= \case
-                Just (SourceLocation _ (SrcPos (Pos actualPos) _))
+                Just (SourceLocation _ (SrcPos (Pos actualPos) _) _)
                   | actualPos == pos -> pass
-                loc -> lift $ assertFailure [int||Expected stopping at line #{pos + 1}, got #{loc}|]
+                loc -> liftIO $ assertFailure [int||Expected stopping at line #{pos + 1}, got #{loc}|]
 
-        lift $ step "check \"func\" function call stepping"
+        let goAndCheckLinePosition pos = do
+              goToNextBreakpoint
+              checkLinePosition pos
+
+        liftIO $ step "check \"func\" function call stepping"
         checkLinePosition 6
 
-        lift $ step "check stepping inside \"func\""
-        checkLinePosition 1
-        checkLinePosition 2
+        liftIO $ step "check stepping inside \"func\""
+        goAndCheckLinePosition 1
+        goAndCheckLinePosition 2
 
-        lift $ step "check stopping at constant assignment"
-        checkLinePosition 7
+        liftIO $ step "check stopping at constant assignment"
+        goAndCheckLinePosition 7
 
-        lift $ step "check that \"s2\" is not inlined"
+        liftIO $ step "check that \"s2\" is not inlined"
         goToNextBreakpoint
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
@@ -469,8 +451,8 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 4) (Pos 0))
 
-        lift $ step "Check that \"fold\" build-in works correctly"
-        N.continueUntilBreakpoint N.NextBreak
+        liftIO $ step "Check that \"fold\" build-in works correctly"
+        moveTill Forward isAtBreakpoint
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
           let sumElemsItemMb = stackItems
@@ -505,7 +487,7 @@ test_Snapshots = testGroup "Snapshots collection"
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 11) (Pos 0))
 
         N.continueUntilBreakpoint N.NextBreak
-        lift $ step "Check function namings"
+        liftIO $ step "Check function namings"
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -537,9 +519,6 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        -- Skip starting snapshot
-        _ <- move Forward
-
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
@@ -554,7 +533,7 @@ test_Snapshots = testGroup "Snapshots collection"
                   InterpretRunning EventFacedStatement -> True
                   _ -> False
 
-            (_, filter snapPred . tsAfterInstrs -> snaps) <- moveTill Forward (FrozenPredicate $ pure False)
+            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
 
             ( snaps
                 <&> do \InterpretSnapshot{..} ->
@@ -612,7 +591,7 @@ test_Snapshots = testGroup "Snapshots collection"
       (allLocs, his) <- mkSnapshotsFor runData
 
       let his' = InterpretHistory $
-            (Unsafe.fromJust . twoElemFromList) (take 1000 (toList $ unInterpretHistory his)) <>
+            fromList (take 1000 (toList $ unInterpretHistory his)) <>
             error "Went too far in execution history"
 
       let tenSeconds = 10 * 1e6
@@ -661,20 +640,20 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           -- Jump to GT
-          lift $ step "jumping to GT"
-          (moveRes, _) <- moveTill Forward $ FrozenPredicate do
+          liftIO $ step "jumping to GT"
+          moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
             return $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue False)
 
-          lift $ assertBool
+          liftIO $ assertBool
             "Didn't find the necessary snapshot"
             (moveRes == MovedSuccessfully)
 
           srcLocAtGt <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
           -- Go back. If for COMPARE we also create a snapshot, our test should fail
-          lift $ step "jumping back"
+          liftIO $ step "jumping back"
           void . moveTill Backward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
             return $ has statusExpressionEvaluatedP status
@@ -687,9 +666,9 @@ test_Snapshots = testGroup "Snapshots collection"
             ) do
               srcLocAtCompare <- sfLoc . head . isStackFrames <$> frozen curSnapshot
               if srcLocAtCompare == srcLocAtGt
-                then lift $ assertFailure
+                then liftIO $ assertFailure
                   "Created a snapshot at COMPARE that duplicates the snapshot at GT"
-                else lift $ assertFailure
+                else liftIO $ assertFailure
                   "COMPARE seems to have a different source location than GT, \
                   \please check that this test is still sensible"
 
@@ -707,15 +686,14 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         testWithSnapshots runData do
-          lift $ step "Skipping push"
-          _ <- moveTill Forward $ goesAfter (SrcPos (Pos 1) (Pos 0))
+          liftIO $ step "Skipping push"
           _ <- move Forward  -- skip "upon expression" state
           do
             status <- isStatus <$> frozen curSnapshot
             preview statusExpressionEvaluatedP status
               @?= Just (SomeLorentzValue (0 :: Integer))
 
-          lift $ step "Checking comparison result"
+          liftIO $ step "Checking comparison result"
           replicateM_ 2 $ move Forward
           do
             status <- isStatus <$> frozen curSnapshot
@@ -735,23 +713,23 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           -- Jump to division result
-          lift $ step "jumping to GT"
-          (moveRes, _) <- moveTill Forward $ FrozenPredicate do
+          liftIO $ step "jumping to GT"
+          moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
             return $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue (3 :: Integer))
 
-          lift $ assertBool
+          liftIO $ assertBool
             "Didn't find the necessary snapshot"
             (moveRes == MovedSuccessfully)
           srcLocAtDiv <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
-          lift $ step "jumping to the previously computed value"
+          liftIO $ step "jumping to the previously computed value"
           void . moveTill Backward $ FrozenPredicate do
             has statusExpressionEvaluatedP . isStatus <$> curSnapshot
 
           srcLocAtBack <- sfLoc . head . isStackFrames <$> frozen curSnapshot
-          lift $ assertBool
+          liftIO $ assertBool
             "Duplicated source range for different snapshots"
             (srcLocAtDiv /= srcLocAtBack)
     ]
@@ -769,7 +747,7 @@ test_Snapshots = testGroup "Snapshots collection"
         void $ moveTill Forward $
           goesAfter (SrcPos (Pos 4) (Pos 0))
 
-        lift $ step [int||Extract variables|]
+        liftIO $ step [int||Extract variables|]
         checkSnapshot \snap -> do
           let vars = snap
                 & isStackFrames
@@ -790,11 +768,11 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         moveTill Forward $
           goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
-        lift $ step [int||Check stack frame names on entering "recursive"|]
+        liftIO $ step [int||Check stack frame names on entering "recursive"|]
         checkSnapshot ((@=?) ["recursive", "main"] . getStackFrameNames)
 
         moveTill Forward $ goesAfter (SrcPos (Pos 4) (Pos 0))
-        lift $ step [int||Check that we have only "main" stack frame after leaving function|]
+        liftIO $ step [int||Check that we have only "main" stack frame after leaving function|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "Calling local function" \step -> do
@@ -809,12 +787,12 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         move Forward
 
-        lift $ step [int||Check that we have only one "main" stack frame|]
+        liftIO $ step [int||Check that we have only one "main" stack frame|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
         moveTill Forward $
           goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
-        lift $ step [int||Check that we have "f" stack frame on entering local function|]
+        liftIO $ step [int||Check that we have "f" stack frame on entering local function|]
         checkSnapshot ((@=?) ["f", "main"] . getStackFrameNames)
 
   , testCaseSteps "Function calling other function" \step -> do
@@ -829,12 +807,12 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         moveTill Forward $
           goesBetween (SrcPos (Pos 2) (Pos 0)) (SrcPos (Pos 3) (Pos 0))
-        lift $ step [int||Calling top level function "complex"|]
+        liftIO $ step [int||Calling top level function "complex"|]
         checkSnapshot ((@=?) ["complex", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesBetween (SrcPos (Pos 0) (Pos 0)) (SrcPos (Pos 1) (Pos 0))
-        lift $ step [int||Calling function "add" from "complex"|]
+        liftIO $ step [int||Calling function "add" from "complex"|]
         checkSnapshot ((@=?) ["add", "complex", "main"] . getStackFrameNames)
 
   , testCaseSteps "Lambda parameter" \step -> do
@@ -854,10 +832,11 @@ test_Snapshots = testGroup "Snapshots collection"
             , crdStorage = 0 :: Integer
             }
 
-      let stackFramesCheck :: ([[Text]] -> Bool) -> StateT (DebuggerState (InterpretSnapshot u)) IO ()
+      let stackFramesCheck :: ([[Text]] -> Bool) -> HistoryReplayM (InterpretSnapshot u) IO ()
           stackFramesCheck namesCheck = do
-            (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <- moveTill Forward (FrozenPredicate $ pure False)
-            lift $
+            (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <-
+              listen $ moveTill Forward (FrozenPredicate $ pure False)
+            liftIO $
               assertBool
                 [int||Expected to have only one stack frame \
                   with name "main" in each snapshot, got #{stackFrameNames}|]
@@ -890,7 +869,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 8) (Pos 0)) (SrcPos (Pos 12) (Pos 0))
           && matchesSrcType (N.SourcePath nestedFile)
-        lift $ step [int||Check variables for "sum" snapshot|]
+        liftIO $ step [int||Check variables for "sum" snapshot|]
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = stackFrame@StackFrame
@@ -902,7 +881,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         moveTill Forward $
           goesAfter (SrcPos (Pos 4) (Pos 0)) && matchesSrcType (N.SourcePath nestedFile2)
-        lift $ step [int||Check variables for "strange" snapshot|]
+        liftIO $ step [int||Check variables for "strange" snapshot|]
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = stackFrame@StackFrame
@@ -925,7 +904,7 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         moveTill Forward $
           goesBetween (SrcPos (Pos 3) (Pos 0)) (SrcPos (Pos 5) (Pos 0))
-        lift $ step [int||Check that we have two stack frames with "main" name|]
+        liftIO $ step [int||Check that we have two stack frames with "main" name|]
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
@@ -954,11 +933,11 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 0) (Pos 0)) (SrcPos (Pos 1) (Pos 0))
 
-        lift $ step [int||Check stack frames after entering "add5"|]
+        liftIO $ step [int||Check stack frames after entering "add5"|]
         checkSnapshot ((@=?) ["add", "add5", "main"] . getStackFrameNames)
 
         moveTill Forward $ goesAfter (SrcPos (Pos 7) (Pos 0))
-        lift $ step [int||Check stack frames after leaving "add5"|]
+        liftIO $ step [int||Check stack frames after leaving "add5"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "Paritally applied function inside top level function" \step -> do
@@ -974,12 +953,12 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
 
-        lift $ step [int||Go into "add5"|]
+        liftIO $ step [int||Go into "add5"|]
         checkSnapshot ((@=?) ["add", "add5", "myFunc", "main"] . getStackFrameNames)
 
         moveTill Forward $ goesAfter (SrcPos (Pos 6) (Pos 0))
 
-        lift $ step [int||Leave "myFunc"|]
+        liftIO $ step [int||Leave "myFunc"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "2 times curried function" \step -> do
@@ -995,19 +974,19 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 7) (Pos 0)) (SrcPos (Pos 8) (Pos 0))
 
-        lift $ step [int||Check stack frames for inner "sub"|]
+        liftIO $ step [int||Check stack frames for inner "sub"|]
         checkSnapshot ((@=?) ["sub", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesBetween (SrcPos (Pos 5) (Pos 0)) (SrcPos (Pos 6) (Pos 0))
 
-        lift $ step [int||Check stack frames for inner "add"|]
+        liftIO $ step [int||Check stack frames for inner "add"|]
         checkSnapshot ((@=?) ["add", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesAfter (SrcPos (Pos 12) (Pos 0))
 
-        lift $ step [int||Leave "applyOp" functions|]
+        liftIO $ step [int||Leave "applyOp" functions|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "2 times curried function inside lambda" \step -> do
@@ -1023,7 +1002,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 5) (Pos 0)) (SrcPos (Pos 6) (Pos 0))
 
-        lift $ step [int||Check "sub" stack frames inside "lambdaFun"|]
+        liftIO $ step [int||Check "sub" stack frames inside "lambdaFun"|]
 
         -- Actually here should be only one stack frame with name "f"
         -- but LIGO source mapper treats these "f"s from this contract as different.
@@ -1032,7 +1011,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 4) (Pos 0)) (SrcPos (Pos 5) (Pos 0))
 
-        lift $ step [int||Check "add" stack frames inside "lambdaFun"|]
+        liftIO $ step [int||Check "add" stack frames inside "lambdaFun"|]
 
         -- The same here.
         checkSnapshot ((@=?) ["add", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
@@ -1040,7 +1019,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesAfter (SrcPos (Pos 7) (Pos 0))
 
-        lift $ step [int||Leave "lambdaFun"|]
+        liftIO $ step [int||Leave "lambdaFun"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "Multiple currying" \step -> do
@@ -1056,7 +1035,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesBetween (SrcPos (Pos 7) (Pos 0)) (SrcPos (Pos 8) (Pos 0))
 
-        lift $ step [int||Check stack frames in inner "act"|]
+        liftIO $ step [int||Check stack frames in inner "act"|]
 
         -- The same as in the test above.
         checkSnapshot ((@=?) ["act", "f", "f", "applyOnce", "applyTwice", "applyThrice", "apply", "main"] . getStackFrameNames)
@@ -1064,7 +1043,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $
           goesAfter (SrcPos (Pos 10) (Pos 0))
 
-        lift $ step [int||Check stack frames after leaving "act"|]
+        liftIO $ step [int||Check stack frames after leaving "act"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
   ]
 
@@ -1104,7 +1083,7 @@ unit_Contracts_are_sensible = do
           Left err -> assertFailure $ pretty err
 
       when coCheckSourceLocations do
-        forM_ locations \srcLoc@(SourceLocation loc _) -> do
+        forM_ locations \srcLoc@(SourceLocation loc _ _) -> do
           case loc of
             SourcePath path ->
               -- Some paths can be empty in @SourceLocation@ because of some ligo issues.

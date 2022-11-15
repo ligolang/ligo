@@ -149,6 +149,7 @@ tests:
       - nyan-interpolation-core
       - morley
       - morley-debugger
+      - mtl
       - singletons
       - tasty
       - text

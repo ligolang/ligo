@@ -32,7 +32,7 @@ import Duplo (layer, leq, spineTo)
 import Fmt (Buildable (..), pretty)
 import Parser (Info)
 import Product (Contains)
-import Range (Range (..), getRange, point)
+import Range (Range (..), getRange)
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
@@ -63,7 +63,7 @@ ligoPositionToSrcPos (LigoPosition l c) =
 
 ligoRangeToSourceLocation :: HasCallStack => LigoRange -> SourceLocation
 ligoRangeToSourceLocation LigoRange{..} =
-  SourceLocation (SourcePath lrFile) (ligoPositionToSrcPos lrStart)
+  SourceLocation (SourcePath lrFile) (ligoPositionToSrcPos lrStart) (ligoPositionToSrcPos lrEnd)
 
 -- | Returns all nodes which cover given range
 -- ordered from the most local to the least local.
@@ -81,24 +81,29 @@ getStatementLocs locs parsedContracts =
     & Set.fromList
   where
     sourceLocationToRange :: SourceLocation -> Range
-    sourceLocationToRange (SourceLocation (SourcePath file) srcPos) =
-      pointWithoutFile
-        { _rFile = file
-        }
+    sourceLocationToRange (SourceLocation (SourcePath file) startPos endPos) = Range
+      { _rStart = posToTuple startPos
+      , _rFinish = posToTuple endPos
+      , _rFile = file
+      }
       where
-        SrcPos (Pos l) (Pos c) = srcPos
-        pointWithoutFile = point (Unsafe.fromIntegral $ l + 1) (Unsafe.fromIntegral $ c + 1)
+        posToTuple :: Integral i => SrcPos -> (i, i, i)
+        posToTuple (SrcPos (Pos l) (Pos c)) =
+          (Unsafe.fromIntegral (l + 1), Unsafe.fromIntegral (c + 1), 0)
+
     sourceLocationToRange loc = error [int||Got source location with Lorentz source #{loc}|]
 
     rangeToSourceLocation :: Range -> SourceLocation
     rangeToSourceLocation Range{..} =
       SourceLocation
-        (SourcePath _rFile) $
-        SrcPos
+        (SourcePath _rFile)
+        (tupleToPos _rStart)
+        (tupleToPos _rFinish)
+      where
+        tupleToPos :: Integral i => (i, i, i) -> SrcPos
+        tupleToPos (l, c, _) = SrcPos
           (Pos $ Unsafe.fromIntegral $ l - 1)
           (Pos $ Unsafe.fromIntegral $ c - 1)
-      where
-        (l, c, _) = _rStart
 
     ranges = toList locs
       <&> sourceLocationToRange
