@@ -3,7 +3,12 @@ import React, { PureComponent } from "react";
 // import redux from '~/base-components/redux'
 import Navbar from "~/base-components/navbar";
 // import keypairManager from '~/base-components/keypair'
-import { navbarItem, OpenProjectModal, NewProjectModal } from "~/base-components/workspace";
+import {
+  navbarItem,
+  OpenProjectModal,
+  NewProjectModal,
+  RenameProjectModal,
+} from "~/base-components/workspace";
 // import { networkManager } from '~/ligo-components/eth-network'
 // import { utils } from '~/ligo-components/eth-sdk'
 
@@ -15,6 +20,7 @@ export default class Header extends PureComponent {
     this.state = {
       keypairs: [],
     };
+    this.openProjectModalRef = React.createRef();
   }
 
   componentDidMount() {
@@ -178,7 +184,8 @@ export default class Header extends PureComponent {
           {logo}
         </Navbar>
         <NewProjectModal createProject={createProject} />
-        <OpenProjectModal createProject={createProject} />
+        <RenameProjectModal />
+        <OpenProjectModal createProject={createProject} ref={this.openProjectModalRef} />
       </>
     );
   }

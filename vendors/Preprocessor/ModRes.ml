@@ -50,8 +50,8 @@ type lock_file = {
 
 let compact : 'a option list -> 'a list option =
   let folded x acc =
-    let* acc = acc in
-    let* x   = x in
+    let* acc in
+    let* x   in
     Some (x :: acc)
   in List.fold_right ~f:folded ~init:(Some [])
 
@@ -92,8 +92,8 @@ module Path =
        string. *)
 
     let v : string -> t =
-      fun s -> 
-        try Some (Fpath.v s |> Fpath.normalize |> Fpath.rem_empty_seg) 
+      fun s ->
+        try Some (Fpath.v s |> Fpath.normalize |> Fpath.rem_empty_seg)
         with _ -> None
 
     (* Alias of [Filename.dir_sep]. *)
@@ -157,7 +157,7 @@ module Path =
     (* The function [dirpath] drops the last segment from a path
        e.g. "/a/b/c.mligo" yields "/a/b" *)
 
-    let dirpath path = 
+    let dirpath path =
       path
     |> Option.map ~f:Fpath.split_base
     |> Option.map ~f:fst
@@ -168,11 +168,11 @@ module Path =
 
     let equal p1 p2 =
       match p1, p2 with
-        Some p1, Some p2 -> 
+        Some p1, Some p2 ->
           Fpath.equal (Fpath.normalize p1) (Fpath.normalize p2)
       | _ -> false
 
-    (* The predicate [is_root] checks in the given path is the root 
+    (* The predicate [is_root] checks in the given path is the root
        directory *)
 
     let is_root = function None -> false | Some p -> Fpath.is_root p
@@ -275,11 +275,18 @@ module Esy =
   }
  *)
 
-let clean_installation_json abs_path_to_project_root installation_json =
+let clean_installation_json ~root abs_path_to_project_root installation_json =
+  let Package root = root in
   let* installation_json = installation_json in
   let kvs = Yojson.Basic.Util.to_assoc installation_json in
+  (* set the path of root project to [abs_path_to_project_root] *)
+  let kvs = List.map kvs ~f:(fun (k, v) -> 
+    if String.equal k root 
+    then (k, `String abs_path_to_project_root) 
+    else (k, v)) 
+  in
   let folded map (key, value) =
-    let* map   = map in
+    let* map   in
     let  key   = Package key in
     let* value = JsonHelpers.string_of value in
     let  abs_p = Path.get_absolute_path ~root:abs_path_to_project_root value in
@@ -332,14 +339,14 @@ let clean_installation_json abs_path_to_project_root installation_json =
   }] *)
 
 let clean_lock_file_json lock_json =
-  let* lock_json = lock_json in
+  let* lock_json in
   let  module Util = Yojson.Basic.Util in
   let* root = Util.member "root" lock_json |> JsonHelpers.string_of in
   let  root = Package root in
   let  node = Util.member "node" lock_json in
   let  kvs  = Util.to_assoc node in
   let  folded map (key, value) =
-    let* map = map in
+    let* map in
     let  key = Package key in
     let  dependencies = Util.member "dependencies" value in
     let* dependencies = JsonHelpers.string_list_of dependencies in
@@ -354,7 +361,8 @@ let clean_lock_file_json lock_json =
 
 let resolve_path abs_path_to_project_root installation pkg_name =
   let* Path path = PackageMap.find_opt pkg_name installation in
-  let  path = Path.get_absolute_path ~root:abs_path_to_project_root path in
+  let  path = Path.get_absolute_path
+                ~root:abs_path_to_project_root path in
   let* path = Path.to_string path
   in Some path
 
@@ -366,10 +374,10 @@ let resolve_path abs_path_to_project_root installation pkg_name =
 let resolve_paths abs_path_to_project_root installation graph
     : resolution list option =
   let folded key value entries =
-    let* entries  = entries in
-    let  mapped   = resolve_path abs_path_to_project_root installation in
+    let* entries in
+    let  mapped = resolve_path abs_path_to_project_root installation in
     let* resolved = compact @@ List.map value ~f:mapped in
-    let* key   = resolve_path abs_path_to_project_root installation key in
+    let* key = resolve_path abs_path_to_project_root installation key in
     let  key   = Path key in
     let  paths = List.sort ~compare:String.compare resolved in
     let  paths = List.map ~f:(fun p -> Path p) paths
@@ -404,22 +412,24 @@ let find_dependencies (lock_file : lock_file) : package list PackageMap.t =
 
 let make project_root : t option =
   let  abs_path_to_project_root = Path.get_absolute_path project_root in
-  let* abs_path_to_project_root = Path.to_string abs_path_to_project_root in
-  let* installation_json =
-    Esy.installation_json_path project_root
-    |> JsonHelpers.from_file_opt
-    |> clean_installation_json abs_path_to_project_root in
+  let* abs_path_to_project_root =
+    Path.to_string abs_path_to_project_root in
   let* lock_file_json =
     Esy.lock_file_path project_root
     |> JsonHelpers.from_file_opt
     |> clean_lock_file_json
   in
-  let  root = lock_file_json.root in
-  let  dependencies = find_dependencies lock_file_json in
+  let root = lock_file_json.root in
+  let* installation_json =
+    Esy.installation_json_path project_root
+    |> JsonHelpers.from_file_opt
+    |> clean_installation_json ~root abs_path_to_project_root in
+  let dependencies = find_dependencies lock_file_json in
   let* resolutions =
-    resolve_paths abs_path_to_project_root installation_json dependencies in
+    resolve_paths abs_path_to_project_root installation_json
+                  dependencies in
   let* root_path =
-    resolve_path  abs_path_to_project_root installation_json root in
+    resolve_path abs_path_to_project_root installation_json root in
   let  root_path = Path root_path
   in Some {root_path; resolutions}
 

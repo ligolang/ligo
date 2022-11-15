@@ -1,3 +1,4 @@
+import pathHelper from "path-browserify";
 import platform from "~/base-components/platform";
 import fileOps from "~/base-components/file-ops";
 
@@ -21,7 +22,7 @@ export default class SolcjsCompiler {
       const solcFile =
         platform.isWeb || process.env.NODE_ENV === "development"
           ? "/solc.js"
-          : fileOps.pathHelper.join(fileOps.appPath, "build/solc.js");
+          : pathHelper.join(fileOps.appPath, "build/solc.js");
       this.worker = new Worker(solcFile);
       this.worker.onmessage = this.onMessage.bind(this);
     }
@@ -57,7 +58,7 @@ export default class SolcjsCompiler {
 
     let mainFileContent;
     try {
-      mainFileContent = await projectManager.readFile(projectManager.mainFilePath);
+      mainFileContent = await fileOps.readFile(projectManager.mainFilePath);
     } catch (e) {
       console.warn(e);
       throw new Error(`Cannot read the main file <b>${mainFilePath}</b>.`);
@@ -119,7 +120,7 @@ export default class SolcjsCompiler {
     try {
       const completePath = this.projectManager.pathForProjectFile(path);
       if (!this.fileCache.has(completePath)) {
-        this.fileCache.set(completePath, await this.projectManager.readFile(completePath));
+        this.fileCache.set(completePath, await fileOps.readFile(completePath));
       }
       return this.fileCache.get(completePath);
     } catch (e) {

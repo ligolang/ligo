@@ -61,15 +61,21 @@ let record_keyword_match: Core.regexp = {
 }
 
 let control_keywords_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\|end\\\\|in\\\\)\\\\b";
-  textmate = "\\b(match|with|if|then|else|assert|failwith|begin|end|in)\\b";
-  vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\)\\>"
+  emacs    = "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\)\\\\b";
+  textmate = "\\b(match|with|if|then|else|assert|failwith|begin)\\b";
+  vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\)\\>"
 }
 
 let control_keywords_match_reasonligo: Core.regexp = {
   emacs    = "\\\\b\\\\(switch\\\\|if\\\\|else\\\\|assert\\\\|failwith\\\\)\\\\b";
   textmate = "\\b(switch|if|else|assert|failwith)\\b";
   vim      = "\\<\\(switch\\|if\\|else\\|assert\\|failwith\\)\\>"
+}
+
+let structure_keywords_match: Core.regexp = {
+  emacs    = "\\\\b\\\\(struct\\\\|end\\\\|in\\\\)\\\\b";
+  textmate = "\\b(struct|end|in)\\b";
+  vim      = "\\<\\(struct\\|end\\|in\\)\\>";
 }
 
 let control_keywords_match_ligo: Core.regexp = {
@@ -96,7 +102,6 @@ let operators_match_ligo: Core.regexp = {
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\>"
 }
 
-
 let module_match1: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\.";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\.";
@@ -104,11 +109,22 @@ let module_match1: Core.regexp = {
 }
 
 let module_match2: Core.regexp = {
-  emacs    = "\\\\([a-z_][a-zA-Z0-9_$]*\\\\)\\\\b";
-  textmate = "([a-z][a-zA-Z0-9_$]*)";
-  vim      = "[a-z_][a-zA-Z0-9_$]*"
+  emacs    = "\\\\b\\\\([a-z_][a-zA-Z0-9_$]*\\\\)\\\\b";
+  textmate = "\\b([a-z][a-zA-Z0-9_$]*)\\b";
+  vim      = "\\<[a-z_][a-zA-Z0-9_$]*\\>";
 }
 
+let module_keyword_match: Core.regexp = {
+  emacs    = "\\\\bmodule\\\\b";
+  textmate = "\\b(module)\\b";
+  vim      = "\\<module\\>";
+}
+
+let identifier_match: Core.regexp = {
+  emacs    = "\\\\b\\\\([a-z$_][a-zA-Z0-9$_]*\\\\)\\\\b";
+  textmate = "\\b([a-z$_][a-zA-Z0-9$_]*)\\b";
+  vim      = "\\<[a-z$_][a-zA-Z0-9$_]*\\>";
+}
 
 let identifier_constructor_match: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";

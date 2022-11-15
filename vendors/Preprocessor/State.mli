@@ -79,13 +79,13 @@ class t :
     method chans   : in_channel list
     method incl    : file_path
     method imports : (file_path * module_name) list
-    method parent  : file_path option
+
+    method ancestors : file_path list
 
   (* DIRECTORIES *)
 
-    method set_incl   : file_path -> 'state
-    method set_parent : file_path -> 'state
-    method orphan     : 'state
+    method set_incl      : file_path -> 'state
+    method push_ancestor : file_path -> 'state
 
   (* CONDITIONAL DIRECTIVES *)
 

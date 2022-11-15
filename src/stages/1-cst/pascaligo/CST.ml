@@ -823,14 +823,6 @@ let rec pattern_to_region = function
 | P_Var     t
 | P_Verbatim t -> t#region
 
-let rec declaration_to_region = function
-  D_Attr     (_,d) -> declaration_to_region d
-| D_Const    {region; _}
-| D_Fun      {region; _}
-| D_Module   {region; _}
-| D_Type     {region; _} -> region
-| D_Directive d -> Directive.to_region d
-
 let selection_to_region = function
   FieldName name -> name#region
 | Component w -> w#region

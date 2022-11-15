@@ -8,7 +8,7 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Control.Lens (ix, makeLensesWith, (?~), (^?!))
+import Control.Lens (Each (each), has, ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
 import Fmt (pretty)
@@ -20,9 +20,9 @@ import Test.Util
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
-  (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate),
+  (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), MovementResult (..),
   NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
-  curSnapshot, frozen, move, moveTill, tsAfterInstrs, twoElemFromList)
+  curSnapshot, frozen, goesAfter, move, moveTill, tsAfterInstrs, twoElemFromList)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
@@ -644,6 +644,138 @@ test_Snapshots = testGroup "Snapshots collection"
 
       unlessM (readIORef anyWritten) do
         assertFailure [int||No logs we're dumped during snapshot collection|]
+
+  , testGroup "comparisons does not produce duplicated snapshots"
+    -- ligo used to produce the same location twice, e.g. for both COMPARE and GT
+
+    [ testCaseSteps "comparison in condition" \step -> do
+        let file = contractsDir </> "if.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 4 :: Integer
+              }
+
+        testWithSnapshots runData do
+          -- Jump to GT
+          lift $ step "jumping to GT"
+          (moveRes, _) <- moveTill Forward $ FrozenPredicate do
+            status <- isStatus <$> curSnapshot
+            return $ preview statusExpressionEvaluatedP status
+                  == Just (SomeLorentzValue False)
+
+          lift $ assertBool
+            "Didn't find the necessary snapshot"
+            (moveRes == MovedSuccessfully)
+
+          srcLocAtGt <- sfLoc . head . isStackFrames <$> frozen curSnapshot
+
+          -- Go back. If for COMPARE we also create a snapshot, our test should fail
+          lift $ step "jumping back"
+          void . moveTill Backward $ FrozenPredicate do
+            status <- isStatus <$> curSnapshot
+            return $ has statusExpressionEvaluatedP status
+
+
+          status <- isStatus <$> frozen curSnapshot
+          when
+            ( preview statusExpressionEvaluatedP status
+              == Just (SomeLorentzValue (-1 :: Integer))
+            ) do
+              srcLocAtCompare <- sfLoc . head . isStackFrames <$> frozen curSnapshot
+              if srcLocAtCompare == srcLocAtGt
+                then lift $ assertFailure
+                  "Created a snapshot at COMPARE that duplicates the snapshot at GT"
+                else lift $ assertFailure
+                  "COMPARE seems to have a different source location than GT, \
+                  \please check that this test is still sensible"
+
+    , testCaseSteps "standalone comparison & comparison against 0" \step -> do
+        -- Checking this just in case, maybe LIGO behaves differently for
+        -- extracted @let cond = a > b@.
+        -- Comparisons against 0 do not require `COMPARE`, however
+        -- at the moment of writing LIGO still uses it.
+        let file = contractsDir </> "bool.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = 5 :: Integer
+              , crdStorage = False
+              }
+
+        testWithSnapshots runData do
+          lift $ step "Skipping push"
+          _ <- moveTill Forward $ goesAfter (SrcPos (Pos 1) (Pos 0))
+          _ <- move Forward  -- skip "upon expression" state
+          do
+            status <- isStatus <$> frozen curSnapshot
+            preview statusExpressionEvaluatedP status
+              @?= Just (SomeLorentzValue (0 :: Integer))
+
+          lift $ step "Checking comparison result"
+          replicateM_ 2 $ move Forward
+          do
+            status <- isStatus <$> frozen curSnapshot
+            preview statusExpressionEvaluatedP status
+              @?= Just (SomeLorentzValue True)
+
+    , testCaseSteps "integer division" \step -> do
+        -- Division in LIGO also leaves the same locations for
+        -- the intermediate computation, 3 times this time.
+        let file = contractsDir </> "if.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 6 :: Integer
+              }
+
+        testWithSnapshots runData do
+          -- Jump to division result
+          lift $ step "jumping to GT"
+          (moveRes, _) <- moveTill Forward $ FrozenPredicate do
+            status <- isStatus <$> curSnapshot
+            return $ preview statusExpressionEvaluatedP status
+                  == Just (SomeLorentzValue (3 :: Integer))
+
+          lift $ assertBool
+            "Didn't find the necessary snapshot"
+            (moveRes == MovedSuccessfully)
+          srcLocAtDiv <- sfLoc . head . isStackFrames <$> frozen curSnapshot
+
+          lift $ step "jumping to the previously computed value"
+          void . moveTill Backward $ FrozenPredicate do
+            has statusExpressionEvaluatedP . isStatus <$> curSnapshot
+
+          srcLocAtBack <- sfLoc . head . isStackFrames <$> frozen curSnapshot
+          lift $ assertBool
+            "Duplicated source range for different snapshots"
+            (srcLocAtDiv /= srcLocAtBack)
+
+    , testCaseSteps "Variables in pattern match" \step -> do
+        let file = contractsDir </> "variables-in-pattern-match.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          void $ moveTill Forward $
+            goesAfter (SrcPos (Pos 4) (Pos 0))
+
+          lift $ step [int||Extract variables|]
+          checkSnapshot \snap -> do
+            -- TODO: extract variables in a neat way when LIGO-758 is merged
+            let vars =
+                  snap ^.. isStackFramesL . ix 0 . sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
+                  <&> maybe ("?" :: Text) pretty
+
+            vars @~=? ["a", "b"]
+    ]
+
   ]
 
 -- | Special options for checking contract.
@@ -675,7 +807,7 @@ unit_Contracts_locations_are_sensible = do
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
       (locations, _, _) <-
-        case readLigoMapper ligoMapper of
+        case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
 
@@ -697,15 +829,15 @@ unit_Contracts_locations_are_sensible = do
       -- we use built-in functions in next contract and they are having weird source locations.
       , ("built-ins", def & coCheckSourceLocationsL .~ False)
       , ("poly", def & coCheckSourceLocationsL .~ False)
+      , ("self", def & coCheckSourceLocationsL .~ False)
+      , ("iterate-big-map", def & coCheckSourceLocationsL .~ False)
       , ("two-entrypoints", def & coEntrypointL ?~ "main1")
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
     badContracts :: [FilePath]
     badContracts = combine contractsDir <$>
-      [ "self.mligo" -- this contract doesn't typecheck in Michelson
-      , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
-      , "no-entrypoint.mligo" -- this file doesn't have any entrypoint
+      [ "no-entrypoint.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
       ]

@@ -3,4 +3,8 @@
  (public_name ligo.environment)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils ast_typed ligo_prim))
+ (libraries simple-utils tezos-utils ast_typed ligo_prim)
+ (preprocess
+  (staged_pps
+   ppx_deriving.eq
+   ppx_compare)))

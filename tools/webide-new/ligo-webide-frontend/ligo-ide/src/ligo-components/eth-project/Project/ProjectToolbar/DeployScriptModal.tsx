@@ -43,10 +43,12 @@ function DeployScriptModal({
 
     await Api.generateDeployScript({
       name,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      sources: contractFiles,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      main: projectManager.mainFilePath,
+      project: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        sourceFiles: contractFiles,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        main: projectManager.mainFilePath,
+      },
       storage,
     })
       .then(async (resp) => {
@@ -99,7 +101,12 @@ function DeployScriptModal({
         onChange={(n: string) => setName(n)}
         placeholder="Name"
       />
-      {result && <code className="user-select">{result}</code>}
+      {result && (
+        <>
+          <div>Result</div>
+          <pre className="pre-box pre-wrap break-all bg-primary text-body">{result}</pre>
+        </>
+      )}
     </Modal>
   );
 }

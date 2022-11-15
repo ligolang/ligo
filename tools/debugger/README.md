@@ -1,5 +1,7 @@
 # Debugger
 
+[![VSCode Extension](https://vsmarketplacebadge.apphb.com/version/ligolang-publish.ligo-debugger-vscode.svg?label=VSCode%20Extension)](https://marketplace.visualstudio.com/items?itemName=ligolang-publish.ligo-debugger-vscode)
+
 A debugger for LIGO contracts for VSCode IDE.
 
 It consists of two parts:

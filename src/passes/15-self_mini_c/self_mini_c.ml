@@ -401,11 +401,14 @@ let etas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (eta changed)
 
+let not_comparable ~raise : expression -> expression =
+  map_expression (Michelson_restrictions.not_comparable ~raise)
+
 let contract_check ~raise ~(options : Compiler_options.t) (init: anon_function) : anon_function=
   if options.backend.experimental_disable_optimizations_for_debugging
   then init
   else
-    let all = [Michelson_restrictions.self_in_lambdas ~raise] in
+    let all = [Michelson_restrictions.self_in_lambdas ~raise; Michelson_restrictions.not_comparable ~raise] in
     let all_e = List.map ~f:(Helpers.map_sub_level_expression) all in
     List.fold ~f:(|>) all_e ~init
 
@@ -418,6 +421,7 @@ let rec all_expression ~raise (options : Compiler_options.t) : expression -> exp
     let e = inline_lets changed e in
     let e = betas changed e in
     let e = etas changed e in
+    let e = not_comparable ~raise e in
     if !changed
     then all_expression ~raise options e
     else e

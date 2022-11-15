@@ -30,7 +30,7 @@ import UnliftIO.MVar (tryReadMVar)
 import UnliftIO.STM (atomically)
 
 import AST
-import Cli (TempSettings, getLigoVersion)
+import Cli (TempSettings, getLigoVersionSafe)
 import Config (Config (..))
 import Extension (isLigoFile)
 import Language.LSP.Util (filePathToNormalizedUri, sendError)
@@ -110,14 +110,14 @@ mainLoop =
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
              S.Handler RIO meth -> S.Handler RIO meth
         addReqLogging handler msg@J.RequestMessage{_method} resp = Log.addNamespace [i|#{_method}|] do
-          version <- getLigoVersion
+          version <- getLigoVersionSafe
           maybe id Log.addContext version $ handler msg resp
 
         addNotifLogging
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
              S.Handler RIO meth -> S.Handler RIO meth
         addNotifLogging handler msg@J.NotificationMessage{_method} = Log.addNamespace [i|#{_method}|] do
-          version <- getLigoVersion
+          version <- getLigoVersionSafe
           maybe id Log.addContext version $ handler msg
 
         handleDisabledReq

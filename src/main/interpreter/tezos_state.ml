@@ -1,14 +1,14 @@
 open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_014_PtKathma_test_helpers
+module Tezos_alpha_test_helpers = Memory_proto_alpha.Test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_014_PtKathma
-module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
-module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
-module Tezos_protocol_parameters = Tezos_protocol_014_PtKathma_parameters
+module Tezos_protocol = Memory_proto_alpha
+module Tezos_protocol_env = Memory_proto_alpha.Alpha_environment
+module Tezos_raw_protocol = Memory_proto_alpha.Raw_protocol
+module Tezos_protocol_parameters = Memory_proto_alpha.Parameters
 
 type r = (Errors.interpreter_error, Main_warnings.all) raise
 
@@ -388,11 +388,9 @@ let extract_origination_from_result
       ; internal_operation_results
       ; balance_updates = _
       } ->
-    let aux
-      (x : Apply_internal_results.packed_internal_manager_operation_result)
-      =
+    let aux (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
-      | Internal_manager_operation_result
+      | Internal_operation_result
           ({ source; _ }, Applied (IOrigination_result x)) ->
         let originated_contracts =
           List.map ~f:(contract_of_hash ~raise) x.originated_contracts
@@ -426,12 +424,9 @@ let extract_event_from_result
       ; internal_operation_results
       ; balance_updates = _
       } ->
-    let aux
-      acc
-      (x : Apply_internal_results.packed_internal_manager_operation_result)
-      =
+    let aux acc (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
-      | Internal_manager_operation_result
+      | Internal_operation_result
           ( { operation = Event { tag; payload; ty }; source; _ }
           , Applied (IEvent_result _) ) ->
         ( source
@@ -459,14 +454,12 @@ let extract_lazy_storage_diff_from_result
       ; internal_operation_results
       ; balance_updates = _
       } ->
-    let aux
-      (x : Apply_internal_results.packed_internal_manager_operation_result)
-      =
+    let aux (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
-      | Internal_manager_operation_result
+      | Internal_operation_result
           ({ source = _; _ }, Applied (IOrigination_result x)) ->
         [ x.lazy_storage_diff ]
-      | Internal_manager_operation_result
+      | Internal_operation_result
           ( { source = _; _ }
           , Applied (ITransaction_result (Transaction_to_contract_result x)) )
         -> [ x.lazy_storage_diff ]
@@ -1065,7 +1058,7 @@ let init_ctxt
     | baker :: _ ->
       let max =
         Tezos_protocol_parameters.Default_parameters.constants_test
-          .tokens_per_roll
+          .minimal_stake
       in
       if Tez.( < ) (Alpha_context.Tez.of_mutez_exn baker) max
       then raise.error (Errors.not_enough_initial_accounts loc max)

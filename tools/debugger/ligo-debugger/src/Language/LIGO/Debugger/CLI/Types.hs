@@ -5,7 +5,7 @@ module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
   ) where
 
-import Control.Lens (AsEmpty (..), forOf, prism)
+import Control.Lens (AsEmpty (..), forOf, makePrisms, prism)
 import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
@@ -15,6 +15,7 @@ import Data.Char (isDigit)
 import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
+import Data.SemVer qualified as SemVer
 import Data.Text qualified as T
 import Data.Typeable (cast)
 import Data.Vector qualified as V
@@ -24,7 +25,10 @@ import Text.Interpolation.Nyan (int, rmode')
 
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
+import Morley.Michelson.Text (MText)
 import Morley.Util.Lens
+
+import Util
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -273,6 +277,8 @@ data LigoExposedStackEntry = LigoExposedStackEntry
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
+makeLensesWith postfixLFields ''LigoExposedStackEntry
+
 instance Buildable LigoExposedStackEntry where
   build (LigoExposedStackEntry decl ty) =
     let declB = maybe "?" build decl
@@ -294,6 +300,8 @@ data LigoStackEntry
     -- reusable functions or part of sum type when unfolding via @IF_LEFT@s.
   deriving stock (Show, Eq, Generic)
   deriving anyclass (NFData)
+
+makePrisms ''LigoStackEntry
 
 instance Buildable LigoStackEntry where
   build = \case
@@ -363,6 +371,9 @@ data LigoIndexedInfo = LigoIndexedInfo
 
 makeLensesWith postfixLFields ''LigoIndexedInfo
 
+instance Default LigoIndexedInfo where
+  def = LigoIndexedInfo Nothing Nothing
+
 instance Buildable LigoIndexedInfo where
   build = \case
     LigoEmptyLocationInfo -> "none"
@@ -425,13 +436,31 @@ instance FromJSON LigoMapper where
 class (Exception e) => DebuggerException e
 
 newtype LigoException = LigoException { leMessage :: Text }
-  deriving newtype (Eq, Show, FromBuilder, Buildable)
+  deriving newtype (Eq, Show, FromBuilder)
   deriving anyclass (DebuggerException)
 
 instance Default LigoException where
   def = LigoException ""
 
+instance Buildable LigoException where
+  -- Here we need to strip that prefix in order to escape
+  -- tautology "Internal error: failed to handle: Internal error: %some LIGO error message%"
+  build (LigoException (T.stripPrefix "Internal error: " -> Just stripped)) = build stripped
+  build LigoException{..} = build leMessage
+
 instance Exception LigoException where
+  displayException = pretty
+
+newtype UnsupportedLigoVersionException =
+    UnsupportedLigoVersionException SemVer.Version
+  deriving stock (Show)
+  deriving anyclass (DebuggerException)
+
+instance Buildable UnsupportedLigoVersionException where
+  build (UnsupportedLigoVersionException ver) =
+    [int||Used `ligo` executable has #semv{ver} version which is not supported|]
+
+instance Exception UnsupportedLigoVersionException where
   displayException = pretty
 
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
@@ -461,6 +490,13 @@ newtype DapMessageException = DapMessageException DAP.Message
 instance Exception DapMessageException where
   displayException (DapMessageException msg) = DAP.formatMessage msg
 
+newtype ReplacementException = ReplacementException MText
+  deriving newtype (Show, Buildable)
+  deriving anyclass (DebuggerException)
+
+instance Exception ReplacementException where
+  displayException = pretty
+
 data SomeDebuggerException where
   SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
 
@@ -473,5 +509,7 @@ instance Exception SomeDebuggerException where
     asum
       [ SomeDebuggerException <$> fromException @LigoException e
       , SomeDebuggerException <$> fromException @DapMessageException e
+      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
+      , SomeDebuggerException <$> fromException @ReplacementException e
       , cast @_ @SomeDebuggerException e'
       ]

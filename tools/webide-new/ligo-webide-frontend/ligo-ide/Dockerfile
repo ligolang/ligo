@@ -10,7 +10,7 @@ COPY . .
 
 RUN yarn install
 
- 
+ENV MEASUREMENT_ID="G-5H01XTN4PY"
 RUN yarn build:react-prod
 
 FROM ${RUNNER_IMAGE}

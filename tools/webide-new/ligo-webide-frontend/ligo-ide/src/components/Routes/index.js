@@ -6,6 +6,11 @@ import { Input, LoadingScreen, CenterScreen } from "~/base-components/ui-compone
 
 import BottomBar from "./BottomBar";
 
+import actions from "~/base-components/workspace/actions";
+import fileOps from "~/base-components/file-ops";
+import { ProjectManager } from "~/base-components/workspace/ProjectManager";
+import redux, { Provider } from "~/base-components/redux";
+
 Input.defaultProps = {
   type: "text",
   autoComplete: "off",
@@ -19,6 +24,7 @@ const Project = lazy(() => import("./Project" /* webpackChunkName: "Project" */)
 const Contract = lazy(() => import("./Contract" /* webpackChunkName: "Contract" */));
 const Explorer = lazy(() => import("./Explorer" /* webpackChunkName: "Explorer" */));
 const Network = lazy(() => import("./Network" /* webpackChunkName: "Network" */));
+const OpenProject = lazy(() => import("./OpenProject" /* webpackChunkName: "OpenProject" */));
 
 export default function (props) {
   return (
@@ -48,8 +54,23 @@ export default function (props) {
           <Route
             exact
             path="/:username"
-            component={UserHomepage}
             className="p-relative w-100 h-100"
+            component={UserHomepage}
+          />
+          <Route
+            exact
+            path="/share/:gistid"
+            className="p-relative w-100 h-100"
+            render={(routerProps) => {
+              const projectLink = routerProps.match?.params?.gistid;
+              if (!projectLink || !projectLink || projectLink === "local") {
+                const isMatch = projectLink.match(/^[0-9,a-f]{32}$/gi);
+                if (isMatch === null || isMatch.length === 0) {
+                  return <Redirect to="/local}" />;
+                }
+              }
+              return <OpenProject projectLink={projectLink} />;
+            }}
           />
           <CacheRoute
             exact

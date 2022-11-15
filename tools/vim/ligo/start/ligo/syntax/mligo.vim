@@ -6,18 +6,14 @@ endif
 syntax cluster top contains=TOP
 
 " typeproduct
-syntax region typeproduct start="{" end="}" contained contains=identifier,typeannotation,semicolon 
+syntax region typeproduct start="{" end="}" contained contains=uppercaseidentifier,typeannotation,semicolon 
 
 " typeint
 syntax match typeint "\<[0-9]+\>" contained 
 highlight link typeint Number 
 
-" typemodule
-syntax match typemodule "\<[A-Z][a-zA-Z0-9_$]*\." contained 
-highlight link typemodule Identifier 
-
 " typeparentheses
-syntax region typeparentheses start="(" end=")" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeparentheses start="(" end=")" contained contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 
 " typevar
 syntax match typevar "'\<[a-z_][a-zA-Z0-9_]*\>" contained 
@@ -32,29 +28,24 @@ syntax match typeoperator "\(->\|\.\|\*\||\)" contained
 highlight link typeoperator Operator 
 
 " typeannotationlambda
-syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" end="\()\|=\|;\|}\|->\)\@=" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" end="\()\|=\|;\|}\|->\)\@=" contained contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotationlambda_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
-" identifierconstructor
-syntax match identifierconstructor "\<[A-Z][a-zA-Z0-9_$]*\>" 
-highlight link identifierconstructor Label 
+" lowercaseidentifier
+syntax match lowercaseidentifier "\<[a-z$_][a-zA-Z0-9$_]*\>" contained 
+highlight link lowercaseidentifier Identifier 
 
-" identifier
-syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
-
-" module
-syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
-highlight link module_ Identifier 
-syntax match module "\<[A-Z][a-zA-Z0-9_$]*\." nextgroup=module_ skipempty skipwhite
-highlight link module Structure 
+" uppercaseidentifier
+syntax match uppercaseidentifier "\<[A-Z][a-zA-Z0-9_$]*\>" 
+highlight link uppercaseidentifier Structure 
 
 " lambda
 syntax region lambda matchgroup=lambda_ start="\<fun\>" matchgroup=lambda__ end="\(->\)" contains=typeannotationlambda 
@@ -84,8 +75,16 @@ highlight link letbinding_ StorageClass
 syntax match letbinding "\<\(let\)\>" nextgroup=letbinding_ skipempty skipwhite
 highlight link letbinding Keyword 
 
+" moduledeclaration
+syntax match moduledeclaration "\<module\>" 
+highlight link moduledeclaration Keyword 
+
+" structurekeywords
+syntax match structurekeywords "\<\(struct\|end\|in\)\>" 
+highlight link structurekeywords Keyword 
+
 " controlkeywords
-syntax match controlkeywords "\<\(match\|with\|if\|then\|else\|assert\|failwith\|begin\|end\|in\)\>" 
+syntax match controlkeywords "\<\(match\|with\|if\|then\|else\|assert\|failwith\|begin\)\>" 
 highlight link controlkeywords Conditional 
 
 " macro
