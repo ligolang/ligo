@@ -43,7 +43,8 @@ COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 # Run tests
-RUN opam exec -- dune runtest --profile static --no-buffer \
+RUN opam exec -- dune build @check \
+  && opam exec -- dune runtest --profile static --no-buffer \
 # Coverage (only the overall)
   && find . -name '*.coverage' | xargs rm -f \
   && opam exec -- dune clean \
