@@ -7,9 +7,7 @@ module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
   , TestInfo (..)
   ) where
 
-import Control.Lens
-import Data.HashMap.Strict qualified as HM
-import Data.Text qualified as T
+import Control.Lens (_Just, to)
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.Directory (makeAbsolute)
@@ -67,7 +65,7 @@ testInfos =
 constructExpectedWorkspaceEdit :: [(Range, String)] -> [J.TextEdit]
 constructExpectedWorkspaceEdit = map constructCodeAction
   where
-    constructCodeAction (r, s) = J.TextEdit { _range = toLspRange r , _newText = T.pack s }
+    constructCodeAction (r, s) = J.TextEdit { _range = toLspRange r , _newText = toText s }
 
 extractTypeAliasDriver :: TestTree -> TestTree
 extractTypeAliasDriver = testGroup "Extract type extractedTypeNameAlias code action" . pure
@@ -82,7 +80,7 @@ extractTextEdits :: J.CodeAction -> [J.TextEdit]
 extractTextEdits action = unwrapEdits edits
   where
     edits :: [(J.Uri, J.List J.TextEdit)]
-    edits = action ^. J.edit . _Just . J.changes . _Just . to HM.toList
+    edits = action ^. J.edit . _Just . J.changes . _Just . to toPairs
 
     unwrapEdits :: [(J.Uri, J.List J.TextEdit)] -> [J.TextEdit]
     unwrapEdits = \case

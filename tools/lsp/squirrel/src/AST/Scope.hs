@@ -9,15 +9,15 @@ module AST.Scope
 
 import Algebra.Graph.Class qualified as G (vertex)
 import Algebra.Graph.ToGraph qualified as G (vertexList)
-import Control.Monad ((<=<))
 
 import AST.Includes (insertPreprocessorRanges)
 import AST.Scope.Common as M
 import AST.Scope.Fallback as M
 import AST.Scope.FromCompiler as M
 import AST.Scope.Standard as M
-import Cli.Types (TempSettings)
+import Unsafe
 
+import Cli.Types (TempSettings)
 import Progress (ProgressCallback)
 
 -- | Like 'addScopes', but doesn't visit includes. That is, this function only
@@ -30,5 +30,5 @@ addShallowScopes
   -> ContractInfo
   -> m ContractInfo'
 addShallowScopes tempSettings reportProgress =
-  (fmap (head . G.vertexList) . addScopes @parser tempSettings reportProgress . G.vertex)
+  (fmap (Unsafe.head . G.vertexList) . addScopes @parser tempSettings reportProgress . G.vertex)
   <=< insertPreprocessorRanges

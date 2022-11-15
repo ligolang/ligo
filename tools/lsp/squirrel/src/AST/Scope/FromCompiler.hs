@@ -2,22 +2,13 @@ module AST.Scope.FromCompiler
   ( FromCompiler
   ) where
 
-import Control.Arrow ((&&&))
 import Control.Category ((>>>))
 import Control.Comonad.Cofree (Cofree (..), _extract)
-import Control.Lens (view)
-import Control.Monad.Reader (runReader)
-import Data.Either (partitionEithers)
-import Data.Foldable (foldlM)
-import Data.Function (on)
-import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
-import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.String (IsString)
-import Data.Text (Text)
 import Duplo.Lattice
 import UnliftIO.Directory (canonicalizePath)
+
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
@@ -65,10 +56,10 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       -> m (HashMap Text ScopedDecl)
     fromScopes namespace (LigoDefinitionsInner variables _ modules moduleAliases) =
       foldMapM id
-        [ foldMapM (uncurry (fromVariableDecl namespace)) $ HashMap.toList variables
+        [ foldMapM (uncurry (fromVariableDecl namespace)) $ toPairs variables
         -- TODO (LIGO-593): Types are ignored!
-        , foldMapM (uncurry (fromModuleDecl namespace)) $ HashMap.toList modules
-        , foldMapM (uncurry (fromModuleAliasDecl namespace)) $ HashMap.toList moduleAliases
+        , foldMapM (uncurry (fromModuleDecl namespace)) $ toPairs modules
+        , foldMapM (uncurry (fromModuleAliasDecl namespace)) $ toPairs moduleAliases
         ]
 
     normalizeRange :: Range -> m Range
@@ -138,7 +129,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       where
         loop
           = withListZipper
-          $ find (subject `isCoveredBy`) >>> atLocus maybeLoop
+          $ ListZipper.find (subject `isCoveredBy`) >>> atLocus maybeLoop
 
         isCoveredBy = leq `on` snd . view _extract
 

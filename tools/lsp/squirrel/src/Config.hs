@@ -9,7 +9,6 @@ module Config
 import Data.Aeson
   (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:), (.:?), (.=))
 import Data.Default (Default (def))
-import Data.Set (Set)
 import Language.LSP.Types qualified as J
 
 import Cli (LigoClientEnv (..))

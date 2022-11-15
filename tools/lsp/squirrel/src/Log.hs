@@ -25,19 +25,16 @@ module Log
   , flagBasedSeverity
   ) where
 
-import Control.Monad.IO.Unlift (MonadIO (..), MonadUnliftIO)
-import Control.Monad.Trans (lift)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.String.Interpolate.IsString (i)
-import Data.Text (pack)
 import Katip
 import Katip.Monadic (NoLoggingT (..))
 import Language.Haskell.TH (ExpQ)
 import Language.Haskell.TH.Syntax.Compat (SpliceQ, examineSplice, liftSplice)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
-import System.IO (stderr)
 import System.IO.Temp (getCanonicalTemporaryDirectory)
-import UnliftIO.Exception (bracket)
+import UnliftIO.Exception as UnliftIO (bracket)
 
 instance MonadFail m => MonadFail (NoLoggingT m) where
   fail = lift . fail
@@ -90,7 +87,7 @@ withLogger level initNamespace env action = do
       handleScribe <- mkFileScribe (dir </> "ligo-language-server.log") (permitItem DebugS) V3
       registerScribe "Log file" handleScribe defaultScribeSettings le
     delLogEnv = liftIO . closeScribes
-  bracket mkLogEnv delLogEnv \le ->
+  UnliftIO.bracket mkLogEnv delLogEnv \le ->
     action (runKatipContextT le () initNamespace)
 
 flagBasedEnv :: SpliceQ Environment
@@ -98,13 +95,13 @@ flagBasedEnv = liftSplice do
   let flagName = "LIGO_ENV"
   liftIO (lookupEnv flagName) >>= maybe
     (examineSplice [|| "production" ||])
-    (\flag -> examineSplice [|| Environment (pack flag) ||])
+    (\flag -> examineSplice [|| Environment (toText @String flag) ||])
 
 flagBasedSeverity :: SpliceQ Severity
 flagBasedSeverity = liftSplice do
   let flagName = "LIGO_SEVERITY"
   liftIO (lookupEnv flagName) >>= maybe
     (examineSplice [|| InfoS ||])
-    (\flag -> case textToSeverity $ pack flag of
+    (\flag -> case textToSeverity $ toText flag of
       Nothing -> fail $ "Unrecognized " <> flagName <> " flag: " <> flag
       Just severity -> examineSplice [|| severity ||])

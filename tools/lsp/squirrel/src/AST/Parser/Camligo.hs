@@ -4,6 +4,8 @@ module AST.Parser.Camligo
   ( recognise
   ) where
 
+import Prelude hiding (Alt)
+
 import AST.Skeleton
 
 import Duplo.Tree

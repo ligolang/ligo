@@ -27,23 +27,19 @@ module Cli.Json
   )
 where
 
-import Control.Lens (_head, over)
+import Prelude hiding (Element, Product (..), sum)
+
+import Control.Lens (_head)
 import Data.Aeson.KeyMap (toAscList)
 import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
-import Data.Foldable (toList)
-import Data.Function ((&))
+import Data.Foldable qualified (toList)
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.List.NonEmpty qualified as NE
-import Data.Maybe (fromMaybe)
-import Data.Proxy (Proxy (..))
-import Data.Text (Text)
-import GHC.Generics (Generic, Rep)
-import GHC.TypeLits (KnownNat, Nat, natVal)
+import Debug qualified (show)
+import GHC.Generics (Rep)
+import GHC.TypeLits (Nat)
 import Language.LSP.Types qualified as J
-import Prelude hiding (sum)
 
 import AST.Skeleton hiding (CString)
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
@@ -394,7 +390,7 @@ newtype LigoJSON (n :: Nat) a = LigoJSON a
 instance forall n a. (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON (LigoJSON n a) where
   parseJSON = fmap LigoJSON . genericParseJSON defaultOptions
     { fieldLabelModifier =
-      drop (fromInteger (natVal $ Proxy @n) + 2)
+      genericDrop (natVal (Proxy @n) + 2)
       . toSnakeCase
     }
 
@@ -433,7 +429,7 @@ instance FromJSON LigoRange where
 
 instance Pretty LigoError where
   pp (LigoError status stage (LigoErrorContent msg at)) = mconcat
-    [ pp status <+> " in ", text $ show stage
+    [ pp status <+> " in ", text $ Debug.show stage
     , case at of
         Nothing -> mempty
         Just at' -> text "\n\nat: " <> pp (fromLigoRangeOrDef at')
@@ -519,7 +515,7 @@ fromLigoType
 fromLigoType st = \case
   LTCConstant LigoTypeConstant {..} ->
     -- See: https://gitlab.com/ligolang/ligo/-/issues/1478
-    fromLigoConstant (NE.head _ltcInjection & over _head toLower) _ltcParameters
+    fromLigoConstant (head _ltcInjection & over _head toLower) _ltcParameters
 
   LTCVariable variable -> fromLigoPrimitive Nothing $ _ltvName variable
 
@@ -560,7 +556,7 @@ fromLigoType st = \case
       make' (st, TApply n p)
 
     fromLigoTable fieldKind x =
-      map (uncurry (fromLigoTableField fieldKind)) $ HM.toList $ _lttFields x
+      map (uncurry (fromLigoTableField fieldKind)) $ toPairs $ _lttFields x
 
     fromLigoTableField
       :: FieldKind
@@ -598,6 +594,6 @@ make' (i, f)
   | null ges = i :< inject f
   | otherwise = i' :< inject f
   where
-    ges = List.filter (not . (`leq` i)) (extract <$> toList f)
+    ges = List.filter (not . (`leq` i)) (extract <$> Data.Foldable.toList f)
     r = getElem (List.minimum ges) `merged` getElem (List.maximum ges)
     i' = putElem r i

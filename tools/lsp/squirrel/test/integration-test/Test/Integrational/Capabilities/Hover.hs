@@ -34,7 +34,7 @@ unit_hover_arrow_type_jsligo = do
   --Hover.unit_hover_arrow_type_jsligo @Standard
   -- FIXME: LIGO doesn't yield all references in this test
   --Hover.unit_hover_arrow_type_jsligo @FromCompiler
-  pure ()
+  pass
 
 unit_hover_apply_type :: Assertion
 unit_hover_apply_type = do

@@ -6,13 +6,10 @@ module AST.Scope.ScopedDecl.Parser
   , parseModule
   ) where
 
+import Prelude hiding (Type)
+
 import Control.Lens ((??))
-import Control.Monad.Reader (Reader, ask, lift)
-import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Coerce (coerce)
-import Data.Foldable (asum)
-import Data.Functor ((<&>))
-import Data.List.NonEmpty (nonEmpty, toList)
 import Duplo.Tree (layer, match)
 import Witherable (wither)
 
@@ -54,9 +51,6 @@ parseType node = do
       , parseVariableType
       , parseParenType
       ]
-
-hoistMaybe :: Applicative f => Maybe a -> MaybeT f a
-hoistMaybe = MaybeT . pure
 
 parseParenType :: PPableLIGO info => LIGO info -> Parser (Maybe Type)
 parseParenType node = runMaybeT do

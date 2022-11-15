@@ -36,7 +36,9 @@ module AST.Capabilities.CodeAction.ExtractTypeAlias
   , extractedTypeNameAlias
   ) where
 
-import Control.Monad.Trans.Writer
+import Prelude hiding (Product (..), Type)
+
+import Control.Monad.Trans.Writer (execWriter, tell)
 import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
 import Data.Text qualified as T
@@ -110,7 +112,7 @@ genTypeName _tree =
   --     = head
   --     . filterOutFirst (isJust . findInTree)
   --     $ ("t"<>) . T.pack . show @Integer <$> [0..]
-  T.pack extractedTypeNameAlias
+  toText extractedTypeNameAlias
 
 -- | Reconstructs type definition node from given alias name and
 -- either if it's a typename or some other complex type.
@@ -124,7 +126,7 @@ constructTypeAlias
 constructTypeAlias dialect alias typeVars t Range{_rStart = (sl, sc, _)} =
   J.TextEdit
     { _range = toLspRange $ point sl sc
-    , _newText = T.pack . (<>"\n") . show . lppDialect @(LIGO Info') dialect $
+    , _newText = (<>"\n") . show . lppDialect @(LIGO Info') dialect $
         case t of
           (Left typeName) ->
             defaultState :< inject @Binding
@@ -197,12 +199,12 @@ makeReplaceTypeEdits newTypeName (Left typeNode) =
     [ Visit @Type \(getRange -> r) -> \case
         typeNode' | typeNode == typeNode' ->
           tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
-        _ -> pure ()
+        _ -> pass
     ]
 makeReplaceTypeEdits newTypeName (Right oldTypeName) =
   execWriter . visit'
     [ Visit @TypeName \(getRange -> r) -> \case
         TypeName typeName' | oldTypeName == typeName' ->
           tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
-        _ -> pure ()
+        _ -> pass
     ]

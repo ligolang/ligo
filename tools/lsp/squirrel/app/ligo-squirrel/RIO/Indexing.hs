@@ -8,25 +8,18 @@ module RIO.Indexing
   , handleProjectFileChanged
   ) where
 
-import Control.Lens (view)
-import Control.Monad (void, when)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
 import Data.Aeson (eitherDecodeFileStrict', encodeFile)
-import Data.Bool (bool)
 import Data.Default (def)
-import Data.List (inits)
-import Data.Maybe (catMaybes)
-import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
-import System.IO (IOMode (ReadMode), hFileSize, withFile)
+import System.IO (hFileSize)
 import UnliftIO.Directory (canonicalizePath, findFile, withCurrentDirectory)
-import UnliftIO.Exception (displayException, tryIO)
-import UnliftIO.MVar (isEmptyMVar, putMVar, swapMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
+import UnliftIO.Exception (tryIO)
+import UnliftIO.MVar (isEmptyMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
+import Unsafe qualified
 import Witherable (ordNubOn)
 
 import Cli qualified
@@ -168,13 +161,13 @@ askForIndexDirectory contractDir = do
           }
         (\(fmap (fmap (view J.title)) -> choice) ->
           bool don'tCreate doCreate (choice == Right (Just "Yes")))
-    handleChosenOption _ = pure ()
+    handleChosenOption _ = pass
 
     mkGitDirectory :: RIO (Maybe FilePath)
     mkGitDirectory = tryIO (readCreateProcess git "") >>= either
       (\e -> Nothing <$ $Log.warning [Log.i|#{displayException e}|])
       -- The output includes a trailing newline, we remove it with `init`.
-      (pure . Just . init)
+      (pure . Just . Unsafe.init)
       where
         git :: CreateProcess
         git = (proc "git" ["rev-parse", "--show-toplevel"])
@@ -185,7 +178,7 @@ askForIndexDirectory contractDir = do
     mkRequest suggestions = J.ShowMessageRequestParams
       { _xtype = J.MtInfo
       , _message = [Log.i|Choose a directory to index LIGO files. See #{projectIndexingMarkdownLink} for more details.|]
-      , _actions = Just $ J.MessageActionItem . T.pack . prettyIndexOptions <$> suggestions
+      , _actions = Just $ J.MessageActionItem . toText . prettyIndexOptions <$> suggestions
       }
 
     handleParams
@@ -198,7 +191,7 @@ askForIndexDirectory contractDir = do
       (maybe DoNotIndex getPathFromChosenOption)
       where
         getPathFromChosenOption :: J.MessageActionItem -> IndexOptions
-        getPathFromChosenOption (view J.title -> T.unpack -> chosen)
+        getPathFromChosenOption (view J.title -> toString -> chosen)
           | Just path <- gitProject
           , chosen == path = FromGitProject path
           | Just path <- rootProject

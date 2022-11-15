@@ -8,20 +8,16 @@ module AST.Capabilities.SignatureHelp
   , toLspParameters
   ) where
 
+import Prelude hiding (Product (..))
+
 import Language.LSP.Types qualified as LSP
   (List (..), ParameterInformation (..), ParameterLabel (..), SignatureHelp (..),
   SignatureHelpDoc (..), SignatureInformation (..))
 
-import Control.Applicative ((<|>))
-import Control.Lens (_1, _Just, (^..), (^?))
-import Control.Monad (void, when)
-import Control.Monad.Trans.RWS
-import Data.Foldable (asum)
+import Control.Lens (_Just)
+import Control.Monad.Trans.RWS (RWS, execRWS, tell)
 import Data.List (findIndex)
-import Data.Maybe (fromMaybe)
-import Data.Monoid (Endo (..))
-import Data.Text (Text)
-import Data.Text qualified as Text (intercalate, unwords)
+import Data.Text qualified as Text (intercalate)
 import Duplo.Lattice (leq)
 import Duplo.Pretty (fsep, pp, ppToText)
 import Duplo.Tree (extract, layer, match, spineTo)
@@ -76,14 +72,14 @@ matchValuesAndTypes position params' args' =
       local (+ ixIncr) $ go params args
     -- There are more arguments than parameters, so the user has typed extra
     -- arguments. We stop here.
-    go [] (_ : _) = pure ()
+    go [] (_ : _) = pass
     -- There are more parameters than arguments, so the user has not typed
     -- everything yet.
     go (param : params) [] = do
       ix <- ask
       modify \activeParamNo -> activeParamNo <|> Just ix
       tell $ Endo ((param : params) <>)
-    go [] [] = pure ()
+    go [] [] = pass
 
     getParamTuple :: Parameter -> Maybe [Pattern]
     getParamTuple = \case
@@ -145,7 +141,7 @@ makeSignatureLabel :: Lang -> Text -> [Text] -> Text
 makeSignatureLabel Pascal name params
   = "function " <> name <> " (" <> Text.intercalate "; " params <> ")"
 makeSignatureLabel Caml name params
-  = "let " <> name <> " " <> Text.unwords params
+  = "let " <> name <> " " <> unwords params
 makeSignatureLabel Reason name params
   = "let " <> name <> " = (" <> Text.intercalate ", " params <> ")"
 makeSignatureLabel Js name params

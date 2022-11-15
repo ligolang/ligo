@@ -10,13 +10,10 @@ module RIO
   ) where
 
 import Algebra.Graph.Class qualified as G (empty)
-import Control.Monad (unless, void)
-import Control.Monad.Reader (runReaderT)
 import Data.Aeson (Result (Error, Success), Value, fromJSON)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
-import UnliftIO.MVar (newEmptyMVar, newMVar, tryReadMVar)
 
 import AST (Standard)
 import ASTMap qualified

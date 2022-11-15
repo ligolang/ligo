@@ -3,6 +3,8 @@ module AST.Parser.Jsligo
   ( recognise
   ) where
 
+import Prelude hiding (Alt)
+
 import AST.Skeleton
 
 import Duplo.Tree

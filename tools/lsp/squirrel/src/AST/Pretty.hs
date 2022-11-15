@@ -1,26 +1,24 @@
+{-# LANGUAGE PolyKinds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Pretty printers for all 4 dialects and core s-expressions
 -- and their corresponding `Show` instances for @AST.Skeleton@ types.
 
 module AST.Pretty
-  ( module Exports
+  ( module DPretty
   , LPP (..)
   , PPableLIGO
   , Pretty (..)
   , TotalLPP
-  , docToText
   , lppDialect
   , sexpr
   ) where
 
-import Data.Kind (Type)
-import Data.List.NonEmpty (NonEmpty (..), toList)
+import Prelude hiding (Alt, Sum)
+
 import Data.Sum
-import Data.Text (Text)
-import Data.Text qualified as Text (pack)
 import Duplo (Cofree ((:<)), Layers)
-import Duplo.Pretty as Exports
+import Duplo.Pretty as DPretty
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
   parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
@@ -127,17 +125,17 @@ instance LPP1 d Error where
 
 sexpr :: Text -> [Doc] -> Doc
 sexpr header [] = "(" <.> pp header <.> ")"
-sexpr header items = "(" <.> pp header `indent` foldr1 above items <.> ")"
+sexpr header items = "(" <.> pp header `indent` foldr above DPretty.empty items <.> ")"
 
 sop :: Doc -> Text -> [Doc] -> Doc
-sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
+sop a op b = "(" <.> a `indent` pp op `indent` foldr above DPretty.empty b <.> ")"
 
 blockWith :: forall dialect p . LPP dialect p => (Doc -> Doc) -> [p] -> Doc
-blockWith f = foldr (indent . f . lpp @dialect) empty
+blockWith f = foldr (indent . f . lpp @dialect) DPretty.empty
 
 block' :: [Doc] -> Doc
 -- block' = foldr (<.>) empty . map ((<.> "\n") . lpp)
-block' = foldr (($+$) . (<.> "\n") . lpp) empty
+block' = foldr (($+$) . (<.> "\n") . lpp) DPretty.empty
 
 list :: forall dialect p . LPP dialect p => [p] -> Doc
 list = brackets . train @dialect @p ";"
@@ -355,7 +353,7 @@ instance Pretty1 Error where
     Error src children -> sexpr "ERROR" ["\"" <> pp src <> "\"", pp children]
 
 instance Pretty LineMarker where
-  pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ Text.pack fp, pp f]
+  pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ toText fp, pp f]
 
 instance Pretty LineMarkerType where
   pp RootFile     = ""
@@ -368,8 +366,13 @@ instance Pretty1 CaseOrDefaultStm where
     DefaultStm s -> sexpr "default" [pp s]
 
 -- Orphans
+type instance PrettyShow J.UInt = ()
+type instance PrettyShow (J.SMethod _) = ()
+type instance PrettyShow Doc = ()
+type instance PrettyShow Range = ()
+
 instance Pretty J.UInt where
-  pp = pp . Text.pack . show
+  pp = pp . show @Text
 
 ----------------------------------------------------------------------------
 -- Common
@@ -468,7 +471,7 @@ instance LPP1 'Pascal Binding where
     BModuleAlias  mname alias    -> "module" <+> lpp mname <+> lpp alias
 
     BFunction _ name params ty body ->
-      foldr (<+>) empty $ concat
+      foldr (<+>) DPretty.empty $ concat
         [ ["function"]
         , [name]
         , params
@@ -508,13 +511,13 @@ instance LPP1 'Pascal Expr where
     Map       bs         -> "map [" `indent` train ";" bs `above` "]"
     Remove    k c s      -> "remove" <+> k <+> "from" <+> c <+> s
     Skip                 -> "skip"
-    ForLoop   j s f d b  -> foldr (<+>) empty
+    ForLoop   j s f d b  -> foldr (<+>) DPretty.empty
       [ "for", j, ":=", lpp s
       , "to", lpp f, "block' {", lpp d, "} with", lpp b
       ]
-    ForBox    k mv t z b -> foldr (<+>) empty
+    ForBox    k mv t z b -> foldr (<+>) DPretty.empty
       [ "for", k
-      , maybe empty ("->" <+>) mv
+      , maybe DPretty.empty ("->" <+>) mv
       , "in", lpp t
       , z, lpp b
       ]
@@ -524,11 +527,11 @@ instance LPP1 'Pascal Expr where
     Lambda    ps ty b    -> "function" <+> lpp ps <+> ":" <+> lpp ty <+> "is" <+> lpp b
     Patch     z bs       -> "patch" <+> z <+> "with" <+> lpp bs
     RecordUpd r up       -> r <+> "with record" <+> lpp up
-    Case      s az       -> foldr (<+>) empty
+    Case      s az       -> foldr (<+>) DPretty.empty
       [ "case"
       , lpp s
       , "of\n"
-      , foldr above empty $ lpp <$> az
+      , foldr above DPretty.empty $ lpp <$> az
       , "end"
       ]
     Paren     e          -> "(" <+> lpp e <+> ")"
@@ -610,7 +613,7 @@ instance LPP1 'Reason TypeVariableName where
 instance LPP1 'Reason Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name ty body  -> foldr (<+>) empty
+    BConst        name ty body  -> foldr (<+>) DPretty.empty
       [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
@@ -641,15 +644,15 @@ instance LPP1 'Reason Expr where
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tuple l
     Annot     n t        -> parens (n <+> ":" <+> t)
-    Case      s az       -> foldr (<+>) empty
+    Case      s az       -> foldr (<+>) DPretty.empty
       [ "switch"
       , lpp s
       , "{\n"
-      , foldr above empty $ lpp <$> az
+      , foldr above DPretty.empty $ lpp <$> az
       , "\n}"
       ]
     Seq       es         -> train " " es
-    Lambda    ps ty b    -> foldr (<+>) empty
+    Lambda    ps ty b    -> foldr (<+>) DPretty.empty
       [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
@@ -734,7 +737,7 @@ instance LPP1 'Js TypeVariableName where
 instance LPP1 'Js Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name ty body  -> foldr (<+>) empty
+    BConst        name ty body  -> foldr (<+>) DPretty.empty
       [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ]
     BAttribute    name          -> "/* @" <.> name <.> " */"
     BInclude      fname         -> "#include" <+> pp fname
@@ -766,16 +769,16 @@ instance LPP1 'Js Expr where
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tupleJsLIGO l
     Annot     n t        -> parens (n <+> ":" <+> t)
-    Case      s az       -> foldr (<+>) empty
+    Case      s az       -> foldr (<+>) DPretty.empty
       [ "match("
       , lpp s
       , ","
       , "{\n"
-      , foldr above empty $ lpp <$> az
+      , foldr above DPretty.empty $ lpp <$> az
       , "\n}"
       ]
     Seq       es         -> train ";" es
-    Lambda    ps ty b    -> foldr (<+>) empty
+    Lambda    ps ty b    -> foldr (<+>) DPretty.empty
       [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     ForOfLoop v c b      -> "for" <+> "(const" <+> v <+> "of" <+> c <+> ") {" `indent` lpp b `above` "}"
@@ -871,12 +874,12 @@ instance LPP1 'Caml Binding where
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
 
     BFunction isRec name params ty body ->
-      foldr (<+>) empty $ concat
+      foldr (<+>) DPretty.empty $ concat
         [ ["let"]
         , ["rec" | isRec]
         , [name]
         , params
-        , [maybe empty ((":" <+>) . lpp) ty]
+        , [maybe DPretty.empty ((":" <+>) . lpp) ty]
         , ["=", body]
         ]
     node                      -> error "unexpected `Binding` node failed with: " <+> pp node
@@ -904,14 +907,14 @@ instance LPP1 'Caml Expr where
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tuple l
     Annot     n t        -> parens (n <+> ":" <+> t)
-    Case      s az       -> foldr (<+>) empty
+    Case      s az       -> foldr (<+>) DPretty.empty
       [ "match"
       , lpp s
       , "with\n"
-      , foldr above empty $ lpp <$> az
+      , foldr above DPretty.empty $ lpp <$> az
       ]
     Seq       es         -> train " " es
-    Lambda    ps ty b    -> foldr (<+>) empty
+    Lambda    ps ty b    -> foldr (<+>) DPretty.empty
       [ train "," ps, maybe "" ((":" <+>) . lpp) ty, "=>", lpp b ]
     RecordUpd r with     -> r <+> "with" <+> train ";" with
     Paren     e          -> "(" <+> lpp e <+> ")"
@@ -975,9 +978,6 @@ lppDialect dialect = case dialect of
   Caml   -> lpp @'Caml
   Reason -> lpp @'Reason
   Js     -> lpp @'Js
-
-docToText :: Doc -> Text
-docToText = Text.pack . show
 
 type PPableLIGO info =
   ( Contains [Text] info

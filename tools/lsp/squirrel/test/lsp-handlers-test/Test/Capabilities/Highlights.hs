@@ -2,12 +2,11 @@ module Test.Capabilities.Highlights
   ( unit_highlights
   ) where
 
-import Control.Monad.IO.Class (liftIO)
-import GHC.Stack (HasCallStack)
 import Language.LSP.Test
 import Language.LSP.Types
   (DocumentHighlight (..), DocumentHighlightKind (..), List (..), Position (..), Range (..))
 import System.FilePath ((</>))
+import Unsafe qualified
 
 import Test.HUnit (Assertion)
 
@@ -55,4 +54,4 @@ unit_highlights = runHandlersTest contractsDir do
   -- Highlight "commit" second local variable (when cursor on declaration)
   highlightTest commit2_local_decl commit2_local_usage commit2_local_decl
   -- Highlight "commit" first local variable (when cursor on usage)
-  highlightTest commit1_local_decl commit1_local_usage (head commit1_local_usage)
+  highlightTest commit1_local_decl commit1_local_usage (Unsafe.head commit1_local_usage)

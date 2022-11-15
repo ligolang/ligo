@@ -27,18 +27,14 @@ module Parser
   , noMatch
   ) where
 
-import Control.Arrow
-import Control.Exception (Exception (..), throwIO)
+import Prelude hiding (Product)
+
+import Control.Exception (throwIO)
 import Control.Monad.RWS hiding (Product)
-import Data.Foldable (find)
-import Data.Functor
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.Maybe (fromJust, fromMaybe, isJust, mapMaybe)
 import Data.String.Interpolate (i)
-import Data.Text (Text)
 import Data.Text qualified as Text
 import Language.LSP.Types qualified as J
-import Text.Read (readMaybe)
+import Unsafe qualified
 
 import Duplo.Pretty
 import Duplo.Tree
@@ -108,9 +104,9 @@ data LineMarker = LineMarker
 
 parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, J.UInt)
 parseLineMarkerText marker = do
-  "#" : lineStr : fileText : flags <- Just $ Text.words marker
-  line <- readMaybe $ Text.unpack lineStr
-  let file = Text.unpack $ Text.init $ Text.tail fileText
+  "#" : lineStr : fileText : flags <- Just $ words marker
+  line <- readMaybe $ toString lineStr
+  let file = toString $ Text.init $ Text.tail fileText
   let markerType = case flags of
         -- TODO: There is an edge case when there are line markers and comments
         -- (see src/test/contracts/includer.{,m,re}ligo, so we assume for now
@@ -257,7 +253,7 @@ withComments act = do
   first (comms :>) <$> act
 
 getMarkers :: [RawTree] -> [LineMarker]
-getMarkers = mapMaybe (parseLineMarker . fromJust . match)
+getMarkers = mapMaybe (parseLineMarker . Unsafe.fromJust . match)
 
 boilerplateImpl
   :: ParserM (f RawTree)

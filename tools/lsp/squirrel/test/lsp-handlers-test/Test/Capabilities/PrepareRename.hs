@@ -45,10 +45,9 @@ testPrepareRenameFail fp pos = do
   r <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc fp
     getPrepareRename doc pos
-  case r of
-    Just (LSP.InL _) -> expectationFailure "should be able to rename"
-    Just (LSP.InR _) -> expectationFailure "should not receive RangeWithPlaceholder"
-    Nothing -> pure ()
+  whenJust r $ \case
+    LSP.InL _ -> expectationFailure "should be able to rename"
+    LSP.InR _ -> expectationFailure "should not receive RangeWithPlaceholder"
 
 unit_prepare_rename_example_fail :: Assertion
 unit_prepare_rename_example_fail = do

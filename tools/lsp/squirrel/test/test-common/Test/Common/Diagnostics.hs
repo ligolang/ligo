@@ -6,7 +6,6 @@ module Test.Common.Diagnostics
   , parseDiagnosticsDriver
   ) where
 
-import Data.List (nub)
 import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import UnliftIO.Directory (makeAbsolute)
@@ -17,7 +16,7 @@ import Diagnostic (Message (..), MessageDetail (..), Severity (..), filterDiagno
 import Range
 
 import Test.Common.Capabilities.Util qualified as Util (contractsDir)
-import Test.Common.FixedExpectations (HasCallStack, shouldMatchList)
+import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.Util (ScopeTester)
 import Test.Tasty.HUnit (Assertion)
 
@@ -115,6 +114,6 @@ parseDiagnosticsDriver source (DiagnosticTest file expectedAllMsgs expectedFilte
       FallbackSource -> fallback
       StandardSource -> fallback <> fromCompiler
     -- FIXME (LIGO-507): Remove duplicated diagnostics.
-    msgs = nub $ collectAllErrors contract
+    msgs = ordNub $ collectAllErrors contract
   msgs `shouldMatchList` catMsgs expectedAllMsgs
   filterDiagnostics msgs `shouldMatchList` catMsgs expectedFilteredMsgs

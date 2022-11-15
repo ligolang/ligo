@@ -8,10 +8,9 @@ module Language.LSP.Util
   ) where
 
 import Control.Lens (dimap)
-import Data.Maybe (fromJust)
-import Data.Text (Text)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
+import Unsafe qualified
 
 sendMsg :: S.MonadLsp config m => J.MessageType -> Text -> m ()
 sendMsg msg = S.sendNotification J.SWindowShowMessage . J.ShowMessageParams msg
@@ -28,7 +27,7 @@ sendInfo = sendMsg J.MtInfo
 reverseUriMap :: S.MonadLsp config m => m (J.NormalizedUri -> J.NormalizedUri)
 reverseUriMap = dimap normalizedUriToFilePath filePathToNormalizedUri <$> S.reverseFileMap
   where
-    normalizedUriToFilePath = fromJust . J.uriToFilePath . J.fromNormalizedUri
+    normalizedUriToFilePath = Unsafe.fromJust . J.uriToFilePath . J.fromNormalizedUri
 
 filePathToNormalizedUri :: FilePath -> J.NormalizedUri
 filePathToNormalizedUri = J.toNormalizedUri . J.filePathToUri

@@ -9,9 +9,7 @@ module Test.Project.Driver
 
 import Algebra.Graph.AdjacencyMap qualified as AM
 import Algebra.Graph.Class qualified as G
-import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (Result (Success), Value (Null), fromJSON)
-import GHC.Stack (HasCallStack)
 import Language.LSP.Test qualified as LSP
 import Language.LSP.Types qualified as LSP
 import System.Directory (canonicalizePath)

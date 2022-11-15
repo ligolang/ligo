@@ -26,13 +26,12 @@ module AST.Skeleton
   , withNestedLIGO
   ) where
 
-import Control.Lens.Lens (Lens, lens)
+import Prelude hiding (Alt, Product, Type)
+
+import Control.Lens.Lens (lens)
 import Data.Functor.Classes (Eq1 (..))
-import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.Text (Text)
-import GHC.Generics (Generic)
+import Text.Show qualified
 
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
@@ -56,7 +55,7 @@ withNestedLIGO
 withNestedLIGO = flip nestedLIGO
 
 instance Pretty (LIGO xs) => Show (SomeLIGO xs) where
-  show = show . PP
+  show = Text.Show.show . PP
 
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
@@ -470,12 +469,12 @@ instance Eq1 TField where
   liftEq f (TField an at) (TField bn bt) = f an bn && liftEqMaybe f at bt
 
 instance Eq1 ModuleAccess where
-  liftEq f (ModuleAccess ap asrc) (ModuleAccess bp bsrc) =
-    f asrc bsrc && liftEqList f ap bp
+  liftEq f (ModuleAccess apath asrc) (ModuleAccess bpath bsrc) =
+    f asrc bsrc && liftEqList f apath bpath
 
 instance Eq1 QualifiedName where
-  liftEq f (QualifiedName asrc ap) (QualifiedName bsrc bp) =
-    f asrc bsrc && liftEqList f ap bp
+  liftEq f (QualifiedName asrc apath) (QualifiedName bsrc bpath) =
+    f asrc bsrc && liftEqList f apath bpath
 
 instance Eq1 Pattern where
   liftEq f (IsConstr na mbpa) (IsConstr nb mbpb) =

@@ -6,7 +6,6 @@ module Test.Common.LSP
   , runHandlersTestWithConfig
   ) where
 
-import Control.Lens ((^.))
 import Data.Aeson (toJSON)
 import Language.LSP.Test
   (Session, SessionConfig (..), defaultConfig, fullCaps, openDoc, runSession, runSessionWithConfig)

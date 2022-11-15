@@ -15,17 +15,13 @@ module Test.Common.Util
   , supportedExtensions
   ) where
 
-import Control.Monad ((<=<))
-import Control.Monad.IO.Class (liftIO)
-import Data.Functor ((<&>))
-import Data.List (isPrefixOf, isSuffixOf)
-import GHC.Stack (HasCallStack)
+import Data.List (isSuffixOf)
 import Language.Haskell.TH.Syntax (liftString)
 import System.Directory (listDirectory)
 import System.Environment (getEnv)
 import System.FilePath (splitDirectories, takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
-import UnliftIO.Exception (catch, throwIO)
+import UnliftIO.Exception as UnliftIO (catch, throwIO)
 
 import AST.Includes (Includes (..), includesGraph, insertPreprocessorRanges)
 import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
@@ -49,7 +45,7 @@ testDir =
   $(
     let
       getDir :: IO FilePath
-      getDir = getEnv "TEST_DIR" `catch` \e ->
+      getDir = getEnv "TEST_DIR" `UnliftIO.catch` \e ->
         if isDoesNotExistError e
         then pure $ ".." </> ".." </> ".." </> "src" </> "test"
         else throwIO e

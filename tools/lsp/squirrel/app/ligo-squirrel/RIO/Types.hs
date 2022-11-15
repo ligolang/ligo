@@ -6,10 +6,9 @@ module RIO.Types
   , RIO (..)
   ) where
 
-import Control.Lens (_head, over)
+import Control.Lens (_head)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, mapReaderT)
-import Control.Monad.Trans (lift)
+import Control.Monad.Reader (mapReaderT)
 import Data.Aeson (Options (..), defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Char (toLower)
@@ -18,7 +17,6 @@ import Katip (Katip (..), KatipContext (..))
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map qualified as StmMap
-import UnliftIO.MVar (MVar)
 import UnliftIO.Pool (Pool)
 
 import AST (ContractInfo', Includes, ParsedContractInfo)

@@ -10,17 +10,12 @@ module AST.Parser
   , collectAllErrors
   ) where
 
-import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
-import Data.Foldable (toList)
-import Data.List (find, isPrefixOf)
-import Data.Maybe (fromMaybe, isJust)
-import Data.Text (Text)
-import Data.Text qualified as Text (lines, unlines)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import System.FilePath (splitDirectories, takeDirectory, takeFileName, (</>))
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 import UnliftIO.Directory (doesDirectoryExist, listDirectory)
-import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
+import UnliftIO.Exception (Handler (..), catches, fromEither)
 
 import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
@@ -83,10 +78,10 @@ loadPreprocessed tempSettings src = do
     prePreprocess contents =
       let
         hasPreprocessor = contents =~ ("^#[ \t]*[a-z]+" :: Text)
-        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
+        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> lines contents
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in
-      (src{srcText = Text.unlines $ map fst prepreprocessed}, shouldPreprocess)
+      (src{srcText = unlines $ map fst prepreprocessed}, shouldPreprocess)
 
 parsePreprocessed :: (HasLigoClient m, Log m) => TempSettings -> Source -> m ContractInfo
 parsePreprocessed tempSettings src = do
@@ -108,8 +103,8 @@ parseWithScopes fp = runNoLoggingT do
     temp = TempSettings top $ GenerateDir $ template <> takeFileName fp
     ignore = not . any (template `isPrefixOf`) . splitDirectories
   graph <- includesGraph =<< parseContracts (parsePreprocessed temp) noProgress ignore top
-  let group = find (isJust . lookupContract fp) $ Includes <$> wcc (getIncludes graph)
-  scoped <- addScopes @impl temp noProgress $ fromMaybe graph group
+  let grp = find (isJust . lookupContract fp) $ Includes <$> wcc (getIncludes graph)
+  scoped <- addScopes @impl temp noProgress $ fromMaybe graph grp
   maybe (contractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
