@@ -102,6 +102,7 @@ data StackFrame u = StackFrame
     -- (and referred by 'sfInstrNo').
   , sfStack :: [StackItem u]
     -- ^ Ligo stack available at the current position of this stack frame.
+    -- Top of the stack goes first.
   } deriving stock (Show, Generic)
 
 deriving stock instance Eq (StackFrame 'Concise)

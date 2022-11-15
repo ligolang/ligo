@@ -241,6 +241,7 @@ instance HasSpecificMessages LIGO where
           & isStackFrames
           & flip (^?!) (ix (frameIdScopesRequestArguments argumentsScopesRequest - 1))
           & sfStack
+          & reverse  -- stack's top should go to the end of the variables list
 
     let builder =
           case isStatus snap of

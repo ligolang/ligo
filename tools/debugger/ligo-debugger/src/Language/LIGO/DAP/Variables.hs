@@ -51,7 +51,7 @@ runBuilder act = (res, vars)
 
 insertToIndex :: Int -> [DAP.Variable] -> VariableBuilder Int
 insertToIndex idx vars = do
-  _2 %= M.insertWith (<>) idx vars
+  _2 %= M.insertWith (\added cur -> cur <> added) idx vars
   pure idx
 
 insertVars :: [DAP.Variable] -> VariableBuilder Int
