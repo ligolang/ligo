@@ -16,6 +16,15 @@ module Cli.Json
   , LigoTypeContent (..)
   , LigoTypeExpression (..)
   , LigoTableField (..)
+  , LigoTypeVariable (..)
+  , LigoTypeSum
+  , LigoTypeRecord
+  , LigoTypeArrow (..)
+  , LigoTypeForAll (..)
+  , LigoTypeApp (..)
+  , LigoTypeModuleAccessor (..)
+  , LigoTypeConstant (..)
+  , LigoTypeTable (..)
   , LigoRange (..)
   , LigoRangeInner (..)
   , LigoByte (..)
