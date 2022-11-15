@@ -2,7 +2,7 @@ import React from "react";
 const valid = ["jsligo", "cameligo", "reasonligo", "pascaligo"];
 const ctx = {
   syntax: (() => {
-    if (typeof window === 'undefined') return "jsligo";
+    if (typeof window === "undefined") return "jsligo";
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop)
     });

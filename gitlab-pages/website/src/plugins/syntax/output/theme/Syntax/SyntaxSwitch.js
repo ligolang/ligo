@@ -1,11 +1,16 @@
-import React from 'react';
-import styles from './styles.module.css';
+import React, { useEffect, useState } from "react";
+import styles from "./styles.module.css";
+
 function SyntaxSwitch(props) {
+  const [_, setState] = useState(0);
+  useEffect(() => {
+    setState(1);
+  }, []);
   return /*#__PURE__*/React.createElement("select", {
     className: styles.syntaxSwitch,
-    defaultValue: props.syntax,
+    value: props.syntax,
     onChange: e => {
-      if (typeof window === 'undefined') return;
+      if (typeof window === "undefined") return;
       const url = new URL(window.location);
       url.searchParams.set("lang", e.target.value);
       window.history.pushState(null, "", url.toString());
@@ -21,4 +26,5 @@ function SyntaxSwitch(props) {
     value: "jsligo"
   }, "JsLIGO"));
 }
+
 export default SyntaxSwitch;

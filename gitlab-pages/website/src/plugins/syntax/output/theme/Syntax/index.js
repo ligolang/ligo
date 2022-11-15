@@ -1,5 +1,6 @@
 import React from 'react';
 import SyntaxContext from './SyntaxContext';
+
 function Syntax(props) {
   return /*#__PURE__*/React.createElement(SyntaxContext.Consumer, null, ({
     syntax
@@ -11,5 +12,6 @@ function Syntax(props) {
     }
   });
 }
+
 export default Syntax;
 export { SyntaxContext };
