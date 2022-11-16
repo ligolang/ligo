@@ -23,13 +23,14 @@ module LigoManifest = Cli_helpers.LigoManifest
 module RepositoryUrl = Cli_helpers.RepositoryUrl
 module SMap = Caml.Map.Make (String)
 
-type sem_ver = string [@@deriving to_yojson]
-type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 type object_ = (string * string) list
 
 let object__to_yojson o =
   `Assoc (List.fold o ~init:[] ~f:(fun kvs (k, v) -> (k, `String v) :: kvs))
 
+
+type sem_ver = string [@@deriving to_yojson]
+type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 
 module FilesInfo = struct
   type t =

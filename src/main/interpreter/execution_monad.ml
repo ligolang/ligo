@@ -186,7 +186,6 @@ module Command = struct
     | Add_cast :
         Location.t * LT.Contract.t * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Michelson_equal : Location.t * LT.value * LT.value -> bool tezos_command
     | Implicit_account :
         Tezos_protocol.Protocol.Alpha_context.public_key_hash
         -> LT.value tezos_command
@@ -805,18 +804,6 @@ module Command = struct
       in
       let internals = { ctxt.internals with storage_tys } in
       (), { ctxt with internals }
-    | Michelson_equal (loc, a, b) ->
-      let ({ micheline_repr = { code; _ }; _ } : LT.typed_michelson_code) =
-        trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-        @@ LC.get_michelson_expr a
-      in
-      let ({ micheline_repr = { code = code'; _ }; _ }
-            : LT.typed_michelson_code)
-        =
-        trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-        @@ LC.get_michelson_expr b
-      in
-      Caml.( = ) code code', ctxt
     | Get_last_originations () ->
       let aux (src, lst) =
         let src = LC.v_address src in

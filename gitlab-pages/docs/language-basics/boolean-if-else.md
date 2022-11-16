@@ -547,6 +547,11 @@ non-comparable types: maps, sets or lists are not comparable: if you
 wish to compare them, you will have to write your own comparison
 function.
 
+> Note: when running in test mode (this is, in the testing framework),
+> for developer convinence, more types are made comparable. Maps, sets
+> and lists will be made comparable in case its elements are
+> comparable.
+
 ### Comparing Strings
 
 

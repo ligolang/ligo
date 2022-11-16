@@ -691,6 +691,21 @@ let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount
 Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
 
 <SyntaxTitle syntax="pascaligo">
+val get_time : unit -> timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_time : unit -> timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_time: unit => timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_time = (_u: unit) => timestamp
+</SyntaxTitle>
+
+Gets the current time (to be used in test mode).
+
+<SyntaxTitle syntax="pascaligo">
 val baker_account : (string * key) -> option tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

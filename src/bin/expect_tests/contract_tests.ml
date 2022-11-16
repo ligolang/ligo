@@ -1154,6 +1154,24 @@ let%expect_test _ =
   [%expect{| "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "not_comparable.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 21-28:
+      1 | let main ((_u, s) : (int set) set * unit) : operation list * unit = ([] : operation list), s
+      2 |
+
+    The set constructor needs a comparable type argument, but it was given a non-comparable one. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "not_comparable.mligo" ; "-e" ; "main2" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 22-29:
+      2 |
+      3 | let main2 ((_u, s) : (int set) ticket * unit) : operation list * unit = ([] : operation list), s
+
+    The ticket constructor needs a comparable type argument, but it was given a non-comparable one. |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "big_map.ligo" ; "(big_map1,unit)" ] ;
   [%expect {|
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
@@ -1469,10 +1487,12 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 4-64:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 7, character 2 to line 10, character 34:
+      6 | function main (const p : parameter; const s : storage) : return is
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
+     10 |   with ((nil: list(operation)), s)
 
     Warning: Tezos.self type annotation.
     Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
@@ -1612,10 +1632,13 @@ File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, ch
 Warning: unused variable "p".
 Hint: replace it by "_p" to prevent this warning.
 
-File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 4-59:
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 7, character 2 to line 11, character 21:
+  6 | function main (const p : parameter; const s : storage) : return is
   7 |   {
   8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
   9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+ 10 |   }
+ 11 |   with (list [op], s)
 
 Invalid entrypoint "Toto". One of the following patterns is expected:
 * "%bar" is expected for entrypoint "Bar"

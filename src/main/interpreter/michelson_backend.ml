@@ -1575,3 +1575,18 @@ let parse_raw_michelson_code ~raise code ty =
   let code = parse_code ~raise code in
   let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
   code, code_ty
+
+let compare_michelson ~raise loc a b =
+  let module LT = Ligo_interpreter.Types in
+  let module LC = Ligo_interpreter.Combinators in
+  let ({ micheline_repr = { code; _ }; _ } : LT.typed_michelson_code) =
+    trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
+    @@ LC.get_michelson_expr a
+  in
+  let ({ micheline_repr = { code = code'; _ }; _ }
+       : LT.typed_michelson_code)
+    =
+    trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
+    @@ LC.get_michelson_expr b
+  in
+  Caml.compare code code'

@@ -272,6 +272,7 @@ pages-attempt:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - gitlab-pages/**/*
+        - changelog/*
       when: on_success
 
 deploy_website_preview:

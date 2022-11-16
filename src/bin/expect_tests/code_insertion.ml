@@ -9,7 +9,8 @@ let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_michelson_insertion_1.ligo" ] ;
   [%expect{xxx|
-    File "../../test/contracts/negative/bad_michelson_insertion_1.ligo", line 4, characters 2-74:
+    File "../../test/contracts/negative/bad_michelson_insertion_1.ligo", line 3, character 72 to line 5, character 41:
+      2 |
       3 | function main (const p : nat; const s: nat ) : list (operation)* nat is {
       4 |   const f : (nat * nat -> nat)= [%Michelson ({| ADD |} : nat *nat -> nat)];
       5 | } with ((nil: list(operation)), f (p, s))

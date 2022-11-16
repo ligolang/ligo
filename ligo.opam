@@ -53,6 +53,7 @@ depends: [
   "bisect_ppx" {>= "2.3"}
   "irmin"
   "cmdliner" {= "1.1.0"}
+  "ocaml-compiler-libs"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.3.0" }
   # dependencies of vendored dependencies
