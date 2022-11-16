@@ -1487,10 +1487,12 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 4-64:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 7, character 2 to line 10, character 34:
+      6 | function main (const p : parameter; const s : storage) : return is
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
+     10 |   with ((nil: list(operation)), s)
 
     Warning: Tezos.self type annotation.
     Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
@@ -1630,10 +1632,13 @@ File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, ch
 Warning: unused variable "p".
 Hint: replace it by "_p" to prevent this warning.
 
-File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 4-59:
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 7, character 2 to line 11, character 21:
+  6 | function main (const p : parameter; const s : storage) : return is
   7 |   {
   8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
   9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+ 10 |   }
+ 11 |   with (list [op], s)
 
 Invalid entrypoint "Toto". One of the following patterns is expected:
 * "%bar" is expected for entrypoint "Bar"
