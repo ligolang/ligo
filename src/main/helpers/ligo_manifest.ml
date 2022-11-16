@@ -167,9 +167,8 @@ let read ~project_root =
          | Error e -> failwith e
        in
        let main =
-         (* TODO: main is always present *)
          try Some (json |> Util.member "main" |> Util.to_string) with
-         | _ -> None
+         | _ -> failwith "No main field in package.json"
        in
        let license =
          try json |> Util.member "license" |> Util.to_string with

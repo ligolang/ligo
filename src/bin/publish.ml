@@ -3,7 +3,7 @@
 
 - [x] Add --dry-run CLI flag to ligo publish
 - [x] when directory field is null don't send the key
-- [ ] Stat main file before publish
+- [x] Stat main file before publish
 - [ ] Implement --dry-run flag
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
@@ -12,7 +12,6 @@
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
 - [ ] Docs: Add not about `--registry`
-- [ ] Try to infer repository using git config --get remote.origin.url
 - [ ] Wrap logging message in a function ~before ~after
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 
@@ -389,7 +388,28 @@ let validate_storage ~manifest =
   | _ -> Lwt.return @@ Ok ()
 
 
-let validate_main_file = ()
+let validate_main_file ~manifest =
+  let open LigoManifest in
+  let { main } = manifest in
+  Lwt.return
+  @@
+  match main with
+  | Some main ->
+    (match Sys_unix.file_exists main with
+    | `Yes ->
+      (match snd @@ Filename.split_extension main with
+      | Some _ -> Ok ()
+      | None ->
+        Error
+          "Invalid LIGO file specifed in main field of package.json\n\
+           Valid extension for LIGO files are (.ligo, .mligo, .religo, \
+           .jsligo) ")
+    | `No | `Unknown ->
+      Error
+        "main file does not exists.\n\
+         Please specify a valid LIGO file in package.json.")
+  | None -> Error "No main field in package.json"
+
 
 let publish ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
@@ -407,9 +427,9 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
     |> Digestif.SHA512.to_raw_string
   in
   let files_info = FilesInfo.make ~size:len ~sha1 ~sha512 ~fcount ~tarball in
-  let* result = validate_storage ~manifest in
-  (* validate_main_file *)
-  match result with
+  let* result_main = validate_main_file ~manifest in
+  let* result_storage = validate_storage ~manifest in
+  match Result.all_unit [ result_main; result_storage ] with
   | Ok () ->
     let body = Body.make ~ligo_registry ~files_info ~manifest in
     Lwt.return @@ Ok body
