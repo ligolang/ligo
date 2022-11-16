@@ -91,9 +91,6 @@ okayTests =
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "c" </> "d" </> "foo.mligo"
       , "infer_fun_application.mligo"
 
-        -- LIGO-899
-      , "modules.jsligo"
-
         -- LIGO fails to parse these:
       , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
