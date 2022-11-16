@@ -24,7 +24,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils syntax lwt lwt.unix semver uri core_unix
-   core_unix.sys_unix re)
+   re)
  (inline_tests)
  (preprocess
   (pps ppx_deriving_yojson ppx_inline_test)))
