@@ -11,5 +11,5 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  lexing_jsligo_self_tokens)
+  lx_js_self_tokens)
  (modules Self ZWSP Token_of))

@@ -9,8 +9,8 @@ module Trace = Simple_utils.Trace
 
 module Config      = Preprocessing_reasonligo.Config
 module Token       = Lexing_reasonligo.Token
-module UnitPasses  = Lexing_reasonligo_self_units.Self
-module TokenPasses = Lexing_reasonligo_self_tokens.Self
+module UnitPasses  = Lx_rsn_self_units.Self
+module TokenPasses = Lx_rsn_self_tokens.Self
 module ParErr      = Parsing_reasonligo.ParErr
 module Parser      = Parsing_reasonligo.Parser
 module Pretty      = Parsing_reasonligo.Pretty
