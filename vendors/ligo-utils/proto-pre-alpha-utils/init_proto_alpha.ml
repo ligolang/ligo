@@ -4,7 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
-module Proto_env = Tezos_protocol_environment_014_PtKathma
+module Proto_env = Tp_environment_014_PtKathma
 open Error_monad
 open Protocol
 
@@ -91,11 +91,11 @@ module Context_init = struct
     let proto_params =
       Data_encoding.Binary.to_bytes_exn Data_encoding.json json
     in
-    let* ctxt = Tezos_protocol_environment.(
+    let* ctxt = Tp_environment.(
       Context.add Memory_context.empty ["version"] (MBytes.of_string "genesis")
       )
     in
-    let* ctxt = Tezos_protocol_environment.Context.(
+    let* ctxt = Tp_environment.Context.(
       add ctxt protocol_param_key proto_params
       )
     in

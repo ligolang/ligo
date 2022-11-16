@@ -1,6 +1,6 @@
 module Name = struct let name = "alpha" end
 module Proto = Tezos_protocol_014_PtKathma
-module Alpha_environment = Tezos_protocol_environment_014_PtKathma
+module Alpha_environment = Tp_environment_014_PtKathma
 module Raw_protocol = Tezos_raw_protocol_014_PtKathma
 module Parameters = Tezos_protocol_014_PtKathma_parameters
 module Client = Tezos_client_014_PtKathma
