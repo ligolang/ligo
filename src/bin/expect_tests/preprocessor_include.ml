@@ -1,7 +1,7 @@
 open Cli_expect
 
-let pwd = Sys_unix.getcwd ()
-let () = Sys_unix.chdir "../../test/contracts/include/test1"
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/include/test1"
 
 let%expect_test _ =
   run_ligo_good [ "print"; "preprocessed"; "root.ligo"; "--lib"; "includes" ];
@@ -26,10 +26,8 @@ let%expect_test _ =
 
     # 2 "root.ligo" 2 |}]
 
-let () =
-  Sys_unix.chdir pwd;
-  Sys_unix.chdir "../../test/contracts/include/test2"
-
+let () = Caml.Sys.chdir pwd ;
+         Caml.Sys.chdir "../../test/contracts/include/test2"
 
 let%expect_test _ =
   run_ligo_good [ "print"; "preprocessed"; "Root.mligo"; "--lib"; "bug" ];
@@ -45,10 +43,8 @@ let%expect_test _ =
 
     # 2 "Root.mligo" 2 |}]
 
-let () =
-  Sys_unix.chdir pwd;
-  Sys_unix.chdir "../../test/contracts/include/test3"
-
+let () = Caml.Sys.chdir pwd ;
+         Caml.Sys.chdir "../../test/contracts/include/test3"
 
 let%expect_test _ =
   run_ligo_good [ "print"; "preprocessed"; "B1.ligo"; "--lib"; "B2" ];
@@ -67,10 +63,8 @@ let%expect_test _ =
 
     const b1 = b2 * 2 + b3 |}]
 
-let () =
-  Sys_unix.chdir pwd;
-  Sys_unix.chdir "../../test/contracts/include/test4/current"
-
+let () = Caml.Sys.chdir pwd ;
+         Caml.Sys.chdir "../../test/contracts/include/test4/current"
 
 let%expect_test _ =
   run_ligo_good [ "print"; "preprocessed"; "../Root.ligo"; "--lib"; "../bug" ];
@@ -86,10 +80,8 @@ let%expect_test _ =
 
     # 2 "../Root.ligo" 2 |}]
 
-let () =
-  Sys_unix.chdir pwd;
-  Sys_unix.chdir "../../test/contracts/include/missing_asi"
-
+let () = Caml.Sys.chdir pwd ;
+         Caml.Sys.chdir "../../test/contracts/include/missing_asi"
 
 let%expect_test _ =
   run_ligo_good [ "print"; "preprocessed"; "b.jsligo" ];
@@ -111,10 +103,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
-let () =
-  Sys_unix.chdir pwd;
-  Sys_unix.chdir "../../test/contracts/include"
-
+let () = Caml.Sys.chdir pwd ;
+         Caml.Sys.chdir "../../test/contracts/include"
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "preprocessed"; "include_cycle1/a.mligo" ];
@@ -150,5 +140,5 @@ let%expect_test _ =
     Error: Dependency cycle between:
     -> "mutual_incl/foo.mligo"
     -> "mutual_incl/bar.mligo" |}]
-
-let () = Sys_unix.chdir pwd
+       
+let () = Caml.Sys.chdir pwd ;

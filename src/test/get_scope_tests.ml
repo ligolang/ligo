@@ -8,7 +8,7 @@ let schema = "../main/scopes/schema.json"
 let validate_json_file file_name =
   let command_str = Format.sprintf "python3 -m jsonschema -i %s %s" file_name schema in
   Format.printf "command: %s\n" command_str;
-  let status = Sys_unix.command @@ command_str in
+  let status = Caml.Sys.command @@ command_str in
   if status > 0 then Alcotest.fail "JSON schema validation failed"
 
 
@@ -65,7 +65,7 @@ let schema_test_negative
 
 
 let files_in_dir dir_path =
-  Sys_unix.readdir dir_path
+  Caml.Sys.readdir dir_path
   |> Array.to_list
   |> List.filter ~f:(fun x ->
          match Filename.split_extension x with

@@ -252,7 +252,7 @@ let publish ~ligo_registry ~manifest ~body ~token =
 
 
 let os_type =
-  match Sys.os_type with
+  match Caml.Sys.os_type with
   | "Unix" -> Gz.Unix
   | "Win32" -> Gz.NTFS
   | "Cygwin" -> Gz.NTFS
@@ -311,7 +311,7 @@ let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) 
       if ligoignore (String.chop_prefix_if_exists ~prefix:"." file_or_dir)
       then Lwt.return []
       else (
-        let all = Sys_unix.ls_dir file_or_dir in
+        let all = Ligo_unix.ls_dir file_or_dir in
         let* files =
           Lwt_list.fold_left_s
             (fun acc f ->
@@ -334,9 +334,9 @@ let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) 
 
 let from_dir ~dir f =
   let pwd = Core_unix.getcwd () in
-  let () = Sys_unix.chdir dir in
+  let () = Caml.Sys.chdir dir in
   let result = f () in
-  let () = Sys_unix.chdir pwd in
+  let () = Caml.Sys.chdir pwd in
   result
 
 

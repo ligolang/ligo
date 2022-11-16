@@ -449,4 +449,4 @@ let main
     Lwt_main.run (LTerm.fprintls term (LTerm_text.eval [ S welcome_msg ]));
     (try loop ~raw_options syntax display_format term history state 1 with
     | LTerm_read_line.Interrupt -> Ok ("", "")
-    | Sys_unix.Break -> Ok ("", ""))
+    | Caml.Sys.Break -> Ok ("", ""))

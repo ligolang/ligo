@@ -6,9 +6,9 @@ module Constants = Constants
 module Semver = LigoManifest.Semver
 
 let find_project_root () =
-  let pwd = Sys_unix.getcwd in
+  let pwd = Caml.Sys.getcwd in
   let rec aux p =
-    let dirs = Sys_unix.ls_dir p in
+    let dirs = Caml.Sys.ls_dir p in
     if List.exists ~f:(String.equal "package.json") dirs
     then Some p
     else (

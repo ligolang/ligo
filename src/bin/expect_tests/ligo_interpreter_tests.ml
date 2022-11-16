@@ -1,8 +1,8 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
-let pwd = Sys_unix.getcwd ()
-let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
 
 (* test comparison on sum/record types *)
 let%expect_test _ =
@@ -854,13 +854,9 @@ let%expect_test _ =
       Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |xxx}]
 
 (* do not remove that :) *)
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd
 
-let () =
-  Sys_unix.chdir
-    "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
-
-
+let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test.mligo" ];
   [%expect
@@ -874,13 +870,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
+let () = Caml.Sys.chdir pwd
 
-let () = Sys_unix.chdir pwd
-
-let () =
-  Sys_unix.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
-
-
+let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test/a/b/test.mligo" ];
   [%expect
@@ -894,9 +886,10 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
+let () = Caml.Sys.chdir pwd
 
-let () = Sys_unix.chdir pwd
-let bad_test n = bad_test ("/interpreter_tests/" ^ n)
+
+let bad_test n = bad_test ("/interpreter_tests/"^n)
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];
@@ -1117,8 +1110,8 @@ let%expect_test _ =
     95000000000mutez
     100000000000n |}]
 
-let pwd = Sys_unix.getcwd ()
-let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
@@ -1137,7 +1130,7 @@ let%expect_test _ =
   Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
   unit) |}]
 
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_michelson_non_func.mligo" ];
