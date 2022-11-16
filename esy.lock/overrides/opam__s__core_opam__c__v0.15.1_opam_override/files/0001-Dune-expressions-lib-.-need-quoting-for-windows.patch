@@ -1,0 +1,32 @@
+From 489efd3239e47bcb584f0d41ce17c74eba77db29 Mon Sep 17 00:00:00 2001
+From: Manas Jayanth <3097018+ManasJayanth@users.noreply.github.com>
+Date: Thu, 3 Nov 2022 11:00:35 +0530
+Subject: [PATCH 1/2] Dune expressions `%{lib:...}` need quoting for windows
+
+When used with bash -c "...", back slashes are escaped away, thus
+making it necessary to single quote Dune expressions
+---
+ core/src/dune | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/core/src/dune b/core/src/dune
+index 8f785b5..65cae09 100644
+--- a/core/src/dune
++++ b/core/src/dune
+@@ -1,5 +1,5 @@
+ (rule (targets config.h) (deps)
+- (action (bash "cp %{lib:jst-config:config.h} .")))
++ (action (bash "cp '%{lib:jst-config:config.h}' .")))
+ 
+ (library (name core) (public_name core) (install_c_headers time_ns_stubs)
+  (libraries base base_bigstring base_for_tests base_quickcheck bin_prot
+@@ -12,4 +12,4 @@
+  (preprocess (pps ppx_jane)) (preprocessor_deps config.h)
+  (js_of_ocaml (javascript_files strftime.js runtime.js)))
+ 
+-(documentation)
+\ No newline at end of file
++(documentation)
+-- 
+2.34.1.windows.1
+
