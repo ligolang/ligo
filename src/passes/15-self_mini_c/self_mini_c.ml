@@ -187,7 +187,7 @@ let rec is_pure : expression -> bool = fun e ->
     (* very not pure *)
     false
 
-  (* TODO E_let_mut_in is pure when the rhs is pure and the body's
+ (* TODO E_let_mut_in is pure when the rhs is pure and the body's
      only impurity is assign/deref of the bound mutable variable *)
   | E_let_mut_in _
   | E_assign _
@@ -210,9 +210,13 @@ let rec is_pure : expression -> bool = fun e ->
 
 let occurs_count : Value_var.t -> expression -> int =
   fun x e ->
-  let fvs = Free_variables.expression [] e in
+  let fvs = get_fv [] e in
   Free_variables.mem_count x fvs
 
+let mutation_count : Value_var.t -> expression -> int =
+  fun x e ->
+    let muts = assigned_and_free_vars [] e in
+    Free_variables.mem_count x muts
 (* Let "inlining" mean transforming the code:
 
      let x = e1 in e2
@@ -241,11 +245,22 @@ let should_inline : Value_var.t -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 
+let should_inline_mut : Value_var.t -> expression -> bool =
+  fun x e2 ->
+  mutation_count x e2 = 0
+
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if (is_pure e1 && (should_inline_here || should_inline x e1 e2))
+    then
+      let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
+      (changed := true ; e2')
+    else
+      e
+  | E_let_mut_in (e1, ((x, _a), e2)) ->
+    if (is_pure e1 && (should_inline_mut x e2))
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
       (changed := true ; e2')
@@ -430,7 +445,7 @@ let create_contract ~raise expr =
   let _ = map_expression (fun expr ->
                   match expr.content with
                   | E_create_contract (_, _, ((x, _), lambda), _) -> (
-                    let fvs = Free_variables.expression [x] lambda in
+                    let fvs = get_fv [x] lambda in
                     if Int.equal (List.length fvs) 0 then expr
                     else raise.error @@ fvs_in_create_contract_lambda expr (List.hd_exn fvs)
                   )

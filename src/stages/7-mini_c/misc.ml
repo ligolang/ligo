@@ -14,14 +14,17 @@ module Free_variables = struct
   let empty : bindings = []
   let of_list : Value_var.t list -> bindings = fun x -> x
 
-  let rec expression : bindings -> expression -> bindings = fun b e ->
+  let rec expression ~count_var_ref ~count_deref ~count_assign : bindings -> expression -> bindings = fun b e ->
+    let expression = expression ~count_var_ref ~count_deref ~count_assign in
     let self = expression b in
     match e.content with
+    | E_variable n -> if count_var_ref then var_name b n else empty
+    | E_deref x -> if count_deref then var_name b x else empty
+    | E_assign (x, e) -> if count_assign then union (var_name b x) (self e) else union b (self e)
     | E_literal _ -> empty
-    | E_closure f -> lambda b f
+    | E_closure f -> lambda ~count_var_ref ~count_deref ~count_assign b f
     | E_constant (c) -> unions @@ List.map ~f:self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
-    | E_variable n -> var_name b n
     | E_iterator (_, ((v, _), body), expr) ->
       unions [ expression (union (singleton v) b) body ;
                self expr ;
@@ -76,10 +79,6 @@ module Free_variables = struct
       union (expression b code) (unions (List.map ~f:self args))
     | E_let_mut_in (expr, ((x, _), body)) ->
       union (self expr) (expression (union (singleton x) b) body)
-    | E_deref x ->
-      var_name b x
-    | E_assign (x, e) ->
-      union (var_name b x) (self e)
     | E_for (start, final, incr, ((x, _), body)) ->
       unions [ self start;
                self final;
@@ -98,8 +97,11 @@ module Free_variables = struct
     then empty
     else singleton n
 
-  and lambda : bindings -> anon_function -> bindings = fun b l ->
+  and lambda ~count_var_ref ~count_deref ~count_assign : bindings -> anon_function -> bindings = fun b l ->
     let b = union (singleton l.binder) b in
-    expression b l.body
+    expression ~count_var_ref ~count_deref ~count_assign b l.body
 
 end
+
+let get_fv = Free_variables.expression ~count_var_ref:true ~count_deref:true ~count_assign:true
+let assigned_and_free_vars = Free_variables.expression ~count_var_ref:false ~count_deref:false ~count_assign:true
