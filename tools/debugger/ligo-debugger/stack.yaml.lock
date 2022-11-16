@@ -421,10 +421,10 @@ packages:
   original:
     hackage: run-st-0.1.1.0
 - completed:
-    hackage: zigzag-0.0.1.0@sha256:a995158dad3dfe0347cfc8f8a9327cc3f51832600553169ba5b1e08c45b45405,1078
+    hackage: zigzag-0.0.1.0@sha256:ac2f78aa02457ac12d17621c692d29ad30bae205b5be858fbf0e400ac9a9c412,1133
     pantry-tree:
       size: 321
-      sha256: e5e5aadb11d695f9f1792a6d8f8faa4131afc23713335ff93dab6b0806bea510
+      sha256: 4d37af24d7d68ca428cc9e8c9e909c3c57417a244b59cffcc54f4004405b7d4e
   original:
     hackage: zigzag-0.0.1.0
 - completed:

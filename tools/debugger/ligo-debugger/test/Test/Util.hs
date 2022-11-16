@@ -41,6 +41,9 @@ module Test.Util
   , testWithSnapshotsLogging
   , checkSnapshot
   , unexpectedSnapshot
+    -- * Lower-lever interface
+  , mkSnapshotsForImpl
+  , dummyLoggingFunction
   ) where
 
 import Control.Lens (each)
