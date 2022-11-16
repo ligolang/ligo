@@ -16,7 +16,6 @@ import Control.Monad.Except (Except, liftEither, runExcept, throwError)
 import Data.Char (isAsciiUpper, isDigit)
 import Data.Coerce (coerce)
 import Data.DList qualified as DL
-import Data.Data (cast)
 import Data.Default (Default, def)
 import Data.HashSet qualified as HS
 import Data.Map qualified as M
@@ -30,7 +29,6 @@ import Text.Show qualified
 import Util (everywhereM')
 
 import Morley.Debugger.Core.Common (debuggerTcOptions)
-import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
@@ -40,7 +38,7 @@ import Morley.Michelson.TypeCheck
 import Morley.Michelson.Typed
   (BadTypeForScope (BtHasTicket), Contract' (..), ContractCode' (ContractCode, unContractCode),
   CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta),
-  dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr)
+  dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr, pattern ConcreteMeta)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Util.Lens (makeLensesWith, postfixLFields)
 
@@ -355,14 +353,6 @@ embedInInstr metaTape instr = do
       Seq{} -> False
       i -> isMichelsonInstr i
 
-    -- Sometimes we want to ignore embeding meta for some instructions.
-    shouldIgnoreMeta :: Instr i o -> Bool
-    shouldIgnoreMeta = \case
-      -- We're ignoring @LAMBDA@ instruction here in order
-      -- not to stop on function assignment.
-      LAMBDA{} -> True
-      _ -> False
-
     recursionImpl :: CtorEffectsApp $ StateT [meta] $ Except EmbedError
     recursionImpl = CtorEffectsApp "embed" $ \oldInstr mkNewInstr ->
       if not $ isActualInstr oldInstr
@@ -382,9 +372,7 @@ embedInInstr metaTape instr = do
           let metasToDrop = michelsonInstrInnerBranches oldInstr
           put $ drop (Unsafe.fromIntegral @Word @Int metasToDrop) rest
 
-          if shouldIgnoreMeta oldInstr
-          then mkNewInstr
-          else Meta (SomeMeta meta) <$> mkNewInstr
+          Meta (SomeMeta meta) <$> mkNewInstr
 
 -- TODO: extract this to Morley
 -- | For Michelson instructions this returns how many sub-instructions this
@@ -411,8 +399,8 @@ michelsonInstrInnerBranches = \case
 
 -- | Read LIGO's debug output and produce
 --
--- 1. All locations that may be worth attention. This is to be used
---    in switching breakpoints.
+-- 1. All expression locations. We return __all__ expression locations
+--    because we need them to extract all the statement ones.
 -- 2. A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
 --    wrappers that carry the debug info.
 -- 3. All contract filepaths that would be used in debugging session.
@@ -420,7 +408,7 @@ readLigoMapper
   :: LigoMapper 'Unique
   -> (U.T -> U.T)
   -> (forall meta. (Default meta) => U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
-  -> Either DecodeError (Set SourceLocation, SomeContract, [FilePath])
+  -> Either DecodeError (Set ExpressionSourceLocation, SomeContract, [FilePath])
 readLigoMapper ligoMapper typeRules instrRules = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
@@ -454,15 +442,18 @@ readLigoMapper ligoMapper typeRules instrRules = do
   return $! force (exprLocs, extendedContract, allFiles)
 
   where
-    mentionedSourceLocs :: LigoIndexedInfo 'Unique -> [SourceLocation]
-    mentionedSourceLocs LigoIndexedInfo{..} =
-      maybeToList $ ligoRangeToSourceLocation <$> liiLocation
+    mentionedSourceLocs :: (EmbeddedLigoMeta, Bool) -> [ExpressionSourceLocation]
+    mentionedSourceLocs (LigoIndexedInfo{..}, shouldKeep) = (shouldKeep, liiLocation)
+      & second (fmap ligoRangeToSourceLocation)
+      & sequenceA
+      <&> uncurry ExpressionSourceLocation . swap
+      & maybeToList
 
-    getSourceLocations :: Instr i o -> [EmbeddedLigoMeta]
+    getSourceLocations :: Instr i o -> [(EmbeddedLigoMeta, Bool)]
     getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
-      Meta (SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) _ -> DL.singleton meta
+      ConcreteMeta (meta :: EmbeddedLigoMeta) instr
+        -> DL.singleton (meta, not $ shouldIgnoreMeta instr)
       _ -> mempty
-
 
     -- Strip duplicate locations.
     --

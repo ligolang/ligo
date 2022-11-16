@@ -24,8 +24,7 @@ import UnliftIO (forConcurrently_)
 import Morley.Debugger.Core
   (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), HistoryReplayM,
   MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation),
-  SourceType (..), curSnapshot, frozen, goesAfter, matchesSrcType, move, moveTill, tsAfterInstrs,
-  tsAllVisited)
+  SourceType (..), curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
@@ -117,21 +116,6 @@ test_Snapshots = testGroup "Snapshots collection"
               ]
           in
           [ ( InterpretRunning . EventExpressionEvaluated . Just $
-                SomeLorentzValue (42 :: Integer)
-            , one
-              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
-              , stackWithS
-              )
-            )
-
-          , ( InterpretRunning EventExpressionPreview
-            , one
-              ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
-              , stackWithS
-              )
-            )
-
-          , ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
@@ -243,7 +227,7 @@ test_Snapshots = testGroup "Snapshots collection"
             } -> pass
           sp -> unexpectedSnapshot sp
 
-  , testCaseSteps "check shadowing" \_step -> do
+  , testCaseSteps "check shadowing" \step -> do
       let file = contractsDir </> "shadowing.religo"
       let runData = ContractRunData
             { crdProgram = file
@@ -253,10 +237,6 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 12) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 13) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 18) (Pos 0))
-
         let checkStackItem :: Name 'Concise -> SomeValue -> StackItem 'Concise -> Bool
             checkStackItem expectedVar expectedVal = \case
               StackItem
@@ -267,7 +247,9 @@ test_Snapshots = testGroup "Snapshots collection"
                 } -> actualVal == expectedVal && expectedVar == actualVar
               _ -> False
 
-        goToNextBreakpoint
+        liftIO $ step [int||Go to second "s1"|]
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 12) (Pos 0))
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -275,7 +257,9 @@ test_Snapshots = testGroup "Snapshots collection"
           unless (any (checkStackItem "s1" $ T.SomeConstrainedValue (T.VInt 8)) stackItems) do
             unexpectedSnapshot snap
 
-        goToNextBreakpoint
+        liftIO $ step [int||Go to first "s2"|]
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 13) (Pos 0))
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -297,7 +281,9 @@ test_Snapshots = testGroup "Snapshots collection"
           when (s1Count /= 1) do
             assertFailure [int||Expected 1 "s1" variable, found #{s1Count} "s1" variables|]
 
-        goToNextBreakpoint
+        liftIO $ step [int||Check shadowing in switch|]
+        moveTill Forward $
+          goesAfter (SrcPos (Pos 18) (Pos 0))
         -- TODO [LIGO-552] We somehow appear at weird place
         -- Breakpoint was pointing to body of `switch`, but we stopped at the switch itself
         _ <- move Forward
@@ -339,7 +325,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 5 0) (LigoPosition 5 18)
+                { sfLoc = LigoRange file' (LigoPosition 7 0) (LigoPosition 7 17)
                 } :| []
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -396,10 +382,6 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 1) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 2) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 6) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 7) (Pos 0))
         N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
 
         let checkLinePosition pos = do
@@ -408,8 +390,16 @@ test_Snapshots = testGroup "Snapshots collection"
                   | actualPos == pos -> pass
                 loc -> liftIO $ assertFailure [int||Expected stopping at line #{pos + 1}, got #{loc}|]
 
+        let stepNextLine :: HistoryReplayM (InterpretSnapshot 'Unique) IO ()
+            stepNextLine = void $ moveTill Forward $ FrozenPredicate do
+              curSnapshot >>= \case
+                InterpretSnapshot
+                  { isStatus = InterpretRunning EventFacedStatement
+                  } -> pure True
+                _ -> pure False
+
         let goAndCheckLinePosition pos = do
-              goToNextBreakpoint
+              stepNextLine
               checkLinePosition pos
 
         liftIO $ step "check \"func\" function call stepping"
@@ -687,14 +677,9 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           liftIO $ step "Skipping push"
-          _ <- move Forward  -- skip "upon expression" state
-          do
-            status <- isStatus <$> frozen curSnapshot
-            preview statusExpressionEvaluatedP status
-              @?= Just (SomeLorentzValue (0 :: Integer))
+          _ <- moveTill Forward $ goesAfter (SrcPos (Pos 1) (Pos 0))
 
           liftIO $ step "Checking comparison result"
-          replicateM_ 2 $ move Forward
           do
             status <- isStatus <$> frozen curSnapshot
             preview statusExpressionEvaluatedP status
@@ -1045,6 +1030,81 @@ test_Snapshots = testGroup "Snapshots collection"
 
         liftIO $ step [int||Check stack frames after leaving "act"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
+
+  , testCaseSteps "Skipping constant evaluation and not skipping statement" \step -> do
+      let file = contractsDir </> "constant-assignment.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        liftIO $ step [int||Check stopping at statement|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 2 12)
+                } :| []
+            , isStatus = InterpretRunning EventFacedStatement
+            } -> pass
+          snap -> unexpectedSnapshot snap
+
+        move Forward
+
+        liftIO $ step [int||Check that we skipped constant evaluation|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = loc
+                } :| []
+            } | loc /= LigoRange file (LigoPosition 2 11) (LigoPosition 2 12) -- position of constant
+            -> pass
+          snap -> unexpectedSnapshot snap
+
+  , testCaseSteps "Computations in list" \step -> do
+      let file = contractsDir </> "computations-in-list.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = [] :: [Integer]
+            }
+
+      testWithSnapshots runData do
+        -- Go to list
+        void $ moveTill Forward $
+          goesAfter (SrcPos (Pos 5) (Pos 0))
+
+        move Forward
+
+        liftIO $ step [int||Check that we skipped constant evaluations|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 6 56) (LigoPosition 6 58)
+                } :| []
+            , isStatus = InterpretRunning EventExpressionPreview
+            } -> pass
+          snap -> unexpectedSnapshot snap
+
+        moveTill Forward $ FrozenPredicate $ pure False
+
+        liftIO $ step [int||Check that failed location is known|]
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 6 56) (LigoPosition 6 58)
+                , sfName = "failwith$1"
+                } :|
+                  StackFrame
+                    { sfName = "unsafeCompute"
+                    }
+                  : _
+            , isStatus = InterpretFailed _
+            } -> pass
+          snap -> unexpectedSnapshot snap
   ]
 
 -- | Special options for checking contract.
@@ -1083,7 +1143,7 @@ unit_Contracts_are_sensible = do
           Left err -> assertFailure $ pretty err
 
       when coCheckSourceLocations do
-        forM_ locations \srcLoc@(SourceLocation loc _ _) -> do
+        forM_ (getAllSourceLocations locations) \srcLoc@(SourceLocation loc _ _) -> do
           case loc of
             SourcePath path ->
               -- Some paths can be empty in @SourceLocation@ because of some ligo issues.

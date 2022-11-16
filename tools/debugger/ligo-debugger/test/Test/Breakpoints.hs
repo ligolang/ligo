@@ -105,6 +105,16 @@ test_test =
               (SrcPos (Pos 5) (Pos 26))
             )
 
+        liftIO $ step "Calculate arguments"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 5) (Pos 21))
+              (SrcPos (Pos 5) (Pos 25))
+            )
+
         liftIO $ step "Go to next breakpoint (switch file)"
         goToNextBreakpoint
         N.frozen do
@@ -123,6 +133,16 @@ test_test =
               (N.SourcePath file)
               (SrcPos (Pos 7) (Pos 2))
               (SrcPos (Pos 7) (Pos 30))
+            )
+
+        liftIO $ step "Calculate arguments"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 7) (Pos 23))
+              (SrcPos (Pos 7) (Pos 29))
             )
 
         replicateM 4 do
@@ -156,6 +176,54 @@ test_test =
               (SrcPos (Pos 8) (Pos 45))
             )
 
+        liftIO $ step "Calculate arguments"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 8) (Pos 27))
+              (SrcPos (Pos 8) (Pos 44))
+            )
+
+        liftIO $ step "Calculate arguments for \"what\""
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 9) (Pos 74))
+              (SrcPos (Pos 9) (Pos 79))
+            )
+
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 9) (Pos 67))
+              (SrcPos (Pos 9) (Pos 72))
+            )
+
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath file)
+              (SrcPos (Pos 9) (Pos 64))
+              (SrcPos (Pos 9) (Pos 79))
+            )
+
+        liftIO $ step "Calculate arguments for \"strange\""
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (N.SourcePath nestedFile)
+              (SrcPos (Pos 18) (Pos 80))
+              (SrcPos (Pos 18) (Pos 87))
+            )
+
         liftIO $ step "Go to next breakpoint (more nested file)"
         goToNextBreakpoint
         N.frozen do
@@ -172,8 +240,8 @@ test_test =
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (N.SourcePath nestedFile)
-              (SrcPos (Pos 18) (Pos 45))
-              (SrcPos (Pos 18) (Pos 88))
+              (SrcPos (Pos 18) (Pos 57))
+              (SrcPos (Pos 18) (Pos 64))
             )
 
         liftIO $ step "Go to previous breakpoint"

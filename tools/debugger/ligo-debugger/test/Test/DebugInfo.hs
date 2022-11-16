@@ -126,23 +126,17 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         ]
 
-      ((_slStart &&& _slEnd) <$> toList exprLocs)
+      ((_slStart &&& _slEnd) <$> toList (getInterestingSourceLocations exprLocs))
         @?=
         -- Note: the order of entries below is not the interpretation order
         -- because we extracted these pairs from Set with its lexicographical order
         [ ( SrcPos (Pos 1) (Pos 11)
           , SrcPos (Pos 1) (Pos 17)
           )
-        , ( SrcPos (Pos 1) (Pos 15)
-          , SrcPos (Pos 1) (Pos 17)
-          )
         , ( SrcPos (Pos 2) (Pos 11)
           , SrcPos (Pos 2) (Pos 18)
           )
         , ( SrcPos (Pos 2) (Pos 11)
-          , SrcPos (Pos 2) (Pos 22)
-          )
-        , ( SrcPos (Pos 2) (Pos 21)
           , SrcPos (Pos 2) (Pos 22)
           )
         , ( SrcPos (Pos 3) (Pos 3)

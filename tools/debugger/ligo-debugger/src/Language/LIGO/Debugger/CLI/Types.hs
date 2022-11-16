@@ -18,6 +18,7 @@ import Data.Char (isDigit)
 import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
+import Data.Set qualified as S
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
 import Data.Vector qualified as V
@@ -27,14 +28,15 @@ import System.Console.ANSI
   (Color (Red), ColorIntensity (Dull), ConsoleIntensity (BoldIntensity), ConsoleLayer (Foreground),
   SGR (Reset, SetColor, SetConsoleIntensity))
 import Text.Interpolation.Nyan (int, rmode')
+import Util
 
+import Morley.Debugger.Core (SourceLocation)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
 import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
 import Language.LIGO.Debugger.Error
-import Util
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -623,3 +625,19 @@ instance Exception PluginCommunicationException where
 instance DebuggerException PluginCommunicationException where
   type ExceptionTag PluginCommunicationException = "PluginComminication"
   debuggerExceptionType _ = MidPluginLayerException
+
+-- | An expression source location with boolean indicator
+-- that tells us whether it is interesting or not.
+-- /Interesting/ means that we want to use this location
+-- in switching breakpoints.
+data ExpressionSourceLocation = ExpressionSourceLocation
+  { eslSourceLocation :: SourceLocation
+  , eslShouldKeep :: Bool
+  } deriving stock (Show, Eq, Ord, Generic)
+    deriving anyclass (NFData)
+
+getAllSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
+getAllSourceLocations = S.map eslSourceLocation
+
+getInterestingSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
+getInterestingSourceLocations = getAllSourceLocations . S.filter eslShouldKeep

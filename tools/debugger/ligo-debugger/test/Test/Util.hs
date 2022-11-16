@@ -21,7 +21,6 @@ module Test.Util
   , HUnit.testCaseSteps
   , HUnit.assertFailure
   , HUnit.assertBool
-  , goesBetween
   , getStackFrameNames
   , getVariableNamesFromStackFrame
     -- * Common snippets
@@ -29,6 +28,9 @@ module Test.Util
     -- * Helpers for breakpoints
   , goToNextBreakpoint
   , goToPreviousBreakpoint
+  , goesAfter
+  , goesBefore
+  , goesBetween
     -- * Snapshot unilities
   , ContractRunData (..)
   , mkSnapshotsFor
@@ -42,6 +44,7 @@ module Test.Util
   ) where
 
 import Control.Lens (each)
+import Data.Singletons (demote)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
 import System.FilePath (takeExtension, (</>))
@@ -55,8 +58,8 @@ import Morley.Debugger.Core.Breakpoint
   (BreakpointSelector (NextBreak), continueUntilBreakpoint, reverseContinue)
 import Morley.Debugger.Core.Navigate
   (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
-  HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition), SourceLocation,
-  curSnapshot, evalWriterT, frozen, goesAfter, goesBefore, isAtBreakpoint, moveTill)
+  HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition),
+  SourceLocation (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
 import Morley.Michelson.ErrorPos (SrcPos)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
@@ -69,6 +72,7 @@ import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
 
 contractsDir :: FilePath
@@ -184,6 +188,18 @@ compareWithCurLocation
 compareWithCurLocation oldSrcLoc = FrozenPredicate $
   getExecutedPosition >>= maybe (pure False) (pure . (/= oldSrcLoc))
 
+goesAfter
+  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
+  => SrcPos -> FrozenPredicate (DebuggerState is) m
+goesAfter loc = FrozenPredicate $ fromMaybe False <$>
+  ((\(SourceLocation _ startPos _) -> startPos >= loc) <<$>> getExecutedPosition)
+
+goesBefore
+  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
+  => SrcPos -> FrozenPredicate (DebuggerState is) m
+goesBefore loc = FrozenPredicate $ fromMaybe False <$>
+  ((\(SourceLocation _ _ endPos) -> endPos <= loc) <<$>> getExecutedPosition)
+
 goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToNextBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
@@ -225,14 +241,31 @@ mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st
     case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
       Right v -> pure v
       Left err -> HUnit.assertFailure $ pretty err
+
   Refl <- sing @cp' `decideEquality` sing @(T.ToT param)
-    & maybe (HUnit.assertFailure "Parameter type mismatch") pure
+    & maybe
+      do HUnit.assertFailure
+          [int||
+            Parameter type mismatch.
+            Expected: #{demote @cp'}
+            Got: #{demote @(T.ToT param)}
+          |]
+      do pure
+
   Refl <- sing @st' `decideEquality` sing @(T.ToT st)
-    & maybe (HUnit.assertFailure "Storage type mismatch") pure
+    & maybe
+      do HUnit.assertFailure
+          [int||
+            Storage type mismatch.
+            Expected: #{demote @st'}
+            Got: #{demote @(T.ToT st)}
+          |]
+      do pure
 
   parsedContracts <- parseContracts allFiles
 
-  let statementLocs = getStatementLocs exprLocs parsedContracts
+  let statementLocs = getStatementLocs (getAllSourceLocations exprLocs) parsedContracts
+  let allLocs = getInterestingSourceLocations exprLocs <> statementLocs
 
   his <-
     collectInterpretSnapshots
@@ -246,7 +279,7 @@ mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st
       parsedContracts
       logger
 
-  return (exprLocs <> statementLocs, his)
+  return (allLocs, his)
 
 -- | Make snapshots history for simple contract.
 mkSnapshotsFor
