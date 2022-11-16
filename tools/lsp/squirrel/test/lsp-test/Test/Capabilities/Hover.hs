@@ -19,5 +19,11 @@ unit_hover_apply_type = Hover.unit_hover_apply_type @Fallback
 --unit_hover_sum_type_mligo :: Assertion
 --unit_hover_sum_type_mligo = Hover.unit_hover_sum_type_mligo @Fallback
 
+--unit_hover_sum_type_pascaligo :: Assertion
+--unit_hover_sum_type_pascaligo = Hover.unit_hover_sum_type_pascaligo @Fallback
+
+--unit_hover_sum_type_religo :: Assertion
+--unit_hover_sum_type_religo = Hover.unit_hover_sum_type_religo @Fallback
+
 unit_hover_parametric_type_ligo :: Assertion
 unit_hover_parametric_type_ligo = Hover.unit_hover_parametric_type_ligo @Fallback
