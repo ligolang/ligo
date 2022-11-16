@@ -25,8 +25,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix decompress.gz
-   bigstringaf base64 cohttp-lwt-unix yojson digestif core_unix
-   core_unix.filename_unix)
+   bigstringaf base64 cohttp-lwt-unix yojson digestif core_unix)
  (preprocess
   (pps ppx_deriving_yojson))
  (modules publish))
