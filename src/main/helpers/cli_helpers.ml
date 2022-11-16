@@ -8,7 +8,7 @@ module Semver = LigoManifest.Semver
 let find_project_root () =
   let pwd = Caml.Sys.getcwd in
   let rec aux p =
-    let dirs = Caml.Sys.ls_dir p in
+    let dirs = Ligo_unix.ls_dir p in
     if List.exists ~f:(String.equal "package.json") dirs
     then Some p
     else (
@@ -94,7 +94,7 @@ let run_command (cmd : command) =
         Lwt.map
           (fun status ->
             match status with
-            | Caml_unix.WEXITED 0 -> Ok ()
+            | Ligo_unix.WEXITED 0 -> Ok ()
             | _ -> Error "unknown error")
           p#status)
   in

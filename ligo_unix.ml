@@ -4,8 +4,7 @@ let home_directory () =
   match Sys.getenv_opt "HOME" with
   | Some home -> home
   | None when Sys.win32-> (match Sys.getenv_opt "USERPROFILE", Sys.getenv "HOMEDRIVE", Sys.getenv "HOMEPATH" with
+                          | _, home_drive, home_path -> home_drive ^ home_path
                           | Some home, _, _ -> home
-                          | Some _, home_drive, home_path -> home_drive ^ home_path
                           | _ -> "")
   | None -> ""
-
