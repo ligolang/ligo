@@ -223,6 +223,29 @@ let%expect_test _ =
 
     Variable "param" not found. |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/wrong_return1.ligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/wrong_return1.ligo", line 3, character 71 to line 5, character 8:
+      2 |
+      3 | function updateAdmin(const _new_admin: address; var s: int): return is {
+      4 |     const _ = 1;
+      5 | } with s
+
+    Invalid type(s)
+    Cannot unify int with ( list (operation) * int ). |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/wrong_return2.ligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/wrong_return2.ligo", line 3, characters 71-72:
+      2 |
+      3 | function updateAdmin(const _new_admin: address; var s: int): return is s
+
+    Invalid type(s)
+    Cannot unify int with ( list (operation) * int ). |}]
+
+
 (* Compiles due to inference ;) *)
 (* let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;

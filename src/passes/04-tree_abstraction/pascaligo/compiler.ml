@@ -542,9 +542,10 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
     let code = self ci.code in
     e_raw_code ~loc language code
   | E_Block be ->
-    let be, _ = r_split be in
+    let be, location = r_split be in
     let next = self be.expr in
-    compile_block ~raise ~next be.block
+    let block = compile_block ~raise ~next be.block in
+    { block with location }
   | E_Nil nil -> (
     let (_,loc) = w_split nil in
     e_list ~loc []
@@ -1018,9 +1019,12 @@ and compile_fun_decl loc ~raise : CST.fun_decl -> Value_var.t * type_expression 
       let input_type = Option.map ~f:t_tuple lst in
       let var = Value_var.fresh ~name:"parameters" () in
       let binder = Param.make var input_type in
-      let result = e_param_matching_tuple (e_variable var) param result in
+      let result = e_param_matching_tuple ~loc:result.location (e_variable var) param result in
       let lambda : _ Lambda.t = { binder ; output_type = ret_type ; result } in
-      (lambda, Option.map ~f:(fun (a,b) -> t_arrow a b) @@ Option.bind_pair (input_type,ret_type))
+      (lambda, Option.map ~f:(fun (a,b : AST.type_expression * AST.type_expression) -> 
+        let loc = Location.cover a.location b.location  in
+        t_arrow ~loc a b
+      ) @@ Option.bind_pair (input_type,ret_type))
   in
   (* This handle polymorphic annotation *)
   let fun_type =
