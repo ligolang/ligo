@@ -5,17 +5,7 @@ module Bugs = struct
     }
   [@@deriving yojson]
 
-  (* Fix regexp *)
-  let email_re = Str.regexp "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,10}$"
-
-  (* Fix regexp *)
-  let url_re =
-    Str.regexp
-      "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
-
-
-  let validate { email; url } = true
-    (* Str.string_match email_re email 0 && Str.string_match url_re url 0 *)
+  (* If required validate `email` & url` *)
 end
 
 type t =
@@ -74,14 +64,15 @@ let try_readme ~project_root =
     let contents = In_channel.read_all (Filename.concat project_root r) in
     String.escaped contents
 
+
 let read ~project_root =
   match project_root with
   | None -> failwith "No package.json found!"
   | Some project_root ->
     let ligo_manifest_path = Filename.concat project_root "package.json" in
-    let () = 
+    let () =
       match Sys_unix.file_exists ligo_manifest_path with
-        `No | `Unknown -> failwith "Unable to find package.json!"
+      | `No | `Unknown -> failwith "Unable to find package.json!"
       | `Yes -> ()
     in
     let json =
@@ -112,23 +103,23 @@ let read ~project_root =
          with
          | _ -> []
        in
-       let dependencies = 
-        try
-          json
-          |> Util.member "dependencies"
-          |> Util.to_assoc
-          |> List.Assoc.map ~f:Util.to_string
-        with
-        | _ -> []
+       let dependencies =
+         try
+           json
+           |> Util.member "dependencies"
+           |> Util.to_assoc
+           |> List.Assoc.map ~f:Util.to_string
+         with
+         | _ -> []
        in
        let dev_dependencies =
-        try
-          json
-          |> Util.member "devDependencies"
-          |> Util.to_assoc
-          |> List.Assoc.map ~f:Util.to_string
-        with
-        | _ -> []
+         try
+           json
+           |> Util.member "devDependencies"
+           |> Util.to_assoc
+           |> List.Assoc.map ~f:Util.to_string
+         with
+         | _ -> []
        in
        let author =
          try json |> Util.member "author" |> Util.to_string with
@@ -176,7 +167,7 @@ let read ~project_root =
          | Error e -> failwith e
        in
        let main =
-        (* TODO: main is always present *)
+         (* TODO: main is always present *)
          try Some (json |> Util.member "main" |> Util.to_string) with
          | _ -> None
        in
@@ -195,17 +186,15 @@ let read ~project_root =
              |> Util.member "bugs"
              |> fun b ->
              match Bugs.of_yojson b with
-             | Ok bugs when Bugs.validate bugs -> Ok bugs
-             | Ok _ | Error _ ->
-              Ok {email="";url=""}
-               (* Error
+             | Ok bugs -> Ok bugs
+             | Error _ ->
+               Error
                  "Invalid `bugs` fields.\n\
                   email & url (bug tracker url) needs to be provided\n\
                   e.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \
-                  \"email\" : \"foo@bar.com\" }" *)
+                  \"email\" : \"foo@bar.com\" }"
            with
-           (* TODO: fix this ... *)
-           | _ -> Error "No license field in package.json"
+           | _ -> Error "No bugs field in package.json"
          in
          match result with
          | Ok bugs -> bugs
