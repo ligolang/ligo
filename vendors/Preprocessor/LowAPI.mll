@@ -59,9 +59,9 @@ module Make (Config : Config.S) (Options : Options.S) =
         let path =
           if String.(dir = "." || dir = "") then file_path
           else dir ^ Filename.dir_sep ^ file_path in
-        match Sys_unix.file_exists path with
-          `Yes           -> Some path
-        | `No | `Unknown -> find_in_cli_paths file_path dirs
+        match Caml.Sys.file_exists path with
+        | true           -> Some path
+        | false -> find_in_cli_paths file_path dirs
 
     (* The call [find dir file inclusion_paths] looks for [file] in
        [dir]. If the file is not found, it is sought in the
@@ -73,9 +73,9 @@ module Make (Config : Config.S) (Options : Options.S) =
       let path =
         if String.(dir = "." || dir = "") then file
         else dir ^ Filename.dir_sep ^ file in
-      match Sys_unix.file_exists path with
-        `Yes -> Some path
-      | `No | `Unknown ->
+      match Caml.Sys.file_exists path with
+      | true -> Some path
+      | false ->
           match find_in_cli_paths file Options.dirs with
             Some _ as some -> some
           | None ->
@@ -84,9 +84,9 @@ module Make (Config : Config.S) (Options : Options.S) =
               in match file_opt with
                    None -> None
                  | Some file ->
-                     match Sys_unix.file_exists file with
-                       `Yes -> file_opt
-                     | `No | `Unknown -> None
+                     match Caml.Sys.file_exists file with
+                     | true -> file_opt
+                     | false -> None
 
     (* STRING PROCESSING *)
 

@@ -258,14 +258,12 @@ let os_type =
   | "Cygwin" -> Gz.NTFS
   | _ -> Gz.Unix
 
-
 (* [gzip] compresses the file [fname] *)
-let gzip fname =
-  let fd = Caml_unix.openfile fname [ Core_unix.O_RDWR ] 0o666 in
-  let file_size = Int.of_int64_exn (Core_unix.stat fname).st_size in
+let gzip fname fd =
+  let file_size = (Ligo_unix.stat fname).st_size in
   let level = 4 in
   let buffer_len = De.io_buffer_size in
-  let time () = Int32.of_float (Core_unix.gettimeofday ()) in
+  let time () = Int32.of_float (Ligo_unix.gettimeofday ()) in
   let i = De.bigstring_create buffer_len in
   let o = De.bigstring_create buffer_len in
   let w = De.Lz77.make_window ~bits:15 in
@@ -275,15 +273,11 @@ let gzip fname =
   let cfg = Gz.Higher.configuration os_type time in
   let refill buf =
     let len = min (file_size - !p) buffer_len in
-    if len <= 0
-    then 0
-    else (
-      let bytes = Bytes.create len in
-      let len = Caml_unix.read fd bytes 0 len in
-      Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len;
-      p := !p + len;
-      len)
-  in
+    if len <= 0 then 0 else
+    let bytes = Bytes.create len in
+    let len = Ligo_unix.read fd bytes 0 len in
+    Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len ;
+    p := !p + len ; len in
   let flush buf len =
     let str = Bigstringaf.substring buf ~off:0 ~len in
     Buffer.add_string r str
@@ -333,7 +327,7 @@ let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) 
 
 
 let from_dir ~dir f =
-  let pwd = Core_unix.getcwd () in
+  let pwd = Caml.Sys.getcwd () in
   let () = Caml.Sys.chdir dir in
   let result = f () in
   let () = Caml.Sys.chdir pwd in
@@ -345,10 +339,10 @@ let tar ~name ~version files =
   let files, sizes = List.unzip files in
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
-  let fname = Filename_unix.temp_file name (Semver.to_string version) in
-  let fd = Caml_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666 in
+  let fname = Filename.temp_file name (Semver.to_string version) in
+  let fd = Ligo_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666 in
   let () = Tar_unix.Archive.create files fd in
-  let () = Caml_unix.close fd in
+  let () = Ligo_unix.close fd in
   Lwt.return (fcount, fname, unpacked_size)
 
 

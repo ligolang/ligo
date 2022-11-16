@@ -17,8 +17,8 @@ type interpreter_error = Errors.interpreter_error
    if that fails it tries to resolve it as a package path using [mod_res] *)
 let resolve_contract_file ~mod_res ~source_file ~contract_file =
   match Caml.Sys.file_exists contract_file with
-  | `Yes -> contract_file
-  | `No | `Unknown ->
+  | true -> contract_file
+  | false ->
     (match source_file with
     | Some source_file ->
       let d = Filename.dirname source_file in
