@@ -111,9 +111,38 @@ instance FromJSON LigoRange where
 -- hashes presence in variable names.
 data NameType
   = Unique
-    -- ^ Variable name __may (but not require)__ have hashes.
+    -- ^ Variable name __may have (but not require)__ hashes.
+    -- Example: @var#123@.
+    --
+    -- Up to our understanding, the rules are the following:
+    --
+    -- * Local variables __have__ hashes.
+    -- * Top-level declarations within the module being run __don't have__
+    -- hashes.
+    -- * However, top-level declarations in the imported files __have__
+    -- hashes.
+    -- * Similarly, top-level declarations coming from @module@s __have__
+    -- hashes.
+    --
+    -- Also, the main rule:
+    -- * Two different variables will have different unique names.
+    -- * The opposite is not true in some edge cases.
+    --
+    --   For instance, @advanced-curry.mligo@ from our tests has a nuance:
+    --   in @apply@ function, variable @f@ will have numerous different
+    --   unique names.
+    --
+    -- So whether can you rely on the names when distinguishing variables or not
+    -- - depends on your use case and on your definition of "same" term
+    -- on variables.
+    --
+    -- Not only the entire variable name is globally unique across the contract;
+    -- the numeric identifier after the hash is globally unique too.
   | Concise
     -- ^ Variable name definitely doesn't have hashes.
+    --
+    -- For user-defined variables (and not LIGO-internal ones), concise
+    -- representation will exactly match the name of the variable in the code.
 
 genSingletons [''NameType]
 
