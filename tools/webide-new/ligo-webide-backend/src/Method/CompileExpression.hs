@@ -45,5 +45,6 @@ inferDialect filepath =
   case Text.takeWhileEnd (/= '.') (Text.pack filepath) of
     "mligo" -> Just CameLIGO
     "ligo" -> Just PascaLIGO
+    "pligo" -> Just PascaLIGO
     "jsligo" -> Just JsLIGO
     _ -> Nothing
