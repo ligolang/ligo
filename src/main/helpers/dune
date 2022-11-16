@@ -23,7 +23,7 @@
    constants)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils syntax lwt lwt.unix semver uri core_unix
+ (libraries simple-utils syntax lwt lwt.unix semver uri unix
    re)
  (inline_tests)
  (preprocess
