@@ -1,18 +1,18 @@
 author: melwyn95
 description: '### Improve pattern matching anomaly (missing case / redundant case)
-  error messages.\n##### For missing cases:\n```ocaml\ntype p = Four | Five | Six\ntype
+  error messages.\n##### For missing cases:\n\n\n```ocaml\ntype p = Four | Five | Six\ntype
   t = One of { a : int ; b : p } | Two | Three\n\nlet s (x : t) = \n match x with\n
-  One { a ; b = Six } -> ()\n | Two -> ()\n | Three -> ()\n```\nError:\n```ocaml\n
+  One { a ; b = Six } -> ()\n | Two -> ()\n | Three -> ()\n\n```\nError:\n\n```ocaml\n
   File \"../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_r_c.mligo\",
   line 5, character 2 to line 8, character 29:\n 4 | let s (x : t) =\n 5 | match x
   with\n 6 | One { a ; b = Six } -> ()\n 7 | | Two -> ()\n 8 | | Three -> ()\n\n Error
   : this pattern-matching is not exhaustive.\n Here are examples of cases that are
-  not matched:\n - One({ a = _ ; b = Five })\n - One({ a = _ ; b = Four })\n```\n---\n#####
-  For redundant case:\n```ocaml\ntype t = One of int | Two of nat | Three\n\nlet s
+  not matched:\n - One({ a = _ ; b = Five })\n - One({ a = _ ; b = Four })\n\n```\n\n---\n#####
+  For redundant case:\n\n```ocaml\ntype t = One of int | Two of nat | Three\n\nlet s
   (x : t) = \n match x with\n One a -> ()\n | Two c -> ()\n | Three -> ()\n | _ ->
-  ()\n```\nError:\n```ocaml\nFile \"../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_w.mligo\",
+  ()\n\n```\nError:\n\n```ocaml\nFile \"../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_w.mligo\",
   line 8, characters 4-5:\n 7 | | Three -> ()\n 8 | | _ -> ()\n\n Error : this match
-  case is unused\n```'
+  case is unused\n\n```'
 merge_request: '1794'
 title: 'Pattern Matching: anomaly detection'
 type: changed

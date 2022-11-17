@@ -1,14 +1,14 @@
 author: er433
-description: '\n<p>Updated to Lima protocol for Michelson type-checking and testing
-  framework. Main breaking changes are:</p>\n\n- Deprecation of `chest` and `Tezos.open_chest`.\n- Change
-  in `Tezos.create_ticket` to prevent the creation of zero valued tickets.\n<p>Support
+description: '\nUpdated to Lima protocol for Michelson type-checking and testing
+  framework. Main breaking changes are:\n\n- Deprecation of `chest` and `Tezos.open_chest`.\n- Change
+  in `Tezos.create_ticket` to prevent the creation of zero valued tickets.\nSupport
   for Jakarta has been removed. By default, we compile to Kathmandu. Type-checking
   for contracts use Kathmandu/Lima depending on `--protocol` passed, but for the rest
-  of commands, protocol Lima is used (particularly, testing framework).</p>\n\n###
-  Example of `Tezos.create_ticket` change\n<p>Usage for protocol Kathmandu: </p>\n```\nlet
-  ticket : ticket<string> = Tezos.create_ticket(\"one\", 10 as nat);\n```\n\n<p>Usage
-  for protocol Lima:</p>\n```\nlet ticket : ticket<string> = Option.unopt(Tezos.create_ticket(\"one\",
-  10 as nat));\n```\n\n'
+  of commands, protocol Lima is used (particularly, testing framework).\n\n###
+  Example of `Tezos.create_ticket` change\nUsage for protocol Kathmandu: \n\n```\nlet
+  ticket : ticket<string> = Tezos.create_ticket(\"one\", 10 as nat);\n\n```\n\n\nUsage
+  for protocol Lima:\n\n```\nlet ticket : ticket<string> = Option.unopt(Tezos.create_ticket(\"one\",
+  10 as nat));\n\n```\n\n\n'
 merge_request: '2094'
 title: 'Protocol update: Lima'
 type: breaking
