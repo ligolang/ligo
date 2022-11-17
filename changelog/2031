@@ -1,5 +1,5 @@
 author: rinderkn
-description: '### Fixed some bugs with the preprocessor and lexer.'
+description: '#### Fixed some bugs with the preprocessor and lexer.'
 merge_request: '2031'
 title: Refactoring of the front-end (last iteration)
 type: internal

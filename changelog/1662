@@ -1,5 +1,5 @@
 author: lesenechal.remi
-description: \n### Lifting restrictions on redundant constructors\n\nIt is now possible
+description: \n#### Lifting restrictions on redundant constructors\n\nIt is now possible
   to declare variant types sharing the same constructors as in:\n\n\n```\ntype t1 =\n|
   Foo of int\n| Bar of string\n\ntype t2 =\n| Foo of int\n| Baz of nat\n\n\n```
 merge_request: '1662'

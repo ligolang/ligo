@@ -1,6 +1,6 @@
 author: melwyn95
-description: '### Improve pattern matching anomaly (missing case / redundant case)
-  error messages.\n##### For missing cases:\n\n\n```ocaml\ntype p = Four | Five | Six\ntype
+description: '#### Improve pattern matching anomaly (missing case / redundant case)
+  error messages.\n###### For missing cases:\n\n\n```ocaml\ntype p = Four | Five | Six\ntype
   t = One of { a : int ; b : p } | Two | Three\n\nlet s (x : t) = \n match x with\n
   One { a ; b = Six } -> ()\n | Two -> ()\n | Three -> ()\n\n```\nError:\n\n```ocaml\n
   File \"../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_r_c.mligo\",

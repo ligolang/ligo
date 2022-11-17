@@ -1,5 +1,5 @@
 author: rinderkn
-description: '### Until now escaped characters in strings were not properly scanned.\nFor
+description: '#### Until now escaped characters in strings were not properly scanned.\nFor
   instance, now the following constants\n\n\n```\nlet _one = String.length \"\\\"\"\nlet
   _two = String.length \"\\n\"\nlet _three = String.length \"\\\\\"\n\n```\n\n\nare accepted
   and evaluate in 1.'

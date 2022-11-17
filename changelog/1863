@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Adds support for the new LIGO registry with the following commands\n1.
+description: '#### Adds support for the new LIGO registry with the following commands\n1.
   `publish [--registry URL] [--ligorc-path PATH] [--project-root PATH]` publish the
   LIGO package declared in package.json\n2. `add-user [--registry URL] [--ligorc-path
   PATH]` create a new user for the LIGO package registry\n3. `login [--registry URL]
