@@ -1,5 +1,5 @@
 author: er433
-description: '### Soon to be deprecated: `Tezos.amount`, `Tezos.balance`, `Tezos.now`,
+description: '#### Soon to be deprecated: `Tezos.amount`, `Tezos.balance`, `Tezos.now`,
   `Tezos.sender`, `Tezos.source`, `Tezos.level`, `Tezos.self_address`, `Tezos.chain_id`,
   `Tezos.total_voting_power`.\n\nThese should be replaced by their \"thunked\" counterpart,
   which are prefixed with `get_`. E.g. `Tezos.balance : unit -> tez`.'

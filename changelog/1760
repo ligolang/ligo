@@ -1,5 +1,5 @@
 author: rinderkn
-description: '### Declarations `function f () : t is b` and calls `f ()` are now valid.'
+description: '#### Declarations `function f () : t is b` and calls `f ()` are now valid.'
 merge_request: '1760'
 title: Authorising () in function declarations and function calls.
 type: changed

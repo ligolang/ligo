@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Fix handling for scoped npm packages'
+description: '#### Fix handling for scoped npm packages'
 merge_request: '1818'
 title: Fix handling of @scoped/packages in ModRes
 type: fixed

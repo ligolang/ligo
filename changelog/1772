@@ -1,5 +1,5 @@
 author: er433
-description: '### New `Test` type and functions\n- `type michelson_contract`: representing
+description: '#### New `Test` type and functions\n- `type michelson_contract`: representing
   Michelson contracts.\n- `Test.compile_contract_from_file : string -> string -> string
   list -> michelson_contract`\n- `Test.compile_contract : (''param auto_merge_request.sh
   release_metadata retrieve_merge_request_info.sh update_distribution_references_with_release.sh
@@ -7,7 +7,7 @@ description: '### New `Test` type and functions\n- `type michelson_contract`: re
   retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning_website.sh
   ''storage) -> michelson_contract`\n- `Test.read_contract_from_file : string -> michelson_contract`\n-
   `Test.originate_contract : michelson_contract -> michelson_program -> tez -> address`\n-
-  `Test.size : michelson_contract -> int`\n### Breaking changes in `Test` types, now
+  `Test.size : michelson_contract -> int`\n#### Breaking changes in `Test` types, now
   they return `michelson_contract` instead of `michelson_program`:\n- `Test.originate_from_file
   : string -> string -> string list -> michelson_program -> tez -> address auto_merge_request.sh
   release_metadata retrieve_merge_request_info.sh update_distribution_references_with_release.sh

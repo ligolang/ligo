@@ -1,5 +1,5 @@
 author: er433
-description: '### Add support for global constants in `compile storage` and `compile
+description: '#### Add support for global constants in `compile storage` and `compile
   parameter`'
 merge_request: '1677'
 title: Add support for constants and file-constants in compile-parameter and compile-storage

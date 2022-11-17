@@ -1,5 +1,5 @@
 author: er433
-description: '### Deprecated: `Tezos.amount`, `Tezos.balance`, `Tezos.now`, `Tezos.sender`,
+description: '#### Deprecated: `Tezos.amount`, `Tezos.balance`, `Tezos.now`, `Tezos.sender`,
   `Tezos.source`, `Tezos.level`, `Tezos.self_address`, `Tezos.chain_id`, `Tezos.total_voting_power`'
 merge_request: '1877'
 title: Remove thunked constants

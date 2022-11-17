@@ -1,5 +1,5 @@
 author: er433
-description: '### Added support for `chain_id` in the testing framework, now it can
+description: '#### Added support for `chain_id` in the testing framework, now it can
   run `Tezos.get_chain_id ()` successfully.'
 merge_request: '2033'
 title: 'Testing framework: add support for `chain_id` values'

@@ -1,5 +1,5 @@
 author: er433
-description: '### Testing framework: add support for loading files with global constants\nA
+description: '#### Testing framework: add support for loading files with global constants\nA
   new function `Test.register_file_constants` is introduced. It takes a string (file
   path) and returns a list of strings corresponding to the hashes of the registered
   constants.\n\nThe file format is the same as the used in `--file-constants` for

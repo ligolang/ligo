@@ -1,14 +1,14 @@
 author: melwyn95
-description: '\n### Before change\n\n```\n$ ligo.55 compile contract x.ligo \n\nInvalid
+description: '\n#### Before change\n\n\n```\n\n$ ligo.55 compile contract x.ligo \n\nInvalid
   type(s)\nCannot unify int with ( list (operation) auto_merge_request.sh homebrew
   parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
   update_distribution_references_with_release.sh versioning versioning_website.sh
-  int ).\n```\n\n### After change\n\n```\n$ ligo compile contract x.mligo \nFile \"x.ligo\",
+  int ).\n\n\n```\n\n\n#### After change\n\n\n```\n\n$ ligo compile contract x.mligo \nFile \"x.ligo\",
   line 3, characters 71-72:\n 2 | \n 3 | function updateAdmin(const _new_admin: address;
   var s: int): return is s\n 4 | \n\nInvalid type(s)\nCannot unify int with ( list
   (operation) auto_merge_request.sh homebrew parse_mr_info.py release_metadata requirements.txt
   retrieve_merge_request_info.sh update_distribution_references_with_release.sh versioning
-  versioning_website.sh int ).\n```\n'
+  versioning_website.sh int ).\n\n```\n\n'
 merge_request: '2144'
 title: Fix location for error message for PascaLIGO
 type: fixed
