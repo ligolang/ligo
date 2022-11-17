@@ -145,7 +145,7 @@ test_test =
               (SrcPos (Pos 7) (Pos 29))
             )
 
-        replicateM 4 do
+        replicateM_ 4 do
           liftIO $ step "Go to next breakpoint (nested file)"
           goToNextBreakpoint
           N.frozen do
@@ -225,14 +225,25 @@ test_test =
             )
 
         liftIO $ step "Go to next breakpoint (more nested file)"
-        goToNextBreakpoint
-        N.frozen do
-          N.getExecutedPosition @@?= Just
-            (N.SourceLocation
-              (N.SourcePath nestedFile2)
-              (SrcPos (Pos 1) (Pos 2))
-              (SrcPos (Pos 1) (Pos 20))
-            )
+        liftIO $ step "Rotate in a loop"
+        replicateM_ 7 do
+          goToNextBreakpoint
+          N.frozen do
+            N.getExecutedPosition @@?= Just
+              (N.SourceLocation
+                (N.SourcePath nestedFile2)
+                (SrcPos (Pos 4) (Pos 4))
+                (SrcPos (Pos 4) (Pos 18))
+              )
+
+          goToNextBreakpoint
+          N.frozen do
+            N.getExecutedPosition @@?= Just
+              (N.SourceLocation
+                (N.SourcePath nestedFile2)
+                (SrcPos (Pos 4) (Pos 11))
+                (SrcPos (Pos 4) (Pos 18))
+              )
 
         liftIO $ step "Go to next breakpoint (go back)"
         goToNextBreakpoint
@@ -250,7 +261,7 @@ test_test =
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (N.SourcePath nestedFile2)
-              (SrcPos (Pos 1) (Pos 2))
-              (SrcPos (Pos 1) (Pos 20))
+              (SrcPos (Pos 4) (Pos 11))
+              (SrcPos (Pos 4) (Pos 18))
             )
   ]
