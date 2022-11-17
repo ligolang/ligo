@@ -1,5 +1,0 @@
-author: Laucans
-description: \n\n<p>Apply michelson optimizations on mutable variables</p>\n\n
-merge_request: '2155'
-title: Fix changelog generation
-type: performance
