@@ -57,6 +57,18 @@ test_ExpressionCompilation = testGroup "Compiling expression"
       res <- try @_ @LigoCallException $ evalExprOverContract1 "absentStorage"
       res @? isLeft
 
+  , testGroup "Expressions starting from `-`"
+    -- At the moment of writing, `ligo` does not accept negative numbers easily
+    -- See https://gitlab.com/ligolang/ligo/-/issues/1495
+    [ testCase "Negative numbers" do
+        res <- evalExprOverContract1 "-3"
+        res @?= U.ValueInt (-3)
+
+    , testCase "Simple expression" do
+        res <- evalExprOverContract1 "-3 + 1"
+        res @?= U.ValueInt (-2)
+
+    ]
   ]
 
 test_EntrypointsCollection :: TestTree
