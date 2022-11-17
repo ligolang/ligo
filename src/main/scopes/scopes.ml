@@ -53,6 +53,7 @@ let update_typing_env
 type reference =
   | Variable of VVar.t
   | Type of TVar.t
+  | ModuleAccessType of MVar.t list * TVar.t
   | ModuleAccess of MVar.t list * VVar.t
   | ModuleAlias of MVar.t list
 
@@ -103,15 +104,17 @@ let rec update_type_variable_reference : TVar.t -> def list -> bool * def list =
 
 
 let rec update_module_variable_references
-    : MVar.t list -> VVar.t option -> def list -> bool * def list
+    :  MVar.t list -> [ `Variable of VVar.t | `Type of TVar.t | `None ]
+    -> def list -> bool * def list
   =
  fun mvs ev defs ->
   match mvs, defs with
   | _, [] -> false, defs
   | [], defs ->
     (match ev with
-    | Some ev -> update_variable_reference ev defs
-    | None -> true, defs)
+    | `Variable ev -> update_variable_reference ev defs
+    | `Type tv -> update_type_variable_reference tv defs
+    | `None -> true, defs)
   | mv :: mvs, Module ({ name; mod_case = Def d; _ } as m) :: defs
     when MVar.is_name mv name ->
     let loc = MVar.get_location mv in
@@ -131,7 +134,9 @@ let rec update_module_variable_references
 
 
 and resolve_alias
-    : string list -> MVar.t list -> VVar.t option -> def list -> bool * def list
+    :  string list -> MVar.t list
+    -> [ `Variable of VVar.t | `Type of TVar.t | `None ] -> def list
+    -> bool * def list
   =
  fun aliases mvs ev defs ->
   match aliases with
@@ -160,9 +165,11 @@ let update_reference : reference -> def list -> bool * def list =
   match r with
   | Variable ev -> update_variable_reference ev defs
   | Type tv -> update_type_variable_reference tv defs
+  | ModuleAccessType (mvs, tv) ->
+    update_module_variable_references mvs (`Type tv) defs
   | ModuleAccess (mvs, ev) ->
-    update_module_variable_references mvs (Some ev) defs
-  | ModuleAlias mvs -> update_module_variable_references mvs None defs
+    update_module_variable_references mvs (`Variable ev) defs
+  | ModuleAlias mvs -> update_module_variable_references mvs `None defs
 
 
 let update_references : reference list -> def list -> def list * reference list =
@@ -176,8 +183,28 @@ let update_references : reference list -> def list -> def list * reference list 
   defs, refs
 
 
-(* TODO: implement this *)
-let find_type_references : AST.type_expression -> reference list = fun te -> []
+let rec find_type_references : AST.type_expression -> reference list =
+ fun te ->
+  match te.type_content with
+  | T_variable t -> [ Type t ]
+  | T_sum { fields; layout = _ } | T_record { fields; layout = _ } ->
+    Record.fold fields ~init:[] ~f:(fun refs row ->
+        let t_refs = find_type_references row.associated_type in
+        refs @ t_refs)
+  | T_arrow { type1; type2 } ->
+    find_type_references type1 @ find_type_references type2
+  | T_app { type_operator; arguments } ->
+    let t_refs = List.concat @@ List.map arguments ~f:find_type_references in
+    Type type_operator :: t_refs
+  | T_module_accessor { module_path; element } ->
+    [ ModuleAccessType (module_path, element) ]
+  | T_singleton _ -> []
+  | T_abstraction { ty_binder; kind = _; type_ }
+  | T_for_all { ty_binder; kind = _; type_ } ->
+    (* TODO: add def for ty_binder *)
+    let t_refs = find_type_references type_ in
+    t_refs
+
 
 let find_binder_type_references
     : AST.type_expression option Binder.t -> reference list
