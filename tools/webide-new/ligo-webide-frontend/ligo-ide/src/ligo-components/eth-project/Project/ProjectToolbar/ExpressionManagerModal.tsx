@@ -137,7 +137,7 @@ function ExpressionManagerModal({
           </div>
         }
         options={declarations}
-        placeholder="Please select a faunction"
+        placeholder="Please select a function"
         value={name}
         onChange={(template: string) => setName(template)}
         size={managerType === "dryRun" ? "" : "short"}
