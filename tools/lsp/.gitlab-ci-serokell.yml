@@ -34,6 +34,7 @@ ligo-build:
   stage: ligo
   needs:
     - print-nix-version
+    - validate-cabal-files  # otherwise build will rely on the outdated deps list
   only: [merge_requests, tooling]
   tags: [nix-with-docker]
   script:
