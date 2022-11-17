@@ -1,6 +1,5 @@
 author: lesenechal.remi
-description: '<!--- Section under ## Changelog will be added to your changelog description.
-  --->\nFix a bug where the typing of one for-loop could invalidate the typing
+description: '\nFix a bug where the typing of one for-loop could invalidate the typing
   of the next one\n\n'
 merge_request: '2121'
 title: fixing E_for_each ctxt threading
