@@ -25,6 +25,7 @@ parser.add_argument("--token", type=str, help="private token")
 
 
 HOSTNAME_REGEX = re.compile("^https?://[^/]+")
+COMMENT_REGEX = re.compile("<!---.*-->")
 
 TYPE_MAP = ["fixed", "added", "breaking", "performance", "none"]
 
@@ -69,7 +70,7 @@ def get_changelog(elems):
 
     # Render the elems
     changelog_details = "".join([gfm.renderer.render(elem) for elem in elems])
-
+    changelog_details = re.sub(COMMENT_REGEX, '', changelog_details)
     return changelog_details
 
 
