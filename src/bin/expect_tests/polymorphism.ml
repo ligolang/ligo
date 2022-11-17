@@ -457,4 +457,23 @@ let%expect_test _ =
     Underspecified type list (^gen#5).
     Please add additional annotations. |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; (test "monomorphisation_fail.mligo") ] ;
+  [%expect{|
+    File "./monomorphisation_fail.mligo", line 3, characters 58-63:
+      2 |
+      3 | let main ((p, s) : unit * unit) : operation list * unit = f p s
+
+    Cannot monomorphise the expression. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; (test "monomorphisation_fail2.mligo") ] ;
+  [%expect{|
+    File "./monomorphisation_fail2.mligo", line 1, characters 11-19:
+      1 | let nested (type a) =
+      2 |   let x (type b) =
+
+    Cannot monomorphise the expression. |}]
+
+
 let () = Sys_unix.chdir pwd
