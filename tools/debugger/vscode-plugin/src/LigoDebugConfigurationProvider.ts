@@ -57,7 +57,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				"entrypoint",
 				"AskOnStart",
 				config.entrypoint,
-				getEntrypoint(
+				() => getEntrypoint(
 					this.context,
 					async (entrypoint) => {
 						return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).message;
@@ -79,7 +79,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				"michelsonEntrypoint",
 				"AskOnStart",
 				config.michelsonEntrypoint,
-				createRememberingQuickPick(
+				() => createRememberingQuickPick(
 					contractMetadata,
 					"Please pick a Michelson entrypoint to run"
 				)
@@ -100,7 +100,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				"parameter",
 				"AskOnStart",
 				config.parameter,
-				getParameterOrStorage(
+				() => getParameterOrStorage(
 					this.context,
 					validateInput,
 					"parameter",
@@ -118,7 +118,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				"storage",
 				"AskOnStart",
 				config.storage,
-				getParameterOrStorage(
+				() => getParameterOrStorage(
 					this.context,
 					validateInput,
 					"storage",
