@@ -257,7 +257,8 @@ let%expect_test _ =
     (mytype#0 -> mytype)
     Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 5-11
     Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-40
-    Content: : sum[Bar -> string , Foo -> int]
+    Content: : |sum[Bar -> string , Foo -> int]|
+    references: []
     Module definitions: |} ]
 
 let%expect_test _ =
@@ -474,7 +475,8 @@ let%expect_test _ =
     (myrec#0 -> myrec)
     Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 5-10
     Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 13-36
-    Content: : record[bar -> int , foo -> int]
+    Content: : |record[bar -> int , foo -> int]|
+    references: []
     Module definitions: |} ] ;
 
   run_ligo_good [ "info" ; "get-scope" ; gs "constant.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
@@ -686,7 +688,8 @@ let%expect_test _ =
     (foo_record#0 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 5-15
     Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 18-43
-    Content: : record[bar -> int , foo -> int]
+    Content: : |record[bar -> int , foo -> int]|
+    references: []
     Module definitions: |} ];
 
   run_ligo_good [ "info"; "get-scope" ; gs "nominal_types.mligo" ; "--format"; "dev" ; "--with-types" ] ;
@@ -731,11 +734,13 @@ let%expect_test _ =
     (foo_record#1 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 5-15
     Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 18-58
-    Content: : record[bar -> foo_variant , foo -> foo_variant]
+    Content: : |record[bar -> foo_variant , foo -> foo_variant]|
+    references:
     (foo_variant#0 -> foo_variant)
     Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 5-16
     Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 19-45
-    Content: : sum[Bar -> string , Foo -> int]
+    Content: : |sum[Bar -> string , Foo -> int]|
+    references:
     Module definitions: |} ]
 
 let%expect_test _ =    

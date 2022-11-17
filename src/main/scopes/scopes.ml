@@ -201,9 +201,12 @@ let rec find_type_references : AST.type_expression -> reference list =
   | T_singleton _ -> []
   | T_abstraction { ty_binder; kind = _; type_ }
   | T_for_all { ty_binder; kind = _; type_ } ->
-    (* TODO: add def for ty_binder *)
     let t_refs = find_type_references type_ in
-    t_refs
+    List.filter t_refs ~f:(fun r ->
+        match r with
+        | Type tv -> not @@ TVar.equal tv ty_binder
+        | Variable _ | ModuleAccess _ | ModuleAlias _ | ModuleAccessType _ ->
+          true)
 
 
 let find_binder_type_references
@@ -452,7 +455,7 @@ let rec expression
     let def = type_expression type_binder Local rhs in
     let defs, refs, tenv, scopes = expression tenv let_result in
     let scopes = merge_same_scopes scopes in
-    [ def ] @ defs, refs @ t_refs @ t_refs, tenv, scopes
+    [ def ] @ defs, t_refs @ refs, tenv, scopes
   | E_matching { matchee; cases } ->
     let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
     let scopes = merge_same_scopes scopes in
