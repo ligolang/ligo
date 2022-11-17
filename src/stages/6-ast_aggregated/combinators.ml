@@ -192,6 +192,12 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
   | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
   | _ -> None
 
+let get_t_map_or_big_map (t:type_expression) : (type_expression * type_expression) option =
+  match t.type_content with
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Map -> Some (k,v)
+  | _ -> None
+
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
@@ -360,23 +366,26 @@ let build_type_abstractions init =
 (* This function re-builds a term prefixed with E_type_inst:
    given an expression e and a list of type variables [t1; ...; tn],
    it constructs an expression e@{t1}@...@{tn} *)
-let build_type_insts init =
+let build_type_insts_opt init =
+  let open Simple_utils.Option in
   let f av forall =
-      let Abstraction.{ ty_binder ; type_ = t ; kind = _ } = Option.value_exn @@ get_t_for_all forall.type_expression in
+      let* forall = forall in
+      let* Abstraction.{ ty_binder ; type_ = t ; kind = _ } = get_t_for_all forall.type_expression in
       let type_ = t_variable av () in
-      (make_e (E_type_inst {forall ; type_ }) (Helpers.subst_type ty_binder type_ t)) in
-  List.fold_right ~init ~f
+      return (make_e (E_type_inst {forall ; type_ }) (Helpers.subst_type ty_binder type_ t)) in
+  List.fold_right ~init:(return init) ~f
 
 (* This function expands a function with a type T_for_all but not with
    the same amount of E_type_abstraction *)
-let forall_expand (e : expression) =
+let forall_expand_opt (e : expression) =
+  let open Simple_utils.Option in
   let tvs, _ = Helpers.destruct_for_alls e.type_expression in
   let evs, e_without_type_abs = get_type_abstractions e in
   if List.equal Ligo_prim.Type_var.equal tvs evs then
-    e
+    return e
   else
-    let e = build_type_insts e_without_type_abs tvs in
-    build_type_abstractions e tvs
+    let* e = build_type_insts_opt e_without_type_abs tvs in
+    return @@ build_type_abstractions e tvs
 
 let context_decl ?(loc = Location.generated) (binder : type_expression Binder.t) (expr : expression) (attr : ValueAttr.t) : context =
   [Location.wrap ~loc @@ D_value { binder ; expr ; attr }]

@@ -691,6 +691,21 @@ let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount
 Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
 
 <SyntaxTitle syntax="pascaligo">
+val get_time : unit -> timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_time : unit -> timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_time: unit => timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_time = (_u: unit) => timestamp
+</SyntaxTitle>
+
+Gets the current time (to be used in test mode).
+
+<SyntaxTitle syntax="pascaligo">
 val baker_account : (string * key) -> option tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -1362,3 +1377,20 @@ let unset_print_values = (u: unit) => unit
 </SyntaxTitle>
 
 Turns off the printing of `test` prefixed values at the end of tests.
+
+
+<SyntaxTitle syntax="pascaligo">
+val get_last_events_from&lt;a,p,s&gt; : typed_address (p,s) -> string -> list (a)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_last_events_from : ('p,'s) typed_address -> string -> 'a list
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_last_events_from: typed_address ('p,'s) => string => list ('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_last_events_from: typed_address &lt;&apos;p,&apos;s&gt; => string => list &lt;&apos;a&gt;
+</SyntaxTitle>
+
+Returns the list of all the event payloads emited with a given tag by a given address. Any call to this
+function must be annotated with the expected payload type.

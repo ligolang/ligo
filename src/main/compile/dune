@@ -9,6 +9,7 @@
   simple-utils
   tezos-utils
   proto-alpha-utils
+  proto-pre-alpha-utils
   preprocessing
   parsing
   cst

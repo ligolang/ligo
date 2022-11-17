@@ -1,0 +1,25 @@
+author: er433
+description: '\n### Before change\n\n```\n$ cat monomorphisation_fail.mligo \nlet
+  f (_ : unit) s = ([], s)\n\nlet main ((p, s) : unit auto_merge_request.sh homebrew
+  parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning versioning_website.sh
+  unit) : operation list auto_merge_request.sh homebrew parse_mr_info.py release_metadata
+  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
+  versioning versioning_website.sh unit = f p s\n$ ligo compile contract monomorphisation_fail.mligo
+  \nInternal error: Monomorphisation: cannot resolve non-variables with instantiations\n```\n\n<p>![image](/uploads/c97d4cfcabc2229161fd4c2a06981e43/image.png)</p>\n\n###
+  After change\n\n```\n$ cat monomorphisation_fail.mligo \nlet f (_ : unit) s = ([],
+  s)\n\nlet main ((p, s) : unit auto_merge_request.sh homebrew parse_mr_info.py release_metadata
+  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
+  versioning versioning_website.sh unit) : operation list auto_merge_request.sh homebrew
+  parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning versioning_website.sh
+  unit = f p s\n$ ligo compile contract monomorphisation_fail.mligo \nFile \"monomorphisation_fail.mligo\",
+  line 3, characters 58-63:\n 2 | \n 3 | let main ((p, s) : unit auto_merge_request.sh
+  homebrew parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning versioning_website.sh
+  unit) : operation list auto_merge_request.sh homebrew parse_mr_info.py release_metadata
+  requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
+  versioning versioning_website.sh unit = f p s\n\nCannot monomorphise the expression.\n```\n\n<p>![image](/uploads/676ad111a46cf586634438375f5e5bc3/image.png)</p>\n\n'
+merge_request: '2142'
+title: 'Monomorphisation: add a better error message'
+type: fixed

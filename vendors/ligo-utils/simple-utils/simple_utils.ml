@@ -11,6 +11,7 @@ module Option = X_option
 module Map = X_map
 module Ligo_string = X_string
 module Z = X_z
+module Result = X_result
 
 module Tuple = Tuple
 module Tree = Tree

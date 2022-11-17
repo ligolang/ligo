@@ -3,6 +3,8 @@ type t =
   ; version : string
   ; description : string
   ; scripts : (string * string) list
+  ; dependencies : (string * string) list
+  ; dev_dependencies : (string * string) list
   ; main : string option
   ; author : string
   ; type_ : string

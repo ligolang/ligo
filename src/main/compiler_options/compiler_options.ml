@@ -29,6 +29,7 @@ type middle_end = {
   warn_unused_rec : bool ;
   no_stdlib : bool ;
   syntax_for_errors : Syntax_types.t option ;
+  no_colour : bool ;
 }
 
 type backend = {
@@ -94,6 +95,7 @@ let make :
         warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec ;
         no_stdlib = raw_options.no_stdlib ;
         syntax_for_errors = syntax ;
+        no_colour = raw_options.no_colour;
       } in
       let backend = {
         protocol_version ;
