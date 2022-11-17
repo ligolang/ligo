@@ -42,8 +42,8 @@ let%expect_test _ =
       9 |   }
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#542 , b -> ^gen#543 , c -> ^gen#544] with
-    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify record[a -> ^a , b -> ^b , c -> ^c] with sum[Cons -> ( int * int ) , Nil -> unit].
+    Hint: ^a, ^b, ^c represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.religo") ] ;
@@ -57,7 +57,8 @@ let%expect_test _ =
       8 |   }
 
     Invalid type(s)
-    Cannot unify ( ^gen#542 * ^gen#543 * ^gen#544 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify ( ^a * ^b * ^c ) with sum[Cons -> ( int * int ) , Nil -> unit].
+    Hint: ^a, ^b, ^c represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -67,7 +68,7 @@ let%expect_test _ =
       5 |   | Some_fake(x) => x
       6 |   | None_fake    => 1
 
-    Pattern not of the expected type option (int) |}]
+    Pattern not of the expected type option (int). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
@@ -171,7 +172,7 @@ let%expect_test _ =
       8 |         | Decrement    => s - 1
       9 |         };
 
-    Pattern not of the expected type nat |}]
+    Pattern not of the expected type nat. |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
@@ -195,7 +196,7 @@ let%expect_test _ =
       6 |   | {one : _ , three : _} => 0
       7 |   }
 
-    Pattern not of the expected type parameter |}]
+    Pattern not of the expected type parameter. |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -209,14 +210,14 @@ let%expect_test _ =
      10 |   }
 
     Invalid type(s)
-    Cannot unify ( ^gen#541 * ^gen#542 ) with ( int * int * int ).
-
+    Cannot unify ( ^a * ^b ) with ( int * int * int ).
     Difference between the types:
-    - ^gen#541
+    - ^a
     + int
-    - ^gen#542
+    - ^b
     + int
-    + int |}]
+    + int
+    Hint: ^a, ^b represent placeholder type(s). |}]
 
 (* Positives *)
 

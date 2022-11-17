@@ -96,7 +96,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( int * string ) with ( int * string * bool ).
-
     Difference between the types:
       int
       string
@@ -174,7 +173,8 @@ let%expect_test _ =
      46 |   in
 
     Invalid type(s)
-    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#545). |}]
+    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^a).
+    Hint: ^a represent placeholder type(s). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -213,7 +213,7 @@ let%expect_test _ =
       8 |         Some (contract) -> contract
 
     Invalid type
-    Ill formed type funtype _a#18 : * . contract (_a#18). |}]
+    Ill formed type funtype a : * . contract (a). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/double_for_each.ligo" ] ;
@@ -330,7 +330,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( string * int * int * string ) with ( tez * nat * tez ).
-
     Difference between the types:
     - string
     + tez
@@ -370,7 +369,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( string * int * nat * tez * string * int ) with ( tez * int * tez * nat * string ).
-
     Difference between the types:
     - string
     + tez
@@ -392,7 +390,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( int * nat * int * nat * int * nat ) with ( int * tez * string * nat * int * address * int * tez * nat ).
-
     Difference between the types:
       int
     + tez
@@ -451,7 +448,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( int * string * ( nat * tez * nat ) * tez ) with ( int * ( nat * tez * int ) * string * tez * address ).
-
     Difference between the types:
       int
     - string
@@ -484,7 +480,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( int * ( nat * tez * tez * nat ) * nat ) with ( int * ( string * address * string * tez ) * ( address * int * int * int ) * ( nat * tez * int * nat ) * ( address * int * int * int ) * nat ).
-
     Difference between the types:
       int
     + ( string * address * string * tez )
@@ -512,7 +507,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify ( string * int * nat * int * string * int ) with ( tez * int * tez * nat * string ).
-
     Difference between the types:
     - string
     + tez

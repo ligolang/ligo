@@ -434,8 +434,9 @@ let%expect_test _ =
       5 |     let b                = List.length ys in
       6 |     [], (a + b + List.length [])
 
-    Underspecified type ^gen#548.
-    Please add additional annotations. |xxx}]
+    Underspecified type ^a.
+    Please add additional annotations.
+    Hint: ^a represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
@@ -444,8 +445,9 @@ let%expect_test _ =
       3 | let main (_, _ : int list * nat) : (operation list * nat) =
       4 |     [], (one [])
 
-    Underspecified type ^gen#544.
-    Please add additional annotations. |xxx}]
+    Underspecified type ^a.
+    Please add additional annotations.
+    Hint: ^a represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
@@ -454,8 +456,9 @@ let%expect_test _ =
       1 | let s = List.length []
       2 |
 
-    Underspecified type ^gen#543.
-    Please add additional annotations. |xxx}]
+    Underspecified type ^a.
+    Please add additional annotations.
+    Hint: ^a represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
@@ -464,13 +467,15 @@ let%expect_test _ =
       1 | let p = []
       2 |
 
-    Underspecified type ^gen#541.
-    Please add additional annotations. |xxx}]
+    Underspecified type ^a.
+    Please add additional annotations.
+    Hint: ^a represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
   [%expect{|
-    Underspecified type ^gen#5.
-    Please add additional annotations. |}]
+    Underspecified type ^a.
+    Please add additional annotations.
+    Hint: ^a represent placeholder type(s). |}]
 
 let () = Sys_unix.chdir pwd
