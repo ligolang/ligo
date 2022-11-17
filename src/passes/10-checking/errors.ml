@@ -58,6 +58,36 @@ and row_mapper ~f ({ fields; layout } : Type.row) : Type.row =
   { fields; layout }
 
 
+let pp_texists_hint ?(requires_annotations = false) ()
+    : Format.formatter -> Type.t list -> unit
+  =
+ fun ppf types ->
+  let texists_vars =
+    types |> List.map ~f:Type.texists_vars |> Type_var.Set.union_list
+  in
+  if not (Set.is_empty texists_vars)
+  then (
+    Format.fprintf
+      ppf
+      "@.Hint: %a represent placeholder type(s)."
+      Simple_utils.PP_helpers.(
+        list_sep
+          (fun ppf tvar ->
+            Format.fprintf
+              ppf
+              "^%s"
+              (Type.Type_var_name_tbl.Exists.name_of tvar))
+          (fun ppf () -> Format.fprintf ppf ", "))
+      (Set.to_list texists_vars);
+    if requires_annotations
+    then
+      Format.fprintf
+        ppf
+        " Adding additional annotations may resolve your error.";
+    Format.fprintf ppf "@.")
+  else ()
+
+
 let type_improve t =
   Context.Hashes.hash_types ();
   type_mapper ~f:type_improve t
@@ -114,6 +144,10 @@ let error_ppformat
     -> unit
   =
  fun ~display_format f a ->
+  (* Create a fresh name table for printing types in errors *)
+  Type.Type_var_name_tbl.Exists.clear ();
+  let name_tbl = Type.Type_var_name_tbl.create () in
+  let pp_type = Type.pp_with_name_tbl ~tbl:name_tbl in
   match display_format with
   | Human_readable | Dev ->
     (match a with
@@ -128,29 +162,36 @@ let error_ppformat
     | `Typer_ill_formed_type (type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type@.Ill formed type %a.@]"
+        "@[<hv>%a@.Invalid type@.Ill formed type %a.%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type_
+        (pp_texists_hint ())
+        [ type_ ]
     | `Typer_record_mismatch (_record, type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Mismatching record labels. Expected record of type %a.@]"
+        "@[<hv>%a@.Mismatching record labels. Expected record of type %a.%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type_
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ]
     | `Typer_cannot_subtype (type1, type2, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Expected %a, but received %a. Types are not compatitable.@]"
+        "@[<hv>%a@.Expected %a, but received %a. Types are not \
+         compatitable.%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type2
-        Type.pp
+        pp_type
         type1
+        (pp_texists_hint ())
+        [ type1; type2 ]
     | `Typer_corner_case (desc, loc) ->
       Format.fprintf
         f
@@ -161,13 +202,14 @@ let error_ppformat
     | `Typer_occurs_check_failed (tvar, type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.The type variable ^%a occurs inside %a.@]"
+        "@[<hv>%a@.The type variable ^%s occurs inside %a.%a@]"
         Snippet.pp
         loc
-        Type_var.pp
-        tvar
-        Type.pp
+        (Type.Type_var_name_tbl.Exists.name_of tvar)
+        pp_type
         type_
+        (pp_texists_hint ())
+        [ type_ ]
     | `Typer_pattern_missing_cases (syntax, ps, loc) ->
       let ps =
         List.fold ps ~init:"" ~f:(fun s p ->
@@ -193,40 +235,46 @@ let error_ppformat
     | `Typer_cannot_unify (no_color, type1, type2, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.@.%a@]"
+        "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.%a%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type1
-        Type.pp
+        pp_type
         type2
-        (Typediff.pp ~no_color)
+        (Typediff.pp ~no_color ~tbl:name_tbl)
         (Typediff.diff type1 type2)
+        (pp_texists_hint ())
+        [ type1; type2 ]
     | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a due to differing \
-         layouts (%a and %a).@]"
+         layouts (%a and %a).%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type1
-        Type.pp
+        pp_type
         type2
         Type.pp_layout
         layout1
         Type.pp_layout
         layout2
+        (pp_texists_hint ())
+        [ type1; type2 ]
     | `Typer_bad_constructor (label, type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a.Expected constructor %a in expected sum type %a.]"
+        "@[<hv>%a.Expected constructor %a in expected sum type %a.%a]"
         Snippet.pp
         loc
         Label.pp
         label
-        Type.pp
+        pp_type
         type_
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ]
     | `Typer_pattern_do_not_match loc ->
       Format.fprintf
         f
@@ -244,19 +292,17 @@ let error_ppformat
     | `Typer_unbound_type_variable (tv, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Type \"%a\" not found. @]"
+        "@[<hv>%a@.Type \"%s\" not found. @]"
         Snippet.pp
         loc
-        Type_var.pp
-        tv
+        (Type.Type_var_name_tbl.name_of name_tbl tv)
     | `Typer_unbound_texists_var (tvar, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Existential variable \"^%a\" not found. @]"
+        "@[<hv>%a@.Existential variable \"^%s\" not found. @]"
         Snippet.pp
         loc
-        Type_var.pp
-        tvar
+        (Type.Type_var_name_tbl.Exists.name_of tvar)
     | `Typer_unbound_variable (v, loc) ->
       Format.fprintf
         f
@@ -278,13 +324,15 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Expected collection of type \"%a\", but recieved collection \
-         of type %a.@]"
+         of type %a.%a@]"
         Snippet.pp
         loc
         For_each_loop.pp_collect_type
         collection_type
-        Type.pp
+        pp_type
         type_
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ]
     | `Typer_mismatching_for_each_binder_arity
         (expected_arity, recieved_arity, loc) ->
       Format.fprintf
@@ -332,15 +380,17 @@ let error_ppformat
     | `Typer_should_be_a_function_type (lamb_type, _args, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\". @]"
+        "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\".%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         (type_improve lamb_type)
+        (pp_texists_hint ~requires_annotations:true ())
+        [ lamb_type ]
     | `Typer_bad_record_access (field, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid record field \"%a\" in record. @]"
+        "@[<hv>%a@.Invalid record field \"%a\" in record.@]"
         Snippet.pp
         loc
         Label.pp
@@ -356,13 +406,13 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid arguments.@.Only composed types of not more than \
-         two element are allowed to be compared. @]"
+         two element are allowed to be compared.@]"
         Snippet.pp
         loc
     | `Typer_assert_equal (expected, actual, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
+        "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\".@]"
         Snippet.pp
         loc
         Ast_typed.PP.type_expression_orig
@@ -373,22 +423,26 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument \
-         of type \"%a\". @]"
+         of type \"%a\".%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         (type_improve type_)
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ]
     | `Typer_uncomparable_types (type1, type2, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid arguments.@.These types cannot be compared: \"%a\" \
-         and \"%a\". @]"
+         and \"%a\".%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         (type_improve type1)
-        Type.pp
+        pp_type
         (type_improve type2)
+        (pp_texists_hint ())
+        [ type1; type2 ]
     | `Typer_pattern_do_not_conform_type (pat, type_, _loc) ->
       let pf ppf value =
         match pat.location with
@@ -402,22 +456,26 @@ let error_ppformat
       in
       Format.fprintf
         f
-        "@[<hv>%a@.Pattern %anot of the expected type %a @]"
+        "@[<hv>%a@.Pattern %anot of the expected type %a.%a@]"
         Snippet.pp
         pat.location
         pf
         pat
-        Type.pp
+        pp_type
         (type_improve type_)
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ]
     | `Typer_mut_is_polymorphic (type_, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Mutable binding has the polymorphic type %a@.Hint: Add an \
-         annotation.@]"
+         annotation.%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type_
+        (pp_texists_hint ())
+        [ type_ ]
     | `Typer_unbound_module (path, loc) ->
       let rec pp_path ppf path =
         match path with
@@ -437,21 +495,25 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Underspecified type %a.@.Please add additional \
-         annotations.@]"
+         annotations.%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         type_
+        (pp_texists_hint ())
+        [ type_ ]
     | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type(s).@.Expected \"%a\", but got: \"%a\".@]"
+        "@[<hv>%a@.Invalid type(s).@.Expected \"%a\", but got: \"%a\".%a@]"
         Snippet.pp
         loc
-        Type.pp
+        pp_type
         expected_type
-        Type.pp
-        lit_type)
+        pp_type
+        lit_type
+        (pp_texists_hint ~requires_annotations:true ())
+        [ expected_type; lit_type ])
 
 
 let error_json : typer_error -> Simple_utils.Error.t =
