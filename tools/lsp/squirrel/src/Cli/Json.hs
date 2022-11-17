@@ -530,7 +530,11 @@ fromLigoType st = \case
 
   LTCSingleton      _ -> mkErr "unsupported type `Singleton`"      -- TODO not used
   LTCAbstraction    _ -> mkErr "unsupported type `Abstraction`"    -- TODO not used
-  LTCForAll         _ -> mkErr "unsupported type `ForAll`"         -- TODO not used
+
+  LTCForAll LigoTypeForAll{..} ->
+    let tyVar = fromLigoTypeExpression _ltfaType_ in
+    make' (st, TVariable tyVar)
+
   LTCModuleAccessor _ -> mkErr "unsupported type `ModuleAccessor`" -- TODO not used
 
   LTCApp LigoTypeApp{..} ->
@@ -540,9 +544,7 @@ fromLigoType st = \case
 
   LTCArrow LigoTypeArrow {..} ->
     make' (st, TArrow (fromLigoTypeExpression _ltaType1) (fromLigoTypeExpression _ltaType2))
-
   where
-
     fromLigoPrimitive :: Maybe FieldKind -> Text -> LIGO Info
     fromLigoPrimitive = \case
       Just FieldSum     -> make' . (st,) . Ctor

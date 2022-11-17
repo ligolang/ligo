@@ -356,25 +356,30 @@ module.exports = grammar({
       )),
     ),
 
-    lambda: $ => prec.right(12, choice(
-      seq(
-        common.par(common.sepBy(',', field("argument", $.fun_arg))),
-        optional(seq(
-          ':',
-          field("type", $._type_expr),
-        )),
-        '=>',
-        field("body", $._program),
+    _type_generics: $ => seq(
+      'type',
+      choice(
+        field("type_name", $.TypeVariableName),
+        common.par(common.sepBy1(',', field("type_name", $.TypeVariableName))),
       ),
-      seq(
-        field("argument", $.TypeName),
-        optional(seq(
-          ':',
-          field("type", $._type_expr),
+      ',',
+    ),
+
+    lambda: $ => prec.right(12, seq(
+      choice(
+        $.Unit,
+        common.par(seq(
+          optional($._type_generics),
+          common.sepBy1(',', field("argument", $.fun_arg)),
         )),
-        '=>',
-        field("body", $._program),
-      )
+        field("argument", $.TypeName),
+      ),
+      optional(seq(
+        ':',
+        field("type", $._type_expr),
+      )),
+      '=>',
+      field("body", $._program),
     )),
 
     indexing: $ => prec.right(12, seq(

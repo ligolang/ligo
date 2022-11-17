@@ -161,27 +161,30 @@ instance Pretty1 Binding where
   pp1 = \case
     BTypeDecl     n    tys ty   -> sexpr "type_decl"  [n, pp tys, ty]
     BParameter    n    ty       -> sexpr "parameter"  [n, pp ty]
-    BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
-    BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
+    BVar          name tys ty value ->
+      sexpr "var"   $ concat [[name], [sexpr "type" tys | not (null tys)], [pp ty], [pp value]]
+    BConst        name tys ty value ->
+      sexpr "const" $ concat [[name], [sexpr "type" tys | not (null tys)], [pp ty], [pp value]]
     BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
     BImport       fname alias   -> sexpr "#import" [fname, alias]
     BModuleDecl   mname body    -> sexpr "module" [mname, pp body]
     BModuleAlias  mname alias   -> sexpr "module" [mname, pp alias]
 
-    BFunction isRec name params ty body ->
+    BFunction isRec name tys params ty body ->
       sexpr "fun" $ concat
         [ ["rec" | isRec]
         , [name]
+        , [sexpr "type" tys | not (null tys)]
         , params
         , [":", pp ty]
         , ["=", body]
         ]
 
-instance Pretty1 TypeParams where
+instance Pretty1 QuotedTypeParams where
   pp1 = \case
-    TypeParam  t  -> sexpr "tparameter" [t]
-    TypeParams ts -> sexpr "tparameters" ts
+    QuotedTypeParam  t  -> sexpr "tparameter" [t]
+    QuotedTypeParams ts -> sexpr "tparameters" ts
 
 instance Pretty1 AST.Type where
   pp1 = \case
@@ -232,7 +235,7 @@ instance Pretty1 Expr where
     WhileLoop f b        -> sexpr "while" [f, b]
     Seq       es         -> sexpr "seq" es
     Block     es         -> sexpr "block" es
-    Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
+    Lambda    ps tys ty b -> sexpr "lam" $ concat [ps, [sexpr "type" tys | not (null tys)], [":", pp ty], ["=>", b]]
     Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
     CodeInj   l e        -> sexpr "%" [l, e]
@@ -441,6 +444,10 @@ instance LPP1 'Caml MapBinding where
 -- Pascal
 ----------------------------------------------------------------------------
 
+prettyTyVarsPascal :: [Doc] -> Doc
+prettyTyVarsPascal []  = DPretty.empty
+prettyTyVarsPascal tys = "<" <.> train ", " tys <.> ">"
+
 instance LPP1 'Pascal AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "->" <+> codom
@@ -461,8 +468,10 @@ instance LPP1 'Pascal TypeVariableName where
 instance LPP1 'Pascal Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> lpp n <+> "is" <+> lpp ty
-    BVar          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
-    BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
+    BVar          name tys ty value ->
+      "var" <+> name <+> prettyTyVarsPascal tys <+> ":" <+> lpp ty <+> ":=" <+> lpp value
+    BConst        name tys ty body  ->
+      "const" <+> name <+> prettyTyVarsPascal tys <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
@@ -470,19 +479,21 @@ instance LPP1 'Pascal Binding where
     BModuleDecl   mname body    -> "module" <+> lpp mname <+> "is" <+> lpp body
     BModuleAlias  mname alias    -> "module" <+> lpp mname <+> lpp alias
 
-    BFunction _ name params ty body ->
+    BFunction isRec name tys params ty body ->
       foldr (<+>) DPretty.empty $ concat
-        [ ["function"]
+        [ ["recursive" | isRec]
+        , ["function"]
         , [name]
+        , ["<" <.> train ", " tys <.> ">" | not (null tys)]
         , params
         , [":", lpp ty]
         , ["is", body]
         ]
 
-instance LPP1 'Pascal TypeParams where
+instance LPP1 'Pascal QuotedTypeParams where
   lpp1 = \case
-    TypeParam  t  -> parens t
-    TypeParams ts -> tuple ts
+    QuotedTypeParam  t  -> parens t
+    QuotedTypeParams ts -> tuple ts
 
 instance LPP1 'Pascal Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -524,7 +535,8 @@ instance LPP1 'Pascal Expr where
     WhileLoop f b        -> "while" <+> lpp f <+> "block' {" `indent` lpp b `above` "}"
     Seq       es         -> block' $ map (<.>";") es
     Attrs     ts         -> mconcat $ brackets . ("@"<+>) <$> ts
-    Lambda    ps ty b    -> "function" <+> lpp ps <+> ":" <+> lpp ty <+> "is" <+> lpp b
+    Lambda    ps tys ty b ->
+      "function" <+> prettyTyVarsPascal tys <+> lpp ps <+> ":" <+> lpp ty <+> "is" <+> lpp b
     Patch     z bs       -> "patch" <+> z <+> "with" <+> lpp bs
     RecordUpd r up       -> r <+> "with record" <+> lpp up
     Case      s az       -> foldr (<+>) DPretty.empty
@@ -594,6 +606,11 @@ instance LPP1 'Pascal CaseOrDefaultStm where
 -- Reason
 ----------------------------------------------------------------------------
 
+prettyTyVarsReason :: [Doc] -> Doc
+prettyTyVarsReason []   = DPretty.empty
+prettyTyVarsReason [ty] = "type" <+> ty
+prettyTyVarsReason tys  = "type" <+> "(" <.> train ", " tys <.> ")"
+
 instance LPP1 'Reason AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "=>" <+> codom
@@ -613,18 +630,24 @@ instance LPP1 'Reason TypeVariableName where
 instance LPP1 'Reason Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name ty body  -> foldr (<+>) DPretty.empty
-      [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
+    BConst        name _ ty body -> foldr (<+>) DPretty.empty
+      [ "let"
+      , name
+      , maybe "" ((":" <+>) . lpp) ty
+      , "="
+      , lpp body
+      , ";"  -- TODO: maybe append ";" to *all* the expressions in the contract
+      ]
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
-instance LPP1 'Reason TypeParams where
+instance LPP1 'Reason QuotedTypeParams where
   lpp1 = \case
-    TypeParam  t  -> parens t
-    TypeParams ts -> tuple ts
+    QuotedTypeParam  t  -> parens t
+    QuotedTypeParams ts -> tuple ts
 
 instance LPP1 'Reason Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -652,8 +675,11 @@ instance LPP1 'Reason Expr where
       , "\n}"
       ]
     Seq       es         -> train " " es
-    Lambda    ps ty b    -> foldr (<+>) DPretty.empty
-      [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
+    Lambda    ps tys ty b -> foldr (<+>) DPretty.empty
+      [ parens (prettyTyVarsReason tys <+> train ", " ps)
+      , maybe "" ((":" <+>) . lpp) ty
+      , "=> {", lpp b, "}"
+      ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
@@ -717,6 +743,10 @@ instance LPP1 'Reason CaseOrDefaultStm where
 tupleJsLIGO :: forall p . LPP 'Js p => [p] -> Doc
 tupleJsLIGO = brackets . train @'Js @p ","
 
+prettyTyVarsJs :: [Doc] -> Doc
+prettyTyVarsJs []  = DPretty.empty
+prettyTyVarsJs tys = "<" <.> train ", " tys <.> ">"
+
 instance LPP1 'Js AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "=>" <+> codom
@@ -737,8 +767,11 @@ instance LPP1 'Js TypeVariableName where
 instance LPP1 'Js Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name ty body  -> foldr (<+>) DPretty.empty
-      [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ]
+    BConst        name tys ty body -> foldr (<+>) DPretty.empty
+      [ "let", name
+      , maybe DPretty.empty (((":" <+> prettyTyVarsJs tys) <+>) . lpp) ty
+      , "=", lpp body, ";"
+      ]
     BAttribute    name          -> "/* @" <.> name <.> " */"
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
@@ -747,10 +780,10 @@ instance LPP1 'Js Binding where
     BModuleAlias  mname alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
-instance LPP1 'Js TypeParams where
+instance LPP1 'Js QuotedTypeParams where
   lpp1 = \case
-    TypeParam  t  -> "<" <.> pp t <.> ">"
-    TypeParams ts -> "<" <.> train "," ts <.> ">"
+    QuotedTypeParam  t  -> "<" <.> pp t <.> ">"
+    QuotedTypeParams ts -> "<" <.> train "," ts <.> ">"
 
 instance LPP1 'Js Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -778,8 +811,11 @@ instance LPP1 'Js Expr where
       , "\n}"
       ]
     Seq       es         -> train ";" es
-    Lambda    ps ty b    -> foldr (<+>) DPretty.empty
-      [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
+    Lambda    ps tys ty b -> foldr (<+>) DPretty.empty
+      [ tuple ps
+      , maybe "" (((":" <+> prettyTyVarsJs tys) <+>) . lpp) ty
+      , "=> {", lpp b, "}"
+      ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     ForOfLoop v c b      -> "for" <+> "(const" <+> v <+> "of" <+> c <+> ") {" `indent` lpp b `above` "}"
     AssignOp l o r       -> l <+> o <+> r
@@ -850,6 +886,10 @@ tupleCameLIGO = \case
   [x] -> lpp @'Caml x
   xs  -> tuple @'Caml xs
 
+prettyTyVarsCaml :: [Doc] -> Doc
+prettyTyVarsCaml []  = DPretty.empty
+prettyTyVarsCaml tys = parens ("type" <+> train ", " tys)
+
 instance LPP1 'Caml AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "->" <+> codom
@@ -860,7 +900,7 @@ instance LPP1 'Caml AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
-    TParen    t         -> "(" <+> lpp t <+> ")"
+    TParen    t         -> parens (lpp t)
 
 instance LPP1 'Caml TypeVariableName where
   lpp1 = \case
@@ -869,25 +909,27 @@ instance LPP1 'Caml TypeVariableName where
 instance LPP1 'Caml Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
+    BConst        name tys ty body ->
+      "let" <+> name <+> prettyTyVarsCaml tys <+> ":" <+> lpp ty <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
 
-    BFunction isRec name params ty body ->
+    BFunction isRec name tys params ty body ->
       foldr (<+>) DPretty.empty $ concat
         [ ["let"]
         , ["rec" | isRec]
         , [name]
+        , [prettyTyVarsCaml tys]
         , params
         , [maybe DPretty.empty ((":" <+>) . lpp) ty]
         , ["=", body]
         ]
     node                      -> error "unexpected `Binding` node failed with: " <+> pp node
 
-instance LPP1 'Caml TypeParams where
+instance LPP1 'Caml QuotedTypeParams where
   lpp1 = \case
-    TypeParam  t  -> t
-    TypeParams ts -> tuple ts
+    QuotedTypeParam  t  -> t
+    QuotedTypeParams ts -> tuple ts
 
 instance LPP1 'Caml Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -914,8 +956,13 @@ instance LPP1 'Caml Expr where
       , foldr above DPretty.empty $ lpp <$> az
       ]
     Seq       es         -> train " " es
-    Lambda    ps ty b    -> foldr (<+>) DPretty.empty
-      [ train "," ps, maybe "" ((":" <+>) . lpp) ty, "=>", lpp b ]
+    Lambda    ps tys ty b -> foldr (<+>) DPretty.empty
+      [ "fun"
+      , prettyTyVarsCaml tys
+      , train "," ps
+      , maybe "" ((":" <+>) . lpp) ty
+      , "=>", lpp b
+      ]
     RecordUpd r with     -> r <+> "with" <+> train ";" with
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node

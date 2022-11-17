@@ -26,8 +26,8 @@ import AST.Scope.ScopedDecl
   Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..),
   _ModuleSpec, mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec)
 import AST.Scope.ScopedDecl.Parser (parseModule, parseParameters, parseTypeDeclSpecifics)
-import AST.Skeleton hiding (Type, TypeParams (..))
-import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))
+import AST.Skeleton hiding (QuotedTypeParams (..), Type)
+import AST.Skeleton qualified as Skeleton (QuotedTypeParams (..), Type (..))
 import Cli.Types
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
@@ -452,14 +452,20 @@ instance HasGo Expr where
       (sts, refs) <- processSequence decls
       pure $ Just ((Set.empty, getRange r) :< sts, Set.toList refs)
     Block {} -> pure Nothing
-    Lambda params typ body -> do
-      paramRefs <- scopeParams params typ
-      subforest <- fmap (fmap getTree) $ do
-        void (maybe (pure Nothing) walk typ)
-        for_ (zip paramRefs params) \(pr, p) ->
-          withScope pr (walk p)
-        withScopes paramRefs (walk body)
-      pure $ Just ((Set.fromList paramRefs, getRange r) :< maybeToList subforest, [])
+    Lambda params tys typ body -> do
+      tyRefs <- scopeParams tys Nothing
+      withScopes tyRefs do
+        mapM_ walk tys
+        paramRefs <- scopeParams params typ
+        subforest <- fmap (fmap getTree) do
+          void (maybe (pure Nothing) walk typ)
+          for_ (zip (tyRefs <> paramRefs) (tys <> params)) \(pr, p) ->
+            withScope pr (walk p)
+          withScopes paramRefs (walk body)
+        pure $ Just
+          ( (Set.fromList paramRefs <> Set.fromList tyRefs, getRange r) :< maybeToList subforest
+          , []
+          )
     ForBox name mname2 coll expr1 expr2 -> do
       declRefs <- scopeParams (catMaybes [Just name, mname2]) Nothing
       withScopes declRefs $ do
@@ -472,7 +478,7 @@ instance HasGo Expr where
     Patch expr1 expr2 -> do
       void (walk expr1)
       walk expr2
-    RecordUpd  name assignments -> do
+    RecordUpd name assignments -> do
       walk name
       mapM_ walk assignments
       pure Nothing
@@ -514,53 +520,85 @@ scopeParams args ty = foldMapM go args
   where
     go :: LIGO ParsedInfo -> ScopeM [ExtendedDeclRef]
     go node = case node of
-      (match -> Just (_, BParameter (layer -> Just (IsParen xs)) _)) ->
+      (layer -> Just (BParameter (layer -> Just (IsParen xs)) _)) ->
         scopeParams [xs] ty
-      (match -> Just (_, BParameter (layer -> Just (IsTuple xs)) _)) ->
+      (layer -> Just (BParameter (layer -> Just (IsTuple xs)) _)) ->
         foldMapM go xs
-      (match -> Just (_, BParameter name mType)) -> do
+      (layer -> Just (BParameter name mType)) -> do
         mkDecl (valueScopedDecl [] name mType Nothing)
           >>= maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
-      (match -> Just (_, IsAnnot pat _)) -> go pat
-      (match -> Just (_, IsTuple xs)) -> foldMapM go xs
-      (match -> Just (_, IsParen x)) -> go x
-      (match -> Just (_, IsVar x)) -> go x
-      (match -> Just (_, NameDecl _)) -> do
+      (layer -> Just (IsAnnot pat _)) -> go pat
+      (layer -> Just (IsTuple xs)) -> foldMapM go xs
+      (layer -> Just (IsParen x)) -> go x
+      (layer -> Just (IsVar x)) -> go x
+      (layer -> Just (NameDecl _)) -> do
         mkDecl (valueScopedDecl [] node ty Nothing) >>=
           maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
-      (match -> Just (_, IsRecord rfps)) -> do
+      (layer -> Just (IsRecord rfps)) -> do
         flip foldMapM rfps $ \case
           (layer -> Just x) -> case x of
             IsRecordField _ var -> go var
             IsRecordCapture var -> go var
           _ -> pure []
-      (match -> Just (r, TVariable (layer -> Just (TypeVariableName name)))) -> do
+      (match -> Just (r, TypeVariableName name)) -> do
         scopedDecl <- mkTypeVariableScope name (getRange r)
         (:[]) <$> insertScope (OrdinaryRef TypeLevel) scopedDecl
+      (layer -> Just (TVariable tvar)) -> go tvar
       _ -> pure []
 
-walkConstTuple
+walkLet
   :: Product ParsedInfo
+  -> LIGO ParsedInfo
   -> [LIGO ParsedInfo]
   -> Maybe (LIGO ParsedInfo)
-  -> [LIGO ParsedInfo]
+  -> Maybe (LIGO ParsedInfo)
   -> ScopeM (Maybe ScopeRet)
-walkConstTuple r names typ vals = do
-  declRefs <- flip wither (zip names vals) \(name, val) ->
-    mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
-      maybe (pure Nothing) \scopedDecl -> do
-        declRef <- insertScope (OrdinaryRef TermLevel) scopedDecl
-        withScope declRef (walk name)
-        pure (Just declRef)
-  whenJust typ $ void . walk
-  mapM_ walk vals
-  pure $ Just ((Set.fromList declRefs, getRange r) :< [], declRefs)
+walkLet r name tys typ (Just (layer -> Just (Lambda params tys' typ' body))) = do
+  let returnType = typ' <|> typ
+  tyRefs <- scopeParams tys Nothing
+  withScopes tyRefs $ mkDecl (functionScopedDecl [] name params returnType (Just body))
+    >>= maybe (pure Nothing) \functionDecl -> do
+      traverse_ walk tys
+      functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
+      tyRefs' <- scopeParams tys' Nothing
+      withScopes tyRefs' do
+        mapM_ walk tys'
+        paramRefs <- scopeParams params returnType
+        subforest <- fmap (fmap getTree) do
+          void $ withScope functionRef (walk name)
+          for_ (zip paramRefs params) \(pr, p) ->
+            withScope pr (walk p)
+          withScopes (functionRef : paramRefs) (walk body)
+        pure $ Just
+          ( (Set.singleton functionRef, getRange r) :<
+            [ (Set.fromList (tyRefs <> tyRefs'), getRange r) :< []
+            , (Set.fromList paramRefs, getRange r) :< maybeToList subforest
+            ]
+          , [functionRef]
+          )
+walkLet r pat tys ty mexpr = do
+  tyRefs <- scopeParams tys Nothing
+  withScopes tyRefs do
+    traverse_ walk tys
+    refs <- scopeParams [pat] ty
+    void $ withScopes refs (walk pat)
+    whenJust ty $ void . walk
+    subforest <- maybe (pure Nothing) (fmap (fmap getTree) . walk) mexpr
+    pure $ Just
+      ( (Set.fromList refs, getRange r) :<
+        ( ((Set.fromList tyRefs, getRange r) :< [])
+        : maybeToList subforest
+        )
+      , refs
+      )
 
 instance HasGo Binding where
   walk' r = \case
-    BFunction isRec name params typ body ->
-      mkDecl (functionScopedDecl [] name params typ (Just body))
+    BFunction isRec name tys params typ body -> do
+      tyRefs <- scopeParams tys Nothing
+      withScopes tyRefs $ mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
+          traverse_ walk tys
           functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
           paramRefs <- scopeParams params typ
           subforest <- fmap (fmap getTree) $ do
@@ -568,49 +606,23 @@ instance HasGo Binding where
             mapM_ (withScopes paramRefs . walk) params
             whenJust typ $ void . walk
             withScopes (bool id (functionRef :) isRec paramRefs) (walk body)
-          pure $ Just ((Set.singleton functionRef, getRange r) :<
-            [(Set.fromList paramRefs, getRange r) :< maybeToList subforest], [functionRef])
+          pure $ Just (
+            ( Set.singleton functionRef, getRange r) :<
+              [ (Set.fromList tyRefs, getRange r) :< []
+              , (Set.fromList paramRefs, getRange r) :< maybeToList subforest
+              ]
+            , [functionRef]
+            )
 
     BParameter name typ -> do
       void (walk name)
       maybe (pure Nothing) walk typ
 
-    BVar pat typ mexpr ->
-      mkDecl (valueScopedDecl [] pat typ mexpr)
-        >>= maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope (OrdinaryRef TermLevel) scopedDecl
-          subforest <- fmap (fmap getTree) $ withScope declRef $ do
-            void (walk pat)
-            maybe (pure Nothing) walk mexpr
-          whenJust typ $ void . walk
-          pure $ Just
-            ((Set.singleton declRef, getRange r) :< maybeToList subforest, [declRef])
+    BVar   pat tys ty mexpr ->
+      walkLet r pat tys ty mexpr
 
-    BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
-      mkDecl (functionScopedDecl [] name params typ (Just body))
-        >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
-          paramRefs <- scopeParams params typ
-          subforest <- fmap (fmap getTree) $ do
-            void $ withScope functionRef (walk name)
-            for_ (zip paramRefs params) \(pr, p) -> do
-              withScope pr (walk p)
-            withScopes (functionRef : paramRefs) (walk body)
-          pure $ Just ((Set.singleton functionRef, getRange r) :<
-            [(Set.fromList paramRefs, getRange r) :< maybeToList subforest], [functionRef])
-
-    BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) typ (Just (layer -> Just (Tuple vals))) ->
-      walkConstTuple r names typ vals
-
-    BConst (layer -> Just (IsTuple names)) typ (Just (layer -> Just (Tuple vals))) ->
-      walkConstTuple r names typ vals
-
-    BConst pat ty mexpr -> do
-      refs <- scopeParams [pat] ty
-      void $ withScopes refs (walk pat)
-      whenJust ty $ void . walk
-      subforest <- maybe (pure Nothing) (fmap (fmap getTree) . walk) mexpr
-      pure $ Just ((Set.fromList refs, getRange r) :< maybeToList subforest, refs)
+    BConst pat tys ty mexpr ->
+      walkLet r pat tys ty mexpr
 
     BTypeDecl name mparams expr -> do
       let scopeVariant, scopeTField :: LIGO ParsedInfo -> ScopeM (Maybe ScopeRet)
@@ -636,8 +648,8 @@ instance HasGo Binding where
         maybe (pure Nothing) \scopedDecl -> do
           declRef <- insertScope (OrdinaryRef TypeLevel) scopedDecl
           let params = case mparams of
-                Just (layer -> Just (Skeleton.TypeParams ps)) -> ps
-                Just (layer -> Just (Skeleton.TypeParam p)) -> [p]
+                Just (layer -> Just (Skeleton.QuotedTypeParams ps)) -> ps
+                Just (layer -> Just (Skeleton.QuotedTypeParam p)) -> [p]
                 _ -> []
 
           paramRefs <- scopeParams params Nothing
@@ -718,7 +730,7 @@ instance HasGo TypeName where
   walk' r (TypeName name) = walkName TypeLevel r name
 
 instance HasGo TypeVariableName where
-  walk' r (TypeVariableName decl) = walkName TypeLevel r decl
+  walk' r (TypeVariableName name) = walkName TypeLevel r name
 
 instance HasGo FieldName where
   walk' _ _ = pure Nothing
@@ -767,10 +779,16 @@ walkModuleAccess path accessorM = go path
 instance HasGo ModuleAccess where
   walk' _ (ModuleAccess path accessor) = Nothing <$ walkModuleAccess path (Just accessor)
 
-instance HasGo Skeleton.TypeParams where
-  walk' _ = \case
-    Skeleton.TypeParam  {} -> pure Nothing
-    Skeleton.TypeParams {} -> pure Nothing
+instance HasGo Skeleton.QuotedTypeParams where
+  walk' r = \case
+    Skeleton.QuotedTypeParam  ty  -> walkQuotedTypeParams [ty]
+    Skeleton.QuotedTypeParams tys -> walkQuotedTypeParams tys
+    where
+      walkQuotedTypeParams tys = do
+        tyRefs <- scopeParams tys Nothing
+        withScopes tyRefs do
+          traverse_ walk tys
+          pure $ Just ((Set.fromList tyRefs, getRange r) :< [], [])
 
 instance HasGo CaseOrDefaultStm where
   walk' r = \case

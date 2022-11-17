@@ -1,5 +1,6 @@
 module Test.Capabilities.Hover
   ( unit_hover_apply_type
+  , unit_hover_parametric_type_ligo
   ) where
 
 import Test.HUnit (Assertion)
@@ -17,3 +18,6 @@ unit_hover_apply_type = Hover.unit_hover_apply_type @Fallback
 
 --unit_hover_sum_type_mligo :: Assertion
 --unit_hover_sum_type_mligo = Hover.unit_hover_sum_type_mligo @Fallback
+
+unit_hover_parametric_type_ligo :: Assertion
+unit_hover_parametric_type_ligo = Hover.unit_hover_parametric_type_ligo @Fallback
