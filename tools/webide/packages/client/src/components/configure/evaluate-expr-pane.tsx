@@ -30,7 +30,7 @@ export const EvaluateValuePaneComponent = () => {
             protocol=selectedProtocol
             dispatch({ ...new ChangeProtocolAction(selectedProtocol) })}
           }>
-          <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Lima}>Lima</Option>
           <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
         <Label htmlFor="entrypoint">Expression</Label>

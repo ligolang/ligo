@@ -36,7 +36,7 @@ type Action =
 const DEFAULT_STATE: EvaluateFunctionState = {
   entrypoint: '',
   parameters: '',
-  protocol: 'jakarta'
+  protocol: 'kathmandu'
 };
 
 const evaluateFunction = (

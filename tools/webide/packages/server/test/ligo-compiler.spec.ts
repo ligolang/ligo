@@ -28,7 +28,7 @@ describe('Ligo compiler', () => {
       'main',
       'json',
       '0',
-      'jakarta'
+      'kathmandu'
     );
 
     expect(michelsonCode.trim()).toEqual('{ "int": "0" }');

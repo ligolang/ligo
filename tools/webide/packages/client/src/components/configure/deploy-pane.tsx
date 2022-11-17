@@ -53,7 +53,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
             useProtocol = protocol
             dispatch({ ...new ChangeProtocolAction(protocol) })}
           }>
-          <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Lima}>Lima</Option>
           <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
       <Label htmlFor="storage">Choose a Network</Label>
@@ -71,7 +71,6 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           }}
         >
           <Option value={networkType.Kathmandunet}>Kathmandunet</Option>
-          <Option value={networkType.Jakartanet}>Jakartanet</Option>
           <Option value={networkType.Ghostnet}>Ghostnet</Option>
           <Option value={networkType.Mainnet}>Mainnet</Option>
         </SelectCommand>
@@ -95,7 +94,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           }
         ></Textarea>
       </Group>
-      {useNetwork && ( useNetwork === networkType.Ghostnet || useNetwork === networkType.Jakartanet || useNetwork === networkType.Kathmandunet) &&
+      {useNetwork && ( useNetwork === networkType.Ghostnet || useNetwork === networkType.Kathmandunet) &&
       <HGroup>
         <Checkbox
           checked={true}
