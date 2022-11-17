@@ -45,3 +45,7 @@ let exp2 =
     // paramertic type in
     let j : nat boo = Some 1n in
     ()
+
+// 2 problem missing reference & virtual location
+// Missing reference : qux, boo, foo, bar, 
+// Virual location   : q, s, idk, hmm, x, t

@@ -279,9 +279,9 @@ let rec expression
     in
     let defs_result, refs_result, tenv, scopes = expression tenv result in
     let scopes = merge_same_scopes scopes in
-    let defs, refs_result = update_references refs_result def in
+    let defs, refs = update_references (refs_result @ t_refs) def in
     ( defs_result @ defs
-    , refs_result @ t_refs
+    , refs
     , tenv
     , add_defs_to_scopes def scopes )
   | E_type_abstraction { result; _ } -> expression tenv result
@@ -383,8 +383,8 @@ let rec expression
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
     let scopes' = add_defs_to_scopes [ def ] scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs_result = update_references refs_result [ def ] in
-    defs_result @ defs_rhs @ defs, refs_result @ refs_rhs @ t_refs, tenv, scopes
+    let defs, refs = update_references (refs_rhs @ t_refs) [ def ] in
+    defs_result @ defs_rhs @ defs, refs_result @ refs, tenv, scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
     let t_refs = find_binder_type_references let_binder in
@@ -409,8 +409,8 @@ let rec expression
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
     let scopes' = add_defs_to_scopes defs_binder scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs_result = update_references refs_result defs_binder in
-    defs_result @ defs_rhs @ defs, refs_result @ refs_rhs @ t_refs, tenv, scopes
+    let defs, refs = update_references (refs_rhs @ t_refs) defs_binder in
+    defs_result @ defs_rhs @ defs, refs_result @ refs, tenv, scopes
   | E_recursive { fun_name; fun_type; lambda = { binder; result; _ } } ->
     let t_refs = find_type_references fun_type in
     let t_refs = t_refs @ find_type_references (Param.get_ascr binder) in
@@ -445,9 +445,9 @@ let rec expression
     let defs_result, refs_result, tenv, scopes = expression tenv result in
     let scopes = merge_same_scopes scopes in
     let defs = def_par @ [ def_fun ] in
-    let defs, refs_result = update_references refs_result defs in
+    let defs, refs = update_references (refs_result @ t_refs) defs in
     ( defs_result @ defs
-    , refs_result @ t_refs
+    , refs
     , tenv
     , add_defs_to_scopes (def_par @ [ def_fun ]) scopes )
   | E_type_in { type_binder; rhs; let_result } ->
@@ -455,7 +455,7 @@ let rec expression
     let def = type_expression type_binder Local rhs in
     let defs, refs, tenv, scopes = expression tenv let_result in
     let scopes = merge_same_scopes scopes in
-    [ def ] @ defs, t_refs @ refs, tenv, scopes
+    [ def ] @ defs, refs @ t_refs, tenv, scopes
   | E_matching { matchee; cases } ->
     let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
     let scopes = merge_same_scopes scopes in
