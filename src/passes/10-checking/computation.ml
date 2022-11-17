@@ -259,6 +259,12 @@ module Options = struct
     let open Let_syntax in
     let%map options = options () in
     options.syntax_for_errors
+
+
+  let no_color () =
+    let open Let_syntax in
+    let%map options = options () in
+    options.no_colour
 end
 
 type 'a exit =
@@ -714,7 +720,7 @@ let equal_domains lmap1 lmap2 =
 
 
 type unify_error =
-  [ `Typer_cannot_unify of Type.t * Type.t * Location.t
+  [ `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
   | `Typer_cannot_unify_diff_layout of
     Type.t * Type.t * Type.layout * Type.layout * Location.t
   | `Typer_ill_formed_type of Type.t * Location.t
@@ -729,7 +735,10 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
     let%bind type2 = Context.tapply type2 in
     unify type1 type2
   in
-  let fail () = raise (cannot_unify type1 type2) in
+  let fail () =
+    let%bind no_color = Options.no_color () in
+    raise (cannot_unify no_color type1 type2)
+  in
   match type1.content, type2.content with
   | T_singleton lit1, T_singleton lit2 when Literal_value.equal lit1 lit2 ->
     return ()

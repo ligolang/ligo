@@ -77,7 +77,7 @@ type typer_error =
   | `Typer_pattern_redundant_case of Location.t
   | `Typer_cannot_unify_diff_layout of
     Type.t * Type.t * Type.layout * Type.layout * Location.t
-  | `Typer_cannot_unify of Type.t * Type.t * Location.t
+  | `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
   | `Typer_assert_equal of
     Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_unbound_module of Module_var.t list * Location.t
@@ -190,16 +190,18 @@ let error_ppformat
         "@[<hv>%a@.Error : this match case is unused.@]"
         Snippet.pp
         loc
-    | `Typer_cannot_unify (type1, type2, loc) ->
+    | `Typer_cannot_unify (no_color, type1, type2, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.@]"
+        "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.@.%a@]"
         Snippet.pp
         loc
         Type.pp
         type1
         Type.pp
         type2
+        (Typediff.pp ~no_color)
+        (Typediff.diff type1 type2)
     | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
       Format.fprintf
         f
@@ -529,7 +531,7 @@ let error_json : typer_error -> Simple_utils.Error.t =
     let message = Format.asprintf "@[Error: this match case is unused.@]" in
     let content = make_content ~message ~location:loc () in
     make ~stage ~content
-  | `Typer_cannot_unify (type1, type2, loc) ->
+  | `Typer_cannot_unify (_, type1, type2, loc) ->
     let message =
       Format.asprintf
         "@[Invalid type(s)@.Cannot unify %a with %a.@]"

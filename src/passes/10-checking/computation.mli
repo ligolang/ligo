@@ -32,6 +32,7 @@ val options : unit -> (Compiler_options.middle_end, 'err, 'wrn) t
 module Options : sig
   val test : unit -> (bool, 'err, 'wrn) t
   val syntax : unit -> (Syntax_types.t option, 'err, 'wrn) t
+  val no_color : unit -> (bool, 'err, 'wrn) t
 end
 
 type 'a exit =
@@ -122,7 +123,7 @@ module Context : sig
 end
 
 type unify_error =
-  [ `Typer_cannot_unify of Type.t * Type.t * Location.t
+  [ `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
   | `Typer_cannot_unify_diff_layout of
     Type.t * Type.t * Type.layout * Type.layout * Location.t
   | `Typer_ill_formed_type of Type.t * Location.t

@@ -1,8 +1,8 @@
 {
   "ligo-set-helpers@1.0.2@d41d8cd9":
-    "/foo/.esy/source/i/ligo_set_helpers__1.0.2__5cd724a1",
+    "./.ligo/source/i/ligo_set_helpers__1.0.2__5cd724a1",
   "ligo-list-helpers@1.0.0@d41d8cd9":
-    "/foo/.esy/source/i/ligo_list_helpers__1.0.0__bf074147",
-  "ligo-foo@link-dev:./package.json":
-    "/foo/projects/ligo-foo"
+    "./.ligo/source/i/ligo_list_helpers__1.0.0__bf074147",
+  "working_project@link-dev:./package.json":
+    "./projects/working_project"
 }

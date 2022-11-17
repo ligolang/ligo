@@ -190,6 +190,12 @@ let now =
   let spec = optional string in
   flag ~doc name spec
 
+let no_colour =
+  let open Command.Param in
+  let name = "--no-colour" in
+  let doc = "disable coloring in CLI output" in
+  flag ~doc name no_arg
+
 let display_format =
   let open Command.Param in
   let open Simple_utils.Display in
@@ -330,9 +336,9 @@ I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let reset_return () = return := Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt no_stdlib michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt no_stdlib michelson_format output_file show_warnings warning_as_error no_colour michelson_comments constants file_constants project_root warn_unused_rec
         () =
-    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~no_stdlib ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~no_stdlib ~warning_as_error ~no_colour ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -341,7 +347,7 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> no_stdlib <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> no_stdlib <*> michelson_code_format <*> output_file <*> warn <*> werror <*> no_colour <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
@@ -600,8 +606,8 @@ let info_group =
 
 (** Print commands *)
 let preprocessed =
-  let f source_file syntax libraries display_format project_root () =
-    let raw_options = Raw_options.make ~syntax ~libraries ~project_root () in
+  let f source_file syntax libraries display_format project_root no_colour () =
+    let raw_options = Raw_options.make ~syntax ~libraries ~project_root ~no_colour () in
     return_result ~return @@
       Api.Print.preprocess raw_options source_file display_format  in
   let summary   = "preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
@@ -613,10 +619,10 @@ let preprocessed =
                   as a module and therefore the content of the imported \
                   file is not printed by this sub-command." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> libraries <*> display_format <*> project_root)
+  (f <$> source_file <*> syntax <*> libraries <*> display_format <*> project_root <*> no_colour)
 let pretty_print =
-  let f source_file syntax display_format warning_as_error () =
-    let raw_options = Raw_options.make ~syntax ~warning_as_error () in
+  let f source_file syntax display_format warning_as_error no_colour () =
+    let raw_options = Raw_options.make ~syntax ~warning_as_error ~no_colour () in
     return_result ~return @@
     Api.Print.pretty_print raw_options source_file display_format in
   let summary   = "pretty-print the source file." in
@@ -625,10 +631,10 @@ let pretty_print =
                   adjusted to the number of columns in the terminal (or \
                   60 if it cannot be determined)." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format <*> werror)
+  (f <$> source_file <*> syntax <*> display_format <*> werror <*> no_colour)
 let print_graph =
-  let f source_file syntax display_format project_root () =
-  let raw_options = Raw_options.make ~syntax ~project_root () in
+  let f source_file syntax display_format project_root no_colour () =
+  let raw_options = Raw_options.make ~syntax ~project_root ~no_colour () in
     return_result ~return @@
     Api.Print.dependency_graph raw_options source_file display_format
   in
@@ -637,11 +643,11 @@ let print_graph =
                   by the module system. It explores all imported source \
                   files (recursively) following a DFS strategy." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format <*> project_root)
+  (f <$> source_file <*> syntax <*> display_format <*> project_root <*> no_colour)
 
 let print_cst =
-  let f source_file syntax display_format () =
-    let raw_options = Raw_options.make ~syntax () in
+  let f source_file syntax display_format no_colour () =
+    let raw_options = Raw_options.make ~syntax ~no_colour () in
     return_result ~return @@
     Api.Print.cst raw_options source_file display_format
   in
@@ -649,11 +655,11 @@ let print_cst =
   let readme () = "This sub-command prints the source file in the CST \
                   stage, obtained after preprocessing and parsing." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> syntax <*> display_format <*> no_colour)
 
 let print_ast =
-  let f source_file syntax display_format () =
-    let raw_options = Raw_options.make ~syntax () in
+  let f source_file syntax display_format no_colour () =
+    let raw_options = Raw_options.make ~syntax ~no_colour () in
     return_result ~return @@
     Api.Print.ast raw_options source_file display_format
   in
@@ -661,13 +667,13 @@ let print_ast =
   let readme () = "This sub-command prints the source file in the AST \
                   imperative stage, before desugaring step is applied." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> syntax <*> display_format <*> no_colour)
 
 
 
 let print_ast_core =
-  let f source_file syntax display_format self_pass project_root () =
-    let raw_options = Raw_options.make ~syntax ~self_pass ~project_root () in
+  let f source_file syntax display_format self_pass project_root no_colour () =
+    let raw_options = Raw_options.make ~syntax ~self_pass ~project_root ~no_colour () in
     return_result ~return @@
     Api.Print.ast_core raw_options source_file display_format
   in
@@ -675,11 +681,11 @@ let print_ast_core =
   let readme () = "This sub-command prints the source file in the AST \
                   core stage." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format <*> self_pass <*> project_root )
+  (f <$> source_file <*> syntax <*> display_format <*> self_pass <*> project_root <*> no_colour)
 
 let print_ast_typed =
-  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
-    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test no_colour () =
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test ~no_colour () in
     return_result ~return @@
     Api.Print.ast_typed raw_options source_file  display_format
   in
@@ -689,11 +695,11 @@ let print_ast_typed =
                   type the contract, but the contract is not combined \
                   with imported modules." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode <*> no_colour)
 
 let print_ast_aggregated =
-  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
-    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test no_colour () =
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test ~no_colour () in
     return_result ~return @@
       Api.Print.ast_aggregated raw_options source_file display_format
   in
@@ -701,11 +707,11 @@ let print_ast_aggregated =
   let readme () = "This sub-command prints the source file in the AST \
                    aggregated stage." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode <*> no_colour)
 
 let print_mini_c =
-  let f source_file syntax protocol_version display_format optimize project_root warn_unused_rec () =
-    let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
+  let f source_file syntax protocol_version display_format optimize project_root warn_unused_rec no_colour () =
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root ~warn_unused_rec ~no_colour () in
     return_result ~return @@
     Api.Print.mini_c raw_options source_file display_format optimize
   in
@@ -715,7 +721,7 @@ let print_mini_c =
                   and compile the contract. Compilation is applied \
                   after combination in the AST typed stage." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> optimize <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> optimize <*> project_root <*> warn_unused_rec <*> no_colour)
 
 let print_group =
   let summary = "print intermediary program representation.\nWarning: Intended for development of LIGO and can break at any time" in

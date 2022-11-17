@@ -1,6 +1,7 @@
 open Cli_expect
 
 let () = Sys_unix.chdir "../../test/projects/"
+let pwd = Sys_unix.getcwd ()
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
@@ -21,7 +22,6 @@ let%expect_test _ =
       2 |
     File "tezos-ligo-fa2" not found. |}]
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "using_scope_pkg_project"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "src/a/b/c/contract.test.mligo" ; "--project-root" ; "." ] ;
@@ -36,7 +36,6 @@ let%expect_test _ =
     - test_originate exited with value (). |}]
 let () = Sys_unix.chdir pwd
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "using_scope_pkg_project/src/a/b/c"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "contract.test.mligo" ] ;
@@ -45,7 +44,6 @@ let%expect_test _ =
     - test_originate exited with value (). |}]
 let () = Sys_unix.chdir pwd
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "using_scope_pkg_project/src/a/b"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "c/contract.test.mligo" ] ;
@@ -54,7 +52,6 @@ let%expect_test _ =
     - test_originate exited with value (). |}]
 let () = Sys_unix.chdir pwd
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "using_scope_pkg_project/src/a"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "b/c/contract.test.mligo" ] ;
@@ -63,7 +60,6 @@ let%expect_test _ =
     - test_originate exited with value (). |}]
 let () = Sys_unix.chdir pwd
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "using_scope_pkg_project/src"
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "a/b/c/contract.test.mligo" ] ;
@@ -85,7 +81,6 @@ let%expect_test _ =
       storage (option nat) ;
       code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "dao_path_bug"
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
@@ -107,7 +102,6 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "include_include"
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
@@ -137,7 +131,6 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "include_import"
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
@@ -170,7 +163,6 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "import_import"
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
@@ -206,7 +198,6 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "import_include"
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract" ; "main.mligo" ] ;
@@ -225,4 +216,25 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
+let () = Sys_unix.chdir pwd
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; "using_ligo_breathalyser/test.mligo" ; "--project-root" ; "using_ligo_breathalyser" ] ;
+  [%expect{|
+    (1 , 2 , 3)
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let () = Sys_unix.chdir "using_ligo_breathalyser"
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; "test.mligo" ] ;
+  [%expect{|
+    (1 , 2 , 3)
+    Everything at the top-level was executed.
+    - test exited with value (). |}] ;
+  run_ligo_good [ "run"; "test" ; "test.mligo" ; "--project-root" ; "." ] ;
+  [%expect{|
+    (1 , 2 , 3)
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 let () = Sys_unix.chdir pwd

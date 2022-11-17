@@ -199,7 +199,7 @@ let%expect_test _ =
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.religo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.religo"); "--no-colour" ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.religo", line 7, character 2 to line 10, character 3:
       6 | let main = (action : parameter) : int =>
@@ -209,7 +209,14 @@ let%expect_test _ =
      10 |   }
 
     Invalid type(s)
-    Cannot unify ( ^gen#541 * ^gen#542 ) with ( int * int * int ). |}]
+    Cannot unify ( ^gen#541 * ^gen#542 ) with ( int * int * int ).
+
+    Difference between the types:
+    - ^gen#541
+    + int
+    - ^gen#542
+    + int
+    + int |}]
 
 (* Positives *)
 

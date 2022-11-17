@@ -1,6 +1,7 @@
 type t = {
   (* Formatter *)
   warning_as_error : bool ;
+  no_colour : bool ;
 
   (* Warnings *)
   warn_unused_rec : bool ;
@@ -40,6 +41,7 @@ module Default_options = struct
   (* Formatter *)
   let show_warnings = true
   let warning_as_error = false
+  let no_colour = false
 
   (* Warnings *)
   let warn_unused_rec = false
@@ -79,6 +81,7 @@ end
 
 let make
   ?(warning_as_error = Default_options.warning_as_error)
+  ?(no_colour = Default_options.no_colour)
   ?(warn_unused_rec = Default_options.warn_unused_rec)
   ?(syntax = Default_options.syntax)
   ?(entry_point = Default_options.entry_point)
@@ -104,6 +107,7 @@ let make
 {
   (* Formatter *)
   warning_as_error ;
+  no_colour ;
 
   (* Warnings *)
   warn_unused_rec ;

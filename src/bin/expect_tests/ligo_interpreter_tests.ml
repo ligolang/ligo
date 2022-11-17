@@ -571,7 +571,8 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_timestamp.mligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test_sub exited with value (). |}]
+    - test_sub exited with value ().
+    - test_get_time exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_context.mligo" ] ;

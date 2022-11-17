@@ -14,10 +14,42 @@ let self_in_lambdas ~raise : expression -> expression =
             raise.error bad_self_address
           else
             e
-	| _ -> e
-			in
+	| _ -> e in
       let _self_in_lambdas : expression = Helpers.map_expression
         (f ~raise)
         body in
       e
     | _ -> e
+
+let rec check_comparable ~raise (error : type_expression -> _) : type_expression -> unit =
+  fun t ->
+  let self = check_comparable ~raise error in
+  match t.type_content with
+  | T_base TB_unit | T_base TB_never | T_base TB_bool | T_base TB_int
+  | T_base TB_nat | T_base TB_string | T_base TB_timestamp | T_base TB_mutez
+  | T_base TB_chain_id | T_base TB_bytes | T_base TB_key_hash | T_base TB_address
+  | T_base TB_key | T_base TB_signature -> ()
+  | T_tuple ts ->
+    let () = List.iter ~f:(fun t -> self (snd t)) ts in
+    ()
+  | T_option t ->
+    let () = self t in
+    ()
+  | T_or (t1, t2) ->
+    let () = self (snd t1) in
+    let () = self (snd t2) in
+    ()
+  | _ -> raise.error @@ error t
+
+let not_comparable ~raise : expression -> expression =
+  fun e ->
+  let f t = match t.type_content with
+    | T_set t ->
+      let () = check_comparable ~raise (not_comparable "set") t in
+      t
+    | T_ticket t ->
+      let () = check_comparable ~raise (not_comparable "ticket") t in
+      t
+    | _ -> t in
+  let _ = Helpers.map_type_expression f e.type_expression in
+  e

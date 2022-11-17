@@ -11,7 +11,8 @@
   compiler_options
   main_warnings
   desugaring
-  syntax_types)
+  syntax_types
+  ocaml-compiler-libs.common)
  (preprocess
   (pps
    ppx_poly_constructor

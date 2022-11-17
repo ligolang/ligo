@@ -387,6 +387,7 @@ module Test = struct
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
   let bake_until_n_cycle_end (n : nat) : unit = [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
+  let get_time (_u : unit) : timestamp = Tezos.get_now ()
   let cast_address (type a b) (a : address) : (a, b) typed_address = [%external ("TEST_CAST_ADDRESS", a)]
   let register_delegate (kh : key_hash) : unit = [%external ("TEST_REGISTER_DELEGATE", kh)]
   let register_constant (m : michelson_program) : string = [%external ("TEST_REGISTER_CONSTANT", m)]

@@ -60,13 +60,22 @@ let%expect_test _ =
   - C |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match7.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match7.jsligo"); "--no-colour" ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match7.jsligo", line 1, characters 11-20:
       1 | let foo = ([a,b,c,d] : [int,int,int]) : int => a + b + c + d;
 
     Invalid type(s)
-    Cannot unify ( ^gen#541 * ^gen#542 * ^gen#543 * ^gen#544 ) with ( int * int * int ). |}]
+    Cannot unify ( ^gen#541 * ^gen#542 * ^gen#543 * ^gen#544 ) with ( int * int * int ).
+
+    Difference between the types:
+    - ^gen#541
+    + int
+    - ^gen#542
+    + int
+    - ^gen#543
+    + int
+    - ^gen#544 |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;

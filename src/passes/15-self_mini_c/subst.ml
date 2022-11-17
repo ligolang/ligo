@@ -161,7 +161,7 @@ let subst_binder : type body.
     if Value_var.equal x y
     then (y, body)
     (* else, if no capture, subst in binder *)
-    else if not (Free_variables.mem (Free_variables.expression [] expr) y)
+    else if not (Free_variables.mem (get_fv [] expr) y)
     then (y, subst ~body ~x ~expr)
     (* else, avoid capture and subst in binder *)
     else

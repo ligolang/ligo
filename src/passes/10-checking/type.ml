@@ -384,9 +384,7 @@ let get_t__type_ t = get_t_binary_construct t Literal_types._type_
 
 
 let get_t_bool t : unit option =
-  match t.content with
-  | content when equal_content content (t_bool ()).content -> Some ()
-  | _ -> None
+  Option.some_if (equal_content t.content (t_bool ()).content) ()
 
 
 let get_t_option t =
@@ -459,22 +457,31 @@ let pp_tuple_or_record_sep_type value =
 
 
 let rec pp ppf t =
-  match t.content with
-  | T_variable tvar -> Type_var.pp ppf tvar
-  | T_exists tvar -> Format.fprintf ppf "^%a" Type_var.pp tvar
-  | T_arrow arr -> Arrow.pp pp ppf arr
-  | T_construct construct -> pp_construct ppf construct
-  | T_singleton lit -> Literal_value.pp ppf lit
-  | T_abstraction abs -> Abstraction.pp_type_abs pp ppf abs
-  | T_for_all for_all -> Abstraction.pp_forall pp ppf for_all
-  | T_sum row ->
-    Format.fprintf
-      ppf
-      "@[<h>sum[%a]@]"
-      (pp_lmap_sep_d pp_row_elem)
-      (Record.LMap.to_kv_list_rev row.fields)
-  | T_record row ->
-    Format.fprintf ppf "%a" (pp_tuple_or_record_sep_type pp_row_elem) row.fields
+  if Option.is_some (get_t_bool t)
+  then bool ppf
+  else if Option.is_some (get_t_option t)
+  then option ppf t
+  else (
+    match t.content with
+    | T_variable tvar -> Type_var.pp ppf tvar
+    | T_exists tvar -> Format.fprintf ppf "^%a" Type_var.pp tvar
+    | T_arrow arr -> Arrow.pp pp ppf arr
+    | T_construct construct -> pp_construct ppf construct
+    | T_singleton lit -> Literal_value.pp ppf lit
+    | T_abstraction abs -> Abstraction.pp_type_abs pp ppf abs
+    | T_for_all for_all -> Abstraction.pp_forall pp ppf for_all
+    | T_sum row ->
+      Format.fprintf
+        ppf
+        "@[<h>sum[%a]@]"
+        (pp_lmap_sep_d pp_row_elem)
+        (Record.LMap.to_kv_list_rev row.fields)
+    | T_record row ->
+      Format.fprintf
+        ppf
+        "%a"
+        (pp_tuple_or_record_sep_type pp_row_elem)
+        row.fields)
 
 
 and pp_construct ppf { constructor; parameters; _ } =
@@ -487,19 +494,9 @@ and pp_construct ppf { constructor; parameters; _ } =
 
 
 and pp_row_elem ppf (row_elem : row_element) = pp ppf row_elem.associated_type
-
-let bool ppf : unit = Format.fprintf ppf "%a" Type_var.pp Literal_types.v_bool
+and bool ppf : unit = Format.fprintf ppf "%a" Type_var.pp Literal_types.v_bool
 
 and option ppf t : unit =
   match get_t_option t with
   | Some t -> Format.fprintf ppf "option (%a)" pp t
   | None -> Format.fprintf ppf "option ('a)"
-
-
-let pp ppf t =
-  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
-  if Option.is_some (get_t_bool t)
-  then bool ppf
-  else if Option.is_some (get_t_option t)
-  then option ppf t
-  else pp ppf t

@@ -3,6 +3,8 @@ type t =
   ; version : string
   ; description : string
   ; scripts : (string * string) list
+  ; dependencies : (string * string) list
+  ; dev_dependencies : (string * string) list
   ; main : string option
   ; author : string
   ; type_ : string
@@ -84,6 +86,24 @@ let read ~project_root =
          with
          | _ -> []
        in
+       let dependencies = 
+        try
+          json
+          |> Util.member "dependencies"
+          |> Util.to_assoc
+          |> List.Assoc.map ~f:Util.to_string
+        with
+        | _ -> []
+       in
+       let dev_dependencies =
+        try
+          json
+          |> Util.member "devDependencies"
+          |> Util.to_assoc
+          |> List.Assoc.map ~f:Util.to_string
+        with
+        | _ -> []
+       in
        let author =
          try json |> Util.member "author" |> Util.to_string with
          | _ -> failwith "No author field  in package.json"
@@ -138,6 +158,8 @@ let read ~project_root =
          ; version
          ; description
          ; scripts
+         ; dependencies
+         ; dev_dependencies
          ; main
          ; author
          ; type_

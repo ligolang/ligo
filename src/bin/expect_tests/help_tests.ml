@@ -82,6 +82,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                              . format that will be used by compile-contract for
                                the resulting Michelson. Available formats are
                                'text' (default), 'json' and 'hex'.
+  [--no-colour]              . disable coloring in CLI output
   [--no-stdlib]              . disable stdlib inclusion.
   [--no-warn]                . disable warning messages
   [--output-file FILENAME], -o
