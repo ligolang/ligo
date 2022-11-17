@@ -280,10 +280,7 @@ let rec expression
     let defs_result, refs_result, tenv, scopes = expression tenv result in
     let scopes = merge_same_scopes scopes in
     let defs, refs = update_references (refs_result @ t_refs) def in
-    ( defs_result @ defs
-    , refs
-    , tenv
-    , add_defs_to_scopes def scopes )
+    defs_result @ defs, refs, tenv, add_defs_to_scopes def scopes
   | E_type_abstraction { result; _ } -> expression tenv result
   | E_constructor { element; _ } -> expression tenv element
   | E_accessor { struct_; _ } -> expression tenv struct_
@@ -626,7 +623,11 @@ and declaration
     let def = type_expression type_binder Global type_expr in
     [ def ], t_refs, tenv, []
   | D_module { module_binder; module_; module_attr = _ } ->
-    module_expression ~with_types ~options tenv Global module_binder module_
+    let defs, refs, env, scopes =
+      module_expression ~with_types ~options tenv Global module_binder module_
+    in
+    let defs, refs = update_references refs defs in
+    defs, refs, env, scopes
 
 
 and declarations
@@ -689,7 +690,8 @@ let scopes
   let tenv =
     { type_env = options.init_env; bindings = Misc.Bindings_map.empty }
   in
-  let defs, _, _, scopes = declarations ~with_types ~options tenv prg in
+  let defs, refs, _, scopes = declarations ~with_types ~options tenv prg in
+  let defs, _ = update_references refs defs in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
   defs, scopes

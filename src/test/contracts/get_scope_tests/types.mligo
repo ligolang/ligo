@@ -47,5 +47,5 @@ let exp2 =
     ()
 
 // 2 problem missing reference & virtual location
-// Missing reference : qux, boo, foo, bar, 
+// Missing reference : foo, bar, 
 // Virual location   : q, s, idk, hmm, x, t
