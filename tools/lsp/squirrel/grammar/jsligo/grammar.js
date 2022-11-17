@@ -25,9 +25,9 @@ module.exports = grammar({
       common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
     _toplevel: $ => choice(
-      seq(optional($._Expor_kwd), $.toplevel_binding),
-      seq(optional($._Expor_kwd), $.type_decl),
-      seq(optional($._Expor_kwd), $.namespace_statement),
+      withAttrs($, seq(optional($._Export_kwd), $.toplevel_binding)),
+      withAttrs($, seq(optional($._Export_kwd), $.type_decl)),
+      withAttrs($, seq(optional($._Export_kwd), $.namespace_statement)),
       $.import_statement,
       $.preprocessor
     ),
@@ -41,10 +41,16 @@ module.exports = grammar({
 
     _statement: $ => field("statement", $._base_statement),
 
+    _declaration: $ => withAttrs($,
+      choice(
+        $.let_binding,
+        $.const_binding,
+        $.type_decl,
+      )
+    ),
+
     _base_statement: $ => prec(5, choice(
-      $.let_binding,
-      $.const_binding,
-      $.type_decl,
+      $._declaration,
       $._expr_statement,
       $.return_statement,
       $.block_statement,
@@ -331,7 +337,7 @@ module.exports = grammar({
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
-    toplevel_binding:  $ => withAttrs($,
+    toplevel_binding: $ =>
       seq(
         choice($._Let_kwd, $._Const_kwd),
         field("binding_pattern", $._binding_pattern),
@@ -340,10 +346,9 @@ module.exports = grammar({
         ),
         '=',
         field("value", $._expr)
-      )
-    ),
+      ),
 
-    let_binding: $ => withAttrs($,
+    let_binding: $ =>
       seq(
         $._Let_kwd,
         field("binding_pattern", $._binding_pattern),
@@ -352,10 +357,9 @@ module.exports = grammar({
         ),
         '=',
         field("value", $._expr)
-      )
-    ),
+      ),
 
-    const_binding: $ => withAttrs($,
+    const_binding: $ =>
       seq(
         $._Const_kwd,
         field("binding_pattern", $._binding_pattern),
@@ -364,8 +368,7 @@ module.exports = grammar({
         ),
         '=',
         field("value", $._expr)
-      )
-    ),
+      ),
 
     type_decl: $ => seq(
       'type',
@@ -537,7 +540,7 @@ module.exports = grammar({
     wildcard: $ => '_',
     _Let_kwd: $ => 'let',
     _Const_kwd: $ => 'const',
-    _Expor_kwd: $ => 'export',
+    _Export_kwd: $ => 'export',
     Else_kwd: $ => 'else',
   }
 })
