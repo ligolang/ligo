@@ -6,4 +6,4 @@
  (public_name ligo.unix))
 
 
-(vendored_dirs vendors)
+(vendored_dirs vendored-dune)
