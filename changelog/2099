@@ -1,6 +1,5 @@
 author: lesenechal.remi
-description: '<!--- Section under ## Changelog will be added to your changelog description.
-  --->\n\nApply michelson optimizations on mutable variables\n\n'
+description: '\n\nApply michelson optimizations on mutable variables\n\n'
 merge_request: '2099'
 title: Optimizations on mutable variables
 type: performance
