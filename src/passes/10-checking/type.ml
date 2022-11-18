@@ -483,10 +483,7 @@ end = struct
     | None ->
       let name =
         if Type_var.is_generated tvar
-        then (
-          let name = create_name t in
-          add_name t tvar name;
-          name)
+        then create_name t
         else (
           (* User-defined name. We'd like to try keep the name. However
              a collision could occur if we've previously used this name.
@@ -494,18 +491,15 @@ end = struct
              We resolve the collision by adding a number to the end until we reach 
              a unique name *)
           let name = Type_var.to_name_exn tvar in
-          (* let curr_name = ref name in
+          let curr_name = ref name in
           let i = ref 0 in
-          while not (is_used t !curr_name) do
+          while is_used t !curr_name do
             curr_name := name ^ Int.to_string !i;
             Int.incr i
           done;
-          !curr_name) *)
-          (* Problem (Alistair): 
-              We need to distinguish between type constructor variables and type variables
-              in order to implement this *)
-          name)
+          !curr_name)
       in
+      add_name t tvar name;
       (* Invariant: [name] is unique (wrt table [t]) *)
       name
 
