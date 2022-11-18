@@ -1,6 +1,6 @@
 {
   "name": "ligo",
-  "version": "0.43.0-dev",
+  "version": "0.56.0-dev",
   "esy": {
     "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
     "release": {
@@ -13,7 +13,6 @@
         "@opam/conf-libev",
         "esy-gmp"
       ],
-
       "rewritePrefix": true
     }
   },
@@ -24,6 +23,7 @@
       "dune build -p ligo"
     ],
     "buildEnv": {
+      "LIGO_VERSION": "0.56.0-dev",
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
     "exportedEnv": {
