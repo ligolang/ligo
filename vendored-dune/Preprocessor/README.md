@@ -13,7 +13,7 @@ of LIGO, here `ligo/vendors`. As such, it is distributed with the LIGO
 compiler which uses it as a library. Nevertheless, a standalone
 preprocessor can also be built and used either as an interactive way
 to test the library, or for uses independent of LIGO. The directory
-`ligo/vendors/Preprocessor` should list the following files:
+`ligo/vendored-dune/Preprocessor` should list the following files:
 
 ```
 Preprocessor
@@ -47,39 +47,39 @@ Preprocessor
 
 Here is a short description of those files:
 
-  * The OCaml module `API` is the heart of the preprocessor.
+- The OCaml module `API` is the heart of the preprocessor.
 
-  * The modules whose names start with `E_` are used by `API` to parse
-    the boolean expression of conditional directives `#if` and
-    `#elif`.
+- The modules whose names start with `E_` are used by `API` to parse
+  the boolean expression of conditional directives `#if` and
+  `#elif`.
 
-  * The module `Error` defines the errors that the preprocessor may
-    emit.
+- The module `Error` defines the errors that the preprocessor may
+  emit.
 
-  * The `LICENSE` file must contain the MIT license.
+- The `LICENSE` file must contain the MIT license.
 
-  * The modules `CLI` and `PreprocMainGen` deal with command-line
-    options for the standalone preprocessor, and also export data
-    structures about the configuration meant for the library client,
-    for example, the LIGO compiler.
+- The modules `CLI` and `PreprocMainGen` deal with command-line
+  options for the standalone preprocessor, and also export data
+  structures about the configuration meant for the library client,
+  for example, the LIGO compiler.
 
-  * The module `PreprocMain` is the standalone preprocessor.
+- The module `PreprocMain` is the standalone preprocessor.
 
-  * The directory `Tests` is used for unit tests of the standalone
-    preprocessor.
+- The directory `Tests` is used for unit tests of the standalone
+  preprocessor.
 
-  * The file `README.md` is the present file.
+- The file `README.md` is the present file.
 
-  * The module `State` defines a type and related functions used for
-    preprocessing.
+- The module `State` defines a type and related functions used for
+  preprocessing.
 
 The following files are meant to be used only by a special Makefile to
 build the standalone preprocessor. See
 [how to build with the Makefile](#the-standalone-preprocessor-with-make).
 
-  * Hidden files prefixed by `.`.
+- Hidden files prefixed by `.`.
 
-  * The file `Makefile.cfg` configures the Makefile.
+- The file `Makefile.cfg` configures the Makefile.
 
 ## Builds
 
@@ -89,7 +89,7 @@ The relevant files are `dune` and `dune-project`. The shell command
 
         $ dune build Preprocessor.a
 
-is to be run in the directory `ligo/vendors/Preprocessor`.
+is to be run in the directory `ligo/vendored-dune/Preprocessor`.
 
 ### The Standalone Preprocessor with dune
 
@@ -97,9 +97,9 @@ The relevant files are `dune` and `dune-project`. The shell command
 
         $ dune build PreprocMain.exe
 
-is to be run in the directory `ligo/vendors/Preprocessor`. As usual
+is to be run in the directory `ligo/vendored-dune/Preprocessor`. As usual
 with `dune`, the executable is found in the mirror directory tree
-`ligo/_build/default/vendors/Preprocessor`.
+`ligo/_build/default/vendored-dune/Preprocessor`.
 
 ### The Standalone Preprocessor with Make
 
@@ -112,7 +112,7 @@ repositories first, outside the LIGO working directory:
 > $ git clone https://github.com/rinderknecht/OCaml-build.git
 
 Make sure the directory to the scripts is in your `PATH` shell
-variable. Then, back in `ligo/vendors/Preprocessor`, run
+variable. Then, back in `ligo/vendored-dune/Preprocessor`, run
 
 > $ setup.sh
 
@@ -174,29 +174,29 @@ First, we see that the preprocessor follows the
 conventions on short and long option names. The input is an anonymous
 argument that must be preceded by `--`. The options are
 
-  * `-I <paths>` for finding files given to the directive `#include`
-    which are not found by appending their path to the current
-    directory.
+- `-I <paths>` for finding files given to the directive `#include`
+  which are not found by appending their path to the current
+  directory.
 
-  * `--columns` for using column numbers instead of horizontal
-    offsets when reporting errors in the input (the first character
-    on a line is on the column 1, but has offset 0).
+- `--columns` for using column numbers instead of horizontal
+  offsets when reporting errors in the input (the first character
+  on a line is on the column 1, but has offset 0).
 
-  * `--show-pp` for actually printing on `stdin` the result of
-    preprocessing the input. If not given this option, the
-    preprocessor will only print on `stderr` errors, if any.
+- `--show-pp` for actually printing on `stdin` the result of
+  preprocessing the input. If not given this option, the
+  preprocessor will only print on `stderr` errors, if any.
 
 ## The Preprocessing Directives
 
 This preprocessor features different kinds of directives:
 
-  * directives found in the standard preprocessor for the language
-    `C#`;
+- directives found in the standard preprocessor for the language
+  `C#`;
 
-  * a directive from `cpp`, the `C` preprocessor, enabling the textual
-    inclusion of files;
+- a directive from `cpp`, the `C` preprocessor, enabling the textual
+  inclusion of files;
 
-  * a directive specific to LIGO to support a minimal module system.
+- a directive specific to LIGO to support a minimal module system.
 
 Importantly, [strings](#preprocessing-strings-and-comments) are
 handled the way `cpp` does, not `C#`.
@@ -205,24 +205,24 @@ In the following subsections, we shall briefly present those
 directives. Here, we state some properties which hold for all of
 them.
 
-  * They must start with a `#` symbol at the beginning of a line.
+- They must start with a `#` symbol at the beginning of a line.
 
-  * Wrongly spelled directives or unsupported ones are ignored without
-    warning, and therefore will appear in the output.
+- Wrongly spelled directives or unsupported ones are ignored without
+  warning, and therefore will appear in the output.
 
-  * They can have arguments in the form of free text or
-    strings. (Anything after the directive name is considered a
-    potential argument.)
+- They can have arguments in the form of free text or
+  strings. (Anything after the directive name is considered a
+  potential argument.)
 
-  * Strings arguments must be enclosed between double quotes and
-    cannot span over two or more lines.
+- Strings arguments must be enclosed between double quotes and
+  cannot span over two or more lines.
 
-  * The valid preprocessing of a directive leaves in its place an
-    empty line (that is, a newline character) or another directive, to
-    be picked up by other tools, like lexers.
+- The valid preprocessing of a directive leaves in its place an
+  empty line (that is, a newline character) or another directive, to
+  be picked up by other tools, like lexers.
 
-  * Newline characters are never discarded, to preserve the line
-    numbers of copied text.
+- Newline characters are never discarded, to preserve the line
+  numbers of copied text.
 
 ### The Error Directive
 
@@ -247,21 +247,20 @@ discarded, and only newline characters are copied.
 Conditional directives follow the familiar syntax of some of their
 cousins in programming languages. At the very least,
 
-  1. they start with the `#if` directive, followed by a Boolean
-     expression as argument,
+1. they start with the `#if` directive, followed by a Boolean
+   expression as argument,
 
-  2. and they are closed by `#endif`.
+2. and they are closed by `#endif`.
 
 It is also possible to use
 
-  * one `#else` directive before `#endif`;
+- one `#else` directive before `#endif`;
 
-  * a series of `#elif` directive after `#if` (as a short-hand for a
-    `#else` immediately followed by an `#if`, except that only one
-    `#endif` will close the conditional).
+- a series of `#elif` directive after `#if` (as a short-hand for a
+  `#else` immediately followed by an `#if`, except that only one
+  `#endif` will close the conditional).
 
 A trivial example would be:
-
 
 ```
 #if false
@@ -280,8 +279,7 @@ output is
 
 ```
 
-Note what looks like an anonymous preprocessing directive `# 1
-"Tests/test.txt"`. We will explain its meaning when presenting
+Note what looks like an anonymous preprocessing directive `# 1 "Tests/test.txt"`. We will explain its meaning when presenting
 [The Inclusion Directive](#the-inclusion-directive). (Remark: `cpp`
 would not output blank lines followed by the end of the file.) Their
 use is clearer if we add text before and after the conditional, like
@@ -331,13 +329,14 @@ This is NOT copied to the output, except the newline character.
 ```
 
 This opens the possibility to use Boolean expressions made of
-  * `true` and `false` already mentioned;
-  * `||` for the disjunction ("or");
-  * `&&` for the conjunction ("and");
-  * `==` for equality;
-  * `!=` for inequality;
-  * `!` for negation;
-  * `(` and `)` around expressions to specify priorities.
+
+- `true` and `false` already mentioned;
+- `||` for the disjunction ("or");
+- `&&` for the conjunction ("and");
+- `==` for equality;
+- `!=` for inequality;
+- `!` for negation;
+- `(` and `)` around expressions to specify priorities.
 
 Directives are processed in sequence in the input file. This
 preprocessor, like that of `C#`, allows us to _undefine_ a symbol,
@@ -480,9 +479,9 @@ End of "a.txt"
 
 There are three forms of linemarkers:
 
-  1. `# <line number> "path/to/file"`
-  2. `# <line number> "path/to/file" 1`
-  2. `# <line number> "path/to/file" 2`
+1. `# <line number> "path/to/file"`
+2. `# <line number> "path/to/file" 1`
+3. `# <line number> "path/to/file" 2`
 
 The first kind is used only at the start of the output file and states
 that the line after the linemarker has number `<line number>` and
@@ -517,7 +516,6 @@ The `#import` directive is specific to the LIGO compiler. It provides
 the support for a
 [minimal module system](https://ligolang.org/docs/language-basics/modules#modules-and-imports-build-system).
 
-
 ## Preprocessing Strings and Comments
 
 Strings and comments are recognised by the preprocessor, even in
@@ -525,16 +523,16 @@ pieces of the input that are not copied. (This last point is a
 difference between `cpp` and the `C#` preprocessor.) The rationale for
 doing so when copying the input is twofold:
 
-  1. We do not want the preprocessor to interpret a directive that is
-     actually in a comment. This can happen when commenting out a
-     piece of the source code that contains a preprocessing directive:
-     we do not want that directive to be interpreted.
+1. We do not want the preprocessor to interpret a directive that is
+   actually in a comment. This can happen when commenting out a
+   piece of the source code that contains a preprocessing directive:
+   we do not want that directive to be interpreted.
 
-  2. We do not want the preprocessor to interpret a directive that is
-     actually in a string. This can happen if the source code is that
-     of a bootstrapped compiler, that is, a compiler for its own
-     language. Another scenario is that of a test: the source code is
-     actually printing what is happening.
+2. We do not want the preprocessor to interpret a directive that is
+   actually in a string. This can happen if the source code is that
+   of a bootstrapped compiler, that is, a compiler for its own
+   language. Another scenario is that of a test: the source code is
+   actually printing what is happening.
 
 When the processor is in skip mode, that is, the input is not copied,
 strings and comments are also recognised. This ensures that a string
@@ -564,11 +562,11 @@ Strings are enclosed between double quotes.
 
 Comments can follow one of the following combinations:
 
-  * `(*` and `*)` for blocks, and `//` for lines;
+- `(*` and `*)` for blocks, and `//` for lines;
 
-  * `/*` and `*/` for blocks, and `//` for lines;
+- `/*` and `*/` for blocks, and `//` for lines;
 
-  * `/*` and `*/` for blocks, and `#` for lines
+- `/*` and `*/` for blocks, and `#` for lines
 
 See section [Adding a Comment or String](#adding-a-new-kind-of-comment)
 for new combinations.
@@ -638,27 +636,27 @@ given by the type and value `status`:
     val status : status
 ```
 
-  * The constructor `` `Done`` means that no error occurred.
+- The constructor `` `Done`` means that no error occurred.
 
-  * The constructor `` `Version`` carries the commit hash of the source
-    code, as shown about
-    [the standalone preprocessor](#the-standalone-preprocessor).
+- The constructor `` `Version`` carries the commit hash of the source
+  code, as shown about
+  [the standalone preprocessor](#the-standalone-preprocessor).
 
-  * The `` `Help`` constructor carries the help displayed by `--help`.
+- The `` `Help`` constructor carries the help displayed by `--help`.
 
-  * The constructor `` `CLI`` carries a string buffer containing the
-    internal values of the command-line options which were given. This
-    is used for debugging the module `CLI`. See `--cli`.
+- The constructor `` `CLI`` carries a string buffer containing the
+  internal values of the command-line options which were given. This
+  is used for debugging the module `CLI`. See `--cli`.
 
-  * The constructor `` `SyntaxError`` reports an error when parsing the
-    command-line options.
+- The constructor `` `SyntaxError`` reports an error when parsing the
+  command-line options.
 
-  * The constructor `` `FileNotFound`` denotes the input file not being
-    found.
+- The constructor `` `FileNotFound`` denotes the input file not being
+  found.
 
 The rationale for this structure is to enable the CLI to be augmented
 when composing the preprocessor with another tool that consumes its
-output. For example, the lexing library in `vendors/LexerLib` features
+output. For example, the lexing library in `vendored-dune/LexerLib` features
 its own `CLI` module, exporting its own type
 `status`:
 
@@ -673,17 +671,17 @@ its own `CLI` module, exporting its own type
     ]
 ```
 
-which reuses the one in `vendors/Preprocessor/CLI.mli`.
+which reuses the one in `vendored-dune/Preprocessor/CLI.mli`.
 
 #### The Implementation
 
 On word on the implementation `CLI.ml`. We designed the CLI of the
 preprocessor library so it can be composed with other tools, like a
-lexer based on the lexer library in `vendors/LexerLib`. In order to
+lexer based on the lexer library in `vendored-dune/LexerLib`. In order to
 achieve this goal, we do not want the exception `Getopt.Error` to be
 raised when finding an unknown option, one that is destined to another
 tool, like the lexer. Therefore, we designed a module `Argv` in
-`vendors/ligo-utils/simple-utils` that filters out unknown options but
+`vendored-dune/ligo-utils/simple-utils` that filters out unknown options but
 leaves correct ones, even if their syntax is invalid and will result
 in an exception `Getopt.Error` raised by
 `Getopt.parse_cmdline`. Importantly, we assume that there are no
@@ -718,7 +716,6 @@ list by calling `Argv.filter`. That function performs a side effect on
 `Sys.argv`: unknown options are removed and compacted. That is why
 `Sys.argv` has to be restored from the backup after parsing the
 command-line: another parse is now possible by another client.
-
 
 ### API
 
@@ -827,25 +824,25 @@ type state = {
 We find the fields `config`, `mode` and `trace` we considered earlier,
 but also additional information.
 
-  * The field `env` records the symbols defined by `#define` and not
-    undefined by `#undef`. It acts as a value environment when
-    computing the Boolean expressions of `#if` and `#elif`.
+- The field `env` records the symbols defined by `#define` and not
+  undefined by `#undef`. It acts as a value environment when
+  computing the Boolean expressions of `#if` and `#elif`.
 
-  * The field `out` is the output buffer.
+- The field `out` is the output buffer.
 
-  * The field `chans` is the list of input channels opened when
-    processing an `#include` directive, in order to close them when we
-    are done, and thus avoid a memory leak (channels are not collected
-    by the OCaml collector).
+- The field `chans` is the list of input channels opened when
+  processing an `#include` directive, in order to close them when we
+  are done, and thus avoid a memory leak (channels are not collected
+  by the OCaml collector).
 
-  * The field `incl` is isomorphic to the file system path to the
-    current input file, and it is changed to that of any included
-    file. More precisely, its a stack on top of which directories are
-    pushed by means of `API.push_dir`, and from which a path can be
-    obtained back `API.mk_path`.
+- The field `incl` is isomorphic to the file system path to the
+  current input file, and it is changed to that of any included
+  file. More precisely, its a stack on top of which directories are
+  pushed by means of `API.push_dir`, and from which a path can be
+  obtained back `API.mk_path`.
 
-  * The field `import` is the list of modules from their defining
-    file, as given by the `#import`
+- The field `import` is the list of modules from their defining
+  file, as given by the `#import`
 
 The entry point in the automaton is `API.scan`:
 
@@ -866,6 +863,7 @@ The first is `API.copy`:
 let copy state buffer =
   Buffer.add_string state.out (Lexing.lexeme buffer)
 ```
+
 and the other is `proc_nl` ("process newline character"):
 
 ```
@@ -878,7 +876,6 @@ Remember too that newline characters are always copied, independent of
 the mode.
 
 #### Scanning Conditional Directives
-
 
 When an `#if` directive is found, the trace is extended by calling
 
@@ -1062,7 +1059,7 @@ let line_comments =
 gathers the valid opening markers for line comments.
 
 After matching all possible block comment openings
-(*block_comments_openings*), we need to check whether the matched
+(_block_comments_openings_), we need to check whether the matched
 opening is the one requested by the client:
 
 ```
@@ -1099,12 +1096,12 @@ comments, or `in_line` for line comments.
 If we consider the definition of `in_block`, we see that it tries to
 match three regular expressions on the lexing buffer:
 
-  1. a string delimiter (it is an opening, but opening and closing are
-     expected to be the same);
+1. a string delimiter (it is an opening, but opening and closing are
+   expected to be the same);
 
-  2. a block comment opening;
+2. a block comment opening;
 
-  3. a block comment closing.
+3. a block comment closing.
 
 Actually, string delimiters and block comment opening share the same
 semantic action because comments can contain strings and strings
@@ -1117,7 +1114,6 @@ the `opening` parameter:
 ```
 and in_block block opening state = parse
 ```
-
 
 ## PreprocMainGen
 
@@ -1162,8 +1158,7 @@ signature `CLI.S`. If it is a debug option, it should not lead to an
 error by being incompatible with other options, therefore there is not
 need to extend the type `status` and the variant `` `Done`` will
 do. The function [make_help] needs to be emended so `--help` displays
-the new option. If it is for debugging, the description could be `For
-debugging.` or `Not documented.` A global reference needs to be
+the new option. If it is for debugging, the description could be `For debugging.` or `Not documented.` A global reference needs to be
 created, which will hold the OCaml value corresponding to the option,
 and it must be initialised with a default value, so an `option` may be
 handy sometimes. See for example the reference `input`. If your option
@@ -1175,6 +1170,7 @@ reference, for example see
 ```
 let dirs = !dirs
 ```
+
 to comply with the signature `CLI.S`, where no reference escapes to
 the client. You may want the new option to be debugged itself, by
 adding a string to the value `options`:

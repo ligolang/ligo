@@ -6,7 +6,7 @@ description  : "Generate syntax highlighting for TextMate, Vim, and Emacs."
 maintainer   : "info@ligolang.org"
 authors      : "LIGO team"
 license      : "MIT"
-homepage     : "https://gitlab.com/ligolang/ligo/-/tree/dev/vendors/syntax-highlighting"
+homepage     : "https://gitlab.com/ligolang/ligo/-/tree/dev/vendored-dune/syntax-highlighting"
 bug-reports  : "https://gitlab.com/ligolang/ligo/issues"
 # If you change the dependencies, run `opam lock` in the root
 depends      : ["dune" "yojson"]

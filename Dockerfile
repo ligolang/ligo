@@ -37,9 +37,8 @@ RUN opam update && sh scripts/install_opam_deps.sh
 
 COPY gitlab-pages /ligo/gitlab-pages
 # Install LIGO
+COPY dune dune-project ligo_unix.ml /ligo/
 COPY src /ligo/src
-COPY dune /ligo
-COPY dune-project /ligo/dune-project
 COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting

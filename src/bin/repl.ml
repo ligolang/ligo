@@ -13,7 +13,7 @@ let get_declarations_core (core_prg : Ast_core.program) =
      the absolute file path, and the REPL prints an absolute file path which is confusing
      So we ignore the module declarations which which have their module_binder as some absolute path.
      The imported module name will still be printed by the REPL as it is added as a module alias.
-     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
+     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendored-dune/BuildSystem/BuildSystem.ml#L113-121
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
     let module_variable =
