@@ -316,6 +316,8 @@ let import_action ~callback hash_pos state lexbuf =
   let mangle str =
     let name =
         Str.global_replace (Str.regexp_string ".") "____" str
+      |> Str.global_replace (Str.regexp_string ":") "__"
+      |> Str.global_replace (Str.regexp_string "\\") "__"
       |> Str.global_replace (Str.regexp_string "/") "__"
       |> Str.global_replace (Str.regexp_string "@") "_"
       |> Str.global_replace (Str.regexp_string "-") "_"
@@ -339,10 +341,13 @@ let import_action ~callback hash_pos state lexbuf =
               None -> Error.File_not_found import_file
                       |> fail state import_region
             | Some import_path -> import_path in
-          let mangled_filename = mangle import_path in
+          let import_path_with_fwd_slashes =
+            Str.global_replace (Str.regexp_string "\\") "/" import_path
+          in
+          let mangled_filename = mangle import_path_with_fwd_slashes in
           let () = state#print @@
                      Config.mk_module mangled_filename import_module
-          in state#push_import import_path mangled_filename
+          in state#push_import import_path_with_fwd_slashes mangled_filename
         else state in
       (* We emit the newline character _after_ the module alias
          declaration, if any, and not before, to keep its line number
