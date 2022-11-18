@@ -1,31 +1,21 @@
 # We abort pipeline if the MR last commit of MR is pushed by human and not by bot.
-.export-mr-info: &export-mr-info
+.pip-install-ci-requirements: &pip-install-ci-requirements
     - pip3 install -r ./.ci/scripts/requirements.txt
-    - MR_INFO='$(./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API})'
-    - MR_AUTHOR_USERNAME_Q=$(nix-shell -p jq --run "jq \".author\" <<< ${MR_INFO}")
-    - export MR_AUTHOR_USERNAME=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_AUTHOR_USERNAME_Q})
-    - MR_TITLE_Q=$(nix-shell -p jq --run "jq \".title\" <<< ${MR_INFO}")
-    - export MR_TITLE=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_TITLE_Q})
-    - MR_TYPE_Q=$(nix-shell -p jq --run "jq \".type\" <<< ${MR_INFO}")
-    - export MR_TYPE=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_TYPE_Q})
-    - MR_DESC_Q=$(nix-shell -p jq --run "jq \".changelog\" <<< ${MR_INFO}")
-    - export MR_DESC=$(sed -e 's/^"//' -e 's/"$//' <<< ${MR_DESC_Q})
 
 add-changelog-entry:
   stage: post-build-action
   extends : .nix
   before_script:
-    - *export-mr-info
+    - *pip-install-ci-requirements
   script:
-  # Check if type is None, if None, skip changelog generation
-    - "[[ $MR_TYPE = none ]] && exit 0"
-    # - echo $MR_TYPE
-    # - echo $MR_TITLE
-    # - echo $MR_AUTHOR_USERNAME
-    # - echo $MR_DESC
+    - ./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API}
+      # Check if type is None, if None, skip changelog generation
+    - | 
+      if [[ ! -f "changelog/${CI_MERGE_REQUEST_IID}" ]]; then
+        exit 0
+      fi
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
-    - ./scripts/add-changelog-entry.sh "$MR_TYPE" "$CI_MERGE_REQUEST_IID" "$MR_AUTHOR_USERNAME" "$MR_TITLE" "$MR_DESC"
-    - git add changelog/*
+    - git add changelog/${CI_MERGE_REQUEST_IID}
     - git commit -m "[Bot] add changelog entry"
     - git push origin HEAD:$CI_COMMIT_REF_NAME
     - echo "Changelog has been pushed which cause a new pipeline triggering, to preserve resources this one will be exited with code 1."
