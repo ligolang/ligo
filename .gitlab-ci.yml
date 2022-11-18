@@ -6,7 +6,6 @@ variables:
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - esy
   - pretooling                      # changelog
   - build                           # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
@@ -37,7 +36,7 @@ esy-windows:
   extends: .submodule-clone
   tags:
     - windows
-  stage: esy
+  stage: build
   only:
   - merge_requests
   - dev
