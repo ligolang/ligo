@@ -6,6 +6,7 @@ variables:
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
+  - esy
   - pretooling                      # changelog
   - build                           # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
@@ -23,7 +24,6 @@ include:
 
 .submodule-clone:
   before_script:
-    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
     - git submodule sync --recursive
     - git submodule update --init --recursive --remote
 
@@ -32,6 +32,36 @@ include:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+
+esy-windows:
+  extends: .submodule-clone
+  tags:
+    - windows
+  stage: esy
+  only:
+  - merge_requests
+  - dev
+  - /^.*-run-dev$/
+  - /^release/.*$/
+  - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    # - $env:GIT_CURL_VERBOSE = 1
+    # - $env:GIT_TRACE = 1
+    # - $env:GIT_TRACE_PACKET = 1
+    - git config http.postBuffer 1048576000
+    - npm i -g @esy-nightly/esy --force
+    - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - esy i
+    - bash -c "esy release || esy release || esy release"
+    - rm -Recurse -Force _esy
+    - cp *.dll _release/bin/
+    - cp ./WindowsInstaller.nsi _release
+    - cd _release; makensis .\WindowsInstaller.nsi
+    - cd .. ; mv _release platform-windows-x64
+  artifacts:
+    paths:
+      - platform-windows-x64
 
 changelog:
   stage: pretooling
