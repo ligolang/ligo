@@ -58,7 +58,7 @@ module Make (Config : Config.S) (Options : Options.S) =
     | dir::dirs ->
         let path =
           if String.(dir = "." || dir = "") then file_path
-          else dir ^ Filename.dir_sep ^ file_path in
+          else dir ^ "/" ^ file_path in
         match Caml.Sys.file_exists path with
         | true           -> Some path
         | false -> find_in_cli_paths file_path dirs
@@ -72,7 +72,7 @@ module Make (Config : Config.S) (Options : Options.S) =
     let find dir file inclusion_paths =
       let path =
         if String.(dir = "." || dir = "") then file
-        else dir ^ Filename.dir_sep ^ file in
+        else dir ^ "/" ^ file in
       match Caml.Sys.file_exists path with
       | true -> Some path
       | false ->
@@ -291,7 +291,7 @@ module Make (Config : Config.S) (Options : Options.S) =
                format it to conform to the convention of [cpp]. *)
 
             let path = if String.(path = "" || path = ".") then base
-                       else path ^ Filename.dir_sep ^ base in
+                       else path ^ "/" ^ base in
 
             (* Finally we can output the linemarker. The rightmost
                flag is 2, to specify a return from an #include. The

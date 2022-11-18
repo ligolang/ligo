@@ -96,7 +96,7 @@ module Path =
         try Some (Fpath.v s |> Fpath.normalize |> Fpath.rem_empty_seg)
         with _ -> None
 
-    (* Alias of [Filename.dir_sep]. *)
+    (* Alias of ["/"]. *)
 
     (* The function [segs] splits a file path into segments,
        e.g. "/a/b/c.ligo" yields [["a";"b";"c.ligo"]]. *)
@@ -114,29 +114,29 @@ module Path =
     let normalize : t -> t = Option.map ~f:Fpath.normalize
 
     (* The predicate [ends_with_dir_sep] checks if a given file path
-       [path] ends with the directory separator [Fpath.dir_sep]. *)
+       [path] ends with the directory separator ["/"]. *)
 
     let ends_with_dir_sep =
-      let regexp = Str.regexp (Format.sprintf "%s$" Fpath.dir_sep)
+      let regexp = Str.regexp (Format.sprintf "%s$" "/")
       in fun path -> Str.string_match regexp path 0
 
     (* The predicate [starts_with_dir_sep] checks if a given file path
-       [path] starts with the directory separator [Fpath.dir_sep]. *)
+       [path] starts with the directory separator ["/"]. *)
 
     let starts_with_dir_sep =
-      let regexp = Str.regexp (Format.sprintf "^%s" Fpath.dir_sep)
+      let regexp = Str.regexp (Format.sprintf "^%s" "/")
       in fun path -> Str.string_match regexp path 0
 
     (* The call [join path1 path2] concatenates file paths [path1] and
        [path2], assuming that the directory separator is
-       [Fpath.dir_sep]. *)
+       ["/"]. *)
 
     (* TODO: Define a canonical representation for paths. *)
 
     let join : string -> string -> string =
       fun a b ->
         match ends_with_dir_sep a, starts_with_dir_sep b with
-          false, false -> a ^ Fpath.dir_sep ^ b
+          false, false -> a ^ "/" ^ b
         | false, true
         | true , false -> a ^ b
         | true , true  -> a ^ "." ^ b
@@ -510,13 +510,13 @@ let find_external_file ~file ~inclusion_paths =
       let scope = Core.String.chop_prefix_exn ~prefix:"@" scope in
       let* Path dir = find_in_inclusion_paths ~scope pkg_name in
       let rest_of_path =
-        String.concat ~sep:Filename.dir_sep rest_of_path
+        String.concat ~sep:"/" rest_of_path
       in Some (Path.join dir rest_of_path)
     | [pkg_name] -> None
     | pkg_name :: rest_of_path ->
        let* Path dir = find_in_inclusion_paths pkg_name in
        let rest_of_path =
-         String.concat ~sep:Filename.dir_sep rest_of_path
+         String.concat ~sep:"/" rest_of_path
        in Some (Path.join dir rest_of_path)
     | _ -> None
   in Some segs
