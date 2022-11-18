@@ -1,0 +1,20 @@
+{
+    "name": "ligo-breathalyzer",
+    "description": "A simple test framework for Ligo Lang",
+    "keywords": [ "ligo", "tezos", "tezos-ligo", "cameligo" ],
+    "directories": { "lib": "lib", "test": "test" },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/marigold-dev/breathalyzer.git"
+    },
+    "version": "1.0.0",
+    "author": "Marigold <contact@marigold.dev>",
+    "license": "MIT",
+    "scripts": {
+        "test": "ligo run test test/test.mligo --project-root ."
+    },
+    "dependencies": {},
+    "devDependencies": {},
+    "bugs": { "url": "https://github.com/marigold-dev/breathalyzer/issues" },
+    "homepage": "https://github.com/marigold-dev/breathalyzer"
+}

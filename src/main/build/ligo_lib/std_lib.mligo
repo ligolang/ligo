@@ -37,11 +37,18 @@ module Tezos = struct
   let get_contract_with_error (type a) (a : address) (s : string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
+#if KATHMANDU
   let create_ticket (type a) (v : a) (n : nat) : a ticket = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> a ticket)] (v, n)
+#endif
+#if LIMA
+  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
+#endif
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
     [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+#if KATHMANDU
   let open_chest (ck : chest_key) (c : chest) (n : nat) : chest_opening_result =
     [%Michelson ({| { UNPAIR ; UNPAIR ; OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} : chest_key * chest * nat -> chest_opening_result)] (ck, c, n)
+#endif
   [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
     [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (s : string), (() : b))] (x, a)
   let split_ticket (type a) (t : a ticket) (p : nat * nat) : (a ticket * a ticket) option =
@@ -64,11 +71,18 @@ module Tezos = struct
   let get_contract_with_error (type a) ((a, s) : address * string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
+#if KATHMANDU
   let create_ticket (type a) ((v, n) : a * nat) : a ticket = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> a ticket)] (v, n)
+#endif
+#if LIMA
+  let create_ticket (type a) ((v, n) : a * nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
+#endif
   let transaction (type a) ((a, mu, c) : a * tez * a contract) : operation =
     [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+#if KATHMANDU
   let open_chest ((ck, c, n) : chest_key * chest * nat) : chest_opening_result =
     [%Michelson ({| { UNPAIR ; UNPAIR ; OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} : chest_key * chest * nat -> chest_opening_result)] (ck, c, n)
+#endif
   [@inline] [@thunk] let call_view (type a b) (p : string * a * address)  : b option =
     [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (p.0 : string), (() : b))] (p.1, p.2)
   let split_ticket (type a) ((t, p) : (a ticket) * (nat * nat)) : (a ticket * a ticket) option =
@@ -373,6 +387,7 @@ module Test = struct
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
   let bake_until_n_cycle_end (n : nat) : unit = [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
+  let get_time (_u : unit) : timestamp = Tezos.get_now ()
   let cast_address (type a b) (a : address) : (a, b) typed_address = [%external ("TEST_CAST_ADDRESS", a)]
   let register_delegate (kh : key_hash) : unit = [%external ("TEST_REGISTER_DELEGATE", kh)]
   let register_constant (m : michelson_program) : string = [%external ("TEST_REGISTER_CONSTANT", m)]

@@ -2,9 +2,6 @@ module Location = Simple_utils.Location
 module Var = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
-module Tezos_protocol = Tezos_protocol_014_PtKathma
-module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
-module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
@@ -12,30 +9,30 @@ let int_of_mutez t =
   Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 
 
-let tez_to_z : Tezos_protocol.Protocol.Tez_repr.t -> Z.t =
+let tez_to_z : Memory_proto_alpha.Protocol.Tez_repr.t -> Z.t =
  fun t ->
-  let enc = Tezos_protocol.Protocol.Tez_repr.encoding in
+  let enc = Memory_proto_alpha.Protocol.Tez_repr.encoding in
   let c = Data_encoding.Binary.to_bytes_exn enc t in
   int_of_mutez
   @@ Data_encoding.Binary.of_bytes_exn
-       Tezos_protocol.Protocol.Alpha_context.Tez.encoding
+       Memory_proto_alpha.Protocol.Alpha_context.Tez.encoding
        c
 
 
 let contract_to_contract
-  :  Tezos_protocol.Protocol.Contract_repr.t
-  -> Tezos_protocol.Protocol.Alpha_context.Contract.t
+  :  Memory_proto_alpha.Protocol.Contract_repr.t
+  -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t
   =
  fun t ->
-  let enc = Tezos_protocol.Protocol.Contract_repr.encoding in
+  let enc = Memory_proto_alpha.Protocol.Contract_repr.encoding in
   let c = Data_encoding.Binary.to_bytes_exn enc t in
   Data_encoding.Binary.of_bytes_exn
-    Tezos_protocol.Protocol.Alpha_context.Contract.encoding
+    Memory_proto_alpha.Protocol.Alpha_context.Contract.encoding
     c
 
 
 let string_of_contract t =
-  Format.asprintf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp t
+  Format.asprintf "%a" Memory_proto_alpha.Protocol.Alpha_context.Contract.pp t
 
 
 let string_of_key_hash t =
@@ -213,7 +210,7 @@ let make_options ~raise ?param ctxt =
     ; self = source
     ; amount =
         Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez_exn 100000000L
-    ; chain_id = Tezos_protocol_env.Chain_id.zero
+    ; chain_id = Memory_proto_alpha.Alpha_environment.Chain_id.zero
     ; balance = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
     ; now = timestamp
     ; level
@@ -254,8 +251,8 @@ let compile_type ~raise type_exp =
 
 let entrypoint_of_string x =
   match
-    Tezos_raw_protocol.Entrypoint_repr.of_annot_lax_opt
-      (Tezos_raw_protocol.Non_empty_string.of_string_exn x)
+    Memory_proto_alpha.Raw_protocol.Entrypoint_repr.of_annot_lax_opt
+      (Memory_proto_alpha.Raw_protocol.Non_empty_string.of_string_exn x)
   with
   | Some x -> x
   | None ->
@@ -1578,3 +1575,18 @@ let parse_raw_michelson_code ~raise code ty =
   let code = parse_code ~raise code in
   let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
   code, code_ty
+
+let compare_michelson ~raise loc a b =
+  let module LT = Ligo_interpreter.Types in
+  let module LC = Ligo_interpreter.Combinators in
+  let ({ micheline_repr = { code; _ }; _ } : LT.typed_michelson_code) =
+    trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
+    @@ LC.get_michelson_expr a
+  in
+  let ({ micheline_repr = { code = code'; _ }; _ }
+       : LT.typed_michelson_code)
+    =
+    trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
+    @@ LC.get_michelson_expr b
+  in
+  Caml.compare code code'

@@ -4,8 +4,8 @@
   (libraries
     tezos-error-monad
     tezos-stdlib-unix
-    tezos-protocol-014-PtKathma
-    tezos-client-014-PtKathma
+    tezos-protocol-015-PtLimaPt
+    tezos-client-015-PtLimaPt
     tezos-memory-proto-alpha
     data-encoding
     simple-utils

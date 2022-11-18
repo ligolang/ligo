@@ -6,4 +6,4 @@
   (libraries
      ;; Vendors
      Preprocessor)
-  (modules Errors Common))
+  (modules Errors Common PreprocMainGen))

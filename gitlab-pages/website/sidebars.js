@@ -105,7 +105,8 @@ const sidebars = {
       "protocol/hangzhou",
       "protocol/ithaca",
       "protocol/jakarta",
-      "protocol/kathmandu"
+      "protocol/kathmandu",
+      "protocol/lima"
     ]
   },
   "contributors-docs": {
@@ -154,7 +155,8 @@ const sidebars = {
       "faq/convert-address-to-contract",
       "faq/polymorphic-comparison",
       "faq/catch-error-view",
-      "faq/cameligo-ocaml-syntax-diff"
+      "faq/cameligo-ocaml-syntax-diff",
+      "faq/tezos-now-advance-time"
     ]
   }
 };

@@ -345,7 +345,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 20)
+                { sfLoc = LigoRange file' (LigoPosition 5 4) (LigoPosition 5 18)
                 } :| _
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
@@ -558,16 +558,13 @@ test_Snapshots = testGroup "Snapshots collection"
 
       step [int||Checking locations for #{file2}|]
       checkLocations
-        runData2
-        ( [LigoRange file2 (LigoPosition 2 2) (LigoPosition 2 20)]
-        <>
+        runData2 $
           concat
             ( replicate 3
               [ LigoRange file2 (LigoPosition 4 4) (LigoPosition 4 28)
               , LigoRange file2 (LigoPosition 5 4) (LigoPosition 5 22)
               ]
             )
-        )
 
   , testCaseSteps "Execution history is lazy" \step -> do
       let file = contractsDir </> "infinite_contract.mligo"

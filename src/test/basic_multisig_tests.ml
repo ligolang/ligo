@@ -34,25 +34,18 @@ let op_list ~raise =
   let source =
     Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
     (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
-  let entrypoint =
-    let open Tezos_raw_protocol_014_PtKathma in
-    match (Entrypoint_repr.of_annot_lax_opt (Non_empty_string.of_string_exn "default")) with
-    | Some x -> x
-    | None -> raise.error (Main_errors.test_internal __LOC__)
-  in
   let destination =
-    Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
-      Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
+    Trace.trace_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
+      Signature.Public_key_hash.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
   in
-  let unparsed_parameters : Script.expr = Memory_proto_alpha.Protocol.Script_repr.unit in
-  let operation : _ Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation =
-    Transaction_to_contract { destination ; amount = Tez.zero ; entrypoint ; location = 0 ; parameters = () ; parameters_ty = Unit_t ; unparsed_parameters }
+  let operation : _ Memory_proto_alpha.Protocol.Script_typed_ir.internal_operation_contents =
+    Transaction_to_implicit { destination ; amount = Tez.zero }
   in
   let internal_operation : Memory_proto_alpha.Protocol.Script_typed_ir.packed_internal_operation =
     Memory_proto_alpha.Protocol.Script_typed_ir.( Internal_operation { source ; operation ; nonce=0 } ) in
   let opbytes =
-    let contents = Memory_proto_alpha.Protocol.Apply_internal_results.contents_of_packed_internal_operation internal_operation in
-    Data_encoding.Binary.to_bytes_exn Memory_proto_alpha.Protocol.Apply_internal_results.internal_contents_encoding contents
+    let contents = Memory_proto_alpha.Protocol.Apply_internal_results.packed_internal_operation internal_operation in
+    Data_encoding.Binary.to_bytes_exn Memory_proto_alpha.Protocol.Apply_internal_results.internal_operation_encoding contents
   in
   Ast_imperative.(e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
 

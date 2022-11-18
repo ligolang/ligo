@@ -6,6 +6,8 @@ let stage = "self_ast_aggregated"
 type self_ast_aggregated_error = [
   | `Self_ast_aggregated_expected_obj_ligo of Location.t
   | `Self_ast_aggregated_polymorphism_unresolved of Location.t
+  | `Self_ast_aggregated_monomorphisation_non_var of Ast_aggregated.expression
+  | `Self_ast_aggregated_monomorphisation_non_for_all of Ast_aggregated.expression
   | `Self_ast_aggregated_fvs_in_create_contract_lambda of Ast_aggregated.expression * Value_var.t
   | `Self_ast_aggregated_create_contract_lambda of Constant.constant' * Ast_aggregated.expression
   | `Self_ast_aggregated_bad_format_entrypoint_ann of string * Location.t
@@ -32,6 +34,16 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
         Snippet.pp loc
+    | `Self_ast_aggregated_monomorphisation_non_var expr
+    | `Self_ast_aggregated_monomorphisation_non_for_all expr ->
+      if Location.is_dummy_or_generated expr.location then
+        Format.fprintf f
+          "@[<hv>%a@.Cannot monomorphise the expression.@]"
+          Ast_aggregated.PP.expression expr
+      else
+        Format.fprintf f
+          "@[<hv>%a@.Cannot monomorphise the expression.@]"
+          Snippet.pp expr.location
     | `Self_ast_aggregated_fvs_in_create_contract_lambda (e,v) ->
       Format.fprintf f
         "@[<hv>%a@.Free variable usage is not allowed in call to Tezos.create_contract:@.%a@]"
@@ -87,6 +99,11 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
   | `Self_ast_aggregated_polymorphism_unresolved location ->
     let message = "Can't infer the type of this value, please add a type annotation." in
     let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_monomorphisation_non_var expr
+  | `Self_ast_aggregated_monomorphisation_non_for_all expr ->
+    let message = "Cannot monomorphise the expression." in
+    let content = make_content ~message ~location:expr.location () in
     make ~stage ~content
   | `Self_ast_aggregated_fvs_in_create_contract_lambda (_,v) ->
     let location = Value_var.get_location v in

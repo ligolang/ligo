@@ -1,6 +1,6 @@
 {
   "checksum": "43957eac5ffe842f31d18e7b7e122166",
-  "root": "ligo-main@link-dev:./package.json",
+  "root": "complex_project@link-dev:./package.json",
   "node": {
     "webpack-sources@3.2.3@d41d8cd9": {
       "id": "webpack-sources@3.2.3@d41d8cd9",
@@ -395,8 +395,8 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "ligo-main@link-dev:./package.json": {
-      "id": "ligo-main@link-dev:./package.json",
+    "complex_project@link-dev:./package.json": {
+      "id": "complex_project@link-dev:./package.json",
       "name": "ligo-main",
       "version": "link-dev:./package.json",
       "source": {

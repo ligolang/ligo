@@ -190,6 +190,12 @@ let now =
   let spec = optional string in
   flag ~doc name spec
 
+let no_colour =
+  let open Command.Param in
+  let name = "--no-colour" in
+  let doc = "disable coloring in CLI output" in
+  flag ~doc name no_arg
+
 let display_format =
   let open Command.Param in
   let open Simple_utils.Display in
@@ -330,9 +336,9 @@ I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let reset_return () = return := Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt no_stdlib michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt no_stdlib michelson_format output_file show_warnings warning_as_error no_colour michelson_comments constants file_constants project_root warn_unused_rec
         () =
-    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~no_stdlib ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~no_stdlib ~warning_as_error ~no_colour ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -341,7 +347,7 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> no_stdlib <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> no_stdlib <*> michelson_code_format <*> output_file <*> warn <*> werror <*> no_colour <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
@@ -473,8 +479,8 @@ let mutate_group =
 
 (** Run commands *)
 let test =
-  let f source_file syntax steps cli_expr_inj protocol_version display_format show_warnings project_root warn_unused_rec () =
-    let raw_options = Raw_options.make ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~cli_expr_inj ~test:true () in
+  let f source_file syntax steps cli_expr_inj display_format show_warnings project_root warn_unused_rec () =
+    let raw_options = Raw_options.make ~syntax ~steps ~project_root ~warn_unused_rec ~cli_expr_inj ~test:true () in
     return_result ~return ~show_warnings @@
     Api.Run.test raw_options source_file display_format
   in
@@ -485,7 +491,7 @@ let test =
                   procedure should rely on this sub-command alone."
   in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> steps <*> cli_expr_inj <*> protocol_version <*> display_format <*> warn <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> syntax <*> steps <*> cli_expr_inj <*> display_format <*> warn <*> project_root <*> warn_unused_rec)
 
 let dry_run =
   let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
