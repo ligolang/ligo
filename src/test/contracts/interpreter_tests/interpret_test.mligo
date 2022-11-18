@@ -428,3 +428,7 @@ let test_int_bls =
 let test_not =
   let f ((x, y) : nat * int) : int = x * not y in
   assert (Test.eval (f (313n , 2938818607801353443)) = Test.run f (313n , 2938818607801353443))
+
+let test_chain_id = 
+  let chain_id = Test.eval ("NetXH12Aer3be93" : chain_id) in
+  assert (chain_id = Test.eval (Tezos.get_chain_id ()))
