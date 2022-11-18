@@ -287,13 +287,13 @@ let%expect_test _ =
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 3, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 2 to line 13, character 10
     Content: |resolved: int|
-    references:
-      File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 8-9
+    references: []
     (b#9 -> b)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 12, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 12, characters 10-11
     Content: |resolved: int|
-    references: []
+    references:
+      File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 8-9
     (c#1 -> c)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-40
@@ -381,14 +381,14 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, characters 14-15 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 12-13 ,
-      File "../../test/contracts/get_scope_tests/shadowing.mligo", line 8, characters 4-5 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 10, characters 2-3
     (a#4 -> a)
     Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 8-9
     Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 12-21
     Content: |resolved: int|
     references:
-      File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 12-13
+      File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 12-13 ,
+      File "../../test/contracts/get_scope_tests/shadowing.mligo", line 8, characters 4-5
     (b#5 -> b)
     Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 3, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, character 2 to line 10, character 11
