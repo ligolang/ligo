@@ -219,13 +219,13 @@ let%expect_test _ =
     Range: File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 13-14
     Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 17-18
     Content: |resolved: int|
-    references: []
+    references:
+      File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 30-31
     (d#12 -> d)
     Range: File "../../test/contracts/get_scope_tests/match.mligo", line 17, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 18, character 2 to line 20, character 13
     Content: |resolved: int|
-    references:
-      File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 30-31
+    references: []
     (hd#8 -> hd)
     Range: File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6
     Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 14-15

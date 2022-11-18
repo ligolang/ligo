@@ -184,9 +184,9 @@ let update_references : reference list -> def list -> def list * reference list 
 
 
 let rec find_type_references : AST.type_expression -> reference list =
-  fun te ->
+ fun te ->
   match te.type_content with
-  | T_variable t -> 
+  | T_variable t ->
     let t = TVar.set_location te.location t in
     [ Type t ]
   | T_sum { fields; layout = _ } | T_record { fields; layout = _ } ->
@@ -458,6 +458,9 @@ let rec expression
     [ def ] @ defs, refs @ t_refs, tenv, scopes
   | E_matching { matchee; cases } ->
     let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
+    let defs_matchee, refs_matchee =
+      update_references refs_matchee defs_matchee
+    in
     let scopes = merge_same_scopes scopes in
     let defs_cases, refs_cases, tenv, scopes' =
       List.fold_left
