@@ -47,4 +47,4 @@ let exp2 =
     ()
 
 // 1 problem virtual location
-// Virual location   : q, s, idk, hmm, x, t, foo, bar, qux, boo
+// Virual location   : q, idk, hmm, x, bar, boo

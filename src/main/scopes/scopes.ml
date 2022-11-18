@@ -184,9 +184,11 @@ let update_references : reference list -> def list -> def list * reference list 
 
 
 let rec find_type_references : AST.type_expression -> reference list =
- fun te ->
+  fun te ->
   match te.type_content with
-  | T_variable t -> [ Type t ]
+  | T_variable t -> 
+    let t = TVar.set_location te.location t in
+    [ Type t ]
   | T_sum { fields; layout = _ } | T_record { fields; layout = _ } ->
     Record.fold fields ~init:[] ~f:(fun refs row ->
         let t_refs = find_type_references row.associated_type in
@@ -194,6 +196,7 @@ let rec find_type_references : AST.type_expression -> reference list =
   | T_arrow { type1; type2 } ->
     find_type_references type1 @ find_type_references type2
   | T_app { type_operator; arguments } ->
+    let type_operator = TVar.set_location te.location type_operator in
     let t_refs = List.concat @@ List.map arguments ~f:find_type_references in
     Type type_operator :: t_refs
   | T_module_accessor { module_path; element } ->
