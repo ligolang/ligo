@@ -55,6 +55,14 @@ module Bls12_381_Fr = struct
   let of_yojson _ = failwith "bls12_381_fr_of_yojson: not implemented"
 end
 
+module Chain_id = struct
+  include Tezos_crypto.Chain_id
+
+  let to_yojson (c : t) = [%to_yojson: bytes] (to_bytes c)
+  let of_yojson _ = failwith "chain_id_of_yojson: not implemented"
+end
+
+
 module Generator = struct
   include QCheck.Gen
 
@@ -93,7 +101,7 @@ type constant_val =
   | C_bls12_381_g1 of Bls12_381_G1.t [@name "bls12_381_g1"]
   | C_bls12_381_g2 of Bls12_381_G2.t [@name "bls12_381_g2"]
   | C_bls12_381_fr of Bls12_381_Fr.t [@name "bls12_381_fr"]
-  | C_chain_id of string [@name "chain_id"]
+  | C_chain_id of Chain_id.t [@name "chain_id"]
 [@@deriving yojson]
 
 type micheline_value =
