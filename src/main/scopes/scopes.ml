@@ -647,6 +647,7 @@ and declarations
         let defs, refs = update_references (refs' @ refs) defs in
         defs' @ defs, refs, tenv, scopes @ scopes')
   in
+  let defs, refs = update_references refs defs in
   defs, refs, tenv, scopes
 
 
@@ -690,8 +691,7 @@ let scopes
   let tenv =
     { type_env = options.init_env; bindings = Misc.Bindings_map.empty }
   in
-  let defs, refs, _, scopes = declarations ~with_types ~options tenv prg in
-  let defs, _ = update_references refs defs in
+  let defs, _, _, scopes = declarations ~with_types ~options tenv prg in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
   defs, scopes

@@ -46,6 +46,5 @@ let exp2 =
     let j : nat boo = Some 1n in
     ()
 
-// 2 problem missing reference & virtual location
-// Missing reference : foo, bar, 
-// Virual location   : q, s, idk, hmm, x, t
+// 1 problem virtual location
+// Virual location   : q, s, idk, hmm, x, t, foo, bar, qux, boo
