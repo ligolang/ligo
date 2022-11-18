@@ -237,6 +237,14 @@ module Mutator = struct
         let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
         return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
     )
+    | E_let_mut_in { let_binder ; rhs ; let_result; attr } -> (
+      if attr.no_mutation then
+        let+ let_result, mutation = self let_result in
+        return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
+      else
+        let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
+        return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
+    )
     | E_lambda { binder ; output_type ; result } -> (
       let+ result, mutation = self result in
       return @@ E_lambda { binder ; output_type ; result }, mutation
@@ -261,10 +269,19 @@ module Mutator = struct
       let e = return @@ E_literal l in
       e, Option.some_if (b && not (Location.is_dummy_or_generated e.location)) (e.location, e)
     )
-    | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
-    | E_type_inst _ as e' -> [ (return e'), None ]
+    | E_raw_code { language ; code = ({ expression_content = m ; _ } as code) } when Option.is_some (get_e_tuple m) ->
+      let tuple = Option.value ~default:[] (get_e_tuple m) in
+      let hd, args = match tuple with
+        | [] -> failwith "expected non-empty tuple in %Michelson"
+        | hd :: tl -> hd, tl in
+      let args = combine_list args (List.map ~f:self args) in
+      let+ args,mutation = args in
+      let m = List.foldi (hd :: args) ~init:[] ~f:(fun i r e -> (Label.Label (Int.to_string i), e) :: r) |> Record.of_list in
+      return @@ E_raw_code { language ; code = { code with expression_content = E_record m } }, mutation
+    | E_raw_code _ -> [ (return e'.expression_content), None ]
+    | E_variable _ | E_type_inst _ as ec -> [ (return ec), None ]
     (* TODO: Determine proper fuzzing semantics for these *)
-    | E_let_mut_in _ | E_for_each _ | E_deref _ | E_while _ | E_for _ as e' -> [ (return e'), None ]
+    | E_for_each _ | E_deref _ | E_while _ | E_for _ as ec -> [ (return ec), None ]
     | E_assign {binder;expression} ->
         let+ expression, mutation = self expression in
         return @@ E_assign {binder;expression}, mutation
