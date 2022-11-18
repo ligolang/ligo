@@ -379,13 +379,12 @@ let rec expression
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_rhs] *)
     let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
-    let defs_rhs, refs_rhs = update_references refs_rhs defs_rhs in
     let def, defs_rhs = drop_last defs_rhs in
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
     let scopes' = add_defs_to_scopes [ def ] scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs = update_references (refs_rhs @ refs_result @ t_refs) [ def ] in
-    defs_result @ defs_rhs @ defs, refs, tenv, scopes
+    let defs, refs_result = update_references (refs_result @ t_refs) [ def ] in
+    defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
     let t_refs = find_binder_type_references let_binder in
@@ -410,8 +409,8 @@ let rec expression
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
     let scopes' = add_defs_to_scopes defs_binder scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs = update_references (refs_rhs @ refs_result @ t_refs) defs_binder in
-    defs_result @ defs_rhs @ defs, refs, tenv, scopes
+    let defs, refs_result = update_references (refs_result @ t_refs) defs_binder in
+    defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_recursive { fun_name; fun_type; lambda = { binder; result; _ } } ->
     let t_refs = find_type_references fun_type in
     let t_refs = t_refs @ find_type_references (Param.get_ascr binder) in
