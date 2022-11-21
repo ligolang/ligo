@@ -11,6 +11,8 @@ import {
 	SetLigoBinaryPathResponse,
 	SetProgramPathArguments,
 	SetProgramPathResponse,
+	ValidateConfigArguments,
+	ValidateConfigResponse,
 	ValidateEntrypointArguments,
 	ValidateEntrypointResponse,
 	ValidateValueArguments,
@@ -20,8 +22,7 @@ import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 import stream from 'stream'
 import * as ee from 'events'
 import * as vscode from 'vscode'
-import { isDefined } from './base';
-import { version } from 'process';
+import { isDefined, Maybe } from './base';
 
 type LigoSpecificRequest
 	= 'initializeLogger'
@@ -30,6 +31,7 @@ type LigoSpecificRequest
 	| 'validateEntrypoint'
 	| 'getContractMetadata'
 	| 'validateValue'
+	| 'validateConfig'
 	;
 
 /**
@@ -70,6 +72,28 @@ function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
 							});
 					}
 				});
+			return;
+
+		case "Configuration":
+			vscode.window.showErrorMessage(
+				"Launch configuration problem",
+				largeError(formattedMessage),
+				"Open launch.json",
+			).then(result => {
+				if (isDefined(result)) {
+					const workspaceFolders: Maybe<readonly vscode.WorkspaceFolder[]> = vscode.workspace.workspaceFolders;
+					if (isDefined(workspaceFolders)) {
+						// Workspace with ligo project
+						let currentWorkspace = workspaceFolders[0];
+						let pathToLaunchJson = vscode.Uri.joinPath(currentWorkspace.uri, ".vscode", "launch.json");
+						vscode.workspace
+							.openTextDocument(pathToLaunchJson)
+							.then(config => {
+								vscode.window.showTextDocument(config);
+							});
+					}
+				}
+			});
 			return;
 	}
 
@@ -267,6 +291,7 @@ export default class LigoProtocolClient extends ProtocolClient {
 	sendMsg(command: 'validateEntrypoint', args: ValidateEntrypointArguments): Promise<ValidateEntrypointResponse>
 	sendMsg(command: 'getContractMetadata', args: GetContractMetadataArguments): Promise<GetContractMetadataResponse>
 	sendMsg(command: 'validateValue', args: ValidateValueArguments): Promise<ValidateValueResponse>
+	sendMsg(command: 'validateConfig', args: ValidateConfigArguments): Promise<ValidateConfigResponse>
 	sendMsg(command: LigoSpecificRequest, args: any): Promise<DebugProtocol.Response> {
 		return this.send(command, args)
 	}

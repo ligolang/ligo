@@ -67,18 +67,14 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 			);
 		config.entrypoint = entrypoint;
 
-		const contractMetadata : Maybe<ContractMetadata> =
+		const contractMetadata : ContractMetadata =
 			(await this.client.sendMsg('getContractMetadata', { entrypoint })).contractMetadata;
 
-		if (!isDefined(contractMetadata)) {
-			return config;
-		}
-
-		const michelsonEntrypoint : string =
+		const michelsonEntrypoint : Maybe<string> =
 			await tryExecuteCommand(
 				"michelsonEntrypoint",
 				"AskOnStart",
-				config.michelsonEntrypoint,
+				config.michelsonEntrypoint as Maybe<string>,
 				() => createRememberingQuickPick(
 					contractMetadata,
 					"Please pick a Michelson entrypoint to run"
@@ -131,6 +127,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 			);
 		config.storage = storage;
 
+		await this.client.sendMsg('validateConfig', { michelsonEntrypoint, parameter, storage });
 		return config;
 	}
 

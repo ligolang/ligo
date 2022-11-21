@@ -81,16 +81,16 @@ export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfigur
   }
 }
 
-export async function tryExecuteCommand(
+export async function tryExecuteCommand<T extends Maybe<string>>(
   field: ConfigField,
   expectedExtractedCommand: ConfigCommand,
-  configItem: string,
-  resultPromise: () => Promise<Maybe<string>>
-): Promise<string> {
+  configItem: T,
+  resultPromise: () => Promise<Maybe<T>>
+): Promise<T> {
   const extractedCommand = getCommand(configItem);
   if (isDefined(extractedCommand)) {
     if (extractedCommand === expectedExtractedCommand) {
-      const result : Maybe<string> = await resultPromise();
+      const result : Maybe<T> = await resultPromise();
       if (!isDefined(result)) {
         // If user decided to close entrypoint quickpick
         // then we want to stop debugging session immediately.
