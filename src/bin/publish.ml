@@ -10,6 +10,7 @@
 - [ ] Wrap logging message in a function ~before ~after
 - [ ] Add CLI option to override path to .ligorc
 - [ ] Add basic comments in code
+- [ ] Add support for .ligoignore to igore stuff while packaging
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
@@ -539,6 +540,21 @@ let show_stats stats =
     =
     stats
   in
+  let human_readable_size size =
+    if size > 1000
+    then (
+      let kb = Float.(float_of_int size / 1000.0) in
+      if Float.(kb > 1000.0)
+      then (
+        let mb = Float.(kb / 1000.0) in
+        if Float.(mb > 1000.0)
+        then (
+          let gb = Float.(mb / 1000.0) in
+          Format.sprintf "%0.2f GB" gb)
+        else Format.sprintf "%0.2f MB" mb)
+      else Format.sprintf "%0.2f kB" kb)
+    else Format.sprintf "%d B" size
+  in
   let prefix = String.sub sha512 ~pos:0 ~len:13 in
   let suffix = String.sub sha512 ~pos:(String.length sha512 - 15) ~len:15 in
   let integrity = Format.sprintf "sha512-%s[...]%s" prefix suffix in
@@ -547,8 +563,8 @@ let show_stats stats =
   let () = Format.printf "    name:          %s\n%!" name in
   let () = Format.printf "    version:       %s\n%!" version in
   let () = Format.printf "    filename:      %s\n%!" tarball_name in
-  let () = Format.printf "    package size:  %d\n%!" packed_size in
-  let () = Format.printf "    unpacked size: %d\n%!" unpacked_size in
+  let () = Format.printf "    package size:  %s\n%!" (human_readable_size packed_size) in
+  let () = Format.printf "    unpacked size: %s\n%!" (human_readable_size unpacked_size) in
   let () = Format.printf "    shasum:        %s\n%!" sha1 in
   let () = Format.printf "    integrity:     %s\n%!" integrity in
   let () = Format.printf "    total files:   %d\n%!" file_count in
