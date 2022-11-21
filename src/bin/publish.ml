@@ -9,6 +9,7 @@
 - [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [ ] Wrap logging message in a function ~before ~after
 - [ ] Add CLI option to override path to .ligorc
+- [ ] Add basic comments in code
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
@@ -223,7 +224,27 @@ module Body = struct
     }
 end
 
-let http ~ligo_registry ~manifest ~body ~token =
+let handle_server_response ~name response body =
+  let open Cohttp_lwt in
+  let body = Lwt_main.run (Body.to_string body) in
+  let code = Response.status response in
+  match code with
+  | `Conflict -> Error ("\nConflict: version already exists", "")
+  | `Created ->
+    let () = Printf.printf "Done\n%!" in
+    Ok ("Package successfully published", "")
+  | `Unauthorized ->
+    Error
+      ( Format.sprintf
+          "\n%s already exists and you don't seem to have access to it."
+          name
+      , "" )
+  | `Bad_gateway | `Service_unavailable | `Gateway_timeout ->
+    Error ("\nRegistry seems down. Contact the developers", "")
+  | _ -> Error (body, "")
+
+
+let publish ~ligo_registry ~manifest ~body ~token =
   let open Cohttp_lwt_unix in
   let LigoManifest.{ name } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
@@ -238,7 +259,9 @@ let http ~ligo_registry ~manifest ~body ~token =
     body |> Body.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
   let r = Client.put ~headers ~body uri in
-  Lwt.map (fun r -> Ok r) r
+  let () = Printf.printf "Uploading package... %!" in
+  let response, body = Lwt_main.run r in
+  handle_server_response ~name:manifest.name response body
 
 
 let os_type =
@@ -410,8 +433,13 @@ let validate_main_file ~manifest =
   | None -> Error "No main field in package.json"
 
 
+let validate ~manifest =
+  let result_main = validate_main_file ~manifest in
+  let result_storage = Lwt_main.run @@ validate_storage ~manifest in
+  Result.all_unit [ result_main; result_storage ]
+
+
 let pack ~project_root ~token ~ligo_registry ~manifest =
-  let open Lwt.Syntax in
   let LigoManifest.{ name; version; _ } = manifest in
   let () = Format.printf "Packing tarball... %!" in
   let fcount, tarball = Lwt_main.run @@ tar_gzip project_root ~name ~version in
@@ -426,36 +454,11 @@ let pack ~project_root ~token ~ligo_registry ~manifest =
     |> Digestif.SHA512.to_raw_string
   in
   let files_info = FilesInfo.make ~size:len ~sha1 ~sha512 ~fcount ~tarball in
-  let result_main = validate_main_file ~manifest in
-  let result_storage = Lwt_main.run @@ validate_storage ~manifest in
-  match Result.all_unit [ result_main; result_storage ] with
+  match validate ~manifest with
   | Ok () ->
     let body = Body.make ~ligo_registry ~files_info ~manifest in
     Ok body
   | Error e -> Error (e, "")
-
-
-let validate = ()
-let publish = ()
-
-let handle_server_response ~name response body =
-  let open Cohttp_lwt in
-  let body = Lwt_main.run (Body.to_string body) in
-  let code = Response.status response in
-  match code with
-  | `Conflict -> Error ("\nConflict: version already exists", "")
-  | `Created ->
-    let () = Printf.printf "Done\n%!" in
-    Ok ("Package successfully published", "")
-  | `Unauthorized ->
-    Error
-      ( Format.sprintf
-          "\n%s already exists and you don't seem to have access to it."
-          name
-      , "" )
-  | `Bad_gateway | `Service_unavailable | `Gateway_timeout ->
-    Error ("\nRegistry seems down. Contact the developers", "")
-  | _ -> Error (body, "")
 
 
 let ( let* ) x f = Result.bind x ~f
@@ -493,14 +496,6 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
   let* token = get_auth_token ~ligorc_path ligo_registry in
   let* project_root = get_project_root project_root in
   let* packed = pack ~project_root ~token ~ligo_registry ~manifest in
-
-  let request =
-    if dry_run
-    then Lwt.return (Error "TODO: dry-run")
-    else http ~token ~body:packed ~ligo_registry ~manifest
-  in
-  let () = Printf.printf "Uploading package... %!" in
-  match Lwt_main.run request with
-  | Ok (response, body) ->
-    handle_server_response ~name:manifest.name response body
-  | Error e -> Error (e, "")
+  if dry_run
+  then Ok ("", "")
+  else publish ~token ~body:packed ~ligo_registry ~manifest
