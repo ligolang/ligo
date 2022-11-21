@@ -279,7 +279,7 @@ let publish ~ligo_registry ~manifest ~body ~token =
     body |> Body.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
   let r = Client.put ~headers ~body uri in
-  let () = Printf.printf "Uploading package... %!" in
+  let () = Printf.printf "==> Uploading package... %!" in
   let response, body = Lwt_main.run r in
   handle_server_response ~name:manifest.name response body
 
@@ -399,7 +399,7 @@ let validate_storage ~manifest =
   let { main; storage_fn; storage_arg } = manifest in
   match main, storage_fn, storage_arg with
   | Some main, Some storage_fn, Some storage_arg ->
-    let () = Printf.printf "Validating storage... %!" in
+    let () = Printf.printf "==> Validating storage... %!" in
     let expression = Format.sprintf "%s %s" storage_fn storage_arg in
     let ligo = Sys_unix.executable_name in
     let cmd =
@@ -460,7 +460,7 @@ let validate ~manifest =
 
 let pack ~project_root ~token ~ligo_registry ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
-  let () = Format.printf "Packing tarball... %!" in
+  let () = Format.printf "==> Packing tarball... %!" in
   let fcount, tarball, unpacked_size =
     Lwt_main.run @@ tar_gzip project_root ~name ~version
   in
@@ -539,7 +539,7 @@ let show_stats stats =
     =
     stats
   in
-  let () = Format.printf "    publishing %s@%s\n%!" name version in
+  let () = Format.printf "    publishing: %s@%s\n%!" name version in
   let () = Format.printf "    === Tarball Details ===\n%!" in
   let () = Format.printf "    name:          %s\n%!" name in
   let () = Format.printf "    version:       %s\n%!" version in
@@ -549,7 +549,7 @@ let show_stats stats =
   let () = Format.printf "    shasum:        %s\n%!" sha1 in
   let () = Format.printf "    integrity:     %s\n%!" integrity in
   let () = Format.printf "    total files:   %d\n%!" file_count in
-  Format.printf "\n%!"
+  ()
 
 
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
