@@ -4,7 +4,7 @@
 - [x] Add --dry-run CLI flag to ligo publish
 - [x] when directory field is null don't send the key
 - [x] Stat main file before publish
-- [ ] Implement --dry-run flag
+- [x] Implement --dry-run flag
 - [ ] Add stats about packed size, upacked size, total files in json
 - [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [ ] Wrap logging message in a function ~before ~after
@@ -33,21 +33,40 @@ let object__to_yojson o =
 type sem_ver = string [@@deriving to_yojson]
 type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 
-module FilesInfo = struct
+module PackageStats = struct
   type t =
-    { file_count : int
+    { name : string
+    ; version : string
+    ; file_count : int
     ; unpacked_size : int
+    ; packed_size : int
+    ; tarball_name : string
     ; tarball_content : bytes
     ; sha1 : string
     ; sha512 : string
+    ; integrity : string
     }
 
-  let make ~size ~fcount ~sha1 ~sha512 ~tarball =
-    { file_count = fcount
-    ; unpacked_size = size
+  let make
+      ~name
+      ~version
+      ~unpacked_size
+      ~packed_size
+      ~fcount
+      ~sha1
+      ~sha512
+      ~tarball
+    =
+    { name
+    ; version
+    ; file_count = fcount
+    ; unpacked_size
+    ; packed_size
+    ; tarball_name = Format.sprintf "%s-%s.tgz" name version
+    ; tarball_content = tarball
     ; sha1
     ; sha512
-    ; tarball_content = tarball
+    ; integrity = Format.sprintf "sha512-%s" (Base64.encode_exn sha512)
     }
 end
 
@@ -61,14 +80,11 @@ module Dist = struct
     }
   [@@deriving to_yojson]
 
-  let make ~tarball ~files_info =
-    let FilesInfo.{ sha1; sha512; file_count; unpacked_size; _ } = files_info in
-    { integrity = Format.sprintf "sha512-%s" (Base64.encode_exn sha512)
-    ; shasum = sha1
-    ; tarball
-    ; file_count
-    ; unpacked_size
-    }
+  let make ~tarball ~package_stats =
+    let PackageStats.{ sha1; sha512; file_count; unpacked_size; integrity; _ } =
+      package_stats
+    in
+    { integrity; shasum = sha1; tarball; file_count; unpacked_size }
 end
 
 type author = { name : string } [@@deriving to_yojson]
@@ -94,7 +110,7 @@ module Version = struct
     }
   [@@deriving to_yojson]
 
-  let make ~ligo_registry ~version ~files_info ~manifest =
+  let make ~ligo_registry ~version ~package_stats ~manifest =
     let LigoManifest.
           { name
           ; version
@@ -116,7 +132,11 @@ module Version = struct
       manifest
     in
     let tarball =
-      Format.sprintf "%s/%s/-/%s-%s.tgz" ligo_registry name name version
+      Format.sprintf
+        "%s/%s/-/%s"
+        ligo_registry
+        name
+        package_stats.PackageStats.tarball_name
     in
     { main
     ; name
@@ -133,7 +153,7 @@ module Version = struct
     ; readme
     ; bugs
     ; id = Format.sprintf "%s@%s" name version
-    ; dist = Dist.make ~tarball ~files_info
+    ; dist = Dist.make ~tarball ~package_stats
     }
 end
 
@@ -182,7 +202,7 @@ module Body = struct
     }
   [@@deriving to_yojson]
 
-  let make ~ligo_registry ~files_info ~manifest =
+  let make ~ligo_registry ~package_stats ~manifest =
     let LigoManifest.
           { name
           ; version
@@ -203,8 +223,8 @@ module Body = struct
       =
       manifest
     in
-    let gzipped_tarball = files_info.FilesInfo.tarball_content in
-    let v = Version.make ~ligo_registry ~version ~files_info ~manifest in
+    let gzipped_tarball = package_stats.PackageStats.tarball_content in
+    let v = Version.make ~ligo_registry ~version ~package_stats ~manifest in
     let versions = SMap.add version v SMap.empty in
     { id = name
     ; name
@@ -214,7 +234,7 @@ module Body = struct
     ; readme
     ; attachments =
         SMap.add
-          (Format.sprintf "%s-%s.tgz" name version)
+          package_stats.PackageStats.tarball_name
           Attachment.
             { content_type = "application/octet-stream"
             ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
@@ -356,8 +376,7 @@ let tar ~name ~version dir =
   let open Lwt.Syntax in
   let* files = from_dir ~dir (fun () -> get_all_files ".") in
   let files, sizes = List.unzip files in
-  let size = List.fold sizes ~init:0 ~f:( + ) in
-  let () = Format.printf "Size = %d\n" size in
+  let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
   let fname = Filename_unix.temp_file name version in
   let fd =
@@ -365,14 +384,14 @@ let tar ~name ~version dir =
   in
   let () = Tar_unix.Archive.create files fd in
   let () = Caml_unix.close fd in
-  Lwt.return (fcount, fname, size)
+  Lwt.return (fcount, fname, unpacked_size)
 
 
 let tar_gzip ~name ~version dir =
   let open Lwt.Syntax in
-  let* fcount, fname, size = tar ~name ~version dir in
+  let* fcount, fname, unpacked_size = tar ~name ~version dir in
   let buf = gzip fname in
-  Lwt.return (fcount, Buffer.contents_bytes buf)
+  Lwt.return (fcount, Buffer.contents_bytes buf, unpacked_size)
 
 
 let validate_storage ~manifest =
@@ -442,22 +461,36 @@ let validate ~manifest =
 let pack ~project_root ~token ~ligo_registry ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
   let () = Format.printf "Packing tarball... %!" in
-  let fcount, tarball = Lwt_main.run @@ tar_gzip project_root ~name ~version in
+  let fcount, tarball, unpacked_size =
+    Lwt_main.run @@ tar_gzip project_root ~name ~version
+  in
   let () = Printf.printf "Done\n%!" in
-  let len = Bytes.length tarball in
+  let packed_size = Bytes.length tarball in
   let sha1 =
-    tarball |> Digestif.SHA1.digest_bytes ~off:0 ~len |> Digestif.SHA1.to_hex
+    tarball
+    |> Digestif.SHA1.digest_bytes ~off:0 ~len:packed_size
+    |> Digestif.SHA1.to_hex
   in
   let sha512 =
     tarball
-    |> Digestif.SHA512.digest_bytes ~off:0 ~len
+    |> Digestif.SHA512.digest_bytes ~off:0 ~len:packed_size
     |> Digestif.SHA512.to_raw_string
   in
-  let files_info = FilesInfo.make ~size:len ~sha1 ~sha512 ~fcount ~tarball in
+  let package_stats =
+    PackageStats.make
+      ~name
+      ~version
+      ~unpacked_size
+      ~packed_size
+      ~sha1
+      ~sha512
+      ~fcount
+      ~tarball
+  in
   match validate ~manifest with
   | Ok () ->
-    let body = Body.make ~ligo_registry ~files_info ~manifest in
-    Ok body
+    let body = Body.make ~ligo_registry ~package_stats ~manifest in
+    Ok (body, package_stats)
   | Error e -> Error (e, "")
 
 
@@ -491,11 +524,40 @@ let get_project_root project_root =
       , "" )
 
 
+let show_stats stats =
+  let PackageStats.
+        { name
+        ; version
+        ; tarball_name
+        ; packed_size
+        ; unpacked_size
+        ; sha1
+        ; integrity
+        ; file_count
+        ; _
+        }
+    =
+    stats
+  in
+  let () = Format.printf "    publishing %s@%s\n%!" name version in
+  let () = Format.printf "    === Tarball Details ===\n%!" in
+  let () = Format.printf "    name:          %s\n%!" name in
+  let () = Format.printf "    version:       %s\n%!" version in
+  let () = Format.printf "    filename:      %s\n%!" tarball_name in
+  let () = Format.printf "    package size:  %d\n%!" packed_size in
+  let () = Format.printf "    unpacked size: %d\n%!" unpacked_size in
+  let () = Format.printf "    shasum:        %s\n%!" sha1 in
+  let () = Format.printf "    integrity:     %s\n%!" integrity in
+  let () = Format.printf "    total files:   %d\n%!" file_count in
+  Format.printf "\n%!"
+
+
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
   let* manifest = read_manifest ~project_root in
   let* token = get_auth_token ~ligorc_path ligo_registry in
   let* project_root = get_project_root project_root in
-  let* packed = pack ~project_root ~token ~ligo_registry ~manifest in
+  let* packed, stats = pack ~project_root ~token ~ligo_registry ~manifest in
+  let () = show_stats stats in
   if dry_run
   then Ok ("", "")
   else publish ~token ~body:packed ~ligo_registry ~manifest
