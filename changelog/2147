@@ -1,0 +1,5 @@
+author: er433
+description: \n
+merge_request: '2147'
+title: 'Testing framework: fix mutation in Michelson inlines'
+type: fixed

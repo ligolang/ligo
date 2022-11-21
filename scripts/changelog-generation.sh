@@ -9,7 +9,7 @@ cd "$(dirname "${BASH_SOURCE[0]}"/..)"
 
 # For html rendering, we want to replace <> which can be interpreted as html by &lt; &gt; except for <p> and </p>
 # That's a dirty fix, but didn't find another one...
-cat changelog.json | sed "s#<#\&lt;#g" | sed "s#>#\&gt;#g"  | sed "s#\&lt;p\&gt;#<p>#g"  | sed "s#\&lt;\/p\&gt;#<\/p>#g" > changelog-for-web-rendering.json
+cat changelog.json | sed "s#<#\&lt;#g" | sed "s#>#\&gt;#g"  | sed "s#\&lt;p\&gt;##g"  | sed "s#\&lt;\/p\&gt;##g" > changelog-for-web-rendering.json
 
 mustache ./changelog-for-web-rendering.json ./scripts/changelog.md.mustache > changelog.md
 mustache ./changelog.json ./scripts/changelog.txt.mustache > changelog.txt

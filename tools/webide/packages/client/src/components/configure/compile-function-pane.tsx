@@ -96,11 +96,11 @@ const CompileFunctionPaneComponent = (props) => {
           <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
           <SelectCommand
             id="protocol-select"
-            value={protocolType.Jakarta}
+            value={protocolType.Kathmandu}
             onChange={ev =>
               dispatch({ ...new ChangeProtocolAction(ev.target.value) })
             }>
-            <Option value={protocolType.Jakarta}>Jakarta</Option>
+            <Option value={protocolType.Lima}>Lima</Option>
             <Option value={protocolType.Kathmandu}>Kathmandu</Option>
           </SelectCommand>
           <Label>Select Function to compile</Label>

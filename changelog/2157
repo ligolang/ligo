@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '2157'
+title: Add support for `chain_id` literal in Testing Framework
+type: fixed

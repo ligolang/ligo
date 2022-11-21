@@ -1081,8 +1081,8 @@ and infer_application ~raise ~loc ~options ~ctx lamb_type args
     , ret_type
     , (fun hole ->
         f
-          (O.e_type_inst
-             { forall = hole; type_ = t_exists ~loc evar }
+          (O.make_e ~location:hole.location
+             (E_type_inst { forall = hole; type_ = t_exists ~loc evar })
              lamb_type))
     , args )
   | T_arrow { type1 = arg_type; type2 = ret_type } ->

@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Tree sitter grammar for jsligo'
+description: '#### Tree sitter grammar for jsligo'
 merge_request: '1581'
 title: Tree sitter grammar for jsligo
 type: internal

@@ -1,9 +1,9 @@
 author: melwyn95
-description: '\n<p>Before:</p>\n```\n$ ligo.54 print preprocessed x.mligo \nAn internal
-  error ocurred. Please, contact the developers.\n(\"Stack overflow\").\n```\n\n<p>After</p>\n```\n$
+description: '\nBefore:\n\n```\n\n$ ligo.54 print preprocessed x.mligo \nAn internal
+  error ocurred. Please, contact the developers.\n(\"Stack overflow\").\n\n```\n\n\nAfter\n\n```\n\n$
   ligo print preprocessed x.mligo \nFile \"x.mligo\", line 1, characters 9-18:\n 1
   | #include \"y.mligo\"\n 2 | \nError: Dependency cycle between:\n-> \"x.mligo\"\n->
-  \"y.mligo\"\n```\n\n'
+  \"y.mligo\"\n\n```\n\n\n'
 merge_request: '2128'
 title: 'Fix: Detect cycles in `#include` paths and give proper error message'
 type: fixed

@@ -1,5 +1,5 @@
 author: tomjack
-description: '### Docker image: ligo now executable by non-root users inside container
+description: '#### Docker image: ligo now executable by non-root users inside container
   (e.g. when running docker with `-u $(id -u):$(id -g)`.)'
 merge_request: '1810'
 title: 'Docker image: make ligo executable for non-root users'

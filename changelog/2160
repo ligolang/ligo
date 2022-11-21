@@ -1,0 +1,6 @@
+author: Laucans
+description: <p>`dao-jsligo`, `dao-cameligo`, `permit-cameligo` are now available
+  through `ligo init` command</p>\n\n
+merge_request: '2160'
+title: Add template to ligo init command
+type: added

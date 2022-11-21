@@ -20,8 +20,6 @@ const Tezos = (network: string) => {
   switch (network) {
     case "mainnet":
       return new TezosToolkit(`https://mainnet.api.tez.ie`);
-    case "jakartanet":   
-      return new TezosToolkit(`https://jakartanet.ecadinfra.com`);
     case "ghostnet":   
       return new TezosToolkit(`https://ghostnet.ecadinfra.com`);
     case "kathmandunet":   

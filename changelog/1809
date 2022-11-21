@@ -1,5 +1,5 @@
 author: er433
-description: '### New functions: `Test.print`, `Test.println`, `Test.eprint`, `Test.to_string`,
+description: '#### New functions: `Test.print`, `Test.println`, `Test.eprint`, `Test.to_string`,
   `Test.nl` and `Test.chr`\n\nThese new functions provide more fine-grained printing.\n\n`val
   Test.print : string -> unit` : prints an string to stdout.\n\n`val Test.println
   : string -> unit` : prints an string to stdout, adding a newline at the end.\n\n`val

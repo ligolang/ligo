@@ -6,7 +6,7 @@ export enum MichelsonFormat {
 }
 
 export enum protocolType {
-  Jakarta = 'jakarta',
+  Lima = 'lima',
   Kathmandu = 'kathmandu'
 }
 
@@ -45,7 +45,7 @@ type Action =
 
 const DEFAULT_STATE: CompileState = {
   entrypoint: '',
-  protocol: 'jakarta',
+  protocol: 'kathmandu',
   michelsonFormat: MichelsonFormat.Text
 };
 

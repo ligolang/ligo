@@ -1,8 +1,8 @@
 author: melwyn95
-description: 'Fixed handling for nested generic functions in JsLIGO\n```\nconst id
+description: 'Fixed handling for nested generic functions in JsLIGO\n\n\n```\nconst id
   : <P>(x : P) => P = (x : P) => {\n const id_1 : <Q>(y : Q) => Q = (y : Q) => {\n
   let id_2 : <R>(z : R) => R = (z : R) => {\n let z = z;\n return z;\n };\n let y
-  = y;\n return id_2(y);\n }\n return id_1(x);\n};\n```'
+  = y;\n return id_2(y);\n }\n return id_1(x);\n};\n\n\n```'
 merge_request: '1727'
 title: '[jsligo] Fix nested polymorphic functions'
 type: fixed

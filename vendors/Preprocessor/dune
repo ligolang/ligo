@@ -31,13 +31,6 @@
 (menhir
   (modules E_Parser))
 
-;; Building PreprocMain.exe for a standalone preprocessor
-
-(executable
-  (name PreprocMain)
-  (modules PreprocMain)
-  (libraries Preprocessor))
-
 ;; Building E_LexerMain.exe for a standalone lexer of boolean
 ;; expressions
 
