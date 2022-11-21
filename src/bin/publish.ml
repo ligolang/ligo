@@ -541,19 +541,14 @@ let show_stats stats =
     stats
   in
   let human_readable_size size =
-    if size > 1000
-    then (
-      let kb = Float.(float_of_int size / 1000.0) in
-      if Float.(kb > 1000.0)
-      then (
-        let mb = Float.(kb / 1000.0) in
-        if Float.(mb > 1000.0)
-        then (
-          let gb = Float.(mb / 1000.0) in
-          Format.sprintf "%0.2f GB" gb)
-        else Format.sprintf "%0.2f MB" mb)
-      else Format.sprintf "%0.2f kB" kb)
-    else Format.sprintf "%d B" size
+    let giga = 1000000000.0 in
+    let mega = 1000000.0 in
+    let kilo = 1000.0 in
+    match float_of_int size with
+    | size when Float.(size >= giga) -> Format.sprintf "%0.2f GB" (size /. giga)
+    | size when Float.(size >= mega) -> Format.sprintf "%0.2f MB" (size /. mega)
+    | size when Float.(size >= kilo) -> Format.sprintf "%0.2f kB" (size /. kilo)
+    | size -> Format.sprintf "%d B" (int_of_float size)
   in
   let prefix = String.sub sha512 ~pos:0 ~len:13 in
   let suffix = String.sub sha512 ~pos:(String.length sha512 - 15) ~len:15 in
@@ -563,8 +558,14 @@ let show_stats stats =
   let () = Format.printf "    name:          %s\n%!" name in
   let () = Format.printf "    version:       %s\n%!" version in
   let () = Format.printf "    filename:      %s\n%!" tarball_name in
-  let () = Format.printf "    package size:  %s\n%!" (human_readable_size packed_size) in
-  let () = Format.printf "    unpacked size: %s\n%!" (human_readable_size unpacked_size) in
+  let () =
+    Format.printf "    package size:  %s\n%!" (human_readable_size packed_size)
+  in
+  let () =
+    Format.printf
+      "    unpacked size: %s\n%!"
+      (human_readable_size unpacked_size)
+  in
   let () = Format.printf "    shasum:        %s\n%!" sha1 in
   let () = Format.printf "    integrity:     %s\n%!" integrity in
   let () = Format.printf "    total files:   %d\n%!" file_count in
