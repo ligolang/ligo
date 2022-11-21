@@ -474,7 +474,7 @@ let pack ~project_root ~token ~ligo_registry ~manifest =
   let sha512 =
     tarball
     |> Digestif.SHA512.digest_bytes ~off:0 ~len:packed_size
-    |> Digestif.SHA512.to_raw_string
+    |> Digestif.SHA512.to_hex
   in
   let package_stats =
     PackageStats.make
@@ -532,13 +532,16 @@ let show_stats stats =
         ; packed_size
         ; unpacked_size
         ; sha1
-        ; integrity
+        ; sha512
         ; file_count
         ; _
         }
     =
     stats
   in
+  let prefix = String.sub sha512 ~pos:0 ~len:13 in
+  let suffix = String.sub sha512 ~pos:(String.length sha512 - 15) ~len:15 in
+  let integrity = Format.sprintf "sha512-%s[...]%s" prefix suffix in
   let () = Format.printf "    publishing: %s@%s\n%!" name version in
   let () = Format.printf "    === Tarball Details ===\n%!" in
   let () = Format.printf "    name:          %s\n%!" name in
