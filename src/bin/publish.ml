@@ -5,15 +5,16 @@
 - [x] when directory field is null don't send the key
 - [x] Stat main file before publish
 - [ ] Implement --dry-run flag
-- [ ] Add unit tests for manifest parsing & validation
-- [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] Add stats about packed size, upacked size, total files in json
 - [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
+- [ ] Wrap logging message in a function ~before ~after
+- [ ] Add CLI option to override path to .ligorc
+- [ ] Add unit tests for manifest parsing & validation
+- [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
+- [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
-- [ ] Docs: Add not about `--registry`
-- [ ] Wrap logging message in a function ~before ~after
-- [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
+- [ ] Docs: Add note about `--registry`
 
 *)
 
@@ -411,7 +412,7 @@ let validate_main_file ~manifest =
   | None -> Error "No main field in package.json"
 
 
-let publish ~project_root ~token ~ligo_registry ~manifest =
+let pack ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name; version; _ } = manifest in
   let () = Format.printf "Packing tarball... %!" in
@@ -436,6 +437,9 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
   | Error e -> Lwt.return @@ Error e
 
 
+let validate = ()
+let publish = ()
+
 let handle_server_response ~name response body =
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
@@ -456,35 +460,54 @@ let handle_server_response ~name response body =
   | _ -> Error (body, "")
 
 
+let ( let* ) x f = Result.bind x ~f
+
+let validate_manifest manifest =
+  match Result.bind manifest ~f:LigoManifest.validate with
+  | Ok manifest -> Ok manifest
+  | Error e -> Error (Format.sprintf "\nERROR: %s" e, "")
+
+
+let get_auth_token ~ligorc_path ligo_registry =
+  let ligorc = LigoRC.read ~ligorc_path in
+  let registry_key = LigoRC.registry_key ligo_registry in
+  let token = LigoRC.get_token ~registry_key ligorc in
+  match token with
+  | Some token -> Ok token
+  | None ->
+    Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user.", "")
+
+
+let get_project_root project_root =
+  match project_root with
+  | Some project_root -> Ok project_root
+  | None ->
+    Error
+      ( "\n\
+         Can't find project-root.\n\
+         Hint: Use --project-root to specify project root"
+      , "" )
+
+
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
   let manifest = LigoManifest.read ~project_root in
-  let manifest = Result.bind manifest ~f:LigoManifest.validate in
-  match manifest with
-  | Error e -> Error (Format.sprintf "\nERROR: %s" e, "")
-  | Ok manifest ->
-    let ligorc = LigoRC.read ~ligorc_path in
-    let registry_key = LigoRC.registry_key ligo_registry in
-    let token = LigoRC.get_token ~registry_key ligorc in
-    (match token with
-    | None ->
-      Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user", "")
-    | Some token ->
-      (* Pattern match and show error if no project root *)
-      let project_root = Option.value_exn project_root in
-      let body = publish ~project_root ~token ~ligo_registry ~manifest in
-      let body =
-        (* TODO: fix this... *)
-        match Lwt_main.run body with
-        | Ok body -> body
-        | Error e -> failwith e
-      in
-      let request =
-        if dry_run
-        then Lwt.return (Error "TODO: dry-run")
-        else http ~token ~body ~ligo_registry ~manifest
-      in
-      let () = Printf.printf "Uploading package... %!" in
-      (match Lwt_main.run request with
-      | Ok (response, body) ->
-        handle_server_response ~name:manifest.name response body
-      | Error e -> Error (e, "")))
+  let* manifest = validate_manifest manifest in
+  let* token = get_auth_token ~ligorc_path ligo_registry in
+  let* project_root = get_project_root project_root in
+  let body = pack ~project_root ~token ~ligo_registry ~manifest in
+  let body =
+    (* TODO: fix this... *)
+    match Lwt_main.run body with
+    | Ok body -> body
+    | Error e -> failwith e
+  in
+  let request =
+    if dry_run
+    then Lwt.return (Error "TODO: dry-run")
+    else http ~token ~body ~ligo_registry ~manifest
+  in
+  let () = Printf.printf "Uploading package... %!" in
+  match Lwt_main.run request with
+  | Ok (response, body) ->
+    handle_server_response ~name:manifest.name response body
+  | Error e -> Error (e, "")
