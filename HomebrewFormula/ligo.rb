@@ -1,12 +1,18 @@
 class Ligo < Formula
   desc "Friendly Smart Contract Language for Tezos"
   homepage "https://ligolang.org/"
-
+  license "MIT"
+  sha256 "27cb3c2c90daa8c5ea05487da6bf94d66d2e4132a7eabba79228aaf44da9249e"
   # We clone repo explicitely to preserve the information about git submodules
   url "https://gitlab.com/ligolang/ligo.git", tag: "0.55.0", revision: "0875c3efbd093e8571d6dfe8e6a5dab167e38734"
+  version "0.55.0"
+  head "https://gitlab.com/ligolang/ligo.git", branch: "dev"
 
   bottle do
-    root_url "https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo"
+    root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/"
+    rebuild 1
+  # bottle arm64_ventura
+  # bottle ventura
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]

@@ -5,10 +5,6 @@ class LigoAT0550 < Formula
   # We clone repo explicitely to preserve the information about git submodules
   url "https://gitlab.com/ligolang/ligo.git", tag: "0.55.0", revision: "0875c3efbd093e8571d6dfe8e6a5dab167e38734"
 
-  bottle do
-    root_url "https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo"
-  end
-
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]
   build_dependencies.each do |dependency|
     depends_on dependency => :build
