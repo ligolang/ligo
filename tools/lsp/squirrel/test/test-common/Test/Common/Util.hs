@@ -13,9 +13,11 @@ module Test.Common.Util
   , parseContractsWithDependenciesScopes
   , parseDirectoryWithScopes
   , supportedExtensions
+  , renderNoLineLengthLimit
   ) where
 
 import Data.List (isSuffixOf)
+import Duplo.Pretty (Doc, Style (..), renderStyle, style)
 import Language.Haskell.TH.Syntax (liftString)
 import System.Directory (listDirectory)
 import System.Environment (getEnv)
@@ -103,3 +105,6 @@ parseDirectoryWithScopes
 parseDirectoryWithScopes dir = do
   let temp = TempSettings dir $ GenerateDir tempTemplate
   parseContractsWithDependenciesScopes @impl temp dir
+
+renderNoLineLengthLimit :: Doc -> Text
+renderNoLineLengthLimit = toText . renderStyle style{lineLength = maxBound}

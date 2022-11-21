@@ -9,6 +9,8 @@ module Test.Integrational.Capabilities.Hover
   , unit_hover_arrow_type_mligo
   , unit_hover_sum_type_jsligo
   , unit_hover_sum_type_mligo
+  , unit_hover_sum_type_pascaligo
+  , unit_hover_sum_type_religo
   , unit_hover_parametric_type_ligo
   ) where
 
@@ -70,6 +72,17 @@ unit_hover_sum_type_mligo :: Assertion
 unit_hover_sum_type_mligo = do
   Hover.unit_hover_sum_type_mligo @Standard
   Hover.unit_hover_sum_type_mligo @FromCompiler
+
+
+unit_hover_sum_type_pascaligo :: Assertion
+unit_hover_sum_type_pascaligo = do
+  Hover.unit_hover_sum_type_pascaligo @Standard
+  Hover.unit_hover_sum_type_pascaligo @FromCompiler
+
+unit_hover_sum_type_religo :: Assertion
+unit_hover_sum_type_religo = do
+  Hover.unit_hover_sum_type_religo @Standard
+  Hover.unit_hover_sum_type_religo @FromCompiler
 
 unit_hover_parametric_type_ligo :: Assertion
 unit_hover_parametric_type_ligo = do

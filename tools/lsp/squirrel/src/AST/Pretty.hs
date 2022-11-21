@@ -454,7 +454,7 @@ instance LPP1 'Pascal AST.Type where
     TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
     TProduct  [element] -> element
     TProduct  elements  -> parens $ train " *" elements
-    TSum      (x :| xs) -> x <.> blockWith ("|"<.>) xs
+    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -497,7 +497,9 @@ instance LPP1 'Pascal QuotedTypeParams where
 
 instance LPP1 'Pascal Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor ty -> ctor <+> "of" <+> pp ty
+    Variant ctor mTy -> case mTy of
+      Just ty -> ctor <+> "of" <+> pp ty
+      Nothing -> ctor
 
 instance LPP1 'Pascal Expr where
   lpp1 = \case
@@ -616,7 +618,7 @@ instance LPP1 'Reason AST.Type where
     TArrow    dom codom -> dom <+> "=>" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  elements  -> tuple elements
-    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
+    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -651,7 +653,9 @@ instance LPP1 'Reason QuotedTypeParams where
 
 instance LPP1 'Reason Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor ty -> ctor <+> parens (lpp ty)
+    Variant ctor mTy -> case mTy of
+      Just ty -> ctor <+> parens (lpp ty)
+      Nothing -> ctor
 
 instance LPP1 'Reason Expr where
   lpp1 = \case
@@ -753,7 +757,7 @@ instance LPP1 'Js AST.Type where
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  [element] -> element
     TProduct  elements  -> tupleJsLIGO elements
-    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
+    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -787,7 +791,11 @@ instance LPP1 'Js QuotedTypeParams where
 
 instance LPP1 'Js Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor ty -> brackets ("\"" <.> lpp ctor <.> "\"" <.> "," <+> lpp ty)
+    Variant ctor mTy -> brackets $ case mTy of
+      Just ty -> ctrInQuotes <.> "," <+> lpp ty
+      Nothing -> ctrInQuotes
+      where
+        ctrInQuotes = "\"" <.> lpp ctor <.> "\""
 
 instance LPP1 'Js Expr where
   lpp1 = \case
@@ -895,7 +903,7 @@ instance LPP1 'Caml AST.Type where
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
     TProduct  elements  -> train " *" elements
-    TSum      (x :| xs) -> x <.> blockWith ("| "<.>) xs
+    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
     TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -933,7 +941,9 @@ instance LPP1 'Caml QuotedTypeParams where
 
 instance LPP1 'Caml Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor ty -> ctor <+> ":" <+> pp ty
+    Variant ctor mTy -> case mTy of
+      Just ty -> ctor <+> "of" <+> pp ty
+      Nothing -> ctor
 
 instance LPP1 'Caml Expr where
   lpp1 = \case

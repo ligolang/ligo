@@ -12,6 +12,8 @@ module Test.Common.Capabilities.Hover
   , unit_hover_arrow_type_jsligo
   , unit_hover_sum_type_jsligo
   , unit_hover_sum_type_mligo
+  , unit_hover_sum_type_pascaligo
+  , unit_hover_sum_type_religo
   , unit_hover_parametric_type_ligo
   ) where
 
@@ -114,6 +116,18 @@ unit_hover_sum_type_mligo = do
   fp <- makeAbsolute $ contractsDir </> "sum.mligo"
   let type' = AliasType "parameter"
   checkHover @parser fp (point 13 12){_rFile = fp} (hover' (interval 10 11 17){_rFile = fp} "action" type' Caml Value)
+
+unit_hover_sum_type_pascaligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_sum_type_pascaligo = do
+  fp <- makeAbsolute $ contractsDir </> "sum.ligo"
+  let type' = AliasType "parameter"
+  checkHover @parser fp (point 13 10){_rFile = fp} (hover' (interval 10 22 28){_rFile = fp} "action" type' Pascal Value)
+
+unit_hover_sum_type_religo :: forall parser. ScopeTester parser => Assertion
+unit_hover_sum_type_religo = do
+  fp <- makeAbsolute $ contractsDir </> "sum.religo"
+  let type' = AliasType "parameter"
+  checkHover @parser fp (point 13 13){_rFile = fp} (hover' (interval 10 14 20){_rFile = fp} "action" type' Reason Value)
 
 unit_hover_parametric_type_ligo :: forall parser. ScopeTester parser => Assertion
 unit_hover_parametric_type_ligo = do
