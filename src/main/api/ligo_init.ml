@@ -25,6 +25,9 @@ let contract_template_url_map = Map.of_alist_exn (module String) [
   "randomness-cameligo", "https://github.com/ligolang/randomness-cameligo";
   "shifumi-jsligo", "https://github.com/ligolang/shifumi-jsligo";
   "shifumi-cameligo", "https://github.com/ligolang/shifumi-cameligo";
+  "dao-jsligo", "https://github.com/ligolang/dao-jsligo";
+  "dao-cameligo", "https://github.com/ligolang/dao-cameligo";
+  "permit-cameligo", "https://github.com/ligolang/permit-cameligo";
 ] 
 
 let library_template_url_map = Map.of_alist_exn (module String) [
