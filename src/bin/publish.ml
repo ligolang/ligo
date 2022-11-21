@@ -392,8 +392,6 @@ let validate_storage ~manifest =
 let validate_main_file ~manifest =
   let open LigoManifest in
   let { main } = manifest in
-  Lwt.return
-  @@
   match main with
   | Some main ->
     (match Sys_unix.file_exists main with
@@ -416,7 +414,7 @@ let pack ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name; version; _ } = manifest in
   let () = Format.printf "Packing tarball... %!" in
-  let* fcount, tarball = tar_gzip project_root ~name ~version in
+  let fcount, tarball = Lwt_main.run @@ tar_gzip project_root ~name ~version in
   let () = Printf.printf "Done\n%!" in
   let len = Bytes.length tarball in
   let sha1 =
@@ -428,13 +426,13 @@ let pack ~project_root ~token ~ligo_registry ~manifest =
     |> Digestif.SHA512.to_raw_string
   in
   let files_info = FilesInfo.make ~size:len ~sha1 ~sha512 ~fcount ~tarball in
-  let* result_main = validate_main_file ~manifest in
-  let* result_storage = validate_storage ~manifest in
+  let result_main = validate_main_file ~manifest in
+  let result_storage = Lwt_main.run @@ validate_storage ~manifest in
   match Result.all_unit [ result_main; result_storage ] with
   | Ok () ->
     let body = Body.make ~ligo_registry ~files_info ~manifest in
-    Lwt.return @@ Ok body
-  | Error e -> Lwt.return @@ Error e
+    Ok body
+  | Error e -> Error (e, "")
 
 
 let validate = ()
@@ -462,7 +460,8 @@ let handle_server_response ~name response body =
 
 let ( let* ) x f = Result.bind x ~f
 
-let validate_manifest manifest =
+let read_manifest ~project_root =
+  let manifest = LigoManifest.read ~project_root in
   match Result.bind manifest ~f:LigoManifest.validate with
   | Ok manifest -> Ok manifest
   | Error e -> Error (Format.sprintf "\nERROR: %s" e, "")
@@ -485,26 +484,20 @@ let get_project_root project_root =
     Error
       ( "\n\
          Can't find project-root.\n\
-         Hint: Use --project-root to specify project root"
+         Hint: Use --project-root to specify project root."
       , "" )
 
 
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
-  let manifest = LigoManifest.read ~project_root in
-  let* manifest = validate_manifest manifest in
+  let* manifest = read_manifest ~project_root in
   let* token = get_auth_token ~ligorc_path ligo_registry in
   let* project_root = get_project_root project_root in
-  let body = pack ~project_root ~token ~ligo_registry ~manifest in
-  let body =
-    (* TODO: fix this... *)
-    match Lwt_main.run body with
-    | Ok body -> body
-    | Error e -> failwith e
-  in
+  let* packed = pack ~project_root ~token ~ligo_registry ~manifest in
+
   let request =
     if dry_run
     then Lwt.return (Error "TODO: dry-run")
-    else http ~token ~body ~ligo_registry ~manifest
+    else http ~token ~body:packed ~ligo_registry ~manifest
   in
   let () = Printf.printf "Uploading package... %!" in
   match Lwt_main.run request with
