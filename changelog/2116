@@ -4,13 +4,9 @@ description: '\n\n#### Feature description\n\nThe typer error message `Cannot un
   example, here is a before/after of the error message for the following code :\n\n\n```\nlet
   x : int * nat * int * nat * int * nat = 42 , 4n , 42 , 24n , 42 , 24n\nlet y : int
   * tez * string * nat * int * address * int * tez * nat = x\n\n```\n\n\n#### Before\n\n\n```\nInvalid type(s)\nCannot
-  unify ( int * nat * int * nat * int * nat ) with ( int auto_merge_request.sh homebrew
-  parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
-  update_distribution_references_with_release.sh versioning versioning_website.sh
+  unify ( int * nat * int * nat * int * nat ) with ( int *
   tez * string * nat * int * address * int * tez * nat ).\n\n```\n\n\n#### After\n\n\n```\nInvalid type(s)\nCannot
-  unify ( int * nat * int * nat * int * nat ) with ( int auto_merge_request.sh homebrew
-  parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
-  update_distribution_references_with_release.sh versioning versioning_website.sh
+  unify ( int * nat * int * nat * int * nat ) with ( int *
   tez * string * nat * int * address * int * tez * nat ).\nDifference between the types:\n int\n+
   tez\n+ string\n nat\n int\n- nat\n+ address\n int\n+ tez\n nat\n\n```\n\n\n'
 merge_request: '2116'

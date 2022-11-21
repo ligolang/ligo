@@ -1,10 +1,8 @@
 author: lesenechal.remi
 description: '- `ligo info list-declarations` now fail in case of a type error\n-
   `ligo info list-declarations` now accepts a flag `--only-ep` to only display declarations
-  typed as an entrypoint (`parameter auto_merge_request.sh release_metadata retrieve_merge_request_info.sh
-  update_distribution_references_with_release.sh versioning_website.sh storage ->
-  operation list auto_merge_request.sh release_metadata retrieve_merge_request_info.sh
-  update_distribution_references_with_release.sh versioning_website.sh storage`)'
+  typed as an entrypoint (`parameter * storage ->
+  operation list * storage`)'
 merge_request: '1915'
 title: List decl improv
 type: added
