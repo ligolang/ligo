@@ -31,6 +31,15 @@ let object__to_yojson o =
   `Assoc (List.fold o ~init:[] ~f:(fun kvs (k, v) -> (k, `String v) :: kvs))
 
 
+let with_logging ~before ?(after = "Done") fn =
+  let () = Printf.printf "==> %s... %!" before in
+  match fn () with
+  | Ok v ->
+    let () = Printf.printf "%s\n%!" after in
+    Ok v
+  | Error e -> Error e
+
+
 type sem_ver = string [@@deriving to_yojson]
 type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 
@@ -251,9 +260,7 @@ let handle_server_response ~name response body =
   let code = Response.status response in
   match code with
   | `Conflict -> Error ("\nConflict: version already exists", "")
-  | `Created ->
-    let () = Printf.printf "Done\n%!" in
-    Ok ("Package successfully published", "")
+  | `Created -> Ok ("Package successfully published", "")
   | `Unauthorized ->
     Error
       ( Format.sprintf
@@ -280,7 +287,6 @@ let publish ~ligo_registry ~manifest ~body ~token =
     body |> Body.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
   let r = Client.put ~headers ~body uri in
-  let () = Printf.printf "==> Uploading package... %!" in
   let response, body = Lwt_main.run r in
   handle_server_response ~name:manifest.name response body
 
@@ -400,7 +406,6 @@ let validate_storage ~manifest =
   let { main; storage_fn; storage_arg } = manifest in
   match main, storage_fn, storage_arg with
   | Some main, Some storage_fn, Some storage_arg ->
-    let () = Printf.printf "==> Validating storage... %!" in
     let expression = Format.sprintf "%s %s" storage_fn storage_arg in
     let ligo = Sys_unix.executable_name in
     let cmd =
@@ -416,59 +421,49 @@ let validate_storage ~manifest =
             (fun status ->
               match status with
               | Caml_unix.WEXITED 0 -> Ok ()
-              | _ -> Error "unknown error")
+              | _ -> Error ("unknown error", ""))
             p#status)
     in
-    let open Lwt.Syntax in
-    let* result = status in
+    let result = Lwt_main.run status in
     (match result with
-    | Ok _ -> Lwt.return @@ Ok (Printf.printf "Done\n%!")
+    | Ok _ -> Ok ()
     | Error _ ->
-      Lwt.return
-      @@ Error
-           "\n\
-            Error: Check `storage_fn` & `storage_arg` in packge.json or check \
-            your LIGO storage expression")
-  | _ -> Lwt.return @@ Ok ()
+      Error
+        ( "\n\
+           Error: Check `storage_fn` & `storage_arg` in packge.json or check \
+           your LIGO storage expression"
+        , "" ))
+  | _ -> Ok ()
 
 
 let validate_main_file ~manifest =
   let open LigoManifest in
   let { main } = manifest in
-  let () = Printf.printf "==> Validating main file... %!" in
   match main with
   | Some main ->
     (match Sys_unix.file_exists main with
     | `Yes ->
       (match snd @@ Filename.split_extension main with
-      | Some _ -> Ok (Printf.printf "Done\n%!")
+      | Some _ -> Ok ()
       | None ->
         Error
-          "Invalid LIGO file specifed in main field of package.json\n\
-           Valid extension for LIGO files are (.ligo, .mligo, .religo, \
-           .jsligo) ")
+          ( "Invalid LIGO file specifed in main field of package.json\n\
+             Valid extension for LIGO files are (.ligo, .mligo, .religo, \
+             .jsligo) "
+          , "" ))
     | `No | `Unknown ->
       Error
-        "main file does not exists.\n\
-         Please specify a valid LIGO file in package.json.")
-  | None -> Error "No main field in package.json"
-
-
-let validate ~manifest =
-  let result_main = validate_main_file ~manifest in
-  let result_storage = Lwt_main.run @@ validate_storage ~manifest in
-  [ result_main; result_storage ]
-  |> Result.all_unit
-  |> Result.map_error ~f:(fun e -> e, "")
+        ( "main file does not exists.\n\
+           Please specify a valid LIGO file in package.json."
+        , "" ))
+  | None -> Error ("No main field in package.json", "")
 
 
 let pack ~project_root ~token ~ligo_registry ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
-  let () = Format.printf "==> Packing tarball... %!" in
   let fcount, tarball, unpacked_size =
     Lwt_main.run @@ tar_gzip project_root ~name ~version
   in
-  let () = Printf.printf "Done\n%!" in
   let packed_size = Bytes.length tarball in
   let sha1 =
     tarball
@@ -573,12 +568,33 @@ let show_stats stats =
 
 
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
-  let* manifest = read_manifest ~project_root in
-  let* token = get_auth_token ~ligorc_path ligo_registry in
-  let* project_root = get_project_root project_root in
-  let* () = validate ~manifest in
-  let* packed, stats = pack ~project_root ~token ~ligo_registry ~manifest in
+  let* manifest =
+    with_logging ~before:"Reading manifest" (fun () ->
+        read_manifest ~project_root)
+  in
+  let* token =
+    with_logging ~before:"Checking auth token" (fun () ->
+        get_auth_token ~ligorc_path ligo_registry)
+  in
+  let* project_root =
+    with_logging ~before:"Finding project root" (fun () ->
+        get_project_root project_root)
+  in
+  let* () =
+    with_logging ~before:"Validating main file" (fun () ->
+        validate_main_file ~manifest)
+  in
+  let* () =
+    with_logging ~before:"Validating storage" (fun () ->
+        validate_storage ~manifest)
+  in
+  let* packed, stats =
+    with_logging ~before:"Packing tarball" (fun () ->
+        pack ~project_root ~token ~ligo_registry ~manifest)
+  in
   let () = show_stats stats in
   if dry_run
   then Ok ("", "")
-  else publish ~token ~body:packed ~ligo_registry ~manifest
+  else
+    with_logging ~before:"Uploading package" (fun () ->
+        publish ~token ~body:packed ~ligo_registry ~manifest)
