@@ -47,14 +47,14 @@ let pp : display_format:string display_format ->
           (variant_to_string in_use)
     )
     | `Checking_ambiguous_constructor_expr (expr, tv_chosen,tv_possible,loc) ->
-      Format.fprintf f "@[<hv>%a@ Warning: The type of \"%a\" is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: The type of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
       Ast_core.PP.expression
       expr
       Type_var.pp tv_chosen
       Type_var.pp tv_possible
     | `Checking_ambiguous_constructor_pat (pat, tv_chosen,tv_possible,loc) ->
-      Format.fprintf f "@[<hv>%a@ Warning: The type the pattern of \"%a\" is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: The type the pattern of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
       Ast_core.(Pattern.pp PP.type_expression_option)
       pat
@@ -133,7 +133,7 @@ let to_warning : all -> Simple_utils.Warning.t = fun w ->
     let content = make_content ~message ~location () in
     make ~stage:"michelson typecheck" ~content
   | `Checking_ambiguous_constructor_expr (expr, tv_chosen,tv_possible,location) ->
-    let message = Format.asprintf "Warning: The type of \"%a\" is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @."
+    let message = Format.asprintf "Warning: The type of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @."
       Ast_core.PP.expression expr
       Type_var.pp tv_chosen
       Type_var.pp tv_possible
@@ -141,7 +141,7 @@ let to_warning : all -> Simple_utils.Warning.t = fun w ->
     let content = make_content ~message ~location () in
     make ~stage:"typer" ~content
   | `Checking_ambiguous_constructor_pat (pat, tv_chosen,tv_possible,location) ->
-    let message = Format.asprintf "Warning: The type the pattern of \"%a\" is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @."
+    let message = Format.asprintf "Warning: The type the pattern of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @."
       Ast_core.(Pattern.pp PP.type_expression_option) pat
       Type_var.pp tv_chosen
       Type_var.pp tv_possible
