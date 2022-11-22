@@ -1182,6 +1182,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     let>> v = Decompile (code, code_ty, expr_ty) in
     return v
+  | ( C_TEST_DECOMPILE
+    , [ V_Michelson (Untyped_code code) ] )
+    ->
+    let code_ty = Michelson_backend.compile_type ~raise expr_ty in
+    let code_ty = Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) code_ty in
+    let>> v = Decompile (code, code_ty, expr_ty) in
+    return v
   | C_TEST_DECOMPILE, _ -> fail @@ error_type ()
   | C_TEST_COMPILE_CONTRACT, [ contract ] ->
     let>> code = Compile_contract (loc, contract) in

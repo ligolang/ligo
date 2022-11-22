@@ -919,10 +919,10 @@ let originate_contract
   =
  fun ~raise ~loc ~calltrace ctxt (contract, storage) amt ->
   let contract =
-    trace_option ~raise (corner_case ()) @@ get_michelson_contract contract
+    trace_option ~raise (corner_case ~loc ()) @@ get_michelson_contract contract
   in
-  let { micheline_repr = { code = storage; _ }; ast_ty = ligo_ty } =
-    trace_option ~raise (corner_case ()) @@ get_michelson_expr storage
+  let storage, ligo_ty =
+    trace_option ~raise (corner_case ~loc ()) @@ get_michelson_code_and_type storage
   in
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
@@ -947,7 +947,9 @@ let originate_contract
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) ->
     let addr = v_address dst in
-    let storage_tys = (dst, ligo_ty) :: ctxt.internals.storage_tys in
+    let storage_tys = match ligo_ty with
+      | None -> ctxt.internals.storage_tys
+      | Some ligo_ty -> (dst, ligo_ty) :: ctxt.internals.storage_tys in
     addr, { ctxt with internals = { ctxt.internals with storage_tys } }
   | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
