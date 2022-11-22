@@ -134,7 +134,7 @@ let error_ppformat
     | `Typer_ill_formed_type (type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type@.Ill formed type \"%a\".@]"
+        "@[<hv>%a@.Invalid type@.Ill formed type \"%a\".Hint: you might be missing some type arguments.@]"
         Snippet.pp
         loc
         Type.pp
