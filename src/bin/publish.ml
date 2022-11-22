@@ -435,12 +435,13 @@ let validate_storage ~manifest =
 let validate_main_file ~manifest =
   let open LigoManifest in
   let { main } = manifest in
+  let () = Printf.printf "==> Validating main file... %!" in
   match main with
   | Some main ->
     (match Sys_unix.file_exists main with
     | `Yes ->
       (match snd @@ Filename.split_extension main with
-      | Some _ -> Ok ()
+      | Some _ -> Ok (Printf.printf "Done\n%!")
       | None ->
         Error
           "Invalid LIGO file specifed in main field of package.json\n\
@@ -456,7 +457,9 @@ let validate_main_file ~manifest =
 let validate ~manifest =
   let result_main = validate_main_file ~manifest in
   let result_storage = Lwt_main.run @@ validate_storage ~manifest in
-  Result.all_unit [ result_main; result_storage ]
+  [ result_main; result_storage ]
+  |> Result.all_unit
+  |> Result.map_error ~f:(fun e -> e, "")
 
 
 let pack ~project_root ~token ~ligo_registry ~manifest =
@@ -488,11 +491,8 @@ let pack ~project_root ~token ~ligo_registry ~manifest =
       ~fcount
       ~tarball
   in
-  match validate ~manifest with
-  | Ok () ->
-    let body = Body.make ~ligo_registry ~package_stats ~manifest in
-    Ok (body, package_stats)
-  | Error e -> Error (e, "")
+  let body = Body.make ~ligo_registry ~package_stats ~manifest in
+  Ok (body, package_stats)
 
 
 let ( let* ) x f = Result.bind x ~f
@@ -576,6 +576,7 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
   let* manifest = read_manifest ~project_root in
   let* token = get_auth_token ~ligorc_path ligo_registry in
   let* project_root = get_project_root project_root in
+  let* () = validate ~manifest in
   let* packed, stats = pack ~project_root ~token ~ligo_registry ~manifest in
   let () = show_stats stats in
   if dry_run
