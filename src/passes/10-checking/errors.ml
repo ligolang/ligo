@@ -48,6 +48,12 @@ let rec type_mapper ~f (t : Type.t) =
   | T_sum row ->
     let row = row_mapper ~f row in
     return @@ T_sum row
+  | T_for_all abs ->
+    let abs = Abstraction.map (type_mapper ~f) abs in
+    return @@ T_for_all abs
+  | T_abstraction abs ->
+    let abs = Abstraction.map (type_mapper ~f) abs in
+    return @@ T_abstraction abs
   | _ -> t
 
 
@@ -128,29 +134,29 @@ let error_ppformat
     | `Typer_ill_formed_type (type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type@.Ill formed type %a.@]"
+        "@[<hv>%a@.Invalid type@.Ill formed type \"%a\".@]"
         Snippet.pp
         loc
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_record_mismatch (_record, type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Mismatching record labels. Expected record of type %a.@]"
+        "@[<hv>%a@.Mismatching record labels. Expected record of type \"%a\".@]"
         Snippet.pp
         loc
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_cannot_subtype (type1, type2, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Expected %a, but received %a. Types are not compatitable.@]"
+        "@[<hv>%a@.Expected \"%a\", but received \"%a\". Types are not compatitable.@]"
         Snippet.pp
         loc
         Type.pp
-        type2
+        (type_improve type2)
         Type.pp
-        type1
+        (type_improve type1)
     | `Typer_corner_case (desc, loc) ->
       Format.fprintf
         f
@@ -161,13 +167,13 @@ let error_ppformat
     | `Typer_occurs_check_failed (tvar, type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.The type variable ^%a occurs inside %a.@]"
+        "@[<hv>%a@.The type variable \"^%a\" occurs inside \"%a\".@]"
         Snippet.pp
         loc
         Type_var.pp
         tvar
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_pattern_missing_cases (syntax, ps, loc) ->
       let ps =
         List.fold ps ~init:"" ~f:(fun s p ->
@@ -193,26 +199,26 @@ let error_ppformat
     | `Typer_cannot_unify (no_color, type1, type2, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a.@.%a@]"
+        "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\".@.%a@]"
         Snippet.pp
         loc
         Type.pp
-        type1
+        (type_improve type1)
         Type.pp
-        type2
+        (type_improve type2)
         (Typediff.pp ~no_color)
         (Typediff.diff type1 type2)
     | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type(s)@.Cannot unify %a with %a due to differing \
+        "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\" due to differing \
          layouts (%a and %a).@]"
         Snippet.pp
         loc
         Type.pp
-        type1
+        (type_improve type1)
         Type.pp
-        type2
+        (type_improve type2)
         Type.pp_layout
         layout1
         Type.pp_layout
@@ -220,13 +226,13 @@ let error_ppformat
     | `Typer_bad_constructor (label, type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a.Expected constructor %a in expected sum type %a.]"
+        "@[<hv>%a.Expected constructor \"%a\" in expected sum type \"%a\".]"
         Snippet.pp
         loc
         Label.pp
         label
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_pattern_do_not_match loc ->
       Format.fprintf
         f
@@ -278,13 +284,13 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Expected collection of type \"%a\", but recieved collection \
-         of type %a.@]"
+         of type \"%a\".@]"
         Snippet.pp
         loc
         For_each_loop.pp_collect_type
         collection_type
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_mismatching_for_each_binder_arity
         (expected_arity, recieved_arity, loc) ->
       Format.fprintf
@@ -402,7 +408,7 @@ let error_ppformat
       in
       Format.fprintf
         f
-        "@[<hv>%a@.Pattern %anot of the expected type %a @]"
+        "@[<hv>%a@.Pattern %anot of the expected type \"%a\".@]"
         Snippet.pp
         pat.location
         pf
@@ -412,12 +418,12 @@ let error_ppformat
     | `Typer_mut_is_polymorphic (type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Mutable binding has the polymorphic type %a@.Hint: Add an \
+        "@[<hv>%a@.Mutable binding has the polymorphic type \"%a\".@.Hint: Add an \
          annotation.@]"
         Snippet.pp
         loc
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_unbound_module (path, loc) ->
       let rec pp_path ppf path =
         match path with
@@ -436,12 +442,12 @@ let error_ppformat
     | `Typer_cannot_decode_texists (type_, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Underspecified type %a.@.Please add additional \
+        "@[<hv>%a@.Underspecified type \"%a\".@.Please add additional \
          annotations.@]"
         Snippet.pp
         loc
         Type.pp
-        type_
+        (type_improve type_)
     | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
       Format.fprintf
         f
@@ -449,9 +455,9 @@ let error_ppformat
         Snippet.pp
         loc
         Type.pp
-        expected_type
+        (type_improve expected_type)
         Type.pp
-        lit_type)
+        (type_improve lit_type))
 
 
 let error_json : typer_error -> Simple_utils.Error.t =
@@ -469,7 +475,10 @@ let error_json : typer_error -> Simple_utils.Error.t =
     make ~stage ~content
   | `Typer_ill_formed_type (type_, loc) ->
     let message =
-      Format.asprintf "@[Invalid type@.Ill formed type %a.@]" Type.pp type_
+      Format.asprintf
+        "@[Invalid type@.Ill formed type %a.@]"
+        Type.pp
+        (type_improve type_)
     in
     let content = make_content ~message ~location:loc () in
     make ~stage ~content
