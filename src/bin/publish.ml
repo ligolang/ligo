@@ -5,20 +5,20 @@
 - [x] when directory field is null don't send the key
 - [x] Stat main file before publish
 - [x] Implement --dry-run flag
-- [ ] Add stats about packed size, upacked size, total files in json
-- [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
+- [x] Add stats about packed size, upacked size, total files in json
+- [x] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [x] Wrap logging message in a function ~before ~after
 - [x] Add support for .ligoignore to igore stuff while packaging
-- [ ] Add basic comments in code
-- [ ] manually Test CLI option to override path to .ligorc
-- [ ] manually Test .ligoignore stuff
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
+- [ ] Add basic comments in code
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
 - [ ] Docs: Add note about `--registry`
-
+- [ ] manually Test CLI option to override path to .ligorc
+- [ ] manually Test .ligoignore stuff
+- [ ] manually end-to-end test publishing & installing pacakges
 *)
 
 module LigoRC = Cli_helpers.LigoRC
@@ -537,9 +537,9 @@ let show_stats stats =
     stats
   in
   let human_readable_size size =
-    let giga = 1000000000.0 in
-    let mega = 1000000.0 in
-    let kilo = 1000.0 in
+    let kilo = 1024.0 in
+    let mega = kilo *. kilo in
+    let giga = kilo *. mega in
     match float_of_int size with
     | size when Float.(size >= giga) -> Format.sprintf "%0.2f GB" (size /. giga)
     | size when Float.(size >= mega) -> Format.sprintf "%0.2f MB" (size /. mega)
