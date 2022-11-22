@@ -117,8 +117,7 @@ let ctx_init ?env () =
   match env with
   | None -> Context.empty
   | Some env ->
-    Environment.foldi env ~init:Context.empty ~f:(fun _i ctx decl ->
-        (* Format.printf "%d: %a\n" i (Ast_typed.PP.declaration ~use_hidden:false) decl; *)
+    Environment.fold env ~init:Context.empty ~f:(fun ctx decl ->
         match Location.unwrap decl with
         | D_value { binder; expr; attr = _ } ->
           Context.add_imm
@@ -785,12 +784,6 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
     |> all_lmap_unit
   | _ -> fail ()
 
-
-(* let unify type1 type2 : (unit, _, _) t =
- fun ~raise ~options ~loc state ->
-  Trace.try_with
-    (fun ~raise ~catch:_ -> unify type1 type2 ~raise ~options ~loc state)
-    (fun ~catch:_ _ -> raise.error (cannot_unify type1 type2 loc)) *)
 
 type subtype_error = unify_error
 
