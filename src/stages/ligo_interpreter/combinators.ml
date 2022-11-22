@@ -120,6 +120,10 @@ let get_michelson_expr : value -> typed_michelson_code option = function
   | V_Michelson (Ty_code x) -> Some x
   | _ -> None
 
+let get_michelson_code_and_type : value -> (mcode * type_expression option) option = function
+  | V_Michelson (Ty_code { micheline_repr = { code = x ; _ } ; ast_ty }) -> Some (x, Some ast_ty)
+  | V_Michelson (Untyped_code x) -> Some (x, None)
+  | _ -> None
 
 let get_nat : value -> Z.t option = function
   | V_Ct (C_nat x) -> Some x

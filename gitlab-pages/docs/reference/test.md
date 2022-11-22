@@ -765,6 +765,20 @@ let constant_to_michelson_program = (constant : string) => michelson_program
 Turn a constant (as a string) into a `michelson_program`. To be used together with `Test.register_constant`.
 
 <SyntaxTitle syntax="pascaligo">
+val parse_michelson : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val parse_michelson : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let parse_michelson: string => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let parse_michelson = (constant : string) => michelson_program
+</SyntaxTitle>
+Parses Michelson (as string) into a `michelson_program`.
+
+<SyntaxTitle syntax="pascaligo">
 val register_file_constants : string -> list (string)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
