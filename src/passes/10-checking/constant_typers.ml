@@ -365,7 +365,8 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
              (* Unify the inferred types *)
              let%bind () =
                unify_worklist
-               |> List.map ~f:(fun (arg_type1, arg_type2) ->
+               (* Reverse due to [foldi] above *)
+               |> List.rev_map ~f:(fun (arg_type1, arg_type2) ->
                       let%bind arg_type1 = Context.tapply arg_type1 in
                       let%bind arg_type2 = Context.tapply arg_type2 in
                       unify arg_type1 arg_type2)
@@ -376,7 +377,8 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
     (* Check the checked arguments *)
     let%bind () =
       checked
-      |> List.map ~f:(fun (i, arg_type, arg) ->
+      (* Reverse due to [folid] above *)
+      |> List.rev_map ~f:(fun (i, arg_type, arg) ->
              let%bind arg = Context.tapply arg_type >>= check arg in
              Hashtbl.set output_args ~key:i ~data:(arg_type, arg);
              return ())
