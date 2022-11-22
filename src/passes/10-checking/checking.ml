@@ -218,7 +218,7 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
     raise
       (corner_case
          "chest / chest_key are not allowed in the syntax (only tests need \
-          this type")
+          this type)")
 
 
 let equal_lmap_doms lmap1 lmap2 =
