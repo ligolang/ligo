@@ -430,7 +430,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract.mligo") ] ;
   [%expect{xxx|
-    File "./unresolved/contract.mligo", line 6, characters 17-31:
+    File "./unresolved/contract.mligo", line 6, characters 29-31:
       5 |     let b                = List.length ys in
       6 |     [], (a + b + List.length [])
 
@@ -440,7 +440,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
   [%expect{xxx|
-    File "./unresolved/contract2.mligo", line 4, characters 9-15:
+    File "./unresolved/contract2.mligo", line 4, characters 13-15:
       3 | let main (_, _ : int list * nat) : (operation list * nat) =
       4 |     [], (one [])
 
@@ -450,7 +450,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
   [%expect{xxx|
-    File "./unresolved/storage.mligo", line 1, characters 8-22:
+    File "./unresolved/storage.mligo", line 1, characters 20-22:
       1 | let s = List.length []
       2 |
 
@@ -460,6 +460,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
   [%expect{xxx|
+    File "./unresolved/parameter.mligo", line 1, characters 8-10:
+      1 | let p = []
+      2 |
+
     Underspecified type "list (^gen#541)".
     Please add additional annotations. |xxx}]
 
