@@ -92,7 +92,11 @@ let decode type_ ~raise subst =
   (* Attempt to lift the error to the originally decoded type (improves error reporting) *)
   Trace.try_with
     (fun ~raise ~catch:_ -> decode type_ ~raise subst)
-    (fun ~catch:_ _ -> raise.error (cannot_decode_texists type_ type_.location))
+    (fun ~catch:_ (`Typer_cannot_decode_texists (_type, loc)) ->
+      raise.error
+        (cannot_decode_texists
+           type_
+           ((* pick the best location! *) if Location.is_dummy_or_generated loc then type_.location else loc)))
 
 
 let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =
