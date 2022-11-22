@@ -105,6 +105,8 @@ if __name__ == "__main__":
     if type != "none":
         changelog_details = get_changelog(markdown.children)
         changelog_details = changelog_details.replace('\n', '\\n')
+        changelog_details = changelog_details.replace('<p>', '')
+        changelog_details = changelog_details.replace('</p>', '')
     else:
        quit()
 
