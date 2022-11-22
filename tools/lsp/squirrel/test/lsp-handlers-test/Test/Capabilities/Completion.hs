@@ -3,8 +3,6 @@ module Test.Capabilities.Completion
   , unit_completion_jsligo
   ) where
 
-import Control.Lens ((^.))
-import Data.List (sort)
 import Language.LSP.Test
 import Language.LSP.Types (Position (..))
 import Language.LSP.Types.Lens (label)

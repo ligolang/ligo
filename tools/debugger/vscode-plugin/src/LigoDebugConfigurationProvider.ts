@@ -24,10 +24,7 @@ export type ConfigField
 	;
 
 export type ConfigCommand
-	= "AskForEntrypoint"
-	| "AskForMichelsonEntrypoint"
-	| "AskForParameter"
-	| "AskForStorage"
+	= "AskOnStart"
 	;
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -58,9 +55,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const entrypoint : string =
 			await tryExecuteCommand(
 				"entrypoint",
-				"AskForEntrypoint",
+				"AskOnStart",
 				config.entrypoint,
-				getEntrypoint(
+				() => getEntrypoint(
 					this.context,
 					async (entrypoint) => {
 						return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).message;
@@ -80,9 +77,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const michelsonEntrypoint : string =
 			await tryExecuteCommand(
 				"michelsonEntrypoint",
-				"AskForMichelsonEntrypoint",
+				"AskOnStart",
 				config.michelsonEntrypoint,
-				createRememberingQuickPick(
+				() => createRememberingQuickPick(
 					contractMetadata,
 					"Please pick a Michelson entrypoint to run"
 				)
@@ -101,9 +98,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const parameter : string =
 			await tryExecuteCommand(
 				"parameter",
-				"AskForParameter",
+				"AskOnStart",
 				config.parameter,
-				getParameterOrStorage(
+				() => getParameterOrStorage(
 					this.context,
 					validateInput,
 					"parameter",
@@ -119,9 +116,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const storage : string =
 			await tryExecuteCommand(
 				"storage",
-				"AskForStorage",
+				"AskOnStart",
 				config.storage,
-				getParameterOrStorage(
+				() => getParameterOrStorage(
 					this.context,
 					validateInput,
 					"storage",
@@ -149,9 +146,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
-				config.entrypoint = '{AskForEntrypoint}'
-				config.parameter = "{AskForParameter}"
-				config.storage = "{AskForStorage}"
+				config.entrypoint = '{AskOnStart}'
+				config.parameter = "{AskOnStart}"
+				config.storage = "{AskOnStart}"
 			}
 		}
 
@@ -160,7 +157,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
-		config.entrypoint ??= '{AskForEntrypoint}'
+		config.entrypoint ??= '{AskOnStart}'
 
 		if (config.logDir === '') {
 			config.logDir = undefined

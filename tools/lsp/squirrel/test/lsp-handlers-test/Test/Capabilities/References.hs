@@ -7,11 +7,11 @@ module Test.Capabilities.References
   , unit_changingUnsavedBufferMakesGlobalLoseReference
   ) where
 
-import Control.Monad.IO.Class (liftIO)
 import Language.LSP.Test
 import Language.LSP.Types
 import System.Directory (makeAbsolute, removeFile)
 import System.FilePath ((</>))
+import System.IO (writeFile)
 
 import Test.HUnit (Assertion)
 

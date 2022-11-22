@@ -3,8 +3,6 @@ module RIO.Registration
   , registerFileWatcher
   ) where
 
-import Control.Monad (void)
-import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
@@ -19,7 +17,7 @@ registerDidChangeConfiguration = do
     reg = J.Registration "ligoChangeConfiguration" J.SWorkspaceDidChangeConfiguration J.Empty
     params = J.RegistrationParams $ J.List [J.SomeRegistration reg]
 
-  void $ S.sendRequest J.SClientRegisterCapability params (const $ pure ())
+  void $ S.sendRequest J.SClientRegisterCapability params (const pass)
 
 registerFileWatcher :: RIO ()
 registerFileWatcher = do
@@ -35,7 +33,7 @@ registerFileWatcher = do
     ligoFilesOpts = J.DidChangeWatchedFilesRegistrationOptions $ J.List $ map watcher extGlobs
     ligoFilesReg = J.Registration "ligoFileWatcher" J.SWorkspaceDidChangeWatchedFiles ligoFilesOpts
 
-    projGlob = T.pack $ "**" </> ligoProjectName
+    projGlob = toText $ "**" </> ligoProjectName
     projWatcher = J.FileSystemWatcher
       { J._globPattern = projGlob
       , J._kind = Just J.WatchKind
@@ -52,4 +50,4 @@ registerFileWatcher = do
       , J.SomeRegistration ligoProjReg
       ]
 
-  void $ S.sendRequest J.SClientRegisterCapability regParams (const $ pure ())
+  void $ S.sendRequest J.SClientRegisterCapability regParams (const pass)

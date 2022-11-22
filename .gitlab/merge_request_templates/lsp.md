@@ -1,0 +1,3 @@
+- [ ] Bug fixes and new features have corresponding tests added
+- [ ] If making changes that change syntax highlighting, we also updated the syntax highlighting generator
+- [ ] (Before merging) commit history is squashed and prettified, and follows the [Serokell commit policy](https://www.notion.so/serokell/Commit-and-PR-policy-4cf98e1a910a415d86b5f2491d9af1af)

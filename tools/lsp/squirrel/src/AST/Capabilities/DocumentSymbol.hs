@@ -4,10 +4,8 @@ module AST.Capabilities.DocumentSymbol
   ( extractDocumentSymbols
   ) where
 
-import Control.Lens ((^.))
-import Control.Monad.Writer.Strict
-import Data.Maybe (fromMaybe)
-import Data.Text
+import Control.Monad.Writer.Strict (Writer, execWriter, tell)
+import Debug qualified (show)
 import Duplo (match)
 import Language.LSP.Types (SymbolInformation (..))
 import Language.LSP.Types qualified as J
@@ -38,11 +36,11 @@ extractDocumentSymbols uri tree =
     collectFromContract (match @RawContract -> Just (_, RawContract decls))
       = mapM_ collectDecl decls
     collectFromContract _
-      = pure ()
+      = pass
 
     collectDecl :: LIGO Info' -> Writer [SymbolInformation] ()
     collectDecl (match @Binding -> Just (_, binding)) = case binding of
-          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
+          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _ _) ->
             tellScopedDecl
               r
               J.SkFunction
@@ -53,13 +51,13 @@ extractDocumentSymbols uri tree =
             tellSymbolInfo
               r
               J.SkNamespace
-              ("some include at " <> pack (show r))
+              ("some include at " <> Debug.show r)
 
           (BImport (match @Constant -> Just (getElem @Range -> r, _)) _) ->
             tellSymbolInfo
               r
               J.SkNamespace
-              ("some import at " <> pack (show r))
+              ("some import at " <> Debug.show r)
 
           (BTypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
@@ -67,15 +65,15 @@ extractDocumentSymbols uri tree =
               J.SkTypeParameter
               (const Nothing)
 
-          (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
+          (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          (BConst p _ _) -> collectDecl p
+          (BConst p _ _ _) -> collectDecl p
 
-          (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
+          (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
               r
               J.SkConstant
@@ -94,7 +92,7 @@ extractDocumentSymbols uri tree =
               J.SkModule
               (\ScopedDecl {_sdName} -> Just ("module " <> _sdName))
 
-          _ -> pure ()
+          _ -> pass
 
     collectDecl (match @Pattern -> Just (_, pat)) = case pat of
           (IsAnnot p _) -> collectDecl p
@@ -107,7 +105,7 @@ extractDocumentSymbols uri tree =
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
           (IsParen x) -> collectDecl x
 
-          _ -> pure ()
+          _ -> pass
 
     collectDecl (match @RecordFieldPattern -> Just (_, rfpattern)) = case rfpattern of
           (IsRecordField _ pat) -> collectDecl pat
@@ -117,9 +115,9 @@ extractDocumentSymbols uri tree =
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          _ -> pure ()
+          _ -> pass
 
-    collectDecl _ = pure ()
+    collectDecl _ = pass
 
     -- | Tries to find scoped declaration and apply continuation to it or
     -- ignore the declaration if not found.
@@ -127,7 +125,7 @@ extractDocumentSymbols uri tree =
       :: Range
       -> (ScopedDecl -> Writer [SymbolInformation] ())
       -> Writer [SymbolInformation] ()
-    withScopedDecl r f = maybe (pure ()) f (findScopedDecl r tree)
+    withScopedDecl r = whenJust (findScopedDecl r tree)
 
     -- | Tell to the writer symbol information that we may find in scope or
     -- just ignore it and return `[]`.

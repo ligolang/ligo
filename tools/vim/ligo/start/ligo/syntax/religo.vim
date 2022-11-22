@@ -32,7 +32,7 @@ syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|}\|=
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|module\|let\)\>\|;\|}\|^#\|\[@\)\@=" contains=uppercaseidentifier,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|module\|let\)\>\|;\|}\|,\|)\|^#\|\[@\)\@=" contains=uppercaseidentifier,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
 " recordfield

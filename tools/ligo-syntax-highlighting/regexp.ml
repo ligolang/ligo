@@ -327,14 +327,15 @@ let type_definition_match: Core.regexp = {
   * Locally inside a "let", immediately before an "in".
 
   follow(type_decl) = Type Module Let In End EOF Directive Attr
+  Heads-up for an extra token: ")". This is for parametric types.
 *)
 let type_definition_begin: Core.regexp = type_definition_match
 
 let type_definition_end: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
-  emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\b";
-  textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b)";
-  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\)\\@="
+  emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\|)\\\\b";
+  textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b|\\))";
+  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\|)\\)\\@=";
 }
 
 let type_name_match: Core.regexp = {
@@ -456,6 +457,13 @@ let type_as_end_jsligo: Core.regexp = {
   vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@=";
 }
 
+let type_binder_positive_lookahead_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = "(?=([a-zA-Z0-9_,]+|\\s)+>)";
+  vim      = "\\([a-zA-Z0-9_,]\\|\\s\\)\\+>\\@=";
+}
+
 (*
   follow(type_annotation) = SEMI RPAR RBRACKET Is EQ ASS
   n.b.: Remove the `%inline` from `type_annotation` before running Menhir to see
@@ -506,14 +514,17 @@ let type_annotation_end_reasonligo: Core.regexp = {
   vim      = "\\()\\|}\\|=\\|,\\|=>\\)\\@=";
 }
 
-(* follow(type_decl) = Type SEMI RBRACE Module Let EOF Directive Attr *)
+(*
+  follow(type_decl) = Type SEMI RBRACE Module Let EOF Directive Attr
+  Heads-up for extra tokens: RPAR and COMMA. This is for parametric types.
+*)
 let type_definition_begin_reasonligo: Core.regexp = type_definition_begin
 
 let type_definition_end_reasonligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
-  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|}\\\\|^#\\\\|\\\\[@";
-  textmate = "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)";
-  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|}\\|^#\\|\\[@\\)\\@=";
+  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|}\\\\|,\\\\|)\\\\|^#\\\\|\\\\[@";
+  textmate = "(?=\\b(type|module|let)\\b|;|}|,|\\)|^#|\\[@)";
+  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|}\\|,\\|)\\|^#\\|\\[@\\)\\@=";
 }
 
 let type_operator_match_reasonligo: Core.regexp = {

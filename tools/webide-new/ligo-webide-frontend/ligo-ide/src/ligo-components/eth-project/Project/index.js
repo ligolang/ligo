@@ -36,6 +36,9 @@ modelSessionManager.registerModeDetector((filePath) => {
   if (base.endsWith(".ligo")) {
     return "pascaligo";
   }
+  if (base.endsWith(".pligo")) {
+    return "pascaligo";
+  }
   if (base.endsWith(".mligo")) {
     return "cameligo";
   }

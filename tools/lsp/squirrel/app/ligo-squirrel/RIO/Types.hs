@@ -6,23 +6,22 @@ module RIO.Types
   , RIO (..)
   ) where
 
-import Control.Lens (_head, over)
+import Control.Lens (_head)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, mapReaderT)
-import Control.Monad.Trans (lift)
+import Control.Monad.Reader (mapReaderT)
 import Data.Aeson (Options (..), defaultOptions)
 import Data.Aeson.TH (deriveJSON)
-import Data.Default (Default (def))
 import Data.Char (toLower)
+import Data.Default (Default (def))
 import Katip (Katip (..), KatipContext (..))
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map qualified as StmMap
-import UnliftIO.MVar (MVar)
+import UnliftIO.Pool (Pool)
 
 import AST (ContractInfo', Includes, ParsedContractInfo)
 import ASTMap (ASTMap)
-import Cli (HasLigoClient (..), LigoClientEnv (..))
+import Cli (HasLigoClient (..), LigoClientEnv (..), LigoProcess)
 import Config (Config (..))
 import Log (LogT)
 
@@ -72,6 +71,8 @@ data RioEnv = RioEnv
   -- ^ Stores the user's choice (or lack of) in how the project should be indexed.
   , reBuildGraph :: MVar (Includes FilePath)
   -- ^ Represents the build graph for all files that were looked up.
+  , reLigo :: Pool LigoProcess
+  -- ^ The spawned LIGO processes.
   }
 
 newtype ProjectSettings = ProjectSettings
@@ -110,7 +111,10 @@ instance KatipContext RIO where
   localKatipNamespace f = RIO . mapReaderT (S.LspT . localKatipNamespace f . S.unLspT) . unRio
 
 instance HasLigoClient RIO where
-  getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) S.getConfig
+  getLigoClientEnv = do
+    _lceClientPath <- _cLigoBinaryPath <$> S.getConfig
+    _lceLigoProcesses <- asks (Just . reLigo)
+    pure LigoClientEnv{..}
 
 $(deriveJSON defaultOptions
   { fieldLabelModifier = over _head toLower . drop 2, omitNothingFields = True

@@ -4,7 +4,7 @@
     "description": "VSCode debugger extension for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -124,22 +124,22 @@
                             "entrypoint": {
                                 "type": "string",
                                 "description": "Entry point of the contract (`main` method)",
-                                "default": "{AskForEntrypoint}"
+                                "default": "{AskOnStart}"
                             },
                             "michelsonEntrypoint": {
                                 "type": "string",
                                 "description": "Michelson entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
-                                "default": "{AskForMichelsonEntrypoint}"
+                                "default": "{AskOnStart}"
                             },
                             "parameter": {
                                 "type": "string",
                                 "description": "Parameter value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
-                                "default": "{AskForParameter}"
+                                "default": "{AskOnStart}"
                             },
                             "storage": {
                                 "type": "string",
                                 "description": "Initial storage value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
-                                "default": "{AskForStorage}"
+                                "default": "{AskOnStart}"
                             },
                             "logDir": {
                                 "type": "string",
@@ -206,9 +206,9 @@
                         "request": "launch",
                         "name": "Launch LIGO",
                         "logDir": "",
-                        "entrypoint": "{AskForEntrypoint}",
-                        "parameter": "{AskForParameter}",
-                        "storage": "{AskForStorage}"
+                        "entrypoint": "{AskOnStart}",
+                        "parameter": "{AskOnStart}",
+                        "storage": "{AskOnStart}"
                     }
                 ],
                 "configurationSnippets": [
@@ -219,9 +219,9 @@
                             "type": "ligo",
                             "request": "launch",
                             "name": "Launch ${1:LIGO contract}",
-                            "entrypoint": "${2|{AskForEntrypoint}|}",
-                            "parameter": "${3|{AskForParameter}|}",
-                            "storage": "${4|{AskForStorage}|}"
+                            "entrypoint": "${2|{AskOnStart}|}",
+                            "parameter": "${3|{AskOnStart}|}",
+                            "storage": "${4|{AskOnStart}|}"
                         }
                     },
                     {
@@ -234,10 +234,10 @@
                             "logDir": "",
                             "program": "^\"\\${file}\"",
                             "stopOnEntry": true,
-                            "michelsonEntrypoint": "${2|{AskForMichelsonEntrypoint},default|}",
-                            "entrypoint": "${3|{AskForEntrypoint}|}",
-                            "parameter": "${4|{AskForParameter}|}",
-                            "storage": "${5|{AskForStorage}|}",
+                            "michelsonEntrypoint": "${2|{AskOnStart},default|}",
+                            "entrypoint": "${3|{AskOnStart}|}",
+                            "parameter": "${4|{AskOnStart}|}",
+                            "storage": "${5|{AskOnStart}|}",
                             "contractEnv": {
                                 "now": "${6:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
                                 "level": "${7:10000}",

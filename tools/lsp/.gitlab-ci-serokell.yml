@@ -34,6 +34,7 @@ ligo-build:
   stage: ligo
   needs:
     - print-nix-version
+    - validate-cabal-files  # otherwise build will rely on the outdated deps list
   only: [merge_requests, tooling]
   tags: [nix-with-docker]
   script:
@@ -77,6 +78,15 @@ lsp-lint:
     # Nix has some trouble with git so we run it directly from the CI
     - cd tools/lsp
     - bash squirrel/scripts/check-trailing-whitespace.sh
+
+lsp-stylish:
+  stage: lsp
+  needs: []
+  only: [merge_requests, tooling]
+  script:
+    - cd tools/lsp/squirrel
+    - nix develop ..#ci -c ./scripts/validate-stylish.sh
+
 
 print-nix-version:
   stage: nix

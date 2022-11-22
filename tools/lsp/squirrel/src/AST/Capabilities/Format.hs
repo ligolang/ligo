@@ -5,8 +5,10 @@ module AST.Capabilities.Format
   , formatAt
   ) where
 
+import Prelude hiding (Product (..))
+
 import Language.LSP.Types qualified as J
-import UnliftIO.Exception (Handler (..), catches, displayException)
+import UnliftIO.Exception (Handler (..), catches)
 
 import AST.Scope (ContractInfo', Info', pattern FindContract)
 import AST.Skeleton (SomeLIGO (..))
@@ -15,8 +17,8 @@ import Duplo.Lattice (leq)
 import Duplo.Tree (extract, spineTo)
 import Log (Log)
 import Log qualified
-import ParseTree (Source (..))
 import Parser (CodeSource (..))
+import ParseTree (Source (..))
 import Product (Product, getElem)
 import Range (Range (..), toLspRange)
 
@@ -31,7 +33,7 @@ formatImpl tempSettings src info = do
   let r@Range{_rFile} = getElem info
   out <- callForFormat tempSettings (Source _rFile (srcIsDirty src) source) `catches`
     [ Handler \(e :: LigoIOException) ->
-      source <$ $(Log.err) [Log.i|#{displayException e}|]
+      source <$ $Log.err [Log.i|#{displayException e}|]
     , Handler \(_ :: SomeLigoException) -> pure source
     ]
   pure $ J.List [J.TextEdit (toLspRange r) out]

@@ -312,6 +312,7 @@
 		(,"\\b\\(const\\|var\\)\\b"
 			(1 font-lock-keyword-face)
 		)
+		(,"<[:space:]*" ())
 		(,"\\btype\\b" ( 1 font-lock-keyword-face))
 		(,":" ( 1 ligo-font-lock-operator-face))
 		(,":" ( 1 ligo-font-lock-operator-face))

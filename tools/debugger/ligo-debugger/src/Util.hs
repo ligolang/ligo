@@ -3,17 +3,19 @@ module Util
   , readSemVerQ
   , resourcesFolder
   , rmode'semv
+  , rmode'ansi
   , everywhereM'
   ) where
 
 import Data.Char qualified as Char
-import Data.List (groupBy)
+import Data.List (groupBy, singleton)
 import Data.SemVer qualified as SemVer
 import Data.Text qualified as Text
 import Debug qualified
 import Fmt (build)
 import Generics.SYB (Data (gmapM), GenericM)
 import Language.Haskell.TH.Syntax (Code (..), Q, liftTyped)
+import System.Console.ANSI (SGR, setSGRCode)
 import System.FilePath ((</>))
 import TH.RelativePaths (qReadFileText)
 import Text.Interpolation.Nyan.Core (RMode (..))
@@ -41,15 +43,20 @@ readSemVerQ path = Code do
         & Text.unlines
         & Text.strip
 
-  ver <- SemVer.fromText clearContent
+  version <-
+    SemVer.fromText clearContent
     & either (\_ -> fail $ "Invalid version constant in the file: " <> Debug.show clearContent) pure
-  examineCode $ liftTyped ver
+
+  examineCode . liftTyped $ version
 
 resourcesFolder :: FilePath
 resourcesFolder = "src" </> "resources"
 
 rmode'semv :: RMode SemVer.Version
 rmode'semv = RMode (build . SemVer.toText)
+
+rmode'ansi :: RMode [SGR]
+rmode'ansi = RMode (build . concatMap (setSGRCode . singleton))
 
 -- | Monadic variation on everywhere'
 everywhereM' :: forall m. Monad m => GenericM m -> GenericM m

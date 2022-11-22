@@ -21,7 +21,7 @@ import Test.HUnit (Assertion)
 --import Test.Common.FixedExpectations (shouldBe)
 
 unit_selection_range :: Assertion
-unit_selection_range = pure ()
+unit_selection_range = pass
 
 --contractsDir :: FilePath
 --contractsDir = Common.contractsDir </> "selection-range"

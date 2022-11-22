@@ -464,12 +464,12 @@ export default class ProjectManager {
 
     try {
       await fileOps.rename(oldPath, newPath);
-      modelSessionManager.updateEditorAfterMovedFile(oldPath, newPath);
     } catch (e) {
       console.log(e);
       throw new Error(`Fail to rename <b>${oldPath}</b>.`);
     }
 
+    modelSessionManager.updateEditorAfterMovedFile(oldPath, newPath);
     ProjectManager.refreshDirectory({
       type: isFile ? "renameFile" : "renameDirectory",
       oldPath,

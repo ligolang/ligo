@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
-import Api from "~/components/api/api";
-import compilerManager from "~/ligo-components/eth-compiler";
+import { WebIdeApi } from "~/components/api/api";
+import { CompilerManager } from "~/ligo-components/eth-compiler";
 
 interface DeployScriptModalProps {
   modalRef: React.RefObject<Modal>;
@@ -41,7 +41,7 @@ function DeployScriptModal({
       return;
     }
 
-    await Api.generateDeployScript({
+    await WebIdeApi.generateDeployScript({
       name,
       project: {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -52,12 +52,9 @@ function DeployScriptModal({
       storage,
     })
       .then(async (resp) => {
-        /* eslint-disable */
-        // @ts-ignore
-        setResult(resp.script);
-        // @ts-ignore
-        await compilerManager.saveCompiledContract(resp.build, projectManager);
-        /* eslint-enable */
+        setResult(resp.data.script);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        await CompilerManager.saveCompiledContract(resp.data.build, projectManager);
       })
       .catch((e: Error) => {
         modalRef.current?.closeModal().catch((me: Error) => {

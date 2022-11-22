@@ -37,6 +37,10 @@ highlight link typeannotation_ Operator
 syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|recursive\|module\|function\|end\|const\)\>\|;\|{\|^#\|\[@\)\@=" contains=iskeyword,uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
 highlight link typedefinition_ Keyword 
 
+" typebinder
+syntax match typebinder "<" nextgroup=typebinder___ skipempty skipwhite
+syntax region typebinder___ start="\([a-zA-Z0-9_,]\|\s\)\+>\@=" end=">" contained contains=typename,typename 
+
 " constorvar
 syntax match constorvar "\<\(const\|var\)\>" 
 highlight link constorvar Keyword 
