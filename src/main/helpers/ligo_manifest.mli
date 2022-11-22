@@ -9,7 +9,7 @@ type t =
   ; scripts : (string * string) list
   ; dependencies : (string * string) list
   ; dev_dependencies : (string * string) list
-  ; main : string option
+  ; main : string
   ; author : string
   ; type_ : string
   ; storage_fn : string option

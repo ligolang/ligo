@@ -9,6 +9,7 @@
 - [x] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [x] Wrap logging message in a function ~before ~after
 - [x] Add support for .ligoignore to igore stuff while packaging
+- [ ] Refactor manifest parsin & validation
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] Add basic comments in code
@@ -105,7 +106,7 @@ module Version = struct
   type t =
     { name : string
     ; author : author
-    ; main : string option
+    ; main : string
     ; type_ : string [@key "type"]
     ; storage_fn : string option
     ; storage_arg : string option
@@ -405,8 +406,8 @@ let tar_gzip ~name ~version ~ligoignore dir =
 let validate_storage ~manifest =
   let open LigoManifest in
   let { main; storage_fn; storage_arg } = manifest in
-  match main, storage_fn, storage_arg with
-  | Some main, Some storage_fn, Some storage_arg ->
+  match storage_fn, storage_arg with
+  | Some storage_fn, Some storage_arg ->
     let expression = Format.sprintf "%s %s" storage_fn storage_arg in
     let ligo = Sys_unix.executable_name in
     let cmd =
@@ -440,24 +441,21 @@ let validate_storage ~manifest =
 let validate_main_file ~manifest =
   let open LigoManifest in
   let { main } = manifest in
-  match main with
-  | Some main ->
-    (match Sys_unix.file_exists main with
-    | `Yes ->
-      (match snd @@ Filename.split_extension main with
-      | Some _ -> Ok ()
-      | None ->
-        Error
-          ( "Invalid LIGO file specifed in main field of package.json\n\
-             Valid extension for LIGO files are (.ligo, .mligo, .religo, \
-             .jsligo) "
-          , "" ))
-    | `No | `Unknown ->
+  match Sys_unix.file_exists main with
+  | `Yes ->
+    (match snd @@ Filename.split_extension main with
+    | Some _ -> Ok ()
+    | None ->
       Error
-        ( "main file does not exists.\n\
-           Please specify a valid LIGO file in package.json."
+        ( "Invalid LIGO file specifed in main field of package.json\n\
+           Valid extension for LIGO files are (.ligo, .mligo, .religo, \
+           .jsligo) "
         , "" ))
-  | None -> Error ("No main field in package.json", "")
+  | `No | `Unknown ->
+    Error
+      ( "main file does not exists.\n\
+         Please specify a valid LIGO file in package.json."
+      , "" )
 
 
 let pack ~project_root ~token ~ligo_registry ~ligoignore ~manifest =

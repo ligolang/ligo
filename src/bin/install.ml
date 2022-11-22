@@ -8,6 +8,7 @@ let does_json_manifest_exist () =
     (try 
       let _ = Yojson.Safe.from_file package_json in
       Ok ()
+    (* TODO: in case of invalid json write {} to the file *)
     with _ -> Error "Invalid package.json")
   | (`No | `Unknown) -> Error "A package.json does not exist"
   
