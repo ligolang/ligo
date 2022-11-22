@@ -88,14 +88,15 @@ and signature_of_module
     : ctx:Context.t -> Ast_typed.module_ -> Context.Signature.t
   =
  fun ~ctx module_ ->
-  match module_ with
-  | [] -> []
-  | decl :: module_ ->
-    let public, sig_item = signature_item_of_decl ~ctx decl in
-    let sig_ =
-      signature_of_module ~ctx:(Context.add_signature_item ctx sig_item) module_
-    in
-    if public then sig_item :: sig_ else sig_
+  let _ctx, sig_ =
+    (* [List.fold_left] due to dependence of context (snoc list) *)
+    List.fold_left module_ ~init:(ctx, []) ~f:(fun (ctx, sig_) decl ->
+        let public, sig_item = signature_item_of_decl ~ctx decl in
+        let ctx = Context.add_signature_item ctx sig_item in
+        ctx, if public then sig_item :: sig_ else sig_)
+  in
+  (* Reverse since [List.fold_left] reverses the signature *)
+  List.rev sig_
 
 
 and signature_item_of_decl
