@@ -1,0 +1,5 @@
+author: er433
+description: \n
+merge_request: '2162'
+title: 'Internal: in `tezos-ligo`, lazify `sapling_storage.ml`''s `default_root`'
+type: performance
