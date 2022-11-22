@@ -2,6 +2,8 @@ module Test.Scope.ScopedDecl
   ( unit_access_field
   ) where
 
+import Prelude hiding (Type)
+
 import Test.Tasty.HUnit (Assertion)
 
 import AST.Scope.ScopedDecl (Type (..), TypeDeclSpecifics (..), TypeField (..), accessField)

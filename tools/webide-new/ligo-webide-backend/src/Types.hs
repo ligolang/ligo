@@ -4,10 +4,9 @@ module Types
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Swagger.Schema
+import Data.OpenApi.Schema
   (ToSchema, constructorTagModifier, declareNamedSchema, defaultSchemaOptions,
   genericDeclareNamedSchema)
-import GHC.Generics (Generic)
 
 import Util (prepareField)
 

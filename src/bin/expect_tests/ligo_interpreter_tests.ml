@@ -104,7 +104,8 @@ let%expect_test _ =
     - test_key_hash exited with value ().
     - test_check exited with value ().
     - test_int_bls exited with value ().
-    - test_not exited with value (). |}]
+    - test_not exited with value ().
+    - test_chain_id exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)

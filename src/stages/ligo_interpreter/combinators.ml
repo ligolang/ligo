@@ -35,6 +35,7 @@ let v_timestamp : Z.t -> value = fun v -> V_Ct (C_timestamp v)
 let v_bls12_381_g1 : Bls12_381.G1.t -> value = fun v -> V_Ct (C_bls12_381_g1 v)
 let v_bls12_381_g2 : Bls12_381.G2.t -> value = fun v -> V_Ct (C_bls12_381_g2 v)
 let v_bls12_381_fr : Bls12_381.Fr.t -> value = fun v -> V_Ct (C_bls12_381_fr v)
+let v_chain_id : Chain_id.t -> value = fun c -> V_Ct (C_chain_id c)
 
 let v_key_hash : Tezos_crypto.Signature.public_key_hash -> value =
  fun v -> V_Ct (C_key_hash v)
@@ -311,7 +312,7 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   | C_bls12_381_fr b, C_bls12_381_fr b' ->
     Bytes.compare (Bls12_381.Fr.to_bytes b) (Bls12_381.Fr.to_bytes b')
   | C_int64 i, C_int64 i' -> Int64.compare i i'
-  | C_chain_id i, C_chain_id i' -> String.compare i i'
+  | C_chain_id i, C_chain_id i' -> Chain_id.compare i i'
   | ( ( C_unit
       | C_bool _
       | C_int _

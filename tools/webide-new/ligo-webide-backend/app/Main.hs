@@ -1,7 +1,6 @@
 module Main (main) where
 
 import Config (Config(..))
-import Control.Monad (join)
 import Options.Applicative
 import Server
 

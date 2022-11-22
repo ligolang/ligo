@@ -1,5 +1,5 @@
 author: ulrikstrid
-description: '### nix improvements\n\nAdd package that provides `ligo` with with `esy`.\nUsage:
+description: '#### nix improvements\n\nAdd package that provides `ligo` with with `esy`.\nUsage:
   `nix run gitlab:ligolang/ligo#withEsy -- install`'
 merge_request: '1974'
 title: Adds a package wrapped in esy

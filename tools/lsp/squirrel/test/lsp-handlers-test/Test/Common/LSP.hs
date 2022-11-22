@@ -6,9 +6,9 @@ module Test.Common.LSP
   , runHandlersTestWithConfig
   ) where
 
-import Control.Lens ((^.))
 import Data.Aeson (toJSON)
-import Language.LSP.Test (Session, SessionConfig (..), defaultConfig, fullCaps, openDoc, runSession, runSessionWithConfig)
+import Language.LSP.Test
+  (Session, SessionConfig (..), defaultConfig, fullCaps, openDoc, runSession, runSessionWithConfig)
 import Language.LSP.Types (ResponseMessage, ResponseResult, TextDocumentIdentifier)
 import Language.LSP.Types.Lens qualified as LSP (result)
 

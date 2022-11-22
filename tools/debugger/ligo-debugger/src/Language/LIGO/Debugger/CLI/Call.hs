@@ -12,29 +12,34 @@ module Language.LIGO.Debugger.CLI.Call
   , isSupportedVersion
   , minimalSupportedVersion
   , recommendedVersion
+  , getVersionIssuesDetails
+  , UnsupportedLigoVersionException (..)
   ) where
 
 import Data.Aeson qualified as Aeson
+import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
+import Data.SemVer.QQ qualified as SemVer.QQ
 import Data.Text qualified as T
 import Fmt (Buildable, build, pretty)
 import System.FilePath ((</>))
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO)
-import UnliftIO.Exception (mapExceptionM, throwIO)
+import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
 
-import Cli (HasLigoClient, LigoClientFailureException (..), callLigoImpl, callLigoImplBS)
+import Cli (HasLigoClient, LigoClientFailureException (..), callLigo, callLigoBS)
 import Cli qualified as LSP
 
 import Morley.Michelson.Parser qualified as MP
 import Morley.Michelson.Untyped qualified as MU
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Error
 import Util
 
 withMapLigoExc :: (MonadUnliftIO m) => m a -> m a
 withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
-  [int||#{cfeStderr e}|] :: LigoException
+  [int||#{cfeStderr e}|] :: LigoCallException
 
 {-
   Here and in the next calling @ligo@ binary functions
@@ -48,69 +53,80 @@ withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
 -}
 
 -- | Run ligo to compile the contract with all the necessary debug info.
-compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m LigoMapper
+compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m (LigoMapper 'Unique)
 compileLigoContractDebug entrypoint file = withMapLigoExc $
-  callLigoImplBS Nothing
+  callLigoBS Nothing
     [ "compile", "contract"
     , "--no-warn"
     , "--michelson-format", "json"
     , "--michelson-comments", "location"
     , "--michelson-comments", "env"
-    , "-e", entrypoint
+    , "-e", LSP.strArg entrypoint
     , "--experimental-disable-optimizations-for-debugging"
     , "--disable-michelson-typechecking"
-    , file
+    , LSP.strArg file
     ] Nothing
-    >>= either (throwUnexpectedLigoOutput "decoding source mapper") pure
-      . first toText . Aeson.eitherDecode
+    >>= either (throwIO . LigoDecodeException "decoding source mapper" . toText) pure
+      . Aeson.eitherDecode
 
 -- | Run ligo to compile expression into Michelson in the context of the
 -- given file.
 compileLigoExpression :: forall m. (HasLigoClient m)
                       => MP.MichelsonSource -> FilePath -> Text -> m MU.Value
 compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
-  callLigoImpl Nothing
+  callLigo Nothing
     [ "compile", "expression"
     , "--no-warn"
-    , "--init-file", ctxFile
+    , "--init-file", LSP.strArg ctxFile
     , "auto"  -- `syntax` argument, we can leave `auto` since context file is specified
-    , toString expr
+    , LSP.strArg expr
     ] Nothing
     >>= decodeOutput
   where
     decodeOutput :: Text -> m MU.Value
     decodeOutput txt =
       MP.parseExpandValue valueOrigin txt
-        & either (throwUnexpectedLigoOutput "parsing Michelson value" . pretty) pure
+        & first (LigoDecodeException "parsing Michelson value" .  pretty)
+        & fromEither
 
 getAvailableEntrypoints :: forall m. (HasLigoClient m)
                         => FilePath -> m EntrypointsList
 getAvailableEntrypoints file = withMapLigoExc $
-  callLigoImpl Nothing
+  callLigo Nothing
     [ "info", "list-declarations"
     , "--only-ep"
-    , file
+    , LSP.strArg file
     ] Nothing
     >>= decodeOutput
   where
     decodeOutput :: Text -> m EntrypointsList
     decodeOutput txt =
       maybe
-        do throwUnexpectedLigoOutput "decoding list declarations" txt
+        do throwIO $ LigoDecodeException "decoding list declarations" txt
         pure
         do parseEntrypointsList txt
 
--- | Throw an error about ligo producing unexpected output which
--- we fail to parse.
-throwUnexpectedLigoOutput :: (HasLigoClient m) => Text -> Text -> m a
-throwUnexpectedLigoOutput source err =
-  throwIO @_ @LigoException =<< mentionVersionIssues [int||
-    Unexpected output of `ligo` from #{source}:
-    #{err}
-   |]
-
 -- Versions
 ----------------------------------------------------------------------------
+
+-- | The current LIGO version is completely unsupported.
+data UnsupportedLigoVersionException = UnsupportedLigoVersionException SemVer.Version
+  deriving stock (Show)
+
+instance Buildable UnsupportedLigoVersionException where
+  build (UnsupportedLigoVersionException verActual) =
+    [int||Used `ligo` executable has #semv{verActual} version which is not supported|]
+
+instance Exception UnsupportedLigoVersionException where
+  displayException = pretty
+
+instance DebuggerException UnsupportedLigoVersionException where
+  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
+  debuggerExceptionType _ = UserException
+  debuggerExceptionData (UnsupportedLigoVersionException verActual) = M.fromList
+    [ ("actualVersion", [int||#semv{verActual}|])
+    , ("recommendedVersion", [int||#semv{recommendedVersion}|])
+    ]
 
 -- | Run ligo to get the version of executable.
 getLigoVersion :: (HasLigoClient m) => m LSP.Version
@@ -169,6 +185,12 @@ isSupportedVersion ver = fromMaybe VersionSupported $ asum
     ver < minimalSupportedVersion
       ?- noSupport
 
+    -- These versions are unsupported because of
+    -- wrong working "ligo info list-declarations" for
+    -- contracts with functions from stdlib (e.g. "Set" or "Tezos").
+  , [SemVer.QQ.version|0.51.0|] <= ver && ver <= [SemVer.QQ.version|0.53.0|]
+      ?- noSupport
+
     -- Future versions that we didn't check yet
   , ver > recommendedVersion  -- don't hesitate to replace this with a higher constant
       ?- partialSupport
@@ -206,12 +228,11 @@ recommendedVersion :: SemVer.Version
 recommendedVersion =
   $$(readSemVerQ $ resourcesFolder </> "versions" </> "recommended")
 
--- | Update an error so that it mentions issues with ligo version being
--- unsupported in case any such issues take place.
-mentionVersionIssues :: (HasLigoClient m) => LigoException -> m LigoException
-mentionVersionIssues exc = do
-  mVer <- parseLigoVersion <$> getLigoVersion
-  let verNote = case mVer of
+-- | A clarifying message that mentions issues with ligo version being
+-- unsupported, in case any such issues take place.
+getVersionIssuesDetails :: (HasLigoClient m) => m (Maybe Text)
+getVersionIssuesDetails = do
+  (parseLigoVersion <$> getLigoVersion) <&> \case
         Nothing -> Just [int|n|
           You seem to be using not a stable release of ligo,
           consider trying #semv{recommendedVersion}.
@@ -231,5 +252,3 @@ mentionVersionIssues exc = do
             the extension is released.
             |]
           VersionSupported -> Nothing
-  return . LigoException $
-    maybe id (flip (<>)) (mappend "\n" <$> verNote) (leMessage exc)

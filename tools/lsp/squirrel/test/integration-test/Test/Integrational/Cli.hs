@@ -2,15 +2,14 @@ module Test.Integrational.Cli
   ( test_ligo_159
   ) where
 
-import Data.Foldable (asum)
 import System.FilePath (takeDirectory, (</>))
-import UnliftIO.Exception (SomeException, fromException, tryJust)
+import UnliftIO.Exception (tryJust)
 
 import Cli
 import Log (runNoLoggingT)
 import ParseTree (pathToSrc)
 
-import Test.Common.FixedExpectations (HasCallStack, expectationFailure)
+import Test.Common.FixedExpectations (expectationFailure)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
@@ -26,7 +25,7 @@ checkFile path = testCase path do
   src <- runNoLoggingT $ pathToSrc path
   let temp = TempSettings (takeDirectory path) $ GenerateDir ".temp"
   tryJust filterException (runNoLoggingT $ getLigoDefinitions temp src) >>= \case
-    Left  _ -> pure ()
+    Left  _ -> pass
     Right _ -> expectationFailure "Expected contract to fail, but it has succeeded."
 
 test_ligo_159 :: TestTree

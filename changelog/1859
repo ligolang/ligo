@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Infer `--project-root` when using ligo commands\nNow LIGO will try
+description: '#### Infer `--project-root` when using ligo commands\nNow LIGO will try
   to infer `--project-root` by looking at parent directories,\nThis will make LIGO
   CLI commands less verbose (when using external packages from npm).\n\nIf you need/want
   to specify the root directory of your project you can as always use the `--project-root`

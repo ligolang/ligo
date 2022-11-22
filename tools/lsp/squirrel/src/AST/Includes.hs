@@ -13,48 +13,35 @@ module AST.Includes
   , Includes (..)
   , MarkerInfo (..)
   ) where
+import Prelude hiding (Product)
 
 import Algebra.Graph.AdjacencyMap qualified as G
-import Control.Lens (Lens', _1, to, view, (&), (+~), (-~), (.~), (^.))
-import Control.Monad (forM, join, when)
-import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.RWS.Strict (RWS, RWST, execRWS, execRWST, gets, modify, tell)
-import Data.Bifunctor (bimap)
-import Data.Bool (bool)
-import Data.DList (DList, toList)
-import Data.Foldable (for_)
-import Data.Functor ((<&>))
-import Data.IntMap.Strict (IntMap)
+import Control.Lens (to, (+~), (-~))
+import Control.Monad.RWS.Strict (RWS, RWST, execRWS, execRWST, tell)
+import Data.DList (DList)
+import Data.DList qualified as DList (toList)
 import Data.IntMap.Strict qualified as IntMap
-import Data.List (sortOn)
-import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Semigroup (Arg (..))
-import Data.Text (Text)
-import Data.Text qualified as Text
 import Duplo.Tree (Cofree ((:<)), fastMake)
 import Language.LSP.Types qualified as J
-import System.FilePath ((</>), takeDirectory)
+import System.FilePath (takeDirectory, (</>))
 import Text.Regex.TDFA (Regex, getAllTextMatches, makeRegexM, match)
 import UnliftIO.Directory (canonicalizePath)
 import Witherable (imapMaybe)
 
 import AST.Scope.Common
-  ( ContractInfo, pattern FindContract, Includes (..), ParsedContractInfo, contractFile
-  )
+  (ContractInfo, Includes (..), ParsedContractInfo, contractFile, pattern FindContract)
 import AST.Scope.Fallback (loopM, loopM_)
-import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
+import AST.Skeleton (Error (..), LIGO, Lang (..), SomeLIGO (..))
 import Diagnostic (Message (..), MessageDetail (MissingContract))
 import Parser
-  ( Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo
-  , parseLineMarkerText
-  )
+  (Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo, parseLineMarkerText)
 import ParseTree (Source (..))
 import Product (Contains, Product (..), getElem, modElem, putElem)
 import Range
-  ( PreprocessedRange (..), Range (..), getRange, rangeLines, rFile, rFinish, rStart
-  , startLine, finishLine
-  )
+  (PreprocessedRange (..), Range (..), finishLine, getRange, rFile, rFinish, rStart, rangeLines,
+  startLine)
 
 data ExtractionDepth
   = DirectInclusions
@@ -84,7 +71,7 @@ insertPreprocessorRanges :: MonadIO m => ContractInfo -> m ParsedContractInfo
 insertPreprocessorRanges = fmap fst . extractIncludedFiles AllInclusions
 
 getMarkers :: forall xs. Contains [LineMarker] xs => LIGO xs -> [LineMarker]
-getMarkers ligo = toList $ snd $ execRWS (loopM_ collectMarkers ligo) () ()
+getMarkers ligo = DList.toList $ snd $ execRWS (loopM_ collectMarkers ligo) () ()
   where
     collectMarkers :: LIGO xs -> RWS () (DList LineMarker) () ()
     collectMarkers (info :< _) = for_ (getElem @[LineMarker] info) (tell . pure)
@@ -94,7 +81,7 @@ extractIncludes :: forall m. MonadFail m => Text -> m [LineMarker]
 extractIncludes contents = do
   regex :: Regex <- makeRegexM source
   let
-    matches = getAllTextMatches . match regex <$> Text.lines contents
+    matches = getAllTextMatches . match regex <$> lines contents
     markers = imapMaybe getFileName matches
   pure markers
   where
@@ -147,7 +134,7 @@ includesGraph' contracts = do
   pure
     $ Includes
     $ uncurry G.overlay
-    $ bimap (G.edges . map (join bimap mkArg) . toList) (G.vertices . map mkArg)
+    $ bimap (G.edges . map (join bimap mkArg) . DList.toList) (G.vertices . map mkArg)
     $ foldr go ([], []) contracts
 
 getMarkerInfos
@@ -180,9 +167,8 @@ collectMarkerInfos directIncludes pwd markers =
     n <- withPwd pwd next
     case f of
       RootFile     -> modify $ IntMap.insert line $ MarkerInfo lm r 0
-      IncludedFile -> gets (IntMap.lookupLT line) >>= \case
-        Nothing -> pure ()
-        Just (_, MarkerInfo prev lr d) -> do
+      IncludedFile -> whenJustM (gets (IntMap.lookupLT line)) $
+        \(_, MarkerInfo prev lr d) -> do
           modify $ IntMap.insert
             line
             (MarkerInfo lm (bool lr (r & startLine -~ rangeOffset prev) $ d == 0) (d + 1))
@@ -302,7 +288,7 @@ includesGraph contracts = do
         in
         (edges'' <> edges, vertex' : vertices)
 
-  pure $ Includes $ uncurry G.overlay $ bimap (G.edges . toList) G.vertices $ foldr go ([], []) contracts
+  pure $ Includes $ uncurry G.overlay $ bimap (G.edges . DList.toList) G.vertices $ foldr go ([], []) contracts
 
   where
     emptyContract :: FilePath -> ParsedContractInfo

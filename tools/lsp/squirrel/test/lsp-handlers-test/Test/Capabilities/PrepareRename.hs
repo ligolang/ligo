@@ -13,7 +13,7 @@ import Language.LSP.Types hiding (Range (..))
 import Language.LSP.Types qualified as LSP
 import Test.HUnit (Assertion)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
 import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
@@ -45,10 +45,9 @@ testPrepareRenameFail fp pos = do
   r <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc fp
     getPrepareRename doc pos
-  case r of
-    Just (LSP.InL _) -> expectationFailure "should be able to rename"
-    Just (LSP.InR _) -> expectationFailure "should not receive RangeWithPlaceholder"
-    Nothing -> pure ()
+  whenJust r $ \case
+    LSP.InL _ -> expectationFailure "should be able to rename"
+    LSP.InR _ -> expectationFailure "should not receive RangeWithPlaceholder"
 
 unit_prepare_rename_example_fail :: Assertion
 unit_prepare_rename_example_fail = do

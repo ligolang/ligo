@@ -620,7 +620,9 @@ and infer_expression (expr : I.expression)
       match%bind Context.get_sum constructor with
       | [] -> raise (unbound_constructor constructor)
       | (tvar, tvars, arg_type, sum_type) :: other ->
-        let%bind () = warn_ambiguous_constructor_expr ~expr ~tvar ~arg_type other in
+        let%bind () =
+          warn_ambiguous_constructor_expr ~expr ~tvar ~arg_type other
+        in
         return (tvars, arg_type, sum_type)
     in
     let%bind subst =
@@ -956,7 +958,11 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
           fun hole ->
             let%bind texists = decode texists in
             let%bind lamb_type = decode lamb_type in
-            f (O.e_type_inst { forall = hole; type_ = texists } lamb_type))
+            f
+              (O.make_e
+                 ~location:hole.O.location
+                 (E_type_inst { forall = hole; type_ = texists })
+                 lamb_type))
       , args )
   | T_arrow { type1 = arg_type; type2 = ret_type } ->
     let%bind args = check_expression args arg_type in

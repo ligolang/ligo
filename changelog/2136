@@ -1,17 +1,13 @@
 author: er433
-description: '\n### Before change\n\n```\n$ ligo compile contract not_comparable.mligo
+description: '\n#### Before change\n\n\n```\n\n$ ligo compile contract not_comparable.mligo
   \nError(s) occurred while type checking the contract:\nAt (unshown) location 2,
   ill formed type:\n 1: { parameter (set (set int)) ;\n 2: storage unit ;\n 3: code
   { CDR ; NIL operation ; PAIR } }\nAt line 1 characters 17 to 25,\ncomparable type
-  expected.Type set int is not comparable.\n```\n\n### After change\n\n```\n$ ligo
+  expected.Type set int is not comparable.\n\n```\n\n\n#### After change\n\n\n```\n\n$ ligo
   compile contract not_comparable.mligo \nFile \"not_comparable.mligo\", line 1, characters
-  21-28:\n 1 | let main ((_u, s) : (int set) set auto_merge_request.sh homebrew parse_mr_info.py
-  release_metadata requirements.txt retrieve_merge_request_info.sh update_distribution_references_with_release.sh
-  versioning versioning_website.sh unit) : operation list auto_merge_request.sh homebrew
-  parse_mr_info.py release_metadata requirements.txt retrieve_merge_request_info.sh
-  update_distribution_references_with_release.sh versioning versioning_website.sh
+  21-28:\n 1 | let main ((_u, s) : (int set) set * unit) : operation list *
   unit = ([] : operation list), s\n\nThe set constructor needs a comparable type argument,
-  but it was given a non-comparable one.\n```\n\n'
+  but it was given a non-comparable one.\n\n```\n\n\n'
 merge_request: '2136'
 title: Add check for non-comparable types under `set` and `ticket`
 type: fixed

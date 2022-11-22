@@ -157,8 +157,6 @@ include Monad.Make3 (struct
   let map = `Define_using_bind
 end)
 
-type 'a with_loc = Location.t -> 'a
-
 let all_lmap (lmap : ('a, 'err, 'wrn) t Record.LMap.t)
     : ('a Record.LMap.t, 'err, 'wrn) t
   =

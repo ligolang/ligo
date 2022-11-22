@@ -4,9 +4,7 @@ module Test.Integrational.Diagnostics
   ) where
 
 import Test.Common.Diagnostics
-  ( DiagnosticSource (..), parseDiagnosticsDriver, simpleTest, treeDoesNotContainNameTest
-  )
-import Test.Common.FixedExpectations (HasCallStack)
+  (DiagnosticSource (..), parseDiagnosticsDriver, simpleTest, treeDoesNotContainNameTest)
 import Test.Tasty.HUnit (Assertion)
 
 -- Try to parse a file, and check that the proper error messages are generated

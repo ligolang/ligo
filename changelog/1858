@@ -1,13 +1,13 @@
 author: Laucans
-description: \n### Initialize a new Ligo project from chosen template\n\nThis feature
+description: \n#### Initialize a new Ligo project from chosen template\n\nThis feature
   allow user to easily setup a new ligo project (Library or Contract) from template
-  by adding new command-set into CLI.\n\n#### Requirements\n\nFeature use `git` so
-  git cli have to be available.\n\n#### Commands\n\n`ligo init -help`\n\n`ligo init
+  by adding new command-set into CLI.\n\n##### Requirements\n\nFeature use `git` so
+  git cli have to be available.\n\n##### Commands\n\n`ligo init -help`\n\n`ligo init
   contract --template-list` = print available template list to generate contract\n\n`ligo
   init contract <PROJECT> --template XXX` = initialize folder with contract template
   XXX\n\n`ligo init library --template-list` = print available template list to generate
   library\n\n`ligo init library <PROJECT> --template XXX` = initialize folder with
-  library template XXX\n\n#### Additional details\n\n* Every template are cloned from
+  library template XXX\n\n##### Additional details\n\n* Every template are cloned from
   [github ligolang org](https://github.com/ligolang/).
 merge_request: '1858'
 title: CLI Scaffolding feature
