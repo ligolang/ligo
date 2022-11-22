@@ -10,12 +10,13 @@ module Test.Common.FixedExpectations
   , shouldThrow
   ) where
 
-import Test.Hspec.Expectations (Expectation, HasCallStack)
+import Test.Hspec.Expectations (Expectation)
 import Test.Hspec.Expectations qualified as H
-  (expectationFailure, shouldBe, shouldContain, shouldMatchList, shouldSatisfy, shouldThrow, Selector, anyException)
+  (Selector, anyException, expectationFailure, shouldBe, shouldContain, shouldMatchList,
+  shouldSatisfy, shouldThrow)
 import Test.HUnit.Lang qualified as H (HUnitFailure (..), formatFailureReason)
 import Test.Tasty.HUnit (HUnitFailure (..))
-import UnliftIO.Exception (Exception, catch, impureThrow)
+import UnliftIO.Exception as UnliftIO (catch, impureThrow)
 
 expectationFailure :: HasCallStack => String -> Expectation
 expectationFailure s = tastify (H.expectationFailure s)
@@ -42,4 +43,4 @@ toTastyFailure (H.HUnitFailure loc s)
   = HUnitFailure loc (H.formatFailureReason s)
 
 tastify :: Expectation -> Expectation
-tastify action = action `catch` (impureThrow . toTastyFailure)
+tastify action = action `UnliftIO.catch` (impureThrow . toTastyFailure)

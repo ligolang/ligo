@@ -20,10 +20,10 @@ import Test.Tasty.HUnit (testCase)
 import Language.LIGO.DAP.Variables (createVariables, runBuilder)
 import Language.LIGO.Debugger.CLI.Types
   (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry),
-  LigoType (LTUnresolved), LigoVariable (LigoVariable))
+  LigoType (LTUnresolved), LigoVariable (LigoVariable), Name, NameType (Concise))
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 
-mkStackItem :: (SingI t) => Value t -> Maybe Text -> StackItem
+mkStackItem :: (SingI t) => Value t -> Maybe (Name 'Concise) -> StackItem 'Concise
 mkStackItem v nameMb = StackItem desc (SomeValue v)
   where
     desc =

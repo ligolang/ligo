@@ -3,7 +3,7 @@ module Test.Capabilities.Hover
   , unit_hover_jsligo
   ) where
 
-import Data.Text (isPrefixOf)
+import Data.Text qualified as Text (isPrefixOf)
 import Language.LSP.Test
 import Language.LSP.Types (Hover (..), HoverContents (..), MarkupContent (..), Position (..))
 
@@ -20,7 +20,7 @@ unit_hover = do
     getHover doc (Position 3 11)
   shouldSatisfy maybeHover $ \case
     Just (Hover (HoverContents (MarkupContent _ hoverText)) _) ->
-      "b : bool" `isPrefixOf` hoverText
+      "b : bool" `Text.isPrefixOf` hoverText
     _ -> error "expected a hover"
 
 unit_hover_jsligo :: Assertion
@@ -30,5 +30,5 @@ unit_hover_jsligo = do
     getHover doc (Position 3 11)
   shouldSatisfy maybeHover $ \case
     Just (Hover (HoverContents (MarkupContent _ hoverText)) _) ->
-      "b : bool" `isPrefixOf` hoverText
+      "b : bool" `Text.isPrefixOf` hoverText
     _ -> error "expected a hover"

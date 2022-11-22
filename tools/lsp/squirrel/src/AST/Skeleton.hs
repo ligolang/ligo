@@ -18,7 +18,7 @@ module AST.Skeleton
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
   , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..), Attr (..)
-  , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
+  , QuotedTypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
   , getLIGO
   , setLIGO
@@ -26,13 +26,12 @@ module AST.Skeleton
   , withNestedLIGO
   ) where
 
-import Control.Lens.Lens (Lens, lens)
+import Prelude hiding (Alt, Product, Type)
+
+import Control.Lens.Lens (lens)
 import Data.Functor.Classes (Eq1 (..))
-import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.Text (Text)
-import GHC.Generics (Generic)
+import Text.Show qualified
 
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
@@ -56,7 +55,7 @@ withNestedLIGO
 withNestedLIGO = flip nestedLIGO
 
 instance Pretty (LIGO xs) => Show (SomeLIGO xs) where
-  show = show . PP
+  show = Text.Show.show . PP
 
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
@@ -72,7 +71,7 @@ type RawLigoList =
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
   , RawContract, TypeName, TypeVariableName, FieldName, Verbatim, Error, Ctor
   , NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr, ModuleName
-  , ModuleAccess, Attr, TypeParams, CaseOrDefaultStm
+  , ModuleAccess, Attr, QuotedTypeParams, CaseOrDefaultStm
   ]
 
 data Lang
@@ -118,11 +117,11 @@ newtype RawContract it
   deriving Eq1 via DefaultEq1DeriveFor1List
 
 data Binding it
-  = BFunction     IsRec it [it] (Maybe it) it -- ^ (Name) (Parameters) (Type) (Expr)
+  = BFunction     IsRec it [it] [it] (Maybe it) it -- ^ (Name) (TypeVariableName) (Parameters) (Type) (Expr)
   | BParameter    it (Maybe it) -- ^ (Pattern) (Type)
-  | BVar          it (Maybe it) (Maybe it) -- ^ (Pattern) (Type) (Expr)
-  | BConst        it (Maybe it) (Maybe it) -- ^ (Pattern) (Type) (Expr)
-  | BTypeDecl     it (Maybe it) it -- ^ (Name) (Maybe (TypeParams)) (Type)
+  | BVar          it [it] (Maybe it) (Maybe it) -- ^ (Pattern) (TypeVariableName) (Type) (Expr)
+  | BConst        it [it] (Maybe it) (Maybe it) -- ^ (Pattern) (TypeVariableName) (Type) (Expr)
+  | BTypeDecl     it (Maybe it) it -- ^ (Name) (Maybe (QuotedTypeParams)) (Type)
   | BAttribute    it -- ^ (Name)
   | BInclude      it
   | BImport       it it
@@ -130,9 +129,9 @@ data Binding it
   | BModuleAlias  it [it]   -- ^ (Name) (Name)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
-data TypeParams it
-  = TypeParam it  -- ^ (TypeVariableName)
-  | TypeParams [it]  -- ^ [TypeVariableName]
+data QuotedTypeParams it
+  = QuotedTypeParam it  -- ^ (TypeVariableName)
+  | QuotedTypeParams [it]  -- ^ [TypeVariableName]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 type IsRec = Bool
@@ -190,7 +189,7 @@ data Expr it
   | ForOfLoop it it it                 -- (Expr) (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
   | Block     [it]                     -- [Declaration]
-  | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
+  | Lambda    [it] [it] (Maybe it) it -- [VarDecl] [TypeVariableName] (Maybe (Type)) (Expr)
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
@@ -445,9 +444,9 @@ instance Eq1 Binding where
   -- liftEq _ _ _ = error "Cannot compare `Binding`"
   liftEq _ _ _ = False
 
-instance Eq1 TypeParams where
-  liftEq f (TypeParam a) (TypeParam b) = f a b
-  liftEq f (TypeParams as) (TypeParams bs) = liftEqList f as bs
+instance Eq1 QuotedTypeParams where
+  liftEq f (QuotedTypeParam a) (QuotedTypeParam b) = f a b
+  liftEq f (QuotedTypeParams as) (QuotedTypeParams bs) = liftEqList f as bs
   liftEq _ _ _ = False
 
 instance Eq1 Type where
@@ -470,12 +469,12 @@ instance Eq1 TField where
   liftEq f (TField an at) (TField bn bt) = f an bn && liftEqMaybe f at bt
 
 instance Eq1 ModuleAccess where
-  liftEq f (ModuleAccess ap asrc) (ModuleAccess bp bsrc) =
-    f asrc bsrc && liftEqList f ap bp
+  liftEq f (ModuleAccess apath asrc) (ModuleAccess bpath bsrc) =
+    f asrc bsrc && liftEqList f apath bpath
 
 instance Eq1 QualifiedName where
-  liftEq f (QualifiedName asrc ap) (QualifiedName bsrc bp) =
-    f asrc bsrc && liftEqList f ap bp
+  liftEq f (QualifiedName asrc apath) (QualifiedName bsrc bpath) =
+    f asrc bsrc && liftEqList f apath bpath
 
 instance Eq1 Pattern where
   liftEq f (IsConstr na mbpa) (IsConstr nb mbpb) =

@@ -8,7 +8,12 @@ module Language.LIGO.Debugger.Common
   , isLigoStdLib
   , errorValueType
   , createErrorValue
+  , ReplacementException(..)
   , replacementErrorValueToException
+  , refineStack
+  , ligoRangeToRange
+  , rangeToLigoRange
+  , shouldIgnoreMeta
   ) where
 
 import Unsafe qualified
@@ -17,26 +22,32 @@ import AST (Expr, LIGO)
 import AST qualified
 import Data.HashMap.Strict qualified as HM
 import Data.Set qualified as Set
+import Data.Vinyl (Rec (RNil, (:&)))
 import Duplo (layer, leq, spineTo)
+import Fmt (Buildable (..), pretty)
 import Parser (Info)
 import Product (Contains)
-import Range (Range (..), getRange, point)
+import Range (Range (..), getRange)
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Debugger.Core.Snapshots (SourceType (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Interpret (StkEl (seValue))
 import Morley.Michelson.Parser (utypeQ)
 import Morley.Michelson.Text (MText)
-import Morley.Michelson.Typed (EpAddress (..), Value, Value' (..))
+import Morley.Michelson.Typed
+  (EpAddress (..), Instr (LAMBDA, PUSH), SomeConstrainedValue (SomeValue), SomeValue, Value,
+  Value' (..), withValueTypeSanity)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (Address, mformatAddress, ta)
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Error
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.
-type EmbeddedLigoMeta = LigoIndexedInfo
+type EmbeddedLigoMeta = LigoIndexedInfo 'Unique
 
 ligoPositionToSrcPos :: HasCallStack => LigoPosition -> SrcPos
 ligoPositionToSrcPos (LigoPosition l c) =
@@ -46,7 +57,7 @@ ligoPositionToSrcPos (LigoPosition l c) =
 
 ligoRangeToSourceLocation :: HasCallStack => LigoRange -> SourceLocation
 ligoRangeToSourceLocation LigoRange{..} =
-  SourceLocation (SourcePath lrFile) (ligoPositionToSrcPos lrStart)
+  SourceLocation (SourcePath lrFile) (ligoPositionToSrcPos lrStart) (ligoPositionToSrcPos lrEnd)
 
 -- | Returns all nodes which cover given range
 -- ordered from the most local to the least local.
@@ -64,24 +75,29 @@ getStatementLocs locs parsedContracts =
     & Set.fromList
   where
     sourceLocationToRange :: SourceLocation -> Range
-    sourceLocationToRange (SourceLocation (SourcePath file) srcPos) =
-      pointWithoutFile
-        { _rFile = file
-        }
+    sourceLocationToRange (SourceLocation (SourcePath file) startPos endPos) = Range
+      { _rStart = posToTuple startPos
+      , _rFinish = posToTuple endPos
+      , _rFile = file
+      }
       where
-        SrcPos (Pos l) (Pos c) = srcPos
-        pointWithoutFile = point (Unsafe.fromIntegral $ l + 1) (Unsafe.fromIntegral $ c + 1)
+        posToTuple :: Integral i => SrcPos -> (i, i, i)
+        posToTuple (SrcPos (Pos l) (Pos c)) =
+          (Unsafe.fromIntegral (l + 1), Unsafe.fromIntegral (c + 1), 0)
+
     sourceLocationToRange loc = error [int||Got source location with Lorentz source #{loc}|]
 
     rangeToSourceLocation :: Range -> SourceLocation
     rangeToSourceLocation Range{..} =
       SourceLocation
-        (SourcePath _rFile) $
-        SrcPos
+        (SourcePath _rFile)
+        (tupleToPos _rStart)
+        (tupleToPos _rFinish)
+      where
+        tupleToPos :: Integral i => (i, i, i) -> SrcPos
+        tupleToPos (l, c, _) = SrcPos
           (Pos $ Unsafe.fromIntegral $ l - 1)
           (Pos $ Unsafe.fromIntegral $ c - 1)
-      where
-        (l, c, _) = _rStart
 
     ranges = toList locs
       <&> sourceLocationToRange
@@ -136,6 +152,18 @@ createErrorValue errMsg =
 errorAddress :: Address
 errorAddress = [ta|tz1fakefakefakefakefakefakefakcphLA5|]
 
+-- | Something was found to be wrong after replacing Michelson code
+-- in 'preprocessContract'.
+newtype ReplacementException = ReplacementException MText
+  deriving newtype (Show, Buildable)
+
+instance Exception ReplacementException where
+  displayException = pretty
+
+instance DebuggerException ReplacementException where
+  type ExceptionTag ReplacementException = "Replacement"
+  debuggerExceptionType _ = MidLigoLayerException
+
 -- | We're replacing some @Michelson@ instructions.
 -- Sometimes we perform unsafe unwrapping in the replaced code.
 -- In failure case we're doing something like @{ PUSH errValue; FAILWITH }@
@@ -146,3 +174,53 @@ replacementErrorValueToException = \case
   (VPair (VAddress (EpAddress addr _), VString errMsg)) | addr == errorAddress -> do
     pure $ ReplacementException errMsg
   _ -> Nothing
+
+stkElValue :: StkEl v -> SomeValue
+stkElValue stkEl = let v = seValue stkEl in withValueTypeSanity v (SomeValue v)
+
+-- | Leave only information that matters in LIGO.
+refineStack :: Rec StkEl st -> [SomeValue]
+refineStack =
+  -- Note: it is important for this function to be lazy if we don't
+  -- want to have full copy of stack skeleton (which is sequence of `:&`)
+  -- in each snapshot, that would take O(snapshots num * avg stack size) memory.
+  --
+  -- And 'Rec' is strict datatype, so using functions like 'rmap' would not
+  -- fit our purpose.
+  \case
+    RNil -> []
+    stkEl :& st -> stkElValue stkEl : refineStack st
+
+ligoRangeToRange :: LigoRange -> Range
+ligoRangeToRange LigoRange{..} = Range
+  { _rStart = toPosition lrStart
+  , _rFinish = toPosition lrEnd
+  , _rFile = lrFile
+  }
+  where
+    toPosition LigoPosition{..} = (Unsafe.fromIntegral lpLine, Unsafe.fromIntegral $ lpCol + 1, 0)
+
+rangeToLigoRange :: Range -> LigoRange
+rangeToLigoRange Range{..} = LigoRange
+  { lrStart = toLigoPosition _rStart
+  , lrEnd = toLigoPosition _rFinish
+  , lrFile = _rFile
+  }
+  where
+    toLigoPosition (line, col, _) = LigoPosition (Unsafe.fromIntegral line) (Unsafe.fromIntegral $ col - 1)
+
+-- | Sometimes we want to ignore metas for some instructions.
+shouldIgnoreMeta :: Instr i o -> Bool
+shouldIgnoreMeta = \case
+  -- We're ignoring @LAMBDA@ instruction here in order
+  -- not to stop on function assignment.
+  LAMBDA{} -> True
+
+  -- @PUSH@es have location metas that point to constants.
+  -- E.g. @PUSH int 42@ may have a location of @42@.
+  --
+  -- So, stopping at them and showing an evaluation
+  -- seems useless. I see that @42@ evaluates to @42@
+  -- without any debug info.
+  PUSH{} -> True
+  _ -> False

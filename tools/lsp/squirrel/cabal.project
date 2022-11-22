@@ -25,6 +25,11 @@ source-repository-package
 
 source-repository-package
     type: git
+    location: https://github.com/serokell/base-noprelude.git
+    tag: c8b06c4c8a271fce0c2f41ab18e88d58e64bac52
+
+source-repository-package
+    type: git
     location: https://github.com/serokell/duplo.git
     tag: f65dc29eef93a7260cfbb7db812f0bd265db16fd
 

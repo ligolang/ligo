@@ -81,13 +81,11 @@ export class LigoDebugLocalStorage {
         return this.access("quickpick", "entrypoint")
     }
 
-    lastParameterOrStorageValue(type: "parameter", entrypoint: string, michelsonEntrypoint?: string): ValueAccess<string>;
-    lastParameterOrStorageValue(type: "storage", entrypoint: string): ValueAccess<string>;
-    lastParameterOrStorageValue(type: InputBoxType, entrypoint: string, michelsonEntrypoint?: string): ValueAccess<string> {
-        return this.access("quickpick", type, entrypoint, michelsonEntrypoint)
-    }
-
-    lastParameterOrStorageFormat(type: InputBoxType, entrypoint: string): ValueAccess<InputValueType> {
-        return this.access("switch", "button", type, entrypoint)
+    lastParameterOrStorageValue(type: "parameter", entrypoint: string, michelsonEntrypoint?: string)
+        : ValueAccess<[string, InputValueType]>;
+    lastParameterOrStorageValue(type: "storage", entrypoint: string): ValueAccess<[string, InputValueType]>;
+    lastParameterOrStorageValue(type: InputBoxType, entrypoint: string, michelsonEntrypoint?: string)
+        : ValueAccess<[string, InputValueType]> {
+        return this.access("quickpick", "switch", "button", type, entrypoint, michelsonEntrypoint)
     }
 }

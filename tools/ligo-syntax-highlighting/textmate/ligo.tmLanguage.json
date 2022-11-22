@@ -6,6 +6,7 @@
     { "include": "#string" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
+    { "include": "#typebinder" },
     { "include": "#uppercaseidentifier" },
     { "include": "#attribute" },
     { "include": "#macro" },
@@ -99,6 +100,18 @@
     "constorvar": {
       "match": "\\b(const|var)\\b",
       "captures": { "1": { "name": "keyword.other.ligo" } }
+    },
+    "typebinder": {
+      "begin": "(<)\\s*(?=([a-zA-Z0-9_,]+|\\s)+>)",
+      "end": "(>)",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typename" },
+        { "include": "#typename" }
+      ]
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",

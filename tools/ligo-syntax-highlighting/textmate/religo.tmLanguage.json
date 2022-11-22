@@ -117,7 +117,7 @@
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
-      "end": "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)",
+      "end": "(?=\\b(type|module|let)\\b|;|}|,|\\)|^#|\\[@)",
       "beginCaptures": { "1": { "name": "keyword.other.religo" } },
       "endCaptures": {},
       "patterns": [

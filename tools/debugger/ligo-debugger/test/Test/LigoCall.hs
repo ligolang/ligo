@@ -4,9 +4,12 @@ module Test.LigoCall
 
 import Prelude hiding (try)
 
+import Data.Text qualified as T
+import Fmt (pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
 import UnliftIO.Exception (try)
+import Unsafe qualified
 
 import Morley.Michelson.Parser (MichelsonSource (MSName))
 import Morley.Michelson.Text (mt)
@@ -21,7 +24,7 @@ test_Compilation = testGroup "Getting debug info"
       let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
       res <- compileLigoContractDebug "main" file
-      take 15 (toList $ lmLocations res) @?= mconcat
+      take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry]          ]
@@ -40,20 +43,32 @@ test_ExpressionCompilation = testGroup "Compiling expression"
   in
   [ testCase "Evaluating pure values" do
       res <- evalExprOverContract1 "(5n, \"abc\")"
-      res @?= (U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|]))
+      res @?= U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|])
 
   , testCase "Relying on constants defined in the contract" do
       res <- evalExprOverContract1 "defEmptyStorage"
-      res @?= (U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|]))
+      res @?= U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|])
 
   , testCase "Relying on functions defined in the contract" do
-      res <- try @_ @LigoException $ evalExprOverContract1 "defStorage \"a\""
+      res <- try @_ @LigoCallException $ evalExprOverContract1 "defStorage \"a\""
       res @? isRight
 
   , testCase "Non-existing variable" do
-      res <- try @_ @LigoException $ evalExprOverContract1 "absentStorage"
+      res <- try @_ @LigoCallException $ evalExprOverContract1 "absentStorage"
       res @? isLeft
 
+  , testGroup "Expressions starting from `-`"
+    -- At the moment of writing, `ligo` does not accept negative numbers easily
+    -- See https://gitlab.com/ligolang/ligo/-/issues/1495
+    [ testCase "Negative numbers" do
+        res <- evalExprOverContract1 "-3"
+        res @?= U.ValueInt (-3)
+
+    , testCase "Simple expression" do
+        res <- evalExprOverContract1 "-3 + 1"
+        res @?= U.ValueInt (-2)
+
+    ]
   ]
 
 test_EntrypointsCollection :: TestTree
@@ -88,11 +103,24 @@ test_Regressions = testGroup "Regressions"
   [ -- Getting entrypoints when a contract imports another contract of
     -- a different dialect
 
-    -- TODO: enable this test
-    testCase "ligolang#1461" $ when False do
+    testCase "ligolang#1461" do
 
       let file = contractsDir </> "module_contracts" </> "imported.mligo"
 
       EntrypointsList _res <- getAvailableEntrypoints file
       pass
+  ]
+
+test_ANSISequencesReplace :: TestTree
+test_ANSISequencesReplace = testGroup "ANSI replacements"
+  [ testCase "Check replacement" do
+      Left (exc :: LigoCallException) <- try (compileLigoContractDebug "main" (contractsDir </> "malformed.mligo"))
+
+      let actual = pretty exc
+            & T.splitOn "-->"
+            & flip (Unsafe.!!) 1
+            & T.splitOn "<--"
+            & Unsafe.head
+
+      "Hello" @?= actual
   ]

@@ -1,12 +1,10 @@
 module Method.CompileExpression (compileExpression) where
 
-import Control.Monad.Except (throwError)
-import Control.Monad.Trans (lift)
 import Data.Text qualified as Text
-import Servant (err400, errBody)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
 import Common (WebIDEM)
+import Error (LigoCompilerError(..))
 import Ligo (runLigo)
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
@@ -17,8 +15,7 @@ compileExpression :: CompileExpressionRequest -> WebIDEM CompilerResponse
 compileExpression request =
   withProject (cerProject request) $ \(dirPath, fullMainPath) -> do
     dialect <- case inferDialect fullMainPath of
-      Nothing -> lift . throwError $ err400
-        {errBody = "couldn't infer dialect from filetype"}
+      Nothing -> throwM $ WrongMainFileExtension fullMainPath
       Just d -> pure d
 
     (ec, out, err) <- runLigo dirPath $
@@ -32,9 +29,9 @@ compileExpression request =
 
     case ec of
       ExitSuccess -> pure (CompilerResponse $ Text.pack out)
-      ExitFailure _ -> pure (CompilerResponse $ Text.pack err)
+      ExitFailure _ -> throwM $ LigoCompilerError $ Text.pack err
 
-data Dialect = CameLIGO | PascaLIGO | JsLIGO
+data Dialect = CameLIGO | PascaLIGO | JsLIGO | ReasonLIGO
   deriving stock (Eq, Show, Ord, Enum)
 
 prettyDialect :: Dialect -> String
@@ -42,11 +39,14 @@ prettyDialect = \case
   CameLIGO -> "cameligo"
   PascaLIGO -> "pascaligo"
   JsLIGO -> "jsligo"
+  ReasonLIGO -> "reasonligo"
 
 inferDialect :: FilePath -> Maybe Dialect
 inferDialect filepath =
   case Text.takeWhileEnd (/= '.') (Text.pack filepath) of
     "mligo" -> Just CameLIGO
     "ligo" -> Just PascaLIGO
+    "pligo" -> Just PascaLIGO
     "jsligo" -> Just JsLIGO
+    "religo" -> Just ReasonLIGO
     _ -> Nothing

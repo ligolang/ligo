@@ -5,18 +5,13 @@ module Source
   , withProject
   ) where
 
-import Control.Monad (forM_)
-import Control.Monad.Catch (MonadMask)
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson
   (FromJSON, Options(..), ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON,
   genericToJSON, parseJSON, toJSON)
-import Data.Swagger.Schema
+import Data.OpenApi.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema, unwrapUnaryRecords)
-import Data.Text (Text)
 import Data.Text.IO qualified as Text
-import GHC.Generics (Generic)
 import System.FilePath (takeDirectory, (</>))
 
 import System.Directory (createDirectoryIfMissing, getCurrentDirectory)

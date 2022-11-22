@@ -184,4 +184,4 @@ unit_local_type_of_good =
   -- from working.
   -- FIXME: LIGO-758
   --localTypeOfGood @Standard
-  pure ()
+  pass

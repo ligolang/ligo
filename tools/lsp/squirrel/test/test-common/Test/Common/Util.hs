@@ -13,26 +13,22 @@ module Test.Common.Util
   , parseContractsWithDependenciesScopes
   , parseDirectoryWithScopes
   , supportedExtensions
+  , renderNoLineLengthLimit
   ) where
 
-import Control.Monad ((<=<))
-import Control.Monad.IO.Class (liftIO)
-import Data.Functor ((<&>))
-import Data.List (isPrefixOf, isSuffixOf)
-import GHC.Stack (HasCallStack)
+import Data.List (isSuffixOf)
+import Duplo.Pretty (Doc, Style (..), renderStyle, style)
 import Language.Haskell.TH.Syntax (liftString)
 import System.Directory (listDirectory)
 import System.Environment (getEnv)
 import System.FilePath (splitDirectories, takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
-import UnliftIO.Exception (catch, throwIO)
+import UnliftIO.Exception as UnliftIO (catch, throwIO)
 
 import AST.Includes (Includes (..), includesGraph, insertPreprocessorRanges)
 import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
 import AST.Scope
-  ( ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo
-  , addScopes, contractTree
-  )
+  (ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo, addScopes, contractTree)
 import AST.Skeleton (SomeLIGO)
 import Cli.Types (TempDir (..), TempSettings (..))
 import Extension (supportedExtensions)
@@ -51,7 +47,7 @@ testDir =
   $(
     let
       getDir :: IO FilePath
-      getDir = getEnv "TEST_DIR" `catch` \e ->
+      getDir = getEnv "TEST_DIR" `UnliftIO.catch` \e ->
         if isDoesNotExistError e
         then pure $ ".." </> ".." </> ".." </> "src" </> "test"
         else throwIO e
@@ -109,3 +105,6 @@ parseDirectoryWithScopes
 parseDirectoryWithScopes dir = do
   let temp = TempSettings dir $ GenerateDir tempTemplate
   parseContractsWithDependenciesScopes @impl temp dir
+
+renderNoLineLengthLimit :: Doc -> Text
+renderNoLineLengthLimit = toText . renderStyle style{lineLength = maxBound}

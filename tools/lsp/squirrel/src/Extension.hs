@@ -9,12 +9,7 @@ module Extension
   , supportedExtensions
   ) where
 
-import Control.Exception (Exception)
 import Control.Monad.Except (MonadError (throwError))
-import Data.Either (isRight)
-import Data.Functor ((<&>))
-import Data.Text (Text)
-import Data.Text qualified as Text
 import System.FilePath
 
 import AST.Skeleton (Lang (..))
@@ -34,7 +29,7 @@ newtype UnsupportedExtension = UnsupportedExtension String
 -- support braced globs such as "{,m,re}ligo" even though the LSP spec allows
 -- it. Because of this, we return multiple globs instead of one single glob.
 extGlobs :: [Text]
-extGlobs = Text.pack . (("**" </>) . ("*" <>)) <$> supportedExtensions
+extGlobs = toText . (("**" </>) . ("*" <>)) <$> supportedExtensions
 
 getExt :: MonadError UnsupportedExtension m => FilePath -> m Lang
 getExt path =

@@ -4,43 +4,30 @@ module AST.Scope.Fallback
   , loopM
   , loopM_
   ) where
+import Prelude hiding (Alt (..), Product (..), Sum (..))
 
-import Control.Applicative (Alternative (..))
-import Control.Arrow ((&&&))
-import Control.Lens (makeLenses, view, _1, (%~), (^.), (|>), (^?), (<&>))
-import Control.Monad.Reader (runReader)
-import Control.Monad.RWS.Strict (RWS, asks, evalRWS, get, local, modify, tell, void)
-import Control.Monad.Trans.Maybe (MaybeT (..))
-import Control.Monad.Writer (Endo (..), Writer, execWriter)
-import Data.Bifunctor (first)
-import Data.Bool (bool)
-import Data.Foldable (for_, traverse_)
-import Data.Kind qualified (Type)
+import Control.Lens (makeLenses, (|>))
+import Control.Monad.RWS.Strict (RWS, evalRWS, tell)
+import Control.Monad.Writer (Writer, execWriter)
+import Data.Foldable qualified as Foldable (for_)
 import Data.HashMap.Lazy qualified as HashMap
-import Data.HashMap.Lazy (HashMap)
-import Data.List (foldl')
-import Data.List.NonEmpty (toList, unzip)
+import Data.Kind qualified (Type)
+import Data.List.NonEmpty qualified as NE (unzip)
 import Data.Map qualified as Map
-import Data.Map (Map)
-import Data.Maybe (catMaybes, fromMaybe, listToMaybe, maybeToList)
-import Data.Set (Set)
 import Data.Set qualified as Set
-import Data.Text (Text)
-import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<.>), (<+>))
+import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<+>), (<.>))
 import Duplo.Tree hiding (loop)
-import Prelude hiding (unzip)
 import Witherable (wither)
 
 import AST.Pretty (PPableLIGO)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..)
-  , Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..)
-  , mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec, _ModuleSpec
-  )
+  (DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..),
+  Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..),
+  _ModuleSpec, mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec)
 import AST.Scope.ScopedDecl.Parser (parseModule, parseParameters, parseTypeDeclSpecifics)
-import AST.Skeleton hiding (Type, TypeParams (..))
-import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))
+import AST.Skeleton hiding (QuotedTypeParams (..), Type)
+import AST.Skeleton qualified as Skeleton (QuotedTypeParams (..), Type (..))
 import Cli.Types
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
@@ -48,9 +35,6 @@ import Parser (ParsedInfo)
 import Product
 import Range
 import Util (foldMapM, unconsFromEnd, (<<&>>))
-
-hoistMaybe :: Applicative f => Maybe a -> MaybeT f a
-hoistMaybe = MaybeT . pure
 
 data Fallback
 
@@ -75,7 +59,7 @@ data ExtendedDeclRef = ExtendedDeclRef
     deriving stock (Eq, Ord)
 
 data RefKind
-  = OrdinaryRef
+  = OrdinaryRef Level
   | ModuleAliasRef (Maybe ExtendedDeclRef)
   deriving Show via PP RefKind
   deriving stock (Eq, Ord)
@@ -84,7 +68,7 @@ instance Pretty ExtendedDeclRef where
   pp (ExtendedDeclRef ref ns rk) = pp ns <.> "." <.> pp ref <+> pp rk
 
 instance Pretty RefKind where
-  pp OrdinaryRef = "ref"
+  pp (OrdinaryRef l) = pp l <+> "ref"
   pp (ModuleAliasRef ns) = "alias" <+> maybe "unresolved" pp ns
 
 type ExtendedScopeInfo = (Set ExtendedDeclRef, Range)
@@ -111,10 +95,17 @@ mapInUnqualified, mapInQualified :: (Namespace -> Namespace) -> Qualified -> Qua
 mapInUnqualified f (Qualified uns qns) = Qualified (f uns) qns
 mapInQualified   f (Qualified uns qns) = Qualified uns (f qns)
 
+data RefKey = RefKey
+  { rkNamespace :: Namespace
+  , rkName :: Text
+  , rkLevel :: Level
+  } deriving stock (Eq, Generic, Show)
+    deriving anyclass (Hashable)
+
 -- | The scoping environment, that may be locally updated at each subnode.
 data ScopeEnv = ScopeEnv
   { _seNamespace :: Qualified
-  , _seInScope :: HashMap (Namespace, Text) InScopeRef
+  , _seInScope :: HashMap RefKey InScopeRef
   , _seDialect :: Lang
   }
 
@@ -144,7 +135,7 @@ askNamespace :: ScopeM Qualified
 askNamespace = asks (view seNamespace)
 {-# INLINE askNamespace #-}
 
-askInScope :: ScopeM (HashMap (Namespace, Text) InScopeRef)
+askInScope :: ScopeM (HashMap RefKey InScopeRef)
 askInScope = asks (view seInScope)
 {-# INLINE askInScope #-}
 
@@ -168,7 +159,7 @@ mapQualified f = local (seNamespace %~ f)
 
 -- | Apply some transformation to the current scope.
 mapInScope
-  :: (HashMap (Namespace, Text) InScopeRef -> HashMap (Namespace, Text) InScopeRef)
+  :: (HashMap RefKey InScopeRef -> HashMap RefKey InScopeRef)
   -> ScopeM a
   -> ScopeM a
 mapInScope f = local (seInScope %~ f)
@@ -203,7 +194,7 @@ insertScope edrRefKind scopedDecl = do
 resolveModuleAlias :: Text -> ScopeM (Maybe Namespace)
 resolveModuleAlias moduleName = do
   namespace <- askNamespace
-  lookupInOuterModules namespace moduleName <&> \case
+  lookupInOuterModules ModuleLevel namespace moduleName <&> \case
     Nothing -> Nothing
     Just (InScopeOrdinaryRef _, ns) -> Just $ ns <> Namespace [moduleName]
     Just (InScopeModuleAliasRef _ ref, _) -> expandAliasRef ref
@@ -211,8 +202,10 @@ resolveModuleAlias moduleName = do
     expandAliasRef :: Maybe ExtendedDeclRef -> Maybe Namespace
     expandAliasRef Nothing =
       Nothing
-    expandAliasRef (Just ExtendedDeclRef{edrDeclRef = DeclRef{drName}, edrNamespace, edrRefKind = OrdinaryRef}) =
+    expandAliasRef (Just ExtendedDeclRef{edrDeclRef = DeclRef{drName}, edrNamespace, edrRefKind = OrdinaryRef ModuleLevel}) =
       Just $ edrNamespace <> Namespace [drName]
+    expandAliasRef (Just ExtendedDeclRef{edrRefKind = OrdinaryRef _}) =
+      Nothing
     expandAliasRef (Just ExtendedDeclRef{edrRefKind = ModuleAliasRef refM}) =
       expandAliasRef refM
 
@@ -240,28 +233,28 @@ expandModuleAlias (Namespace (base : nested)) =
 
 withScope :: ExtendedDeclRef -> ScopeM a -> ScopeM a
 withScope ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..} =
-  mapInScope (HashMap.insert (edrNamespace, drName) ref)
+  mapInScope (HashMap.insert (RefKey edrNamespace drName level) ref)
   where
-    ref = case edrRefKind of
-      OrdinaryRef -> InScopeOrdinaryRef drRange
-      ModuleAliasRef rhs -> InScopeModuleAliasRef drRange rhs
+    (ref, level) = case edrRefKind of
+      OrdinaryRef l -> (InScopeOrdinaryRef drRange, l)
+      ModuleAliasRef rhs -> (InScopeModuleAliasRef drRange rhs, ModuleLevel)
 
 withScopes :: [ExtendedDeclRef] -> ScopeM a -> ScopeM a
 withScopes declRefs m = foldl' (flip withScope) m declRefs
 
-inScopeRefToRef :: InScopeRef -> (Range, RefKind)
-inScopeRefToRef = \case
-  InScopeOrdinaryRef range -> (range, OrdinaryRef)
+inScopeRefToRef :: Level -> InScopeRef -> (Range, RefKind)
+inScopeRefToRef level = \case
+  InScopeOrdinaryRef range -> (range, OrdinaryRef level)
   InScopeModuleAliasRef range ref -> (range, ModuleAliasRef ref)
 
-insertRef :: Text -> PreprocessedRange -> ScopeM ()
-insertRef name (PreprocessedRange refRange) = do
+insertRef :: Level -> Text -> PreprocessedRange -> ScopeM ()
+insertRef level name (PreprocessedRange refRange) = do
   namespace <- askNamespace
-  lookupInOuterModules namespace name >>= \case
-    Nothing -> pure ()
+  lookupInOuterModules level namespace name >>= \case
+    Nothing -> pass
     Just (inScopeRef, declNamespace) -> do
       let
-        (declRange, refKind) = inScopeRefToRef inScopeRef
+        (declRange, refKind) = inScopeRefToRef level inScopeRef
         ref = ExtendedDeclRef (DeclRef name declRange) declNamespace refKind
       modify $ Map.adjust (sdRefs %~ (refRange :)) ref
 
@@ -269,16 +262,16 @@ insertRef name (PreprocessedRange refRange) = do
 -- namespace in non-qualified, then it continues searching as @A.n@, and then as
 -- @n@, in this order, stopping the lookup on the first occurrence that was
 -- found, if any. Returns the namespace in which it was found.
-lookupInOuterModules :: Qualified -> Text -> ScopeM (Maybe (InScopeRef, Namespace))
-lookupInOuterModules namespace name = do
+lookupInOuterModules :: Level -> Qualified -> Text -> ScopeM (Maybe (InScopeRef, Namespace))
+lookupInOuterModules level namespace name = do
   inScope <- askInScope
   let namespaceName = unqualified namespace <> qualified namespace
-  case HashMap.lookup (namespaceName, name) inScope of
-    Nothing -> case namespace of
-      Qualified (Namespace uns) qns
-        | null uns  -> pure Nothing
-        | otherwise -> lookupInOuterModules (Qualified (Namespace $ init uns) qns) name
+  case HashMap.lookup (RefKey namespaceName name level) inScope of
     Just inScopeRef -> pure $ Just (inScopeRef, namespaceName)
+    Nothing         -> case namespace of
+      Qualified (Namespace uns) qns -> case nonEmpty uns of
+        Nothing    -> pure Nothing
+        Just neUns -> lookupInOuterModules level (Qualified (Namespace $ init neUns) qns) name
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv info = do
@@ -310,7 +303,7 @@ class HasGo (f :: Data.Kind.Type -> Data.Kind.Type) where
   walk' :: Product ParsedInfo -> f (LIGO ParsedInfo) -> ScopeM (Maybe ScopeRet)
 
 instance HasGo Name where
-  walk' r (Name name) = walkName r name
+  walk' r (Name name) = walkName TermLevel r name
 
 instance HasGo QualifiedName where
   walk' _ QualifiedName {..} = do
@@ -323,8 +316,8 @@ instance HasGo Pattern where
     case pattern' of
       IsConstr name mpat -> do
         void (walk name)
-        maybe (pure ()) (void . walk) mpat
-      IsConstant _ -> pure ()
+        whenJust mpat $ void . walk
+      IsConstant _ -> pass
       IsVar name -> void (walk name)
       IsCons head' tail' -> do
         void (walk head')
@@ -332,7 +325,7 @@ instance HasGo Pattern where
       IsAnnot pat typ -> do
         void (walk pat)
         void (walk typ)
-      IsWildcard -> pure ()
+      IsWildcard -> pass
       IsSpread name -> void (walk name)
       IsList pats -> mapM_ walk pats
       IsTuple pats -> mapM_ walk pats
@@ -395,12 +388,12 @@ instance HasGo Expr where
     Record assignments  -> do
       for_ assignments $ \case
         (layer -> Just (Assign _ expr')) -> void (walk expr')
-        _ -> pure ()
+        _ -> pass
       pure Nothing
     If clause true false -> do
       walk clause
       walk true
-      maybe (pure ()) (void . walk) false
+      whenJust false $ void . walk
       pure Nothing
     Ternary clause true false -> do
       walk clause
@@ -443,7 +436,7 @@ instance HasGo Expr where
       void (walk name)
       void (walk begin)
       void (walk end)
-      maybe (pure ()) (void . walk) step
+      whenJust step $ void . walk
       st <- fmap getTree <$> walk body
       pure $ fmap (, []) st
     WhileLoop clause body -> do
@@ -459,19 +452,25 @@ instance HasGo Expr where
       (sts, refs) <- processSequence decls
       pure $ Just ((Set.empty, getRange r) :< sts, Set.toList refs)
     Block {} -> pure Nothing
-    Lambda params typ body -> do
-      paramRefs <- scopeParams params typ
-      subforest <- fmap (fmap getTree) $ do
-        void (maybe (pure Nothing) walk typ)
-        for_ (zip paramRefs params) \(pr, p) ->
-          withScope pr (walk p)
-        withScopes paramRefs (walk body)
-      pure $ Just ((Set.fromList paramRefs, getRange r) :< maybeToList subforest, [])
+    Lambda params tys typ body -> do
+      tyRefs <- scopeParams tys Nothing
+      withScopes tyRefs do
+        mapM_ walk tys
+        paramRefs <- scopeParams params typ
+        subforest <- fmap (fmap getTree) do
+          void (maybe (pure Nothing) walk typ)
+          for_ (zip (tyRefs <> paramRefs) (tys <> params)) \(pr, p) ->
+            withScope pr (walk p)
+          withScopes paramRefs (walk body)
+        pure $ Just
+          ( (Set.fromList paramRefs <> Set.fromList tyRefs, getRange r) :< maybeToList subforest
+          , []
+          )
     ForBox name mname2 coll expr1 expr2 -> do
       declRefs <- scopeParams (catMaybes [Just name, mname2]) Nothing
       withScopes declRefs $ do
         void (walk name)
-        maybe (pure ()) (void . walk) mname2
+        whenJust mname2 $ void . walk
       walk coll
       walk expr1
       subforest <- fmap (fmap getTree) $ withScopes declRefs $ walk expr2
@@ -479,7 +478,7 @@ instance HasGo Expr where
     Patch expr1 expr2 -> do
       void (walk expr1)
       walk expr2
-    RecordUpd  name assignments -> do
+    RecordUpd name assignments -> do
       walk name
       mapM_ walk assignments
       pure Nothing
@@ -496,7 +495,7 @@ walkTwoFields
   :: LIGO ParsedInfo
   -> Maybe (LIGO ParsedInfo)
   -> ScopeM (Maybe ScopeRet)
-walkTwoFields a b = Nothing <$ (walk a *> maybe (pure ()) (void . walk) b)
+walkTwoFields a b = Nothing <$ (walk a *> whenJust b (void . walk))
 
 instance HasGo TField where
   walk' _ (TField name mtype) = walkTwoFields name mtype
@@ -521,103 +520,109 @@ scopeParams args ty = foldMapM go args
   where
     go :: LIGO ParsedInfo -> ScopeM [ExtendedDeclRef]
     go node = case node of
-      (match -> Just (_, BParameter (layer -> Just (IsParen xs)) _)) ->
+      (layer -> Just (BParameter (layer -> Just (IsParen xs)) _)) ->
         scopeParams [xs] ty
-      (match -> Just (_, BParameter (layer -> Just (IsTuple xs)) _)) ->
+      (layer -> Just (BParameter (layer -> Just (IsTuple xs)) _)) ->
         foldMapM go xs
-      (match -> Just (_, BParameter name mType)) -> do
+      (layer -> Just (BParameter name mType)) -> do
         mkDecl (valueScopedDecl [] name mType Nothing)
-          >>= maybe (pure []) (fmap (:[]) . insertScope OrdinaryRef)
-      (match -> Just (_, IsAnnot pat _)) -> go pat
-      (match -> Just (_, IsTuple xs)) -> foldMapM go xs
-      (match -> Just (_, IsParen x)) -> go x
-      (match -> Just (_, IsVar x)) -> go x
-      (match -> Just (_, NameDecl _)) -> do
+          >>= maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
+      (layer -> Just (IsAnnot pat _)) -> go pat
+      (layer -> Just (IsTuple xs)) -> foldMapM go xs
+      (layer -> Just (IsParen x)) -> go x
+      (layer -> Just (IsVar x)) -> go x
+      (layer -> Just (NameDecl _)) -> do
         mkDecl (valueScopedDecl [] node ty Nothing) >>=
-          maybe (pure []) (fmap (:[]) . insertScope OrdinaryRef)
-      (match -> Just (_, IsRecord rfps)) -> do
+          maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
+      (layer -> Just (IsRecord rfps)) -> do
         flip foldMapM rfps $ \case
           (layer -> Just x) -> case x of
             IsRecordField _ var -> go var
             IsRecordCapture var -> go var
           _ -> pure []
-      (match -> Just (r, TVariable (layer -> Just (TypeVariableName name)))) -> do
+      (match -> Just (r, TypeVariableName name)) -> do
         scopedDecl <- mkTypeVariableScope name (getRange r)
-        (:[]) <$> insertScope OrdinaryRef scopedDecl
+        (:[]) <$> insertScope (OrdinaryRef TypeLevel) scopedDecl
+      (layer -> Just (TVariable tvar)) -> go tvar
       _ -> pure []
 
-walkConstTuple
+walkLet
   :: Product ParsedInfo
+  -> LIGO ParsedInfo
   -> [LIGO ParsedInfo]
   -> Maybe (LIGO ParsedInfo)
-  -> [LIGO ParsedInfo]
+  -> Maybe (LIGO ParsedInfo)
   -> ScopeM (Maybe ScopeRet)
-walkConstTuple r names typ vals = do
-  declRefs <- flip wither (zip names vals) \(name, val) ->
-    mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
-      maybe (pure Nothing) \scopedDecl -> do
-        declRef <- insertScope OrdinaryRef scopedDecl
-        withScope declRef (walk name)
-        pure (Just declRef)
-  maybe (pure ()) (void . walk) typ
-  mapM_ walk vals
-  pure $ Just ((Set.fromList declRefs, getRange r) :< [], declRefs)
+walkLet r name tys typ (Just (layer -> Just (Lambda params tys' typ' body))) = do
+  let returnType = typ' <|> typ
+  tyRefs <- scopeParams tys Nothing
+  withScopes tyRefs $ mkDecl (functionScopedDecl [] name params returnType (Just body))
+    >>= maybe (pure Nothing) \functionDecl -> do
+      traverse_ walk tys
+      functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
+      tyRefs' <- scopeParams tys' Nothing
+      withScopes tyRefs' do
+        mapM_ walk tys'
+        paramRefs <- scopeParams params returnType
+        subforest <- fmap (fmap getTree) do
+          void $ withScope functionRef (walk name)
+          for_ (zip paramRefs params) \(pr, p) ->
+            withScope pr (walk p)
+          withScopes (functionRef : paramRefs) (walk body)
+        pure $ Just
+          ( (Set.singleton functionRef, getRange r) :<
+            [ (Set.fromList (tyRefs <> tyRefs'), getRange r) :< []
+            , (Set.fromList paramRefs, getRange r) :< maybeToList subforest
+            ]
+          , [functionRef]
+          )
+walkLet r pat tys ty mexpr = do
+  tyRefs <- scopeParams tys Nothing
+  withScopes tyRefs do
+    traverse_ walk tys
+    refs <- scopeParams [pat] ty
+    void $ withScopes refs (walk pat)
+    whenJust ty $ void . walk
+    subforest <- maybe (pure Nothing) (fmap (fmap getTree) . walk) mexpr
+    pure $ Just
+      ( (Set.fromList refs, getRange r) :<
+        ( ((Set.fromList tyRefs, getRange r) :< [])
+        : maybeToList subforest
+        )
+      , refs
+      )
 
 instance HasGo Binding where
   walk' r = \case
-    BFunction isRec name params typ body ->
-      mkDecl (functionScopedDecl [] name params typ (Just body))
+    BFunction isRec name tys params typ body -> do
+      tyRefs <- scopeParams tys Nothing
+      withScopes tyRefs $ mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope OrdinaryRef functionDecl
+          traverse_ walk tys
+          functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
           paramRefs <- scopeParams params typ
           subforest <- fmap (fmap getTree) $ do
             void $ withScope functionRef (walk name)
             mapM_ (withScopes paramRefs . walk) params
-            maybe (pure ()) (void . walk) typ
+            whenJust typ $ void . walk
             withScopes (bool id (functionRef :) isRec paramRefs) (walk body)
-          pure $ Just ((Set.singleton functionRef, getRange r) :<
-            [(Set.fromList paramRefs, getRange r) :< maybeToList subforest], [functionRef])
+          pure $ Just (
+            ( Set.singleton functionRef, getRange r) :<
+              [ (Set.fromList tyRefs, getRange r) :< []
+              , (Set.fromList paramRefs, getRange r) :< maybeToList subforest
+              ]
+            , [functionRef]
+            )
 
     BParameter name typ -> do
       void (walk name)
       maybe (pure Nothing) walk typ
 
-    BVar pat typ mexpr ->
-      mkDecl (valueScopedDecl [] pat typ mexpr)
-        >>= maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope OrdinaryRef scopedDecl
-          subforest <- fmap (fmap getTree) $ withScope declRef $ do
-            void (walk pat)
-            maybe (pure Nothing) walk mexpr
-          maybe (pure ()) (void . walk) typ
-          pure $ Just
-            ((Set.singleton declRef, getRange r) :< maybeToList subforest, [declRef])
+    BVar   pat tys ty mexpr ->
+      walkLet r pat tys ty mexpr
 
-    BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
-      mkDecl (functionScopedDecl [] name params typ (Just body))
-        >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope OrdinaryRef functionDecl
-          paramRefs <- scopeParams params typ
-          subforest <- fmap (fmap getTree) $ do
-            void $ withScope functionRef (walk name)
-            for_ (zip paramRefs params) \(pr, p) -> do
-              withScope pr (walk p)
-            withScopes (functionRef : paramRefs) (walk body)
-          pure $ Just ((Set.singleton functionRef, getRange r) :<
-            [(Set.fromList paramRefs, getRange r) :< maybeToList subforest], [functionRef])
-
-    BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) typ (Just (layer -> Just (Tuple vals))) ->
-      walkConstTuple r names typ vals
-
-    BConst (layer -> Just (IsTuple names)) typ (Just (layer -> Just (Tuple vals))) ->
-      walkConstTuple r names typ vals
-
-    BConst pat ty mexpr -> do
-      refs <- scopeParams [pat] ty
-      void $ withScopes refs (walk pat)
-      maybe (pure ()) (void . walk) ty
-      subforest <- maybe (pure Nothing) (fmap (fmap getTree) . walk) mexpr
-      pure $ Just ((Set.fromList refs, getRange r) :< maybeToList subforest, refs)
+    BConst pat tys ty mexpr ->
+      walkLet r pat tys ty mexpr
 
     BTypeDecl name mparams expr -> do
       let scopeVariant, scopeTField :: LIGO ParsedInfo -> ScopeM (Maybe ScopeRet)
@@ -625,7 +630,7 @@ instance HasGo Binding where
             (layer -> Just (Variant vname vtype)) ->
               mkDecl (functionScopedDecl [] vname (maybeToList vtype) (Just name) Nothing)
                 >>= maybe (pure Nothing) \decl -> do
-                  ref <- insertScope OrdinaryRef decl
+                  ref <- insertScope (OrdinaryRef TermLevel) decl
                   withScope ref (walk vname)
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
             _ -> pure Nothing
@@ -633,18 +638,18 @@ instance HasGo Binding where
             (layer -> Just (TField fname ftype)) ->
               mkDecl (valueScopedDecl [] fname ftype Nothing)
                 >>= maybe (pure Nothing) \decl -> do
-                  ref <- insertScope OrdinaryRef decl
+                  ref <- insertScope (OrdinaryRef TermLevel) decl
                   withScope ref (walk fname)
-                  traverse_ walk ftype
+                  whenJust ftype $ void . walk
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
             _ -> pure Nothing
 
       mkDecl (typeScopedDecl (getElem r) name expr) >>=
         maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope OrdinaryRef scopedDecl
+          declRef <- insertScope (OrdinaryRef TypeLevel) scopedDecl
           let params = case mparams of
-                Just (layer -> Just (Skeleton.TypeParams ps)) -> ps
-                Just (layer -> Just (Skeleton.TypeParam p)) -> [p]
+                Just (layer -> Just (Skeleton.QuotedTypeParams ps)) -> ps
+                Just (layer -> Just (Skeleton.QuotedTypeParam p)) -> [p]
                 _ -> []
 
           paramRefs <- scopeParams params Nothing
@@ -652,7 +657,7 @@ instance HasGo Binding where
           for_ (zip paramRefs params) $ \(pr, p) ->
             withScope pr (walk p)
           (subforest, fromMaybe [] -> subRefs) <-
-            fmap unzip $ withScopes (declRef:paramRefs) $ case expr of
+            fmap NE.unzip $ withScopes (declRef:paramRefs) $ case expr of
               (layer -> Just (TSum variants)) -> do
                 (sts, concat -> refs) <- unzip <$> wither scopeVariant (toList variants)
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
@@ -677,7 +682,7 @@ instance HasGo Binding where
           (declTree, declRefs) <-
             mapQualified (mapInUnqualified (\(Namespace ns) -> Namespace (ns |> moduleName)))
             $ processSequence decls
-          moduleRef <- insertScope OrdinaryRef moduleDecl
+          moduleRef <- insertScope (OrdinaryRef ModuleLevel) moduleDecl
           void $ withScope moduleRef $ walk name
           pure $ Just
             ( (Set.singleton moduleRef, getRange r) :< declTree
@@ -700,9 +705,10 @@ instance HasGo Binding where
             (ref, edrNamespace) <- MaybeT do
               currentNamespace <- askNamespace
               lookupInOuterModules
+                ModuleLevel
                 (mapInQualified (<> Namespace aliasNamespace) currentNamespace)
                 drName
-            let (drRange, edrRefKind) = inScopeRefToRef ref
+            let (drRange, edrRefKind) = inScopeRefToRef ModuleLevel ref
             pure ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..}
 
           moduleRef <- insertScope (ModuleAliasRef declRefM) moduleDecl
@@ -717,14 +723,14 @@ instance HasGo RawContract where
     xs <- view _1 <$> processSequence statements
     pure $ Just ((Set.empty, getRange r) :< xs, [])
 
-walkName :: Product ParsedInfo -> Text -> ScopeM (Maybe ScopeRet)
-walkName r name = Nothing <$ insertRef name (getElem @PreprocessedRange r)
+walkName :: Level -> Product ParsedInfo -> Text -> ScopeM (Maybe ScopeRet)
+walkName level r name = Nothing <$ insertRef level name (getElem @PreprocessedRange r)
 
 instance HasGo TypeName where
-  walk' r (TypeName name) = walkName r name
+  walk' r (TypeName name) = walkName TypeLevel r name
 
 instance HasGo TypeVariableName where
-  walk' r (TypeVariableName decl) = walkName r decl
+  walk' r (TypeVariableName name) = walkName TypeLevel r name
 
 instance HasGo FieldName where
   walk' _ _ = pure Nothing
@@ -739,10 +745,10 @@ instance HasGo Error where
   walk' _ _ = pure Nothing
 
 instance HasGo Ctor where
-  walk' r (Ctor name) = walkName r name
+  walk' r (Ctor name) = walkName TermLevel r name
 
 instance HasGo NameDecl where
-  walk' r (NameDecl decl) = walkName r decl
+  walk' r (NameDecl decl) = walkName TermLevel r decl
 
 instance HasGo Preprocessor where
   walk' _ _ = pure Nothing
@@ -754,7 +760,7 @@ instance HasGo PatchableExpr where
   walk' _ (PatchableExpr _ expr) = Nothing <$ walk expr
 
 instance HasGo ModuleName where
-  walk' r (ModuleName name) = walkName r name
+  walk' r (ModuleName name) = walkName ModuleLevel r name
 
 -- | Given a module access such as `A.B.C` ('Nothing' case) or `A.B.C.x` ('Just'
 -- case), add references to each module in the chain and maybe walk over the
@@ -762,22 +768,27 @@ instance HasGo ModuleName where
 walkModuleAccess :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM ()
 walkModuleAccess path accessorM = go path
   where
-    go [] = maybe (pure ()) (void . walk) accessorM
+    go [] = whenJust accessorM $ void . walk
     go (modName : modNames) = do
       void $ walk modName
       getName modName >>= \case
-        Left _ -> pure ()
-        Right (_, namespacePart) -> resolveModuleAlias namespacePart >>= \case
-          Nothing -> pure ()
-          Just resolved -> mapNamespace (const resolved) (go modNames)
+        Left _ -> pass
+        Right (_, namespacePart) -> whenJustM (resolveModuleAlias namespacePart) $
+          \resolved -> mapNamespace (const resolved) (go modNames)
 
 instance HasGo ModuleAccess where
   walk' _ (ModuleAccess path accessor) = Nothing <$ walkModuleAccess path (Just accessor)
 
-instance HasGo Skeleton.TypeParams where
-  walk' _ = \case
-    Skeleton.TypeParam  {} -> pure Nothing
-    Skeleton.TypeParams {} -> pure Nothing
+instance HasGo Skeleton.QuotedTypeParams where
+  walk' r = \case
+    Skeleton.QuotedTypeParam  ty  -> walkQuotedTypeParams [ty]
+    Skeleton.QuotedTypeParams tys -> walkQuotedTypeParams tys
+    where
+      walkQuotedTypeParams tys = do
+        tyRefs <- scopeParams tys Nothing
+        withScopes tyRefs do
+          traverse_ walk tys
+          pure $ Just ((Set.fromList tyRefs, getRange r) :< [], [])
 
 instance HasGo CaseOrDefaultStm where
   walk' r = \case
@@ -818,7 +829,7 @@ loop go = aux
 loopM_ :: (Applicative t, Foldable f) => (Cofree f a -> t ()) -> (Cofree f a -> t ())
 loopM_ go = aux
   where
-    aux (r :< fs) = for_ fs aux *> go (r :< fs)
+    aux (r :< fs) = Foldable.for_ fs aux *> go (r :< fs)
 
 loopM
   :: (Monad m, Traversable f)

@@ -2,8 +2,7 @@ module AST.Scope.Standard
   ( Standard
   ) where
 
-import Data.Foldable (toList)
-import UnliftIO.Exception (Handler (..), catches, displayException)
+import UnliftIO.Exception (Handler (..), catches)
 
 import AST.Scope.Common
   (FindFilepath (..), HasScopeForest (..), MergeStrategy (..), ParsedContract (..), ScopeForest,
@@ -31,7 +30,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
           -- catch only errors that we expect from ligo and try to use fallback parser
           pure $ LigoErrors $ fromLigoErrorToMsg <$> toList errs <> warns
       , Handler \(e :: LigoIOException) -> do
-          $(Log.err) [i|#{displayException e}|]
+          $Log.err [i|#{displayException e}|]
           pure Failure
       , Handler \(_ :: SomeLigoException) ->
           pure Failure

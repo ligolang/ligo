@@ -5,14 +5,13 @@ module Test.Common.Util.Parsers
 import System.FilePath (takeDirectory)
 
 import AST.Scope
-  ( pattern FindContract, HasScopeForest, ContractInfo, addShallowScopes, contractFile
-  )
+  (ContractInfo, HasScopeForest, addShallowScopes, contractFile, pattern FindContract)
 import Cli.Types (TempDir (..), TempSettings (..))
 import Diagnostic (Message)
 import Parser (collectTreeErrors)
 import Progress (noProgress)
 
-import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)
+import Test.Common.FixedExpectations (Expectation, expectationFailure)
 import Test.Common.Util (readContractWithMessages)
 
 getScopedMsgs :: forall impl. HasScopeForest impl IO => ContractInfo -> IO [Message]
@@ -32,7 +31,7 @@ checkFile True path = do
   let msgs' = collectTreeErrors tree <> msgs
   case msgs' of
     [] -> getScopedMsgs @parser c >>= \case
-      [] -> pure ()
+      [] -> pass
       msgs'' -> expectationFailure $
         "Scoping failed, but it shouldn't have. " <>
         "Messages: " <> show msgs'' <> "."
@@ -46,4 +45,4 @@ checkFile False path = do
     [] -> expectationFailure "Parsing succeeded, but it shouldn't have."
     _ -> getScopedMsgs @parser c >>= \case
       [] -> expectationFailure "Scoping succeeded, but it shouldn't have."
-      _ -> pure ()
+      _ -> pass

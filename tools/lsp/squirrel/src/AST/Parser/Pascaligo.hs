@@ -3,12 +3,14 @@ module AST.Parser.Pascaligo
   ( recognise
   ) where
 
+import Prelude hiding (Alt)
+
 import AST.Skeleton
 
 import Duplo.Tree
 
-import ParseTree
 import Parser
+import ParseTree
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -47,8 +49,8 @@ recognise (SomeRawTree dialect rawTree)
         "skip"              -> return Skip
         "case_expr"         -> Case      <$> field  "subject"    <*> fields   "case"
         "case_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "fun_expr"          -> Lambda    <$> fields "parameter"  <*> fieldOpt    "type"  <*> field "body"
-        "fun_expr_closed"   -> Lambda    <$> fields "parameter"  <*> fieldOpt    "type"  <*> field "body"
+        "fun_expr"          -> Lambda    <$> fields "parameter"  <*> fields   "param" <*> fieldOpt "type" <*> field "body"
+        "fun_expr_closed"   -> Lambda    <$> fields "parameter"  <*> fields   "param" <*> fieldOpt "type" <*> field "body"
         "for_int"           -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
         "for_in"            -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
         "while_loop"        -> WhileLoop <$> field  "breaker"    <*> field    "body"
@@ -175,9 +177,9 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "parameter" <*> fieldOpt "type" <*> field "body"
-        "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
+        "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "param" <*> fields "parameter" <*> fieldOpt "type" <*> field "body"
+        "const_decl" -> BConst    <$>             field    "name"       <*> fields "param" <*> fieldOpt "type" <*> fieldOpt "value"
+        "var_decl"   -> BVar      <$>             field    "name"       <*> fields "type_name" <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> fieldOpt "params" <*> field "typeValue"
         "p_include"  -> BInclude  <$>             field    "filename"
         "p_import"   -> BImport   <$>             field    "filename" <*> field "alias"
@@ -185,11 +187,11 @@ recognise (SomeRawTree dialect rawTree)
         "module_alias" -> BModuleAlias <$> field "moduleName" <*> fields "module"
         _            -> fallthrough
 
-    -- TypeParams
+    -- QuotedTypeParams
   , Descent do
       boilerplate \case
-        "type_params" -> TypeParams <$> fields "param"
-        _             -> fallthrough
+        "type_vars" -> QuotedTypeParams <$> fields "param"
+        _           -> fallthrough
 
     -- VarDecl
   , Descent do

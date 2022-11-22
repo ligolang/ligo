@@ -16,6 +16,7 @@ module Name = struct
   let const_or_var           = "constorvar"
   let numeric_literals       = "numericliterals"
   (* Types *)
+  let type_binder            = "typebinder"
   let type_definition        = "typedefinition"
   let type_annotation        = "typeannotation"
   let type_annotation_field  = "typeannotationfield"
@@ -136,6 +137,7 @@ let syntax_highlighting =
     };
     syntax_patterns = [
       (* TODO: Name.lowercase_identifier; *)
+      Name.type_binder;
       Name.uppercase_identifier;
       Name.attribute;
       Name.macro;
@@ -226,6 +228,28 @@ let syntax_highlighting =
         }
       };
       (* Types *)
+      {
+        name = Name.type_binder;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.chevron_begin, None);
+            (*
+              FIXME: Breaks with type binders spanning multiple lines and
+              comments.
+                Until patterns are supported, it's very difficult to
+              disambiguate type params and less than/greater than expressions!
+              So we use an approximate solution for now.
+                To fix this, add support for patterns, make regions out of
+              `const`/`let/`function` declarations (and `function` expressions)
+              and expect a type_binder right after a pattern.
+            *)
+            (Regexp.type_binder_positive_lookahead_ligo, None);
+          ];
+          end_ = [(Regexp.chevron_end, None)];
+          patterns = [Name.type_name; Name.type_name];
+        };
+      };
       {
         name = Name.type_definition;
         kind = Begin_end {

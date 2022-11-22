@@ -39,4 +39,4 @@ unit_range_formatting :: Assertion
 --    formatRange doc formattingOptions editRange
 --    (,) <$> documentContents doc <*> documentContents expectedDoc
 --  formattedDoc `shouldBe` expectedDoc
-unit_range_formatting = pure ()
+unit_range_formatting = pass
