@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-cd "$(dirname "${BASH_SOURCE[0]}")"
 
 HOST=$1
 CI_PROJECT_ID=$2
