@@ -54,6 +54,10 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
     let%bind loc = loc () in
     return @@ Type.make_t ~loc content (Some type_)
   in
+  let lift type_ = 
+    let%bind loc = loc () in
+    return @@ Type.{ type_ with location = loc }
+  in
   match type_.type_content with
   | T_arrow { type1; type2 } ->
     let%bind type1 = evaluate_type type1 in
@@ -67,7 +71,7 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
     const @@ T_record row
   | T_variable tvar ->
     (match%bind Context.get_type tvar with
-    | Some type_ -> return type_
+    | Some type_ -> lift type_
     | None ->
       (match%bind Context.get_type_var tvar with
       | Some _ -> const @@ T_variable tvar
