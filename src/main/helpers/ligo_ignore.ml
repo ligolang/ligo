@@ -1,6 +1,6 @@
 type t = Re.re list
 
-let default = [ ".ligo"; "_esy"; "node_modules"; "esy.lock"; ".git" ]
+let default = [ "/.ligo"; "/_esy"; "/node_modules"; "/esy.lock"; "/.git" ]
 
 let read ~ligoignore_path : t =
   let entries =

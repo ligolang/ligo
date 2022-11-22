@@ -8,9 +8,10 @@
 - [ ] Add stats about packed size, upacked size, total files in json
 - [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [x] Wrap logging message in a function ~before ~after
-- [ ] Add support for .ligoignore to igore stuff while packaging
+- [x] Add support for .ligoignore to igore stuff while packaging
 - [ ] Add basic comments in code
 - [ ] manually Test CLI option to override path to .ligorc
+- [ ] manually Test .ligoignore stuff
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
@@ -342,11 +343,11 @@ let rec get_all_files
   let* files =
     match status.st_kind with
     | S_REG ->
-      if ligoignore (String.chop_prefix_if_exists ~prefix:"./" file_or_dir)
+      if ligoignore (String.chop_prefix_if_exists ~prefix:"." file_or_dir)
       then Lwt.return []
       else Lwt.return [ file_or_dir, status.st_size ]
     | S_DIR ->
-      if ligoignore (String.chop_prefix_if_exists ~prefix:"./" file_or_dir)
+      if ligoignore (String.chop_prefix_if_exists ~prefix:"." file_or_dir)
       then Lwt.return []
       else (
         let all = Sys_unix.ls_dir file_or_dir in
