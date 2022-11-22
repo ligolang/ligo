@@ -1,7 +1,0 @@
-
-author: Laucans
-description: '\n\nfix a bug where bytes literals extraction was not working happening in JsLIGO\n\n'
-merge_request: '2170'
-title: refactor, cleaning changelog generation
-type: fixed
-            
