@@ -2941,6 +2941,25 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ;  "cameligo" ; "tests" ; "--init-file" ; contract "bytes_literals.mligo" ] ;
   [%expect{| { True ; True ; True } |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ;  "jsligo" ; "tests" ; "--init-file" ; contract "bytes_literals.jsligo" ] ;
+  [%expect{| (Pair (Pair True True) True) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ;  "jsligo" ; "realistic" ; "--init-file" ; contract "bytes_literals.jsligo" ] ;
+  [%expect{| 0x0a202020207b0a20202020226e616d65223a226e616d65222c0a20202020226465736372697074696f6e223a226465736372697074696f6e222c0a202020202276657273696f6e223a22302e302e30222c0a20202020226c6963656e7365223a7b226e616d65223a226c696e616d65227d2c0a2020202022617574686f7273223a5b22617574686f7273225d2c0a2020202022686f6d6570616765223a22222c0a2020202022736f75726365223a7b22746f6f6c73223a5b22746f6f6c73225d2c20226c6f636174696f6e223a226c6f636174696f6e227d2c0a2020202022696e7465726661636573223a5b22545a4950225d2c0a20202020226572726f7273223a5b5d2c0a20202020227669657773223a5b5d0a202020207d0a2020 |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; bad_contract "bytes_literals.jsligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/bytes_literals.jsligo", line 2, characters 18-23:
+      1 | const shame = () => {
+      2 |   const x = bytes `foo` as nat;
+      3 |   return x
+
+    Invalid type(s).
+    Expected: "bytes", but got: "nat". |}]
+
 (* get_entrypoint_opt in uncurried language *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ;  contract "get_entrypoint.jsligo" ] ;
