@@ -91,7 +91,7 @@ let%expect_test _ =
       1 | type x = option list
 
     Invalid type
-    Ill formed type funtype 'a : * . option ('a). |}]
+    Ill formed type "option".Hint: you might be missing some type arguments. |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.mligo")] ;
   [%expect{|
@@ -131,7 +131,7 @@ let%expect_test _ =
       1 | type x is list(option)
 
     Invalid type
-    Ill formed type funtype 'a : * . option ('a). |}]
+    Ill formed type "option".Hint: you might be missing some type arguments. |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.ligo")] ;
   [%expect{|
@@ -171,7 +171,7 @@ let%expect_test _ =
       1 | type x = list(option);
 
     Invalid type
-    Ill formed type funtype 'a : * . option ('a). |}]
+    Ill formed type "option".Hint: you might be missing some type arguments. |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.religo")] ;
   [%expect{|

@@ -22,7 +22,7 @@ let%expect_test _ =
       3 |     Success: () => "",
       4 |     Fail: (_ : test_exec_error) => ""
 
-    Pattern not of the expected type nat |}]
+    Pattern not of the expected type "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match5.jsligo") ; "--test" ] ;
@@ -42,7 +42,7 @@ let%expect_test _ =
       4 |     Failure: (_ : test_exec_error) => ""
       5 |   });
 
-    Pattern not of the expected type sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] |}]
+    Pattern not of the expected type "sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
@@ -66,7 +66,7 @@ let%expect_test _ =
       1 | let foo = ([a,b,c,d] : [int,int,int]) : int => a + b + c + d;
 
     Invalid type(s)
-    Cannot unify ( ^gen#541 * ^gen#542 * ^gen#543 * ^gen#544 ) with ( int * int * int ).
+    Cannot unify "( ^gen#541 * ^gen#542 * ^gen#543 * ^gen#544 )" with "( int * int * int )".
 
     Difference between the types:
     - ^gen#541

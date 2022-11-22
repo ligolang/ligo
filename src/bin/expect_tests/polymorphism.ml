@@ -388,7 +388,7 @@ let%expect_test _ =
       5 | let m = merge (Map.empty : (int, string) foo)
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "f" ; "--init-file" ; (test "cases_annotation.mligo") ] ;
@@ -430,47 +430,43 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract.mligo") ] ;
   [%expect{xxx|
-    File "./unresolved/contract.mligo", line 6, characters 29-31:
+    File "./unresolved/contract.mligo", line 6, characters 17-31:
       5 |     let b                = List.length ys in
       6 |     [], (a + b + List.length [])
 
-    Underspecified type ^gen#548.
+    Underspecified type "^gen#546".
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
   [%expect{xxx|
-    File "./unresolved/contract2.mligo", line 4, characters 13-15:
+    File "./unresolved/contract2.mligo", line 4, characters 9-15:
       3 | let main (_, _ : int list * nat) : (operation list * nat) =
       4 |     [], (one [])
 
-    Underspecified type ^gen#544.
+    Underspecified type "^gen#542".
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
   [%expect{xxx|
-    File "./unresolved/storage.mligo", line 1, characters 20-22:
+    File "./unresolved/storage.mligo", line 1, characters 8-22:
       1 | let s = List.length []
       2 |
 
-    Underspecified type ^gen#543.
+    Underspecified type "^gen#541".
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
   [%expect{xxx|
-    File "./unresolved/parameter.mligo", line 1, characters 8-10:
-      1 | let p = []
-      2 |
-
-    Underspecified type ^gen#541.
+    Underspecified type "list (^gen#541)".
     Please add additional annotations. |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
   [%expect{|
-    Underspecified type ^gen#5.
+    Underspecified type "list (^gen#5)".
     Please add additional annotations. |}]
 
 let () = Sys_unix.chdir pwd

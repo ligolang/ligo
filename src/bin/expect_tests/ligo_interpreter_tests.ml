@@ -839,7 +839,7 @@ let%expect_test _ =
       3 |   Test.originate f () 0tez
 
     Invalid type(s)
-    Cannot unify unit with ( list (operation) * unit ). |}]
+    Cannot unify "unit" with "( list (operation) * unit )". |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
@@ -865,6 +865,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 |}]
 
@@ -938,7 +939,7 @@ let%expect_test _ =
       3 |
 
     Invalid type(s)
-    Cannot unify record[property -> string] with record[field -> int]. |}]
+    Cannot unify "record[property -> string]" with "record[field -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
@@ -948,7 +949,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, "toto");
 
     Invalid type(s)
-    Cannot unify string with record[b -> int]. |}]
+    Cannot unify "string" with "record[b -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
@@ -958,7 +959,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {field: "toto"});
 
     Invalid type(s)
-    Cannot unify record[field -> string] with int. |}]
+    Cannot unify "record[field -> string]" with "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
