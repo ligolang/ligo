@@ -1,5 +1,6 @@
 module LigoRC = Ligo_rc
 module LigoManifest = Ligo_manifest
+module LigoIgnore = Ligo_ignore
 module RepositoryUrl = Repository_url
 
 module Constants : sig
@@ -8,6 +9,7 @@ module Constants : sig
   val esy : string
   val ligo_install_path : string
   val ligo_rc_path : string
+  val ligo_ignore_path : string
   val ligo_registry : string
 
   val esy_add

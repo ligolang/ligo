@@ -1,11 +1,13 @@
 module LigoRC = Ligo_rc
 module LigoManifest = Ligo_manifest
+module LigoIgnore = Ligo_ignore
 module RepositoryUrl = Repository_url
 
 module Constants = struct
   type command = (string * string array)
   let ligo_install_path = "./.ligo"
   let ligo_rc_path = Filename.concat (Sys_unix.home_directory ()) ".ligorc"
+  let ligo_ignore_path = Filename.concat (Sys_unix.getcwd ()) ".ligoignore"
   let ligo_registry = "https://packages.ligolang.org/-/api"
   let esy = "esy"
   let windows = "Win32"

@@ -7,10 +7,10 @@
 - [x] Implement --dry-run flag
 - [ ] Add stats about packed size, upacked size, total files in json
 - [ ] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
-- [ ] Wrap logging message in a function ~before ~after
-- [ ] Add CLI option to override path to .ligorc
-- [ ] Add basic comments in code
+- [x] Wrap logging message in a function ~before ~after
 - [ ] Add support for .ligoignore to igore stuff while packaging
+- [ ] Add basic comments in code
+- [ ] manually Test CLI option to override path to .ligorc
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
@@ -22,6 +22,7 @@
 
 module LigoRC = Cli_helpers.LigoRC
 module LigoManifest = Cli_helpers.LigoManifest
+module LigoIgnore = Cli_helpers.LigoIgnore
 module RepositoryUrl = Cli_helpers.RepositoryUrl
 module SMap = Caml.Map.Make (String)
 
@@ -332,29 +333,29 @@ let gzip fname =
   r
 
 
-(* TODO: More files here ?? *)
-module SSet = Set.Make (String)
-
-let ignore_dirs =
-  SSet.of_list [ ".ligo"; "_esy"; "node_modules"; "esy.lock"; ".git" ]
-
-
-let rec get_all_files : string -> (string * int) list Lwt.t =
- fun file_or_dir ->
+let rec get_all_files
+    : ligoignore:(string -> bool) -> string -> (string * int) list Lwt.t
+  =
+ fun ~ligoignore file_or_dir ->
   let open Lwt.Syntax in
   let* status = Lwt_unix.lstat file_or_dir in
   let* files =
     match status.st_kind with
-    | S_REG -> Lwt.return [ file_or_dir, status.st_size ]
+    | S_REG ->
+      if ligoignore (String.chop_prefix_if_exists ~prefix:"./" file_or_dir)
+      then Lwt.return []
+      else Lwt.return [ file_or_dir, status.st_size ]
     | S_DIR ->
-      if SSet.mem ignore_dirs (Filename.basename file_or_dir)
+      if ligoignore (String.chop_prefix_if_exists ~prefix:"./" file_or_dir)
       then Lwt.return []
       else (
         let all = Sys_unix.ls_dir file_or_dir in
         let* files =
           Lwt_list.fold_left_s
             (fun acc f ->
-              let* fs = get_all_files (Filename.concat file_or_dir f) in
+              let* fs =
+                get_all_files ~ligoignore (Filename.concat file_or_dir f)
+              in
               Lwt.return (acc @ fs))
             []
             all
@@ -379,9 +380,7 @@ let from_dir ~dir f =
   result
 
 
-let tar ~name ~version dir =
-  let open Lwt.Syntax in
-  let* files = from_dir ~dir (fun () -> get_all_files ".") in
+let tar ~name ~version files =
   let files, sizes = List.unzip files in
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
@@ -394,9 +393,10 @@ let tar ~name ~version dir =
   Lwt.return (fcount, fname, unpacked_size)
 
 
-let tar_gzip ~name ~version dir =
+let tar_gzip ~name ~version ~ligoignore dir =
   let open Lwt.Syntax in
-  let* fcount, fname, unpacked_size = tar ~name ~version dir in
+  let* files = from_dir ~dir (fun () -> get_all_files ~ligoignore ".") in
+  let* fcount, fname, unpacked_size = tar ~name ~version files in
   let buf = gzip fname in
   Lwt.return (fcount, Buffer.contents_bytes buf, unpacked_size)
 
@@ -459,10 +459,10 @@ let validate_main_file ~manifest =
   | None -> Error ("No main field in package.json", "")
 
 
-let pack ~project_root ~token ~ligo_registry ~manifest =
+let pack ~project_root ~token ~ligo_registry ~ligoignore ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
   let fcount, tarball, unpacked_size =
-    Lwt_main.run @@ tar_gzip project_root ~name ~version
+    Lwt_main.run @@ tar_gzip project_root ~name ~version ~ligoignore
   in
   let packed_size = Bytes.length tarball in
   let sha1 =
@@ -567,7 +567,7 @@ let show_stats stats =
   ()
 
 
-let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
+let publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run =
   let* manifest =
     with_logging ~before:"Reading manifest" (fun () ->
         read_manifest ~project_root)
@@ -588,9 +588,10 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
     with_logging ~before:"Validating storage" (fun () ->
         validate_storage ~manifest)
   in
+  let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in
   let* packed, stats =
     with_logging ~before:"Packing tarball" (fun () ->
-        pack ~project_root ~token ~ligo_registry ~manifest)
+        pack ~project_root ~token ~ligo_registry ~ligoignore ~manifest)
   in
   let () = show_stats stats in
   if dry_run
