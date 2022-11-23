@@ -1,11 +1,11 @@
 
 ### SYNOPSIS
 ```
-ligo print preprocessed SOURCE_FILE
+ligo mutate ast SOURCE_FILE
 ```
 
 ### DESCRIPTION
-This sub-command runs the pre-processor on a LIGO source file and outputs the result. The directive `#include` directly inlines the included file and therefore its content appears in the output. In contrast, the directive `#import` includes the file as a module and therefore the content of the imported file is not printed by this sub-command.
+This sub-command returns a mutated version for a given file. It does not use the build system.
 
 ### FLAGS
 **--display-format FORMAT**
@@ -14,14 +14,17 @@ the format that will be used by the CLI. Available formats are 'dev', 'json', an
 **--library LIBS**
 A comma-separated list of paths to directories where to search for files to be included by the preprocessor (alias: -l)
 
-**--no-colour**
-disable coloring in CLI output
-
-**--project-root PATH**
-The path to root of the project.
+**--seed SEED**
+the seed or counter used for generation.
 
 **--syntax SYNTAX**
 the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively). (alias: -s)
+
+**-generator GEN**
+the generator for mutation. (alias: -g)
+
+**-p PROTOCOL**
+choose protocol's types/values pre-loaded into the LIGO environment (kathmandu , lima). By default, the current protocol (kathmandu) will be used (alias: --protocol)
 
 **-help**
 print this help text and exit (alias: -?)

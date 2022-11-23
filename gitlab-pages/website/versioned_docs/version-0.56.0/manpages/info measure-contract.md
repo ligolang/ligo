@@ -1,33 +1,39 @@
 
 ### SYNOPSIS
 ```
-ligo print ast-aggregated SOURCE_FILE
+ligo info measure-contract SOURCE_FILE
 ```
 
 ### DESCRIPTION
-This sub-command prints the source file in the AST aggregated stage.
+This sub-command compiles a source file and measures the contract's compiled size in bytes.
 
 ### FLAGS
 **--display-format FORMAT**
 the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile. (alias: --format)
 
-**--no-colour**
-disable coloring in CLI output
+**--enable-michelson-typed-opt**
+Enable Michelson optimizations that work using typecking.
+
+**--no-warn**
+disable warning messages
 
 **--project-root PATH**
 The path to root of the project.
 
-**--self-pass**
-apply the self pass
-
 **--syntax SYNTAX**
 the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively). (alias: -s)
 
-**--test**
-force testing mode.
+**--views VIEWS**
+A list of declaration name that will be compiled as on-chain views, separated by ',' (alias: -v)
 
 **--warn-unused-rec**
 warn about unused recursion in a recursive function
+
+**--werror**
+treat warnings as errors
+
+**-e ENTRY-POINT**
+the entry-point that will be compiled. (alias: --entry-point)
 
 **-p PROTOCOL**
 choose protocol's types/values pre-loaded into the LIGO environment (kathmandu , lima). By default, the current protocol (kathmandu) will be used (alias: --protocol)
