@@ -1,41 +1,44 @@
 ;; Build of the self passes on the tokens of JsLIGO
 
 (library
-  (name lexing_jsligo_self_tokens)
-  (public_name ligo.lexing.jsligo.self.tokens)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     LexerLib
-     ;; LIGO
-     lexing_shared
-     menhir_jsligo_tokens)
-  (modules
-     PreParser State Token ES6FUN ES6FUN_hook
-     VBAR VBAR_hook SEMI SEMI_hook Attributes Self))
+ (name lexing_jsligo_self_tokens)
+ (public_name ligo.lexing.jsligo.self.tokens)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  LexerLib
+  ;; LIGO
+  lexing_shared
+  menhir_jsligo_tokens)
+ (modules PreParser State Token ES6FUN ES6FUN_hook VBAR VBAR_hook SEMI
+   SEMI_hook Attributes Self))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of
 ;; Menhir
 
 (rule
-  (targets MenhirToken.ml MenhirToken.mli)
-  (deps (:ParToken ../../../../02-parsing/jsligo/ParToken.mly))
-  (action (run menhir %{ParToken} --only-tokens --inspection
-                                  --table --base MenhirToken)))
+ (targets MenhirToken.ml MenhirToken.mli)
+ (deps
+  (:ParToken ../../../../02-parsing/jsligo/ParToken.mly))
+ (action
+  (run menhir %{ParToken} --only-tokens --inspection --table --base
+    MenhirToken)))
 
 (library
-  (name menhir_jsligo_tokens)
-  (public_name ligo.lexing.menhir_jsligo_tokens)
-  (modules MenhirToken)
-  (libraries
-    ;; LIGO
-    lexing_shared
-    ;; Third party
-    menhirLib
-    hex)
-  (flags (:standard -open Lexing_shared -open Wrap)))
+ (name menhir_jsligo_tokens)
+ (public_name ligo.lexing.menhir_jsligo_tokens)
+ (modules MenhirToken)
+ (libraries
+  ;; LIGO
+  lexing_shared
+  ;; Third party
+  menhirLib
+  hex)
+ (flags
+  (:standard -open Lexing_shared -open Wrap)))
 
 ;; --------------------------------------------------------------------
 ;; Building the PreParser

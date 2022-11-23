@@ -339,7 +339,7 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let scope = Scope.push_value scope let_binder rhs.type_expression attr Path.empty  in
     let let_result = self ~scope let_result in
     return (E_let_mut_in { let_binder ; rhs ; let_result ; attr })
-  | E_deref var -> 
+  | E_deref var ->
     let path = Scope.find_value scope var in
     let _,expression_variable = Scope.add_path_to_var scope path var in
     return @@ E_deref expression_variable
@@ -349,14 +349,14 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_assign {binder;expression}
   | E_for { binder; start; final; incr; f_body } ->
     let start = self start
-    and final = self final 
+    and final = self final
     and incr = self incr in
     let scope = Scope.push_func_or_case_binder scope binder in
     let f_body = self ~scope f_body in
     return @@ E_for { binder; start; final; incr; f_body }
   | E_for_each { fe_binder = binder1, binder2 as fe_binder; collection; collection_type; fe_body } ->
     let collection = self collection in
-    let scope = 
+    let scope =
       List.fold_left (binder1 :: Option.to_list binder2) ~init:scope ~f:Scope.push_func_or_case_binder
     in
     let fe_body = self ~scope fe_body in
@@ -367,8 +367,8 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
 
 and compile_cases ~raise ~loc path scope matchee cases : O.expression_content =
   let matchee_type = matchee.type_expression in
-  let eqs = List.map cases 
-    ~f:(fun {pattern ; body} -> 
+  let eqs = List.map cases
+    ~f:(fun {pattern ; body} ->
         let pattern = I.Pattern.map (compile_type_expression ~raise path scope) pattern in
         let binders = I.Pattern.binders pattern |> List.map ~f:Binder.get_var in
         let scope = List.fold binders ~init:scope ~f:Scope.push_func_or_case_binder in

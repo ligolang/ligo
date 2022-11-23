@@ -45,6 +45,7 @@ depends: [
   # PPXs
   "ppx_deriving"
   "ppx_deriving_yojson"
+  "ppx_yojson_conv"
   "ppx_expect"
   "ppx_import"
   "ppx_inline_test"

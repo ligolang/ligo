@@ -2,7 +2,7 @@ type 'a t = {
   ty_binder : Var.Type_var.t;
   kind : Kind.t;
   type_ : 'a ;
-} [@@deriving eq,compare,yojson,hash,fold,map]
+} [@@deriving eq,compare,yojson,hash,fold,map, sexp]
 (* Lambda (a : kind). term *)
 
 

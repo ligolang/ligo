@@ -8,7 +8,7 @@ add-changelog-entry:
   before_script:
     - *pip-install-ci-requirements
   script:
-    - ./.ci/scripts/retrieve_merge_request_info.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${CI_MERGE_REQUEST_IID} ${TOKEN_API}
+    - python3 .ci/scripts/create_changelog_entry.py --hostname "${CI_PROJECT_URL}" --project "${CI_PROJECT_ID}" --mr-id "${CI_MERGE_REQUEST_IID}" --token "${TOKEN_API}"
       # Check if type is None, if None, skip changelog generation
     - | 
       if [[ ! -f "changelog/${CI_MERGE_REQUEST_IID}" ]]; then

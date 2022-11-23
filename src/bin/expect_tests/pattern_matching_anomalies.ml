@@ -257,17 +257,23 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c1_c2_c3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.mligo", line 6, characters 4-9:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
       5 |     One a -> ()
       6 |   | One b -> ()
       7 |   | Two c -> ()
+      8 |   | Three -> ()
 
     Error : this match case is unused. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c1_c3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.mligo", line 7, characters 4-9:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
+      5 |     One a -> ()
       6 |   | Two c -> ()
       7 |   | One b -> ()
       8 |   | Three -> ()
@@ -277,7 +283,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c3_c1.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.mligo", line 8, characters 4-9:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
+      5 |     One a -> ()
+      6 |   | Two c -> ()
       7 |   | Three -> ()
       8 |   | One b -> ()
 
@@ -286,7 +296,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c3_w.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_w.mligo", line 8, characters 4-5:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_w.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
+      5 |     One a -> ()
+      6 |   | Two c -> ()
       7 |   | Three -> ()
       8 |   | _     -> ()
 
@@ -295,7 +309,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_w_c2_c3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_w_c2_c3.mligo", line 7, characters 4-9:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_w_c2_c3.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
+      5 |     One a -> ()
       6 |   | _     -> ()
       7 |   | Two c -> ()
       8 |   | Three -> ()
@@ -305,17 +322,22 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "w_c1_c2_c3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/w_c1_c2_c3.mligo", line 6, characters 4-9:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/w_c1_c2_c3.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
       5 |     _     -> ()
       6 |   | One a -> ()
       7 |   | Two c -> ()
+      8 |   | Three -> ()
 
     Error : this match case is unused. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "tx_tx_ty.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/tx_tx_ty.mligo", line 8, characters 5-11:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/tx_tx_ty.mligo", line 6, character 2 to line 9, character 18:
+      5 | let s (x : t) =
+      6 |   match x with
       7 |     (n, One) -> ()
       8 |   | (n, One) -> ()
       9 |   | (n, Two) -> ()
@@ -325,7 +347,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "tx_w_ty.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/tx_w_ty.mligo", line 9, characters 5-11:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/tx_w_ty.mligo", line 6, character 2 to line 9, character 18:
+      5 | let s (x : t) =
+      6 |   match x with
+      7 |     (n, One) -> ()
       8 |   | _        -> ()
       9 |   | (n, Two) -> ()
 
@@ -334,7 +359,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "w_tx_ty.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/w_tx_ty.mligo", line 8, characters 5-11:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/w_tx_ty.mligo", line 6, character 2 to line 9, character 18:
+      5 | let s (x : t) =
+      6 |   match x with
       7 |     _        -> ()
       8 |   | (n, One) -> ()
       9 |   | (n, Two) -> ()
@@ -344,7 +371,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "rx_rx_ry.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/rx_rx_ry.mligo", line 8, characters 4-19:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/rx_rx_ry.mligo", line 6, character 2 to line 9, character 25:
+      5 | let s (x : t) =
+      6 |   match x with
       7 |     { a ; b = One } -> ()
       8 |   | { a ; b = One } -> ()
       9 |   | { a ; b = Two } -> ()
@@ -354,7 +383,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "rx_w_ry.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/rx_w_ry.mligo", line 9, characters 4-19:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/rx_w_ry.mligo", line 6, character 2 to line 9, character 25:
+      5 | let s (x : t) =
+      6 |   match x with
+      7 |     { a ; b = One } -> ()
       8 |   | _               -> ()
       9 |   | { a ; b = Two } -> ()
 
@@ -363,7 +395,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "w_rx_ry.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/w_rx_ry.mligo", line 8, characters 4-19:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/w_rx_ry.mligo", line 6, character 2 to line 9, character 25:
+      5 | let s (x : t) =
+      6 |   match x with
       7 |     _               -> ()
       8 |   | { a ; b = One } -> ()
       9 |   | { a ; b = Two } -> ()
@@ -373,7 +407,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c_c.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c_c.mligo", line 11, characters 4-12:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c_c.mligo", line 6, character 2 to line 11, character 18:
+      5 | let s (x : t) =
+      6 |   match x with
+      7 |     One Five -> ()
+      8 |   | One Four -> ()
+      9 |   | Two c    -> ()
      10 |   | Three    -> ()
      11 |   | One Four -> ()
 
@@ -382,10 +421,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c1_c2_c3.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.jsligo", line 6, characters 4-7:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.jsligo", line 4, character 11 to line 9, character 4:
+      3 | let s = (x : t) : unit =>
+      4 |   match(x, {
       5 |     One:   (a : int) => unit,
       6 |     One:   (b : int) => unit,
       7 |     Two:   (c : nat) => unit,
+      8 |     Three: () => unit
+      9 |   })
 
     Error : this match case is unused. |}]
 
@@ -393,17 +436,25 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c1_c3.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.jsligo", line 7, characters 4-7:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.jsligo", line 4, character 11 to line 9, character 4:
+      3 | let s = (x : t) : unit =>
+      4 |   match(x, {
+      5 |     One:   (a : int) => unit,
       6 |     Two:   (c : nat) => unit,
       7 |     One:   (b : int) => unit,
       8 |     Three: () => unit
+      9 |   })
 
     Error : this match case is unused. |}]
   
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c3_c1.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.jsligo", line 8, characters 4-7:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.jsligo", line 4, character 11 to line 9, character 4:
+      3 | let s = (x : t) : unit =>
+      4 |   match(x, {
+      5 |     One:   (a : int) => unit,
+      6 |     Two:   (c : nat) => unit,
       7 |     Three: ()        => unit,
       8 |     One:   (b : int) => unit,
       9 |   })

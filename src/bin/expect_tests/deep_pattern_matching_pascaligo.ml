@@ -33,25 +33,30 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail1.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.ligo", line 6, characters 11-30:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.ligo", line 5, character 2 to line 9, character 3:
+      4 | function t (const x: myt * myt) is
       5 |   case x of [
       6 |   | (Nil , record [a ; b ; c ]) -> 1
       7 |   | (xs  , Nil) -> 2
+      8 |   | (Cons (a,b) , Cons (c,d)) -> a + b + c + d
+      9 |   ]
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#492 , b -> ^gen#493 , c -> ^gen#494] with
-    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify "record[a -> ^gen#542 , b -> ^gen#543 , c -> ^gen#544]" with "myt". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.ligo", line 5, characters 11-18:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.ligo", line 4, character 2 to line 8, character 3:
+      3 | function t (const x: myt * myt) is
       4 |   case x of [
       5 |   | (Nil , (a,b,c)) -> 1
       6 |   | (xs  , Nil) -> 2
+      7 |   | (Cons (a,b) , Cons (c,d)) -> a + b + c + d
+      8 |   ]
 
     Invalid type(s)
-    Cannot unify ( ^gen#492 * ^gen#493 * ^gen#494 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify "( ^gen#542 * ^gen#543 * ^gen#544 )" with "myt". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.ligo") ] ;
@@ -61,7 +66,7 @@ let%expect_test _ =
       5 |   | Some_fake (x) -> x
       6 |   | None_fake -> 1
 
-    Pattern not of the expected type option (int) |}]
+    Pattern not of the expected type "option (int)". |}]
 
 (* wrong body type *)
 
@@ -74,7 +79,7 @@ let%expect_test _ =
       7 |   ]
 
     Invalid type(s)
-    Cannot unify int with string. |}]
+    Cannot unify "int" with "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.ligo") ] ;
@@ -85,14 +90,16 @@ let%expect_test _ =
      24 |         ] ;
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.ligo", line 6, characters 4-18:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.ligo", line 4, character 2 to line 7, character 3:
+      3 | function t (const x: myt * ( int * int * int)) is
+      4 |   case x of [
       5 |   | (xs , (a,b,c)) -> 1
       6 |   | (xs , (c,b,a)) -> 2
       7 |   ]
@@ -151,7 +158,7 @@ let%expect_test _ =
      10 |       | Decrement -> s - 1
      11 |     ]
 
-    Pattern not of the expected type nat |}]
+    Pattern not of the expected type "nat". |}]
 
 (* Positives *)
 

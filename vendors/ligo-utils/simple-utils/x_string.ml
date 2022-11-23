@@ -1,6 +1,6 @@
 type t =
   Standard of string
-| Verbatim of string [@@deriving hash]
+| Verbatim of string [@@deriving hash, sexp]
 
 let standard : string -> t = fun s -> Standard s
 let verbatim : string -> t = fun s -> Verbatim s
