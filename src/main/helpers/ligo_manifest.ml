@@ -40,20 +40,65 @@ type t =
 
 let is_empty field value =
   if String.equal value ""
-  then failwith (Format.sprintf "%s is \"\" in package.json" field)
-  else ()
+  then Error (Format.sprintf "%s is \"\" in package.json" field)
+  else Ok ()
+
+
+let validate_storage ~main ~storage_fn ~storage_arg =
+  match storage_fn, storage_arg with
+  | Some storage_fn, Some storage_arg ->
+    let expression = Format.sprintf "%s %s" storage_fn storage_arg in
+    let ligo = Sys_unix.executable_name in
+    let cmd = Constants.ligo_compile_storage ~ligo ~main ~expression () in
+    let status =
+      Lwt_process.with_process_none
+        ~stdout:`Dev_null
+        ~stderr:`Dev_null
+        cmd
+        (fun p ->
+          Lwt.map
+            (fun status ->
+              match status with
+              | Caml_unix.WEXITED 0 -> Ok ()
+              | _ -> Error "unknown error")
+            p#status)
+    in
+    let result = Lwt_main.run status in
+    (match result with
+    | Ok _ -> Ok ()
+    | Error _ ->
+      Error
+        "\n\
+         Error: Check `storage_fn` & `storage_arg` in packge.json or check \
+         your LIGO storage expression")
+  | _ -> Ok ()
+
+
+let validate_main_file ~main =
+  match Sys_unix.file_exists main with
+  | `Yes ->
+    (match snd @@ Filename.split_extension main with
+    | Some _ -> Ok ()
+    | None ->
+      Error
+        "Invalid LIGO file specifed in main field of package.json\n\
+         Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) ")
+  | `No | `Unknown ->
+    Error
+      "main file does not exists.\n\
+       Please specify a valid LIGO file in package.json."
 
 
 let validate t =
-  let { name; main; author; _ } = t in
-  try
-    is_empty "name" name;
-    is_empty "author" author;
-    is_empty "main" main;
-    (* stat manin file here *)
-    Ok t
-  with
-  | Failure e -> Error e
+  let { name; main; author; storage_fn; storage_arg } = t in
+  let* () = is_empty "name" name in
+  let* () = is_empty "author" author in
+  let* () = is_empty "main" main in
+  (* stat manin file here *)
+  let* () = validate_main_file ~main in
+  (* check storage *)
+  let* () = validate_storage ~main ~storage_fn ~storage_arg in
+  Ok ()
 
 
 let try_readme ~project_root =
@@ -264,3 +309,12 @@ let read ~project_root =
 (* Name missing *)
 (* Version missing *)
 (* Version invalid sem ver *)
+(* Author missing *)
+(* *)
+
+(* Expect tests *)
+
+(* Invalid main *)
+(* Invalid storage_fn *)
+(* Invalid storage_arg *)
+(* Valid storage_fn, storage_arg, main *)

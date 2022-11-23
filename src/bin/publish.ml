@@ -405,61 +405,6 @@ let tar_gzip ~name ~version ~ligoignore dir =
   Lwt.return (fcount, Buffer.contents_bytes buf, unpacked_size)
 
 
-let validate_storage ~manifest =
-  let open LigoManifest in
-  let { main; storage_fn; storage_arg } = manifest in
-  match storage_fn, storage_arg with
-  | Some storage_fn, Some storage_arg ->
-    let expression = Format.sprintf "%s %s" storage_fn storage_arg in
-    let ligo = Sys_unix.executable_name in
-    let cmd =
-      Cli_helpers.Constants.ligo_compile_storage ~ligo ~main ~expression ()
-    in
-    let status =
-      Lwt_process.with_process_none
-        ~stdout:`Dev_null
-        ~stderr:`Dev_null
-        cmd
-        (fun p ->
-          Lwt.map
-            (fun status ->
-              match status with
-              | Caml_unix.WEXITED 0 -> Ok ()
-              | _ -> Error ("unknown error", ""))
-            p#status)
-    in
-    let result = Lwt_main.run status in
-    (match result with
-    | Ok _ -> Ok ()
-    | Error _ ->
-      Error
-        ( "\n\
-           Error: Check `storage_fn` & `storage_arg` in packge.json or check \
-           your LIGO storage expression"
-        , "" ))
-  | _ -> Ok ()
-
-
-let validate_main_file ~manifest =
-  let open LigoManifest in
-  let { main } = manifest in
-  match Sys_unix.file_exists main with
-  | `Yes ->
-    (match snd @@ Filename.split_extension main with
-    | Some _ -> Ok ()
-    | None ->
-      Error
-        ( "Invalid LIGO file specifed in main field of package.json\n\
-           Valid extension for LIGO files are (.ligo, .mligo, .religo, \
-           .jsligo) "
-        , "" ))
-  | `No | `Unknown ->
-    Error
-      ( "main file does not exists.\n\
-         Please specify a valid LIGO file in package.json."
-      , "" )
-
-
 let pack ~project_root ~token ~ligo_registry ~ligoignore ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
   let fcount, tarball, unpacked_size =
@@ -495,8 +440,12 @@ let ( let* ) x f = Result.bind x ~f
 
 let read_manifest ~project_root =
   let manifest = LigoManifest.read ~project_root in
-  match Result.bind manifest ~f:LigoManifest.validate with
-  | Ok manifest -> Ok manifest
+  Result.map_error manifest ~f:(fun e -> e, "")
+
+
+let validate_manifest manifest =
+  match LigoManifest.validate manifest with
+  | Ok () -> Ok ()
   | Error e -> Error (Format.sprintf "\nERROR: %s" e, "")
 
 
@@ -574,6 +523,10 @@ let publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run 
     with_logging ~before:"Reading manifest" (fun () ->
         read_manifest ~project_root)
   in
+  let* () =
+    with_logging ~before:"Validating manifest file" (fun () ->
+        validate_manifest manifest)
+  in
   let* token =
     with_logging ~before:"Checking auth token" (fun () ->
         get_auth_token ~ligorc_path ligo_registry)
@@ -581,14 +534,6 @@ let publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run 
   let* project_root =
     with_logging ~before:"Finding project root" (fun () ->
         get_project_root project_root)
-  in
-  let* () =
-    with_logging ~before:"Validating main file" (fun () ->
-        validate_main_file ~manifest)
-  in
-  let* () =
-    with_logging ~before:"Validating storage" (fun () ->
-        validate_storage ~manifest)
   in
   let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in
   let* packed, stats =

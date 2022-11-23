@@ -19,7 +19,13 @@
 (library
  (name cli_helpers)
  (public_name ligo.cli_helpers)
- (modules cli_helpers repository_url ligo_rc ligo_manifest ligo_ignore)
+ (modules
+  cli_helpers
+  repository_url
+  ligo_rc
+  ligo_manifest
+  ligo_ignore
+  constants)
  (instrumentation
   (backend bisect_ppx))
  (libraries

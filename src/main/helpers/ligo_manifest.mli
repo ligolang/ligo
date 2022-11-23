@@ -28,5 +28,5 @@ type t =
   }
 [@@deriving to_yojson]
 
-val validate : t -> (t, string) result
+val validate : t -> (unit, string) result
 val read : project_root:string option -> (t, string) result
