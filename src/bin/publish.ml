@@ -446,7 +446,7 @@ let read_manifest ~project_root =
 let validate_manifest manifest =
   match LigoManifest.validate manifest with
   | Ok () -> Ok ()
-  | Error e -> Error (Format.sprintf "\nERROR: %s" e, "")
+  | Error e -> Error (Format.sprintf "\nError: %s" e, "")
 
 
 let get_auth_token ~ligorc_path ligo_registry =

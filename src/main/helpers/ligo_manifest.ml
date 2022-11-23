@@ -38,12 +38,6 @@ type t =
   }
 [@@deriving to_yojson]
 
-let is_empty field value =
-  if String.equal value ""
-  then Error (Format.sprintf "%s is \"\" in package.json" field)
-  else Ok ()
-
-
 let validate_storage ~main ~storage_fn ~storage_arg =
   match storage_fn, storage_arg with
   | Some storage_fn, Some storage_arg ->
@@ -60,7 +54,7 @@ let validate_storage ~main ~storage_fn ~storage_arg =
             (fun status ->
               match status with
               | Caml_unix.WEXITED 0 -> Ok ()
-              | _ -> Error "unknown error")
+              | _ -> Error "Error: unknown error")
             p#status)
     in
     let result = Lwt_main.run status in
@@ -81,19 +75,16 @@ let validate_main_file ~main =
     | Some _ -> Ok ()
     | None ->
       Error
-        "Invalid LIGO file specifed in main field of package.json\n\
+        "Error: Invalid LIGO file specifed in main field of package.json\n\
          Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) ")
   | `No | `Unknown ->
     Error
-      "main file does not exists.\n\
+      "Error: main file does not exists.\n\
        Please specify a valid LIGO file in package.json."
 
 
 let validate t =
   let { name; main; author; storage_fn; storage_arg } = t in
-  let* () = is_empty "name" name in
-  let* () = is_empty "author" author in
-  let* () = is_empty "main" main in
   (* stat manin file here *)
   let* () = validate_main_file ~main in
   (* check storage *)
@@ -108,7 +99,7 @@ let try_readme ~project_root =
         String.equal "readme.md" (String.lowercase d)
         || String.equal "readme" (String.lowercase d))
   with
-  | None -> "ERROR: No README data found!"
+  | None -> "Error: No README data found!"
   | Some r ->
     let contents = In_channel.read_all (Filename.concat project_root r) in
     String.escaped contents
@@ -116,46 +107,50 @@ let try_readme ~project_root =
 
 let parse_name json =
   match Util.member "name" json with
+  | `String "" -> Error "Error: name field is empty (\"\") in package.json"
   | `String s -> Ok s
-  | `Null -> Error "No name field in package.json"
-  | _ -> Error "Invalid name field in package.json"
+  | `Null -> Error "Error: No name field in package.json"
+  | _ -> Error "Error: Invalid name field in package.json"
 
 
 let parse_sem_ver version =
   match Semver.of_string version with
   | Some s -> Ok s
-  | None -> Error (Format.sprintf "Invalid version %s in package.json" version)
+  | None ->
+    Error (Format.sprintf "Error: Invalid version %s in package.json" version)
 
 
 let parse_version json =
   let* version =
     match Util.member "version" json with
     | `String s -> Ok s
-    | `Null -> Error "No version field in package.json"
-    | _ -> Error "Invalid version field in package.json"
+    | `Null -> Error "Error: No version field in package.json"
+    | _ -> Error "Error: Invalid version field in package.json"
   in
   parse_sem_ver version
 
 
 let parse_author json =
   match Util.member "author" json with
+  | `String "" -> Error "Error: author field is empty (\"\") in package.json"
   | `String s -> Ok s
-  | `Null -> Error "No author field in package.json"
-  | _ -> Error "Invalid author field in package.json"
+  | `Null -> Error "Error: No author field in package.json"
+  | _ -> Error "Error: Invalid author field in package.json"
 
 
 let parse_main json =
   match Util.member "main" json with
+  | `String "" -> Error "Error: main field is empty (\"\") in package.json"
   | `String s -> Ok s
-  | `Null -> Error "No main field in package.json"
-  | _ -> Error "Invalid main field in package.json"
+  | `Null -> Error "Error: No main field in package.json"
+  | _ -> Error "Error: Invalid main field in package.json"
 
 
 let parse_license json =
   match Util.member "license" json with
   | `String s -> Ok s
-  | `Null -> Error "No license field in package.json"
-  | _ -> Error "Invalid license field in package.json"
+  | `Null -> Error "Error: No license field in package.json"
+  | _ -> Error "Error: Invalid license field in package.json"
 
 
 let parse_description json =
@@ -195,12 +190,13 @@ let parse_dev_dependencies json =
 
 let parse_repository json =
   match Util.member "repository" json with
-  | `Null -> Error "No repository field in package.json"
+  | `Null -> Error "Error: No repository field in package.json"
   | repo ->
     (match Repository_url.parse repo with
     | Ok t -> Ok t
     | Error e ->
-      Error (Format.sprintf "Invalid repository field in package.json\n%s" e))
+      Error
+        (Format.sprintf "Error: Invalid repository field in package.json\n%s" e))
 
 
 let parse_readme ~project_root json =
@@ -216,7 +212,7 @@ let parse_type json =
   | `String "library" -> Ok "library"
   | _ ->
     Error
-      "Invalid type field in package.json\n\
+      "Error: Invalid type field in package.json\n\
        Type can be either library or contract"
 
 
@@ -224,7 +220,8 @@ let parse_storage_fn ~type_ json =
   match Util.member "storage_fn" json with
   | `String s -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
-    Error "In case of a type : contract a `storage_fn` needs to be provided"
+    Error
+      "Error: In case of a type : contract a `storage_fn` needs to be provided"
   | _ -> Ok None
 
 
@@ -232,19 +229,20 @@ let parse_storage_arg ~type_ json =
   match Util.member "storage_arg" json with
   | `String s -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
-    Error "In case of a type : contract a `storage_arg` needs to be provided"
+    Error
+      "Error: In case of a type : contract a `storage_arg` needs to be provided"
   | _ -> Ok None
 
 
 let parse_bugs json =
   match Util.member "bugs" json with
-  | `Null -> Error "No bugs field in package.json"
+  | `Null -> Error "Error: No bugs field in package.json"
   | bugs ->
     (match Bugs.of_yojson bugs with
     | Ok bugs -> Ok bugs
     | Error _ ->
       Error
-        "Invalid `bugs` fields.\n\
+        "Error: Invalid `bugs` fields.\n\
          email & url (bug tracker url) needs to be provided\n\
          e.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \"email\" : \
          \"foo@bar.com\" }")
@@ -290,17 +288,17 @@ let read_from_json ~project_root ~ligo_manifest_path json =
 
 let read ~project_root =
   match project_root with
-  | None -> failwith "No package.json found!"
+  | None -> failwith "Error: No package.json found!"
   | Some project_root ->
     let ligo_manifest_path = Filename.concat project_root "package.json" in
     let () =
       match Sys_unix.file_exists ligo_manifest_path with
-      | `No | `Unknown -> failwith "Unable to find package.json!"
+      | `No | `Unknown -> failwith "Error: Unable to find package.json!"
       | `Yes -> ()
     in
     let json =
       try Yojson.Safe.from_file ligo_manifest_path with
-      | _ -> failwith "Error in parsing package.json (invalid json)"
+      | _ -> failwith "Error: Error in parsing package.json (invalid json)"
     in
     read_from_json ~project_root ~ligo_manifest_path json
 
