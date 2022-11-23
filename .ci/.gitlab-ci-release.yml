@@ -233,7 +233,7 @@ bottle-ventura-i7:
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
       --upload-file ./ligo--${RELEASE_VERSION}.ventura.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.ventura.bottle.1.tar.gz"
+      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.ventura.bottle.tar.gz"
     - sed -i '' "s/# bottle ventura/${BOTTLE_INFO}/" ./HomebrewFormula/ligo.rb
   after_script:
     - brew uninstall ligo 
@@ -262,7 +262,7 @@ bottle-ventura-m1:
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
       --upload-file ./ligo--${RELEASE_VERSION}.arm64_ventura.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.arm64_ventura.bottle.1.tar.gz"
+      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.arm64_ventura.bottle.tar.gz"
     - sed -i '' "s/# bottle arm64_ventura/${BOTTLE_INFO}/" ./HomebrewFormula/ligo.rb
   after_script:
     - brew uninstall ligo 

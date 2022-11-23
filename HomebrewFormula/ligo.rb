@@ -10,7 +10,8 @@ class Ligo < Formula
 
 
   bottle do
-    root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/"
+    root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current"
+    rebuild 1
       sha256 cellar: :any, arm64_ventura: "65e15ff61d484adac1fcd59a6d204a2c5ac1fc8fabaf7eef74e31ac6f7571405"
       sha256 cellar: :any, ventura: "9f26e806dd5c3ee4f1bdde2fde3278a3c21bb67ce5e39f104897ce4681809f15"
   end
