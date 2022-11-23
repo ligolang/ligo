@@ -12,6 +12,7 @@ import Fmt.Internal.Core (FromBuilder)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
 import Cli.Impl qualified as LSP
+import Extension qualified as LSP
 
 -- | Exceptions allowed in debugger logic.
 class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
@@ -91,3 +92,7 @@ instance DebuggerException LSP.LigoIOException where
     -- This is usually some "ligo executable not found in path", i.e.
     -- something to be fixed by the user
     UserException
+
+instance DebuggerException LSP.UnsupportedExtension where
+  type ExceptionTag LSP.UnsupportedExtension = "UnsupportedExtension"
+  debuggerExceptionType _ = MidLigoLayerException

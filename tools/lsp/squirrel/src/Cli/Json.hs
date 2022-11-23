@@ -16,6 +16,15 @@ module Cli.Json
   , LigoTypeContent (..)
   , LigoTypeExpression (..)
   , LigoTableField (..)
+  , LigoTypeVariable (..)
+  , LigoTypeSum
+  , LigoTypeRecord
+  , LigoTypeArrow (..)
+  , LigoTypeForAll (..)
+  , LigoTypeApp (..)
+  , LigoTypeModuleAccessor (..)
+  , LigoTypeConstant (..)
+  , LigoTypeTable (..)
   , LigoRange (..)
   , LigoRangeInner (..)
   , LigoByte (..)
@@ -223,7 +232,8 @@ data LigoTypeExpression = LigoTypeExpression
     -- | `"orig_var"`
   , _lteOrigVar     :: Maybe LigoTypeVariable
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTypeExpression
 
 -- | Whole ligo type.
@@ -265,20 +275,23 @@ data LigoTypeContent
   ---- 5th stage specific
   | -- `"t_constant"`
     LTCConstant LigoTypeConstant
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
 
 data LigoTypeApp = LigoTypeApp
   { _ltaTypeOperator :: LigoTypeVariable
   , _ltaArguments    :: [LigoTypeExpression]
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTypeApp
 
 data LigoTypeModuleAccessor = LigoTypeModuleAccessor
   { _ltmaModulePath :: Value -- TODO not used
   , _ltmaElement    :: Value -- TODO not used
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 4 LigoTypeModuleAccessor
 
 type LigoTypeSum = LigoTypeTable
@@ -288,7 +301,8 @@ data LigoTypeTable = LigoTypeTable
   { _lttFields :: HM.HashMap Text LigoTableField
   , _lttLayout  :: Value -- TODO not used
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTypeTable
 
 data LigoTypeConstant = LigoTypeConstant
@@ -296,7 +310,8 @@ data LigoTypeConstant = LigoTypeConstant
   , _ltcLanguage   :: Text
   , _ltcInjection  :: NonEmpty Text
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTypeConstant
 
 data LigoTypeArrow = LigoTypeArrow
@@ -304,7 +319,8 @@ data LigoTypeArrow = LigoTypeArrow
   { _ltaType2 :: LigoTypeExpression
   , _ltaType1 :: LigoTypeExpression
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTypeArrow
 
 data LigoTypeVariable = LigoTypeVariable
@@ -313,14 +329,16 @@ data LigoTypeVariable = LigoTypeVariable
   , _ltvGenerated :: Bool
   , _ltvLocation  :: LigoRange
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTypeVariable
 
 data LigoTypeForAll = LigoTypeForAll
   { _ltfaTyBinder :: LigoTypeVariable
   , _ltfaType_    :: LigoTypeExpression
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 4 LigoTypeForAll
 
 -- | Record field type value.
@@ -337,7 +355,8 @@ data LigoTableField = LigoTableField
   , -- | The type itself.
     _ltfAssociatedType :: LigoTypeExpression
   }
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Eq)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoTableField
 
 -- | Location of definition.
@@ -348,12 +367,14 @@ data LigoRange
   = LRVirtual Text
   | LRFile LigoFileRange
   deriving stock (Eq, Generic, Show)
+  deriving anyclass (NFData)
 
 data LigoFileRange = LigoFileRange
   { _lfrStart :: LigoRangeInner
   , _lfrStop  :: LigoRangeInner
   }
   deriving stock (Eq, Generic, Show)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoFileRange
 
 -- | Insides of ligo location.
@@ -366,6 +387,7 @@ data LigoRangeInner = LigoRangeInner
   , _lriPointBol :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 3 LigoRangeInner
 
 -- | Byte representation of ligo location.
@@ -379,6 +401,7 @@ data LigoByte = LigoByte
   , _lbPosCnum  :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
+  deriving anyclass (NFData)
   deriving (FromJSON) via LigoJSON 2 LigoByte
 
 ----------------------------------------------------------------------------

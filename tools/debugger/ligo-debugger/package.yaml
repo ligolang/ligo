@@ -68,6 +68,7 @@ library:
   dependencies:
     - aeson
     - ansi-terminal
+    - attoparsec
     - bytestring
     - conduit
     - conduit-extra
@@ -136,6 +137,7 @@ tests:
     main: Main.hs
 
     dependencies:
+      - aeson
       - containers
       - data-default
       - dir-traverse

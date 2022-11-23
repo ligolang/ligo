@@ -50,6 +50,7 @@ import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
+import Extension (UnsupportedExtension (..), getExt)
 
 import Language.LIGO.DAP.Variables
 
@@ -237,22 +238,34 @@ instance HasSpecificMessages LIGO where
   handleScopesRequest DAP.ScopesRequest{..} = do
     -- We follow the implementation from morley-debugger
     snap <- zoom dsDebuggerState $ frozen curSnapshot
-    let stackItems = snap
+
+    let currentStackFrame = snap
           & isStackFrames
           & flip (^?!) (ix (frameIdScopesRequestArguments argumentsScopesRequest - 1))
+
+    let stackItems = currentStackFrame
           & sfStack
-          & reverse  -- stack's top should go to the end of the variables list
+          & reverse -- stack's top should go to the end of the variables list
+
+    -- Here we can see one problem. Variables types would be prettified
+    -- in the dialect from the current file.
+    -- But some variables can come from, for example, a @CameLIGO@ contract
+    -- and the other ones from a @PascaLIGO@ one.
+    lang <-
+      currentStackFrame ^. sfLocL . lrFileL
+        & getExt @(Either UnsupportedExtension)
+        & either throwM pure
 
     let builder =
           case isStatus snap of
             InterpretRunning (EventExpressionEvaluated (Just (SomeValue value)))
               -- We want to show $it variable only in the top-most stack frame.
               | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
-                idx <- createVariables stackItems
+                idx <- createVariables lang stackItems
                 -- TODO: get the type of "$it" value
-                itVar <- buildVariable LTUnresolved value "$it"
+                itVar <- buildVariable lang (LigoType Nothing) value "$it"
                 insertToIndex idx [itVar]
-            _ -> createVariables stackItems
+            _ -> createVariables lang stackItems
 
     let (varReference, variables) = runBuilder builder
 

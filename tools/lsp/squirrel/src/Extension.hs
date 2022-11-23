@@ -10,6 +10,7 @@ module Extension
   ) where
 
 import Control.Monad.Except (MonadError (throwError))
+import Data.String.Interpolate (i)
 import System.FilePath
 
 import AST.Skeleton (Lang (..))
@@ -23,7 +24,10 @@ data ElimExt a = ElimExt
 
 newtype UnsupportedExtension = UnsupportedExtension String
   deriving stock Show
-  deriving anyclass Exception
+
+instance Exception UnsupportedExtension where
+  displayException (UnsupportedExtension ext) =
+    [i|Unsupported extension has been met: "#{ext}"|]
 
 -- TODO: 'lsp' uses the 'Glob' package to deal with globs, but it doesn't
 -- support braced globs such as "{,m,re}ligo" even though the LSP spec allows
