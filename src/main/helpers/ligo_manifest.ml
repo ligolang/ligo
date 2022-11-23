@@ -228,19 +228,24 @@ let parse_type json =
 
 let parse_storage_fn ~type_ json =
   match Util.member "storage_fn" json with
-  | `String s -> Ok (Some s)
+  | `String "" when String.(type_ = "contract") ->
+    Error "Error: storage_fn field is empty (\"\") in package.json"
+  | `String s when String.(type_ = "contract") -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
     Error
-      "Error: In case of a type : contract a `storage_fn` needs to be provided"
+      "Error: In case of a type : contract a `storage_fn` needs to be provided."
   | _ -> Ok None
 
 
 let parse_storage_arg ~type_ json =
   match Util.member "storage_arg" json with
-  | `String s -> Ok (Some s)
+  | `String "" when String.(type_ = "contract") ->
+    Error "Error: storage_arg field is empty (\"\") in package.json"
+  | `String s when String.(type_ = "contract") -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
     Error
-      "Error: In case of a type : contract a `storage_arg` needs to be provided"
+      "Error: In case of a type : contract a `storage_arg` needs to be \
+       provided."
   | _ -> Ok None
 
 
@@ -674,18 +679,181 @@ let%test _ =
   | Error _ -> false
   | Ok manifest ->
     string_assoc_list_equal manifest.dev_dependencies [ "some_tool", "1.0.0" ]
-(* type_ = "contract" *)
-(* storage_fn = missing *)
-(* storage_fn = empty *)
-(* storage_fn = valid *)
-(* storage_arg = missing *)
-(* storage_arg = empty *)
-(* storage_arg = valid *)
-(* description = missing *)
-(* description = empty *)
-(* description = valid *)
 
-(* Expect tests *)
+(* type_ = "contract" & storage_fn = missing *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"}}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = "Error: In case of a type : contract a `storage_fn` needs to be \
+         provided.")
+  | Ok _ -> false
+
+(* storage_fn = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(e = {|Error: storage_fn field is empty ("") in package.json|})
+  | Ok _ -> false
+
+(* storage_fn = valid & storage_arg = missing *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":"generate_initial_storage"}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = "Error: In case of a type : contract a `storage_arg` needs to be \
+         provided.")
+  | Ok _ -> false
+
+(* storage_arg = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":"generate_initial_storage",
+         "storage_arg":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(e = "Error: storage_arg field is empty (\"\") in package.json")
+  | Ok _ -> false
+
+(* storage_arg = valid *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":"generate_initial_storage",
+         "storage_arg":"1"}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest ->
+    Option.equal
+      String.equal
+      manifest.storage_fn
+      (Some "generate_initial_storage")
+    && Option.equal String.equal manifest.storage_arg (Some "1")
+
+(* description = missing *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":"generate_initial_storage",
+         "storage_arg":"1"}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> String.equal manifest.description ""
+
+(* description = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":"generate_initial_storage",
+         "storage_arg":"1",
+         "description":""}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> String.equal manifest.description ""
+
+(* description = valid *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "type":"contract",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"},
+         "storage_fn":"generate_initial_storage",
+         "storage_arg":"1",
+         "description":"A LIGO package"}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> String.equal manifest.description "A LIGO package"
+
+(* TODO: Expect tests *)
 
 (* Invalid main *)
 (* Invalid storage_fn *)

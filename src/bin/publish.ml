@@ -9,8 +9,8 @@
 - [x] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [x] Wrap logging message in a function ~before ~after
 - [x] Add support for .ligoignore to igore stuff while packaging
-- [ ] Refactor manifest parsing & validation
-- [ ] Add unit tests for manifest parsing & validation
+- [x] Refactor manifest parsing & validation
+- [x] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [ ] Add basic comments in code
