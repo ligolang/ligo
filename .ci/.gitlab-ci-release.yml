@@ -219,6 +219,9 @@ update_release_metadata:
 #######################################################################
 generate-homebrew-version:
   stage: pretooling
+  needs:
+    - job: build_release_env_vars
+      artifacts: true
   script:
     - ./.ci/scripts/homebrew/create_new_homebrew_version.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${RELEASE_VERSION}
   artifacts:
@@ -237,6 +240,8 @@ bottle-ventura-i7:
     - i7
   needs:
     - job: generate-homebrew-version
+      artifacts: true
+    - job: build_release_env_vars
       artifacts: true
   script:
     - brew install --build-bottle ./HomebrewFormula/ligo.rb
@@ -264,6 +269,8 @@ bottle-ventura-m1:
     - m1
   needs:
     - job: bottle-ventura-i7
+      artifacts: true
+    - job: build_release_env_vars
       artifacts: true
   script:
     - brew install --build-bottle ./HomebrewFormula/ligo.rb
