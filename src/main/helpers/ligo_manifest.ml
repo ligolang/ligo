@@ -15,6 +15,7 @@ end
 module Semver = struct
   include Semver
 
+  let equal v1 v2 = compare v1 v2 = 0
   let to_yojson s = `String (to_string s)
 end
 
@@ -84,7 +85,7 @@ let validate_main_file ~main =
 
 
 let validate t =
-  let { name; main; author; storage_fn; storage_arg } = t in
+  let { main; storage_fn; storage_arg; _ } = t in
   (* stat manin file here *)
   let* () = validate_main_file ~main in
   (* check storage *)
@@ -123,6 +124,7 @@ let parse_sem_ver version =
 let parse_version json =
   let* version =
     match Util.member "version" json with
+    | `String "" -> Error "Error: version field is empty (\"\") in package.json"
     | `String s -> Ok s
     | `Null -> Error "Error: No version field in package.json"
     | _ -> Error "Error: Invalid version field in package.json"
@@ -148,6 +150,7 @@ let parse_main json =
 
 let parse_license json =
   match Util.member "license" json with
+  | `String "" -> Error "Error: license field is empty (\"\") in package.json"
   | `String s -> Ok s
   | `Null -> Error "Error: No license field in package.json"
   | _ -> Error "Error: Invalid license field in package.json"
@@ -157,6 +160,13 @@ let parse_description json =
   match Util.member "description" json with
   | `String s -> Ok s
   | _ -> Ok ""
+
+
+let string_assoc_list_equal assoc1 assco2 =
+  List.equal
+    (fun (k1, v1) (k2, v2) -> String.equal k1 k2 && String.equal v1 v2)
+    assoc1
+    assco2
 
 
 let parse_string_assoc_list
@@ -242,7 +252,7 @@ let parse_bugs json =
     | Ok bugs -> Ok bugs
     | Error _ ->
       Error
-        "Error: Invalid `bugs` fields.\n\
+        "Error: Invalid `bugs` field in package.json.\n\
          email & url (bug tracker url) needs to be provided\n\
          e.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \"email\" : \
          \"foo@bar.com\" }")
@@ -256,33 +266,33 @@ let read_from_json ~project_root ~ligo_manifest_path json =
   let* repository = parse_repository json in
   let* main = parse_main json in
   let* license = parse_license json in
+  let* bugs = parse_bugs json in
   (* Optional fields *)
+  let* type_ = parse_type json in
   let* description = parse_description json in
   let* scripts = parse_scripts json in
   let* dependencies = parse_dependencies json in
   let* dev_dependencies = parse_dev_dependencies json in
-  let* type_ = parse_type json in
   let* storage_fn = parse_storage_fn ~type_ json in
   let* storage_arg = parse_storage_arg ~type_ json in
   let* readme = parse_readme ~project_root json in
-  let* bugs = parse_bugs json in
   Ok
     { name
     ; version
     ; author
+    ; repository
+    ; main
+    ; license
+    ; bugs
+    ; type_
     ; description
     ; scripts
     ; dependencies
     ; dev_dependencies
-    ; main
-    ; type_
     ; storage_fn
     ; storage_arg
-    ; repository
-    ; license
     ; readme
     ; ligo_manifest_path
-    ; bugs
     }
 
 
@@ -302,17 +312,383 @@ let read ~project_root =
     in
     read_from_json ~project_root ~ligo_manifest_path json
 
+
 (* Unit tests *)
 
-(* Name missing *)
-(* Version missing *)
-(* Version invalid sem ver *)
-(* Author missing *)
-(* *)
+let ligo_manifest_path = "<valid-path>"
+let project_root = "<valid-path>"
+let read_from_json = read_from_json ~project_root ~ligo_manifest_path
+
+(* name = missing *)
+let%test _ =
+  let json = Yojson.Safe.from_string {|{}|} in
+  match read_from_json json with
+  | Error e -> String.(e = "Error: No name field in package.json")
+  | Ok _ -> false
+
+(* name = empty *)
+let%test _ =
+  let json = Yojson.Safe.from_string {|{"name":""}|} in
+  match read_from_json json with
+  | Error e -> String.(e = {|Error: name field is empty ("") in package.json|})
+  | Ok _ -> false
+
+(* name = valid & version = missing *)
+let%test _ =
+  let json = Yojson.Safe.from_string {|{"name":"foo"}|} in
+  match read_from_json json with
+  | Error e -> String.(e = {|Error: No version field in package.json|})
+  | Ok _ -> false
+
+(* version = empty *)
+let%test _ =
+  let json = Yojson.Safe.from_string {|{"name":"foo","version":""}|} in
+  match read_from_json json with
+  | Error e ->
+    String.(e = {|Error: version field is empty ("") in package.json|})
+  | Ok _ -> false
+
+(* version = invalid *)
+let%test _ =
+  let json = Yojson.Safe.from_string {|{"name":"foo","version":"0.1"}|} in
+  match read_from_json json with
+  | Error e -> String.(e = {|Error: Invalid version 0.1 in package.json|})
+  | Ok _ -> false
+
+(* version = valid & author = missing *)
+let%test _ =
+  let json = Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0"}|} in
+  match read_from_json json with
+  | Error e -> String.(e = {|Error: No author field in package.json|})
+  | Ok _ -> false
+
+(* author = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0","author":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(e = {|Error: author field is empty ("") in package.json|})
+  | Ok _ -> false
+
+(* author = valid & repository = missing *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe"}|}
+  in
+  match read_from_json json with
+  | Error e -> String.(e = {|Error: No repository field in package.json|})
+  | Ok _ -> false
+
+(* repository = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe","repository":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = "Error: Invalid repository field in package.json\n\
+         repository url is invalid")
+  | Ok _ -> false
+
+(* repository = valid & main = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git"}|}
+  in
+  match read_from_json json with
+  | Error e -> String.(e = "Error: No main field in package.json")
+  | Ok _ -> false
+
+(* main = valid & license = missing *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo"}|}
+  in
+  match read_from_json json with
+  | Error e -> String.(e = "Error: No license field in package.json")
+  | Ok _ -> false
+
+(* license = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(e = {|Error: license field is empty ("") in package.json|})
+  | Ok _ -> false
+
+(* license = valid & bugs = missing *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT"}|}
+  in
+  match read_from_json json with
+  | Error e -> String.(e = {|Error: No bugs field in package.json|})
+  | Ok _ -> false
+
+(* bugs = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT","bugs":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = {|Error: Invalid `bugs` field in package.json.
+email & url (bug tracker url) needs to be provided
+e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
+  | Ok _ -> false
+
+(* bugs = only url *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar"}}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = {|Error: Invalid `bugs` field in package.json.
+email & url (bug tracker url) needs to be provided
+e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
+  | Ok _ -> false
+
+(* bugs = only email *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"email":"foo@bar.com"}}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = {|Error: Invalid `bugs` field in package.json.
+email & url (bug tracker url) needs to be provided
+e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
+  | Ok _ -> false
+
+(* bugs = both url & email *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README"}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest ->
+    String.equal manifest.name "foo"
+    && Semver.equal
+         manifest.version
+         (Option.value_exn (Semver.of_string "0.1.0"))
+    && String.equal manifest.author "john doe"
+    && String.equal manifest.repository.type_ "git"
+    && String.equal manifest.repository.url "https://github.com/npm/cli.git"
+    && Option.equal String.equal manifest.repository.directory None
+    && String.equal manifest.main "lib.mligo"
+    && String.equal manifest.license "MIT"
+    && String.equal manifest.bugs.url "https://foo.com/bar"
+    && String.equal manifest.bugs.email "foo@bar.com"
+    && String.equal manifest.readme "README"
+    && String.equal manifest.type_ "library"
+
+(* type_ = invalid *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"module"}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = {|Error: Invalid type field in package.json
+Type can be either library or contract|})
+  | Ok _ -> false
+
+(* type_ = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":""}|}
+  in
+  match read_from_json json with
+  | Error e ->
+    String.(
+      e
+      = {|Error: Invalid type field in package.json
+Type can be either library or contract|})
+  | Ok _ -> false
+
+(* type_ = library *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library"}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> String.equal manifest.type_ "library"
+
+(* scripts = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library","script":{}}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> string_assoc_list_equal manifest.scripts []
+
+(* scripts = valid *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"}}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest ->
+    string_assoc_list_equal
+      manifest.scripts
+      [ "test", "ligo run test lib.test.mligo" ]
+
+(* dependencies = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{}}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> string_assoc_list_equal manifest.dependencies []
+
+(* dependencies = valid *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"}}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest ->
+    string_assoc_list_equal manifest.dependencies [ "@ligo/bigarray", "0.1.1" ]
+
+(* devDependencies = empty *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{}}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest -> string_assoc_list_equal manifest.dev_dependencies []
+
+(* devDependencies = valid *)
+let%test _ =
+  let json =
+    Yojson.Safe.from_string
+      {|{"name":"foo","version":"0.1.0","author":"john doe",
+         "repository":"https://github.com/npm/cli.git",
+         "main":"lib.mligo","license":"MIT",
+         "bugs":{"url":"https://foo.com/bar","email":"foo@bar.com"},
+         "readme":"README","type":"library",
+         "scripts":{"test":"ligo run test lib.test.mligo"},
+         "dependencies":{"@ligo/bigarray":"0.1.1"},
+         "devDependencies":{"some_tool":"1.0.0"}}|}
+  in
+  match read_from_json json with
+  | Error _ -> false
+  | Ok manifest ->
+    string_assoc_list_equal manifest.dev_dependencies [ "some_tool", "1.0.0" ]
+(* type_ = "contract" *)
+(* storage_fn = missing *)
+(* storage_fn = empty *)
+(* storage_fn = valid *)
+(* storage_arg = missing *)
+(* storage_arg = empty *)
+(* storage_arg = valid *)
+(* description = missing *)
+(* description = empty *)
+(* description = valid *)
 
 (* Expect tests *)
 
 (* Invalid main *)
 (* Invalid storage_fn *)
 (* Invalid storage_arg *)
-(* Valid storage_fn, storage_arg, main *)
+(* Valid storage_fn, storage_arg, main, readme file < 1MB *)
+(* Valid storage_fn, storage_arg, main, readme file > 1MB *)
