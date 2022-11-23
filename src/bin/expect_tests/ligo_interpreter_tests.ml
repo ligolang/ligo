@@ -642,8 +642,10 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
   [%expect {|
     KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj
+    [1 -> "hi"]
     Everything at the top-level was executed.
-    - test_foo exited with value (). |}]
+    - test_foo exited with value ().
+    - test_bar exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
@@ -675,6 +677,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_create.mligo" ] ;
   [%expect {|
     42
+    42
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_create2.mligo" ] ;
+  [%expect{|
     42
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -983,15 +993,6 @@ let%expect_test _ =
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
     100000000000n |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "run"; "test" ; bad_test "test_create.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_create.mligo", line 11, characters 12-44:
-     10 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage fact_ta)) in
-     11 |   Test.log (Test.get_storage_of_address addr)
-
-    Not supported (yet) when the provided account has been fetched from Test.get_last_originations |}]
 
 let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"

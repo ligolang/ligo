@@ -1,45 +1,45 @@
 ;; Build of the CameLIGO lexer as a library
 
 (library
-  (name lexing_cameligo)
-  (public_name ligo.lexing.cameligo)
-  (modules Token)
-  (libraries
-    ;; LIGO
-    lexing_shared
-    menhir_cameligo_tokens
-    lexing_cameligo_self_units
-    lexing_cameligo_self_tokens
-    ;; Third party
-    str
-    hex))
+ (name lexing_cameligo)
+ (public_name ligo.lexing.cameligo)
+ (modules Token)
+ (libraries
+  ;; LIGO
+  lexing_shared
+  menhir_cameligo_tokens
+  lexing_cameligo_self_units
+  lexing_cameligo_self_tokens
+  ;; Third party
+  str
+  hex))
 
 ;; Build of a standalone lexer for CameLIGO
 
 (executable
-  (name LexerMain)
-  (libraries
-    ;; LIGO
-    preprocessing_cameligo
-    lexing_shared
-    lexing_cameligo
-    ;; Third party
-    str)
-  (modules Version LexerMain))
+ (name LexerMain)
+ (libraries
+  ;; LIGO
+  preprocessing_cameligo
+  lexing_shared
+  lexing_cameligo
+  ;; Third party
+  str)
+ (modules Version LexerMain))
 
 ;; --------------------------------------------------------------------
 ;; Build of the unlexer (for covering the error states of the LR
 ;; automaton)
 
 (executable
-  (name Unlexer)
-  (libraries
-    ;; LIGO
-    lexing_shared
-    lexing_cameligo
-    ;; Third party
-    str)
-  (modules Unlexer))
+ (name Unlexer)
+ (libraries
+  ;; LIGO
+  lexing_shared
+  lexing_cameligo
+  ;; Third party
+  str)
+ (modules Unlexer))
 
 ;; --------------------------------------------------------------------
 ;; Build of the version source (for the user, as a CLI option)

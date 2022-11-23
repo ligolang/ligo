@@ -12,15 +12,15 @@
 (coq.extraction
  (prelude extraction)
  (extracted_modules
-   ;; Coq stuff (hmm)
-   Datatypes
-   Bool
-   Nat
-   PeanoNat
-   List
-   Specif
-   ;; LIGO /src/coq stuff
-   ope
-   compiler)
+  ;; Coq stuff (hmm)
+  Datatypes
+  Bool
+  Nat
+  PeanoNat
+  List
+  Specif
+  ;; LIGO /src/coq stuff
+  ope
+  compiler)
  (theories ligo_coq)
  (libraries zarith))

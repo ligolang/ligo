@@ -114,12 +114,6 @@ module Command = struct
         -> [ `Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t ]
            tezos_command
     | State_error_to_value : Tezos_state.state_error -> LT.value tezos_command
-    | Get_storage :
-        Location.t
-        * Ligo_interpreter.Types.calltrace
-        * LT.value
-        * Ast_aggregated.type_expression
-        -> LT.value tezos_command
     | Get_storage_of_address :
         Location.t * Ligo_interpreter.Types.calltrace * LT.value
         -> LT.value tezos_command
@@ -432,31 +426,6 @@ module Command = struct
          let rej = LC.v_ctor "Balance_too_low" rej_data in
          fail_ctor rej, ctxt
        | _ -> fail_other (), ctxt)
-    | Get_storage (loc, calltrace, addr, ty_expr) ->
-      let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let storage', ty =
-        Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr
-      in
-      let storage =
-        storage'
-        |> Tezos_protocol.Protocol.Michelson_v1_primitives.strings_of_prims
-        |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
-      in
-      let ret =
-        Michelson_to_value.decompile_to_untyped_value
-          ~raise
-          ~bigmaps:ctxt.transduced.bigmaps
-          ty
-          storage
-      in
-      let ret =
-        Michelson_to_value.decompile_value
-          ~raise
-          ~bigmaps:ctxt.transduced.bigmaps
-          ret
-          ty_expr
-      in
-      ret, ctxt
     | Get_balance (loc, calltrace, addr) ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
       let balance = Tezos_state.get_balance ~raise ~loc ~calltrace ctxt addr in
@@ -473,21 +442,14 @@ module Command = struct
         |> Tezos_protocol.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
-      let ast_ty =
-        trace_option
-          ~raise
-          (Errors.generic_error
-             loc
-             "Not supported (yet) when the provided account has been fetched \
-              from Test.get_last_originations")
-        @@ List.Assoc.find
-             ~equal:Tezos_state.equal_account
-             ctxt.internals.storage_tys
-             addr
-      in
-      let ret =
+      let ret = match List.Assoc.find
+                        ~equal:Tezos_state.equal_account
+                        ctxt.internals.storage_tys
+                        addr with
+      | Some ast_ty ->
         LT.V_Michelson
           (Ty_code { micheline_repr = { code = storage; code_ty = ty }; ast_ty })
+      | None -> LT.V_Michelson (Untyped_code storage)
       in
       ret, ctxt
     | Get_size contract_code ->
