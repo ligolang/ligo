@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: '\n\nImprove pretty-printing of types in errors by removing occurrences of `gen#...` variables.\n\n'
+merge_request: '2153'
+title: Goodbye `gen` 👋
+type: added
+            
