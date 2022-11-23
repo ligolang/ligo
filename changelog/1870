@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Handle Big_map.get_and_update in testing framework'
+description: '#### Handle Big_map.get_and_update in testing framework'
 merge_request: '1870'
 title: Handle Big_map.get_and_update in test interpreter
 type: fixed

@@ -838,7 +838,8 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
   ]
 
 let run ?argv () =
-  Command_unix.run ~version:Version.version ?argv main;
+  let build_info = Format.sprintf "Protocol built-in: %s" Environment.Protocols.(variant_to_string in_use) in
+  Command_unix.run ~build_info ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
     Done -> 0;

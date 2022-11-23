@@ -27,4 +27,4 @@ let%expect_test _ =
       6 | let typing_error = f 42 |> gg |> h
 
     Invalid type(s)
-    Cannot unify int -> int with int. |}]
+    Cannot unify "int -> int" with "int". |}]

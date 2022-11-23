@@ -2,8 +2,6 @@ module Test.Capabilities.SelectionRange
   ( unit_selectionRangeInsideCase
   ) where
 
-import Control.Lens ((^.))
-import Data.Function ((&))
 import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)

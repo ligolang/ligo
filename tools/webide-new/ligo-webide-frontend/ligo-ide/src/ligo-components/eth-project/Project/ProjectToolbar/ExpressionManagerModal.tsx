@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, DebouncedFormGroup, DropdownInput } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
-import Api from "~/components/api/api";
+import { WebIdeApi } from "~/components/api/api";
 
 interface ExpressionManagerModalProps {
   modalRef: React.RefObject<Modal>;
@@ -49,13 +49,13 @@ function ExpressionManagerModal({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       setFiles(contractFiles);
 
-      const decls = await Api.listDeclarations({
+      const decls = await WebIdeApi.listDeclarations({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         project: { sourceFiles: contractFiles, main: projectManager.mainFilePath },
         onlyEndpoint: false,
       });
       setDeclarations(
-        decls.map((d) => {
+        decls.data.map((d) => {
           return { id: d, display: d };
         })
       );
@@ -81,20 +81,20 @@ function ExpressionManagerModal({
     setLoading(true);
 
     await (managerType === "dryRun"
-      ? Api.dryRun({
+      ? WebIdeApi.dryRun({
           entrypoint: name,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           project: { sourceFiles: files, main: projectManager.mainFilePath },
           storage,
           parameters: params,
         })
-      : Api.compileExpression({
+      : WebIdeApi.compileExpression({
           function: name,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           project: { sourceFiles: files, main: projectManager.mainFilePath },
         })
     )
-      .then((resp) => setResult(resp))
+      .then((resp) => setResult(resp.data))
       .catch((e: Error) => {
         modalRef.current?.closeModal().catch((me: Error) => {
           console.error(me);
@@ -137,7 +137,7 @@ function ExpressionManagerModal({
           </div>
         }
         options={declarations}
-        placeholder="Please select a faunction"
+        placeholder="Please select a function"
         value={name}
         onChange={(template: string) => setName(template)}
         size={managerType === "dryRun" ? "" : "short"}

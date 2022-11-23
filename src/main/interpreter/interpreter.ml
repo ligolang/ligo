@@ -1195,6 +1195,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     let>> v = Decompile (code, code_ty, expr_ty) in
     return v
+  | ( C_TEST_DECOMPILE
+    , [ V_Michelson (Untyped_code code) ] )
+    ->
+    let code_ty = Michelson_backend.compile_type ~raise expr_ty in
+    let code_ty = Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) code_ty in
+    let>> v = Decompile (code, code_ty, expr_ty) in
+    return v
   | C_TEST_DECOMPILE, _ -> fail @@ error_type ()
   | C_TEST_COMPILE_CONTRACT, [ contract ] ->
     let>> code = Compile_contract (loc, contract) in
@@ -1433,9 +1440,15 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
       Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g2 b))
   | Literal_bls12_381_fr b ->
     (match Bls12_381.Fr.of_bytes_opt b with
-    | Some t -> Monad.return @@ v_bls12_381_fr t
+     | Some t -> Monad.return @@ v_bls12_381_fr t
+     | None ->
+       Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_fr b))
+  | Literal_chain_id c ->
+    (match Tezos_crypto.Chain_id.of_b58check_opt c with
+    | Some t -> 
+      Monad.return @@ v_chain_id t
     | None ->
-      Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_fr b))
+      Monad.fail @@ Errors.literal Location.generated (Literal_chain_id c))
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
 

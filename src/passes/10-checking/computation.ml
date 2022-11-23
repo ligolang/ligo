@@ -117,8 +117,7 @@ let ctx_init ?env () =
   match env with
   | None -> Context.empty
   | Some env ->
-    Environment.foldi env ~init:Context.empty ~f:(fun _i ctx decl ->
-        (* Format.printf "%d: %a\n" i (Ast_typed.PP.declaration ~use_hidden:false) decl; *)
+    Environment.fold env ~init:Context.empty ~f:(fun ctx decl ->
         match Location.unwrap decl with
         | D_value { binder; expr; attr = _ } ->
           Context.add_imm
@@ -156,8 +155,6 @@ include Monad.Make3 (struct
 
   let map = `Define_using_bind
 end)
-
-type 'a with_loc = Location.t -> 'a
 
 let all_lmap (lmap : ('a, 'err, 'wrn) t Record.LMap.t)
     : ('a Record.LMap.t, 'err, 'wrn) t
@@ -274,116 +271,7 @@ type 'a exit =
 
 module Context_ = Context
 
-module Context : sig
-  module Signature = Context.Signature
-
-  val lift_lvar
-    :  at:Context.item
-    -> lvar':Layout_var.t
-    -> Type.layout
-    -> (Type.layout, 'err, 'wrn) t
-
-  val lift_tvar
-    :  at:Context.item
-    -> tvar':Type_var.t
-    -> kind:Kind.t
-    -> Type.t
-    -> (Type.t, 'err, 'wrn) t
-
-  val insert_at
-    :  at:Context.item
-    -> hole:Context.item list
-    -> (unit, 'err, 'wrn) t
-
-  val lock : on_exit:'a exit -> in_:('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
-
-  val add
-    :  Context.item list
-    -> on_exit:'a exit
-    -> in_:('a, 'err, 'wrn) t
-    -> ('a, 'err, 'wrn) t
-
-  val get_value
-    :  Value_var.t
-    -> ( ( Context.mutable_flag * Type.t
-         , [ `Mut_var_captured | `Not_found ] )
-         result
-       , 'err
-       , 'wrn )
-       t
-
-  val get_value_exn
-    :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Context.mutable_flag * Type.t, 'err, 'wrn) t
-
-  val get_imm : Value_var.t -> (Type.t option, 'err, 'wrn) t
-
-  val get_imm_exn
-    :  Value_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t, 'err, 'wrn) t
-
-  val get_mut : Value_var.t -> (Type.t option, 'err, 'wrn) t
-
-  val get_mut_exn
-    :  Value_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t, 'err, 'wrn) t
-
-  val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
-
-  val get_type_var_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> (Kind.t, 'err, 'wrn) t
-
-  val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
-
-  val get_type_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t, 'err, 'wrn) t
-
-  val get_module : Module_var.t -> (Signature.t option, 'err, 'wrn) t
-
-  val get_module_exn
-    :  Module_var.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
-
-  val get_signature
-    :  Module_var.t List.Ne.t
-    -> (Signature.t option, 'err, 'wrn) t
-
-  val get_signature_exn
-    :  Module_var.t List.Ne.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
-
-  val get_texists_var
-    :  Type_var.t
-    -> error:'err with_loc
-    -> (Kind.t, 'err, 'wrn) t
-
-  val get_sum
-    :  Label.t
-    -> ((Type_var.t * Type_var.t list * Type.t * Type.t) list, 'err, 'wrn) t
-
-  val get_record
-    :  Type.row_element Record.t
-    -> ((Type_var.t option * Type.row) option, 'err, 'wrn) t
-
-  val add_texists_eq : Type_var.t -> Kind.t -> Type.t -> (unit, 'err, 'wrn) t
-  val add_lexists_eq : Layout_var.t -> Type.layout -> (unit, 'err, 'wrn) t
-  val push : Context.item list -> (unit, 'err, 'wrn) t
-  val tapply : Type.t -> (Type.t, 'err, 'wrn) t
-
-  module Well_formed : sig
-    val context : unit -> (bool, 'err, 'wrn) t
-    val type_ : Type.t -> (Kind.t option, 'err, 'wrn) t
-  end
-end = struct
+module Context = struct
   module Signature = Context.Signature
 
   let lift_var ~get_vars ~add_var ~add_eq ~at ~fresh ~var' t =
@@ -785,12 +673,6 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
     |> all_lmap_unit
   | _ -> fail ()
 
-
-(* let unify type1 type2 : (unit, _, _) t =
- fun ~raise ~options ~loc state ->
-  Trace.try_with
-    (fun ~raise ~catch:_ -> unify type1 type2 ~raise ~options ~loc state)
-    (fun ~catch:_ _ -> raise.error (cannot_unify type1 type2 loc)) *)
 
 type subtype_error = unify_error
 

@@ -7,9 +7,7 @@ module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
   , TestInfo (..)
   ) where
 
-import Control.Lens
-import Data.HashMap.Strict qualified as HM
-import Data.Text qualified as T
+import Control.Lens (_Just, to)
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.Directory (makeAbsolute)
@@ -21,7 +19,7 @@ import AST.Capabilities.CodeAction.ExtractTypeAlias
 import Range
 
 import Test.Common.Capabilities.Util (contractsDir)
-import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.Util (ScopeTester, readContractWithScopes)
 
 data TestInfo = TestInfo
@@ -55,11 +53,36 @@ testInfos =
         ]
     }
   , TestInfo
-    { tiContract = "existential.mligo"
-    , tiCursor = interval 1 9 17
+    { tiContract = "parametric2.mligo"
+    , tiCursor = interval 1 24 34
     , tiExpectedEdits =
-        [ (mkr 1 9 1 17 , extractedTypeNameAlias)
-        , (mkr 1 1 1  1 , "type ('a, 'b) " <> extractedTypeNameAlias <> " = 'a -> 'b\n")
+        [ (mkr 1 24 1 34, extractedTypeNameAlias)
+        , (mkr 1  1 1  1, "type ('a, 'b) " <> extractedTypeNameAlias <> " = 'a * 'b -> 'a\n")
+        ]
+    }
+  , TestInfo
+    { tiContract = "unbound.ligo"
+    , tiCursor = interval 1 25 36
+    , tiExpectedEdits =
+        [ (mkr 1 25 1 36, extractedTypeNameAlias)
+        , (mkr 1  1 1  1, "type (a, b) " <> extractedTypeNameAlias <> " is a -> b -> c\n")
+        ]
+    }
+  , TestInfo
+    { tiContract = "nested.mligo"
+    , tiCursor = interval 5 31 42
+    , tiExpectedEdits =
+        [ (mkr 5 31 5 42, extractedTypeNameAlias)
+        , (mkr 1  1 1  1, "type ('a, 'b, 'c) " <> extractedTypeNameAlias <> " = 'a -> 'b -> 'c\n")
+        ]
+    }
+  , TestInfo
+    { tiContract = "phantom.jsligo"
+    , tiCursor = interval 1 30 33
+    , tiExpectedEdits =
+        [ (mkr 1 30 1 33, extractedTypeNameAlias)
+        , (mkr 1 19 1 22, extractedTypeNameAlias)
+        , (mkr 1  1 1  1, "type " <> extractedTypeNameAlias <> " = int\n")
         ]
     }
   ]
@@ -67,7 +90,7 @@ testInfos =
 constructExpectedWorkspaceEdit :: [(Range, String)] -> [J.TextEdit]
 constructExpectedWorkspaceEdit = map constructCodeAction
   where
-    constructCodeAction (r, s) = J.TextEdit { _range = toLspRange r , _newText = T.pack s }
+    constructCodeAction (r, s) = J.TextEdit { _range = toLspRange r , _newText = toText s }
 
 extractTypeAliasDriver :: TestTree -> TestTree
 extractTypeAliasDriver = testGroup "Extract type extractedTypeNameAlias code action" . pure
@@ -82,7 +105,7 @@ extractTextEdits :: J.CodeAction -> [J.TextEdit]
 extractTextEdits action = unwrapEdits edits
   where
     edits :: [(J.Uri, J.List J.TextEdit)]
-    edits = action ^. J.edit . _Just . J.changes . _Just . to HM.toList
+    edits = action ^. J.edit . _Just . J.changes . _Just . to toPairs
 
     unwrapEdits :: [(J.Uri, J.List J.TextEdit)] -> [J.TextEdit]
     unwrapEdits = \case
@@ -96,4 +119,4 @@ makeTest TestInfo{tiContract, tiCursor, tiExpectedEdits} = do
   tree <- readContractWithScopes @parser contractPath
   let [action] = typeExtractionCodeAction tiCursor (J.filePathToUri contractPath) tree
   let resultingEdits = extractTextEdits action
-  resultingEdits `shouldBe` constructExpectedWorkspaceEdit tiExpectedEdits
+  resultingEdits `shouldMatchList` constructExpectedWorkspaceEdit tiExpectedEdits

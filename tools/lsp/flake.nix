@@ -168,9 +168,15 @@
         defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only
         legacyPackages = pkgs;
-        devShell = pkgs.mkShell rec {
-          buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
+        devShells = {
+          default = pkgs.mkShell rec {
+            buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
+          };
+          ci = pkgs.mkShell {
+            buildInputs = [ pkgs.stylish-haskell pkgs.gnumake ];
+          };
         };
+
       }) // rec {
 
         lsp-docker-image-default = lsp-docker-image {};

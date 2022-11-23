@@ -1,5 +1,6 @@
 module Location = Simple_utils.Location
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
+open Trace
 open Ligo_prim
 open Errors
 module I = Type
@@ -87,7 +88,16 @@ and decode_row ({ fields; layout } : Type.row) ~raise subst =
   O.{ fields; layout }
 
 
-let decode type_ ~raise subst = decode type_ ~raise subst
+let decode type_ ~raise subst =
+  (* Attempt to lift the error to the originally decoded type (improves error reporting) *)
+  Trace.try_with
+    (fun ~raise ~catch:_ -> decode type_ ~raise subst)
+    (fun ~catch:_ (`Typer_cannot_decode_texists (_type, loc)) ->
+      raise.error
+        (cannot_decode_texists
+           type_
+           ((* pick the best location! *) if Location.is_dummy_or_generated loc then type_.location else loc)))
+
 
 let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =
   Pattern_anomalies.check_anomalies ~raise ~syntax ~loc eqs matchee_type

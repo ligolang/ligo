@@ -21,28 +21,22 @@ module Test.Common.Capabilities.Find
   , invariants
   ) where
 
-import Data.Foldable (for_)
-import Data.Functor ((<&>))
-import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
+import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
 import AST.Capabilities.Find (definitionOf, findScopedDecl, referencesOf, typeDefinitionAt)
 import AST.Scope.Common (contractTree, lookupContract)
-import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..)
-  )
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
 import Cli (TempDir (..), TempSettings (..))
 import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations
-  (expectationFailure, shouldBe, shouldContain, shouldMatchList)
+import Test.Common.FixedExpectations (expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Common.Util
-  ( ScopeTester, parseContractsWithDependenciesScopes, readContractWithScopes, tempTemplate
-  )
+  (ScopeTester, parseContractsWithDependenciesScopes, readContractWithScopes, tempTemplate)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "find"
@@ -98,8 +92,8 @@ checkDefinitionReferenceInvariants tests = do
 
 label :: FilePath -> Range -> IO Range
 label filepath r
-  | null (_rFile r) = pure r{ _rFile = filepath }
-  | otherwise      = fmap (\fp -> r{ _rFile = fp }) (makeAbsolute $ _rFile r)
+  | null (_rFile r) = pure r{_rFile = filepath}
+  | otherwise       = fmap (\fp -> r{_rFile = fp}) (makeAbsolute $ _rFile r)
 
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
@@ -128,7 +122,7 @@ checkIfReference filepath expectedRef mention = test
       case referencesOf mention' tree of
         Nothing -> expectationFailure $
           printf "References in range '%s' from '%s' are not found."
-            (show mention') filepath'
+            (show @String mention') filepath'
         Just references -> references `shouldContain` [expectedRef']
 
 invariants :: [DefinitionReferenceInvariant]
@@ -314,24 +308,20 @@ invariants =
     , driDef = Just (interval 1 5 8)
     , driRefs = [interval 5 16 19]
     }
-  -- -- Test variable shadowing (including interaction between type names, parameters and variable names)
-  -- -- that contains several declaration with the same names
-  -- -- TODO: Issue LIGO-729:
-  -- -- For the reference in interval (3, 19, 25) server shows all references except the interval itself
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "name-shadowing.mligo"
-  --   , driDesc = "type name"
-  --   , driDef  = Just (interval 1 6 12)
-  --   , driRefs = [interval 3 19 25, interval 3 29 35]
-  --   }
-  -- -- TODO: Issue LIGO-729:
-  -- -- For the declaration in interval (3, 10, 16) server shows extra reference that is actually type name
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "name-shadowing.mligo"
-  --   , driDesc = "parameter"
-  --   , driDef  = Just (interval 3 10 16)
-  --   , driRefs = [interval 4 16 22]
-  --   }
+  -- Test variable shadowing (including interaction between type names, parameters and variable names)
+  -- that contains several declaration with the same names
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "name-shadowing.mligo"
+    , driDesc = "type name"
+    , driDef  = Just (interval 1 6 12)
+    , driRefs = [interval 3 19 25, interval 3 29 35]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "name-shadowing.mligo"
+    , driDesc = "parameter"
+    , driDef  = Just (interval 3 10 16)
+    , driRefs = [interval 4 16 22]
+    }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "name-shadowing.mligo"
     , driDesc = "first local variable"
@@ -516,6 +506,18 @@ invariants =
     , driDesc = "Modules, Cz.nested resolves in A.B.C.nested"
     , driDef = Just (interval 4 18 24)
     , driRefs = [interval 15 20 26]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "undefined.jsligo"
+    , driDesc = "Parametric types, can find references of a type variable (T)"
+    , driDef = Just (interval 1 18 19)
+    , driRefs = [interval 1 21 22, interval 1 50 51]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "parametric.religo"
+    , driDesc = "Parametric types, can find references of a type variable (T)"
+    , driDef = Just (interval 1 16 17)
+    , driRefs = [interval 1 23 24, interval 1 34 35]
     }
   ]
 

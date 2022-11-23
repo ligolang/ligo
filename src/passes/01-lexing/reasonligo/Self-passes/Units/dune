@@ -1,14 +1,15 @@
 ;; Build of the self passes on the lexical units of ReasonLIGO
 
 (library
-  (name lexing_reasonligo_self_units)
-  (public_name ligo.lexing.reasonligo.self.units)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     LexerLib
-     ;; LIGO
-     lexing_shared
-     lexing_reasonligo_self_tokens)
-  (modules Self))
+ (name lexing_reasonligo_self_units)
+ (public_name ligo.lexing.reasonligo.self.units)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  LexerLib
+  ;; LIGO
+  lexing_shared
+  lexing_reasonligo_self_tokens)
+ (modules Self))

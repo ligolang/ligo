@@ -24,4 +24,4 @@ File "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, cha
   5 | } with ((nil: list(operation)), f (p, s))
 
 Invalid type(s)
-Cannot unify ( nat * nat ) with nat. |xxx}]
+Cannot unify "( nat * nat )" with "nat". |xxx}]

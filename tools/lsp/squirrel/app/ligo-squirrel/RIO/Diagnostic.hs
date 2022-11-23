@@ -4,9 +4,7 @@ module RIO.Diagnostic
   , clearDiagnostics
   ) where
 
-import Data.Foldable (traverse_)
-import Data.Function (on)
-import Data.List (groupBy, sortOn)
+import Data.List (groupBy)
 import Data.Map qualified as Map
 import Language.LSP.Diagnostics qualified as D
 import Language.LSP.Server qualified as S
@@ -41,7 +39,7 @@ collectErrors contract version = do
       extractGroup [] = []
       extractGroup ([] : xs) = extractGroup xs
       extractGroup (ys@(y : _) : xs) = (fst y, snd <$> ys) : extractGroup xs
-  let grouped = extractGroup $ groupBy ((==) `on` fst) $ sortOn fst diags
+  let grouped = extractGroup $ groupBy ((==) `on` fst) $ sortWith fst diags
   diagnostic version grouped
 
 clearDiagnostics :: J.NormalizedUri -> RIO ()

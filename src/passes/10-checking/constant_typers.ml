@@ -365,7 +365,8 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
              (* Unify the inferred types *)
              let%bind () =
                unify_worklist
-               |> List.map ~f:(fun (arg_type1, arg_type2) ->
+               (* Reverse due to [foldi] above *)
+               |> List.rev_map ~f:(fun (arg_type1, arg_type2) ->
                       let%bind arg_type1 = Context.tapply arg_type1 in
                       let%bind arg_type2 = Context.tapply arg_type2 in
                       unify arg_type1 arg_type2)
@@ -376,7 +377,8 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
     (* Check the checked arguments *)
     let%bind () =
       checked
-      |> List.map ~f:(fun (i, arg_type, arg) ->
+      (* Reverse due to [folid] above *)
+      |> List.rev_map ~f:(fun (i, arg_type, arg) ->
              let%bind arg = Context.tapply arg_type >>= check arg in
              Hashtbl.set output_args ~key:i ~data:(arg_type, arg);
              return ())
@@ -1549,58 +1551,3 @@ module External_types = struct
          ; t_int () ^-> t_nat () ^~> t_nat ()
          ])
 end
-
-(*
-
-let typer_of_type_no_tc t = typer_table_of_ligo_type ~add_tc:false ~fail:false t
-
-let failwith_typer =
-  any_table_of
-    [ (typer_of_type_no_tc @@ O.(t_string () ^-> t_unit ()))
-    ; (typer_of_type_no_tc @@ O.(t_nat () ^-> t_unit ()))
-    ; (typer_of_type_no_tc @@ O.(t_int () ^-> t_unit ()))
-    ; typer_table_of_ligo_type O.(for_all "a" @@ fun a -> t_string () ^-> a)
-    ; typer_table_of_ligo_type O.(for_all "a" @@ fun a -> t_nat () ^-> a)
-    ; typer_table_of_ligo_type O.(for_all "a" @@ fun a -> t_int () ^-> a)
-    ]
-
-
-let int_typer =
-  any_table_of
-    [ typer_table_of_ligo_type O.(t_nat () ^-> t_int ())
-    ; typer_table_of_ligo_type O.(t_bls12_381_fr () ^-> t_int ())
-    ]
-
-
-let ediv_typer =
-  any_table_of
-    [ typer_table_of_ligo_type
-        O.(t_nat () ^-> t_nat () ^-> t_option (t_pair (t_nat ()) (t_nat ())))
-    ; typer_table_of_ligo_type
-        O.(t_int () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())))
-    ; typer_table_of_ligo_type
-        O.(t_nat () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())))
-    ; typer_table_of_ligo_type
-        O.(t_int () ^-> t_nat () ^-> t_option (t_pair (t_int ()) (t_nat ())))
-    ; typer_table_of_ligo_type
-        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_pair (t_nat ()) (t_mutez ())))
-    ; typer_table_of_ligo_type
-        O.(t_mutez () ^-> t_nat () ^-> t_option (t_pair (t_mutez ()) (t_mutez ())))
-    ]
-
-
-let external_typers ~raise ~options loc s =
-  let typer =
-    match s with
-    | "int" -> Constant_types.int_typer
-    | "ediv" -> Constant_types.ediv_typer
-    | "u_ediv" -> Constant_types.ediv_typer
-    | _ ->
-      raise.error
-        (corner_case @@ Format.asprintf "Typer not implemented for external %s" s)
-  in
-  fun lst tv_opt ->
-    let error = ref [] in
-    match typer ~error ~raise ~options ~loc lst tv_opt with
-    | Some (tv, table, ot) -> tv, table, ot
-    | None -> raise.error (corner_case @@ Format.asprintf "Cannot type external %s" s) *)

@@ -6,8 +6,6 @@ module Test.Capabilities.DocumentSymbol
   , unit_document_symbols_example_let_jsligo
   ) where
 
-import Control.Lens ((^.))
-import Data.Text (Text)
 import Language.LSP.Test
 import Language.LSP.Types
   (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name),

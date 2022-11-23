@@ -4,9 +4,6 @@ module Test.Common.Capabilities.SignatureHelp
   , simpleFunctionCallDriver
   ) where
 
-import Control.Lens ((^.))
-import Data.Maybe (fromJust)
-import Data.Text (Text)
 import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
@@ -22,6 +19,8 @@ import Range (Range, point)
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
+
+import Unsafe qualified
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
@@ -242,7 +241,7 @@ simpleFunctionCallDriver testCases = do
 
     makeTest graph TestInfo{..} = do
       let filepath = contractsDir </> "signature-help" </> tiContract
-      let tree = contractTree $ fromJust $ lookupContract filepath graph
+      let tree = contractTree $ Unsafe.fromJust $ lookupContract filepath graph
       let Right dialect = getExt filepath
       let result = findSignature (tree ^. nestedLIGO) tiCursor
       result `shouldBe`

@@ -93,7 +93,7 @@ let%expect_test _ =
       7 |   }
 
     Invalid type(s)
-    Cannot unify int with string. |}]
+    Cannot unify "int" with "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
@@ -104,7 +104,7 @@ let%expect_test _ =
      21 |       };
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)

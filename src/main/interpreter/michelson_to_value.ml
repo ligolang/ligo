@@ -50,6 +50,11 @@ let signature_of_string ~raise s =
   @@ Tezos_crypto.Signature.of_b58check s
 
 
+let chain_id_of_string ~raise s =
+  Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
+    Errors.generic_error Location.generated "Cannot parse chain_id")
+  @@ Tezos_crypto.Chain_id.of_b58check s
+
 let wrong_mini_c_value _t _v =
   Errors.generic_error Location.generated "wrong_mini_c_value"
 
@@ -137,7 +142,8 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Construct ("Right", b)
   | Prim (_, "int", [], _), Int (_, n) -> V_Ct (C_int n)
   | Prim (_, "nat", [], _), Int (_, n) -> V_Ct (C_nat n)
-  | Prim (_, "chain_id", _, _), String (_, id) -> V_Ct (C_chain_id id)
+  | Prim (_, "chain_id", _, _), String (_, id) -> 
+    V_Ct (C_chain_id  (chain_id_of_string ~raise id))
   | Prim (_, "key_hash", [], _), String (_, n) ->
     V_Ct (C_key_hash (key_hash_of_string ~raise n))
   | Prim (_, "key_hash", [], _), Bytes (_, b) ->

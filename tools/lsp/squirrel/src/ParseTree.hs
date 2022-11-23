@@ -3,7 +3,6 @@
 
      All datatypes here are strict.
 -}
-
 module ParseTree
   ( -- * Tree/Forest
     ParseTree (..)
@@ -22,28 +21,20 @@ module ParseTree
   where
 
 import Data.Aeson (ToJSON (..), object, (.=))
-import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
-import Data.Function ((&))
 import Data.Functor.Classes (Show1 (..))
-import Data.Text (Text)
-import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
-import Data.Text.Encoding.Error qualified as Text
-import Data.Traversable (for)
-import Control.Monad ((>=>))
-import Control.Monad.IO.Class (MonadIO (..))
 import Foreign.C.String (peekCString)
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
-import Foreign.Ptr (Ptr, nullPtr)
+import Foreign.Ptr (nullPtr)
 import Foreign.Storable (peek, peekElemOff, poke)
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
+import Text.Show
 import TreeSitter.Language
 import TreeSitter.Node
 import TreeSitter.Parser
 import TreeSitter.Tree hiding (Tree)
-import UnliftIO.Exception (displayException)
 
 import Duplo.Tree
 
@@ -72,7 +63,7 @@ instance LogItem Source where
   payloadKeys = const $ const AllKeys
 
 instance Show Source where
-  show = show . srcPath
+  show = Text.Show.show . srcPath
 
 -- | Reads the provided file path and checks whether it contains valid UTF-8
 -- string, logging an error message in case and returning a leniently decoded
@@ -81,15 +72,15 @@ pathToSrc :: Log m => FilePath -> m Source
 pathToSrc p = do
   raw <- liftIO $ BS.readFile p
   -- Is it valid UTF-8?
-  fmap (Source p False) $ Text.decodeUtf8' raw & \case
+  fmap (Source p False) $ decodeUtf8' raw & \case
     Left exception -> do
-      $(Log.err) [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
+      $Log.err [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
       -- Leniently decode the data so we can continue working even with invalid
       -- data. Note that this case means we'll decode the file two times; this
       -- is fine, as invalid data should be very uncommon.
       -- TODO: Once we migrate to text-2.0:
-      -- s/Text.decodeUtf8With Text.lenientDecode/Text.decodeUtf8Lenient/
-      pure $ Text.decodeUtf8With Text.lenientDecode raw
+      -- s/decodeUtf8With lenientDecode/Text.decodeUtf8Lenient/
+      pure $ decodeUtf8With lenientDecode raw
     Right decoded -> pure decoded
 
 type RawTree = Tree '[ParseTree] RawInfo
@@ -109,10 +100,10 @@ data ParseTree self = ParseTree
   deriving stock (Functor, Foldable, Traversable)
 
 instance Show1 ParseTree where
-  liftShowsPrec lift liftList d (ParseTree name children _) = showParen (d > appPrec)
+  liftShowsPrec unlifted unliftedList d (ParseTree name children _) = showParen (d > appPrec)
     $ showString "ParseTree "
     . showsPrec (appPrec + 1) name . showChar ' '
-    . liftShowsPrec lift liftList d children
+    . liftShowsPrec unlifted unliftedList d children
     where
       appPrec :: Int
       appPrec = 10
@@ -122,7 +113,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
 toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
-  $(Log.debug) [Log.i|Reading #{fp}|]
+  $Log.debug [Log.i|Reading #{fp}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
@@ -134,7 +125,7 @@ toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go src)
 
-  $(Log.debug) [Log.i|Done reading #{fp}|]
+  $Log.debug [Log.i|Done reading #{fp}|]
   pure res
   where
     go :: ByteString -> Node -> IO RawTree
@@ -151,7 +142,7 @@ toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
               if   nodeFieldName node' == nullPtr
               then return ""
               else peekCString $ nodeFieldName node'
-            pure $ fastMake (r, Text.pack field) tree
+            pure $ fastMake (r, toText field) tree
 
           ty <- peekCString $ nodeType node
 
@@ -160,13 +151,13 @@ toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
             finish2D = nodeEndPoint   node
 
             (name, info)
-              | toInteger (nodeIsMissing node) == 1 = ("MISSING", Just (Text.pack ty))
+              | toInteger (nodeIsMissing node) == 1 = ("MISSING", Just (toText ty))
               -- There are cases when `start2D == finish2D`, but the node is not Missing. We need to
               -- investigate such cases. To check such problem run trace on missing contracts from
               -- "test/error-recovery/simple/jsligo" and check cases when `nodeIsMissing` returns `False`,
               -- but `start2D == finish2D`.
               | start2D == finish2D = ("ERROR", Nothing)
-              | otherwise = (Text.pack ty, Nothing)
+              | otherwise = (toText ty, Nothing)
             range = Range
               { _rStart  =
                   ( fromIntegral $ pointRow    start2D + 1

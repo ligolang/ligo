@@ -15,7 +15,7 @@ let%expect_test _ =
      16 |     (a 1) + (fo b)
 
     Invalid type(s)
-    Cannot unify int -> int with option (int). |}]
+    Cannot unify "int -> int" with "optioni". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -132,7 +132,7 @@ let%expect_test _ =
       6 |   | B -> 2
 
     Invalid type(s)
-    Cannot unify int with string. |}]
+    Cannot unify "int" with "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
@@ -143,7 +143,7 @@ let%expect_test _ =
      20 |     in
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)

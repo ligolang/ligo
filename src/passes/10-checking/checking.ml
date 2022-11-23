@@ -24,7 +24,7 @@ let assert_type_expression_eq ~raise (loc : Location.t) (type1, type2) : unit =
   This function operates on the return type of Context.get_sum.
   If type match the constructor label and its argument type, warns user about ambiguous constructor
 *)
-let warn_ambiguous_constructor ~tvar:var_chosen ~arg_type ignored
+let warn_ambiguous_constructor ~warning ~tvar:var_chosen ~arg_type ignored
     : (unit, _, _) C.t
   =
   let open C in
@@ -35,10 +35,26 @@ let warn_ambiguous_constructor ~tvar:var_chosen ~arg_type ignored
       ignored
   in
   match ignored_match with
-  | Some (var_ignored, _, _, _) ->
-    warn (fun loc ->
-        `Checking_ambiguous_constructor (var_chosen, var_ignored, loc))
+  | Some (var_ignored, _, _, _) -> warn (warning var_chosen var_ignored)
   | None -> return ()
+
+
+let warn_ambiguous_constructor_expr ~expr ~tvar ~arg_type ignored =
+  warn_ambiguous_constructor
+    ignored
+    ~tvar
+    ~arg_type
+    ~warning:(fun var_chosen var_ignored loc ->
+      `Checking_ambiguous_constructor_expr (expr, var_chosen, var_ignored, loc))
+
+
+let warn_ambiguous_constructor_pat ~pat ~tvar ~arg_type ignored =
+  warn_ambiguous_constructor
+    ignored
+    ~tvar
+    ~arg_type
+    ~warning:(fun var_chosen var_ignored loc ->
+      `Checking_ambiguous_constructor_pat (pat, var_chosen, var_ignored, loc))
 
 
 (* let get_signature path : (Signature.t, _, _) C.t =
@@ -54,6 +70,10 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
     let%bind loc = loc () in
     return @@ Type.make_t ~loc content (Some type_)
   in
+  let lift type_ =
+    let%bind loc = loc () in
+    return @@ Type.{ type_ with location = loc }
+  in
   match type_.type_content with
   | T_arrow { type1; type2 } ->
     let%bind type1 = evaluate_type type1 in
@@ -67,7 +87,7 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
     const @@ T_record row
   | T_variable tvar ->
     (match%bind Context.get_type tvar with
-    | Some type_ -> return type_
+    | Some type_ -> lift type_
     | None ->
       (match%bind Context.get_type_var tvar with
       | Some _ -> const @@ T_variable tvar
@@ -198,7 +218,7 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
     raise
       (corner_case
          "chest / chest_key are not allowed in the syntax (only tests need \
-          this type")
+          this type)")
 
 
 let equal_lmap_doms lmap1 lmap2 =
@@ -600,7 +620,9 @@ and infer_expression (expr : I.expression)
       match%bind Context.get_sum constructor with
       | [] -> raise (unbound_constructor constructor)
       | (tvar, tvars, arg_type, sum_type) :: other ->
-        let%bind () = warn_ambiguous_constructor ~tvar ~arg_type other in
+        let%bind () =
+          warn_ambiguous_constructor_expr ~expr ~tvar ~arg_type other
+        in
         return (tvars, arg_type, sum_type)
     in
     let%bind subst =
@@ -936,7 +958,11 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
           fun hole ->
             let%bind texists = decode texists in
             let%bind lamb_type = decode lamb_type in
-            f (O.e_type_inst { forall = hole; type_ = texists } lamb_type))
+            f
+              (O.make_e
+                 ~location:hole.O.location
+                 (E_type_inst { forall = hole; type_ = texists })
+                 lamb_type))
       , args )
   | T_arrow { type1 = arg_type; type2 = ret_type } ->
     let%bind args = check_expression args arg_type in
@@ -1196,7 +1222,7 @@ and infer_pattern (pat : I.type_expression option I.Pattern.t)
       | [] -> raise (unbound_constructor constructor)
       | (tvar, tvars, arg_type, sum_type) :: other ->
         let%bind () =
-          lift @@ warn_ambiguous_constructor ~tvar ~arg_type other
+          lift @@ warn_ambiguous_constructor_pat ~pat ~tvar ~arg_type other
         in
         return (tvars, arg_type, sum_type)
     in

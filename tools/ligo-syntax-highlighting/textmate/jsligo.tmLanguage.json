@@ -177,6 +177,17 @@
         { "include": "$self" }
       ]
     },
+    "typebinder": {
+      "begin": "(<)",
+      "end": "(>)",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typename" }
+      ]
+    },
     "typedefinition": {
       "begin": "\\b(type)\\b",
       "end": "(?=;|}|\\b(else|default|case)\\b)",
@@ -192,6 +203,7 @@
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -210,6 +222,7 @@
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -228,6 +241,7 @@
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -246,6 +260,7 @@
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -293,6 +308,7 @@
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -317,6 +333,7 @@
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },

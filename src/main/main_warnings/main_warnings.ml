@@ -7,7 +7,8 @@ type all =
   | `Self_ast_typed_warning_unused of Location.t * string
   | `Self_ast_typed_warning_muchused of Location.t * string
   | `Self_ast_typed_warning_unused_rec of Location.t * string
-  | `Checking_ambiguous_constructor of Type_var.t * Type_var.t * Location.t
+  | `Checking_ambiguous_constructor_expr of Ast_core.expression * Type_var.t * Type_var.t * Location.t
+  | `Checking_ambiguous_constructor_pat of Ast_core.type_expression option Ast_core.Pattern.t * Type_var.t * Type_var.t * Location.t
   | `Self_ast_imperative_warning_layout of (Location.t * Label.t)
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of Location.t * Type_var.t
   | `Self_ast_imperative_warning_deprecated_constant of Location.t * Ast_imperative.expression * Ast_imperative.expression * Ast_imperative.type_expression
@@ -45,9 +46,18 @@ let pp : display_format:string display_format ->
           (variant_to_string in_use)
           (variant_to_string in_use)
     )
-    | `Checking_ambiguous_constructor (tv_chosen,tv_possible,loc) ->
-      Format.fprintf f "@[<hv>%a@ Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
+    | `Checking_ambiguous_constructor_expr (expr, tv_chosen,tv_possible,loc) ->
+      Format.fprintf f "@[<hv>%a@ Warning: The type of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
+      Ast_core.PP.expression
+      expr
+      Type_var.pp tv_chosen
+      Type_var.pp tv_possible
+    | `Checking_ambiguous_constructor_pat (pat, tv_chosen,tv_possible,loc) ->
+      Format.fprintf f "@[<hv>%a@ Warning: The type the pattern of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @.@]"
+      Snippet.pp loc
+      Ast_core.(Pattern.pp PP.type_expression_option)
+      pat
       Type_var.pp tv_chosen
       Type_var.pp tv_possible
     | `Main_view_ignored loc ->
@@ -122,8 +132,17 @@ let to_warning : all -> Simple_utils.Warning.t = fun w ->
     let location = Location.dummy in
     let content = make_content ~message ~location () in
     make ~stage:"michelson typecheck" ~content
-  | `Checking_ambiguous_constructor (tv_chosen,tv_possible,location) ->
-    let message = Format.asprintf "Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @."
+  | `Checking_ambiguous_constructor_expr (expr, tv_chosen,tv_possible,location) ->
+    let message = Format.asprintf "Warning: The type of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @."
+      Ast_core.PP.expression expr
+      Type_var.pp tv_chosen
+      Type_var.pp tv_possible
+    in
+    let content = make_content ~message ~location () in
+    make ~stage:"typer" ~content
+  | `Checking_ambiguous_constructor_pat (pat, tv_chosen,tv_possible,location) ->
+    let message = Format.asprintf "Warning: The type the pattern of \"%a\" is ambiguous: Inferred type is \"%a\" but could be of type \"%a\".@ Hint: You might want to add a type annotation. @."
+      Ast_core.(Pattern.pp PP.type_expression_option) pat
       Type_var.pp tv_chosen
       Type_var.pp tv_possible
     in

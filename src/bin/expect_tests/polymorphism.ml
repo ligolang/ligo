@@ -388,7 +388,7 @@ let%expect_test _ =
       5 | let m = merge (Map.empty : (int, string) foo)
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "f" ; "--init-file" ; (test "cases_annotation.mligo") ] ;
@@ -477,5 +477,24 @@ let%expect_test _ =
     Underspecified type ^a.
     Please add additional annotations.
     Hint: ^a represent placeholder type(s). |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; (test "monomorphisation_fail.mligo") ] ;
+  [%expect{|
+    File "./monomorphisation_fail.mligo", line 3, characters 58-63:
+      2 |
+      3 | let main ((p, s) : unit * unit) : operation list * unit = f p s
+
+    Cannot monomorphise the expression. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; (test "monomorphisation_fail2.mligo") ] ;
+  [%expect{|
+    File "./monomorphisation_fail2.mligo", line 1, characters 11-19:
+      1 | let nested (type a) =
+      2 |   let x (type b) =
+
+    Cannot monomorphise the expression. |}]
+
 
 let () = Sys_unix.chdir pwd

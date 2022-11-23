@@ -216,12 +216,13 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   };
 
   const updateTitle = (treeData) => {
-    const rawDecoration = modelSessionManager.decorationMap;
-    const hasError = Object.keys(rawDecoration).length !== 0;
-    if (!hasError) return;
-    const errorNode = updateErrorInfo(rawDecoration, treeData.key);
-    travelTree(treeData, renderTitle, errorNode);
-    setTreeData([treeData]);
+    // TODO: it should work some day
+    // const rawDecoration = modelSessionManager.decorationMap;
+    // const hasError = Object.keys(rawDecoration).length !== 0;
+    // if (!hasError) return;
+    // const errorNode = updateErrorInfo(rawDecoration, treeData.key);
+    // travelTree(treeData, renderTitle, errorNode);
+    // setTreeData([treeData]);
   };
 
   const refreshDirectory = async (data) => {

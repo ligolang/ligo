@@ -47,6 +47,7 @@ let string_of_signature t = Format.asprintf "%a" Tezos_crypto.Signature.pp t
 let bytes_of_bls12_381_g1 t = Bls12_381.G1.to_bytes t
 let bytes_of_bls12_381_g2 t = Bls12_381.G2.to_bytes t
 let bytes_of_bls12_381_fr t = Bls12_381.Fr.to_bytes t
+let string_of_chain_id t = Tezos_crypto.Chain_id.to_b58check t
 
 module Tezos_eq = struct
   (* behavior should be equivalent to the one in the tezos codebase *)
@@ -628,7 +629,8 @@ let rec val_to_ast ~raise ~loc
          | T_constant { injection = Chain_id; _ } -> Some ()
          | _ -> None)
     in
-    e_a_chain_id s
+    let x = string_of_chain_id s in
+    e_a_chain_id x
   | V_Construct (ctor, arg) when is_t_sum ty ->
     let map_ty =
       trace_option
@@ -1124,7 +1126,8 @@ let rec compile_value ~raise ~options ~loc
          | T_constant { injection = Chain_id; _ } -> Some ()
          | _ -> None)
     in
-    Tezos_micheline.Micheline.String ((), s)
+    let x = string_of_chain_id s in
+    Tezos_micheline.Micheline.String ((), x)
   | V_Ct (C_bls12_381_g1 b) ->
     let () =
       trace_option

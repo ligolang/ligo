@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from gitlab import Gitlab
-from marko.ext.gfm import GFM, elements
+from marko.ext.gfm import GFM
 from marko.md_renderer import MarkdownRenderer
 from marko import block, inline, Markdown
 import json
@@ -25,6 +25,7 @@ parser.add_argument("--token", type=str, help="private token")
 
 
 HOSTNAME_REGEX = re.compile("^https?://[^/]+")
+COMMENT_REGEX = re.compile("<!---.*-->")
 
 TYPE_MAP = ["fixed", "added", "breaking", "performance", "none"]
 
@@ -69,7 +70,7 @@ def get_changelog(elems):
 
     # Render the elems
     changelog_details = "".join([gfm.renderer.render(elem) for elem in elems])
-
+    changelog_details = re.sub(COMMENT_REGEX, '', changelog_details)
     return changelog_details
 
 
@@ -103,16 +104,19 @@ if __name__ == "__main__":
     # Get changelog details
     if type != "none":
         changelog_details = get_changelog(markdown.children)
+        changelog_details = changelog_details.replace('\n', '\\n')
+        changelog_details = changelog_details.replace('<p>', '')
+        changelog_details = changelog_details.replace('</p>', '')
     else:
-        changelog_details = None
+       quit()
 
-    print(
-        json.dumps(
-            {
-                "title": title,
-                "author": author,
-                "changelog": changelog_details,
-                "type": type,
-            }
-        )
-    )
+    f = open(f"changelog/{args.mr_id}", "x")
+    f.write(f'''
+author: {author}
+description: '{changelog_details}'
+merge_request: '{args.mr_id}'
+title: {title}
+type: {type}
+            ''')
+    f.close()
+

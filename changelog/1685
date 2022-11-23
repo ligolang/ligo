@@ -1,5 +1,5 @@
 author: er433
-description: '### Fixed naming issue when compiling more than 10 views (#1388).'
+description: '#### Fixed naming issue when compiling more than 10 views (#1388).'
 merge_request: '1685'
 title: 'Fix for naming issue when compiling more than 10 views (#1388)'
 type: fixed

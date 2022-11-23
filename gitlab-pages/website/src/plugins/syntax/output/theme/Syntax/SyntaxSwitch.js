@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
 
 function SyntaxSwitch(props) {
-  const [_, setState] = useState(0);
+  const [_, setState] = useState(0); // All this thing is a trick to force rerender
+  // because it looks like there's a bug with static generation
+  // so we have to trigger a render to make sure the correct value is rendered
+
   useEffect(() => {
     setState(1);
   }, []);
@@ -13,7 +16,7 @@ function SyntaxSwitch(props) {
       if (typeof window === "undefined") return;
       const url = new URL(window.location);
       url.searchParams.set("lang", e.target.value);
-      window.history.pushState(null, "", url.toString());
+      window.history.replaceState(null, "", url.toString());
       props.onSyntaxChange(e.target.value);
     }
   }, /*#__PURE__*/React.createElement("option", {

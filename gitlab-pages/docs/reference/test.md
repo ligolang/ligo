@@ -765,6 +765,20 @@ let constant_to_michelson_program = (constant : string) => michelson_program
 Turn a constant (as a string) into a `michelson_program`. To be used together with `Test.register_constant`.
 
 <SyntaxTitle syntax="pascaligo">
+val parse_michelson : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val parse_michelson : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let parse_michelson: string => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let parse_michelson = (constant : string) => michelson_program
+</SyntaxTitle>
+Parses Michelson (as string) into a `michelson_program`.
+
+<SyntaxTitle syntax="pascaligo">
 val register_file_constants : string -> list (string)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -793,6 +807,8 @@ let bake_until_n_cycle_end: nat => unit
 let bake_until_n_cycle_end = (cycles : nat) => unit
 </SyntaxTitle>
 It bakes until a number of cycles pass, so that an account registered as delegate can effectively act as a baker.
+
+*Note :* It can be used in tests to [manually advance time](../faq/tezos-now-advance-time)
 
 <SyntaxTitle syntax="pascaligo">
 val new_account : unit -> (string * key)

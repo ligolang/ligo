@@ -55,6 +55,7 @@ type tdef =
   ; body_range : Location.t
   ; content : Ast_core.type_expression
   ; def_type : def_type
+  ; references : LSet.t
   }
 
 type mod_case =
@@ -134,7 +135,14 @@ let make_t_def
  fun name def_type loc te ->
   let uid = make_def_id name in
   Type
-    { name; range = loc; body_range = te.location; uid; content = te; def_type }
+    { name
+    ; range = loc
+    ; body_range = te.location
+    ; uid
+    ; content = te
+    ; def_type
+    ; references = LSet.empty
+    }
 
 
 let make_m_def

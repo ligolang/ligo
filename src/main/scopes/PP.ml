@@ -45,7 +45,14 @@ let rec definitions : Format.formatter -> def list -> unit =
         | Unresolved -> Format.fprintf ppf "unresolved"
       in
       Format.fprintf ppf "|%a|@ %a" typ v.t refs v.references
-    | Type t -> Format.fprintf ppf ": %a" Ast_core.PP.type_expression t.content
+    | Type t ->
+      Format.fprintf
+        ppf
+        ": |%a|@ %a"
+        Ast_core.PP.type_expression
+        t.content
+        refs
+        t.references
     | Module { mod_case = Alias a; references; _ } ->
       Format.fprintf
         ppf
@@ -113,19 +120,21 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       ; "references", `List (List.map ~f:Location.to_yojson references)
       ]
   in
-  let type_definition ~name ~range ~body_range ~content =
+  let type_definition ~name ~range ~body_range ~content ~references =
+    let references = LSet.elements references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range
       ; "body_range", Location.to_yojson body_range
       ; "content", Ast_core.type_expression_to_yojson content
+      ; "references", `List (List.map ~f:Location.to_yojson references)
       ]
   in
   let aux = function
     | Variable { name; range; body_range; t; references; uid; def_type = _ } ->
       uid, defintion ~name ~range ~body_range ~t ~references
-    | Type { name; range; body_range; content; uid; def_type = _ } ->
-      uid, type_definition ~name ~range ~body_range ~content
+    | Type { name; range; body_range; content; uid; def_type = _; references }
+      -> uid, type_definition ~name ~range ~body_range ~content ~references
     | Module
         { name
         ; range

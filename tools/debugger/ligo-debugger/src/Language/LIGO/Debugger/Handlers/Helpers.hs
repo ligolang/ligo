@@ -3,14 +3,18 @@ module Language.LIGO.Debugger.Handlers.Helpers
   ( module Language.LIGO.Debugger.Handlers.Helpers
   ) where
 
+import Prelude hiding (try)
+
 import AST (LIGO, nestedLIGO, parse)
 import AST.Scope.Common qualified as AST.Common
-import Cli (HasLigoClient)
+import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (writeTChan)
 import Control.Lens (Each (each))
+import Control.Monad.Except (liftEither, throwError)
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI)
+import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Log (runNoLoggingT)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
@@ -27,10 +31,13 @@ import Morley.Michelson.Untyped qualified as U
 import ParseTree (pathToSrc)
 import Parser (Info)
 import Text.Interpolation.Nyan
-import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
+import UnliftIO.Exception (fromEither, throwIO, try)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Michelson
 
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
@@ -61,19 +68,21 @@ withMichelsonEntrypoint
   -> (forall arg. SingI arg => T.Notes arg -> T.EntrypointCallT param arg -> m a)
   -> m a
 withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
-  let noParseEntrypointErr = [int|m|Could not parse entrypoint: #{id}|]
+  let noParseEntrypointErr = ConfigurationException .
+        [int|m|Could not parse entrypoint: #{id}|]
   michelsonEntrypoint <- case mEntrypoint of
     Nothing -> pure U.DefEpName
     -- extension may return default entrypoints as "default"
     Just "default" -> pure U.DefEpName
     Just ep -> U.buildEpName (toText $ firstLetterToLowerCase ep)
       & first noParseEntrypointErr
-      & fromEither @DapMessageException
+      & fromEither
 
-  let noEntrypointErr = [int||Entrypoint `#{michelsonEntrypoint}` not found|]
+  let noEntrypointErr = ConfigurationException
+        [int||Entrypoint `#{michelsonEntrypoint}` not found|]
   T.MkEntrypointCallRes notes call <-
     T.mkEntrypointCall michelsonEntrypoint (cParamNotes contract)
-    & maybe (throwIO @_ @DapMessageException noEntrypointErr) pure
+    & maybe (throwIO noEntrypointErr) pure
 
   cont notes call
   where
@@ -92,32 +101,34 @@ parseValue
   -> Text
   -> Text
   -> Text
-  -> m (T.Value t)
-parseValue ctxContractPath category val valueType = do
+  -> m (Either Text (T.Value t))
+parseValue ctxContractPath category val valueType = runExceptT do
   let src = P.MSName category
   uvalue <- case valueType of
-    "LIGO" ->
-      mapExceptionM @LigoException @LigoException
-      do \e -> [int||
-        Error parsing #{category}:
+    "LIGO" -> do
+      lift (try $ compileLigoExpression src ctxContractPath val) >>= \case
+        Right x -> pure x
+        Left (err :: LigoCallException) -> throwError [int||
+            Error parsing #{category}:
 
-        #{e}
-        |]
-      do compileLigoExpression src ctxContractPath val
+            #{err}
+          |]
     "Michelson" ->
       P.parseExpandValue src val
         & first (pretty . MD.prettyFirstError)
-        & fromEither @DapMessageException
+        & liftEither
 
-    _ -> throwIO @_ @DapMessageException [int||
+    _ -> throwError [int||
         Expected "LIGO" or "Michelson" in field "valueType" \
         but got #{valueType}
       |]
 
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
-    & first (\msg -> [int||Typechecking as #{category} failed: #{msg}|])
-    & fromEither @DapMessageException
+    & first do \msg -> [int||
+        Typechecking as #{category} failed: #{msg}
+      |]
+    & liftEither
 
 getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
 getServerState = asks _rcLSState >>= readTVarIO >>= \case
@@ -152,3 +163,26 @@ parseContracts allFiles = do
   let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
 
   pure $ HM.fromList $ zip allFiles parsedFiles
+
+-- | Some exception in debugger logic.
+data SomeDebuggerException where
+  SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
+
+deriving stock instance Show SomeDebuggerException
+
+instance Exception SomeDebuggerException where
+  displayException (SomeDebuggerException e) = displayException e
+
+  fromException e@(SomeException e') =
+    asum
+      [ SomeDebuggerException <$> fromException @LigoCallException e
+      , SomeDebuggerException <$> fromException @LigoDecodeException e
+      , SomeDebuggerException <$> fromException @MichelsonDecodeException e
+      , SomeDebuggerException <$> fromException @ConfigurationException e
+      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
+      , SomeDebuggerException <$> fromException @ReplacementException e
+      , SomeDebuggerException <$> fromException @PluginCommunicationException e
+      , SomeDebuggerException <$> fromException @ImpossibleHappened e
+      , SomeDebuggerException <$> fromException @LigoIOException e
+      , cast @_ @SomeDebuggerException e'
+      ]
