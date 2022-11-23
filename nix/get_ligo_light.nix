@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   name = "ligo";
-  version = "0.55.0";
+  version = "0.56.0";
 
   executable = fetchurl {
     name = "ligo";
-    url = "https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo";
+    url = "https://gitlab.com/ligolang/ligo/-/jobs/3370208693/artifacts/raw/ligo";
     sha256 = "sha256-sO8LzN4xZXVs5bNgTpnzHLQVpm9va5M6BqbeFxOaBaw=";
     executable = true;
   };
