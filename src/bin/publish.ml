@@ -95,7 +95,7 @@ module Dist = struct
   [@@deriving to_yojson]
 
   let make ~tarball ~package_stats =
-    let PackageStats.{ sha1; sha512; file_count; unpacked_size; integrity; _ } =
+    let PackageStats.{ sha1; file_count; unpacked_size; integrity; _ } =
       package_stats
     in
     { integrity; shasum = sha1; tarball; file_count; unpacked_size }
@@ -124,7 +124,7 @@ module Version = struct
     }
   [@@deriving to_yojson]
 
-  let make ~ligo_registry ~version ~package_stats ~manifest =
+  let make ~ligo_registry ~package_stats ~manifest =
     let LigoManifest.
           { name
           ; version
@@ -217,28 +217,9 @@ module Body = struct
   [@@deriving to_yojson]
 
   let make ~ligo_registry ~package_stats ~manifest =
-    let LigoManifest.
-          { name
-          ; version
-          ; main
-          ; scripts
-          ; dependencies
-          ; dev_dependencies
-          ; description
-          ; readme
-          ; author
-          ; type_
-          ; repository
-          ; storage_fn
-          ; storage_arg
-          ; bugs
-          ; _
-          }
-      =
-      manifest
-    in
+    let LigoManifest.{ name; version; readme; description; _ } = manifest in
     let gzipped_tarball = package_stats.PackageStats.tarball_content in
-    let v = Version.make ~ligo_registry ~version ~package_stats ~manifest in
+    let v = Version.make ~ligo_registry ~package_stats ~manifest in
     let version = Semver.to_string version in
     let versions = SMap.add version v SMap.empty in
     { id = name
@@ -279,7 +260,7 @@ let handle_server_response ~name response body =
 
 let publish ~ligo_registry ~manifest ~body ~token =
   let open Cohttp_lwt_unix in
-  let LigoManifest.{ name } = manifest in
+  let LigoManifest.{ name; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers =
     Cohttp.Header.of_list
@@ -405,7 +386,7 @@ let tar_gzip ~name ~version ~ligoignore dir =
   Lwt.return (fcount, Buffer.contents_bytes buf, unpacked_size)
 
 
-let pack ~project_root ~token ~ligo_registry ~ligoignore ~manifest =
+let pack ~project_root ~ligo_registry ~ligoignore ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
   let fcount, tarball, unpacked_size =
     Lwt_main.run @@ tar_gzip project_root ~name ~version ~ligoignore
@@ -527,10 +508,6 @@ let publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run 
     with_logging ~before:"Validating manifest file" (fun () ->
         validate_manifest manifest)
   in
-  let* token =
-    with_logging ~before:"Checking auth token" (fun () ->
-        get_auth_token ~ligorc_path ligo_registry)
-  in
   let* project_root =
     with_logging ~before:"Finding project root" (fun () ->
         get_project_root project_root)
@@ -538,11 +515,15 @@ let publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run 
   let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in
   let* packed, stats =
     with_logging ~before:"Packing tarball" (fun () ->
-        pack ~project_root ~token ~ligo_registry ~ligoignore ~manifest)
+        pack ~project_root ~ligo_registry ~ligoignore ~manifest)
   in
   let () = show_stats stats in
   if dry_run
   then Ok ("", "")
   else
+    let* token =
+      with_logging ~before:"Checking auth token" (fun () ->
+          get_auth_token ~ligorc_path ligo_registry)
+    in
     with_logging ~before:"Uploading package" (fun () ->
         publish ~token ~body:packed ~ligo_registry ~manifest)
