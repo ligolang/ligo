@@ -209,6 +209,13 @@ let destruct_type_abstraction t =
   loop [] t
 
 
+let texists_vars t =
+  fold t ~init:Type_var.Set.empty ~f:(fun texists_vars t ->
+      match t.content with
+      | T_exists tvar -> Set.add texists_vars tvar
+      | _ -> texists_vars)
+
+
 let default_layout = L_tree
 
 let t_construct constructor parameters ?loc ?meta () : t =
@@ -403,6 +410,106 @@ let get_t_option t =
   | _ -> None
 
 
+module Type_var_name_tbl : sig
+  type t
+
+  (** [create ()] creates a new type variable table. *)
+  val create : unit -> t
+
+  (** [clear t] clears the table [t]. *)
+  val clear : t -> unit
+
+  (** [name_of t tvar] returns the human readable name of [tvar]. *)
+  val name_of : t -> Type_var.t -> string
+
+  module Exists : sig
+    (** [clear ()] clears the table used for existential variables. *)
+    val clear : unit -> unit
+
+    (** [name_of tvar] returns the human readable name for the existential variable [tvar] *)
+    val name_of : Type_var.t -> string
+  end
+end = struct
+  type t =
+    { name_tbl : (Type_var.t, string) Hashtbl.t
+          (* [name_tbl] is the mapping from type variables to names *)
+    ; names : string Hash_set.t
+          (* [names] is the set of existing names (superset of [Hashtbl.data name_tbl]) *)
+    ; mutable name_counter : int
+          (* [name_counter] is a counter used to generate unique variable names *)
+    }
+
+  let create () =
+    { name_tbl = Hashtbl.create (module Type_var)
+    ; names = Hash_set.create (module String)
+    ; name_counter = 0
+    }
+
+
+  let clear t =
+    Hashtbl.clear t.name_tbl;
+    Hash_set.clear t.names;
+    t.name_counter <- 0
+
+
+  let exists_tbl = create ()
+
+  let is_used t name =
+    Hash_set.mem t.names name || Hash_set.mem exists_tbl.names name
+
+
+  let incr_name_counter t = t.name_counter <- t.name_counter + 1
+
+  let rec create_name t =
+    let name =
+      if t.name_counter < 26
+      then String.of_char (Char.of_int_exn (97 + t.name_counter))
+      else
+        String.of_char (Char.of_int_exn (97 + (t.name_counter mod 26)))
+        ^ Int.to_string (t.name_counter / 26)
+    in
+    incr_name_counter t;
+    if is_used t name then create_name t else name
+
+
+  let add_name t tvar name =
+    Hashtbl.add_exn t.name_tbl ~key:tvar ~data:name;
+    Hash_set.add t.names name
+
+
+  let name_of t tvar =
+    match Hashtbl.find t.name_tbl tvar with
+    | Some name -> name
+    | None ->
+      let name =
+        if Type_var.is_generated tvar
+        then create_name t
+        else (
+          (* User-defined name. We'd like to try keep the name. However
+             a collision could occur if we've previously used this name.
+             
+             We resolve the collision by adding a number to the end until we reach 
+             a unique name *)
+          let name = Type_var.to_name_exn tvar in
+          let curr_name = ref name in
+          let i = ref 0 in
+          while is_used t !curr_name do
+            curr_name := name ^ Int.to_string !i;
+            Int.incr i
+          done;
+          !curr_name)
+      in
+      add_name t tvar name;
+      (* Invariant: [name] is unique (wrt table [t]) *)
+      name
+
+
+  module Exists = struct
+    let clear () = clear exists_tbl
+    let name_of tvar = name_of exists_tbl tvar
+  end
+end
+
 let pp_layout ppf layout =
   match layout with
   | L_comb -> Format.fprintf ppf "comb"
@@ -456,47 +563,107 @@ let pp_tuple_or_record_sep_type value =
     " *@ "
 
 
-let rec pp ppf t =
+let rec pp ~name_of_tvar ~name_of_exists ppf t =
+  let pp = pp ~name_of_tvar ~name_of_exists in
   if Option.is_some (get_t_bool t)
   then bool ppf
   else if Option.is_some (get_t_option t)
-  then option ppf t
+  then option ~name_of_tvar ~name_of_exists ppf t
   else (
     match t.content with
-    | T_variable tvar -> Type_var.pp ppf tvar
-    | T_exists tvar -> Format.fprintf ppf "^%a" Type_var.pp tvar
+    | T_variable tvar -> Format.fprintf ppf "%s" (name_of_tvar tvar)
+    | T_exists tvar -> Format.fprintf ppf "^%s" (name_of_exists tvar)
     | T_arrow arr -> Arrow.pp pp ppf arr
-    | T_construct construct -> pp_construct ppf construct
+    | T_construct construct ->
+      pp_construct ~name_of_tvar ~name_of_exists ppf construct
     | T_singleton lit -> Literal_value.pp ppf lit
-    | T_abstraction abs -> Abstraction.pp_type_abs pp ppf abs
-    | T_for_all for_all -> Abstraction.pp_forall pp ppf for_all
+    | T_abstraction abs -> pp_type_abs ~name_of_tvar ~name_of_exists ppf abs
+    | T_for_all for_all -> pp_forall ~name_of_tvar ~name_of_exists ppf for_all
     | T_sum row ->
       Format.fprintf
         ppf
         "@[<h>sum[%a]@]"
-        (pp_lmap_sep_d pp_row_elem)
+        (pp_lmap_sep_d (pp_row_elem ~name_of_tvar ~name_of_exists))
         (Record.LMap.to_kv_list_rev row.fields)
     | T_record row ->
       Format.fprintf
         ppf
         "%a"
-        (pp_tuple_or_record_sep_type pp_row_elem)
+        (pp_tuple_or_record_sep_type
+           (pp_row_elem ~name_of_tvar ~name_of_exists))
         row.fields)
 
 
-and pp_construct ppf { constructor; parameters; _ } =
+and pp_construct
+    ~name_of_tvar
+    ~name_of_exists
+    ppf
+    { constructor; parameters; _ }
+  =
   Format.fprintf
     ppf
     "%s%a"
     (Literal_types.to_string constructor)
-    (PP.list_sep_d_par pp)
+    (PP.list_sep_d_par (pp ~name_of_tvar ~name_of_exists))
     parameters
 
 
-and pp_row_elem ppf (row_elem : row_element) = pp ppf row_elem.associated_type
+and pp_row_elem ~name_of_tvar ~name_of_exists ppf (row_elem : row_element) =
+  pp ~name_of_tvar ~name_of_exists ppf row_elem.associated_type
+
+
+and pp_forall
+    ~name_of_tvar
+    ~name_of_exists
+    ppf
+    ({ ty_binder; kind; type_ } : _ Abstraction.t)
+    : unit
+  =
+  Format.fprintf
+    ppf
+    "∀ %s : %a . %a"
+    (name_of_tvar ty_binder)
+    Kind.pp
+    kind
+    (pp ~name_of_tvar ~name_of_exists)
+    type_
+
+
+and pp_type_abs
+    ~name_of_tvar
+    ~name_of_exists
+    ppf
+    ({ ty_binder; kind; type_ } : _ Abstraction.t)
+    : unit
+  =
+  Format.fprintf
+    ppf
+    "funtype %s : %a . %a"
+    (name_of_tvar ty_binder)
+    Kind.pp
+    kind
+    (pp ~name_of_tvar ~name_of_exists)
+    type_
+
+
 and bool ppf : unit = Format.fprintf ppf "%a" Type_var.pp Literal_types.v_bool
 
-and option ppf t : unit =
+and option ~name_of_tvar ~name_of_exists ppf t : unit =
   match get_t_option t with
-  | Some t -> Format.fprintf ppf "option (%a)" pp t
+  | Some t ->
+    Format.fprintf ppf "option (%a)" (pp ~name_of_tvar ~name_of_exists) t
   | None -> Format.fprintf ppf "option ('a)"
+
+
+let pp_with_name_tbl ~tbl ppf t =
+  let name_of_tvar = Type_var_name_tbl.name_of tbl in
+  let name_of_exists = Type_var_name_tbl.Exists.name_of in
+  pp ~name_of_tvar ~name_of_exists ppf t
+
+
+(* let name_of tvar = Format.asprintf "%a" Type_var.pp tvar in
+  pp ~name_of_tvar:name_of ~name_of_exists:name_of ppf t *)
+
+let pp =
+  let name_of tvar = Format.asprintf "%a" Type_var.pp tvar in
+  pp ~name_of_tvar:name_of ~name_of_exists:name_of

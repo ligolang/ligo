@@ -42,7 +42,8 @@ let%expect_test _ =
       9 |   ]
 
     Invalid type(s)
-    Cannot unify "record[a -> ^gen#542 , b -> ^gen#543 , c -> ^gen#544]" with "myt". |}]
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.ligo") ] ;
@@ -56,7 +57,8 @@ let%expect_test _ =
       8 |   ]
 
     Invalid type(s)
-    Cannot unify "( ^gen#542 * ^gen#543 * ^gen#544 )" with "myt". |}]
+    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.ligo") ] ;
