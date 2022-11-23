@@ -25,7 +25,7 @@ let%expect_test _ =
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
 
-    Pattern not of the expected type parameter. |}]
+    Pattern not of the expected type "parameter". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -38,14 +38,14 @@ let%expect_test _ =
       9 |   | Reset            -> 0
 
     Invalid type(s)
-    Cannot unify ( ^a * ^b ) with ( int * int * int ).
+    Cannot unify "( ^a * ^b )" with "( int * int * int )".
     Difference between the types:
     - ^a
     + int
     - ^b
     + int
     + int
-    Hint: ^a, ^b represent placeholder type(s). |}]
+    Hint: "^a", "^b" represent placeholder type(s). |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
@@ -95,8 +95,8 @@ let%expect_test _ =
       8 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
 
     Invalid type(s)
-    Cannot unify record[a -> ^a , b -> ^b , c -> ^c] with sum[Cons -> ( int * int ) , Nil -> unit].
-    Hint: ^a, ^b, ^c represent placeholder type(s). |}]
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
@@ -109,8 +109,8 @@ let%expect_test _ =
       7 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
 
     Invalid type(s)
-    Cannot unify ( ^a * ^b * ^c ) with sum[Cons -> ( int * int ) , Nil -> unit].
-    Hint: ^a, ^b, ^c represent placeholder type(s). |}]
+    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -120,7 +120,7 @@ let%expect_test _ =
       5 |   | Some_fake x -> x
       6 |   | None_fake -> 1
 
-    Pattern not of the expected type option (int). |}]
+    Pattern not of the expected type "option (int)". |}]
 
 (* wrong body type *)
 
@@ -194,7 +194,7 @@ let%expect_test _ =
       7 |    | Decrement -> s -1
       8 |  in ([] : operation list), stor
 
-    Pattern not of the expected type nat. |}]
+    Pattern not of the expected type "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.mligo") ] ;

@@ -95,11 +95,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s)
-    Cannot unify ( int * string ) with ( int * string * bool ).
-    Difference between the types:
-      int
-      string
-    + bool |} ] ;
+    Cannot unify "toto" with "( int * string * bool )". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
@@ -173,8 +169,8 @@ let%expect_test _ =
      46 |   in
 
     Invalid type(s)
-    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^a).
-    Hint: ^a represent placeholder type(s). |}]
+    Cannot unify "id_details" with "option (^a)".
+    Hint: "^a" represent placeholder type(s). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -213,7 +209,7 @@ let%expect_test _ =
       8 |         Some (contract) -> contract
 
     Invalid type
-    Ill formed type funtype a : * . contract (a). |}]
+    Ill formed type "contract".Hint: you might be missing some type arguments. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/double_for_each.ligo" ] ;
@@ -329,7 +325,7 @@ let%expect_test _ =
       5 |   ([] : operation list), s
 
     Invalid type(s)
-    Cannot unify ( string * int * int * string ) with ( tez * nat * tez ).
+    Cannot unify "( string * int * int * string )" with "( tez * nat * tez )".
     Difference between the types:
     - string
     + tez
@@ -368,7 +364,7 @@ let%expect_test _ =
       5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
     Invalid type(s)
-    Cannot unify ( string * int * nat * tez * string * int ) with ( tez * int * tez * nat * string ).
+    Cannot unify "( string * int * nat * tez * string * int )" with "( tez * int * tez * nat * string )".
     Difference between the types:
     - string
     + tez
@@ -389,7 +385,7 @@ let%expect_test _ =
       5 | //               ^^^   ^^^^^^               ^^^^^^^         ^^^
 
     Invalid type(s)
-    Cannot unify ( int * nat * int * nat * int * nat ) with ( int * tez * string * nat * int * address * int * tez * nat ).
+    Cannot unify "( int * nat * int * nat * int * nat )" with "( int * tez * string * nat * int * address * int * tez * nat )".
     Difference between the types:
       int
     + tez
@@ -447,7 +443,7 @@ let%expect_test _ =
       5 |   //             ^^^^^^                ^^^    ^^^^^^         ^^^^^^^
 
     Invalid type(s)
-    Cannot unify ( int * string * ( nat * tez * nat ) * tez ) with ( int * ( nat * tez * int ) * string * tez * address ).
+    Cannot unify "( int * string * ( nat * tez * nat ) * tez )" with "( int * ( nat * tez * int ) * string * tez * address )".
     Difference between the types:
       int
     - string
@@ -479,14 +475,14 @@ let%expect_test _ =
      10 |   ([] : operation list), s
 
     Invalid type(s)
-    Cannot unify ( int * ( nat * tez * tez * nat ) * nat ) with ( int * ( string * address * string * tez ) * ( address * int * int * int ) * ( nat * tez * int * nat ) * ( address * int * int * int ) * nat ).
+    Cannot unify "( int * s * nat )" with "( int * s1 * s2 * s_close * s2 * nat )".
     Difference between the types:
       int
-    + ( string * address * string * tez )
-    + ( address * int * int * int )
-    - ( nat * tez * tez * nat )
-    + ( nat * tez * int * nat )
-    + ( address * int * int * int )
+    - s
+    + s1
+    + s2
+    + s_close
+    + s2
       nat |}]
 
 (*
@@ -506,7 +502,7 @@ let%expect_test _ =
       5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
     Invalid type(s)
-    Cannot unify ( string * int * nat * int * string * int ) with ( tez * int * tez * nat * string ).
+    Cannot unify "( string * int * nat * int * string * int )" with "( tez * int * tez * nat * string )".
     Difference between the types:
     - string
     + tez

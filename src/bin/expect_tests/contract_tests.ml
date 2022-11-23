@@ -1908,8 +1908,8 @@ let%expect_test _ =
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
     Invalid type(s)
-    Cannot unify option (^a) with string.
-    Hint: ^a represent placeholder type(s). |}]
+    Cannot unify "option (^a)" with "string".
+    Hint: "^a" represent placeholder type(s). |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =

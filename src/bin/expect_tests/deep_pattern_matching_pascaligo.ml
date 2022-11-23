@@ -42,8 +42,8 @@ let%expect_test _ =
       9 |   ]
 
     Invalid type(s)
-    Cannot unify record[a -> ^a , b -> ^b , c -> ^c] with sum[Cons -> ( int * int ) , Nil -> unit].
-    Hint: ^a, ^b, ^c represent placeholder type(s). |}]
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.ligo") ] ;
@@ -57,8 +57,8 @@ let%expect_test _ =
       8 |   ]
 
     Invalid type(s)
-    Cannot unify ( ^a * ^b * ^c ) with sum[Cons -> ( int * int ) , Nil -> unit].
-    Hint: ^a, ^b, ^c represent placeholder type(s). |}]
+    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.ligo") ] ;
@@ -68,7 +68,7 @@ let%expect_test _ =
       5 |   | Some_fake (x) -> x
       6 |   | None_fake -> 1
 
-    Pattern not of the expected type option (int). |}]
+    Pattern not of the expected type "option (int)". |}]
 
 (* wrong body type *)
 
@@ -160,7 +160,7 @@ let%expect_test _ =
      10 |       | Decrement -> s - 1
      11 |     ]
 
-    Pattern not of the expected type nat. |}]
+    Pattern not of the expected type "nat". |}]
 
 (* Positives *)
 
