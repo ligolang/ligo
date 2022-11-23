@@ -60,21 +60,6 @@ build_release_env_vars:
 #######################################################################
 # Following script is executed when branch is created
 #######################################################################
-xrefcheck:
-  stage: tooling
-  needs:
-    - job: changelog
-      artifacts: true
-  script:
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
-    - chmod 777 ./xrefcheck-x86_64-linux
-    - ./xrefcheck-x86_64-linux
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^release/ && $TRIGGER_DOC_UPDATE == null' 
-      when: always
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
-      when: always
-
 create-tag:
   stage: release    
   script:

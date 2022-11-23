@@ -178,6 +178,20 @@ docker-push:
 #     - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
 #     - docker push "${LIGO_REGISTRY_FULL_NAME}"
 
+xrefcheck:
+  stage: tooling
+  needs:
+    - job: changelog
+      artifacts: true
+  script:
+    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
+    - chmod 777 ./xrefcheck-x86_64-linux
+    - ./xrefcheck-x86_64-linux
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+  allow_failure: true
+  
 webide-backend-build-and-push-backend:
   extends: .docker-image
   stage: deploy
