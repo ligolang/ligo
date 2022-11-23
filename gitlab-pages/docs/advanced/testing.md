@@ -644,7 +644,7 @@ const test_transfer_to_contract_ = () : unit => {
   let main_addr = Tezos.address (Test.to_contract (main_taddr)) ;
 
   /* mk_param is executed __by the proxy contract__ */
-  let mk_param = (t:ticket<string>) : param => { return [42,t] } ;
+  const mk_param = (t:ticket<string>) : param => { return [42,t] } ;
   /* Use this address everytime you want to send tickets from the same proxy-contract */
   /* initialize a proxy contract in charge of creating and sending your tickets */
   let proxy_taddr = Proxy_ticket.init_transfer (mk_param) ;
@@ -755,7 +755,7 @@ const main = (_: unit, s: storage) : [ list<operation> , storage] => {
 };
 
 const test_originate_contract_ = () : unit => {
-  let mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
+  const mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
   let ticket_info = [0x0202, 15 as nat] ;
   let addr = Proxy_ticket.originate (ticket_info, mk_storage, main) ;
   let storage : michelson_program = Test.get_storage_of_address (addr) ;

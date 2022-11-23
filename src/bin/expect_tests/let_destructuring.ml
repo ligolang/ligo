@@ -26,7 +26,7 @@ let%expect_test _ =
       4 |   let { a = a ; f = b }  = { a = 1 ; b = 1n } in
       5 |   (a,b)
 
-    Pattern not of the expected type foo |}]
+    Pattern not of the expected type "foo". |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret" ; "t1"; "--init-file";(test "let_destructuring.religo") ] ;
@@ -64,13 +64,17 @@ let%expect_test _ =
       4 |   var record [ a = a ; f = b ] := record [ a = 1 ; b = 1n ] ;
       5 | } with (a,b)
 
-    Pattern not of the expected type foo |}] ;
+    Pattern not of the expected type "foo". |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern not of the expected type t |}] ;
+    Invalid type(s)
+    Cannot unify "record[a -> ^a]" with "t".
+    Hint: "^a" represent placeholder type(s). |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a ; b ; c} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern not of the expected type t |}];
+    Invalid type(s)
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "t".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}];
 
   run_ligo_good ["run"; "interpret" ; "t1" ; "--init-file";(test "let_destructuring.jsligo") ] ;
   [%expect{| 1 |}] ;

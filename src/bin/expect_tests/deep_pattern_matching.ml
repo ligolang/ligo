@@ -15,7 +15,7 @@ let%expect_test _ =
      16 |     (a 1) + (fo b)
 
     Invalid type(s)
-    Cannot unify int -> int with option (int). |}]
+    Cannot unify "int -> int" with "optioni". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -25,18 +25,27 @@ let%expect_test _ =
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
 
-    Pattern not of the expected type parameter |}]
+    Pattern not of the expected type "parameter". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.mligo"); "--no-colour" ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 8, characters 15-19:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 7, character 2 to line 9, character 25:
+      6 | let main (action : parameter) : int =
       7 |   match action with
       8 |   | Increment (n, m) -> 0
       9 |   | Reset            -> 0
 
-    Pattern not of the expected type ( int * int * int ) |}]
+    Invalid type(s)
+    Cannot unify "( ^a * ^b )" with "( int * int * int )".
+    Difference between the types:
+    - ^a
+    + int
+    - ^b
+    + int
+    + int
+    Hint: "^a", "^b" represent placeholder type(s). |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
@@ -48,7 +57,7 @@ let%expect_test _ =
       3 |   (([] : operation list), ())
 
     Invalid type(s).
-    Expected: "nat", but got: "unit". |}]
+    Expected "unit", but got: "nat". |}]
 
 
 (* Trying to match on values *)
@@ -78,25 +87,30 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail1.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.mligo", line 6, characters 10-33:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.mligo", line 5, character 2 to line 8, character 44:
+      4 | let t = fun (x: myt * myt) ->
       5 |   match x with
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
+      8 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#492 , b -> ^gen#493 , c -> ^gen#494] with
-    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.mligo", line 5, characters 11-16:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.mligo", line 4, character 2 to line 7, character 44:
+      3 | let t = fun (x: myt * myt) ->
       4 |   match x with
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
+      7 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
 
     Invalid type(s)
-    Cannot unify ( ^gen#492 * ^gen#493 * ^gen#494 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -106,7 +120,7 @@ let%expect_test _ =
       5 |   | Some_fake x -> x
       6 |   | None_fake -> 1
 
-    Pattern not of the expected type option (int) |}]
+    Pattern not of the expected type "option (int)". |}]
 
 (* wrong body type *)
 
@@ -118,7 +132,7 @@ let%expect_test _ =
       6 |   | B -> 2
 
     Invalid type(s)
-    Cannot unify int with string. |}]
+    Cannot unify "int" with "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
@@ -129,14 +143,16 @@ let%expect_test _ =
      20 |     in
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 6, characters 4-16:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
+      3 | let t = fun (x: myt * ( int * int * int)) ->
+      4 |   match x with
       5 |   | xs , (a,b,c) -> 1
       6 |   | xs , (c,b,a) -> 2
 
@@ -178,7 +194,7 @@ let%expect_test _ =
       7 |    | Decrement -> s -1
       8 |  in ([] : operation list), stor
 
-    Pattern not of the expected type nat |}]
+    Pattern not of the expected type "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.mligo") ] ;

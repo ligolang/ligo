@@ -1,5 +1,5 @@
 author: er433
-description: '### New functions for testing framework\n\nThere are new functions for
+description: '#### New functions for testing framework\n\nThere are new functions for
   doing mutation testing directly from files, that originate a mutated version of
   the contract and then gives control to the passed function that can do the test:\n-
   `Test.originate_from_file_and_mutate : string -> string -> string list -> michelson_program

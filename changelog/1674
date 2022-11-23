@@ -1,6 +1,6 @@
 author: pewulfman
-description: '### Here put what you want to share with ligo users through changelog.
-  Markdown formatted (### for title).\nRedesign the handling of imperative construct
+description: '#### Here put what you want to share with ligo users through changelog.
+  Markdown formatted (#### for title).\nRedesign the handling of imperative construct
   such as loop and assignation to fix bugs and improve performances'
 merge_request: '1674'
 title: Refactor loop and assignation

@@ -1,4 +1,4 @@
- (**
+(**
     This modules aims at finding the difference between two large tuple types
     for improved error message during type mismatch.
     For example when type [a * b * c * d * e] cannot unify with [c * d * e],
@@ -16,34 +16,33 @@
       z
 *)
 
-open Ast_typed
 open Ligo_prim
 open Simple_utils
 
 module Defs = struct
-  type left  = type_expression
-  type right = type_expression
-  type eq    = unit
-  type diff  = unit
+  type left = Type.t
+  type right = Type.t
+  type eq = unit
+  type diff = unit
   type state = unit
 end
 
-module Define = Diffing.Define(Defs)
+module Define = Diffing.Define (Defs)
 
-let rows_to_te_list : rows -> ty_expr list = fun r ->
-  let fields : row_element Record.t    = r.fields in
-  let l : (Label.t * row_element) list = Record.to_list fields in
-  let l : row_element list             = List.map ~f:snd l in
-  let l : type_expression list         = List.map ~f:(fun re -> re.associated_type) l in
-  l
+let field_types_of_row (row : Type.row) : Type.t list =
+  row.fields
+  |> Record.to_list
+  |> List.map ~f:snd
+  |> List.map ~f:(fun (row_elem : Type.row_element) -> row_elem.associated_type)
 
-let rows_to_te_array : rows -> ty_expr array = fun r ->
-  Array.of_list @@ List.rev @@ rows_to_te_list r
 
-module rec TeArg : sig
+let field_types_array_of_row row =
+  Array.of_list @@ List.rev @@ field_types_of_row row
+
+
+module rec Arg : sig
   val weight : Define.change -> int
-  val test :
-    unit -> type_expression -> type_expression -> (unit, unit) result
+  val test : unit -> Type.t -> Type.t -> (unit, unit) result
   val update : Define.change -> unit -> unit
 end = struct
   (*
@@ -97,42 +96,44 @@ end = struct
 
   *)
 
-  (* let weight_simple : Define.change -> int = function
-    | Delete _ -> 1
-    | Insert _ -> 1
-    | Keep   _ -> 0
-    | Change _ -> 1 *)
-
   let rec weight : Define.change -> int = function
-    | Delete te
-    | Insert te -> (
-        match te.type_content with
-        | T_record r -> List.length @@ rows_to_te_list r
-        | _          -> 1
-        )
-    | Keep   _ -> 0
-    | Change (te1, te2, _) -> (
-        match te1.type_content, te2.type_content with
-        | T_record r1, T_record r2 ->
-          (* We consider the weight to change a record into another
+    | Delete type_ | Insert type_ ->
+      (match type_.content with
+      | T_record row -> List.length @@ field_types_of_row row
+      | _ -> 1)
+    | Keep _ -> 0
+    | Change (type1, type2, _) ->
+      (match type1.content, type2.content with
+      | T_record row1, T_record row2 ->
+        (* We consider the weight to change a record into another
              as the weight of the diff between them,
              so that "close" records are gather together in the diff *)
-          let diff = Diff.diff () (rows_to_te_array r1) (rows_to_te_array r2) in
-          let diff_weights = List.map ~f:(fun change -> weight change) diff in
-          let total_weight = List.fold ~init:0 ~f:(+) diff_weights in
-          total_weight
-        | T_record r, _
-        | _         , T_record r -> 1 + (List.length @@ rows_to_te_list r) (* one single insertion + n removals (or the contrary) *)
-        | _                      -> 1 + 1 (* one single insertion + one signle removal *)
-        )
-  
-  let test : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result =
-    fun _state te_l te_r ->
-    match type_expression_eq (te_l, te_r) with
+        let diff =
+          Diff.diff
+            ()
+            (field_types_array_of_row row1)
+            (field_types_array_of_row row2)
+        in
+        let diff_weights = List.map ~f:(fun change -> weight change) diff in
+        let total_weight = List.fold ~init:0 ~f:( + ) diff_weights in
+        total_weight
+      | T_record row, _ | _, T_record row ->
+        1 + (List.length @@ field_types_of_row row)
+        (* one single insertion + n removals (or the contrary) *)
+      | _ -> 1 + 1 (* one single insertion + one signle removal *))
+
+
+  let test
+      : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result
+    =
+   fun _state type1 type2 ->
+    match Type.equal type1 type2 with
     | true -> Ok ()
     | false -> Error ()
 
-  let update : Define.change -> Defs.state -> Defs.state = fun _change _state -> ()
+
+  let update : Define.change -> Defs.state -> Defs.state =
+   fun _change _state -> ()
 end
 
 (*
@@ -140,105 +141,108 @@ end
   using the above computation of "weights" of type_expression changes.
 *)
 and Diff : sig
-  val diff :
-    unit -> type_expression array -> type_expression array -> Define.patch
-end = Define.Simple(TeArg)
-
+  val diff : unit -> Type.t array -> Type.t array -> Define.patch
+end =
+  Define.Simple (Arg)
 
 type t = Define.patch
 
-let get_diff : type_expression -> type_expression -> t = fun t1 t2 ->
-  List.rev @@
-  match t1.type_content, t2.type_content with
+let diff : Type.t -> Type.t -> t =
+ fun type1 type2 ->
+  List.rev
+  @@
+  match type1.content, type2.content with
   (* When the two types are records, call the [Diffing] to get the optimal diff *)
-  | T_record r1, T_record r2
-    when (Record.is_tuple r1.fields)
-    &&   (Record.is_tuple r2.fields) ->
-    (* let () = Printf.printf "[DEBUG] Matching get_diff case (T_record, T_record) <%d> <%d> )\n" (hash_ty_expr t1) (hash_ty_expr t2) in *)
-    let r1 : ty_expr array = rows_to_te_array r1 in
-    let r2 : ty_expr array = rows_to_te_array r2 in
-    let diff : t = Diff.diff () r1 r2 in
-    diff
+  | T_record row1, T_record row2
+    when Record.is_tuple row1.fields && Record.is_tuple row2.fields ->
+    Diff.diff () (field_types_array_of_row row1) (field_types_array_of_row row2)
   (* TODO : Add record and variant types *)
   (* For types like [tuple_a list option] vs. [tuple_b list option] for example,
      the typer will explore the types recursively to pinpoint the mismatch,
-     and [get_diff] will be called on [tuple_a] vs [tuple_b] *)
+     and [diff] will be called on [tuple_a] vs [tuple_b] *)
   | _ -> []
 
-module PP = struct
 
-  (* The [ANSI] module uses Ocaml Format's semantic tags to enable styling of output.
-     After calling [add_ansi_marking] on the given [ppf],
-     you can add colored text by enclosing it with a semantic tag, like this :
+(* The [ANSI] module uses Ocaml Format's semantic tags to enable styling of output.
+   After calling [add_ansi_marking] on the given [ppf],
+   you can add colored text by enclosing it with a semantic tag, like this :
       [Format.fprintf ppf "normal text, @{<red>some red text@}, normal text again"
 
-    The module will basically surround "some red text"
-    with [mark_open_stag "red"] string output as prefix
-    and [mark_close_stag "red"] string output as suffix.
+   The module will basically surround "some red text"
+   with [mark_open_stag "red"] string output as prefix
+   and [mark_close_stag "red"] string output as suffix.
 
-    See :
+   See :
     https://ocamlpro.com/blog/2020_06_01_fr_tutoriel_format
     https://hal.archives-ouvertes.fr/hal-01503081/file/format-unraveled.pdf
-  *)
-  module ANSI = struct
-
-    type style =
+*)
+module ANSI = struct
+  type style =
     | Normal
     | Red
     | Green
 
-    let style_of_stag = function
+  let style_of_stag = function
     | Format.String_tag s ->
-      begin match s with
+      (match s with
       | "normal" -> Normal
-      | "red"    -> Red
-      | "green"  -> Green
-      | _ -> failwith "Unknown ANSI style" (* TODO NP : How to report errors properly ? *)
-      end
-    | _ -> failwith "Unknown ANSI semantic tag" (* TODO NP : How to report errors properly ? *)
+      | "red" -> Red
+      | "green" -> Green
+      | _ ->
+        failwith
+          "Unknown ANSI style" (* TODO NP : How to report errors properly ? *))
+    | _ -> failwith "Unknown ANSI semantic tag"
 
-    let closing_style = function
+
+  (* TODO NP : How to report errors properly ? *)
+
+  let closing_style = function
     | Red | Green | Normal -> Normal
 
-    let code_of_style = function
+
+  let code_of_style = function
     | Normal -> 0
-    | Red    -> 31
-    | Green  -> 32
+    | Red -> 31
+    | Green -> 32
 
-    let ansi_of_code code =
-      Format.sprintf "\027[%dm" code
 
-    let ansi_of_style style = ansi_of_code @@ code_of_style style
+  let ansi_of_code code = Format.sprintf "\027[%dm" code
+  let ansi_of_style style = ansi_of_code @@ code_of_style style
+  let mark_open_stag t = ansi_of_style @@ style_of_stag t
+  let mark_close_stag t = ansi_of_style @@ closing_style @@ style_of_stag t
 
-    let mark_open_stag t = ansi_of_style @@ style_of_stag t
-    let mark_close_stag t = ansi_of_style @@ closing_style @@ style_of_stag t
-
-    let add_ansi_marking ppf =
-      let open Format in
-      pp_set_mark_tags ppf true;
-      let old_fs = pp_get_formatter_stag_functions ppf () in
-      pp_set_formatter_stag_functions ppf
-        {old_fs with mark_open_stag; mark_close_stag}
-
-  end
-
-  let pp_list_newline pp_content ppf content =
-    PP_helpers.list_sep pp_content (PP_helpers.tag "@,") ppf content
-  let pp_te = Ast_typed.PP.type_expression
-  let _pp_te_debug ppf (te : ty_expr) : unit =
-    Format.fprintf ppf "%a <hash:%d>" pp_te te (hash_type_expression te)
-
-  let rec change ppf (c : Define.change ) : unit =
-    let self = change in
-    match c with
-    | Delete  l              -> Format.fprintf ppf "@{<red>- %a@}" pp_te l
-    | Insert  r              -> Format.fprintf ppf "@{<green>+ %a@}" pp_te r 
-    | Keep    (l, _r, _eq)   -> Format.fprintf ppf "  %a" pp_te l
-    | Change  (l, r, _diff)  -> pp_list_newline self ppf [Delete l; Insert r]
-
-  let t (no_colour : bool) ppf (patch : t) : unit =
-    if not no_colour then ANSI.add_ansi_marking ppf;
-    match patch with
-    | [] -> Format.fprintf ppf ""
-    | _ -> Format.fprintf ppf "@.@[<v>Difference between the types:@,%a@]" (pp_list_newline change)  patch
+  let add_ansi_marking ppf =
+    let open Format in
+    pp_set_mark_tags ppf true;
+    let old_fs = pp_get_formatter_stag_functions ppf () in
+    pp_set_formatter_stag_functions
+      ppf
+      { old_fs with mark_open_stag; mark_close_stag }
 end
+
+let pp_list_newline pp_content ppf content =
+  PP_helpers.list_sep pp_content (PP_helpers.tag "@,") ppf content
+
+let _pp_te_debug ppf (type_ : Type.t) : unit =
+  Format.fprintf ppf "%a <hash:%d>" Type.pp type_ (Type.hash type_)
+
+
+let rec pp_change ~tbl ppf (c : Define.change) : unit =
+  let self = pp_change ~tbl in
+  match c with
+  | Delete l -> Format.fprintf ppf "@{<red>- %a@}" (Type.pp_with_name_tbl ~tbl) l
+  | Insert r -> Format.fprintf ppf "@{<green>+ %a@}" (Type.pp_with_name_tbl ~tbl) r
+  | Keep (l, _r, _eq) -> Format.fprintf ppf "  %a" (Type.pp_with_name_tbl ~tbl) l
+  | Change (l, r, _diff) -> pp_list_newline self ppf [ Delete l; Insert r ]
+
+
+let pp ~(no_color : bool) ~tbl ppf (patch : t) : unit =
+  if not no_color then ANSI.add_ansi_marking ppf;
+  match patch with
+  | [] -> Format.fprintf ppf ""
+  | _ ->
+    Format.fprintf
+      ppf
+      "@.@[<v>Difference between the types:@,%a@]"
+      (pp_list_newline (pp_change ~tbl))
+      patch

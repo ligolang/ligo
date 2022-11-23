@@ -42,7 +42,7 @@ type t =
   | External of string
   | Gen
   | Int64
-  [@@deriving ord, eq, yojson, hash]
+  [@@deriving ord, eq, yojson, hash, sexp]
 
 let to_string = function
   | String               -> "string"

@@ -1,5 +1,5 @@
 author: er433
-description: \n### New type `test_exec_error_balance_too_low`\n\nA new type `test_exec_error_balance_too_low`
+description: \n#### New type `test_exec_error_balance_too_low`\n\nA new type `test_exec_error_balance_too_low`
   has been added to testing framework. It represents the data returned by `Balance_too_low`
   case in `test_exec_error`.
 merge_request: '1717'

@@ -1,5 +1,5 @@
 author: er433
-description: '### New asserting primitives in the `Test` module'
+description: '#### New asserting primitives in the `Test` module'
 merge_request: '2054'
 title: 'Testing framework: add `assert` alternatives in the `Test` module'
 type: added

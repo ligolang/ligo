@@ -104,7 +104,8 @@ let%expect_test _ =
     - test_key_hash exited with value ().
     - test_check exited with value ().
     - test_int_bls exited with value ().
-    - test_not exited with value (). |}]
+    - test_not exited with value ().
+    - test_chain_id exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
@@ -500,7 +501,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (2136n , 2331n , 2331n). |}]
 
@@ -641,8 +642,10 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
   [%expect {|
     KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj
+    [1 -> "hi"]
     Everything at the top-level was executed.
-    - test_foo exited with value (). |}]
+    - test_foo exited with value ().
+    - test_bar exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
@@ -674,6 +677,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_create.mligo" ] ;
   [%expect {|
     42
+    42
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_create2.mligo" ] ;
+  [%expect{|
     42
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -839,7 +850,7 @@ let%expect_test _ =
       3 |   Test.originate f () 0tez
 
     Invalid type(s)
-    Cannot unify unit with ( list (operation) * unit ). |}]
+    Cannot unify "unit" with "( list (operation) * unit )". |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
@@ -865,6 +876,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 |}]
 
@@ -938,7 +950,7 @@ let%expect_test _ =
       3 |
 
     Invalid type(s)
-    Cannot unify record[property -> string] with record[field -> int]. |}]
+    Cannot unify "record[property -> string]" with "record[field -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
@@ -948,7 +960,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, "toto");
 
     Invalid type(s)
-    Cannot unify string with record[b -> int]. |}]
+    Cannot unify "string" with "record[b -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
@@ -958,7 +970,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {field: "toto"});
 
     Invalid type(s)
-    Cannot unify record[field -> string] with int. |}]
+    Cannot unify "record[field -> string]" with "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
@@ -981,15 +993,6 @@ let%expect_test _ =
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
     100000000000n |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "run"; "test" ; bad_test "test_create.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_create.mligo", line 11, characters 12-44:
-     10 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage fact_ta)) in
-     11 |   Test.log (Test.get_storage_of_address addr)
-
-    Not supported (yet) when the provided account has been fetched from Test.get_last_originations |}]
 
 let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
@@ -1045,4 +1048,5 @@ let%expect_test _ =
     An uncaught error occured:
     Failwith: "foo"
     Trace:
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 ,
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]

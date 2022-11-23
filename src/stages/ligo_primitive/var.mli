@@ -1,17 +1,17 @@
 module Location = Simple_utils.Location
 
 module type VAR = sig
-  type t [@@deriving eq, compare, yojson, hash]
+  type t [@@deriving compare, yojson, hash, sexp]
 
   (* Create a compiler generated variable *)
   val reset_counter : unit -> unit
   val fresh : ?loc:Location.t -> ?name:string -> unit -> t
   val fresh_like : ?loc:Location.t -> t -> t
-
   (* Construct a user variable directly from a string. This should only
       be used for embedding user variable names. For programmatically
       generated variables, use `fresh`. Take care not to cause
       shadowing/capture except as the user intended. *)
+
   val of_input_var : ?loc:Location.t -> string -> t
 
   (* Warning : do not use *)
@@ -22,6 +22,8 @@ module type VAR = sig
 
   (* Prints vars as %s or %s#%d *)
   val pp : Format.formatter -> t -> unit
+
+  include Comparable.S with type t := t
 end
 
 module Value_var : sig

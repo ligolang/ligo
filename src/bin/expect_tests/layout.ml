@@ -16,5 +16,4 @@ let%expect_test _ =
      23 |   [],s
 
     Invalid type(s)
-    Cannot unify record[tata -> int , titi -> int , toto -> int , tutu -> int] with
-    record[tata -> int , titi -> int , toto -> int , tutu -> int] due to differing layouts (tree and comb). |}]
+    Cannot unify "storage1" with "storage" due to differing layouts (tree and comb). |}]

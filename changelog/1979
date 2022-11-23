@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Fixes path resolution if a relative path is provided to `Test.originate_from_file`
+description: '#### Fixes path resolution if a relative path is provided to `Test.originate_from_file`
   & `Test.compile_contract_from_file` & `Test.read_contract_from_file`'
 merge_request: '1979'
 title: '[Testing Framwork] Fix relative path resolution for contracts'

@@ -14,4 +14,14 @@
   syntax_types
   ocaml-compiler-libs.common)
  (preprocess
-  (pps ppx_poly_constructor ppx_compare ppx_let ppx_here ppx_hash)))
+  (pps
+   ppx_poly_constructor
+   ppx_woo
+   ppx_map
+   ppx_sexp_conv
+   ppx_compare
+   ppx_let
+   ppx_here
+   ppx_hash
+   ppx_import
+   ppx_deriving_yojson)))

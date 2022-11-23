@@ -39,7 +39,7 @@ export const CompilePaneComponent = () => {
             protocol=selectedProtocol
             dispatch({ ...new ChangeProtocolAction(selectedProtocol) })}
           }>
-          <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Lima}>Lima</Option>
           <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>

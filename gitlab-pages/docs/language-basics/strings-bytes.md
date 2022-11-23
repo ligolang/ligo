@@ -213,6 +213,38 @@ let b = 0x7070;
 </Syntax>
 
 
+Moreover, a string literal can be converted to its bytes representation:
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+const bs : bytes = [%bytes "foo"]
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let bs : bytes = [%bytes "foo"]
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let bs : bytes = [%bytes "foo"]
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let bs = (bytes `foo`);
+```
+
+</Syntax>
+
 
 ### Concatenating Bytes
 

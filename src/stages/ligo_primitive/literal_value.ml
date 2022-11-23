@@ -1,6 +1,6 @@
 module Z = Simple_utils.Z
 
-type ligo_string = Simple_utils.Ligo_string.t [@@deriving eq, compare, yojson, hash]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving eq, compare, yojson, hash, sexp]
 
 
 type layout =
@@ -29,7 +29,7 @@ type t =
   | Literal_bls12_381_fr of bytes
   | Literal_chest of bytes
   | Literal_chest_key of bytes
-[@@deriving eq,compare,yojson, hash]
+[@@deriving eq,compare,yojson, hash, sexp]
 
 let to_enum = function
   | Literal_unit        ->  1

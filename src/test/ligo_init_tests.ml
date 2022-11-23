@@ -71,8 +71,11 @@ let expected_contract_list =
  "NFT-factory-cameligo";
  "NFT-factory-jsligo";
  "advisor-cameligo";
+ "dao-cameligo";
+ "dao-jsligo";
  "multisig-cameligo";
  "multisig-jsligo";
+ "permit-cameligo";
  "randomness-cameligo";
  "randomness-jsligo";
  "shifumi-cameligo";

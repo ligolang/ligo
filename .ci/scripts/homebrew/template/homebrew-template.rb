@@ -1,12 +1,18 @@
 class LIGO_CLASS_PLACEHOLDER < Formula
   desc "Friendly Smart Contract Language for Tezos"
   homepage "https://ligolang.org/"
+  license "MIT"
 
   # We clone repo explicitely to preserve the information about git submodules
   url "https://gitlab.com/ligolang/ligo.git", tag: "LIGO_VERSION_PLACEHOLDER", revision: "LIGO_HEAD_REF_HASH_PLACEHOLDER"
+  version "LIGO_VERSION_PLACEHOLDER"
+  head "https://gitlab.com/ligolang/ligo.git", branch: "dev"
+
 
   bottle do
-    root_url "https://gitlab.com/ligolang/ligo/-/jobs/LIGO_ARTIFACT_JOB_ID_PLACEHOLDER/artifacts/raw/ligo"
+    root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/"
+  # bottle arm64_ventura
+  # bottle ventura
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]

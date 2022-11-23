@@ -1,5 +1,5 @@
 author: er433
-description: '### Inference for Test.random fixed.'
+description: '#### Inference for Test.random fixed.'
 merge_request: '1687'
 title: Fix and docs about Test.random
 type: fixed
