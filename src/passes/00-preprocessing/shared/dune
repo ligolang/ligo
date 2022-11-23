@@ -1,9 +1,9 @@
 ;; Build of the LIGO preprocessors as libraries
 
 (library
-  (name preprocessing_shared)
-  (public_name ligo.preprocessing.shared)
-  (libraries
-     ;; Vendors
-     Preprocessor)
-  (modules Errors Common PreprocMainGen))
+ (name preprocessing_shared)
+ (public_name ligo.preprocessing.shared)
+ (libraries
+  ;; Vendors
+  Preprocessor)
+ (modules Errors Common PreprocMainGen))

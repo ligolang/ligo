@@ -1,14 +1,15 @@
 ;; Build of the shared modules for the CSTs and their printers
 
 (library
-  (name cst_shared)
-  (public_name ligo.cst.shared)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     lexing_shared
-     ;; Third party
-     zarith
-     hex)
-  (modules Tree))
+ (name cst_shared)
+ (public_name ligo.cst.shared)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  lexing_shared
+  ;; Third party
+  zarith
+  hex)
+ (modules Tree))
