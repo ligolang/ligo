@@ -2921,7 +2921,7 @@ let%expect_test _ =
       3 |   return x
 
     Invalid type(s).
-    Expected: "bytes", but got: "nat". |}]
+    Expected "nat", but got: "bytes". |}]
 
 (* get_entrypoint_opt in uncurried language *)
 let%expect_test _ =
