@@ -66,16 +66,16 @@ let%expect_test _ =
       1 | let foo = ([a,b,c,d] : [int,int,int]) : int => a + b + c + d;
 
     Invalid type(s)
-    Cannot unify "( ^gen#541 * ^gen#542 * ^gen#543 * ^gen#544 )" with "( int * int * int )".
-
+    Cannot unify "( ^a * ^b * ^c * ^d )" with "( int * int * int )".
     Difference between the types:
-    - ^gen#541
+    - ^a
     + int
-    - ^gen#542
+    - ^b
     + int
-    - ^gen#543
+    - ^c
     + int
-    - ^gen#544 |}]
+    - ^d
+    Hint: "^a", "^b", "^c", "^d" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;

@@ -227,16 +227,16 @@ let _pp_te_debug ppf (type_ : Type.t) : unit =
   Format.fprintf ppf "%a <hash:%d>" Type.pp type_ (Type.hash type_)
 
 
-let rec change ppf (c : Define.change) : unit =
-  let self = change in
+let rec pp_change ~tbl ppf (c : Define.change) : unit =
+  let self = pp_change ~tbl in
   match c with
-  | Delete l -> Format.fprintf ppf "@{<red>- %a@}" Type.pp l
-  | Insert r -> Format.fprintf ppf "@{<green>+ %a@}" Type.pp r
-  | Keep (l, _r, _eq) -> Format.fprintf ppf "  %a" Type.pp l
+  | Delete l -> Format.fprintf ppf "@{<red>- %a@}" (Type.pp_with_name_tbl ~tbl) l
+  | Insert r -> Format.fprintf ppf "@{<green>+ %a@}" (Type.pp_with_name_tbl ~tbl) r
+  | Keep (l, _r, _eq) -> Format.fprintf ppf "  %a" (Type.pp_with_name_tbl ~tbl) l
   | Change (l, r, _diff) -> pp_list_newline self ppf [ Delete l; Insert r ]
 
 
-let pp ~(no_color : bool) ppf (patch : t) : unit =
+let pp ~(no_color : bool) ~tbl ppf (patch : t) : unit =
   if not no_color then ANSI.add_ansi_marking ppf;
   match patch with
   | [] -> Format.fprintf ppf ""
@@ -244,5 +244,5 @@ let pp ~(no_color : bool) ppf (patch : t) : unit =
     Format.fprintf
       ppf
       "@.@[<v>Difference between the types:@,%a@]"
-      (pp_list_newline change)
+      (pp_list_newline (pp_change ~tbl))
       patch
