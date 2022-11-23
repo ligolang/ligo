@@ -2,9 +2,15 @@ module Bugs : sig
   type t [@@deriving to_yojson]
 end
 
+module Semver : sig
+  type t [@@deriving to_yojson]
+
+  val to_string : t -> string
+end
+
 type t =
   { name : string
-  ; version : string
+  ; version : Semver.t
   ; description : string
   ; scripts : (string * string) list
   ; dependencies : (string * string) list

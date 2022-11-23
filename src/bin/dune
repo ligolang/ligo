@@ -37,7 +37,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix decompress.gz
-   bigstringaf base64 cohttp-lwt-unix yojson digestif core_unix core_unix.command_unix core_unix.filename_unix)
+   bigstringaf base64 cohttp-lwt-unix yojson digestif semver core_unix core_unix.command_unix core_unix.filename_unix)
  (preprocess (pps ppx_deriving_yojson))
  (modules publish))
 
@@ -53,7 +53,7 @@
  (name daemon)
  (instrumentation
   (backend bisect_ppx))
- (libraries parse-argv ligo_api cli_helpers)
+ (libraries parse-argv cli_helpers)
  (preprocess (pps ppx_deriving_yojson))
  (modules daemon))
 

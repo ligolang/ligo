@@ -2,6 +2,7 @@ module LigoRC = Ligo_rc
 module LigoManifest = Ligo_manifest
 module LigoIgnore = Ligo_ignore
 module RepositoryUrl = Repository_url
+module Semver = LigoManifest.Semver
 
 module Constants : sig
   type command = string * string array

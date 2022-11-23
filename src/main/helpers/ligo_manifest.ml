@@ -1,5 +1,7 @@
 module Util = Yojson.Safe.Util
 
+let ( let* ) x f = Result.bind x ~f
+
 module Bugs = struct
   type t =
     { email : string
@@ -10,9 +12,15 @@ module Bugs = struct
   (* If required validate `email` & url` *)
 end
 
+module Semver = struct
+  include Semver
+
+  let to_yojson s = `String (to_string s)
+end
+
 type t =
   { name : string
-  ; version : string
+  ; version : Semver.t
   ; description : string
   ; scripts : (string * string) list
   ; dependencies : (string * string) list
@@ -36,19 +44,13 @@ let is_empty field value =
   else ()
 
 
-let is_version_correct version =
-  if Option.is_none @@ Semver.of_string version
-  then failwith (Format.sprintf "invalid version %s in package.json" version)
-  else ()
-
-
 let validate t =
-  let { name; version; author; _ } = t in
+  let { name; main; author; _ } = t in
   try
     is_empty "name" name;
     is_empty "author" author;
-    is_empty "version" version;
-    is_version_correct version;
+    is_empty "main" main;
+    (* stat manin file here *)
     Ok t
   with
   | Failure e -> Error e
@@ -74,11 +76,20 @@ let parse_name json =
   | _ -> Error "Invalid name field in package.json"
 
 
+let parse_sem_ver version =
+  match Semver.of_string version with
+  | Some s -> Ok s
+  | None -> Error (Format.sprintf "Invalid version %s in package.json" version)
+
+
 let parse_version json =
-  match Util.member "version" json with
-  | `String s -> Ok s
-  | `Null -> Error "No version field in package.json"
-  | _ -> Error "Invalid version field in package.json"
+  let* version =
+    match Util.member "version" json with
+    | `String s -> Ok s
+    | `Null -> Error "No version field in package.json"
+    | _ -> Error "Invalid version field in package.json"
+  in
+  parse_sem_ver version
 
 
 let parse_author json =
@@ -194,8 +205,6 @@ let parse_bugs json =
          \"foo@bar.com\" }")
 
 
-let ( let* ) x f = Result.bind x ~f
-
 let read_from_json ~project_root ~ligo_manifest_path json =
   (* Required fields *)
   let* name = parse_name json in
@@ -249,3 +258,9 @@ let read ~project_root =
       | _ -> failwith "Error in parsing package.json (invalid json)"
     in
     read_from_json ~project_root ~ligo_manifest_path json
+
+(* Unit tests *)
+
+(* Name missing *)
+(* Version missing *)
+(* Version invalid sem ver *)

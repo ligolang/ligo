@@ -9,7 +9,7 @@
 - [x] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
 - [x] Wrap logging message in a function ~before ~after
 - [x] Add support for .ligoignore to igore stuff while packaging
-- [ ] Refactor manifest parsin & validation
+- [ ] Refactor manifest parsing & validation
 - [ ] Add unit tests for manifest parsing & validation
 - [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] Add basic comments in code
@@ -26,6 +26,7 @@ module LigoRC = Cli_helpers.LigoRC
 module LigoManifest = Cli_helpers.LigoManifest
 module LigoIgnore = Cli_helpers.LigoIgnore
 module RepositoryUrl = Cli_helpers.RepositoryUrl
+module Semver = Cli_helpers.Semver
 module SMap = Caml.Map.Make (String)
 
 type object_ = (string * string) list
@@ -49,7 +50,7 @@ type dist_tag = { latest : sem_ver } [@@deriving to_yojson]
 module PackageStats = struct
   type t =
     { name : string
-    ; version : string
+    ; version : Semver.t
     ; file_count : int
     ; unpacked_size : int
     ; packed_size : int
@@ -75,7 +76,7 @@ module PackageStats = struct
     ; file_count = fcount
     ; unpacked_size
     ; packed_size
-    ; tarball_name = Format.sprintf "%s-%s.tgz" name version
+    ; tarball_name = Format.sprintf "%s-%s.tgz" name (Semver.to_string version)
     ; tarball_content = tarball
     ; sha1
     ; sha512
@@ -111,7 +112,7 @@ module Version = struct
     ; storage_fn : string option
     ; storage_arg : string option
     ; repository : RepositoryUrl.t
-    ; version : sem_ver
+    ; version : Semver.t
     ; description : string
     ; scripts : object_
     ; dependencies : object_
@@ -165,7 +166,7 @@ module Version = struct
     ; dev_dependencies
     ; readme
     ; bugs
-    ; id = Format.sprintf "%s@%s" name version
+    ; id = Format.sprintf "%s@%s" name (Semver.to_string version)
     ; dist = Dist.make ~tarball ~package_stats
     }
 end
@@ -238,6 +239,7 @@ module Body = struct
     in
     let gzipped_tarball = package_stats.PackageStats.tarball_content in
     let v = Version.make ~ligo_registry ~version ~package_stats ~manifest in
+    let version = Semver.to_string version in
     let versions = SMap.add version v SMap.empty in
     { id = name
     ; name
@@ -386,7 +388,7 @@ let tar ~name ~version files =
   let files, sizes = List.unzip files in
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
-  let fname = Filename_unix.temp_file name version in
+  let fname = Filename_unix.temp_file name (Semver.to_string version) in
   let fd =
     Caml_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666
   in
@@ -546,6 +548,7 @@ let show_stats stats =
   in
   let prefix = String.sub sha512 ~pos:0 ~len:13 in
   let suffix = String.sub sha512 ~pos:(String.length sha512 - 15) ~len:15 in
+  let version = Semver.to_string version in
   let integrity = Format.sprintf "sha512-%s[...]%s" prefix suffix in
   let () = Format.printf "    publishing: %s@%s\n%!" name version in
   let () = Format.printf "    === Tarball Details ===\n%!" in
