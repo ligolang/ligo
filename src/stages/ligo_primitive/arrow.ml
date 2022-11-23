@@ -1,7 +1,7 @@
 type 'a t = {
   type1: 'a ;
   type2: 'a ;
-  } [@@deriving eq,compare,yojson,hash,fold,map]
+  } [@@deriving eq,compare,yojson,hash,fold,map, sexp]
 
 let pp g ppf = fun {type1;type2} ->
   Format.fprintf ppf "%a -> %a"

@@ -8,7 +8,7 @@ let%expect_test _ =
       4 |   | { a = a ;  b = b ; c = c } -> a
 
     Invalid type(s)
-    Cannot unify int with string. |}] ;
+    Cannot unify "int" with "string". |}] ;
 
   run_ligo_good [ "run"; "interpret" ; "( (match (1,2n,\"3\") with | (a,b,c) -> a) : int )" ; "--syntax";"cameligo" ] ;
    [%expect {|
