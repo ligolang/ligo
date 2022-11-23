@@ -11,7 +11,7 @@
 - [x] Add support for .ligoignore to igore stuff while packaging
 - [x] Refactor manifest parsing & validation
 - [x] Add unit tests for manifest parsing & validation
-- [ ] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
+- [x] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [ ] Add basic comments in code
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
@@ -41,7 +41,9 @@ let with_logging ~before ?(after = "Done") fn =
   | Ok v ->
     let () = Printf.printf "%s\n%!" after in
     Ok v
-  | Error e -> Error e
+  | Error e ->
+    let () = Printf.printf "\n%!" in
+    Error e
 
 
 type sem_ver = string [@@deriving to_yojson]
@@ -427,7 +429,7 @@ let read_manifest ~project_root =
 let validate_manifest manifest =
   match LigoManifest.validate manifest with
   | Ok () -> Ok ()
-  | Error e -> Error (Format.sprintf "\nError: %s" e, "")
+  | Error e -> Error (e, "")
 
 
 let get_auth_token ~ligorc_path ligo_registry =

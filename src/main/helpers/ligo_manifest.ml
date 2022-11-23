@@ -63,8 +63,7 @@ let validate_storage ~main ~storage_fn ~storage_arg =
     | Ok _ -> Ok ()
     | Error _ ->
       Error
-        "\n\
-         Error: Check `storage_fn` & `storage_arg` in packge.json or check \
+        "Error: Check `storage_fn` & `storage_arg` in packge.json or check \
          your LIGO storage expression")
   | _ -> Ok ()
 
@@ -855,8 +854,6 @@ let%test _ =
 
 (* TODO: Expect tests *)
 
-(* Invalid main *)
-(* Invalid storage_fn *)
-(* Invalid storage_arg *)
+(* Valid library, main, readme file < 1MB *)
 (* Valid storage_fn, storage_arg, main, readme file < 1MB *)
 (* Valid storage_fn, storage_arg, main, readme file > 1MB *)

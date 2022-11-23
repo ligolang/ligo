@@ -238,3 +238,24 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 let () = Sys_unix.chdir pwd
+
+(* ligo publish tests *)
+
+let () = Sys_unix.chdir "publish_invalid_main"
+let%expect_test _ =
+  run_ligo_bad [ "publish"; "--dry-run" ] ;
+  [%expect{|
+    ==> Reading manifest... Done
+    ==> Validating manifest file...
+    Error: main file does not exists.
+    Please specify a valid LIGO file in package.json. |}]
+let () = Sys_unix.chdir pwd
+
+let () = Sys_unix.chdir "publish_invalid_storage"
+let%expect_test _ =
+  run_ligo_bad [ "publish"; "--dry-run" ] ;
+  [%expect{|
+    ==> Reading manifest... Done
+    ==> Validating manifest file...
+    Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
+let () = Sys_unix.chdir pwd
