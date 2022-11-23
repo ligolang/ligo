@@ -114,6 +114,7 @@ export default class MonacoEditorContainer extends PureComponent {
           readOnly={readOnly}
           onChange={() => onChange(true)}
           onChangeDecorations={this.props.onChangeDecorations}
+          addLanguagesCallback={this.props.addLanguagesCallback}
         />
         <CustomTabContainer loading={loading} modelSession={modelSession} />
       </>

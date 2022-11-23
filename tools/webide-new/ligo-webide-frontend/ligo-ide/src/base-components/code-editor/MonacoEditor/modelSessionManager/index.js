@@ -78,7 +78,7 @@ class ModelSessionManager {
     const uri = monaco.Uri.file(newPath);
     const newModel = monaco.editor.createModel(
       this.sessions[oldPath]._model.value,
-      this.sessions[oldPath]._model._languageIdentifier.language,
+      this.sessions[oldPath]._model._languageId,
       uri
     );
 

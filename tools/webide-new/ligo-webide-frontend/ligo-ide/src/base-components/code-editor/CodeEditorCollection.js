@@ -240,6 +240,7 @@ export default class CodeEditorCollection extends PureComponent {
             onChange={this.setCurrentTabUnsaved}
             onCommand={this.onCommand}
             onChangeDecorations={this.props.onChangeDecorations}
+            addLanguagesCallback={this.props.addLanguagesCallback}
           />
         </Tabs>
       </div>

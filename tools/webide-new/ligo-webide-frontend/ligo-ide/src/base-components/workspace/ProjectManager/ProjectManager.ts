@@ -19,9 +19,9 @@ import ProjectSettings from "../ProjectSettings";
 
 import type { WorkspaceLoader } from "../WorkspaceLoader";
 import type TerminalButton from "../components/TerminalButton";
-import { RefreshData } from "~base-components/filetree/types";
-import { GistContent } from "~base-components/file-ops/GistFs";
-import MonacoEditor from "~base-components/code-editor/MonacoEditor/MonacoEditor";
+import { RefreshData } from "~/base-components/filetree/types";
+import { GistContent } from "~/base-components/file-ops/GistFs";
+import MonacoEditor from "~/base-components/code-editor/MonacoEditor/MonacoEditor";
 
 export default class ProjectManager {
   static ProjectSettings = ProjectSettings;
@@ -511,7 +511,7 @@ export default class ProjectManager {
   onEditorReady(editor: monaco.editor.IStandaloneCodeEditor, editorComponent: MonacoEditor) {
     modelSessionManager.decorationMap = {};
     // eslint-disable-next-line no-bitwise
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       editorComponent.props.onCommand("save");
       this.lint();

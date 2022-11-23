@@ -5,7 +5,7 @@ import fileOps from "~/base-components/file-ops";
 import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
-import FileTree from "~base-components/filetree";
+import FileTree from "~/base-components/filetree";
 import type ProjectManager from "../ProjectManager/ProjectManager";
 
 interface GistUploadModalsProps {
