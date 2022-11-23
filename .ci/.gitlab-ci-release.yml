@@ -76,7 +76,6 @@ create-tag:
     - job: initialize-git
     - job: build_release_env_vars
       artifacts: true
-    - job: xrefcheck
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^release/ && $TRIGGER_DOC_UPDATE == null' 
       when: always
