@@ -28,5 +28,5 @@ type t =
   }
 [@@deriving to_yojson]
 
-val validate : t -> (unit, string) result
+val validate : ?ligo_bin_path:string -> t -> (unit, string) result
 val read : project_root:string option -> (t, string) result

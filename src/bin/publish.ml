@@ -426,8 +426,8 @@ let read_manifest ~project_root =
   Result.map_error manifest ~f:(fun e -> e, "")
 
 
-let validate_manifest manifest =
-  match LigoManifest.validate manifest with
+let validate_manifest ~ligo_bin_path manifest =
+  match LigoManifest.validate ~ligo_bin_path manifest with
   | Ok () -> Ok ()
   | Error e -> Error (e, "")
 
@@ -501,14 +501,21 @@ let show_stats stats =
   ()
 
 
-let publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run =
+let publish
+    ~ligo_registry
+    ~ligorc_path
+    ~ligoignore_path
+    ~project_root
+    ~dry_run
+    ~ligo_bin_path
+  =
   let* manifest =
     with_logging ~before:"Reading manifest" (fun () ->
         read_manifest ~project_root)
   in
   let* () =
     with_logging ~before:"Validating manifest file" (fun () ->
-        validate_manifest manifest)
+        validate_manifest ~ligo_bin_path manifest)
   in
   let* project_root =
     with_logging ~before:"Finding project root" (fun () ->

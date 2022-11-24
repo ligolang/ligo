@@ -1,5 +1,5 @@
 {
-    "name": "test_package_2",
+    "name": "test_package_3",
     "version": "0.0.1",
     "type": "contract",
     "author": "foo",
@@ -10,6 +10,6 @@
         "url": "https://github.com/foo/bar",
         "email": "foo@bar.com"
     },
-    "storage_fn": "gen_storage",
+    "storage_fn": "make_initial_storage",
     "storage_arg": "()"
 }

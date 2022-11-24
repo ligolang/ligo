@@ -259,3 +259,52 @@ let%expect_test _ =
     ==> Validating manifest file...
     Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
 let () = Sys_unix.chdir pwd
+
+let remove_dynamic_info_from_log log =
+  String.split_lines log
+  |> List.filter ~f:(fun line ->
+         not
+           (String.is_prefix ~prefix:"    shasum:" line
+           || String.is_prefix ~prefix:"    integrity:" line))
+  |> String.concat ~sep:"\n"
+
+
+let () = Sys_unix.chdir "publish_lib_lt_1mb"
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run" ] ;
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect{|
+    ==> Reading manifest... Done
+    ==> Validating manifest file... Done
+    ==> Finding project root... Done
+    ==> Packing tarball... Done
+        publishing: test_package_3@0.0.1
+        === Tarball Details ===
+        name:          test_package_3
+        version:       0.0.1
+        filename:      test_package_3-0.0.1.tgz
+        package size:  357 B
+        unpacked size: 368 B
+        total files:   2 |}]
+let () = Sys_unix.chdir pwd
+
+let () = Sys_unix.chdir "publish_contract_lt_1mb"
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run" ] ;
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect{|
+    ==> Reading manifest... Done
+    ==> Validating manifest file... Done
+    ==> Finding project root... Done
+    ==> Packing tarball... Done
+        publishing: test_package_3@0.0.1
+        === Tarball Details ===
+        name:          test_package_3
+        version:       0.0.1
+        filename:      test_package_3-0.0.1.tgz
+        package size:  1.08 kB
+        unpacked size: 1.82 kB
+        total files:   3 |}]
+let () = Sys_unix.chdir pwd
