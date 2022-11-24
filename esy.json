@@ -257,6 +257,12 @@
           "build": ["true"]
         }
       },
+      "@opam/core_unix": {
+        "version": "opam:v0.15.1",
+        "override": {
+          "build": ["true"]
+        }
+      },
       "@opam/ocamlformat-rpc": {
         "source": "no-source:",
         "override": {
