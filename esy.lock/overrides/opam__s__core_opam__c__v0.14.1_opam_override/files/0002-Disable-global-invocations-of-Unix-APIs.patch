@@ -1,0 +1,64 @@
+From 8f5cb6bcc015bc199f4a95ac147fbbe0cf2f44d1 Mon Sep 17 00:00:00 2001
+From: Manas Jayanth <3097018+ManasJayanth@users.noreply.github.com>
+Date: Mon, 10 Jan 2022 20:54:21 +0530
+Subject: [PATCH 2/2] Disable global invocations of Unix APIs
+
+---
+ src/core_unix.ml      | 4 ++--
+ src/core_unix.mli     | 2 +-
+ src/syscall_result.ml | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/core_unix.ml b/src/core_unix.ml
+index 88f3c81..a63aebe 100644
+--- a/src/core_unix.ml
++++ b/src/core_unix.ml
+@@ -1983,9 +1983,9 @@ module Passwd = struct
+       (fun s -> Getbyuid s)
+   ;;
+ 
+-  let pwdb_lock = Error_checking_mutex.create () ;;
+ 
+   let getpwents () =
++    let pwdb_lock = Error_checking_mutex.create () in
+     Error_checking_mutex.critical_section pwdb_lock ~f:(fun () ->
+       begin
+         Low_level.setpwent ();
+@@ -2310,7 +2310,7 @@ module Cidr = struct
+     | exception _ -> false (* maybe they tried to use IPv6 *)
+     | address     -> does_match_int32 t address
+ 
+-  let multicast = of_string "224.0.0.0/4"
++  let multicast = if Sys.unix then Some (of_string "224.0.0.0/4") else None
+ 
+   let is_subset t ~of_ =
+     bits of_ <= bits t
+diff --git a/src/core_unix.mli b/src/core_unix.mli
+index 1be1178..a19459b 100644
+--- a/src/core_unix.mli
++++ b/src/core_unix.mli
+@@ -1342,7 +1342,7 @@ module Cidr : sig
+ 
+   (** IPv4 multicast address can be represented by the CIDR prefix 224.0.0.0/4,
+       (i.e. addresses from 224.0.0.0 to 239.255.255.255, inclusive) *)
+-  val multicast : t
++  val multicast : t option
+ 
+   (** Is the given address inside the given Cidr.t?  Note that the broadcast and network
+       addresses are considered valid so [does_match 10.0.0.0/8 10.0.0.0] is true. *)
+diff --git a/src/syscall_result.ml b/src/syscall_result.ml
+index e335085..56b1306 100644
+--- a/src/syscall_result.ml
++++ b/src/syscall_result.ml
+@@ -25,7 +25,7 @@ module Make (M : Arg) () = struct
+   (* The only reason to have one of these per functor invocation is to make it trivial to
+      get the type right. *)
+   let preallocated_errnos : (_, Unix_error.t) Result.t array =
+-    Array.init 64 ~f:(fun i -> Error (Unix_error.of_errno i))
++    if Sys.unix then Array.init 64 ~f:(fun i -> Error (Unix_error.of_errno i)) else [||]
+   ;;
+   (* Since we return [-errno] from C, we implicitly rely on there not being a 0 [errno].
+      However, we have 0 in [preallocated_errnos], partly so we can index directly by
+-- 
+2.34.1.windows.1
+
