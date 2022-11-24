@@ -17,8 +17,8 @@ function ProtocolSelector() {
   const dispatch = useDispatch();
 
   const protocols = [
-    { showName: "Jakarta (mainnet)", name: "jakarta" },
-    { showName: "Kathmandu (testnet)", name: "kathmandu" },
+    { showName: "Kathmandu (mainnet)", name: "kathmandu" },
+    { showName: "Lima (testnet)", name: "lima" },
   ];
 
   const menuHeader = (

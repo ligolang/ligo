@@ -16,7 +16,8 @@ export default class ProjectToolbar extends PureComponent {
 
   constructor(props) {
     super(props);
-    this.deployScriptModal = React.createRef();
+    this.deployScriptModalRef = React.createRef();
+    this.deployModalRef = React.createRef();
     this.expressionManagerModal = React.createRef();
     this.compileModalRef = React.createRef();
     this.state = {
@@ -27,8 +28,12 @@ export default class ProjectToolbar extends PureComponent {
     };
   }
 
-  gistUploadFileModal = () => {
-    this.deployScriptModal.current.openModal();
+  deployScriptModal = () => {
+    this.deployScriptModalRef.current.openModal();
+  };
+
+  deployModal = () => {
+    this.deployModalRef.current.openModal();
   };
 
   compileModalOpen = () => {
@@ -65,7 +70,7 @@ export default class ProjectToolbar extends PureComponent {
           icon="fas fa-file-export"
           tooltip="Deploy Script"
           readOnly={readOnly}
-          onClick={() => this.gistUploadFileModal()}
+          onClick={() => this.deployScriptModal()}
         />
         <ToolbarButton
           id="dry-run"
@@ -97,7 +102,7 @@ export default class ProjectToolbar extends PureComponent {
           onCompile={() => projectManager.compile(null, this.props.finalCall)}
         />
         <DeployScriptModal
-          modalRef={this.deployScriptModal}
+          modalRef={this.deployScriptModalRef}
           projectSettings={projectSettings}
           projectManager={projectManager}
         />

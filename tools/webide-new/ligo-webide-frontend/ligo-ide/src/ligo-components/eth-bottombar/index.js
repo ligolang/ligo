@@ -3,7 +3,7 @@ import CacheRoute from "react-router-cache-route";
 
 import { connect } from "~/base-components/redux";
 
-// import { KeypairButton } from '~/base-components/keypair'
+import { KeypairButton } from "~/base-components/keypair";
 import { TerminalButton } from "~/base-components/workspace";
 import ProtocolSelector from "~/ligo-components/eth-compiler/bottombar/ProtocolSelector";
 
@@ -19,9 +19,9 @@ export default connect(["network", "queue", "projects", "uiState"])(function Bot
     projects,
     uiState,
 
-    // mnemonic = true,
-    // secretName = mnemonic ? 'Private Key / Mnemonic' : 'Private Key',
-    // chains,
+    mnemonic = true,
+    secretName = mnemonic ? "Private Key / Mnemonic" : "Private Key",
+    chains,
 
     // noNetwork,
   } = props;
@@ -49,11 +49,11 @@ export default connect(["network", "queue", "projects", "uiState"])(function Bot
   return (
     <>
       {/* <KeypairButton mnemonic={mnemonic} secretName={secretName} chains={chains}>
-      <div className='btn btn-primary btn-sm btn-flat'>
-        <i className='fas fa-key' />
-      </div>
-    </KeypairButton>
-    { !noNetwork && <NetworkStatus /> }
+        <div className="btn btn-primary btn-sm btn-flat">
+          <i className="fas fa-key" />
+        </div>
+      </KeypairButton> */}
+      {/* { !noNetwork && <NetworkStatus /> }
     <QueueButton txs={txs} />
     <AbiStorage>
       <div className='btn btn-default btn-sm btn-flat text-muted'>

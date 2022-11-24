@@ -7,30 +7,36 @@ import networkManager from "../networkManager";
 
 export default class RemoteNetworkInfo extends PureComponent {
   render() {
-    const { networkId, url, EditButton, info, status } = this.props;
+    const { networkId, url, EditButton, status } = this.props;
 
     return (
       <div className="d-flex">
         <div className="col-6 p-0 border-right-black">
           <TableCard title={networkManager.current?.fullName} right={EditButton}>
-            <TableCardRow name="Node URL" badge={url} badgeColor="primary" />
-            {info?.chainId && <TableCardRow name="Chain ID" badge={info?.chainId} />}
-            {info?.ensAddress && <TableCardRow name="ENS" badge={info?.ensAddress} />}
+            {networkManager.current?.group !== "others" && networkManager.current?.symbol && (
+              <TableCardRow name="Native Coin" badge={networkManager.current?.symbol} />
+            )}
+            {url && <TableCardRow name="Node URL" badge={url} badgeColor="primary" />}
+            {status?.chain_id && <TableCardRow name="Chain ID" badge={status?.chain_id} />}
           </TableCard>
         </div>
         <div className="col-6 p-0">
           <TableCard title="Blocks">
-            {status?.number && <TableCardRow name="Block Number" badge={status?.number} />}
-            {status?.timestamp && (
+            {networkId && (
               <TableCardRow
-                name="Block Time"
-                badge={moment(status.timestamp * 1000).format("MMMM Do, HH:mm:ss")}
+                loading={!status?.header?.level}
+                name="Block Number"
+                badge={status?.header?.level}
               />
             )}
-            {Boolean(status?.difficulty) && (
+            {networkId && (
               <TableCardRow
-                name="Difficulty"
-                badge={status && Number(status.difficulty).toFixed(0)}
+                loading={!status?.header?.timestamp}
+                name="Block Time"
+                badge={
+                  status?.header?.timestamp &&
+                  moment(status.header?.timestamp).format("MMMM Do, HH:mm:ss")
+                }
               />
             )}
           </TableCard>
