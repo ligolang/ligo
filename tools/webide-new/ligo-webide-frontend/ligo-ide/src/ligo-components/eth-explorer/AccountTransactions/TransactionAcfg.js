@@ -23,7 +23,7 @@ export default function ({ tx }) {
         </small>
         <Address addr={tx.creator} />
       </div>
-      <Badge pill color="success">
+      <Badge pill color="warning">
         {totalSupply}
       </Badge>
     </div>

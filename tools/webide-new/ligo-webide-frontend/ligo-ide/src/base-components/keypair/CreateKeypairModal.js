@@ -108,11 +108,11 @@ export default class CreateKeypairModal extends PureComponent {
     if (this.props.mnemonic) {
       return (
         <ButtonGroup>
-          <Button color="success" onClick={this.regenerateKeypair}>
+          <Button color="warning" onClick={this.regenerateKeypair}>
             Regenerate
           </Button>
           <UncontrolledButtonDropdown>
-            <DropdownToggle color="success" className="pr-2 pl-1" caret />
+            <DropdownToggle color="warning" className="pr-2 pl-1" caret />
             <DropdownMenu>
               <DropdownItem
                 onClick={() => this.setState({ secretType: "privkey" }, this.regenerateKeypair)}
@@ -130,7 +130,7 @@ export default class CreateKeypairModal extends PureComponent {
       );
     }
     return (
-      <Button color="success" onClick={this.regenerateKeypair}>
+      <Button color="warning" onClick={this.regenerateKeypair}>
         Regenerate
       </Button>
     );
@@ -177,7 +177,7 @@ export default class CreateKeypairModal extends PureComponent {
         </div>
         <div className="row align-items-center">
           <div className="col-2">
-            <Badge pill color="success" className="ml-1">
+            <Badge pill color="warning" className="ml-1">
               {secretName}
             </Badge>
           </div>

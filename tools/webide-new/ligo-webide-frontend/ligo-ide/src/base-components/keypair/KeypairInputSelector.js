@@ -58,13 +58,13 @@ export default class KeypairInputSelector extends PureComponent {
   }
 
   findExtraOptions() {
-    let extraAdrress = [];
+    let extraAddress = [];
     const extraOptions = this.props.extra
       ? // eslint-disable-next-line array-callback-return
         this.props.extra.map((item) => {
           if (item.children) {
             item.children.forEach((ele) => {
-              ele.address && extraAdrress.push(ele.address);
+              ele.address && extraAddress.push(ele.address);
             });
             return {
               ...item,
@@ -75,7 +75,7 @@ export default class KeypairInputSelector extends PureComponent {
       : [];
 
     return {
-      extraAdrress,
+      extraAddress,
       extraOptions,
     };
   }

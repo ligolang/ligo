@@ -118,7 +118,7 @@ class UserHomepage extends PureComponent {
     //   return null
     // }
     return (
-      <Button color="success" onClick={() => actions.newProject(this.state.remote)}>
+      <Button color="warning" onClick={() => actions.newProject(this.state.remote)}>
         <i className="fas fa-plus mr-1" />
         New
       </Button>
@@ -130,7 +130,7 @@ class UserHomepage extends PureComponent {
     //   return null
     // }
     return (
-      <Button color="success" className="border-left-gray" onClick={() => actions.openProject()}>
+      <Button color="warning" className="border-left-gray" onClick={() => actions.openProject()}>
         <i className="fas fa-folder-plus mr-1" />
         Open
       </Button>
