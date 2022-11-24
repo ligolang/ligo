@@ -39,16 +39,13 @@ type t =
   }
 [@@deriving to_yojson]
 
-let validate_storage ?ligo_bin_path ~main ~storage_fn ~storage_arg () =
+let validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () =
   match storage_fn, storage_arg with
   | Some storage_fn, Some storage_arg ->
     let expression = Format.sprintf "%s %s" storage_fn storage_arg in
-    let ligo =
-      match ligo_bin_path with
-      | Some ligo -> ligo
-      | None -> Sys_unix.executable_name
+    let cmd =
+      Constants.ligo_compile_storage ~ligo:ligo_bin_path ~main ~expression ()
     in
-    let cmd = Constants.ligo_compile_storage ~ligo ~main ~expression () in
     let status =
       Lwt_process.with_process_none
         ~stdout:`Dev_null
@@ -87,12 +84,12 @@ let validate_main_file ~main =
        Please specify a valid LIGO file in package.json."
 
 
-let validate ?ligo_bin_path t =
+let validate ~ligo_bin_path t =
   let { main; storage_fn; storage_arg; _ } = t in
-  (* stat manin file here *)
+  (* stat main file here *)
   let* () = validate_main_file ~main in
   (* check storage *)
-  let* () = validate_storage ?ligo_bin_path ~main ~storage_fn ~storage_arg () in
+  let* () = validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () in
   Ok ()
 
 

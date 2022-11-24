@@ -241,6 +241,8 @@ let () = Sys_unix.chdir pwd
 
 (* ligo publish tests *)
 
+let ligo_bin_path = "../../../../../install/default/bin/ligo"
+
 let () = Sys_unix.chdir "publish_invalid_main"
 let%expect_test _ =
   run_ligo_bad [ "publish"; "--dry-run" ] ;
@@ -253,7 +255,7 @@ let () = Sys_unix.chdir pwd
 
 let () = Sys_unix.chdir "publish_invalid_storage"
 let%expect_test _ =
-  run_ligo_bad [ "publish"; "--dry-run" ] ;
+  run_ligo_bad [ "publish"; "--dry-run" ; "--ligo-bin-path" ; ligo_bin_path ] ;
   [%expect{|
     ==> Reading manifest... Done
     ==> Validating manifest file...
@@ -291,7 +293,7 @@ let () = Sys_unix.chdir pwd
 
 let () = Sys_unix.chdir "publish_contract_lt_1mb"
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run" ] ;
+  run_ligo_good [ "publish"; "--dry-run" ; "--ligo-bin-path" ; ligo_bin_path ] ;
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect{|
@@ -311,7 +313,7 @@ let () = Sys_unix.chdir pwd
 
 let () = Sys_unix.chdir "publish_contract_gt_1mb"
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run" ] ;
+  run_ligo_good [ "publish"; "--dry-run" ; "--ligo-bin-path" ; ligo_bin_path ] ;
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect{|

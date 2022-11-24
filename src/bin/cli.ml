@@ -336,7 +336,7 @@ let ligo_bin_path =
   let open Command.Param in
   let name = "--ligo-bin-path" in
   let doc  = "PATH path to LIGO executable." in
-  let spec = optional_with_default "ligo" string in
+  let spec = optional_with_default Sys_unix.executable_name string in
   flag ~doc name spec
 
 module Api = Ligo_api

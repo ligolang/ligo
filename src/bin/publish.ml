@@ -12,7 +12,7 @@
 - [x] Refactor manifest parsing & validation
 - [x] Add unit tests for manifest parsing & validation
 - [x] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
-- [ ] 2 tests for tar-gzip (< 1 MB & > 1 MB)
+- [x] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [ ] Add basic comments in code
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
