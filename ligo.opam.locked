@@ -52,6 +52,7 @@ depends: [
   "coq" {= "8.13.2"}
   "core" {= "v0.15.1"}
   "core_kernel" {= "v0.15.0"}
+  "core_unix" {= "v0.15.1"}
   "cppo" {= "1.6.9"}
   "crunch" {= "3.3.1"}
   "csexp" {= "1.5.1"}

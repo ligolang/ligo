@@ -13,6 +13,7 @@ depends: [
   # Jane Street Core
   "core" {>= "v0.15.0" & < "v0.16.0"}
   "core_kernel" { >= "v0.15.0" & < "v0.16.0"}
+  "core_unix" { with-test & >= "v0.15.0"  & < "v0.16.0"}
   # Tooling
   "odoc" { build }
   "ocamlfind" { build }
