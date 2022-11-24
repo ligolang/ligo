@@ -284,8 +284,8 @@ let%expect_test _ =
         name:          test_package_3
         version:       0.0.1
         filename:      test_package_3-0.0.1.tgz
-        package size:  1.05 kB
-        unpacked size: 1.75 kB
+        package size:  1.0 kB
+        unpacked size: 1.8 kB
         total files:   3 |}]
 let () = Sys_unix.chdir pwd
 
@@ -304,8 +304,8 @@ let%expect_test _ =
         name:          test_package_4
         version:       0.0.1
         filename:      test_package_4-0.0.1.tgz
-        package size:  1.09 kB
-        unpacked size: 1.82 kB
+        package size:  1.1 kB
+        unpacked size: 1.8 kB
         total files:   3 |}]
 let () = Sys_unix.chdir pwd
 
@@ -324,7 +324,7 @@ let%expect_test _ =
         name:          test_package_5
         version:       0.0.1
         filename:      test_package_5-0.0.1.tgz
-        package size:  1.22 kB
-        unpacked size: 10.22 kB
+        package size:  195.8 kB
+        unpacked size: 1.1 MB
         total files:   3 |}]
 let () = Sys_unix.chdir pwd

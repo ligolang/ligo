@@ -473,9 +473,9 @@ let show_stats stats =
     let mega = kilo *. kilo in
     let giga = kilo *. mega in
     match float_of_int size with
-    | size when Float.(size >= giga) -> Format.sprintf "%0.2f GB" (size /. giga)
-    | size when Float.(size >= mega) -> Format.sprintf "%0.2f MB" (size /. mega)
-    | size when Float.(size >= kilo) -> Format.sprintf "%0.2f kB" (size /. kilo)
+    | size when Float.(size >= giga) -> Format.sprintf "%0.1f GB" (size /. giga)
+    | size when Float.(size >= mega) -> Format.sprintf "%0.1f MB" (size /. mega)
+    | size when Float.(size >= kilo) -> Format.sprintf "%0.1f kB" (size /. kilo)
     | size -> Format.sprintf "%d B" (int_of_float size)
   in
   let prefix = String.sub sha512 ~pos:0 ~len:13 in

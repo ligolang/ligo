@@ -855,5 +855,3 @@ let%test _ =
   match read_from_json json with
   | Error _ -> false
   | Ok manifest -> String.equal manifest.description "A LIGO package"
-
-(* Valid storage_fn, storage_arg, main, readme file > 1MB *)
