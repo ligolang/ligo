@@ -1,5 +1,5 @@
 {
-    "name": "test_package_4",
+    "name": "test_package_5",
     "version": "0.0.1",
     "type": "contract",
     "author": "foo",
@@ -11,5 +11,5 @@
         "email": "foo@bar.com"
     },
     "storage_fn": "make_initial_storage",
-    "storage_arg": "()"
+    "storage_arg": "100n"
 }

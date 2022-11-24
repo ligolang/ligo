@@ -256,7 +256,8 @@ let%expect_test _ =
   run_ligo_bad [ "publish"; "--dry-run" ] ;
   [%expect{|
     ==> Reading manifest... Done
-    ==> Validating manifest file...
+    ==> Validating manifest file... ligo
+
     Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
 let () = Sys_unix.chdir pwd
 
@@ -284,9 +285,9 @@ let%expect_test _ =
         name:          test_package_3
         version:       0.0.1
         filename:      test_package_3-0.0.1.tgz
-        package size:  357 B
-        unpacked size: 368 B
-        total files:   2 |}]
+        package size:  1.05 kB
+        unpacked size: 1.75 kB
+        total files:   3 |}]
 let () = Sys_unix.chdir pwd
 
 let () = Sys_unix.chdir "publish_contract_lt_1mb"
@@ -299,12 +300,36 @@ let%expect_test _ =
     ==> Validating manifest file... Done
     ==> Finding project root... Done
     ==> Packing tarball... Done
-        publishing: test_package_3@0.0.1
+        publishing: test_package_4@0.0.1
         === Tarball Details ===
-        name:          test_package_3
+        name:          test_package_4
         version:       0.0.1
-        filename:      test_package_3-0.0.1.tgz
-        package size:  1.08 kB
+        filename:      test_package_4-0.0.1.tgz
+        package size:  1.09 kB
         unpacked size: 1.82 kB
         total files:   3 |}]
+let () = Sys_unix.chdir pwd
+
+let () = Sys_unix.chdir "publish_contract_gt_1mb"
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run" ] ;
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 39, characters 7-29
+  Called from Cli_expect_tests__Package_management.(fun) in file "src/bin/expect_tests/package_management.ml", line 314, characters 2-110
+  Called from Expect_test_collector.Make.Instance_io.exec in file "collector/expect_test_collector.ml", line 262, characters 12-19
+
+  Trailing output
+  ---------------
+  ==> Reading manifest... Done
+  ==> Validating manifest file... ../../../../_build/install/default/bin/ligo
+
+  Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
 let () = Sys_unix.chdir pwd

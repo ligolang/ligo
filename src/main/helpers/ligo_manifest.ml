@@ -856,8 +856,4 @@ let%test _ =
   | Error _ -> false
   | Ok manifest -> String.equal manifest.description "A LIGO package"
 
-(* TODO: Expect tests *)
-
-(* Valid library, main, readme file < 1MB *)
-(* Valid storage_fn, storage_arg, main, readme file < 1MB *)
 (* Valid storage_fn, storage_arg, main, readme file > 1MB *)
