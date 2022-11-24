@@ -19,7 +19,10 @@
   },
   "source": "./ligo.opam",
   "override": {
-    "build": "dune build -p ligo",
+    "build": [
+      "bash -c 'patch -p1 < 001-tezos-deps-via-esy.patch'",
+      "dune build -p ligo"
+    ],
     "buildEnv": {
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
