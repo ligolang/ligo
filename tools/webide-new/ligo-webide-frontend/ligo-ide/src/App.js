@@ -11,10 +11,11 @@ if (process.env.MEASUREMENT_ID) {
   ReactGA.initialize(process.env.MEASUREMENT_ID);
 }
 
-loadWASM(onigasm.default);
-
 const Router = platform.isDesktop ? HashRouter : BrowserRouter;
-const ReduxApp = lazy(() => import("./ReduxApp.tsx" /* webpackChunkName: "components" */));
+const ReduxApp = lazy(async () => {
+  await loadWASM(onigasm.default);
+  return import("./ReduxApp.tsx" /* webpackChunkName: "components" */);
+});
 
 export default function App() {
   return (
