@@ -1473,6 +1473,8 @@ let rec compile_value ~raise ~options ~loc
      | _ ->
        raise.error
        @@ Errors.generic_error loc (Format.asprintf "Expected LAMBDA"))
+  | V_Michelson (Ty_code x) -> x.micheline_repr.code
+  | V_Michelson (Untyped_code x) -> x
   | v ->
     raise.error
     @@ Errors.generic_error
