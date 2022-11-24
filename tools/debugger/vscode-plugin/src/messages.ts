@@ -93,5 +93,21 @@ export interface GetContractMetadataArguments {
 }
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
-	contractMetadata?: ContractMetadata
+	contractMetadata: ContractMetadata
+}
+
+// ValidateConfig //
+
+export interface ValidateConfigArguments {
+	michelsonEntrypoint?: string
+	parameter: string
+	storage: string
+}
+
+export interface ValidateConfigRequest extends DebugProtocol.Request {
+	command: 'validateConfig'
+	arguments: ValidateConfigArguments
+}
+
+export interface ValidateConfigResponse extends DebugProtocol.Response {
 }
