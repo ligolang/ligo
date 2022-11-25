@@ -1,6 +1,4 @@
 (* 
-
-
 - [x] Add --dry-run CLI flag to ligo publish
 - [x] when directory field is null don't send the key
 - [x] Stat main file before publish
@@ -22,6 +20,7 @@
 - [ ] manually Test CLI option to override path to .ligorc
 - [ ] manually Test .ligoignore stuff
 - [ ] manually end-to-end test publishing & installing pacakges (math-libs)
+- [ ] Update MR description
 *)
 
 module LigoRC = Cli_helpers.LigoRC
@@ -411,7 +410,7 @@ let tar_gzip ~name ~version ~ligoignore dir =
 
 (* The function [pack] creates a tar-ball (tar + gzip) from the [project_root] 
    and it calculates hashes (sha1 & sha256) and returns a [PackageStats.t] *)
-let pack ~project_root ~ligo_registry ~ligoignore ~manifest =
+let pack ~project_root ~ligoignore ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
   let fcount, tarball, unpacked_size =
     Lwt_main.run @@ tar_gzip project_root ~name ~version ~ligoignore
@@ -526,7 +525,6 @@ let show_stats stats =
 
 
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path =
-  (* TODO: handle ligo_ignore_path *)
   let* manifest =
     with_logging ~before:"Reading manifest" (fun () ->
         read_manifest ~project_root)
@@ -543,7 +541,7 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path =
   let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in
   let* package_stats =
     with_logging ~before:"Packing tarball" (fun () ->
-        pack ~project_root ~ligo_registry ~ligoignore ~manifest)
+        pack ~project_root ~ligoignore ~manifest)
   in
   let () = show_stats package_stats in
   if dry_run
