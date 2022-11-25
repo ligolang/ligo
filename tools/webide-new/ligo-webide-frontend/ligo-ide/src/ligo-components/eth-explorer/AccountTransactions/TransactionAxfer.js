@@ -31,7 +31,7 @@ export default function ({ tx, owner }) {
       <div className="flex-1 overflow-hidden">
         <Address addr={tx.to} />
       </div>
-      <Badge pill color={tx.from === owner ? "danger" : "success"}>
+      <Badge pill color={tx.from === owner ? "danger" : "warning"}>
         {amount}
       </Badge>
     </div>

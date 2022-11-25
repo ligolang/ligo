@@ -192,7 +192,7 @@ export default class BaseModal extends PureComponent {
               textActions.map((t, i) => (
                 <Button
                   key={`action-${i}`}
-                  color={colorActions && colorActions[i] ? colorActions[i] : "success"}
+                  color={colorActions && colorActions[i] ? colorActions[i] : "warning"}
                   className="mr-2"
                   onClick={onActions[i]}
                 >

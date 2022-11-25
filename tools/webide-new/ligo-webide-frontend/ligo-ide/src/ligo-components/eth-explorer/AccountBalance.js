@@ -20,7 +20,7 @@ export default function AccountBalance({ account, tokens, history }) {
         name="Balance"
         icon="fas fa-wallet"
         badge={`${new Intl.NumberFormat().format(account.balance)} ${networkManager.symbol}`}
-        badgeColor="success"
+        badgeColor="warning"
       />
       {Boolean(erc20Tokens?.length) && (
         <TableCardRow

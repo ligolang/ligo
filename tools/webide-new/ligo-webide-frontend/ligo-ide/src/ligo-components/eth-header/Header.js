@@ -27,11 +27,6 @@ export default class Header extends PureComponent {
     this.customModal = React.createRef();
   }
 
-  componentDidMount() {
-    // keypairManager.loadAllKeypairs().then(this.updateKeypairs)
-    // keypairManager.onUpdated(this.updateKeypairs)
-  }
-
   componentDidUpdate(prevProps) {
     if (
       this.props.customNetworkModalStatus &&

@@ -105,7 +105,7 @@ export default class CustomNetworkModal extends PureComponent {
                 <Button
                   key={connecting === name ? `${name}-connecting` : `${name}-connect`}
                   size="sm"
-                  color="success"
+                  color="warning"
                   onClick={() => this.connect(item.toJS())}
                 >
                   {connecting === name ? (

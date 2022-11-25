@@ -25,8 +25,12 @@ export default {
     },
     UPDATE_KEYPAIR: {
       reducer: (state, { payload }) => {
-        const { address, name, balance = {} } = payload;
-        const newState = state.set(payload.address, { address, name, balance });
+        const { address, name, secret = undefined, balance = {} } = payload;
+        const key = state.get(payload.address);
+        const newState = state.set(
+          payload.address,
+          key ? { address, name, secret: key.secret, balance } : { address, name, secret, balance }
+        );
         return newState;
       },
     },

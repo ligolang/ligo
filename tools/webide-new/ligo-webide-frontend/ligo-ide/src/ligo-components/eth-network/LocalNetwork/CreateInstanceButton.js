@@ -113,7 +113,7 @@ export default class CreateInstanceButton extends PureComponent {
       <>
         <Button
           key="new-instance"
-          color="success"
+          color="warning"
           className={this.props.className}
           onClick={this.onClickButton}
         >

@@ -17,8 +17,9 @@ import { ProjectManager } from "~/base-components/workspace";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const Header = lazy(() => import("./components/Header" /* webpackChunkName: "header" */));
+const BottomBar = lazy(() => import("./components/BottomBar" /* webpackChunkName: "bottombar" */));
 
-function ReduxApp(props: { history: any }) {
+const ReduxApp = (props: { history: any }) => {
   const [loaded, setLoaded] = useState(false);
   const ligoIdeFileSystems = useRef<fileSystems>(new fileSystems());
   const indexedDB = useRef<fileSystem>(new indexedDBFileSystem());
@@ -53,16 +54,14 @@ function ReduxApp(props: { history: any }) {
   return (
     <Provider store={redux.store}>
       <div className="body" style={{ paddingTop: "49px" }}>
-        <Routes>
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-ignore */}
-          <Header history={props.history} />
-          <NotificationSystem />
-          <GlobalModals icon={icon} />
-        </Routes>
+        <Header history={props.history} />
+        <NotificationSystem />
+        <GlobalModals icon={icon} />
+        <Routes />
+        <BottomBar />
       </div>
     </Provider>
   );
-}
+};
 
 export default ReduxApp;

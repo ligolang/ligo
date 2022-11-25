@@ -10,7 +10,7 @@ import {
   DropdownItem,
 } from "~/base-components/ui-components";
 
-function ProtocolSelector() {
+const ProtocolSelector = () => {
   // @ts-ignore
   const protocol: { showName: string; name: string } = useSelector((state) => state.protocol);
 
@@ -54,6 +54,6 @@ function ProtocolSelector() {
       </DropdownMenu>
     </UncontrolledButtonDropdown>
   );
-}
+};
 
 export default ProtocolSelector;
