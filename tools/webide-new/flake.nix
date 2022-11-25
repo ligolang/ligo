@@ -57,7 +57,7 @@
             unitConfig.ConditionPathExists = [ webide-cfg.package webide-cfg.ligo-package webide-cfg.tezos-client-package ];
             script =
               ''
-                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --tezos-client-path ${webide-cfg.tezos-client-package}/bin/tezos-client
+                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --octez-client-path ${webide-cfg.tezos-client-package}/bin/octez-client
               '';
 
           };
