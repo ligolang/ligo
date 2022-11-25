@@ -17,7 +17,7 @@ module.exports = grammar({
     [$.ConstrName, $.ModuleName],
     [$.ConstrNameType, $.String],
     [$.FieldName, $.NameDecl],
-    [$.FieldName, $.Name]
+    [$.FieldName, $.Name],
   ],
 
   rules: {
@@ -73,6 +73,7 @@ module.exports = grammar({
       $.pattern_match,
       $._member_expr,
       $.ternary_expr,
+      $.type_as_annotation,
     ),
 
     ternary_expr: $ => prec.right(seq(
@@ -194,7 +195,6 @@ module.exports = grammar({
       $.paren_expr,
       $.module_access,
       $.tuple,
-      $.type_as_annotation,
     ),
 
     tuple: $ => common.brackets(common.sepBy(',', field("item", $._annot_expr))),
@@ -511,7 +511,7 @@ module.exports = grammar({
     ConstrNameType: $ => /\"(\\.|[^"])+\"/,
     FieldName: $ => $._Name,
     ModuleName: $ => $._NameCapital,
-    TypeName: $ => prec(1, choice($._Name, $._NameCapital)),
+    TypeName: $ => choice($._Name, $._NameCapital),
     TypeVariableName: $ => choice($._Name, $._NameCapital),
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
