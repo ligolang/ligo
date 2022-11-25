@@ -270,17 +270,24 @@ let publish ~ligo_registry ~manifest ~body ~token =
   let open Cohttp_lwt_unix in
   let LigoManifest.{ name; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
-  let headers =
-    Cohttp.Header.of_list
-      [ "referer", "publish"
-      ; "authorization", Format.sprintf "Bearer %s" token
-      ; "content-type", "application/json" (* TODO: ; "content-size", ... *)
-      ]
-  in
   let body =
     body |> Body.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
-  let r = Client.put ~headers ~body uri in
+  let body_headers =
+    Lwt.bind (Cohttp_lwt.Body.length body) (fun (content_size, body) ->
+        let headers =
+          Cohttp.Header.of_list
+            [ "referer", "publish"
+            ; "authorization", Format.sprintf "Bearer %s" token
+            ; "Content-Type", "application/json"
+            ; "Content-Length", Int64.to_string content_size
+            ]
+        in
+        Lwt.return (body, headers))
+  in
+  let r =
+    Lwt.bind body_headers (fun (body, headers) -> Client.put ~headers ~body uri)
+  in
   let response, body = Lwt_main.run r in
   handle_server_response ~name:manifest.name response body
 
