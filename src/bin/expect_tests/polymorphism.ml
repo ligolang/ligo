@@ -434,8 +434,9 @@ let%expect_test _ =
       5 |     let b                = List.length ys in
       6 |     [], (a + b + List.length [])
 
-    Underspecified type "^gen#546".
-    Please add additional annotations. |xxx}]
+    Underspecified type "^a".
+    Please add additional annotations.
+    Hint: "^a" represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
@@ -444,8 +445,9 @@ let%expect_test _ =
       3 | let main (_, _ : int list * nat) : (operation list * nat) =
       4 |     [], (one [])
 
-    Underspecified type "^gen#542".
-    Please add additional annotations. |xxx}]
+    Underspecified type "^a".
+    Please add additional annotations.
+    Hint: "^a" represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
@@ -454,8 +456,9 @@ let%expect_test _ =
       1 | let s = List.length []
       2 |
 
-    Underspecified type "^gen#541".
-    Please add additional annotations. |xxx}]
+    Underspecified type "^a".
+    Please add additional annotations.
+    Hint: "^a" represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
@@ -464,14 +467,16 @@ let%expect_test _ =
       1 | let p = []
       2 |
 
-    Underspecified type "list (^gen#541)".
-    Please add additional annotations. |xxx}]
+    Underspecified type "list (^a)".
+    Please add additional annotations.
+    Hint: "^a" represent placeholder type(s). |xxx}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
   [%expect{|
-    Underspecified type "list (^gen#5)".
-    Please add additional annotations. |}]
+    Underspecified type "list (^a)".
+    Please add additional annotations.
+    Hint: "^a" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "monomorphisation_fail.mligo") ] ;

@@ -42,7 +42,8 @@ let%expect_test _ =
       9 |   }
 
     Invalid type(s)
-    Cannot unify "record[a -> ^gen#542 , b -> ^gen#543 , c -> ^gen#544]" with "myt". |}]
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.religo") ] ;
@@ -56,7 +57,8 @@ let%expect_test _ =
       8 |   }
 
     Invalid type(s)
-    Cannot unify "( ^gen#542 * ^gen#543 * ^gen#544 )" with "myt". |}]
+    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -208,14 +210,14 @@ let%expect_test _ =
      10 |   }
 
     Invalid type(s)
-    Cannot unify "( ^gen#541 * ^gen#542 )" with "( int * int * int )".
-
+    Cannot unify "( ^a * ^b )" with "( int * int * int )".
     Difference between the types:
-    - ^gen#541
+    - ^a
     + int
-    - ^gen#542
+    - ^b
     + int
-    + int |}]
+    + int
+    Hint: "^a", "^b" represent placeholder type(s). |}]
 
 (* Positives *)
 
