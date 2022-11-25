@@ -13,7 +13,7 @@
 - [x] Add unit tests for manifest parsing & validation
 - [x] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [x] 2 tests for tar-gzip (< 1 MB & > 1 MB)
-- [ ] Add basic comments in code
+- [x] Add basic comments in code
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
 - [ ] Docs: Add note about `--registry`
@@ -206,6 +206,8 @@ module Attachments = struct
     `Assoc kvs
 end
 
+(* This module represents the body of the HTTP request needed to publish a 
+   package to LIGO registry *)
 module Body = struct
   type t =
     { id : string [@key "_id"]
@@ -242,6 +244,8 @@ module Body = struct
     }
 end
 
+(* [handle_server_response] handles the response to the request made by 
+   [publish] *)
 let handle_server_response ~name response body =
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
@@ -260,6 +264,8 @@ let handle_server_response ~name response body =
   | _ -> Error (body, "")
 
 
+(* [publish] makes a HTTP put request to the [ligo_registry] with the [body] 
+   and used [token] for authorization *)
 let publish ~ligo_registry ~manifest ~body ~token =
   let open Cohttp_lwt_unix in
   let LigoManifest.{ name; _ } = manifest in
@@ -268,7 +274,7 @@ let publish ~ligo_registry ~manifest ~body ~token =
     Cohttp.Header.of_list
       [ "referer", "publish"
       ; "authorization", Format.sprintf "Bearer %s" token
-      ; "content-type", "application/json"
+      ; "content-type", "application/json" (* TODO: ; "content-size", ... *)
       ]
   in
   let body =
@@ -287,6 +293,7 @@ let os_type =
   | _ -> Gz.Unix
 
 
+(* [gzip] compresses the file [fname] *)
 let gzip fname =
   let fd = Caml_unix.openfile fname [ Core_unix.O_RDWR ] 0o666 in
   let file_size = Int.of_int64_exn (Core_unix.stat fname).st_size in
@@ -320,6 +327,9 @@ let gzip fname =
   r
 
 
+(* [get_all_files] returs a list of files to be included in the package, it
+   starts starts finding files from the project-root & It ignores the files or 
+   directries specified in .ligoignore *)
 let rec get_all_files
     : ligoignore:(string -> bool) -> string -> (string * int) list Lwt.t
   =
@@ -367,6 +377,7 @@ let from_dir ~dir f =
   result
 
 
+(* [tar] creates a tar file of the [files] *)
 let tar ~name ~version files =
   let files, sizes = List.unzip files in
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
@@ -380,6 +391,7 @@ let tar ~name ~version files =
   Lwt.return (fcount, fname, unpacked_size)
 
 
+(* [tar_gzip] creates a tar-ball of the directory [dir] *)
 let tar_gzip ~name ~version ~ligoignore dir =
   let open Lwt.Syntax in
   let* files = from_dir ~dir (fun () -> get_all_files ~ligoignore ".") in
@@ -388,6 +400,8 @@ let tar_gzip ~name ~version ~ligoignore dir =
   Lwt.return (fcount, Buffer.contents_bytes buf, unpacked_size)
 
 
+(* The function [pack] creates a tar-ball (tar + gzip) from the [project_root] 
+   and it calculates hashes (sha1 & sha256) and returns a [PackageStats.t] *)
 let pack ~project_root ~ligo_registry ~ligoignore ~manifest =
   let LigoManifest.{ name; version; _ } = manifest in
   let fcount, tarball, unpacked_size =
@@ -415,8 +429,7 @@ let pack ~project_root ~ligo_registry ~ligoignore ~manifest =
       ~fcount
       ~tarball
   in
-  let body = Body.make ~ligo_registry ~package_stats ~manifest in
-  Ok (body, package_stats)
+  Ok package_stats
 
 
 let ( let* ) x f = Result.bind x ~f
@@ -432,6 +445,8 @@ let validate_manifest ~ligo_bin_path manifest =
   | Error e -> Error (e, "")
 
 
+(* The function [get_auth_token] reads as .ligorc file and extracts the 
+   auth-token for the requested [ligo_registry] *)
 let get_auth_token ~ligorc_path ligo_registry =
   let ligorc = LigoRC.read ~ligorc_path in
   let registry_key = LigoRC.registry_key ligo_registry in
@@ -522,17 +537,18 @@ let publish
         get_project_root project_root)
   in
   let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in
-  let* packed, stats =
+  let* package_stats =
     with_logging ~before:"Packing tarball" (fun () ->
         pack ~project_root ~ligo_registry ~ligoignore ~manifest)
   in
-  let () = show_stats stats in
+  let () = show_stats package_stats in
   if dry_run
   then Ok ("", "")
-  else
+  else (
+    let body = Body.make ~ligo_registry ~package_stats ~manifest in
     let* token =
       with_logging ~before:"Checking auth token" (fun () ->
           get_auth_token ~ligorc_path ligo_registry)
     in
     with_logging ~before:"Uploading package" (fun () ->
-        publish ~token ~body:packed ~ligo_registry ~manifest)
+        publish ~token ~body ~ligo_registry ~manifest))
