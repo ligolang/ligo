@@ -24,6 +24,7 @@ export default class BaseModal extends PureComponent {
     textCancel: PropTypes.string,
     colorCancel: PropTypes.string,
     onCancel: PropTypes.func,
+    onOpened: PropTypes.func,
     noCancel: PropTypes.bool,
     children: PropTypes.node,
     onAdditionAction: PropTypes.func,
@@ -128,6 +129,7 @@ export default class BaseModal extends PureComponent {
       textAddition = "",
       colorAddition = "default",
       onClosed = () => {},
+      onOpened = () => {},
       className,
       children,
       headerCancelIcon,
@@ -157,6 +159,7 @@ export default class BaseModal extends PureComponent {
           className
         )}
         onClosed={onClosed}
+        onOpened={onOpened}
       >
         <ModalHeader
           toggle={noCancel ? undefined : this.toggle}

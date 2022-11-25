@@ -24,11 +24,7 @@ export default {
     let accPrivateKey = secretParam;
     if (accPrivateKey.includes(" ")) {
       secretType = "mnemonic";
-      const seed = Bip39.mnemonicToSeedSync(secretParam);
-      accPrivateKey = b58cencode(
-        Ed25519.derivePath("m/44'/1729'/0'/0'", seed.toString("hex")).key.slice(0, 32),
-        prefix.edsk2
-      );
+      accPrivateKey = this.secretFromMnemonic(secretParam);
     }
     const signer = await InMemorySigner.fromSecretKey(accPrivateKey);
     const accAddress = await signer.publicKeyHash();
@@ -37,6 +33,13 @@ export default {
       secret: secretParam,
       secretName: secretType === "mnemonic" ? "Mnemonic" : "Private Key",
     };
+  },
+  secretFromMnemonic(mnemonic: string) {
+    const seed = Bip39.mnemonicToSeedSync(mnemonic);
+    return b58cencode(
+      Ed25519.derivePath("m/44'/1729'/0'/0'", seed.toString("hex")).key.slice(0, 32),
+      prefix.edsk2
+    );
   },
   walletFrom() {
     // if (secret.startsWith("0x")) {

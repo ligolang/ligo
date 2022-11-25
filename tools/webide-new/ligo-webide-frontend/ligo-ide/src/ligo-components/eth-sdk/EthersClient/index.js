@@ -12,9 +12,7 @@ export default class EthersClient {
     this.networkId = networkId;
     this.chainId = chainId;
 
-    if (url) {
-      this.provider = new TezosToolkit(url);
-    } else if (browserExtension) {
+    if (browserExtension) {
       this.provider = new TezosToolkit(url);
       this.provider.setWalletProvider(browserExtension.ethereum);
     } else {
