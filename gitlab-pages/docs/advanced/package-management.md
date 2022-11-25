@@ -3,26 +3,13 @@ id: package-management
 title: Package management
 ---
 
-# Table of Contents
+import Syntax from '@theme/Syntax';
+import Link from '@docusaurus/Link';
 
-1.  [Ligo registry](#org1abc41f)
-    1.  [Packages](#org9972a92)
-    2.  [Packaging](#org1f8c72e)
-    3.  [Publishing](#orgf4e121c)
-    4.  [Consuming](#orgd2a9667)
-    5.  [Notes](#org1cc9c85)
-
-
-<a id="org1abc41f"></a>
-
-# Ligo registry
 
 Any programming language that aims to make collaboration easier needs
 a way to distribute (and consume) it's reusable modules. Ligo provides
 first-class support for such distributable units (ie. packages).
-
-
-<a id="org9972a92"></a>
 
 ## Packages
 
@@ -54,51 +41,9 @@ next to their Ligo modules.
 Any directory (recursively) containing `.mligo` files can be turned into a package
 by simply placing a manifest file, `package.json` over there.
 
-
-<a id="org1f8c72e"></a>
-
-## Packaging
-
-Packages are code units shared with other developers. Therefore,
-authors must provide useful metadata, both for other programmers in
-the community as well as ligo toolchain, to understand the package's
-contents, it's version and other useful information.
-
-For Ligo packages, authors must provide,
-
-1.  A name (in the `name` field)
-2.  Version (`version`)
-3.  Dependencies, if any. (`dependencies`)
-4.  A brief description (`description`)
-
-Sample `package.json` with the above information.
-
-    {
-      "name": "ligo-foo",
-      "version": "1.0.18",
-      "author": "Name <email@domain.com>"
-      "description": "An example for ligo dependency depending on another ligo dependency",
-      "scripts": {
-        "test": "ligo run test foo.test.mligo --project-root ."
-      },
-      "dependencies": {
-        "ligo-list-helpers": "1.0.0",
-        "ligo-set-helpers": "^1.0.2"
-      }
-    }
-
-
-<a id="orgf4e121c"></a>
-
-## Publishing
-
-Ligo packages can be published to a central repository at
-`beta.packages.ligolang.org` with the `ligo publish` command.
-
-    ligo publish
-
-
-<a id="orgd2a9667"></a>
+# Ligo registry
+TODO: write someting here.
+packages are hosted on ligo registry link (where pacakges reside)
 
 ## Consuming
 
@@ -109,7 +54,7 @@ Using `ligo install` command we can fetch these ligo libraries (It internally in
 Pre-requites: 
 1. esy [link](https://esy.sh/docs/en/getting-started.html)
 
-## Workflow
+### Workflow
 
 Start with empty `package.json` file
 
@@ -227,6 +172,45 @@ Out [3]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY())))))
 In  [4]: 
 ```
 
+## Packaging
+
+Packages are code units shared with other developers. Therefore,
+authors must provide useful metadata, both for other programmers in
+the community as well as ligo toolchain, to understand the package's
+contents, it's version and other useful information.
+
+For Ligo packages, authors must provide,
+
+1.  A name (in the `name` field)
+2.  Version (`version`)
+3.  Dependencies, if any. (`dependencies`)
+4.  A brief description (`description`)
+
+Sample `package.json` with the above information.
+
+    {
+      "name": "ligo-foo",
+      "version": "1.0.18",
+      "author": "Name <email@domain.com>"
+      "description": "An example for ligo dependency depending on another ligo dependency",
+      "scripts": {
+        "test": "ligo run test foo.test.mligo --project-root ."
+      },
+      "dependencies": {
+        "ligo-list-helpers": "1.0.0",
+        "ligo-set-helpers": "^1.0.2"
+      }
+    }
+
+
+## Publishing
+
+Ligo packages can be published to a central repository at
+`beta.packages.ligolang.org` with the `ligo publish` command.
+
+    ligo publish
+
+
 ## Creating and publishing packages to Ligo registry
 
 We are going the write the `ligo-list-helpers` library that we used earlier.
@@ -297,15 +281,15 @@ ligo add-user
 ```
 This would create a `.ligorc` in the home directory.
 
+TODO: updae this note  
 > Note: unlike npm, ligo only creates the rc file in the home directory. Placing the file anywhere else isn't meaningful to Ligo
 
 Now run,
 
 ```bash 
 ligo publish
+# TODO: add nice logs here...
 ```
-
-<a id="org1cc9c85"></a>
 
 ## Quick CLI options reference
 
@@ -327,7 +311,13 @@ If you wish to specify the root directory manually you can do so using the `--pr
 ligo compile contract main.mligo --project-root PATH
 ```
 
-## Notes
+TODO: add --registry
+TODO: add --ligorc-path
+TODO: add --dry-run
+TODO: check cli.ml to see that all flags are covered
+
+## FAQs
+TODO: fix formatting for this section
 
 Note that,
 
