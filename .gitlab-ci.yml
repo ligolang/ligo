@@ -64,6 +64,33 @@ esy-windows:
     paths:
       - platform-windows-x64
 
+prepare_npm_tarball:
+  tags:
+  - docker
+  stage: push
+  needs:
+    - job: docker_extract
+      artifacts: true
+    - job: esy-windows
+      artifacts: true
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /^release/.*$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - mkdir -p _release/platform-linux/bin
+    - cp platform-windows-x64/esyInstallRelease.js _release
+    - mv platform-* _release/
+    - cp ./ligo _release/platform-linux/bin
+    - node scripts/pipelines-release.js
+    - cp ./scripts/release-postinstall.js _release/postinstall.js
+    - cd _release && npm pack
+  artifacts:
+    paths:
+      - _release/ligo-*.tgz
+
 changelog:
   stage: pretooling
   only:
