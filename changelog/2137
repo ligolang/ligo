@@ -1,5 +1,5 @@
 author: melwyn95
-description: <p>Fixes package resolution for LIGO when used via Docker container.</p>\n\n
+description: Fixes package resolution for LIGO when used via Docker container.\n\n
 merge_request: '2137'
 title: 'Fix: Package resolution from Docker containers'
 type: fixed

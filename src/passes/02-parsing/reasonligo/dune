@@ -10,10 +10,9 @@
  (targets RecoverParser.ml)
  (deps Parser.cmly)
  (action
-   (with-stdout-to
-     %{targets}
-     (run menhir-recover --external-tokens Lexing_reasonligo.Token
-          Parser.cmly))))
+  (with-stdout-to
+   %{targets}
+   (run menhir-recover --external-tokens Lexing_reasonligo.Token Parser.cmly))))
 
 ;; Build of the ReasonLIGO parser as a library
 
@@ -21,25 +20,29 @@
  (name parsing_reasonligo)
  (public_name ligo.parsing.reasonligo)
  (instrumentation
-   (backend bisect_ppx))
- (modules
-    Parser ParErr Pretty RecoverParser)
+  (backend bisect_ppx))
+ (modules Parser ParErr Pretty RecoverParser)
  (libraries
-   ;; LIGO
-   lexing_reasonligo
-   lexing_shared
-   cst_reasonligo
-   ;; Vendors
-   simple-utils
-   ParserLib
-   ;; Third party
-   pprint
-   terminal_size
-   menhirLib
-   hex)
-   (flags (:standard \ -open Core)
-          (-open Cst_reasonligo    ;; for CST in Parser.mli
-           -open Lexing_shared)))  ;; for Attr, Wrap in Parser.mli
+  ;; LIGO
+  lexing_reasonligo
+  lexing_shared
+  cst_reasonligo
+  ;; Vendors
+  simple-utils
+  ParserLib
+  ;; Third party
+  pprint
+  terminal_size
+  menhirLib
+  hex)
+ (flags
+  (:standard \ -open Core)
+  (-open
+   Cst_reasonligo ;; for CST in Parser.mli
+   -open
+   Lexing_shared)))
+
+;; for Attr, Wrap in Parser.mli
 
 ;; Local build of a standalone parser for ReasonLIGO
 
@@ -55,7 +58,8 @@
   ;; Third party
   hex)
  (modules ParserMain Parser_msg)
- (flags (:standard \ -open Core)))
+ (flags
+  (:standard \ -open Core)))
 
 ;; Build of the covering of error states in the LR automaton
 

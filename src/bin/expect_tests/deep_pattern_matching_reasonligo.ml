@@ -33,25 +33,32 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail1.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.religo", line 6, characters 11-34:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.religo", line 5, character 2 to line 9, character 3:
+      4 | let t = (x: (myt, myt)) =>
       5 |   switch(x) {
       6 |   | (Nil , {a : a , b : b , c : c}) => 1
       7 |   | (xs  , Nil) => 2
+      8 |   | (Cons ((a,b)) , Cons ((c,d))) => a + b + c + d
+      9 |   }
 
     Invalid type(s)
-    Cannot unify record[a -> ^gen#492 , b -> ^gen#493 , c -> ^gen#494] with
-    sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.religo", line 5, characters 12-17:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.religo", line 4, character 2 to line 8, character 3:
+      3 | let t = (x: (myt, myt)) =>
       4 |   switch(x) {
       5 |   | (Nil , (a,b,c)) => 1
       6 |   | (xs  , Nil) => 2
+      7 |   | (Cons ((a,b)) , Cons ((c,d))) => a + b + c + d
+      8 |   }
 
     Invalid type(s)
-    Cannot unify ( ^gen#492 * ^gen#493 * ^gen#494 ) with sum[Cons -> ( int * int ) , Nil -> unit]. |}]
+    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -61,12 +68,14 @@ let%expect_test _ =
       5 |   | Some_fake(x) => x
       6 |   | None_fake    => 1
 
-    Pattern not of the expected type option (int) |}]
+    Pattern not of the expected type "option (int)". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_test6.religo", line 4, characters 5-14:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_test6.religo", line 2, character 2 to line 5, character 3:
+      1 | let t = (x : list(int)) =>
+      2 |   switch(x) {
       3 |   | a           => 0
       4 |   | [hd, ...tl] => 0
       5 |   }
@@ -84,7 +93,7 @@ let%expect_test _ =
       7 |   }
 
     Invalid type(s)
-    Cannot unify int with string. |}]
+    Cannot unify "int" with "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
@@ -95,14 +104,16 @@ let%expect_test _ =
      21 |       };
 
     Invalid type(s)
-    Cannot unify string with int. |}]
+    Cannot unify "string" with "int". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.religo", line 6, characters 5-17:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.religo", line 4, character 2 to line 7, character 3:
+      3 | let t = (x: (myt, (int , int , int))) =>
+      4 |   switch(x) {
       5 |   | (xs , (a,b,c)) => 1
       6 |   | (xs , (c,b,a)) => 2
       7 |   }
@@ -161,7 +172,7 @@ let%expect_test _ =
       8 |         | Decrement    => s - 1
       9 |         };
 
-    Pattern not of the expected type nat |}]
+    Pattern not of the expected type "nat". |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
@@ -185,18 +196,28 @@ let%expect_test _ =
       6 |   | {one : _ , three : _} => 0
       7 |   }
 
-    Pattern not of the expected type parameter |}]
+    Pattern not of the expected type "parameter". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.religo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.religo"); "--no-colour" ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.religo", line 8, characters 15-19:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.religo", line 7, character 2 to line 10, character 3:
+      6 | let main = (action : parameter) : int =>
       7 |   switch(action) {
       8 |   | Increment((n, m)) => 0
       9 |   | Reset             => 0
+     10 |   }
 
-    Pattern not of the expected type ( int * int * int ) |}]
+    Invalid type(s)
+    Cannot unify "( ^a * ^b )" with "( int * int * int )".
+    Difference between the types:
+    - ^a
+    + int
+    - ^b
+    + int
+    + int
+    Hint: "^a", "^b" represent placeholder type(s). |}]
 
 (* Positives *)
 

@@ -100,36 +100,36 @@ let are_keys_numeric keys =
   List.for_all keys
     ~f:(fun (l) -> Option.is_some @@ int_of_string_opt @@ Label.to_string l)
 
-let rec to_list_pattern ~(raise : raise) simple_pattern : _ AST.Pattern.t =
+let rec to_list_pattern ~(raise : raise) ~loc simple_pattern : _ AST.Pattern.t =
   match simple_pattern with
-    SP_Wildcard _ -> Location.wrap @@ AST.Pattern.P_var wild_binder
+    SP_Wildcard _ -> Location.wrap ~loc @@ AST.Pattern.P_var wild_binder
   | SP_Constructor (Label "#NIL", _, _) ->
-    Location.wrap @@ AST.Pattern.P_list (List [])
+    Location.wrap ~loc @@ AST.Pattern.P_list (List [])
   | SP_Constructor (Label "#CONS", sps, t) ->
     let rsps = List.rev sps in
     let tl = List.hd_exn rsps in
     let hd = List.rev (List.tl_exn rsps) in
-    let hd = to_original_pattern ~raise hd (C.get_t_list_exn t) in
-    let tl = to_list_pattern ~raise tl in
-    Location.wrap @@ AST.Pattern.P_list (Cons (hd, tl))
+    let hd = to_original_pattern ~raise ~loc hd (C.get_t_list_exn t) in
+    let tl = to_list_pattern ~raise ~loc tl in
+    Location.wrap ~loc @@ AST.Pattern.P_list (Cons (hd, tl))
   | SP_Constructor (Label c, _, _) ->
     raise.error @@
-      Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c)
+      Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c) loc
 
-and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
+and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
   let open AST.Pattern in
   match simple_patterns with
     [] -> raise.error @@
-      Errors.corner_case "edge case: to_original_pattern empty patterns"
-  | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap @@ P_unit
-  | SP_Wildcard _::[] -> Location.wrap @@ P_var wild_binder
+      Errors.corner_case "edge case: to_original_pattern empty patterns" loc
+  | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap ~loc @@ P_unit
+  | SP_Wildcard _::[] -> Location.wrap ~loc @@ P_var wild_binder
   | (SP_Constructor (Label "#CONS", _, _) as simple_pattern)::[]
   | (SP_Constructor (Label "#NIL", _, _) as simple_pattern)::[] ->
-    to_list_pattern ~raise simple_pattern
+    to_list_pattern ~raise ~loc simple_pattern
   | SP_Constructor (c, sps, t)::[] ->
     let t = get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum t)) in
-    let ps = to_original_pattern ~raise sps t in
-    Location.wrap @@ P_variant (c, ps)
+    let ps = to_original_pattern ~raise ~loc sps t in
+    Location.wrap ~loc @@ P_variant (c, ps)
   | _ ->
     (match ty.type_content with
     AST.T_record { fields ; _ } ->
@@ -141,14 +141,14 @@ and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
         ~f:(fun (sps, ps) t ->
             let n = List.length @@ destructure_type t in
             let sps, rest = List.split_n sps n in
-            rest, ps @ [to_original_pattern ~raise sps t]
+            rest, ps @ [to_original_pattern ~raise ~loc sps t]
           )
       in
       if are_keys_numeric labels then
-        Location.wrap @@ P_tuple ps
+        Location.wrap ~loc @@ P_tuple ps
       else
-        Location.wrap @@ P_record (Record.of_list (List.zip_exn labels ps))
-    | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple")
+        Location.wrap ~loc @@ P_record (Record.of_list (List.zip_exn labels ps))
+    | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple" ty.location) 
 
 let print_matrix matrix =
   let () = Format.printf "matrix: \n" in
@@ -302,7 +302,7 @@ let get_constructors_from_1st_col matrix =
         default_matrix = [default_matrix matrix]
 
         Urec (matrix, vector) = Urec (default_matrix, (v2, ... , vn)) *)
-let rec algorithm_Urec ~(raise : raise) matrix vector =
+let rec algorithm_Urec ~(raise : raise) ~loc matrix vector =
   if List.is_empty matrix then true
   else if List.for_all matrix ~f:(List.is_empty) && List.is_empty vector
   then false
@@ -311,7 +311,7 @@ let rec algorithm_Urec ~(raise : raise) matrix vector =
       let a = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
-      algorithm_Urec ~raise matrix vector
+      algorithm_Urec ~raise ~loc matrix vector
   | SP_Wildcard t :: q2_n ->
     let complete_signature = get_all_constructors t in
     let constructors = get_constructors_from_1st_col matrix in
@@ -320,13 +320,13 @@ let rec algorithm_Urec ~(raise : raise) matrix vector =
       LSet.fold
         (fun c b ->
           let tys = find_constuctor_arity c t in
-          b || algorithm_Urec ~raise
+          b || algorithm_Urec ~raise ~loc
                 (specialize_matrix c tys matrix)
                 (specialize_vector c tys vector))
         complete_signature false
     else
-      algorithm_Urec ~raise (default_matrix matrix) q2_n
-  | [] -> raise.error @@ Errors.corner_case "edge case: algorithm Urec"
+      algorithm_Urec ~raise ~loc (default_matrix matrix) q2_n
+  | [] -> raise.error @@ Errors.corner_case "edge case: algorithm Urec" loc
 
 (* Algorithm I [algorithm_I matrix n ts]
 
@@ -365,11 +365,11 @@ let rec algorithm_Urec ~(raise : raise) matrix vector =
           If there more constructors that do not belong to Σ,
           we can improve by returning all the patterns that can be formed
           using the extra constructors. *)
-let rec algorithm_I ~(raise : raise) matrix n ts =
+let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
   if n = 0 then
     if List.is_empty matrix then Some [[]]
     else if List.for_all matrix ~f:(List.is_empty) then None
-    else raise.error @@ Errors.corner_case "edge case: algorithm Urec"
+    else raise.error @@ Errors.corner_case "edge case: algorithm Urec" loc
   else
     let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
@@ -383,7 +383,7 @@ let rec algorithm_I ~(raise : raise) matrix n ts =
             let tys = find_constuctor_arity ck t in
             let ak  = List.length tys in
             let matrix = specialize_matrix ck tys matrix in
-            let ps = algorithm_I ~raise matrix (ak + n - 1) (tys @ ts) in
+            let ps = algorithm_I ~raise ~loc matrix (ak + n - 1) (tys @ ts) in
             match ps with
               Some ps ->
                 Some
@@ -394,7 +394,7 @@ let rec algorithm_I ~(raise : raise) matrix n ts =
           ) complete_signature None
     else
       let dp = default_matrix matrix in
-      let ps = algorithm_I ~raise dp (n - 1) ts in
+      let ps = algorithm_I ~raise ~loc dp (n - 1) ts in
       match ps with
         Some ps ->
           if LSet.is_empty constructors then
@@ -424,13 +424,13 @@ let rec algorithm_I ~(raise : raise) matrix n ts =
        [p21, p22, ... , p2n]
         ...
        [pm1, pm2, ... , pmn]], n) *)
-let missing_case_analysis ~raise matrix t =
+let missing_case_analysis ~raise ~loc matrix t =
   let ts = destructure_type t in
 
-  match algorithm_I ~raise matrix (List.length ts) ts with
+  match algorithm_I ~raise ~loc matrix (List.length ts) ts with
     Some sps ->
       let ps = List.map sps
-        ~f:(fun sp -> to_original_pattern ~raise sp t) in
+        ~f:(fun sp -> to_original_pattern ~raise ~loc sp t) in
       Some ps
   | None -> None
 
@@ -441,14 +441,14 @@ let missing_case_analysis ~raise matrix t =
           [p2]
           ...
           [p(i-1)], pi) is false *)
-let redundant_case_analysis ~raise matrix =
+let redundant_case_analysis ~raise ~loc matrix =
   let redundant, case, _ =  List.fold_left matrix ~init:(false, 0, [])
     ~f:(fun (redundant_case_found, case, matrix) vector ->
       if redundant_case_found then (true, case, [])
       else if List.is_empty matrix then (false, case + 1, [vector])
       else
         let redundant_case_found
-          = not @@ algorithm_Urec matrix ~raise vector in
+          = not @@ algorithm_Urec matrix ~raise ~loc vector in
         (redundant_case_found, case + 1, matrix @ [vector]))
   in
   (redundant, case)
@@ -478,11 +478,11 @@ let check_anomalies ~(raise : raise) ~syntax ~loc (eqs : (AST.type_expression AS
 
   let matrix = List.map eqs ~f:(fun (p, t, _) -> to_simple_pattern (p, t)) in
 
-  match missing_case_analysis ~raise matrix t with
+  match missing_case_analysis ~raise ~loc matrix t with
     Some missing_cases ->
-      raise.error @@ Errors.pattern_missing_cases loc syntax missing_cases
+      raise.error @@ Errors.pattern_missing_cases syntax missing_cases loc
   | None ->
-    let redundant, case = redundant_case_analysis ~raise matrix in
+    let redundant, case = redundant_case_analysis ~raise ~loc matrix in
     if redundant
     then
       let p, _, _ = List.nth_exn eqs (case - 1) in

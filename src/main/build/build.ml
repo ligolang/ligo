@@ -48,8 +48,8 @@ module M (Params : Params) =
           Environment.add_module ~public:() module_name (Environment.to_module ast_typed_env) env
       let init_env : environment =
         let type_env = options.middle_end.init_env in
-        Environment.append 
-          (Environment.append type_env std_lib.typed_mod_def) 
+        Environment.append
+          (Environment.append type_env std_lib.typed_mod_def)
           (Stdlib.select_prelude_typed top_level_syntax std_lib)
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
@@ -227,7 +227,7 @@ let rec build_contract_aggregated ~raise : options:Compiler_options.t -> string 
       let form =
         let command_line_views = match cli_views with [] -> None | x -> Some x in
         Ligo_compile.Of_core.View { command_line_views ; contract_entry = entry_point }
-      in  
+      in
       trace ~raise self_ast_typed_tracer @@ Ligo_compile.Of_core.specific_passes form typed_prg in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end ~contract_pass:true typed_contract entry_point in
     let agg_views = build_aggregated_views ~raise ~options typed_views in

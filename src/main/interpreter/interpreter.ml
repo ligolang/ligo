@@ -20,13 +20,13 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
   | `Yes -> contract_file
   | `No | `Unknown ->
     (match source_file with
-     | Some source_file ->
-       let d = Filename.dirname source_file in
-       let s = Filename.concat d contract_file in
-       (match Sys_unix.file_exists s with
-        | `Yes -> s
-        | `No | `Unknown -> ModRes.Helpers.resolve ~file:contract_file mod_res)
-     | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
+    | Some source_file ->
+      let d = Filename.dirname source_file in
+      let s = Filename.concat d contract_file in
+      (match Sys_unix.file_exists s with
+      | `Yes -> s
+      | `No | `Unknown -> ModRes.Helpers.resolve ~file:contract_file mod_res)
+    | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
 
 
 let get_file_from_location loc =
@@ -212,8 +212,8 @@ let apply_comparison ~raise
     return @@ v_bool b
 
 let bind_param
-  :  env -> Value_var.t -> Param.mutable_flag -> type_expression * value
-  -> in_:(env -> 'a Monad.t) -> 'a Monad.t
+    :  env -> Value_var.t -> Param.mutable_flag -> type_expression * value
+    -> in_:(env -> 'a Monad.t) -> 'a Monad.t
   =
   let open Monad in
   fun env var mut_flag (type_, val_) ~in_ ->
@@ -228,10 +228,23 @@ let bind_param
       let@ () = Free loc in
       return result
 
+(* 
+let deref_env env =
+  let open Monad in
+  bind_map_list
+    (fun (x, y) ->
+      match y.item.eval_term with
+      | V_Location loc ->
+        let* v = Call (Deref loc) in
+        return (x, { y with item = { y.item with eval_term = v } })
+      | _ -> return (x, y))
+    env *)
+
 
 let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
-  :  Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant'
-  -> (value * AST.type_expression * Location.t) list -> value Monad.t
+    :  Location.t -> calltrace -> AST.type_expression -> env
+    -> Constant.constant' -> (value * AST.type_expression * Location.t) list
+    -> value Monad.t
   =
  fun loc calltrace expr_ty env c operands ->
   let open Constant in
@@ -300,18 +313,18 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_SOME, _ -> fail @@ error_type ()
   | C_MAP_FIND_OPT, [ k; V_Map l ] ->
     (match List.Assoc.find ~equal:LC.equal_value l k with
-     | Some v -> return @@ v_some v
-     | None -> return @@ v_none ())
+    | Some v -> return @@ v_some v
+    | None -> return @@ v_none ())
   | C_MAP_FIND_OPT, _ -> fail @@ error_type ()
   | C_MAP_FIND, [ k; V_Map l ] ->
     (match List.Assoc.find ~equal:LC.equal_value l k with
-     | Some v -> return @@ v
-     | None ->
-       fail
-       @@ Errors.meta_lang_eval
-            loc
-            calltrace
-            (v_string @@ Predefined.Tree_abstraction.pseudo_module_to_string c))
+    | Some v -> return @@ v
+    | None ->
+      fail
+      @@ Errors.meta_lang_eval
+           loc
+           calltrace
+           (v_string @@ Predefined.Tree_abstraction.pseudo_module_to_string c))
   | C_MAP_FIND, _ -> fail @@ error_type ()
   (* binary *)
   | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), [ operand ; operand' ] ->
@@ -335,17 +348,17 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ v_timestamp res
   | C_SUB, [ V_Ct (C_mutez a'); V_Ct (C_mutez b') ] ->
     (match Michelson_backend.Tezos_eq.mutez_sub a' b' with
-     | Some res -> return @@ v_mutez res
-     | None ->
-       fail
-         (Errors.meta_lang_eval
-            loc
-            calltrace
-            (v_string "Mutez underflow/overflow")))
+    | Some res -> return @@ v_mutez res
+    | None ->
+      fail
+        (Errors.meta_lang_eval
+           loc
+           calltrace
+           (v_string "Mutez underflow/overflow")))
   | C_SUB_MUTEZ, [ V_Ct (C_mutez a'); V_Ct (C_mutez b') ] ->
     (match Michelson_backend.Tezos_eq.mutez_sub a' b' with
-     | Some res -> return @@ v_some @@ v_mutez res
-     | None -> return @@ v_none ())
+    | Some res -> return @@ v_some @@ v_mutez res
+    | None -> return @@ v_none ())
   | C_SUB, _ -> fail @@ error_type ()
   | C_SUB_MUTEZ, _ -> fail @@ error_type ()
   | C_CONS, [ v; V_List vl ] -> return @@ V_List (v :: vl)
@@ -367,13 +380,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ v_timestamp res
   | C_ADD, [ V_Ct (C_mutez a'); V_Ct (C_mutez b') ] ->
     (match Michelson_backend.Tezos_eq.mutez_add a' b' with
-     | Some res -> return @@ v_mutez res
-     | None ->
-       fail
-         (Errors.meta_lang_eval
-            loc
-            calltrace
-            (v_string "Mutez underflow/overflow")))
+    | Some res -> return @@ v_mutez res
+    | None ->
+      fail
+        (Errors.meta_lang_eval
+           loc
+           calltrace
+           (v_string "Mutez underflow/overflow")))
   | C_ADD, [ V_Ct (C_bls12_381_g1 a); V_Ct (C_bls12_381_g1 b) ] ->
     let r = Bls12_381.G1.(add a b) in
     return (v_bls12_381_g1 r)
@@ -427,23 +440,23 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_DIV, [ V_Ct (C_nat a'); V_Ct (C_int b') ] ->
     let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
     (match a with
-     | Some (res, _) -> return @@ v_int res
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
+    | Some (res, _) -> return @@ v_int res
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
   | C_DIV, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
     let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
     (match a with
-     | Some (res, _) -> return @@ v_nat res
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
+    | Some (res, _) -> return @@ v_nat res
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
   | C_DIV, [ V_Ct (C_mutez a'); V_Ct (C_mutez b') ] ->
     let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
     (match a with
-     | Some (res, _) -> return @@ v_nat res
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
+    | Some (res, _) -> return @@ v_nat res
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
   | C_DIV, [ V_Ct (C_mutez a'); V_Ct (C_nat b') ] ->
     let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
     (match a with
-     | Some (res, _) -> return @@ v_mutez res
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
+    | Some (res, _) -> return @@ v_mutez res
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
   | C_DIV, _ -> fail @@ error_type ()
   | C_MOD, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
     return @@ v_int64 Int64.(rem a' b')
@@ -452,13 +465,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_MOD, [ V_Ct (C_nat a'); V_Ct (C_int b') ] ->
     let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
     (match a with
-     | Some (_, r) -> return @@ v_nat r
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
+    | Some (_, r) -> return @@ v_nat r
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
   | C_MOD, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
     let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
     (match a with
-     | Some (_, r) -> return @@ v_nat r
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
+    | Some (_, r) -> return @@ v_nat r
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str)
   | C_MOD, _ -> fail @@ error_type ()
   | C_CONCAT, [ V_Ct (C_string a'); V_Ct (C_string b') ] ->
     return @@ v_string (a' ^ b')
@@ -497,8 +510,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_LSL, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
     let v = Michelson_backend.Tezos_eq.nat_shift_left a' b' in
     (match v with
-     | Some v -> return @@ v_nat v
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow"))
+    | Some v -> return @@ v_nat v
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow"))
   | C_LSL, _ -> fail @@ error_type ()
   | C_LSR, [ V_Ct (C_int64 a'); V_Ct (C_nat b') ] ->
     let b' = Z.to_int b' in
@@ -506,8 +519,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_LSR, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
     let v = Michelson_backend.Tezos_eq.nat_shift_right a' b' in
     (match v with
-     | Some v -> return @@ v_nat v
-     | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow"))
+    | Some v -> return @@ v_nat v
+    | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow"))
   | C_LSR, _ -> fail @@ error_type ()
   | C_LIST_EMPTY, [] -> return @@ V_List []
   | C_LIST_EMPTY, _ -> fail @@ error_type ()
@@ -525,7 +538,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       Monad.bind_map_list
         (fun elt ->
           bind_param env arg_binder arg_mut_flag (ty, elt) ~in_:(fun env' ->
-            eval_ligo body calltrace env'))
+              eval_ligo body calltrace env'))
         elts
     in
     return (V_List elts)
@@ -568,7 +581,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_list
       (fun _ elt ->
         bind_param env arg_binder arg_mut_flag (ty, elt) ~in_:(fun env ->
-          eval_ligo body calltrace env))
+            eval_ligo body calltrace env))
       (v_unit ())
       elts
   | C_LIST_ITER, _ -> fail @@ error_type ()
@@ -607,11 +620,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
         arg_mut_flag
         (init_ty, cur_env)
         ~in_:(fun env' ->
-        let* ret = eval_ligo body calltrace env' in
-        match ret with
-        | V_Construct ("##Loop_continue", v) -> aux v
-        | V_Construct ("##Loop_stop", v) -> return v
-        | _ -> fail @@ error_type ())
+          let* ret = eval_ligo body calltrace env' in
+          match ret with
+          | V_Construct ("##Loop_continue", v) -> aux v
+          | V_Construct ("##Loop_stop", v) -> return v
+          | _ -> fail @@ error_type ())
     in
     aux init
   | C_LOOP_LEFT, _ -> fail @@ error_type ()
@@ -764,11 +777,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_MAP_REMOVE, _ -> fail @@ error_type ()
   | C_MAP_UPDATE, [ k; option; V_Map kvs ] ->
     (match LC.get_option option with
-     | Some (Some v) ->
-       return @@ V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k)
-     | Some None ->
-       return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
-     | _ -> assert false)
+    | Some (Some v) ->
+      return @@ V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k)
+    | Some None ->
+      return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
+    | _ -> assert false)
   | C_MAP_UPDATE, _ -> fail @@ error_type ()
   | C_MAP_MEM, [ k; V_Map kvs ] ->
     return @@ v_bool (List.Assoc.mem ~equal:LC.equal_value kvs k)
@@ -782,16 +795,16 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       | None -> v_none ()
     in
     (match LC.get_option option with
-     | Some (Some v) ->
-       return
-       @@ v_pair
-            ( old_value
-            , V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k) )
-     | Some None ->
-       return
-       @@ v_pair
-            (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
-     | None -> assert false)
+    | Some (Some v) ->
+      return
+      @@ v_pair
+           ( old_value
+           , V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k) )
+    | Some None ->
+      return
+      @@ v_pair
+           (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
+    | None -> assert false)
   | C_BIG_MAP_GET_AND_UPDATE, _ | C_MAP_GET_AND_UPDATE, _ ->
     fail @@ error_type ()
   | C_SET_EMPTY, [] -> return @@ V_Set []
@@ -836,7 +849,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     Monad.bind_fold_list
       (fun _ elt ->
         bind_param env arg_binder arg_mut_flag (ty, elt) ~in_:(fun env' ->
-          eval_ligo body calltrace env'))
+            eval_ligo body calltrace env'))
       (v_unit ())
       elts
   | C_SET_ITER, _ -> fail @@ error_type ()
@@ -866,7 +879,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     in
     let* new_v =
       bind_param env arg_binder arg_mut_flag (ty, v) ~in_:(fun env' ->
-        eval_ligo body calltrace env')
+          eval_ligo body calltrace env')
     in
     return @@ v_some new_v
   | C_OPTION_MAP, [ V_Func_val _; (V_Construct ("None", V_Ct C_unit) as v) ] ->
@@ -1028,12 +1041,12 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_PRINT, _ -> fail @@ error_type ()
   | C_TEST_TO_STRING, [ v; V_Ct (C_int z) ] ->
     (match Z.to_int z with
-     | 1 ->
-       let json = Ligo_interpreter.Types.value_to_yojson v in
-       return (v_string @@ Yojson.Safe.to_string json)
-     | _ ->
-       let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
-       return (v_string s))
+    | 1 ->
+      let json = Ligo_interpreter.Types.value_to_yojson v in
+      return (v_string @@ Yojson.Safe.to_string json)
+    | _ ->
+      let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
+      return (v_string s))
   | C_TEST_TO_STRING, _ -> fail @@ error_type ()
   | C_TEST_UNESCAPE_STRING, [ V_Ct (C_string s) ] ->
     return (v_string (Scanf.unescaped s))
@@ -1055,7 +1068,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let ts_opt =
       let v_opt = trace_option ~raise (error_type ()) @@ LC.get_option ts_opt in
       Option.map v_opt ~f:(fun x ->
-        trace_option ~raise (error_type ()) @@ LC.get_timestamp x)
+          trace_option ~raise (error_type ()) @@ LC.get_timestamp x)
     in
     let>> () = Reset_state (loc, ts_opt, calltrace, n, amts) in
     return @@ v_unit ()
@@ -1076,25 +1089,25 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       return a
     in
     (match event_payload_type_opt with
-     | Some p_ty ->
-       let>> x = Get_last_events (tag, p_ty) in
-       return x
-     | None -> fail @@ error_type ())
+    | Some p_ty ->
+      let>> x = Get_last_events (tag, p_ty) in
+      return x
+    | None -> fail @@ error_type ())
   | C_TEST_LAST_EVENTS, _ -> fail @@ error_type ()
   | ( C_TEST_MUTATE_CONTRACT
     , [ V_Ct (C_nat n); (V_Ast_contract { main; views } as v) ] ) ->
     let* () = check_value v in
     let v = Mutation.mutate_some_contract ~raise n main in
     (match v with
-     | None -> return (v_none ())
-     | Some (main, m) ->
-       return
-       @@ v_some
-            (V_Record
-               (Record.LMap.of_list
-                  [ Label "0", V_Ast_contract { main; views }
-                  ; Label "1", V_Mutation m
-                  ])))
+    | None -> return (v_none ())
+    | Some (main, m) ->
+      return
+      @@ v_some
+           (V_Record
+              (Record.LMap.of_list
+                 [ Label "0", V_Ast_contract { main; views }
+                 ; Label "1", V_Mutation m
+                 ])))
   | C_TEST_MUTATE_CONTRACT, _ -> fail @@ error_type ()
   | C_TEST_MUTATE_VALUE, [ V_Ct (C_nat n); v ] ->
     let* () = check_value v in
@@ -1108,13 +1121,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
          v
          value_ty
      with
-     | None -> return @@ v_none ()
-     | Some (e, m) ->
-       let* v = eval_ligo e calltrace env in
-       return
-       @@ v_some
-            (V_Record
-               (Record.LMap.of_list [ Label "0", v; Label "1", V_Mutation m ])))
+    | None -> return @@ v_none ()
+    | Some (e, m) ->
+      let* v = eval_ligo e calltrace env in
+      return
+      @@ v_some
+           (V_Record
+              (Record.LMap.of_list [ Label "0", v; Label "1", V_Mutation m ])))
   | C_TEST_MUTATE_VALUE, _ -> fail @@ error_type ()
   | ( C_TEST_SAVE_MUTATION
     , [ V_Ct (C_string dir); V_Mutation ((loc, _, _) as mutation) ] ) ->
@@ -1140,7 +1153,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
        let () = Sys_unix.chdir odir in
        return (v_some (v_string file_path))
      with
-     | Sys_error _ -> return (v_none ()))
+    | Sys_error _ -> return (v_none ()))
   | C_TEST_SAVE_MUTATION, _ -> fail @@ error_type ()
   | C_TEST_TO_CONTRACT, [ addr ] ->
     let contract_ty = nth_type 0 in
@@ -1180,6 +1193,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
            ~unforged_tickets:true
            (ast_ty, expr_ty)
     in
+    let>> v = Decompile (code, code_ty, expr_ty) in
+    return v
+  | ( C_TEST_DECOMPILE
+    , [ V_Michelson (Untyped_code code) ] )
+    ->
+    let code_ty = Michelson_backend.compile_type ~raise expr_ty in
+    let code_ty = Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) code_ty in
     let>> v = Decompile (code, code_ty, expr_ty) in
     return v
   | C_TEST_DECOMPILE, _ -> fail @@ error_type ()
@@ -1337,8 +1357,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_SIGN, _ -> fail @@ error_type ()
   | C_TEST_GET_ENTRYPOINT, [ V_Ct (C_contract { address = _; entrypoint }) ] ->
     (match entrypoint with
-     | None -> return @@ v_none ()
-     | Some s -> return @@ v_some (v_string s))
+    | None -> return @@ v_none ()
+    | Some s -> return @@ v_some (v_string s))
   | C_TEST_GET_ENTRYPOINT, _ -> fail @@ error_type ()
   | C_TEST_INT64_OF_INT, [ V_Ct (C_int n) ] ->
     return @@ V_Ct (C_int64 (Z.to_int64 n))
@@ -1391,44 +1411,49 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
   | Literal_mutez s -> Monad.return @@ v_mutez s
   | Literal_key_hash s ->
     (match Tezos_crypto.Signature.Public_key_hash.of_b58check s with
-     | Ok kh -> Monad.return @@ v_key_hash kh
-     | Error _ ->
-       Monad.fail @@ Errors.literal Location.generated (Literal_key_hash s))
+    | Ok kh -> Monad.return @@ v_key_hash kh
+    | Error _ ->
+      Monad.fail @@ Errors.literal Location.generated (Literal_key_hash s))
   | Literal_key s ->
     (match Tezos_crypto.Signature.Public_key.of_b58check s with
-     | Ok k -> Monad.return @@ v_key k
-     | Error _ ->
-       Monad.fail @@ Errors.literal Location.generated (Literal_key s))
+    | Ok k -> Monad.return @@ v_key k
+    | Error _ -> Monad.fail @@ Errors.literal Location.generated (Literal_key s))
   | Literal_signature s ->
     (match Tezos_crypto.Signature.of_b58check s with
-     | Ok s -> Monad.return @@ v_signature s
-     | Error _ ->
-       Monad.fail @@ Errors.literal Location.generated (Literal_signature s))
+    | Ok s -> Monad.return @@ v_signature s
+    | Error _ ->
+      Monad.fail @@ Errors.literal Location.generated (Literal_signature s))
   | Literal_address s ->
     (match Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s with
-     | Ok t -> Monad.return @@ v_address t
-     | Error _ ->
-       Monad.fail @@ Errors.literal Location.generated (Literal_address s))
+    | Ok t -> Monad.return @@ v_address t
+    | Error _ ->
+      Monad.fail @@ Errors.literal Location.generated (Literal_address s))
   | Literal_bls12_381_g1 b ->
     (match Bls12_381.G1.of_bytes_opt b with
-     | Some t -> Monad.return @@ v_bls12_381_g1 t
-     | None ->
-       Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g1 b))
+    | Some t -> Monad.return @@ v_bls12_381_g1 t
+    | None ->
+      Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g1 b))
   | Literal_bls12_381_g2 b ->
     (match Bls12_381.G2.of_bytes_opt b with
-     | Some t -> Monad.return @@ v_bls12_381_g2 t
-     | None ->
-       Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g2 b))
+    | Some t -> Monad.return @@ v_bls12_381_g2 t
+    | None ->
+      Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_g2 b))
   | Literal_bls12_381_fr b ->
     (match Bls12_381.Fr.of_bytes_opt b with
      | Some t -> Monad.return @@ v_bls12_381_fr t
      | None ->
        Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_fr b))
+  | Literal_chain_id c ->
+    (match Tezos_crypto.Chain_id.of_b58check_opt c with
+    | Some t -> 
+      Monad.return @@ v_chain_id t
+    | None ->
+      Monad.fail @@ Errors.literal Location.generated (Literal_chain_id c))
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
 
 and eval_ligo ~raise ~steps ~options
-  : AST.expression -> calltrace -> env -> value Monad.t
+    : AST.expression -> calltrace -> env -> value Monad.t
   =
  fun term calltrace env ->
   let eval_ligo ?(steps = steps - 1) v =
@@ -1448,67 +1473,67 @@ and eval_ligo ~raise ~steps ~options
     let* f' = eval_ligo f calltrace env in
     let* args' = eval_ligo args calltrace env in
     (match f' with
-     | V_Func_val
-         { arg_binder; arg_mut_flag; body; env; rec_name = None; orig_lambda }
-       ->
-       let Arrow.{ type1 = in_ty; type2 = _ } =
-         AST.get_t_arrow_exn orig_lambda.type_expression
-       in
-       bind_param env arg_binder arg_mut_flag (in_ty, args') ~in_:(fun f_env' ->
-         eval_ligo
-           { body with location = term.location }
-           (term.location :: calltrace)
-           f_env')
-     | V_Func_val
-         { arg_binder
-         ; arg_mut_flag
-         ; body
-         ; env
-         ; rec_name = Some fun_name
-         ; orig_lambda
-         } ->
-       let Arrow.{ type1 = in_ty; type2 = _ } =
-         AST.get_t_arrow_exn orig_lambda.type_expression
-       in
-       let f_env' = Env.extend env fun_name (orig_lambda.type_expression, f') in
-       bind_param
-         f_env'
-         arg_binder
-         arg_mut_flag
-         (in_ty, args')
-         ~in_:(fun f_env'' ->
-         eval_ligo
-           { body with location = term.location }
-           (term.location :: calltrace)
-           f_env'')
-     | V_Michelson
-         (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty = _ }) ->
-       let () =
-         match code with
-         | Seq (_, [ Prim (_, "FAILWITH", _, _) ]) ->
-           raise.warning (`Use_meta_ligo term.location)
-         | _ -> ()
-       in
-       let>> v =
-         Run_Michelson
-           ( term.location
-           , calltrace
-           , code
-           , term.type_expression
-           , args'
-           , args.type_expression )
-       in
-       return v
-     | _ ->
-       fail
-       @@ Errors.generic_error
-            term.location
-            "Trying to apply on something that is not a function?")
+    | V_Func_val
+        { arg_binder; arg_mut_flag; body; env; rec_name = None; orig_lambda } ->
+      let Arrow.{ type1 = in_ty; type2 = _ } =
+        AST.get_t_arrow_exn orig_lambda.type_expression
+      in
+      bind_param env arg_binder arg_mut_flag (in_ty, args') ~in_:(fun f_env' ->
+          eval_ligo
+            { body with location = term.location }
+            (term.location :: calltrace)
+            f_env')
+    | V_Func_val
+        { arg_binder
+        ; arg_mut_flag
+        ; body
+        ; env
+        ; rec_name = Some fun_name
+        ; orig_lambda
+        } ->
+      let Arrow.{ type1 = in_ty; type2 = _ } =
+        AST.get_t_arrow_exn orig_lambda.type_expression
+      in
+      let f_env' = Env.extend env fun_name (orig_lambda.type_expression, f') in
+      bind_param
+        f_env'
+        arg_binder
+        arg_mut_flag
+        (in_ty, args')
+        ~in_:(fun f_env'' ->
+          eval_ligo
+            { body with location = term.location }
+            (term.location :: calltrace)
+            f_env'')
+    | V_Michelson
+        (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty = _ }) ->
+      let () =
+        match code with
+        | Seq (_, [ Prim (_, "FAILWITH", _, _) ]) ->
+          raise.warning (`Use_meta_ligo term.location)
+        | _ -> ()
+      in
+      let>> v =
+        Run_Michelson
+          ( term.location
+          , calltrace
+          , code
+          , term.type_expression
+          , args'
+          , args.type_expression )
+      in
+      return v
+    | _ ->
+      fail
+      @@ Errors.generic_error
+           term.location
+           "Trying to apply on something that is not a function?")
   | E_lambda { binder; output_type = _; result } ->
     let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
     let env =
       List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env
     in
+    (* let* env = deref_env env in *)
     return
     @@ V_Func_val
          { rec_name = None
@@ -1555,20 +1580,20 @@ and eval_ligo ~raise ~steps ~options
   | E_accessor { struct_; path } ->
     let* record' = eval_ligo struct_ calltrace env in
     (match record' with
-     | V_Record recmap ->
-       let a = Record.LMap.find path recmap in
-       return a
-     | _ -> failwith "trying to access a non-record")
+    | V_Record recmap ->
+      let a = Record.LMap.find path recmap in
+      return a
+    | _ -> failwith "trying to access a non-record")
   | E_update { struct_; path; update } ->
     let* record' = eval_ligo struct_ calltrace env in
     (match record' with
-     | V_Record recmap ->
-       if Record.LMap.mem path recmap
-       then
-         let* field' = eval_ligo update calltrace env in
-         return @@ V_Record (Record.LMap.add path field' recmap)
-       else failwith "field l does not exist in record"
-     | _ -> failwith "this expression isn't a record")
+    | V_Record recmap ->
+      if Record.LMap.mem path recmap
+      then
+        let* field' = eval_ligo update calltrace env in
+        return @@ V_Record (Record.LMap.add path field' recmap)
+      else failwith "field l does not exist in record"
+    | _ -> failwith "this expression isn't a record")
   | E_constant { cons_name; arguments } ->
     let* arguments' =
       Monad.bind_map_list
@@ -1608,84 +1633,85 @@ and eval_ligo ~raise ~steps ~options
   | E_matching { matchee; cases } ->
     let* e' = eval_ligo matchee calltrace env in
     (match cases, e' with
-     | Match_variant { cases; _ }, V_List [] ->
-       let { constructor = _; pattern = _; body } =
-         List.find_exn
-           ~f:(fun { constructor = Label c; pattern = _; body = _ } ->
-             String.equal "Nil" c)
-           cases
-       in
-       eval_ligo body calltrace env
-     | Match_variant { cases; tv }, V_List lst ->
-       let { constructor = _; pattern; body } =
-         List.find_exn
-           ~f:(fun { constructor = Label c; pattern = _; body = _ } ->
-             String.equal "Cons" c)
-           cases
-       in
-       let ty = AST.get_t_list_exn tv in
-       let hd = List.hd_exn lst in
-       let tl = V_List (List.tl_exn lst) in
-       let proj = v_pair (hd, tl) in
-       let env' = Env.extend env pattern (ty, proj) in
-       eval_ligo body calltrace env'
-     | Match_variant { cases; _ }, V_Ct (C_bool b) ->
-       let ctor_body (case : _ matching_content_case) =
-         case.constructor, case.body
-       in
-       let cases = Record.of_list (List.map ~f:ctor_body cases) in
-       let get_case c = Record.LMap.find (Label c) cases in
-       let match_true = get_case "True" in
-       let match_false = get_case "False" in
-       if b
-       then eval_ligo match_true calltrace env
-       else eval_ligo match_false calltrace env
-     | Match_variant { cases; tv }, V_Construct (matched_c, proj) ->
-       let* tv =
-         match AST.get_t_sum_opt tv with
-         | Some tv ->
-           let ({ associated_type; michelson_annotation = _; decl_pos = _ }
-                 : row_element)
-             =
-             Record.LMap.find (Label matched_c) tv.fields
-           in
-           return associated_type
-         | None ->
-           (match AST.get_t_option tv with
-            | Some tv -> return tv
-            | None -> fail @@ Errors.generic_error tv.location "Expected sum")
-       in
-       let { constructor = _; pattern; body } =
-         List.find_exn
-           ~f:(fun { constructor = Label c; pattern = _; body = _ } ->
-             String.equal matched_c c)
-           cases
-       in
-       (* TODO-er: check *)
-       let env' = Env.extend env pattern (tv, proj) in
-       eval_ligo body calltrace env'
-     | Match_record { fields; body; tv = _ }, V_Record rv ->
-       let aux : Label.t -> _ Binder.t -> env -> env =
-        fun l b env ->
-         let iv =
-           match Record.LMap.find_opt l rv with
-           | Some x -> x
-           | None -> failwith "label do not match"
-         in
-         Env.extend env (Binder.get_var b) (Binder.get_ascr b, iv)
-       in
-       let env' = Record.LMap.fold aux fields env in
-       eval_ligo body calltrace env'
-     | _, v ->
-       failwith
-         ("not yet supported case "
-         ^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v
-         ^ Format.asprintf "%a" AST.PP.expression term))
+    | Match_variant { cases; _ }, V_List [] ->
+      let { constructor = _; pattern = _; body } =
+        List.find_exn
+          ~f:(fun { constructor = Label c; pattern = _; body = _ } ->
+            String.equal "Nil" c)
+          cases
+      in
+      eval_ligo body calltrace env
+    | Match_variant { cases; tv }, V_List lst ->
+      let { constructor = _; pattern; body } =
+        List.find_exn
+          ~f:(fun { constructor = Label c; pattern = _; body = _ } ->
+            String.equal "Cons" c)
+          cases
+      in
+      let ty = AST.get_t_list_exn tv in
+      let hd = List.hd_exn lst in
+      let tl = V_List (List.tl_exn lst) in
+      let proj = v_pair (hd, tl) in
+      let env' = Env.extend env pattern (ty, proj) in
+      eval_ligo body calltrace env'
+    | Match_variant { cases; _ }, V_Ct (C_bool b) ->
+      let ctor_body (case : _ matching_content_case) =
+        case.constructor, case.body
+      in
+      let cases = Record.of_list (List.map ~f:ctor_body cases) in
+      let get_case c = Record.LMap.find (Label c) cases in
+      let match_true = get_case "True" in
+      let match_false = get_case "False" in
+      if b
+      then eval_ligo match_true calltrace env
+      else eval_ligo match_false calltrace env
+    | Match_variant { cases; tv }, V_Construct (matched_c, proj) ->
+      let* tv =
+        match AST.get_t_sum_opt tv with
+        | Some tv ->
+          let ({ associated_type; michelson_annotation = _; decl_pos = _ }
+                : row_element)
+            =
+            Record.LMap.find (Label matched_c) tv.fields
+          in
+          return associated_type
+        | None ->
+          (match AST.get_t_option tv with
+          | Some tv -> return tv
+          | None -> fail @@ Errors.generic_error tv.location "Expected sum")
+      in
+      let { constructor = _; pattern; body } =
+        List.find_exn
+          ~f:(fun { constructor = Label c; pattern = _; body = _ } ->
+            String.equal matched_c c)
+          cases
+      in
+      (* TODO-er: check *)
+      let env' = Env.extend env pattern (tv, proj) in
+      eval_ligo body calltrace env'
+    | Match_record { fields; body; tv = _ }, V_Record rv ->
+      let aux : Label.t -> _ Binder.t -> env -> env =
+       fun l b env ->
+        let iv =
+          match Record.LMap.find_opt l rv with
+          | Some x -> x
+          | None -> failwith "label do not match"
+        in
+        Env.extend env (Binder.get_var b) (Binder.get_ascr b, iv)
+      in
+      let env' = Record.LMap.fold aux fields env in
+      eval_ligo body calltrace env'
+    | _, v ->
+      failwith
+        ("not yet supported case "
+        ^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v
+        ^ Format.asprintf "%a" AST.PP.expression term))
   | E_recursive { fun_name; fun_type = _; lambda } ->
     let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
     let env =
       List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env
     in
+    (* let* env = deref_env env in *)
     return
     @@ V_Func_val
          { rec_name = Some fun_name
@@ -1711,7 +1737,7 @@ and eval_ligo ~raise ~steps ~options
     let rec bind_list = function
       | [] -> return []
       | hd :: tl ->
-        let* hd = hd in
+        let* hd in
         let* tl = bind_list tl in
         return @@ (hd :: tl)
     in
@@ -1729,93 +1755,91 @@ and eval_ligo ~raise ~steps ~options
         args
     in
     (match code.expression_content with
-     | E_literal (Literal_string x)
-       when String.equal language Backend.Michelson.name
-            && (is_t_arrow (get_type code) || is_t_arrow term.type_expression)
-       ->
-       let ast_ty = get_type code in
-       let exp_as_string = Ligo_string.extract x in
-       let code, code_ty =
-         Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
-       in
-       let replace m =
-         let open Tezos_micheline.Micheline in
-         match m with
-         | Prim (_, s, [], [ id ])
-           when String.equal "type" s && String.is_prefix ~prefix:"$" id ->
-           let id = String.chop_prefix_exn ~prefix:"$" id in
-           let id = Int.of_string id in
-           (match List.nth args id with
-            | None ->
-              raise.error
-                (Errors.generic_error
-                   term.location
-                   (Format.sprintf "could not resolve (type %d)" id))
-            | Some (_, t) ->
-              Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) t)
-         | Prim (_, s, [], [ id ])
-           when String.equal "litstr" s && String.is_prefix ~prefix:"$" id ->
-           let id = String.chop_prefix_exn ~prefix:"$" id in
-           let id = Int.of_string id in
-           (match List.nth args id with
-            | Some (V_Ct (C_string s), _) ->
-              Tezos_micheline.Micheline.String ((), s)
-            | _ ->
-              raise.error
-                (Errors.generic_error
-                   term.location
-                   (Format.sprintf "could not resolve (litstr %d)" id)))
-         | Prim (a, b, c, d) ->
-           let open Tezos_micheline.Micheline in
-           let f arg (c, d) =
-             match arg with
-             | Prim (_, s, [], [ id ])
-               when String.equal "annot" s && String.is_prefix ~prefix:"$" id ->
-               let id = String.chop_prefix_exn ~prefix:"$" id in
-               let id = Int.of_string id in
-               let annot =
-                 match List.nth args id with
-                 | Some (V_Ct (C_string s), _) -> s
-                 | _ ->
-                   raise.error
-                     (Errors.generic_error
-                        term.location
-                        (Format.sprintf "could not resolve (annot %d)" id))
-               in
-               c, annot :: d
-             | m -> m :: c, d
-           in
-           let c, d = List.fold_right ~f ~init:([], d) c in
-           Prim (a, b, c, d)
-         | m -> m
-       in
-       let code = Tezos_utils.Michelson.map replace code in
-       return
-       @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
-     | _ ->
-       raise.error
-       @@ Errors.generic_error
-            term.location
-            "Embedded raw code can only have a functional type")
+    | E_literal (Literal_string x)
+      when String.equal language Backend.Michelson.name
+           && (is_t_arrow (get_type code) || is_t_arrow term.type_expression) ->
+      let ast_ty = get_type code in
+      let exp_as_string = Ligo_string.extract x in
+      let code, code_ty =
+        Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
+      in
+      let replace m =
+        let open Tezos_micheline.Micheline in
+        match m with
+        | Prim (_, s, [], [ id ])
+          when String.equal "type" s && String.is_prefix ~prefix:"$" id ->
+          let id = String.chop_prefix_exn ~prefix:"$" id in
+          let id = Int.of_string id in
+          (match List.nth args id with
+          | None ->
+            raise.error
+              (Errors.generic_error
+                 term.location
+                 (Format.sprintf "could not resolve (type %d)" id))
+          | Some (_, t) ->
+            Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun s -> s) t)
+        | Prim (_, s, [], [ id ])
+          when String.equal "litstr" s && String.is_prefix ~prefix:"$" id ->
+          let id = String.chop_prefix_exn ~prefix:"$" id in
+          let id = Int.of_string id in
+          (match List.nth args id with
+          | Some (V_Ct (C_string s), _) ->
+            Tezos_micheline.Micheline.String ((), s)
+          | _ ->
+            raise.error
+              (Errors.generic_error
+                 term.location
+                 (Format.sprintf "could not resolve (litstr %d)" id)))
+        | Prim (a, b, c, d) ->
+          let open Tezos_micheline.Micheline in
+          let f arg (c, d) =
+            match arg with
+            | Prim (_, s, [], [ id ])
+              when String.equal "annot" s && String.is_prefix ~prefix:"$" id ->
+              let id = String.chop_prefix_exn ~prefix:"$" id in
+              let id = Int.of_string id in
+              let annot =
+                match List.nth args id with
+                | Some (V_Ct (C_string s), _) -> s
+                | _ ->
+                  raise.error
+                    (Errors.generic_error
+                       term.location
+                       (Format.sprintf "could not resolve (annot %d)" id))
+              in
+              c, annot :: d
+            | m -> m :: c, d
+          in
+          let c, d = List.fold_right ~f ~init:([], d) c in
+          Prim (a, b, c, d)
+        | m -> m
+      in
+      let code = Tezos_utils.Michelson.map replace code in
+      return
+      @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
+    | _ ->
+      raise.error
+      @@ Errors.generic_error
+           term.location
+           "Embedded raw code can only have a functional type")
   | E_raw_code { language; code } ->
     let open AST in
     (match code.expression_content with
-     | E_literal (Literal_string x)
-       when String.equal language Backend.Michelson.name
-            && (is_t_arrow (get_type code) || is_t_arrow term.type_expression)
-       ->
-       let ast_ty = get_type code in
-       let exp_as_string = Ligo_string.extract x in
-       let code, code_ty =
-         Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
-       in
-       return
-       @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
-     | _ ->
-       raise.error
-       @@ Errors.generic_error
-            term.location
-            "Embedded raw code can only have a functional type")
+    | E_literal (Literal_string x)
+      when String.equal language Backend.Michelson.name
+           && (is_t_arrow (get_type code) || is_t_arrow term.type_expression) ->
+      let ast_ty = get_type code in
+      let exp_as_string = Ligo_string.extract x in
+      let code, code_ty =
+        Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty
+      in
+      return
+      @@ V_Michelson (Ty_code { micheline_repr = { code; code_ty }; ast_ty })
+    | _ ->
+      raise.error
+      @@ Errors.generic_error
+           term.location
+           "Embedded raw code can only have a functional type")
   | E_assign { binder; expression } ->
     let loc =
       match Env.lookup env (Binder.get_var binder) with
@@ -1881,15 +1905,15 @@ and eval_ligo ~raise ~steps ~options
     in
     let* collection = eval_ligo collection calltrace env in
     (match collection with
-     | V_Map elts ->
-       Monad.bind_fold_list
-         (fun _ (k_val, v_val) ->
-           let env = Env.extend env binder1 (k_ty, k_val) in
-           let env = Env.extend env binder2 (v_ty, v_val) in
-           eval_ligo fe_body calltrace env)
-         (v_unit ())
-         elts
-     | _ -> failwith (Format.asprintf "Expected map value for for-each loop"))
+    | V_Map elts ->
+      Monad.bind_fold_list
+        (fun _ (k_val, v_val) ->
+          let env = Env.extend env binder1 (k_ty, k_val) in
+          let env = Env.extend env binder2 (v_ty, v_val) in
+          eval_ligo fe_body calltrace env)
+        (v_unit ())
+        elts
+    | _ -> failwith (Format.asprintf "Expected map value for for-each loop"))
   | E_for_each { fe_binder = binder1, None; collection; fe_body; _ } ->
     let type_ = collection.type_expression in
     let* v_ty =
@@ -1903,31 +1927,31 @@ and eval_ligo ~raise ~steps ~options
     in
     let* collection = eval_ligo collection calltrace env in
     (match collection with
-     | V_Set elts | V_List elts ->
-       Monad.bind_fold_list
-         (fun _ v_val ->
-           let env = Env.extend env binder1 (v_ty, v_val) in
-           eval_ligo fe_body calltrace env)
-         (v_unit ())
-         elts
-     | _ ->
-       failwith (Format.asprintf "Expected list or set value for for-each loop"))
+    | V_Set elts | V_List elts ->
+      Monad.bind_fold_list
+        (fun _ v_val ->
+          let env = Env.extend env binder1 (v_ty, v_val) in
+          eval_ligo fe_body calltrace env)
+        (v_unit ())
+        elts
+    | _ ->
+      failwith (Format.asprintf "Expected list or set value for for-each loop"))
   | E_for { binder; start; final; incr; f_body } ->
     let* start = eval_ligo start calltrace env in
     let* incr = eval_ligo incr calltrace env in
     let* final = eval_ligo final calltrace env in
     (match start, incr, final with
-     | V_Ct (C_int start), V_Ct (C_int incr), V_Ct (C_int final) ->
-       let rec loop curr =
-         if Z.geq curr final
-         then return @@ v_unit ()
-         else (
-           let env = Env.extend env binder (AST.t_int (), V_Ct (C_int curr)) in
-           let* _ = eval_ligo f_body calltrace env in
-           loop (Z.add curr incr))
-       in
-       loop start
-     | _ -> failwith (Format.asprintf "Expected int types for for loop"))
+    | V_Ct (C_int start), V_Ct (C_int incr), V_Ct (C_int final) ->
+      let rec loop curr =
+        if Z.geq curr final
+        then return @@ v_unit ()
+        else (
+          let env = Env.extend env binder (AST.t_int (), V_Ct (C_int curr)) in
+          let* _ = eval_ligo f_body calltrace env in
+          loop (Z.add curr incr))
+      in
+      loop start
+    | _ -> failwith (Format.asprintf "Expected int types for for loop"))
   | E_type_abstraction { type_binder = _; result } ->
     eval_ligo result calltrace env
   | E_type_inst _ ->
@@ -1950,7 +1974,7 @@ and try_eval ~raise ~steps ~options expr env state r =
 
 
 let eval_expression ~raise ~steps ~options
-  : Ast_typed.program -> Ast_typed.expression -> bool * value
+    : Ast_typed.program -> Ast_typed.expression -> bool * value
   =
  fun prg expr ->
   (* Compile new context *)
@@ -1973,7 +1997,7 @@ let eval_expression ~raise ~steps ~options
 
 
 let eval_test ~raise ~steps ~options
-  : Ast_typed.program -> bool * (string * value) list
+    : Ast_typed.program -> bool * (string * value) list
   =
  fun prg ->
   let decl_lst = prg in

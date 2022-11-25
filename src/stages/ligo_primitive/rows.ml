@@ -12,13 +12,16 @@ module LMap = struct
   let of_yojson _f _lmap =
     failwith "TODO"
 
+  let sexp_of_t _ _ = failwith "todo"
+
+  let t_of_sexp _ _ = failwith "todo"
 end
 
 type 'a row_element_mini_c = {
   associated_type      : 'a ;
   michelson_annotation : string option [@hash.ignore] ;
   decl_pos : int [@hash.ignore] ;
-  } [@@deriving eq,yojson,hash]
+  } [@@deriving eq,yojson,hash, sexp]
 
 let cmp3 f a1 b1 g a2 b2 h a3 b3 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> h a3 b3 | c -> c) | c -> c
 let compare_row_element_mini_c f {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
@@ -36,12 +39,12 @@ type 'a row_element = {
   associated_type : 'a ;
   attributes      : string list ;
   decl_pos        : int ;
-  } [@@deriving eq,compare,yojson,hash,fold,map]
+  } [@@deriving eq,compare,yojson,hash,fold,map, sexp]
 
 type 'a t = {
   fields     : 'a row_element LMap.t;
   attributes : string list ;
-  } [@@deriving eq,compare,yojson,hash,fold,map]
+  } [@@deriving eq,compare,yojson,hash,fold,map, sexp]
 
 module PP = struct
   open Simple_utils.PP_helpers

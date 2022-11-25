@@ -41,7 +41,7 @@ let pp_ct : Format.formatter -> constant_val -> unit =
     Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.G2.to_bytes b))
   | C_bls12_381_fr b ->
     Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.Fr.to_bytes b))
-  | C_chain_id s -> Format.fprintf ppf "%s" s
+  | C_chain_id c -> Format.fprintf ppf "%s" (Bytes.to_string (Chain_id.to_bytes c))
 
 
 let rec pp_value : Format.formatter -> value -> unit =

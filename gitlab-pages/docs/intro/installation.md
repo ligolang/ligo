@@ -55,7 +55,7 @@ Linux or OSX:
 > ```
 > For convenience you can alias the above command
 > ```sh
-> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.55.0"
+> alias ligo='docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.55.0'
 > ```
 > To make this `alias` persistent across terminal sessions you need to configure your shell.     
 > Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.

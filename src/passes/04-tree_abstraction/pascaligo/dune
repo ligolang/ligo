@@ -4,16 +4,16 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries
-    ;; Vendor
-    simple-utils
-    tezos-utils
-    ;; LIGO
-    cst
-    lexing_shared
-    ast_imperative
-    tree_abstraction_shared
-    predefined
-    syntax_types
-    parsing)
+  ;; Vendor
+  simple-utils
+  tezos-utils
+  ;; LIGO
+  cst
+  lexing_shared
+  ast_imperative
+  tree_abstraction_shared
+  predefined
+  syntax_types
+  parsing)
  (preprocess
   (pps ppx_poly_constructor)))
