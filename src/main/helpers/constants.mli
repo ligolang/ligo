@@ -4,7 +4,6 @@ val esy : string
 val windows : string
 val ligo_install_path : string
 val ligo_rc_path : string
-val ligo_ignore_path : string
 val ligo_registry : string
 
 val esy_add

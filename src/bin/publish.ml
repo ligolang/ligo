@@ -17,9 +17,11 @@
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
 - [ ] Docs: Add note about `--registry`
+- [ ] Docs: Add not about `--dry-run` and paste logs
+- [ ] Docs: mention about .ligoignore
 - [ ] manually Test CLI option to override path to .ligorc
 - [ ] manually Test .ligoignore stuff
-- [ ] manually end-to-end test publishing & installing pacakges
+- [ ] manually end-to-end test publishing & installing pacakges (math-libs)
 *)
 
 module LigoRC = Cli_helpers.LigoRC
@@ -523,14 +525,8 @@ let show_stats stats =
   ()
 
 
-let publish
-    ~ligo_registry
-    ~ligorc_path
-    ~ligoignore_path
-    ~project_root
-    ~dry_run
-    ~ligo_bin_path
-  =
+let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path =
+  (* TODO: handle ligo_ignore_path *)
   let* manifest =
     with_logging ~before:"Reading manifest" (fun () ->
         read_manifest ~project_root)
@@ -543,6 +539,7 @@ let publish
     with_logging ~before:"Finding project root" (fun () ->
         get_project_root project_root)
   in
+  let ligoignore_path = Filename.concat project_root ".ligoignore" in
   let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in
   let* package_stats =
     with_logging ~before:"Packing tarball" (fun () ->

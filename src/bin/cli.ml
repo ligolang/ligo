@@ -289,6 +289,7 @@ let self_pass =
   let name = "--self-pass" in
   let doc  = "apply the self pass" in
   flag ~doc name no_arg
+
 let dry_run_flag =
   let open Command.Param in
   let name = "--dry-run" in
@@ -323,13 +324,6 @@ let ligorc_path =
   let name = "--ligorc-path" in
   let doc  = "PATH path to .ligorc file." in
   let spec = optional_with_default Constants.ligo_rc_path string in
-  flag ~doc name spec
-
-let ligoignore_path =
-  let open Command.Param in
-  let name = "--ligoignore-path" in
-  let doc  = "PATH path to .ligoignore file." in
-  let spec = optional_with_default Constants.ligo_ignore_path string in
   flag ~doc name spec
 
 let ligo_bin_path =
@@ -806,9 +800,9 @@ let install =
 let publish =
   let summary   = "[BETA] publish the LIGO package declared in package.json" in
   let readme () = "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
-  let f ligo_registry ligorc_path ligoignore_path project_root dry_run ligo_bin_path () =
-    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~ligoignore_path ~project_root ~dry_run ~ligo_bin_path in
-  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> ligoignore_path <*> project_root <*> dry_run_flag <*> ligo_bin_path)
+  let f ligo_registry ligorc_path project_root dry_run ligo_bin_path () =
+    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path in
+  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root <*> dry_run_flag <*> ligo_bin_path)
 
 let add_user =
   let summary   = "[BETA] create a new user for the LIGO package registry" in
