@@ -239,6 +239,31 @@ let%expect_test _ =
     - test exited with value (). |}]
 let () = Sys_unix.chdir pwd
 
+let%expect_test _ =
+  let test s = 
+    s 
+  |> String.split_lines 
+  |> List.length
+  |> (fun len -> if len > 0 then "Test passed" else "Test failed") 
+  in 
+  run_ligo_good [ "info"; "get-scope" ; "import_import/main.mligo" ; "--project-root" ; "import_import" ; "--format" ; "dev" ] ;
+  print_endline @@ test [%expect.output];
+  [%expect{|
+    Test passed |}] ;
+  run_ligo_good [ "info"; "get-scope" ; "import_include/main.mligo" ; "--project-root" ; "import_include" ; "--format" ; "dev" ] ;
+  print_endline @@ test [%expect.output];
+  [%expect{|
+    Test passed |}] ;
+  run_ligo_good [ "info"; "get-scope" ; "include_import/main.mligo" ; "--project-root" ; "include_import" ; "--format" ; "dev" ] ;
+  print_endline @@ test [%expect.output];
+  [%expect{|
+    Test passed |}] ;
+  run_ligo_good [ "info"; "get-scope" ; "include_include/main.mligo" ; "--project-root" ; "include_include" ; "--format" ; "dev" ] ;
+  print_endline @@ test [%expect.output];
+  [%expect{|
+    Test passed |}]
+
+
 (* ligo publish tests *)
 
 let ligo_bin_path = "../../../../../install/default/bin/ligo"

@@ -592,16 +592,16 @@ let measure_contract =
   (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> enable_michelson_typed_opt <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let get_scope =
-  let f source_file protocol_version libraries display_format with_types () =
-    let raw_options = Raw_options.make ~protocol_version ~libraries ~with_types () in
+  let f source_file protocol_version libraries display_format with_types project_root () =
+    let raw_options = Raw_options.make ~protocol_version ~libraries ~with_types ~project_root () in
     return_result ~return @@
-    Api.Info.get_scope raw_options source_file  display_format
+    Api.Info.get_scope raw_options source_file display_format
   in
   let summary   = "return the JSON encoded environment for a given file." in
   let readme () = "This sub-command returns the environment for a given \
                   file in JSON format. It does not use the build system." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> protocol_version <*> libraries <*> display_format <*> with_types)
+  (f <$> source_file <*> protocol_version <*> libraries <*> display_format <*> with_types <*> project_root)
 
 let info_group =
   let summary = "tools to get information from contracts" in
