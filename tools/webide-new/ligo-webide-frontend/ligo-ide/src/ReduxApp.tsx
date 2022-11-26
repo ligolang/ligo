@@ -23,6 +23,7 @@ const ReduxApp = (props: { history: any }) => {
   const [loaded, setLoaded] = useState(false);
   const ligoIdeFileSystems = useRef<fileSystems>(new fileSystems());
   const indexedDB = useRef<fileSystem>(new indexedDBFileSystem());
+  const bottomBarRef = useRef<typeof BottomBar>(null);
 
   useEffect(() => {
     async function loadStorage() {
@@ -58,7 +59,7 @@ const ReduxApp = (props: { history: any }) => {
         <NotificationSystem />
         <GlobalModals icon={icon} />
         <Routes />
-        <BottomBar />
+        <BottomBar ref={bottomBarRef} />
       </div>
     </Provider>
   );
