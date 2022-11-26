@@ -10,7 +10,7 @@ let
     '';
     integreties = builtins.fromJSON (builtins.readFile ./integreties.json);
     buildInputs = [ python3 pkg-config libsecret ];
-    yarnBuildMore = "yarn --offline build:react";
+    yarnBuildMore = "yarn --offline build:react-prod";
     installPhase = ''
       cp -rL $PWD/build $out
     '';
