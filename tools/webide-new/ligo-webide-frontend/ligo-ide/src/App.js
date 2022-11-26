@@ -13,7 +13,9 @@ if (process.env.MEASUREMENT_ID) {
 
 const Router = platform.isDesktop ? HashRouter : BrowserRouter;
 const ReduxApp = lazy(async () => {
-  await loadWASM(onigasm.default);
+  await loadWASM(onigasm.default).catch((e) => {
+    console.error(e);
+  });
   return import("./ReduxApp.tsx" /* webpackChunkName: "components" */);
 });
 
