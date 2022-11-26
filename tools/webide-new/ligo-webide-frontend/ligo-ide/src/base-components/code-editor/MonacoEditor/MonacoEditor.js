@@ -7,6 +7,7 @@ import throttle from "lodash/throttle";
 
 import modelSessionManager from "./modelSessionManager";
 import { theme } from "./theme";
+import { actions } from "~/base-components/workspace";
 
 export default class MonacoEditor extends Component {
   static propTypes = {
@@ -43,7 +44,6 @@ export default class MonacoEditor extends Component {
       props.modelSession.recoverInEditor(this.monacoEditor);
 
       this.throttledLayoutEditor();
-      // $.bottomBar.updatePosition(this.monacoEditor.getPosition())
     }
 
     if (props.editorConfig !== this.props.editorConfig) {
@@ -89,7 +89,7 @@ export default class MonacoEditor extends Component {
       modelSessionManager.projectManager.onFileChanged();
     });
     monacoEditor.onDidChangeCursorPosition(({ position }) => {
-      // $.bottomBar.updatePosition(position)
+      actions.updatePosition([position.lineNumber, position.column]);
     });
     monacoEditor.onDidBlurEditorWidget(() => {
       // monacoEditor.focus()

@@ -7,6 +7,7 @@ import modelSessionManager from "./modelSessionManager";
 
 import MonacoEditor from "./MonacoEditor";
 import CustomTabContainer from "./CustomTabContainer";
+import { actions } from "~/base-components/workspace";
 
 export default class MonacoEditorContainer extends PureComponent {
   static propTypes = {
@@ -24,18 +25,16 @@ export default class MonacoEditorContainer extends PureComponent {
 
   componentDidMount() {
     this.loadFile(this.props);
-    // api.bridge.send('languageClient.create')
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.path !== this.props.path) {
       if (this.props.path) {
         this.loadFile(this.props);
-      } else {
-        // $.bottomBar.updatePosition()
       }
     }
     if (prevState.modelSession !== this.state.modelSession) {
+      actions.updatePosition([1, 1]);
       modelSessionManager.currentModelSession = this.state.modelSession;
     }
   }
