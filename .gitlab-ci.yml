@@ -51,6 +51,7 @@ esy-windows:
     - npm i -g @esy-nightly/esy --force
     - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
     - $env:HOME = 'C:/Users/gitlabrunner'
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
     - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
     - esy i
     - bash -c "esy release || esy release || esy release"
