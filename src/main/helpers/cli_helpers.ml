@@ -103,7 +103,7 @@ let makeCommand cmd =
                    with
                    | k::v::_rest -> Some (k, v)
                    | _ -> None)
-        |> List.filter (function | None  -> false | _ -> true)
+        |> List.filter_opt
         |> List.filter (fun e  ->
                match e with
                | Some (k,_) -> (String.lowercase_ascii k) = "path"
