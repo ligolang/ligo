@@ -45,7 +45,7 @@ by simply placing a manifest file, `package.json` over there.
 
 # Ligo registry
 TODO: write someting here.
-packages are hosted on ligo registry link (where pacakges reside)
+packages are hosted on ligo registry link (where packages reside)
 
 ## Consuming
 
@@ -204,6 +204,7 @@ Sample `package.json` with the above information.
       }
     }
 
+// TODO: metion .ligoignore here (maybe as a Note:)
 
 ## Publishing
 
@@ -331,12 +332,32 @@ ligo compile contract main.mligo --registry URL
 > ```
 
 ### --ligorc-path
-TODO: fill this
+
+LIGO creates a `.ligorc` file to store auth tokens for the user for a specific registry, This auth token is useful when publishing a package.
+
+By default LIGO creates the `.ligorc` in the home directory, If you wish to override this you can do so using the `--ligorc-path` e.g.
+
+```bash
+# Loging in
+ligo login --ligorc-path ./.ligorc
+
+# Publishing
+ligo publish --ligorc-path ./.ligorc
+```
+<br/>
+
+> Note: Using `ligo login` a users can log into multiple registries e.g. LIGO registry, LIGO beta registry, A new entry will be created in the `.ligorc` for stroing auth token each registy.  
 
 ### --dry-run
-TODO: fill this
 
-TODO: check cli.ml to see that all flags are covered
+While using `ligo publish` if you don't want to actually make changes to the LIGO registry, you can use the `--dry-run` flag. e.g.
+
+```bash
+ligo publish --dry-run
+```
+
+This will only display the report on command line what it would have done in the case of `ligo publish`.
+
 
 ## Notes
 TODO: fix formatting for this section

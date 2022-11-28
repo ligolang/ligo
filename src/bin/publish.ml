@@ -17,6 +17,7 @@
 - [x] Docs: Add note about `--registry`
 - [ ] Docs: Add not about `--dry-run` and paste logs
 - [ ] Docs: mention about .ligoignore
+- [ ] Docs: spell check package-management.md
 - [ ] manually Test CLI option to override path to .ligorc
 - [ ] manually Test .ligoignore stuff
 - [ ] manually end-to-end test publishing & installing pacakges (math-libs)
