@@ -261,8 +261,12 @@ let rec expression
     let scopes' = merge_same_scopes scopes' in
     let scopes_final = merge_same_scopes (scopes @ scopes') in
     defs' @ defs, refs' @ refs, tenv, scopes_final
-  | E_lambda { binder; result; output_type = _ } ->
-    let t_refs = find_param_type_references binder in
+  | E_lambda { binder; result; output_type } ->
+    let binder_type_refs = find_param_type_references binder in
+    let output_type_refs =
+      Option.value ~default:[] @@ Option.map ~f:find_type_references output_type
+    in
+    let t_refs = binder_type_refs @ output_type_refs in
     let var = Param.get_var binder in
     let core_type = Param.get_ascr binder in
     let def =
@@ -409,7 +413,9 @@ let rec expression
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
     let scopes' = add_defs_to_scopes defs_binder scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    let defs, refs_result = update_references (refs_result @ t_refs) defs_binder in
+    let defs, refs_result =
+      update_references (refs_result @ t_refs) defs_binder
+    in
     defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_recursive { fun_name; fun_type; lambda = { binder; result; _ } } ->
     let t_refs = find_type_references fun_type in
