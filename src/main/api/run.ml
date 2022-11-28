@@ -28,7 +28,8 @@ let dry_run (raw_options : Raw_options.t) source_file parameter storage amount b
       let entry_point = Value_var.of_input_var entry_point in
       let typed_prg = Build.qualified_typed ~raise ~options Env source_file in
       let aggregated_prg = Compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
-      let mini_c_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
+      let expanded_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
+      let mini_c_prg = Compile.Of_expanded.compile_expression ~raise expanded_prg in
       let compile_exp = Compile.Of_mini_c.compile_contract ~raise ~options mini_c_prg in
       let parameter_ty =
         (* fails if the given entry point is not a valid contract *)
@@ -73,7 +74,8 @@ let evaluate_call (raw_options : Raw_options.t) source_file parameter amount bal
       let app              = Compile.Of_core.apply entry_point core_param in
       let typed_app        = Compile.Of_core.compile_expression ~raise ~options ~init_prog app in
       let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end init_prog typed_app in
-      let app_mini_c       = Compile.Of_aggregated.compile_expression ~raise app_aggregated in
+      let app_expanded     = Compile.Of_aggregated.compile_expression ~raise app_aggregated in
+      let app_mini_c       = Compile.Of_expanded.compile_expression ~raise app_expanded in
       let michelson        = Compile.Of_mini_c.compile_expression ~raise ~options app_mini_c in
       let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
       let runres           = Run.run_expression ~raise ~options michelson.expr michelson.expr_ty in

@@ -15,7 +15,6 @@ type abs_error = [
   | `Concrete_pascaligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_pascaligo_untyped_recursive_fun of Location.t
   | `Concrete_pascaligo_block_start_with_attribute of Raw.block Region.reg
-  | `Concrete_pascaligo_unsupported_top_level_destructuring of Region.t
   | `Concrete_pascaligo_unsupported_type_ann_on_patterns of Region.t
   | `Concrete_pascaligo_ignored_attribute of Location.t
   | `Concrete_pascaligo_expected_variable of Location.t
@@ -105,10 +104,6 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid attribute declaration.@.Attributes have to follow the declaration it is attached to. @]"
         Snippet.pp_lift @@ block.region
-    | `Concrete_pascaligo_unsupported_top_level_destructuring loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Unsupported destructuring at top-level. @]"
-        Snippet.pp_lift @@ loc
   )
 
 let error_json : abs_error -> Simple_utils.Error.t =
@@ -193,10 +188,5 @@ let error_json : abs_error -> Simple_utils.Error.t =
     | `Concrete_pascaligo_block_start_with_attribute block ->
       let message = "Invalid attribute declaration.@.Attributes have to follow the declaration it is attached to." in
       let location = Location.lift block.region in
-      let content = make_content ~message ~location () in
-      make ~stage ~content
-    | `Concrete_pascaligo_unsupported_top_level_destructuring reg ->
-      let message = "Unsupported destructuring at top-level." in
-      let location = Location.lift reg in
       let content = make_content ~message ~location () in
       make ~stage ~content

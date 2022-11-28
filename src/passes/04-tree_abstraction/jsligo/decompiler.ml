@@ -357,9 +357,8 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_let_in {let_binder;rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let attributes = filter_private attributes in
-    let var = CST.PVar (decompile_variable2 @@ Binder.get_var let_binder) in
-    let binders = var in
-    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr let_binder in
+    let binders = match decompile_pattern let_binder with Ok x -> x | _ -> failwith "could not decompile pattern" in
+    let lhs_type = None in
     let expr = decompile_expression_in rhs in
     let expr = e_hd expr in
     let let_binding = CST.{
@@ -595,9 +594,14 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr
   | E_let_mut_in { let_binder; rhs; let_result; _ } ->
-    let var = CST.PVar (decompile_variable2 @@ Binder.get_var let_binder) in
-    let binders = var in
-    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr let_binder in
+    let binders = match decompile_pattern let_binder with Ok x -> x | _ -> failwith "what?" in
+    let lhs_type =
+      let x = match let_binder.wrap_content with
+        | P_var x -> Binder.get_ascr x
+        | (P_unit | P_list _ | P_variant (_, _) | P_tuple _ | P_record _) -> None
+      in  
+      Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ x
+    in
     let expr = decompile_expression_in rhs in
     let expr = e_hd expr in
     let let_binding = CST.{
@@ -767,6 +771,46 @@ and decompile_matching_cases : _ AST.Match_expr.match_case list -> CST.expr =
   in
   cases
   *)
+and decompile_pattern p =
+  match (Location.unwrap p) with
+  | AST.Pattern.P_variant (Label constructor,_) -> (
+        Ok (CST.PConstr (Region.wrap_ghost constructor))
+    )
+  (* Note: Currently only the above branch AST.P_variant is valid
+      as pattern-matching is only supported on Varaints.
+      Pattern matching on lists cannot be incomplete as there is a check
+      for this in tree-abstractor
+      The rest of the cases are a best approximation of decompilation, these
+      will not be really used, modify the rest of the cases when pattern
+      matching will be handled in a better manner *)
+  | P_unit -> Error "no PUnit in JsLIGO CST"
+  | P_var v ->
+    let name = { CST.variable = decompile_variable @@ Binder.get_var v ; attributes = [] } in
+    Ok (CST.PVar (Region.wrap_ghost name))
+  | P_tuple lst ->
+    let rec aux = function
+      [] -> Ok []
+    | p::ps ->
+      let p = decompile_pattern p in
+      match p with
+        Ok p -> Result.map (aux ps) ~f:(fun ps -> p :: ps)
+      | Error e -> Error e
+    in
+    Result.map (aux lst) ~f:(fun pl ->
+      let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
+      CST.PArray (Region.wrap_ghost (brackets pl))
+    )
+  | P_list pl -> Error "no PList in JsLIGO CST"
+  | P_record lps ->
+    let lps = Record.of_list lps in
+    let fields_name = List.map ~f:(fun (Label x) ->
+      CST.PVar (
+        Region.wrap_ghost
+          { CST.variable = Region.wrap_ghost x
+          ; attributes = [] })) (Record.LMap.keys lps) in
+    let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
+    let inj = Region.wrap_ghost @@ braced inj in
+    Ok (CST.PObject inj)
 
 and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
   let decl = Location.unwrap decl in
@@ -806,6 +850,25 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
     let var = CST.PVar (decompile_variable2 @@ Binder.get_var binder) in
     let binders = var in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr binder in
+    let expr = decompile_expression_in expr in
+    let expr = e_hd expr in
+    let binding = CST.({
+      binders;
+      lhs_type;
+      type_params=None;
+      eq = Token.ghost_eq;
+      expr
+    }) in
+    let const = CST.SConst (Region.wrap_ghost (CST.{kwd_const=Token.ghost_const; bindings = (Region.wrap_ghost binding, []); attributes})) in
+    if is_private then
+      const
+    else
+      CST.SExport (Region.wrap_ghost (Token.ghost_export, const))
+  | D_irrefutable_match  { pattern; attr; expr } ->
+    let is_private = List.mem ~equal:String.equal attr "private" in
+    let attributes : CST.attributes = decompile_attributes attr in
+    let binders = match decompile_pattern pattern with Ok x -> x | _ -> failwith "what?" in
+    let lhs_type = None in
     let expr = decompile_expression_in expr in
     let expr = e_hd expr in
     let binding = CST.({
@@ -870,6 +933,7 @@ let decompile_expression : AST.expression -> CST.expr list = fun expr ->
                    AST.PP.expression expr
                    Location.pp expr.location
 
+  (* TODO: check usage *)
 let rec decompile_pattern p =
   match (Location.unwrap p) with
   | AST.Pattern.P_variant (constructor,_) -> (
@@ -898,7 +962,10 @@ let rec decompile_pattern p =
         Ok p -> Result.map (aux ps) ~f:(fun ps -> p :: ps)
       | Error e -> Error e
     in
-    Result.map (aux lst) ~f:(fun pl ->
+    lst
+    |> List.map ~f:decompile_pattern
+    |> Result.all
+    |> Result.map ~f:(fun pl ->
       let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
       CST.PArray (Region.wrap_ghost (brackets pl))
     )

@@ -82,22 +82,22 @@ and expression_content ppf (ec : expression_content) =
   | E_type_abstraction e -> Type_abs.pp expression ppf e
   | E_matching    m -> Match_expr.pp expression type_expression_option ppf m
   | E_recursive  r -> Recursive.pp expression type_expression ppf r
-  | E_let_in { let_binder ;rhs ; let_result; attr } ->
+  | E_let_in { let_binder ;rhs ; let_result; attributes } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression_option) let_binder
+      (Pattern.pp type_expression_option) let_binder
       expression rhs
-      Types.ValueAttr.pp attr
+      Types.ValueAttr.pp attributes
       expression let_result
   | E_type_in   ti -> Type_in.pp expression type_expression ppf ti
   | E_mod_in    mi -> Mod_in.pp  expression module_expr ppf mi
   | E_raw_code   r -> Raw_code.pp   expression ppf r
   | E_ascription a -> Ascription.pp expression type_expression ppf a
   | E_module_accessor ma -> Module_access.pp Value_var.pp ppf ma
-  | E_let_mut_in { let_binder ;rhs ; let_result; attr } ->
+  | E_let_mut_in { let_binder ;rhs ; let_result; attributes } ->
     fprintf ppf "@[let mut %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression_option) let_binder
+      (Pattern.pp type_expression_option) let_binder
       expression rhs
-      Types.ValueAttr.pp attr
+      Types.ValueAttr.pp attributes
       expression let_result
   | E_assign     a -> Assign.pp     expression type_expression_option ppf a
   | E_for for_loop ->
@@ -109,6 +109,7 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) = match Location.unwrap d with
     D_value vd  -> Types.Value_decl.pp expression type_expression_option ppf vd
+  | D_irrefutable_match  pd -> Types.Pattern_decl.pp expression type_expression_option ppf pd
   | D_type  td  -> Types.Type_decl.pp type_expression ppf td
   | D_module md -> Types.Module_decl.pp module_expr ppf md
 

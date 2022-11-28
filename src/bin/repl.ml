@@ -17,17 +17,23 @@ let get_declarations_core (core_prg : Ast_core.program )=
     not @@ (Caml.Sys.file_exists module_variable) in
 
   let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
+  let lhs_pattern_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_lhs_pattern_declarations core_prg in
   let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
   let mod_declarations  = Ligo_compile.Of_core.list_mod_declarations core_prg in
   let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
-  func_declarations @ type_declarations @ mod_declarations
+  func_declarations @ lhs_pattern_declarations @ type_declarations @ mod_declarations
 
 let get_declarations_typed (typed_prg : Ast_typed.program) =
-  List.filter_map ~f:Ast_typed.(fun (a : declaration) -> Simple_utils.Location.unwrap a |>
-    (function D_value a when not a.attr.hidden -> Option.return @@ `Value (Binder.get_var a.binder)
-    | D_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
-    | D_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
-    | _ -> None)) @@ typed_prg
+  List.concat @@ List.filter_map ~f:Ast_typed.(fun (a : declaration) -> Simple_utils.Location.unwrap a |>
+    (function 
+    | D_value a when not a.attr.hidden -> Option.return @@ [`Value (Binder.get_var a.binder)]
+    | D_irrefutable_match  a when not a.attr.hidden -> 
+      let binders = Pattern.binders a.pattern in
+      let values = List.map binders ~f:(fun b -> `Value (Binder.get_var b)) in
+      Option.return @@ values
+    | D_type a when not a.type_attr.hidden -> Option.return @@ [`Type a.type_binder]
+    | D_module a when not a.module_attr.hidden -> Option.return @@ [`Module a.module_binder]
+    | (D_value _ | D_irrefutable_match  _ | D_type _ | D_module _) -> None)) @@ typed_prg
 
 let pp_declaration ppf = function
     `Value a  -> Value_var.pp  ppf a
@@ -100,7 +106,8 @@ let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
   let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end state.top_level typed_exp in
-  let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
+  let expanded_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
+  let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
   let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let options = state.dry_run_opts in
   let runres = Run.run_expression ~raise ~options:options compiled_exp.expr compiled_exp.expr_ty in

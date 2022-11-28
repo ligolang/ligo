@@ -118,13 +118,14 @@ let rec decompile_expression (expr : O.expression) : I.expression =
     | O.E_recursive recs ->
       let recs = Recursive.map self decompile_type_expression recs in
       return @@ I.E_recursive recs
-    | O.E_let_in { let_binder; attr; rhs; let_result } ->
+    | O.E_let_in { let_binder; attributes; rhs; let_result } ->
       let let_binder =
-        Binder.map (Option.map ~f:decompile_type_expression) let_binder
+        O.Pattern.map (Option.map ~f:decompile_type_expression) let_binder
       in
+      let let_binder = decompile_pattern let_binder in
       let rhs = decompile_expression rhs in
       let let_result = decompile_expression let_result in
-      let attributes = decompile_value_attributes attr in
+      let attributes = decompile_value_attributes attributes in
       return @@ I.E_let_in { let_binder; attributes; rhs; let_result }
     | O.E_type_in ti ->
       let ti = Type_in.map self decompile_type_expression ti in
@@ -175,13 +176,14 @@ let rec decompile_expression (expr : O.expression) : I.expression =
       let cond = self cond in
       let body = self body in
       return @@ I.E_while { cond; body }
-    | O.E_let_mut_in { let_binder; attr; rhs; let_result } ->
+    | O.E_let_mut_in { let_binder; attributes; rhs; let_result } ->
       let let_binder =
-        Binder.map (Option.map ~f:decompile_type_expression) let_binder
+        O.Pattern.map (Option.map ~f:decompile_type_expression) let_binder
       in
+      let let_binder = decompile_pattern let_binder in
       let rhs = decompile_expression rhs in
       let let_result = decompile_expression let_result in
-      let attributes = decompile_value_attributes attr in
+      let attributes = decompile_value_attributes attributes in
       return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result })
 
 
@@ -238,6 +240,14 @@ and decompile_declaration : O.declaration -> I.declaration =
     let expr = decompile_expression expr in
     let attr = decompile_value_attributes attr in
     return @@ D_value { binder; expr; attr }
+  | D_irrefutable_match  { pattern; expr; attr } ->
+    let pattern =
+      O.Pattern.map (Option.map ~f:decompile_type_expression) pattern
+    in
+    let pattern = decompile_pattern pattern in
+    let expr = decompile_expression expr in
+    let attr = decompile_value_attributes attr in
+    return @@ D_irrefutable_match  { pattern; expr; attr }
   | D_type { type_binder; type_expr; type_attr } ->
     let type_expr = decompile_type_expression type_expr in
     let type_attr = decompile_type_attributes type_attr in

@@ -32,8 +32,11 @@ module Free_variables = struct
     | E_accessor {struct_;_} -> self struct_
     | E_update {struct_; update;_} -> union (self struct_) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
-    | E_let_in { let_binder; rhs; let_result; _} ->
-      let b' = union (Binder.apply singleton let_binder) b in
+    | E_let_in { let_binder ; rhs; let_result; _} ->
+      let b' = List.fold (Types.Pattern.binders let_binder)
+        ~f:(fun b pb -> union (Binder.apply singleton pb) b)
+        ~init:b
+      in
       union
         (expression b' let_result)
         (self rhs)
@@ -227,6 +230,7 @@ let get_entry (lst : program) (name : Value_var.t) : expression option =
       then Some expr
       else None
     )
+    | D_irrefutable_match  _
     | D_type   _
     | D_module _ -> None
   in

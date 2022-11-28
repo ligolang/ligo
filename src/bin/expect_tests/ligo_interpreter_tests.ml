@@ -300,11 +300,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_mutate_from_file.mligo" ] ;
   [%expect{|
-    File "./test_mutate_from_file.mligo", line 7, character 2 to line 8, character 4:
+    File "./test_mutate_from_file.mligo", line 7, characters 11-65:
       6 |   let _ = Test.transfer_exn a (Test.eval 1) 0tez in
       7 |   let () = assert (Test.get_storage_of_address a = (Test.eval 1)) in
       8 |   ()
-      9 |
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
@@ -801,14 +800,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 1, character 0 to line 2, character 25:
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test : unit =
       2 |   failwith "I am failing"
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
 
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 1, character 0 to line 2, character 25:
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test : unit =
       2 |   failwith "I am failing"
 
@@ -897,16 +896,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_mutation_loop.mligo" ; "--steps" ; "1000" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
-     16 |     | None -> ()
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
 
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
-     16 |     | None -> ()
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
@@ -1018,14 +1015,10 @@ let () = Sys_unix.chdir pwd
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
   [%expect {xxx|
-    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, character 2 to line 7, character 5:
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
       1 | let test =
       2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
       3 |   begin
-      4 |     Test.log x;
-      5 |     assert (x = x);
-      6 |     assert (x = 1)
-      7 |   end
 
     Embedded raw code can only have a functional type |xxx}]
 

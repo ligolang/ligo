@@ -187,11 +187,12 @@ let rec compile_expression ~raise : I.expression -> O.expression =
     let recs = Recursive.map self self_type recs in
     return @@ O.E_recursive recs
   | I.E_let_in { let_binder; attributes; rhs; let_result } ->
-    let let_binder = Binder.map self_type_option let_binder in
+    let let_binder = I.Pattern.map self_type_option let_binder in
+    let let_binder = compile_pattern ~raise let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
     let attributes = compile_value_attributes attributes in
-    return @@ O.E_let_in { let_binder; attr = attributes; rhs; let_result }
+    return @@ O.E_let_in { let_binder; attributes; rhs; let_result }
   | I.E_type_in ti ->
     let ti = Type_in.map self self_type ti in
     return @@ O.E_type_in ti
@@ -308,11 +309,12 @@ let rec compile_expression ~raise : I.expression -> O.expression =
     let while_loop = While_loop.map self while_loop in
     return @@ O.E_while while_loop
   | I.E_let_mut_in { let_binder; attributes; rhs; let_result } ->
-    let let_binder = Binder.map self_type_option let_binder in
+    let let_binder = I.Pattern.map self_type_option let_binder in
+    let let_binder = compile_pattern ~raise let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
     let attributes = compile_value_attributes attributes in
-    return @@ O.E_let_mut_in { let_binder; attr = attributes; rhs; let_result }
+    return @@ O.E_let_mut_in { let_binder; attributes; rhs; let_result }
   | I.E_skip () -> O.e_unit ~loc ~sugar:expr ()
 
 
@@ -418,6 +420,14 @@ and compile_declaration ~raise : I.declaration -> O.declaration =
     let expr = compile_expression ~raise expr in
     let attr = compile_value_attributes attr in
     return @@ D_value { binder; expr; attr }
+  | D_irrefutable_match  { pattern; expr; attr } ->
+    let pattern =
+      I.Pattern.map (compile_type_expression_option ~raise) pattern
+    in
+    let pattern = compile_pattern ~raise pattern in
+    let expr = compile_expression ~raise expr in
+    let attr = compile_value_attributes attr in
+    return @@ D_irrefutable_match  { pattern; expr; attr }
   | D_type { type_binder; type_expr; type_attr } ->
     let type_expr = compile_type_expression ~raise type_expr in
     let type_attr = compile_type_attributes type_attr in

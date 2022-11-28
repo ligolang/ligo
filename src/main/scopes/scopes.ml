@@ -222,6 +222,15 @@ let find_binder_type_references
   | None -> []
 
 
+let find_pattern_type_references
+    : AST.type_expression option AST.Pattern.t -> reference list
+  =
+ fun pattern ->
+  pattern
+  |> AST.Pattern.binders
+  |> List.concat_map ~f:find_binder_type_references
+
+
 let find_param_type_references
     : AST.type_expression option Param.t -> reference list
   =
@@ -378,7 +387,7 @@ let rec expression
       ; let_result
       ; _
       } ->
-    let t_refs = find_binder_type_references let_binder in
+    let t_refs = find_pattern_type_references let_binder in
     (* For recursive functions we don't need to add a def for [let_binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_rhs] *)
@@ -391,23 +400,25 @@ let rec expression
     defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
-    let t_refs = find_binder_type_references let_binder in
-    let var = Binder.get_var let_binder in
-    let core_type = Binder.get_ascr let_binder in
+    let t_refs = find_pattern_type_references let_binder in
+    let binders = AST.Pattern.binders let_binder in
     let defs_binder =
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ?core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            rhs.location
-        ])
+      List.concat_map binders ~f:(fun binder ->
+          let var = Binder.get_var binder in
+          let core_type = Binder.get_ascr binder in
+          if VVar.is_generated var
+          then []
+          else (
+            let binder_loc = VVar.get_location var in
+            [ Misc.make_v_def
+                ~with_types
+                ?core_type
+                tenv.bindings
+                Local
+                var
+                binder_loc
+                rhs.location
+            ]))
     in
     let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
@@ -576,25 +587,28 @@ and module_expression
 
 
 and declaration_expression
-    :  with_types:bool -> options:Compiler_options.middle_end
-    -> ?core_type:AST.type_expression -> typing_env -> VVar.t -> AST.expression
+    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
+    -> AST.type_expression option Binder.t list -> AST.expression
     -> def list * reference list * typing_env * scopes
   =
- fun ~with_types ~options ?core_type tenv ev e ->
+ fun ~with_types ~options tenv binders e ->
   let defs, refs, tenv, scopes = expression ~with_types ~options tenv e in
-  let range = VVar.get_location ev in
-  let body_range = e.location in
-  let def =
-    Misc.make_v_def
-      ~with_types
-      ?core_type
-      tenv.bindings
-      Global
-      ev
-      range
-      body_range
+  let defs' =
+    List.map binders ~f:(fun binder ->
+        let core_type = Binder.get_ascr binder in
+        let ev = Binder.get_var binder in
+        let range = VVar.get_location ev in
+        let body_range = e.location in
+        Misc.make_v_def
+          ~with_types
+          ?core_type
+          tenv.bindings
+          Global
+          ev
+          range
+          body_range)
   in
-  [ def ] @ defs, refs, tenv, scopes
+  defs' @ defs, refs, tenv, scopes
 
 
 and declaration
@@ -607,6 +621,7 @@ and declaration
   | D_value { attr = { hidden; _ }; _ }
   | D_module { module_attr = { hidden; _ }; _ }
   | D_type { type_attr = { hidden; _ }; _ }
+  | D_irrefutable_match  { attr = { hidden; _ }; _ }
     when hidden -> [], [], tenv, []
   | D_value
       { binder
@@ -622,12 +637,20 @@ and declaration
     in
     let def, defs_expr = drop_last defs_expr in
     defs_expr @ [ def ], refs_rhs @ t_refs, tenv, scopes
+  | D_irrefutable_match  { pattern; expr; _ } ->
+    let t_refs = find_pattern_type_references pattern in
+    let binders = AST.Pattern.binders pattern in
+    (* 
+      TODO: neeed to handle core_type when P_ascr   
+    let core_type = Binder.get_ascr binder in *)
+    let defs, refs, env, scopes =
+      declaration_expression ~with_types ~options tenv binders expr
+    in
+    defs, refs @ t_refs, env, scopes
   | D_value { binder; expr; attr = _ } ->
     let t_refs = find_binder_type_references binder in
-    let var = Binder.get_var binder in
-    let core_type = Binder.get_ascr binder in
     let defs, refs, env, scopes =
-      declaration_expression ~with_types ~options ?core_type tenv var expr
+      declaration_expression ~with_types ~options tenv [ binder ] expr
     in
     defs, refs @ t_refs, env, scopes
   | D_type { type_binder; type_expr; type_attr = _ } ->

@@ -6,8 +6,9 @@ open Simple_utils.Runned_result
 
 let decompile_value ~raise (output_type:Ast_aggregated.type_expression) (ty, value) =
   let mini_c     = trace ~raise main_decompile_michelson @@ Stacking.Decompiler.decompile_value ty value in
-  let aggregated =  trace ~raise main_decompile_mini_c    @@ Spilling.decompile mini_c output_type in
-  let typed      =  trace ~raise main_decompile_aggregated @@ Aggregation.decompile aggregated in
+  let aggregated = trace ~raise main_decompile_mini_c    @@ Spilling.decompile mini_c output_type in
+  let pat        = Expansion.decompile aggregated in
+  let typed      = Aggregation.decompile pat in
   let core       = Checking.untype_expression typed in
   core
 

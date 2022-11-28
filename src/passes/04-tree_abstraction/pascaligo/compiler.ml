@@ -21,6 +21,10 @@ let pseq_to_list = function
   None -> []
 | Some seq -> npseq_to_list seq
 
+let rec unepar = function
+| CST.P_Par { value = { inside; _ }; _ } -> unepar inside
+| _ as v -> v
+
 let check_no_attributes ~(raise:(Errors.abs_error,Main_warnings.all) Simple_utils.Trace.raise) (loc: Location.t) lst =
   (* TODO: should be done in a dedicated pass ?*)
   if not (List.is_empty lst) then raise.error (ignored_attribute loc)
@@ -384,7 +388,6 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
   | E_Fun { value = { parameters; ret_type ; return ; _ } ; region} -> (
     check_no_attributes ~raise (Location.lift region) attr ;
     let compile_param : CST.param_decl CST.reg -> _ Param.t  = fun { value = { param_kind ; pattern ; param_type } ; region = _ } ->
-      (* TODO: feels wrong, binders do not have loc in AST *)
       let var =
         match pattern with
         | P_Var x -> compile_variable x
@@ -552,10 +555,10 @@ let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_
   )
   | E_Attr (a,x) -> compile_expression ~raise ~attr:(a::attr) x
 
-and conv ~raise :  CST.pattern -> AST.ty_expr option Pattern.t =
+and compile_pattern ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
   fun p ->
     let open Pattern in
-    let self = conv ~raise in
+    let self = compile_pattern ~raise in
     match p with
     | P_Verbatim _ | P_Attr _ -> raise.error (unsupported_pattern_type p)
     | P_Var var -> (
@@ -667,7 +670,7 @@ and compile_matching_expr : type a . raise:('b,'w) raise -> (a-> AST.expression)
     let cases : (CST.pattern * AST.expression) list = List.Ne.to_list cases in
     let aux : (CST.pattern * AST.expression) -> (AST.expression , AST.ty_expr option) Match_expr.match_case =
       fun (raw_pattern, body) ->
-        let pattern = conv ~raise raw_pattern in
+        let pattern = compile_pattern ~raise raw_pattern in
         { pattern ; body }
     in
     List.map ~f:aux cases
@@ -902,50 +905,43 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST
     return @@ compile_expression ~raise (E_Call { region ; value = (f,args)})
   )
 
-and compile_let_destructuring ~raise :
-  ?const:bool -> Location.t -> CST.expr -> CST.pattern -> AST.expression -> AST.type_expression option -> AST.expression =
-    fun ?(const = false) loc value pattern body ty_opt ->
-      let init = compile_expression ~raise value in
-      let pattern = conv ~raise pattern in
-      let wrap body = 
-        if const then body
-        else 
-          let binders = Pattern.binders pattern in
-          List.fold_left binders ~init:body ~f:(fun body binder ->
-            e_let_mut_in ~loc binder [] (e_variable ~loc (Binder.get_var binder)) body 
-            )
-      in
-      let match_case = Match_expr.{ pattern ; body = wrap body } in
-      let match_ = e_matching ~loc init [match_case] in
-      Option.value_map ty_opt ~default:match_ ~f:(e_annotation ~loc match_)
+and compile_binding ~raise : CST.pattern * CST.expr -> (_ * CST.type_expr) option -> _ AST.Pattern.t * AST.expression =
+  fun (lhs,rhs) ascr_opt ->
+    let lhs = compile_pattern ~raise lhs in
+    let rhs =
+      let rhs = compile_expression ~raise rhs in
+      Option.value_map ~default:rhs ascr_opt ~f:(fun (_, ty) ->
+          e_ascription
+            ~loc:rhs.location
+            { anno_expr = rhs
+            ; type_annotation = compile_type_expression ~raise ty
+            }
+            ())
+    in
+    (lhs,rhs)
 
 and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expression -> CST.declaration -> AST.expression =
   fun ?(attr = []) ~next data_decl ->
-  let return ~loc ?mut var ascr attr init =
+  let return_let_in ~loc ?mut var ascr attr init =
     e_let_in_ez ~loc ?ascr ?mut var attr init next
+  in
+  let return_let_pattern_in ~loc pattern attr init =
+    e_let_in ~loc pattern attr init next
   in
   match data_decl with
   | D_Attr (a,x) -> compile_data_declaration ~raise ~attr:(a::attr) ~next x
   | D_Const const_decl -> (
-    let cd, loc = r_split const_decl in
-    let type_ = Option.map ~f:(compile_type_expression ~raise <@ snd) cd.const_type in
-    match cd.pattern with
-    | P_Var name -> (
-      let init = compile_expression ~raise cd.init in
-      let p = compile_variable name in
-      let attr = compile_attributes attr in
-      return ~loc ~mut:false p type_ attr init
-    )
-    | pattern ->
-      (* not sure what to do with  attributes in that case *)
-      compile_let_destructuring ~const:true ~raise loc cd.init pattern next type_
+    let CST.{pattern ; init ; const_type ; _}, loc = r_split const_decl in
+    let lhs,rhs = compile_binding ~raise (pattern,init) const_type in
+    let attr = compile_attributes attr in
+    return_let_pattern_in ~loc lhs attr rhs
   )
   | D_Directive _ -> next
   | D_Fun fun_decl -> (
     let fun_decl, loc = r_split fun_decl in
     let attr = compile_attributes [] in
     let fun_var, fun_type, lambda = compile_fun_decl loc ~raise fun_decl in
-    return ~loc fun_var fun_type attr lambda
+    return_let_in ~loc fun_var fun_type attr lambda
   )
   | D_Type type_decl -> (
     let td,loc = r_split type_decl in
@@ -974,23 +970,17 @@ and compile_statement ~raise : ?next:AST.expression -> CST.statement -> AST.expr
     (Some dd)
   | S_VarDecl var_decl -> (
     let vd, loc = r_split var_decl in
-    let type_ = Option.map ~f:(compile_type_expression ~raise <@ snd) vd.var_type in
-    match vd.pattern with
-    | P_Var name -> (
-      let init = compile_expression ~raise vd.init in
-      let var = compile_variable name in
-      match next with
-      | Some next ->
-        Some (e_let_mut_in ~loc (Binder.make var type_) [] init next)
-      | None -> None
-    )
-    | pattern ->
-      (* not sure what to do with  attributes in that case *)
-      match next with
-      | Some next ->
-        let x = compile_let_destructuring ~raise ~const:false loc vd.init pattern next type_ in
-        Some x
-      | None -> None
+    let attr = [] in
+    let init = compile_expression ~raise vd.init in
+    let init = Option.value_map vd.var_type
+      ~default:init
+      ~f:(fun (_,ty) ->
+        let type_annotation = compile_type_expression ~raise ty in
+        e_ascription ~loc:init.location {type_annotation ; anno_expr = init } ()) 
+    in
+    let pattern = compile_pattern ~raise vd.pattern in
+    Option.map next
+      ~f:(fun next -> e_let_mut_in ~loc pattern attr init next)
   )
 
 and compile_block ~raise : ?next:AST.expression -> CST.block CST.reg -> AST.expression =
@@ -1053,9 +1043,10 @@ and compile_fun_decl loc ~raise : CST.fun_decl -> Value_var.t * type_expression 
   ) type_params in
   (fun_binder, fun_type, func)
 
-and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> AST.declaration list =
+and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> AST.declaration option =
   fun ?(attr=[]) decl ->
-  let return reg decl = [Location.wrap ~loc:(Location.lift reg) decl] in
+  let return reg decl = Some (Location.wrap ~loc:(Location.lift reg) decl) in
+  let skip = None in
   match decl with
   | D_Attr (a,x) -> compile_declaration ~attr:(a::attr) ~raise x
   | D_Type { value = { name ; params ; type_expr; _ } ; region } ->
@@ -1078,18 +1069,10 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
 
   | D_Const {value={pattern; const_type; init; _}; region} -> (
     let attr = compile_attributes attr in
-    match pattern with
-    | P_Var name ->
-      let var = compile_variable name in
-      let ascr = Option.map ~f:(compile_type_expression ~raise <@ snd) const_type in
-      let expr = compile_expression ~raise init in
-      let binder = Binder.make var ascr in
-      let ast = D_value {binder; attr; expr} in
-      return region ast
-    | _ ->
-        raise.error (unsupported_top_level_destructuring region)
+    let lhs,rhs = compile_binding ~raise (pattern,init) const_type in
+    let ast = D_irrefutable_match  {pattern = lhs ; attr; expr = rhs} in
+    return region ast
   )
-
   | D_Fun {value; region} ->
     let var, ascr, expr = compile_fun_decl (Location.lift region) ~raise value in
     let binder = Binder.make var ascr in
@@ -1103,7 +1086,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
     let ast = D_module {module_binder; module_; module_attr=[]}
     in return region ast
 
-  | D_Directive _ -> []
+  | D_Directive _ -> skip (* Directives are not propagated to the AST *)
 
 and compile_module_expression ~raise : CST.module_expr ->  AST.module_expr = function
   | CST.M_Body { region ; value = { enclosing = _ ; declarations } } -> (
@@ -1125,11 +1108,10 @@ and compile_module_expression ~raise : CST.module_expr ->  AST.module_expr = fun
 
 and compile_declarations ~raise : CST.declaration Utils.nseq -> AST.module_ =
   fun decl ->
-    let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list decl
-    in List.concat lst
+    List.filter_map ~f:(compile_declaration ~raise) @@ nseq_to_list decl
 
 let compile_program ~raise : CST.declaration Utils.nseq -> AST.program = fun t ->
   nseq_to_list t
   |> List.map ~f:(fun a ~raise -> compile_declaration ~raise a)
   |> Simple_utils.Trace.collect ~raise
-  |> List.concat
+  |> List.filter_opt

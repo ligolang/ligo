@@ -77,15 +77,14 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_lambda defuse lambda
   | E_type_abstraction {result;_} ->
      defuse_of_expr defuse result
-  | E_let_in {let_binder;rhs;let_result;_} ->
-     let defuse,unused = defuse_of_expr defuse rhs in
-     let old_binder = M.find_opt (Binder.get_var let_binder) defuse in
-     let defuse, unused' = defuse_of_expr (M.add (Binder.get_var let_binder) false defuse) let_result in
-     let unused' = add_if_unused unused' (Binder.get_var let_binder) defuse in
-     replace_opt (Binder.get_var let_binder) old_binder defuse, unused@unused'
   | E_raw_code {code;_} ->
      defuse_of_expr defuse code
+  | E_let_mut_in {let_binder;rhs;let_result;_} 
+  | E_let_in {let_binder;rhs;let_result;_} ->
+    let cases = [ let_binder, let_result ] in
+    defuse_union (defuse_of_expr defuse rhs) (defuse_of_cases defuse cases)
   | E_matching {matchee;cases} ->
+     let cases = List.map cases ~f:(fun {pattern;body} -> pattern, body) in
      defuse_union (defuse_of_expr defuse matchee) (defuse_of_cases defuse cases)
   | E_record re ->
      Record.fold
@@ -105,12 +104,6 @@ let rec defuse_of_expr defuse expr : defuse =
       (M.add (Binder.get_var binder) true M.empty, [])
       (defuse_of_expr defuse expression)
   | E_deref var -> M.add var true defuse, []
-  | E_let_mut_in {let_binder;rhs;let_result;_} ->
-    let defuse,unused = defuse_of_expr defuse rhs in
-    let old_binder = M.find_opt (Binder.get_var let_binder) defuse in
-    let defuse, unused' = defuse_of_expr (M.add (Binder.get_var let_binder) false defuse) let_result in
-    let unused' = add_if_unused unused' (Binder.get_var let_binder) defuse in
-    replace_opt (Binder.get_var let_binder) old_binder defuse, unused@unused'
   | E_for { binder; start; final; incr; f_body } ->
     defuse_unions
       defuse
@@ -151,7 +144,7 @@ and defuse_of_binders defuse binders in_ =
 
 and defuse_of_cases defuse cases = 
   List.fold_left cases ~init:(defuse,[])
-    ~f:(fun (defuse,unused_) {pattern;body} ->
+    ~f:(fun (defuse,unused_) (pattern,body) ->
       let vars = Pattern.binders pattern |> List.rev_map ~f:Binder.get_var in
       let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
       let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
@@ -171,6 +164,7 @@ and unused_declaration ~raise = fun (x : declaration) ->
   let update_annotations annots =
     List.iter ~f:raise.Simple_utils.Trace.warning annots in
   match Location.unwrap x with
+  | D_irrefutable_match  { expr ; _ }
   | D_value {expr ; _} -> (
     let defuse,_ = defuse_neutral in
     let unused = defuse_of_expr defuse expr in

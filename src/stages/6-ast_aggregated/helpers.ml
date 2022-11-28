@@ -42,31 +42,6 @@ let kv_list_of_record_or_tuple ~(layout : Layout.t) record_t_content record =
     List.map ~f:snd s
   )
 
-let remove_empty_annotation (ann : string option) : string option =
-  match ann with
-  | Some "" -> None
-  | Some ann -> Some ann
-  | None -> None
-
-let is_michelson_or (t: _ Record.t) =
-  let s = List.sort ~compare:(fun (k1, _) (k2, _) -> Label.compare k1 k2) @@
-    Record.LMap.to_kv_list t in
-  match s with
-  | [ (Label "M_left", ta) ; (Label "M_right", tb) ] -> Some (ta,tb)
-  | _ -> None
-
-let is_michelson_pair (t: row_element Record.t) : (row_element * row_element) option =
-  match Record.LMap.to_list t with
-  | [ a ; b ] -> (
-      if List.for_all ~f:(fun i -> Record.LMap.mem i t) @@ (Label.range 0 2)
-      && Option.(
-        is_some a.michelson_annotation || is_some b.michelson_annotation
-      )
-      then Some (a , b)
-      else None
-    )
-  | _ -> None
-
 (* This function parse te and replace all occurence of binder by value *)
 let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_expression) =
   let self = subst_type binder value in
@@ -202,11 +177,11 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   else
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_matching {matchee=e;cases} -> (
-      let (res, e') = self init e in
-      let (res,cases') = fold_map_cases f res cases in
-      (res, return @@ E_matching {matchee=e';cases=cases'})
-    )
+  | E_matching { matchee; cases } -> (
+    let (res, matchee) = self init matchee in
+    let (res,cases) = fold_map_cases f res cases in
+    (res, return @@ E_matching {matchee;cases})
+  )
   | E_record m -> (
     let (res, m') = Record.fold_map ~f:self ~init m in
     (res, return @@ E_record m')
@@ -228,10 +203,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res,(a,b)) = Simple_utils.Pair.fold_map ~f:self ~init ab in
       (res, return @@ E_application {lamb=a;args=b})
     )
-  | E_let_in { let_binder ; rhs ; let_result; attr } -> (
+  | E_let_in { let_binder ; rhs ; let_result; attributes } -> (
       let (res,rhs) = self init rhs in
       let (res,let_result) = self res let_result in
-      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
+      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attributes })
     )
   | E_type_inst { forall ; type_ } -> (
     let (res, forall) = self init forall in
@@ -267,23 +242,18 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   | E_while w ->
     let res, w = While_loop.fold_map self init w in
     res, return @@ E_while w
-  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+  | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let res, rhs = self init rhs in
     let res, let_result = self res let_result in
-    res, return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+    res, return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
   | E_deref _
   | E_literal _ | E_variable _ as e' -> (init, return e')
 
-and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
-  match m with
-  | Match_variant {cases ; tv} -> (
-      let aux init {constructor ; pattern ; body} =
-        let (init, body) = fold_map_expression f init body in
-        (init, {constructor; pattern ; body})
-      in
-      let (init,cases) = List.fold_map ~f:aux ~init cases in
-      (init, Match_variant {cases ; tv})
-    )
-  | Match_record { fields; body; tv } ->
-      let (init, body) = fold_map_expression f init body in
-      (init, Match_record { fields ; body ; tv })
+and fold_map_case : 'a fold_mapper -> 'a -> (expression, type_expression) Types.Match_expr.match_case -> 'a * (expression, type_expression) Types.Match_expr.match_case
+  = fun f init { pattern ; body } -> 
+      let init, body = fold_map_expression f init body in
+      init, { pattern ; body }
+
+and fold_map_cases : 'a fold_mapper -> 'a -> (expression, type_expression) Types.Match_expr.match_case list -> 'a * (expression, type_expression) Types.Match_expr.match_case list 
+  = fun f init ms ->
+      List.fold_map ms ~init ~f:(fold_map_case f)

@@ -70,6 +70,15 @@ module ValueAttr = struct
       (pp_if_set "private") (not public)
       (pp_if_set "hidden") hidden
       (pp_if_set "thunk") thunk
+  
+  let default_attributes = {
+    inline = false
+  ; no_mutation = false
+  ; view = false
+  ; public = true
+  ; hidden = false
+  ; thunk = false
+  }
 
 end
 
@@ -87,11 +96,11 @@ module TypeOrModuleAttr = struct
     fprintf ppf "%a%a"
       (pp_if_set "private") (not public)
       (pp_if_set "hidden") hidden
+  
+  let default_attributes = { public = true ; hidden = false }
 
 end
-module Value_decl  = Value_decl(ValueAttr)
-module Type_decl   = Type_decl(TypeOrModuleAttr)
-module Module_decl = Module_decl(TypeOrModuleAttr)
+
 module Access_label = struct
   type 'a t = Label.t
   let equal _ = Label.equal
@@ -104,11 +113,20 @@ module Access_label = struct
   let map _ = Fun.id
   let fold_map _ = fun a b -> a,b
 end
+
 module Accessor = Accessor(Access_label)
 module Update   = Update(Access_label)
 
-module Pattern = Pattern.Make(Record)()
+
+
+module Value_decl  = Value_decl(ValueAttr)
+module Type_decl   = Type_decl(TypeOrModuleAttr)
+module Module_decl = Module_decl(TypeOrModuleAttr)
+
+module Pattern = Linear_pattern
 module Match_expr = Match_expr.Make(Pattern)
+module Pattern_decl = Pattern_decl(Pattern)(ValueAttr)
+module Let_in = Let_in.Make(Pattern)(ValueAttr)
 
 type expression_content =
   (* Base *)
@@ -119,7 +137,7 @@ type expression_content =
   | E_lambda of (expr, ty_expr option) Lambda.t
   | E_recursive of (expr, ty_expr) Recursive.t
   | E_type_abstraction of expr Type_abs.t
-  | E_let_in of let_in
+  | E_let_in of (expr, ty_expr option) Let_in.t
   | E_type_in of (expr, ty_expr) Type_in.t
   | E_mod_in of (expr, module_expr) Mod_in.t
   | E_raw_code  of expr Raw_code.t
@@ -134,18 +152,13 @@ type expression_content =
   | E_ascription of (expr, ty_expr) Ascription.t
   | E_module_accessor of Value_var.t Module_access.t
   (* Imperative *)
-  | E_let_mut_in  of let_in
+  | E_let_mut_in  of (expr, ty_expr option) Let_in.t
   | E_assign   of (expr, ty_expr option) Assign.t
   | E_for      of expr For_loop.t
   | E_for_each of expr For_each_loop.t
   | E_while    of expr While_loop.t
 
-and let_in = {
-    let_binder: ty_expr option Binder.t ;
-    rhs: expression ;
-    let_result: expression ;
-    attr: ValueAttr.t ;
-  }
+
 and expression = {
   expression_content  : expression_content ;
   sugar    : sugar_expression_option ;
@@ -156,6 +169,7 @@ and expr = expression
 
 and declaration_content =
     D_value  of (expr,ty_expr option) Value_decl.t
+  | D_irrefutable_match  of (expr,ty_expr option) Pattern_decl.t
   | D_type   of ty_expr Type_decl.t
   | D_module of module_expr Module_decl.t
 

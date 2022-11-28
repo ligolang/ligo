@@ -326,13 +326,9 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   | E_type_abstraction _ -> failwith "corner case : annonymous type abstraction"
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder;rhs;let_result;attributes} ->
-    let var_attributes = [] in
-    let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ Binder.get_var let_binder; attributes = var_attributes } : CST.var_pattern)) in
-    let binders = (var,[]) in
-    let type_params, rhs_type = Option.value_map (Binder.get_ascr let_binder) ~default:(None, None)
-                                           ~f:(fun t -> let type_params, rhs_type = decompile_type_params t in
-                                                        type_params, Some (prefix_colon rhs_type)) in
+  | E_let_in { let_binder; rhs; let_result; attributes } ->
+    let binders = (decompile_pattern let_binder, []) in
+    let type_params, rhs_type = None , None in
     let let_rhs = decompile_expression rhs in
     let binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
     let body = decompile_expression let_result in
@@ -678,6 +674,14 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
       let let_decl : CST.let_decl = (Token.ghost_let,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
   )
+  | D_irrefutable_match  {pattern;attr;expr} ->
+    let attributes : CST.attributes = Shared_helpers.decompile_attributes attr in
+    let binders = (decompile_pattern pattern,[]) in
+    let type_params, rhs_type = None, None in
+    let let_rhs = decompile_expression expr in
+    let let_binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
+    let let_decl : CST.let_decl = (Token.ghost_let,None,let_binding,attributes) in
+    CST.Let (wrap @@ let_decl)
   | D_module {module_binder;module_;module_attr=_} -> (
     let name    = decompile_mod_var module_binder in
     match module_.wrap_content with

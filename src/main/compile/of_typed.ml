@@ -88,12 +88,16 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
     let e = compile_expression_in_context ~raise ~options prg tuple_view in
     Self_ast_aggregated.remove_check_self e
 
-(* if only_ep, we only list the declarations with types fiting an entrypoint *)
+(* 
+  if only_ep, we only list the declarations with types fiting an entrypoint
+  TODO (when we have module signature): extract declaration names from sig type
+*)
 let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
+      | D_irrefutable_match  {pattern = { wrap_content = P_var binder ; _ } ; attr;expr}
       | D_value {binder;attr;expr} when attr.public && not attr.hidden ->
         if only_ep then (
           if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content) then
@@ -101,7 +105,7 @@ let list_declarations (only_ep: bool) (m : Ast_typed.program) : Value_var.t list
         )
         else
           (Binder.get_var binder)::prev
-      | _ -> prev)
+      | D_value _ | D_irrefutable_match  _ | D_type _ | D_module _ -> prev)
     ~init:[] m
 
 let list_type_declarations (m : Ast_typed.program) : Type_var.t list =

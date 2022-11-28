@@ -5,9 +5,6 @@ module Helpers = Helpers
 let reset_counter () = Monomorphisation.poly_counter_reset ()
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 
-let simplify_pattern_matching =
-  Helpers.map_program @@ Pattern_matching_simpl.peephole_expression
-
 let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
   fun e ->
   match e.expression_content with
@@ -47,7 +44,7 @@ let inline_thunk : bool ref -> Ast_aggregated.expression -> Ast_aggregated.expre
   fun changed e ->
   let return_changed e = changed := true ; e in
   match e.expression_content with
-  | E_let_in { let_binder ; rhs ; let_result ; attr = { thunk = true ; _ } } ->
+  | E_let_in { let_binder = { wrap_content = P_var let_binder ; _ } ; rhs ; let_result ; attributes = { thunk = true ; _ } } ->
     let rhs = make_forced rhs in
     let e = Subst.subst_expression ~body:let_result ~x:(Binder.get_var let_binder) ~expr:rhs in
     return_changed e
@@ -88,7 +85,6 @@ let all_aggregated_expression ~raise e =
   let e = Uncurry.uncurry_expression e in
   let e = thunk e in
   let e = Helpers.map_expression (Literal_replace.expression ~raise) e in
-  let e = Helpers.map_expression Pattern_matching_simpl.peephole_expression e in
   let e = Helpers.map_expression (Contract_passes.entrypoint_typing ~raise) e in
   let e = Helpers.map_expression (Contract_passes.emit_event_typing ~raise) e in
   let e = Helpers.map_expression (Contract_passes.self_literal_typing ~raise) e in
@@ -96,7 +92,6 @@ let all_aggregated_expression ~raise e =
 
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = Helpers.map_expression Polymorphic_replace.expression e in
-  let e = Helpers.map_expression Pattern_matching_simpl.peephole_expression e in
   let e =
     if not options.test then
       let () = Obj_ligo.check_obj_ligo ~raise e in (* for good measure .. *)
@@ -106,7 +101,6 @@ let all_expression ~raise ~(options : Compiler_options.middle_end) e =
 
 let all_program ~raise ~(options : Compiler_options.middle_end) (prg : Ast_aggregated.program) =
   let prg = Helpers.map_program Polymorphic_replace.expression prg in
-  let prg = simplify_pattern_matching prg in
   let prg = if not options.test then
       let prg = Obj_ligo.purge_meta_ligo_program ~raise prg in
       let () = Obj_ligo.check_obj_ligo_program ~raise prg in (* for good measure .. *)
@@ -129,5 +123,4 @@ let all_contract ~raise parameter storage prg =
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
   let all_p = List.map ~f:(fun pass -> Helpers.map_expression pass) @@ contract_passes_map ~raise in
   let prg = List.fold ~f:(fun x f -> f x) all_p ~init:prg in
-  let prg = Helpers.map_expression Pattern_matching_simpl.peephole_expression prg in
   prg

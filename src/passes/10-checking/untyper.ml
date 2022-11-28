@@ -91,12 +91,12 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
   | E_matching m ->
     let I.Match_expr.{ matchee ; cases } = untype_match_expr m in 
     return (e_matching matchee cases)
-  | E_let_in {let_binder;rhs;let_result; attr} ->
-      let tv = self_type rhs.type_expression in
+  | E_let_in {let_binder;rhs;let_result; attributes} ->
       let rhs = self rhs in
       let result = self let_result in
-      let attr : ValueAttr.t = untype_value_attr attr in
-      return (e_let_mut_in (Binder.map (Fn.const @@ Some tv) let_binder) rhs result attr)
+      let attr : ValueAttr.t = untype_value_attr attributes in
+      let let_binder = O.Pattern.map (Fn.const None) let_binder in
+      return (e_let_mut_in let_binder rhs result attr)
   | E_mod_in {module_binder;rhs;let_result} ->
       let rhs = untype_module_expr rhs in
       let result = self let_result in
@@ -109,12 +109,12 @@ and untype_expression_content (ec:O.expression_content) : I.expression =
       let lambda = Lambda.map self self_type lambda in
       return @@ e_recursive fun_name fun_type lambda
   | E_module_accessor ma -> return @@ I.make_e @@ E_module_accessor ma
-  | E_let_mut_in {let_binder;rhs;let_result; attr} ->
-    let tv = self_type rhs.type_expression in
+  | E_let_mut_in {let_binder;rhs;let_result; attributes} ->
     let rhs = self rhs in
     let result = self let_result in
-    let attr : ValueAttr.t = untype_value_attr attr in
-    return (e_let_in (Binder.map (Fn.const @@ Some tv) let_binder) rhs result attr)
+    let attr : ValueAttr.t = untype_value_attr attributes in
+    let let_binder = O.Pattern.map (Fn.const None) let_binder in
+    return (e_let_in let_binder rhs result attr)
   | E_assign a ->
     let a = Assign.map self self_type_opt a in
     return @@ make_e @@ E_assign a
@@ -148,11 +148,12 @@ and untype_match_expr
     let cases = List.map cases 
       ~f:(fun { pattern ; body } ->
         let pattern = O.Pattern.map untype_type_expression_option pattern in
-        let pattern = untype_pattern pattern in
         let body = untype_expression body in
         I.Match_expr.{ pattern ; body }
     ) in
     I.Match_expr.{ matchee ; cases }
+
+(* TODO: check usage *)
 and untype_pattern 
   : _ O.Pattern.t -> _ I.Pattern.t
   = fun p ->
@@ -197,6 +198,15 @@ and untype_declaration_constant : (O.expression -> I.expression) -> _ O.Value_de
     let attr = untype_value_attr attr in
     {binder;attr;expr;}
 
+and untype_declaration_pattern : (O.expression -> I.expression) -> _ O.Pattern_decl.t -> _ I.Pattern_decl.t =
+  fun untype_expression {pattern;expr;attr} ->
+    let ty = untype_type_expression expr.O.type_expression in
+    let pattern = O.Pattern.map (Fn.const None) pattern in
+    let expr = untype_expression expr in
+    let expr = I.e_ascription expr ty in
+    let attr= untype_value_attr attr in
+    {pattern;attr;expr;}
+
 and untype_declaration_type : _ O.Type_decl.t -> _ I.Type_decl.t =
   fun {type_binder; type_expr; type_attr={public;hidden}} ->
     let type_expr = untype_type_expression type_expr in
@@ -215,6 +225,9 @@ and untype_declaration =
   | D_value dc ->
     let dc = untype_declaration_constant untype_expression dc in
     return @@ D_value dc
+  | D_irrefutable_match  x ->
+    let x = untype_declaration_pattern untype_expression x in
+    return @@ D_irrefutable_match  x
   | D_type dt ->
     let dt = untype_declaration_type dt in
     return @@ D_type dt

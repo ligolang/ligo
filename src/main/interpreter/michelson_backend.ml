@@ -154,7 +154,7 @@ let add_ast_env ?(name = Ligo_prim.Value_var.fresh ()) env binder body =
        && Ligo_prim.Value_var.compare let_binder name <> 0
     then
       e_a_let_in
-        (Ligo_prim.Binder.make let_binder expr.type_expression)
+        (Pattern.var (Ligo_prim.Binder.make let_binder expr.type_expression))
         expr
         e
         { inline
@@ -240,13 +240,14 @@ let run_expression_unwrap
 
 let compile_ast ~raise ~options aggregated_exp =
   let open Ligo_compile in
-  let mini_c_exp = Of_aggregated.compile_expression ~raise aggregated_exp in
+  let expanded = Of_aggregated.compile_expression ~raise aggregated_exp in
+  let mini_c_exp = Of_expanded.compile_expression ~raise expanded in
   Of_mini_c.compile_expression ~raise ~options mini_c_exp
 
 
 let compile_type ~raise type_exp =
   let open Ligo_compile in
-  let ty = Of_aggregated.compile_type ~raise type_exp in
+  let ty = Of_expanded.compile_type ~raise type_exp in
   Of_mini_c.compile_type ty
 
 
@@ -297,14 +298,16 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
 
 let compile_contract_ast ~raise ~options ~tezos_context main views =
   let open Ligo_compile in
-  let mini_c = Of_aggregated.compile_expression ~raise main in
+  let expanded = Of_aggregated.compile_expression ~raise main in
+  let mini_c = Of_expanded.compile_expression ~raise expanded in
   let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
   let views =
     match views with
     | None -> []
     | Some (view_names, aggregated) ->
       let mini_c =
-        Ligo_compile.Of_aggregated.compile_expression ~raise aggregated
+        let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+        Of_expanded.compile_expression ~raise expanded
       in
       let mini_c =
         trace ~raise Main_errors.self_mini_c_tracer
@@ -1232,7 +1235,7 @@ let rec compile_value ~raise ~options ~loc
       Ligo_prim.Record.LMap.find (Label ctor) map_ty.fields
     in
     let arg = self arg ty' in
-    let ty' = Ligo_compile.Of_aggregated.compile_type ~raise ty in
+    let ty' = Ligo_compile.Of_expanded.compile_type ~raise ty in
     let ty_variant =
       trace_option ~raise (Errors.generic_error Location.generated "foo")
       @@ get_t_sum_opt ty
@@ -1383,7 +1386,7 @@ let rec compile_value ~raise ~options ~loc
         | (name, { item; no_mutation; inline }) :: tl ->
           let mich = self item.eval_term item.ast_type in
           let minic_ty =
-            Ligo_compile.Of_aggregated.compile_type ~raise item.ast_type
+            Ligo_compile.Of_expanded.compile_type ~raise item.ast_type
           in
           let mich_ty = Ligo_compile.Of_mini_c.compile_type minic_ty in
           let mich_ty =
@@ -1491,7 +1494,7 @@ let compile_value ~raise ~options ~loc
   =
  fun v ty ->
   let expr = compile_value ~raise ~options ~loc v ty in
-  let expr_ty = Ligo_compile.Of_aggregated.compile_type ~raise ty in
+  let expr_ty = Ligo_compile.Of_expanded.compile_type ~raise ty in
   let expr_ty = Ligo_compile.Of_mini_c.compile_type expr_ty in
   let expr_ty = clean_location_with () expr_ty in
   Ligo_interpreter.Types.

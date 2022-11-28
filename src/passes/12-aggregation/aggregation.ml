@@ -15,4 +15,4 @@ let compile_expression_in_context ~raise : Ast_typed.expression -> Ast_typed.pro
     let decls, init = compile_program ~raise hole program in
     Ast_aggregated.context_apply decls init
 
-let decompile = Decompiler.decompile
+let decompile : Ast_aggregated.expression -> Ast_typed.expression = Decompiler.decompile

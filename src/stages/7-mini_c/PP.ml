@@ -173,7 +173,7 @@ and expression_content ppf (e:expression_content) = match e with
       hash
       Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
   | E_create_contract (p, s, ((x, a), code), args) ->
-    fprintf ppf "@[create_contract(%a,@ %a,@ fun (%a : %a) -> %a,@ %a)@]"
+    fprintf ppf "@[create_contract(%a,@ %a,@ (fun (%a : %a) -> %a),@ (%a))@]"
       type_expression p
       type_expression s
       Value_var.pp x

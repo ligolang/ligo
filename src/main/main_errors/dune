@@ -17,6 +17,7 @@
   aggregation
   ligo_interpreter
   spilling
+  self_ast_aggregated
   self_mini_c
   scoping
   stacking

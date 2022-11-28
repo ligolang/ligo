@@ -474,9 +474,9 @@ let redundant_case_analysis ~raise ~loc matrix =
    missing pattern to the original pattern representation
    using [to_original_pattern].
    e. If there are no missing cases we check for redundant cases. *)
-let check_anomalies ~(raise : raise) ~syntax ~loc (eqs : (AST.type_expression AST.Pattern.t * AST.type_expression * AST.expression) list) t =
+let check_anomalies ~(raise : raise) ~syntax ~loc (eqs : (AST.type_expression AST.Pattern.t * AST.type_expression) list) t =
 
-  let matrix = List.map eqs ~f:(fun (p, t, _) -> to_simple_pattern (p, t)) in
+  let matrix = List.map eqs ~f:to_simple_pattern in
 
   match missing_case_analysis ~raise ~loc matrix t with
     Some missing_cases ->
@@ -485,7 +485,7 @@ let check_anomalies ~(raise : raise) ~syntax ~loc (eqs : (AST.type_expression AS
     let redundant, case = redundant_case_analysis ~raise ~loc matrix in
     if redundant
     then
-      let p, _, _ = List.nth_exn eqs (case - 1) in
+      let p, _ = List.nth_exn eqs (case - 1) in
       let loc = Location.get_location p in
       raise.error @@ Errors.pattern_redundant_case loc
     else ()

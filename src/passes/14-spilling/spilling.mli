@@ -1,7 +1,7 @@
 open Simple_utils.Trace
 open Errors
 
-module AST = Ast_aggregated
+module AST = Ast_expanded
 module Append_tree = Tree.Append
 module Errors = Errors
 module Layout = Layout

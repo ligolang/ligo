@@ -210,6 +210,11 @@ end = struct
         {scope with name_map=PathVarMap.add (p,v) var scope.name_map},var
 end
 
+let push_pattern_in_scope scope pattern attributes path =
+  List.fold (O.Pattern.binders pattern)
+    ~f:(fun scope binder ->
+      Scope.push_value scope binder (Binder.get_ascr binder) attributes path)
+    ~init:scope
 
 let compile_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
   fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
@@ -246,7 +251,6 @@ let rec compile_type_expression ~raise path scope (type_expression : I.type_expr
 let rec compile_expression ~raise path scope (expr : I.expression) =
   let self ?(path = path) ?(scope=scope) = compile_expression ~raise path scope in
   let self_type ?(path = path) ?(scope=scope) = compile_type_expression ~raise path scope in
-  let self_cases ?(path = path) ?(scope=scope) = compile_cases ~raise ~loc:expr.location path scope in
   let return expression_content =
     let type_expression = self_type expr.type_expression in
     O.{expression_content;location=expr.location;type_expression}
@@ -283,13 +287,13 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let output_type = self_type output_type in
     let result   = self ~scope result in
     return @@ E_recursive {fun_name;fun_type;lambda={binder;output_type;result}}
-  | E_let_in {let_binder;rhs;let_result;attr} ->
-    let let_binder   = Binder.map self_type let_binder in
+  | E_let_in {let_binder;rhs;let_result;attributes} ->
+    let let_binder = I.Pattern.map self_type let_binder in
     let rhs = self rhs in
-    let attr = compile_value_attr attr in
-    let scope = Scope.push_value scope let_binder rhs.type_expression attr Path.empty  in
+    let attributes = compile_value_attr attributes in
+    let scope = push_pattern_in_scope scope let_binder attributes Path.empty in
     let let_result = self ~scope let_result in
-    return @@ E_let_in {let_binder;rhs;let_result;attr}
+    return @@ E_let_in {let_binder;rhs;let_result;attributes}
   | E_raw_code {language;code} ->
     let code = self code in
     return @@ E_raw_code {language;code}
@@ -302,9 +306,16 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let element = self element in
     return @@ E_constructor {constructor;element}
   | E_matching {matchee;cases} ->
+    let attributes = O.ValueAttr.default_attributes in
     let matchee = self matchee in
-    let cases   = self_cases matchee cases in
-    return @@ cases
+    let cases : _ O.Match_expr.match_case list =
+      List.map cases
+        ~f:(fun {pattern ; body} ->
+          let pattern = I.Pattern.map self_type pattern in
+          let scope = push_pattern_in_scope scope pattern attributes Path.empty in
+          ({pattern ; body = self ~scope body} : _ O.Match_expr.match_case))
+      in
+    return @@ E_matching {matchee;cases}
   (* Record *)
   | E_record record ->
     let record = Record.map ~f:self record in
@@ -332,14 +343,14 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let path    = Path.append path2 path in
     let _,element = Scope.add_path_to_var scope path element in
     return @@ E_variable element)
-  | E_let_mut_in { let_binder ; rhs ; let_result ; attr } ->
-    let let_binder   = Binder.map self_type let_binder in
+  | E_let_mut_in { let_binder ; rhs ; let_result ; attributes } ->
+    let let_binder = I.Pattern.map self_type let_binder in
     let rhs = self rhs in
-    let attr = compile_value_attr attr in
-    let scope = Scope.push_value scope let_binder rhs.type_expression attr Path.empty  in
+    let attributes = compile_value_attr attributes in
+    let scope = push_pattern_in_scope scope let_binder attributes Path.empty in
     let let_result = self ~scope let_result in
-    return (E_let_mut_in { let_binder ; rhs ; let_result ; attr })
-  | E_deref var ->
+    return @@ E_let_mut_in {let_binder;rhs;let_result;attributes}
+  | E_deref var -> 
     let path = Scope.find_value scope var in
     let _,expression_variable = Scope.add_path_to_var scope path var in
     return @@ E_deref expression_variable
@@ -365,40 +376,6 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let while_loop = While_loop.map self while_loop in
     return @@ E_while while_loop
 
-and compile_cases ~raise ~loc path scope matchee cases : O.expression_content =
-  let matchee_type = matchee.type_expression in
-  let eqs = List.map cases
-    ~f:(fun {pattern ; body} ->
-        let pattern = I.Pattern.map (compile_type_expression ~raise path scope) pattern in
-        let binders = I.Pattern.binders pattern |> List.map ~f:Binder.get_var in
-        let scope = List.fold binders ~init:scope ~f:Scope.push_func_or_case_binder in
-        let body = compile_expression ~raise path scope body in
-        pattern, matchee_type, body) in
-  match matchee.expression_content with
-  | E_variable var ->
-    let match_expr =
-      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
-    in
-    match_expr.expression_content
-  | _ ->
-    let var = Value_var.fresh ~loc ~name:"match_" () in
-    let match_expr =
-      Pattern_matching.compile_matching ~raise ~err_loc:loc var eqs
-    in
-    O.E_let_in
-      { let_binder = Binder.make var matchee.type_expression
-      ; rhs = matchee
-      ; let_result = { match_expr with location = loc }
-      ; attr =
-          { inline = false
-          ; no_mutation = false
-          ; public = true
-          ; view = false
-          ; hidden = false
-          ; thunk = false
-          }
-      }
-
 and compile_declaration ~raise ~(super_attr : O.ModuleAttr.t) path scope (d : I.declaration) =
   match Location.unwrap d with
     D_value {binder;expr;attr} ->
@@ -410,6 +387,25 @@ and compile_declaration ~raise ~(super_attr : O.ModuleAttr.t) path scope (d : I.
       let scope,var = Scope.add_path_to_var scope path @@ Binder.get_var binder in
       let binder = Binder.set_var binder var in
       scope, O.context_decl binder expr attr
+  | D_irrefutable_match  {pattern;expr;attr} ->
+    let attr = {attr with hidden = attr.hidden || super_attr.hidden; public = attr.public && super_attr.public} in
+    let expr = compile_expression ~raise path scope expr in
+    let attr = compile_value_attr attr in
+    let pattern = I.Pattern.map (fun _ -> expr.type_expression) pattern in
+    let scope  = push_pattern_in_scope scope pattern attr path in
+    let scope,pattern =
+      O.Pattern.fold_map_pattern
+        (fun scope pattern ->
+          match pattern.wrap_content with
+          | P_var binder ->
+            let scope,var = Scope.add_path_to_var scope path @@ Binder.get_var binder in
+            let binder = Binder.set_var binder var in
+            scope, {pattern with wrap_content = P_var binder }
+          | _ -> scope,pattern)
+        scope
+        pattern
+    in
+    scope, O.context_decl_pattern pattern expr attr
   | D_type _ ->
       scope, O.context_id
   | D_module {module_binder;module_;module_attr} ->

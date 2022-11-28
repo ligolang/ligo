@@ -183,8 +183,7 @@ let%expect_test _ =
       2 |   let () = 42n;
       3 |   ([] : list(operation), ())
 
-    Invalid pattern matching.
-    Can't match on values. |}]
+    Pattern not of the expected type "nat". |}]
 
 (* wrong fields on record pattern *)
 (* wrong type on constructor argument pattern *)

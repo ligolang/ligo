@@ -119,14 +119,15 @@ let compile_groups ~raise filename grp_list =
           Compiler_options.set_init_env options init_env in
         let options = Compiler_options.set_test_flag options true in
         let typed = Build.qualified_typed_str ~raise ~options contents in
-        Format.printf "Typed AST: %a\n" (Ast_typed.PP.program ~use_hidden:true) typed;
+        (* Format.printf "Typed AST: %a\n" (Ast_typed.PP.program ~use_hidden:true) typed; *)
         let _ : bool * (group_name * Ligo_interpreter.Types.value) list = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()
       | Object ->
         let typed = Build.qualified_typed_str ~raise ~options contents in
         let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed (Ast_typed.e_a_unit ()) in
-        let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
-        Format.printf "Mini_c AST: %a\n" (Mini_c.PP.expression) mini_c;
+        let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
+        let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
+        (* Format.printf "Mini_c AST: %a\n" (Mini_c.PP.expression) mini_c; *)
         let _michelson : Stacking__Compiler_program.compiled_expression = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
         ()
   in

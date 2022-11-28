@@ -14,15 +14,18 @@ module type S = sig
   type 't t [@@deriving eq, compare, yojson, hash]
 
   val fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a
+  val fold_map_pattern : ('a -> 'b t -> 'a * 'c t) -> 'a -> 'b t -> 'a * 'c t
+  val map_pattern : ('a t -> 'b t) -> 'a t -> 'b t
   val iter : ('a -> unit) -> 'a t -> unit
   val fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
   val map : ('a -> 'b) -> 'a t -> 'b t
   val fold_map : ('a -> 'b -> 'a * 'b) -> 'a -> 'b t -> 'a * 'b t
   val binders : 'a t -> 'a Binder.t list
+  val var : ?loc:Location.t -> 'a Binder.t -> 'a t
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
 
-module Make (Container : Container) () = struct
+module Make (Container : Container) = struct
   type 'ty_exp list_pattern =
     | Cons of 'ty_exp t * 'ty_exp t
     | List of 'ty_exp t list
@@ -37,6 +40,26 @@ module Make (Container : Container) () = struct
 
   and 't t = 't pattern_repr Location.wrap
   [@@deriving eq, compare, yojson, hash]
+
+  let var : ?loc:Location.t -> 'ty Binder.t -> 'ty t =
+   fun ?loc b -> Location.wrap ?loc (P_var b)
+
+
+  let record_pattern : ?loc:Location.t -> 'ty_exp t Container.t -> 'ty t =
+   fun ?loc b -> Location.wrap ?loc (P_record b)
+
+
+  let variant_pattern : ?loc:Location.t -> Label.t * 'ty_exp t -> 'ty t =
+   fun ?loc (label, pat) -> Location.wrap ?loc (P_variant (label, pat))
+
+
+  (* get top level ascription if any *)
+  let get_ascr : 'ty t -> 'ty option =
+   fun x ->
+    match x.wrap_content with
+    | P_var b -> Some (Binder.get_ascr b)
+    | _ -> None
+
 
   let rec pp_list g ppf pl =
     let mpp = pp g in
@@ -101,6 +124,36 @@ module Make (Container : Container) () = struct
     | P_tuple lp -> List.fold_left ~f:(fold_pattern f) ~init:acc lp
     | P_record lps -> Container.fold ~f:(fold_pattern f) ~init:acc lps
 
+
+  let rec fold_map_pattern
+      : ('a -> 'b t -> 'a * 'c t) -> 'a -> 'b t -> 'a * 'c t
+    =
+   fun f acc p ->
+    let loc = Location.get_location p in
+    match Location.unwrap p with
+    | P_unit -> f acc p
+    | P_var _ -> f acc p
+    | P_list lp ->
+      (match lp with
+      | Cons (pa, pb) ->
+        let acc, pa = fold_map_pattern f acc pa in
+        let acc, pb = fold_map_pattern f acc pb in
+        acc, Location.wrap ~loc (P_list (Cons (pa, pb)))
+      | List lp ->
+        let acc, lp = List.fold_map ~f:(fold_map_pattern f) ~init:acc lp in
+        acc, Location.wrap ~loc (P_list (List lp)))
+    | P_variant (l, p) ->
+      let acc, lp = fold_map_pattern f acc p in
+      acc, Location.wrap ~loc (P_variant (l, lp))
+    | P_tuple lp ->
+      let acc, lp = List.fold_map ~f:(fold_map_pattern f) ~init:acc lp in
+      acc, Location.wrap ~loc (P_tuple lp)
+    | P_record lps ->
+      let acc, lps = Container.fold_map ~f:(fold_map_pattern f) ~init:acc lps in
+      acc, Location.wrap ~loc (P_record lps)
+
+
+  let map_pattern f p = snd @@ fold_map_pattern (fun () x -> (), f x) () p
 
   let rec fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a =
    fun f acc p ->
@@ -191,3 +244,6 @@ module Make (Container : Container) () = struct
       []
       t
 end
+
+module Non_linear_pattern = Make (Label.Assoc)
+module Linear_pattern = Make (Record)

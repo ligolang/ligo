@@ -21,7 +21,8 @@ let type_file ~raise ~(options : Compiler_options.t) f stx form : Ast_typed.prog
 let compile_file ~raise ~options f stx ep =
   let typed    = type_file ~raise ~options f stx @@ Contract ep in
   let aggregated = Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed ep in
-  let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
+  let expanded   = Of_aggregated.compile_expression ~raise aggregated in
+  let mini_c     = Of_expanded.compile_expression ~raise expanded in
   let michelson  = Of_mini_c.compile_contract ~raise ~options mini_c in
   let contract   = Of_michelson.build_contract ~raise michelson in
   contract
@@ -64,7 +65,8 @@ let compile_contract_input ~raise ~options parameter storage syntax init_prog =
   let core      = Of_imperative.compile_expression ~raise imperative in
   let typed      = Of_core.compile_expression ~raise ~options ~init_prog core in
   let aggregated = Of_typed.compile_expression_in_context ~raise ~options:options.middle_end init_prog typed in
-  let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
+  let expanded = Of_aggregated.compile_expression ~raise aggregated in
+  let mini_c     = Of_expanded.compile_expression ~raise expanded in
   let compiled   = Of_mini_c.compile_expression ~raise ~options mini_c in
   compiled
 
