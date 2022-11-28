@@ -64,6 +64,31 @@ esy-windows:
     paths:
       - platform-windows-x64
 
+esy-macos-intel:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - i7
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^.*-run-dev$/
+  - /^release/.*$/
+  - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - mkdir -p ~/.npm
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g @esy-nightly/esy --force
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin
+  artifacts:
+    paths:
+      - platform-darwin
+
 prepare_npm_tarball:
   tags:
   - docker
@@ -72,6 +97,8 @@ prepare_npm_tarball:
     - job: docker_extract
       artifacts: true
     - job: esy-windows
+      artifacts: true
+    - job: esy-macos-intel
       artifacts: true
   only:
     - merge_requests
