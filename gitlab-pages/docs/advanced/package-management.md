@@ -17,7 +17,9 @@ Reusable modules that developers intend to share with other can be
 distributed as packages by placing a `package.json` (a manifest file)
 next to their Ligo modules.
 
-    ls
+```bash
+ls
+```
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -48,7 +50,7 @@ packages are hosted on ligo registry link (where pacakges reside)
 ## Consuming
 
 To fetch (download) & maintain different versions of external libraries we need a package manager.
-LIGO libraries can be published to [Ligo's own registry](https://beta.packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
+LIGO libraries can be published to [Ligo's own registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
 Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
 
 Pre-requites: 
@@ -206,7 +208,7 @@ Sample `package.json` with the above information.
 ## Publishing
 
 Ligo packages can be published to a central repository at
-`beta.packages.ligolang.org` with the `ligo publish` command.
+[`packages.ligolang.org`](https://packages.ligolang.org/) with the `ligo publish` command.
 
     ligo publish
 
@@ -263,7 +265,8 @@ This is an important step, as it will help the tools and your users/collaborator
       "dependencies": {
         "ligo-list-helpers": "1.0.0",
         "ligo-set-helpers": "^1.0.2"
-      }
+        ...
+}
 ```
 
 #### Logging in
@@ -281,8 +284,7 @@ ligo add-user
 ```
 This would create a `.ligorc` in the home directory.
 
-TODO: updae this note  
-> Note: unlike npm, ligo only creates the rc file in the home directory. Placing the file anywhere else isn't meaningful to Ligo
+> Note: By default LIGO  creates the rc file (`.ligorc`) in the home directory.
 
 Now run,
 
@@ -311,12 +313,32 @@ If you wish to specify the root directory manually you can do so using the `--pr
 ligo compile contract main.mligo --project-root PATH
 ```
 
-TODO: add --registry
-TODO: add --ligorc-path
-TODO: add --dry-run
+### --registry
+
+By default LIGO CLI will publish & install packages from the [LIGO registry](https://packages.ligolang.org/).
+
+If you wish to specify a different registry e.g. LIGO beta registry you can do do by using the `--registry` option e.g.
+
+```bash
+ligo compile contract main.mligo --registry URL
+```
+<br/>
+
+> Note: In order to point the LIGO CLI to the beta registry use https://packages.ligolang.org/-/api/ as the URL
+> 
+> ```bash
+> ligo install --registry https://packages.ligolang.org/-/api/
+> ```
+
+### --ligorc-path
+TODO: fill this
+
+### --dry-run
+TODO: fill this
+
 TODO: check cli.ml to see that all flags are covered
 
-## FAQs
+## Notes
 TODO: fix formatting for this section
 
 Note that,
@@ -333,6 +355,7 @@ If it is not used, it won't appear in the final michelson - only the used parts 
 
 As an example, consider,
 
+# TODO: ```cameligo ??
     #import "package_name/increment.mligo" "Increment"
     
     let main =

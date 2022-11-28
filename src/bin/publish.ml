@@ -14,7 +14,7 @@
 - [x] Add basic comments in code
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [ ] Docs: Add note about #import/include"<pkg>/<path>"
-- [ ] Docs: Add note about `--registry`
+- [x] Docs: Add note about `--registry`
 - [ ] Docs: Add not about `--dry-run` and paste logs
 - [ ] Docs: mention about .ligoignore
 - [ ] manually Test CLI option to override path to .ligorc
