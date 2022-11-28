@@ -71,6 +71,7 @@ def get_changelog(elems):
     # Render the elems
     changelog_details = "".join([gfm.renderer.render(elem) for elem in elems])
     changelog_details = re.sub(COMMENT_REGEX, '', changelog_details)
+    
     return changelog_details
 
 
@@ -104,6 +105,7 @@ if __name__ == "__main__":
     # Get changelog details
     if type != "none":
         changelog_details = get_changelog(markdown.children)
+        changelog_details = changelog_details.replace('```', '\n```')
         changelog_details = changelog_details.replace('\n', '\\n')
         changelog_details = changelog_details.replace('<p>', '')
         changelog_details = changelog_details.replace('</p>', '')
