@@ -11,8 +11,13 @@ type contract_type = {
 let annotation_or_label annot label = Option.value ~default:(String.uncapitalize @@ Label.to_string label) @@ Ast_typed.Helpers.remove_empty_annotation annot
 
 let check_entrypoint_annotation_format ~raise ep (exp: expression) =
+  let allowed_annot_char c =
+    match c with
+    | ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9') ->
+        true
+    | _ -> false in
   match String.split ~on:'%' ep with
-    | [ "" ; ep'] -> ep'
+    | [ "" ; ep'] when String.for_all ~f:allowed_annot_char ep' -> ep'
     | _ -> raise.error @@ Errors.bad_format_entrypoint_ann ep exp.location
 
 let self_typing ~raise : contract_type -> expression -> bool * contract_type * expression = fun dat e ->

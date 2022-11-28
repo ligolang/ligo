@@ -1603,7 +1603,8 @@ Hint: replace it by "_p" to prevent this warning.
 
 Invalid entrypoint "Toto". One of the following patterns is expected:
 * "%bar" is expected for entrypoint "Bar"
-* "%default" when no entrypoint is used. |}];
+* "%default" when no entrypoint is used.
+Valid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9'). |}];
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_1.religo"];
   [%expect {|
@@ -1867,7 +1868,8 @@ let%expect_test _ =
 
     Invalid entrypoint "foo". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
-    * "%default" when no entrypoint is used. |}]
+    * "%default" when no entrypoint is used.
+    Valid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9'). |}]
 
 (* using test in compilation *)
 let%expect_test _ =
@@ -2947,3 +2949,16 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ;  contract "self_annotations.mligo" ; "()" ] ;
   [%expect{| Unit |}]
+
+(* check tag in Tezos.emit *)
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ;  bad_contract "emit_bad_tag.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/emit_bad_tag.mligo", line 2, characters 3-31:
+      1 | let main (_,_ : unit * string ) : operation list * string =
+      2 |   [Tezos.emit "%hello world" 12], "bye"
+
+    Invalid entrypoint "%hello world". One of the following patterns is expected:
+    * "%bar" is expected for entrypoint "Bar"
+    * "%default" when no entrypoint is used.
+    Valid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9'). |}]
