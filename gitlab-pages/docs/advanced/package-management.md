@@ -44,8 +44,8 @@ Any directory (recursively) containing `.mligo` files can be turned into a packa
 by simply placing a manifest file, `package.json` over there.
 
 # Ligo registry
-TODO: write someting here.
-packages are hosted on ligo registry link (where packages reside)
+
+The [LIGO registry](https://packages.ligolang.org/) is used to host LIGO packages. The LIGO registry contains the contracts/libraries along with it's metadata. The packages which reside on the LIGO registry can be installed using the `ligo install` command. 
 
 ## Consuming
 
@@ -92,6 +92,12 @@ let main (action, store : parameter * storage) : operation list * storage =
     | Reverse   -> XList.reverse store))
 
 ```
+
+> Note: When using LIGO packages the `#import`/`#include` syntax is of the form
+> 
+> `#import "<pkg name>/<file in package>" "Module"`
+>
+> `#include "pkg name>/<file in package>"`
 
 and we write some tests for our smart contract in `main.test.mligo`
 
