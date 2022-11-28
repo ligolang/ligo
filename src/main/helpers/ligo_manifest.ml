@@ -106,12 +106,18 @@ let try_readme ~project_root =
     String.escaped contents
 
 
-let parse_name json =
-  match Util.member "name" json with
-  | `String "" -> Error "Error: name field is empty (\"\") in package.json"
+let parse_require_field ~field_name json =
+  match Util.member field_name json with
+  | `String "" ->
+    Error
+      (Format.asprintf
+         "Error: %s field is empty (\"\") in package.json"
+         field_name)
   | `String s -> Ok s
-  | `Null -> Error "Error: No name field in package.json"
-  | _ -> Error "Error: Invalid name field in package.json"
+  | `Null ->
+    Error (Format.asprintf "Error: No %s field in package.json" field_name)
+  | _ ->
+    Error (Format.asprintf "Error: Invalid %s field in package.json" field_name)
 
 
 let parse_sem_ver version =
@@ -130,30 +136,6 @@ let parse_version json =
     | _ -> Error "Error: Invalid version field in package.json"
   in
   parse_sem_ver version
-
-
-let parse_author json =
-  match Util.member "author" json with
-  | `String "" -> Error "Error: author field is empty (\"\") in package.json"
-  | `String s -> Ok s
-  | `Null -> Error "Error: No author field in package.json"
-  | _ -> Error "Error: Invalid author field in package.json"
-
-
-let parse_main json =
-  match Util.member "main" json with
-  | `String "" -> Error "Error: main field is empty (\"\") in package.json"
-  | `String s -> Ok s
-  | `Null -> Error "Error: No main field in package.json"
-  | _ -> Error "Error: Invalid main field in package.json"
-
-
-let parse_license json =
-  match Util.member "license" json with
-  | `String "" -> Error "Error: license field is empty (\"\") in package.json"
-  | `String s -> Ok s
-  | `Null -> Error "Error: No license field in package.json"
-  | _ -> Error "Error: Invalid license field in package.json"
 
 
 let parse_description json =
@@ -265,12 +247,12 @@ let parse_bugs json =
 
 let read_from_json ~project_root ~ligo_manifest_path json =
   (* Required fields *)
-  let* name = parse_name json in
+  let* name = parse_require_field ~field_name:"name" json in
   let* version = parse_version json in
-  let* author = parse_author json in
+  let* author = parse_require_field ~field_name:"author" json in
   let* repository = parse_repository json in
-  let* main = parse_main json in
-  let* license = parse_license json in
+  let* main = parse_require_field ~field_name:"main" json in
+  let* license = parse_require_field ~field_name:"license" json in
   let* bugs = parse_bugs json in
   (* Optional fields *)
   let* type_ = parse_type json in
