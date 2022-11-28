@@ -8,12 +8,12 @@ import Link from '@docusaurus/Link';
 
 
 Any programming language that aims to make collaboration easier needs
-a way to distribute (and consume) it's reusable modules. LIGO provides
-first-class support for such distributable units (ie. packages).
+a way to distribute (and consume) its reusable modules. LIGO provides
+first-class support for such distributable units (i.e. packages).
 
 ## Packages
 
-Reusable modules that developers intend to share with other can be
+Reusable modules that developers intend to share with others can be
 distributed as packages by placing a `package.json` (a manifest file)
 next to their Ligo modules.
 
@@ -45,12 +45,12 @@ by simply placing a manifest file, `package.json` over there.
 
 ## LIGO registry
 
-The [LIGO registry](https://packages.ligolang.org/) is used to host LIGO packages. The LIGO registry contains the contracts/libraries along with it's metadata. The packages which reside on the LIGO registry can be installed using the `ligo install` command. 
+The [LIGO registry](https://packages.ligolang.org/) is used to host LIGO packages. The LIGO registry contains the contracts/libraries along with their metadata. The packages which reside on the LIGO registry can be installed using the `ligo install` command. 
 
 ## Consuming
 
 To fetch (download) & maintain different versions of external libraries we need a package manager.
-LIGO libraries can be published to [LIGO's own registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
+LIGO libraries can be published to [LIGO's registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
 Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
 
 Pre-requites: 
@@ -58,7 +58,7 @@ Pre-requites:
 
 ### Workflow
 
-Start with empty `package.json` file
+Start with an empty `package.json` file
 
 ```json
 {}
@@ -66,13 +66,13 @@ Start with empty `package.json` file
 
 We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
 
-Next we will use a simple dependency `ligo-list-helper` published on LIGO registry. To download & install the library, run,
+Next, we will use a simple dependency `ligo-list-helper` published on the LIGO registry. To download & install the library, run,
 
 ```bash
 ligo install ligo-list-helpers
 ```
 
-Now we will write a smart contract `main.mligo` which will use the `ligo-list-herpers` library
+Now we will write a smart contract `main.mligo` which will use the `ligo-list-helpers` library
 
 ```cameligo skip
 #import "ligo-list-helpers/list.mligo" "XList"
@@ -138,7 +138,7 @@ If you working with an existing LIGO project, to install the dependencies, at th
 ligo install
 ```
 
-### Upgrading version of a LIGO package
+### Upgrading the version of a LIGO package
 
 During the lifecycle of a project, if you wish to upgrade the version of a LIGO package, 
 Just update the package version to the desired one in the `package.json`.
@@ -163,8 +163,7 @@ ligo install
 ```
 <br/>
 
-This will fetch the updated version of LIGO package, and the compiler will use the updated
-version of the package.
+This will fetch the updated version of the LIGO package, and the compiler will use the updated version of the package.
 
 ### Using a LIGO package via REPL
 
@@ -190,10 +189,10 @@ In  [4]:
 
 ## Packaging
 
-Packages are code units that cna be shared with other developers. Therefore,
+Packages are code units that can be shared with other developers. Therefore,
 authors must provide useful metadata, both for other programmers in
-the community as well as LIGO toolchain, to understand the package's
-contents, it's version and other useful information.
+the community as well as the LIGO toolchain, to understand the package's
+contents, its version, and other useful information.
 
 ### Adding package metadata (LIGO manifest)
 
@@ -207,27 +206,27 @@ The structure of a LIGO manifest is as follows,
 
 - **`name`** : Name of the package.
 - **`version`** : Version of the package (Should be a valid [sem-ver](https://semver.org/)).
-- **`main`** : Main file of the package, Ideally this file should export all the functionality that the package provides.
+- **`main`** : The main file of the package, Ideally this file should export all the functionality that the package provides.
 - **`author`** : Author of the package.
 - **`license`** : A valid SPDX license identifier. 
 - **`repository`** : The place where the LIGO code is hosted (remote repository),
 The `repository` field follows a [structure same as npm](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#repository).
-- **`bugs`** : The url to your project's issue tracker and / or the email address to which issues should be reported.
+- **`bugs`** : The url to your project's issue tracker and/or the email address to which issues should be reported.
 The `bugs` fields follows a [structure same as npm](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#bugs).
 
 - **`type`** : The `type` field can be one of `library` or `contract`, If the field is ommited default value of `type` is `library`
-- **`storage_fn`** : In the case when `type` is `contract`, the name of function which provides provides initial storage needs to be provided.
+- **`storage_fn`** : In the case when `type` is `contract`, the name of the function which provides initial storage needs to be provided.
 - **`storage_arg`** : In the case when `type` is `contract`, an expression that is a parameter to the `storage_fn` needs to be provided.
 
 #### Optional fields:
 
-- **`description`** : A brief description about the package.
-- **`readme`** : Some readme text, if this field is ommited the contents of README.md or README will be used in its place.
-- **`dependencies`** : A object (key-value pairs) of dependencies of the package where key is a `package_name` and value is a `package_version` 
+- **`description`** : A brief description of the package.
+- **`readme`** : Some readme text, if this field is omitted the contents of README.md or README will be used in its place.
+- **`dependencies`** : A object (key-value pairs) of dependencies of the package where key is a `package_name` and the value is a `package_version` 
 - **`dev_dependencies`** : A object (key-value pairs) of dev_dependencies of the package where key is a `package_name` and value is a `package_version` 
 
 
-Sample LIGO manifest (`package.json`) with the some of the above information:
+Sample LIGO manifest (`package.json`) with some of the above information:
 
 ```json
 {
@@ -255,10 +254,10 @@ Sample LIGO manifest (`package.json`) with the some of the above information:
 
 #### Ignore some files or directories while packaging using .ligoignore
 
-You can specify some file or directories which you want to keep out of the LIGO package (keys, deploymet scripts, etc.) in a `.ligoignore` file.
-`.ligoignore` file is similar to a `.gitignore` file (you can specify glob paterns of files or directories you would like to ignore) 
+You can specify some files or directories which you want to keep out of the LIGO package (keys, deployment scripts, etc.) in a `.ligoignore` file.
+`.ligoignore` file is similar to a `.gitignore` file (you can specify glob patterns of files or directories you would like to ignore) 
 
-### Creating and publishing packages to LIGO registry
+### Creating and publishing packages to the LIGO registry
 
 We are going the write the `ligo-list-helpers` library that we used earlier.
 
@@ -302,7 +301,7 @@ ligo run test list.test.mligo
 
 ### Logging in
 
-Before publishing, registry server needs to authenticate the user to avoid abuse. To login,
+Before publishing, the registry server needs to authenticate the user to avoid abuse. To login,
 
 ```bash
 ligo login
@@ -315,7 +314,7 @@ ligo add-user
 ```
 This would create a `.ligorc` in the home directory.
 
-> Note: By default LIGO  creates the rc file (`.ligorc`) in the home directory.
+> Note: By default, LIGO  creates the rc file (`.ligorc`) in the home directory.
 
 ### Publishing
 
@@ -351,14 +350,14 @@ ligo compile contract main.mligo --project-root PATH
 
 By default LIGO CLI will publish & install packages from the [LIGO registry](https://packages.ligolang.org/).
 
-If you wish to specify a different registry e.g. LIGO beta registry you can do do by using the `--registry` option e.g.
+If you wish to specify a different registry e.g. LIGO beta registry you can do so by using the `--registry` option e.g.
 
 ```bash
 ligo compile contract main.mligo --registry URL
 ```
 <br/>
 
-> Note: In order to point the LIGO CLI to the beta registry use https://packages.ligolang.org/-/api/ as the URL
+> Note: To point the LIGO CLI to the beta registry use https://packages.ligolang.org/-/api/ as the URL
 > 
 > ```bash
 > ligo install --registry https://packages.ligolang.org/-/api/
@@ -379,32 +378,32 @@ ligo publish --ligorc-path ./.ligorc
 ```
 <br/>
 
-> Note: Using `ligo login` a users can log into multiple registries e.g. LIGO registry, LIGO beta registry, A new entry will be created in the `.ligorc` for stroing auth token each registy.  
+> Note: Using `ligo login` users can log into multiple registries e.g. LIGO registry, and the LIGO beta registry, A new entry will be created in the `.ligorc` for storing auth token of each registry.  
 
 ### --dry-run
 
-While using `ligo publish` if you don't want to actually make changes to the LIGO registry, you can use the `--dry-run` flag. e.g.
+While using `ligo publish` if you don't want to make changes to the LIGO registry, you can use the `--dry-run` flag. e.g.
 
 ```bash
 ligo publish --dry-run
 ```
 
-This will only display the report on command line what it would have done in the case of `ligo publish`.
+This will only display the report on the command line what it would have done in the case of `ligo publish`.
 
 
 ## Notes
 
 Note that,
 
-### 1. Are packages written different syntaxes interoperable?
+### 1. Are packages written in different syntaxes interoperable?
 
 References made to cameligo are only for illustrative purposes. Any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
 
-### 2. What happen if there is a main function in a .mligo file of a package?
+### 2. What happens if there is a main function in a .mligo file of a package?
     
 Depends on how it is called.
 
-If it is not used, it won't appear in the final michelson - only the used parts from the library will be compiled.
+If it is not used, it won't appear in the final Michelson - only the used parts from the library will be compiled.
 
 As an example, consider,
 
@@ -430,4 +429,4 @@ let test =
 ```
 <br/>
 
-In this case main function will be used in tests.
+In this case, main function will be used in tests.
