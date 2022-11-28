@@ -90,79 +90,65 @@ let does_command_exist (cmd : string) =
 
 let makeCommand cmd =
   let open Caml in
+  (* Looks up $env:PATH for the command *)
+  let resolve_npm_command cmd =
+    let pathVars =
+      Ligo_unix.environment ()
+      |> Array.to_list
+      |> List.filter_map (fun e -> match Str.split (Str.regexp "=") e with
+                                    | k::v::_rest -> Some (k, v)
+                                    | _ -> None)
+      |> List.filter (fun e  -> match e with
+                                | (k, _) -> (String.lowercase_ascii k) = "path"
+                                | _ -> false)
+    in
+    let path_sep = match Sys.unix with
+            | true  -> ":"
+            | false  -> ";"
+    in
+    let path_sep_regexp = Str.regexp path_sep in
+    let v =
+      List.fold_right (fun e acc  ->
+          let (_,v) = e in
+          acc ^ path_sep ^ v) pathVars ""
+    in
+    let paths = Str.split path_sep_regexp v in
+    let npmPaths =
+      List.filter
+        (fun path  ->
+           Sys.file_exists
+             (Filename.concat path (sprintf ("%s.cmd") cmd))) paths
+    in
+    (match npmPaths with
+     | [] ->
+         (fprintf stderr "No %s bin path found" cmd;
+          exit (-1))
+     | h::_ ->
+         Filename.concat h (sprintf "%s.cmd" cmd))
+  in
   match Sys.unix with
-  | true  -> cmd
-  | false  ->
-      let pathVars =
-        Ligo_unix.environment ()
-        |> Array.to_list
-        |> List.filter_map
-                (fun e  -> match Str.split (Str.regexp "=") e with
-                           | k::v::_rest -> Some (k, v)
-                           | _ -> None)
-        |> List.filter (fun e  ->
-               match e with
-               | Some (k,_) -> (String.lowercase_ascii k) = "path"
-               | _ -> false)
-        |> List.map (function
-              | Some x -> x
-              | None  -> ("", ""))
-      in
-      let v =
-        List.fold_right
-          (fun e  ->
-             fun acc  ->
-               let (_,v) = e in
-               acc ^
-                 ((match Sys.unix with
-                   | true  -> ((":")[@reason.raw_literal ":"])
-                   | false  -> ((";")[@reason.raw_literal ";"])) ^ v))
-          pathVars "" in
-      let paths =
-        Str.split
-          (Str.regexp
-             (match Sys.unix with
-              | true  -> ((":")[@reason.raw_literal ":"])
-              | false  -> ((";")[@reason.raw_literal ";"]))) v in
-      let npmPaths =
-        List.filter
-          (fun path  ->
-             Sys.file_exists
-               (Filename.concat path
-                  (sprintf (("%s.cmd")[@reason.raw_literal "%s.cmd"]) cmd)))
-          paths in
-      (match npmPaths with
-       | [] ->
-           (fprintf stderr
-              (("No %s bin path found")[@reason.raw_literal
-                                         "No %s bin path found"]) cmd;
-            exit (-1))
-       | h::_ ->
-           Filename.concat h
-             (sprintf (("%s.cmd")[@reason.raw_literal "%s.cmd"]) cmd))
+  | true -> cmd
+  | false -> resolve_npm_command cmd
 
 let run ?env  c args =
   let open Ligo_unix in
   let env_vars =
     match env with
-    | ((Some (v))[@explicit_arity ]) -> v
+    | Some v -> v
     | None  -> Ligo_unix.environment () in
   let pid =
     Ligo_unix.create_process_env c (Array.append [|c|] args) env_vars stdin stdout
       stderr in
   match Ligo_unix.waitpid [] pid with
-  | (_,((WEXITED (c))[@explicit_arity ])) -> c
-  | (_,((WSIGNALED (c))[@explicit_arity ])) -> c
-  | (_,((WSTOPPED (c))[@explicit_arity ])) -> c
+  | (_, WEXITED c) -> c
+  | (_, WSIGNALED c) -> c
+  | (_, WSTOPPED c) -> c
 
 let run ?env cmd args =
   let exitCode = run ?env cmd args in
   if exitCode <> 0
   then
-    (printf
-       (("%s failed. Exit code relayed to the shell\n Exiting with (%d)...\n")
-       [@reason.raw_literal
-         "%s failed. Exit code relayed to the shell\\n Exiting with (%d)...\\n"])
+    (printf "%s failed. Exit code relayed to the shell\n Exiting with (%d)...\n"
        cmd exitCode)
 
 (* Runs a commands in a separate process *)
