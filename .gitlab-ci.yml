@@ -55,9 +55,9 @@ esy-windows:
     - esy i
     - bash -c "esy release || esy release || esy release"
     - rm -Recurse -Force _esy
-    - cp *.dll _release/bin/
+    - cp ./windows-installer/*.dll _release/bin/
     - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./_release
-    - cp ./WindowsInstaller.nsi _release
+    - cp ./windows-installer/WindowsInstaller.nsi _release
     - cd _release; makensis .\WindowsInstaller.nsi
     - cd .. ; mv _release platform-windows-x64
   artifacts:
