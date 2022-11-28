@@ -97,7 +97,22 @@
           }
         }
       },
-      "@opam/tezos-hacl": "./vendors/tezos-ligo",
+      "@opam/tezos-hacl": {
+        "source": "./vendors/tezos-ligo",
+        "override": {
+          "build": [
+            "rm -rf vendors",
+            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tezos-hacl"
+          ],
+          "buildEnvOverride": {
+            "LD_LIBRARY_PATH": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH}",
+            "DYLD_LIBRARY_PATH": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH}"
+          },
+          "dependencies": {
+            "@opam/hacl-star-raw": "*"
+          }
+        }
+      },
       "@opam/tezos-lwt-result-stdlib": "./vendors/tezos-ligo",
       "@opam/tezos-micheline": "./vendors/tezos-ligo",
       "@opam/tezos-mockup": "./vendors/tezos-ligo",
@@ -106,7 +121,6 @@
       "@opam/tezos-mockup-registration": "./vendors/tezos-ligo",
       "@opam/tezos-p2p": "./vendors/tezos-ligo",
       "@opam/tezos-p2p-services": "./vendors/tezos-ligo",
-
       "@opam/tezos-protocol-015-PtLimaPt": {
         "source": "./vendors/tezos-ligo",
         "override": {
@@ -137,7 +151,6 @@
           ]
         }
       },
-
       "@opam/octez-protocol-compiler": "./vendors/tezos-ligo",
       "see-if-its-useful-later-@opam/octez-protocol-compiler": {
         "source": "./vendors/tezos-ligo/src/lib_protocol_compiler/tezos-protocol-compiler.opam",

@@ -1,5 +1,5 @@
 {
-  "checksum": "a8f585e46d6dfba78537aac73820083d",
+  "checksum": "7bc5bd32c37dee2b5b1015cc85d2ce22",
   "root": "ligo@link-dev:./ligo.opam",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
@@ -46,7 +46,7 @@
         "@opam/tezos-rust-libs@opam:1.2@a5f75439",
         "@opam/tezos-plonk@opam:0.1.3@89e34ecc",
         "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91",
         "@opam/tezos-crypto@path:vendors/tezos-ligo@ac44ca2e",
         "@opam/tezos-client-015-PtLimaPt@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-client-014-PtKathma@path:vendors/tezos-ligo@d41d8cd9",
@@ -1825,15 +1825,29 @@
         "@opam/dune@opam:3.4.1@3f2f99f0"
       ]
     },
-    "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9": {
-      "id": "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9",
+    "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91": {
+      "id": "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91",
       "name": "@opam/tezos-hacl",
       "version": "path:vendors/tezos-ligo",
       "source": {
         "type": "install",
         "source": [ "path:vendors/tezos-ligo" ]
       },
-      "overrides": [],
+      "overrides": [
+        {
+          "build": [
+            "rm -rf vendors",
+            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tezos-hacl"
+          ],
+          "buildEnvOverride": {
+            "LD_LIBRARY_PATH":
+              "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH}",
+            "DYLD_LIBRARY_PATH":
+              "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH}"
+          },
+          "dependencies": { "@opam/hacl-star-raw": "*" }
+        }
+      ],
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/hacl-star-raw@opam:0.4.1@20994502",
         "@opam/hacl-star@opam:0.4.1@9d446625",
@@ -1959,7 +1973,7 @@
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-lwt-result-stdlib@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
         "@opam/secp256k1-internal@git:https://gitlab.com/nomadic-labs/ocaml-secp256k1-internal:secp256k1-internal.opam#18012dcbe3169d51a2b2d6e991150a9a02a85494@d41d8cd9",
         "@opam/ringo@opam:0.9@e47e0ec5", "@opam/lwt@opam:5.6.0@4f1604a8",
@@ -1975,7 +1989,7 @@
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-lwt-result-stdlib@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
         "@opam/secp256k1-internal@git:https://gitlab.com/nomadic-labs/ocaml-secp256k1-internal:secp256k1-internal.opam#18012dcbe3169d51a2b2d6e991150a9a02a85494@d41d8cd9",
         "@opam/ringo@opam:0.9@e47e0ec5", "@opam/lwt@opam:5.6.0@4f1604a8",
@@ -2312,7 +2326,7 @@
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91",
         "@opam/tezos-event-logging@path:vendors/tezos-ligo@0ab68e7a",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
         "@opam/tezos-crypto@path:vendors/tezos-ligo@ac44ca2e",
@@ -2329,7 +2343,7 @@
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-hacl@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-hacl@path:vendors/tezos-ligo@1a2add91",
         "@opam/tezos-event-logging@path:vendors/tezos-ligo@0ab68e7a",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
         "@opam/tezos-crypto@path:vendors/tezos-ligo@ac44ca2e",
