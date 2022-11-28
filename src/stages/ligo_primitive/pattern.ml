@@ -38,8 +38,7 @@ module Make (Container : Container) = struct
     | P_tuple of 'ty_exp t list
     | P_record of 'ty_exp t Container.t
 
-  and 't t = 't pattern_repr Location.wrap
-  [@@deriving eq, compare, yojson, hash]
+  and 't t = 't pattern_repr Location.wrap [@@deriving eq, compare, yojson, hash]
 
   let var : ?loc:Location.t -> 'ty Binder.t -> 'ty t =
    fun ?loc b -> Location.wrap ?loc (P_var b)
@@ -66,11 +65,7 @@ module Make (Container : Container) = struct
     match pl with
     | Cons (pl, pr) -> Format.fprintf ppf "%a::%a" mpp pl mpp pr
     | List pl ->
-      Format.fprintf
-        ppf
-        "[%a]"
-        Simple_utils.PP_helpers.(list_sep mpp (tag " ; "))
-        pl
+      Format.fprintf ppf "[%a]" Simple_utils.PP_helpers.(list_sep mpp (tag " ; ")) pl
 
 
   and pp type_expression ppf p =
@@ -87,9 +82,7 @@ module Make (Container : Container) = struct
         Simple_utils.PP_helpers.(list_sep (pp type_expression) (tag ","))
         pl
     | P_record lps ->
-      let aux ppf (l, p) =
-        fprintf ppf "%a = %a" Label.pp l (pp type_expression) p
-      in
+      let aux ppf (l, p) = fprintf ppf "%a = %a" Label.pp l (pp type_expression) p in
       fprintf
         ppf
         "{ %a }"
@@ -125,9 +118,7 @@ module Make (Container : Container) = struct
     | P_record lps -> Container.fold ~f:(fold_pattern f) ~init:acc lps
 
 
-  let rec fold_map_pattern
-      : ('a -> 'b t -> 'a * 'c t) -> 'a -> 'b t -> 'a * 'c t
-    =
+  let rec fold_map_pattern : ('a -> 'b t -> 'a * 'c t) -> 'a -> 'b t -> 'a * 'c t =
    fun f acc p ->
     let loc = Location.get_location p in
     match Location.unwrap p with

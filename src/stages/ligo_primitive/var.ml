@@ -33,8 +33,7 @@ module Internal () = struct
       ; counter : int
       ; generated : bool
       ; location :
-          (Location.t
-          [@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
+          (Location.t[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
       }
     [@@deriving equal, compare, yojson, hash, sexp]
   end
@@ -62,10 +61,7 @@ module Internal () = struct
 
 
   let exists_prefix = "^gen"
-
-  let fresh_exists ?(loc = Location.dummy) () =
-    fresh ~loc ~name:exists_prefix ()
-
+  let fresh_exists ?(loc = Location.dummy) () = fresh ~loc ~name:exists_prefix ()
 
   (* should be removed in favor of a lift pass before ast_imperative *)
   let of_input_var ?(loc = Location.dummy) name =
@@ -106,10 +102,7 @@ module Internal () = struct
 
 
   let _pp ppf v = Format.fprintf ppf "%s#%d" v.name v.counter
-
-  let wildcard =
-    { name = "_"; counter = 0; location = Location.dummy; generated = false }
-
+  let wildcard = { name = "_"; counter = 0; location = Location.dummy; generated = false }
 
   include Comparable.Make (T)
 end

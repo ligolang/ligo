@@ -1,10 +1,7 @@
-type 'a t = ('a * 'a) list
-[@@deriving eq, compare, yojson, hash, sexp, map, fold]
+type 'a t = ('a * 'a) list [@@deriving eq, compare, yojson, hash, sexp, map, fold]
 
 let pp' str f ppf m =
-  let assoc ppf : 'a * 'a -> unit =
-   fun (a, b) -> Format.fprintf ppf "%a -> %a" f a f b
-  in
+  let assoc ppf : 'a * 'a -> unit = fun (a, b) -> Format.fprintf ppf "%a -> %a" f a f b in
   Format.fprintf ppf "%s[%a]" str Simple_utils.PP_helpers.(list_sep_d assoc) m
 
 

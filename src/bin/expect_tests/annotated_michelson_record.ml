@@ -1,12 +1,18 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
+let contract basename = "../../test/contracts/" ^ basename
 
 (*COMB*)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_comb.mligo" ; "--entry-point" ; "main_comb_two" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ; "--entry-point"
+    ; "main_comb_two"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -42,8 +48,15 @@ let%expect_test _ =
              { parameter unit ;
                storage (pair (int %anbfoo) (string %anabar)) ;
                code { CDR ; DUP ; CAR ; UPDATE 1 ; NIL operation ; PAIR } } |}];
-  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_comb.mligo" ; "--entry-point" ; "main_comb_three" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ; "--entry-point"
+    ; "main_comb_three"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -85,8 +98,15 @@ let%expect_test _ =
              PAIR 3 ;
              NIL operation ;
              PAIR } } |}];
-  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_comb.mligo" ; "--entry-point" ; "main_comb_five" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ; "--entry-point"
+    ; "main_comb_five"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -125,8 +145,17 @@ let%expect_test _ =
       code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_record_comb.mligo" ; "()" ; "{ foo = 2 ; bar = \"bar\" }" ; "-e" ; "main_comb_two" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ; "()"
+    ; "{ foo = 2 ; bar = \"bar\" }"
+    ; "-e"
+    ; "main_comb_two"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -160,8 +189,17 @@ let%expect_test _ =
     Hint: replace it by "_action" to prevent this warning.
 
     ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
-  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_record_comb.mligo" ; "()" ; "{ a = 2 ; b = \"\" ; c = 1n }" ; "-e" ; "main_comb_three" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ; "()"
+    ; "{ a = 2 ; b = \"\" ; c = 1n }"
+    ; "-e"
+    ; "main_comb_three"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -195,8 +233,17 @@ let%expect_test _ =
     Hint: replace it by "_action" to prevent this warning.
 
     ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
-  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_record_comb.mligo" ; "()" ; "{ one = 1 ; two = \"\" ; three = true ; four = 2n ; five = 1 }" ; "-e" ; "main_comb_five" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ; "()"
+    ; "{ one = 1 ; two = \"\" ; three = true ; four = 2n ; five = 1 }"
+    ; "-e"
+    ; "main_comb_five"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -234,8 +281,15 @@ let%expect_test _ =
 
 (*TREE*)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_tree.mligo" ; "--entry-point" ; "main_comb_two" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "annotated_michelson_record_tree.mligo"
+    ; "--entry-point"
+    ; "main_comb_two"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -271,8 +325,15 @@ let%expect_test _ =
              { parameter unit ;
                storage (pair (string %anbar) (int %anfoo)) ;
                code { CDR ; NIL operation ; PAIR } } |}];
-  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_tree.mligo" ; "--entry-point" ; "main_comb_three" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "annotated_michelson_record_tree.mligo"
+    ; "--entry-point"
+    ; "main_comb_three"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -315,8 +376,15 @@ let%expect_test _ =
                       PAIR ;
                       NIL operation ;
                       PAIR } } |}];
-  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_tree.mligo" ; "--entry-point" ; "main_comb_five" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "annotated_michelson_record_tree.mligo"
+    ; "--entry-point"
+    ; "main_comb_five"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -356,8 +424,17 @@ let%expect_test _ =
                code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_record_tree.mligo" ; "()" ; "{ foo = 2 ; bar = \"bar\" }" ; "-e" ; "main_comb_two"  ] ;
-  [%expect {|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "annotated_michelson_record_tree.mligo"
+    ; "()"
+    ; "{ foo = 2 ; bar = \"bar\" }"
+    ; "-e"
+    ; "main_comb_two"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -391,8 +468,17 @@ let%expect_test _ =
              Hint: replace it by "_action" to prevent this warning.
 
              ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
-  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_record_tree.mligo" ; "()" ; "{ a = 2 ; b = \"\" ; c = 1n }" ; "-e" ; "main_comb_three" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "annotated_michelson_record_tree.mligo"
+    ; "()"
+    ; "{ a = 2 ; b = \"\" ; c = 1n }"
+    ; "-e"
+    ; "main_comb_three"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -426,8 +512,17 @@ let%expect_test _ =
              Hint: replace it by "_action" to prevent this warning.
 
              ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
-  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_record_tree.mligo" ; "()" ; "{ one = 1 ; two = \"\" ; three = true ; four = 2n ; five = 1 }" ; "-e" ; "main_comb_five" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "annotated_michelson_record_tree.mligo"
+    ; "()"
+    ; "{ one = 1 ; two = \"\" ; three = true ; four = 2n ; five = 1 }"
+    ; "-e"
+    ; "main_comb_five"
+    ];
+  [%expect
+    {|
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
@@ -464,5 +559,11 @@ let%expect_test _ =
                record[five -> 1 , four -> +2 , one -> 1 , three -> True(unit) , two -> ""] ) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "interpret" ; "accesses " ; "--init-file" ; (contract "annotated_michelson_record_comb.mligo") ] ;
-  [%expect{| ( 1 , "" , True(unit) , +1 , 2 ) |}]
+  run_ligo_good
+    [ "run"
+    ; "interpret"
+    ; "accesses "
+    ; "--init-file"
+    ; contract "annotated_michelson_record_comb.mligo"
+    ];
+  [%expect {| ( 1 , "" , True(unit) , +1 , 2 ) |}]

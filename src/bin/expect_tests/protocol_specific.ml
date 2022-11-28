@@ -1,14 +1,12 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
-
-let bad_contract basename =
-  "../../test/contracts/negative/" ^ basename
+let contract basename = "../../test/contracts/" ^ basename
+let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "protocol_dalphanet.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "protocol_dalphanet.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/protocol_dalphanet.mligo", line 12, characters 13-14:
      11 |
      12 | let main (p, s : bls_l * bool) : operation list * bool =
@@ -19,11 +17,17 @@ let%expect_test _ =
 
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
-      code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] 
-      
+      code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}]
+
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "sapling.mligo"
+    ; "--disable-michelson-typechecking"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/sapling.mligo", line 8, characters 14-19:
       7 |
       8 | let main (tr, store : parameter * storage) : return =
@@ -43,21 +47,24 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "rollup.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "rollup.mligo" ];
+  [%expect
+    {|
     { parameter tx_rollup_l2_address ;
       storage unit ;
-      code { DROP ; PUSH string "roll up !" ; FAILWITH } } |}] ;
-
-  run_ligo_good [ "compile" ; "contract" ; contract "min_block_time.mligo" ] ;
-  [%expect{|
+      code { DROP ; PUSH string "roll up !" ; FAILWITH } } |}];
+  run_ligo_good [ "compile"; "contract"; contract "min_block_time.mligo" ];
+  [%expect
+    {|
     { parameter unit ;
       storage nat ;
       code { DROP ; MIN_BLOCK_TIME ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "emit.mligo" ; "--protocol" ; "kathmandu" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "compile"; "contract"; contract "emit.mligo"; "--protocol"; "kathmandu" ];
+  [%expect
+    {|
     { parameter (pair int int) ;
       storage unit ;
       code { CAR ;
@@ -70,10 +77,11 @@ let%expect_test _ =
              DIG 2 ;
              EMIT %foo (pair int int) ;
              CONS ;
-             PAIR } } |}] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "emit.mligo" ; "--protocol" ; "kathmandu" ] ;
-  [%expect{|
+             PAIR } } |}];
+  run_ligo_bad
+    [ "compile"; "contract"; bad_contract "emit.mligo"; "--protocol"; "kathmandu" ];
+  [%expect
+    {|
     File "../../test/contracts/negative/emit.mligo", line 3, characters 3-18:
       2 |   let x = "%lol" in
       3 |   [Tezos.emit x 12],x

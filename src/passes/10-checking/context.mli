@@ -101,16 +101,8 @@ type _ exit =
 
 val drop_until : 'a -> on_exit:'a exit -> pos:pos -> 'a * Substitution.t
 val unlock : 'a -> on_exit:'a exit -> lock:mut_lock -> 'a * Substitution.t
-
-val get_record
-  :  t
-  -> Type.row_element Record.t
-  -> (Type_var.t option * Type.row) option
-
-val get_sum
-  :  t
-  -> Label.t
-  -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
+val get_record : t -> Type.row_element Record.t -> (Type_var.t option * Type.row) option
+val get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
 
 module Well_formed : sig
   val context : t -> bool

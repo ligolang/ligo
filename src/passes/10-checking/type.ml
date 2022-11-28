@@ -7,11 +7,8 @@ type meta = Ast_core.type_expression option [@@deriving yojson]
 type t =
   { content : content
   ; meta : (meta[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
-  ; orig_var :
-      (Type_var.t option[@equal.ignore] [@compare.ignore] [@hash.ignore])
-  ; location :
-      (Location.t
-      [@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
+  ; orig_var : (Type_var.t option[@equal.ignore] [@compare.ignore] [@hash.ignore])
+  ; location : (Location.t[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
   }
 
 and content =
@@ -34,8 +31,7 @@ and content =
           ; ("get", fun x -> x.content)
           ]
       ; wrap_constructor =
-          ( "content"
-          , fun type_content ?loc ?meta () -> make_t ?loc type_content meta )
+          ("content", fun type_content ?loc ?meta () -> make_t ?loc type_content meta)
       ; wrap_get = "content", get
       ; default_get = `Option
       }]
@@ -66,8 +62,7 @@ let rec free_vars t =
   match t.content with
   | T_variable tvar -> Set.singleton tvar
   | T_exists _ -> Set.empty
-  | T_construct { parameters; _ } ->
-    parameters |> List.map ~f:free_vars |> Set.union_list
+  | T_construct { parameters; _ } -> parameters |> List.map ~f:free_vars |> Set.union_list
   | T_sum row | T_record row -> free_vars_row row
   | T_arrow arr -> arr |> Arrow.map free_vars |> Arrow.fold Set.union Set.empty
   | T_for_all abs | T_abstraction abs ->
@@ -88,8 +83,7 @@ let rec orig_vars t =
   @@
   match t.content with
   | T_variable _ | T_exists _ | T_singleton _ -> Set.empty
-  | T_construct { parameters; _ } ->
-    parameters |> List.map ~f:orig_vars |> Set.union_list
+  | T_construct { parameters; _ } -> parameters |> List.map ~f:orig_vars |> Set.union_list
   | T_sum row | T_record row -> orig_vars_row row
   | T_arrow arr -> arr |> Arrow.map orig_vars |> Arrow.fold Set.union Set.empty
   | T_for_all abs | T_abstraction abs ->
@@ -148,9 +142,7 @@ and subst_abstraction
     ~type_:type_'
     : _ Abstraction.t
   =
-  let subst t =
-    subst t ~free_vars:(Set.add free_vars ty_binder) ~tvar ~type_:type_'
-  in
+  let subst t = subst t ~free_vars:(Set.add free_vars ty_binder) ~tvar ~type_:type_' in
   if Type_var.(tvar = ty_binder)
   then { ty_binder; kind; type_ }
   else if Set.mem free_vars ty_binder
@@ -162,9 +154,7 @@ and subst_abstraction
 
 
 and subst_row ?(free_vars = Type_var.Set.empty) { fields; layout } ~tvar ~type_ =
-  { fields = Record.map fields ~f:(subst_row_elem ~free_vars ~tvar ~type_)
-  ; layout
-  }
+  { fields = Record.map fields ~f:(subst_row_elem ~free_vars ~tvar ~type_); layout }
 
 
 and subst_row_elem ?(free_vars = Type_var.Set.empty) row_elem ~tvar ~type_ =
@@ -225,8 +215,7 @@ let t_construct constructor parameters ?loc ?meta () : t =
     meta
 
 
-let t__type_ ?loc ?meta () : t =
-  t_construct Literal_types._type_ [] ?loc ?meta ()
+let t__type_ ?loc ?meta () : t = t_construct Literal_types._type_ [] ?loc ?meta ()
   [@@map
     _type_
     , ( "signature"
@@ -260,17 +249,10 @@ let t__type_ ?loc ?meta () : t =
 
 let t_michelson_code = t_michelson_program
 
-let t__type_ t ?loc ?meta () : t =
-  t_construct ?loc ?meta Literal_types._type_ [ t ] ()
+let t__type_ t ?loc ?meta () : t = t_construct ?loc ?meta Literal_types._type_ [ t ] ()
   [@@map
     _type_
-    , ( "list"
-      , "set"
-      , "contract"
-      , "ticket"
-      , "sapling_state"
-      , "sapling_transaction"
-      , "gen" )]
+    , ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen")]
 
 
 let t__type_ t t' ?loc ?meta () : t =
@@ -300,10 +282,7 @@ let t_tuple ts ?loc ?meta () =
 
 let t_pair t1 t2 ?loc ?meta () = t_tuple [ t1; t2 ] ?loc ?meta ()
 let t_triplet t1 t2 t3 ?loc ?meta () = t_tuple [ t1; t2; t3 ] ?loc ?meta ()
-
-let t_sum_ez fields ?loc ?meta ?layout () =
-  t_sum ?loc ?meta (row_ez fields ?layout ()) ()
-
+let t_sum_ez fields ?loc ?meta ?layout () = t_sum ?loc ?meta (row_ez fields ?layout ()) ()
 
 let t_bool ?loc ?meta () =
   t_sum_ez ?loc ?meta [ "True", t_unit (); "False", t_unit () ] ()
@@ -349,11 +328,7 @@ let t_test_exec_error ?loc ?meta () =
 
 
 let t_test_exec_result ?loc ?meta () =
-  t_sum_ez
-    ?loc
-    ?meta
-    [ "Success", t_nat ?loc (); "Fail", t_test_exec_error ?loc () ]
-    ()
+  t_sum_ez ?loc ?meta [ "Success", t_nat ?loc (); "Fail", t_test_exec_error ?loc () ] ()
 
 
 let get_t_construct t constr =
@@ -377,13 +352,7 @@ let get_t_binary_construct t constr =
 
 let get_t__type_ t = get_t_unary_construct t Literal_types._type_
   [@@map
-    _type_
-    , ( "contract"
-      , "list"
-      , "set"
-      , "ticket"
-      , "sapling_state"
-      , "sapling_transaction" )]
+    _type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction")]
 
 
 let get_t__type_ t = get_t_binary_construct t Literal_types._type_
@@ -453,11 +422,7 @@ end = struct
 
 
   let exists_tbl = create ()
-
-  let is_used t name =
-    Hash_set.mem t.names name || Hash_set.mem exists_tbl.names name
-
-
+  let is_used t name = Hash_set.mem t.names name || Hash_set.mem exists_tbl.names name
   let incr_name_counter t = t.name_counter <- t.name_counter + 1
 
   let rec create_name t =
@@ -519,9 +484,7 @@ let pp_layout ppf layout =
 
 let pp_lmap_sep value sep ppf lmap =
   let lst = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lmap in
-  let new_pp ppf (k, v) =
-    Format.fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v
-  in
+  let new_pp ppf (k, v) = Format.fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v in
   Format.fprintf ppf "%a" (PP.list_sep new_pp sep) lst
 
 
@@ -539,28 +502,14 @@ let pp_tuple_sep value sep ppf m =
   Format.fprintf ppf "%a" (PP.list_sep new_pp sep) lst
 
 
-let pp_tuple_or_record_sep_t
-    value
-    format_record
-    sep_record
-    format_tuple
-    sep_tuple
-    ppf
-    m
-  =
+let pp_tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
   if Record.is_tuple m
   then Format.fprintf ppf format_tuple (pp_tuple_sep value (PP.tag sep_tuple)) m
-  else
-    Format.fprintf ppf format_record (pp_record_sep value (PP.tag sep_record)) m
+  else Format.fprintf ppf format_record (pp_record_sep value (PP.tag sep_record)) m
 
 
 let pp_tuple_or_record_sep_type value =
-  pp_tuple_or_record_sep_t
-    value
-    "@[<h>record[%a]@]"
-    " ,@ "
-    "@[<h>( %a )@]"
-    " *@ "
+  pp_tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
 
 let rec pp ~name_of_tvar ~name_of_exists ppf t =
@@ -574,8 +523,7 @@ let rec pp ~name_of_tvar ~name_of_exists ppf t =
     | T_variable tvar -> Format.fprintf ppf "%s" (name_of_tvar tvar)
     | T_exists tvar -> Format.fprintf ppf "^%s" (name_of_exists tvar)
     | T_arrow arr -> Arrow.pp pp ppf arr
-    | T_construct construct ->
-      pp_construct ~name_of_tvar ~name_of_exists ppf construct
+    | T_construct construct -> pp_construct ~name_of_tvar ~name_of_exists ppf construct
     | T_singleton lit -> Literal_value.pp ppf lit
     | T_abstraction abs -> pp_type_abs ~name_of_tvar ~name_of_exists ppf abs
     | T_for_all for_all -> pp_forall ~name_of_tvar ~name_of_exists ppf for_all
@@ -589,17 +537,11 @@ let rec pp ~name_of_tvar ~name_of_exists ppf t =
       Format.fprintf
         ppf
         "%a"
-        (pp_tuple_or_record_sep_type
-           (pp_row_elem ~name_of_tvar ~name_of_exists))
+        (pp_tuple_or_record_sep_type (pp_row_elem ~name_of_tvar ~name_of_exists))
         row.fields)
 
 
-and pp_construct
-    ~name_of_tvar
-    ~name_of_exists
-    ppf
-    { constructor; parameters; _ }
-  =
+and pp_construct ~name_of_tvar ~name_of_exists ppf { constructor; parameters; _ } =
   Format.fprintf
     ppf
     "%s%a"
@@ -650,8 +592,7 @@ and bool ppf : unit = Format.fprintf ppf "%a" Type_var.pp Literal_types.v_bool
 
 and option ~name_of_tvar ~name_of_exists ppf t : unit =
   match get_t_option t with
-  | Some t ->
-    Format.fprintf ppf "option (%a)" (pp ~name_of_tvar ~name_of_exists) t
+  | Some t -> Format.fprintf ppf "option (%a)" (pp ~name_of_tvar ~name_of_exists) t
   | None -> Format.fprintf ppf "option ('a)"
 
 

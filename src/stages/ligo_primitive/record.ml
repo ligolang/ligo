@@ -3,13 +3,9 @@ module LMap = struct
 
   let to_yojson f lmap =
     let lst =
-      List.sort
-        ~compare:(fun (a, _) (b, _) -> Label.compare a b)
-        (bindings lmap)
+      List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) (bindings lmap)
     in
-    let lst' =
-      List.fold_left ~f:(fun acc (Label k, v) -> (k, f v) :: acc) ~init:[] lst
-    in
+    let lst' = List.fold_left ~f:(fun acc (Label k, v) -> (k, f v) :: acc) ~init:[] lst in
     `Assoc lst'
 
 
@@ -51,8 +47,8 @@ let iter : 'a t -> f:('a -> unit) -> unit =
 
 let map : 'a t -> f:('a -> 'b) -> 'b t = fun record ~f -> LMap.map f record
 let of_list = LMap.of_list
-
 let find_opt = LMap.find_opt
+
 let is_tuple m =
   List.for_all ~f:(fun i -> LMap.mem i m) @@ Label.range 0 (LMap.cardinal m)
 
@@ -78,9 +74,7 @@ module PP = struct
 
   let record_sep_expr value sep ppf (m : 'a t) =
     let lst = LMap.to_kv_list m in
-    let lst =
-      List.dedup_and_sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lst
-    in
+    let lst = List.dedup_and_sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lst in
     let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v in
     fprintf ppf "%a" Simple_utils.PP_helpers.(list_sep new_pp sep) lst
 
@@ -94,14 +88,7 @@ module PP = struct
 
   (* Prints records which only contain the consecutive fields
     0..(cardinal-1) as tuples *)
-  let tuple_or_record_sep_expr
-      value
-      format_record
-      sep_record
-      format_tuple
-      sep_tuple
-      ppf
-      m
+  let tuple_or_record_sep_expr value format_record sep_record format_tuple sep_tuple ppf m
     =
     if is_tuple m
     then fprintf ppf format_tuple (tuple_sep_expr value (tag sep_tuple)) m
@@ -109,19 +96,10 @@ module PP = struct
 
 
   let tuple_or_record_sep_expr value =
-    tuple_or_record_sep_expr
-      value
-      "@[<hv 7>record[%a]@]"
-      " ,@ "
-      "@[<hv 2>( %a )@]"
-      " ,@ "
+    tuple_or_record_sep_expr value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
 end
 
 let pp f ppf r = Format.fprintf ppf "%a" (PP.tuple_or_record_sep_expr f) r
 
 let pp_tuple f ppf t =
-  Format.fprintf
-    ppf
-    "(@[<h>%a@])"
-    Simple_utils.PP_helpers.(list_sep f (tag " , "))
-    t
+  Format.fprintf ppf "(@[<h>%a@])" Simple_utils.PP_helpers.(list_sep f (tag " , ")) t

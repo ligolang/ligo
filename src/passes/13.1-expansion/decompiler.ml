@@ -9,7 +9,13 @@ very naive decompilation
 *)
 
 let default_attr : I.ValueAttr.t =
-  { inline = false; no_mutation = false; public = true; view = false; hidden = false; thunk = false }
+  { inline = false
+  ; no_mutation = false
+  ; public = true
+  ; view = false
+  ; hidden = false
+  ; thunk = false
+  }
 
 
 let rec decompile_expression : I.expression -> O.expression =
@@ -26,7 +32,10 @@ let rec decompile_expression : I.expression -> O.expression =
     let fields = Record.map fields ~f:O.Pattern.var in
     let let_binder = O.Pattern.record_pattern ~loc:exp.location fields in
     return (O.E_let_in { let_binder; rhs; let_result; attributes = default_attr })
-  | E_matching { matchee; cases = Match_variant { cases = [ { constructor; pattern; body } ]; tv } } ->
+  | E_matching
+      { matchee
+      ; cases = Match_variant { cases = [ { constructor; pattern; body } ]; tv }
+      } ->
     let rhs = self matchee in
     let let_result = self body in
     let let_binder =
@@ -36,16 +45,16 @@ let rec decompile_expression : I.expression -> O.expression =
     return (O.E_let_in { let_binder; rhs; let_result; attributes = default_attr })
   | E_matching { matchee; cases = Match_variant { cases; tv } } ->
     let matchee = self matchee in
-    let f = fun I.{constructor ; pattern ; body } ->
+    let f I.{ constructor; pattern; body } =
       let body = self body in
-      let pattern = 
+      let pattern =
         let v = O.Pattern.var (Binder.make pattern (I.get_sum_type tv constructor)) in
         O.Pattern.variant_pattern ~loc:exp.location (constructor, v)
       in
-      O.Match_expr.{pattern ; body}
+      O.Match_expr.{ pattern; body }
     in
     let cases = List.map ~f cases in
-    return (O.E_matching {matchee ; cases})
+    return (O.E_matching { matchee; cases })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_result = self let_result in

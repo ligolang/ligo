@@ -57,8 +57,7 @@ let%expect_test _ =
 let contract file = test ("top_level_patterns/negative/" ^ file)
 
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "pascaligo/nested_record.ligo" ];
+  run_ligo_bad [ "compile"; "contract"; contract "pascaligo/nested_record.ligo" ];
   [%expect
     {|
     File "../../test/contracts/top_level_patterns/negative/pascaligo/nested_record.ligo", line 10, character 6 to line 14, character 9:
