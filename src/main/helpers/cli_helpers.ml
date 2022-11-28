@@ -96,14 +96,10 @@ let makeCommand cmd =
       let pathVars =
         Ligo_unix.environment ()
         |> Array.to_list
-        |> List.map
-                (fun e  ->
-                   match Str.split
-                           (Str.regexp (("=")[@reason.raw_literal "="])) e
-                   with
-                   | k::v::_rest -> Some (k, v)
-                   | _ -> None)
-        |> List.filter_opt
+        |> List.filter_map
+                (fun e  -> match Str.split (Str.regexp "=") e with
+                           | k::v::_rest -> Some (k, v)
+                           | _ -> None)
         |> List.filter (fun e  ->
                match e with
                | Some (k,_) -> (String.lowercase_ascii k) = "path"
