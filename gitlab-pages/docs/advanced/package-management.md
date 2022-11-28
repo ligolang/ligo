@@ -253,9 +253,10 @@ Sample LIGO manifest (`package.json`) with the some of the above information:
 ```
 <br/>
 
+#### Ignore some files or directories while packaging using .ligoignore
 
-
-// TODO: metion .ligoignore here (maybe as a Note: similar to .gitingore or .npmignore)
+You can specify some file or directories which you want to keep out of the LIGO package (keys, deploymet scripts, etc.) in a `.ligoignore` file.
+`.ligoignore` file is similar to a `.gitignore` file (you can specify glob paterns of files or directories you would like to ignore) 
 
 ### Creating and publishing packages to LIGO registry
 
