@@ -55,7 +55,7 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp e.location
     | `Self_ast_aggregated_bad_format_entrypoint_ann (ep,loc) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint \"%s\". One of the following patterns is expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when no entrypoint is used."
+        "@[<hv>%a@.Invalid entrypoint \"%s\". One of the following patterns is expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when no entrypoint is used.@.Valid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%%' | '@' | '0' .. '9')."
         Snippet.pp loc
         ep
     | `Self_ast_aggregated_entrypoint_ann_not_literal loc ->
