@@ -253,7 +253,7 @@ let entrypoint_of_string x =
   | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
 
-let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
+let build_ast ~raise subst_lst mut_flag arg_binder rec_name in_ty out_ty aggregated_exp =
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp =
     match rec_name with
@@ -261,7 +261,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
       Ast_aggregated.e_a_lambda
         { result = aggregated_exp'
         ; output_type = out_ty
-        ; binder = Ligo_prim.Param.make arg_binder in_ty
+        ; binder = Ligo_prim.Param.make ~mut_flag arg_binder in_ty
         }
         in_ty
         out_ty
@@ -272,7 +272,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
         ; lambda =
             { result = aggregated_exp'
             ; output_type = out_ty
-            ; binder = Ligo_prim.Param.make arg_binder in_ty
+            ; binder = Ligo_prim.Param.make ~mut_flag arg_binder in_ty
             }
         }
   in
@@ -354,12 +354,12 @@ let compile_contract_file ~raise ~options source_file entry_point declared_views
   aggregated, views
 
 
-let make_function in_ty out_ty arg_binder body subst_lst =
+let make_function mut_flag in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
   Ast_aggregated.e_a_lambda
     { result = typed_exp'
     ; output_type = out_ty
-    ; binder = Ligo_prim.Param.make arg_binder in_ty
+    ; binder = Ligo_prim.Param.make ~mut_flag arg_binder in_ty
     }
     in_ty
     out_ty
@@ -642,7 +642,14 @@ let rec val_to_ast ~raise ~loc
             Ast_aggregated.PP.type_expression
             ty)
   | V_Func_val v ->
-    make_ast_func ~raise ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
+    make_ast_func
+      ~raise
+      ?name:v.rec_name
+      v.env
+      v.arg_mut_flag
+      v.arg_binder
+      v.body
+      v.orig_lambda
   | V_Michelson (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty }) ->
     let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
     let s = Ligo_string.verbatim s in
@@ -771,7 +778,7 @@ let rec val_to_ast ~raise ~loc
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: typed_address"
 
 
-and make_ast_func ~raise ?name env arg body orig =
+and make_ast_func ~raise ?name env mut_flag arg body orig =
   let open Ast_aggregated in
   let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name env arg body in
@@ -782,7 +789,7 @@ and make_ast_func ~raise ?name env arg body orig =
     Ligo_prim.Lambda.
       { result = typed_exp'
       ; output_type = out_ty
-      ; binder = Ligo_prim.Param.make arg in_ty
+      ; binder = Ligo_prim.Param.make ~mut_flag arg in_ty
       }
   in
   let typed_exp' =
@@ -1368,7 +1375,7 @@ let rec compile_value ~raise ~options ~loc
       in
       aux [] env
     in
-    let make_ast_func ~raise ?name env arg body orig =
+    let make_ast_func ~raise ?name env arg mut_flag body orig =
       let open Ast_aggregated in
       let env = make_subst_ast_env_exp ~raise env in
       let typed_exp' = add_ast_env ?name env arg body in
@@ -1379,7 +1386,7 @@ let rec compile_value ~raise ~options ~loc
         Ligo_prim.Lambda.
           { result = typed_exp'
           ; output_type = out_ty
-          ; binder = Ligo_prim.Param.make arg in_ty
+          ; binder = Ligo_prim.Param.make ~mut_flag arg in_ty
           }
       in
       let typed_exp' =
@@ -1396,7 +1403,14 @@ let rec compile_value ~raise ~options ~loc
       typed_exp'
     in
     let typed_exp =
-      make_ast_func ~raise ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
+      make_ast_func
+        ~raise
+        ?name:v.rec_name
+        v.env
+        v.arg_binder
+        v.arg_mut_flag
+        v.body
+        v.orig_lambda
     in
     let compiled_exp = compile_ast ~raise ~options typed_exp in
     (match compiled_exp.expr with
