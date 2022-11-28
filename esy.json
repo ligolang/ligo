@@ -278,8 +278,16 @@
           }
         }
       },
-      "esy-rustup": "esy-packages/esy-rustup:esy.json#b12694a9690845765efb312cf8bb76df27c93669",
-      "@opam/tezos-rust-libs": "opam:1.1",
+      "@opam/conf-rust-2021": {
+        "source": "no-source:",
+        "override": {
+          "build": ["true"],
+          "dependencies": {
+            "esy-rustup": "*"
+          }
+        }
+      },
+      "esy-rustup": "esy-packages/esy-rustup:esy.json#3872ef2eaefb6c2207bd7cb4386d073a27381bf",
       "@opam/zarith": "opam:1.12",
       "@opam/conf-hidapi": {
         "source": "no-source:",
