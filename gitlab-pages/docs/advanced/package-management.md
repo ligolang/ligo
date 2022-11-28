@@ -8,7 +8,7 @@ import Link from '@docusaurus/Link';
 
 
 Any programming language that aims to make collaboration easier needs
-a way to distribute (and consume) it's reusable modules. Ligo provides
+a way to distribute (and consume) it's reusable modules. LIGO provides
 first-class support for such distributable units (ie. packages).
 
 ## Packages
@@ -43,14 +43,14 @@ ls
 Any directory (recursively) containing `.mligo` files can be turned into a package
 by simply placing a manifest file, `package.json` over there.
 
-# Ligo registry
+## LIGO registry
 
 The [LIGO registry](https://packages.ligolang.org/) is used to host LIGO packages. The LIGO registry contains the contracts/libraries along with it's metadata. The packages which reside on the LIGO registry can be installed using the `ligo install` command. 
 
 ## Consuming
 
 To fetch (download) & maintain different versions of external libraries we need a package manager.
-LIGO libraries can be published to [Ligo's own registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
+LIGO libraries can be published to [LIGO's own registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
 Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
 
 Pre-requites: 
@@ -64,9 +64,9 @@ Start with empty `package.json` file
 {}
 ```
 
-We will need the LIGO compiler binary to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
+We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
 
-Next we will use a simple dependency `ligo-list-helper` published on Ligo registry. To download & install the library, run,
+Next we will use a simple dependency `ligo-list-helper` published on LIGO registry. To download & install the library, run,
 
 ```bash
 ligo install ligo-list-helpers
@@ -92,6 +92,7 @@ let main (action, store : parameter * storage) : operation list * storage =
     | Reverse   -> XList.reverse store))
 
 ```
+<br/>
 
 > Note: When using LIGO packages the `#import`/`#include` syntax is of the form
 > 
@@ -113,20 +114,23 @@ let test =
     assert (Test.get_storage taddr = [3; 2; 1])
 
 ```
+<br/>
 
 To compile the contract to Michelson run the command
 
 ```bash
 ligo compile contract main.mligo
 ```
+<br/>
 
 This will find the dependencies installed on the local machine, and compile the `main.mligo` file.
 
-To test the contract using ligo's [testing framework](https://ligolang.org/docs/reference/test) run the command
+To test the contract using LIGO's [testing framework](../advanced/testing.md) run the command
 
 ```bash
 ligo run test main.test.mligo
 ```
+<br/>
 
 If you working with an existing LIGO project, to install the dependencies, at the root of the project just run
 
@@ -151,10 +155,14 @@ Just update the package version to the desired one in the `package.json`.
   }
 }
 ```
+<br/>
+
 and run the command
 ```bash
 ligo install
 ```
+<br/>
+
 This will fetch the updated version of LIGO package, and the compiler will use the updated
 version of the package.
 
@@ -184,10 +192,10 @@ In  [4]:
 
 Packages are code units shared with other developers. Therefore,
 authors must provide useful metadata, both for other programmers in
-the community as well as ligo toolchain, to understand the package's
+the community as well as LIGO toolchain, to understand the package's
 contents, it's version and other useful information.
 
-For Ligo packages, authors must provide,
+For LIGO packages, authors must provide,
 
 1.  A name (in the `name` field)
 2.  Version (`version`)
@@ -196,31 +204,43 @@ For Ligo packages, authors must provide,
 
 Sample `package.json` with the above information.
 
-    {
+```json
+{
+  "name": "ligo-foo",
+  "version": "1.0.18",
+  "author": "Name <email@domain.com>"
+  "description": "An example for ligo dependency depending on another ligo dependency",
+  "scripts": {
+    "test": "ligo run test foo.test.mligo --project-root ."
+  },
+  "dependencies": {
+    "ligo-list-helpers": "1.0.0",
+    "ligo-set-helpers": "^1.0.2"
+  }
+}
+```
+<br/>
+
+### Adding package metadata
+
+This is an important step, as it will help the tools and your users/collaborators, provide vital information about your package.
+
+```json
+{
       "name": "ligo-foo",
       "version": "1.0.18",
-      "author": "Name <email@domain.com>"
       "description": "An example for ligo dependency depending on another ligo dependency",
-      "scripts": {
-        "test": "ligo run test foo.test.mligo --project-root ."
-      },
       "dependencies": {
         "ligo-list-helpers": "1.0.0",
         "ligo-set-helpers": "^1.0.2"
-      }
-    }
+        ...
+}
+```
+
 
 // TODO: metion .ligoignore here (maybe as a Note:)
 
-## Publishing
-
-Ligo packages can be published to a central repository at
-[`packages.ligolang.org`](https://packages.ligolang.org/) with the `ligo publish` command.
-
-    ligo publish
-
-
-## Creating and publishing packages to Ligo registry
+### Creating and publishing packages to LIGO registry
 
 We are going the write the `ligo-list-helpers` library that we used earlier.
 
@@ -236,6 +256,7 @@ let reverse (type a) (xs : a list) : a list =
     List.fold_left f ([] : a list) xs
 
 ```
+<br/>
 
 and some tests for the library
 
@@ -253,6 +274,7 @@ let test_reverse =
     assert (reverse xs = [3; 2; 1])
 
 ```
+<br/>
 
 To run the tests run the command
 
@@ -260,23 +282,7 @@ To run the tests run the command
 ligo run test list.test.mligo
 ```
 
-#### Adding package metadata
-
-This is an important step, as it will help the tools and your users/collaborators, provide vital information about your package.
-
-```json
-{
-      "name": "ligo-foo",
-      "version": "1.0.18",
-      "description": "An example for ligo dependency depending on another ligo dependency",
-      "dependencies": {
-        "ligo-list-helpers": "1.0.0",
-        "ligo-set-helpers": "^1.0.2"
-        ...
-}
-```
-
-#### Logging in
+### Logging in
 
 Before publishing, registry server needs to authenticate the user to avoid abuse. To login,
 
@@ -293,7 +299,10 @@ This would create a `.ligorc` in the home directory.
 
 > Note: By default LIGO  creates the rc file (`.ligorc`) in the home directory.
 
-Now run,
+### Publishing
+
+LIGO packages can be published to a central repository at
+[`packages.ligolang.org`](https://packages.ligolang.org/) with the `ligo publish` command.
 
 ```bash 
 ligo publish
@@ -366,37 +375,41 @@ This will only display the report on command line what it would have done in the
 
 
 ## Notes
-TODO: fix formatting for this section
 
 Note that,
 
-1.  References made to cameligo are only for illustrative purposes. Any
-    syntax can be used in packages. Furthermore, one can consume a
-    package written in one syntax from another.
+### 1. Are packages written different syntaxes interoperable?
 
-2.  What happen if there is a main function in a .mligo file?
+References made to cameligo are only for illustrative purposes. Any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
+
+### 2. What happen if there is a main function in a .mligo file of a package?
     
-    Depends on how it is called.
+Depends on how it is called.
 
 If it is not used, it won't appear in the final michelson - only the used parts from the library will be compiled.
 
 As an example, consider,
 
-# TODO: ```cameligo ??
-    #import "package_name/increment.mligo" "Increment"
-    
-    let main =
-      ...
-      Increment.add ...
-      ...
+```cameligo skip
+#import "package_name/increment.mligo" "Increment"
+
+let main =
+  ...
+  Increment.add ...
+  ...
+```
+<br/>
 
 In this case, only add function from the package will be used by the compiler.
 
 Also,
 
-    #import "package_name/increment.mligo" 
-    
-    let test = 
-      Test.originate ... Increment.main ...
+```cameligo skip
+#import "package_name/increment.mligo" 
+
+let test = 
+  Test.originate ... Increment.main ...
+```
+<br/>
 
 In this case main function will be used in tests.

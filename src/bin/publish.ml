@@ -12,7 +12,7 @@
 - [x] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
 - [x] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [x] Add basic comments in code
-- [ ] Docs: Review the structure
+- [x] Docs: Review the structure
 - [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [x] Docs: Add note about #import/include"<pkg>/<path>"
 - [x] Docs: Add note about `--registry`
