@@ -9,9 +9,10 @@ let rec check_block_scope ~raise vars types mods e =
   match e.expression_content with
   | E_let_in { let_binder; rhs; let_result; _ } ->
     let binders = List.map ~f:Binder.get_var (Pattern.binders let_binder) in
-    let () = List.iter binders
-      ~f:(fun var ->
-        if List.mem ~equal:Value_var.equal vars var then raise.error @@ no_shadowing e.location)
+    let () =
+      List.iter binders ~f:(fun var ->
+          if List.mem ~equal:Value_var.equal vars var
+          then raise.error @@ no_shadowing e.location)
     in
     check_block_scope ~raise [] [] [] rhs;
     check_block_scope ~raise (binders @ vars) types mods let_result
@@ -43,10 +44,8 @@ let peephole_program ~raise : program -> program =
         then raise.error (no_shadowing location)
       in
       aux (var :: vars) types mods remaining
-    | Location.{ wrap_content = D_irrefutable_match  t; location } :: remaining ->
-      let pattern_vars =
-        List.map ~f:Binder.get_var (Pattern.binders t.pattern)
-      in
+    | Location.{ wrap_content = D_irrefutable_match t; location } :: remaining ->
+      let pattern_vars = List.map ~f:Binder.get_var (Pattern.binders t.pattern) in
       let () =
         List.iter pattern_vars ~f:(fun var ->
             if List.mem ~equal:Value_var.equal vars var

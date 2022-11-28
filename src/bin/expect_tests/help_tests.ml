@@ -1,8 +1,9 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_good [ "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "-help" ];
+  [%expect
+    {|
     The LigoLANG compiler
 
       ligo SUBCOMMAND
@@ -33,11 +34,12 @@ let%expect_test _ =
       version                    . print version information
       help                       . explain a given subcommand (perhaps recursively)
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; "-help" ];
+  [%expect
+    {|
 compile a contract.
 
   ligo compile contract SOURCE_FILE
@@ -107,11 +109,12 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                (kathmandu) will be used
   [-help], -?                . print this help text and exit
 
-(core/src/command.ml.Exit_called (status 0)) |} ]
+(core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "parameter" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "parameter"; "-help" ];
+  [%expect
+    {|
     compile parameters to a Michelson expression.
 
       ligo compile parameter SOURCE_FILE PARAMETER_EXPRESSION
@@ -169,11 +172,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "storage" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "storage"; "-help" ];
+  [%expect
+    {|
     compile an initial storage in LIGO syntax to a Michelson expression.
 
       ligo compile storage SOURCE_FILE STORAGE_EXPRESSION
@@ -231,11 +235,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "constant" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "constant"; "-help" ];
+  [%expect
+    {|
     compile constant to a Michelson value and its hash.
 
       ligo compile constant SYNTAX _EXPRESSION
@@ -265,11 +270,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "dry-run" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "dry-run"; "-help" ];
+  [%expect
+    {|
     run a smart-contract with the given storage and input.
 
       ligo run dry-run SOURCE_FILE PARAMETER_EXPRESSION STORAGE_EXPRESSION
@@ -313,11 +319,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "evaluate-call" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "evaluate-call"; "-help" ];
+  [%expect
+    {|
     run a function with the given parameter.
 
       ligo run evaluate-call SOURCE_FILE PARAMETER_EXPRESSION
@@ -361,12 +368,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
-
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "evaluate-expr" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "evaluate-expr"; "-help" ];
+  [%expect
+    {|
     evaluate a given definition.
 
       ligo run evaluate-expr SOURCE_FILE
@@ -410,11 +417,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "expression" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "expression"; "-help" ];
+  [%expect
+    {|
     compile to a Michelson value.
 
       ligo compile expression SYNTAX _EXPRESSION
@@ -456,11 +464,12 @@ let%expect_test _ =
                                    (kathmandu) will be used
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
+    (core/src/command.ml.Exit_called (status 0)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "list-declarations" ; "-help" ] ;
-  [%expect {|
+  run_ligo_good [ "info"; "list-declarations"; "-help" ];
+  [%expect
+    {|
     list all the top-level declarations.
 
       ligo info list-declarations SOURCE_FILE
@@ -485,5 +494,4 @@ let%expect_test _ =
                                    .religo, and .jsligo respectively).
       [-help], -?                . print this help text and exit
 
-    (core/src/command.ml.Exit_called (status 0)) |} ]
-  
+    (core/src/command.ml.Exit_called (status 0)) |}]

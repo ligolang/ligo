@@ -162,30 +162,35 @@ type constant' =
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ
   | C_OPTION_MAP
-[@@deriving eq,compare,yojson,hash, print_constant, only_interpreter_tags, read_constant ]
+[@@deriving
+  eq, compare, yojson, hash, print_constant, only_interpreter_tags, read_constant]
 
+type deprecated =
+  { name : string
+  ; const : constant'
+  }
 
-type deprecated = {
-  name : string ;
-  const : constant' ;
-}
-
-type rich_constant =
-  | Const of constant'
-  [@@deriving eq,compare,yojson,hash]
+type rich_constant = Const of constant' [@@deriving eq, compare, yojson, hash]
 
 let const_name (Const c) = c
-type 'e t = {
-  cons_name: constant' ; (* this is in enum *)
-  arguments: 'e list ;
-  } [@@deriving eq,compare,yojson,hash, fold, map]
 
-let pp f ppf = fun {cons_name;arguments} ->
-  Format.fprintf ppf "@[%a@[<hv 1>(%a)@]@]"
-    pp_constant' cons_name
-    Simple_utils.PP_helpers.(list_sep_d f) arguments
+type 'e t =
+  { cons_name : constant' (* this is in enum *)
+  ; arguments : 'e list
+  }
+[@@deriving eq, compare, yojson, hash, fold, map]
 
-let fold_map : ('acc -> 'a ->  'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
-= fun f acc {cons_name;arguments} ->
-  let acc,arguments = List.fold_map ~f ~init:acc arguments in
-  (acc,{cons_name;arguments})
+let pp f ppf { cons_name; arguments } =
+  Format.fprintf
+    ppf
+    "@[%a@[<hv 1>(%a)@]@]"
+    pp_constant'
+    cons_name
+    Simple_utils.PP_helpers.(list_sep_d f)
+    arguments
+
+
+let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t =
+ fun f acc { cons_name; arguments } ->
+  let acc, arguments = List.fold_map ~f ~init:acc arguments in
+  acc, { cons_name; arguments }

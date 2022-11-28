@@ -96,7 +96,9 @@ let decode type_ ~raise subst =
       raise.error
         (cannot_decode_texists
            type_
-           ((* pick the best location! *) if Location.is_dummy_or_generated loc then type_.location else loc)))
+           (if (* pick the best location! *) Location.is_dummy_or_generated loc
+           then type_.location
+           else loc)))
 
 
 let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =

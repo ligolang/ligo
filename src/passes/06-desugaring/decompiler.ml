@@ -4,9 +4,7 @@ module I = Ast_imperative
 module O = Ast_core
 
 let decompile_row_attributes layout =
-  layout
-  |> Option.map ~f:(Format.asprintf "layout:%a" Layout.pp)
-  |> Option.to_list
+  layout |> Option.map ~f:(Format.asprintf "layout:%a" Layout.pp) |> Option.to_list
 
 
 let decompile_row_elem_attributes michelson_annotation =
@@ -35,9 +33,7 @@ let decompile_type_attributes : O.TypeOrModuleAttr.t -> I.Attr.t =
 
 let decompile_module_attributes = decompile_type_attributes
 
-let rec decompile_type_expression (type_ : O.type_expression)
-    : I.type_expression
-  =
+let rec decompile_type_expression (type_ : O.type_expression) : I.type_expression =
   let self = decompile_type_expression in
   let loc = type_.location in
   let return content = I.make_t ~loc content in
@@ -76,13 +72,11 @@ and decompile_row ({ fields; layout } : O.rows) : _ I.non_linear_rows =
     fields
     |> Record.map
          ~f:(fun
-           ({ associated_type; decl_pos; michelson_annotation } :
-             _ Rows.row_element_mini_c)
-         ->
+              ({ associated_type; decl_pos; michelson_annotation } :
+                _ Rows.row_element_mini_c)
+            ->
            let associated_type = decompile_type_expression associated_type in
-           let attributes =
-             decompile_row_elem_attributes michelson_annotation
-           in
+           let attributes = decompile_row_elem_attributes michelson_annotation in
            ({ associated_type; attributes; decl_pos } : _ Rows.row_element))
     |> Record.to_list
   in
@@ -108,9 +102,7 @@ let rec decompile_expression (expr : O.expression) : I.expression =
       let app = Application.map self app in
       return @@ I.E_application app
     | O.E_lambda lamb ->
-      let lamb =
-        Lambda.map self (Option.map ~f:decompile_type_expression) lamb
-      in
+      let lamb = Lambda.map self (Option.map ~f:decompile_type_expression) lamb in
       return @@ I.E_lambda lamb
     | O.E_type_abstraction ta ->
       let ta = Type_abs.map self ta in
@@ -196,9 +188,7 @@ and decompile_match_expr
   let matchee = decompile_expression matchee in
   let cases =
     List.map cases ~f:(fun { pattern; body } ->
-        let pattern =
-          O.Pattern.map (Option.map ~f:decompile_type_expression) pattern
-        in
+        let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
         let pattern = decompile_pattern pattern in
         let body = decompile_expression body in
         I.Match_expr.{ pattern; body })
@@ -227,7 +217,7 @@ and decompile_pattern : _ O.Pattern.t -> _ I.Pattern.t =
     Location.wrap ~loc (I.Pattern.P_tuple ps)
   | P_record lps ->
     let lps = Record.map ~f:decompile_pattern lps in
-    let lps = Record.to_list lps  in
+    let lps = Record.to_list lps in
     Location.wrap ~loc (I.Pattern.P_record lps)
 
 
@@ -240,14 +230,12 @@ and decompile_declaration : O.declaration -> I.declaration =
     let expr = decompile_expression expr in
     let attr = decompile_value_attributes attr in
     return @@ D_value { binder; expr; attr }
-  | D_irrefutable_match  { pattern; expr; attr } ->
-    let pattern =
-      O.Pattern.map (Option.map ~f:decompile_type_expression) pattern
-    in
+  | D_irrefutable_match { pattern; expr; attr } ->
+    let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
     let pattern = decompile_pattern pattern in
     let expr = decompile_expression expr in
     let attr = decompile_value_attributes attr in
-    return @@ D_irrefutable_match  { pattern; expr; attr }
+    return @@ D_irrefutable_match { pattern; expr; attr }
   | D_type { type_binder; type_expr; type_attr } ->
     let type_expr = decompile_type_expression type_expr in
     let type_attr = decompile_type_attributes type_attr in
@@ -270,28 +258,20 @@ and decompile_module_expr : O.module_expr -> I.module_expr =
 
 
 and decompile_decl : O.decl -> I.decl = fun d -> decompile_declaration d
-
-and decompile_module : O.module_ -> I.module_ =
- fun m -> List.map ~f:decompile_decl m
-
+and decompile_module : O.module_ -> I.module_ = fun m -> List.map ~f:decompile_decl m
 
 let decompile_program = List.map ~f:decompile_declaration
 
 let decompile_pattern_to_string ~syntax pattern =
-  let pattern =
-    O.Pattern.map (Option.map ~f:decompile_type_expression) pattern
-  in
+  let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
   let pattern = decompile_pattern pattern in
   let s =
     match syntax with
     | Some Syntax_types.JsLIGO ->
       Tree_abstraction.Jsligo.decompile_pattern_to_string pattern
-    | Some CameLIGO ->
-      Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
-    | Some ReasonLIGO ->
-      Tree_abstraction.Reasonligo.decompile_pattern_to_string pattern
-    | Some PascaLIGO ->
-      Tree_abstraction.Pascaligo.decompile_pattern_to_string pattern
+    | Some CameLIGO -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
+    | Some ReasonLIGO -> Tree_abstraction.Reasonligo.decompile_pattern_to_string pattern
+    | Some PascaLIGO -> Tree_abstraction.Pascaligo.decompile_pattern_to_string pattern
     | None -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
   in
   s

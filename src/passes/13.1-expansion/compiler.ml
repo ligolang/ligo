@@ -14,21 +14,15 @@ let rec compile_expression : I.expression -> O.expression =
   let self = compile_expression in
   let return : O.expression_content -> O.expression =
    fun expression_content ->
-    { expression_content
-    ; type_expression = exp.type_expression
-    ; location = exp.location
-    }
+    { expression_content; type_expression = exp.type_expression; location = exp.location }
   in
   match exp.expression_content with
   | E_matching { matchee; cases } ->
     let matchee = self matchee in
     compile_matching ~loc:exp.location ~mut:false matchee cases
   | E_let_in
-    { let_binder = { wrap_content = P_var let_binder; _ }
-    ; rhs
-    ; let_result
-    ; attributes
-    } ->
+      { let_binder = { wrap_content = P_var let_binder; _ }; rhs; let_result; attributes }
+    ->
     (* if lhs is a simple pattern, we do not bother executing Pattern_matching *)
     let rhs = self rhs in
     let let_result = self let_result in
@@ -42,11 +36,8 @@ let rec compile_expression : I.expression -> O.expression =
       matchee
       [ { pattern = let_binder; body = let_result } ]
   | E_let_mut_in
-      { let_binder = { wrap_content = P_var let_binder; _ }
-      ; rhs
-      ; let_result
-      ; attributes
-      } ->
+      { let_binder = { wrap_content = P_var let_binder; _ }; rhs; let_result; attributes }
+    ->
     (* if lhs is a simple pattern, we do not bother executing Pattern_matching *)
     let rhs = self rhs in
     let let_result = self let_result in
@@ -113,8 +104,7 @@ let rec compile_expression : I.expression -> O.expression =
 
 and compile_matching
     :  loc:Location.t -> ?attributes:O.ValueAttr.t -> mut:bool -> O.expression
-    -> (I.expression, I.type_expression) I.Match_expr.match_case list
-    -> O.expression
+    -> (I.expression, I.type_expression) I.Match_expr.match_case list -> O.expression
   =
  fun ~loc ?attributes ~mut matchee cases ->
   let matchee_type = matchee.type_expression in
@@ -131,8 +121,7 @@ and compile_matching
     { let_binder = Binder.make var matchee_type
     ; rhs = matchee
     ; let_result = { match_expr with location = loc }
-    ; attributes =
-        Option.value attributes ~default:O.ValueAttr.default_attributes
+    ; attributes = Option.value attributes ~default:O.ValueAttr.default_attributes
     }
 
 
@@ -184,8 +173,7 @@ and destruct_mut_let_in : O.expression -> O.expression =
             })
         ~init:case.body
     in
-    return
-      (O.E_matching { prod_case with cases = O.Match_record { case with body } })
+    return (O.E_matching { prod_case with cases = O.Match_record { case with body } })
   | O.E_matching ({ cases = O.Match_variant sums; _ } as sum_case) ->
     (* because this would only happens for mutable let-ins, sum.cases should always be of size 1 *)
     let cases =
@@ -203,7 +191,5 @@ and destruct_mut_let_in : O.expression -> O.expression =
           in
           { x with body })
     in
-    return
-      (O.E_matching
-         { sum_case with cases = O.Match_variant { sums with cases } })
+    return (O.E_matching { sum_case with cases = O.Match_variant { sums with cases } })
   | _ -> failwith "compiling pattern did not result in a matching expression"

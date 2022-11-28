@@ -20,8 +20,8 @@ let tez_to_z : Memory_proto_alpha.Protocol.Tez_repr.t -> Z.t =
 
 
 let contract_to_contract
-  :  Memory_proto_alpha.Protocol.Contract_repr.t
-  -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t
+    :  Memory_proto_alpha.Protocol.Contract_repr.t
+    -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t
   =
  fun t ->
   let enc = Memory_proto_alpha.Protocol.Contract_repr.encoding in
@@ -39,10 +39,7 @@ let string_of_key_hash t =
   Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
 
-let string_of_key t =
-  Format.asprintf "%a" Tezos_crypto.Signature.Public_key.pp t
-
-
+let string_of_key t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key.pp t
 let string_of_signature t = Format.asprintf "%a" Tezos_crypto.Signature.pp t
 let bytes_of_bls12_381_g1 t = Bls12_381.G1.to_bytes t
 let bytes_of_bls12_381_g2 t = Bls12_381.G2.to_bytes t
@@ -134,9 +131,7 @@ let create_chest (payload : Bytes.t) (time : int) : _ =
   let chest_key_bytes =
     Data_encoding.Binary.to_bytes_exn Timelock.chest_key_encoding chest_key
   in
-  let chest_bytes =
-    Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest
-  in
+  let chest_bytes = Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest in
   chest_bytes, chest_key_bytes
 
 
@@ -195,8 +190,7 @@ let make_options ~raise ?param ctxt =
     let timestamp =
       Memory_proto_alpha.Protocol.Script_timestamp.of_zint
         (Z.of_int64
-           (Proto_alpha_utils.Time.Protocol.to_seconds
-              (Tezos_state.get_timestamp ctxt)))
+           (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt)))
     in
     let level =
       Memory_proto_alpha.Protocol.(
@@ -209,8 +203,7 @@ let make_options ~raise ?param ctxt =
     ; source
     ; payer = source
     ; self = source
-    ; amount =
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez_exn 100000000L
+    ; amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez_exn 100000000L
     ; chain_id = Memory_proto_alpha.Alpha_environment.Chain_id.zero
     ; balance = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
     ; now = timestamp
@@ -219,10 +212,10 @@ let make_options ~raise ?param ctxt =
 
 
 let run_expression_unwrap
-  ~raise
-  ~run_options
-  ?(loc = Location.generated)
-  (c_expr : Stacking.compiled_expression)
+    ~raise
+    ~run_options
+    ?(loc = Location.generated)
+    (c_expr : Stacking.compiled_expression)
   =
   let runres =
     Ligo_run.Of_michelson.run_expression
@@ -257,8 +250,7 @@ let entrypoint_of_string x =
       (Memory_proto_alpha.Raw_protocol.Non_empty_string.of_string_exn x)
   with
   | Some x -> x
-  | None ->
-    failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
+  | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
 
 let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
@@ -287,9 +279,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let parameter, storage =
     trace_option
       ~raise
-      (Errors.generic_error
-         Location.generated
-         "Trying to compile a non-contract?")
+      (Errors.generic_error Location.generated "Trying to compile a non-contract?")
     @@ Ast_aggregated.get_t_pair in_ty
   in
   trace ~raise Main_errors.self_ast_aggregated_tracer
@@ -317,8 +307,7 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
         trace_option
           ~raise
           (`Self_mini_c_tracer
-            (Self_mini_c.Errors.corner_case
-               "Error reconstructing type of views"))
+            (Self_mini_c.Errors.corner_case "Error reconstructing type of views"))
         @@ Mini_c.get_t_tuple mini_c.type_expression
       in
       let nb_of_views = List.length view_names in
@@ -327,8 +316,7 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
           trace_option
             ~raise
             (`Self_mini_c_tracer
-              (Self_mini_c.Errors.corner_case
-                 "Error reconstructing type of view"))
+              (Self_mini_c.Errors.corner_case "Error reconstructing type of view"))
           @@ List.nth mini_c_tys i
         in
         let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
@@ -359,15 +347,9 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
   Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
 
 
-let compile_contract_file ~raise ~options source_file entry_point declared_views
-  =
+let compile_contract_file ~raise ~options source_file entry_point declared_views =
   let aggregated, views =
-    Build.build_contract_meta_ligo
-      ~raise
-      ~options
-      entry_point
-      declared_views
-      source_file
+    Build.build_contract_meta_ligo ~raise ~options entry_point declared_views source_file
   in
   aggregated, views
 
@@ -384,7 +366,7 @@ let make_function in_ty out_ty arg_binder body subst_lst =
 
 
 let rec val_to_ast ~raise ~loc
-  : Ligo_interpreter.Types.value -> Ast_aggregated.type_expression -> _
+    : Ligo_interpreter.Types.value -> Ast_aggregated.type_expression -> _
   =
  fun v ty ->
   let open Ligo_interpreter.Types in
@@ -427,8 +409,8 @@ let rec val_to_ast ~raise ~loc
               Ast_aggregated.PP.type_expression
               ty))
         (match ty.type_content with
-         | T_constant { injection = Int | External "int"; _ } -> Some ()
-         | _ -> None)
+        | T_constant { injection = Int | External "int"; _ } -> Some ()
+        | _ -> None)
     in
     e_a_int x
   | V_Ct (C_int64 _) ->
@@ -487,21 +469,21 @@ let rec val_to_ast ~raise ~loc
     e_a_string (Simple_utils.Ligo_string.standard s)
   | V_Ct (C_bytes b) ->
     (match get_t_bytes ty with
-     | Some () -> e_a_bytes b
-     | None ->
-       (match get_t_chest ty with
-        | Some () -> e_a_chest b
+    | Some () -> e_a_bytes b
+    | None ->
+      (match get_t_chest ty with
+      | Some () -> e_a_chest b
+      | None ->
+        (match get_t_chest_key ty with
+        | Some () -> e_a_chest_key b
         | None ->
-          (match get_t_chest_key ty with
-           | Some () -> e_a_chest_key b
-           | None ->
-             raise.error
-               (Errors.generic_error
-                  loc
-                  (Format.asprintf
-                     "Expected bytes, chest, or chest_key but got %a"
-                     Ast_aggregated.PP.type_expression
-                     ty)))))
+          raise.error
+            (Errors.generic_error
+               loc
+               (Format.asprintf
+                  "Expected bytes, chest, or chest_key but got %a"
+                  Ast_aggregated.PP.type_expression
+                  ty)))))
   | V_Ct (C_address a) when is_t_address ty ->
     let () =
       trace_option
@@ -629,8 +611,8 @@ let rec val_to_ast ~raise ~loc
               Ast_aggregated.PP.type_expression
               ty))
         (match ty.type_content with
-         | T_constant { injection = Chain_id; _ } -> Some ()
-         | _ -> None)
+        | T_constant { injection = Chain_id; _ } -> Some ()
+        | _ -> None)
     in
     let x = string_of_chain_id s in
     e_a_chain_id x
@@ -646,9 +628,7 @@ let rec val_to_ast ~raise ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ({ associated_type = ty'; michelson_annotation = _; decl_pos = _ }
-          : row_element)
-      =
+    let ({ associated_type = ty'; michelson_annotation = _; decl_pos = _ } : row_element) =
       Ligo_prim.Record.LMap.find (Label ctor) map_ty.fields
     in
     let arg = val_to_ast ~raise ~loc arg ty' in
@@ -662,13 +642,7 @@ let rec val_to_ast ~raise ~loc
             Ast_aggregated.PP.type_expression
             ty)
   | V_Func_val v ->
-    make_ast_func
-      ~raise
-      ?name:v.rec_name
-      v.env
-      v.arg_binder
-      v.body
-      v.orig_lambda
+    make_ast_func ~raise ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
   | V_Michelson (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty }) ->
     let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
     let s = Ligo_string.verbatim s in
@@ -688,8 +662,7 @@ let rec val_to_ast ~raise ~loc
     make_ast_record ~raise ~loc map_ty map
   | V_Record map when Option.is_some @@ get_t_ticket ty ->
     let ty =
-      trace_option ~raise (Errors.generic_error loc "impossible")
-      @@ get_t_ticket ty
+      trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_ticket ty
     in
     let rows =
       trace_option ~raise (Errors.generic_error loc "impossible")
@@ -707,17 +680,12 @@ let rec val_to_ast ~raise ~loc
       let map =
         match get (Label "1") map with
         | V_Record map -> map
-        | _ ->
-          raise.error
-          @@ Errors.generic_error loc "unforged ticket badly decompiled"
+        | _ -> raise.error @@ Errors.generic_error loc "unforged ticket badly decompiled"
       in
       let value = get (Label "0") map in
       let amt = get (Label "1") map in
       Ligo_prim.Record.of_list
-        [ Label "ticketer", ticketer
-        ; Label "value", value
-        ; Label "amount", amt
-        ]
+        [ Label "ticketer", ticketer; Label "value", value; Label "amount", amt ]
     in
     make_ast_record ~raise ~loc rows map
   | V_Record _ ->
@@ -789,22 +757,18 @@ let rec val_to_ast ~raise ~loc
             Ast_aggregated.PP.type_expression
             ty)
   | V_Michelson_contract _ ->
-    raise.error
-    @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
+    raise.error @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
   | V_Ast_contract _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: ast-contract"
   | V_Michelson (Untyped_code _) ->
-    raise.error
-    @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
+    raise.error @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: mutation"
-  | V_Gen _ ->
-    raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
+  | V_Gen _ -> raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
   | V_Location _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: location"
   | V_Typed_address _ ->
-    raise.error
-    @@ Errors.generic_error loc "Cannot be abstracted: typed_address"
+    raise.error @@ Errors.generic_error loc "Cannot be abstracted: typed_address"
 
 
 and make_ast_func ~raise ?name env arg body orig =
@@ -824,8 +788,7 @@ and make_ast_func ~raise ?name env arg body orig =
   let typed_exp' =
     match name with
     | None -> e_a_lambda lambda in_ty out_ty
-    | Some fun_name ->
-      e_a_recursive { fun_name; fun_type = orig.type_expression; lambda }
+    | Some fun_name -> e_a_recursive { fun_name; fun_type = orig.type_expression; lambda }
   in
   (* Check that function to be compiled is obj-LIGO *)
   let _ =
@@ -859,21 +822,15 @@ and make_ast_list ~raise ~loc ty l =
 
 
 and make_ast_set ~raise ~loc ty l =
-  let l =
-    List.dedup_and_sort ~compare:Ligo_interpreter.Combinators.compare_value l
-  in
+  let l = List.dedup_and_sort ~compare:Ligo_interpreter.Combinators.compare_value l in
   let l = List.map ~f:(fun v -> val_to_ast ~raise ~loc v ty) l in
-  List.fold_right
-    l
-    ~f:Ast_aggregated.e_a_set_add
-    ~init:(Ast_aggregated.e_a_set_empty ty)
+  List.fold_right l ~f:Ast_aggregated.e_a_set_add ~init:(Ast_aggregated.e_a_set_empty ty)
 
 
 and make_ast_big_map ~raise ~loc key_ty value_ty kv =
   let kv =
     List.dedup_and_sort
-      ~compare:(fun (k, _) (k', _) ->
-        Ligo_interpreter.Combinators.compare_value k k')
+      ~compare:(fun (k, _) (k', _) -> Ligo_interpreter.Combinators.compare_value k k')
       kv
   in
   let kv =
@@ -893,8 +850,7 @@ and make_ast_big_map ~raise ~loc key_ty value_ty kv =
 and make_ast_map ~raise ~loc key_ty value_ty kv =
   let kv =
     List.dedup_and_sort
-      ~compare:(fun (k, _) (k', _) ->
-        Ligo_interpreter.Combinators.compare_value k k')
+      ~compare:(fun (k, _) (k', _) -> Ligo_interpreter.Combinators.compare_value k k')
       kv
   in
   let kv =
@@ -929,8 +885,8 @@ and make_subst_ast_env_exp ~raise env =
 
 
 let rec compile_value ~raise ~options ~loc
-  :  Ligo_interpreter.Types.value -> Ast_aggregated.type_expression
-  -> Ligo_interpreter.Types.mcode
+    :  Ligo_interpreter.Types.value -> Ast_aggregated.type_expression
+    -> Ligo_interpreter.Types.mcode
   =
  fun v ty ->
   let open Ast_aggregated in
@@ -952,21 +908,21 @@ let rec compile_value ~raise ~options ~loc
     Tezos_micheline.Micheline.String ((), s)
   | V_Ct (C_bytes b) ->
     (match get_t_bytes ty with
-     | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
-     | None ->
-       (match get_t_chest ty with
+    | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
+    | None ->
+      (match get_t_chest ty with
+      | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
+      | None ->
+        (match get_t_chest_key ty with
         | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
         | None ->
-          (match get_t_chest_key ty with
-           | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
-           | None ->
-             raise.error
-               (Errors.generic_error
-                  loc
-                  (Format.asprintf
-                     "Expected bytes, chest, or chest_key but got %a"
-                     Ast_aggregated.PP.type_expression
-                     ty)))))
+          raise.error
+            (Errors.generic_error
+               loc
+               (Format.asprintf
+                  "Expected bytes, chest, or chest_key but got %a"
+                  Ast_aggregated.PP.type_expression
+                  ty)))))
   | V_Ct (C_int x) ->
     let () =
       trace_option
@@ -1071,8 +1027,8 @@ let rec compile_value ~raise ~options ~loc
     let x = string_of_contract c.address in
     (* TODO-er: if we want support for entrypoints, this should be fixed: *)
     (match c.entrypoint with
-     | None -> Tezos_micheline.Micheline.String ((), x)
-     | Some e -> Tezos_micheline.Micheline.String ((), x ^ "%" ^ e))
+    | None -> Tezos_micheline.Micheline.String ((), x)
+    | Some e -> Tezos_micheline.Micheline.String ((), x ^ "%" ^ e))
   | V_Ct (C_key_hash kh) ->
     let () =
       trace_option
@@ -1126,8 +1082,8 @@ let rec compile_value ~raise ~options ~loc
               Ast_aggregated.PP.type_expression
               ty))
         (match ty.type_content with
-         | T_constant { injection = Chain_id; _ } -> Some ()
-         | _ -> None)
+        | T_constant { injection = Chain_id; _ } -> Some ()
+        | _ -> None)
     in
     let x = string_of_chain_id s in
     Tezos_micheline.Micheline.String ((), x)
@@ -1178,45 +1134,45 @@ let rec compile_value ~raise ~options ~loc
       trace_option
         ~raise
         (Errors.generic_error
-            loc
-            (Format.asprintf
+           loc
+           (Format.asprintf
               "Expected timestamp but got %a"
               Ast_aggregated.PP.type_expression
               ty))
         (get_t_timestamp ty)
     in
-    Tezos_micheline.Micheline.Int ((),t)
+    Tezos_micheline.Micheline.Int ((), t)
   | V_Ct (C_int64 x) ->
     let () =
       trace_option
         ~raise
         (Errors.generic_error
-            loc
-            (Format.asprintf
+           loc
+           (Format.asprintf
               "Expected timestamp but got %a"
               Ast_aggregated.PP.type_expression
               ty))
         (get_t_int ty)
     in
-    Tezos_micheline.Micheline.Int ((),Z.of_int64 x)
+    Tezos_micheline.Micheline.Int ((), Z.of_int64 x)
   | V_Construct (ctor, arg) when Option.is_some (get_t_option ty) ->
     (match ctor with
-     | "None" -> Tezos_micheline.Micheline.Prim ((), "None", [], [])
-     | "Some" ->
-       let option_ty =
-         trace_option
-           ~raise
-           (Errors.generic_error
-              loc
-              (Format.asprintf
-                 "Expected option type but got %a"
-                 Ast_aggregated.PP.type_expression
-                 ty))
-         @@ get_t_option ty
-       in
-       let arg = self arg option_ty in
-       Tezos_micheline.Micheline.Prim ((), "Some", [ arg ], [])
-     | _ -> failwith "Unexpected")
+    | "None" -> Tezos_micheline.Micheline.Prim ((), "None", [], [])
+    | "Some" ->
+      let option_ty =
+        trace_option
+          ~raise
+          (Errors.generic_error
+             loc
+             (Format.asprintf
+                "Expected option type but got %a"
+                Ast_aggregated.PP.type_expression
+                ty))
+        @@ get_t_option ty
+      in
+      let arg = self arg option_ty in
+      Tezos_micheline.Micheline.Prim ((), "Some", [ arg ], [])
+    | _ -> failwith "Unexpected")
   | V_Construct (ctor, arg) when is_t_sum ty ->
     let map_ty =
       trace_option
@@ -1229,9 +1185,7 @@ let rec compile_value ~raise ~options ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ({ associated_type = ty'; michelson_annotation = _; decl_pos = _ }
-          : row_element)
-      =
+    let ({ associated_type = ty'; michelson_annotation = _; decl_pos = _ } : row_element) =
       Ligo_prim.Record.LMap.find (Label ctor) map_ty.fields
     in
     let arg = self arg ty' in
@@ -1338,13 +1292,10 @@ let rec compile_value ~raise ~options ~loc
           k, v)
         map
     in
-    let map =
-      List.sort ~compare:(fun (k1, _) (k2, _) -> Caml.compare k1 k2) map
-    in
+    let map = List.sort ~compare:(fun (k1, _) (k2, _) -> Caml.compare k1 k2) map in
     let map =
       List.map
-        ~f:(fun (k, v) ->
-          Tezos_micheline.Micheline.Prim ((), "Elt", [ k; v ], []))
+        ~f:(fun (k, v) -> Tezos_micheline.Micheline.Prim ((), "Elt", [ k; v ], []))
         map
     in
     Tezos_micheline.Micheline.Seq ((), map)
@@ -1368,38 +1319,31 @@ let rec compile_value ~raise ~options ~loc
           k, v)
         map
     in
-    let map =
-      List.sort ~compare:(fun (k1, _) (k2, _) -> Caml.compare k1 k2) map
-    in
+    let map = List.sort ~compare:(fun (k1, _) (k2, _) -> Caml.compare k1 k2) map in
     let map =
       List.map
-        ~f:(fun (k, v) ->
-          Tezos_micheline.Micheline.Prim ((), "Elt", [ k; v ], []))
+        ~f:(fun (k, v) -> Tezos_micheline.Micheline.Prim ((), "Elt", [ k; v ], []))
         map
     in
     Tezos_micheline.Micheline.Seq ((), map)
-  | V_Func_val v -> (
+  | V_Func_val v ->
     let make_subst_ast_env_exp ~raise env =
       let open Ligo_interpreter.Types in
       let rec aux acc = function
         | [] -> acc
         | (name, { item; no_mutation; inline }) :: tl ->
           let mich = self item.eval_term item.ast_type in
-          let minic_ty =
-            Ligo_compile.Of_expanded.compile_type ~raise item.ast_type
-          in
+          let minic_ty = Ligo_compile.Of_expanded.compile_type ~raise item.ast_type in
           let mich_ty = Ligo_compile.Of_mini_c.compile_type minic_ty in
           let mich_ty =
-            Tezos_micheline.(
-              Micheline.map_node (fun _ -> ()) (fun x -> x) mich_ty)
+            Tezos_micheline.(Micheline.map_node (fun _ -> ()) (fun x -> x) mich_ty)
           in
           let mich =
             Tezos_micheline.Micheline.(
               Seq
                 ( ()
-                , [ Prim ((), "DROP", [], [])
-                  ; Prim ((), "PUSH", [ mich_ty; mich ], [])
-                  ] ))
+                , [ Prim ((), "DROP", [], []); Prim ((), "PUSH", [ mich_ty; mich ], []) ]
+                ))
           in
           let mich =
             Tezos_micheline.(
@@ -1409,10 +1353,7 @@ let rec compile_value ~raise ~options ~loc
                 mich)
           in
           let mich =
-            Format.asprintf
-              "%a"
-              Tezos_micheline.Micheline_printer.print_expr
-              mich
+            Format.asprintf "%a" Tezos_micheline.Micheline_printer.print_expr mich
           in
           let expr =
             e_a_raw_code
@@ -1455,27 +1396,16 @@ let rec compile_value ~raise ~options ~loc
       typed_exp'
     in
     let typed_exp =
-      make_ast_func
-        ~raise
-        ?name:v.rec_name
-        v.env
-        v.arg_binder
-        v.body
-        v.orig_lambda
+      make_ast_func ~raise ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
     in
     let compiled_exp = compile_ast ~raise ~options typed_exp in
-    match compiled_exp.expr with
-     | Seq (_, [ Prim (_, "LAMBDA", [ _; _; compiled_exp ], _) ]) ->
-       let compiled_exp =
-         Tezos_micheline.Micheline.map_node
-           (fun _ -> ())
-           (fun x -> x)
-           compiled_exp
-       in
-       compiled_exp
-     | _ ->
-       raise.error
-       @@ Errors.generic_error loc (Format.asprintf "Expected LAMBDA"))
+    (match compiled_exp.expr with
+    | Seq (_, [ Prim (_, "LAMBDA", [ _; _; compiled_exp ], _) ]) ->
+      let compiled_exp =
+        Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) compiled_exp
+      in
+      compiled_exp
+    | _ -> raise.error @@ Errors.generic_error loc (Format.asprintf "Expected LAMBDA"))
   | V_Michelson (Ty_code x) -> x.micheline_repr.code
   | V_Michelson (Untyped_code x) -> x
   | v ->
@@ -1484,13 +1414,15 @@ let rec compile_value ~raise ~options ~loc
          loc
          (Format.asprintf
             "Cannot decompile value %a of type %a"
-            Ligo_interpreter.PP.pp_value v
-            Ast_aggregated.PP.type_expression ty)
+            Ligo_interpreter.PP.pp_value
+            v
+            Ast_aggregated.PP.type_expression
+            ty)
 
 
 let compile_value ~raise ~options ~loc
-  :  Ligo_interpreter.Types.value -> Ast_aggregated.type_expression
-  -> Ligo_interpreter.Types.typed_michelson_code
+    :  Ligo_interpreter.Types.value -> Ast_aggregated.type_expression
+    -> Ligo_interpreter.Types.typed_michelson_code
   =
  fun v ty ->
   let expr = compile_value ~raise ~options ~loc v ty in
@@ -1502,14 +1434,14 @@ let compile_value ~raise ~options ~loc
 
 
 let run_michelson_func
-  ~raise
-  ~options
-  ~loc
-  (ctxt : Tezos_state.context)
-  (code : (unit, string) Tezos_micheline.Micheline.node)
-  func_ty
-  arg
-  arg_ty
+    ~raise
+    ~options
+    ~loc
+    (ctxt : Tezos_state.context)
+    (code : (unit, string) Tezos_micheline.Micheline.node)
+    func_ty
+    arg
+    arg_ty
   =
   let open Ligo_interpreter.Types in
   let run_options = make_options ~raise (Some ctxt) in
@@ -1520,8 +1452,7 @@ let run_michelson_func
   let func =
     match code with
     | Seq (_, s) -> Tezos_utils.Michelson.(seq ([ i_push arg_ty arg ] @ s))
-    | _ ->
-      raise.error (Errors.generic_error Location.generated "Could not parse")
+    | _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
   in
   match
     Ligo_run.Of_michelson.run_expression
@@ -1546,32 +1477,28 @@ let parse_code ~raise code =
   let code, errs = Micheline_parser.tokenize code in
   let code =
     match errs with
-    | _ :: _ ->
-      raise.error (Errors.generic_error Location.generated "Could not parse")
+    | _ :: _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
     | [] ->
       let code, errs = Micheline_parser.parse_expression ~check:false code in
       (match errs with
-       | _ :: _ ->
-         raise.error (Errors.generic_error Location.generated "Could not parse")
-       | [] ->
-         let code = Micheline.map_node (fun _ -> ()) (fun x -> x) code in
-         (match code with
-          | Seq (_, s) -> Tezos_utils.Michelson.(seq s)
-          | _ ->
-            raise.error
-              (Errors.generic_error Location.generated "Could not parse")))
+      | _ :: _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
+      | [] ->
+        let code = Micheline.map_node (fun _ -> ()) (fun x -> x) code in
+        (match code with
+        | Seq (_, s) -> Tezos_utils.Michelson.(seq s)
+        | _ -> raise.error (Errors.generic_error Location.generated "Could not parse")))
   in
   code
 
 
 let parse_and_run_michelson_func
-  ~raise
-  ~loc
-  (ctxt : Tezos_state.context)
-  code
-  func_ty
-  arg
-  arg_ty
+    ~raise
+    ~loc
+    (ctxt : Tezos_state.context)
+    code
+    func_ty
+    arg
+    arg_ty
   =
   let code = parse_code ~raise code in
   run_michelson_func ~raise ~loc ctxt code func_ty arg arg_ty
@@ -1584,6 +1511,7 @@ let parse_raw_michelson_code ~raise code ty =
   let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
   code, code_ty
 
+
 let compare_michelson ~raise loc a b =
   let module LT = Ligo_interpreter.Types in
   let module LC = Ligo_interpreter.Combinators in
@@ -1591,9 +1519,7 @@ let compare_michelson ~raise loc a b =
     trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
     @@ LC.get_michelson_expr a
   in
-  let ({ micheline_repr = { code = code'; _ }; _ }
-       : LT.typed_michelson_code)
-    =
+  let ({ micheline_repr = { code = code'; _ }; _ } : LT.typed_michelson_code) =
     trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
     @@ LC.get_michelson_expr b
   in

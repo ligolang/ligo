@@ -6,8 +6,9 @@ let bad_contract = bad_test
 
 (* warning unused variables example *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_unused.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "warning_unused.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
      10 |   let x = s.x + 3 in
      11 |   let x = foo x in
@@ -37,10 +38,18 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
- (* warning non-duplicable variable used examples *)
+(* warning non-duplicable variable used examples *)
 let%expect_test _ =
-run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
-[%expect{|
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "x"
+    ; "--init-file"
+    ; contract "warning_duplicate.mligo"
+    ];
+  [%expect
+    {|
   File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-50:
     1 | module Foo = struct
     2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
@@ -52,10 +61,17 @@ run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; con
   At (unshown) location 8, type option (ticket nat) cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
   At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
-
 let%expect_test _ =
-run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate2.mligo" ] ;
-[%expect{|
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "x"
+    ; "--init-file"
+    ; contract "warning_duplicate2.mligo"
+    ];
+  [%expect
+    {|
   File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
     1 | let x = Tezos.create_ticket 42n 42n
     2 | let x = (x, x)
@@ -66,10 +82,11 @@ run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; con
   At (unshown) location 8, type option (ticket nat) cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
   At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
-  (* some check about the warnings of the E_constructor cases *)
+(* some check about the warnings of the E_constructor cases *)
 let%expect_test _ =
-run_ligo_good [ "compile" ; "contract" ; contract "warning_ambiguous_ctor.mligo" ] ;
-[%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "warning_ambiguous_ctor.mligo" ];
+  [%expect
+    {|
   File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-64:
     8 | (* here we expect a warning because both A constructor have the same parameter type *)
     9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
@@ -80,16 +97,17 @@ run_ligo_good [ "compile" ; "contract" ; contract "warning_ambiguous_ctor.mligo"
   { parameter unit ;
     storage (or (int %a) (nat %b)) ;
     code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
-
-run_ligo_good [ "compile" ; "contract" ; contract "not_ambiguous_ctor.mligo" ] ;
-[%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "not_ambiguous_ctor.mligo" ];
+  [%expect
+    {|
   { parameter unit ;
     storage (or (nat %a) (nat %b)) ;
     code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_sum_types.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "warning_sum_types.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/warning_sum_types.mligo", line 65, characters 14-23:
      64 |
      65 | let warn_me = TopTop 42
@@ -183,8 +201,9 @@ let%expect_test _ =
       code { DROP ; PUSH int 42 ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_sum_types_shadowed.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "warning_sum_types_shadowed.mligo" ];
+  [%expect
+    {|
     { parameter int ;
       storage int ;
       code { DROP ; PUSH int 42 ; NIL operation ; PAIR } } |}]

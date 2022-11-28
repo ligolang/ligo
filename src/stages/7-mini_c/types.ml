@@ -18,11 +18,11 @@ type type_content =
   | T_sapling_transaction of Z.t
   | T_option of type_expression
 
-and type_expression = {
-  type_content : type_content;
-  location : Location.t;
-  source_type : Ast_typed.type_expression option;
-}
+and type_expression =
+  { type_content : type_content
+  ; location : Location.t
+  ; source_type : Ast_typed.type_expression option
+  }
 
 and type_base =
   | TB_unit
@@ -52,9 +52,7 @@ and type_base =
   | TB_type_int of Z.t
 
 and environment_element = Value_var.t * type_expression
-
 and environment = environment_element list
-
 and var_name = Value_var.t
 and fun_name = Value_var.t
 
@@ -83,7 +81,6 @@ type value =
   | D_operation of bytes
 
 and selector = var_name list
-
 and binder = var_name * type_expression
 
 and expression_content =
@@ -93,13 +90,13 @@ and expression_content =
   | E_application of (expression * expression)
   | E_variable of var_name
   | E_iterator of Constant.constant' * (binder * expression) * expression
-  | E_fold     of ((binder * expression) * expression * expression)
+  | E_fold of ((binder * expression) * expression * expression)
   | E_fold_right of ((binder * expression) * (expression * type_expression) * expression)
-  | E_if_bool  of (expression * expression * expression)
-  | E_if_none  of expression * expression * (binder * expression)
-  | E_if_cons  of expression * expression * ((binder * binder) * expression)
-  | E_if_left  of expression * (binder * expression) * (binder * expression)
-  | E_let_in   of expression * inline * (binder * expression)
+  | E_if_bool of (expression * expression * expression)
+  | E_if_none of expression * expression * (binder * expression)
+  | E_if_cons of expression * expression * ((binder * binder) * expression)
+  | E_if_left of expression * (binder * expression) * (binder * expression)
+  | E_let_in of expression * inline * (binder * expression)
   | E_tuple of expression list
   | E_let_tuple of expression * (binder list * expression)
   (* E_proj (record, index, field_count): we use the field_count to
@@ -111,10 +108,12 @@ and expression_content =
   | E_proj of expression * int * int
   (* E_update (record, index, update, field_count): field_count as for E_proj *)
   | E_update of expression * int * expression * int
-  | E_raw_michelson of ((Location.t, string) Tezos_micheline.Micheline.node list * expression list)
+  | E_raw_michelson of
+      ((Location.t, string) Tezos_micheline.Micheline.node list * expression list)
   (* E_global_constant (hash, args) *)
   | E_global_constant of string * expression list
-  | E_create_contract of type_expression * type_expression * (binder * expression) * expression list
+  | E_create_contract of
+      type_expression * type_expression * (binder * expression) * expression list
   (* Mutability stuff *)
   | E_let_mut_in of expression * (binder * expression)
   | E_deref of var_name
@@ -124,41 +123,37 @@ and expression_content =
   (* (start, final, incr, (binder, body)) *)
   | E_while of expression * expression
 
+and expression =
+  { content : expression_content
+  ; type_expression : type_expression
+  ; location : Location.t
+  }
 
-and expression = {
-  content : expression_content ;
-  type_expression : type_expression ;
-  location : Location.t;
-}
+and constant =
+  { cons_name : Constant.constant'
+  ; arguments : expression list
+  }
 
-and constant = {
-  cons_name : Constant.constant';
-  arguments : expression list;
-}
-
-and anon_function = {
-  binder : Value_var.t ;
-  body : expression ;
-}
+and anon_function =
+  { binder : Value_var.t
+  ; body : expression
+  }
 
 (* backend expression metadata *)
 type binder_meta =
-  { location : Location.t;
-    name : string option;
-    source_type : Ast_typed.type_expression option;
+  { location : Location.t
+  ; name : string option
+  ; source_type : Ast_typed.type_expression option
   }
 
 type meta =
-  { location : Location.t;
-    (* source location on any node *)
-    env : binder_meta option list;
-    (* environment descriptor on special environment Seq nodes *)
-    binder : binder_meta option;
-    (* binder descriptor on the translated type of binders (since
+  { location : Location.t
+  ; (* source location on any node *)
+    env : binder_meta option list
+  ; (* environment descriptor on special environment Seq nodes *)
+    binder : binder_meta option
+        (* binder descriptor on the translated type of binders (since
        backend environments are lists of types) *)
   }
 
-let dummy_meta : meta =
-  { location = Location.dummy ;
-    env = [] ;
-    binder = None }
+let dummy_meta : meta = { location = Location.dummy; env = []; binder = None }

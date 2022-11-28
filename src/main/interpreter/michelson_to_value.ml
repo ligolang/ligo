@@ -6,7 +6,7 @@ open Ligo_prim
 
 let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ ->
-    Errors.generic_error Location.generated "Cannot parse address")
+      Errors.generic_error Location.generated "Cannot parse address")
   @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s
 
 
@@ -21,19 +21,19 @@ let contract_of_bytes ~raise b =
 
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
-    Errors.generic_error Location.generated "Cannot parse key_hash")
+      Errors.generic_error Location.generated "Cannot parse key_hash")
   @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
 
 
 let key_hash_of_bytes ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
-    Errors.generic_error Location.generated "Cannot parse key_hash")
+      Errors.generic_error Location.generated "Cannot parse key_hash")
   @@ Tezos_crypto.Signature.Public_key_hash.of_bytes s
 
 
 let key_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
-    Errors.generic_error Location.generated "Cannot parse key")
+      Errors.generic_error Location.generated "Cannot parse key")
   @@ Tezos_crypto.Signature.Public_key.of_b58check s
 
 
@@ -46,14 +46,15 @@ let key_of_bytes ~raise s =
 
 let signature_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
-    Errors.generic_error Location.generated "Cannot parse signature")
+      Errors.generic_error Location.generated "Cannot parse signature")
   @@ Tezos_crypto.Signature.of_b58check s
 
 
 let chain_id_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
-    Errors.generic_error Location.generated "Cannot parse chain_id")
+      Errors.generic_error Location.generated "Cannot parse chain_id")
   @@ Tezos_crypto.Chain_id.of_b58check s
+
 
 let wrong_mini_c_value _t _v =
   Errors.generic_error Location.generated "wrong_mini_c_value"
@@ -106,14 +107,14 @@ let normalize_edo_comb_value = function
   (* only do it for type is "pair" (and "ticket"), because Seq case is ambiguous *)
   | Prim (_, "pair", _, _) | Prim (_, "ticket", _, _) ->
     (function
-     | Prim (loc, "Pair", xs, _) -> comb "Pair" loc xs
-     | Seq (loc, xs) -> comb "Pair" loc xs
-     | x -> x)
+    | Prim (loc, "Pair", xs, _) -> comb "Pair" loc xs
+    | Seq (loc, xs) -> comb "Pair" loc xs
+    | x -> x)
   | _ -> fun x -> x
 
 
 let rec decompile_to_untyped_value ~raise ~bigmaps
-  : ('l, string) node -> ('l, string) node -> Ligo_interpreter.Types.value
+    : ('l, string) node -> ('l, string) node -> Ligo_interpreter.Types.value
   =
  fun ty value ->
   let ty = normalize_edo_comb_type ty in
@@ -142,14 +143,13 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Construct ("Right", b)
   | Prim (_, "int", [], _), Int (_, n) -> V_Ct (C_int n)
   | Prim (_, "nat", [], _), Int (_, n) -> V_Ct (C_nat n)
-  | Prim (_, "chain_id", _, _), String (_, id) -> 
-    V_Ct (C_chain_id  (chain_id_of_string ~raise id))
+  | Prim (_, "chain_id", _, _), String (_, id) ->
+    V_Ct (C_chain_id (chain_id_of_string ~raise id))
   | Prim (_, "key_hash", [], _), String (_, n) ->
     V_Ct (C_key_hash (key_hash_of_string ~raise n))
   | Prim (_, "key_hash", [], _), Bytes (_, b) ->
     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
-  | Prim (_, "key", [], _), String (_, n) ->
-    V_Ct (C_key (key_of_string ~raise n))
+  | Prim (_, "key", [], _), String (_, n) -> V_Ct (C_key (key_of_string ~raise n))
   | Prim (_, "key", [], _), Bytes (_, b) -> V_Ct (C_key (key_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
     V_Ct (C_signature (signature_of_string ~raise n))
@@ -249,7 +249,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     let c = Tezos_micheline.Micheline.strip_locations c in
     let c =
       Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ ->
-        Errors.generic_error Location.generated "Cannot get instructions")
+          Errors.generic_error Location.generated "Cannot get instructions")
       @@ Tezos_protocol.Protocol.Michelson_v1_primitives.prims_of_strings c
     in
     let u =
@@ -262,20 +262,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     in
     let code_block = make_e (e_string (Ligo_string.verbatim u)) (t_string ()) in
     let insertion =
-      e_a_raw_code
-        Backend.Michelson.name
-        code_block
-        (t_arrow t_input t_output ())
+      e_a_raw_code Backend.Michelson.name code_block (t_arrow t_input t_output ())
     in
-    let body =
-      e_a_application insertion (e_a_variable arg_binder t_input) t_output
-    in
+    let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
     let orig_lambda =
       e_a_lambda
-        { binder = Param.make arg_binder t_input
-        ; output_type = t_output
-        ; result = body
-        }
+        { binder = Param.make arg_binder t_input; output_type = t_output; result = body }
         t_input
         t_output
     in
@@ -315,11 +307,11 @@ e.g.
   result == { a = 1 ; b = 2 ; c = 3}
 *)
 let rec decompile_value
-  ~raise
-  ~(bigmaps : bigmap list)
-  (v : value)
-  (t : Ast_aggregated.type_expression)
-  : value
+    ~raise
+    ~(bigmaps : bigmap list)
+    (v : value)
+    (t : Ast_aggregated.type_expression)
+    : value
   =
   let open Literal_types in
   let open Ligo_interpreter.Combinators in
@@ -335,105 +327,101 @@ let rec decompile_value
         (String.equal language Backend.Michelson.name)
     in
     (match injection, parameters with
-     | Map, [ k_ty; v_ty ] ->
-       let map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
-       let map' =
-         let aux (k, v) =
-           let key = self k k_ty in
-           let value = self v v_ty in
-           key, value
-         in
-         List.map ~f:aux map
-       in
-       V_Map map'
-     | Big_map, [ k_ty; v_ty ] ->
-       (match get_nat v with
-        | Some _ ->
-          raise.error @@ corner_case ~loc:"unspiller" "Big map id not supported"
-        | None ->
-          let big_map =
-            trace_option ~raise (wrong_mini_c_value t v) @@ get_map v
+    | Map, [ k_ty; v_ty ] ->
+      let map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
+      let map' =
+        let aux (k, v) =
+          let key = self k k_ty in
+          let value = self v v_ty in
+          key, value
+        in
+        List.map ~f:aux map
+      in
+      V_Map map'
+    | Big_map, [ k_ty; v_ty ] ->
+      (match get_nat v with
+      | Some _ -> raise.error @@ corner_case ~loc:"unspiller" "Big map id not supported"
+      | None ->
+        let big_map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
+        let big_map' =
+          let aux (k, v) =
+            let key = self k k_ty in
+            let value = self v v_ty in
+            key, value
           in
-          let big_map' =
-            let aux (k, v) =
-              let key = self k k_ty in
-              let value = self v v_ty in
-              key, value
-            in
-            List.map ~f:aux big_map
-          in
-          V_Map big_map')
-     | List, [ ty ] ->
-       let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
-       let lst' =
-         let aux e = self e ty in
-         List.map ~f:aux lst
-       in
-       V_List lst'
-     | Set, [ ty ] ->
-       let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_set v in
-       let lst' =
-         let aux e = self e ty in
-         List.map ~f:aux lst
-       in
-       V_Set lst'
-     | ( ( Ast_contract
-         | Map
-         | Big_map
-         | List
-         | Set
-         | Int64
-         | String
-         | Bytes
-         | Int
-         | Operation
-         | Nat
-         | Tez
-         | Unit
-         | Address
-         | Signature
-         | Key
-         | Key_hash
-         | Timestamp
-         | Chain_id
-         | Contract
-         | Michelson_program
-         | Michelson_or
-         | Michelson_pair
-         | Baker_hash
-         | Pvss_key
-         | Sapling_state
-         | Sapling_transaction
-         | Baker_operation
-         | Bls12_381_g1
-         | Bls12_381_g2
-         | Bls12_381_fr
-         | Never
-         | Ticket
-         | Michelson_contract
-         | Gen
-         | Chest
-         | Chest_key
-         | Typed_address
-         | Mutation
-         | Chest_opening_result
-         | External _
-         | Tx_rollup_l2_address )
-       , _ ) -> v)
+          List.map ~f:aux big_map
+        in
+        V_Map big_map')
+    | List, [ ty ] ->
+      let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
+      let lst' =
+        let aux e = self e ty in
+        List.map ~f:aux lst
+      in
+      V_List lst'
+    | Set, [ ty ] ->
+      let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_set v in
+      let lst' =
+        let aux e = self e ty in
+        List.map ~f:aux lst
+      in
+      V_Set lst'
+    | ( ( Ast_contract
+        | Map
+        | Big_map
+        | List
+        | Set
+        | Int64
+        | String
+        | Bytes
+        | Int
+        | Operation
+        | Nat
+        | Tez
+        | Unit
+        | Address
+        | Signature
+        | Key
+        | Key_hash
+        | Timestamp
+        | Chain_id
+        | Contract
+        | Michelson_program
+        | Michelson_or
+        | Michelson_pair
+        | Baker_hash
+        | Pvss_key
+        | Sapling_state
+        | Sapling_transaction
+        | Baker_operation
+        | Bls12_381_g1
+        | Bls12_381_g2
+        | Bls12_381_fr
+        | Never
+        | Ticket
+        | Michelson_contract
+        | Gen
+        | Chest
+        | Chest_key
+        | Typed_address
+        | Mutation
+        | Chest_opening_result
+        | External _
+        | Tx_rollup_l2_address )
+      , _ ) -> v)
   | T_sum _ when Option.is_some (Ast_aggregated.get_t_bool t) -> v
   | T_sum _ when Option.is_some (Ast_aggregated.get_t_option t) ->
     let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
     (match opt with
-     | None -> v_none ()
-     | Some s ->
-       let o = Option.value_exn (Ast_aggregated.get_t_option t) in
-       let s' = self s o in
-       v_some s')
+    | None -> v_none ()
+    | Some s ->
+      let o = Option.value_exn (Ast_aggregated.get_t_option t) in
+      let s' = self s o in
+      v_some s')
   | T_sum { layout; fields } ->
     let lst =
-      List.map
-        ~f:(fun (k, ({ associated_type; _ } : _ Rows.row_element_mini_c)) ->
-        k, associated_type)
+      List.map ~f:(fun (k, ({ associated_type; _ } : _ Rows.row_element_mini_c)) ->
+          k, associated_type)
       @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout fields
     in
     let Label constructor, v, tv = L.extract_constructor ~raise ~layout v lst in
@@ -441,9 +429,8 @@ let rec decompile_value
     V_Construct (constructor, sub)
   | T_record { layout; fields } ->
     let lst =
-      List.map
-        ~f:(fun (k, ({ associated_type; _ } : _ Rows.row_element_mini_c)) ->
-        k, associated_type)
+      List.map ~f:(fun (k, ({ associated_type; _ } : _ Rows.row_element_mini_c)) ->
+          k, associated_type)
       @@ Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout fields
     in
     let lst = L.extract_record ~raise ~layout v lst in
@@ -453,53 +440,41 @@ let rec decompile_value
   | T_arrow { type1; type2 } ->
     (* We now patch the types *)
     (* Mut flag is ignored bcs not required in the case when we patch raw code to a function *)
-    let { arg_binder
-        ; arg_mut_flag = _
-        ; body
-        ; rec_name = _
-        ; orig_lambda = _
-        ; env = _
-        }
-      =
+    let { arg_binder; arg_mut_flag = _; body; rec_name = _; orig_lambda = _; env = _ } =
       trace_option ~raise (wrong_mini_c_value t v) @@ get_func v
     in
     (match body.expression_content with
-     | E_application { lamb; args = _ } ->
-       (match lamb.expression_content with
-        | E_raw_code { code; language = _ } ->
-          let insertion =
-            e_a_raw_code Backend.Michelson.name code (t_arrow type1 type2 ())
-          in
-          let body =
-            e_a_application insertion (e_a_variable arg_binder type1) type2
-          in
-          let orig_lambda =
-            e_a_lambda
-              { binder = Param.make arg_binder type1
-              ; output_type = type2
-              ; result = body
-              }
-              type1
-              type2
-          in
-          V_Func_val
-            { rec_name = None
-            ; orig_lambda
-            ; arg_binder
-            ; arg_mut_flag = Immutable
-            ; body
-            ; env = Ligo_interpreter.Environment.empty_env
-            }
-        | _ -> v)
-     | _ -> v)
+    | E_application { lamb; args = _ } ->
+      (match lamb.expression_content with
+      | E_raw_code { code; language = _ } ->
+        let insertion =
+          e_a_raw_code Backend.Michelson.name code (t_arrow type1 type2 ())
+        in
+        let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
+        let orig_lambda =
+          e_a_lambda
+            { binder = Param.make arg_binder type1; output_type = type2; result = body }
+            type1
+            type2
+        in
+        V_Func_val
+          { rec_name = None
+          ; orig_lambda
+          ; arg_binder
+          ; arg_mut_flag = Immutable
+          ; body
+          ; env = Ligo_interpreter.Environment.empty_env
+          }
+      | _ -> v)
+    | _ -> v)
   | _ -> v
 
 
 let conv
-  ~raise
-  ~bigmaps
-  (t : Tezos_raw_protocol.Script_repr.expr)
-  (v : Tezos_raw_protocol.Script_repr.expr)
+    ~raise
+    ~bigmaps
+    (t : Tezos_raw_protocol.Script_repr.expr)
+    (v : Tezos_raw_protocol.Script_repr.expr)
   =
   let v =
     v

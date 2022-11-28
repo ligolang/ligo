@@ -86,54 +86,61 @@ let read ~project_root =
          with
          | _ -> []
        in
-       let dependencies = 
-        try
-          json
-          |> Util.member "dependencies"
-          |> Util.to_assoc
-          |> List.Assoc.map ~f:Util.to_string
-        with
-        | _ -> []
+       let dependencies =
+         try
+           json
+           |> Util.member "dependencies"
+           |> Util.to_assoc
+           |> List.Assoc.map ~f:Util.to_string
+         with
+         | _ -> []
        in
        let dev_dependencies =
-        try
-          json
-          |> Util.member "devDependencies"
-          |> Util.to_assoc
-          |> List.Assoc.map ~f:Util.to_string
-        with
-        | _ -> []
+         try
+           json
+           |> Util.member "devDependencies"
+           |> Util.to_assoc
+           |> List.Assoc.map ~f:Util.to_string
+         with
+         | _ -> []
        in
        let author =
          try json |> Util.member "author" |> Util.to_string with
          | _ -> failwith "No author field  in package.json"
        in
        let type_ =
-         try json |> Util.member "type" |> Util.to_string
-          |> (fun t ->
-                if String.(t = "contract" || t = "library") 
-                then t 
-                else failwith "Type can be either library or contract") with
-          | Failure s -> failwith s      
-          | _ -> "library"
+         try
+           json
+           |> Util.member "type"
+           |> Util.to_string
+           |> fun t ->
+           if String.(t = "contract" || t = "library")
+           then t
+           else failwith "Type can be either library or contract"
+         with
+         | Failure s -> failwith s
+         | _ -> "library"
        in
-       let storage_fn = 
-          try Some (json |> Util.member "storage_fn" |> Util.to_string) with
-          | _ -> None in
+       let storage_fn =
+         try Some (json |> Util.member "storage_fn" |> Util.to_string) with
+         | _ -> None
+       in
        let storage_arg =
-          try Some (json |> Util.member "storage_arg" |> Util.to_string) with
-          | _ -> None in
-       let () = 
-          match type_, storage_fn, storage_arg with
-            "contract", Some _, Some _ -> ()
-          | "contract", (None | Some _), (None | Some _) -> 
-            failwith "In case of a contract a `storage_fn` & `storage_arg` needs to provided"
-          | ("library" | _), _, _ -> ()
+         try Some (json |> Util.member "storage_arg" |> Util.to_string) with
+         | _ -> None
+       in
+       let () =
+         match type_, storage_fn, storage_arg with
+         | "contract", Some _, Some _ -> ()
+         | "contract", (None | Some _), (None | Some _) ->
+           failwith
+             "In case of a contract a `storage_fn` & `storage_arg` needs to provided"
+         | ("library" | _), _, _ -> ()
        in
        let repository =
          let repo =
            match json |> Util.member "repository" with
-            `Null -> failwith "No repository field in package.json"
+           | `Null -> failwith "No repository field in package.json"
            | repo -> repo
            | exception _ -> failwith "Invalid repository field in package.json"
          in

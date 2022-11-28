@@ -71,8 +71,7 @@ let rec extract_variable_types
         List.concat
         @@ List.map cases ~f:(fun { pattern; _ } ->
                let binders = Pattern.binders pattern in
-               List.map binders ~f:(fun b ->
-                   Binder.get_var b, Binder.get_ascr b))
+               List.map binders ~f:(fun b -> Binder.get_var b, Binder.get_ascr b))
       in
       return bindings
     | E_module_accessor { element = e; _ } -> return [ e, exp.type_expression ]
@@ -80,9 +79,7 @@ let rec extract_variable_types
     | E_let_mut_in _ -> return []
     | E_for { binder; start; _ } -> return [ binder, start.type_expression ]
     | E_for_each { fe_binder = binder1, Some binder2; collection; _ } ->
-      let key_type, val_type =
-        Ast_typed.get_t_map_exn collection.type_expression
-      in
+      let key_type, val_type = Ast_typed.get_t_map_exn collection.type_expression in
       return [ binder1, key_type; binder2, val_type ]
     | E_for_each { fe_binder = binder, None; collection; _ } ->
       let type_ = collection.type_expression in
@@ -94,21 +91,17 @@ let rec extract_variable_types
       then (
         let k, v = Ast_typed.get_t_map_exn type_ in
         return [ binder, Ast_typed.t_pair k v ])
-      else
-        failwith
-          "E_for_each type with 1 binder should have map, set or list type"
+      else failwith "E_for_each type with 1 binder should have map, set or list type"
   in
   match decl with
   | D_value { attr = { hidden = true; _ }; _ } -> prev
-  | D_irrefutable_match  { attr = { hidden = true; _ }; _ } -> prev
+  | D_irrefutable_match { attr = { hidden = true; _ }; _ } -> prev
   | D_value { binder; expr; _ } ->
     let prev = add prev [ Binder.get_var binder, expr.type_expression ] in
     Self_ast_typed.Helpers.fold_expression aux prev expr
-  | D_irrefutable_match  { pattern; expr; _ } ->
+  | D_irrefutable_match { pattern; expr; _ } ->
     let prev =
-      let f acc binder =
-        add acc [ Binder.get_var binder, expr.type_expression ]
-      in
+      let f acc binder = add acc [ Binder.get_var binder, expr.type_expression ] in
       List.fold (Pattern.binders pattern) ~f ~init:prev
     in
     Self_ast_typed.Helpers.fold_expression aux prev expr
@@ -134,8 +127,8 @@ let resolve_if : with_types:bool -> bindings_map -> Value_var.t -> type_case =
 
 
 let make_v_def
-    :  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map
-    -> def_type -> Value_var.t -> Location.t -> Location.t -> def
+    :  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> def_type
+    -> Value_var.t -> Location.t -> Location.t -> def
   =
  fun ~with_types ?core_type bindings def_type var range body_range ->
   let type_case =

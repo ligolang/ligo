@@ -226,18 +226,12 @@ let contract_prod =
     ; compile_file_ "top_level_patterns/contracts/pascaligo/ticket_tuple.ligo"
     ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple_record.ligo"
     ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple.ligo"
-    ; compile_file_
-        "top_level_patterns/contracts/reasonligo/nested_record.religo"
-    ; compile_file_
-        "top_level_patterns/contracts/reasonligo/nested_tuple.religo"
-    ; compile_file_
-        "top_level_patterns/contracts/reasonligo/record_tuple.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/nested_record.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/nested_tuple.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/record_tuple.religo"
     ; compile_file_ "top_level_patterns/contracts/reasonligo/record.religo"
-    ; compile_file_
-        "top_level_patterns/contracts/reasonligo/ticket_record.religo"
-    ; compile_file_
-        "top_level_patterns/contracts/reasonligo/ticket_tuple.religo"
-    ; compile_file_
-        "top_level_patterns/contracts/reasonligo/tuple_record.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/ticket_record.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/ticket_tuple.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/tuple_record.religo"
     ; mini_c_file "top_level_patterns/contracts/reasonligo/tuple.religo"
     ]

@@ -93,8 +93,7 @@ let%expect_test _ =
 let contract file = test ("top_level_patterns/negative/" ^ file)
 
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "reasonligo/nested_record.religo" ];
+  run_ligo_bad [ "compile"; "contract"; contract "reasonligo/nested_record.religo" ];
   [%expect
     {|
     Reasonligo is depreacted, support will be dropped in a few versions.
@@ -112,8 +111,7 @@ let%expect_test _ =
     Hint: Change the name. |}]
 
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "reasonligo/nested_tuple.religo" ];
+  run_ligo_bad [ "compile"; "contract"; contract "reasonligo/nested_tuple.religo" ];
   [%expect
     {|
     Reasonligo is depreacted, support will be dropped in a few versions.
@@ -158,8 +156,7 @@ let%expect_test _ =
     Hint: Change the name. |}]
 
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "reasonligo/record_tuple.religo" ];
+  run_ligo_bad [ "compile"; "contract"; contract "reasonligo/record_tuple.religo" ];
   [%expect
     {|
     Reasonligo is depreacted, support will be dropped in a few versions.
@@ -177,8 +174,7 @@ let%expect_test _ =
     Hint: Change the name. |}]
 
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "reasonligo/tuple_record.religo" ];
+  run_ligo_bad [ "compile"; "contract"; contract "reasonligo/tuple_record.religo" ];
   [%expect
     {|
     Reasonligo is depreacted, support will be dropped in a few versions.
