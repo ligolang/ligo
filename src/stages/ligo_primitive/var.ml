@@ -70,7 +70,7 @@ module Internal () = struct
   (* should be removed in favor of a lift pass before ast_imperative *)
   let of_input_var ?(loc = Location.dummy) name =
     if String.equal name "_"
-    then fresh ~name ()
+    then fresh ~name ~loc ()
     else { name; counter = 0; generated = false; location = loc }
 
 

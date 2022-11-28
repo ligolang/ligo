@@ -19,6 +19,14 @@ let rec reduplicate ~raise : expression -> expression =
   let return expression_content : expression =
     { exp with expression_content } in
   let binder_remove_counter = fun b -> Binder.set_var b (Binder.apply remove_counter b) in
+  let pattern_remove_counter pattern =
+    Pattern.map_pattern
+      (fun p -> match p.wrap_content with
+        | P_var v ->
+          { p with wrap_content = P_var (binder_remove_counter v) }
+        | _ -> p)
+      pattern
+  in
   let param_remove_counter = fun b -> Param.set_var b (remove_counter @@ Param.get_var b) in
   match exp.expression_content with
     | E_literal l ->
@@ -43,11 +51,11 @@ let rec reduplicate ~raise : expression -> expression =
        let result = self result in
        let binder = param_remove_counter binder in
        return (E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } })
-    | E_let_in { let_binder ; rhs ; let_result ; attr } ->
+    | E_let_in { let_binder ; rhs ; let_result ; attributes } ->
        let rhs = self rhs in
        let let_result = self let_result in
-       let let_binder = binder_remove_counter let_binder in
-       return (E_let_in { let_binder ; rhs ; let_result ; attr })
+       let let_binder = pattern_remove_counter let_binder in
+       return (E_let_in { let_binder ; rhs ; let_result ; attributes })
     | E_raw_code { language ; code } ->
        let code = self code in
        return (E_raw_code { language ; code })
@@ -58,19 +66,12 @@ let rec reduplicate ~raise : expression -> expression =
     | E_constructor { constructor ; element } ->
        let element = self element in
        return (E_constructor { constructor ; element })
-    | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
-       let matchee = self matchee in
-       let f { constructor ; pattern ; body } =
-         let body = self body in
-         let pattern = remove_counter pattern in
-         { constructor ; pattern ; body } in
-       let cases = List.map ~f cases in
-       return (E_matching { matchee ; cases = Match_variant { cases ; tv } })
-    | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
-       let matchee = self matchee in
-       let body = self body in
-       let fields = Record.map ~f:binder_remove_counter fields in
-       return (E_matching { matchee ; cases = Match_record { fields ; body ; tv } })
+    | E_matching { matchee ; cases } ->
+      let matchee = self matchee in
+      let cases = List.map cases
+        ~f:(fun {pattern; body} -> Match_expr.{pattern = pattern_remove_counter pattern ; body = self body}) 
+      in
+      return (E_matching { matchee ; cases })
     (* Record *)
     | E_record map ->
        let map = Record.map ~f:self map in
@@ -86,11 +87,11 @@ let rec reduplicate ~raise : expression -> expression =
       let binder = binder_remove_counter binder in
       let expression = self expression in
       return @@ E_assign {binder;expression}
-   | E_let_mut_in { let_binder; rhs; let_result; attr } ->
-      let let_binder = binder_remove_counter let_binder in
+   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
+      let let_binder = pattern_remove_counter let_binder in
       let rhs = self rhs in
       let let_result = self let_result in
-      return @@ E_let_mut_in { let_binder; rhs; let_result; attr }
+      return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
    | E_for { binder; start; incr; final; f_body } ->
       let binder = remove_counter binder in
       let start = self start in

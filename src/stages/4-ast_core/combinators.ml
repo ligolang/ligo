@@ -152,9 +152,9 @@ let e_application lamb args : expression = e_application {lamb;args} ()
 let e_lambda ?loc ?sugar binder output_type result = e_lambda ?loc ?sugar {binder; output_type; result ;  } ()
 let e_type_abs ?loc ?sugar type_binder result = e_type_abstraction ?loc ?sugar {type_binder; result ;  } ()
 let e_recursive ?loc ?sugar fun_name fun_type lambda = e_recursive ?loc ?sugar {fun_name; fun_type; lambda} ()
-let e_let_in ?loc ?sugar let_binder rhs let_result attr = e_let_in ?loc ?sugar { let_binder ; rhs ; let_result; attr } ()
+let e_let_in ?loc ?sugar let_binder rhs let_result attributes = e_let_in ?loc ?sugar { let_binder ; rhs ; let_result; attributes } ()
 
-let e_let_mut_in ?loc ?sugar let_binder rhs let_result attr = e_let_mut_in ?loc ?sugar { let_binder ; rhs ; let_result; attr } ()
+let e_let_mut_in ?loc ?sugar let_binder rhs let_result attributes = e_let_mut_in ?loc ?sugar { let_binder ; rhs ; let_result; attributes } ()
 
 let e_type_in type_binder rhs let_result = e_type_in { type_binder ; rhs ; let_result } ()
 let e_mod_in ?loc ?sugar module_binder rhs let_result = e_mod_in ?loc ?sugar { module_binder ; rhs ; let_result } ()
@@ -167,7 +167,7 @@ let e_module_accessor ?loc ?sugar module_path element = e_module_accessor ?loc ?
 let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = e_ascription ?loc ?sugar {anno_expr;type_annotation} ()
 let e_lambda_ez  ?loc var ?ascr ?mut_flag output_type result : expression = e_lambda ?loc (Ligo_prim.Param.make ?mut_flag var ascr) output_type result
 let e_let_in_ez  ?loc var ?ascr ?(mut = false) attributes rhs let_result = 
-  let binder = Ligo_prim.Binder.make var ascr in
+  let binder = Types.Pattern.var (Binder.make var ascr) in
   if mut then e_let_mut_in ?loc binder attributes rhs let_result
   else e_let_in ?loc binder attributes rhs let_result
 

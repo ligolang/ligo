@@ -4,10 +4,10 @@ module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Int64       = Caml.Int64
+open Ligo_prim
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Ligo_prim
 
 let lmap_sep value sep ppf m =
   let lst = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) m in
@@ -104,8 +104,9 @@ let type_expression_annot ppf (te : type_expression) : unit =
   fprintf ppf " : %a" type_expression te
 
 let rec expression ppf (e : expression) =
-  fprintf ppf "%a : %a"
-    expression_content e.expression_content type_expression e.type_expression
+  fprintf ppf "%a"
+    expression_content e.expression_content 
+    (* type_expression e.type_expression *)
 
 and expression_content ppf (ec: expression_content) =
   match ec with
@@ -119,24 +120,19 @@ and expression_content ppf (ec: expression_content) =
   | E_update      u -> Types.Update.pp      expression ppf u
   | E_lambda      l -> Lambda.pp      expression type_expression_annot ppf l
   | E_type_abstraction e -> Type_abs.pp expression ppf e
-  | E_matching {matchee; cases;} ->
-      fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
+  | E_matching m ->
+    Types.Match_expr.pp expression type_expression ppf m
   | E_recursive  r -> Recursive.pp expression type_expression_annot ppf r
-  | E_let_in {let_binder; rhs; let_result; attr = { hidden = false ; _ } as attr } ->
-    fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression_annot) let_binder
-      expression rhs
-      Types.ValueAttr.pp attr
-      expression let_result
-  | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
-      fprintf ppf "@[<h>%a@]" expression let_result
+  | E_let_in x when (not x.attributes.hidden) ->
+    Let_in.pp expression type_expression ppf x
+  | E_let_in x -> expression ppf x.let_result
   | E_raw_code   r -> Raw_code.pp   expression ppf r
   | E_type_inst ti -> type_inst ppf ti
-  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+  | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     Format.fprintf ppf "@[let mut %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression_annot) let_binder
+      (Pattern.pp type_expression_annot) let_binder
       expression rhs
-      Types.ValueAttr.pp attr
+      Types.ValueAttr.pp attributes
       expression let_result
   | E_assign a -> Assign.pp expression type_expression ppf a
   | E_deref var -> Format.fprintf ppf "!%a" Value_var.pp var
@@ -155,19 +151,6 @@ and option_inline ppf inline =
     fprintf ppf "[@inline]"
   else
     fprintf ppf ""
-
-and matching_variant_case : (formatter -> expression -> unit) -> formatter -> expression matching_content_case -> unit =
-  fun f ppf {constructor=c; pattern; body} ->
-  fprintf ppf "@[<v 2>| %a %a ->@ %a@]" Label.pp c Value_var.pp pattern f body
-
-and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
-  | Match_variant {cases ; tv=_} ->
-      fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
-  | Match_record {fields ; body ; tv = _} ->
-      (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      fprintf ppf "| @[%a@] ->@ @[%a@]"
-        (tuple_or_record_sep_expr (Binder.pp type_expression_annot)) fields
-        f body
-
+  
 let program ppf : program -> unit = fun (prg, exp) ->
   fprintf ppf "%a" expression Combinators.(context_apply prg exp)

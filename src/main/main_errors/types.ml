@@ -61,7 +61,6 @@ type all =
 
  | `Main_decompile_michelson of Stacking.Errors.stacking_error
  | `Main_decompile_mini_c of Spilling.Errors.spilling_error
- | `Main_decompile_aggregated of Aggregation.Errors.aggregation_error
  | `Main_decompile_typed of Checking.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found

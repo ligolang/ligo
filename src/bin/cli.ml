@@ -709,6 +709,19 @@ let print_ast_aggregated =
   Command.basic ~summary ~readme
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode <*> no_colour)
 
+let print_ast_expanded =
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
+    return_result ~return @@
+      Api.Print.ast_expanded raw_options source_file display_format
+  in
+  let summary = "print the contract after aggregation.\n Warning: Intended for development of LIGO and can break at any time." in
+  let readme () = "This sub-command prints the source file in the AST \
+                  aggregated stage." in
+  Command.basic ~summary ~readme
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
+  
+
 let print_mini_c =
   let f source_file syntax protocol_version display_format optimize project_root warn_unused_rec no_colour () =
     let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root ~warn_unused_rec ~no_colour () in
@@ -734,6 +747,7 @@ let print_group =
     "ast-core"        , print_ast_core;
     "ast-typed"       , print_ast_typed;
     "ast-aggregated"  , print_ast_aggregated;
+    "ast-expanded"    , print_ast_expanded;
     "mini-c"          , print_mini_c; ]
 
 (** init *)

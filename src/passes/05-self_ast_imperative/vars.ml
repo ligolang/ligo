@@ -37,7 +37,10 @@ let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expr
                         (true, vars, expr)
                    | E_let_in {let_binder;rhs;let_result;attributes=_} ->
                       let _ = self ~vars rhs in
-                      let vars = add_binder let_binder vars in
+                      let vars = List.fold (Pattern.binders let_binder)
+                        ~init:vars
+                        ~f:(fun acc x -> add_binder x acc)
+                      in
                       let _ = self ~vars let_result in
                       (false, vars, expr)
                    | E_matching {matchee;cases} ->

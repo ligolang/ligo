@@ -279,6 +279,8 @@ let item_of_signature_item (sig_item : Signature.item) : item =
 let add_signature_item t (sig_item : Signature.item) =
   add t (item_of_signature_item sig_item)
 
+let add_signature_items t (sig_items : Signature.item list) =
+  List.fold ~f:add_signature_item ~init:t (List.rev sig_items)
 
 let get_value =
   memoize2

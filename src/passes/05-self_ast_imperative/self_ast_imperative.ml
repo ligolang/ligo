@@ -20,7 +20,9 @@ let all_type_expression_mapper ~raise =
   ]
 
 let all_module_mapper ~raise ~js_style_no_shadowing =
-  if js_style_no_shadowing then [ No_shadowing.peephole_program ~raise ] else []
+  if js_style_no_shadowing 
+  then [ No_shadowing.peephole_program ~raise ; Expression_soundness.linearity_prg ~raise ] 
+  else [ Expression_soundness.linearity_prg ~raise ]
 
 let all_program ~raise ~js_style_no_shadowing =
   List.map

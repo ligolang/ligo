@@ -56,10 +56,12 @@ let warn_ambiguous_constructor_pat ~pat ~tvar ~arg_type ignored =
     ~warning:(fun var_chosen var_ignored loc ->
       `Checking_ambiguous_constructor_pat (pat, var_chosen, var_ignored, loc))
 
-
-(* let get_signature path : (Signature.t, _, _) C.t =
-  let open C in
-  Context.get_signature path ~error:(unbound_module path) *)
+let check_let_annomalies ~syntax binder type_expr =
+  Elaboration.check_anomalies
+    ~loc:(Location.get_location binder)
+    ~syntax
+    [ binder, type_expr ]
+    type_expr
 
 let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
   let open C in
@@ -378,6 +380,7 @@ and infer_expression (expr : I.expression)
           let%bind type_ = decode type_ in
           return @@ O.make_e ~location:loc content type_) )
   in
+  let%bind syntax = Options.syntax () in
   match expr.expression_content with
   | E_literal lit -> infer_literal lit
   | E_constant { cons_name = const; arguments = args } ->
@@ -421,35 +424,24 @@ and infer_expression (expr : I.expression)
            let%bind expr = expr in
            return (O.E_type_abstraction { type_binder = tvar; result = expr }))
          ret_type
-  | E_let_in { let_binder; rhs; let_result; attr } ->
-    let rhs_ascr = Binder.get_ascr let_binder in
-    let rhs =
-      Option.value_map
-        rhs_ascr
-        ~f:(fun rhs_ascr -> I.e_ascription rhs rhs_ascr)
-        ~default:rhs
-    in
+  | E_let_in { let_binder; rhs; let_result; attributes } ->
     let%bind rhs_type, rhs = infer rhs in
     let%bind rhs_type = Context.tapply rhs_type in
-    let%bind res_type, let_result =
-      def
-        [ Binder.get_var let_binder, Immutable, rhs_type ]
-        ~on_exit:Lift_type
-        ~in_:(infer let_result)
+    let%bind frags, let_binder =
+      With_frag.run @@ check_pattern ~mut:false let_binder rhs_type
     in
-    let attr = infer_value_attr attr in
+    let%bind res_type, let_result =
+      def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
+    in
+    let attributes = infer_value_attr attributes in
     const
       E.(
         let%bind rhs_type = decode rhs_type in
+        let%bind let_binder = let_binder in
         let%bind rhs = rhs
         and let_result = let_result in
-        return
-        @@ O.E_let_in
-             { let_binder = Binder.set_ascr let_binder rhs_type
-             ; rhs
-             ; let_result
-             ; attr
-             })
+        let%bind () = check_let_annomalies ~syntax let_binder rhs_type in
+        return (O.E_let_in { let_binder; rhs; let_result; attributes }))
       res_type
   | E_type_in { type_binder = tvar; rhs; let_result } ->
     let%bind rhs = evaluate_type rhs in
@@ -672,42 +664,24 @@ and infer_expression (expr : I.expression)
       @@ Signature.get_value sig_ element
     in
     const E.(return @@ O.E_module_accessor { module_path; element }) elt_type
-  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
-    let%bind loc = loc () in
-    let rhs_ascr = Binder.get_ascr let_binder in
-    let rhs =
-      Option.value_map
-        rhs_ascr
-        ~f:(fun rhs_ascr -> I.e_ascription ~loc rhs rhs_ascr)
-        ~default:rhs
-    in
+  | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let%bind rhs_type, rhs = infer rhs in
     let%bind rhs_type = Context.tapply rhs_type in
-    (* TODO: Improve inference here -- we could subtype it to get a monotype? *)
-    let%bind () =
-      assert_
-        (not @@ Type.is_t_for_all rhs_type)
-        ~error:(mut_is_polymorphic rhs_type)
+    let%bind frags, let_binder =
+      With_frag.run @@ check_pattern ~mut:true let_binder rhs_type
     in
     let%bind res_type, let_result =
-      def
-        [ Binder.get_var let_binder, Mutable, rhs_type ]
-        ~on_exit:Lift_type
-        ~in_:(infer let_result)
+      def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
     in
-    let attr = infer_value_attr attr in
+    let attributes = infer_value_attr attributes in
     const
       E.(
-        let%bind rhs_type = decode rhs_type
-        and rhs = rhs
+        let%bind rhs_type = decode rhs_type in
+        let%bind let_binder = let_binder in
+        let%bind rhs = rhs
         and let_result = let_result in
-        return
-        @@ O.E_let_mut_in
-             { let_binder = Binder.set_ascr let_binder rhs_type
-             ; rhs
-             ; let_result
-             ; attr
-             })
+        let%bind () = check_let_annomalies ~syntax let_binder rhs_type in
+        return (O.E_let_mut_in { let_binder; rhs; let_result; attributes }))
       res_type
   | E_assign { binder; expression } ->
     let%bind type_ =
@@ -1017,14 +991,17 @@ and infer_constant const args : (Type.t * O.expression E.t, _, _) C.t =
              { type_ with location = loc }) )
 
 
-and check_pattern (pat : I.type_expression option I.Pattern.t) (type_ : Type.t)
+and check_pattern
+    ~mut
+    (pat : I.type_expression option I.Pattern.t)
+    (type_ : Type.t)
     : (O.type_expression O.Pattern.t E.t, _, _) C.With_frag.t
   =
   let open C.With_frag in
   let open Let_syntax in
   let module P = O.Pattern in
-  let check = check_pattern in
-  let infer = infer_pattern in
+  let check = check_pattern ~mut in
+  let infer = infer_pattern ~mut in
   let const content =
     let%bind loc = loc () in
     return
@@ -1048,7 +1025,10 @@ and check_pattern (pat : I.type_expression option I.Pattern.t) (type_ : Type.t)
         unify ascr type_
       | None -> return ()
     in
-    let%bind () = extend [ Binder.get_var binder, Immutable, type_ ] in
+    let%bind () =
+      extend
+        [ Binder.get_var binder, (if mut then Mutable else Immutable), type_ ]
+    in
     const
       E.(
         let%bind type_ = decode type_ in
@@ -1127,14 +1107,14 @@ and check_pattern (pat : I.type_expression option I.Pattern.t) (type_ : Type.t)
     return pat
 
 
-and infer_pattern (pat : I.type_expression option I.Pattern.t)
+and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     : (Type.t * O.type_expression O.Pattern.t E.t, _, _) C.With_frag.t
   =
   let open C.With_frag in
   let open Let_syntax in
   let module P = O.Pattern in
-  let check = check_pattern in
-  let infer = infer_pattern in
+  let check = check_pattern ~mut in
+  let infer = infer_pattern ~mut in
   let const content type_ =
     let%bind loc = loc () in
     return
@@ -1157,7 +1137,7 @@ and infer_pattern (pat : I.type_expression option I.Pattern.t)
       | Some ascr -> lift @@ evaluate_type ascr
       | None -> exists Type
     in
-    let%bind () = extend [ var, Immutable, type_ ] in
+    let%bind () = extend [ var, (if mut then Mutable else Immutable), type_ ] in
     const
       E.(
         let%bind type_ = decode type_ in
@@ -1298,7 +1278,7 @@ and check_cases
   let check_case { I.Match_expr.pattern; body } =
     let%bind matchee_type = Context.tapply matchee_type in
     let%bind frag, pattern =
-      With_frag.run @@ check_pattern pattern matchee_type
+      With_frag.run @@ check_pattern ~mut:false pattern matchee_type
     in
     let%bind body =
       def_frag frag ~on_exit:Drop ~in_:(check_expression body ret_type)
@@ -1312,7 +1292,14 @@ and check_cases
   cases |> List.map ~f:check_case |> all >>| E.all
 
 
-and def_frag frag ~on_exit ~in_ =
+and def_frag
+    : type a.
+      C.With_frag.fragment
+      -> on_exit:a C.exit
+      -> in_:(a, typer_error, Main_warnings.all) C.t
+      -> (a, typer_error, Main_warnings.all) C.t
+  =
+ fun frag ~on_exit ~in_ ->
   let open C in
   def
     (List.map frag ~f:(fun (var, mut_flag, type_) -> var, mut_flag, type_))
@@ -1332,9 +1319,7 @@ and compile_match (matchee : O.expression E.t) cases matchee_type
       let%bind matchee = matchee in
       let%bind cases = cases in
       let%bind matchee_type = decode matchee_type in
-      let eqs =
-        List.map cases ~f:(fun (pat, body) -> pat, matchee_type, body)
-      in
+      let eqs = List.map cases ~f:(fun (pat, _body) -> pat, matchee_type) in
       let%bind () = check_anomalies ~loc ~syntax eqs matchee_type in
       return
       @@
@@ -1386,11 +1371,12 @@ and infer_module_expr (mod_expr : I.module_expr)
 
 
 and infer_declaration (decl : I.declaration)
-    : (Signature.item * O.declaration E.t, _, _) C.t
+    : (Signature.item list * O.declaration E.t, _, _) C.t
   =
   let open C in
   let open Let_syntax in
-  let const content (sig_item : Signature.item) =
+  let%bind syntax = Options.syntax () in
+  let const content (sig_item : Signature.item list) =
     let%bind loc = loc () in
     return
       ( sig_item
@@ -1401,6 +1387,20 @@ and infer_declaration (decl : I.declaration)
   set_loc decl.location
   @@
   match decl.wrap_content with
+  | D_irrefutable_match  { pattern; expr; attr } ->
+    let%bind matchee_type, expr = infer_expression expr in
+    let attr = infer_value_attr attr in
+    let%bind matchee_type = Context.tapply matchee_type in
+    let%bind frags, pattern =
+      With_frag.run @@ check_pattern ~mut:false pattern matchee_type
+    in
+    const
+      E.(
+        let%bind expr = expr
+        and pattern = pattern in
+        let%bind () = check_let_annomalies ~syntax pattern expr.type_expression in
+        return @@ O.D_irrefutable_match  { pattern; expr; attr })
+      (List.map ~f:(fun (v, _, ty) -> Context.Signature.S_value (v, ty)) frags)
   | D_type { type_binder; type_expr; type_attr = { public; hidden } } ->
     let%bind type_expr = evaluate_type type_expr in
     let type_expr = { type_expr with orig_var = Some type_binder } in
@@ -1409,7 +1409,7 @@ and infer_declaration (decl : I.declaration)
         let%bind type_expr = decode type_expr in
         return
         @@ O.D_type { type_binder; type_expr; type_attr = { public; hidden } })
-      (S_type (type_binder, type_expr))
+      [ S_type (type_binder, type_expr) ]
   | D_value { binder; attr; expr } ->
     let var = Binder.get_var binder in
     let ascr = Binder.get_ascr binder in
@@ -1425,9 +1425,8 @@ and infer_declaration (decl : I.declaration)
         let%bind expr_type = decode expr_type
         and expr = expr in
         return
-        @@ O.D_value
-             { binder = Binder.set_ascr binder (Some expr_type); expr; attr })
-      (S_value (var, expr_type))
+        @@ O.D_value { binder = Binder.set_ascr binder expr_type; expr; attr })
+      [ S_value (var, expr_type) ]
   | D_module { module_binder; module_; module_attr = { public; hidden } } ->
     let%bind sig_, module_ = infer_module_expr module_ in
     const
@@ -1436,7 +1435,7 @@ and infer_declaration (decl : I.declaration)
         return
         @@ O.D_module
              { module_binder; module_; module_attr = { public; hidden } })
-      (S_module (module_binder, sig_))
+      [ S_module (module_binder, sig_) ]
 
 
 and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
@@ -1446,12 +1445,12 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
   match module_ with
   | [] -> return ([], E.return [])
   | decl :: module_ ->
-    let%bind sig_item, decl = infer_declaration decl in
-    let%bind sig_, decls =
-      def_sig_item [ sig_item ] ~on_exit:Lift_sig ~in_:(infer_module module_)
+    let%bind sig_, decl = infer_declaration decl in
+    let%bind tl_sig_, decls =
+      def_sig_item sig_ ~on_exit:Lift_sig ~in_:(infer_module module_)
     in
     return
-      ( sig_item :: sig_
+      ( sig_ @ tl_sig_
       , E.(
           let%bind decl = decl
           and decls = decls in

@@ -48,7 +48,7 @@ let add_all_lines_to_buffer : In_channel.t -> Buffer.t -> unit =
 
 let expression_to_string ~syntax aggregated =
   let aggregated   = Reduplicate_binders.reduplicate ~raise aggregated in
-  let typed        = Aggregation.decompile ~raise aggregated in
+  let typed        = Aggregation.decompile aggregated in
   let core         = Decompile.Of_typed.decompile_expression typed in
   let imperative   = Decompile.Of_core.decompile_expression core in
   let buffer       = Decompile.Of_imperative.decompile_expression imperative syntax in
@@ -205,7 +205,7 @@ module Mutator = struct
     match e'.expression_content with
     | E_matching {matchee;cases} -> (
       let+ matchee, cases, mutation = combine matchee (self matchee) cases (mutate_cases cases) in
-      return @@ E_matching {matchee;cases=cases}, mutation
+      return @@ E_matching {matchee;cases}, mutation
     )
     | E_accessor {struct_; path} -> (
       let+ struct_, mutation = self struct_ in
@@ -229,21 +229,21 @@ module Mutator = struct
       let+ a, b, mutation = combine lamb (self lamb) args (self args) in
       return @@ E_application {lamb=a;args=b}, mutation
     )
-    | E_let_in { let_binder ; rhs ; let_result; attr } -> (
-      if attr.no_mutation then
+    | E_let_in { let_binder ; rhs ; let_result; attributes } -> (
+      if attributes.no_mutation then
         let+ let_result, mutation = self let_result in
-        return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
+        return @@ E_let_in { let_binder ; rhs ; let_result; attributes }, mutation
       else
         let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
-        return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
+        return @@ E_let_in { let_binder ; rhs ; let_result; attributes }, mutation
     )
-    | E_let_mut_in { let_binder ; rhs ; let_result; attr } -> (
-      if attr.no_mutation then
+    | E_let_mut_in { let_binder ; rhs ; let_result; attributes } -> (
+      if attributes.no_mutation then
         let+ let_result, mutation = self let_result in
-        return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
+        return @@ E_let_in { let_binder ; rhs ; let_result; attributes }, mutation
       else
         let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
-        return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
+        return @@ E_let_in { let_binder ; rhs ; let_result; attributes }, mutation
     )
     | E_lambda { binder ; output_type ; result } -> (
       let+ result, mutation = self result in
@@ -286,22 +286,15 @@ module Mutator = struct
         let+ expression, mutation = self expression in
         return @@ E_assign {binder;expression}, mutation
 
-  and mutate_cases : matching_expr -> (matching_expr * (Location.t * expression) option) list = fun m ->
-    match m with
-    | Match_variant {cases;tv} -> (
-      let aux { constructor ; pattern ; body } =
-        let+ body, mutation = mutate_expression body in
-        ({constructor;pattern;body}, mutation)
-      in
-      let casess = List.map ~f:aux cases in
-      let+ cases, mutation = combine_list cases casess in
-      Match_variant {cases ; tv}, mutation
-    )
-    | Match_record {fields; body; tv} ->
-       let+ body, mutation = mutate_expression body in
-       Match_record {fields; body; tv}, mutation
-
-
+and mutate_cases : _ Match_expr.match_case list -> (_ Match_expr.match_case list * (Location.t * expression) option) list =
+  fun cases ->
+    let aux Match_expr.{pattern ; body } =
+      let+ body,mutation = mutate_expression body in
+      Match_expr.{pattern ; body}, mutation
+    in
+    let casess = List.map ~f:aux cases in
+    let+ cases,mutation = combine_list cases casess in
+    (cases , mutation)
   let some_mutate_expression ?(n = 0) (expr : Ast_aggregated.expression) =
     List.nth (List.filter_map ~f:(fun (v, i) -> Option.map i ~f:(fun m -> (v, m))) (mutate_expression expr))
              n

@@ -1,0 +1,26 @@
+type r = { a : nat , b : int , c : string }
+
+const r = [ { a : 1 as nat , b : 1 , c : "H" }
+          , { a : 2 as nat , b : 2 , c : "E" }
+          , { a : 3 as nat , b : 3 , c : "L" } 
+          ]
+const [ { a : a1 , b : b1 , c : c1 }
+      , { a : a2 , b : b2 , c : c2 }
+      , { a : a3 , b : b3 , c : c3 }
+      ] = r
+const [ { a : a4 , b : b4 , c : c4 }
+      , { a : a5 , b : b5 , c : c5 }
+      , { a : a6 , b : b6 , c : c6 }
+      ] 
+  = [ { a : 4 as nat , b : 4 , c : "L" }
+    , { a : 5 as nat , b : 5 , c : "L" }
+    , { a : 6 as nat , b : 6 , c : "O" } 
+    ]
+
+type storage = [nat, int, string]
+
+const main = (_ : unit, _ : storage) : [list<operation>, storage]
+  => [list([]), [ a1 + a2 + a3 + a4 + a5 + a6
+        , b1 + b2 + b3 + b4 + b5 + b6
+        , c1 + c2 + c3 + c4 + c5 + c6
+      ]]

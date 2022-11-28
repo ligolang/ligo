@@ -21,6 +21,7 @@
   checking
   ast_typed
   self_ast_typed
+  expansion
   spilling
   mini_c
   self_mini_c

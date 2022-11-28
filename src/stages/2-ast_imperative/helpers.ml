@@ -50,9 +50,12 @@ end = struct
     | E_application { lamb; args } -> VarSet.union (self lamb) (self args)
     | E_let_mut_in { let_binder; rhs; let_result; _ }
     | E_let_in { let_binder; rhs; let_result; _ } ->
-      VarSet.union
-        (self rhs)
-        (VarSet.remove (Binder.get_var let_binder) (self let_result))
+      let bound = List.map ~f:Binder.get_var (Pattern.binders let_binder) in
+      let fv_let_result = List.fold bound
+        ~init:(self let_result)
+        ~f:(fun acc x -> VarSet.remove x acc)
+      in
+      VarSet.union (self rhs) fv_let_result
     | E_type_in { let_result; type_binder = _; rhs = _ } -> self let_result
     | E_mod_in { rhs; let_result; module_binder = _ } ->
       VarSet.union (get_fv_module_expr rhs.wrap_content) (self let_result)
@@ -95,6 +98,7 @@ end = struct
     let aux (x : decl) =
       match Location.unwrap x with
       | D_value { binder = _; expr; attr = _ } -> get_fv_expr expr
+      | D_irrefutable_match  { pattern = _; expr; attr = _ } -> get_fv_expr expr
       | D_type _t -> VarSet.empty
       | D_module { module_binder = _; module_; module_attr = _ } ->
         get_fv_module_expr module_.wrap_content

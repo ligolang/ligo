@@ -3,7 +3,12 @@
  (public_name ligo.spilling)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils ast_aggregated mini_c self_mini_c
-   predefined self_ast_aggregated)
+ (libraries
+  simple-utils
+  tezos-utils
+  ast_expanded
+  mini_c
+  self_mini_c
+  predefined)
  (preprocess
   (pps ppx_poly_constructor)))

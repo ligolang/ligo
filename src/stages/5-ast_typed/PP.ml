@@ -4,10 +4,10 @@ module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Int64       = Caml.Int64
+open Ligo_prim
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Ligo_prim
 
 let lmap_sep value sep ppf m =
   let lst = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) m in
@@ -80,10 +80,6 @@ and type_expression ppf (te : type_expression) : unit =
 
 let type_expression_annot ppf (te : type_expression) : unit =
   fprintf ppf " : %a" type_expression te
-let type_expression_option ppf (te : type_expression option) : unit =
-  match te with
-  | Some te -> type_expression_annot ppf te
-  | None    -> fprintf ppf ""
 
 let rec type_content_orig : formatter -> type_content -> unit =
   fun ppf tc ->
@@ -125,25 +121,25 @@ and expression_content ppf (ec: expression_content) =
   | E_update      u -> Types.Update.pp      expression ppf u
   | E_lambda      l -> Lambda.pp      expression type_expression ppf l
   | E_type_abstraction e -> Type_abs.pp expression ppf e
-  | E_matching    m -> Types.Match_expr.pp expression type_expression ppf m
+  | E_matching    m -> Types.Match_expr.pp expression type_expression_annot ppf m
   | E_recursive   r -> Recursive.pp expression type_expression ppf r
-  | E_let_in {let_binder; rhs; let_result; attr = { hidden = false ; _ } as attr } ->
+  | E_let_in {let_binder; rhs; let_result; attributes = { hidden = false ; _ } as attr } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression_annot) let_binder
+      (Pattern.pp type_expression_annot) let_binder
       expression rhs
       Types.ValueAttr.pp attr
       expression let_result
-  | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
+  | E_let_in {let_binder = _; rhs = _; let_result; attributes = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; hidden = true ; thunk = _ } } ->
       fprintf ppf "%a" expression let_result
   | E_mod_in    mi -> Mod_in.pp  expression module_expr ppf mi
   | E_raw_code   r -> Raw_code.pp   expression ppf r
   | E_module_accessor ma -> Module_access.pp Value_var.pp ppf ma
   | E_type_inst ti -> type_inst ppf ti
-  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+  | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     Format.fprintf ppf "@[let mut %a =@;<1 2>%a%a in@ %a@]"
-      (Binder.pp type_expression_annot) let_binder
+      (Pattern.pp type_expression_annot) let_binder
       expression rhs
-      Types.ValueAttr.pp attr
+      Types.ValueAttr.pp attributes
       expression let_result
   | E_assign a -> Assign.pp expression type_expression ppf a
   | E_deref n -> Format.fprintf ppf "!%a" Value_var.pp n
@@ -164,7 +160,8 @@ and option_inline ppf inline =
     fprintf ppf ""
 
 and declaration ?(use_hidden=true) ppf (d : declaration) = match Location.unwrap d with
-    D_value vd  -> if (vd.attr.hidden && use_hidden) then () else Types.Value_decl.pp expression type_expression_option ppf vd
+    D_value vd  -> if (vd.attr.hidden && use_hidden) then () else Types.Value_decl.pp expression type_expression_annot ppf vd
+  | D_irrefutable_match  pd -> if (pd.attr.hidden && use_hidden) then () else Types.Pattern_decl.pp expression type_expression_annot ppf pd
   | D_type  td  -> if (td.type_attr.hidden && use_hidden) then () else Types.Type_decl.pp type_expression ppf td
   | D_module md -> if (md.module_attr.hidden && use_hidden) then () else Types.Module_decl.pp module_expr ppf md
 

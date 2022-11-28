@@ -26,7 +26,8 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
     check_recursive_call ~raise n final_path result
   | E_recursive { fun_name; fun_type=_; lambda} ->
     check_recursive_call ~raise fun_name true lambda.result
-  | E_let_in {rhs;let_result;_} ->
+  | E_let_in {rhs;let_result;_} 
+  ->
     check_recursive_call ~raise n false rhs;
     check_recursive_call ~raise n final_path let_result
   | E_mod_in {rhs=_;let_result;_} ->

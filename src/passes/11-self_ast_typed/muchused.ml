@@ -135,9 +135,12 @@ let rec muchuse_of_expr expr : muchuse =
   | E_type_abstraction {result;_} ->
      muchuse_of_expr result
   | E_let_in {let_binder;rhs;let_result;_} ->
-     muchuse_union (muchuse_of_expr rhs)
-       (muchuse_of_binder (Binder.get_var let_binder) rhs.type_expression
-          (muchuse_of_expr let_result))
+    let binders = Pattern.binders let_binder in
+    let muchuse_let_result = muchuse_of_expr let_result in
+    let muchuse_let_binder = List.fold binders ~init:muchuse_let_result
+      ~f:(fun m b -> muchuse_of_binder (Binder.get_var b) (Binder.get_ascr b) m)
+    in
+    muchuse_union (muchuse_of_expr rhs) muchuse_let_binder
   | E_recursive {fun_name;lambda;fun_type} ->
      muchuse_of_binder fun_name fun_type (muchuse_of_lambda fun_type lambda)
   | E_matching {matchee;cases} ->
@@ -166,9 +169,12 @@ let rec muchuse_of_expr expr : muchuse =
     (muchuse_of_expr expression)
   | E_deref var -> M.add var 1 M.empty, []
   | E_let_mut_in {let_binder;rhs;let_result;_} ->
-    muchuse_union (muchuse_of_expr rhs)
-      (muchuse_of_binder (Binder.get_var let_binder) rhs.type_expression
-         (muchuse_of_expr let_result))
+    let binders = Pattern.binders let_binder in
+    let muchuse_let_result = muchuse_of_expr let_result in
+    let muchuse_let_binder = List.fold binders ~init:muchuse_let_result
+      ~f:(fun m b -> muchuse_of_binder (Binder.get_var b) (Binder.get_ascr b) m)
+    in
+    muchuse_union (muchuse_of_expr rhs) muchuse_let_binder
   | E_for { binder; start; final; incr; f_body } ->
     muchuse_unions
       [ muchuse_of_expr start
@@ -235,7 +241,13 @@ let rec get_all_declarations (module_name : Module_var.t) : module_ ->
           let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" Module_var.pp module_name) ^ "." ^ (Format.asprintf "%a" Value_var.pp v) in
           (name, t) in
          recs |> List.map ~f:add_module_name
-      | _ -> [] in
+      | D_irrefutable_match   { pattern ; _ } ->
+          let binders = Pattern.binders pattern in
+          List.map binders ~f:(fun binder -> 
+            let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" Module_var.pp module_name) ^ "." ^ (Format.asprintf "%a" Value_var.pp @@ Binder.get_var binder) in
+            name, Binder.get_ascr binder
+          ) 
+      | D_type _ | D_module _ -> [] in
     m |> List.map ~f:aux |> List.concat
 
 let rec muchused_helper (muchuse : muchuse) =
@@ -249,11 +261,19 @@ and muchuse_declaration = fun (x : declaration) s ->
   | D_value {expr ; binder; _} ->
       muchuse_union (muchuse_of_expr expr)
         (muchuse_of_binder (Binder.get_var binder) expr.type_expression s)
+  | D_irrefutable_match  { expr ; pattern ; _ } ->
+      let binders = Pattern.binders pattern in
+      let muchuse_expr = muchuse_of_expr expr in
+      let muchuse_pattern = List.map binders
+        ~f:(fun b ->
+            (muchuse_of_binder (Binder.get_var b) expr.type_expression s)) in
+      muchuse_union muchuse_expr (muchuse_maxs muchuse_pattern)
   | D_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
       let decls = get_all_declarations module_binder module_ in
       List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
         decls ~init:(muchused_helper s module_)
-  | _ -> s
+  | D_module _
+  | D_type _ -> s
 
 and muchuse_decl = fun x s -> muchuse_declaration x s
 

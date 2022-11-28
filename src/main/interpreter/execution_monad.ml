@@ -1004,6 +1004,7 @@ let rec eval
         | `Main_interpret_target_lang_error _
         | `Main_interpret_target_lang_failwith _
         | `Main_interpret_meta_lang_eval _
+        | `Main_interpret_generic _
         | `Main_interpret_meta_lang_failwith _ ->
           eval ~raise ~options handler state log
         | e -> raise.error e)
@@ -1026,14 +1027,13 @@ let rec bind_list = function
 
 
 let bind_map_list f lst = bind_list (List.map ~f lst)
-
-let bind_fold_list f init lst =
+let bind_iter_list ~f lst = let _ = bind_map_list (fun x -> let* () = f x in return ()) lst in return ()
+let bind_fold_list ~f ~init lst =
   let aux x y =
     let* x = x in
     f x y
   in
   List.fold_left ~f:aux ~init:(return init) lst
-
 
 let bind_fold_right_list f init lst =
   let aux y x =

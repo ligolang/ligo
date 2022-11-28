@@ -36,12 +36,10 @@
   TODO: This approach is naive, with a more sophisticated approach it is possible to descriminate between non-exhaustive/redundant/unused patterns
 *)
 
-let fold_map_expression = Ast_aggregated.Helpers.fold_map_expression
-let fold_expression = Helpers.fold_expression
-let map_expression = Helpers.map_expression
+let fold_map_expression = Ast_expanded.Helpers.fold_map_expression
 
 open Ligo_prim
-open Ast_aggregated
+open Ast_expanded
 
 module SimplMap = Simple_utils.Map.Make(Value_var)
 
@@ -66,7 +64,7 @@ let rec do_while : (expression -> (bool * expression)) -> expression -> expressi
     else exp
 
 let make_le : _ matching_content_variant -> (Label.t * Value_var.t) list = fun ml ->
-  List.map ~f:(fun (m:_ matching_content_case) -> (m.constructor,m.pattern)) ml.cases
+  List.map ~f:(fun (m:_ matching_content_case) -> (m.constructor, m.pattern)) ml.cases
 
 let substitute_var_in_body : Value_var.t -> Value_var.t -> expression -> expression =
   fun to_subst new_var body ->

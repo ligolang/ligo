@@ -105,12 +105,12 @@ let rec expression path : Aliases.t -> AST.expression -> AST.expression =
   | E_recursive r ->
     let r = Recursive.map self self_type r in
     return @@ E_recursive r
-  | E_let_in { let_binder; rhs; let_result; attr } ->
-    let let_binder = Binder.map self_type let_binder in
+  | E_let_in {let_binder;rhs;let_result;attributes} ->
+    let let_binder = AST.Pattern.map self_type let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
-    return @@ E_let_in { let_binder; rhs; let_result; attr }
-  | E_type_inst { forall; type_ } ->
+    return @@ E_let_in {let_binder;rhs;let_result;attributes}
+  | E_type_inst {forall; type_} ->
     let forall = self forall in
     let type_ = self_type type_ in
     return @@ E_type_inst { forall; type_ }
@@ -154,12 +154,12 @@ let rec expression path : Aliases.t -> AST.expression -> AST.expression =
           aliases, path)
     in
     let module_path = List.rev module_path in
-    return @@ E_module_accessor { module_path; element }
-  | E_let_mut_in { let_binder; rhs; let_result; attr } ->
+    return @@ E_module_accessor {module_path;element}
+  | E_let_mut_in { let_binder ; rhs ; let_result ; attributes } ->
     let rhs = self rhs in
     let let_result = self let_result in
-    let let_binder = Binder.map self_type let_binder in
-    return (E_let_mut_in { let_binder; rhs; let_result; attr })
+    let let_binder = AST.Pattern.map self_type let_binder in
+    return (E_let_mut_in { let_binder ; rhs ; let_result ; attributes })
   | E_deref var -> return (E_deref var)
   | E_assign { binder; expression } ->
     let binder = Binder.map self_type binder in
@@ -195,17 +195,21 @@ and compile_declaration path aliases (d : AST.declaration)
   match Location.unwrap d with
   | D_value { binder; expr; attr } ->
     let expr = expression path aliases expr in
-    let binder = Binder.map (Option.map ~f:(type_expression aliases)) binder in
+    let binder = Binder.map (type_expression aliases) binder in
     return_s aliases @@ AST.D_value { binder; expr; attr }
+  | D_irrefutable_match  { pattern ; expr ; attr } ->
+    let expr   = expression path aliases expr in
+    let pattern = AST.Pattern.map (type_expression aliases) pattern in 
+    return_s aliases @@ AST.D_irrefutable_match  {pattern;expr;attr}
   | D_type { type_binder; type_expr; type_attr } ->
     let type_expr = type_expression aliases type_expr in
     return_s aliases @@ AST.D_type { type_binder; type_expr; type_attr }
-  | D_module { module_binder; module_; module_attr } ->
+  | D_module { module_binder; module_; module_attr } -> (
     let mod_aliases, path, module_ =
       compile_module_expr module_binder path aliases module_
     in
     let aliases = Aliases.push aliases module_binder mod_aliases path in
-    (match module_ with
+    match module_ with
     | None -> return_n aliases
     | Some module_ ->
       return_s aliases @@ AST.D_module { module_binder; module_; module_attr })

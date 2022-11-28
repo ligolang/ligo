@@ -255,7 +255,6 @@ let rec error_ppformat : display_format:string display_format ->
 
     | `Main_decompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
-    | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
     | `Main_view_rule_violated loc ->
       Format.fprintf f "@[<hv>%a@.View rule violated:
@@ -426,7 +425,6 @@ let rec error_json : Types.all -> Simple_utils.Error.t list = fun a ->
     [make ~stage:"testing framwork" ~content]
   | `Main_decompile_michelson e -> [Stacking.Errors.error_json e]
   | `Main_decompile_mini_c e -> [Spilling.Errors.error_json e]
-  | `Main_decompile_aggregated e -> [Aggregation.Errors.error_json e]
   | `Main_decompile_typed e -> [Checking.Errors.error_json e]
   | `Ligo_init_unrecognized_template _lsttr ->
     let content = make_content ~message:"Ligo init tracer" () in

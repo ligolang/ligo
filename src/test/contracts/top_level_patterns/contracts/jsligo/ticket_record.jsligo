@@ -1,0 +1,23 @@
+type t = { a : ticket<int> , b : ticket<string> , c : ticket<nat> }
+
+const { a : a1, b : b1, c : c1 }
+    = { a : Tezos.create_ticket(1, 10 as nat)
+      , b : Tezos.create_ticket("one", 10 as nat)
+      , c : Tezos.create_ticket(1 as nat, 10 as nat)
+      }
+
+const { a : a2, c : c2, b : b2 }
+    = { a : Tezos.create_ticket(2, 10 as nat)
+      , b : Tezos.create_ticket("TWO", 10 as nat)
+      , c : Tezos.create_ticket(3 as nat, 10 as nat)
+      }
+
+type storage = [ticket<int>, ticket<string>, ticket<nat>]
+
+const main = (_ : unit, _ : storage) : [list<operation>, storage]
+  => {
+    let a = Option.unopt (Tezos.join_tickets (a1, a2));
+    let b  = Option.unopt (Tezos.join_tickets (b1, b2));
+    let c  = Option.unopt (Tezos.join_tickets (c1, c2));
+    return [list([]), [a, b, c]]
+  }
