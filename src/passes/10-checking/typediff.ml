@@ -36,9 +36,7 @@ let field_types_of_row (row : Type.row) : Type.t list =
   |> List.map ~f:(fun (row_elem : Type.row_element) -> row_elem.associated_type)
 
 
-let field_types_array_of_row row =
-  Array.of_list @@ List.rev @@ field_types_of_row row
-
+let field_types_array_of_row row = Array.of_list @@ List.rev @@ field_types_of_row row
 
 module rec Arg : sig
   val weight : Define.change -> int
@@ -109,10 +107,7 @@ end = struct
              as the weight of the diff between them,
              so that "close" records are gather together in the diff *)
         let diff =
-          Diff.diff
-            ()
-            (field_types_array_of_row row1)
-            (field_types_array_of_row row2)
+          Diff.diff () (field_types_array_of_row row1) (field_types_array_of_row row2)
         in
         let diff_weights = List.map ~f:(fun change -> weight change) diff in
         let total_weight = List.fold ~init:0 ~f:( + ) diff_weights in
@@ -123,17 +118,14 @@ end = struct
       | _ -> 1 + 1 (* one single insertion + one signle removal *))
 
 
-  let test
-      : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result
-    =
+  let test : Defs.state -> Defs.left -> Defs.right -> (Defs.eq, Defs.diff) result =
    fun _state type1 type2 ->
     match Type.equal type1 type2 with
     | true -> Ok ()
     | false -> Error ()
 
 
-  let update : Define.change -> Defs.state -> Defs.state =
-   fun _change _state -> ()
+  let update : Define.change -> Defs.state -> Defs.state = fun _change _state -> ()
 end
 
 (*
@@ -188,9 +180,7 @@ module ANSI = struct
       | "normal" -> Normal
       | "red" -> Red
       | "green" -> Green
-      | _ ->
-        failwith
-          "Unknown ANSI style" (* TODO NP : How to report errors properly ? *))
+      | _ -> failwith "Unknown ANSI style" (* TODO NP : How to report errors properly ? *))
     | _ -> failwith "Unknown ANSI semantic tag"
 
 
@@ -215,13 +205,12 @@ module ANSI = struct
     let open Format in
     pp_set_mark_tags ppf true;
     let old_fs = pp_get_formatter_stag_functions ppf () in
-    pp_set_formatter_stag_functions
-      ppf
-      { old_fs with mark_open_stag; mark_close_stag }
+    pp_set_formatter_stag_functions ppf { old_fs with mark_open_stag; mark_close_stag }
 end
 
 let pp_list_newline pp_content ppf content =
   PP_helpers.list_sep pp_content (PP_helpers.tag "@,") ppf content
+
 
 let _pp_te_debug ppf (type_ : Type.t) : unit =
   Format.fprintf ppf "%a <hash:%d>" Type.pp type_ (Type.hash type_)

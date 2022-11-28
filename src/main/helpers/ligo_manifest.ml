@@ -14,14 +14,13 @@ module Bugs = struct
       let email = Util.to_string_option @@ Util.member "email" json in
       Ok { url; email }
     with
-    | e -> Error e 
+    | e -> Error e
 
 
   let to_yojson { url; email } =
     `Assoc
       ([ "url", `String url ]
-      @ Option.value_map email ~default:[] ~f:(fun email ->
-            [ "email", `String email ]))
+      @ Option.value_map email ~default:[] ~f:(fun email -> [ "email", `String email ]))
 
   (* If required validate `email` & url` *)
 end
@@ -57,15 +56,9 @@ let validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () =
   match storage_fn, storage_arg with
   | Some storage_fn, Some storage_arg ->
     let expression = Format.sprintf "%s %s" storage_fn storage_arg in
-    let cmd =
-      Constants.ligo_compile_storage ~ligo:ligo_bin_path ~main ~expression ()
-    in
+    let cmd = Constants.ligo_compile_storage ~ligo:ligo_bin_path ~main ~expression () in
     let status =
-      Lwt_process.with_process_none
-        ~stdout:`Dev_null
-        ~stderr:`Dev_null
-        cmd
-        (fun p ->
+      Lwt_process.with_process_none ~stdout:`Dev_null ~stderr:`Dev_null cmd (fun p ->
           Lwt.map
             (fun status ->
               match status with
@@ -78,8 +71,8 @@ let validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () =
     | Ok _ -> Ok ()
     | Error _ ->
       Error
-        "Error: Check `storage_fn` & `storage_arg` in packge.json or check \
-         your LIGO storage expression")
+        "Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO \
+         storage expression")
   | _ -> Ok ()
 
 
@@ -123,22 +116,16 @@ let try_readme ~project_root =
 let parse_require_field ~field_name json =
   match Util.member field_name json with
   | `String "" ->
-    Error
-      (Format.asprintf
-         "Error: %s field is empty (\"\") in package.json"
-         field_name)
+    Error (Format.asprintf "Error: %s field is empty (\"\") in package.json" field_name)
   | `String s -> Ok s
-  | `Null ->
-    Error (Format.asprintf "Error: No %s field in package.json" field_name)
-  | _ ->
-    Error (Format.asprintf "Error: Invalid %s field in package.json" field_name)
+  | `Null -> Error (Format.asprintf "Error: No %s field in package.json" field_name)
+  | _ -> Error (Format.asprintf "Error: Invalid %s field in package.json" field_name)
 
 
 let parse_sem_ver version =
   match Semver.of_string version with
   | Some s -> Ok s
-  | None ->
-    Error (Format.sprintf "Error: Invalid version %s in package.json" version)
+  | None -> Error (Format.sprintf "Error: Invalid version %s in package.json" version)
 
 
 let parse_version json =
@@ -201,8 +188,7 @@ let parse_repository json =
     (match Repository_url.parse repo with
     | Ok t -> Ok t
     | Error e ->
-      Error
-        (Format.sprintf "Error: Invalid repository field in package.json\n%s" e))
+      Error (Format.sprintf "Error: Invalid repository field in package.json\n%s" e))
 
 
 let parse_readme ~project_root json =
@@ -218,8 +204,7 @@ let parse_type json =
   | `String "library" -> Ok "library"
   | _ ->
     Error
-      "Error: Invalid type field in package.json\n\
-       Type can be either library or contract"
+      "Error: Invalid type field in package.json\nType can be either library or contract"
 
 
 let parse_storage_fn ~type_ json =
@@ -228,8 +213,7 @@ let parse_storage_fn ~type_ json =
     Error "Error: storage_fn field is empty (\"\") in package.json"
   | `String s when String.(type_ = "contract") -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
-    Error
-      "Error: In case of a type : contract a `storage_fn` needs to be provided."
+    Error "Error: In case of a type : contract a `storage_fn` needs to be provided."
   | _ -> Ok None
 
 
@@ -239,9 +223,7 @@ let parse_storage_arg ~type_ json =
     Error "Error: storage_arg field is empty (\"\") in package.json"
   | `String s when String.(type_ = "contract") -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
-    Error
-      "Error: In case of a type : contract a `storage_arg` needs to be \
-       provided."
+    Error "Error: In case of a type : contract a `storage_arg` needs to be provided."
   | _ -> Ok None
 
 
@@ -345,8 +327,7 @@ let%test _ =
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":"foo","version":""}|} in
   match read_from_json json with
-  | Error e ->
-    String.(e = {|Error: version field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: version field is empty ("") in package.json|})
   | Ok _ -> false
 
 (* version = invalid *)
@@ -365,19 +346,15 @@ let%test _ =
 
 (* author = empty *)
 let%test _ =
-  let json =
-    Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0","author":""}|}
-  in
+  let json = Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0","author":""}|} in
   match read_from_json json with
-  | Error e ->
-    String.(e = {|Error: author field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: author field is empty ("") in package.json|})
   | Ok _ -> false
 
 (* author = valid & repository = missing *)
 let%test _ =
   let json =
-    Yojson.Safe.from_string
-      {|{"name":"foo","version":"0.1.0","author":"john doe"}|}
+    Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0","author":"john doe"}|}
   in
   match read_from_json json with
   | Error e -> String.(e = {|Error: No repository field in package.json|})
@@ -392,9 +369,7 @@ let%test _ =
   match read_from_json json with
   | Error e ->
     String.(
-      e
-      = "Error: Invalid repository field in package.json\n\
-         repository url is invalid")
+      e = "Error: Invalid repository field in package.json\nrepository url is invalid")
   | Ok _ -> false
 
 (* repository = valid & main = empty *)
@@ -429,8 +404,7 @@ let%test _ =
          "main":"lib.mligo","license":""}|}
   in
   match read_from_json json with
-  | Error e ->
-    String.(e = {|Error: license field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: license field is empty ("") in package.json|})
   | Ok _ -> false
 
 (* license = valid & bugs = missing *)
@@ -508,9 +482,7 @@ let%test _ =
   | Error _ -> false
   | Ok manifest ->
     String.equal manifest.name "foo"
-    && Semver.equal
-         manifest.version
-         (Option.value_exn (Semver.of_string "0.1.0"))
+    && Semver.equal manifest.version (Option.value_exn (Semver.of_string "0.1.0"))
     && String.equal manifest.author "john doe"
     && String.equal manifest.repository.type_ "git"
     && String.equal manifest.repository.url "https://github.com/npm/cli.git"
@@ -600,9 +572,7 @@ let%test _ =
   match read_from_json json with
   | Error _ -> false
   | Ok manifest ->
-    string_assoc_list_equal
-      manifest.scripts
-      [ "test", "ligo run test lib.test.mligo" ]
+    string_assoc_list_equal manifest.scripts [ "test", "ligo run test lib.test.mligo" ]
 
 (* dependencies = empty *)
 let%test _ =
@@ -689,9 +659,7 @@ let%test _ =
   match read_from_json json with
   | Error e ->
     String.(
-      e
-      = "Error: In case of a type : contract a `storage_fn` needs to be \
-         provided.")
+      e = "Error: In case of a type : contract a `storage_fn` needs to be provided.")
   | Ok _ -> false
 
 (* storage_fn = empty *)
@@ -710,8 +678,7 @@ let%test _ =
          "storage_fn":""}|}
   in
   match read_from_json json with
-  | Error e ->
-    String.(e = {|Error: storage_fn field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: storage_fn field is empty ("") in package.json|})
   | Ok _ -> false
 
 (* storage_fn = valid & storage_arg = missing *)
@@ -732,9 +699,7 @@ let%test _ =
   match read_from_json json with
   | Error e ->
     String.(
-      e
-      = "Error: In case of a type : contract a `storage_arg` needs to be \
-         provided.")
+      e = "Error: In case of a type : contract a `storage_arg` needs to be provided.")
   | Ok _ -> false
 
 (* storage_arg = empty *)
@@ -754,8 +719,7 @@ let%test _ =
          "storage_arg":""}|}
   in
   match read_from_json json with
-  | Error e ->
-    String.(e = "Error: storage_arg field is empty (\"\") in package.json")
+  | Error e -> String.(e = "Error: storage_arg field is empty (\"\") in package.json")
   | Ok _ -> false
 
 (* storage_arg = valid *)
@@ -777,10 +741,7 @@ let%test _ =
   match read_from_json json with
   | Error _ -> false
   | Ok manifest ->
-    Option.equal
-      String.equal
-      manifest.storage_fn
-      (Some "generate_initial_storage")
+    Option.equal String.equal manifest.storage_fn (Some "generate_initial_storage")
     && Option.equal String.equal manifest.storage_arg (Some "1")
 
 (* description = missing *)

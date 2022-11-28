@@ -80,6 +80,7 @@ val get_texists_eq : t -> Type_var.t -> Type.t option
 val get_lexists_eq : t -> Layout_var.t -> Type.layout option
 val get_signature : t -> Module_var.t List.Ne.t -> Signature.t option
 val add_signature_item : t -> Signature.item -> t
+val add_signature_items : t -> Signature.item list -> t
 val insert_at : t -> at:item -> hole:t -> t
 val split_at : t -> at:item -> t * t
 val mark : t -> t * pos
@@ -100,16 +101,8 @@ type _ exit =
 
 val drop_until : 'a -> on_exit:'a exit -> pos:pos -> 'a * Substitution.t
 val unlock : 'a -> on_exit:'a exit -> lock:mut_lock -> 'a * Substitution.t
-
-val get_record
-  :  t
-  -> Type.row_element Record.t
-  -> (Type_var.t option * Type.row) option
-
-val get_sum
-  :  t
-  -> Label.t
-  -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
+val get_record : t -> Type.row_element Record.t -> (Type_var.t option * Type.row) option
+val get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
 
 module Well_formed : sig
   val context : t -> bool

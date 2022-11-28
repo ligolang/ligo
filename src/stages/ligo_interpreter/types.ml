@@ -62,7 +62,6 @@ module Chain_id = struct
   let of_yojson _ = failwith "chain_id_of_yojson: not implemented"
 end
 
-
 module Generator = struct
   include QCheck.Gen
 
@@ -71,9 +70,7 @@ module Generator = struct
 end
 
 type mcode = unit Tezos_utils.Michelson.michelson [@@deriving yojson]
-
-type mutation = Location.t * Ast_aggregated.expression * string
-[@@deriving yojson]
+type mutation = Location.t * Ast_aggregated.expression * string [@@deriving yojson]
 
 type contract =
   { address : Contract.t

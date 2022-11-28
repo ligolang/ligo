@@ -1,0 +1,8 @@
+const r = [1 as nat, 1, "Hello"]
+const [a, b, c] = r
+const [a1, b1, c1] = [2 as nat, 2, "World"]
+
+type storage = [nat, int, string]
+
+const main = (_ : unit, _ : storage) : [list<operation>, storage] =>
+  [list([]), [a + a1, b + b1, c + c1]]

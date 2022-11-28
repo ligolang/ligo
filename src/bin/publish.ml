@@ -67,16 +67,7 @@ module PackageStats = struct
     ; integrity : string
     }
 
-  let make
-      ~name
-      ~version
-      ~unpacked_size
-      ~packed_size
-      ~fcount
-      ~sha1
-      ~sha512
-      ~tarball
-    =
+  let make ~name ~version ~unpacked_size ~packed_size ~fcount ~sha1 ~sha512 ~tarball =
     { name
     ; version
     ; file_count = fcount
@@ -101,9 +92,7 @@ module Dist = struct
   [@@deriving to_yojson]
 
   let make ~tarball ~package_stats =
-    let PackageStats.{ sha1; file_count; unpacked_size; integrity; _ } =
-      package_stats
-    in
+    let PackageStats.{ sha1; file_count; unpacked_size; integrity; _ } = package_stats in
     { integrity; shasum = sha1; tarball; file_count; unpacked_size }
 end
 
@@ -204,9 +193,7 @@ module Attachments = struct
   type t = Attachment.t SMap.t
 
   let to_yojson t =
-    let kvs =
-      SMap.fold (fun k v xs -> (k, Attachment.to_yojson v) :: xs) t []
-    in
+    let kvs = SMap.fold (fun k v xs -> (k, Attachment.to_yojson v) :: xs) t [] in
     `Assoc kvs
 end
 
@@ -259,9 +246,7 @@ let handle_server_response ~name response body =
   | `Created -> Ok ("Package successfully published", "")
   | `Unauthorized ->
     Error
-      ( Format.sprintf
-          "\n%s already exists and you don't seem to have access to it."
-          name
+      ( Format.sprintf "\n%s already exists and you don't seem to have access to it." name
       , "" )
   | `Bad_gateway | `Service_unavailable | `Gateway_timeout ->
     Error ("\nRegistry seems down. Contact the developers", "")
@@ -289,9 +274,7 @@ let publish ~ligo_registry ~manifest ~body ~token =
         in
         Lwt.return (body, headers))
   in
-  let r =
-    Lwt.bind body_headers (fun (body, headers) -> Client.put ~headers ~body uri)
-  in
+  let r = Lwt.bind body_headers (fun (body, headers) -> Client.put ~headers ~body uri) in
   let response, body = Lwt_main.run r in
   handle_server_response ~name:manifest.name response body
 
@@ -341,8 +324,7 @@ let gzip fname =
 (* [get_all_files] returs a list of files to be included in the package, it
    starts starts finding files from the project-root & It ignores the files or 
    directries specified in .ligoignore *)
-let rec get_all_files
-    : ligoignore:(string -> bool) -> string -> (string * int) list Lwt.t
+let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) list Lwt.t
   =
  fun ~ligoignore file_or_dir ->
   let open Lwt.Syntax in
@@ -361,9 +343,7 @@ let rec get_all_files
         let* files =
           Lwt_list.fold_left_s
             (fun acc f ->
-              let* fs =
-                get_all_files ~ligoignore (Filename.concat file_or_dir f)
-              in
+              let* fs = get_all_files ~ligoignore (Filename.concat file_or_dir f) in
               Lwt.return (acc @ fs))
             []
             all
@@ -394,9 +374,7 @@ let tar ~name ~version files =
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
   let fname = Filename_unix.temp_file name (Semver.to_string version) in
-  let fd =
-    Caml_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666
-  in
+  let fd = Caml_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666 in
   let () = Tar_unix.Archive.create files fd in
   let () = Caml_unix.close fd in
   Lwt.return (fcount, fname, unpacked_size)
@@ -420,9 +398,7 @@ let pack ~project_root ~ligoignore ~manifest =
   in
   let packed_size = Bytes.length tarball in
   let sha1 =
-    tarball
-    |> Digestif.SHA1.digest_bytes ~off:0 ~len:packed_size
-    |> Digestif.SHA1.to_hex
+    tarball |> Digestif.SHA1.digest_bytes ~off:0 ~len:packed_size |> Digestif.SHA1.to_hex
   in
   let sha512 =
     tarball
@@ -464,8 +440,7 @@ let get_auth_token ~ligorc_path ligo_registry =
   let token = LigoRC.get_token ~registry_key ligorc in
   match token with
   | Some token -> Ok token
-  | None ->
-    Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user.", "")
+  | None -> Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user.", "")
 
 
 let get_project_root project_root =
@@ -473,10 +448,7 @@ let get_project_root project_root =
   | Some project_root -> Ok project_root
   | None ->
     Error
-      ( "\n\
-         Can't find project-root.\n\
-         Hint: Use --project-root to specify project root."
-      , "" )
+      ("\nCan't find project-root.\nHint: Use --project-root to specify project root.", "")
 
 
 let show_stats stats =
@@ -513,13 +485,9 @@ let show_stats stats =
   let () = Format.printf "    name:          %s\n%!" name in
   let () = Format.printf "    version:       %s\n%!" version in
   let () = Format.printf "    filename:      %s\n%!" tarball_name in
+  let () = Format.printf "    package size:  %s\n%!" (human_readable_size packed_size) in
   let () =
-    Format.printf "    package size:  %s\n%!" (human_readable_size packed_size)
-  in
-  let () =
-    Format.printf
-      "    unpacked size: %s\n%!"
-      (human_readable_size unpacked_size)
+    Format.printf "    unpacked size: %s\n%!" (human_readable_size unpacked_size)
   in
   let () = Format.printf "    shasum:        %s\n%!" sha1 in
   let () = Format.printf "    integrity:     %s\n%!" integrity in
@@ -529,16 +497,14 @@ let show_stats stats =
 
 let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path =
   let* manifest =
-    with_logging ~before:"Reading manifest" (fun () ->
-        read_manifest ~project_root)
+    with_logging ~before:"Reading manifest" (fun () -> read_manifest ~project_root)
   in
   let* () =
     with_logging ~before:"Validating manifest file" (fun () ->
         validate_manifest ~ligo_bin_path manifest)
   in
   let* project_root =
-    with_logging ~before:"Finding project root" (fun () ->
-        get_project_root project_root)
+    with_logging ~before:"Finding project root" (fun () -> get_project_root project_root)
   in
   let ligoignore_path = Filename.concat project_root ".ligoignore" in
   let ligoignore = LigoIgnore.matches @@ LigoIgnore.read ~ligoignore_path in

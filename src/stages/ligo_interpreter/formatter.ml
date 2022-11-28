@@ -58,9 +58,7 @@ let tests_ppformat ~display_format f (print_values, toplevel_env) =
     Format.fprintf
       ppf
       "@[<v>%a@]"
-      (Simple_utils.PP_helpers.list_sep
-         pp_result
-         (Simple_utils.PP_helpers.tag "@."))
+      (Simple_utils.PP_helpers.list_sep pp_result (Simple_utils.PP_helpers.tag "@."))
       lst
   in
   match display_format with
@@ -78,5 +76,4 @@ let tests_jsonformat b : json =
   `Null
 
 
-let tests_format : 'a format =
-  { pp = tests_ppformat; to_json = tests_jsonformat }
+let tests_format : 'a format = { pp = tests_ppformat; to_json = tests_jsonformat }

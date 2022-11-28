@@ -2,18 +2,30 @@ open Cli_expect
 
 (* evaluate-expr *)
 let%expect_test _ =
-  run_ligo_good ["run"; "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "--entry-point" ; "a" ] ;
+  run_ligo_good
+    [ "run"
+    ; "evaluate-expr"
+    ; "../../test/contracts/evaluation_tests.ligo"
+    ; "--entry-point"
+    ; "a"
+    ];
   [%expect {|
-    record[bar -> "bar" , foo -> +0] |} ];
-
-  run_ligo_good ["run"; "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "--entry-point" ; "b" ] ;
+    record[bar -> "bar" , foo -> +0] |}];
+  run_ligo_good
+    [ "run"
+    ; "evaluate-expr"
+    ; "../../test/contracts/evaluation_tests.ligo"
+    ; "--entry-point"
+    ; "b"
+    ];
   [%expect {|
-    2 |} ]
+    2 |}]
 
 (* list-declarations *)
 let%expect_test _ =
-  run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.ligo" ] ;
-  [%expect{|
+  run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.ligo" ];
+  [%expect
+    {|
     ../../test/contracts/loop.ligo declarations:
     inner_capture_in_conditional_block
     dummy
@@ -31,45 +43,42 @@ let%expect_test _ =
     for_sum_step
     for_sum
     while_sum
-    counter |} ];
-
-  run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.mligo" ; "--format" ;"json" ] ;
-  [%expect{|
+    counter |}];
+  run_ligo_good
+    [ "info"; "list-declarations"; "../../test/contracts/loop.mligo"; "--format"; "json" ];
+  [%expect
+    {|
     {
       "source_file": "../../test/contracts/loop.mligo",
       "declarations": [
         "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
       ]
-    } |} ];
-
-
-  run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.mligo" ] ;
-  [%expect{|
+    } |}];
+  run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.mligo" ];
+  [%expect
+    {|
     ../../test/contracts/loop.mligo declarations:
     counter_nest
     aux_nest
     counter
     counter_simple
-    aux_simple |} ];
-
-  run_ligo_good ["info"; "list-declarations" ; "../../test/contracts/loop.religo" ] ;
-  [%expect{|
+    aux_simple |}];
+  run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.religo" ];
+  [%expect
+    {|
     ../../test/contracts/loop.religo declarations:
     counter_nest
     aux_nest
     counter
     counter_simple
-    aux_simple |} ];
-
-  run_ligo_bad ["run" ; "interpret" ; "1" ; "--syntax"; "cameligo" ; "--protocol"; "do_not_exist" ] ;
-  [%expect{|
-    Invalid protocol version 'do_not_exist'. Available versions: kathmandu , lima |}] ;
-
-  run_ligo_bad [ "repl" ; "camelig0" ] ;
-  [%expect{| Please check syntax name. |}] ;
-
-  run_ligo_bad [ "repl" ; "cameligo" ; "--protocol" ; "h" ] ;
-  [%expect{| Please check protocol name. |}] ;
-
-  run_ligo_bad [ "repl" ; "cameligo" ; "--sender" ; "foo" ] ;
-  [%expect{| Please check run options. |}] ;
+    aux_simple |}];
+  run_ligo_bad
+    [ "run"; "interpret"; "1"; "--syntax"; "cameligo"; "--protocol"; "do_not_exist" ];
+  [%expect
+    {| Invalid protocol version 'do_not_exist'. Available versions: kathmandu , lima |}];
+  run_ligo_bad [ "repl"; "camelig0" ];
+  [%expect {| Please check syntax name. |}];
+  run_ligo_bad [ "repl"; "cameligo"; "--protocol"; "h" ];
+  [%expect {| Please check protocol name. |}];
+  run_ligo_bad [ "repl"; "cameligo"; "--sender"; "foo" ];
+  [%expect {| Please check run options. |}]

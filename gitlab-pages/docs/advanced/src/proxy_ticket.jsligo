@@ -5,13 +5,13 @@ const proxy_transfer_contract :
     (x : (ticket:ticket<vt>) => whole_p) => ((x : [[[vt , nat] , address] , unit] ) => [list<operation> , unit]) =
   ( mk_param :  ((ticket:ticket<vt>) => whole_p)) => {
     (p : [[[vt , nat] , address] , unit] ) => {
-    let [p,_] = p ;
-    let [[v,amt],dst_addr] = p ;
-    let ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
-    let tx_param = mk_param (ticket) ;
-    let c : contract<whole_p> =
+    const [p,_] = p ;
+    const [[v,amt],dst_addr] = p ;
+    const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
+    const tx_param = mk_param (ticket) ;
+    const c : contract<whole_p> =
       Tezos.get_contract_with_error (dst_addr, "Testing proxy: you provided a wrong address") ;
-    let op = Tezos.transaction (tx_param, 1 as mutez, c) ;
+    const op = Tezos.transaction (tx_param, 1 as mutez, c) ;
     return ([ list([op]), unit ])
   };
 };
@@ -29,11 +29,11 @@ const proxy_originate_contract :
             ((x : [ vp , whole_s]) => [list<operation> , whole_s])
           ]) => {
       (p : [[vt , nat] , option<address>]) => {
-        let [p,_] = p;
-        let [v,amt] = p ;
-	let ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
-        let init_storage : whole_s = mk_storage (ticket) ;
-        let [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), (0 as mutez), init_storage) ;
+        const [p,_] = p;
+        const [v,amt] = p ;
+      	const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
+        const init_storage : whole_s = mk_storage (ticket) ;
+        const [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), (0 as mutez), init_storage) ;
         return ([list([op]), Some(addr)])
   };
 };
@@ -53,7 +53,7 @@ const init_transfer :
 const transfer :
   <vt>( x : [proxy_address<vt> , [[vt , nat] , address]]) => test_exec_result =
   ( [taddr_proxy, info] : [proxy_address<vt> , [[vt , nat] , address]]) => {
-    let [ticket_info, dst_addr] = info ;
+    const [ticket_info, dst_addr] = info ;
     return (
       Test.transfer_to_contract(Test.to_contract (taddr_proxy), [ticket_info , dst_addr], 1 as mutez)
     )
