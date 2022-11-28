@@ -4,10 +4,24 @@ let ( let* ) x f = Result.bind x ~f
 
 module Bugs = struct
   type t =
-    { email : string
-    ; url : string
+    { url : string
+    ; email : string option
     }
-  [@@deriving yojson]
+
+  let of_yojson json =
+    try
+      let url = Util.to_string @@ Util.member "url" json in
+      let email = Util.to_string_option @@ Util.member "email" json in
+      Ok { url; email }
+    with
+    | e -> Error e 
+
+
+  let to_yojson { url; email } =
+    `Assoc
+      ([ "url", `String url ]
+      @ Option.value_map email ~default:[] ~f:(fun email ->
+            [ "email", `String email ]))
 
   (* If required validate `email` & url` *)
 end
@@ -240,7 +254,7 @@ let parse_bugs json =
     | Error _ ->
       Error
         "Error: Invalid `bugs` field in package.json.\n\
-         email & url (bug tracker url) needs to be provided\n\
+         url (bug tracker url) and / or email needs to be provided\n\
          e.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \"email\" : \
          \"foo@bar.com\" }")
 
@@ -444,7 +458,7 @@ let%test _ =
     String.(
       e
       = {|Error: Invalid `bugs` field in package.json.
-email & url (bug tracker url) needs to be provided
+url (bug tracker url) and / or email needs to be provided
 e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
   | Ok _ -> false
 
@@ -455,16 +469,12 @@ let%test _ =
       {|{"name":"foo","version":"0.1.0","author":"john doe",
          "repository":"https://github.com/npm/cli.git",
          "main":"lib.mligo","license":"MIT",
-         "bugs":{"url":"https://foo.com/bar"}}|}
+         "bugs":{"url":"https://foo.com/bar"},
+         "readme":"README"}|}
   in
   match read_from_json json with
-  | Error e ->
-    String.(
-      e
-      = {|Error: Invalid `bugs` field in package.json.
-email & url (bug tracker url) needs to be provided
-e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
-  | Ok _ -> false
+  | Error _ -> false
+  | Ok manifest -> String.equal manifest.bugs.url "https://foo.com/bar"
 
 (* bugs = only email *)
 let%test _ =
@@ -480,7 +490,7 @@ let%test _ =
     String.(
       e
       = {|Error: Invalid `bugs` field in package.json.
-email & url (bug tracker url) needs to be provided
+url (bug tracker url) and / or email needs to be provided
 e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
   | Ok _ -> false
 
@@ -508,7 +518,7 @@ let%test _ =
     && String.equal manifest.main "lib.mligo"
     && String.equal manifest.license "MIT"
     && String.equal manifest.bugs.url "https://foo.com/bar"
-    && String.equal manifest.bugs.email "foo@bar.com"
+    && Option.equal String.equal manifest.bugs.email (Some "foo@bar.com")
     && String.equal manifest.readme "README"
     && String.equal manifest.type_ "library"
 

@@ -190,55 +190,72 @@ In  [4]:
 
 ## Packaging
 
-Packages are code units shared with other developers. Therefore,
+Packages are code units that cna be shared with other developers. Therefore,
 authors must provide useful metadata, both for other programmers in
 the community as well as LIGO toolchain, to understand the package's
 contents, it's version and other useful information.
 
-For LIGO packages, authors must provide,
+### Adding package metadata (LIGO manifest)
 
-1.  A name (in the `name` field)
-2.  Version (`version`)
-3.  Dependencies, if any. (`dependencies`)
-4.  A brief description (`description`)
+This is an important step, as it will help the tools and your users/collaborators, provide vital information about your package.
 
-Sample `package.json` with the above information.
+For LIGO packages, authors must provide a manifest file (package.json).
+
+The structure of a LIGO manifest is as follows,
+
+#### Required fields:
+
+- **`name`** : Name of the package.
+- **`version`** : Version of the package (Should be a valid [sem-ver](https://semver.org/)).
+- **`main`** : Main file of the package, Ideally this file should export all the functionality that the package provides.
+- **`author`** : Author of the package.
+- **`license`** : A valid SPDX license identifier. 
+- **`repository`** : The place where the LIGO code is hosted (remote repository),
+The `repository` field follows a [structure same as npm](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#repository).
+- **`bugs`** : The url to your project's issue tracker and / or the email address to which issues should be reported.
+The `bugs` fields follows a [structure same as npm](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#bugs).
+
+- **`type`** : The `type` field can be one of `library` or `contract`, If the field is ommited default value of `type` is `library`
+- **`storage_fn`** : In the case when `type` is `contract`, the name of function which provides provides initial storage needs to be provided.
+- **`storage_arg`** : In the case when `type` is `contract`, an expression that is a parameter to the `storage_fn` needs to be provided.
+
+#### Optional fields:
+
+- **`description`** : A brief description about the package.
+- **`readme`** : Some readme text, if this field is ommited the contents of README.md or README will be used in its place.
+- **`dependencies`** : A object (key-value pairs) of dependencies of the package where key is a `package_name` and value is a `package_version` 
+- **`dev_dependencies`** : A object (key-value pairs) of dev_dependencies of the package where key is a `package_name` and value is a `package_version` 
+
+
+Sample LIGO manifest (`package.json`) with the some of the above information:
 
 ```json
 {
-  "name": "ligo-foo",
-  "version": "1.0.18",
-  "author": "Name <email@domain.com>"
-  "description": "An example for ligo dependency depending on another ligo dependency",
-  "scripts": {
-    "test": "ligo run test foo.test.mligo --project-root ."
+  "name": "math-lib",
+  "version": "1.0.3",
+  "description": "A math library for LIGO with support for Float & Rational numbers",
+  "main": "lib.mligo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ligolang/math-lib-cameligo.git"
+  },
+  "author": "ligoLANG <https://ligolang.org/>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ligolang/math-lib-cameligo/issues"
   },
   "dependencies": {
-    "ligo-list-helpers": "1.0.0",
-    "ligo-set-helpers": "^1.0.2"
+    "math-lib-core": "^1.0.1",
+    "math-lib-float": "^1.0.2",
+    "math-lib-rational": "^1.0.1"
   }
 }
 ```
 <br/>
 
-### Adding package metadata
-
-This is an important step, as it will help the tools and your users/collaborators, provide vital information about your package.
-
-```json
-{
-      "name": "ligo-foo",
-      "version": "1.0.18",
-      "description": "An example for ligo dependency depending on another ligo dependency",
-      "dependencies": {
-        "ligo-list-helpers": "1.0.0",
-        "ligo-set-helpers": "^1.0.2"
-        ...
-}
-```
 
 
-// TODO: metion .ligoignore here (maybe as a Note:)
+// TODO: metion .ligoignore here (maybe as a Note: similar to .gitingore or .npmignore)
 
 ### Creating and publishing packages to LIGO registry
 

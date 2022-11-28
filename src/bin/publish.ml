@@ -13,12 +13,13 @@
 - [x] 2 tests for tar-gzip (< 1 MB & > 1 MB)
 - [x] Add basic comments in code
 - [x] Docs: Review the structure
-- [ ] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
+- [x] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
 - [x] Docs: Add note about #import/include"<pkg>/<path>"
 - [x] Docs: Add note about `--registry`
 - [x] Docs: Add not about `--dry-run` and paste logs
 - [ ] Docs: mention about .ligoignore
 - [ ] Docs: spell check package-management.md
+
 - [ ] manually Test CLI option to override path to .ligorc
 - [ ] manually Test .ligoignore stuff
 - [ ] manually end-to-end test publishing & installing pacakges (math-libs)
