@@ -11,6 +11,13 @@ When debugger functionality is demanded by the user, we check for the `ligo` ver
 Keeping things simple, we assume that with `ligo` versions below a minimally supported version we are not compatible and debugger start fails for them.
 For the newest versions of `ligo` that are not accounted by our code, we appriory assume that everything is fine; but in case of failure, we make the user know that he is using a potentially incompatible version.
 
+## Minor tests
+
+We can mark some tests as `minor` ones. These tests can fail when the used `ligo` version is only partially supported by us. We can turn them off by passing a `-m` flag to test arguments:
+```bash
+$ stack test --ta "-m"
+```
+
 ## Updating version constraints
 
 Constraints on `ligo` version are specified by `isSupportedVersion` function, we have to keep them up-to-date.
