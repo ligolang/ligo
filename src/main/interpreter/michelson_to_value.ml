@@ -228,7 +228,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     let lst' =
       let aux acc cur = cur :: acc in
       let lst = List.fold_left ~f:aux ~init:lst [] in
-      List.rev lst
+      lst
     in
     let lst'' =
       let aux v = decompile_to_untyped_value ~raise ~bigmaps ty v in

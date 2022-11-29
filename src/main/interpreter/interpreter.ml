@@ -886,16 +886,27 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       kvs
   | C_MAP_FOLD, _ -> fail @@ error_type ()
   | C_MAP_ADD, [ k; v; V_Map kvs ] ->
-    return (V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k))
+    let compare (k1, _) (k2, _) = LC.compare_value k1 k2 in
+    return
+      (V_Map
+         (List.dedup_and_sort ~compare
+         @@ ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k)))
   | C_MAP_ADD, _ -> fail @@ error_type ()
   | C_MAP_REMOVE, [ k; V_Map kvs ] ->
     return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
   | C_MAP_REMOVE, _ -> fail @@ error_type ()
   | C_MAP_UPDATE, [ k; option; V_Map kvs ] ->
+    let compare (k1, _) (k2, _) = LC.compare_value k1 k2 in
     (match LC.get_option option with
     | Some (Some v) ->
-      return @@ V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k)
-    | Some None -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
+      return
+      @@ V_Map
+           (List.dedup_and_sort ~compare
+           @@ ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k))
+    | Some None ->
+      return
+      @@ V_Map
+           (List.dedup_and_sort ~compare @@ List.Assoc.remove ~equal:LC.equal_value kvs k)
     | _ -> assert false)
   | C_MAP_UPDATE, _ -> fail @@ error_type ()
   | C_MAP_MEM, [ k; V_Map kvs ] ->
@@ -903,6 +914,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_MAP_MEM, _ -> fail @@ error_type ()
   | C_BIG_MAP_GET_AND_UPDATE, [ k; option; V_Map kvs ]
   | C_MAP_GET_AND_UPDATE, [ k; option; V_Map kvs ] ->
+    let compare (k1, _) (k2, _) = LC.compare_value k1 k2 in
     let old_value = List.Assoc.find ~equal:LC.equal_value kvs k in
     let old_value =
       match old_value with
@@ -913,7 +925,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     | Some (Some v) ->
       return
       @@ v_pair
-           (old_value, V_Map ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k))
+           ( old_value
+           , V_Map
+               (List.dedup_and_sort ~compare
+               @@ ((k, v) :: List.Assoc.remove ~equal:LC.equal_value kvs k)) )
     | Some None ->
       return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
     | None -> assert false)

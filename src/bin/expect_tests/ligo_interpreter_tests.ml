@@ -832,6 +832,19 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_orig exited with value (). |xxx}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_compare_setmap.mligo" ];
+  [%expect
+    {xxx|
+    Everything at the top-level was executed.
+    - test_address_set exited with value { "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" ;
+      "tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ" }.
+    - test_int_set exited with value { 3 ; 4 }.
+    - test_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
+      Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }.
+    - test_big_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
+      Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |xxx}]
+
 (* do not remove that :) *)
 let () = Sys_unix.chdir pwd
 
