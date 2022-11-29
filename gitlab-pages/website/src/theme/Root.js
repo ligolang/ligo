@@ -6,6 +6,8 @@ export default function Root({ children }) {
   const [syntax, setSyntax] = useState(() => {
     if (typeof window === "undefined") return "jsligo";
 
+    const syntax = localStorage.getItem("syntax");
+
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
     });
@@ -16,7 +18,7 @@ export default function Root({ children }) {
 
     if (valid.includes(lang)) return lang;
 
-    return "jsligo";
+    return syntax ?? "jsligo";
   });
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function Root({ children }) {
 
     const url = new URL(window.location);
     url.searchParams.set("lang", syntax);
-    window.history.pushState(null, "", url.toString());
+    window.history.replaceState(null, "", url.toString());
   });
 
   return (
