@@ -415,8 +415,6 @@ This will only display the report on the command line what it would have done in
 
 ## Notes
 
-Note that,
-
 ### 1. Are packages written in different syntaxes interoperable?
 
 References made to cameligo are only for illustrative purposes. Any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
@@ -451,4 +449,8 @@ let test =
 ```
 <br/>
 
-In this case, main function will be used in tests.
+In this case, the main function will be used in tests.
+
+### 3. What happens if pacakge.json is already in use (maybe because of another tool like npm or taqueria)?
+
+In that case, you can name your LIGO manifest as `esy.json` to avoid conflicts with other tools. Also, there is a plan in the future to introduce `ligo.json` as manifest.
