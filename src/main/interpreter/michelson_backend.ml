@@ -1299,7 +1299,6 @@ let rec compile_value ~raise ~options ~loc
           k, v)
         map
     in
-    let map = List.sort ~compare:(fun (k1, _) (k2, _) -> Caml.compare k1 k2) map in
     let map =
       List.map
         ~f:(fun (k, v) -> Tezos_micheline.Micheline.Prim ((), "Elt", [ k; v ], []))
@@ -1326,7 +1325,6 @@ let rec compile_value ~raise ~options ~loc
           k, v)
         map
     in
-    let map = List.sort ~compare:(fun (k1, _) (k2, _) -> Caml.compare k1 k2) map in
     let map =
       List.map
         ~f:(fun (k, v) -> Tezos_micheline.Micheline.Prim ((), "Elt", [ k; v ], []))
