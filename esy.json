@@ -150,7 +150,8 @@
             "esy-libev": "*"
           },
           "build": [
-            ["dune", "build", "-p", "tezos-protocol-015-PtLimaPt", "-j", "4"]
+            "rm -rf vendors",
+            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tezos-protocol-015-PtLimaPt -j4"
           ],
           "x-build": [
             [
