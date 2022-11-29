@@ -17,13 +17,15 @@
 - [x] Docs: Add note about #import/include"<pkg>/<path>"
 - [x] Docs: Add note about `--registry`
 - [x] Docs: Add not about `--dry-run` and paste logs
-- [ ] Docs: mention about .ligoignore
-- [ ] Docs: spell check package-management.md
+- [x] Docs: mention about .ligoignore
+- [x] Docs: spell check package-management.md
+- [x] Docs: wind up all TODOs
 
+- [x] Publish and consume ligo-list-helpers
+- [ ] Update MR description
 - [ ] manually Test CLI option to override path to .ligorc
 - [ ] manually Test .ligoignore stuff
 - [ ] manually end-to-end test publishing & installing pacakges (math-libs)
-- [ ] Update MR description
 *)
 
 module LigoRC = Cli_helpers.LigoRC

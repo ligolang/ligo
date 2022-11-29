@@ -18,7 +18,7 @@ distributed as packages by placing a `package.json` (a manifest file)
 next to their Ligo modules.
 
 ```bash
-ls
+$ ls
 ```
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -69,7 +69,7 @@ We will need the LIGO compiler to compile smart contracts, to get the LIGO compi
 Next, we will use a simple dependency `ligo-list-helper` published on the LIGO registry. To download & install the library, run,
 
 ```bash
-ligo install ligo-list-helpers
+$ ligo install ligo-list-helpers
 ```
 
 Now we will write a smart contract `main.mligo` which will use the `ligo-list-helpers` library
@@ -119,7 +119,7 @@ let test =
 To compile the contract to Michelson run the command
 
 ```bash
-ligo compile contract main.mligo
+$ ligo compile contract main.mligo
 ```
 <br/>
 
@@ -128,14 +128,14 @@ This will find the dependencies installed on the local machine, and compile the 
 To test the contract using LIGO's [testing framework](../advanced/testing.md) run the command
 
 ```bash
-ligo run test main.test.mligo
+$ ligo run test main.test.mligo
 ```
 <br/>
 
 If you working with an existing LIGO project, to install the dependencies, at the root of the project just run
 
 ```bash
-ligo install
+$ ligo install
 ```
 
 ### Upgrading the version of a LIGO package
@@ -159,7 +159,7 @@ Just update the package version to the desired one in the `package.json`.
 
 and run the command
 ```bash
-ligo install
+$ ligo install
 ```
 <br/>
 
@@ -296,7 +296,7 @@ let test_reverse =
 To run the tests run the command
 
 ```bash
-ligo run test list.test.mligo
+$ ligo run test list.test.mligo
 ```
 
 ### Logging in
@@ -304,13 +304,13 @@ ligo run test list.test.mligo
 Before publishing, the registry server needs to authenticate the user to avoid abuse. To login,
 
 ```bash
-ligo login
+$ ligo login
 ```
 
 If you're a new user,
 
 ```bash
-ligo add-user
+$ ligo add-user
 ```
 This would create a `.ligorc` in the home directory.
 
@@ -322,9 +322,31 @@ LIGO packages can be published to a central repository at
 [`packages.ligolang.org`](https://packages.ligolang.org/) with the `ligo publish` command.
 
 ```bash 
-ligo publish
-# TODO: add nice logs here...
+$ ligo publish
+==> Reading manifest... Done
+==> Validating manifest file... Done
+==> Finding project root... Done
+==> Packing tarball... Done
+    publishing: ligo-list-helpers@1.0.0
+    === Tarball Details ===
+    name:          ligo-list-helpers
+    version:       1.0.0
+    filename:      ligo-list-helpers-1.0.0.tgz
+    package size:  895 B
+    unpacked size: 1.1 kB
+    shasum:        37737db2f58b572f560bd2c45b38e6d01277395d
+    integrity:     sha512-a904c5af793e6[...]fc0efee74cfbb26
+    total files:   6
+==> Checking auth token... Done
+==> Uploading package... Done
+Package successfully published
 ```
+<br/>
+
+> Note: while publishing a package If just want to see what LIGO publish would do, you can use the `--dry-run` flag
+> ```bash
+> $ ligo publish --dry-run
+> ```
 
 ## Quick CLI options reference
 
@@ -334,7 +356,7 @@ By default dependencies are installed in the `.ligo` directory at the root of th
 the path where dependencies are installed use the `--cache-path` option to specify the path e.g.
 
 ```bash
-ligo install --cache-path PATH
+$ ligo install --cache-path PATH
 ```
 
 ### --project-root
@@ -343,7 +365,7 @@ LIGO will try to infer the root directory of the project so that it can find the
 If you wish to specify the root directory manually you can do so using the `--project-root` option e.g.
 
 ```bash
-ligo compile contract main.mligo --project-root PATH
+$ ligo compile contract main.mligo --project-root PATH
 ```
 
 ### --registry
@@ -353,14 +375,14 @@ By default LIGO CLI will publish & install packages from the [LIGO registry](htt
 If you wish to specify a different registry e.g. LIGO beta registry you can do so by using the `--registry` option e.g.
 
 ```bash
-ligo compile contract main.mligo --registry URL
+$ ligo compile contract main.mligo --registry URL
 ```
 <br/>
 
 > Note: To point the LIGO CLI to the beta registry use https://packages.ligolang.org/-/api/ as the URL
 > 
 > ```bash
-> ligo install --registry https://packages.ligolang.org/-/api/
+> $ ligo install --registry https://packages.ligolang.org/-/api/
 > ```
 
 ### --ligorc-path
@@ -371,10 +393,10 @@ By default LIGO creates the `.ligorc` in the home directory, If you wish to over
 
 ```bash
 # Loging in
-ligo login --ligorc-path ./.ligorc
+$ ligo login --ligorc-path ./.ligorc
 
 # Publishing
-ligo publish --ligorc-path ./.ligorc
+$ ligo publish --ligorc-path ./.ligorc
 ```
 <br/>
 
@@ -385,7 +407,7 @@ ligo publish --ligorc-path ./.ligorc
 While using `ligo publish` if you don't want to make changes to the LIGO registry, you can use the `--dry-run` flag. e.g.
 
 ```bash
-ligo publish --dry-run
+$ ligo publish --dry-run
 ```
 
 This will only display the report on the command line what it would have done in the case of `ligo publish`.
