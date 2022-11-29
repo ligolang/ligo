@@ -51,8 +51,8 @@ const packageJson = JSON.stringify(
     repository: mainPackageJson.repository,
     scripts: {
       postinstall: rewritePrefix
-        ? "node -e \"process.env['OCAML_VERSION'] = process.platform == 'linux' ? '4.12.0-musl.static.flambda': '4.14.0000'; process.env['OCAML_PKG_NAME'] = 'ocaml'; process.env['ESY_RELEASE_REWRITE_PREFIX']=true; require('./postinstall.js'); \""
-        : "node -e \"process.env['OCAML_VERSION'] = process.platform == 'linux' ? '4.12.0-musl.static.flambda': '4.14.0000'; process.env['OCAML_PKG_NAME'] = 'ocaml'; require('./postinstall.js')\"",
+        ? "node -e \"process.env['OCAML_VERSION'] = process.platform == 'linux' ? '4.12.0-musl.static.flambda': 'n.00.0000'; process.env['OCAML_PKG_NAME'] = 'ocaml'; process.env['ESY_RELEASE_REWRITE_PREFIX']=true; require('./postinstall.js'); \""
+        : "node -e \"process.env['OCAML_VERSION'] = process.platform == 'linux' ? '4.12.0-musl.static.flambda': 'n.00.0000'; process.env['OCAML_PKG_NAME'] = 'ocaml'; require('./postinstall.js')\"",
     },
     bin: bins,
     files: [
