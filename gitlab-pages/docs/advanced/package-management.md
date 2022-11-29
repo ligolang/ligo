@@ -20,6 +20,7 @@ next to their Ligo modules.
 ```bash
 $ ls
 ```
+<br/>
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -54,7 +55,7 @@ LIGO libraries can be published to [LIGO's registry](https://packages.ligolang.o
 Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
 
 Pre-requites: 
-1. esy [link](https://esy.sh/docs/en/getting-started.html)
+1. Install esy ([link](https://esy.sh/docs/en/getting-started.html))
 
 ### Workflow
 
@@ -63,6 +64,7 @@ Start with an empty `package.json` file
 ```json
 {}
 ```
+<br/>
 
 We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
 
@@ -71,8 +73,9 @@ Next, we will use a simple dependency `@ligo/bigarray` published on the LIGO reg
 ```bash
 $ ligo install @ligo/bigarray
 ```
+<br/>
 
-Now we will write a smart contract `main.mligo` which will use the `ligo-list-helpers` library
+Now we will write a smart contract `main.mligo` which will use the `@ligo/bigarray` library
 
 ```cameligo skip
 #import "@ligo/bigarray/lib/bigarray.mligo" "BA"
@@ -141,15 +144,15 @@ $ ligo install
 ### Upgrading the version of a LIGO package
 
 During the lifecycle of a project, if you wish to upgrade the version of a LIGO package, 
-Just update the package version to the desired one in the `package.json`.
+Just update the package version to the desired one in the `package.json`. e.g.
 
 ```diff
 {
   ...
   "dependencies": {
     "ligo-foo": "1.0.6",
--   "ligo-list-helpers": "1.0.0",
-+   "ligo-list-helpers": "1.0.1",
+-   "@ligo/bigarray": "1.0.0",
++   "@ligo/bigarray": "1.0.1",
     "ligo-test_2": "1.0.0",
     "ligo_test_1": "1.0.0"
   }
@@ -366,23 +369,6 @@ If you wish to specify the root directory manually you can do so using the `--pr
 $ ligo compile contract main.mligo --project-root PATH
 ```
 
-### --registry
-
-By default LIGO CLI will publish & install packages from the [LIGO registry](https://packages.ligolang.org/).
-
-If you wish to specify a different registry e.g. LIGO beta registry you can do so by using the `--registry` option e.g.
-
-```bash
-$ ligo compile contract main.mligo --registry URL
-```
-<br/>
-
-> Note: To point the LIGO CLI to the beta registry use https://packages.ligolang.org/-/api/ as the URL
-> 
-> ```bash
-> $ ligo install --registry https://packages.ligolang.org/-/api/
-> ```
-
 ### --ligorc-path
 
 LIGO creates a `.ligorc` file to store auth tokens for the user for a specific registry, This auth token is useful when publishing a package.
@@ -407,6 +393,7 @@ While using `ligo publish` if you don't want to make changes to the LIGO registr
 ```bash
 $ ligo publish --dry-run
 ```
+<br/>
 
 This will only display the report on the command line what it would have done in the case of `ligo publish`.
 
@@ -415,7 +402,7 @@ This will only display the report on the command line what it would have done in
 
 ### 1. Are packages written in different syntaxes interoperable?
 
-References made to cameligo are only for illustrative purposes. Any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
+Yes, any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
 
 ### 2. What happens if there is a main function in a .mligo file of a package?
     
