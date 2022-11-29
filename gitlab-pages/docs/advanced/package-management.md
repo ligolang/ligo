@@ -559,7 +559,7 @@ and some tests for the library
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=pkg
+```pascaligo skip
 #include "list.ligo"
 
 const test_concat = {
@@ -577,7 +577,7 @@ const test_reverse = {
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=pkg
+```cameligo skip
 #include "list.mligo"
 
 let test_concat = 
@@ -595,7 +595,7 @@ let test_reverse =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=pkg
+```reasonligo skip
 #include "list.religo"
 
 let test_concat = {
@@ -615,7 +615,7 @@ let test_reverse = {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=pkg
+```jsligo skip
 #include "list.jsligo"
 
 const test_concat = (() => {
