@@ -1,34 +1,3 @@
-(* 
-- [x] Add --dry-run CLI flag to ligo publish
-- [x] when directory field is null don't send the key
-- [x] Stat main file before publish
-- [x] Implement --dry-run flag
-- [x] Add stats about packed size, upacked size, total files in json
-- [x] Show tarball contents (number of files) & tarball details in CLI output (name, version, filenam[tarball], packed size, unpacked size, shasum, integrity, total files)
-- [x] Wrap logging message in a function ~before ~after
-- [x] Add support for .ligoignore to igore stuff while packaging
-- [x] Refactor manifest parsing & validation
-- [x] Add unit tests for manifest parsing & validation
-- [x] Add expect tests for ligo publish --dry-run which check for valid storage_fn, storage_arg, main
-- [x] 2 tests for tar-gzip (< 1 MB & > 1 MB)
-- [x] Add basic comments in code
-- [x] Docs: Review the structure
-- [x] Docs: Update docs related to recent changes to package.json (Docs: manifest file)
-- [x] Docs: Add note about #import/include"<pkg>/<path>"
-- [x] Docs: Add note about `--registry`
-- [x] Docs: Add not about `--dry-run` and paste logs
-- [x] Docs: mention about .ligoignore
-- [x] Docs: spell check package-management.md
-- [x] Docs: wind up all TODOs
-
-- [x] Publish and consume ligo-list-helpers
-- [x] Fix main file validation
-- [x] Update MR description
-- [x] manually Test CLI option to override path to .ligorc
-- [x] manually Test .ligoignore stuff
-- [ ] manually end-to-end test publishing & installing pacakges (math-libs)
-*)
-
 module LigoRC = Cli_helpers.LigoRC
 module LigoManifest = Cli_helpers.LigoManifest
 module LigoIgnore = Cli_helpers.LigoIgnore
