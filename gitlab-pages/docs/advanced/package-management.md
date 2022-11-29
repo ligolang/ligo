@@ -77,6 +77,28 @@ $ ligo install @ligo/bigarray
 
 Now we will write a smart contract `main.mligo` which will use the `@ligo/bigarray` library
 
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
+
+type parameter is
+  Concat  of list(int)
+| Reverse
+
+type storage is list(int)
+
+function main (const action : parameter; const store : storage) : list(operation) * storage is
+  (nil,
+   case action of [
+      Concat (ys) -> (BA.concat(store))(ys)
+    | Reverse   -> BA.reverse(store)
+  ])
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo skip
 #import "@ligo/bigarray/lib/bigarray.mligo" "BA"
 
@@ -86,8 +108,6 @@ type parameter =
 
 type storage = int list
 
-type return = (operation) list * storage
-
 let main (action, store : parameter * storage) : operation list * storage =
   (([]: operation list),
    (match action with
@@ -95,6 +115,54 @@ let main (action, store : parameter * storage) : operation list * storage =
     | Reverse   -> BA.reverse store))
 
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo skip
+#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
+
+type parameter =
+  Concat(list(int))
+| Reverse;
+
+type storage = list(int);
+
+let main = ((action, store) : (parameter, storage)): (list(operation), storage) => {
+  (
+   [],
+   (switch (action) {
+    | Concat (ys) => (BA.concat(store))(ys)
+    | Reverse     => BA.reverse(store)
+    })
+  )
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
+
+type parameter =
+  ["Concat", list<int>]
+| ["Reverse"];
+
+type storage = list<int>;
+
+const main = (action: parameter, store: storage): [list<operation>, storage] => {
+  return [
+   list([]),
+   (match(action, {
+      Concat: (ys) => BA.concat(store)(ys)
+    , Reverse: () => BA.reverse(store)
+    }))
+  ]
+}
+```
+
+</Syntax>
 <br/>
 
 > Note: When using LIGO packages the `#import`/`#include` syntax is of the form
@@ -104,6 +172,24 @@ let main (action, store : parameter * storage) : operation list * storage =
 > `#include "pkg name>/<file in package>"`
 
 and we write some tests for our smart contract in `main.test.mligo`
+
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+#include "main.ligo"
+
+const test = {
+    const storage = Test.compile_value(list [1; 2; 3]);
+    const (addr, _, _) = Test.originate_from_file("./main.ligo", "main", (nil : list(string)), storage, 0tez);
+    const taddr : typed_address(parameter, storage) = Test.cast_address(addr);
+    const contr : contract(parameter) = Test.to_contract(taddr);
+    const _ = Test.transfer_to_contract_exn(contr, Reverse, 1mutez);
+} with assert (Test.get_storage(taddr) = list [3; 2; 1])
+
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo skip
 #include "main.mligo"
@@ -117,22 +203,107 @@ let test =
     assert (Test.get_storage taddr = [3; 2; 1])
                                          
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo skip
+#include "main.religo"
+
+let test = {
+    let storage = Test.compile_value([1, 2, 3]);
+    let (addr, _, _) = Test.originate_from_file("./main.religo", "main", ([] : list(string)), storage, 0tez);
+    let taddr : typed_address(parameter, storage) = Test.cast_address(addr);
+    let contr : contract(parameter) = Test.to_contract(taddr);
+    let _ = Test.transfer_to_contract_exn(contr, Reverse, 1mutez);
+    assert (Test.get_storage(taddr) == [3, 2, 1])
+}
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+#include "main.jsligo"
+
+const test = (() => {
+    let storage = Test.compile_value(list([1, 2, 3]));
+    let [addr, _, _] = Test.originate_from_file("./main.jsligo", "main", (list([]) as list<string>), storage, 0 as tez);    let taddr : typed_address<parameter, storage> = Test.cast_address(addr);
+    let contr : contract<parameter> = Test.to_contract(taddr);
+    let _ = Test.transfer_to_contract_exn(contr, Reverse(), 1 as mutez);
+    assert (Test.get_storage(taddr) == list([3, 2, 1]))
+})();
+
+```
+
+</Syntax>
 <br/>
 
 To compile the contract to Michelson run the command
 
+<Syntax syntax="pascaligo">
+
+```bash
+$ ligo compile contract main.ligo
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```bash
 $ ligo compile contract main.mligo
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```bash
+$ ligo compile contract main.religo
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```bash
+$ ligo compile contract main.jsligo
+```
+
+</Syntax>
 <br/>
 
 This will find the dependencies installed on the local machine, and compile the `main.mligo` file.
 
 To test the contract using LIGO's [testing framework](../advanced/testing.md) run the command
 
+<Syntax syntax="pascaligo">
+
+```bash
+$ ligo run test main.test.ligo
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```bash
 $ ligo run test main.test.mligo
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```bash
+$ ligo run test main.test.religo
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```bash
+$ ligo run test main.test.jsligo
+```
+
+</Syntax>
 <br/>
 
 If you working with an existing LIGO project, to install the dependencies, at the root of the project just run
@@ -175,6 +346,24 @@ following the steps above,
 
 And then fire up the LIGO REPL using the following command
 
+<Syntax syntax="pascaligo">
+
+```
+$ ligo repl pascaligo
+Welcome to LIGO's interpreter!
+Included directives:
+  #use "file_path";;
+  #import "file_path" "module_name";;
+In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
+Out [1]: Done.
+In  [2]: (BA.concat (list [1;2;3])) (list [4;5;6]);;
+Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
+In  [3]:
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```
 $ ligo repl cameligo
 Welcome to LIGO's interpreter!
@@ -187,6 +376,41 @@ In  [2]: BA.concat [1;2;3] [4;5;6];;
 Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
 In  [3]:
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```
+$ ligo repl reasonligo
+Welcome to LIGO's interpreter!
+Included directives:
+  #use "file_path";;
+  #import "file_path" "module_name";;
+In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
+Out [1]: Done.
+In  [2]: (BA.concat ([1, 2, 3]))([4, 5, 6]);;
+Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
+In  [3]:
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```
+$ ~/projects/ligo/_build/install/default/bin/ligo repl jsligo
+Welcome to LIGO's interpreter!
+Included directives:
+  #use "file_path";;
+  #import "file_path" "module_name";;
+In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
+Out [1]: Done.
+In  [2]: BA.concat (list([1, 2, 3]))(list([4, 5, 6]));;
+Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
+In  [3]:
+```
+
+</Syntax>
 
 ## Packaging
 
@@ -262,7 +486,26 @@ You can specify some files or directories which you want to keep out of the LIGO
 
 We are going the write a simple package `ligo-list-helpers` library that is similar to the bigarray package we used earlier.
 
-```cameligo skip
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pkg
+(* LIGO library for working with lists *)
+
+function concat<a> (const xs : list(a) ; const ys : list(a)) : list(a) is {
+    function f (const x : a ; const ys : list(a)) : list(a) is x # ys
+} with  List.fold_right(f, xs, ys)
+
+function reverse<a> (const xs : list(a)) : list(a) is {
+    function f (const ys : list(a) ; const x : a) : list(a) is x # ys
+} with List.fold_left(f, (nil : list(a)), xs)
+
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=pkg
 (* LIGO library for working with lists *)
 
 let concat (type a) (xs : a list) (ys : a list) : a list =
@@ -274,11 +517,67 @@ let reverse (type a) (xs : a list) : a list =
     List.fold_left f ([] : a list) xs
 
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=pkg
+/* LIGO library for working with lists */
+
+let concat = (type a, xs : list(a), ys : list(a)) : list(a) =>
+    let f = ((x,ys) : (a, list(a))) : list(a) => [x, ...ys];
+    List.fold_right(f, xs, ys)
+
+let reverse = (type a, xs : list(a)) : list(a) =>
+    let f = ((ys,x) : (list(a), a)) : list(a) => [x, ...ys];
+    List.fold_left(f, ([] : list(a)), xs)
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=pkg
+/* LIGO library for working with lists */
+
+const concat : <T>(xs : list<T>, ys : list<T>) => list<T> = (xs : list<T>, ys : list<T>) : list<T> => {
+    let f = (x : T, ys : list<T>) : list<T> => list([x, ...ys]);
+    return List.fold_right(f, xs, ys)
+}
+
+const reverse : <T>(xs : list<T>) => list<T> = (xs : list<T>) : list<T> => {
+    let f = (ys : list<T>, x : T) : list<T> => list([x, ...ys]);
+    return List.fold_left(f, (list([]) as list<T>), xs)
+}
+
+```
+
+</Syntax>
 <br/>
 
 and some tests for the library
 
-```cameligo skip
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pkg
+#include "list.ligo"
+
+const test_concat = {
+    const xs = list [1; 2; 3];
+    const ys = list [4; 5; 6];
+    const zs = concat (xs, ys);
+} with assert (zs = list [1; 2; 3; 4; 5; 6]);
+
+const test_reverse = {
+    const xs = list [1; 2; 3];
+} with assert (reverse (xs) = list [3; 2; 1]);
+
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=pkg
 #include "list.mligo"
 
 let test_concat = 
@@ -292,13 +591,80 @@ let test_reverse =
     assert (reverse xs = [3; 2; 1])
 
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=pkg
+#include "list.religo"
+
+let test_concat = {
+    let xs = [1, 2, 3];
+    let ys = [4, 5, 6];
+    let zs = concat(xs, ys);
+    assert (zs == [1, 2, 3, 4, 5, 6])
+};
+
+let test_reverse = {
+    let xs = [1, 2, 3];
+    assert (reverse(xs) == [3, 2, 1])
+};
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=pkg
+#include "list.jsligo"
+
+const test_concat = (() => {
+    let xs = list([1, 2, 3]);
+    let ys = list([4, 5, 6]);
+    let zs = concat(xs, ys);
+    assert (zs == list([1, 2, 3, 4, 5, 6]))
+})();
+
+const test_reverse = (() => {
+    let xs = list([1, 2, 3]);
+    assert (reverse(xs) == list([3, 2, 1]))
+})();
+
+```
+
+</Syntax>
 <br/>
 
 To run the tests run the command
 
+<Syntax syntax="pascaligo">
+
+```bash
+$ ligo run test list.test.ligo
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```bash
 $ ligo run test list.test.mligo
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```bash
+$ ligo run test list.test.religo
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```bash
+$ ligo run test list.test.jsligo
+```
+
+</Syntax>
 
 ### Logging in
 
@@ -307,12 +673,15 @@ Before publishing, the registry server needs to authenticate the user to avoid a
 ```bash
 $ ligo login
 ```
+<br/>
 
 If you're a new user,
 
 ```bash
 $ ligo add-user
 ```
+<br/>
+
 This would create a `.ligorc` in the home directory.
 
 > Note: By default, LIGO  creates the rc file (`.ligorc`) in the home directory.
@@ -365,9 +734,34 @@ $ ligo install --cache-path PATH
 LIGO will try to infer the root directory of the project so that it can find the dependencies installed on your local machine, 
 If you wish to specify the root directory manually you can do so using the `--project-root` option e.g.
 
+<Syntax syntax="pascaligo">
+
+```bash
+$ ligo compile contract main.ligo --project-root PATH
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```bash
 $ ligo compile contract main.mligo --project-root PATH
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```bash
+$ ligo compile contract main.religo --project-root PATH
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```bash
+$ ligo compile contract main.jsligo --project-root PATH
+```
+
+</Syntax>
 
 ### --ligorc-path
 
@@ -404,7 +798,7 @@ This will only display the report on the command line what it would have done in
 
 Yes, any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
 
-### 2. What happens if there is a main function in a .mligo file of a package?
+### 2. What happens if there is a main function in a LIGO package?
     
 Depends on how it is called.
 
@@ -422,7 +816,7 @@ let main =
 ```
 <br/>
 
-In this case, only add function from the package will be used by the compiler.
+In this case, only `add` function from the package will be used by the compiler.
 
 Also,
 
@@ -438,4 +832,5 @@ In this case, the main function will be used in tests.
 
 ### 3. What happens if package.json is already in use (maybe because of another tool like npm or taqueria)?
 
-In that case, you can name your LIGO manifest as `esy.json` to avoid conflicts with other tools. Also, there is a plan in the future to introduce `ligo.json` as manifest.
+In that case, you can name your LIGO manifest as `esy.json` to avoid conflicts with other tools. 
+Also, there is a plan in the future to introduce `ligo.json` as manifest.
