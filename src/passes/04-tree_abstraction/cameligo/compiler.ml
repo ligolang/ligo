@@ -966,8 +966,8 @@ and compile_declaration ~raise : CST.declaration -> AST.declaration option =
       let x = ..
       let (x,y) = ..   
     *)
-    (match args, type_params with
-    | [], None ->
+    (match kwd_rec, args, type_params with
+    | None, [], None ->
       (* not function *)
       (*
         let x : ty = body
@@ -993,7 +993,7 @@ and compile_declaration ~raise : CST.declaration -> AST.declaration option =
               e_annotation ~loc:let_rhs.location let_rhs ty)
         in
         return region (D_irrefutable_match { pattern; attr; expr = let_rhs }))
-    | _, _ ->
+    | _, _, _ ->
       (* function *)
       let binder, _fun_ = compile_binder ~raise pattern in
       let params = List.map ~f:(compile_parameter ~raise) args in

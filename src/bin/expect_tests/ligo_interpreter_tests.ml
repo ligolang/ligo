@@ -494,6 +494,13 @@ let%expect_test _ =
       - test_switch_switch_break exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "let_rec.mligo" ];
+  [%expect
+    {|
+      Everything at the top-level was executed.
+      - test exited with value true. |}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_negative_big_map_id.mligo" ];
   [%expect
     {|
