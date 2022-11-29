@@ -107,14 +107,14 @@ generateDeployScript request = do
   let originationData :: OriginationData
       originationData = mkOriginationData typeCheckResult
 
-  tezosClientPath <- lift (asks cTezosClientPath) >>= \case
+  octezClientPath <- lift (asks cOctezClientPath) >>= \case
     Nothing -> throwM NoLigoBinary
     Just p -> pure p
 
   let morleyConfig :: MorleyClientConfig
       morleyConfig = MorleyClientConfig
         { mccEndpointUrl = Just (BaseUrl Https "kathmandu.testnet.tezos.serokell.team" 443 "")
-        , mccTezosClientPath = tezosClientPath
+        , mccTezosClientPath = octezClientPath
         , mccMbTezosClientDataDir = Nothing
         , mccVerbosity = 0
         , mccSecretKey = Nothing
@@ -131,7 +131,7 @@ generateDeployScript request = do
   let burnFee = fromIntegral costPerByte * storageLimit
 
   let script = Text.pack $
-          "tezos-client \\\
+          "octez-client \\\
         \ originate \\\
         \ contract \\\
         \ " ++ Text.unpack (gdsrName request) ++ " \\\
