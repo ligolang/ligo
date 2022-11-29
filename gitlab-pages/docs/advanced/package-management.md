@@ -66,16 +66,16 @@ Start with an empty `package.json` file
 
 We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
 
-Next, we will use a simple dependency `ligo-list-helper` published on the LIGO registry. To download & install the library, run,
+Next, we will use a simple dependency `@ligo/bigarray` published on the LIGO registry. To download & install the library, run,
 
 ```bash
-$ ligo install ligo-list-helpers
+$ ligo install @ligo/bigarray
 ```
 
 Now we will write a smart contract `main.mligo` which will use the `ligo-list-helpers` library
 
 ```cameligo skip
-#import "ligo-list-helpers/list.mligo" "XList"
+#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
 
 type parameter =
   Concat  of int list
@@ -88,8 +88,8 @@ type return = (operation) list * storage
 let main (action, store : parameter * storage) : operation list * storage =
   (([]: operation list),
    (match action with
-      Concat ys -> XList.concat store ys 
-    | Reverse   -> XList.reverse store))
+      Concat ys -> BA.concat store ys 
+    | Reverse   -> BA.reverse store))
 
 ```
 <br/>
@@ -105,14 +105,14 @@ and we write some tests for our smart contract in `main.test.mligo`
 ```cameligo skip
 #include "main.mligo"
 
-let test = 
+let test =
     let storage = Test.compile_value [1; 2; 3] in
-    let (addr, _, _) = Test.originate_from_file "./main.mligo" "main" ([] : string list)) storage 0tez in
+    let (addr, _, _) = Test.originate_from_file "./main.mligo" "main" ([] : string list) storage 0tez in
     let taddr : (parameter, storage) typed_address = Test.cast_address addr in
     let contr : parameter contract = Test.to_contract taddr in
     let _ = Test.transfer_to_contract_exn contr Reverse 1mutez in
     assert (Test.get_storage taddr = [3; 2; 1])
-
+                                         
 ```
 <br/>
 
@@ -178,13 +178,11 @@ Welcome to LIGO's interpreter!
 Included directives:
   #use "file_path";;
   #import "file_path" "module_name";;
-In  [1]: #import "ligo-list-helpers/list.mligo" "ListX";;
+In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
 Out [1]: Done.
-In  [2]: ListX.concat;;
-Out [2]: "[lambda of type: (lambda (list int) (lambda (list int) (list int))) ]"
-In  [3]: ListX.concat [1;2;3] [4;5;6];;
-Out [3]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
-In  [4]: 
+In  [2]: BA.concat [1;2;3] [4;5;6];;
+Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
+In  [3]:
 ```
 
 ## Packaging
@@ -259,7 +257,7 @@ You can specify some files or directories which you want to keep out of the LIGO
 
 ### Creating and publishing packages to the LIGO registry
 
-We are going the write the `ligo-list-helpers` library that we used earlier.
+We are going the write a simple package `ligo-list-helpers` library that is similar to the bigarray package we used earlier.
 
 ```cameligo skip
 (* LIGO library for working with lists *)
