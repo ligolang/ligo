@@ -22,9 +22,10 @@
 - [x] Docs: wind up all TODOs
 
 - [x] Publish and consume ligo-list-helpers
-- [ ] Update MR description
-- [ ] manually Test CLI option to override path to .ligorc
-- [ ] manually Test .ligoignore stuff
+- [x] Fix main file validation
+- [x] Update MR description
+- [x] manually Test CLI option to override path to .ligorc
+- [x] manually Test .ligoignore stuff
 - [ ] manually end-to-end test publishing & installing pacakges (math-libs)
 *)
 

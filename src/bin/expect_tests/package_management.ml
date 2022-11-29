@@ -406,6 +406,18 @@ let%expect_test _ =
     Please specify a valid LIGO file in package.json. |}]
 
 let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_invalid_main2"
+
+let%expect_test _ =
+  run_ligo_bad [ "publish"; "--dry-run" ];
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file...
+    Error: Invalid LIGO file specifed in main field of package.json
+    Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) |}]
+
+let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "publish_invalid_storage"
 
 let%expect_test _ =

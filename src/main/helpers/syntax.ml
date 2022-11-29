@@ -14,6 +14,15 @@ let file_extension_to_variant ~raise sf : t option =
   | _ -> None
 
 
+let of_ext_opt = function
+  | None -> None
+  | Some "ligo" | Some "pligo" -> Some PascaLIGO
+  | Some "mligo" -> Some CameLIGO
+  | Some "religo" -> Some ReasonLIGO
+  | Some "jsligo" -> Some JsLIGO
+  | Some _ -> None
+
+
 let of_string_opt ~raise (Syntax_name syntax) source =
   match syntax, source with
   | "auto", Some sf ->
