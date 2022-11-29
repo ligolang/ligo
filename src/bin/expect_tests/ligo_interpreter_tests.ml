@@ -818,6 +818,13 @@ let%expect_test _ =
     ["typed_address","KT1Eip4VjDintiWphUf9fAM7cCikw3NajBAG"]
     ["record",{"foo":["constant",["int","42"]],"bar":["list",[["constant",["string","hello"]],["constant",["string","world"]]]]}] |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_imm.ligo" ];
+  [%expect
+    {xxx|
+    Everything at the top-level was executed.
+    - test_orig exited with value (). |xxx}]
+
 (* do not remove that :) *)
 let () = Sys_unix.chdir pwd
 

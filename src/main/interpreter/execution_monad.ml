@@ -456,7 +456,13 @@ module Command = struct
         @@ Ast_aggregated.get_t_arrow f.orig_lambda.type_expression
       in
       let func_typed_exp =
-        Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst
+        Michelson_backend.make_function
+          f.arg_mut_flag
+          in_ty
+          out_ty
+          f.arg_binder
+          f.body
+          subst_lst
       in
       let _ =
         trace ~raise Main_errors.self_ast_aggregated_tracer
@@ -533,6 +539,7 @@ module Command = struct
           Michelson_backend.build_ast
             ~raise
             subst_lst
+            Immutable
             arg_binder
             rec_name
             in_ty
