@@ -390,3 +390,118 @@ let%expect_test _ =
   print_endline @@ test [%expect.output];
   [%expect {|
     Test passed |}]
+
+(* ligo publish tests *)
+
+let ligo_bin_path = "../../../../../install/default/bin/ligo"
+let () = Sys_unix.chdir "publish_invalid_main"
+
+let%expect_test _ =
+  run_ligo_bad [ "publish"; "--dry-run" ];
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file...
+    Error: main file does not exists.
+    Please specify a valid LIGO file in package.json. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_invalid_main2"
+
+let%expect_test _ =
+  run_ligo_bad [ "publish"; "--dry-run" ];
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file...
+    Error: Invalid LIGO file specifed in main field of package.json
+    Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_invalid_storage"
+
+let%expect_test _ =
+  run_ligo_bad [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file...
+    Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
+
+let () = Sys_unix.chdir pwd
+
+let remove_dynamic_info_from_log log =
+  String.split_lines log
+  |> List.filter ~f:(fun line ->
+         not
+           (String.is_prefix ~prefix:"    shasum:" line
+           || String.is_prefix ~prefix:"    integrity:" line))
+  |> String.concat ~sep:"\n"
+
+
+let () = Sys_unix.chdir "publish_lib_lt_1mb"
+
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run" ];
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file... Done
+    ==> Finding project root... Done
+    ==> Packing tarball... Done
+        publishing: test_package_3@0.0.1
+        === Tarball Details ===
+        name:          test_package_3
+        version:       0.0.1
+        filename:      test_package_3-0.0.1.tgz
+        package size:  1.0 kB
+        unpacked size: 1.8 kB
+        total files:   3 |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_contract_lt_1mb"
+
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file... Done
+    ==> Finding project root... Done
+    ==> Packing tarball... Done
+        publishing: test_package_4@0.0.1
+        === Tarball Details ===
+        name:          test_package_4
+        version:       0.0.1
+        filename:      test_package_4-0.0.1.tgz
+        package size:  1.1 kB
+        unpacked size: 1.8 kB
+        total files:   3 |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_contract_gt_1mb"
+
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file... Done
+    ==> Finding project root... Done
+    ==> Packing tarball... Done
+        publishing: test_package_5@0.0.1
+        === Tarball Details ===
+        name:          test_package_5
+        version:       0.0.1
+        filename:      test_package_5-0.0.1.tgz
+        package size:  195.8 kB
+        unpacked size: 1.1 MB
+        total files:   3 |}]
+
+let () = Sys_unix.chdir pwd
