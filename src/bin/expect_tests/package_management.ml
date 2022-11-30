@@ -505,3 +505,25 @@ let%expect_test _ =
         total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "test_ligoignore"
+
+let%expect_test _ =
+  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  print_endline dry_run_log;
+  [%expect
+    {|
+    ==> Reading manifest... Done
+    ==> Validating manifest file... Done
+    ==> Finding project root... Done
+    ==> Packing tarball... Done
+        publishing: testing_.ligoignore@0.0.1
+        === Tarball Details ===
+        name:          testing_.ligoignore
+        version:       0.0.1
+        filename:      testing_.ligoignore-0.0.1.tgz
+        package size:  265 B
+        unpacked size: 258 B
+        total files:   1 |}]
+
+let () = Sys_unix.chdir pwd
