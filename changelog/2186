@@ -2,6 +2,6 @@
 author: melwyn95
 description: '\nFixes top-level recursive functions of the form `let rec x = fun y -> ...`\n\n'
 merge_request: '2186'
-title: Fix: Top-level recursive functions for cameligo
+title: 'Fix: Top-level recursive functions for cameligo'
 type: fixed
             

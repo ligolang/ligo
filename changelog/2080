@@ -2,6 +2,6 @@
 author: melwyn95
 description: '\nAdds Support `--dry-run` flag to `ligo publish`Better CLI report for `ligo publish`Add validation before publishing packagesAdd support for `.ligoignore` file & Improve support for `.ligorc` file\nchange in CLI report:\n\n```\n$ ligo publish --ligorc-path ./.ligorc\n==> Reading manifest... Done\n==> Validating manifest file... Done\n==> Finding project root... Done\n==> Packing tarball... Done\n    publishing: ligo-list-helpers@1.0.0\n    === Tarball Details ===\n    name:          ligo-list-helpers\n    version:       1.0.0\n    filename:      ligo-list-helpers-1.0.0.tgz\n    package size:  895 B\n    unpacked size: 1.1 kB\n    shasum:        37737db2f58b572f560bd2c45b38e6d01277395d\n    integrity:     sha512-a904c5af793e6[...]fc0efee74cfbb26\n    total files:   6\n==> Checking auth token... Done\n==> Uploading package... Done\nPackage successfully published\n\n```\n\n'
 merge_request: '2080'
-title: [Package Management] Improvements to `ligo publish`
+title: '[Package Management] Improvements to `ligo publish`'
 type: added
             
