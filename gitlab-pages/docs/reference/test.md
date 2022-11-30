@@ -580,7 +580,8 @@ let to_json: 'a => string
 <SyntaxTitle syntax="jsligo">
 let to_json = (a: 'a) => string
 </SyntaxTitle>
-Convert a value to its JSON representation (as a string).
+
+Convert a value to its JSON representation (as a string). A JSON schema is available [here](values.schema.json).
 
 <SyntaxTitle syntax="pascaligo">
 val print : string -> unit
