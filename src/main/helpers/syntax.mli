@@ -8,3 +8,4 @@ val of_string_opt
 
 val to_string : Syntax_types.t -> string
 val to_ext : Syntax_types.t -> string
+val of_ext_opt : string option -> Syntax_types.t option

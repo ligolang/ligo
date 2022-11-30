@@ -399,6 +399,13 @@ let self_pass =
   flag ~doc name no_arg
 
 
+let dry_run_flag =
+  let open Command.Param in
+  let name = "--dry-run" in
+  let doc = "don't publish changes to LIGO registry." in
+  flag ~doc name no_arg
+
+
 let project_root =
   let open Command.Param in
   let name = "--project-root" in
@@ -431,7 +438,7 @@ let ligo_registry =
 let ligorc_path =
   let open Command.Param in
   let name = "--ligorc-path" in
-  let doc = "PATH path to gobal .ligorc file." in
+  let doc = "PATH path to .ligorc file." in
   let spec = optional_with_default Constants.ligo_rc_path string in
   flag ~doc name spec
 
@@ -440,7 +447,7 @@ let ligo_bin_path =
   let open Command.Param in
   let name = "--ligo-bin-path" in
   let doc = "PATH path to LIGO executable." in
-  let spec = optional_with_default "ligo" string in
+  let spec = optional_with_default Sys_unix.executable_name string in
   flag ~doc name spec
 
 
@@ -1772,11 +1779,20 @@ let publish =
     "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the \
      registry server"
   in
-  let f ligo_registry ligorc_path project_root () =
+  let f ligo_registry ligorc_path project_root dry_run ligo_bin_path () =
     return_result ~return
-    @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root
+    @@ fun () ->
+    Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path
   in
-  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> ligo_registry
+    <*> ligorc_path
+    <*> project_root
+    <*> dry_run_flag
+    <*> ligo_bin_path)
 
 
 let add_user =
