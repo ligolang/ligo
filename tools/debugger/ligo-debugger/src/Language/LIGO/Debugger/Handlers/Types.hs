@@ -146,8 +146,8 @@ data LigoValidateValueRequestArguments = LigoValidateValueRequestArguments
     -- ^ Value to check.
   , categoryLigoValidateValueRequestArguments :: String
     -- ^ Category of the value (e.g. @parameter@).
-  , valueTypeLigoValidateValueRequestArguments :: String
-    -- ^ Type of value (@LIGO@ or @Michelson@)
+  , valueLangLigoValidateValueRequestArguments :: String
+    -- ^ Language of value (@LIGO@ or @Michelson@)
   , pickedMichelsonEntrypointLigoValidateValueRequestArguments :: Maybe String
     -- ^ Special michelson entrypoint that will be used.
   } deriving stock (Eq, Show, Generic)
@@ -164,7 +164,9 @@ data LigoValidateConfigRequest = LigoValidateConfigRequest
 data LigoValidateConfigRequestArguments = LigoValidateConfigRequestArguments
   { michelsonEntrypointLigoValidateConfigRequestArguments :: Maybe String
   , parameterLigoValidateConfigRequestArguments :: String
+  , parameterLangLigoValidateConfigRequestArguments :: String
   , storageLigoValidateConfigRequestArguments :: String
+  , storageLangLigoValidateConfigRequestArguments :: String
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoValidateConfigRequestArguments)
 

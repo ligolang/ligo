@@ -44,7 +44,7 @@ export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<
 // Type if input box that initializ
 export type InputBoxType = "parameter" | "storage"
 
-export type InputValueType = "LIGO" | "Michelson";
+export type InputValueLang = "LIGO" | "Michelson";
 
 /** The type of validation in an input box.
  *
@@ -85,7 +85,8 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
   field: ConfigField,
   expectedExtractedCommand: ConfigCommand,
   configItem: T,
-  resultPromise: () => Promise<Maybe<T>>
+  resultPromise: () => Promise<Maybe<T>>,
+  defaultItem: T = configItem
 ): Promise<T> {
   const extractedCommand = getCommand(configItem);
   if (isDefined(extractedCommand)) {
@@ -107,6 +108,6 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
       throw new Error("Expected command for field \"" + field + "\" is \"" + expectedExtractedCommand + "\". Got \"" + extractedCommand + "\"");
     }
   } else {
-    return configItem;
+    return defaultItem;
   }
 }

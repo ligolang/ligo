@@ -528,8 +528,8 @@ handleValidateValue LigoValidateValueRequest {..} = do
             value
         , categoryLigoValidateValueRequestArguments =
             (toText -> category)
-        , valueTypeLigoValidateValueRequestArguments =
-            (toText -> valueType)
+        , valueLangLigoValidateValueRequestArguments =
+            (toText -> valueLang)
         , pickedMichelsonEntrypointLigoValidateValueRequestArguments =
             michelsonEntrypoint
         } = argumentsLigoValidateValueRequest
@@ -544,10 +544,10 @@ handleValidateValue LigoValidateValueRequest {..} = do
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint $
         \(_ :: T.Notes arg) _ ->
-        void <$> parseValue @arg program category (toText value) valueType
+        void <$> parseValue @arg program category (toText value) valueLang
 
     "storage" ->
-      void <$> parseValue @storage program category (toText value) valueType
+      void <$> parseValue @storage program category (toText value) valueLang
 
     other ->
       throwIO $ PluginCommunicationException [int||Unexpected category #{other}|]
@@ -563,8 +563,10 @@ handleValidateConfig :: LigoValidateConfigRequest -> RIO LIGO ()
 handleValidateConfig LigoValidateConfigRequest{..} = do
   let LigoValidateConfigRequestArguments
         { michelsonEntrypointLigoValidateConfigRequestArguments = michelsonEntrypointMb
-        , parameterLigoValidateConfigRequestArguments = toText -> parameterAndType
-        , storageLigoValidateConfigRequestArguments = toText -> storageAndType
+        , parameterLigoValidateConfigRequestArguments = toText -> parameter
+        , parameterLangLigoValidateConfigRequestArguments = toText -> parameterLang
+        , storageLigoValidateConfigRequestArguments = toText -> storage
+        , storageLangLigoValidateConfigRequestArguments = toText -> storageLang
         } = argumentsLigoValidateConfigRequest
 
   -- Getting a contract here because of GHC complains:
@@ -578,21 +580,18 @@ handleValidateConfig LigoValidateConfigRequest{..} = do
 
   program <- getProgram
 
-  (storage, storageType) <- splitValueAndType storageAndType ("storage" :: Text)
-  (parameter, parameterType) <- splitValueAndType parameterAndType ("parameter" :: Text)
-
   withMichelsonEntrypoint contract michelsonEntrypointMb
     \(_ :: T.Notes arg) epc -> do
       logMessage [int||
-        Checking parameter #{parameter} with type #{parameterType}
+        Checking parameter #{parameter} with lang #{parameterLang}
       |]
-      param <- parseValue @arg program "parameter" parameter parameterType
+      param <- parseValue @arg program "parameter" parameter parameterLang
         >>= either (throwIO . ConfigurationException) pure
 
       logMessage [int||
-        Checking storage #{storage} with type #{storageType}
+        Checking storage #{storage} with lang #{storageLang}
       |]
-      stor <- parseValue @st program "storage" storage storageType
+      stor <- parseValue @st program "storage" storage storageLang
         >>= either (throwIO . ConfigurationException) pure
 
       atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
