@@ -18,6 +18,7 @@ import System.Timeout (timeout)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, (@=?))
 import Test.Util
+import Test.Util.Options (minor, reinsuring)
 import Text.Interpolation.Nyan
 import UnliftIO (forConcurrently_)
 
@@ -372,7 +373,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
     -- [LIGO-658]: write a test that checks that we have 'pair1' and 'pair2' in 'not-inlined-fst.mligo' contract.
 
-  , testCaseSteps "functions and variables are not inlined" \step -> do
+  , minor $ testCaseSteps "functions and variables are not inlined" \step -> do
       let file = contractsDir </> "funcs-and-vars-no-inline.mligo"
       let runData = ContractRunData
             { crdProgram = file
@@ -464,7 +465,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 |]
             _ -> pass
 
-  , testCaseSteps "monomorphed functions shows pretty" \step -> do
+  , minor $ testCaseSteps "monomorphed functions shows pretty" \step -> do
       let file = contractsDir </> "poly.mligo"
       let runData = ContractRunData
             { crdProgram = file
@@ -613,7 +614,7 @@ test_Snapshots = testGroup "Snapshots collection"
       unlessM (readIORef anyWritten) do
         assertFailure [int||No logs we're dumped during snapshot collection|]
 
-  , testGroup "comparisons does not produce duplicated snapshots"
+  , minor $ testGroup "comparisons does not produce duplicated snapshots"
     -- ligo used to produce the same location twice, e.g. for both COMPARE and GT
 
     [ testCaseSteps "comparison in condition" \step -> do
@@ -1028,7 +1029,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step [int||Check stack frames after leaving "act"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
-  , testCaseSteps "Skipping constant evaluation and not skipping statement" \step -> do
+  , minor $ testCaseSteps "Skipping constant evaluation and not skipping statement" \step -> do
       let file = contractsDir </> "constant-assignment.mligo"
       let runData = ContractRunData
             { crdProgram = file
@@ -1060,7 +1061,7 @@ test_Snapshots = testGroup "Snapshots collection"
             -> pass
           snap -> unexpectedSnapshot snap
 
-  , testCaseSteps "Computations in list" \step -> do
+  , minor $ testCaseSteps "Computations in list" \step -> do
       let file = contractsDir </> "computations-in-list.mligo"
       let runData = ContractRunData
             { crdProgram = file
@@ -1123,8 +1124,8 @@ instance Default CheckingOptions where
 -- | This test is checking that @readLigoMapper@ produces ok result for all contracts from @contractsDir@.
 -- Also this test can check contracts with special options
 -- (for e.g. with special entrypoint or should it check source locations for sensibility)
-unit_Contracts_are_sensible :: Assertion
-unit_Contracts_are_sensible = do
+test_Contracts_are_sensible :: TestTree
+test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
   contracts <- makeRelative contractsDir <<$>> scanContracts (`notElem` badContracts) contractsDir
   forConcurrently_ contracts testContract
   where

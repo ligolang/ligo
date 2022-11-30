@@ -190,6 +190,7 @@ test-suite ligo-debugger-test
       Test.Navigation
       Test.Snapshots
       Test.Util
+      Test.Util.Options
       Test.Variables
       Paths_ligo_debugger
   hs-source-dirs:

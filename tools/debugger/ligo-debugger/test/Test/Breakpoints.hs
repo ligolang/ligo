@@ -3,6 +3,8 @@ module Test.Breakpoints
   ) where
 
 import Test.Tasty (TestTree)
+import Test.Util
+import Test.Util.Options (minor)
 
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Navigate qualified as N
@@ -11,10 +13,9 @@ import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 
 import Language.LIGO.Debugger.Snapshots
-import Test.Util
 
 test_test :: [TestTree]
-test_test =
+test_test = minor <$>
   [ testCaseSteps "Simple case" \step -> do
       let file = contractsDir </> "simple-ops-sequence.mligo"
       let runData = ContractRunData
