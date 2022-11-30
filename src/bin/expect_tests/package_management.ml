@@ -430,12 +430,20 @@ let%expect_test _ =
 
 let () = Sys_unix.chdir pwd
 
-let remove_dynamic_info_from_log log =
+let remove_dynamic_info_from_log ?(ignore_size = false) log =
   String.split_lines log
   |> List.filter ~f:(fun line ->
          not
            (String.is_prefix ~prefix:"    shasum:" line
            || String.is_prefix ~prefix:"    integrity:" line))
+  |> (fun lines ->
+       if ignore_size
+       then
+         List.filter lines ~f:(fun line ->
+             not
+               (String.is_prefix ~prefix:"    package size:" line
+               || String.is_prefix ~prefix:"    unpacked size:" line))
+       else lines)
   |> String.concat ~sep:"\n"
 
 
@@ -509,7 +517,7 @@ let () = Sys_unix.chdir "test_ligoignore"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
-  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  let dry_run_log = remove_dynamic_info_from_log ~ignore_size:true [%expect.output] in
   print_endline dry_run_log;
   [%expect
     {|
@@ -522,8 +530,6 @@ let%expect_test _ =
         name:          testing_.ligoignore
         version:       0.0.1
         filename:      testing_.ligoignore-0.0.1.tgz
-        package size:  265 B
-        unpacked size: 258 B
         total files:   1 |}]
 
 let () = Sys_unix.chdir pwd
