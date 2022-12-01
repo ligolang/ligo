@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nImproves the Michelson compilation for negative integers, removes the unnecessary `NEG` instruction in the case of negative integers\\n\\nBefore:\\n\\n\\n```bash\\n$ ligo.55 compile expression cameligo ' -100' --without-run\\n{ PUSH int 100 ; NEG }\\n\\n```\\n\\nAfter\\n\\n\\n```bash\\n$ ligo compile expression cameligo ' -100' --without-run\\n{ PUSH int -100 }\\n\\n```\\n\\n"
+merge_request: '2192'
+title: "Draft: Fix compilation for negative integers"
+type: fixed
+            
