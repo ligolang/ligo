@@ -11,7 +11,7 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  menhir_pascaligo_tokens)
+  mh_psc_tokens)
  (modules Token Self))
 
 ;; --------------------------------------------------------------------
@@ -27,8 +27,8 @@
     MenhirToken)))
 
 (library
- (name menhir_pascaligo_tokens)
- (public_name ligo.lexing.menhir_pascaligo_tokens)
+ (name mh_psc_tokens)
+ (public_name ligo.lexing.mh_psc_tokens)
  (libraries
   ;; LIGO
   lexing_shared

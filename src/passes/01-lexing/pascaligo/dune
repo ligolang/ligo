@@ -7,7 +7,7 @@
  (libraries
   ;; LIGO
   lexing_shared
-  menhir_pascaligo_tokens
+  mh_psc_tokens
   lx_psc_self_tokens
   lexing_pascaligo_self_units
   ;; Third party
