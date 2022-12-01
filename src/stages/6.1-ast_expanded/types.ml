@@ -9,6 +9,7 @@ and type_content = [%import: Ast_aggregated.type_content]
 [@@deriving equal, compare, yojson, hash]
 
 and row_element = [%import: Ast_aggregated.row_element]
+and rows = [%import: Ast_aggregated.rows]
 and ty_expr = type_expression
 
 module ValueAttr = struct

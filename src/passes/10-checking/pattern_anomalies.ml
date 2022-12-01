@@ -45,7 +45,7 @@ let pp_simple_pattern_list ppf sps =
   List.iter sps ~f:(fun sp -> Format.fprintf ppf "%a, " pp_simple_pattern sp)
 
 
-let get_variant_nested_type label (tsum : AST.t_sum) =
+let get_variant_nested_type label (tsum : AST.rows) =
   let label_map = tsum.fields in
   let c = LMap.find label label_map in
   c.associated_type

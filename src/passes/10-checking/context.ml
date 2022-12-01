@@ -825,7 +825,7 @@ let get_record : t -> Type.row_element Record.t -> (Type_var.t option * Type.row
          | _ -> None
        in
        (* [find t ~to_type_map ~to_module_map] finds a record type matching [record_type] *)
-       let rec find : type a. (a, (Type_var.t option * t_sum) option) contextual =
+       let rec find : type a. (a, (Type_var.t option * row) option) contextual =
         fun t ~to_type_map ~to_module_map ->
          match
            to_type_map t

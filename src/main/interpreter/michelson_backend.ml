@@ -805,7 +805,7 @@ and make_ast_func ~raise ?name env mut_flag arg body orig =
   typed_exp'
 
 
-and make_ast_record ~raise ~loc (map_ty : Ast_aggregated.t_sum) map =
+and make_ast_record ~raise ~loc (map_ty : Ast_aggregated.rows) map =
   let open Ligo_interpreter.Types in
   let kv_list =
     Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple

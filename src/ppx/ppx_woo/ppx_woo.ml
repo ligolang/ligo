@@ -42,7 +42,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
             | Some (name, body) when String.(name = label) -> Some body (* once told me *)
             | _ -> None
           in
-          let cons_types = Constructors.constructor_types variant in
           let is = Matching.matching_is_full ?wrap_get variant in
           let exn = Matching.matching_exn_full ?wrap_get variant in
           let opt = Matching.matching_opt_full ?wrap_get variant in
@@ -52,17 +51,7 @@ module Make (Params : Woo_helpers.PARAMS) = struct
           let setters = Cases.setters ?wrap_map variant in
           let destruct = Variant.destruct prefix variant in
           let destruct_tpl = Variant.destruct_tpl prefix variant in
-          []
-          @ cons_types
-          @ cons
-          @ mappers
-          @ setters
-          @ is
-          @ exn
-          @ opt
-          @ def
-          @ destruct
-          @ destruct_tpl
+          [] @ cons @ mappers @ setters @ is @ exn @ opt @ def @ destruct @ destruct_tpl
         | W.T_record record ->
           let prop_types = Properties.property_types record in
           let props = Properties.properties record in
