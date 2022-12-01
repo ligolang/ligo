@@ -142,12 +142,12 @@ let expected_contract_list =
 
 
 let expected_library_list =
-  [ "@ligo/bigarray"
-  ; "@ligo/fa"
-  ; "@ligo/math-lib"
-  ; "@ligo/permit"
+  [ "ligo-bigarray"
   ; "ligo-breathalyzer"
   ; "ligo-extendable-fa2"
+  ; "ligo-fa"
+  ; "ligo-math-lib"
+  ; "ligo-permit"
   ]
 
 
