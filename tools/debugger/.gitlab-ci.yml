@@ -46,7 +46,11 @@ danger-hlint:
 
 danger-premerge-checks:
   stage: validate-final
-  only: [merge_requests]
+  only:
+    refs: [merge_requests]
+    changes:
+      - tools/debugger/**/*
+      - danger/**/*
   needs: ["danger-instant-checks"]  # To get messages in MRs ordered right
   when: always
   interruptible: true
