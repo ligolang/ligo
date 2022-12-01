@@ -67,7 +67,7 @@ let test_init_new_library_with_template ~raise:_ () =
   let res =
     clone_and_check
       ~kind:`LIBRARY
-      ~template:"bigarray-jsligo"
+      ~template:"ligo-breathalyzer"
       ~project_name_opt:project_mock_name
       ()
   in
@@ -90,13 +90,16 @@ let test_init_project_with_unexisting_template_raise_exception ~raise:_ () =
     Alcotest.(check string)
       "Same error message"
       (Format.asprintf
-         "Template unrecognized please select one of the following list : \n%s"
-         (String.concat ~sep:"\n" (Ligo_api.Ligo_init.list' ~kind:`CONTRACT)))
+         "Error: Unrecognized template\n\
+          Hint: Use the option --template \"TEMPLATE_NAME\" \n\n\
+          Please select a template from the following list: \n\
+          - %s"
+         (String.concat ~sep:"\n- " (Ligo_api.Ligo_init.list' ~kind:`CONTRACT)))
       err
 
 
 let test_init_project_with_default_name ~raise:_ () =
-  let res = clone_and_check ~kind:`LIBRARY ~template:"bigarray-jsligo" () in
+  let res = clone_and_check ~kind:`LIBRARY ~template:"ligo-breathalyzer" () in
   match res with
   | Ok () -> ()
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
@@ -106,7 +109,7 @@ let setup_test () = ()
 
 let cleanup_test () =
   let _ = OS.Dir.delete ~recurse:true Fpath.(v "." / project_mock_name) in
-  let _ = OS.Dir.delete ~recurse:true Fpath.(v "." / "bigarray-jsligo") in
+  let _ = OS.Dir.delete ~recurse:true Fpath.(v "." / "ligo-breathalyzer") in
   ()
 
 
@@ -122,11 +125,15 @@ let expected_contract_list =
   [ "NFT-factory-cameligo"
   ; "NFT-factory-jsligo"
   ; "advisor-cameligo"
+  ; "advisor-jsligo"
   ; "dao-cameligo"
   ; "dao-jsligo"
   ; "multisig-cameligo"
   ; "multisig-jsligo"
   ; "permit-cameligo"
+  ; "permit-jsligo"
+  ; "predictive-market-cameligo"
+  ; "predictive-market-jsligo"
   ; "randomness-cameligo"
   ; "randomness-jsligo"
   ; "shifumi-cameligo"
@@ -135,7 +142,13 @@ let expected_contract_list =
 
 
 let expected_library_list =
-  [ "bigarray-cameligo"; "bigarray-jsligo"; "math-lib-cameligo" ]
+  [ "@ligo/bigarray"
+  ; "@ligo/fa"
+  ; "@ligo/math-lib"
+  ; "@ligo/permit"
+  ; "ligo-breathalyzer"
+  ; "ligo-extendable-fa2"
+  ]
 
 
 let test_init_list_template_contract_template_with_format ~raise:_ () =
