@@ -11,7 +11,7 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  menhir_jsligo_tokens)
+  menhir_js_tokens)
  (modules PreParser State Token ES6FUN ES6FUN_hook VBAR VBAR_hook SEMI
    SEMI_hook Attributes Self))
 
@@ -28,7 +28,6 @@
     MenhirToken)))
 
 (library
- (name menhir_jsligo_tokens)
  (public_name ligo.lexing.menhir_jsligo_tokens)
  (modules MenhirToken)
  (libraries
