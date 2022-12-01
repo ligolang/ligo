@@ -7,7 +7,7 @@ class read_username term =
 
     method! send_action =
       function
-      | LTerm_read_line.Break -> exit 0
+      | LTerm_read_line.Break -> raise Sys_unix.Break
       | action -> super#send_action action
 
     method! show_box = false
@@ -21,7 +21,7 @@ class read_password term =
 
     method! send_action =
       function
-      | LTerm_read_line.Break -> exit 0
+      | LTerm_read_line.Break -> raise Sys_unix.Break
       | action -> super#send_action action
 
     initializer self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 "Password: "))
@@ -36,8 +36,11 @@ let prompt stdout_term =
 
 
 let prompt stdout_term =
-  let u, p = Lwt_main.run (prompt stdout_term) in
-  Zed_string.to_utf8 u, Zed_string.to_utf8 p
+  try
+    let u, p = Lwt_main.run (prompt stdout_term) in
+    Ok (Zed_string.to_utf8 u, Zed_string.to_utf8 p)
+  with
+  | LTerm_read_line.Interrupt | Sys_unix.Break -> Error ("Error: Login canceled", "")
 
 
 type data =
@@ -96,22 +99,19 @@ let handle_server_response ~update_token response body =
 
 let create_or_login ~ligo_registry ~ligorc_path =
   let registry_key = LigoRC.registry_key ligo_registry in
-  let ligorc = LigoRC.read ~ligorc_path in
-  let token_opt = LigoRC.get_token ligorc ~registry_key in
   let stdout_term = Lwt_main.run @@ Lazy.force LTerm.stdout in
-  let user, pass =
+  let ( let* ) x f = Result.bind ~f x in
+  let* user, pass =
     if LTerm.is_a_tty stdout_term
     then prompt stdout_term
-    else Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD"
+    else Ok (Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD")
   in
   let authorization =
-    match token_opt with
-    | Some token -> Format.sprintf "Bearer %s" token
-    | None ->
-      let token = Base64.encode_exn (Format.sprintf "%s:%s" user pass) in
-      Format.sprintf "Basic %s" token
+    let token = Base64.encode_exn (Format.sprintf "%s:%s" user pass) in
+    Format.sprintf "Basic %s" token
   in
   let login_url = login_url ~base_url:ligo_registry user in
+  let ligorc = LigoRC.read ~ligorc_path in
   let update_token = LigoRC.update_token ~registry_key ligorc in
   let response, body = Lwt_main.run (http ~uri:login_url ~authorization ~user ~pass) in
   handle_server_response ~update_token response body
