@@ -11,7 +11,7 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  menhir_rsn_tokens)
+  mh_re_tokens)
  (modules PreParErr PreParser State ES6FUN Token Self)
  (flags
   (:standard \ -open Core)))
@@ -29,8 +29,8 @@
     MenhirToken)))
 
 (library
- (name menhir_rsn_tokens)
- (public_name ligo.lexing.menhir_rsn_tokens)
+ (name mh_re_tokens)
+ (public_name ligo.lexing.menhir_re_tokens)
  (modules MenhirToken)
  (libraries
   ;; LIGO
