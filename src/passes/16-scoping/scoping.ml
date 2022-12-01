@@ -25,7 +25,7 @@ let binder_meta (var : Var.t option) (source_type : I.type_expression) : binder_
   Option.map var
     ~f:(fun var -> ({ location = Location.dummy; (* TODO propagate the location of the binder *)
                       name = (if Var.is_generated var then None else Some (Format.asprintf "%a" Var.pp var));
-                      source_type = source_type.source_type }
+                      source_type = source_type.source_type}
                     : binder_meta))
 
 (* Next stage uses Micheline for its types: *)

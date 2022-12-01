@@ -41,9 +41,7 @@ let update_typing_env
     (match typed_prg with
     | Some decl ->
       let module AST = Ast_typed in
-      let bindings =
-        Misc.extract_variable_types tenv.bindings decl.wrap_content
-      in
+      let bindings = Misc.extract_variable_types tenv.bindings decl.wrap_content in
       let type_env = Environment.add_declaration decl tenv.type_env in
       { type_env; bindings }
     | None -> tenv)
@@ -104,8 +102,8 @@ let rec update_type_variable_reference : TVar.t -> def list -> bool * def list =
 
 
 let rec update_module_variable_references
-    :  MVar.t list -> [ `Variable of VVar.t | `Type of TVar.t | `None ]
-    -> def list -> bool * def list
+    :  MVar.t list -> [ `Variable of VVar.t | `Type of TVar.t | `None ] -> def list
+    -> bool * def list
   =
  fun mvs ev defs ->
   match mvs, defs with
@@ -134,9 +132,8 @@ let rec update_module_variable_references
 
 
 and resolve_alias
-    :  string list -> MVar.t list
-    -> [ `Variable of VVar.t | `Type of TVar.t | `None ] -> def list
-    -> bool * def list
+    :  string list -> MVar.t list -> [ `Variable of VVar.t | `Type of TVar.t | `None ]
+    -> def list -> bool * def list
   =
  fun aliases mvs ev defs ->
   match aliases with
@@ -144,13 +141,12 @@ and resolve_alias
   | alias :: aliases ->
     let rec aux = function
       | [] -> false, []
-      | Module ({ name; mod_case = Def d; _ } as m) :: defs
-        when String.(name = alias) ->
+      | Module ({ name; mod_case = Def d; _ } as m) :: defs when String.(name = alias) ->
         let updated, d = resolve_alias aliases mvs ev d in
         let mod_case = Def d in
         updated, Module { m with mod_case } :: defs
-      | (Module { name; mod_case = Alias a; _ } as def) :: defs
-        when String.(name = alias) ->
+      | (Module { name; mod_case = Alias a; _ } as def) :: defs when String.(name = alias)
+        ->
         let updated, defs = resolve_alias (a @ aliases) mvs ev defs in
         updated, def :: defs
       | def :: defs ->
@@ -165,10 +161,8 @@ let update_reference : reference -> def list -> bool * def list =
   match r with
   | Variable ev -> update_variable_reference ev defs
   | Type tv -> update_type_variable_reference tv defs
-  | ModuleAccessType (mvs, tv) ->
-    update_module_variable_references mvs (`Type tv) defs
-  | ModuleAccess (mvs, ev) ->
-    update_module_variable_references mvs (`Variable ev) defs
+  | ModuleAccessType (mvs, tv) -> update_module_variable_references mvs (`Type tv) defs
+  | ModuleAccess (mvs, ev) -> update_module_variable_references mvs (`Variable ev) defs
   | ModuleAlias mvs -> update_module_variable_references mvs `None defs
 
 
@@ -193,8 +187,7 @@ let rec find_type_references : AST.type_expression -> reference list =
     Record.fold fields ~init:[] ~f:(fun refs row ->
         let t_refs = find_type_references row.associated_type in
         refs @ t_refs)
-  | T_arrow { type1; type2 } ->
-    find_type_references type1 @ find_type_references type2
+  | T_arrow { type1; type2 } -> find_type_references type1 @ find_type_references type2
   | T_app { type_operator; arguments } ->
     let type_operator = TVar.set_location te.location type_operator in
     let t_refs = List.concat @@ List.map arguments ~f:find_type_references in
@@ -208,13 +201,10 @@ let rec find_type_references : AST.type_expression -> reference list =
     List.filter t_refs ~f:(fun r ->
         match r with
         | Type tv -> not @@ TVar.equal tv ty_binder
-        | Variable _ | ModuleAccess _ | ModuleAlias _ | ModuleAccessType _ ->
-          true)
+        | Variable _ | ModuleAccess _ | ModuleAlias _ | ModuleAccessType _ -> true)
 
 
-let find_binder_type_references
-    : AST.type_expression option Binder.t -> reference list
-  =
+let find_binder_type_references : AST.type_expression option Binder.t -> reference list =
  fun b ->
   let ascr = Binder.get_ascr b in
   match ascr with
@@ -222,9 +212,14 @@ let find_binder_type_references
   | None -> []
 
 
-let find_param_type_references
-    : AST.type_expression option Param.t -> reference list
+let find_pattern_type_references
+    : AST.type_expression option AST.Pattern.t -> reference list
   =
+ fun pattern ->
+  pattern |> AST.Pattern.binders |> List.concat_map ~f:find_binder_type_references
+
+
+let find_param_type_references : AST.type_expression option Param.t -> reference list =
  fun p ->
   let ascr = Param.get_ascr p in
   match ascr with
@@ -261,8 +256,12 @@ let rec expression
     let scopes' = merge_same_scopes scopes' in
     let scopes_final = merge_same_scopes (scopes @ scopes') in
     defs' @ defs, refs' @ refs, tenv, scopes_final
-  | E_lambda { binder; result; output_type = _ } ->
-    let t_refs = find_param_type_references binder in
+  | E_lambda { binder; result; output_type } ->
+    let binder_type_refs = find_param_type_references binder in
+    let output_type_refs =
+      Option.value ~default:[] @@ Option.map ~f:find_type_references output_type
+    in
+    let t_refs = binder_type_refs @ output_type_refs in
     let var = Param.get_var binder in
     let core_type = Param.get_ascr binder in
     let def =
@@ -305,13 +304,7 @@ let rec expression
       then []
       else (
         let binder_loc = VVar.get_location binder in
-        [ Misc.make_v_def
-            ~with_types
-            tenv.bindings
-            Local
-            binder
-            binder_loc
-            start.location
+        [ Misc.make_v_def ~with_types tenv.bindings Local binder binder_loc start.location
         ])
     in
     let defs_start, refs_start, tenv, scopes1 = expression tenv start in
@@ -374,7 +367,7 @@ let rec expression
       ; let_result
       ; _
       } ->
-    let t_refs = find_binder_type_references let_binder in
+    let t_refs = find_pattern_type_references let_binder in
     (* For recursive functions we don't need to add a def for [let_binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_rhs] *)
@@ -387,23 +380,25 @@ let rec expression
     defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
-    let t_refs = find_binder_type_references let_binder in
-    let var = Binder.get_var let_binder in
-    let core_type = Binder.get_ascr let_binder in
+    let t_refs = find_pattern_type_references let_binder in
+    let binders = AST.Pattern.binders let_binder in
     let defs_binder =
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ?core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            rhs.location
-        ])
+      List.concat_map binders ~f:(fun binder ->
+          let var = Binder.get_var binder in
+          let core_type = Binder.get_ascr binder in
+          if VVar.is_generated var
+          then []
+          else (
+            let binder_loc = VVar.get_location var in
+            [ Misc.make_v_def
+                ~with_types
+                ?core_type
+                tenv.bindings
+                Local
+                var
+                binder_loc
+                rhs.location
+            ]))
     in
     let defs_rhs, refs_rhs, tenv, scopes = expression tenv rhs in
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
@@ -446,10 +441,7 @@ let rec expression
     let scopes = merge_same_scopes scopes in
     let defs = def_par @ [ def_fun ] in
     let defs, refs = update_references (refs_result @ t_refs) defs in
-    ( defs_result @ defs
-    , refs
-    , tenv
-    , add_defs_to_scopes (def_par @ [ def_fun ]) scopes )
+    defs_result @ defs, refs, tenv, add_defs_to_scopes (def_par @ [ def_fun ]) scopes
   | E_type_in { type_binder; rhs; let_result } ->
     let t_refs = find_type_references rhs in
     let def = type_expression type_binder Local rhs in
@@ -458,9 +450,7 @@ let rec expression
     [ def ] @ defs, refs @ t_refs, tenv, scopes
   | E_matching { matchee; cases } ->
     let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
-    let defs_matchee, refs_matchee =
-      update_references refs_matchee defs_matchee
-    in
+    let defs_matchee, refs_matchee = update_references refs_matchee defs_matchee in
     let scopes = merge_same_scopes scopes in
     let defs_cases, refs_cases, tenv, scopes' =
       List.fold_left
@@ -512,9 +502,7 @@ let rec expression
     let scopes' = merge_same_scopes scopes' in
     let scopes' = add_defs_to_scopes defs_module scopes' in
     let defs_module, refs_result = update_references refs_result defs_module in
-    let defs, refs_result =
-      update_references refs_result (defs_result @ defs_module)
-    in
+    let defs, refs_result = update_references refs_result (defs_result @ defs_module) in
     defs, refs_result @ refs_module, tenv, merge_same_scopes scopes @ scopes'
 
 
@@ -529,16 +517,13 @@ and type_expression : TVar.t -> def_type -> AST.type_expression -> def =
 
 
 and module_expression
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> def_type -> MVar.t -> AST.module_expr
-    -> def list * reference list * typing_env * scopes
+    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env -> def_type
+    -> MVar.t -> AST.module_expr -> def list * reference list * typing_env * scopes
   =
  fun ~with_types ~options tenv def_type top m ->
   match m.wrap_content with
   | M_struct decls ->
-    let defs, refs, tenv, scopes =
-      declarations ~with_types ~options tenv decls
-    in
+    let defs, refs, tenv, scopes = declarations ~with_types ~options tenv decls in
     let range = MVar.get_location top in
     let body_range = m.location in
     let name = get_mod_binder_name top in
@@ -570,25 +555,21 @@ and module_expression
 
 
 and declaration_expression
-    :  with_types:bool -> options:Compiler_options.middle_end
-    -> ?core_type:AST.type_expression -> typing_env -> VVar.t -> AST.expression
+    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
+    -> AST.type_expression option Binder.t list -> AST.expression
     -> def list * reference list * typing_env * scopes
   =
- fun ~with_types ~options ?core_type tenv ev e ->
+ fun ~with_types ~options tenv binders e ->
   let defs, refs, tenv, scopes = expression ~with_types ~options tenv e in
-  let range = VVar.get_location ev in
-  let body_range = e.location in
-  let def =
-    Misc.make_v_def
-      ~with_types
-      ?core_type
-      tenv.bindings
-      Global
-      ev
-      range
-      body_range
+  let defs' =
+    List.map binders ~f:(fun binder ->
+        let core_type = Binder.get_ascr binder in
+        let ev = Binder.get_var binder in
+        let range = VVar.get_location ev in
+        let body_range = e.location in
+        Misc.make_v_def ~with_types ?core_type tenv.bindings Global ev range body_range)
   in
-  [ def ] @ defs, refs, tenv, scopes
+  defs' @ defs, refs, tenv, scopes
 
 
 and declaration
@@ -601,27 +582,31 @@ and declaration
   | D_value { attr = { hidden; _ }; _ }
   | D_module { module_attr = { hidden; _ }; _ }
   | D_type { type_attr = { hidden; _ }; _ }
+  | D_irrefutable_match { attr = { hidden; _ }; _ }
     when hidden -> [], [], tenv, []
-  | D_value
-      { binder
-      ; expr = { expression_content = E_recursive _; _ } as expr
-      ; attr = _
-      } ->
+  | D_value { binder; expr = { expression_content = E_recursive _; _ } as expr; attr = _ }
+    ->
     let t_refs = find_binder_type_references binder in
     (* For recursive functions we don't need to add a def for [binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_expr] *)
-    let defs_expr, refs_rhs, tenv, scopes =
-      expression ~with_types ~options tenv expr
-    in
+    let defs_expr, refs_rhs, tenv, scopes = expression ~with_types ~options tenv expr in
     let def, defs_expr = drop_last defs_expr in
     defs_expr @ [ def ], refs_rhs @ t_refs, tenv, scopes
+  | D_irrefutable_match { pattern; expr; _ } ->
+    let t_refs = find_pattern_type_references pattern in
+    let binders = AST.Pattern.binders pattern in
+    (* 
+      TODO: neeed to handle core_type when P_ascr   
+    let core_type = Binder.get_ascr binder in *)
+    let defs, refs, env, scopes =
+      declaration_expression ~with_types ~options tenv binders expr
+    in
+    defs, refs @ t_refs, env, scopes
   | D_value { binder; expr; attr = _ } ->
     let t_refs = find_binder_type_references binder in
-    let var = Binder.get_var binder in
-    let core_type = Binder.get_ascr binder in
     let defs, refs, env, scopes =
-      declaration_expression ~with_types ~options ?core_type tenv var expr
+      declaration_expression ~with_types ~options tenv [ binder ] expr
     in
     defs, refs @ t_refs, env, scopes
   | D_type { type_binder; type_expr; type_attr = _ } ->
@@ -646,9 +631,7 @@ and declarations
       decls
       ~init:([], [], tenv, [])
       ~f:(fun (defs, refs, tenv, scopes) decl ->
-        let defs', refs', tenv, scopes' =
-          declaration ~with_types ~options tenv decl
-        in
+        let defs', refs', tenv, scopes' = declaration ~with_types ~options tenv decl in
         let scopes' = add_defs_to_scopes (filter_local_defs defs) scopes' in
         let defs, refs = update_references (refs' @ refs) defs in
         defs' @ defs, refs, tenv, scopes @ scopes')
@@ -694,9 +677,7 @@ let scopes
   =
  fun ~with_types ~options prg ->
   let () = reset_counter () in
-  let tenv =
-    { type_env = options.init_env; bindings = Misc.Bindings_map.empty }
-  in
+  let tenv = { type_env = options.init_env; bindings = Misc.Bindings_map.empty } in
   let defs, _, _, scopes = declarations ~with_types ~options tenv prg in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in

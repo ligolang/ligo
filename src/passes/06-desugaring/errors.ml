@@ -6,8 +6,7 @@ type desugaring_error = [ `Desugaring_corner_case of string ]
 [@@deriving poly_constructor { prefix = "desugaring_" }]
 
 let error_ppformat
-    :  display_format:string display_format -> Format.formatter
-    -> desugaring_error -> unit
+    : display_format:string display_format -> Format.formatter -> desugaring_error -> unit
   =
  fun ~display_format f a ->
   match display_format with

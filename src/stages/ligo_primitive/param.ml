@@ -20,17 +20,27 @@ let pp_mutable_flag ppf mut_flag =
   | Mutable -> Format.fprintf ppf "mut"
   | Immutable -> ()
 
+
 let pp_forced_flag ppf forced_flag =
   match forced_flag with
   | Forced -> Format.fprintf ppf "forced"
   | Regular -> ()
 
+
 let make ?(mut_flag = Immutable) ?(forced_flag = Regular) var ascr =
-  { binder = Binder.make var ascr; mut_flag ; forced_flag }
+  { binder = Binder.make var ascr; mut_flag; forced_flag }
 
 
-let pp g ppf { binder; mut_flag ; forced_flag } =
-  Format.fprintf ppf "%a%a@;%a" pp_mutable_flag mut_flag pp_forced_flag forced_flag (Binder.pp g) binder
+let pp g ppf { binder; mut_flag; forced_flag } =
+  Format.fprintf
+    ppf
+    "%a%a@;%a"
+    pp_mutable_flag
+    mut_flag
+    pp_forced_flag
+    forced_flag
+    (Binder.pp g)
+    binder
 
 
 let get_var t = Binder.get_var t.binder

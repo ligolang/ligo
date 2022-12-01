@@ -5,4 +5,5 @@
   (backend bisect_ppx))
  (libraries main_errors simple-utils tezos-utils parsing tree_abstraction
    ast_imperative self_ast_imperative desugaring ast_core checking ast_typed
-   syntax self_ast_typed spilling mini_c self_mini_c stacking self_michelson))
+   syntax self_ast_typed spilling expansion mini_c self_mini_c stacking
+   self_michelson))

@@ -6,6 +6,8 @@ const ctx = {
   syntax: (() => {
     if (typeof window === "undefined") return "jsligo";
 
+    const syntax = localStorage.getItem("syntax");
+
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
     });
@@ -14,7 +16,7 @@ const ctx = {
 
     if (valid.includes(lang)) return lang;
 
-    return "jsligo";
+    return syntax ?? "jsligo";
   })(),
   setSyntax: () => {},
 };

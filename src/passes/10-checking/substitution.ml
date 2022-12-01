@@ -6,9 +6,7 @@ type t =
   }
 [@@deriving sexp, compare]
 
-let empty =
-  { type_subst = Type_var.Map.empty; layout_subst = Layout_var.Map.empty }
-
+let empty = { type_subst = Type_var.Map.empty; layout_subst = Layout_var.Map.empty }
 
 let add_texists_eq t tvar kind type_ =
   { t with type_subst = Map.set t.type_subst ~key:tvar ~data:(kind, type_) }

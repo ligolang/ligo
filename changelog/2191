@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2191'
+title: "Internal: remove cons_types from ppx"
+type: fixed
+            

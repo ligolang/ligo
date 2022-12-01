@@ -400,9 +400,13 @@
               }
             }
           ]
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/location" }
         }
       },
-      "required": ["name", "range", "body_range", "content"],
+      "required": ["name", "range", "body_range", "content", "references"],
       "additionalProperties": false
     },
     "modules": {

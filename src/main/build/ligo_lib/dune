@@ -2,7 +2,8 @@
  (name ligo_lib)
  (public_name ligo.ligo_lib)
  (flags
-  (:standard \ -open Core)) ; crunch use Core.String :/
+  (:standard \ -open Core))
+ ; crunch use Core.String :/
  (libraries crunch))
 
 (rule

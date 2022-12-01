@@ -1,0 +1,7 @@
+
+author: lesenechal.remi & melwyn95
+description: '\n \n\n\nFix a bug where top-level let destructuring were causing code to be executed multiple time, as in:\n```\nlet (a,a) =\n  let () = Test.log "hello" in\n  (1,2)\n\n```\nFix a bug where type parameters were not found ([https://gitlab.com/ligolang/ligo/-/issues/1482](https://gitlab.com/ligolang/ligo/-/issues/1482))`proxy_tickets` code has been changed (see [https://ligolang.org/docs/advanced/testing/#transfers-and-originations-with-tickets](https://ligolang.org/docs/advanced/testing/#transfers-and-originations-with-tickets))\n'
+merge_request: '2038'
+title: Add support for patterns in top-level declarations
+type: fixed
+            

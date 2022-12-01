@@ -1,0 +1,6 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat test_compare_setmap.mligo \\n\\nlet test_address_set =\\n let s : address set = Set.empty in\\n let s = Set.add (\"tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv\" : address) s in\\n let s = Set.add (\"tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ\" : address) s in\\n let s : address set = Test.decompile (Test.eval s) in\\n Test.eval s\\n\\n```\\n\\n#### Before\\n\\n\\n```\\n$ ligo run test test_compare_setmap.mligo \\nError(s) occurred while parsing the Michelson input:\\nAt (unshown) location 0, value\\n  { \"tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ\" ;\\n    \"tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv\" } is invalid for type set address.\\nValues in a set literal must be in strictly ascending order, but they were unordered in literal:\\n  { \"tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ\" ;\\n    \"tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv\" } \\n\\n```\\n\\n#### After\\n\\n\\n```\\n$ ligo run test test_compare_setmap.mligo \\nEverything at the top-level was executed.   \\n- test_address_set exited with value { \"tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv\" ;\\n  \"tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ\" }.\\n\\n```\\n\\n"
+merge_request: '2188'
+title: 'Testing framework: fix sorting on decompilation/compilation of maps/sets'
+type: fixed

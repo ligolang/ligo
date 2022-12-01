@@ -33,8 +33,6 @@ module Make (Pattern : Pattern.S) = struct
 
   let fold_map f g acc { matchee; cases } =
     let acc, matchee = f acc matchee in
-    let acc, cases =
-      List.fold_map ~f:(fold_map_match_case f g) ~init:acc cases
-    in
+    let acc, cases = List.fold_map ~f:(fold_map_match_case f g) ~init:acc cases in
     acc, { matchee; cases }
 end

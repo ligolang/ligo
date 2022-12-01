@@ -71,6 +71,7 @@ def get_changelog(elems):
     # Render the elems
     changelog_details = "".join([gfm.renderer.render(elem) for elem in elems])
     changelog_details = re.sub(COMMENT_REGEX, '', changelog_details)
+    
     return changelog_details
 
 
@@ -104,18 +105,26 @@ if __name__ == "__main__":
     # Get changelog details
     if type != "none":
         changelog_details = get_changelog(markdown.children)
-        changelog_details = changelog_details.replace('\n', '\\n')
+        # Force \n before ``` to avoid a bug in case of block code in list
+        changelog_details = changelog_details.replace('```', '\n```')
+        # To save the \n it should be \\n which will be parsed later as line break
+        changelog_details = changelog_details.replace('\n', '\\\\n')
+        # description is stored between '' in changelog file. so if there is ' we have to skip it
+        changelog_details = changelog_details.replace("\"", "\\\"")
+        # formatter put <p> and </p> we don't want them
         changelog_details = changelog_details.replace('<p>', '')
         changelog_details = changelog_details.replace('</p>', '')
+        
+        title = title.replace("\"", "\\\"")
     else:
        quit()
 
     f = open(f"changelog/{args.mr_id}", "x")
     f.write(f'''
 author: {author}
-description: '{changelog_details}'
+description: "{changelog_details}"
 merge_request: '{args.mr_id}'
-title: {title}
+title: "{title}"
 type: {type}
             ''')
     f.close()

@@ -325,7 +325,7 @@ const deny = (action: parameter, store: storage): return_ => {
 
 ### Access Control
 
-This example shows how `Tezos.get_source` can be used to deny access to an
+This example shows how `Tezos.get_sender` can be used to deny access to an
 entrypoint.
 
 <Syntax syntax="pascaligo">
@@ -334,7 +334,7 @@ entrypoint.
 const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
 function main (const action : parameter; const store : storage) : return is
-  if Tezos.get_source() =/= owner then failwith ("Access denied.")
+  if Tezos.get_sender() =/= owner then failwith ("Access denied.")
   else (nil, store)
 ```
 
@@ -345,7 +345,7 @@ function main (const action : parameter; const store : storage) : return is
 let owner = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
 let main (action, store: parameter * storage) : return =
-  if Tezos.get_source () <> owner then failwith "Access denied."
+  if Tezos.get_sender () <> owner then failwith "Access denied."
   else ([], store)
 ```
 
@@ -356,7 +356,7 @@ let main (action, store: parameter * storage) : return =
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
 let main = ((action, store) : (parameter, storage)) : return => {
-  if (Tezos.get_source () != owner) { failwith ("Access denied."); }
+  if (Tezos.get_sender () != owner) { failwith ("Access denied."); }
   else { ([], store) };
 };
 ```
@@ -368,12 +368,17 @@ let main = ((action, store) : (parameter, storage)) : return => {
 const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
 const main = (action: parameter, store: storage): return_ => {
-  if (Tezos.get_source() != owner) { return failwith("Access denied."); }
+  if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
   else { return [list([]), store]; };
 };
 ```
 
 </Syntax>
+
+> Note that we do not use `Tezos.get_source`, but instead
+> `Tezos.get_sender`. In our [tutorial about
+> security](../tutorials/security/security.md#incorrect-authorisation-checks)
+> you can read more about it.
 
 ### Inter-Contract Invocations
 

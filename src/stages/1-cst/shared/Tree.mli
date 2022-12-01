@@ -22,16 +22,15 @@ module Wrap = Lexing_shared.Wrap
    and the padding for the new node itself, determining whether it is
    the last child of its parent. *)
 
-type state = <
-  offsets  : bool;
-  mode     : [`Point | `Byte];
-  buffer   : Buffer.t;
-  pad_path : string;
-  pad_node : string;
-  pad      : int -> int -> state
->
+type state =
+  < offsets : bool
+  ; mode : [ `Point | `Byte ]
+  ; buffer : Buffer.t
+  ; pad_path : string
+  ; pad_node : string
+  ; pad : int -> int -> state >
 
-val mk_state : ?buffer:Buffer.t -> offsets:bool -> [`Byte | `Point] -> state
+val mk_state : ?buffer:Buffer.t -> offsets:bool -> [ `Byte | `Point ] -> state
 
 (* Printing nodes *)
 
@@ -67,9 +66,9 @@ val print_literal_wo_reg : string Wrap.t printer
 
 type child = (state -> unit) option
 
-val mk_child      :      'a printer -> 'a        -> child
-val mk_child_opt  :      'a printer -> 'a option -> child
-val mk_child_list : 'a list printer -> 'a list   -> child
+val mk_child : 'a printer -> 'a -> child
+val mk_child_opt : 'a printer -> 'a option -> child
+val mk_child_list : 'a list printer -> 'a list -> child
 
 (* Printing trees (root + subtrees). The call [print_tree ?region
    state label children] prints a root whose label is [label] and
@@ -79,39 +78,35 @@ val mk_child_list : 'a list printer -> 'a list   -> child
 
 type label = string
 
-val print_tree :
-  ?region:Region.t ->
-  state ->
-  label (* root *) ->
-  child list ->
-  unit
+val print_tree : ?region:Region.t -> state -> label (* root *) -> child list -> unit
 
-val print : (* Alias of [print_tree] *)
-  ?region:Region.t ->
-  state ->
-  label (* root *) ->
-  child list ->
-  unit
+val print
+  :  ?region:(* Alias of [print_tree] *)
+             Region.t
+  -> state
+  -> label (* root *)
+  -> child list
+  -> unit
 
 (* A special case of tree occurs often: the unary tree made of a value
    of type [string Wrap.t], that is, a tree with exactly one
    subtree. *)
 
-val print_unary :
-  ?region:Region.t ->
-  state ->
-  label (* root *) ->
-  'a printer (* printer for the unique child *) ->
-  'a (* unique child *) ->
-  unit
+val print_unary
+  :  ?region:Region.t
+  -> state
+  -> label (* root *)
+  -> 'a printer (* printer for the unique child *)
+  -> 'a (* unique child *)
+  -> unit
 
 (* PRINTING TOKENS (LEAVES) *)
 
 type lexeme = string
 
-val print_string   : string Wrap.t printer
+val print_string : string Wrap.t printer
 val print_verbatim : string Wrap.t printer
-val print_int      : label -> (lexeme * Z.t) Wrap.t printer
-val print_nat      : label -> (lexeme * Z.t) Wrap.t printer
-val print_bytes    : label -> (lexeme * Hex.t) Wrap.t printer
-val print_mutez    : label -> (lexeme * Int64.t) Wrap.t printer
+val print_int : label -> (lexeme * Z.t) Wrap.t printer
+val print_nat : label -> (lexeme * Z.t) Wrap.t printer
+val print_bytes : label -> (lexeme * Hex.t) Wrap.t printer
+val print_mutez : label -> (lexeme * Int64.t) Wrap.t printer

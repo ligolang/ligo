@@ -60,21 +60,6 @@ build_release_env_vars:
 #######################################################################
 # Following script is executed when branch is created
 #######################################################################
-xrefcheck:
-  stage: tooling
-  needs:
-    - job: changelog
-      artifacts: true
-  script:
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
-    - chmod 777 ./xrefcheck-x86_64-linux
-    - ./xrefcheck-x86_64-linux
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^release/ && $TRIGGER_DOC_UPDATE == null' 
-      when: always
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
-      when: always
-
 create-tag:
   stage: release    
   script:
@@ -91,7 +76,6 @@ create-tag:
     - job: initialize-git
     - job: build_release_env_vars
       artifacts: true
-    - job: xrefcheck
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^release/ && $TRIGGER_DOC_UPDATE == null' 
       when: always
@@ -219,6 +203,9 @@ update_release_metadata:
 #######################################################################
 generate-homebrew-version:
   stage: pretooling
+  needs:
+    - job: build_release_env_vars
+      artifacts: true
   script:
     - ./.ci/scripts/homebrew/create_new_homebrew_version.sh ${CI_PROJECT_URL} ${CI_PROJECT_ID} ${RELEASE_VERSION}
   artifacts:
@@ -238,13 +225,15 @@ bottle-ventura-i7:
   needs:
     - job: generate-homebrew-version
       artifacts: true
+    - job: build_release_env_vars
+      artifacts: true
   script:
     - brew install --build-bottle ./HomebrewFormula/ligo.rb
     - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
       --upload-file ./ligo--${RELEASE_VERSION}.ventura.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.ventura.bottle.1.tar.gz"
+      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.ventura.bottle.tar.gz"
     - sed -i '' "s/# bottle ventura/${BOTTLE_INFO}/" ./HomebrewFormula/ligo.rb
   after_script:
     - brew uninstall ligo 
@@ -265,13 +254,15 @@ bottle-ventura-m1:
   needs:
     - job: bottle-ventura-i7
       artifacts: true
+    - job: build_release_env_vars
+      artifacts: true
   script:
     - brew install --build-bottle ./HomebrewFormula/ligo.rb
     - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
       --upload-file ./ligo--${RELEASE_VERSION}.arm64_ventura.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.arm64_ventura.bottle.1.tar.gz"
+      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.arm64_ventura.bottle.tar.gz"
     - sed -i '' "s/# bottle arm64_ventura/${BOTTLE_INFO}/" ./HomebrewFormula/ligo.rb
   after_script:
     - brew uninstall ligo 
@@ -304,12 +295,14 @@ update-versionned-doc:
     - apt-get install -y --no-install-recommends jq
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
   script:
+    - git submodule sync --recursive                       
+    - git submodule update --init --recursive --remote
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
     - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
-    - git add  HomebrewFormula/ nix/get_ligo_light.nix gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
+    - git add vendors/tezos-ligo HomebrewFormula/ nix/get_ligo_light.nix gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
   needs:
