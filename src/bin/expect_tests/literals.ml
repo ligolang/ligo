@@ -33,6 +33,15 @@ let%expect_test _ =
     key edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "expression"; "cameligo"; " -100"; "--without-run" ];
+  [%expect {| { PUSH int -100 } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "expression"; "cameligo"; "(fun () -> -1 : unit -> int)" ];
+  [%expect {|
+    { DROP ; PUSH int -1 } |}]
+
+let%expect_test _ =
   run_ligo_bad
     [ "run"; "interpret"; "(\"thisisnotapublickey\":key)"; "--syntax"; "pascaligo" ];
   [%expect
