@@ -9,7 +9,7 @@ module Trace = Simple_utils.Trace
 
 module Config      = Preprocessing_jsligo.Config
 module Token       = Lexing_jsligo.Token
-module UnitPasses  = Lexing_jsligo_self_units.Self
+module UnitPasses  = Lx_jsl_self_units.Self
 module TokenPasses = Lx_js_self_tokens.Self
 module ParErr      = Parsing_jsligo.ParErr
 module Parser      = Parsing_jsligo.Parser

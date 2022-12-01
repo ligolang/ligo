@@ -5,7 +5,7 @@
 module Config         = Preprocessing_jsligo.Config
 module PreprocParams  = Preprocessor.CLI.Make (Config)
 module Token          = Lexing_jsligo.Token
-module UnitPasses     = Lexing_jsligo_self_units.Self
+module UnitPasses     = Lx_jsl_self_units.Self
 module TokenPasses    = Lx_js_self_tokens.Self
 
 (* Vendors dependencies *)
