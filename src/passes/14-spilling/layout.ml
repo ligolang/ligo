@@ -181,7 +181,7 @@ let record_access_to_lr ~raise ~layout ty m_ty index =
       aux index ty last
     )
 
-let record_to_pairs (type exp) ~raise (compile_expression : _ -> exp) (ec_pair : exp -> exp -> exp) (e_tuple : exp list -> exp) (record_t : AST.t_sum) record : exp =
+let record_to_pairs (type exp) ~raise (compile_expression : _ -> exp) (ec_pair : exp -> exp -> exp) (e_tuple : exp list -> exp) (record_t : AST.rows) record : exp =
   let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.fields record in
   match record_t.layout with
   | L_tree -> (
