@@ -11,5 +11,5 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  lexing_cameligo_self_tokens)
+  lx_ml_self_tokens)
  (modules Self))
