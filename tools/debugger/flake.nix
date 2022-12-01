@@ -29,10 +29,13 @@
           SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
         });
         archOut = {
-          devShells.default = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              nixfmt
-            ];
+          devShells = {
+            default = pkgs.mkShell rec {
+              buildInputs = [ pkgs.nixfmt ];
+            };
+            ci = pkgs.mkShell {
+              buildInputs = [ pkgs.danger-gitlab ];
+            };
           };
 
           packages = {

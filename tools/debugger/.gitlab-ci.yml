@@ -18,6 +18,44 @@ ligo-debugger-test:
     - git add ./ligo # Ligo binary is needed for this tests
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/debugger'#checks.x86_64-linux.ligo-debugger-test
 
+danger-instant-checks:
+  stage: validate
+  only:
+    refs: [merge_requests]
+    changes:
+      - tools/debugger/**/*
+      - danger/**/*
+  interruptible: true
+  script:
+    - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
+        --dangerfile=./danger/instant-checks.rb
+        --danger_id=instant
+
+danger-hlint:
+  stage: validate
+  only:
+    refs: [merge_requests]
+    changes:
+      - tools/debugger/**/*
+      - danger/**/*
+  interruptible: true
+  script:
+    - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
+        --dangerfile=./danger/hlint.rb
+        --danger_id=hlint
+
+danger-premerge-checks:
+  stage: validate-final
+  only: [merge_requests]
+  needs: ["danger-instant-checks"]  # To get messages in MRs ordered right
+  when: always
+  interruptible: true
+  script:
+    - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
+        --dangerfile=./danger/premerge-checks.rb
+        --danger_id=premerge
+  allow_failure: true
+
 # publish vscode extension to the extension marketplace
 # copied over from tools/lsp and slightly modified
 ligo-debugger-extension-publish:
