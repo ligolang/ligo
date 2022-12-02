@@ -1248,7 +1248,11 @@ let rec compile_value ~raise ~options ~loc
       ~raise
       (fun (t, v) -> self v t)
       (fun e1 e2 -> Tezos_micheline.Micheline.Prim ((), "Pair", [ e1; e2 ], []))
-      (fun es -> Tezos_micheline.Micheline.Prim ((), "Pair", es, []))
+      (fun es ->
+        match es with
+        | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
+        | [ e ] -> e
+        | es -> Tezos_micheline.Micheline.Prim ((), "Pair", es, []))
       map_ty
       map_kv
   | V_List lst ->
@@ -1451,7 +1455,7 @@ let run_michelson_func
     ~loc
     (ctxt : Tezos_state.context)
     (code : (unit, string) Tezos_micheline.Micheline.node)
-    func_ty
+    result_ty
     arg
     arg_ty
   =
@@ -1460,7 +1464,7 @@ let run_michelson_func
   let { micheline_repr = { code = arg; code_ty = arg_ty }; _ } =
     compile_value ~raise ~options ~loc arg arg_ty
   in
-  let func_ty = compile_type ~raise func_ty in
+  let result_ty_ = compile_type ~raise result_ty in
   let func =
     match code with
     | Seq (_, s) -> Tezos_utils.Michelson.(seq ([ i_push arg_ty arg ] @ s))
@@ -1472,15 +1476,22 @@ let run_michelson_func
       ~legacy:true
       ~options:run_options
       func
-      func_ty
+      result_ty_
   with
   | Success (ty, value) ->
+    let v =
+      Michelson_to_value.decompile_to_untyped_value
+        ~raise
+        ~bigmaps:ctxt.transduced.bigmaps
+        ty
+        value
+    in
     Result.return
-    @@ Michelson_to_value.decompile_to_untyped_value
+    @@ Michelson_to_value.decompile_value
          ~raise
          ~bigmaps:ctxt.transduced.bigmaps
-         ty
-         value
+         v
+         result_ty
   | Fail f -> Result.fail f
 
 
