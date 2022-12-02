@@ -11,5 +11,5 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  lx_re_self_tokens)
+  lx_re_selftoks)
  (modules Self))

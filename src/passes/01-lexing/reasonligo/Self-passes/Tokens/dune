@@ -1,7 +1,7 @@
 ;; Build of the self passes on the tokens of ReasonLIGO
 
 (library
- (name lx_re_self_tokens)
+ (name lx_re_selftoks)
  (public_name ligo.lexing.reasonligo.self.tokens)
  (instrumentation
   (backend bisect_ppx))

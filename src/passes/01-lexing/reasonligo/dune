@@ -9,7 +9,7 @@
   lexing_shared
   mh_re_tokens
   lx_rsn_self_units
-  lx_re_self_tokens
+  lx_re_selftoks
   ;; Third party
   str
   hex))

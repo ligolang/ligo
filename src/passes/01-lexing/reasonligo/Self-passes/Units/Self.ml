@@ -8,7 +8,7 @@ module Unit   = LexerLib.Unit
 
 (* Local dependencies *)
 
-module Token = Lx_re_self_tokens.Token
+module Token = Lx_re_selftoks.Token
 module Style = Lexing_shared.Style
 
 (* Definition of a self-pass (a.k.a. filter) *)
