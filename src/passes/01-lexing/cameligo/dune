@@ -8,7 +8,7 @@
   ;; LIGO
   lexing_shared
   mh_ml_tokens
-  lexing_cameligo_self_units
+  lx_ml_self_units
   lx_ml_self_tokens
   ;; Third party
   str

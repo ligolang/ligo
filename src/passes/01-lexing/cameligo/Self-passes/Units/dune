@@ -1,7 +1,7 @@
 ;; Build of the self passes on the lexical units of CameLIGO
 
 (library
- (name lexing_cameligo_self_units)
+ (name lx_ml_self_units)
  (public_name ligo.lexing.cameligo.self.units)
  (instrumentation
   (backend bisect_ppx))

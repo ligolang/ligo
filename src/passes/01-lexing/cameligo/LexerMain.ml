@@ -5,7 +5,7 @@
 module Config        = Preprocessing_cameligo.Config
 module PreprocParams = Preprocessor.CLI.Make (Config)
 module Token         = Lexing_cameligo.Token
-module UnitPasses    = Lexing_cameligo_self_units.Self
+module UnitPasses    = Lx_ml_self_units.Self
 module TokenPasses   = Lx_ml_self_tokens.Self
 
 (* Vendors dependencies *)
