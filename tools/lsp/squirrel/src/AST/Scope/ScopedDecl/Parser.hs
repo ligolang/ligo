@@ -210,5 +210,5 @@ parseRecordFieldPattern node = do
 parseModule :: [LIGO info] -> Parser Module
 parseModule =
   pure
-  . maybe ModuleDecl (ModuleAlias . Namespace . coerce)
+  . maybe ModuleDecl (ModuleAlias . Namespace . fromList . coerce)
   . traverse (layer @LIGO.ModuleName)
