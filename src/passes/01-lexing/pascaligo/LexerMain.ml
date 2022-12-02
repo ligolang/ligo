@@ -5,7 +5,7 @@
 module Config        = Preprocessing_pascaligo.Config
 module PreprocParams = Preprocessor.CLI.Make (Config)
 module Token         = Lexing_pascaligo.Token
-module UnitPasses    = Lexing_pascaligo_self_units.Self
+module UnitPasses    = Lx_psc_self_units.Self
 module TokenPasses   = Lx_psc_self_tokens.Self
 
 (* Vendors dependencies *)
