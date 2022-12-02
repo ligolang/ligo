@@ -6,7 +6,7 @@ module Config         = Preprocessing_reasonligo.Config
 module PreprocParams  = Preprocessor.CLI.Make (Config)
 module Token          = Lexing_reasonligo.Token
 module UnitPasses     = Lx_rsn_self_units.Self
-module TokenPasses    = Lx_rsn_self_tokens.Self
+module TokenPasses    = Lx_re_self_tokens.Self
 
 (* Vendors dependencies *)
 
