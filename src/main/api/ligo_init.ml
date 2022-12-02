@@ -17,27 +17,35 @@ let idregex = Str.regexp "[0-9]+\\.[0-9]+\\.[0-9]+"
 let contract_template_url_map =
   Map.of_alist_exn
     (module String)
-    [ "advisor-cameligo", "https://github.com/ligolang/advisor-cameligo"
+    [ "NFT-factory-cameligo", "https://github.com/ligolang/NFT-factory-cameligo"
     ; "NFT-factory-jsligo", "https://github.com/ligolang/NFT-factory-jsligo"
-    ; "NFT-factory-cameligo", "https://github.com/ligolang/NFT-factory-cameligo"
-    ; "multisig-jsligo", "https://github.com/ligolang/multisig-jsligo"
-    ; "multisig-cameligo", "https://github.com/ligolang/multisig-cameligo"
-    ; "randomness-jsligo", "https://github.com/ligolang/randomness-jsligo"
     ; "randomness-cameligo", "https://github.com/ligolang/randomness-cameligo"
-    ; "shifumi-jsligo", "https://github.com/ligolang/shifumi-jsligo"
+    ; "randomness-jsligo", "https://github.com/ligolang/randomness-jsligo"
     ; "shifumi-cameligo", "https://github.com/ligolang/shifumi-cameligo"
-    ; "dao-jsligo", "https://github.com/ligolang/dao-jsligo"
-    ; "dao-cameligo", "https://github.com/ligolang/dao-cameligo"
+    ; "shifumi-jsligo", "https://github.com/ligolang/shifumi-jsligo"
+    ; "multisig-cameligo", "https://github.com/ligolang/multisig-cameligo"
+    ; "multisig-jsligo", "https://github.com/ligolang/multisig-jsligo"
+    ; "advisor-cameligo", "https://github.com/ligolang/advisor-cameligo"
+    ; "advisor-jsligo", "https://github.com/ligolang/advisor-jsligo"
+    ; ( "predictive-market-cameligo"
+      , "https://github.com/ligolang/predictive-market-cameligo" )
+    ; "predictive-market-jsligo", "https://github.com/ligolang/predictive-market-jsligo"
     ; "permit-cameligo", "https://github.com/ligolang/permit-cameligo"
+    ; "permit-jsligo", "https://github.com/ligolang/permit-jsligo"
+    ; "dao-cameligo", "https://github.com/ligolang/dao-cameligo"
+    ; "dao-jsligo", "https://github.com/ligolang/dao-jsligo"
     ]
 
 
 let library_template_url_map =
   Map.of_alist_exn
     (module String)
-    [ "bigarray-jsligo", "https://github.com/ligolang/bigarray-jsligo"
-    ; "bigarray-cameligo", "https://github.com/ligolang/bigarray-cameligo"
-    ; "math-lib-cameligo", "https://github.com/ligolang/math-lib-cameligo.git"
+    [ "ligo-bigarray", "https://github.com/ligolang/bigarray-cameligo"
+    ; "ligo-math-lib", "https://github.com/ligolang/math-lib-cameligo"
+    ; "ligo-fa", "https://github.com/ligolang/contract-catalogue"
+    ; "ligo-permit", "https://github.com/ligolang/permit-cameligo"
+    ; "ligo-breathalyzer", "https://github.com/marigold-dev/breathalyzer"
+    ; "ligo-extendable-fa2", "https://github.com/smart-chain-fr/ligoExtendableFA2"
     ]
 
 
