@@ -501,7 +501,7 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_value ~raise ~options ~loc v expr_ty in
       LT.V_Michelson (Ty_code value), ctxt
-    | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) ->
+    | Run_Michelson (loc, calltrace, func, result_ty, value, value_ty) ->
       (match
          Michelson_backend.run_michelson_func
            ~raise
@@ -509,19 +509,25 @@ module Command = struct
            ~loc
            ctxt
            func
-           func_ty
+           result_ty
            value
            value_ty
        with
       | Ok v -> v, ctxt
       | Error data ->
-        let data_t = Michelson_backend.compile_type ~raise func_ty in
+        let data_t = Michelson_backend.compile_type ~raise result_ty in
         let data_opt =
           to_option
           @@ Michelson_to_value.decompile_to_untyped_value
                ~bigmaps:[]
                (clean_locations data_t)
                (clean_locations data)
+        in
+        let data_opt =
+          match data_opt with
+          | Some data ->
+            Some (Michelson_to_value.decompile_value ~raise ~bigmaps:[] data result_ty)
+          | None -> None
         in
         (match data_opt with
         | Some data -> raise.error @@ Errors.meta_lang_eval loc calltrace data

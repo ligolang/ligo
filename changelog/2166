@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat test_record.ligo\\ntype internal_storage is [@layout:comb] record [\\n  value : int;\\n]\\n\\ntype storage is record [\\n  internal_storage : internal_storage; \\n]\\n\\nconst initial_storage: storage = record [\\n    internal_storage = record [\\n      value = 0;\\n    ];\\n  ];\\n\\nconst test_reproducing = {\\n  Test.log(Test.eval(initial_storage));\\n} with (\"OK\")\\n\\n```\\n\\n#### Before\\n\\n\\n```\\n$ ligo run test test_record.ligo \\nError(s) occurred while parsing the Michelson input:\\nAt (unshown) location 0, value (Pair 0) is invalid for type int.\\nAt (unshown) location 0, unexpected primitive, only an int can be used here. \\n\\n```\\n\\n#### After\\n\\n\\n```\\n$ ligo run test test_record.ligo \\n0                                           \\nEverything at the top-level was executed.\\n- test_reproducing exited with value \"OK\".\\n\\n```\\n\\n"
+merge_request: '2166'
+title: "Testing framework: make `Run` use `decompile_value` (typed)"
+type: fixed
+            
