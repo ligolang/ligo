@@ -7,7 +7,7 @@
  (libraries
   ;; LIGO
   lexing_shared
-  menhir_cameligo_tokens
+  mh_ml_tokens
   lexing_cameligo_self_units
   lx_ml_self_tokens
   ;; Third party

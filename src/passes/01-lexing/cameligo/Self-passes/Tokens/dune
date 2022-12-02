@@ -11,7 +11,7 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  menhir_cameligo_tokens)
+  mh_ml_tokens)
  (modules Token Self))
 
 ;; --------------------------------------------------------------------
@@ -27,8 +27,8 @@
     MenhirToken)))
 
 (library
- (name menhir_cameligo_tokens)
- (public_name ligo.lexing.menhir_cameligo_tokens)
+ (name mh_ml_tokens)
+ (public_name ligo.lexing.mh_ml_tokens)
  (modules MenhirToken)
  (libraries
   ;; LIGO
