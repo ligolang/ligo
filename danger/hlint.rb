@@ -10,15 +10,12 @@ def lint(files, options = {})
   issues = files
     .map { |file| Shellwords.escape(file) }
     .map do |file|
-      out = `hlint lint #{file} #{to_hlint_options(final_options)}`
+      out = `hlint lint #{file} --no-exit-code #{to_hlint_options(final_options)}`
       if $?.success? then
         out
       else
-        fail 'Running Hlint failed, please check the logs'
-        # Command execution has printed the stderr automatically,
-        # let's separate it visually
-        print "\n"
-        exit 1
+        fail 'Hlint checks failed, please check the logs'
+        "[]"
       end
     end
     .reject { |s| s == '' }
