@@ -90,8 +90,9 @@ let build_applications_opt (lamb : expression) (args : expression list) =
   let rec aux lamb' (args : expression list) (t : type_expression) =
     match args, t.type_content with
     | arg :: args', T_arrow { type1 = _; type2 } ->
+      let loc = Location.cover lamb'.location arg.location in
       aux
-        (Combinators.make_e (E_application { lamb = lamb'; args = arg }) type2)
+        (Combinators.make_e ~loc (E_application { lamb = lamb'; args = arg }) type2)
         args'
         type2
     | [], _ -> Some { lamb' with type_expression = t }
@@ -109,7 +110,8 @@ let rec build_type_abstractions e = function
     let e = build_type_abstractions e abs_vars in
     { e with
       expression_content = E_type_abstraction { type_binder = abs_var; result = e }
-    ; type_expression = Combinators.t_for_all abs_var Type e.type_expression
+    ; type_expression =
+        Combinators.t_for_all ~loc:e.location abs_var Type e.type_expression
     }
 
 
@@ -158,6 +160,7 @@ let rec get_fv_type_expression : type_expression -> VarSet.t =
    generated and subtituted to prevent capture. *)
 let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   let self = subst_type ~fv in
+  let loc = u.location in
   match u.type_content with
   | T_variable v' when Type_var.equal v v' -> t
   | T_arrow { type1; type2 } ->
@@ -165,16 +168,16 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
     let type2 = self v t type2 in
     { u with type_content = T_arrow { type1; type2 } }
   | T_abstraction { ty_binder; kind; type_ } when VarSet.mem ty_binder fv ->
-    let ty_binder' = Type_var.fresh () in
-    let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
+    let ty_binder' = Type_var.fresh ~loc () in
+    let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
     let ty_binder = ty_binder' in
     self v t { u with type_content = T_abstraction { ty_binder; kind; type_ } }
   | T_abstraction { ty_binder; kind; type_ } when not (Type_var.equal ty_binder v) ->
     let type_ = self v t type_ in
     { u with type_content = T_abstraction { ty_binder; kind; type_ } }
   | T_for_all { ty_binder; kind; type_ } when VarSet.mem ty_binder fv ->
-    let ty_binder' = Type_var.fresh () in
-    let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
+    let ty_binder' = Type_var.fresh ~loc () in
+    let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
     let ty_binder = ty_binder' in
     self v t { u with type_content = T_for_all { ty_binder; kind; type_ } }
   | T_for_all { ty_binder; kind; type_ } when not (Type_var.equal ty_binder v) ->

@@ -47,7 +47,7 @@ let rec type_expression ppf (te : type_expression) : unit =
   else fprintf ppf "%a" type_content te.type_content
 
 
-and bool ppf = fprintf ppf "%a" Type_var.pp Ligo_prim.Literal_types.v_bool
+and bool ppf = fprintf ppf "bool"
 
 and option ppf (te : type_expression) =
   let t = Combinators.get_t_option te in

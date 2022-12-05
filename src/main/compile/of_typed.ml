@@ -64,12 +64,19 @@ let apply_to_entrypoint_contract ~raise ~options ?(contract_pass = false)
     : Ast_typed.program -> Value_var.t -> Ast_aggregated.expression
   =
  fun prg entrypoint ->
+  let loc = Location.dummy in
   let Self_ast_typed.Helpers.{ parameter = p_ty; storage = s_ty } =
     trace ~raise self_ast_typed_tracer
     @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
-  let ty = t_arrow (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
-  let var_ep = Ast_typed.(e_a_variable entrypoint ty) in
+  let ty =
+    t_arrow
+      ~loc
+      (t_pair ~loc p_ty s_ty)
+      (t_pair ~loc (t_list ~loc (t_operation ~loc ())) s_ty)
+      ()
+  in
+  let var_ep = Ast_typed.(e_a_variable ~loc entrypoint ty) in
   compile_expression_in_context ~raise ~options ~contract_pass prg var_ep
 
 
@@ -77,12 +84,13 @@ let apply_to_entrypoint ~raise ~options
     : Ast_typed.program -> string -> Ast_aggregated.expression
   =
  fun prg entrypoint ->
-  let v = Value_var.of_input_var entrypoint in
+  let loc = Location.dummy in
+  let v = Value_var.of_input_var ~loc entrypoint in
   let ty, _ =
     trace ~raise self_ast_typed_tracer
     @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg
   in
-  let var_ep = Ast_typed.(e_a_variable v ty) in
+  let var_ep = Ast_typed.(e_a_variable ~loc v ty) in
   compile_expression_in_context ~raise ~options prg var_ep
 
 
@@ -124,6 +132,7 @@ let apply_to_entrypoint_view ~raise ~options
     : Ast_typed.program -> Ast_aggregated.expression
   =
  fun prg ->
+  let loc = Location.dummy in
   let views_info = Ast_typed.Helpers.fetch_views_in_program prg in
   let aux : int -> _ -> Label.t * expression =
    fun i (view_ty, view_binder) ->
@@ -131,10 +140,12 @@ let apply_to_entrypoint_view ~raise ~options
       (* at this point the self-pass on views has been applied, we assume the types are correct *)
       trace_option ~raise main_unknown @@ Ast_typed.get_view_form view_ty
     in
-    let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
-    Label.of_int i, Ast_typed.(e_a_variable (Binder.get_var view_binder) ty)
+    let ty = t_arrow ~loc (t_pair ~loc a_ty s_ty) r_ty () in
+    Label.of_int i, Ast_typed.(e_a_variable ~loc (Binder.get_var view_binder) ty)
   in
-  let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views_info) in
+  let tuple_view =
+    Ast_typed.ez_e_a_record ~loc ~layout:L_comb (List.mapi ~f:aux views_info)
+  in
   let e = compile_expression_in_context ~raise ~options prg tuple_view in
   Self_ast_aggregated.remove_check_self e
 

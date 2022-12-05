@@ -21,7 +21,7 @@ module type S = sig
   val map : ('a -> 'b) -> 'a t -> 'b t
   val fold_map : ('a -> 'b -> 'a * 'b) -> 'a -> 'b t -> 'a * 'b t
   val binders : 'a t -> 'a Binder.t list
-  val var : ?loc:Location.t -> 'a Binder.t -> 'a t
+  val var : loc:Location.t -> 'a Binder.t -> 'a t
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
 
@@ -40,16 +40,16 @@ module Make (Container : Container) = struct
 
   and 't t = 't pattern_repr Location.wrap [@@deriving eq, compare, yojson, hash]
 
-  let var : ?loc:Location.t -> 'ty Binder.t -> 'ty t =
-   fun ?loc b -> Location.wrap ?loc (P_var b)
+  let var : loc:Location.t -> 'ty Binder.t -> 'ty t =
+   fun ~loc b -> Location.wrap ~loc (P_var b)
 
 
-  let record_pattern : ?loc:Location.t -> 'ty_exp t Container.t -> 'ty t =
-   fun ?loc b -> Location.wrap ?loc (P_record b)
+  let record_pattern : loc:Location.t -> 'ty_exp t Container.t -> 'ty t =
+   fun ~loc b -> Location.wrap ~loc (P_record b)
 
 
-  let variant_pattern : ?loc:Location.t -> Label.t * 'ty_exp t -> 'ty t =
-   fun ?loc (label, pat) -> Location.wrap ?loc (P_variant (label, pat))
+  let variant_pattern : loc:Location.t -> Label.t * 'ty_exp t -> 'ty t =
+   fun ~loc (label, pat) -> Location.wrap ~loc (P_variant (label, pat))
 
 
   (* get top level ascription if any *)

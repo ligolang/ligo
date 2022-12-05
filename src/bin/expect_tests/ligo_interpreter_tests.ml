@@ -833,6 +833,14 @@ let%expect_test _ =
     - test_orig exited with value (). |xxx}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_record.ligo" ];
+  [%expect
+    {xxx|
+    0
+    Everything at the top-level was executed.
+    - test_reproducing exited with value "OK". |xxx}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_compare_setmap.mligo" ];
   [%expect
     {xxx|

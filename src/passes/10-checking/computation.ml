@@ -134,13 +134,11 @@ let ctx_init ?env () =
           Context.add_module ctx module_binder sig_)
 
 
-let run_elab t ~raise ~options ?env () =
+let run_elab t ~raise ~options ~loc ?env () =
   let ctx = ctx_init ?env () in
   (* Format.printf "@[Context:@.%a@]" Context.pp ctx; *)
   let ctx, pos = Context.mark ctx in
-  let (ctx, subst), elab =
-    t ~raise ~options ~loc:Location.generated (ctx, Substitution.empty)
-  in
+  let (ctx, subst), elab = t ~raise ~options ~loc (ctx, Substitution.empty) in
   (* Drop to get any remaining equations that relate to elaborated thing *)
   let _ctx, subst' = Context.drop_until ctx ~pos ~on_exit:Drop in
   Elaboration.run elab ~raise (Substitution.merge subst subst')
@@ -672,10 +670,11 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
           then return hole
           else (
             let x = Value_var.fresh ~loc ~name:"_sub" () in
-            let%bind arg = f1 (O.e_variable x type21) in
+            let%bind arg = f1 (O.e_variable ~loc x type21) in
             let binder = Param.make x type21 in
-            let%bind result = f2 (O.e_a_application hole arg type12) in
-            return @@ O.e_a_lambda { binder; result; output_type = type22 } type21 type22))
+            let%bind result = f2 (O.e_a_application ~loc hole arg type12) in
+            return
+            @@ O.e_a_lambda ~loc { binder; result; output_type = type22 } type21 type22))
   | T_for_all { ty_binder = tvar; kind; type_ }, _ ->
     let%bind tvar', texists = fresh_texists () in
     let type' = Type.subst type_ ~tvar ~type_:texists in
@@ -690,7 +689,7 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
         fun hole ->
           let%bind type' = decode type' in
           let%bind texists = decode texists in
-          f (O.e_type_inst { forall = hole; type_ = texists } type'))
+          f (O.e_type_inst ~loc { forall = hole; type_ = texists } type'))
   | _, T_for_all { ty_binder = tvar; kind; type_ } ->
     let%bind tvar' = fresh_type_var () in
     let%bind f =
@@ -704,7 +703,7 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
         fun hole ->
           let%bind result = f hole in
           let%bind expected = decode expected in
-          return @@ O.e_type_abstraction { type_binder = tvar'; result } expected)
+          return @@ O.e_type_abstraction ~loc { type_binder = tvar'; result } expected)
   | (T_variable tvar1, T_variable tvar2 | T_exists tvar1, T_exists tvar2)
     when Type_var.equal tvar1 tvar2 -> return E.return
   | T_exists tvar1, _ -> subtype_texists ~mode:Contravariant tvar1 expected

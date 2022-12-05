@@ -26,12 +26,12 @@ and content =
   , ez
       { prefixes =
           [ ( "make_t"
-            , fun ?(loc = Location.generated) content meta : t ->
+            , fun ~loc content meta : t ->
                 { content; location = loc; orig_var = None; meta } )
           ; ("get", fun x -> x.content)
           ]
       ; wrap_constructor =
-          ("content", fun type_content ?loc ?meta () -> make_t ?loc type_content meta)
+          ("content", fun type_content ~loc ?meta () -> make_t ~loc type_content meta)
       ; wrap_get = "content", get
       ; default_get = `Option
       }]
@@ -55,7 +55,7 @@ and layout =
   | L_exists of Layout_var.t
 [@@deriving yojson, equal, sexp, compare, hash]
 
-type constr = ?loc:Location.t -> ?meta:Ast_core.type_expression -> unit -> t
+type constr = loc:Location.t -> ?meta:Ast_core.type_expression -> unit -> t
 
 let rec free_vars t =
   let module Set = Type_var.Set in
@@ -147,7 +147,7 @@ and subst_abstraction
   then { ty_binder; kind; type_ }
   else if Set.mem free_vars ty_binder
   then (
-    let ty_binder' = Type_var.fresh () in
+    let ty_binder' = Type_var.fresh_like ty_binder in
     let type_ = subst_var type_ ~tvar:ty_binder ~tvar':ty_binder' in
     { ty_binder = ty_binder'; kind; type_ = subst type_ })
   else { ty_binder; kind; type_ = subst type_ }
@@ -208,14 +208,14 @@ let texists_vars t =
 
 let default_layout = L_tree
 
-let t_construct constructor parameters ?loc ?meta () : t =
+let t_construct constructor parameters ~loc ?meta () : t =
   make_t
-    ?loc
+    ~loc
     (T_construct { language = Backend.Michelson.name; constructor; parameters })
     meta
 
 
-let t__type_ ?loc ?meta () : t = t_construct Literal_types._type_ [] ?loc ?meta ()
+let t__type_ ~loc ?meta () : t = t_construct Literal_types._type_ [] ~loc ?meta ()
   [@@map
     _type_
     , ( "signature"
@@ -249,14 +249,14 @@ let t__type_ ?loc ?meta () : t = t_construct Literal_types._type_ [] ?loc ?meta 
 
 let t_michelson_code = t_michelson_program
 
-let t__type_ t ?loc ?meta () : t = t_construct ?loc ?meta Literal_types._type_ [ t ] ()
+let t__type_ t ~loc ?meta () : t = t_construct ~loc ?meta Literal_types._type_ [ t ] ()
   [@@map
     _type_
     , ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen")]
 
 
-let t__type_ t t' ?loc ?meta () : t =
-  t_construct ?loc ?meta Literal_types._type_ [ t; t' ] ()
+let t__type_ t t' ~loc ?meta () : t =
+  t_construct ~loc ?meta Literal_types._type_ [ t; t' ] ()
   [@@map _type_, ("map", "big_map", "typed_address")]
 
 
@@ -272,63 +272,63 @@ let row_ez fields ?(layout = default_layout) () =
   { fields; layout }
 
 
-let t_record_ez fields ?loc ?meta ?layout () =
-  t_record ?loc ?meta (row_ez fields ?layout ()) ()
+let t_record_ez fields ~loc ?meta ?layout () =
+  t_record ~loc ?meta (row_ez fields ?layout ()) ()
 
 
-let t_tuple ts ?loc ?meta () =
-  t_record_ez (List.mapi ts ~f:(fun i t -> Int.to_string i, t)) ?loc ?meta ()
+let t_tuple ts ~loc ?meta () =
+  t_record_ez (List.mapi ts ~f:(fun i t -> Int.to_string i, t)) ~loc ?meta ()
 
 
-let t_pair t1 t2 ?loc ?meta () = t_tuple [ t1; t2 ] ?loc ?meta ()
-let t_triplet t1 t2 t3 ?loc ?meta () = t_tuple [ t1; t2; t3 ] ?loc ?meta ()
-let t_sum_ez fields ?loc ?meta ?layout () = t_sum ?loc ?meta (row_ez fields ?layout ()) ()
+let t_pair t1 t2 ~loc ?meta () = t_tuple [ t1; t2 ] ~loc ?meta ()
+let t_triplet t1 t2 t3 ~loc ?meta () = t_tuple [ t1; t2; t3 ] ~loc ?meta ()
+let t_sum_ez fields ~loc ?meta ?layout () = t_sum ~loc ?meta (row_ez fields ?layout ()) ()
 
-let t_bool ?loc ?meta () =
-  t_sum_ez ?loc ?meta [ "True", t_unit (); "False", t_unit () ] ()
+let t_bool ~loc ?meta () =
+  t_sum_ez ~loc ?meta [ "True", t_unit ~loc (); "False", t_unit ~loc () ] ()
 
 
-let t_option t ?loc ?meta () =
-  t_sum_ez ?loc ?meta [ "Some", t; "None", t_unit ?loc () ] ()
+let t_option t ~loc ?meta () =
+  t_sum_ez ~loc ?meta [ "Some", t; "None", t_unit ~loc () ] ()
 
 
 let t_mutez = t_tez
 
-let t_record_with_orig_var row ~orig_var ?loc ?meta () =
-  { (t_record row ?loc ?meta ()) with orig_var }
+let t_record_with_orig_var row ~orig_var ~loc ?meta () =
+  { (t_record row ~loc ?meta ()) with orig_var }
 
 
-let t_test_baker_policy ?loc ?meta () =
+let t_test_baker_policy ~loc ?meta () =
   t_sum_ez
-    ?loc
+    ~loc
     ?meta
-    [ "By_round", t_int ?loc ()
-    ; "By_account", t_address ?loc ()
-    ; "Excluding", t_list ?loc (t_address ?loc ()) ()
+    [ "By_round", t_int ~loc ()
+    ; "By_account", t_address ~loc ()
+    ; "Excluding", t_list ~loc (t_address ~loc ()) ()
     ]
     ()
 
 
-let t_test_exec_error ?loc ?meta () =
+let t_test_exec_error ~loc ?meta () =
   t_sum_ez
-    ?loc
+    ~loc
     ?meta
-    [ "Rejected", t_pair ?loc (t_michelson_code ?loc ()) (t_address ?loc ()) ()
+    [ "Rejected", t_pair ~loc (t_michelson_code ~loc ()) (t_address ~loc ()) ()
     ; ( "Balance_too_low"
       , t_record_ez
-          ?loc
-          [ "contract_too_low", t_address ?loc ()
-          ; "contract_balance", t_mutez ?loc ()
-          ; "spend_request", t_mutez ?loc ()
+          ~loc
+          [ "contract_too_low", t_address ~loc ()
+          ; "contract_balance", t_mutez ~loc ()
+          ; "spend_request", t_mutez ~loc ()
           ]
           () )
-    ; "Other", t_string ?loc ()
+    ; "Other", t_string ~loc ()
     ]
     ()
 
 
-let t_test_exec_result ?loc ?meta () =
-  t_sum_ez ?loc ?meta [ "Success", t_nat ?loc (); "Fail", t_test_exec_error ?loc () ] ()
+let t_test_exec_result ~loc ?meta () =
+  t_sum_ez ~loc ?meta [ "Success", t_nat ~loc (); "Fail", t_test_exec_error ~loc () ] ()
 
 
 let get_t_construct t constr =
@@ -360,7 +360,8 @@ let get_t__type_ t = get_t_binary_construct t Literal_types._type_
 
 
 let get_t_bool t : unit option =
-  Option.some_if (equal_content t.content (t_bool ()).content) ()
+  let t_bool = t_bool ~loc:t.location () in
+  Option.some_if (equal_content t.content t_bool.content) ()
 
 
 let get_t_option t =
@@ -588,7 +589,7 @@ and pp_type_abs
     type_
 
 
-and bool ppf : unit = Format.fprintf ppf "%a" Type_var.pp Literal_types.v_bool
+and bool ppf : unit = Format.fprintf ppf "bool"
 
 and option ~name_of_tvar ~name_of_exists ppf t : unit =
   match get_t_option t with

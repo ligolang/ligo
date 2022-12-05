@@ -229,6 +229,7 @@ let rec decompile_expression : AST.expression -> CST.expr =
  fun expr ->
   let return_expr expr = expr in
   let return_expr_with_par expr = return_expr @@ CST.EPar (wrap @@ par @@ expr) in
+  let loc = expr.location in
   match expr.expression_content with
   | E_variable name ->
     let var = decompile_variable name in
@@ -267,7 +268,7 @@ let rec decompile_expression : AST.expression -> CST.expr =
         @@ Z.to_int64 time
       in
       (* TODO combinators for CSTs. *)
-      let ty = decompile_type_expr @@ AST.t_timestamp () in
+      let ty = decompile_type_expr @@ AST.t_timestamp ~loc () in
       let time = CST.EString (String (wrap time)) in
       return_expr_with_par @@ CST.EAnnot (wrap @@ (time, ghost, ty))
     | Literal_mutez mtez -> return_expr @@ CST.EArith (Mutez (wrap ("", Z.to_int64 mtez)))
@@ -279,19 +280,19 @@ let rec decompile_expression : AST.expression -> CST.expr =
       return_expr @@ CST.EBytes (wrap (s, b))
     | Literal_address addr ->
       let addr = CST.EString (String (wrap addr)) in
-      let ty = decompile_type_expr @@ AST.t_address () in
+      let ty = decompile_type_expr @@ AST.t_address ~loc () in
       return_expr_with_par @@ CST.EAnnot (wrap @@ (addr, ghost, ty))
     | Literal_signature sign ->
       let sign = CST.EString (String (wrap sign)) in
-      let ty = decompile_type_expr @@ AST.t_signature () in
+      let ty = decompile_type_expr @@ AST.t_signature ~loc () in
       return_expr_with_par @@ CST.EAnnot (wrap @@ (sign, ghost, ty))
     | Literal_key k ->
       let k = CST.EString (String (wrap k)) in
-      let ty = decompile_type_expr @@ AST.t_key () in
+      let ty = decompile_type_expr @@ AST.t_key ~loc () in
       return_expr_with_par @@ CST.EAnnot (wrap @@ (k, ghost, ty))
     | Literal_key_hash kh ->
       let kh = CST.EString (String (wrap kh)) in
-      let ty = decompile_type_expr @@ AST.t_key_hash () in
+      let ty = decompile_type_expr @@ AST.t_key_hash ~loc () in
       return_expr_with_par @@ CST.EAnnot (wrap @@ (kh, ghost, ty))
     | Literal_chain_id _ | Literal_operation _ ->
       failwith "chain_id, operation are not created currently ?"
@@ -299,19 +300,19 @@ let rec decompile_expression : AST.expression -> CST.expr =
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.EBytes (wrap (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_g1 () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_g1 ~loc () in
       return_expr @@ CST.EAnnot (wrap @@ (b, ghost, ty))
     | Literal_bls12_381_g2 b ->
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.EBytes (wrap (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_g2 () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_g2 ~loc () in
       return_expr @@ CST.EAnnot (wrap @@ (b, ghost, ty))
     | Literal_bls12_381_fr b ->
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.EBytes (wrap (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_fr ~loc () in
       return_expr @@ CST.EAnnot (wrap @@ (b, ghost, ty))
     | Literal_chest _ | Literal_chest_key _ ->
       failwith "chest / chest_key not allowed in the syntax (only tests need this type)")
@@ -477,7 +478,7 @@ let rec decompile_expression : AST.expression -> CST.expr =
       | Access_record var :: path -> var, path
       | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (Value_var.of_input_var var) path in
+    let field_path = decompile_to_path (Value_var.of_input_var ~loc var) path in
     let field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment =
       { field_path; assignment = ghost; field_expr }
@@ -679,7 +680,7 @@ let rec decompile_expression : AST.expression -> CST.expr =
     in
     let let_rhs = decompile_expression expression in
     let binding : CST.let_binding = { binders; lhs_type; eq = ghost; let_rhs } in
-    let body = decompile_expression (AST.e_unit ()) in
+    let body = decompile_expression (AST.e_unit ~loc ()) in
     let lin : CST.let_in =
       { kwd_let = ghost; kwd_rec = None; binding; semi = ghost; body; attributes = [] }
     in
@@ -756,15 +757,16 @@ and decompile_declaration : AST.declaration -> CST.declaration =
     let lhs_type =
       Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ Binder.get_ascr binder
     in
+    let loc = expr.location in
     (match expr.expression_content with
     | E_lambda lambda ->
-      let let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
+      let let_rhs = decompile_expression @@ AST.make_e ~loc @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = { binders; lhs_type; eq = ghost; let_rhs } in
       let let_decl = wrap (ghost, None, let_binding, attributes) in
       CST.ConstDecl let_decl
     | E_recursive { lambda; _ } ->
       let lambda = Lambda.map Fun.id Option.return lambda in
-      let let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
+      let let_rhs = decompile_expression @@ AST.make_e ~loc @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = { binders; lhs_type; eq = ghost; let_rhs } in
       let let_decl = wrap (ghost, Some ghost, let_binding, attributes) in
       CST.ConstDecl let_decl

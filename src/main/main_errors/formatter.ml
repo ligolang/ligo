@@ -546,8 +546,11 @@ let rec error_ppformat
     | `Ligo_init_unrecognized_template lststr ->
       Format.fprintf
         f
-        "Template unrecognized please select one of the following list : \n%s"
-      @@ String.concat ~sep:"\n" lststr)
+        "Error: Unrecognized template\n\
+        Hint: Use the option --template \"TEMPLATE_NAME\" \n\n\
+        Please select a template from the following list: \n\
+        - %s"
+      @@ String.concat ~sep:"\n- " lststr)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =

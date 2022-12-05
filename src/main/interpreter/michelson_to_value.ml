@@ -119,6 +119,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
  fun ty value ->
   let ty = normalize_edo_comb_type ty in
   let value = normalize_edo_comb_value ty value in
+  let loc = Location.interpreter in
   match ty, value with
   | Prim (_, "pair", ts, _), Prim (_, "Pair", vs, _) ->
     let els =
@@ -242,10 +243,10 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
    *   ) *)
   | Prim (_, "lambda", [ _; _ ], _), (Seq (_, _) as c) ->
     let open! Ast_aggregated in
-    let arg_binder = Value_var.fresh () in
+    let arg_binder = Value_var.fresh ~loc () in
     (* These are temporal types, need to be patched later: *)
-    let t_input = t_unit () in
-    let t_output = t_unit () in
+    let t_input = t_unit ~loc () in
+    let t_output = t_unit ~loc () in
     let c = Tezos_micheline.Micheline.strip_locations c in
     let c =
       Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ ->
@@ -260,13 +261,20 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
            Tezos_protocol.Protocol.Michelson_v1_primitives.string_of_prim
            c)
     in
-    let code_block = make_e (e_string (Ligo_string.verbatim u)) (t_string ()) in
+    let code_block = make_e ~loc (e_string (Ligo_string.verbatim u)) (t_string ~loc ()) in
     let insertion =
-      e_a_raw_code Backend.Michelson.name code_block (t_arrow t_input t_output ())
+      e_a_raw_code
+        ~loc
+        Backend.Michelson.name
+        code_block
+        (t_arrow ~loc t_input t_output ())
     in
-    let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
+    let body =
+      e_a_application ~loc insertion (e_a_variable ~loc arg_binder t_input) t_output
+    in
     let orig_lambda =
       e_a_lambda
+        ~loc
         { binder = Param.make arg_binder t_input; output_type = t_output; result = body }
         t_input
         t_output
@@ -317,8 +325,9 @@ let rec decompile_value
   let open Ligo_interpreter.Combinators in
   let open! Ast_aggregated in
   let self = decompile_value ~raise ~bigmaps in
+  let loc = Location.interpreter in
   match t.type_content with
-  | tc when compare_type_content tc (t_bool ()).type_content = 0 -> v
+  | tc when compare_type_content tc (t_bool ~loc ()).type_content = 0 -> v
   | T_constant { language; injection; parameters } ->
     let () =
       Assert.assert_true
@@ -448,11 +457,14 @@ let rec decompile_value
       (match lamb.expression_content with
       | E_raw_code { code; language = _ } ->
         let insertion =
-          e_a_raw_code Backend.Michelson.name code (t_arrow type1 type2 ())
+          e_a_raw_code ~loc Backend.Michelson.name code (t_arrow ~loc type1 type2 ())
         in
-        let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
+        let body =
+          e_a_application ~loc insertion (e_a_variable ~loc arg_binder type1) type2
+        in
         let orig_lambda =
           e_a_lambda
+            ~loc
             { binder = Param.make arg_binder type1; output_type = type2; result = body }
             type1
             type2

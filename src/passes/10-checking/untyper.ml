@@ -10,8 +10,9 @@ let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t =
 
 
 let rec untype_type_expression (t : O.type_expression) : I.type_expression =
+  let loc = t.location in
   let self = untype_type_expression in
-  let return t = I.make_t t in
+  let return t = I.make_t ~loc t in
   match t.type_content with
   | O.T_sum { fields; layout } ->
     let aux ({ associated_type; michelson_annotation; decl_pos } : O.row_element) =
@@ -35,7 +36,9 @@ let rec untype_type_expression (t : O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant { language = _; injection; parameters } ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = Type_var.fresh ~name:(Literal_types.to_string injection) () in
+    let type_operator =
+      Type_var.fresh ~loc ~name:(Literal_types.to_string injection) ()
+    in
     return @@ I.T_app { type_operator; arguments }
   | O.T_singleton l -> return @@ I.T_singleton l
   | O.T_abstraction x ->
@@ -49,87 +52,87 @@ let rec untype_type_expression (t : O.type_expression) : I.type_expression =
 let untype_type_expression_option x = Option.return @@ untype_type_expression x
 
 let rec untype_expression (e : O.expression) : I.expression =
-  untype_expression_content e.expression_content
+  untype_expression_content ~loc:e.location e.expression_content
 
 
-and untype_expression_content (ec : O.expression_content) : I.expression =
+and untype_expression_content ~loc (ec : O.expression_content) : I.expression =
   let open I in
   let self = untype_expression in
   let self_type = untype_type_expression in
   let self_type_opt = untype_type_expression_option in
   let return e = e in
   match ec with
-  | E_literal l -> return (e_literal l)
+  | E_literal l -> return (e_literal ~loc l)
   | E_constant { cons_name; arguments } ->
     let lst' = List.map ~f:self arguments in
-    return (e_constant cons_name lst')
-  | E_variable n -> return (e_variable n)
+    return (e_constant ~loc cons_name lst')
+  | E_variable n -> return (e_variable ~loc n)
   | E_application { lamb; args } ->
     let f' = self lamb in
     let arg' = self args in
-    return (e_application f' arg')
+    return (e_application ~loc f' arg')
   | E_lambda { binder; output_type; result } ->
     let binder = Param.map self_type_opt binder in
     let output_type = self_type_opt output_type in
     let result = self result in
-    return (e_lambda binder output_type result)
+    return (e_lambda ~loc binder output_type result)
   | E_type_abstraction { type_binder; result } ->
     let result = self result in
-    return (e_type_abs type_binder result)
+    return (e_type_abs ~loc type_binder result)
   | E_constructor { constructor; element } ->
     let p' = self element in
-    return (e_constructor constructor p')
+    return (e_constructor ~loc constructor p')
   | E_record r ->
     let r' = Record.map ~f:self r in
-    return (e_record r' ())
+    return (e_record ~loc r' ())
   | E_accessor { struct_; path } ->
     let r' = self struct_ in
     let (Label s) = path in
-    return (e_record_accessor r' (Label s))
+    return (e_record_accessor ~loc r' (Label s))
   | E_update { struct_ = r; path = Label l; update = e } ->
     let r' = self r in
     let e = self e in
-    return (e_record_update r' (Label l) e)
+    return (e_record_update ~loc r' (Label l) e)
   | E_matching m ->
     let I.Match_expr.{ matchee; cases } = untype_match_expr m in
-    return (e_matching matchee cases)
+    return (e_matching ~loc matchee cases)
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let result = self let_result in
     let attr : ValueAttr.t = untype_value_attr attributes in
     let let_binder = O.Pattern.map (Fn.const None) let_binder in
-    return (e_let_mut_in let_binder rhs result attr)
+    return (e_let_mut_in ~loc let_binder rhs result attr)
   | E_mod_in { module_binder; rhs; let_result } ->
     let rhs = untype_module_expr rhs in
     let result = self let_result in
-    return @@ e_mod_in module_binder rhs result
+    return @@ e_mod_in ~loc module_binder rhs result
   | E_raw_code { language; code } ->
     let code = self code in
-    return (e_raw_code language code)
+    return (e_raw_code ~loc language code)
   | E_recursive { fun_name; fun_type; lambda } ->
     let fun_type = self_type fun_type in
     let lambda = Lambda.map self self_type lambda in
-    return @@ e_recursive fun_name fun_type lambda
-  | E_module_accessor ma -> return @@ I.make_e @@ E_module_accessor ma
+    return @@ e_recursive ~loc fun_name fun_type lambda
+  | E_module_accessor ma -> return @@ I.make_e ~loc @@ E_module_accessor ma
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let result = self let_result in
     let attr : ValueAttr.t = untype_value_attr attributes in
     let let_binder = O.Pattern.map (Fn.const None) let_binder in
-    return (e_let_in let_binder rhs result attr)
+    return (e_let_in ~loc let_binder rhs result attr)
   | E_assign a ->
     let a = Assign.map self self_type_opt a in
-    return @@ make_e @@ E_assign a
+    return @@ make_e ~loc @@ E_assign a
   | E_for for_loop ->
     let for_loop = For_loop.map self for_loop in
-    return @@ I.make_e @@ E_for for_loop
+    return @@ I.make_e ~loc @@ E_for for_loop
   | E_for_each for_each_loop ->
     let for_each_loop = For_each_loop.map self for_each_loop in
-    return @@ I.make_e @@ E_for_each for_each_loop
+    return @@ I.make_e ~loc @@ E_for_each for_each_loop
   | E_while while_loop ->
     let while_loop = While_loop.map self while_loop in
-    return @@ I.make_e @@ E_while while_loop
-  | E_deref var -> return @@ I.make_e @@ E_variable var
+    return @@ I.make_e ~loc @@ E_while while_loop
+  | E_deref var -> return @@ I.make_e ~loc @@ E_variable var
   | E_type_inst { forall; type_ = type_inst } ->
     (match forall.type_expression.type_content with
     | T_for_all { ty_binder; type_; kind = _ } ->
@@ -202,7 +205,7 @@ and untype_declaration_constant
   let ty = untype_type_expression expr.O.type_expression in
   let binder = Binder.map (Fn.const @@ Some ty) binder in
   let expr = untype_expression expr in
-  let expr = I.e_ascription expr ty in
+  let expr = I.e_ascription ~loc:expr.location expr ty in
   let attr = untype_value_attr attr in
   { binder; attr; expr }
 
@@ -214,7 +217,7 @@ and untype_declaration_pattern
   let ty = untype_type_expression expr.O.type_expression in
   let pattern = O.Pattern.map (Fn.const None) pattern in
   let expr = untype_expression expr in
-  let expr = I.e_ascription expr ty in
+  let expr = I.e_ascription ~loc:expr.location expr ty in
   let attr = untype_value_attr attr in
   { pattern; attr; expr }
 

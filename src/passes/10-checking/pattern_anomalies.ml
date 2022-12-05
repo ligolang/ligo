@@ -16,8 +16,8 @@ let cons_label = Label.of_string "#CONS"
 let nil_label = Label.of_string "#NIL"
 let t_unit = AST.t_unit ()
 
-let wild_binder =
-  let var = Value_var.wildcard in
+let wild_binder ~loc =
+  let var = Value_var.wildcard ~loc in
   Binder.make var None
 
 
@@ -25,7 +25,7 @@ type simple_pattern =
   | SP_Wildcard of AST.type_expression
   | SP_Constructor of Label.t * simple_pattern list * AST.type_expression
 
-let nil_constructor ty = SP_Constructor (nil_label, [ SP_Wildcard t_unit ], ty)
+let nil_constructor ~loc ty = SP_Constructor (nil_label, [ SP_Wildcard (t_unit ~loc) ], ty)
 let list_constructors = LSet.of_list [ cons_label; nil_label ]
 
 let rec pp_simple_pattern ppf sp =
@@ -65,6 +65,7 @@ let rec destructure_type (t : AST.type_expression) =
 
 let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
   let pattern', ty = ty_pattern in
+  let loc = Location.get_location pattern' in
   let pattern = Location.unwrap pattern' in
   match pattern with
   | P_unit -> [ SP_Wildcard ty ]
@@ -84,7 +85,7 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
     let hd_ty = Option.value_exn ~here:[%here] (C.get_t_list ty) in
     List.fold_right
       ps
-      ~init:[ nil_constructor ty ]
+      ~init:[ nil_constructor ~loc ty ]
       ~f:(fun p acc ->
         let hd_tl = to_simple_pattern (p, hd_ty) @ acc in
         [ SP_Constructor (cons_label, hd_tl, hd_ty) ])
@@ -123,7 +124,7 @@ let are_keys_numeric keys =
 
 let rec to_list_pattern ~(raise : raise) ~loc simple_pattern : _ AST.Pattern.t =
   match simple_pattern with
-  | SP_Wildcard _ -> Location.wrap ~loc @@ AST.Pattern.P_var wild_binder
+  | SP_Wildcard _ -> Location.wrap ~loc @@ AST.Pattern.P_var (wild_binder ~loc)
   | SP_Constructor (Label "#NIL", _, _) ->
     Location.wrap ~loc @@ AST.Pattern.P_list (List [])
   | SP_Constructor (Label "#CONS", sps, t) ->
@@ -144,7 +145,7 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
   | [] ->
     raise.error @@ Errors.corner_case "edge case: to_original_pattern empty patterns" loc
   | [ SP_Wildcard t ] when AST.is_t_unit t -> Location.wrap ~loc @@ P_unit
-  | [ SP_Wildcard _ ] -> Location.wrap ~loc @@ P_var wild_binder
+  | [ SP_Wildcard _ ] -> Location.wrap ~loc @@ P_var (wild_binder ~loc)
   | [ (SP_Constructor (Label "#CONS", _, _) as simple_pattern) ]
   | [ (SP_Constructor (Label "#NIL", _, _) as simple_pattern) ] ->
     to_list_pattern ~raise ~loc simple_pattern

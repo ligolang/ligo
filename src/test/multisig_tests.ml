@@ -14,34 +14,36 @@ let init_storage threshold counter pkeys =
     List.map
       ~f:(fun el ->
         let _, pk_str, _ = str_keys el in
-        e_key @@ pk_str)
+        e_key ~loc @@ pk_str)
       pkeys
   in
   e_record_ez
-    [ "id", e_string "MULTISIG"
-    ; "counter", e_nat counter
-    ; "threshold", e_nat threshold
-    ; "auth", e_typed_list keys (t_key ())
+    ~loc
+    [ "id", e_string ~loc "MULTISIG"
+    ; "counter", e_nat ~loc counter
+    ; "threshold", e_nat ~loc threshold
+    ; "auth", e_typed_list ~loc keys (t_key ~loc ())
     ]
 
 
-let empty_op_list = e_typed_list [] (t_operation ())
+let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
 
-(* let empty_message = e_lambda (Location.wrap @@ Var.of_input_var "arguments",t_unit ())
-  @@ e_annotation empty_op_list (t_list (t_operation ()))
+(* let empty_message = e_lambda ~loc  (Location.wrap @@ Var.of_input_var "arguments",t_unit ())
+  @@ e_annotation ~loc  empty_op_list (t_list ~loc  (t_operation ~loc  ()))
 
 let chain_id_zero =
-  e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero) *)
+  e_bytes_raw ~loc  (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero) *)
 let empty_message =
   e_lambda_ez
-    (Value_var.of_input_var "arguments")
-    ~ascr:(t_unit ())
-    (Some (t_list (t_operation ())))
+    ~loc
+    (Value_var.of_input_var ~loc "arguments")
+    ~ascr:(t_unit ~loc ())
+    (Some (t_list ~loc (t_operation ~loc ())))
     empty_op_list
 
 
 let chain_id_zero =
-  e_chain_id
+  e_chain_id ~loc
   @@ Tezos_crypto.Base58.simple_encode
        Tezos_base__TzPervasives.Chain_id.b58check_encoding
        Tezos_base__TzPervasives.Chain_id.zero
@@ -55,22 +57,29 @@ let params ~raise counter msg keys is_validl f =
     let pkh, _, _ = str_keys key in
     let payload =
       e_tuple
+        ~loc
         [ msg
-        ; e_nat counter
-        ; e_string (if is_valid then "MULTISIG" else "XX")
+        ; e_nat ~loc counter
+        ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
         ; chain_id_zero
         ]
     in
     let signature = sign_message ~raise program payload sk in
-    e_pair (e_key_hash pkh) (e_signature signature) :: acc
+    e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc
   in
   let signed_msgs = List.fold ~f:aux ~init:[] (List.rev @@ List.zip_exn keys is_validl) in
   e_constructor
+    ~loc
     "CheckMessage"
     (e_record_ez
-       [ "counter", e_nat counter
+       ~loc
+       [ "counter", e_nat ~loc counter
        ; "message", msg
-       ; "signatures", e_typed_list signed_msgs (t_pair (t_key_hash (), t_signature ()))
+       ; ( "signatures"
+         , e_typed_list
+             ~loc
+             signed_msgs
+             (t_pair ~loc (t_key_hash ~loc (), t_signature ~loc ())) )
        ])
 
 
@@ -85,7 +94,7 @@ let not_enough_1_of_2 ~raise f () =
       ~raise
       program
       "main"
-      (e_pair test_params (init_storage 2 0 [ keys; gen_keys () ]))
+      (e_pair ~loc test_params (init_storage 2 0 [ keys; gen_keys () ]))
       exp_failwith
   in
   ()
@@ -101,7 +110,7 @@ let unmatching_counter ~raise f () =
       ~raise
       program
       "main"
-      (e_pair test_params (init_storage 1 0 [ keys ]))
+      (e_pair ~loc test_params (init_storage 1 0 [ keys ]))
       exp_failwith
   in
   ()
@@ -119,7 +128,7 @@ let invalid_1_of_1 ~raise f () =
       ~raise
       program
       "main"
-      (e_pair test_params (init_storage 1 0 keys))
+      (e_pair ~loc test_params (init_storage 1 0 keys))
       exp_failwith
   in
   ()
@@ -137,8 +146,8 @@ let valid_1_of_1 ~raise f () =
       "main"
       (fun n ->
         let params = params ~raise n empty_message [ keys ] [ true ] f in
-        e_pair params (init_storage 1 n [ keys ]))
-      (fun n -> e_pair empty_op_list (init_storage 1 (n + 1) [ keys ]))
+        e_pair ~loc params (init_storage 1 n [ keys ]))
+      (fun n -> e_pair ~loc empty_op_list (init_storage 1 (n + 1) [ keys ]))
   in
   ()
 
@@ -156,8 +165,8 @@ let valid_2_of_3 ~raise f () =
       "main"
       (fun n ->
         let params = params ~raise n empty_message param_keys [ true; true ] f in
-        e_pair params (init_storage 2 n st_keys))
-      (fun n -> e_pair empty_op_list (init_storage 2 (n + 1) st_keys))
+        e_pair ~loc params (init_storage 2 n st_keys))
+      (fun n -> e_pair ~loc empty_op_list (init_storage 2 (n + 1) st_keys))
   in
   ()
 
@@ -176,7 +185,7 @@ let invalid_3_of_3 ~raise f () =
       ~raise
       program
       "main"
-      (e_pair test_params (init_storage 2 0 st_keys))
+      (e_pair ~loc test_params (init_storage 2 0 st_keys))
       exp_failwith
   in
   ()
@@ -194,7 +203,7 @@ let not_enough_2_of_3 ~raise f () =
       ~raise
       program
       "main"
-      (e_pair test_params (init_storage 3 0 st_keys))
+      (e_pair ~loc test_params (init_storage 3 0 st_keys))
       exp_failwith
   in
   ()

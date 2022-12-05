@@ -229,6 +229,7 @@ module Command = struct
         -> a * Tezos_state.context
     =
    fun ~raise ~options command ctxt _log ->
+    let loc = Location.interpreter in
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let k_ty, v_ty =
@@ -355,7 +356,9 @@ module Command = struct
           let v =
             LT.V_Michelson
               (Ty_code
-                 { micheline_repr = { code; code_ty }; ast_ty = Ast_aggregated.t_int () })
+                 { micheline_repr = { code; code_ty }
+                 ; ast_ty = Ast_aggregated.t_int ~loc ()
+                 })
           in
           let rej = LC.v_ctor "Rejected" (LC.v_pair (v, contract_failing)) in
           fail_ctor rej, ctxt
@@ -457,6 +460,7 @@ module Command = struct
       in
       let func_typed_exp =
         Michelson_backend.make_function
+          ~loc
           f.arg_mut_flag
           in_ty
           out_ty
@@ -501,7 +505,7 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_value ~raise ~options ~loc v expr_ty in
       LT.V_Michelson (Ty_code value), ctxt
-    | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) ->
+    | Run_Michelson (loc, calltrace, func, result_ty, value, value_ty) ->
       (match
          Michelson_backend.run_michelson_func
            ~raise
@@ -509,19 +513,25 @@ module Command = struct
            ~loc
            ctxt
            func
-           func_ty
+           result_ty
            value
            value_ty
        with
       | Ok v -> v, ctxt
       | Error data ->
-        let data_t = Michelson_backend.compile_type ~raise func_ty in
+        let data_t = Michelson_backend.compile_type ~raise result_ty in
         let data_opt =
           to_option
           @@ Michelson_to_value.decompile_to_untyped_value
                ~bigmaps:[]
                (clean_locations data_t)
                (clean_locations data)
+        in
+        let data_opt =
+          match data_opt with
+          | Some data ->
+            Some (Michelson_to_value.decompile_value ~raise ~bigmaps:[] data result_ty)
+          | None -> None
         in
         (match data_opt with
         | Some data -> raise.error @@ Errors.meta_lang_eval loc calltrace data
@@ -726,10 +736,11 @@ module Command = struct
         match entrypoint with
         | None ->
           Ast_aggregated.(
-            e_a_contract_opt (Michelson_backend.string_of_contract addr) value_ty)
+            e_a_contract_opt ~loc (Michelson_backend.string_of_contract addr) value_ty)
         | Some entrypoint ->
           Ast_aggregated.(
             e_a_contract_entrypoint_opt
+              ~loc
               entrypoint
               (Michelson_backend.string_of_contract addr)
               value_ty)

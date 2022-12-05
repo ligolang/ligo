@@ -8,16 +8,17 @@ open Ast_imperative
 
 let init_storage name =
   e_record_ez
-    [ "title", e_string name
-    ; "yea", e_nat 0
-    ; "nay", e_nat 0
-    ; "voters", e_typed_set [] (t_address ())
-    ; "start_time", e_timestamp 0
-    ; "finish_time", e_timestamp 1000000000
+    ~loc
+    [ "title", e_string ~loc name
+    ; "yea", e_nat ~loc 0
+    ; "nay", e_nat ~loc 0
+    ; "voters", e_typed_set ~loc [] (t_address ~loc ())
+    ; "start_time", e_timestamp ~loc 0
+    ; "finish_time", e_timestamp ~loc 1000000000
     ]
 
 
-let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
+let yea = e_constructor ~loc "Vote" (e_constructor ~loc "Yea" (e_unit ~loc ()))
 
 let init_vote ~raise () =
   let program = get_program ~raise () in
@@ -26,7 +27,7 @@ let init_vote ~raise () =
       ~raise
       program
       "main"
-      (e_pair yea (init_storage "basic"))
+      (e_pair ~loc yea (init_storage "basic"))
   in
   let _, storage =
     trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_pair result
@@ -39,7 +40,7 @@ let init_vote ~raise () =
   let yea = List.Assoc.find_exn ~equal:Caml.( = ) storage' (Label "yea") in
   let () =
     trace_option ~raise (test_internal __LOC__)
-    @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one)
+    @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat ~loc Z.one)
   in
   ()
 

@@ -337,6 +337,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
 
 
 let%expect_test _ =
+  let loc = Location.dummy in
   let dummy_type = Expression.make_t @@ T_base TB_unit in
   let wrap e = Expression.make e dummy_type in
 
@@ -347,9 +348,9 @@ let%expect_test _ =
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = Value_var.of_input_var "x" in
-  let y = Value_var.of_input_var "y" in
-  let z = Value_var.of_input_var "z" in
+  let x = Value_var.of_input_var ~loc "x" in
+  let y = Value_var.of_input_var ~loc "y" in
+  let z = Value_var.of_input_var ~loc "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
@@ -549,7 +550,7 @@ let%expect_test _ =
 
   (* old bug *)
   Value_var.reset_counter () ;
-  let y0 = Value_var.fresh ~name:"y" () in
+  let y0 = Value_var.fresh ~loc ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x

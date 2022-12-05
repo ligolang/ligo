@@ -106,6 +106,7 @@ let get_body_type (eqs : equations) =
 
 let extract_variant_type : pattern -> Label.t -> O.type_expression -> O.type_expression =
  fun _ label t ->
+  let loc = t.location in
   match t.type_content with
   | T_sum rows ->
     (match Record.LMap.find_opt label rows.fields with
@@ -114,8 +115,8 @@ let extract_variant_type : pattern -> Label.t -> O.type_expression -> O.type_exp
   | O.T_constant { injection = Literal_types.List; parameters = [ proj_t ]; language = _ }
     ->
     (match label with
-    | Label "Cons" -> O.make_t_ez_record [ "0", proj_t; "1", t ]
-    | Label "Nil" -> O.t_unit ()
+    | Label "Cons" -> O.make_t_ez_record ~loc [ "0", proj_t; "1", t ]
+    | Label "Nil" -> O.t_unit ~loc ()
     | Label _ -> corner_case __LOC__)
   | _ -> corner_case __LOC__
 
@@ -202,7 +203,8 @@ let rec substitute_var_in_body
 
 
 let make_var_pattern : Value_var.t -> O.type_expression -> pattern =
- fun var t -> Location.wrap @@ I.Pattern.P_var (Binder.make var t)
+ fun var t ->
+  Location.wrap ~loc:(Value_var.get_location var) @@ I.Pattern.P_var (Binder.make var t)
 
 
 let rec partition : ('a -> bool) -> 'a list -> 'a list list =
@@ -240,6 +242,7 @@ let group_equations : equations -> equations Record.t =
         let p = pattern, proj_t in
         Some [ p :: ptl, body ]
     in
+    let loc = phd.location in
     match phd.wrap_content with
     | P_variant (label, p_opt) ->
       let proj_t = extract_variant_type phd label t in
@@ -247,7 +250,7 @@ let group_equations : equations -> equations Record.t =
     | P_list (List []) ->
       let label = Label.of_string "Nil" in
       let proj_t = extract_variant_type phd label t in
-      Record.LMap.update label (upd proj_t (Location.wrap I.Pattern.P_unit)) m
+      Record.LMap.update label (upd proj_t (Location.wrap ~loc I.Pattern.P_unit)) m
     | P_list (Cons (p_hd, p_tl)) ->
       let label = Label.of_string "Cons" in
       let pattern = Location.wrap ~loc:phd.location @@ I.Pattern.P_tuple [ p_hd; p_tl ] in
@@ -268,15 +271,17 @@ let rec match_ : matchees -> equations -> rest -> O.expression =
     let leq = partition (fun (pl, _) -> is_var (fst @@ List.hd_exn pl)) eqs in
     let aux
         (part_eq : equations)
-        ((def, _, _) : O.expression_content * O.type_expression option * Location.t)
+        ((def, _, _) :
+          O.expression_content * O.type_expression option * Location.t option)
       =
       let r = consvar ms part_eq def in
-      r.expression_content, Some r.type_expression, r.location
+      r.expression_content, Some r.type_expression, Some r.location
     in
-    let r, t, location =
-      List.fold_right ~f:aux ~init:(def, None, Location.generated) leq
-    in
-    O.make_e ~location r (Option.value_exn ~here:[%here] t)
+    let r, t, location = List.fold_right ~f:aux ~init:(def, None, None) leq in
+    O.make_e
+      ~loc:(Option.value_exn ~here:[%here] location)
+      r
+      (Option.value_exn ~here:[%here] t)
 
 
 and consvar : matchees -> equations -> rest -> O.expression =
@@ -317,9 +322,10 @@ and ctor_rule : matchees -> equations -> rest -> O.expression =
  fun ms eqs def ->
   match ms with
   | mhd :: mtl ->
+    let loc = Value_var.get_location mhd in
     let matchee_t = get_pattern_type eqs in
     let body_t = get_body_type eqs in
-    let matchee = O.e_a_variable mhd matchee_t in
+    let matchee = O.e_a_variable ~loc mhd matchee_t in
     let eq_map = group_equations eqs in
     let aux_p : Label.t * equations -> _ O.matching_content_case =
      fun (constructor, eq) ->
@@ -327,11 +333,12 @@ and ctor_rule : matchees -> equations -> rest -> O.expression =
         match eq with
         | [ (tp, _) ] ->
           let pattern, _ = List.hd_exn tp in
+          let loc = pattern.location in
           (match pattern.wrap_content with
           | P_var x -> Binder.get_var x
-          | P_unit -> Value_var.fresh ~name:"unit_proj" ()
-          | _ -> Value_var.fresh ~name:"ctor_proj" ())
-        | _ -> Value_var.fresh ~name:"ctor_proj" ()
+          | P_unit -> Value_var.fresh ~loc ~name:"unit_proj" ()
+          | _ -> Value_var.fresh ~loc ~name:"ctor_proj" ())
+        | _ -> Value_var.fresh ~loc ~name:"ctor_proj" ()
       in
       let new_ms = proj :: mtl in
       let nested = match_ new_ms eq def in
@@ -339,8 +346,8 @@ and ctor_rule : matchees -> equations -> rest -> O.expression =
     in
     let aux_m : Label.t * O.type_expression -> _ O.matching_content_case =
      fun (constructor, t) ->
-      let proj = Value_var.fresh ~name:"ctor_proj" () in
-      let body = O.make_e def t in
+      let proj = Value_var.fresh ~loc ~name:"ctor_proj" () in
+      let body = O.make_e ~loc def t in
       { constructor; pattern = proj; body }
     in
     let grouped_eqs =
@@ -384,7 +391,7 @@ and ctor_rule : matchees -> equations -> rest -> O.expression =
     let cases =
       O.Match_variant { cases = missing_cases @ present_cases; tv = matchee_t }
     in
-    O.make_e (O.E_matching { matchee; cases }) body_t
+    O.make_e ~loc (O.E_matching { matchee; cases }) body_t
   | [] -> corner_case __LOC__
 
 
@@ -432,7 +439,8 @@ and product_rule : typed_pattern -> matchees -> equations -> rest -> O.expressio
      fun (pl, body) ->
       match pl with
       | (prod, t) :: ptl ->
-        let var_filler = make_var_pattern (Value_var.fresh ~name:"_" ()) t, t in
+        let loc = prod.location in
+        let var_filler = make_var_pattern (Value_var.fresh ~loc ~name:"_" ()) t, t in
         (match prod.wrap_content with
         | P_tuple ps ->
           let aux i p =
@@ -492,8 +500,9 @@ and product_rule : typed_pattern -> matchees -> equations -> rest -> O.expressio
     let new_matchees = List.map ~f:(Fn.compose Binder.get_var snd) lb in
     let body = match_ (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body; tv = snd product_shape } in
-    let matchee = O.e_a_variable mhd matchee_t in
-    O.make_e (O.E_matching { matchee; cases }) body.type_expression
+    let loc = body.location in
+    let matchee = O.e_a_variable ~loc mhd matchee_t in
+    O.make_e ~loc (O.E_matching { matchee; cases }) body.type_expression
   | [] -> corner_case __LOC__
 
 
@@ -504,26 +513,28 @@ let compile_matching
   let eqs =
     List.map ~f:(fun (pattern, pattern_ty, body) -> [ pattern, pattern_ty ], body) eqs
   in
+  let loc = Value_var.get_location matchee in
   let missing_case_default =
     let fs =
       O.make_e
+        ~loc
         (O.E_literal (Literal_value.Literal_string Backend.Michelson.fw_partial_match))
-        (O.t_string ())
+        (O.t_string ~loc ())
     in
     let t_fail =
-      let a = Type_var.of_input_var "a" in
-      let b = Type_var.of_input_var "b" in
+      let a = Type_var.of_input_var ~loc "a" in
+      let b = Type_var.of_input_var ~loc "b" in
       let ty_binder = a in
       let kind = Ligo_prim.Kind.Type in
       let type_ =
         let ty_binder = b in
         let kind = Ligo_prim.Kind.Type in
-        let type_ = O.t_arrow (O.t_variable a ()) (O.t_variable b ()) () in
-        O.t_for_all { ty_binder; kind; type_ } ()
+        let type_ = O.t_arrow ~loc (O.t_variable ~loc a ()) (O.t_variable ~loc b ()) () in
+        O.t_for_all ~loc { ty_binder; kind; type_ } ()
       in
-      O.t_for_all { ty_binder; kind; type_ } ()
+      O.t_for_all ~loc { ty_binder; kind; type_ } ()
     in
-    let lamb = O.e_variable (Value_var.of_input_var "failwith") t_fail in
+    let lamb = O.e_variable ~loc (Value_var.of_input_var ~loc "failwith") t_fail in
     let args = fs in
     O.E_application { lamb; args }
   in

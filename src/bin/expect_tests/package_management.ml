@@ -430,20 +430,34 @@ let%expect_test _ =
 
 let () = Sys_unix.chdir pwd
 
-let remove_dynamic_info_from_log ?(ignore_size = false) log =
+let clean_size ~prefix line =
+  if String.is_prefix ~prefix line
+  then
+    if String.is_suffix ~suffix:"kB" line
+    then Format.asprintf "%s*** kB" prefix
+    else if String.is_suffix ~suffix:"MB" line
+    then Format.asprintf "%s*** MB" prefix
+    else if String.is_suffix ~suffix:"GB" line
+    then Format.asprintf "%s*** GB" prefix
+    else if String.is_suffix ~suffix:"B" line
+    then Format.asprintf "%s*** B" prefix
+    else line
+  else line
+
+
+let remove_dynamic_info_from_log log =
   String.split_lines log
   |> List.filter ~f:(fun line ->
          not
            (String.is_prefix ~prefix:"    shasum:" line
            || String.is_prefix ~prefix:"    integrity:" line))
   |> (fun lines ->
-       if ignore_size
-       then
-         List.filter lines ~f:(fun line ->
-             not
-               (String.is_prefix ~prefix:"    package size:" line
-               || String.is_prefix ~prefix:"    unpacked size:" line))
-       else lines)
+       List.map lines ~f:(fun line ->
+           if String.is_prefix ~prefix:"    package size:  " line
+           then clean_size ~prefix:"    package size:  " line
+           else if String.is_prefix ~prefix:"    unpacked size: " line
+           then clean_size ~prefix:"    unpacked size: " line
+           else line))
   |> String.concat ~sep:"\n"
 
 
@@ -464,8 +478,8 @@ let%expect_test _ =
         name:          test_package_3
         version:       0.0.1
         filename:      test_package_3-0.0.1.tgz
-        package size:  1.0 kB
-        unpacked size: 1.8 kB
+        package size:  *** kB
+        unpacked size: *** kB
         total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
@@ -486,8 +500,8 @@ let%expect_test _ =
         name:          test_package_4
         version:       0.0.1
         filename:      test_package_4-0.0.1.tgz
-        package size:  1.1 kB
-        unpacked size: 1.8 kB
+        package size:  *** kB
+        unpacked size: *** kB
         total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
@@ -508,8 +522,8 @@ let%expect_test _ =
         name:          test_package_5
         version:       0.0.1
         filename:      test_package_5-0.0.1.tgz
-        package size:  195.8 kB
-        unpacked size: 1.1 MB
+        package size:  *** kB
+        unpacked size: *** MB
         total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
@@ -517,7 +531,7 @@ let () = Sys_unix.chdir "test_ligoignore"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
-  let dry_run_log = remove_dynamic_info_from_log ~ignore_size:true [%expect.output] in
+  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
     {|
@@ -530,6 +544,8 @@ let%expect_test _ =
         name:          testing_.ligoignore
         version:       0.0.1
         filename:      testing_.ligoignore-0.0.1.tgz
+        package size:  *** B
+        unpacked size: *** B
         total files:   1 |}]
 
 let () = Sys_unix.chdir pwd
