@@ -12,13 +12,13 @@ type expression_content = [%import: Types.expression_content]
   ez
     { prefixes =
         [ ( "make_e"
-          , fun ?(location = Location.generated) expression_content type_expression
-                : expression ->
-              { expression_content; location; type_expression } )
+          , fun ~loc expression_content type_expression : expression ->
+              { expression_content; location = loc; type_expression } )
         ; ("get", fun x -> x.expression_content)
         ; ("get_type", fun x -> x.type_expression)
         ]
-    ; wrap_constructor = "expression_content", make_e
+    ; wrap_constructor =
+        ("expression_content", fun content type_ ~loc -> make_e ~loc content type_)
     ; wrap_get = "expression_content", get
     }]
 
@@ -27,13 +27,13 @@ type type_content = [%import: Types.type_content]
   ez
     { prefixes =
         [ ( "make_t"
-          , fun ?(loc = Location.generated) type_content type_meta : type_expression ->
+          , fun ~loc type_content type_meta : type_expression ->
               { type_content; location = loc; orig_var = None; type_meta } )
         ; ("get", fun x -> x.type_content)
         ]
     ; wrap_constructor =
         ( "type_content"
-        , fun type_content ?loc ?type_meta () -> make_t ?loc type_content type_meta )
+        , fun type_content ~loc ?type_meta () -> make_t ~loc type_content type_meta )
     ; wrap_get = "type_content", get
     ; default_get = `Option
     }]
@@ -41,19 +41,19 @@ type type_content = [%import: Types.type_content]
 open Ligo_prim
 open Literal_types
 
-let make_t_orig_var ?(loc = Location.generated) type_content core orig_var =
+let make_t_orig_var ~loc type_content core orig_var =
   { type_content; location = loc; type_meta = core; orig_var }
 
 
-let t_constant ?loc ?core injection parameters : type_expression =
+let t_constant ~loc ?core injection parameters : type_expression =
   make_t
-    ?loc
+    ~loc
     (T_constant { language = Backend.Michelson.name; injection; parameters })
     core
 
 
 (* TODO?: X_name here should be replaced by X_injection *)
-let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
+let t__type_ ~loc ?core () : type_expression = t_constant ~loc ?core _type_ []
   [@@map
     _type_
     , ( "signature"
@@ -84,63 +84,69 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
       , "int64" )]
 
 
-let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [ t ]
+let t__type_ ~loc ?core t : type_expression = t_constant ~loc ?core _type_ [ t ]
   [@@map
     _type_
     , ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen")]
 
 
-let t_ext_int ?loc ?core t : type_expression =
-  t_constant ?loc ?core (External "int") [ t ]
+let t_ext_int ~loc ?core t : type_expression =
+  t_constant ~loc ?core (External "int") [ t ]
 
 
-let t_ext_ediv ?loc ?core t t' : type_expression =
-  t_constant ?loc ?core (External "ediv") [ t; t' ]
+let t_ext_ediv ~loc ?core t t' : type_expression =
+  t_constant ~loc ?core (External "ediv") [ t; t' ]
 
 
-let t_ext_u_ediv ?loc ?core t t' : type_expression =
-  t_constant ?loc ?core (External "u_ediv") [ t; t' ]
+let t_ext_u_ediv ~loc ?core t t' : type_expression =
+  t_constant ~loc ?core (External "u_ediv") [ t; t' ]
 
 
-let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [ t; t' ]
+let t__type_ ~loc ?core t t' : type_expression = t_constant ~loc ?core _type_ [ t; t' ]
   [@@map _type_, ("map", "big_map", "typed_address")]
 
 
 let t_mutez = t_tez
 
-let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Type_var.fresh ~name:"_a" () in
+let t_abstraction1 ~loc name kind : type_expression =
+  let ty_binder = Type_var.fresh ~loc ~name:"_a" () in
   let type_ =
     t_constant
+      ~loc
       name
-      [ t_variable ~type_meta:(Ast_core.t_variable ty_binder ()) ty_binder () ]
+      [ t_variable ~loc ~type_meta:(Ast_core.t_variable ~loc ty_binder ()) ty_binder () ]
   in
-  t_abstraction { ty_binder; kind; type_ } ?loc ()
+  t_abstraction { ty_binder; kind; type_ } ~loc ()
 
 
-let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Type_var.fresh ~name:"_l" () in
-  let ty_binder_r = Type_var.fresh ~name:"_r" () in
-  let type_ = t_constant name [ t_variable ty_binder_l (); t_variable ty_binder_r () ] in
+let t_abstraction2 ~loc name kind_l kind_r : type_expression =
+  let ty_binder_l = Type_var.fresh ~loc ~name:"_l" () in
+  let ty_binder_r = Type_var.fresh ~loc ~name:"_r" () in
+  let type_ =
+    t_constant
+      ~loc
+      name
+      [ t_variable ~loc ty_binder_l (); t_variable ~loc ty_binder_r () ]
+  in
   t_abstraction
-    ?loc
+    ~loc
     { ty_binder = ty_binder_l
     ; kind = kind_l
-    ; type_ = t_abstraction ?loc { ty_binder = ty_binder_r; kind = kind_r; type_ } ()
+    ; type_ = t_abstraction ~loc { ty_binder = ty_binder_r; kind = kind_r; type_ } ()
     }
     ()
 
 
 let t_for_all ty_binder kind type_ = t_for_all { ty_binder; kind; type_ } ()
 
-let t_record ?loc ?core ~layout fields : type_expression =
-  t_record ?loc { fields; layout } ?type_meta:core ()
+let t_record ~loc ?core ~layout fields : type_expression =
+  t_record ~loc { fields; layout } ?type_meta:core ()
 
 
 let default_layout : Layout.t = Layout.L_tree
 
 let make_t_ez_record
-    ?loc
+    ~loc
     ?core
     ?(layout = default_layout)
     (lst : (string * type_expression) list)
@@ -155,17 +161,17 @@ let make_t_ez_record
       lst
   in
   let map = Record.of_list lst in
-  t_record ?loc ?core ~layout map
+  t_record ~loc ?core ~layout map
 
 
-let ez_t_record ?loc ?core ?(layout = default_layout) lst : type_expression =
+let ez_t_record ~loc ?core ?(layout = default_layout) lst : type_expression =
   let m = Record.of_list lst in
-  t_record ?loc ?core ~layout m
+  t_record ~loc ?core ~layout m
 
 
-let t_pair ?loc ?core a b : type_expression =
+let t_pair ~loc ?core a b : type_expression =
   ez_t_record
-    ?loc
+    ~loc
     ?core
     [ ( Label.of_int 0
       , Rows.{ associated_type = a; michelson_annotation = None; decl_pos = 0 } )
@@ -174,9 +180,9 @@ let t_pair ?loc ?core a b : type_expression =
     ]
 
 
-let t_triplet ?loc ?core a b c : type_expression =
+let t_triplet ~loc ?core a b c : type_expression =
   ez_t_record
-    ?loc
+    ~loc
     ?core
     [ ( Label.of_int 0
       , Rows.{ associated_type = a; michelson_annotation = None; decl_pos = 0 } )
@@ -187,8 +193,8 @@ let t_triplet ?loc ?core a b c : type_expression =
     ]
 
 
-let t_tuple ?loc ?core xs : type_expression =
-  ez_t_record ?loc ?core
+let t_tuple ~loc ?core xs : type_expression =
+  ez_t_record ~loc ?core
   @@ List.mapi
        ~f:(fun i t ->
          ( Label.of_int i
@@ -196,11 +202,11 @@ let t_tuple ?loc ?core xs : type_expression =
        xs
 
 
-let t_sum ?loc ?core ~layout fields : type_expression =
-  t_sum ?loc { fields; layout } ?type_meta:core ()
+let t_sum ~loc ?core ~layout fields : type_expression =
+  t_sum ~loc { fields; layout } ?type_meta:core ()
 
 
-let t_sum_ez ?loc ?core ?(layout = default_layout) (lst : (string * type_expression) list)
+let t_sum_ez ~loc ?core ?(layout = default_layout) (lst : (string * type_expression) list)
     : type_expression
   =
   let lst =
@@ -212,11 +218,11 @@ let t_sum_ez ?loc ?core ?(layout = default_layout) (lst : (string * type_express
       lst
   in
   let map = Record.of_list lst in
-  t_sum ?loc ?core ~layout map
+  t_sum ~loc ?core ~layout map
 
 
 let t_record_ez
-    ?loc
+    ~loc
     ?core
     ?(layout = default_layout)
     (lst : (string * type_expression) list)
@@ -231,74 +237,83 @@ let t_record_ez
       lst
   in
   let map = Record.of_list lst in
-  t_record ?loc ?core ~layout map
+  t_record ~loc ?core ~layout map
 
 
-let t_bool ?loc ?core () : type_expression =
-  t_sum_ez ?loc ?core [ "True", t_unit (); "False", t_unit () ]
+let t_bool ~loc ?core () : type_expression =
+  t_sum_ez ~loc ?core [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
 
 
-let t_option ?loc ?core typ : type_expression =
-  t_sum_ez ?loc ?core [ "Some", typ; "None", t_unit () ]
+let t_option ~loc ?core typ : type_expression =
+  t_sum_ez ~loc ?core [ "Some", typ; "None", t_unit ~loc () ]
 
 
-let t_option_abst ?loc ?core () : type_expression =
-  let ty_binder = Type_var.of_input_var "'a" in
+let t_option_abst ~loc ?core () : type_expression =
+  let ty_binder = Type_var.of_input_var ~loc "'a" in
   t_abstraction
+    ~loc
     { ty_binder
     ; kind = Type
-    ; type_ = t_sum_ez ?loc ?core [ "Some", t_variable ty_binder (); "None", t_unit () ]
+    ; type_ =
+        t_sum_ez
+          ~loc
+          ?core
+          [ "Some", t_variable ~loc ty_binder (); "None", t_unit ~loc () ]
     }
     ()
 
 
 (* types specific to LIGO test framework*)
-let t_michelson_code ?loc ?core () : type_expression =
-  t_constant ?loc ?core Literal_types.Michelson_program []
+let t_michelson_code ~loc ?core () : type_expression =
+  t_constant ~loc ?core Literal_types.Michelson_program []
 
 
-let t_test_exec_error ?loc ?core () : type_expression =
+let t_test_exec_error ~loc ?core () : type_expression =
   t_sum_ez
-    ?loc
+    ~loc
     ?core
-    [ "Rejected", t_pair (t_michelson_code ()) (t_address ())
+    [ "Rejected", t_pair ~loc (t_michelson_code ~loc ()) (t_address ~loc ())
     ; ( "Balance_too_low"
       , t_record_ez
-          [ "contract_too_low", t_address ()
-          ; "contract_balance", t_mutez ()
-          ; "spend_request", t_mutez ()
+          ~loc
+          [ "contract_too_low", t_address ~loc ()
+          ; "contract_balance", t_mutez ~loc ()
+          ; "spend_request", t_mutez ~loc ()
           ] )
-    ; "Other", t_string ()
+    ; "Other", t_string ~loc ()
     ]
 
 
-let t_test_exec_result ?loc ?core () : type_expression =
-  t_sum_ez ?loc ?core [ "Success", t_nat (); "Fail", t_test_exec_error () ]
+let t_test_exec_result ~loc ?core () : type_expression =
+  t_sum_ez ~loc ?core [ "Success", t_nat ~loc (); "Fail", t_test_exec_error ~loc () ]
 
 
-let t_test_baker_policy ?loc ?core () : type_expression =
+let t_test_baker_policy ~loc ?core () : type_expression =
   t_sum_ez
-    ?loc
+    ~loc
     ?core
-    [ "By_round", t_int ()
-    ; "By_account", t_address ()
-    ; "Excluding", t_list (t_address ())
+    [ "By_round", t_int ~loc ()
+    ; "By_account", t_address ~loc ()
+    ; "Excluding", t_list ~loc (t_address ~loc ())
     ]
 
 
-let t_arrow param result ?loc ?s () : type_expression =
-  t_arrow ?loc ?type_meta:s { type1 = param; type2 = result } ()
+let t_arrow param result ~loc ?s () : type_expression =
+  t_arrow ~loc ?type_meta:s { type1 = param; type2 = result } ()
 
 
-let t_shallow_closure param result ?loc ?s () : type_expression =
-  make_t ?loc (T_arrow { type1 = param; type2 = result }) s
+let t_shallow_closure param result ~loc ?s () : type_expression =
+  make_t ~loc (T_arrow { type1 = param; type2 = result }) s
 
 
-let t_chest_opening_result ?loc ?core () : type_expression =
+let t_chest_opening_result ~loc ?core () : type_expression =
   t_sum_ez
-    ?loc
+    ~loc
     ?core
-    [ "Ok_opening", t_bytes (); "Fail_decrypt", t_unit (); "Fail_timelock", t_unit () ]
+    [ "Ok_opening", t_bytes ~loc ()
+    ; "Fail_decrypt", t_unit ~loc ()
+    ; "Fail_timelock", t_unit ~loc ()
+    ]
 
 
 let get_lambda_with_type e =
@@ -308,9 +323,8 @@ let get_lambda_with_type e =
 
 
 let get_t_bool (t : type_expression) : unit option =
-  match t.type_content with
-  | t when compare_type_content t (t_bool ()).type_content = 0 -> Some ()
-  | _ -> None
+  let t_bool = t_bool ~loc:t.location () in
+  Option.some_if (equal_type_content t.type_content t_bool.type_content) ()
 
 
 let get_t_option (t : type_expression) : type_expression option =
@@ -560,18 +574,19 @@ let e__type_ p : expression_content = E_literal (Literal__type_ p)
 let e_unit () : expression_content = E_literal Literal_unit
 let e_pair a b : expression_content = ez_e_record [ Label.of_int 0, a; Label.of_int 1, b ]
 
-let e_bool b : expression_content =
+let e_bool ~loc b : expression_content =
   if b
   then
-    E_constructor { constructor = Label "True"; element = make_e (e_unit ()) (t_unit ()) }
+    E_constructor
+      { constructor = Label "True"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
   else
     E_constructor
-      { constructor = Label "False"; element = make_e (e_unit ()) (t_unit ()) }
+      { constructor = Label "False"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
 
 
-let e_a_literal l t = make_e (E_literal l) t
+let e_a_literal ~loc l t = make_e ~loc (E_literal l) t
 
-let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
+let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
   [@@map
     _type_
     , ( "unit"
@@ -590,16 +605,20 @@ let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
       , "bls12_381_fr" )]
 
 
-let e_a_pair a b = make_e (e_pair a b) (t_pair a.type_expression b.type_expression)
-
-let e_a_constructor constructor element t =
-  e_constructor { constructor = Label constructor; element } t
+let e_a_pair ~loc a b =
+  make_e ~loc (e_pair a b) (t_pair ~loc a.type_expression b.type_expression)
 
 
-let e_a_record ?(layout = default_layout) r =
+let e_a_constructor ~loc constructor element t =
+  e_constructor ~loc { constructor = Label constructor; element } t
+
+
+let e_a_record ~loc ?(layout = default_layout) r =
   e_record
+    ~loc
     r
     (t_record
+       ~loc
        ~layout
        (Record.map
           ~f:(fun t ->
@@ -608,10 +627,12 @@ let e_a_record ?(layout = default_layout) r =
           r))
 
 
-let ez_e_a_record ?layout r =
+let ez_e_a_record ~loc ?layout r =
   make_e
+    ~loc
     (ez_e_record r)
     (ez_t_record
+       ~loc
        ?layout
        (List.mapi
           ~f:(fun i (x, y) ->
@@ -624,40 +645,40 @@ let ez_e_a_record ?layout r =
           r))
 
 
-let e_a_variable v ty = e_variable v ty
-let e_a_application lamb args t = e_application { lamb; args } t
-let e_a_lambda l in_ty out_ty = e_lambda l (t_arrow in_ty out_ty ())
-let e_a_recursive l = e_recursive l l.fun_type
+let e_a_variable ~loc v ty = e_variable ~loc v ty
+let e_a_application ~loc lamb args t = e_application ~loc { lamb; args } t
+let e_a_lambda ~loc l in_ty out_ty = e_lambda ~loc l (t_arrow ~loc in_ty out_ty ())
+let e_a_recursive ~loc l = e_recursive ~loc l l.fun_type
 
-let e_a_let_in let_binder rhs let_result attributes =
-  e_let_in { let_binder; rhs; let_result; attributes } (get_type let_result)
+let e_a_let_in ~loc let_binder rhs let_result attributes =
+  e_let_in ~loc { let_binder; rhs; let_result; attributes } (get_type let_result)
 
 
-let e_a_raw_code language code t = e_raw_code { language; code } t
-let e_a_type_inst forall type_ u = e_type_inst { forall; type_ } u
+let e_a_raw_code ~loc language code t = e_raw_code ~loc { language; code } t
+let e_a_type_inst ~loc forall type_ u = e_type_inst ~loc { forall; type_ } u
 
-let e_a_mod_in module_binder rhs let_result =
-  e_mod_in { module_binder; rhs; let_result } (get_type let_result)
+let e_a_mod_in ~loc module_binder rhs let_result =
+  e_mod_in ~loc { module_binder; rhs; let_result } (get_type let_result)
 
 
 (* Constants *)
-let e_a_nil t = make_e (e_nil ()) (t_list t)
-let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
-let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
-let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)
-let e_a_map_empty kt vt = make_e (e_map_empty ()) (t_map kt vt)
+let e_a_nil ~loc t = make_e ~loc (e_nil ()) (t_list ~loc t)
+let e_a_cons ~loc hd tl = make_e ~loc (e_cons hd tl) (t_list ~loc hd.type_expression)
+let e_a_set_empty ~loc t = make_e ~loc (e_set_empty ()) (t_set ~loc t)
+let e_a_set_add ~loc hd tl = make_e ~loc (e_set_add hd tl) (t_set ~loc hd.type_expression)
+let e_a_map_empty ~loc kt vt = make_e ~loc (e_map_empty ()) (t_map ~loc kt vt)
 
-let e_a_map_add k v tl =
-  make_e (e_map_add k v tl) (t_map k.type_expression v.type_expression)
-
-
-let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
-
-let e_a_big_map_add k v tl =
-  make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
+let e_a_map_add ~loc k v tl =
+  make_e ~loc (e_map_add k v tl) (t_map ~loc k.type_expression v.type_expression)
 
 
-let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
+let e_a_big_map_empty ~loc kt vt = make_e (e_big_map_empty ()) (t_big_map ~loc kt vt)
+
+let e_a_big_map_add ~loc k v tl =
+  make_e ~loc (e_map_add k v tl) (t_big_map ~loc k.type_expression v.type_expression)
+
+
+let e_a_big_map_remove ~loc k tl = make_e ~loc (e_map_remove k tl) tl.type_expression
 
 let get_a_int (t : expression) =
   match t.expression_content with

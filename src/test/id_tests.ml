@@ -14,20 +14,22 @@ let first_owner, first_contract =
 let buy_id ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1 ]
-      ; "next_id", e_int 1
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ "identities", e_big_map ~loc [ e_int ~loc 0, id_details_1 ]
+      ; "next_id", e_int ~loc 1
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_addr = first_owner in
@@ -39,24 +41,30 @@ let buy_id ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let param =
     e_record_ez
-      [ "profile", owner_website; "initial_controller", e_some (e_address new_addr) ]
+      ~loc
+      [ "profile", owner_website
+      ; "initial_controller", e_some ~loc (e_address ~loc new_addr)
+      ]
   in
   let new_storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let () =
@@ -65,8 +73,8 @@ let buy_id ~raise () =
       ~options
       program
       "buy"
-      (e_pair param storage)
-      (e_pair (e_list []) new_storage)
+      (e_pair ~loc param storage)
+      (e_pair ~loc (e_list ~loc []) new_storage)
   in
   ()
 
@@ -74,20 +82,22 @@ let buy_id ~raise () =
 let buy_id_sender_addr ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1 ]
-      ; "next_id", e_int 1
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ "identities", e_big_map ~loc [ e_int ~loc 0, id_details_1 ]
+      ; "next_id", e_int ~loc 1
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_addr = first_owner in
@@ -99,24 +109,30 @@ let buy_id_sender_addr ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let param =
     e_record_ez
-      [ "profile", owner_website; "initial_controller", e_typed_none (t_address ()) ]
+      ~loc
+      [ "profile", owner_website
+      ; "initial_controller", e_typed_none ~loc (t_address ~loc ())
+      ]
   in
   let new_storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let () =
@@ -125,8 +141,8 @@ let buy_id_sender_addr ~raise () =
       ~options
       program
       "buy"
-      (e_pair param storage)
-      (e_pair (e_list []) new_storage)
+      (e_pair ~loc param storage)
+      (e_pair ~loc (e_list ~loc []) new_storage)
   in
   ()
 
@@ -135,20 +151,22 @@ let buy_id_sender_addr ~raise () =
 let buy_id_wrong_amount ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1 ]
-      ; "next_id", e_int 1
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ "identities", e_big_map ~loc [ e_int ~loc 0, id_details_1 ]
+      ; "next_id", e_int ~loc 1
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_addr = first_owner in
@@ -162,7 +180,10 @@ let buy_id_wrong_amount ~raise () =
   in
   let param =
     e_record_ez
-      [ "profile", owner_website; "initial_controller", e_some (e_address new_addr) ]
+      ~loc
+      [ "profile", owner_website
+      ; "initial_controller", e_some ~loc (e_address ~loc new_addr)
+      ]
   in
   let () =
     expect_string_failwith
@@ -170,7 +191,7 @@ let buy_id_wrong_amount ~raise () =
       ~options
       program
       "buy"
-      (e_pair param storage)
+      (e_pair ~loc param storage)
       "Incorrect amount paid."
   in
   ()
@@ -179,11 +200,12 @@ let buy_id_wrong_amount ~raise () =
 let update_details_owner ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -196,43 +218,50 @@ let update_details_owner ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", new_website
       ]
   in
   let id_details_2_diff =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2_diff ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2_diff ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let details = e_bytes_string "ligolang.org" in
+  let details = e_bytes_string ~loc "ligolang.org" in
   let param =
     e_record_ez
-      [ "id", e_int 1
-      ; "new_profile", e_some details
-      ; "new_controller", e_some (e_address new_addr)
+      ~loc
+      [ "id", e_int ~loc 1
+      ; "new_profile", e_some ~loc details
+      ; "new_controller", e_some ~loc (e_address ~loc new_addr)
       ]
   in
   let () =
@@ -241,8 +270,8 @@ let update_details_owner ~raise () =
       ~options
       program
       "update_details"
-      (e_pair param storage)
-      (e_pair (e_list []) new_storage)
+      (e_pair ~loc param storage)
+      (e_pair ~loc (e_list ~loc []) new_storage)
   in
   ()
 
@@ -250,11 +279,12 @@ let update_details_owner ~raise () =
 let update_details_controller ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -267,43 +297,50 @@ let update_details_controller ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let id_details_2_diff =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2_diff ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2_diff ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let details = e_bytes_string "ligolang.org" in
+  let details = e_bytes_string ~loc "ligolang.org" in
   let param =
     e_record_ez
-      [ "id", e_int 1
-      ; "new_profile", e_some details
-      ; "new_controller", e_some (e_address owner_addr)
+      ~loc
+      [ "id", e_int ~loc 1
+      ; "new_profile", e_some ~loc details
+      ; "new_controller", e_some ~loc (e_address ~loc owner_addr)
       ]
   in
   let () =
@@ -312,8 +349,8 @@ let update_details_controller ~raise () =
       ~options
       program
       "update_details"
-      (e_pair param storage)
-      (e_pair (e_list []) new_storage)
+      (e_pair ~loc param storage)
+      (e_pair ~loc (e_list ~loc []) new_storage)
   in
   ()
 
@@ -322,11 +359,12 @@ let update_details_controller ~raise () =
 let update_details_nonexistent ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -339,28 +377,32 @@ let update_details_nonexistent ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let details = e_bytes_string "ligolang.org" in
+  let details = e_bytes_string ~loc "ligolang.org" in
   let param =
     e_record_ez
-      [ "id", e_int 2
-      ; "new_profile", e_some details
-      ; "new_controller", e_some (e_address owner_addr)
+      ~loc
+      [ "id", e_int ~loc 2
+      ; "new_profile", e_some ~loc details
+      ; "new_controller", e_some ~loc (e_address ~loc owner_addr)
       ]
   in
   let () =
@@ -369,7 +411,7 @@ let update_details_nonexistent ~raise () =
       ~options
       program
       "update_details"
-      (e_pair param storage)
+      (e_pair ~loc param storage)
       "This ID does not exist."
   in
   ()
@@ -379,11 +421,12 @@ let update_details_nonexistent ~raise () =
 let update_details_wrong_addr ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -395,28 +438,32 @@ let update_details_wrong_addr ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let details = e_bytes_string "ligolang.org" in
+  let details = e_bytes_string ~loc "ligolang.org" in
   let param =
     e_record_ez
-      [ "id", e_int 0
-      ; "new_profile", e_some details
-      ; "new_controller", e_some (e_address owner_addr)
+      ~loc
+      [ "id", e_int ~loc 0
+      ; "new_profile", e_some ~loc details
+      ; "new_controller", e_some ~loc (e_address ~loc owner_addr)
       ]
   in
   let () =
@@ -425,7 +472,7 @@ let update_details_wrong_addr ~raise () =
       ~options
       program
       "update_details"
-      (e_pair param storage)
+      (e_pair ~loc param storage)
       "You are not the owner or controller of this ID."
   in
   ()
@@ -435,11 +482,12 @@ let update_details_wrong_addr ~raise () =
 let update_details_unchanged ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -452,27 +500,31 @@ let update_details_unchanged ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let param =
     e_record_ez
-      [ "id", e_int 1
-      ; "new_profile", e_typed_none (t_bytes ())
-      ; "new_controller", e_typed_none (t_address ())
+      ~loc
+      [ "id", e_int ~loc 1
+      ; "new_profile", e_typed_none ~loc (t_bytes ~loc ())
+      ; "new_controller", e_typed_none ~loc (t_address ~loc ())
       ]
   in
   let () =
@@ -481,8 +533,8 @@ let update_details_unchanged ~raise () =
       ~options
       program
       "update_details"
-      (e_pair param storage)
-      (e_pair (e_list []) storage)
+      (e_pair ~loc param storage)
+      (e_pair ~loc (e_list ~loc []) storage)
   in
   ()
 
@@ -490,11 +542,12 @@ let update_details_unchanged ~raise () =
 let update_owner ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -507,46 +560,54 @@ let update_owner ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let id_details_2_diff =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2_diff ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2_diff ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let param = e_record_ez [ "id", e_int 1; "new_owner", e_address owner_addr ] in
+  let param =
+    e_record_ez ~loc [ "id", e_int ~loc 1; "new_owner", e_address ~loc owner_addr ]
+  in
   let () =
     expect_eq
       ~raise
       ~options
       program
       "update_owner"
-      (e_pair param storage)
-      (e_pair (e_list []) new_storage)
+      (e_pair ~loc param storage)
+      (e_pair ~loc (e_list ~loc []) new_storage)
   in
   ()
 
@@ -555,11 +616,12 @@ let update_owner ~raise () =
 let update_owner_nonexistent ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -572,30 +634,35 @@ let update_owner_nonexistent ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let param = e_record_ez [ "id", e_int 2; "new_owner", e_address new_addr ] in
+  let param =
+    e_record_ez ~loc [ "id", e_int ~loc 2; "new_owner", e_address ~loc new_addr ]
+  in
   let () =
     expect_string_failwith
       ~raise
       ~options
       program
       "update_owner"
-      (e_pair param storage)
+      (e_pair ~loc param storage)
       "This ID does not exist."
   in
   ()
@@ -605,11 +672,12 @@ let update_owner_nonexistent ~raise () =
 let update_owner_wrong_addr ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -622,30 +690,35 @@ let update_owner_wrong_addr ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
-  let param = e_record_ez [ "id", e_int 0; "new_owner", e_address new_addr ] in
+  let param =
+    e_record_ez ~loc [ "id", e_int ~loc 0; "new_owner", e_address ~loc new_addr ]
+  in
   let () =
     expect_string_failwith
       ~raise
       ~options
       program
       "update_owner"
-      (e_pair param storage)
+      (e_pair ~loc param storage)
       "You are not the owner of this ID."
   in
   ()
@@ -654,11 +727,12 @@ let update_owner_wrong_addr ~raise () =
 let skip ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -671,28 +745,33 @@ let skip ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let new_storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 3
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 3
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let () =
@@ -701,8 +780,8 @@ let skip ~raise () =
       ~options
       program
       "skip"
-      (e_pair (e_unit ()) storage)
-      (e_pair (e_list []) new_storage)
+      (e_pair ~loc (e_unit ~loc ()) storage)
+      (e_pair ~loc (e_list ~loc []) new_storage)
   in
   ()
 
@@ -711,11 +790,12 @@ let skip ~raise () =
 let skip_wrong_amount ~raise () =
   let program = get_program ~raise () in
   let owner_addr = addr 5 in
-  let owner_website = e_bytes_string "ligolang.org" in
+  let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
-      [ "owner", e_address owner_addr
-      ; "controller", e_address owner_addr
+      ~loc
+      [ "owner", e_address ~loc owner_addr
+      ; "controller", e_address ~loc owner_addr
       ; "profile", owner_website
       ]
   in
@@ -728,20 +808,23 @@ let skip_wrong_amount ~raise () =
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents
         ())
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
     e_record_ez
-      [ "owner", e_address new_addr
-      ; "controller", e_address new_addr
+      ~loc
+      [ "owner", e_address ~loc new_addr
+      ; "controller", e_address ~loc new_addr
       ; "profile", new_website
       ]
   in
   let storage =
     e_record_ez
-      [ "identities", e_big_map [ e_int 0, id_details_1; e_int 1, id_details_2 ]
-      ; "next_id", e_int 2
-      ; "name_price", e_mutez 1000000
-      ; "skip_price", e_mutez 1000000
+      ~loc
+      [ ( "identities"
+        , e_big_map ~loc [ e_int ~loc 0, id_details_1; e_int ~loc 1, id_details_2 ] )
+      ; "next_id", e_int ~loc 2
+      ; "name_price", e_mutez ~loc 1000000
+      ; "skip_price", e_mutez ~loc 1000000
       ]
   in
   let () =
@@ -750,7 +833,7 @@ let skip_wrong_amount ~raise () =
       ~options
       program
       "skip"
-      (e_pair (e_unit ()) storage)
+      (e_pair ~loc (e_unit ~loc ()) storage)
       "Incorrect amount paid."
   in
   ()

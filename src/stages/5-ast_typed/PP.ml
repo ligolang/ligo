@@ -84,7 +84,7 @@ and type_injection ppf { language; injection; parameters } =
     parameters
 
 
-and bool ppf : unit = fprintf ppf "%a" Type_var.pp Literal_types.v_bool
+and bool ppf : unit = fprintf ppf "bool"
 
 and option ppf (te : type_expression) : unit =
   let t = Combinators.get_t_option te in
@@ -129,7 +129,7 @@ and type_expression_orig ppf (te : type_expression) : unit =
     else if Option.is_some (Combinators.get_t_option te)
     then option ppf te
     else fprintf ppf "%a" type_content_orig te.type_content
-  | Some v -> Ast_core.(PP.type_expression ppf (t_variable v ()))
+  | Some v -> Ast_core.(PP.type_expression ppf (t_variable ~loc:te.location v ()))
 
 
 let rec expression ppf (e : expression) =

@@ -1,9 +1,12 @@
+module Location = Simple_utils.Location
 open Simple_utils.Trace
 open Ligo_prim
 
 (* Helpers *)
 
 module ModRes = Preprocessor.ModRes
+
+let loc = Location.repl
 
 let get_declarations_core (core_prg : Ast_core.program) =
   (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
@@ -43,7 +46,7 @@ let get_declarations_typed (typed_prg : Ast_typed.program) =
        ~f:
          Ast_typed.(
            fun (a : declaration) ->
-             Simple_utils.Location.unwrap a
+             Location.unwrap a
              |> function
              | D_value a when not a.attr.hidden ->
                Option.return @@ [ `Value (Binder.get_var a.binder) ]
@@ -217,13 +220,13 @@ let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
     let prg = Build.qualified_typed ~raise ~options Env file_name in
-    Simple_utils.Location.wrap (Module_expr.M_struct prg)
+    Location.wrap ~loc (Module_expr.M_struct prg)
   in
   let module_ =
     Ast_typed.
-      [ Simple_utils.Location.wrap
+      [ Location.wrap ~loc
         @@ D_module
-             { module_binder = Module_var.of_input_var module_name
+             { module_binder = Module_var.of_input_var ~loc module_name
              ; module_
              ; module_attr = { public = true; hidden = false }
              }

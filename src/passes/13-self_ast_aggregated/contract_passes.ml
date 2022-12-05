@@ -39,6 +39,7 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
       }
       e.location
   in
+  let loc = e.location in
   match e.expression_content, Ast_aggregated.get_t_option e.type_expression with
   | E_constant { cons_name = C_CHECK_SELF; arguments = [ entrypoint_exp ] }, Some t ->
     let entrypoint =
@@ -68,9 +69,11 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
     in
     let () =
       if not @@ Ast_aggregated.equal_type_expression entrypoint_t t
-      then raise.Simple_utils.Trace.warning @@ bad_self_err Ast_aggregated.(t_contract t)
+      then
+        raise.Simple_utils.Trace.warning
+        @@ bad_self_err Ast_aggregated.(t_contract ~loc t)
     in
-    let e = Ast_aggregated.e_a_none ~location:e.location e.type_expression in
+    let e = Ast_aggregated.e_a_none ~loc:e.location e.type_expression in
     true, dat, e
   | _ -> true, dat, e
 
@@ -99,7 +102,7 @@ let entrypoint_typing ~raise : expression -> expression =
         check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
       | _ -> raise.error @@ Errors.entrypoint_ann_not_literal entrypoint_exp.location
     in
-    Ast_aggregated.e_a_unit ()
+    Ast_aggregated.e_a_unit ~loc:e.location ()
   | _ -> e
 
 
@@ -113,5 +116,5 @@ let emit_event_typing ~raise : expression -> expression =
         check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) tag
       | _ -> raise.error @@ Errors.emit_tag_not_literal tag.location
     in
-    Ast_aggregated.e_a_unit ()
+    Ast_aggregated.e_a_unit ~loc:e.location ()
   | _ -> e

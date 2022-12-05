@@ -142,14 +142,21 @@ let clean_location_with v x =
 
 let clean_locations e t = clean_location_with () e, clean_location_with () t
 
-let add_ast_env ?(name = Ligo_prim.Value_var.fresh ()) env binder body =
+let add_ast_env
+    ?(name = Ligo_prim.Value_var.fresh ~loc:Location.interpreter ())
+    env
+    binder
+    body
+  =
   let open Ast_aggregated in
+  let loc = body.location in
   let aux (let_binder, expr, no_mutation, inline) (e : expression) =
     if Ligo_prim.Value_var.compare let_binder binder <> 0
        && Ligo_prim.Value_var.compare let_binder name <> 0
     then
       e_a_let_in
-        (Pattern.var (Ligo_prim.Binder.make let_binder expr.type_expression))
+        ~loc
+        (Pattern.var ~loc (Ligo_prim.Binder.make let_binder expr.type_expression))
         expr
         e
         { inline
@@ -253,12 +260,23 @@ let entrypoint_of_string x =
   | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
 
-let build_ast ~raise subst_lst mut_flag arg_binder rec_name in_ty out_ty aggregated_exp =
+let build_ast
+    ~raise
+    subst_lst
+    mut_flag
+    arg_binder
+    rec_name
+    in_ty
+    out_ty
+    (aggregated_exp : Ast_aggregated.expression)
+  =
+  let loc = aggregated_exp.location in
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp =
     match rec_name with
     | None ->
       Ast_aggregated.e_a_lambda
+        ~loc
         { result = aggregated_exp'
         ; output_type = out_ty
         ; binder = Ligo_prim.Param.make ~mut_flag arg_binder in_ty
@@ -267,8 +285,9 @@ let build_ast ~raise subst_lst mut_flag arg_binder rec_name in_ty out_ty aggrega
         out_ty
     | Some fun_name ->
       Ast_aggregated.e_a_recursive
+        ~loc
         { fun_name
-        ; fun_type = Ast_aggregated.t_arrow in_ty out_ty ()
+        ; fun_type = Ast_aggregated.t_arrow ~loc in_ty out_ty ()
         ; lambda =
             { result = aggregated_exp'
             ; output_type = out_ty
@@ -354,9 +373,10 @@ let compile_contract_file ~raise ~options source_file entry_point declared_views
   aggregated, views
 
 
-let make_function mut_flag in_ty out_ty arg_binder body subst_lst =
+let make_function ~loc mut_flag in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
   Ast_aggregated.e_a_lambda
+    ~loc
     { result = typed_exp'
     ; output_type = out_ty
     ; binder = Ligo_prim.Param.make ~mut_flag arg_binder in_ty
@@ -384,7 +404,7 @@ let rec val_to_ast ~raise ~loc
               ty))
         (get_t_unit ty)
     in
-    e_a_unit ()
+    e_a_unit ~loc ()
   | V_Ct (C_bool b) ->
     let () =
       trace_option
@@ -397,7 +417,7 @@ let rec val_to_ast ~raise ~loc
               ty))
         (get_t_bool ty)
     in
-    e_a_bool b
+    e_a_bool ~loc b
   | V_Ct (C_int x) ->
     let () =
       trace_option
@@ -412,7 +432,7 @@ let rec val_to_ast ~raise ~loc
         | T_constant { injection = Int | External "int"; _ } -> Some ()
         | _ -> None)
     in
-    e_a_int x
+    e_a_int ~loc x
   | V_Ct (C_int64 _) ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: int64"
   | V_Ct (C_nat x) ->
@@ -427,7 +447,7 @@ let rec val_to_ast ~raise ~loc
               ty))
         (get_t_nat ty)
     in
-    e_a_nat x
+    e_a_nat ~loc x
   | V_Ct (C_mutez x) ->
     let () =
       trace_option
@@ -440,7 +460,7 @@ let rec val_to_ast ~raise ~loc
               ty))
         (get_t_mutez ty)
     in
-    e_a_mutez x
+    e_a_mutez ~loc x
   | V_Ct (C_timestamp t) ->
     let () =
       trace_option
@@ -453,7 +473,7 @@ let rec val_to_ast ~raise ~loc
               ty))
         (get_t_timestamp ty)
     in
-    e_a_timestamp t
+    e_a_timestamp ~loc t
   | V_Ct (C_string s) ->
     let () =
       trace_option
@@ -466,16 +486,16 @@ let rec val_to_ast ~raise ~loc
               ty))
         (get_t_string ty)
     in
-    e_a_string (Simple_utils.Ligo_string.standard s)
+    e_a_string ~loc (Simple_utils.Ligo_string.standard s)
   | V_Ct (C_bytes b) ->
     (match get_t_bytes ty with
-    | Some () -> e_a_bytes b
+    | Some () -> e_a_bytes ~loc b
     | None ->
       (match get_t_chest ty with
-      | Some () -> e_a_chest b
+      | Some () -> e_a_chest ~loc b
       | None ->
         (match get_t_chest_key ty with
-        | Some () -> e_a_chest_key b
+        | Some () -> e_a_chest_key ~loc b
         | None ->
           raise.error
             (Errors.generic_error
@@ -497,7 +517,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_address ty)
     in
     let x = string_of_contract a in
-    e_a_address x
+    e_a_address ~loc x
   | V_Ct (C_address _) ->
     raise.error
     @@ Errors.generic_error
@@ -529,7 +549,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_key_hash ty)
     in
     let x = string_of_key_hash kh in
-    e_a_key_hash x
+    e_a_key_hash ~loc x
   | V_Ct (C_key k) ->
     let () =
       trace_option
@@ -543,7 +563,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_key ty)
     in
     let x = string_of_key k in
-    e_a_key x
+    e_a_key ~loc x
   | V_Ct (C_signature s) ->
     let () =
       trace_option
@@ -557,7 +577,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_signature ty)
     in
     let x = string_of_signature s in
-    e_a_signature x
+    e_a_signature ~loc x
   | V_Ct (C_bls12_381_g1 b) ->
     let () =
       trace_option
@@ -571,7 +591,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_bls12_381_g1 ty)
     in
     let x = bytes_of_bls12_381_g1 b in
-    e_a_bls12_381_g1 x
+    e_a_bls12_381_g1 ~loc x
   | V_Ct (C_bls12_381_g2 b) ->
     let () =
       trace_option
@@ -585,7 +605,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_bls12_381_g2 ty)
     in
     let x = bytes_of_bls12_381_g2 b in
-    e_a_bls12_381_g2 x
+    e_a_bls12_381_g2 ~loc x
   | V_Ct (C_bls12_381_fr b) ->
     let () =
       trace_option
@@ -599,7 +619,7 @@ let rec val_to_ast ~raise ~loc
         (get_t_bls12_381_fr ty)
     in
     let x = bytes_of_bls12_381_fr b in
-    e_a_bls12_381_fr x
+    e_a_bls12_381_fr ~loc x
   | V_Ct (C_chain_id s) ->
     let () =
       trace_option
@@ -615,7 +635,7 @@ let rec val_to_ast ~raise ~loc
         | _ -> None)
     in
     let x = string_of_chain_id s in
-    e_a_chain_id x
+    e_a_chain_id ~loc x
   | V_Construct (ctor, arg) when is_t_sum ty ->
     let map_ty =
       trace_option
@@ -632,7 +652,7 @@ let rec val_to_ast ~raise ~loc
       Ligo_prim.Record.LMap.find (Label ctor) map_ty.fields
     in
     let arg = val_to_ast ~raise ~loc arg ty' in
-    e_a_constructor ctor arg ty
+    e_a_constructor ~loc ctor arg ty
   | V_Construct _ ->
     raise.error
     @@ Errors.generic_error
@@ -653,7 +673,7 @@ let rec val_to_ast ~raise ~loc
   | V_Michelson (Ty_code { micheline_repr = { code; code_ty = _ }; ast_ty }) ->
     let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
     let s = Ligo_string.verbatim s in
-    e_a_raw_code Backend.Michelson.name (make_e (e_string s) ast_ty) ast_ty
+    e_a_raw_code ~loc Backend.Michelson.name (make_e ~loc (e_string s) ast_ty) ast_ty
   | V_Record map when is_t_record ty ->
     let map_ty =
       trace_option
@@ -673,7 +693,7 @@ let rec val_to_ast ~raise ~loc
     in
     let rows =
       trace_option ~raise (Errors.generic_error loc "impossible")
-      @@ get_t_record (Ast_aggregated.t_unforged_ticket ty)
+      @@ get_t_record (Ast_aggregated.t_unforged_ticket ~loc ty)
     in
     let map =
       let get l map =
@@ -780,6 +800,7 @@ let rec val_to_ast ~raise ~loc
 
 and make_ast_func ~raise ?name env mut_flag arg body orig =
   let open Ast_aggregated in
+  let loc = Location.interpreter in
   let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name env arg body in
   let Ligo_prim.Arrow.{ type1 = in_ty; type2 = out_ty } =
@@ -794,8 +815,9 @@ and make_ast_func ~raise ?name env mut_flag arg body orig =
   in
   let typed_exp' =
     match name with
-    | None -> e_a_lambda lambda in_ty out_ty
-    | Some fun_name -> e_a_recursive { fun_name; fun_type = orig.type_expression; lambda }
+    | None -> e_a_lambda ~loc lambda in_ty out_ty
+    | Some fun_name ->
+      e_a_recursive ~loc { fun_name; fun_type = orig.type_expression; lambda }
   in
   (* Check that function to be compiled is obj-LIGO *)
   let _ =
@@ -820,18 +842,24 @@ and make_ast_record ~raise ~loc (map_ty : Ast_aggregated.rows) map =
         l, ast)
       kv_list
   in
-  Ast_aggregated.ez_e_a_record ~layout:map_ty.layout kv_list
+  Ast_aggregated.ez_e_a_record ~loc ~layout:map_ty.layout kv_list
 
 
 and make_ast_list ~raise ~loc ty l =
   let l = List.map ~f:(fun v -> val_to_ast ~raise ~loc v ty) l in
-  List.fold_right l ~f:Ast_aggregated.e_a_cons ~init:(Ast_aggregated.e_a_nil ty)
+  List.fold_right
+    l
+    ~f:(Ast_aggregated.e_a_cons ~loc)
+    ~init:(Ast_aggregated.e_a_nil ~loc ty)
 
 
 and make_ast_set ~raise ~loc ty l =
   let l = List.dedup_and_sort ~compare:Ligo_interpreter.Combinators.compare_value l in
   let l = List.map ~f:(fun v -> val_to_ast ~raise ~loc v ty) l in
-  List.fold_right l ~f:Ast_aggregated.e_a_set_add ~init:(Ast_aggregated.e_a_set_empty ty)
+  List.fold_right
+    l
+    ~f:(Ast_aggregated.e_a_set_add ~loc)
+    ~init:(Ast_aggregated.e_a_set_empty ~loc ty)
 
 
 and make_ast_big_map ~raise ~loc key_ty value_ty kv =
@@ -850,8 +878,8 @@ and make_ast_big_map ~raise ~loc key_ty value_ty kv =
   in
   List.fold_right
     kv
-    ~f:(fun (k, v) r -> Ast_aggregated.e_a_big_map_add k v r)
-    ~init:(Ast_aggregated.e_a_big_map_empty key_ty value_ty)
+    ~f:(fun (k, v) r -> Ast_aggregated.e_a_big_map_add ~loc k v r)
+    ~init:(Ast_aggregated.e_a_big_map_empty ~loc key_ty value_ty)
 
 
 and make_ast_map ~raise ~loc key_ty value_ty kv =
@@ -870,8 +898,8 @@ and make_ast_map ~raise ~loc key_ty value_ty kv =
   in
   List.fold_right
     kv
-    ~f:(fun (k, v) r -> Ast_aggregated.e_a_map_add k v r)
-    ~init:(Ast_aggregated.e_a_map_empty key_ty value_ty)
+    ~f:(fun (k, v) r -> Ast_aggregated.e_a_map_add ~loc k v r)
+    ~init:(Ast_aggregated.e_a_map_empty ~loc key_ty value_ty)
 
 
 and make_subst_ast_env_exp ~raise env =
@@ -1366,13 +1394,15 @@ let rec compile_value ~raise ~options ~loc
           in
           let expr =
             e_a_raw_code
+              ~loc
               "Michelson"
               (make_e
+                 ~loc
                  (e_string @@ Ligo_string.verbatim mich)
-                 (t_arrow (t_unit ()) item.ast_type ()))
-              (t_arrow (t_unit ()) item.ast_type ())
+                 (t_arrow ~loc (t_unit ~loc ()) item.ast_type ()))
+              (t_arrow ~loc (t_unit ~loc ()) item.ast_type ())
           in
-          let expr = e_a_application expr (e_a_unit ()) item.ast_type in
+          let expr = e_a_application ~loc expr (e_a_unit ~loc ()) item.ast_type in
           aux ((name, expr, no_mutation, inline) :: acc) tl
       in
       aux [] env
@@ -1393,9 +1423,9 @@ let rec compile_value ~raise ~options ~loc
       in
       let typed_exp' =
         match name with
-        | None -> e_a_lambda lambda in_ty out_ty
+        | None -> e_a_lambda ~loc lambda in_ty out_ty
         | Some fun_name ->
-          e_a_recursive { fun_name; fun_type = orig.type_expression; lambda }
+          e_a_recursive ~loc { fun_name; fun_type = orig.type_expression; lambda }
       in
       (* Check that function to be compiled is obj-LIGO *)
       let _ =

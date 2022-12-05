@@ -380,6 +380,7 @@ and decompile_eos
   let return_stat stat = return @@ (Some stat, None) in
   let return_stat_ez stat = return_stat @@ (stat, []) in
   let return_inst inst = return_stat_ez @@ CST.S_Instr inst in
+  let loc = expr.location in
   match expr.expression_content with
   | E_variable name ->
     let var = decompile_variable name in
@@ -408,7 +409,7 @@ and decompile_eos
         @@ Z.to_int64 time
       in
       (* TODO combinators for CSTs. *)
-      let ty = decompile_type_expr @@ AST.t_timestamp () in
+      let ty = decompile_type_expr @@ AST.t_timestamp ~loc () in
       let time = CST.E_String (Wrap.ghost time) in
       return_typed time ty
     | Literal_mutez mtez ->
@@ -422,19 +423,19 @@ and decompile_eos
       return_expr @@ CST.E_Bytes (Wrap.ghost (s, b))
     | Literal_address addr ->
       let addr = CST.E_String (Wrap.ghost addr) in
-      let ty = decompile_type_expr @@ AST.t_address () in
+      let ty = decompile_type_expr @@ AST.t_address ~loc () in
       return_typed addr ty
     | Literal_signature sign ->
       let sign = CST.E_String (Wrap.ghost sign) in
-      let ty = decompile_type_expr @@ AST.t_signature () in
+      let ty = decompile_type_expr @@ AST.t_signature ~loc () in
       return_typed sign ty
     | Literal_key k ->
       let k = CST.E_String (Wrap.ghost k) in
-      let ty = decompile_type_expr @@ AST.t_key () in
+      let ty = decompile_type_expr @@ AST.t_key ~loc () in
       return_typed k ty
     | Literal_key_hash kh ->
       let kh = CST.E_String (Wrap.ghost kh) in
-      let ty = decompile_type_expr @@ AST.t_key_hash () in
+      let ty = decompile_type_expr @@ AST.t_key_hash ~loc () in
       return_typed kh ty
     | Literal_chain_id _ | Literal_operation _ ->
       failwith
@@ -443,19 +444,19 @@ and decompile_eos
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.E_Bytes (Wrap.ghost (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_g1 () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_g1 ~loc () in
       return_typed b ty
     | Literal_bls12_381_g2 b ->
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.E_Bytes (Wrap.ghost (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_g2 () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_g2 ~loc () in
       return_typed b ty
     | Literal_bls12_381_fr b ->
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.E_Bytes (Wrap.ghost (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_fr ~loc () in
       return_typed b ty
     | Literal_chest _ | Literal_chest_key _ ->
       failwith "chest / chest_key not allowed in the syntax (only tests need this type)")
@@ -484,7 +485,10 @@ and decompile_eos
     let lin =
       let attributes = Shared_helpers.decompile_attributes attributes in
       let wrap_attr x =
-        List.fold ~f:(fun acc attr -> CST.D_Attr (attr, acc)) ~init:x attributes
+        List.fold
+          ~f:(fun acc attr -> CST.D_Attr (Region.wrap_ghost (attr, acc)))
+          ~init:x
+          attributes
       in
       let pattern = decompile_pattern let_binder in
       let init = decompile_expression rhs in
@@ -872,7 +876,10 @@ and decompile_to_data_decl
   let attributes = Shared_helpers.decompile_attributes attributes in
   let fun_name = name in
   let wrap_attr x =
-    List.fold ~f:(fun acc attr -> CST.D_Attr (attr, acc)) ~init:x attributes
+    List.fold
+      ~f:(fun acc attr -> CST.D_Attr (Region.wrap_ghost (attr, acc)))
+      ~init:x
+      attributes
   in
   match expr.expression_content with
   | E_lambda lambda ->
@@ -971,7 +978,7 @@ and decompile_declaration : AST.declaration -> CST.declaration =
  fun decl ->
   let decl = Location.unwrap decl in
   let wrap_attr attr x =
-    List.fold ~f:(fun acc attr -> CST.D_Attr (attr, acc)) ~init:x attr
+    List.fold ~f:(fun acc attr -> CST.D_Attr (Region.wrap_ghost (attr, acc))) ~init:x attr
   in
   match decl with
   | D_type { type_binder; type_expr; type_attr = _ } ->

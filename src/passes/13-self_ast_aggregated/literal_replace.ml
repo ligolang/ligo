@@ -31,6 +31,7 @@ let pair_expression ~raise : expression -> expression * expression =
 
 let expression ~raise : expression -> expression =
  fun expr ->
+  let loc = expr.location in
   match expr.expression_content with
   | E_constant { cons_name = cst; arguments = lst } ->
     (match cst with
@@ -47,8 +48,8 @@ let expression ~raise : expression -> expression =
       let pairs = List.map ~f:aux lst in
       List.fold_right
         pairs
-        ~f:(fun (k, v) m -> e_a_map_add k v m)
-        ~init:(e_a_map_empty k_ty v_ty)
+        ~f:(fun (k, v) m -> e_a_map_add ~loc k v m)
+        ~init:(e_a_map_empty ~loc k_ty v_ty)
     | C_BIG_MAP_LITERAL ->
       let elt =
         trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
@@ -62,8 +63,8 @@ let expression ~raise : expression -> expression =
       let pairs = List.map ~f:aux lst in
       List.fold_right
         pairs
-        ~f:(fun (k, v) m -> e_a_big_map_add k v m)
-        ~init:(e_a_big_map_empty k_ty v_ty)
+        ~f:(fun (k, v) m -> e_a_big_map_add ~loc k v m)
+        ~init:(e_a_big_map_empty ~loc k_ty v_ty)
     | C_SET_LITERAL ->
       let elt =
         trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
@@ -73,6 +74,9 @@ let expression ~raise : expression -> expression =
         @@ get_t_set expr.type_expression
       in
       let lst = list_expression ~raise elt in
-      List.fold_right lst ~f:(fun v s -> e_a_set_add v s) ~init:(e_a_set_empty v_ty)
+      List.fold_right
+        lst
+        ~f:(fun v s -> e_a_set_add ~loc v s)
+        ~init:(e_a_set_empty ~loc v_ty)
     | _ -> expr)
   | _ -> expr

@@ -1,3 +1,5 @@
+open Ligo_prim
+open Literal_types
 open Types
 open Simple_utils
 
@@ -8,13 +10,13 @@ type expression_content = [%import: Types.expression_content]
   ez
     { prefixes =
         [ ( "make_e"
-          , fun ?(location = Location.generated) expression_content type_expression
-                : expression ->
-              { expression_content; location; type_expression } )
+          , fun ~loc expression_content type_expression : expression ->
+              { expression_content; location = loc; type_expression } )
         ; ("get", fun x -> x.expression_content)
         ; ("get_type", fun x -> x.type_expression)
         ]
-    ; wrap_constructor = "expression_content", make_e
+    ; wrap_constructor =
+        ("expression_content", fun content type_ ~loc -> make_e ~loc content type_)
     ; wrap_get = "expression_content", get
     }]
 
@@ -23,23 +25,20 @@ type type_content = [%import: Types.type_content]
   ez
     { prefixes =
         [ ( "make_t"
-          , fun ?(loc = Location.generated) ?source_type type_content : type_expression ->
+          , fun ~loc ?source_type type_content : type_expression ->
               { type_content; location = loc; orig_var = None; source_type } )
         ; ("get", fun x -> x.type_content)
         ]
     ; wrap_constructor =
         ( "type_content"
-        , fun type_content ?loc ?source_type () -> make_t ?loc ?source_type type_content
+        , fun type_content ~loc ?source_type () -> make_t ~loc ?source_type type_content
         )
     ; wrap_get = "type_content", get
     ; default_get = `Option
     }]
 
-open Ligo_prim
-open Literal_types
-
-let t_constant ?loc injection parameters : type_expression =
-  t_constant ?loc { language = Backend.Michelson.name; injection; parameters } ()
+let t_constant ~loc injection parameters : type_expression =
+  t_constant ~loc { language = Backend.Michelson.name; injection; parameters } ()
 
 
 let get_t_inj (t : type_expression) (v : Ligo_prim.Literal_types.t)
@@ -66,7 +65,7 @@ let get_t_map (t : type_expression) : (type_expression * type_expression) option
   | _ -> None
 
 
-let t__type_ ?loc () : type_expression = t_constant ?loc _type_ []
+let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
   [@@map
     _type_
     , ( "list"
@@ -95,7 +94,7 @@ let t__type_ ?loc () : type_expression = t_constant ?loc _type_ []
       , "chest" )]
 
 
-let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [ t; t' ]
+let t__type_ ~loc t t' : type_expression = t_constant ~loc _type_ [ t; t' ]
   [@@map _type_, "map"]
 
 
@@ -191,16 +190,16 @@ let get_t__type__exn t =
       , "chest" )]
 
 
-let t_arrow param result ?loc ?source_type () : type_expression =
-  t_arrow ?loc ?source_type { type1 = param; type2 = result } ()
+let t_arrow param result ~loc ?source_type () : type_expression =
+  t_arrow ~loc ?source_type { type1 = param; type2 = result } ()
 
 
-let t_record ?loc ~layout fields : type_expression =
-  make_t ?loc (T_record { fields; layout })
+let t_record ~loc ~layout fields : type_expression =
+  make_t ~loc (T_record { fields; layout })
 
 
 let make_t_ez_record
-    ?loc
+    ~loc
     ?(layout = Layout.default_layout)
     (lst : (string * type_expression) list)
     : type_expression
@@ -214,7 +213,7 @@ let make_t_ez_record
       lst
   in
   let map = Record.of_list lst in
-  t_record ?loc ~layout map
+  t_record ~loc ~layout map
 
 
 let get_a_string (t : expression) =
@@ -241,15 +240,8 @@ let get_t_option (t : type_expression) : type_expression option =
   | _ -> None
 
 
-let e_a_let_mut_in ~loc x =
-  let exp = e_let_mut_in x (get_type x.let_result) in
-  { exp with location = loc }
-
-
-let e_a_let_in ~loc x =
-  let exp = e_let_in x (get_type x.let_result) in
-  { exp with location = loc }
-
+let e_a_let_mut_in ~loc x = e_let_mut_in ~loc x (get_type x.let_result)
+let e_a_let_in ~loc x = e_let_in ~loc x (get_type x.let_result)
 
 let get_sum_type (t : type_expression) (label : Label.t) : type_expression =
   match get_t_sum t with
@@ -260,10 +252,10 @@ let get_sum_type (t : type_expression) (label : Label.t) : type_expression =
     | Some row_element -> row_element.associated_type)
 
 
-let t_sum ?loc ~layout fields : type_expression = make_t ?loc (T_sum { fields; layout })
+let t_sum ~loc ~layout fields : type_expression = make_t ~loc (T_sum { fields; layout })
 
 let t_sum_ez
-    ?loc
+    ~loc
     ?(layout = Layout.default_layout)
     (lst : (string * type_expression) list)
     : type_expression
@@ -277,33 +269,34 @@ let t_sum_ez
       lst
   in
   let map = Record.of_list lst in
-  t_sum ?loc ~layout map
+  t_sum ~loc ~layout map
 
 
-let t_bool ?loc () : type_expression =
-  t_sum_ez ?loc [ "True", t_unit (); "False", t_unit () ]
+let t_bool ~loc () : type_expression =
+  t_sum_ez ~loc [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
 
 
 let get_t_bool (t : type_expression) : unit option =
-  match t.type_content with
-  | t when compare_type_content t (t_bool ()).type_content = 0 -> Some ()
-  | _ -> None
+  let t_bool = t_bool ~loc:t.location () in
+  Option.some_if (equal_type_content t.type_content t_bool.type_content) ()
 
 
-let t_option ?loc typ : type_expression = t_sum_ez ?loc [ "Some", typ; "None", t_unit () ]
-
-let t_record ?loc ~layout fields : type_expression =
-  make_t ?loc (T_record { fields; layout })
+let t_option ~loc typ : type_expression =
+  t_sum_ez ~loc [ "Some", typ; "None", t_unit ~loc () ]
 
 
-let ez_t_record ?loc ?(layout = Layout.default_layout) lst : type_expression =
+let t_record ~loc ~layout fields : type_expression =
+  make_t ~loc (T_record { fields; layout })
+
+
+let ez_t_record ~loc ?(layout = Layout.default_layout) lst : type_expression =
   let m = Record.of_list lst in
-  t_record ?loc ~layout m
+  t_record ~loc ~layout m
 
 
-let t_pair ?loc a b : type_expression =
+let t_pair ~loc a b : type_expression =
   ez_t_record
-    ?loc
+    ~loc
     [ Label.of_int 0, { associated_type = a; michelson_annotation = None; decl_pos = 0 }
     ; Label.of_int 1, { associated_type = b; michelson_annotation = None; decl_pos = 1 }
     ]
@@ -402,10 +395,11 @@ let get_e_tuple t =
   | _ -> None
 
 
-let e_bool b : expression_content =
+let e_bool ~loc b : expression_content =
   if b
   then
-    E_constructor { constructor = Label "True"; element = make_e (e_unit ()) (t_unit ()) }
+    E_constructor
+      { constructor = Label "True"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
   else
     E_constructor
-      { constructor = Label "False"; element = make_e (e_unit ()) (t_unit ()) }
+      { constructor = Label "False"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }

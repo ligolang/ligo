@@ -5,6 +5,8 @@ open Ligo_prim
 module Stdlib = Stdlib
 module Source_input = BuildSystem.Source_input
 
+let loc = Location.env
+
 module type Params = sig
   val raise : (all, Main_warnings.all) raise
   val options : Compiler_options.t
@@ -63,7 +65,7 @@ module M (Params : Params) = struct
 
     let add_module_to_env : module_name -> environment -> environment -> environment =
      fun module_name ast_typed_env env ->
-      let module_name = Module_var.of_input_var module_name in
+      let module_name = Module_var.of_input_var ~loc module_name in
       Environment.add_module
         ~public:()
         module_name
@@ -80,9 +82,10 @@ module M (Params : Params) = struct
 
     let make_module_declaration : module_name -> t -> declaration =
      fun module_binder ast_typed ->
-      let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
-      let module_binder = Module_var.of_input_var module_binder in
+      let module_ = Location.wrap ~loc (Module_expr.M_struct ast_typed) in
+      let module_binder = Module_var.of_input_var ~loc module_binder in
       Location.wrap
+        ~loc
         Ast_typed.(
           D_module
             { module_binder; module_; module_attr = { public = true; hidden = true } })
@@ -130,9 +133,10 @@ module Infer (Params : Params) = struct
 
     let make_module_declaration : module_name -> t -> declaration =
      fun module_binder ast_typed ->
-      let module_ = Location.wrap (Module_expr.M_struct ast_typed) in
-      let module_binder = Module_var.of_input_var module_binder in
+      let module_ = Location.wrap ~loc (Module_expr.M_struct ast_typed) in
+      let module_binder = Module_var.of_input_var ~loc module_binder in
       Location.wrap
+        ~loc
         Ast_core.(
           D_module
             { module_binder; module_; module_attr = { public = true; hidden = true } })
@@ -301,7 +305,7 @@ let rec build_contract_aggregated ~raise
     : options:Compiler_options.t -> string -> string list -> Source_input.file_name -> _
   =
  fun ~options entry_point cli_views file_name ->
-  let entry_point = Value_var.of_input_var entry_point in
+  let entry_point = Value_var.of_input_var ~loc entry_point in
   let typed_prg = qualified_typed ~raise ~options Ligo_compile.Of_core.Env file_name in
   let typed_contract =
     trace ~raise self_ast_typed_tracer

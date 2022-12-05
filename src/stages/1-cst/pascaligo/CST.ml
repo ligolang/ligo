@@ -157,7 +157,7 @@ and cst = t
 and declarations = declaration nseq
 
 and declaration =
-  | D_Attr of (attribute * declaration)
+  | D_Attr of (attribute * declaration) reg
   | D_Const of const_decl reg
   | D_Directive of Directive.t
   | D_Fun of fun_decl reg
@@ -743,6 +743,15 @@ let instr_to_region = function
   | I_Remove { region; _ } -> region
   | I_Skip t -> t#region
   | I_While { region; _ } -> region
+
+
+let decl_to_region = function
+  | D_Attr { region; _ } -> region
+  | D_Const { region; _ } -> region
+  | D_Directive dir -> Directive.to_region dir
+  | D_Fun { region; _ } -> region
+  | D_Module { region; _ } -> region
+  | D_Type { region; _ } -> region
 
 
 let test_clause_to_region = function

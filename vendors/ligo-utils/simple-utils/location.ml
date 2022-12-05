@@ -51,6 +51,11 @@ let make (start_pos:Lexing.position) (end_pos:Lexing.position) : t =
                     ~stop:(Pos.from_byte end_pos))
 
 let virtual_location s = Virtual s
+
+let env = virtual_location "env"
+let repl = virtual_location "repl"
+let interpreter = virtual_location "interpreter"
+let test = virtual_location "test"
 let dummy = virtual_location "dummy"
 let generated = virtual_location "generated"
 
@@ -94,7 +99,7 @@ let compare_content ~compare:compare_content wa wb =
 let equal_content ~equal:equal_content wa wb =
   equal_content wa.wrap_content wb.wrap_content
 
-let wrap ?(loc = generated) wrap_content = { wrap_content ; location = loc }
+let wrap ~loc wrap_content = { wrap_content ; location = loc }
 let get_location x = x.location
 let unwrap { wrap_content ; _ } = wrap_content
 let fold f acc x = f acc x.wrap_content

@@ -6,7 +6,8 @@ open Ligo_prim
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
   fun e in_ty out_ty ->
-    let binder = Value_var.fresh () in
+    let loc = e.location in
+    let binder = Value_var.fresh ~loc () in
     let var = e_var binder in_ty in
     let app = e_application e out_ty var in
     { binder = binder ; body = app }

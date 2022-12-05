@@ -19,28 +19,36 @@ let external_contract =
   Tezos_utils.Signature.Public_key_hash.to_string kh
 
 
-let from_ = e_address @@ addr 5
-let to_ = e_address @@ addr 2
-let sender = e_address @@ sender
-(* let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ())) *)
+let from_ = e_address ~loc @@ addr 5
+let to_ = e_address ~loc @@ addr 2
+let sender = e_address ~loc @@ sender
+(* let external_contract = e_annotation ~loc  (e_constant ~loc  (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract ~loc  (t_nat ~loc  ())) *)
 
 let transfer ~raise f s () =
   let program = get_program ~raise f ~st:s () in
   let storage =
     e_record_ez
-      [ "tokens", e_big_map [ sender, e_nat 100; from_, e_nat 100; to_, e_nat 100 ]
-      ; "total_supply", e_nat 300
+      ~loc
+      [ ( "tokens"
+        , e_big_map
+            ~loc
+            [ sender, e_nat ~loc 100; from_, e_nat ~loc 100; to_, e_nat ~loc 100 ] )
+      ; "total_supply", e_nat ~loc 300
       ]
   in
-  let parameter = e_pair from_ (e_pair to_ @@ e_nat 10) in
+  let parameter = e_pair ~loc from_ (e_pair ~loc to_ @@ e_nat ~loc 10) in
   let new_storage =
     e_record_ez
-      [ "tokens", e_big_map [ sender, e_nat 100; from_, e_nat 90; to_, e_nat 110 ]
-      ; "total_supply", e_nat 300
+      ~loc
+      [ ( "tokens"
+        , e_big_map
+            ~loc
+            [ sender, e_nat ~loc 100; from_, e_nat ~loc 90; to_, e_nat ~loc 110 ] )
+      ; "total_supply", e_nat ~loc 300
       ]
   in
-  let input = e_pair parameter storage in
-  let expected = e_pair (e_typed_list [] (t_operation ())) new_storage in
+  let input = e_pair ~loc parameter storage in
+  let expected = e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) new_storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
@@ -51,16 +59,22 @@ let transfer_not_e_balance ~raise f s () =
   let program = get_program ~raise f ~st:s () in
   let storage =
     e_record_ez
-      [ "tokens", e_big_map [ sender, e_nat 100; from_, e_nat 0; to_, e_nat 100 ]
+      ~loc
+      [ ( "tokens"
+        , e_big_map
+            ~loc
+            [ sender, e_nat ~loc 100; from_, e_nat ~loc 0; to_, e_nat ~loc 100 ] )
       ; ( "allowances"
-        , e_big_map [ e_record_ez [ "owner", from_; "spender", sender ], e_nat 100 ] )
-      ; "total_supply", e_nat 300
+        , e_big_map
+            ~loc
+            [ e_record_ez ~loc [ "owner", from_; "spender", sender ], e_nat ~loc 100 ] )
+      ; "total_supply", e_nat ~loc 300
       ]
   in
   let parameter =
-    e_record_ez [ "address_from", from_; "address_to", to_; "value", e_nat 10 ]
+    e_record_ez ~loc [ "address_from", from_; "address_to", to_; "value", e_nat ~loc 10 ]
   in
-  let input = e_pair parameter storage in
+  let input = e_pair ~loc parameter storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
@@ -69,27 +83,27 @@ let transfer_not_e_balance ~raise f s () =
 
 (* let get_balance ~raise f s () =
  *   let program = get_program ~raise f ~st:s () in
- *   let storage = e_record_ez [
- *     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
- *     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
+ *   let storage = e_record_ez ~loc  [
+ *     ("tokens", e_big_map ~loc  [(sender, e_nat ~loc  100); (from_, e_nat ~loc  100); (to_, e_nat ~loc  100)]);
+ *     ("allowances", e_big_map ~loc  [(e_record_ez ~loc  [("owner", sender); ("spender", from_)], e_nat ~loc  100)]);
  *     ("total_supply",e_nat 300);
  *   ] in
- *   let parameter = e_record_ez [("owner", from_);("callback", external_contract)] in
- *   let input = e_pair parameter storage in
- *   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
+ *   let parameter = e_record_ez ~loc  [("owner", from_);("callback", external_contract)] in
+ *   let input = e_pair ~loc  parameter storage in
+ *   let expected = e_pair ~loc  (e_typed_list ~loc  [] (t_operation ~loc  ())) storage in
  *   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
  *   expect_eq ~raise program ~options "getBalance" input expected
  * 
  * let get_total_supply ~raise f s () =
  *   let program = get_program ~raise f ~st:s () in
- *   let storage = e_record_ez [
- *     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
- *     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
+ *   let storage = e_record_ez ~loc  [
+ *     ("tokens", e_big_map ~loc  [(sender, e_nat ~loc  100); (from_, e_nat ~loc  100); (to_, e_nat ~loc  100)]);
+ *     ("allowances", e_big_map ~loc  [(e_record_ez ~loc  [("owner", sender); ("spender", from_)], e_nat ~loc  100)]);
  *     ("total_supply",e_nat 300);
  *   ] in
- *   let parameter = e_record_ez [("callback", external_contract)] in
- *   let input = e_pair parameter storage in
- *   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
+ *   let parameter = e_record_ez ~loc  [("callback", external_contract)] in
+ *   let input = e_pair ~loc  parameter storage in
+ *   let expected = e_pair ~loc  (e_typed_list ~loc  [] (t_operation ~loc  ())) storage in
  *   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
  *   expect_eq ~raise program ~options "getTotalSupply" input expected *)
 

@@ -1,7 +1,10 @@
+module Location = Simple_utils.Location
 open Api_helpers
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
+
+let loc = Location.dummy
 
 let pretty_print (raw_options : Raw_options.t) source_file display_format () =
   let warning_as_error = raw_options.warning_as_error in
@@ -136,7 +139,7 @@ let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
     ~options:options.middle_end
     ~self_pass
     typed
-    (Ast_typed.e_a_unit ())
+    (Ast_typed.e_a_unit ~loc ())
 
 
 let ast_expanded (raw_options : Raw_options.t) source_file display_format () =
@@ -160,7 +163,7 @@ let ast_expanded (raw_options : Raw_options.t) source_file display_format () =
       ~options:options.middle_end
       ~self_pass
       typed
-      (Ast_typed.e_a_unit ())
+      (Ast_typed.e_a_unit ~loc ())
   in
   Compile.Of_aggregated.compile_expression ~raise aggregated
 
@@ -186,7 +189,7 @@ let mini_c (raw_options : Raw_options.t) source_file display_format optimize () 
         ~raise
         ~options:options.middle_end
         typed
-        (Ast_typed.e_a_unit ())
+        (Ast_typed.e_a_unit ~loc ())
     in
     let expanded = Compile.Of_aggregated.compile_expression ~raise expr in
     let mini_c = Compile.Of_expanded.compile_expression ~raise expanded in

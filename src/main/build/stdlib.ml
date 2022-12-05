@@ -1,3 +1,5 @@
+module Location = Simple_utils.Location
+
 type t =
   { curry : lib
   ; uncurry : lib
@@ -27,6 +29,8 @@ let empty =
   let e = { prelude_core = []; prelude_typed = []; content_typed = [] } in
   { curry = e; uncurry = e; typed_mod_def = []; core_mod_def = [] }
 
+
+let loc = Location.env
 
 module Cache = struct
   (* LanguageMap are used to cache compilation of standard libs across :
@@ -89,8 +93,8 @@ let get : options:Compiler_options.t -> unit -> t =
     | Environment.Protocols.Kathmandu -> def "KATHMANDU"
   in
   let lib = Ligo_lib.get () in
-  let binder_curry = Ligo_prim.Module_var.fresh ~name:"Curry_lib" () in
-  let binder_uncurry = Ligo_prim.Module_var.fresh ~name:"Uncurry_lib" () in
+  let binder_curry = Ligo_prim.Module_var.fresh ~loc ~name:"Curry_lib" () in
+  let binder_uncurry = Ligo_prim.Module_var.fresh ~loc ~name:"Uncurry_lib" () in
   let curry_content_core = compile ~options (def "CURRY" ^ std ^ lib) in
   let curry_content_typed = type_ ~options curry_content_core in
   let uncurry_content_core = compile ~options (def "UNCURRY" ^ std ^ lib) in
@@ -100,17 +104,17 @@ let get : options:Compiler_options.t -> unit -> t =
     let open Ligo_prim.Module_expr in
     let open Ast_typed in
     let module_attr = Ast_typed.TypeOrModuleAttr.{ public = true; hidden = true } in
-    [ Location.wrap
+    [ Location.wrap ~loc
       @@ D_module
            { module_binder = binder_curry
            ; module_attr
-           ; module_ = Location.wrap @@ M_struct curry_content_typed
+           ; module_ = Location.wrap ~loc @@ M_struct curry_content_typed
            }
-    ; Location.wrap
+    ; Location.wrap ~loc
       @@ D_module
            { module_binder = binder_uncurry
            ; module_attr
-           ; module_ = Location.wrap @@ M_struct uncurry_content_typed
+           ; module_ = Location.wrap ~loc @@ M_struct uncurry_content_typed
            }
     ]
   in
@@ -118,17 +122,17 @@ let get : options:Compiler_options.t -> unit -> t =
     let open Ligo_prim.Module_expr in
     let open Ast_core in
     let module_attr = Ast_core.TypeOrModuleAttr.{ public = true; hidden = true } in
-    [ Location.wrap
+    [ Location.wrap ~loc
       @@ D_module
            { module_binder = binder_curry
            ; module_attr
-           ; module_ = Location.wrap @@ M_struct curry_content_core
+           ; module_ = Location.wrap ~loc @@ M_struct curry_content_core
            }
-    ; Location.wrap
+    ; Location.wrap ~loc
       @@ D_module
            { module_binder = binder_uncurry
            ; module_attr
-           ; module_ = Location.wrap @@ M_struct uncurry_content_core
+           ; module_ = Location.wrap ~loc @@ M_struct uncurry_content_core
            }
     ]
   in

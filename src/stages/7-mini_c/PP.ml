@@ -342,13 +342,14 @@ let%expect_test _ =
   [%expect {| 0x666f6f |}]
 
 let%expect_test _ =
+  let loc = Location.dummy in
   let pp = expression_content Format.std_formatter in
-  let dummy_type = Combinators.t_unit () in
+  let dummy_type = Combinators.t_unit ~loc () in
   let wrap e =
     { content = e; type_expression = dummy_type; location = Location.generated }
   in
-  let y = Value_var.of_input_var "y" in
-  let z = Value_var.of_input_var "z" in
+  let y = Value_var.of_input_var ~loc "y" in
+  let z = Value_var.of_input_var ~loc "z" in
   pp @@ E_closure { binder = y; body = wrap (E_variable y) };
   [%expect {|
     fun y -> (y)

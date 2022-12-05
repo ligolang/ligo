@@ -101,8 +101,11 @@ let rec compile_type_expression
     let attr = compile_attributes attr in
     let cases = Utils.nsepseq_to_list value.variants in
     let f : CST.variant CST.reg -> string * AST.type_expression * string list =
-     fun { value = { ctor; ctor_args; attributes }; region = _ } ->
-      let t = Option.value ~default:(t_unit ()) (Option.map ~f:(self <@ snd) ctor_args) in
+     fun { value = { ctor; ctor_args; attributes }; region } ->
+      let loc = Location.lift region in
+      let t =
+        Option.value ~default:(t_unit ~loc ()) (Option.map ~f:(self <@ snd) ctor_args)
+      in
       let case_attr = compile_attributes attributes in
       ctor#payload, t, case_attr
     in
@@ -440,7 +443,7 @@ let rec compile_expression
             then raise.error (unexpected_wildcard @@ CST.expr_to_region pun);
             label, Value_var.of_input_var ~loc label
           in
-          e_update ~loc acc [ Access_record label ] (e_variable v)
+          e_update ~loc acc [ Access_record label ] (e_variable ~loc v)
       in
       List.fold_left (Utils.sepseq_to_list record_lhs.value.elements) ~f ~init:structure
     | x -> raise.error (wrong_functional_updator @@ CST.expr_to_region x))
@@ -486,18 +489,18 @@ let rec compile_expression
         let input_tuple_ty =
           (* TODOpoly: polymorphism should give some leeway (using Option.all feels wrong) *)
           let in_tys_opt = Option.all @@ List.map ~f:Param.get_ascr params in
-          Option.map ~f:t_tuple in_tys_opt
+          Option.map ~f:(t_tuple ~loc) in_tys_opt
         in
         let binder = Value_var.fresh ~loc ~name:"parameter" () in
         let expr =
           let body =
-            e_param_matching_tuple ~loc:loc_par (e_variable binder) params body
+            e_param_matching_tuple ~loc:loc_par (e_variable ~loc binder) params body
           in
           e_lambda_ez ~loc binder ?ascr:input_tuple_ty ret_ty body
         in
         let ty_opt =
           Option.map
-            ~f:(fun (a, b) -> t_arrow a b)
+            ~f:(fun (a, b) -> t_arrow ~loc a b)
             (Option.bind_pair (input_tuple_ty, ret_ty))
         in
         expr, ty_opt
@@ -507,7 +510,7 @@ let rec compile_expression
     let v, loc = w_split constr in
     (match v with
     | "Unit" -> e_unit ~loc ()
-    | _ -> e_constructor ~loc v (e_unit ()))
+    | _ -> e_constructor ~loc v (e_unit ~loc ()))
   | E_App x ->
     let (expr, args_opt), loc = r_split x in
     (match expr, args_opt with
@@ -515,7 +518,7 @@ let rec compile_expression
     | CST.E_Ctor x, _ ->
       let ctor_name, _loc = w_split x in
       let args_o = Option.map ~f:compile_tuple_expression args_opt in
-      let args = Option.value ~default:(e_unit ()) args_o in
+      let args = Option.value ~default:(e_unit ~loc ()) args_o in
       e_constructor ~loc ctor_name args
     | _ -> failwith "impossible")
   | E_Case case ->
@@ -653,7 +656,7 @@ and compile_pattern ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
       =
      fun x prev ->
       let p = self x in
-      Location.wrap (P_list (Cons (p, prev)))
+      Location.wrap ~loc (P_list (Cons (p, prev)))
     in
     List.fold_right ~f ~init:(Location.wrap ~loc (P_list (List []))) elements
   | P_Cons { region; value = hd, _, tl } ->
@@ -705,7 +708,7 @@ and compile_pattern ~raise : CST.pattern -> AST.ty_expr option Pattern.t =
     let c, loc = w_split x in
     (match x#payload with
     | "Unit" -> Location.wrap ~loc P_unit
-    | _ -> Location.wrap ~loc (P_variant (Label c, Location.wrap P_unit)))
+    | _ -> Location.wrap ~loc (P_variant (Label c, Location.wrap ~loc P_unit)))
   | P_ModPath _ | P_Mutez _ | P_Bytes _ | P_Int _ | P_Nat _ | P_String _ ->
     raise.error @@ unsupported_pattern_type p
 
@@ -846,7 +849,7 @@ and compile_assignment
       | Access_map k ->
         let matchee = e_map_find_opt ~loc k last_proj in
         let none_body = e_variable ~loc lhs in
-        let some_proj = Value_var.fresh () in
+        let some_proj = Value_var.fresh ~loc () in
         let some_body =
           let updator hole = updator (e_map_add ~loc k hole last_proj) in
           let last_proj' = e_variable ~loc some_proj in
@@ -864,7 +867,11 @@ and compile_assignment
 and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.expression
   =
  fun ?next instruction ->
-  let return expr = Option.value_map next ~default:expr ~f:(e_sequence expr) in
+  let return expr =
+    Option.value_map next ~default:expr ~f:(fun expr' ->
+        let loc = Location.cover expr.location expr'.location in
+        e_sequence ~loc expr expr')
+  in
   let compile_if_clause : ?next:AST.expression -> CST.test_clause -> AST.expression =
    fun ?next if_clause ->
     match if_clause with
@@ -877,7 +884,8 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
     let test = compile_expression ~raise test in
     let ifso = compile_if_clause if_so in
     let ifnot =
-      Option.value_map if_not ~default:(e_skip ()) ~f:(fun x -> compile_if_clause (snd x))
+      Option.value_map if_not ~default:(e_skip ~loc ()) ~f:(fun x ->
+          compile_if_clause (snd x))
     in
     return @@ e_cond ~loc test ifso ifnot
   | I_Case { region; value = { expr; cases; _ } } ->
@@ -897,7 +905,7 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
       (match last_access with
       | Access_map k ->
         let default_rhs =
-          e_map_add ~loc k (compile_expression ~raise rhs) (e_variable var)
+          e_map_add ~loc k (compile_expression ~raise rhs) (e_variable ~loc var)
         in
         let last_proj_update last_proj =
           e_map_add ~loc k (compile_expression ~raise rhs) last_proj
@@ -905,7 +913,7 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
         return @@ compile_assignment ~loc ~last_proj_update ~lhs:var ~path ~default_rhs
       | Access_record _ | Access_tuple _ ->
         let rhs = compile_expression ~raise rhs in
-        let default_rhs = e_update ~loc (e_variable var) [ last_access ] rhs in
+        let default_rhs = e_update ~loc (e_variable ~loc var) [ last_access ] rhs in
         let last_proj_update last_proj = e_update ~loc last_proj [ last_access ] rhs in
         return @@ compile_assignment ~loc ~last_proj_update ~lhs:var ~path ~default_rhs))
   | I_While { region; value = { cond; block; _ } } ->
@@ -919,7 +927,10 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
     let start = compile_expression ~raise init in
     let bound = compile_expression ~raise bound in
     let increment =
-      Option.value_map step ~default:(e_int_z Z.one) ~f:(compile_expression ~raise <@ snd)
+      Option.value_map
+        step
+        ~default:(e_int_z ~loc Z.one)
+        ~f:(compile_expression ~raise <@ snd)
     in
     let body = compile_block ~raise block in
     return @@ e_for ~loc index start bound increment body
@@ -960,17 +971,17 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
       | E_map kvl, `Map _ ->
         let f acc (k, v) = e_map_add ~loc k v acc in
         ( (fun last_proj -> List.fold kvl ~f ~init:last_proj)
-        , List.fold kvl ~f ~init:(e_variable v) )
+        , List.fold kvl ~f ~init:(e_variable ~loc v) )
       | E_record kl, `Record _ ->
         let f acc (label, expr) =
           e_update ~loc acc [ Access_record (Label.to_string label) ] expr
         in
         ( (fun last_proj -> List.fold kl ~f ~init:last_proj)
-        , List.fold kl ~f ~init:(e_variable v) )
+        , List.fold kl ~f ~init:(e_variable ~loc v) )
       | E_set lst, `Set _ ->
         let f acc v = e_set_add ~loc v acc in
         ( (fun last_proj -> List.fold lst ~f ~init:last_proj)
-        , List.fold lst ~f ~init:(e_variable v) )
+        , List.fold lst ~f ~init:(e_variable ~loc v) )
       | _ -> failwith "impossible patch rhs"
     in
     return @@ compile_assignment ~loc ~last_proj_update ~lhs:v ~path ~default_rhs
@@ -983,7 +994,7 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
       | `Set _ -> e_set_remove ~loc
       | `Map _ -> e_map_remove ~loc
     in
-    let default_rhs = remove_func item (e_variable v) in
+    let default_rhs = remove_func item (e_variable ~loc v) in
     let last_proj_update prev_proj = remove_func item prev_proj in
     return @@ compile_assignment ~loc ~last_proj_update ~lhs:v ~path ~default_rhs
   | I_Call { region; value = f, args } ->
@@ -1018,7 +1029,8 @@ and compile_data_declaration ~raise
     e_let_in ~loc pattern attr init next
   in
   match data_decl with
-  | D_Attr (a, x) -> compile_data_declaration ~raise ~attr:(a :: attr) ~next x
+  | D_Attr { value = a, x; _ } ->
+    compile_data_declaration ~raise ~attr:(a :: attr) ~next x
   | D_Const const_decl ->
     let CST.{ pattern; init; const_type; _ }, loc = r_split const_decl in
     let lhs, rhs = compile_binding ~raise (pattern, init) const_type in
@@ -1053,7 +1065,8 @@ and compile_statement ~raise
     let i = compile_instruction ~raise ?next i in
     Some i
   | S_Decl dd ->
-    let next = Option.value ~default:(e_skip ()) next in
+    let loc = Location.lift (CST.decl_to_region dd) in
+    let next = Option.value ~default:(e_skip ~loc ()) next in
     let dd = compile_data_declaration ~raise ~next dd in
     Some dd
   | S_VarDecl var_decl ->
@@ -1103,15 +1116,15 @@ and compile_fun_decl loc ~raise
     | [ binder ] ->
       let lambda : (_, _ option) Lambda.t = { binder; output_type = ret_type; result } in
       ( lambda
-      , Option.map ~f:(fun (a, b) -> t_arrow a b)
+      , Option.map ~f:(fun (a, b) -> t_arrow ~loc a b)
         @@ Option.bind_pair (Param.get_ascr binder, ret_type) )
     | lst ->
       let lst = Option.all @@ List.map ~f:Param.get_ascr lst in
-      let input_type = Option.map ~f:t_tuple lst in
-      let var = Value_var.fresh ~name:"parameters" () in
+      let input_type = Option.map ~f:(t_tuple ~loc) lst in
+      let var = Value_var.fresh ~loc ~name:"parameters" () in
       let binder = Param.make var input_type in
       let result =
-        e_param_matching_tuple ~loc:result.location (e_variable var) param result
+        e_param_matching_tuple ~loc:result.location (e_variable ~loc var) param result
       in
       let lambda : _ Lambda.t = { binder; output_type = ret_type; result } in
       ( lambda
@@ -1167,7 +1180,7 @@ and compile_declaration ~raise
   let return reg decl = Some (Location.wrap ~loc:(Location.lift reg) decl) in
   let skip = None in
   match decl with
-  | D_Attr (a, x) -> compile_declaration ~attr:(a :: attr) ~raise x
+  | D_Attr { value = a, x; _ } -> compile_declaration ~attr:(a :: attr) ~raise x
   | D_Type { value = { name; params; type_expr; _ }; region } ->
     let type_expr =
       let rhs = compile_type_expression ~raise type_expr in

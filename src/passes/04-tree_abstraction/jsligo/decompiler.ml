@@ -280,6 +280,7 @@ let decompile_operator : Constant.rich_constant -> CST.expr List.Ne.t -> CST.exp
 let rec decompile_expression_in : AST.expression -> statement_or_expr list =
  fun expr ->
   let return_expr expr = expr in
+  let loc = expr.location in
   match expr.expression_content with
   | E_variable name ->
     let var = decompile_variable name in
@@ -326,7 +327,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
         @@ Z.to_int64 time
       in
       (* TODO combinators for CSTs. *)
-      let ty = decompile_type_expr @@ AST.t_timestamp () in
+      let ty = decompile_type_expr @@ AST.t_timestamp ~loc () in
       let time = CST.EString (String (Region.wrap_ghost time)) in
       return_expr
       @@ [ Expr (CST.EAnnot (Region.wrap_ghost @@ (time, Token.ghost_colon, ty))) ]
@@ -351,21 +352,21 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
       return_expr @@ [ Expr (CST.EBytes (Region.wrap_ghost (s, b))) ]
     | Literal_address addr ->
       let addr = CST.EString (String (Region.wrap_ghost addr)) in
-      let ty = decompile_type_expr @@ AST.t_address () in
+      let ty = decompile_type_expr @@ AST.t_address ~loc () in
       return_expr
       @@ [ Expr (CST.EAnnot (Region.wrap_ghost (addr, Token.ghost_colon, ty))) ]
     | Literal_signature sign ->
       let sign = CST.EString (String (Region.wrap_ghost sign)) in
-      let ty = decompile_type_expr @@ AST.t_signature () in
+      let ty = decompile_type_expr @@ AST.t_signature ~loc () in
       return_expr
       @@ [ Expr (CST.EAnnot (Region.wrap_ghost (sign, Token.ghost_colon, ty))) ]
     | Literal_key k ->
       let k = CST.EString (String (Region.wrap_ghost k)) in
-      let ty = decompile_type_expr @@ AST.t_key () in
+      let ty = decompile_type_expr @@ AST.t_key ~loc () in
       return_expr @@ [ Expr (CST.EAnnot (Region.wrap_ghost (k, Token.ghost_colon, ty))) ]
     | Literal_key_hash kh ->
       let kh = CST.EString (String (Region.wrap_ghost kh)) in
-      let ty = decompile_type_expr @@ AST.t_key_hash () in
+      let ty = decompile_type_expr @@ AST.t_key_hash ~loc () in
       return_expr @@ [ Expr (CST.EAnnot (Region.wrap_ghost (kh, Token.ghost_colon, ty))) ]
     | Literal_chain_id _ | Literal_operation _ ->
       failwith "chain_id, operation are not created currently ?"
@@ -373,19 +374,19 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.EBytes (Region.wrap_ghost (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_g1 () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_g1 ~loc () in
       return_expr @@ [ Expr (CST.EAnnot (Region.wrap_ghost (b, Token.ghost_colon, ty))) ]
     | Literal_bls12_381_g2 b ->
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.EBytes (Region.wrap_ghost (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_g2 () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_g2 ~loc () in
       return_expr @@ [ Expr (CST.EAnnot (Region.wrap_ghost (b, Token.ghost_colon, ty))) ]
     | Literal_bls12_381_fr b ->
       let b = Hex.of_bytes b in
       let s = Hex.to_string b in
       let b = CST.EBytes (Region.wrap_ghost (s, b)) in
-      let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
+      let ty = decompile_type_expr @@ AST.t_bls12_381_fr ~loc () in
       return_expr @@ [ Expr (CST.EAnnot (Region.wrap_ghost (b, Token.ghost_colon, ty))) ]
     | Literal_chest _ | Literal_chest_key _ ->
       failwith "chest / chest_key not allowed in the syntax (only tests need this type)")

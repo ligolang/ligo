@@ -12,17 +12,18 @@ let compile_main ~raise () =
   Test_helpers.compile_main ~raise "./contracts/timelock_repeat.mligo" ()
 
 
-let empty_op_list = e_typed_list [] (t_operation ())
+let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
 
 let empty_message =
   e_lambda_ez
-    (Value_var.of_input_var "arguments")
-    ~ascr:(t_unit ())
-    (Some (t_list (t_operation ())))
+    ~loc
+    (Value_var.of_input_var ~loc "arguments")
+    ~ascr:(t_unit ~loc ())
+    (Some (t_list ~loc (t_operation ~loc ())))
     empty_op_list
 
 
-let call msg = e_constructor "Call" msg
+let call msg = e_constructor ~loc "Call" msg
 
 let mk_time ~raise st =
   match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
@@ -34,8 +35,9 @@ let to_sec t = Memory_proto_alpha.Protocol.Script_timestamp.to_zint t
 
 let storage st interval execute =
   e_record_ez
-    [ "next_use", e_timestamp_z (to_sec st)
-    ; "interval", e_int interval
+    ~loc
+    [ "next_use", e_timestamp_z ~loc (to_sec st)
+    ; "interval", e_int ~loc interval
     ; "execute", execute
     ]
 
@@ -54,12 +56,12 @@ let early_call ~raise () =
     ~options
     program
     "main"
-    (e_pair (e_unit ()) init_storage)
+    (e_pair ~loc (e_unit ~loc ()) init_storage)
     exp_failwith
 
 
 let fake_decompiled_empty_message =
-  e_string "[lambda of type: (lambda unit (list operation)) ]"
+  e_string ~loc "[lambda of type: (lambda unit (list operation)) ]"
 
 
 (* Test that when we use the contract the next use time advances by correct interval *)
@@ -84,8 +86,8 @@ let interval_advance ~raise () =
     ~options
     program
     "main"
-    (e_pair (e_unit ()) init_storage)
-    (e_pair empty_op_list new_storage_fake)
+    (e_pair ~loc (e_unit ~loc ()) init_storage)
+    (e_pair ~loc empty_op_list new_storage_fake)
 
 
 let main =

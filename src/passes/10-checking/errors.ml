@@ -10,14 +10,15 @@ let stage = "typer"
 
 let type_improve t =
   let open Type in
+  let loc = t.location in
   let make_type (module_path, element) =
     match module_path with
-    | [] -> t_variable element ()
+    | [] -> t_variable ~loc element ()
     | _ ->
       let open Simple_utils.PP_helpers in
       let x = Format.asprintf "%a" (list_sep Module_var.pp (tag ".")) module_path in
       let y = Format.asprintf "%a" Type_var.pp element in
-      t_variable (Type_var.of_input_var (x ^ "." ^ y)) ()
+      t_variable ~loc (Type_var.of_input_var ~loc (x ^ "." ^ y)) ()
   in
   match t.content with
   | T_construct { parameters; _ } when List.length parameters = 0 -> t

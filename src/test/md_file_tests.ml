@@ -167,7 +167,7 @@ let compile_groups ~raise filename grp_list =
           ~raise
           ~options:options.middle_end
           typed
-          (Ast_typed.e_a_unit ())
+          (Ast_typed.e_a_unit ~loc ())
       in
       let expanded =
         Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit
