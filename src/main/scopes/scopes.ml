@@ -444,10 +444,10 @@ let rec expression
     defs_result @ defs, refs, tenv, add_defs_to_scopes (def_par @ [ def_fun ]) scopes
   | E_type_in { type_binder; rhs; let_result } ->
     let t_refs = find_type_references rhs in
-    let def = type_expression type_binder Local rhs in
+    let tdef = [ type_expression type_binder Local rhs ] in
     let defs, refs, tenv, scopes = expression tenv let_result in
-    let scopes = merge_same_scopes scopes in
-    [ def ] @ defs, refs @ t_refs, tenv, scopes
+    let tdef, refs = update_references refs tdef in
+    tdef @ defs, refs @ t_refs, tenv, add_defs_to_scopes tdef scopes
   | E_matching { matchee; cases } ->
     let defs_matchee, refs_matchee, tenv, scopes = expression tenv matchee in
     let defs_matchee, refs_matchee = update_references refs_matchee defs_matchee in
@@ -682,5 +682,3 @@ let scopes
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
   defs, scopes
-
-(* TODO: update references for types *)
