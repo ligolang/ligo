@@ -1,3 +1,4 @@
+module Location = Simple_utils.Location
 open Helpers
 
 type c_unit = Buffer.t
@@ -19,7 +20,7 @@ let compile_contract_input ~raise
   let storage, parameter =
     Simple_utils.Pair.map ~f:(compile_expression ~raise ~meta) (storage, parameter)
   in
-  Ast_imperative.e_pair storage parameter
+  Ast_imperative.e_pair ~loc:Location.dummy storage parameter
 
 
 let pretty_print_cst = pretty_print_cst

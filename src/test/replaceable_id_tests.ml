@@ -10,19 +10,24 @@ let compile_main ~raise () =
 open Ligo_prim
 open Ast_imperative
 
-let empty_op_list = e_typed_list [] (t_operation ())
+let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
 
 let empty_message =
   e_lambda_ez
-    (Value_var.of_input_var "arguments")
-    ~ascr:(t_unit ())
-    (Some (t_list (t_operation ())))
+    ~loc
+    (Value_var.of_input_var ~loc "arguments")
+    ~ascr:(t_unit ~loc ())
+    (Some (t_list ~loc (t_operation ~loc ())))
     empty_op_list
 
 
-let storage id = e_address @@ addr id
-let entry_change_addr id = e_constructor "Change_address" @@ e_address @@ addr @@ id
-let entry_pass_message = e_constructor "Pass_message" @@ empty_message
+let storage id = e_address ~loc @@ addr id
+
+let entry_change_addr id =
+  e_constructor ~loc "Change_address" @@ e_address ~loc @@ addr @@ id
+
+
+let entry_pass_message = e_constructor ~loc "Pass_message" @@ empty_message
 
 let change_addr_success ~raise () =
   let program = get_program ~raise () in
@@ -38,8 +43,8 @@ let change_addr_success ~raise () =
     ~options
     program
     "main"
-    (e_pair param init_storage)
-    (e_pair empty_op_list (storage 2))
+    (e_pair ~loc param init_storage)
+    (e_pair ~loc empty_op_list (storage 2))
 
 
 let change_addr_fail ~raise () =
@@ -57,7 +62,7 @@ let change_addr_fail ~raise () =
     ~options
     program
     "main"
-    (e_pair param init_storage)
+    (e_pair ~loc param init_storage)
     exp_failwith
 
 
@@ -75,8 +80,8 @@ let pass_message_success ~raise () =
     ~options
     program
     "main"
-    (e_pair param init_storage)
-    (e_pair empty_op_list init_storage)
+    (e_pair ~loc param init_storage)
+    (e_pair ~loc empty_op_list init_storage)
 
 
 let pass_message_fail ~raise () =
@@ -94,7 +99,7 @@ let pass_message_fail ~raise () =
     ~options
     program
     "main"
-    (e_pair param init_storage)
+    (e_pair ~loc param init_storage)
     exp_failwith
 
 

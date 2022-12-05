@@ -86,7 +86,7 @@ let compile_program ~raise ~(options : Compiler_options.t) (prg : Ast_core.progr
 
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression =
-  let name = Value_var.of_input_var entry_point in
+  let name = Value_var.of_input_var ~loc:Location.dummy entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content = Ast_core.E_variable name
     ; sugar = None

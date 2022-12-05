@@ -12,17 +12,18 @@ let compile_main ~raise () =
 open Ligo_prim
 open Ast_imperative
 
-let empty_op_list = e_typed_list [] (t_operation ())
+let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
 
 let empty_message =
   e_lambda_ez
-    (Value_var.of_input_var "arguments")
-    ~ascr:(t_unit ())
-    (Some (t_list (t_operation ())))
+    ~loc
+    (Value_var.of_input_var ~loc "arguments")
+    ~ascr:(t_unit ~loc ())
+    (Some (t_list ~loc (t_operation ~loc ())))
     empty_op_list
 
 
-let call msg = e_constructor "Call" msg
+let call msg = e_constructor ~loc "Call" msg
 
 let mk_time ~(raise : ('a, _) Trace.raise) st =
   match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
@@ -31,7 +32,7 @@ let mk_time ~(raise : ('a, _) Trace.raise) st =
 
 
 let to_sec t = Memory_proto_alpha.Protocol.Script_timestamp.to_zint t
-let storage st = e_timestamp_z (to_sec st)
+let storage st = e_timestamp_z ~loc (to_sec st)
 
 let early_call ~raise () =
   let program = get_program ~raise () in
@@ -47,7 +48,7 @@ let early_call ~raise () =
     ~options
     program
     "main"
-    (e_pair (call empty_message) init_storage)
+    (e_pair ~loc (call empty_message) init_storage)
     exp_failwith
 
 
@@ -64,8 +65,8 @@ let call_on_time ~raise () =
     ~options
     program
     "main"
-    (e_pair (call empty_message) init_storage)
-    (e_pair empty_op_list init_storage)
+    (e_pair ~loc (call empty_message) init_storage)
+    (e_pair ~loc empty_op_list init_storage)
 
 
 let main =

@@ -126,8 +126,8 @@ and print_declaration state = function
 
 (* Attributed declaration *)
 
-and print_D_Attr state (node : attribute * declaration) =
-  let attribute, declaration = node in
+and print_D_Attr state node =
+  let attribute, declaration = node.value in
   let children =
     [ Tree.mk_child print_attribute attribute
     ; Tree.mk_child print_declaration declaration

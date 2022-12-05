@@ -80,7 +80,7 @@ let rec compile_type_expression ~raise (type_ : I.type_expression) : O.type_expr
     return @@ T_arrow arr
   | I.T_variable type_variable -> return @@ T_variable type_variable
   | I.T_app { type_operator; arguments = [ l; r ] }
-    when Type_var.equal Literal_types.v_michelson_or type_operator ->
+    when Type_var.equal (Literal_types.v_michelson_or ~loc) type_operator ->
     let l, l_ann =
       trace_option ~raise (corner_case "not an annotated type") @@ I.get_t_annoted l
     in
@@ -91,7 +91,7 @@ let rec compile_type_expression ~raise (type_ : I.type_expression) : O.type_expr
     let r = compile_type_expression r in
     O.t_michelson_sum ~loc l l_ann r r_ann
   | I.T_app { type_operator; arguments = [ l; r ] }
-    when Type_var.equal Literal_types.v_michelson_pair type_operator ->
+    when Type_var.equal (Literal_types.v_michelson_pair ~loc) type_operator ->
     let l, l_ann =
       trace_option ~raise (corner_case "not an annotated type") @@ I.get_t_annoted l
     in
@@ -363,13 +363,13 @@ and desugar_cond_to_match ~loc condition then_clause else_clause =
     ~loc
     condition
     [ { pattern =
-          Location.wrap
-          @@ O.Pattern.P_variant (Label "True", Location.wrap O.Pattern.P_unit)
+          Location.wrap ~loc
+          @@ O.Pattern.P_variant (Label "True", Location.wrap ~loc O.Pattern.P_unit)
       ; body = then_clause
       }
     ; { pattern =
-          Location.wrap
-          @@ O.Pattern.P_variant (Label "False", Location.wrap O.Pattern.P_unit)
+          Location.wrap ~loc
+          @@ O.Pattern.P_variant (Label "False", Location.wrap ~loc O.Pattern.P_unit)
       ; body = else_clause
       }
     ]
@@ -377,6 +377,7 @@ and desugar_cond_to_match ~loc condition then_clause else_clause =
 
 and desugar_sequence_to_let ~loc expr1 expr2 =
   O.e_let_in_ez
+    ~loc
     (Value_var.fresh ~loc ~name:"()" ())
     ~ascr:(O.t_unit ~loc ())
     expr1

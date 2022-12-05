@@ -192,7 +192,7 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
       ( type_
       , E.(
           let%bind type_ = decode type_ in
-          return @@ O.make_e ~location:loc (E_literal lit) type_) )
+          return @@ O.make_e ~loc (E_literal lit) type_) )
   in
   match lit with
   | Literal_unit -> const Type.t_unit
@@ -239,7 +239,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       E.(
         let%bind content = content in
         let%bind type_ = decode type_ in
-        return @@ O.make_e ~location:loc content type_)
+        return @@ O.make_e ~loc content type_)
   in
   let const_with_type content type_ =
     let%bind loc = loc () in
@@ -247,7 +247,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       E.(
         let%bind content = content in
         let%bind type_ = decode type_ in
-        return @@ O.make_e ~location:loc content type_)
+        return @@ O.make_e ~loc content type_)
   in
   match expr.expression_content, type_.content with
   | E_literal lit, T_construct _ ->
@@ -354,7 +354,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     E.(
       let%map expr = expr
       and type_ = decode type_ in
-      O.make_e ~location:loc expr.O.expression_content type_)
+      O.make_e ~loc expr.O.expression_content type_)
   in
   let const content type_ =
     let%bind loc = loc () in
@@ -363,7 +363,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
       , E.(
           let%bind content = content in
           let%bind type_ = decode type_ in
-          return @@ O.make_e ~location:loc content type_) )
+          return @@ O.make_e ~loc content type_) )
   in
   let%bind syntax = Options.syntax () in
   match expr.expression_content with
@@ -435,6 +435,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     return (res_type, let_result)
   | E_raw_code { language; code = { expression_content; _ } }
     when Option.is_some (I.get_e_tuple expression_content) ->
+    let%bind loc = loc () in
     let exprs = Option.value_exn ~here:[%here] @@ I.get_e_tuple expression_content in
     let%bind code, args =
       match exprs with
@@ -464,7 +465,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         let%bind code = code in
         let%bind args = all args in
         let%bind code_type = decode code_type in
-        let tuple = O.e_a_record @@ Record.record_of_tuple (code :: args) in
+        let tuple = O.e_a_record ~loc @@ Record.record_of_tuple (code :: args) in
         return
         @@ O.E_raw_code { language; code = { tuple with type_expression = code_type } })
       code_type
@@ -654,7 +655,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     in
     let%bind type_ = Context.tapply type_ in
     let%bind expression = check expression type_ in
-    let ret_type = Type.t_unit () in
+    let%bind ret_type = create_type Type.t_unit in
     const
       E.(
         let%bind expression = expression
@@ -804,7 +805,7 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
       , E.(
           let%bind content = content in
           let%bind type_ = decode type_ in
-          return @@ O.make_e ~location:loc content type_) )
+          return @@ O.make_e ~loc content type_) )
   in
   (* Desugar return ascription to (result : ret_ascr) *)
   let result =
@@ -848,14 +849,16 @@ and generalize_expr (in_ : (Type.t * O.expression E.t, 'err, 'wrn) C.t)
   =
   let open C in
   let open Let_syntax in
+  let%bind loc = loc () in
   let%bind type_, tvars, expr = generalize in_ in
   let expr =
     E.(
       let%map expr = expr in
       List.fold_right tvars ~init:expr ~f:(fun (tvar, kind) expr ->
           O.e_type_abstraction
+            ~loc
             { type_binder = tvar; result = expr }
-            (O.t_for_all tvar kind expr.type_expression)))
+            (O.t_for_all ~loc tvar kind expr.type_expression)))
   in
   return (type_, expr)
 
@@ -879,7 +882,7 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
             let%bind lamb_type = decode lamb_type in
             f
               (O.make_e
-                 ~location:hole.O.location
+                 ~loc:hole.O.location
                  (E_type_inst { forall = hole; type_ = texists })
                  lamb_type))
       , args )
@@ -927,7 +930,7 @@ and infer_constant const args : (Type.t * O.expression E.t, _, _) C.t =
         and type_ = decode ret_type in
         return
         @@ O.make_e
-             ~location:loc
+             ~loc
              (E_constant { cons_name = const; arguments = args })
              { type_ with location = loc }) )
 
@@ -1367,12 +1370,26 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
           return (decl :: decls)) )
 
 
+(* Turns out we merge multiple programs together before this point, which raises error
+   when we try doing Location.cover! This is a code smell from our build system *)
+(* let loc_of_program (program : I.program) =
+  match program with
+  | [] -> assert false
+  | decl :: decls ->
+    List.fold_right
+      decls
+      ~f:(fun decl loc -> Location.cover loc decl.location)
+      ~init:decl.location *)
+
+
 let type_program ~raise ~options ?env program =
+  let loc = Location.generated in
   C.run_elab
     (let%map.C _, program = infer_module program in
      program)
     ~raise
     ~options
+    ~loc
     ?env
     ()
 
@@ -1383,6 +1400,7 @@ let type_declaration ~raise ~options ?env decl =
      decl)
     ~raise
     ~options
+    ~loc:decl.location
     ?env
     ()
 
@@ -1398,5 +1416,6 @@ let type_expression ~raise ~options ?env ?tv_opt expr =
       expr)
     ~raise
     ~options
+    ~loc:expr.location
     ?env
     ()

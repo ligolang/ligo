@@ -12,7 +12,7 @@ let compile_main ~raise () =
   Test_helpers.compile_main ~raise "./contracts/hashlock.religo" ()
 
 
-let call msg = e_constructor "Call" msg
+let call msg = e_constructor ~loc "Call" msg
 
 let mk_time ~raise st =
   match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
@@ -23,7 +23,7 @@ let mk_time ~raise st =
 let to_sec t = Memory_proto_alpha.Protocol.Script_timestamp.to_zint t
 
 let storage hashed used commits =
-  e_record_ez [ "hashed", hashed; "unused", e_bool used; "commits", commits ]
+  e_record_ez ~loc [ "hashed", hashed; "unused", e_bool ~loc used; "commits", commits ]
 
 
 let first_committer, first_contract =
@@ -33,13 +33,14 @@ let first_committer, first_contract =
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
-let empty_op_list = e_typed_list [] (t_operation ())
+let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
 
 let empty_message =
   e_lambda_ez
-    (Value_var.of_input_var "arguments")
-    ~ascr:(t_unit ())
-    (Some (t_list (t_operation ())))
+    ~loc
+    (Value_var.of_input_var ~loc "arguments")
+    ~ascr:(t_unit ~loc ())
+    (Some (t_list ~loc (t_operation ~loc ())))
     empty_op_list
 
 
@@ -56,32 +57,36 @@ let commit ~raise () =
       (Memory_proto_alpha.Protocol.Script_int.of_int 86_400)
   in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
-  let packed_sender = pack_payload ~raise program (e_address first_committer) in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
+  let packed_sender = pack_payload ~raise program (e_address ~loc first_committer) in
   let salted_hash =
     e_bytes_raw
+      ~loc
       (sha_256_hash
          (BytesLabels.concat ~sep:BytesLabels.empty [ test_hash_raw; packed_sender ]))
   in
   let pre_commits =
     e_typed_big_map
+      ~loc
       []
-      (t_address ())
-      (t_record_ez [ "date", t_timestamp (); "salted_hash", t_bytes () ])
+      (t_address ~loc ())
+      (t_record_ez ~loc [ "date", t_timestamp ~loc (); "salted_hash", t_bytes ~loc () ])
   in
   let init_storage = storage test_hash true pre_commits in
   let commit =
-    e_record_ez [ "date", e_timestamp_z (to_sec lock_time); "salted_hash", salted_hash ]
+    e_record_ez
+      ~loc
+      [ "date", e_timestamp_z ~loc (to_sec lock_time); "salted_hash", salted_hash ]
   in
-  let post_commits = e_big_map [ e_address first_committer, commit ] in
+  let post_commits = e_big_map ~loc [ e_address ~loc first_committer, commit ] in
   let post_storage = storage test_hash true post_commits in
   expect_eq
     ~raise
     ~options
     program
     "commit"
-    (e_pair salted_hash init_storage)
-    (e_pair empty_op_list post_storage)
+    (e_pair ~loc salted_hash init_storage)
+    (e_pair ~loc empty_op_list post_storage)
 
 
 (* Test that the contract fails if we haven't committed before revealing the answer *)
@@ -89,22 +94,25 @@ let reveal_no_commit ~raise () =
   let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal =
-    e_record_ez [ "hashable", e_bytes_string "hello world"; "message", empty_message ]
+    e_record_ez
+      ~loc
+      [ "hashable", e_bytes_string ~loc "hello world"; "message", empty_message ]
   in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
   let pre_commits =
     e_typed_big_map
+      ~loc
       []
-      (t_address ())
-      (t_record_ez [ "date", t_timestamp (); "salted_hash", t_bytes () ])
+      (t_address ~loc ())
+      (t_record_ez ~loc [ "date", t_timestamp ~loc (); "salted_hash", t_bytes ~loc () ])
   in
   let init_storage = storage test_hash true pre_commits in
   expect_string_failwith
     ~raise
     program
     "reveal"
-    (e_pair reveal init_storage)
+    (e_pair ~loc reveal init_storage)
     "You have not made a commitment to hash against yet."
 
 
@@ -113,22 +121,27 @@ let reveal_young_commit ~raise () =
   let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal =
-    e_record_ez [ "hashable", e_bytes_string "hello world"; "message", empty_message ]
+    e_record_ez
+      ~loc
+      [ "hashable", e_bytes_string ~loc "hello world"; "message", empty_message ]
   in
   let now = mk_time ~raise "2000-01-01T00:10:10Z" in
   let lock_time = mk_time ~raise "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
-  let packed_sender = pack_payload ~raise program (e_address first_committer) in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
+  let packed_sender = pack_payload ~raise program (e_address ~loc first_committer) in
   let salted_hash =
     e_bytes_raw
+      ~loc
       (sha_256_hash
          (BytesLabels.concat ~sep:BytesLabels.empty [ test_hash_raw; packed_sender ]))
   in
   let commit =
-    e_record_ez [ "date", e_timestamp_z (to_sec lock_time); "salted_hash", salted_hash ]
+    e_record_ez
+      ~loc
+      [ "date", e_timestamp_z ~loc (to_sec lock_time); "salted_hash", salted_hash ]
   in
-  let commits = e_big_map [ e_address first_committer, commit ] in
+  let commits = e_big_map ~loc [ e_address ~loc first_committer, commit ] in
   let init_storage = storage test_hash true commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
@@ -139,7 +152,7 @@ let reveal_young_commit ~raise () =
     ~options
     program
     "reveal"
-    (e_pair reveal init_storage)
+    (e_pair ~loc reveal init_storage)
     "It has not been 24 hours since your commit yet."
 
 
@@ -148,23 +161,28 @@ let reveal_breaks_commit ~raise () =
   let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal =
-    e_record_ez [ "hashable", e_bytes_string "hello world"; "message", empty_message ]
+    e_record_ez
+      ~loc
+      [ "hashable", e_bytes_string ~loc "hello world"; "message", empty_message ]
   in
   let now = mk_time ~raise "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
-  let packed_sender = pack_payload ~raise program (e_address first_committer) in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
+  let packed_sender = pack_payload ~raise program (e_address ~loc first_committer) in
   let salted_hash =
     e_bytes_raw
+      ~loc
       (sha_256_hash
          (BytesLabels.concat
             ~sep:BytesLabels.empty
             [ Bytes.of_string "hello"; packed_sender ]))
   in
   let commit =
-    e_record_ez [ "date", e_timestamp_z (to_sec now); "salted_hash", salted_hash ]
+    e_record_ez
+      ~loc
+      [ "date", e_timestamp_z ~loc (to_sec now); "salted_hash", salted_hash ]
   in
-  let commits = e_big_map [ e_address first_committer, commit ] in
+  let commits = e_big_map ~loc [ e_address ~loc first_committer, commit ] in
   let init_storage = storage test_hash true commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
@@ -175,7 +193,7 @@ let reveal_breaks_commit ~raise () =
     ~options
     program
     "reveal"
-    (e_pair reveal init_storage)
+    (e_pair ~loc reveal init_storage)
     "This reveal does not match your commitment."
 
 
@@ -184,23 +202,26 @@ let reveal_wrong_commit ~raise () =
   let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal =
-    e_record_ez [ "hashable", e_bytes_string "hello"; "message", empty_message ]
+    e_record_ez ~loc [ "hashable", e_bytes_string ~loc "hello"; "message", empty_message ]
   in
   let now = mk_time ~raise "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
-  let packed_sender = pack_payload ~raise program (e_address first_committer) in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
+  let packed_sender = pack_payload ~raise program (e_address ~loc first_committer) in
   let salted_hash =
     e_bytes_raw
+      ~loc
       (sha_256_hash
          (BytesLabels.concat
             ~sep:BytesLabels.empty
             [ Bytes.of_string "hello"; packed_sender ]))
   in
   let commit =
-    e_record_ez [ "date", e_timestamp_z (to_sec now); "salted_hash", salted_hash ]
+    e_record_ez
+      ~loc
+      [ "date", e_timestamp_z ~loc (to_sec now); "salted_hash", salted_hash ]
   in
-  let commits = e_big_map [ e_address first_committer, commit ] in
+  let commits = e_big_map ~loc [ e_address ~loc first_committer, commit ] in
   let init_storage = storage test_hash true commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
@@ -211,7 +232,7 @@ let reveal_wrong_commit ~raise () =
     ~options
     program
     "reveal"
-    (e_pair reveal init_storage)
+    (e_pair ~loc reveal init_storage)
     "Your commitment did not match the storage hash."
 
 
@@ -220,23 +241,26 @@ let reveal_no_reuse ~raise () =
   let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal =
-    e_record_ez [ "hashable", e_bytes_string "hello"; "message", empty_message ]
+    e_record_ez ~loc [ "hashable", e_bytes_string ~loc "hello"; "message", empty_message ]
   in
   let now = mk_time ~raise "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
-  let packed_sender = pack_payload ~raise program (e_address first_committer) in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
+  let packed_sender = pack_payload ~raise program (e_address ~loc first_committer) in
   let salted_hash =
     e_bytes_raw
+      ~loc
       (sha_256_hash
          (BytesLabels.concat
             ~sep:BytesLabels.empty
             [ Bytes.of_string "hello"; packed_sender ]))
   in
   let commit =
-    e_record_ez [ "date", e_timestamp_z (to_sec now); "salted_hash", salted_hash ]
+    e_record_ez
+      ~loc
+      [ "date", e_timestamp_z ~loc (to_sec now); "salted_hash", salted_hash ]
   in
-  let commits = e_big_map [ e_address first_committer, commit ] in
+  let commits = e_big_map ~loc [ e_address ~loc first_committer, commit ] in
   let init_storage = storage test_hash false commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
@@ -247,7 +271,7 @@ let reveal_no_reuse ~raise () =
     ~options
     program
     "reveal"
-    (e_pair reveal init_storage)
+    (e_pair ~loc reveal init_storage)
     "This contract has already been used."
 
 
@@ -256,23 +280,28 @@ let reveal ~raise () =
   let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal =
-    e_record_ez [ "hashable", e_bytes_string "hello world"; "message", empty_message ]
+    e_record_ez
+      ~loc
+      [ "hashable", e_bytes_string ~loc "hello world"; "message", empty_message ]
   in
   let now = mk_time ~raise "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
-  let test_hash = e_bytes_raw test_hash_raw in
-  let packed_sender = pack_payload ~raise program (e_address first_committer) in
+  let test_hash = e_bytes_raw ~loc test_hash_raw in
+  let packed_sender = pack_payload ~raise program (e_address ~loc first_committer) in
   let salted_hash =
     e_bytes_raw
+      ~loc
       (sha_256_hash
          (BytesLabels.concat
             ~sep:BytesLabels.empty
             [ Bytes.of_string "hello world"; packed_sender ]))
   in
   let commit =
-    e_record_ez [ "date", e_timestamp_z (to_sec now); "salted_hash", salted_hash ]
+    e_record_ez
+      ~loc
+      [ "date", e_timestamp_z ~loc (to_sec now); "salted_hash", salted_hash ]
   in
-  let commits = e_big_map [ e_address first_committer, commit ] in
+  let commits = e_big_map ~loc [ e_address ~loc first_committer, commit ] in
   let init_storage = storage test_hash true commits in
   let post_storage = storage test_hash false commits in
   let options =
@@ -284,8 +313,8 @@ let reveal ~raise () =
     ~options
     program
     "reveal"
-    (e_pair reveal init_storage)
-    (e_pair empty_op_list post_storage)
+    (e_pair ~loc reveal init_storage)
+    (e_pair ~loc empty_op_list post_storage)
 
 
 let main =

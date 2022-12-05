@@ -56,7 +56,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
         | Some { value; _ } -> Some value.inside
       in
       let type_expr = Option.map ~f:self args in
-      let type_expr = Option.value ~default:(t_unit ()) type_expr in
+      let type_expr = Option.value ~default:(t_unit ~loc ()) type_expr in
       let variant_attr = compile_attributes v.attributes in
       v.constr.value, type_expr, variant_attr
     in
@@ -181,7 +181,9 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
         let accessed_el = compile_type_var v in
         t_module_accessor ~loc acc accessed_el
       | TModA ma ->
-        aux (acc @ [ Module_var.of_input_var ma.value.module_name.value ]) ma.value.field
+        aux
+          (acc @ [ Module_var.of_input_var ~loc ma.value.module_name.value ])
+          ma.value.field
       | _ -> raise.error (expected_access_to_variable (CST.type_expr_to_region ma.field))
     in
     return @@ aux [ module_name ] ma.field
@@ -209,11 +211,11 @@ let rec compile_expression
  fun e ->
   let self = compile_expression ~raise in
   let return e = e in
-  let compile_tuple_expression ?loc tuple_expr =
+  let compile_tuple_expression ~loc tuple_expr =
     let lst = List.map ~f:self @@ nseq_to_list tuple_expr in
     match lst with
     | [ hd ] -> return hd
-    | lst -> return @@ e_tuple ?loc lst
+    | lst -> return @@ e_tuple ~loc lst
   in
   let compile_path (path : CST.path) =
     match path with
@@ -227,7 +229,7 @@ let rec compile_expression
       let sels, _ =
         List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path
       in
-      return @@ e_accessor var sels
+      return @@ e_accessor ~loc var sels
   in
   let compile_bin_op (op_type : Constant.constant') (op : _ CST.bin_op CST.reg) =
     let op, loc = r_split op in
@@ -315,7 +317,7 @@ let rec compile_expression
     let loc = Location.lift region in
     let var, loc_var = r_split var in
     let func = e_variable_ez ~loc:loc_var var in
-    let args = compile_tuple_expression args in
+    let args = compile_tuple_expression ~loc args in
     return @@ e_application ~loc func args
   | ECall call ->
     let (func, args), loc = r_split call in
@@ -327,7 +329,7 @@ let rec compile_expression
         hd, List.map ~f:snd tl
     in
     let func = self func in
-    let args = compile_tuple_expression args in
+    let args = compile_tuple_expression ~loc args in
     return @@ e_application ~loc func args
   | ETuple lst ->
     let lst, loc = r_split lst in
@@ -362,16 +364,18 @@ let rec compile_expression
       | EProj proj ->
         let proj, _ = r_split proj in
         let var, _ = r_split proj.struct_name in
-        let moda = e_module_accessor ~loc acc (Value_var.of_input_var var) in
+        let moda = e_module_accessor ~loc acc (Value_var.of_input_var ~loc var) in
         let sels, _ =
           List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path
         in
         return @@ e_accessor ~loc moda sels
       | EModA ma ->
-        aux (acc @ [ Module_var.of_input_var ma.value.module_name.value ]) ma.value.field
+        aux
+          (acc @ [ Module_var.of_input_var ~loc ma.value.module_name.value ])
+          ma.value.field
       | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
     in
-    aux [ Module_var.of_input_var ma.module_name.value ] ma.field
+    aux [ Module_var.of_input_var ~loc ma.module_name.value ] ma.field
   | EUpdate update ->
     let update, _loc = r_split update in
     let record = compile_path update.record in
@@ -423,7 +427,7 @@ let rec compile_expression
           @@ (get_first_non_annotation expr).expression_content
         in
         let lhs_type =
-          Option.map ~f:(Utils.uncurry t_arrow)
+          Option.map ~f:(Utils.uncurry (t_arrow ~loc))
           @@ Option.bind_pair (Param.get_ascr lambda.binder, lambda.output_type)
         in
         let fun_type =
@@ -445,7 +449,9 @@ let rec compile_expression
     return @@ expr
   | EConstr constr ->
     let (constr, args_o), loc = r_split constr in
-    let args_o = Option.map ~f:(compile_tuple_expression <@ List.Ne.singleton) args_o in
+    let args_o =
+      Option.map ~f:(compile_tuple_expression ~loc <@ List.Ne.singleton) args_o
+    in
     let args =
       Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o
     in
@@ -655,8 +661,9 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
   let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
   (* There is no type_params in CST *)
   match unepar binders with
-  | PVar { value = { variable = name; attributes = _ }; _ } ->
+  | PVar { value = { variable = name; attributes = _ }; region } ->
     (*function or const *)
+    let loc = Location.lift region in
     let fun_binder = compile_variable name in
     let expr =
       compile_expression
@@ -664,7 +671,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
         ?fun_rec:(Option.map ~f:(fun _ -> fun_binder) kwd_rec)
         let_rhs
     in
-    let pattern = Pattern.var (Binder.make fun_binder lhs_type) in
+    let pattern = Pattern.var ~loc (Binder.make fun_binder lhs_type) in
     let expr =
       Option.value_map lhs_type ~default:expr ~f:(fun ty ->
           e_annotation ~loc:expr.location expr ty)
@@ -691,8 +698,8 @@ and compile_parameter ~raise
     let var = compile_variable variable in
     return_1 var
   | PTuple tuple ->
-    let tuple, _loc = r_split tuple in
-    let var = Value_var.fresh () in
+    let tuple, loc = r_split tuple in
+    let var = Value_var.fresh ~loc () in
     let aux pattern (binder_lst, fun_) =
       let binder, fun_' = compile_parameter ~raise pattern in
       binder :: binder_lst, fun_' <@ fun_
@@ -700,9 +707,11 @@ and compile_parameter ~raise
     let binder_lst, fun_ =
       List.fold_right ~f:aux ~init:([], fun e -> e) @@ npseq_to_list tuple
     in
-    let expr expr = e_param_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
+    let expr expr =
+      e_param_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr
+    in
     let ascr = Option.all @@ List.map ~f:Param.get_ascr binder_lst in
-    let ascr = Option.map ~f:t_tuple ascr in
+    let ascr = Option.map ~f:(t_tuple ~loc) ascr in
     return ?ascr expr var
   | PPar par -> compile_parameter ~raise par.value.inside
   | PRecord _ -> raise.error @@ unsupported_pattern_type pattern
@@ -731,8 +740,8 @@ and compile_binder ~raise
     let var = compile_variable variable in
     return_1 var
   | PTuple tuple ->
-    let tuple, _loc = r_split tuple in
-    let var = Value_var.fresh () in
+    let tuple, loc = r_split tuple in
+    let var = Value_var.fresh ~loc () in
     let aux pattern (binder_lst, fun_) =
       let binder, fun_' = compile_binder ~raise pattern in
       binder :: binder_lst, fun_' <@ fun_
@@ -740,9 +749,9 @@ and compile_binder ~raise
     let binder_lst, fun_ =
       List.fold_right ~f:aux ~init:([], fun e -> e) @@ npseq_to_list tuple
     in
-    let expr expr = e_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
+    let expr expr = e_matching_tuple ~loc (e_variable ~loc var) binder_lst @@ fun_ expr in
     let ascr = Option.all @@ List.map ~f:Binder.get_ascr binder_lst in
-    let ascr = Option.map ~f:t_tuple ascr in
+    let ascr = Option.map ~f:(t_tuple ~loc) ascr in
     return ?ascr expr var
   | PPar par -> compile_binder ~raise par.value.inside
   | PRecord _ -> raise.error @@ unsupported_pattern_type pattern
@@ -787,10 +796,11 @@ and compile_declaration ~raise : CST.declaration -> AST.declaration option =
     in
     return region @@ D_module { module_binder; module_; module_attr = [] }
   | ModuleAlias { value = { alias; binders; _ }; region } ->
+    let loc = Location.lift region in
     let module_binder = compile_mod_var alias in
     let module_ =
       let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list binders in
-      m_path ~loc:Location.generated path
+      m_path ~loc path
     in
     return region @@ D_module { module_binder; module_; module_attr = [] }
   | Directive _ -> skip

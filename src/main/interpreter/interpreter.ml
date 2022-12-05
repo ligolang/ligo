@@ -691,7 +691,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
             env
             arg_binder
             arg_mut_flag
-            (AST.t_pair k_ty v_ty, v_pair (k, v))
+            (AST.t_pair ~loc k_ty v_ty, v_pair (k, v))
             ~in_:(fun env ->
               let* v' = eval_ligo body calltrace env in
               return @@ (k, v')))
@@ -730,7 +730,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.t_pair k_ty v_ty, v_pair kv)
+          (AST.t_pair ~loc k_ty v_ty, v_pair kv)
           ~in_:(fun env -> eval_ligo body calltrace env))
       ~init:(v_unit ())
       elts
@@ -773,7 +773,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.t_pair acc_ty ty, fold_args)
+          (AST.t_pair ~loc acc_ty ty, fold_args)
           ~in_:(fun env' -> eval_ligo body calltrace env'))
       ~init
       elts
@@ -801,7 +801,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.t_pair acc_ty ty, fold_args)
+          (AST.t_pair ~loc acc_ty ty, fold_args)
           ~in_:(fun env' -> eval_ligo body calltrace env'))
       ~init
       elts
@@ -828,7 +828,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.(t_pair acc_ty ty), fold_args)
+          (AST.(t_pair ~loc acc_ty ty), fold_args)
           ~in_:(fun env' -> eval_ligo body calltrace env'))
       ~init
       elts
@@ -853,7 +853,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.t_pair ty acc_ty, fold_args)
+          (AST.t_pair ~loc ty acc_ty, fold_args)
           ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
@@ -880,7 +880,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.(t_pair acc_ty (t_pair k_ty v_ty)), fold_args)
+          (AST.(t_pair ~loc acc_ty (t_pair ~loc k_ty v_ty)), fold_args)
           ~in_:(fun env' -> eval_ligo body calltrace env'))
       ~init
       kvs
@@ -956,7 +956,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           env
           arg_binder
           arg_mut_flag
-          (AST.(t_pair acc_ty ty), fold_args)
+          (AST.(t_pair ~loc acc_ty ty), fold_args)
           ~in_:(fun env' -> eval_ligo body calltrace env'))
       init
       elts
@@ -1524,6 +1524,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     then fail (Errors.meta_lang_eval term.location calltrace (v_string "Out of fuel"))
     else return ()
   in
+  let loc = term.location in
   match term.expression_content with
   | E_application { lamb = f; args } ->
     let* f' = eval_ligo f calltrace env in
@@ -1906,7 +1907,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         if Z.geq curr final
         then return @@ v_unit ()
         else (
-          let env = Env.extend env binder (AST.t_int (), V_Ct (C_int curr)) in
+          let env = Env.extend env binder (AST.t_int ~loc (), V_Ct (C_int curr)) in
           let* _ = eval_ligo f_body calltrace env in
           loop (Z.add curr incr))
       in
@@ -1954,6 +1955,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * (string * val
      declaration and in the end, gather all of them together *)
   let aux decl r =
     let ds, defs = r in
+    let loc = Location.get_location decl in
     match decl.Location.wrap_content with
     | Ast_typed.D_irrefutable_match
         { pattern = { wrap_content = P_var binder; _ }; expr; _ }
@@ -1962,7 +1964,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * (string * val
       if (not (Value_var.is_generated var))
          && Base.String.is_prefix (Value_var.to_name_exn var) ~prefix:"test"
       then (
-        let expr = Ast_typed.(e_a_variable var expr.type_expression) in
+        let expr = Ast_typed.(e_a_variable ~loc var expr.type_expression) in
         (* TODO: check that variables are unique, as they are ignored *)
         decl :: ds, (binder, expr.type_expression) :: defs)
       else decl :: ds, defs
@@ -1971,11 +1973,13 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * (string * val
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
   let f (n, t) r =
-    let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
-    Record.LMap.add (Label s) (Ast_typed.e_a_variable (Binder.get_var n) t) r
+    let var = Binder.get_var n in
+    let loc = Value_var.get_location var in
+    let s, _ = Value_var.internal_get_name_and_counter var in
+    Record.LMap.add (Label s) (Ast_typed.e_a_variable ~loc var t) r
   in
   let map = List.fold_right lst ~f ~init:Record.LMap.empty in
-  let expr = Ast_typed.e_a_record map in
+  let expr = Ast_typed.e_a_record ~loc:Location.dummy map in
   match eval_expression ~raise ~steps ~options decl_lst expr with
   | b, V_Record m ->
     let f (n, _) r =

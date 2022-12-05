@@ -157,6 +157,7 @@ TODO: warn if tickets in <matchee>
 and destruct_mut_let_in : O.expression -> O.expression =
  fun match_expr ->
   let return expression_content = { match_expr with expression_content } in
+  let loc = match_expr.location in
   match match_expr.expression_content with
   | O.E_matching ({ cases = O.Match_record case; _ } as prod_case) ->
     let binders = List.map ~f:snd (Record.LMap.to_kv_list case.fields) in
@@ -167,7 +168,7 @@ and destruct_mut_let_in : O.expression -> O.expression =
           O.e_a_let_mut_in
             ~loc:acc.location
             { let_binder = b
-            ; rhs = O.e_variable (Binder.get_var b) (Binder.get_ascr b)
+            ; rhs = O.e_variable ~loc (Binder.get_var b) (Binder.get_ascr b)
             ; let_result = acc
             ; attributes = O.ValueAttr.default_attributes
             })
@@ -184,7 +185,7 @@ and destruct_mut_let_in : O.expression -> O.expression =
             O.e_a_let_mut_in
               ~loc:body.location
               { let_binder = b
-              ; rhs = O.e_variable pattern ty
+              ; rhs = O.e_variable ~loc pattern ty
               ; let_result = body
               ; attributes = O.ValueAttr.default_attributes
               }

@@ -491,9 +491,9 @@ module Fold_helpers (M : Monad) = struct
     let return = ok in
     let* d = f.d d in
     match d with
-    | D_Attr (a, d) ->
+    | D_Attr { value = a, d; region } ->
       let* d = map_declaration f d in
-      return @@ D_Attr (a, d)
+      return @@ D_Attr { value = a, d; region }
     | D_Const { value; region } ->
       let* init = self_expr value.init in
       let* const_type =

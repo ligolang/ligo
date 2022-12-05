@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "New templates via ligo init & Improved error messages for invalid template\\n\\nBefore:\\n\\n\\n```bash\\n$ ligo init contract\\nTemplate unrecognized please select one of the following list :\\nNFT-factory-cameligo\\nNFT-factory-jsligo\\nadvisor-cameligo\\ndao-cameligo\\ndao-jsligo\\nmultisig-cameligo\\nmultisig-jsligo\\npermit-cameligo\\nrandomness-cameligo\\nrandomness-jsligo\\nshifumi-cameligo\\nshifumi-jsligo\\n\\n```\\n\\nAfter:\\n\\n\\n```bash\\n$ ligo init contract\\nError: Unrecognized template\\nHint: Use the option --template \"TEMPLATE_NAME\"\\n\\nPlease select a template from the following list:\\n- NFT-factory-cameligo\\n- NFT-factory-jsligo\\n- advisor-cameligo\\n- advisor-jsligo\\n- dao-cameligo\\n- dao-jsligo\\n- multisig-cameligo\\n- multisig-jsligo\\n- permit-cameligo\\n- permit-jsligo\\n- predictive-market-cameligo\\n- predictive-market-jsligo\\n- randomness-cameligo\\n- randomness-jsligo\\n- shifumi-cameligo\\n- shifumi-jsligo\\n\\n```\\n\\n"
+merge_request: '2194'
+title: "Update the templates list for `ligo init` & Imporve the error message"
+type: fixed
+            

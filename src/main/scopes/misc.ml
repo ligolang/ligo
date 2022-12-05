@@ -28,6 +28,7 @@ let rec extract_variable_types
   let aux : bindings_map -> Ast_typed.expression -> bindings_map =
    fun env exp ->
     let return = add env in
+    let loc = exp.location in
     match exp.expression_content with
     | E_literal _
     | E_application _
@@ -90,7 +91,7 @@ let rec extract_variable_types
       else if Ast_typed.is_t_map type_
       then (
         let k, v = Ast_typed.get_t_map_exn type_ in
-        return [ binder, Ast_typed.t_pair k v ])
+        return [ binder, Ast_typed.t_pair ~loc k v ])
       else failwith "E_for_each type with 1 binder should have map, set or list type"
   in
   match decl with

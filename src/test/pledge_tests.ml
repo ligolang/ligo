@@ -22,20 +22,21 @@ let stranger_addr, stranger_contract =
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
-let empty_op_list = e_typed_list [] (t_operation ())
+let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
 
 let empty_message =
   e_lambda_ez
-    (Value_var.of_input_var "arguments")
-    ~ascr:(t_unit ())
-    (Some (t_list (t_operation ())))
+    ~loc
+    (Value_var.of_input_var ~loc "arguments")
+    ~ascr:(t_unit ~loc ())
+    (Some (t_list ~loc (t_operation ~loc ())))
     empty_op_list
 
 
 let pledge ~raise f () =
   let program = get_program ~raise f () in
-  let storage = e_address oracle_addr in
-  let parameter = e_unit () in
+  let storage = e_address ~loc oracle_addr in
+  let parameter = e_unit ~loc () in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
@@ -49,13 +50,13 @@ let pledge ~raise f () =
     ~options
     program
     "donate"
-    (e_pair parameter storage)
-    (e_pair (e_list []) storage)
+    (e_pair ~loc parameter storage)
+    (e_pair ~loc (e_list ~loc []) storage)
 
 
 let distribute ~raise f () =
   let program = get_program ~raise f () in
-  let storage = e_address oracle_addr in
+  let storage = e_address ~loc oracle_addr in
   let parameter = empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
@@ -66,13 +67,13 @@ let distribute ~raise f () =
     ~options
     program
     "distribute"
-    (e_pair parameter storage)
-    (e_pair (e_list []) storage)
+    (e_pair ~loc parameter storage)
+    (e_pair ~loc (e_list ~loc []) storage)
 
 
 let distribute_unauthorized ~raise f () =
   let program = get_program ~raise f () in
-  let storage = e_address oracle_addr in
+  let storage = e_address ~loc oracle_addr in
   let parameter = empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
@@ -83,7 +84,7 @@ let distribute_unauthorized ~raise f () =
     ~options
     program
     "distribute"
-    (e_pair parameter storage)
+    (e_pair ~loc parameter storage)
     "You're not the oracle for this distribution."
 
 

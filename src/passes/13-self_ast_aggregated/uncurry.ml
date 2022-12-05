@@ -151,11 +151,11 @@ let uncurried_rows (depth : int) (args : type_expression list) : rows =
   { fields; layout = L_comb }
 
 
-let uncurried_record_type depth args =
+let uncurried_record_type ~loc depth args =
   let record_type = uncurried_rows depth args in
   { type_content = T_record record_type
   ; orig_var = None
-  ; location = Location.generated
+  ; location = loc
   ; source_type = None
   }
 
@@ -163,19 +163,20 @@ let uncurried_record_type depth args =
 let uncurry_rhs (depth : int) (expr : expression) =
   let arg_types, ret_type = uncurry_arrow depth expr.type_expression in
   let vars, body = uncurry_lambda depth expr in
-  let binder = Value_var.fresh () in
+  let loc = expr.location in
+  let binder = Value_var.fresh ~loc () in
   let labels = uncurried_labels depth in
-  let record_type = uncurried_record_type depth arg_types in
+  let record_type = uncurried_record_type ~loc depth arg_types in
   let matchee =
     { expression_content = E_variable binder
-    ; location = Location.generated
+    ; location = loc
     ; type_expression = record_type
     }
   in
   let fields =
     try
       let f : Value_var.t -> type_expression -> _ Pattern.t =
-       fun v ty -> Pattern.var ~loc:Location.generated (Binder.make v ty)
+       fun v ty -> Pattern.var ~loc (Binder.make v ty)
       in
       Record.of_list (List.zip_exn labels (List.map2_exn ~f vars arg_types))
     with
@@ -188,10 +189,10 @@ let uncurry_rhs (depth : int) (expr : expression) =
            PP.type_expression
            expr.type_expression
   in
-  let pattern = Location.wrap (Pattern.P_record fields) in
+  let pattern = Location.wrap ~loc (Pattern.P_record fields) in
   let result =
     { expression_content = E_matching { matchee; cases = [ { pattern; body } ] }
-    ; location = Location.generated
+    ; location = loc
     ; type_expression = body.type_expression
     }
   in
@@ -230,6 +231,7 @@ let rec uncurry_in_expression ~raise (f : Value_var.t) (depth : int) (expr : exp
   in
   let return e' = { expr with expression_content = e' } in
   let return_id = return expr.expression_content in
+  let loc = expr.location in
   match expr.expression_content with
   | E_application app ->
     let lamb, args = uncurry_app expr in
@@ -254,8 +256,8 @@ let rec uncurry_in_expression ~raise (f : Value_var.t) (depth : int) (expr : exp
       in
       let args =
         { expression_content = record
-        ; location = Location.generated
-        ; type_expression = uncurried_record_type depth arg_types
+        ; location = loc
+        ; type_expression = uncurried_record_type ~loc depth arg_types
         }
       in
       let args = self args in
@@ -343,6 +345,7 @@ let uncurry_expression (expr : expression) : expression =
        fun x1' . fun x2'. ... . fun xn' . let f = (rec(f, (x1, x2, ..., xn)).E[x1, x2, ..., xn]) in f(x1', x2', ..., xn') *)
   map_expression
     (fun expr ->
+      let loc = expr.location in
       match expr.expression_content with
       | E_recursive { fun_name; fun_type; lambda = { binder = _; result } as lambda } ->
         let inner_lambda = { expr with expression_content = E_lambda lambda } in
@@ -358,9 +361,11 @@ let uncurry_expression (expr : expression) : expression =
             (* Uncurry calls inside the expression *)
             let result = uncurry_in_expression ~raise fun_name depth result in
             (* Generate binders for each argument: x1', ..., xn' *)
-            let binder_types = List.map ~f:(fun t -> Value_var.fresh (), t) arg_types in
+            let binder_types =
+              List.map ~f:(fun t -> Value_var.fresh ~loc (), t) arg_types
+            in
             (* An variable for each function argument *)
-            let args = List.map ~f:(fun (b, t) -> e_a_variable b t) binder_types in
+            let args = List.map ~f:(fun (b, t) -> e_a_variable ~loc b t) binder_types in
             (* Generate tupled argument (x1', ..., xn') *)
             let record =
               E_record
@@ -379,8 +384,8 @@ let uncurry_expression (expr : expression) : expression =
             in
             let args =
               { expression_content = record
-              ; location = Location.generated
-              ; type_expression = uncurried_record_type depth arg_types
+              ; location = loc
+              ; type_expression = uncurried_record_type ~loc depth arg_types
               }
             in
             (* the source type is now wrong... but still useful? *)
@@ -408,13 +413,15 @@ let uncurry_expression (expr : expression) : expression =
               ; type_expression =
                   { type_content = T_arrow { type1 = record_type; type2 = ret_type }
                   ; orig_var = None
-                  ; location = Location.generated
+                  ; location = loc
                   ; source_type = None
                   }
               }
             in
             (* Apply function to tuple: f(x1', x2', ..., xn') *)
-            let result = e_a_application (e_a_variable fun_name fun_type) args ret_type in
+            let result =
+              e_a_application ~loc (e_a_variable ~loc fun_name fun_type) args ret_type
+            in
             let attr =
               ValueAttr.
                 { inline = true
@@ -428,7 +435,8 @@ let uncurry_expression (expr : expression) : expression =
             (* Construct the let *)
             let result =
               e_a_let_in
-                (Pattern.var (Binder.make fun_name rhs.type_expression))
+                ~loc
+                (Pattern.var ~loc (Binder.make fun_name rhs.type_expression))
                 rhs
                 result
                 attr
@@ -436,6 +444,7 @@ let uncurry_expression (expr : expression) : expression =
             let f (var, t) result =
               let binder = Param.make var t in
               e_a_lambda
+                ~loc
                 { binder; output_type = result.type_expression; result }
                 t
                 result.type_expression
