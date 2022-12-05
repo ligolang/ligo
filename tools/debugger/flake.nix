@@ -34,7 +34,7 @@
               buildInputs = [ pkgs.nixfmt ];
             };
             ci = pkgs.mkShell {
-              buildInputs = [ pkgs.danger-gitlab ];
+              buildInputs = [ pkgs.danger-gitlab pkgs.haskellPackages.hlint ];
             };
           };
 

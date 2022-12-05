@@ -17,6 +17,10 @@ def check_trailing_whitespaces
     end
 
     path = file.destination_path
+    if (File.directory?(path))  # Can be for submodules
+      next
+    end
+
     contents = File.read(path)
     lines = contents.lines
 
