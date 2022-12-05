@@ -34,14 +34,17 @@ newRioEnv = do
   reTempFiles <- newIO
   reIndexOpts <- newEmptyMVar
   reBuildGraph <- newMVar G.empty
-  let getRootDir = fmap (indexOptionsPath =<<) (tryReadMVar reIndexOpts)
-  reLigo <- Cli.startLigoDaemon getRootDir
+  reLigo <- newIORef Nothing
   pure RioEnv {..}
 
 initializeRio :: RIO ()
 initializeRio = do
   RIO.Registration.registerDidChangeConfiguration
   RIO.Registration.registerFileWatcher
+
+  ligo <- asks reLigo
+  let getRootDir = fmap (indexOptionsPath =<<) (tryReadMVar =<< asks reIndexOpts)
+  writeIORef ligo . Just =<< Cli.startLigoDaemon getRootDir
 
 shutdownRio :: RIO ()
 shutdownRio = do
