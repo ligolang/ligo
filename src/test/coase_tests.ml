@@ -9,35 +9,43 @@ let compile_main ~raise () = Test_helpers.compile_main ~raise "./contracts/coase
 
 open Ast_imperative
 
-let card owner = e_record_ez [ "card_owner", owner; "card_pattern", e_nat 0 ]
-let card_ty = t_record_ez [ "card_owner", t_address (); "card_pattern", t_nat () ]
-let card_ez owner = card (e_address owner)
+let card owner = e_record_ez ~loc [ "card_owner", owner; "card_pattern", e_nat ~loc 0 ]
+
+let card_ty =
+  t_record_ez ~loc [ "card_owner", t_address ~loc (); "card_pattern", t_nat ~loc () ]
+
+
+let card_ez owner = card (e_address ~loc owner)
 
 let make_cards assoc_lst =
-  let card_id_ty = t_nat () in
-  e_typed_map assoc_lst card_id_ty card_ty
+  let card_id_ty = t_nat ~loc () in
+  e_typed_map ~loc assoc_lst card_id_ty card_ty
 
 
-let card_pattern (coeff, qtt) = e_record_ez [ "coefficient", coeff; "quantity", qtt ]
-let card_pattern_ty = t_record_ez [ "coefficient", t_tez (); "quantity", t_nat () ]
-let card_pattern_ez (coeff, qtt) = card_pattern (e_mutez coeff, e_nat qtt)
+let card_pattern (coeff, qtt) = e_record_ez ~loc [ "coefficient", coeff; "quantity", qtt ]
+
+let card_pattern_ty =
+  t_record_ez ~loc [ "coefficient", t_tez ~loc (); "quantity", t_nat ~loc () ]
+
+
+let card_pattern_ez (coeff, qtt) = card_pattern (e_mutez ~loc coeff, e_nat ~loc qtt)
 
 let make_card_patterns lst =
-  let card_pattern_id_ty = t_nat () in
-  let assoc_lst = List.mapi ~f:(fun i x -> e_nat i, x) lst in
-  e_typed_map assoc_lst card_pattern_id_ty card_pattern_ty
+  let card_pattern_id_ty = t_nat ~loc () in
+  let assoc_lst = List.mapi ~f:(fun i x -> e_nat ~loc i, x) lst in
+  e_typed_map ~loc assoc_lst card_pattern_id_ty card_pattern_ty
 
 
 let storage cards_patterns cards next_id =
-  e_record_ez [ "cards", cards; "card_patterns", cards_patterns; "next_id", next_id ]
+  e_record_ez ~loc [ "cards", cards; "card_patterns", cards_patterns; "next_id", next_id ]
 
 
 let storage_ez cps cs next_id =
-  storage (make_card_patterns cps) (make_cards cs) (e_nat next_id)
+  storage (make_card_patterns cps) (make_cards cs) (e_nat ~loc next_id)
 
 
 let cards_ez owner n =
-  List.mapi ~f:(fun i x -> e_nat i, x)
+  List.mapi ~f:(fun i x -> e_nat ~loc i, x)
   @@ List.map ~f:card_ez
   @@ List.map ~f:(Function.constant owner)
   @@ List.range 0 n
@@ -66,19 +74,20 @@ let buy ~raise () =
   let program = get_program ~raise () in
   let () =
     let make_input n =
-      let buy_action = e_record_ez [ "card_to_buy", e_nat 0 ] in
+      let buy_action = e_record_ez ~loc [ "card_to_buy", e_nat ~loc 0 ] in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
-      e_pair buy_action storage
+      e_pair ~loc buy_action storage
     in
     let make_expected n =
-      let ops = e_typed_list [] (t_operation ()) in
+      let ops = e_typed_list ~loc [] (t_operation ~loc ()) in
       let storage =
         let cards =
-          cards_ez first_owner n @ [ e_nat (2 * n), card (e_address second_owner) ]
+          cards_ez first_owner n
+          @ [ e_nat ~loc (2 * n), card (e_address ~loc second_owner) ]
         in
         basic 101 1000 cards ((2 * n) + 1)
       in
-      e_pair ops storage
+      e_pair ~loc ops storage
     in
     let () =
       let amount =
@@ -114,20 +123,21 @@ let dispatch_buy ~raise () =
   let program = get_program ~raise () in
   let () =
     let make_input n =
-      let buy_action = e_record_ez [ "card_to_buy", e_nat 0 ] in
-      let action = e_constructor "Buy_single" buy_action in
+      let buy_action = e_record_ez ~loc [ "card_to_buy", e_nat ~loc 0 ] in
+      let action = e_constructor ~loc "Buy_single" buy_action in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
-      e_pair action storage
+      e_pair ~loc action storage
     in
     let make_expected n =
-      let ops = e_typed_list [] (t_operation ()) in
+      let ops = e_typed_list ~loc [] (t_operation ~loc ()) in
       let storage =
         let cards =
-          cards_ez first_owner n @ [ e_nat (2 * n), card (e_address second_owner) ]
+          cards_ez first_owner n
+          @ [ e_nat ~loc (2 * n), card (e_address ~loc second_owner) ]
         in
         basic 101 1000 cards ((2 * n) + 1)
       in
-      e_pair ops storage
+      e_pair ~loc ops storage
     in
     let () =
       let amount =
@@ -164,22 +174,24 @@ let transfer ~raise () =
   let () =
     let make_input n =
       let transfer_action =
-        e_record_ez [ "card_to_transfer", e_nat 0; "destination", e_address second_owner ]
+        e_record_ez
+          ~loc
+          [ "card_to_transfer", e_nat ~loc 0; "destination", e_address ~loc second_owner ]
       in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
-      e_pair transfer_action storage
+      e_pair ~loc transfer_action storage
     in
     let make_expected n =
-      let ops = e_typed_list [] (t_operation ()) in
+      let ops = e_typed_list ~loc [] (t_operation ~loc ()) in
       let storage =
         let cards =
           let new_card = card_ez second_owner in
           let old_cards = cards_ez first_owner n in
-          (e_nat 0, new_card) :: List.tl_exn old_cards
+          (e_nat ~loc 0, new_card) :: List.tl_exn old_cards
         in
         basic 100 1000 cards (2 * n)
       in
-      e_pair ops storage
+      e_pair ~loc ops storage
     in
     let () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
@@ -205,10 +217,10 @@ let sell ~raise () =
   let program = get_program ~raise () in
   let () =
     let make_input n =
-      let sell_action = e_record_ez [ "card_to_sell", e_nat (n - 1) ] in
+      let sell_action = e_record_ez ~loc [ "card_to_sell", e_nat ~loc (n - 1) ] in
       let cards = cards_ez first_owner n in
       let storage = basic 100 1000 cards (2 * n) in
-      e_pair sell_action storage
+      e_pair ~loc sell_action storage
     in
     let make_expecter : int -> Ast_core.expression -> unit =
      fun n result ->

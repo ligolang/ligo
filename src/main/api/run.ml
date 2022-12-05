@@ -50,7 +50,7 @@ let dry_run
   in
   let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
   let Compiler_options.{ entry_point; _ } = options.frontend in
-  let entry_point = Value_var.of_input_var entry_point in
+  let entry_point = Value_var.of_input_var ~loc:Location.dummy entry_point in
   let typed_prg = Build.qualified_typed ~raise ~options Env source_file in
   let aggregated_prg =
     Compile.Of_typed.apply_to_entrypoint_contract

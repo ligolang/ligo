@@ -466,6 +466,7 @@ and compile_declaration
     scope
     (d : I.declaration)
   =
+  let loc = d.location in
   match Location.unwrap d with
   | D_value { binder; expr; attr } ->
     let attr =
@@ -480,7 +481,7 @@ and compile_declaration
     let scope = Scope.push_value scope binder expr.type_expression attr path in
     let scope, var = Scope.add_path_to_var scope path @@ Binder.get_var binder in
     let binder = Binder.set_var binder var in
-    scope, O.context_decl binder expr attr
+    scope, O.context_decl ~loc binder expr attr
   | D_irrefutable_match { pattern; expr; attr } ->
     let attr =
       { attr with
@@ -504,7 +505,7 @@ and compile_declaration
         scope
         pattern
     in
-    scope, O.context_decl_pattern pattern expr attr
+    scope, O.context_decl_pattern ~loc pattern expr attr
   | D_type _ -> scope, O.context_id
   | D_module { module_binder; module_; module_attr } ->
     let module_attr : O.ModuleAttr.t =
@@ -551,6 +552,7 @@ and compile_module_expr ~raise ?(module_attr = { public = true; hidden = false }
     : Path.t -> Scope.t -> I.module_expr -> Scope.t * O.context
   =
  fun path scope mexpr ->
+  let loc = mexpr.location in
   let rec get_declarations_from_scope scope new_path old_path =
     let dcls = Scope.get_declarations scope in
     let module_ =
@@ -559,11 +561,15 @@ and compile_module_expr ~raise ?(module_attr = { public = true; hidden = false }
           | Value (binder, ty, attr) ->
             let variable =
               O.e_a_variable
+                ~loc
                 (snd @@ Scope.add_path_to_var scope old_path @@ Binder.get_var binder)
                 ty
             in
             let _, var = Scope.add_path_to_var scope new_path @@ Binder.get_var binder in
-            O.(context_append (context_decl (Binder.set_var binder var) variable attr) f)
+            O.(
+              context_append
+                (context_decl ~loc (Binder.set_var binder var) variable attr)
+                f)
           | Module var ->
             let _, scope = Scope.find_module scope var in
             let old_path = Path.add_to_path old_path var in

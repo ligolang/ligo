@@ -229,6 +229,7 @@ module Command = struct
         -> a * Tezos_state.context
     =
    fun ~raise ~options command ctxt _log ->
+    let loc = Location.interpreter in
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let k_ty, v_ty =
@@ -355,7 +356,9 @@ module Command = struct
           let v =
             LT.V_Michelson
               (Ty_code
-                 { micheline_repr = { code; code_ty }; ast_ty = Ast_aggregated.t_int () })
+                 { micheline_repr = { code; code_ty }
+                 ; ast_ty = Ast_aggregated.t_int ~loc ()
+                 })
           in
           let rej = LC.v_ctor "Rejected" (LC.v_pair (v, contract_failing)) in
           fail_ctor rej, ctxt
@@ -457,6 +460,7 @@ module Command = struct
       in
       let func_typed_exp =
         Michelson_backend.make_function
+          ~loc
           f.arg_mut_flag
           in_ty
           out_ty
@@ -732,10 +736,11 @@ module Command = struct
         match entrypoint with
         | None ->
           Ast_aggregated.(
-            e_a_contract_opt (Michelson_backend.string_of_contract addr) value_ty)
+            e_a_contract_opt ~loc (Michelson_backend.string_of_contract addr) value_ty)
         | Some entrypoint ->
           Ast_aggregated.(
             e_a_contract_entrypoint_opt
+              ~loc
               entrypoint
               (Michelson_backend.string_of_contract addr)
               value_ty)

@@ -18,6 +18,8 @@ let options =
     ()
 
 
+let loc = Location.test
+
 let test_format : 'a Simple_utils.Display.format =
   { (* do not display anything if test succeed *)
     pp =
@@ -142,7 +144,7 @@ let get_program ~raise ?(st = "auto") f entry =
 
 
 let get_program f ?st =
-  get_program ?st f (Contract (Ligo_prim.Value_var.of_input_var "main"))
+  get_program ?st f (Contract (Ligo_prim.Value_var.of_input_var ~loc "main"))
 
 
 let expression_to_core ~raise expression =
@@ -467,7 +469,7 @@ let expect_n_strict_pos_small ?options = expect_n_aux ?options [ 2; 10 ]
 let expect_eq_b ~raise program entry_point make_expected =
   let open Ast_imperative in
   let aux b =
-    let input = e_bool b in
+    let input = e_bool ~loc b in
     let expected = make_expected b in
     expect_eq ~raise program entry_point input expected
   in
@@ -477,12 +479,12 @@ let expect_eq_b ~raise program entry_point make_expected =
 
 let expect_eq_n_int a b c =
   let open Ast_imperative in
-  expect_eq_n a b e_int (fun n -> e_int (c n))
+  expect_eq_n a b (e_int ~loc) (fun n -> e_int ~loc (c n))
 
 
 let expect_eq_b_bool a b c =
   let open Ast_imperative in
-  expect_eq_b a b (fun bool -> e_bool (c bool))
+  expect_eq_b a b (fun bool -> e_bool ~loc (c bool))
 
 
 let compile_main ~raise f () =
@@ -491,7 +493,7 @@ let compile_main ~raise f () =
       ~raise
       ~options:options.middle_end
       (get_program ~raise f ())
-    @@ Ligo_prim.Value_var.of_input_var "main"
+    @@ Ligo_prim.Value_var.of_input_var ~loc "main"
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in

@@ -495,7 +495,7 @@ let () = Sys_unix.chdir "publish_contract_gt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
-  let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
+  let dry_run_log = remove_dynamic_info_from_log ~ignore_size:true [%expect.output] in
   print_endline dry_run_log;
   [%expect
     {|
@@ -508,8 +508,6 @@ let%expect_test _ =
         name:          test_package_5
         version:       0.0.1
         filename:      test_package_5-0.0.1.tgz
-        package size:  195.8 kB
-        unpacked size: 1.1 MB
         total files:   3 |}]
 
 let () = Sys_unix.chdir pwd

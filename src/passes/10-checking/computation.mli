@@ -388,12 +388,13 @@ end
     internal representation [Type.t]. *)
 val encode : Ast_typed.type_expression -> Type.t
 
-(** [run_elab comp ~raise ~options ~env] runs and elaborates the computation [comp] with the handler 
+(** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler 
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)
 val run_elab
   :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t
   -> raise:(Errors.typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end
+  -> loc:Location.t
   -> ?env:Environment.t
   -> unit
   -> 'a
