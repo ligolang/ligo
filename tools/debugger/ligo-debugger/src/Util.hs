@@ -24,7 +24,7 @@ groupByKey :: Ord k => (a -> k) -> (a -> v) -> [a] -> [(k, [v])]
 groupByKey f g =
   extractGroup f g
   . groupBy ((==) `on` f)
-  . sortBy (comparing f)
+  . sortOn f
 
 extractGroup :: (a -> k) -> (a -> v) -> [[a]] -> [(k, [v])]
 extractGroup _ _ [] = []
@@ -38,9 +38,9 @@ readSemVerQ :: FilePath -> Code Q SemVer.Version
 readSemVerQ path = Code do
   content <- qReadFileText path
   let clearContent = content
-        & Text.lines
+        & lines
         & filter ((/= "#") . take 1 . toString . Text.dropWhile Char.isSpace)
-        & Text.unlines
+        & unlines
         & Text.strip
 
   version <-

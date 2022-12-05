@@ -132,11 +132,11 @@ buildSubVars lang typ = \case
   VMap m -> do
     forM (toPairs m) \(k, v) -> do
       let name = pretty $ debugBuild DpmNormal k
-      buildVariable lang (getInnerTypeFromRecord name typ) v (T.unpack name)
+      buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
   VBigMap _id m -> do
     forM (toPairs m) \(k, v) -> do
       let name = pretty $ debugBuild DpmNormal k
-      buildVariable lang (getInnerTypeFromRecord name typ) v (T.unpack name)
+      buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
   VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
     pure $ getEpAddressChildren lang EpAddress{..}
   VAddress epAddress -> pure $ getEpAddressChildren lang epAddress

@@ -147,3 +147,21 @@ let g : user = Guest();
     (var_pattern (NameDecl))
     (TypeName)
     (apply (ConstrName))))
+
+=========
+expression as type module access
+=========
+
+const _ = x as A.B.t
+
+---
+
+(source_file
+  (toplevel_binding
+    (wildcard)
+    (type_as_annotation
+      (Name)
+      (module_access_t
+        (ModuleName)
+        (ModuleName)
+        (TypeName)))))
