@@ -1437,18 +1437,18 @@ let%expect_test _ =
       Scopes:
       [ x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 16-17
       [ a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 31-36
-      [ b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 22-29
-      [ g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 37-44
-      [ h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 15, characters 8-10
+      [ bar#5 foo#4 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 22-29
+      [ g#6 bar#5 foo#4 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 37-44
+      [ h#7 g#6 bar#5 foo#4 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 15, characters 8-10
       [ B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
       [ hmm#12 c#11 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
       [ d#13 hmm#12 c#11 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
       [ idk#15 c#14 d#13 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
       [ q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
       [ e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
-      [ f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
-      [ i#22 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
-      [ j#24 i#22 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
+      [ qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
+      [ boo#23 i#22 qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
+      [ j#24 boo#23 i#22 qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
       [ x#26 exp2#25 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
 
       Variable definitions:
@@ -1620,4 +1620,54 @@ let%expect_test _ =
       Content: Alias: A#9
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 8-9 ,
-        File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-12 |}]
+        File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-12 |}];
+  run_ligo_good
+    [ "info"; "get-scope"; gs "local_type.ligo"; "--format"; "dev"; "--with-types" ];
+  [%expect {|
+    Scopes:
+    [ u#0  ] File "../../test/contracts/get_scope_tests/local_type.ligo", line 2, characters 12-14
+    [ b#4 toto#2 y#1 u#0  ] File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 42-43
+    [ foo#3 toto#2 y#1 u#0  ] File "../../test/contracts/get_scope_tests/local_type.ligo", line 5, characters 7-11
+    [ local_type#5  ] File "../../test/contracts/get_scope_tests/local_type.ligo", line 7, characters 10-12
+
+    Variable definitions:
+    (b#4 -> b)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 22-23
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 42-43
+    Content: |core: toto|
+    references:
+      File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 42-43
+    (foo#3 -> foo)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 11-14
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 2-43
+    Content: |core: toto -> toto|
+    references: []
+    (local_type#5 -> local_type)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 1, characters 9-19
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 1, character 0 to line 5, character 11
+    Content: |core: unit -> int|
+    references: []
+    (u#0 -> u)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 1, characters 25-26
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 1, character 44 to line 5, character 11
+    Content: |core: unit|
+    references: []
+    (x#6 -> x)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 7, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 7, characters 10-12
+    Content: |resolved: int|
+    references: []
+    (y#1 -> y)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 2, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 2, characters 12-14
+    Content: |unresolved|
+    references: []
+    Type definitions:
+    (toto#2 -> toto)
+    Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 3, characters 7-11
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.ligo", line 3, characters 15-18
+    Content: : |int|
+    references:
+      File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 26-30 ,
+      File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 34-38
+    Module definitions: |}]
