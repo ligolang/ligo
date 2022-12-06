@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nThe documentation to install ligo on windows is available here : [https://ligolang.org/docs/next/intro/installation?lang=jsligo](https://ligolang.org/docs/next/intro/installation?lang=jsligo). \\n\\nYou can install it through NPM or through windows installer.\\n\\n"
+merge_request: '2198'
+title: "Deliver beta for native Windows installation"
+type: added
+            
