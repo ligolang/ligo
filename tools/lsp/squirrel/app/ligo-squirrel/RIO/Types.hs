@@ -71,8 +71,9 @@ data RioEnv = RioEnv
   -- ^ Stores the user's choice (or lack of) in how the project should be indexed.
   , reBuildGraph :: MVar (Includes FilePath)
   -- ^ Represents the build graph for all files that were looked up.
-  , reLigo :: Pool LigoProcess
-  -- ^ The spawned LIGO processes.
+  , reLigo :: IORef (Maybe (Pool LigoProcess))
+  -- ^ The spawned LIGO processes. This might be 'Nothing' in case the daemon
+  -- was not initialized yet.
   }
 
 newtype ProjectSettings = ProjectSettings
@@ -113,7 +114,7 @@ instance KatipContext RIO where
 instance HasLigoClient RIO where
   getLigoClientEnv = do
     _lceClientPath <- _cLigoBinaryPath <$> S.getConfig
-    _lceLigoProcesses <- asks (Just . reLigo)
+    _lceLigoProcesses <- readIORef =<< asks reLigo
     pure LigoClientEnv{..}
 
 $(deriveJSON defaultOptions

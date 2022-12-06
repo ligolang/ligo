@@ -300,7 +300,7 @@ startLigoDaemon _getRootDir = do
           LigoClientEnv{_lceClientPath} <- getLigoClientEnv
           -- FIXME (LIGO-545): See notes in @callLigo@.
           (Just _lpStdin, Just _lpStdout, Just _lpStderr, _lpLigo) <-
-            createProcess (proc _lceClientPath ["daemon"])
+            createProcess (proc _lceClientPath ["daemon", "--ligo-bin-path", _lceClientPath])
               { std_in  = CreatePipe
               , std_out = CreatePipe
               , std_err = CreatePipe
@@ -332,7 +332,7 @@ cleanupLigoDaemonImpl = Pool.destroyAllResources
 -- If '_lceLigoProcesses' is 'Nothing', this function will make a blocking call
 -- to LIGO, otherwise it will use an unused process handle from the process
 -- pool.
-callLigo :: forall m. HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m Text
+callLigo :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m Text
 callLigo _rootDir args conM = do
   LigoClientEnv{..} <- getLigoClientEnv
   let fpM = srcPath <$> conM
@@ -350,10 +350,9 @@ callLigo _rootDir args conM = do
         UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM
       pure $ toText lo
     Just ligoProcesses ->
-      Pool.withResource ligoProcesses \LigoProcess{..} -> do
-        liftIO do
-          Text.hPutStrLn _lpStdin $ unwords $ map (Debug.show . unLigoCliArg) args
-          hFlush _lpStdin
+      Pool.withResource ligoProcesses \LigoProcess{..} -> liftIO do
+        Text.hPutStrLn _lpStdin $ unwords $ map (Debug.show . unLigoCliArg) args
+        hFlush _lpStdin
         lo <- readUntilNull _lpStdout
         le <- readUntilNull _lpStderr
         getProcessExitCode _lpLigo >>= \case
@@ -368,8 +367,8 @@ callLigo _rootDir args conM = do
         '\0' -> pure []
         c    -> fmap (c :) (readLoop h)
 
-    readUntilNull :: Handle -> m Text
-    readUntilNull = liftIO . fmap toText . readLoop
+    readUntilNull :: Handle -> IO Text
+    readUntilNull = fmap toText . readLoop
 
 newtype Version = Version
   { getVersion :: Text

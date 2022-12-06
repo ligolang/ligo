@@ -45,7 +45,10 @@ mainLoop =
   Log.withLogger $$Log.flagBasedSeverity "lls" $$Log.flagBasedEnv \runLogger -> do
     let
       serverDefinition = S.ServerDefinition
-        { S.onConfigurationChange = \old _ -> Right old
+        { S.onConfigurationChange = \_old newValue ->
+          case Aeson.fromJSON newValue of
+            Aeson.Error err -> Left $ toText err
+            Aeson.Success new -> Right new
         , S.defaultConfig = def
         , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> RIO.newRioEnv
         , S.staticHandlers = catchExceptions handlers
