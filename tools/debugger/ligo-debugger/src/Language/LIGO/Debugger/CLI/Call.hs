@@ -185,12 +185,6 @@ isSupportedVersion ver = fromMaybe VersionSupported $ asum
     ver < minimalSupportedVersion
       ?- noSupport
 
-    -- These versions are unsupported because of
-    -- wrong working "ligo info list-declarations" for
-    -- contracts with functions from stdlib (e.g. "Set" or "Tezos").
-  , [SemVer.QQ.version|0.51.0|] <= ver && ver <= [SemVer.QQ.version|0.53.0|]
-      ?- noSupport
-
     -- Future versions that we didn't check yet
   , ver > recommendedVersion  -- don't hesitate to replace this with a higher constant
       ?- partialSupport
