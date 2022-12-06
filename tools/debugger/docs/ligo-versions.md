@@ -34,7 +34,7 @@ Also, we should periodically check when a new verion of `ligo` is released, e.g.
 
 ### Lower bound
 
-When we update our code in a way that is not compatible with older versions of `ligo`, in particular when `ligo` itself introduces permanent non-backward compatible changes that we follow up, then we have to bump the lower bound version.
+When we are ready to make a new debugger release then we need to manually trigger a job in CI that runs all tests except for `minor` ones for a `minimal-supported` `ligo` version. This job is allowed to fail. Then we need to check all failed test cases by hand. They may be failing because of some minor changes in `ligo`'s output (e.g. some locations are skipped in newer `ligo` releases). If it turns out that something severe occurred (e.g. they changed the `JSON` schema format) then we need to bump this lower bound version.
 
 In such case, other constraints should be updated accordingly, e.g. it may be that all exclusion rules become redundant.
 

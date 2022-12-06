@@ -72,6 +72,7 @@ git.commits.each { |commit|
     if !commit.chore?
       description_patterns = [
         /^Problem:[ \n].*^Solution:[ \n]/m,
+        /^Motivation: [ \n].*/,
         /And yes, I don't care about templates/
       ]
       unless description_patterns.any? { |pattern| pattern.match?(commit.description) }
