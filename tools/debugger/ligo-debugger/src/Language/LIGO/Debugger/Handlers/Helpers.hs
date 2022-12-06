@@ -13,7 +13,7 @@ import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError)
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
-import Data.Singletons (SingI)
+import Data.Singletons (SingI, demote)
 import Data.Text qualified as Text
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
@@ -126,7 +126,8 @@ withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
 
 -- | Try our best to parse and typecheck a value of a certain category.
 parseValue
-  :: (SingI t, HasLigoClient m)
+  :: forall t m.
+     (SingI t, HasLigoClient m)
   => FilePath
   -> Text
   -> Text
@@ -155,9 +156,10 @@ parseValue ctxContractPath category val valueType = runExceptT do
 
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
-    & first do \msg -> [int||
-        Typechecking as #{category} failed: #{msg}
+    & first do \_ -> [int||
+        The value is not of type `#{demote @t}`
       |]
+      -- TODO [LIGO-913]: mention LIGO type
     & liftEither
 
 getServerState :: RIO ext (LanguageServerStateExt ext)
