@@ -93,3 +93,14 @@ With such a contract, you can specify in `launch.json`:
     "parameter": 5
 }
 ```
+
+## FAQ
+
+### I've set `"entrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for an entrypoint when starting a debug session.
+
+We automatically detect the list of entrypoints in the file, and in case it contains only one entrypoint, we skip the selection stage.
+Make sure that your function is a valid entrypoint.
+
+### I've set `"michelsonEntrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for a Michelson entrypoint when starting a debug session.
+
+We automatically detect the list of entrypoints in the contract, and in case it contains only one entrypoint, we skip the selection stage.
