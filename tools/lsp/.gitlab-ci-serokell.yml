@@ -134,6 +134,13 @@ vscode-extension-lsp-handler-tests:
     - git add ./ligo # Ligo binary is needed for this tests
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-handlers-test
 
+vscode-extension-ligo-contracts-test:
+  stage: lsp
+  needs: []
+  only: [merge_requests, tooling]
+  script:
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.ligo-contracts-test
+
 vscode-extension-linux:
   stage: nix
   needs: [ print-nix-version ]
