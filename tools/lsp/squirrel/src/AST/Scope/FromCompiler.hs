@@ -36,7 +36,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
 fromCompiler :: forall m. Log m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
   let msgs = map fromLigoErrorToMsg (errors <> warnings)
-  allRefs <- fromScopes (Namespace []) decls
+  allRefs <- fromScopes (Namespace empty) decls
   foldlM
     (\(sf, errs) (LigoScope r es _ts ms) -> do
       let env = reverse $ es <> ms
@@ -101,7 +101,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
           , _mdsName = moduleName
           }
         moduleDecl = ScopedDecl moduleName r (r : rs) [] dialect moduleSpec namespace
-      decls' <- fromScopes (namespace <> Namespace [moduleName]) members
+      decls' <- fromScopes (namespace <> Namespace (one moduleName)) members
       pure $ HashMap.insert mangled moduleDecl decls'
 
     fromModuleAliasDecl
@@ -116,7 +116,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       let
         moduleSpec = ModuleSpec ModuleDeclSpecifics
           { _mdsInitRange = fromLigoRangeOrDef bodyR
-          , _mdsInit = ModuleAlias $ Namespace alias
+          , _mdsInit = ModuleAlias $ Namespace $ fromList alias
           , _mdsName = moduleName
           }
         moduleDecl = ScopedDecl moduleName r (r : rs) [] dialect moduleSpec namespace

@@ -1,6 +1,5 @@
 module Util
   ( foldMapM
-  , unconsFromEnd
   , safeIndex
   , toUri
   , toLocation
@@ -33,13 +32,6 @@ foldMapM :: (Foldable t, Monad m, Monoid b) => (a -> m b) -> t a -> m b
 foldMapM f = foldlM folder mempty
   where
     folder !acc new = (acc <>) <$> f new
-
--- | Split into list into a pair of all but the last elements, and the last
--- element.
---
--- @unconsFromEnd [1, 2, 3] = Just ([1, 2], 3)@
-unconsFromEnd :: [a] -> Maybe ([a], a)
-unconsFromEnd = map (init &&& last) . nonEmpty  -- doubt we should care about two passes
 
 safeIndex :: (Eq t, Num t) => [a] -> t -> Maybe a
 safeIndex [] _ = Nothing

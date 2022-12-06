@@ -14,6 +14,7 @@ import Data.HashMap.Lazy qualified as HashMap
 import Data.Kind qualified (Type)
 import Data.List.NonEmpty qualified as NE (unzip)
 import Data.Map qualified as Map
+import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
 import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<+>), (<.>))
 import Duplo.Tree hiding (loop)
@@ -34,7 +35,7 @@ import Log (i)
 import Parser (ParsedInfo)
 import Product
 import Range
-import Util (foldMapM, unconsFromEnd, (<<&>>))
+import Util (foldMapM, (<<&>>))
 
 data Fallback
 
@@ -113,7 +114,7 @@ makeLenses ''ScopeEnv
 
 initScopeEnv :: Lang -> ScopeEnv
 initScopeEnv _seDialect = ScopeEnv
-  { _seNamespace = Qualified (Namespace []) (Namespace [])
+  { _seNamespace = Qualified (Namespace empty) (Namespace empty)
   , _seInScope = HashMap.empty
   , _seDialect
   }
@@ -196,14 +197,14 @@ resolveModuleAlias moduleName = do
   namespace <- askNamespace
   lookupInOuterModules ModuleLevel namespace moduleName <&> \case
     Nothing -> Nothing
-    Just (InScopeOrdinaryRef _, ns) -> Just $ ns <> Namespace [moduleName]
+    Just (InScopeOrdinaryRef _, ns) -> Just $ ns <> Namespace (one moduleName)
     Just (InScopeModuleAliasRef _ ref, _) -> expandAliasRef ref
   where
     expandAliasRef :: Maybe ExtendedDeclRef -> Maybe Namespace
     expandAliasRef Nothing =
       Nothing
     expandAliasRef (Just ExtendedDeclRef{edrDeclRef = DeclRef{drName}, edrNamespace, edrRefKind = OrdinaryRef ModuleLevel}) =
-      Just $ edrNamespace <> Namespace [drName]
+      Just $ edrNamespace <> Namespace (one drName)
     expandAliasRef (Just ExtendedDeclRef{edrRefKind = OrdinaryRef _}) =
       Nothing
     expandAliasRef (Just ExtendedDeclRef{edrRefKind = ModuleAliasRef refM}) =
@@ -223,8 +224,8 @@ resolveModuleAlias moduleName = do
 -- which name we're currenly expanding.
 --   (W).X -> (A).X -> A.(X) -> A.(Y).Z -> A.Y.(Z) -> A.Y.Z
 expandModuleAlias :: Namespace -> ScopeM (Maybe Namespace)
-expandModuleAlias (Namespace []) = Just . qualified <$> askNamespace
-expandModuleAlias (Namespace (base : nested)) =
+expandModuleAlias (Namespace Seq.Empty) = Just . qualified <$> askNamespace
+expandModuleAlias (Namespace (base Seq.:<| nested)) =
   resolveModuleAlias base >>= \case
     -- Unbound name, stop.
     Nothing -> pure Nothing
@@ -269,9 +270,9 @@ lookupInOuterModules level namespace name = do
   case HashMap.lookup (RefKey namespaceName name level) inScope of
     Just inScopeRef -> pure $ Just (inScopeRef, namespaceName)
     Nothing         -> case namespace of
-      Qualified (Namespace uns) qns -> case nonEmpty uns of
-        Nothing    -> pure Nothing
-        Just neUns -> lookupInOuterModules level (Qualified (Namespace $ init neUns) qns) name
+      Qualified (Namespace uns) qns -> case uns of
+        Seq.Empty         -> pure Nothing
+        initUns Seq.:|> _ -> lookupInOuterModules level (Qualified (Namespace initUns) qns) name
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv info = do
@@ -698,7 +699,9 @@ instance HasGo Binding where
             -- all aliases.
             ModuleAlias alias <- hoistMaybe (moduleDecl ^? sdSpec . _ModuleSpec . mdsInit)
             Namespace expandedAlias <- MaybeT $ expandModuleAlias alias
-            (aliasNamespace, drName) <- hoistMaybe $ unconsFromEnd expandedAlias
+            (aliasNamespace, drName) <- hoistMaybe $ case expandedAlias of
+              Seq.Empty   -> Nothing
+              h Seq.:|> t -> Just (h, t)
 
             -- Lookup the module name that we resolved to and return its cached
             -- reference.

@@ -45,12 +45,12 @@ import Range (Range)
 import Util (safeIndex)
 
 newtype Namespace = Namespace
-  { getNamespace :: [Text]
+  { getNamespace :: Seq Text
   } deriving stock (Eq, Ord, Show)
     deriving newtype (Hashable, Semigroup, Monoid)
 
 instance Pretty Namespace where
-  pp (Namespace ns) = sexpr "::" (map pp ns)
+  pp (Namespace ns) = sexpr "::" $ map pp $ toList ns
 
 type Scope = [ScopedDecl]
 
