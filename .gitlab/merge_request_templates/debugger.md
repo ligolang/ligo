@@ -19,8 +19,3 @@
 
 - Breaking changes (if applied)
   - [ ] If I introduced changes that are not compatible with the older versions of `ligo`, I updated our version restrictions according to [the respective document](/tools/debugger/docs/ligo-versions.md).
-
-#### Stylistic guide (mandatory)
-
-- [ ] My commits comply with [the following policy](https://www.notion.so/serokell/Where-and-how-to-commit-your-work-58f8973a4b3142c8abbd2e6fd5b3a08e).
-- [ ] My code complies with the [style guide](https://github.com/serokell/style).
