@@ -14,7 +14,6 @@ import Control.Monad.Except (liftEither, throwError)
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI, demote)
-import Data.Text qualified as Text
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Log (runNoLoggingT)
@@ -133,9 +132,9 @@ parseValue
   -> Text
   -> Text
   -> m (Either Text (T.Value t))
-parseValue ctxContractPath category val valueType = runExceptT do
+parseValue ctxContractPath category val valueLang = runExceptT do
   let src = P.MSName category
-  uvalue <- case valueType of
+  uvalue <- case valueLang of
     "LIGO" -> do
       lift (try $ compileLigoExpression src ctxContractPath val) >>= \case
         Right x -> pure x
@@ -150,8 +149,8 @@ parseValue ctxContractPath category val valueType = runExceptT do
         & liftEither
 
     _ -> throwError [int||
-        Expected "LIGO" or "Michelson" in field "valueType" \
-        but got #{valueType}
+        Expected "LIGO" or "Michelson" in field "#{category}Lang" \
+        but got #{valueLang}
       |]
 
   typeVerifyTopLevelType mempty uvalue
@@ -202,17 +201,6 @@ parseContracts allFiles = do
   let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
 
   pure $ HM.fromList $ zip allFiles parsedFiles
-
-splitValueAndType :: (MonadIO m) => Text -> Text -> m (Text, Text)
-splitValueAndType value valueType = do
-  if '@' `elem` value then do
-    -- Sometimes we can find '@' in LIGO values but the last one should be definitely value type
-    pure $ first (Text.dropEnd 1) $ Text.breakOnEnd "@" value
-  else do
-    throwIO $ ConfigurationException [int||
-      Can't find value type in #{valueType}.
-      It should be separated with '@' sign.
-    |]
 
 -- | Some exception in debugger logic.
 data SomeDebuggerException where

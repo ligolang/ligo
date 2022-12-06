@@ -48,11 +48,13 @@ Use F11 (or press "Step Into") to step through LIGO code in details.
 
 The `parameter` and `storage` fields define what will be passed as run arguments.
 
-It is possible to hardcode a concrete value both in LIGO and Michelson. You just need to suffix it with `@` and a preffered format. For example:
+It is possible to hardcode a concrete value both in LIGO and Michelson. You just need to specify its origin in `parameterLang` or `storageLang` fields. Note, that these fields are optional and the default value for them is `LIGO`. For example:
 ```json
 ...
-"parameter": "5n@LIGO", <-- value in LIGO format
-"storage": "Left 42@Michelson" <-- value in Michelson format
+"parameter": "5n",
+"parameterLang": "LIGO", <-- this field is optional
+"storage": "Left 42",
+"storageLang": "Michelson",
 ...
 ```
 

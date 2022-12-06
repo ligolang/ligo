@@ -133,13 +133,23 @@
                             },
                             "parameter": {
                                 "type": "string",
-                                "description": "Parameter value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
+                                "description": "Parameter value.",
                                 "default": "{AskOnStart}"
+                            },
+                            "parameterLang": {
+                                "type": "string",
+                                "description": "Language of parameter ('LIGO' or 'Michelson')",
+                                "default": "LIGO"
                             },
                             "storage": {
                                 "type": "string",
-                                "description": "Initial storage value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
+                                "description": "Initial storage value.",
                                 "default": "{AskOnStart}"
+                            },
+                            "storageLang": {
+                                "type": "string",
+                                "description": "Language of storage ('LIGO' or 'Michelson')",
+                                "default": "LIGO"
                             },
                             "logDir": {
                                 "type": "string",
@@ -237,7 +247,9 @@
                             "michelsonEntrypoint": "${2|{AskOnStart},default|}",
                             "entrypoint": "${3|{AskOnStart}|}",
                             "parameter": "${4|{AskOnStart}|}",
+                            "parameterLang": "LIGO",
                             "storage": "${5|{AskOnStart}|}",
+                            "storageLang": "LIGO",
                             "contractEnv": {
                                 "now": "${6:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
                                 "level": "${7:10000}",
