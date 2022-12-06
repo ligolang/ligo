@@ -1,0 +1,29 @@
+type r = { a : [nat   , int, string]
+         , b : [int   , nat, string] 
+         , c : [string, int, nat]
+         }
+
+let r = { a : [1 as nat     , 1 , "H"]
+        , b : [2      , 2 as nat, "E"] 
+        , c : ["Hello", 3 , 3 as nat ] 
+        }
+let { a : [a1, a2, a3]
+    , b : [b1, b2, b3]
+    , c : [c1, c2, c3]
+    } = r
+let { a : [a4, a5, a6]
+    , b : [b4, b5, b6]
+    , c : [c4, c5, c6]
+    } 
+  = { a : [4 as nat     , 4 , "H"] 
+    , b : [5      , 5 as nat, "E"] 
+    , c : ["Hello", 6 , 6 as nat ] 
+    }
+
+type storage = [nat, int, string]
+
+let main = (_ : unit, _ : storage) : [list<operation>, storage]
+  => [list([]), [ a1 + b2 + c3 + a4 + b5 + c6
+        , a2 + b1 + c2 + a5 + b4 + c5
+        , c1 + b3 + a3 + a6 + b6 + c4
+     ]]

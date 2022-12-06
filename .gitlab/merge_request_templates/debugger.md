@@ -14,7 +14,7 @@
     - [ ] [Other documents](/tools/debugger/docs/)
 
 - `launch.json` config (if updated)
-  - [ ] I keep the format of `launch.json` (in [package.json](./tools/debugger/vscode-plugin/package.json)) synced with how the plugin code and the adapter's code work with this configuration.
+  - [ ] I keep the format of `launch.json` (in [package.json](/tools/debugger/vscode-plugin/package.json)) synced with how the plugin code and the adapter's code work with this configuration.
   - [ ] If I changed values in the initial configuration for `launch.json`, I also searched for them in code and updated accordingly. I keep the default configurations and default values for not listed fields in match.
 
 - Breaking changes (if applied)

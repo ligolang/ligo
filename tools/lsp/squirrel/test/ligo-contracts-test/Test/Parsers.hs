@@ -80,6 +80,8 @@ okayTests =
       , "negative" </> "switch_jsligo" </> "empty_switch.jsligo"
       , "negative" </> "switch_jsligo" </> "default_in_between.jsligo"
       , "negative" </> "switch_jsligo" </> "more_than_one_default.jsligo"
+      , "top_level_patterns" </> "contracts" </> "jsligo" </> "nested_record.jsligo"
+      , "top_level_patterns" </> "contracts" </> "jsligo" </> "record.jsligo"
       ]
     , tdIgnoreDirs = []
     }
@@ -244,4 +246,4 @@ test_contractsWithMissingNodes
   = testGroup "Trying to parse contracts with missing nodes" <$> testCases
   where
     testCases = map makeTestCase <$> getContracts contractsWithMissingNodes
-    makeTestCase contractPath = testCase contractPath (checkFile @Fallback True contractPath)
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback False contractPath)

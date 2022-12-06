@@ -3,8 +3,9 @@ open Cli_expect
 let contract = test
 
 let%expect_test _ =
-  run_ligo_good ["compile"; "contract" ; contract "unused_recursion.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "unused_recursion.mligo" ];
+  [%expect
+    {|
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
       code { CDR ;
@@ -18,11 +19,13 @@ let%expect_test _ =
              SWAP ;
              PAIR ;
              NIL operation ;
-             PAIR } } |} ]
+             PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good ["compile"; "contract" ; contract "unused_recursion.mligo" ; "--warn-unused-rec" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"; "contract"; contract "unused_recursion.mligo"; "--warn-unused-rec" ];
+  [%expect
+    {|
     File "../../test/contracts/unused_recursion.mligo", line 9, characters 10-14:
       8 |   (* parameter shadows fun_name: simple *)
       9 |   let rec toto : int -> int = fun (toto:int) : int -> let number = toto in number + 1 in
@@ -60,11 +63,12 @@ let%expect_test _ =
              SWAP ;
              PAIR ;
              NIL operation ;
-             PAIR } } |} ]
+             PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "unused_recursion.jsligo" ];
+  [%expect
+    {|
     File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
      31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
@@ -122,11 +126,13 @@ let%expect_test _ =
              SWAP ;
              PAIR ;
              NIL operation ;
-             PAIR } } |} ]
+             PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ; "--warn-unused-rec" ] ;
-  [%expect{|
+  run_ligo_good
+    [ "compile"; "contract"; contract "unused_recursion.jsligo"; "--warn-unused-rec" ];
+  [%expect
+    {|
     File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
      31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
@@ -184,4 +190,4 @@ let%expect_test _ =
              SWAP ;
              PAIR ;
              NIL operation ;
-             PAIR } } |} ]
+             PAIR } } |}]

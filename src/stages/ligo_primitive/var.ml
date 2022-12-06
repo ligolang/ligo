@@ -5,14 +5,14 @@ module type VAR = sig
 
   (* Create a compiler generated variable *)
   val reset_counter : unit -> unit
-  val fresh : ?loc:Location.t -> ?name:string -> unit -> t
+  val fresh : loc:Location.t -> ?name:string -> unit -> t
   val fresh_like : ?loc:Location.t -> t -> t
 
   (* Construct a user variable directly from a string. This should only
       be used for embedding user variable names. For programmatically
       generated variables, use `fresh`. Take care not to cause
       shadowing/capture except as the user intended. *)
-  val of_input_var : ?loc:Location.t -> string -> t
+  val of_input_var : loc:Location.t -> string -> t
 
   (* Warning : do not use *)
   val to_name_exn : t -> string
@@ -33,8 +33,7 @@ module Internal () = struct
       ; counter : int
       ; generated : bool
       ; location :
-          (Location.t
-          [@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
+          (Location.t[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
       }
     [@@deriving equal, compare, yojson, hash, sexp]
   end
@@ -44,7 +43,7 @@ module Internal () = struct
   let global_counter = ref 1
   let reset_counter () = global_counter := 1
 
-  let fresh ?(loc = Location.dummy) ?(name = "gen") () =
+  let fresh ~loc ?(name = "gen") () =
     let counter =
       incr global_counter;
       !global_counter
@@ -61,16 +60,10 @@ module Internal () = struct
     { v with counter; location }
 
 
-  let exists_prefix = "^gen"
-
-  let fresh_exists ?(loc = Location.dummy) () =
-    fresh ~loc ~name:exists_prefix ()
-
-
   (* should be removed in favor of a lift pass before ast_imperative *)
-  let of_input_var ?(loc = Location.dummy) name =
+  let of_input_var ~loc name =
     if String.equal name "_"
-    then fresh ~name ()
+    then fresh ~name ~loc ()
     else { name; counter = 0; generated = false; location = loc }
 
 
@@ -88,14 +81,6 @@ module Internal () = struct
   let get_location var = var.location
   let set_location location var = { var with location }
   let is_generated var = var.generated
-
-  let is_exists { name; generated; _ } =
-    (* String Hack for existentials. Used to avoid changes to [Ast_typed].
-       Future MR: Add explicit [T_exists] to [Ast_typed] *)
-    (* would be more safe to use a specific fields in the record *)
-    String.is_prefix name ~prefix:exists_prefix && generated
-
-
   let is_name var name = String.equal var.name name
 
   (* PP *)
@@ -106,10 +91,7 @@ module Internal () = struct
 
 
   let _pp ppf v = Format.fprintf ppf "%s#%d" v.name v.counter
-
-  let wildcard =
-    { name = "_"; counter = 0; location = Location.dummy; generated = false }
-
+  let wildcard ~loc = { name = "_"; counter = 0; location = loc; generated = false }
 
   include Comparable.Make (T)
 end

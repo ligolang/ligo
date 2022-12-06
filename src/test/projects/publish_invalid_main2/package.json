@@ -1,0 +1,12 @@
+{
+    "name": "test_package_1",
+    "version": "0.0.1",
+    "author": "foo",
+    "repository": "gist:1234",
+    "main": "foo.ml",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/foo/bar",
+        "email": "foo@bar.com"
+    }
+}

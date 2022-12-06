@@ -1,4 +1,4 @@
-module AST = Ast_aggregated
+module AST = Ast_expanded
 module Append_tree = Simple_utils.Tree.Append
 
 module Compiler   = Compiler

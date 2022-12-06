@@ -1,6 +1,6 @@
 module Test.Capabilities.Completion
   ( unit_completion
-  , unit_completion_jsligo
+  --, unit_completion_jsligo
   ) where
 
 import Language.LSP.Test
@@ -30,13 +30,14 @@ unit_completion = do
     , "begin", "big_map", "contains", "function", "if", "in", "is", "list", "nil", "recursive", "skip", "while"
     ]
 
-unit_completion_jsligo :: Assertion
-unit_completion_jsligo = do
-  let filename = "type-attribute.jsligo"
-
-  completions <- runHandlersTest contractsDir $ do
-    doc <- openLigoDoc filename
-    getCompletions doc (Position 12 32)
-
-  sort (fmap (^. label) completions) `shouldMatchList`
-    ["id", "if", "import", "is_admin", "switch", "while"]
+-- FIXME: LIGO-797 (https://gitlab.com/ligolang/ligo/-/issues/1514)
+--unit_completion_jsligo :: Assertion
+--unit_completion_jsligo = do
+--  let filename = "type-attribute.jsligo"
+--
+--  completions <- runHandlersTest contractsDir $ do
+--    doc <- openLigoDoc filename
+--    getCompletions doc (Position 12 32)
+--
+--  sort (fmap (^. label) completions) `shouldMatchList`
+--    ["id", "if", "import", "is_admin", "switch", "while"]

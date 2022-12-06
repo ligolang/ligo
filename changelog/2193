@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nBefore:\\n\\n\\n```bash\\n$ ligo.55 login\\nUsername: user1\\nPassword: ************\\nyou are authenticated as 'user1'\\n$ ligo.55 login\\nUsername: user2\\nPassword: ***************\\n{\\n  \"error\": \"username is already registered\"\\n}\\n\\n```\\n\\nAfter:\\n\\n\\n```bash\\n$ ligo login\\nUsername: user1\\nPassword: ************\\nyou are authenticated as 'user1'\\n$ ligo login\\nUsername: user2\\nPassword: ***************\\nyou are authenticated as 'user2'\\n\\n```\\n\\n"
+merge_request: '2193'
+title: "Fix `ligo login` when user is logged in and tries to login again with a different user"
+type: fixed
+            

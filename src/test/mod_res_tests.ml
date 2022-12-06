@@ -36,21 +36,16 @@ let working_project ~raise:_ () =
           ])
   in
   let list_helpers_path =
-    ModRes.find_external_file
-      ~file:"ligo-list-helpers/list.mligo"
-      ~inclusion_paths
+    ModRes.find_external_file ~file:"ligo-list-helpers/list.mligo" ~inclusion_paths
   in
   let () =
     assert (
       option_eq
-        (relative
-           ".ligo/source/i/ligo_list_helpers__1.0.0__bf074147/list.mligo")
+        (relative ".ligo/source/i/ligo_list_helpers__1.0.0__bf074147/list.mligo")
         list_helpers_path)
   in
   let set_helpers_path =
-    ModRes.find_external_file
-      ~file:"ligo-set-helpers/set.mligo"
-      ~inclusion_paths
+    ModRes.find_external_file ~file:"ligo-set-helpers/set.mligo" ~inclusion_paths
   in
   assert (
     option_eq
@@ -87,8 +82,7 @@ let complex_project ~raise:_ () =
   let () =
     assert (
       option_eq
-        (relative
-           ".ligo/source/i/ligo_list_helpers__1.0.1__6233bebd/list.mligo")
+        (relative ".ligo/source/i/ligo_list_helpers__1.0.1__6233bebd/list.mligo")
         list_helpers_path)
   in
   let set_helpers_path =
@@ -110,8 +104,7 @@ let complex_project ~raise:_ () =
   let () =
     assert (
       option_eq
-        (relative
-           ".ligo/source/i/ligo_list_helpers__1.0.0__bf074147/list.mligo")
+        (relative ".ligo/source/i/ligo_list_helpers__1.0.0__bf074147/list.mligo")
         list_helpers_path)
   in
   let set_helpers_path =

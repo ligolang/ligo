@@ -1,16 +1,21 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
-let bad_contract basename =
-  "../../test/contracts/negative/" ^ basename
+let contract basename = "../../test/contracts/" ^ basename
+let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 (* avoid pretty printing *)
 let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "dry-run" ; contract "double_michelson_or.mligo" ; "unit" ; "(M_left (1) : storage)" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "double_michelson_or.mligo"
+    ; "unit"
+    ; "(M_left (1) : storage)"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/double_michelson_or.mligo", line 8, characters 6-9:
       7 |   let foo = (M_right ("one") : storage) in
       8 |   let bar = (M_right 1 : foobar) in
@@ -36,9 +41,15 @@ let%expect_test _ =
     Hint: replace it by "_store" to prevent this warning.
 
     ( LIST_EMPTY() , M_right("one") ) |}];
-
-  run_ligo_good ["run"; "dry-run" ; contract "double_michelson_or.ligo" ; "unit" ; "(M_left (1) : storage)" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "double_michelson_or.ligo"
+    ; "unit"
+    ; "(M_left (1) : storage)"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/double_michelson_or.ligo", line 9, characters 8-11:
       8 |   const foo : storage = (M_right ("one") : storage);
       9 |   const bar : foobar = (M_right (1) : foobar)
@@ -65,10 +76,10 @@ let%expect_test _ =
 
     ( LIST_EMPTY() , M_right("one") ) |}]
 
-
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_or_tree.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_or_tree.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/michelson_or_tree.mligo", line 6, characters 10-16:
       5 |
       6 | let main (action, store : unit * storage) : return =
@@ -90,8 +101,9 @@ let%expect_test _ =
       code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_michelson_or.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "compile"; "contract"; bad_contract "bad_michelson_or.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative/bad_michelson_or.mligo", line 6, characters 12-27:
       5 | let main (action, store : unit * storage) : return =
       6 |   let foo = M_right ("one") in
@@ -101,8 +113,9 @@ let%expect_test _ =
     The contructor "M_right" must be annotated with a variant type. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_or_tree_intermediary.ligo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_or_tree_intermediary.ligo" ];
+  [%expect
+    {|
     File "../../test/contracts/michelson_or_tree_intermediary.ligo", line 6, characters 21-27:
       5 |
       6 | function main (const action : unit; const store : storage) : return is {
@@ -122,4 +135,3 @@ let%expect_test _ =
     { parameter unit ;
       storage (or (int %three) (or (int %one) (nat %two))) ;
       code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
-

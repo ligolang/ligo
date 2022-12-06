@@ -16,9 +16,7 @@ let format_result
       (fun ~catch e -> e :: catch.errors (), catch.warnings (), None)
   in
   let output = Formatter.{ errors; warns; info } in
-  let disp =
-    Displayable { value = output; format = Formatter.get_scope_format }
-  in
+  let disp = Displayable { value = output; format = Formatter.get_scope_format } in
   let (Ex_display_format t) = display_format in
   let result_as_str : string =
     match t with

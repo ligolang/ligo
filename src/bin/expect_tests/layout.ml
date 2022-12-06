@@ -4,7 +4,8 @@ let layout = "../../test/contracts/negative/layout.mligo"
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; layout ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/layout.mligo", line 17, character 2 to line 23, character 6:
      16 | let main ((p,s) : unit * storage) : return =
      17 |   let s : storage1 = {

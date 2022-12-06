@@ -9,10 +9,7 @@ type ('a, 'err, 'wrn) t
 
 include Monad.S3 with type ('a, 'err, 'wrn) t := ('a, 'err, 'wrn) t
 
-val all_lmap
-  :  ('a, 'err, 'wrn) t Record.LMap.t
-  -> ('a Record.LMap.t, 'err, 'wrn) t
-
+val all_lmap : ('a, 'err, 'wrn) t Record.LMap.t -> ('a Record.LMap.t, 'err, 'wrn) t
 val all_lmap_unit : (unit, 'err, 'wrn) t Record.LMap.t -> (unit, 'err, 'wrn) t
 
 (** {1 Location Handling} *)
@@ -54,10 +51,7 @@ val assert_ : bool -> error:'err Errors.with_loc -> (unit, 'err, 'wrn) t
 
 (** [try_ comp ~with_] executes the computation [comp]. If [comp] raises 
     an error [err], then the handler [with_] is called with [err]. *)
-val try_
-  :  ('a, 'err, 'wrn) t
-  -> with_:('err -> ('a, 'err, 'wrn) t)
-  -> ('a, 'err, 'wrn) t
+val try_ : ('a, 'err, 'wrn) t -> with_:('err -> ('a, 'err, 'wrn) t) -> ('a, 'err, 'wrn) t
 
 val try_all
   :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
@@ -94,8 +88,7 @@ val hash_context : unit -> (unit, 'err, 'wrn) t
 (** ['a exit] defines the behavior when exiting a context scope, returning
     a computation of type ['a] *)
 type 'a exit =
-  | Drop : 'a exit
-      (** [Drop] simply drops all context items up until the scope marker *)
+  | Drop : 'a exit (** [Drop] simply drops all context items up until the scope marker *)
   | Lift_type : (Type.t * 'a) exit
       (** [Lift_type] drops everything up until the scope marker *except* existential variables 
           and applies any dropped equations to the returned type.
@@ -116,9 +109,7 @@ module Context : sig
       captured by a closure), then we return [Error]. *)
   val get_value
     :  Value_var.t
-    -> ( ( Context.mutable_flag * Type.t
-         , [ `Mut_var_captured | `Not_found ] )
-         result
+    -> ( (Context.mutable_flag * Type.t, [ `Mut_var_captured | `Not_found ]) result
        , 'err
        , 'wrn )
        t
@@ -132,19 +123,13 @@ module Context : sig
       Returning [None] if not found in the current context. *)
   val get_imm : Value_var.t -> (Type.t option, 'err, 'wrn) t
 
-  val get_imm_exn
-    :  Value_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t, 'err, 'wrn) t
+  val get_imm_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_mut var] returns the type of the mutable variable [var].
       Returning [None] if not found in the current context. *)
   val get_mut : Value_var.t -> (Type.t option, 'err, 'wrn) t
 
-  val get_mut_exn
-    :  Value_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t, 'err, 'wrn) t
+  val get_mut_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
       Returning [None] if not found in the current context. *)
@@ -160,11 +145,7 @@ module Context : sig
       Returning [None] if not found in the current context. *)
 
   val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
-
-  val get_type_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t, 'err, 'wrn) t
+  val get_type_exn : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_module mvar] returns signature of the module [mvar].
       Returning [None] if not found in the current context. *)
@@ -179,9 +160,7 @@ module Context : sig
   (** [get_signature path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
-  val get_signature
-    :  Module_var.t List.Ne.t
-    -> (Signature.t option, 'err, 'wrn) t
+  val get_signature : Module_var.t List.Ne.t -> (Signature.t option, 'err, 'wrn) t
 
   val get_signature_exn
     :  Module_var.t List.Ne.t
@@ -246,10 +225,7 @@ val lexists : unit -> (Type.layout, 'err, 'wrn) t
 
 (** [create_type constr] returns a created type using the [constr] function
     with the location automatically provided *)
-val create_type
-  :  ?meta:Ast_core.type_expression
-  -> Type.constr
-  -> (Type.t, 'err, 'wrn) t
+val create_type : ?meta:Ast_core.type_expression -> Type.constr -> (Type.t, 'err, 'wrn) t
 
 (** [def bindings ~on_exit ~in_] binds the context bindings [bindings] in 
     computation [in_] *)
@@ -360,10 +336,7 @@ module With_frag : sig
     -> Type.constr
     -> (Type.t, 'err, 'wrn) t
 
-  val all_lmap
-    :  ('a, 'err, 'wrn) t Record.LMap.t
-    -> ('a Record.LMap.t, 'err, 'wrn) t
-
+  val all_lmap : ('a, 'err, 'wrn) t Record.LMap.t -> ('a Record.LMap.t, 'err, 'wrn) t
   val all_lmap_unit : (unit, 'err, 'wrn) t Record.LMap.t -> (unit, 'err, 'wrn) t
   val loc : unit -> (Location.t, 'err, 'wrn) t
   val set_loc : Location.t -> ('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
@@ -415,12 +388,13 @@ end
     internal representation [Type.t]. *)
 val encode : Ast_typed.type_expression -> Type.t
 
-(** [run_elab comp ~raise ~options ~env] runs and elaborates the computation [comp] with the handler 
+(** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler 
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)
 val run_elab
   :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t
   -> raise:(Errors.typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end
+  -> loc:Location.t
   -> ?env:Environment.t
   -> unit
   -> 'a

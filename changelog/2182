@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n```\\n$ cat emit_bad_tag.mligo \\nlet main (_,_ : unit * string ) : operation list * string =\\n  [Tezos.emit \"%hello world\" 12], \"bye\"\\n```\\n\\n#### Before\\n\\n```\\n$ ligo compile contract emit_bad_tag.mligo \\nAn internal error ocurred. Please, contact the developers.\\nMichelson_v1_printer.unparse.\\n```\\n\\n#### After\\n\\n```\\n$ ligo compile contract emit_bad_tag.mligo \\nFile \"emit_bad_tag.mligo\", line 2, characters 3-31:\\n  1 | let main (_,_ : unit * string ) : operation list * string =\\n  2 |   [Tezos.emit \"%hello world\" 12], \"bye\"\\n\\nInvalid entrypoint \"%hello world\". One of the following patterns is expected:\\n* \"%bar\" is expected for entrypoint \"Bar\"\\n* \"%default\" when no entrypoint is used.\\nValid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9').\\n```\\n\\n"
+merge_request: '2182'
+title: 'Fix: check allowed chars in entrypoints'
+type: fixed
+            

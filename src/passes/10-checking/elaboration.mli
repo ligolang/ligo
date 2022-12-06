@@ -18,10 +18,7 @@ val decode : Type.t -> Ast_typed.type_expression t
 val check_anomalies
   :  syntax:Syntax_types.t option
   -> loc:Location.t
-  -> (Ast_typed.type_expression Ast_typed.Pattern.t
-     * Ast_typed.type_expression
-     * Ast_typed.expression)
-     list
+  -> (Ast_typed.type_expression Ast_typed.Pattern.t * Ast_typed.type_expression) list
   -> Ast_typed.type_expression
   -> unit t
 

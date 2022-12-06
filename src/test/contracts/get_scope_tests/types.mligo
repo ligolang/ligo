@@ -46,5 +46,4 @@ let exp2 =
     let j : nat boo = Some 1n in
     ()
 
-// 1 problem virtual location
-// Virual location   : q, idk, hmm, x, bar, boo
+let fn = fun (x : A.t) : s -> abs x 
