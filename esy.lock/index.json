@@ -345,7 +345,7 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@e83a4860",
+        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/pbkdf@opam:1.2.0@1484a934",
         "@opam/mirage-crypto-rng@opam:0.10.7@e95dc351",
         "@opam/mirage-crypto-pk@opam:0.10.7@b9152f5b",
@@ -361,7 +361,7 @@
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@e83a4860",
+        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/pbkdf@opam:1.2.0@1484a934",
         "@opam/mirage-crypto-rng@opam:0.10.7@e95dc351",
         "@opam/mirage-crypto-pk@opam:0.10.7@b9152f5b",
@@ -764,7 +764,7 @@
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/x509@opam:0.16.2@c31dcc42",
         "@opam/sexplib@opam:v0.15.1@1824bfd6",
-        "@opam/ptime@opam:1.1.0@e83a4860",
+        "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/ppx_sexp_conv@opam:v0.15.0@585f2e4d",
         "@opam/ppx_cstruct@opam:6.1.1@72283ee5",
         "@opam/mirage-crypto-rng@opam:0.10.7@e95dc351",
@@ -783,7 +783,7 @@
       "devDependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/x509@opam:0.16.2@c31dcc42",
         "@opam/sexplib@opam:v0.15.1@1824bfd6",
-        "@opam/ptime@opam:1.1.0@e83a4860",
+        "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/ppx_sexp_conv@opam:v0.15.0@585f2e4d",
         "@opam/ppx_cstruct@opam:6.1.1@72283ee5",
         "@opam/mirage-crypto-rng@opam:0.10.7@e95dc351",
@@ -950,7 +950,7 @@
         "@opam/tezos-lwt-result-stdlib@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-event-logging@path:vendors/tezos-ligo@0ab68e7a",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
-        "@opam/re@opam:1.10.4@c4910ba6", "@opam/ptime@opam:1.1.0@e83a4860",
+        "@opam/re@opam:1.10.4@c4910ba6", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/mtime@opam:1.3.0@6e9ac4ff",
         "@opam/lwt_log@opam:1.1.2@35f097e3", "@opam/lwt@opam:5.6.0@4f1604a8",
         "@opam/ipaddr@opam:5.3.1@fe286ff4",
@@ -967,7 +967,7 @@
         "@opam/tezos-lwt-result-stdlib@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-event-logging@path:vendors/tezos-ligo@0ab68e7a",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
-        "@opam/re@opam:1.10.4@c4910ba6", "@opam/ptime@opam:1.1.0@e83a4860",
+        "@opam/re@opam:1.10.4@c4910ba6", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/mtime@opam:1.3.0@6e9ac4ff",
         "@opam/lwt_log@opam:1.1.2@35f097e3", "@opam/lwt@opam:5.6.0@4f1604a8",
         "@opam/ipaddr@opam:5.3.1@fe286ff4",
@@ -2346,7 +2346,7 @@
         "@opam/tezos-event-logging@path:vendors/tezos-ligo@0ab68e7a",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
         "@opam/tezos-crypto@path:vendors/tezos-ligo@ac44ca2e",
-        "@opam/ptime@opam:1.1.0@e83a4860", "@opam/lwt@opam:5.6.0@4f1604a8",
+        "@opam/ptime@opam:1.1.0@d6f12219", "@opam/lwt@opam:5.6.0@4f1604a8",
         "@opam/ipaddr@opam:5.3.1@fe286ff4",
         "@opam/ezjsonm@opam:1.3.0@7e3d4a08",
         "@opam/dune@opam:3.4.1@3f2f99f0",
@@ -2363,7 +2363,7 @@
         "@opam/tezos-event-logging@path:vendors/tezos-ligo@0ab68e7a",
         "@opam/tezos-error-monad@path:vendors/tezos-ligo@0fb68dda",
         "@opam/tezos-crypto@path:vendors/tezos-ligo@ac44ca2e",
-        "@opam/ptime@opam:1.1.0@e83a4860", "@opam/lwt@opam:5.6.0@4f1604a8",
+        "@opam/ptime@opam:1.1.0@d6f12219", "@opam/lwt@opam:5.6.0@4f1604a8",
         "@opam/ipaddr@opam:5.3.1@fe286ff4",
         "@opam/ezjsonm@opam:1.3.0@7e3d4a08",
         "@opam/dune@opam:3.4.1@3f2f99f0",
@@ -3360,8 +3360,8 @@
       ],
       "devDependencies": [ "@opam/dune@opam:3.4.1@3f2f99f0" ]
     },
-    "@opam/ptime@opam:1.1.0@e83a4860": {
-      "id": "@opam/ptime@opam:1.1.0@e83a4860",
+    "@opam/ptime@opam:1.1.0@d6f12219": {
+      "id": "@opam/ptime@opam:1.1.0@d6f12219",
       "name": "@opam/ptime",
       "version": "opam:1.1.0",
       "source": {
@@ -3376,7 +3376,12 @@
           "path": "esy.lock/opam/ptime.1.1.0"
         }
       },
-      "overrides": [],
+      "overrides": [
+        {
+          "opamoverride":
+            "esy.lock/overrides/opam__s__ptime_opam__c__1.1.0_opam_override"
+        }
+      ],
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/topkg@opam:1.0.6@da3f4ab1",
         "@opam/ocamlfind@opam:1.9.5@c23112ba",
@@ -5837,13 +5842,13 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@e83a4860",
+        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/lwt@opam:5.6.0@4f1604a8", "@opam/dune@opam:3.4.1@3f2f99f0",
         "@opam/base-unix@opam:base@87d0b2eb",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@e83a4860",
+        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/lwt@opam:5.6.0@4f1604a8", "@opam/dune@opam:3.4.1@3f2f99f0",
         "@opam/base-unix@opam:base@87d0b2eb"
       ]
@@ -7327,13 +7332,13 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@e83a4860",
+        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/dune@opam:3.4.1@3f2f99f0",
         "@opam/cmdliner@opam:1.1.0@643a0e00",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@e83a4860",
+        "ocaml@4.14.0@d41d8cd9", "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/dune@opam:3.4.1@3f2f99f0",
         "@opam/cmdliner@opam:1.1.0@643a0e00"
       ]
@@ -8068,7 +8073,7 @@
       "overrides": [],
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/x509@opam:0.16.2@c31dcc42",
-        "@opam/ptime@opam:1.1.0@e83a4860",
+        "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/mirage-crypto@opam:0.10.7@e98e4f39",
         "@opam/logs@opam:0.7.0@46a3dffc", "@opam/fpath@opam:0.7.3@674d8125",
         "@opam/dune@opam:3.4.1@3f2f99f0", "@opam/bos@opam:0.2.1@02b5c6e3",
@@ -8077,7 +8082,7 @@
       ],
       "devDependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/x509@opam:0.16.2@c31dcc42",
-        "@opam/ptime@opam:1.1.0@e83a4860",
+        "@opam/ptime@opam:1.1.0@d6f12219",
         "@opam/mirage-crypto@opam:0.10.7@e98e4f39",
         "@opam/logs@opam:0.7.0@46a3dffc", "@opam/fpath@opam:0.7.3@674d8125",
         "@opam/dune@opam:3.4.1@3f2f99f0", "@opam/bos@opam:0.2.1@02b5c6e3",
@@ -8604,13 +8609,13 @@
       "overrides": [],
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/zarith@opam:1.12@232cc7f2",
-        "@opam/ptime@opam:1.1.0@e83a4860", "@opam/dune@opam:3.4.1@3f2f99f0",
+        "@opam/ptime@opam:1.1.0@d6f12219", "@opam/dune@opam:3.4.1@3f2f99f0",
         "@opam/cstruct@opam:6.1.1@75bcaa17",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/zarith@opam:1.12@232cc7f2",
-        "@opam/ptime@opam:1.1.0@e83a4860", "@opam/dune@opam:3.4.1@3f2f99f0",
+        "@opam/ptime@opam:1.1.0@d6f12219", "@opam/dune@opam:3.4.1@3f2f99f0",
         "@opam/cstruct@opam:6.1.1@75bcaa17"
       ]
     },
