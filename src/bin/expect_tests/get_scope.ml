@@ -1623,7 +1623,8 @@ let%expect_test _ =
         File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-12 |}];
   run_ligo_good
     [ "info"; "get-scope"; gs "local_type.ligo"; "--format"; "dev"; "--with-types" ];
-  [%expect {|
+  [%expect
+    {|
     Scopes:
     [ u#0  ] File "../../test/contracts/get_scope_tests/local_type.ligo", line 2, characters 12-14
     [ b#4 toto#2 y#1 u#0  ] File "../../test/contracts/get_scope_tests/local_type.ligo", line 4, characters 42-43

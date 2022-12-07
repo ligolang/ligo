@@ -856,7 +856,11 @@ let%expect_test _ =
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 
-let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
+let () =
+  Caml.Sys.chdir
+    "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
+
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test.mligo" ];
   [%expect
@@ -870,9 +874,13 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
+
 let () = Caml.Sys.chdir pwd
 
-let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+let () =
+  Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test/a/b/test.mligo" ];
   [%expect
@@ -886,10 +894,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
+
 let () = Caml.Sys.chdir pwd
-
-
-let bad_test n = bad_test ("/interpreter_tests/"^n)
+let bad_test n = bad_test ("/interpreter_tests/" ^ n)
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];

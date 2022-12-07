@@ -5,5 +5,4 @@
  (libraries unix)
  (public_name ligo.unix))
 
-
 (vendored_dirs vendored-dune vendors)

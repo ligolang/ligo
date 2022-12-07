@@ -258,6 +258,7 @@ let os_type =
   | "Cygwin" -> Gz.NTFS
   | _ -> Gz.Unix
 
+
 (* [gzip] compresses the file [fname] *)
 let gzip fname fd =
   let file_size = (Ligo_unix.stat fname).st_size in
@@ -273,11 +274,15 @@ let gzip fname fd =
   let cfg = Gz.Higher.configuration os_type time in
   let refill buf =
     let len = min (file_size - !p) buffer_len in
-    if len <= 0 then 0 else
-    let bytes = Bytes.create len in
-    let len = Ligo_unix.read fd bytes 0 len in
-    Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len ;
-    p := !p + len ; len in
+    if len <= 0
+    then 0
+    else (
+      let bytes = Bytes.create len in
+      let len = Ligo_unix.read fd bytes 0 len in
+      Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len;
+      p := !p + len;
+      len)
+  in
   let flush buf len =
     let str = Bigstringaf.substring buf ~off:0 ~len in
     Buffer.add_string r str

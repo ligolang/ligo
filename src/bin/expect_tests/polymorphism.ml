@@ -518,8 +518,9 @@ let%expect_test _ =
   [%expect {| 4 |}]
 
 let () =
-  Caml.Sys.chdir pwd ;
+  Caml.Sys.chdir pwd;
   Caml.Sys.chdir "../../test/contracts/negative/polymorphism/"
+
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; test "annotate2.mligo" ];

@@ -3,6 +3,7 @@ open Test_helpers
 open Main_errors
 
 let () = Ligo_unix.putenv "LIGO_FORCE_NEW_TYPER" "false"
+
 type syntax = string
 type group_name = string
 

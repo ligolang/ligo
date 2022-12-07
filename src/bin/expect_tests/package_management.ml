@@ -44,6 +44,7 @@ let%expect_test _ =
     File "tezos-ligo-fa2" not found. |}]
 
 let () = Caml.Sys.chdir "using_scope_pkg_project"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "src/a/b/c/contract.test.mligo"; "--project-root"; "." ];
   [%expect
@@ -57,27 +58,30 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
-let () = Caml.Sys.chdir pwd
 
+let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "using_scope_pkg_project/src/a/b/c"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "contract.test.mligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
-let () = Caml.Sys.chdir pwd
 
+let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "using_scope_pkg_project/src/a/b"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "c/contract.test.mligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
-let () = Caml.Sys.chdir pwd
 
+let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "using_scope_pkg_project/src/a"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "b/c/contract.test.mligo" ];
   [%expect
@@ -120,6 +124,7 @@ let%expect_test _ =
       code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
 
 let () = Caml.Sys.chdir "dao_path_bug"
+
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
   [%expect
@@ -127,6 +132,7 @@ let%expect_test _ =
     { parameter unit ;
       storage (option nat) ;
       code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
+
 let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
@@ -149,6 +155,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let () = Caml.Sys.chdir "include_include"
+
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
   [%expect
@@ -161,6 +168,7 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
+
 let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
@@ -186,6 +194,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let () = Caml.Sys.chdir "include_import"
+
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
   [%expect
@@ -201,6 +210,7 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
+
 let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
@@ -226,6 +236,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let () = Caml.Sys.chdir "import_import"
+
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
   [%expect
@@ -241,6 +252,7 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
+
 let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
@@ -269,6 +281,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let () = Caml.Sys.chdir "import_include"
+
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
   [%expect
@@ -287,6 +300,7 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
+
 let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
@@ -304,6 +318,7 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let () = Caml.Sys.chdir "using_ligo_breathalyser"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "test.mligo" ];
   [%expect

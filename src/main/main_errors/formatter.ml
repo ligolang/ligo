@@ -547,9 +547,9 @@ let rec error_ppformat
       Format.fprintf
         f
         "Error: Unrecognized template\n\
-        Hint: Use the option --template \"TEMPLATE_NAME\" \n\n\
-        Please select a template from the following list: \n\
-        - %s"
+         Hint: Use the option --template \"TEMPLATE_NAME\" \n\n\
+         Please select a template from the following list: \n\
+         - %s"
       @@ String.concat ~sep:"\n- " lststr)
 
 
