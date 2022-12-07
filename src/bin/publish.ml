@@ -260,7 +260,8 @@ let os_type =
 
 
 (* [gzip] compresses the file [fname] *)
-let gzip fname fd =
+let gzip fname =
+  let fd = Ligo_unix.openfile fname [ Ligo_unix.O_CREAT; Ligo_unix.O_RDWR ] 0o666 in
   let file_size = (Ligo_unix.stat fname).st_size in
   let level = 4 in
   let buffer_len = De.io_buffer_size in
@@ -288,7 +289,7 @@ let gzip fname fd =
     Buffer.add_string r str
   in
   Gz.Higher.compress ~w ~q ~level ~refill ~flush () cfg i o;
-  let () = Caml_unix.close fd in
+  let () = Ligo_unix.close fd in
   r
 
 
@@ -344,8 +345,8 @@ let tar ~name ~version files =
   let files, sizes = List.unzip files in
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
-  let fname = Filename.temp_file name (Semver.to_string version) in
-  let fd = Ligo_unix.openfile fname [ Core_unix.O_CREAT; Core_unix.O_RDWR ] 0o666 in
+  let fname = Caml.Filename.temp_file name (Semver.to_string version) in
+  let fd = Ligo_unix.openfile fname [ Ligo_unix.O_CREAT; Ligo_unix.O_RDWR ] 0o666 in
   let () = Tar_unix.Archive.create files fd in
   let () = Ligo_unix.close fd in
   Lwt.return (fcount, fname, unpacked_size)

@@ -333,7 +333,7 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
   let test s =
@@ -394,7 +394,7 @@ let%expect_test _ =
 (* ligo publish tests *)
 
 let ligo_bin_path = "../../../../../install/default/bin/ligo"
-let () = Sys_unix.chdir "publish_invalid_main"
+let () = Caml.Sys.chdir "publish_invalid_main"
 
 let%expect_test _ =
   run_ligo_bad [ "publish"; "--dry-run" ];
@@ -405,8 +405,8 @@ let%expect_test _ =
     Error: main file does not exists.
     Please specify a valid LIGO file in package.json. |}]
 
-let () = Sys_unix.chdir pwd
-let () = Sys_unix.chdir "publish_invalid_main2"
+let () = Caml.Sys.chdir pwd
+let () = Caml.Sys.chdir "publish_invalid_main2"
 
 let%expect_test _ =
   run_ligo_bad [ "publish"; "--dry-run" ];
@@ -417,8 +417,8 @@ let%expect_test _ =
     Error: Invalid LIGO file specifed in main field of package.json
     Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) |}]
 
-let () = Sys_unix.chdir pwd
-let () = Sys_unix.chdir "publish_invalid_storage"
+let () = Caml.Sys.chdir pwd
+let () = Caml.Sys.chdir "publish_invalid_storage"
 
 let%expect_test _ =
   run_ligo_bad [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
@@ -428,7 +428,7 @@ let%expect_test _ =
     ==> Validating manifest file...
     Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
 
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd
 
 let clean_size ~prefix line =
   if String.is_prefix ~prefix line
@@ -461,7 +461,7 @@ let remove_dynamic_info_from_log log =
   |> String.concat ~sep:"\n"
 
 
-let () = Sys_unix.chdir "publish_lib_lt_1mb"
+let () = Caml.Sys.chdir "publish_lib_lt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run" ];
@@ -482,8 +482,8 @@ let%expect_test _ =
         unpacked size: *** kB
         total files:   3 |}]
 
-let () = Sys_unix.chdir pwd
-let () = Sys_unix.chdir "publish_contract_lt_1mb"
+let () = Caml.Sys.chdir pwd
+let () = Caml.Sys.chdir "publish_contract_lt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
@@ -504,8 +504,8 @@ let%expect_test _ =
         unpacked size: *** kB
         total files:   3 |}]
 
-let () = Sys_unix.chdir pwd
-let () = Sys_unix.chdir "publish_contract_gt_1mb"
+let () = Caml.Sys.chdir pwd
+let () = Caml.Sys.chdir "publish_contract_gt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
@@ -526,8 +526,8 @@ let%expect_test _ =
         unpacked size: *** MB
         total files:   3 |}]
 
-let () = Sys_unix.chdir pwd
-let () = Sys_unix.chdir "test_ligoignore"
+let () = Caml.Sys.chdir pwd
+let () = Caml.Sys.chdir "test_ligoignore"
 
 let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
