@@ -55,7 +55,8 @@ let%expect_test _ =
   [%expect {| { PUSH int -100 } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "expression"; "cameligo"; "(fun () -> -(int 1n) : unit -> int)" ];
+  run_ligo_good
+    [ "compile"; "expression"; "cameligo"; "(fun () -> -(int 1n) : unit -> int)" ];
   [%expect {|
     { DROP ; PUSH int -1 } |}]
 

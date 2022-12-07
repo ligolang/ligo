@@ -62,7 +62,7 @@ let check_obj_ligo ~raise ?(blacklist = []) (t : AST.expression) : unit =
       (match b_opt with
       | Some (_, loc) -> raise.Trace.error @@ Errors.expected_obj_ligo loc
       | None -> ())
-    | E_constant { cons_name } when Constant.ppx_is_only_interpreter cons_name ->
+    | E_constant { cons_name } when Constant.constant'_is_only_interpreter cons_name ->
       raise.Trace.error @@ Errors.expected_obj_ligo expr.location
     | E_literal (Literal_string s) when not (check_string @@ Ligo_string.extract s) ->
       raise.Trace.error @@ Errors.expected_obj_ligo expr.location

@@ -1381,7 +1381,6 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
       ~f:(fun decl loc -> Location.cover loc decl.location)
       ~init:decl.location *)
 
-
 let type_program ~raise ~options ?env program =
   let loc = Location.generated in
   C.run_elab
