@@ -2,8 +2,9 @@
  (name cli)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils cmdliner ligo ligo_compile build repl install
-   publish user cli_helpers daemon ligo_api)
+ (libraries core_kernel.version_util core_kernel.caml_threads simple-utils
+   cmdliner ligo ligo_compile build repl install publish user cli_helpers
+   daemon ligo_api)
  (modules command_unx cli version))
 
 (library
