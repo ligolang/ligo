@@ -28,6 +28,7 @@
     MenhirToken)))
 
 (library
+ (name menhir_js_tokens)
  (public_name ligo.lexing.menhir_jsligo_tokens)
  (modules MenhirToken)
  (libraries
