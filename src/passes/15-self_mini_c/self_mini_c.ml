@@ -32,126 +32,6 @@ let map_expression = Helpers.map_expression
 (* Conservative purity test: ok to treat pure things as impure, must
    not treat impure things as pure. *)
 
-(* true if the name names a pure constant -- i.e. if uses will be pure
-   assuming arguments are pure *)
-let is_pure_constant : Constant.constant' -> bool =
-  function
-  | C_UNIT
-  | C_CAR | C_CDR | C_PAIR
-  | C_NIL | C_CONS
-  | C_NEG | C_OR | C_AND | C_XOR | C_NOT
-  | C_EQ  | C_NEQ | C_LT | C_LE | C_GT | C_GE
-  | C_NONE | C_SOME
-  | C_LEFT | C_RIGHT
-  | C_TRUE | C_FALSE
-  | C_UPDATE | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
-  | C_CONCAT
-  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SET_UPDATE
-  | C_LOOP_CONTINUE | C_LOOP_STOP
-  | C_SUB_MUTEZ
-  | C_SIZE | C_SLICE
-  | C_SET_EMPTY | C_SET_LITERAL | C_SET_SIZE
-  | C_LIST_EMPTY | C_LIST_LITERAL | C_LIST_SIZE
-  | C_MAP_EMPTY | C_MAP_LITERAL | C_MAP_SIZE
-  | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
-  | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
-  | C_BIG_MAP_EMPTY
-  | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
-    -> true
-  (* unfortunately impure: *)
-  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
-  (* impure: *)
-  | C_OPTION_MAP
-  | C_MAP_FIND
-  | C_ITER
-  | C_LOOP_LEFT
-  | C_FOLD
-  | C_FOLD_LEFT
-  | C_FOLD_RIGHT
-  | C_SET_ITER
-  | C_SET_FOLD
-  | C_SET_FOLD_DESC
-  | C_LIST_ITER
-  | C_LIST_MAP
-  | C_LIST_FOLD
-  | C_LIST_FOLD_LEFT
-  | C_LIST_FOLD_RIGHT
-  | C_MAP_GET_FORCE
-  | C_MAP_ITER
-  | C_MAP_MAP
-  | C_MAP_FOLD
-  | C_CREATE_CONTRACT
-  (* TODO? *)
-  | C_MAP
-  | C_BIG_MAP
-  | C_BIG_MAP_LITERAL
-  (* Check - these should be removed *)
-  | C_CHECK_SELF
-  | C_CHECK_EMIT_EVENT
-  | C_CHECK_ENTRYPOINT
-  (* Test - ligo interpreter, should never end up here *)
-  | C_TEST_ADDRESS
-  | C_TEST_SIZE
-  | C_TEST_ORIGINATE
-  | C_TEST_GET_STORAGE_OF_ADDRESS
-  | C_TEST_GET_BALANCE
-  | C_TEST_SET_SOURCE
-  | C_TEST_SET_BAKER
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-  | C_TEST_GET_NTH_BS
-  | C_TEST_PRINT
-  | C_TEST_TO_STRING
-  | C_TEST_UNESCAPE_STRING
-  | C_TEST_STATE_RESET
-  | C_TEST_BOOTSTRAP_CONTRACT
-  | C_TEST_NTH_BOOTSTRAP_CONTRACT
-  | C_TEST_LAST_ORIGINATIONS
-  | C_TEST_MUTATE_CONTRACT
-  | C_TEST_MUTATE_VALUE
-  | C_TEST_SAVE_MUTATION
-  | C_TEST_RUN
-  | C_TEST_COMPILE_CONTRACT
-  | C_TEST_DECOMPILE
-  | C_TEST_TO_CONTRACT
-  | C_TEST_TO_ENTRYPOINT
-  | C_TEST_TO_TYPED_ADDRESS
-  | C_TEST_RANDOM
-  | C_TEST_GENERATOR_EVAL
-  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
-  | C_TEST_COMPILE_CONTRACT_FROM_FILE
-  | C_TEST_COMPILE_AST_CONTRACT
-  | C_TEST_SET_BIG_MAP
-  | C_TEST_CAST_ADDRESS
-  | C_TEST_CREATE_CHEST
-  | C_TEST_CREATE_CHEST_KEY
-  | C_TEST_ADD_ACCOUNT
-  | C_TEST_NEW_ACCOUNT
-  | C_TEST_BAKER_ACCOUNT
-  | C_TEST_REGISTER_DELEGATE
-  | C_TEST_BAKE_UNTIL_N_CYCLE_END
-  | C_TEST_GET_VOTING_POWER
-  | C_TEST_GET_TOTAL_VOTING_POWER
-  | C_TEST_REGISTER_CONSTANT
-  | C_TEST_CONSTANT_TO_MICHELSON
-  | C_TEST_REGISTER_FILE_CONSTANTS
-  | C_TEST_PUSH_CONTEXT
-  | C_TEST_POP_CONTEXT
-  | C_TEST_DROP_CONTEXT
-  | C_TEST_FAILWITH
-  | C_TEST_READ_CONTRACT_FROM_FILE
-  | C_TEST_SIGN
-  | C_TEST_GET_ENTRYPOINT
-  | C_TEST_INT64_OF_INT
-  | C_TEST_INT64_TO_INT
-  | C_TEST_LAST_EVENTS
-  | C_TEST_TRY_WITH
-  | C_TEST_SET_PRINT_VALUES
-  | C_ABS
-  | C_INT
-    -> false
-
 let rec is_pure : expression -> bool = fun e ->
   match e.content with
   | E_literal _
@@ -179,7 +59,7 @@ let rec is_pure : expression -> bool = fun e ->
     -> List.for_all ~f:is_pure [ expr ; update ]
 
   | E_constant (c)
-    -> is_pure_constant c.cons_name && List.for_all ~f:is_pure c.arguments
+    -> Constant.constant'_is_pure c.cons_name && List.for_all ~f:is_pure c.arguments
 
   | E_global_constant (_hash, _args) ->
     (* hashed code can be impure :( *)

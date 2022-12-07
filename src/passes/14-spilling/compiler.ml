@@ -24,7 +24,7 @@ let remove_empty_annotation (ann : string option) : string option =
   | None -> None
 
 let compile_constant' : Constant.constant' -> Constant.constant' = fun x ->
-  if Constant.ppx_is_only_interpreter x then
+  if Constant.constant'_is_only_interpreter x then
     failwith (Format.asprintf "%a is only available for LIGO interpreter" Constant.pp_constant' x)
   else x
 

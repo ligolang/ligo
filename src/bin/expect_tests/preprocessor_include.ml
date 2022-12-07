@@ -107,7 +107,8 @@ let%expect_test _ =
 
     const test = assert(z == 3) |}];
   run_ligo_good [ "run"; "test"; "b.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
