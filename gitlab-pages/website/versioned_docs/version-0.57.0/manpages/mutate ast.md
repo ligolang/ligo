@@ -1,11 +1,11 @@
 
 ### SYNOPSIS
 ```
-ligo info get-scope SOURCE_FILE
+ligo mutate ast SOURCE_FILE
 ```
 
 ### DESCRIPTION
-This sub-command returns the environment for a given file in JSON format. It does not use the build system.
+This sub-command returns a mutated version for a given file. It does not use the build system.
 
 ### FLAGS
 **--display-format FORMAT**
@@ -14,11 +14,14 @@ the format that will be used by the CLI. Available formats are 'dev', 'json', an
 **--library LIBS**
 A comma-separated list of paths to directories where to search for files to be included by the preprocessor (alias: -l)
 
-**--project-root PATH**
-The path to root of the project.
+**--seed SEED**
+the seed or counter used for generation.
 
-**--with-types**
-Tries to infer types for all named expressions
+**--syntax SYNTAX**
+the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively). (alias: -s)
+
+**-generator GEN**
+the generator for mutation. (alias: -g)
 
 **-p PROTOCOL**
 choose protocol's types/values pre-loaded into the LIGO environment (kathmandu , lima). By default, the current protocol (kathmandu) will be used (alias: --protocol)
