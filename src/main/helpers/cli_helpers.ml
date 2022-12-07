@@ -100,8 +100,7 @@ let makeCommand cmd =
              | _ -> None)
       |> List.filter (fun e ->
              match e with
-             | k, _ -> String.lowercase_ascii k = "path"
-             | _ -> false)
+             | k, _ -> String.lowercase_ascii k = "path")
     in
     let path_sep =
       match Sys.unix with
