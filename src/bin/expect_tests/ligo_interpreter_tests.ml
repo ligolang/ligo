@@ -853,6 +853,20 @@ let%expect_test _ =
     - test_big_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
       Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |xxx}]
 
+let%expect_test _ =
+  run_ligo_good
+    [ "run"
+    ; "test-expr"
+    ; "cameligo"
+    ; "type t = [@layout:comb] { num : int ; num_nat : nat ; str : string } in let v = \
+       Test.parse_michelson {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.decompile v : \
+       (nat, t) big_map))"
+    ];
+  [%expect
+    {xxx|
+    Everything at the top-level was executed.
+    - eval exited with value [1n -> {num = 1 ; num_nat = 1n ; str = "q"}]. |xxx}]
+
 (* do not remove that :) *)
 let () = Sys_unix.chdir pwd
 

@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew sub-command can evaluate expressions directly in the testing framework:\\n\\n\\n```\\n$ ligo run test-expr cameligo \"Test.log 42\"\\n42                                          \\nEverything at the top-level was executed.\\n- eval exited with value ().\\n\\n```\\n\\n"
+merge_request: '2195'
+title: "CLI: add a `run test-expr` to run expressions in test framework without need of a file"
+type: added
+            
