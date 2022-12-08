@@ -5,7 +5,7 @@ let contract_resource name = test ("res/" ^ name)
 let bad_contract = bad_test
 
 (* avoid pretty printing *)
-let () = Ligo_unix.putenv "TERM" "dumb"
+let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "coase.ligo" ];

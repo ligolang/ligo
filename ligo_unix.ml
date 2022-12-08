@@ -8,3 +8,5 @@ let home_directory () =
                           | Some home, _, _ -> home
                           | _, _, _ -> "")
   | None -> ""
+
+let putenv ~key ~data = putenv key data
