@@ -10,3 +10,4 @@ let home_directory () =
   | None -> ""
 
 let putenv ~key ~data = putenv key data
+let mkdir ~perm dir = mkdir dir perm

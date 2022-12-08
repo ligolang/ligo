@@ -26,7 +26,7 @@ let vim_syntax_highlighting dir syntaxes =
   let write_file file_name subdir_name contents =
     let subdir = Filename.concat dir subdir_name in
     if not (Sys.file_exists subdir) then
-      Ligo_unix.mkdir subdir 0o777;
+      Ligo_unix.mkdir subdir ~perm:0o777;
     output_file subdir file_name contents
   in
   let vim_file_name = "ligo.vim" in
