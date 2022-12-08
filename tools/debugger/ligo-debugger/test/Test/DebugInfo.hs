@@ -60,6 +60,16 @@ test_SourceMapper = testGroup "Reading source mapper"
             filter (hasn't (_1 . _Empty)) $
             toList $ collectMetas (T.unContractCode $ T.cCode contract)
 
+      let mainType = LigoTypeResolved
+            ( mkPairType
+                (mkSimpleConstantType "Unit")
+                (mkSimpleConstantType "Int")
+              `mkArrowType`
+              mkPairType
+                (mkConstantType "List" [mkSimpleConstantType "operation"])
+                (mkSimpleConstantType "Int")
+            )
+
       metasAndInstrs
         @?=
         [ LigoMereEnvInfo
@@ -119,7 +129,7 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr T.PAIR
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "main" (LTArrow $ LigoTypeArrow LTUnresolved LTUnresolved)
+            [ LigoStackEntryVar "main" mainType
             , LigoHiddenStackEntry
             ]
             ?- SomeInstr dummyInstr

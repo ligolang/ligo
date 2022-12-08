@@ -42,7 +42,6 @@ import Log (Log, LogT, Logger, Namespace (..), getLogEnv, runKatipContextT)
 import ParseTree
 import Product
 import Range
-import Util (unconsFromEnd)
 
 data CompleterEnv xs = CompleterEnv
   { ceRange  :: Range
@@ -193,7 +192,7 @@ completeFieldTypeAware
 completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
   QualifiedName{ qnSource, qnPath } <- asum (map layer covers)
   -- throwing away the last field, because it's the field we are trying to complete
-  (finished, _unfinished) <- unconsFromEnd qnPath
+  finished <- init <$> nonEmpty qnPath
   let accessors = map parseAccessor finished
   firstTspec <- toTspec (typeDefinitionOf (getRange qnSource) tree)
   finalTspec <- foldM accessAndDereference firstTspec accessors
@@ -231,7 +230,7 @@ completeModuleField scope pos tree@(SomeLIGO dialect nested) = do
   ModuleAccess{maPath} <- asum (map layer covers)
   let lastModuleName = Unsafe.last maPath
   moduleDecl <- findModuleDecl (getRange $ extract lastModuleName) tree
-  let namespace = _sdNamespace moduleDecl <> AST.Scope.Namespace [_sdName moduleDecl]
+  let namespace = _sdNamespace moduleDecl <> AST.Scope.Namespace (one $ _sdName moduleDecl)
   let decls = filter (\decl -> _sdNamespace decl == namespace) scope
   pure $ mkCompletion <$> decls
   where
@@ -254,7 +253,7 @@ completeFromScope scope level pos (SomeLIGO _ nested) = Just
   ]
   where
     nodes = spineTo (leq pos . getRange) nested
-    currentNamespace = AST.Scope.Namespace $ foldr appendNamespace [] nodes
+    currentNamespace = AST.Scope.Namespace . fromList $ foldr appendNamespace [] nodes
     appendNamespace node namespace = fromMaybe namespace do
       BModuleDecl moduleDecl _ <- layer node
       ModuleName moduleName <- layer moduleDecl

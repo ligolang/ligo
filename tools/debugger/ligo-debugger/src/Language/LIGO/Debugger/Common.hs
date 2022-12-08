@@ -14,6 +14,7 @@ module Language.LIGO.Debugger.Common
   , ligoRangeToRange
   , rangeToLigoRange
   , shouldIgnoreMeta
+  , buildType
   ) where
 
 import Unsafe qualified

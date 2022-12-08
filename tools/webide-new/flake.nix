@@ -57,7 +57,7 @@
             unitConfig.ConditionPathExists = [ webide-cfg.package webide-cfg.ligo-package webide-cfg.tezos-client-package ];
             script =
               ''
-                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --tezos-client-path ${webide-cfg.tezos-client-package}/bin/tezos-client
+                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --octez-client-path ${webide-cfg.tezos-client-package}/bin/octez-client
               '';
 
           };
@@ -114,8 +114,9 @@
         # ligo 0.50.0
         "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/2959700000/artifacts/raw/ligo"; hash = "sha256-9AdoS8tUYeqdnCUSRbUxj3dZQLhk9pbEq93hFF6uSEI="; };
       };
+      ligo-syntaxes = pkgs.callPackage ../lsp/vscode-plugin/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
-      frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { };
+      frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { inherit ligo-syntaxes; };
       backend = pkgs.callPackage ./ligo-webide-backend { };
       swagger-file = backend.swagger-file // {
         meta.artifacts = [ "/swagger.json" ];

@@ -31,12 +31,12 @@ lookupEnv var = fromMaybe (error . Text.pack $ "need to set " ++ var)
 main :: IO ()
 main = do
   ligoPath <- lookupEnv "LIGO_PATH"
-  tezosClientPath <- lookupEnv "TEZOS_CLIENT_PATH"
+  octezClientPath <- lookupEnv "OCTEZ_CLIENT_PATH"
   dockerLigoVersion <- lookupEnv "DOCKER_LIGO_VERSION"
 
   let standardConfig = Config
         { cLigoPath = Just ligoPath
-        , cTezosClientPath = Just tezosClientPath
+        , cOctezClientPath = Just octezClientPath
         , cPort = 0 -- not used
         , cVerbose = False
         , cDockerizedLigoVersion = Nothing

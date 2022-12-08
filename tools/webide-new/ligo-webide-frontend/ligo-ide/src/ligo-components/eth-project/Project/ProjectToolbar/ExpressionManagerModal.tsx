@@ -12,14 +12,14 @@ interface ExpressionManagerModalProps {
   projectManager: any;
 }
 
-function ExpressionManagerModal({
+const ExpressionManagerModal = ({
   modalRef,
   currentTab,
   isOpen,
   close,
   managerType,
   projectManager,
-}: ExpressionManagerModalProps): React.ReactElement | null {
+}: ExpressionManagerModalProps): React.ReactElement | null => {
   const [storage, setStorage] = useState<string>("");
   const [params, setParams] = useState<string>("");
   const [name, setName] = useState<string>("");
@@ -168,6 +168,6 @@ function ExpressionManagerModal({
       )}
     </Modal>
   );
-}
+};
 
 export default ExpressionManagerModal;

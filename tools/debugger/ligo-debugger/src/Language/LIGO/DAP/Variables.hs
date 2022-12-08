@@ -9,7 +9,6 @@ module Language.LIGO.DAP.Variables
 import Control.Lens
 import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
-import Data.Text qualified as T
 import Fmt (pretty)
 
 import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuild)
@@ -20,24 +19,26 @@ import Morley.Michelson.Typed
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
 import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
+import AST (Lang)
+import Cli.Json
+  (LigoTypeApp (..), LigoTypeContent (..), LigoTypeExpression (..), LigoTypeTable (..),
+  _ltfAssociatedType)
+
 import Language.LIGO.Debugger.CLI.Types
-  (LigoExposedStackEntry (LigoExposedStackEntry, leseDeclaration, leseType),
-  LigoStackEntry (LigoStackEntry), LigoType (LTApp, LTRecord, LTUnresolved),
-  LigoTypeApp (LigoTypeApp, ltaArguments), unknownVariable)
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
 --
 -- This creates a map @varaibles references -> [variable]@, where root always has
 -- largest reference.
-createVariables :: (SingI u) => [StackItem u] -> VariableBuilder Int
-createVariables st = do
+createVariables :: (SingI u) => Lang -> [StackItem u] -> VariableBuilder Int
+createVariables lang st = do
   topVarsMb <-
     forM st \(StackItem desc (SomeValue v)) -> do
       case desc of
         LigoStackEntry LigoExposedStackEntry{..} -> do
           let name = maybe (pretty unknownVariable) pretty leseDeclaration
-          Just <$> buildVariable leseType v name
+          Just <$> buildVariable lang leseType v name
         _ -> pure Nothing
   let topVars = catMaybes topVarsMb
   insertVars topVars
@@ -61,17 +62,17 @@ insertVars vars = do
   _2 %= M.insert nextIdx vars
   return nextIdx
 
-createVariable :: String -> String -> LigoType -> Maybe String -> Maybe String -> Variable
-createVariable name varText typ menuContext evaluateName = DAP.defaultVariable
+createVariable :: String -> String -> Lang -> LigoType -> Maybe String -> Maybe String -> Variable
+createVariable name varText lang typ menuContext evaluateName = DAP.defaultVariable
   { DAP.nameVariable = name
   , DAP.valueVariable = varText
-  , DAP.typeVariable = pretty typ
+  , DAP.typeVariable = pretty (buildType lang typ)
   , DAP.__vscodeVariableMenuContextVariable = menuContext
   , DAP.evaluateNameVariable = evaluateName
   }
 
-buildVariable :: forall t. LigoType -> Value t -> String -> VariableBuilder Variable
-buildVariable typ v name = do
+buildVariable :: forall t. Lang -> LigoType -> Value t -> String -> VariableBuilder Variable
+buildVariable lang typ v name = do
   let
     varText = pretty $ debugBuild DpmNormal v
     evaluatedText = pretty $ debugBuild DpmEvaluated v
@@ -79,9 +80,9 @@ buildVariable typ v name = do
       VAddress  {} -> Just "address"
       VContract {} -> Just "contract"
       _            -> Nothing
-    var = createVariable name varText typ menuContext (Just evaluatedText)
+    var = createVariable name varText lang typ menuContext (Just evaluatedText)
 
-  subVars <- buildSubVars typ v
+  subVars <- buildSubVars lang typ v
 
   case subVars of
     [] -> return var
@@ -93,42 +94,50 @@ buildVariable typ v name = do
 
 getInnerTypeFromApp :: Int -> LigoType -> LigoType
 getInnerTypeFromApp i = \case
-  LTApp LigoTypeApp{..} -> fromMaybe LTUnresolved (ltaArguments ^? ix i)
-  _ -> LTUnresolved
+  LigoTypeResolved LigoTypeExpression
+    { _lteTypeContent = LTCApp LigoTypeApp{..}
+    } -> LigoType (_ltaArguments ^? ix i)
+  _ -> LigoType Nothing
 
 getInnerTypeFromRecord :: Text -> LigoType -> LigoType
 getInnerTypeFromRecord name = \case
-  LTRecord hm -> fromMaybe LTUnresolved (hm HM.!? name)
-  _ -> LTUnresolved
+  LigoTypeResolved LigoTypeExpression
+    { _lteTypeContent = LTCRecord
+        ( LigoTypeTable
+            { _lttFields = hm
+            }
+        )
+    } -> LigoType $ _ltfAssociatedType <$> (hm HM.!? name)
+  _ -> LigoType Nothing
 
-getEpAddressChildren :: EpAddress -> [Variable]
-getEpAddressChildren EpAddress{..} =
+getEpAddressChildren :: Lang -> EpAddress -> [Variable]
+getEpAddressChildren lang EpAddress{..} =
   if isDefEpName eaEntrypoint
   then []
   else [addr, ep]
   where
-    addr = createVariable "address" (pretty eaAddress) LTUnresolved Nothing Nothing
-    ep = createVariable "entrypoint" (pretty eaEntrypoint) LTUnresolved Nothing Nothing
+    addr = createVariable "address" (pretty eaAddress) lang (LigoType Nothing) Nothing Nothing
+    ep = createVariable "entrypoint" (pretty eaEntrypoint) lang (LigoType Nothing) Nothing Nothing
 
-buildSubVars :: LigoType -> Value t -> VariableBuilder [Variable]
-buildSubVars typ = \case
+buildSubVars :: Lang -> LigoType -> Value t -> VariableBuilder [Variable]
+buildSubVars lang typ = \case
   VOption Nothing -> return []
   VOption (Just v) -> do
-    (:[]) <$> buildVariable (getInnerTypeFromApp 0 typ) v "Some"
+    (:[]) <$> buildVariable lang (getInnerTypeFromApp 0 typ) v "Some"
   VList lst -> do
-    zipWithM (buildVariable (getInnerTypeFromApp 0 typ)) lst (show <$> [1 :: Int ..])
+    zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ)) lst (show <$> [1 :: Int ..])
   VSet s -> do
-    zipWithM (buildVariable (getInnerTypeFromApp 0 typ)) (toList s) (show <$> [1 :: Int ..])
+    zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ)) (toList s) (show <$> [1 :: Int ..])
   VMap m -> do
     forM (toPairs m) \(k, v) -> do
       let name = pretty $ debugBuild DpmNormal k
-      buildVariable (getInnerTypeFromRecord name typ) v (T.unpack name)
+      buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
   VBigMap _id m -> do
     forM (toPairs m) \(k, v) -> do
       let name = pretty $ debugBuild DpmNormal k
-      buildVariable (getInnerTypeFromRecord name typ) v (T.unpack name)
+      buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
   VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
-    pure $ getEpAddressChildren EpAddress{..}
-  VAddress epAddress -> pure $ getEpAddressChildren epAddress
+    pure $ getEpAddressChildren lang EpAddress{..}
+  VAddress epAddress -> pure $ getEpAddressChildren lang epAddress
   -- Other value types do not have nested structure
   _ -> return []

@@ -8,6 +8,7 @@ import Data.Text qualified as T
 import Fmt (pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
+import Test.Util.Options (minor)
 import UnliftIO.Exception (try)
 import Unsafe qualified
 
@@ -103,7 +104,7 @@ test_Regressions = testGroup "Regressions"
   [ -- Getting entrypoints when a contract imports another contract of
     -- a different dialect
 
-    testCase "ligolang#1461" do
+    minor $ testCase "ligolang#1461" do
 
       let file = contractsDir </> "module_contracts" </> "imported.mligo"
 

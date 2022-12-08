@@ -11,6 +11,7 @@ export class ProjectActions {
     this.openProjectModal = null;
     this.renameProjectModal = null;
     this.workspace = null;
+    this.bottomBarRef = null;
   }
 
   get codeEditor() {
@@ -73,6 +74,10 @@ export class ProjectActions {
 
   openTerminal() {
     ProjectManager.instance?.toggleTerminal(true);
+  }
+
+  updatePosition(pos) {
+    this.bottomBarRef.current.updatePosition(pos);
   }
 
   // TODO remove project from local storage

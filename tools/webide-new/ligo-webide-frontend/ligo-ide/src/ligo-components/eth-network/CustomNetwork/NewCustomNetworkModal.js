@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 
 import { Modal, DebouncedFormGroup, FormGroup, Label } from "~/base-components/ui-components";
-
+import headerActions from "~/ligo-components/eth-header";
 import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";
 
@@ -45,18 +45,96 @@ export default class CustomNetworkModal extends PureComponent {
 
   onConfirm = async () => {
     const { modify, status, option } = this.state;
+    const customNetworkMap = redux.getState().customNetworks.toJS();
+    const customNetworkNames = Object.keys(customNetworkMap);
+    const connected = customNetworkMap[this.name]?.active;
+
+    if (customNetworkNames.includes(option.name) && !modify) {
+      notification.error("Invalid network name", `<b>${option.name}</b> alreay exists.`);
+      return;
+    }
     if (!status) {
       this.tryCreateSdk({ ...option, notify: false });
     } else {
+      let hasDuplicated;
+      const existChain = networkManager.networks.find((item) => item.chainId === status.chainId);
       if (modify) {
-        redux.dispatch("MODIFY_CUSTOM_NETWORK", { name: this.name, option });
+        redux.dispatch("MODIFY_CUSTOM_NETWORK", {
+          name: this.name,
+          option,
+          networkId: existChain?.id,
+        });
+        if (connected) this.connect(option);
       } else {
-        redux.dispatch("ADD_CUSTOM_NETWORK", option);
+        hasDuplicated = networkManager.hasDuplicatedNetwork(option.url);
+        hasDuplicated
+          ? notification.error(
+              "Failed to add network",
+              `The RPC url <b>${option.url}</b> alreay exists.`
+            )
+          : redux.dispatch("ADD_CUSTOM_NETWORK", {
+              ...option,
+              networkId: existChain?.id,
+              chainId: this.state.status?.chainId,
+            });
       }
+      if (hasDuplicated) return;
+      const newNetList = networkManager.getNewNetList();
+      networkManager.addNetworks(newNetList);
       this.setState({ pending: false, status: null });
       this.modal.current.closeModal();
     }
   };
+
+  connect = async (option) => {
+    try {
+      const status = await networkManager.updateCustomNetwork(option);
+      if (status) {
+        redux.dispatch("UPDATE_UI_STATE", { customNetworkOption: option });
+        redux.dispatch("CHANGE_NETWORK_STATUS", true);
+        headerActions.updateNetwork(option.name);
+        networkManager.setNetwork({
+          ...option,
+          id: option.name,
+        });
+        return;
+      }
+    } catch {}
+    notification.error(
+      "Network Error",
+      "Failed to connect the network. Make sure you entered a valid RPC url"
+    );
+    redux.dispatch("CHANGE_NETWORK_STATUS", false);
+  };
+
+  filterStatus = (status) => {
+    if (status && typeof status === "object") {
+      for (let i in status) {
+        status[i] === "unknown" && delete status[i];
+      }
+    }
+    return status;
+  };
+
+  renderNetworkInfo() {
+    const networkInfo = this.state.modify
+      ? this.filterStatus(this.state.status)
+      : {
+          chainId: this.state.status?.chainId,
+          name: this.state.option?.name,
+        };
+
+    const showInfo = !networkInfo ? false : Object.keys(networkInfo).length !== 0;
+
+    return showInfo ? (
+      <FormGroup>
+        <Label>Network info</Label>
+        <pre className="pre-box pre-wrap break-all bg-primary text-body">
+          {JSON.stringify(networkInfo, null, 2)}
+        </pre>
+      </FormGroup>
+    ) : null;
+  }
 
   render() {
     const { placeholder = "http(s)://..." } = this.props;
@@ -66,9 +144,14 @@ export default class CustomNetworkModal extends PureComponent {
       <Modal
         ref={this.modal}
         title={`${modify ? "Modify" : "New"} Custom Network Connection`}
-        pending={pending && "Trying to connect..."}
+        pending={pending && "try"}
         textConfirm={status ? (modify ? "Update Network" : "Add Network") : "Check Network"}
         onConfirm={this.onConfirm}
+        confirmDisabled={
+          !option.name ||
+          !/^[0-9a-zA-Z\-_]*$/.test(option.name) ||
+          !/^(http(s)?:\/\/)\w+[^\s]+(\.[^\s]+){1,}$/.test(option.url)
+        }
       >
         <DebouncedFormGroup
           ref={this.input}
@@ -76,6 +159,10 @@ export default class CustomNetworkModal extends PureComponent {
           maxLength="50"
           value={option.name}
           onChange={(name) => this.setState({ option: { ...option, name } })}
+          // validator={(v) =>
+          //   !/^[0-9a-zA-Z\-_]*$/.test(v) &&
+          //   "Network name can only contain letters, digits, dash or underscore."
+          // }
         />
         <DebouncedFormGroup
           label="URL of node rpc"
@@ -83,15 +170,11 @@ export default class CustomNetworkModal extends PureComponent {
           maxLength="300"
           value={option.url}
           onChange={(url) => this.setState({ status: null, option: { ...option, url } })}
+          // validator={(v) =>
+          //   !/^(http(s)?:\/\/)\w+[^\s]+(\.[^\s]+){1,}$/.test(v) && "RPC url has to be a network url"
+          // }
         />
-        {status && (
-          <FormGroup>
-            <Label>Network info</Label>
-            <pre className="text-body pre-wrap break-all small user-select mb-0">
-              {JSON.stringify(status, null, 2)}
-            </pre>
-          </FormGroup>
-        )}
+        {this.renderNetworkInfo()}
       </Modal>
     );
   }

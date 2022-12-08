@@ -7,11 +7,7 @@ interface CompileModalProps {
   onCompile: any;
 }
 
-function CompileModal({
-  modalRef,
-  tzFilePath,
-  onCompile,
-}: CompileModalProps): React.ReactElement | null {
+const CompileModal: React.FC<CompileModalProps> = ({ modalRef, tzFilePath, onCompile }) => {
   const onCreate = async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     onCompile();
@@ -26,6 +22,6 @@ function CompileModal({
       </div>
     </Modal>
   );
-}
+};
 
 export default CompileModal;

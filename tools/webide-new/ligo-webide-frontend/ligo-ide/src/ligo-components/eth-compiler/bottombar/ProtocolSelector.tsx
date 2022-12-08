@@ -10,15 +10,15 @@ import {
   DropdownItem,
 } from "~/base-components/ui-components";
 
-function ProtocolSelector() {
+const ProtocolSelector = () => {
   // @ts-ignore
   const protocol: { showName: string; name: string } = useSelector((state) => state.protocol);
 
   const dispatch = useDispatch();
 
   const protocols = [
-    { showName: "Jakarta (mainnet)", name: "jakarta" },
-    { showName: "Kathmandu (testnet)", name: "kathmandu" },
+    { showName: "Kathmandu (mainnet)", name: "kathmandu" },
+    { showName: "Lima (testnet)", name: "lima" },
   ];
 
   const menuHeader = (
@@ -54,6 +54,6 @@ function ProtocolSelector() {
       </DropdownMenu>
     </UncontrolledButtonDropdown>
   );
-}
+};
 
 export default ProtocolSelector;

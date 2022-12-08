@@ -11,7 +11,7 @@
 
 import * as vscode from 'vscode';
 import { QuickPickItem } from 'vscode';
-import { Maybe, Ref, isDefined, InputBoxType, InputValueType, InputValidationResult, ContractMetadata } from './base'
+import { Maybe, Ref, isDefined, InputBoxType, InputValueLang, InputValidationResult, ContractMetadata } from './base'
 import { LigoDebugContext, ValueAccess } from './LigoDebugContext'
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
@@ -155,18 +155,18 @@ export async function getEntrypoint (
 
 export async function getParameterOrStorage(
 		context: LigoDebugContext,
-		validateInput: (inputType: InputBoxType, valueType: InputValueType) => (value: string) => Promise<Maybe<string>>,
+		validateInput: (inputType: InputBoxType, valueLang: InputValueLang) => (value: string) => Promise<Maybe<string>>,
 		inputBoxType: InputBoxType,
 		placeHolder: string,
 		prompt: string,
 		ligoEntrypoint: string,
 		contractMetadata: ContractMetadata,
 		michelsonEntrypoint: Maybe<string>
-	): Promise<Maybe<string>> {
+	): Promise<Maybe<[string, InputValueLang]>> {
 
 	const totalSteps = 1;
 
-	let rememberedVal: ValueAccess<[string, InputValueType]>;
+	let rememberedVal: ValueAccess<[string, InputValueLang]>;
 	let michelsonType: string;
 	switch(inputBoxType) {
 		case "parameter":
@@ -187,12 +187,12 @@ export async function getParameterOrStorage(
 	}
 
 	class SwitchButton implements vscode.QuickInputButton {
-		public typ: InputValueType;
+		public lang: InputValueLang;
 		public tooltip: string;
 
-		constructor(public iconPath: vscode.Uri, typ: InputValueType) {
-			this.typ = typ;
-			this.tooltip = "Input in " + typ + " format";
+		constructor(public iconPath: vscode.Uri, lang: InputValueLang) {
+			this.lang = lang;
+			this.tooltip = `Input in ${lang} format`;
 		}
 
 		static readonly LigoSwitch = new SwitchButton(
@@ -233,7 +233,7 @@ export async function getParameterOrStorage(
 			placeholder: placeHolder + placeholderExtra,
 			prompt,
 			value: defaultValue.value,
-			validate: validateInput(inputBoxType, state.ref.currentSwitch.typ),
+			validate: validateInput(inputBoxType, state.ref.currentSwitch.lang),
 			buttons: [state.ref.currentSwitch],
 			// Keep input box open if focus is moved out
 			ignoreFocusOut: true
@@ -278,9 +278,9 @@ export async function getParameterOrStorage(
 			{ currentSwitch: switchButton }
 		);
 
-	if (isDefined(result.value) && isDefined(result.currentSwitch.typ)) {
-		rememberedVal.value[1] = result.currentSwitch.typ;
-		return result.value + '@' + result.currentSwitch.typ;
+	if (isDefined(result.value) && isDefined(result.currentSwitch.lang)) {
+		rememberedVal.value[1] = result.currentSwitch.lang;
+		return [result.value, result.currentSwitch.lang];
 	}
 }
 

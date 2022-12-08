@@ -38,7 +38,7 @@ button, .btn, .nav-link {
 
 .btn-secondary {
   @if $border-width {
-    @include button-variant($secondary, $border, $gray-600, $border, $dark, $border);
+    @include button-variant(rgba($gray-800, 0.6), $border, rgba($secondary, 0.6), $border, $dark, $border);
   } @else {
     @include button-variant($secondary, transparent, $gray-600, transparent, $dark, transparent);
   }

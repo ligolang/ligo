@@ -22,6 +22,8 @@ import Morley.Michelson.Interpret (StkEl (StkEl))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
 
+import Cli (LigoTypeContent (LTCArrow), LigoTypeExpression (..))
+
 import Language.LIGO.Debugger.CLI.Types
 
 -- | Registered name of a lambda.
@@ -109,7 +111,8 @@ embedFunctionNameIntoLambda (LigoVariable newName) =
 tryToEmbedEnvIntoLambda :: (LigoStackEntry 'Unique, StkEl t) -> StkEl t
 tryToEmbedEnvIntoLambda (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
   case leseType of
-    LTArrow{} -> StkEl $ maybe id embedFunctionNameIntoLambda leseDeclaration val
+    LigoTypeResolved LigoTypeExpression { _lteTypeContent = LTCArrow{} }
+      -> StkEl $ maybe id embedFunctionNameIntoLambda leseDeclaration val
     _ -> stkEl
 tryToEmbedEnvIntoLambda (_, stkEl) = stkEl
 

@@ -1,11 +1,16 @@
-{ buildYarnPackage, fetchurl, python3, openapi-generator-cli, runCommand, pkg-config, libsecret }:
+{ buildYarnPackage, fetchurl, python3, openapi-generator-cli, runCommand, pkg-config, libsecret, ligo-syntaxes }:
 let
   src = ./.;
   package = buildYarnPackage {
     inherit src;
+    # some files in ./src/ligo-components/eth-project/Project/languages/syntaxes are symlinks
+    # from some adjacent file tree, so they have to be copied explicitly
+    postUnpack = ''
+      cp --remove-destination ${ligo-syntaxes}/*.json $sourceRoot/src/ligo-components/eth-project/Project/languages/syntaxes
+    '';
     integreties = builtins.fromJSON (builtins.readFile ./integreties.json);
     buildInputs = [ python3 pkg-config libsecret ];
-    yarnBuildMore = "yarn --offline build:react";
+    yarnBuildMore = "yarn --offline build:react-prod";
     installPhase = ''
       cp -rL $PWD/build $out
     '';

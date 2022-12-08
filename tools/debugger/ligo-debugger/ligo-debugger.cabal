@@ -79,6 +79,7 @@ library
   build-depends:
       aeson
     , ansi-terminal
+    , attoparsec
     , base-noprelude
     , bytestring
     , conduit
@@ -189,6 +190,7 @@ test-suite ligo-debugger-test
       Test.Navigation
       Test.Snapshots
       Test.Util
+      Test.Util.Options
       Test.Variables
       Paths_ligo_debugger
   hs-source-dirs:
@@ -241,6 +243,7 @@ test-suite ligo-debugger-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , aeson
     , base-noprelude
     , containers
     , data-default

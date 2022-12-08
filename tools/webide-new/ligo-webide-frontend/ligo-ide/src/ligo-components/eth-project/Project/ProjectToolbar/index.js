@@ -4,10 +4,13 @@ import { WorkspaceContext } from "~/base-components/workspace";
 import { ToolbarButton, DropdownToolbarButton } from "~/base-components/ui-components";
 import keypairManager from "~/base-components/keypair";
 import DeployScriptModal from "./DeployScriptModal";
+import DeployModal from "./DeployModal";
 import CompileModal from "./CompileModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
+import { networkManager } from "~/ligo-components/eth-network";
+import notification from "~/base-components/notification";
 
-// import DeployButton from './DeployButton'
+import DeployButton from "./DeployButton";
 import SignRequestModal from "./SignRequestModal";
 
 export default class ProjectToolbar extends PureComponent {
@@ -16,7 +19,8 @@ export default class ProjectToolbar extends PureComponent {
 
   constructor(props) {
     super(props);
-    this.deployScriptModal = React.createRef();
+    this.deployScriptModalRef = React.createRef();
+    this.deployModalRef = React.createRef();
     this.expressionManagerModal = React.createRef();
     this.compileModalRef = React.createRef();
     this.state = {
@@ -27,8 +31,16 @@ export default class ProjectToolbar extends PureComponent {
     };
   }
 
-  gistUploadFileModal = () => {
-    this.deployScriptModal.current.openModal();
+  deployScriptModal = () => {
+    this.deployScriptModalRef.current.openModal();
+  };
+
+  deployModal = () => {
+    if (!networkManager.sdk) {
+      notification.error("Cannot Deploy", "No connected network.");
+      return;
+    }
+    this.deployModalRef.current.openModal();
   };
 
   compileModalOpen = () => {
@@ -61,11 +73,18 @@ export default class ProjectToolbar extends PureComponent {
           onClick={() => this.compileModalOpen()}
         />
         <ToolbarButton
+          id="deploy"
+          icon="fas fa-plane-departure"
+          tooltip="Deploy"
+          readOnly={readOnly}
+          onClick={() => this.deployModal()}
+        />
+        <ToolbarButton
           id="deploy-script"
           icon="fas fa-file-export"
           tooltip="Deploy Script"
           readOnly={readOnly}
-          onClick={() => this.gistUploadFileModal()}
+          onClick={() => this.deployScriptModal()}
         />
         <ToolbarButton
           id="dry-run"
@@ -81,7 +100,6 @@ export default class ProjectToolbar extends PureComponent {
           readOnly={readOnly}
           onClick={() => this.expressionExecutionModal("compile")}
         />
-        {/* { !noDeploy && <DeployButton projectManager={projectManager} signer={signer} /> } */}
         <ExtraButtons projectManager={projectManager} signer={signer} />
         <div className="flex-1" />
         <ToolbarButton
@@ -97,7 +115,7 @@ export default class ProjectToolbar extends PureComponent {
           onCompile={() => projectManager.compile(null, this.props.finalCall)}
         />
         <DeployScriptModal
-          modalRef={this.deployScriptModal}
+          modalRef={this.deployScriptModalRef}
           projectSettings={projectSettings}
           projectManager={projectManager}
         />
@@ -108,6 +126,12 @@ export default class ProjectToolbar extends PureComponent {
           close={() => this.setState({ isExpressionManagerModalOpen: false })}
           managerType={this.state.expressionManagerType}
           projectManager={projectManager}
+        />
+        <DeployModal
+          modalRef={this.deployModalRef}
+          projectSettings={projectSettings}
+          projectManager={projectManager}
+          signer={signer}
         />
       </>
     );

@@ -13,7 +13,7 @@ import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError)
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
-import Data.Singletons (SingI)
+import Data.Singletons (SingI, demote)
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Log (runNoLoggingT)
@@ -25,7 +25,7 @@ import Morley.Debugger.DAP.Types
   RIO, RioContext (..))
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
-import Morley.Michelson.Typed (Contract' (..), SomeContract (..))
+import Morley.Michelson.Typed (Contract' (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import ParseTree (pathToSrc)
@@ -39,16 +39,45 @@ import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
 
+-- | Type which caches all things that we need for
+-- launching the contract.
+--
+-- All these @Maybe@s inside this type are needed
+-- to track whether this field is initialized or not.
+-- If you try to unwrap @Nothing@ when @Just@ is expected
+-- then a @PluginCommunicationException@ should be thrown.
+data CollectedRunInfo where
+  CollectedRunInfo
+    :: forall cp st arg
+     . (T.ParameterScope cp, T.StorageScope st)
+    =>
+    { criContract :: T.Contract cp st
+    , criEpcMb :: Maybe (T.EntrypointCallT cp arg)
+    , criParameterMb :: Maybe (T.Value arg)
+    , criStorageMb :: Maybe (T.Value st)
+    } -> CollectedRunInfo
+
+onlyContractRunInfo
+  :: forall cp st
+   . (T.ParameterScope cp, T.StorageScope st)
+  => T.Contract cp st
+  -> CollectedRunInfo
+onlyContractRunInfo contract = CollectedRunInfo
+  { criContract = contract
+  , criEpcMb = Nothing
+  , criParameterMb = Nothing
+  , criStorageMb = Nothing
+  }
+
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
   { lsProgram :: Maybe FilePath
-  , lsContract :: Maybe SomeContract
+  , lsCollectedRunInfo :: Maybe CollectedRunInfo
   , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO Info))
-  , lsSwallowedException :: Maybe SomeDebuggerException
   }
 
 instance Buildable LigoLanguageServerState where
@@ -96,15 +125,16 @@ withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
 
 -- | Try our best to parse and typecheck a value of a certain category.
 parseValue
-  :: (SingI t, HasLigoClient m)
+  :: forall t m.
+     (SingI t, HasLigoClient m)
   => FilePath
   -> Text
   -> Text
   -> Text
   -> m (Either Text (T.Value t))
-parseValue ctxContractPath category val valueType = runExceptT do
+parseValue ctxContractPath category val valueLang = runExceptT do
   let src = P.MSName category
-  uvalue <- case valueType of
+  uvalue <- case valueLang of
     "LIGO" -> do
       lift (try $ compileLigoExpression src ctxContractPath val) >>= \case
         Right x -> pure x
@@ -119,41 +149,49 @@ parseValue ctxContractPath category val valueType = runExceptT do
         & liftEither
 
     _ -> throwError [int||
-        Expected "LIGO" or "Michelson" in field "valueType" \
-        but got #{valueType}
+        Expected "LIGO" or "Michelson" in field "#{category}Lang" \
+        but got #{valueLang}
       |]
 
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
-    & first do \msg -> [int||
-        Typechecking as #{category} failed: #{msg}
+    & first do \_ -> [int||
+        The value is not of type `#{demote @t}`
       |]
+      -- TODO [LIGO-913]: mention LIGO type
     & liftEither
 
-getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
+getServerState :: RIO ext (LanguageServerStateExt ext)
 getServerState = asks _rcLSState >>= readTVarIO >>= \case
-  Nothing -> error "Language server state is not initialized"
+  Nothing -> throwIO $ PluginCommunicationException "Language server state is not initialized"
   Just s -> pure s
 
-getProgram
-  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext FilePath
-getProgram = fromMaybe (error "Program is not initialized") . lsProgram <$> getServerState
+expectInitialized :: (MonadIO m) => Text -> m (Maybe a) -> m a
+expectInitialized errMsg maybeM = maybeM >>= \case
+  Nothing -> throwIO $ PluginCommunicationException errMsg
+  Just val -> pure val
 
-getContract
-  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext SomeContract
-getContract = fromMaybe (error "Contract is not initialized") . lsContract <$> getServerState
+getProgram
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext FilePath
+getProgram = "Program is not initialized" `expectInitialized` (lsProgram <$> getServerState)
+
+getCollectedRunInfo
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext CollectedRunInfo
+getCollectedRunInfo =
+  "Collected run info is not initialized" `expectInitialized` (lsCollectedRunInfo <$> getServerState)
 
 getAllLocs
-  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => RIO ext (Set SourceLocation)
-getAllLocs = fromMaybe (error "All locs are not initialized") . lsAllLocs <$> getServerState
+getAllLocs = "All locs are not initialized" `expectInitialized` (lsAllLocs <$> getServerState)
 
 getParsedContracts
-  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => RIO ext (HashMap FilePath (LIGO Info))
-getParsedContracts = fromMaybe (error "Parsed contracts are not initialized") . lsParsedContracts <$> getServerState
+getParsedContracts =
+  "Parsed contracts are not initialized" `expectInitialized` (lsParsedContracts <$> getServerState)
 
 parseContracts :: (MonadIO m) => [FilePath] -> m (HashMap FilePath (LIGO Info))
 parseContracts allFiles = do

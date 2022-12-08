@@ -5,12 +5,13 @@ variables:
   FLAKE_FLAGS: --accept-flake-config -L
 
 stages:
-  - cabal
+  - validate
   - nix
   - ligo
   - debugger
   - lsp
   - webide
+  - validate-final
   - push
 
 default:
@@ -24,7 +25,7 @@ include:
   - '/tools/webide-new/.gitlab-ci.yml'
 
 validate-cabal-files:
-  stage: cabal
+  stage: validate
   only: [merge_requests, tooling]
   script:
     - cd tools/lsp/squirrel
@@ -132,6 +133,13 @@ vscode-extension-lsp-handler-tests:
   script:
     - git add ./ligo # Ligo binary is needed for this tests
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-handlers-test
+
+vscode-extension-ligo-contracts-test:
+  stage: lsp
+  needs: []
+  only: [merge_requests, tooling]
+  script:
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.ligo-contracts-test
 
 vscode-extension-linux:
   stage: nix

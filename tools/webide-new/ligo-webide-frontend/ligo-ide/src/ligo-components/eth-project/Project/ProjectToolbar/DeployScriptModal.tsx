@@ -10,11 +10,11 @@ interface DeployScriptModalProps {
   projectManager: any;
 }
 
-function DeployScriptModal({
+const DeployScriptModal = ({
   modalRef,
   projectSettings,
   projectManager,
-}: DeployScriptModalProps): React.ReactElement | null {
+}: DeployScriptModalProps): React.ReactElement | null => {
   const [storage, setStorage] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -106,6 +106,6 @@ function DeployScriptModal({
       )}
     </Modal>
   );
-}
+};
 
 export default DeployScriptModal;

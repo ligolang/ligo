@@ -24,15 +24,15 @@
         ligo-debugger-exec = pkgs:
           (ligo-debugger-package pkgs).components.exes.ligo-debugger;
         ligo-debugger-components = ligo-debugger-package (pkgs);
-        ligo-debugger-test = ligo-debugger-components.checks.ligo-debugger-test.overrideAttrs(_: {
-          # 'ligo' binary that is used in these tests need ca-certificates in runtime
-          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-        });
+        ligo-debugger-test = (ligo-debugger-package pkgs).components.tests.ligo-debugger-test;
         archOut = {
-          devShells.default = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              nixfmt
-            ];
+          devShells = {
+            default = pkgs.mkShell rec {
+              buildInputs = [ pkgs.nixfmt ];
+            };
+            ci = pkgs.mkShell {
+              buildInputs = [ pkgs.danger-gitlab pkgs.haskellPackages.hlint ];
+            };
           };
 
           packages = {
@@ -52,7 +52,7 @@
           };
 
           inherit ligo-debugger-components;
-          checks = {
+          tests = {
             inherit ligo-debugger-test;
           };
         };

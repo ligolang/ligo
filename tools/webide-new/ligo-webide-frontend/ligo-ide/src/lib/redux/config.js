@@ -116,9 +116,40 @@ export const accounts = {
 
 export const network = {
   default: "",
-  persist: false,
+  persist: true,
   actions: {
     SELECT_NETWORK: {
+      reducer: (_, { payload }) => payload,
+    },
+  },
+};
+
+export const loadNetworkResources = {
+  default: false,
+  persist: false,
+  actions: {
+    LOAD_NETWORK_RESOURCES: {
+      reducer: (_, { payload }) => payload,
+    },
+  },
+};
+
+export const customNetworkModalStatus = {
+  default: false,
+  persist: false,
+  actions: {
+    CUSTOM_MODAL_STATUS: {
+      reducer: (_, { payload }) => payload,
+    },
+  },
+};
+
+// TODO: merge the network Info
+export const networkConnect = {
+  default: false,
+  persist: false,
+  actions: {
+    CHANGE_NETWORK_STATUS: {
       reducer: (_, { payload }) => payload,
     },
   },
