@@ -968,6 +968,53 @@ let test =
     <*> warn_unused_rec)
 
 
+let test_expr =
+  let f
+      syntax
+      expr
+      source_file
+      steps
+      cli_expr_inj
+      display_format
+      show_warnings
+      project_root
+      warn_unused_rec
+      ()
+    =
+    let raw_options =
+      Raw_options.make
+        ~syntax
+        ~steps
+        ~project_root
+        ~warn_unused_rec
+        ~cli_expr_inj
+        ~test:true
+        ()
+    in
+    return_result ~return ~show_warnings
+    @@ Api.Run.test_expression raw_options expr source_file display_format
+  in
+  let summary = "test a expression with the LIGO test framework." in
+  let readme () =
+    "This sub-command tests a LIGO contract using a LIGO interpreter. Still under \
+     development, there are features that are work in progress and are subject to \
+     change. No real test procedure should rely on this sub-command alone."
+  in
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> req_syntax
+    <*> expression ""
+    <*> init_file
+    <*> steps
+    <*> cli_expr_inj
+    <*> display_format
+    <*> warn
+    <*> project_root
+    <*> warn_unused_rec)
+
+
 let dry_run =
   let f
       source_file
@@ -1232,6 +1279,7 @@ let run_group =
   Command.group
     ~summary:"compile and interpret ligo code"
     [ "test", test
+    ; "test-expr", test_expr
     ; "dry-run", dry_run
     ; "evaluate-call", evaluate_call
     ; "evaluate-expr", evaluate_expr

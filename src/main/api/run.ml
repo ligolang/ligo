@@ -26,6 +26,34 @@ let test (raw_options : Raw_options.t) source_file display_format () =
   Interpreter.eval_test ~raise ~steps ~options typed
 
 
+let test_expression (raw_options : Raw_options.t) expr source_file display_format () =
+  format_result ~display_format Ligo_interpreter.Formatter.tests_format
+  @@ fun ~raise ->
+  let raw_options =
+    { raw_options with
+      protocol_version = Environment.Protocols.(variant_to_string in_use)
+    }
+  in
+  let protocol_version =
+    Helpers.protocol_to_variant ~raise raw_options.protocol_version
+  in
+  let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) source_file in
+  let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
+  let Compiler_options.{ steps; _ } = options.test_framework in
+  let module Stdlib = Build.Stdlib in
+  let module Source_input = BuildSystem.Source_input in
+  let init_prg =
+    let f : Source_input.file_name -> Ast_typed.program =
+     fun filename -> Build.qualified_typed ~raise ~options Env filename
+    in
+    let default = Stdlib.select_lib_typed syntax (Stdlib.get ~options) in
+    Option.value_map source_file ~f ~default
+  in
+  let typed = Ligo_compile.Utils.type_expression ~raise ~options syntax expr init_prg in
+  let b, v = Interpreter.eval_expression ~raise ~steps ~options init_prg typed in
+  b, [ "eval", v ]
+
+
 let dry_run
     (raw_options : Raw_options.t)
     source_file
