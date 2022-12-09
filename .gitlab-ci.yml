@@ -89,6 +89,32 @@ esy-macos-intel:
     paths:
       - platform-darwin
 
+esy-macos-m1:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - m1
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^release/.*$/
+  script:
+    - mkdir -p ~/.npm
+    - brew install node
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g esy@beta --force
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin-arm64
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+  artifacts:
+    paths:
+      - platform-darwin-arm64
+
 prepare_npm_tarball:
   tags:
   - docker
@@ -99,6 +125,8 @@ prepare_npm_tarball:
     - job: esy-windows
       artifacts: true
     - job: esy-macos-intel
+      artifacts: true
+    - job: esy-macos-m1
       artifacts: true
   only:
     - merge_requests
