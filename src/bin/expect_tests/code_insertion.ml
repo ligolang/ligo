@@ -3,7 +3,7 @@ open Cli_expect
 let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 (* avoid pretty printing *)
-let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
+let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_michelson_insertion_1.ligo" ];

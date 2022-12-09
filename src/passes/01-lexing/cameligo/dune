@@ -7,9 +7,9 @@
  (libraries
   ;; LIGO
   lexing_shared
-  menhir_cameligo_tokens
-  lexing_cameligo_self_units
-  lexing_cameligo_self_tokens
+  mh_ml_tokens
+  lx_ml_self_units
+  lx_ml_self_tokens
   ;; Third party
   str
   hex))

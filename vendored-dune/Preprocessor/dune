@@ -1,0 +1,50 @@
+;; Building the preprocessor as a library
+
+(library
+  (name Preprocessor)
+  (public_name Preprocessor)
+  (modules
+     Status Config Options Error
+     State Version CLI Env LowAPI TopAPI ModRes
+     Directive E_Lexer E_Parser E_AST E_Lexer)
+  (modules_without_implementation
+     Config Status)
+  (private_modules
+     Version)
+  (libraries
+    ;; Vendor
+    simple-utils
+    GetoptLib
+    ;; Third party
+    str
+    fpath
+    uutf
+    )
+  (flags (:standard -open Core)))
+
+;; Building the lexers of the preprocessor
+
+(ocamllex LowAPI Directive E_Lexer)
+
+;; Building the parser of the preprocessor (for boolean expressions)
+
+(menhir
+  (modules E_Parser))
+
+;; Building E_LexerMain.exe for a standalone lexer of boolean
+;; expressions
+
+(executable
+  (name E_LexerMain)
+  (modules
+    E_LexerMain)
+  (libraries Preprocessor))
+
+;; Building the version source (for the user, as a CLI option)
+
+(rule
+ (targets version.ml)
+ (action (with-stdout-to
+          version.ml
+          (run "sh" "-c"
+               "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))

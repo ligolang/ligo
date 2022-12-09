@@ -23,7 +23,6 @@ include:
 
 .submodule-clone:
   before_script:
-    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
     - git submodule sync --recursive
     - git submodule update --init --recursive --remote
 
@@ -32,6 +31,92 @@ include:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+
+esy-windows:
+  extends: .submodule-clone
+  tags:
+    - windows
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^release/.*$/
+  script:
+    # - $env:GIT_CURL_VERBOSE = 1
+    # - $env:GIT_TRACE = 1
+    # - $env:GIT_TRACE_PACKET = 1
+    - git config http.postBuffer 1048576000
+    - npm i -g @esy-nightly/esy --force
+    - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
+    - esy i
+    - bash -c "esy release || esy release || esy release"
+    - rm -Recurse -Force _esy
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - cp ./windows-installer/*.dll _release/bin/
+    - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./_release
+    - cp ./windows-installer/WindowsInstaller.nsi _release
+    - cd _release; makensis .\WindowsInstaller.nsi
+    - cd .. ; mv _release platform-windows-x64
+  artifacts:
+    paths:
+      - platform-windows-x64
+
+esy-macos-intel:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - i7
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^release/.*$/
+  script:
+    - mkdir -p ~/.npm
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g @esy-nightly/esy --force
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+  artifacts:
+    paths:
+      - platform-darwin
+
+prepare_npm_tarball:
+  tags:
+  - docker
+  stage: push
+  needs:
+    - job: docker_extract
+      artifacts: true
+    - job: esy-windows
+      artifacts: true
+    - job: esy-macos-intel
+      artifacts: true
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /^release/.*$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - mkdir -p _release/platform-linux/bin
+    - cp platform-windows-x64/esyInstallRelease.js _release
+    - mv platform-* _release/
+    - cp ./ligo _release/platform-linux/bin
+    - node scripts/pipelines-release.js
+    - cp ./scripts/release-postinstall.js _release/postinstall.js
+    - cd _release && npm pack
+  artifacts:
+    paths:
+      - _release/ligo-*.tgz
 
 changelog:
   stage: pretooling

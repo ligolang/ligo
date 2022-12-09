@@ -10,8 +10,8 @@ module Lexbuf = Simple_utils.Lexbuf
 
 module Config      = Preprocessing_cameligo.Config
 module Token       = Lexing_cameligo.Token
-module UnitPasses  = Lexing_cameligo_self_units.Self
-module TokenPasses = Lexing_cameligo_self_tokens.Self
+module UnitPasses  = Lx_ml_self_units.Self
+module TokenPasses = Lx_ml_self_tokens.Self
 module ParErr      = Parsing_cameligo.ParErr
 module Tree        = Cst_shared.Tree
 module CST         = Cst_cameligo.CST

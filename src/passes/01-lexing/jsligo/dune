@@ -7,9 +7,9 @@
  (libraries
   ;; LIGO
   lexing_shared
-  menhir_jsligo_tokens
-  lexing_jsligo_self_units
-  lexing_jsligo_self_tokens
+  menhir_js_tokens
+  lx_jsl_self_units
+  lx_js_self_tokens
   ;; Third party
   str
   hex))

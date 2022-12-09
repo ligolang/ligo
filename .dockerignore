@@ -1,3 +1,32 @@
 .git
+.ci
+.direnv
+.github
+HomebrewFormula
+
+# OPAM / dune
+
 _opam
 _build
+*.install
+
+# dockerfiles
+Dockerfile
+Dockerfile.*
+docker
+.devcontainer
+
+# Esy / Windows
+_esy
+esy.json
+esy.lock
+static.esy.json
+static.esy.esy.lock
+*.dll
+
+# nix
+
+*.nix
+flake.lock
+nix
+result

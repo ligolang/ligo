@@ -31,7 +31,7 @@ module T =
        redefine manually here (by type [t]) but the second one we need
        to satisfy Menhir's Inspection API.  *)
 
-    include Menhir_reasonligo_tokens.MenhirToken
+    include Mh_re_tokens.MenhirToken
 
     (* TOKENS *)
 

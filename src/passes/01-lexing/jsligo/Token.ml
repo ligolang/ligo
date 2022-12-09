@@ -1,1 +1,1 @@
-include Lexing_jsligo_self_tokens.Token
+include Lx_js_self_tokens.Token
