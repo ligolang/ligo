@@ -1,6 +1,6 @@
 {
   "name": "ligo",
-  "version": "0.56.0-dev",
+  "version": "0.57.0-dev",
   "esy": {
     "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
     "release": {
