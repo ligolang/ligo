@@ -24,10 +24,10 @@ also shipped with LIGO.
 
 ## Contents
 
-This directory is located in the `vendored-dune` directory of the repository
-of LIGO, here `ligo/vendored-dune`. As such, it is distributed with the LIGO
+This directory is located in the `vendors` directory of the repository
+of LIGO, here `ligo/vendors`. As such, it is distributed with the LIGO
 compiler which uses it as a library. The directory
-`ligo/vendored-dune/LexerLib` should list the following files:
+`ligo/vendors/LexerLib` should list the following files:
 
 ```
 LexerLib
@@ -58,55 +58,55 @@ LexerLib
 
 Here is a short description of some of those files and OCaml modules:
 
-- The OCaml module `Core` is the heart of the lexer library. It can
-  be considered as the low-level lexer engine, with lots of bells
-  and whistles. It is a private module, as far as `dune` is
-  concerned, that is, not to be exported by the library.
+  * The OCaml module `Core` is the heart of the lexer library. It can
+    be considered as the low-level lexer engine, with lots of bells
+    and whistles. It is a private module, as far as `dune` is
+    concerned, that is, not to be exported by the library.
 
-- The module `API` packages types, functions and modules for the
-  client, based on `Core`. It is, in a way, a simplified view of
-  `Core`, with some specific uses in mind. This is a public module.
+  * The module `API` packages types, functions and modules for the
+    client, based on `Core`. It is, in a way, a simplified view of
+    `Core`, with some specific uses in mind. This is a public module.
 
-- The module `CLI` deals with command-line options for building a
-  standalone lexer, and also exports data structures about the
-  configuration meant for the library client, for example, the LIGO
-  compiler. This is a public module.
+  * The module `CLI` deals with command-line options for building a
+    standalone lexer, and also exports data structures about the
+    configuration meant for the library client, for example, the LIGO
+    compiler. This is a public module.
 
-- The module `Error` defines the errors that the lexer library can
-  emit. It is a private module.
+  * The module `Error` defines the errors that the lexer library can
+    emit. It is a private module.
 
-- The module `State` defines types and related functions used for
-  lexing. In particular, the state is a data structure threaded
-  along the calls to scanning rules and which hold a high-level view
-  of the process, including the source and the lexing buffer. It is
-  a public module.
+  * The module `State` defines types and related functions used for
+    lexing. In particular, the state is a data structure threaded
+    along the calls to scanning rules and which hold a high-level view
+    of the process, including the source and the lexing buffer. It is
+    a public module.
 
-- The module `Directive` defines the abstract representation and
-  printers for the preprocessing directives. Indeed, the lexer is
-  designed so it can be used with the preprocessor library, in which
-  case,
-  [linemarkers](https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html)
-  can be found in the input of the lexer. It is a public module.
+  * The module `Directive` defines the abstract representation and
+    printers for the preprocessing directives. Indeed, the lexer is
+    designed so it can be used with the preprocessor library, in which
+    case,
+    [linemarkers](https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html)
+    can be found in the input of the lexer. It is a public module.
 
-- The module `Markup` defines abstract representations for the sorts
-  of markup recognised by the lexer: tabulations, blanks, newline
-  characters, comments etc. It is a public module.
+  * The module `Markup` defines abstract representations for the sorts
+    of markup recognised by the lexer: tabulations, blanks, newline
+    characters, comments etc. It is a public module.
 
-- The interface `Unit` defines a type for lexical units. It is public.
+  * The interface `Unit` defines a type for lexical units. It is public.
 
-- The interface `Client` defines the signature expected from the
-  client of the library to use the `API`. It is of course public.
+  * The interface `Client` defines the signature expected from the
+    client of the library to use the `API`. It is of course public.
 
-- The `LICENSE` file must contain the MIT license.
+  * The `LICENSE` file must contain the MIT license.
 
-- The file `README.md` is the present file.
+  * The file `README.md` is the present file.
 
 ## Interfaces
 
 ### The CLI Interface
 
 The file `CLI.mli` shines a light on the design of `CLI.mli` in the
-preprocessor library, in the directory `vendored-dune/Preprocessor`. The
+preprocessor library, in the directory `vendors/Preprocessor`. The
 present module `CLI` is meant to be composed with the one of the
 preprocessor library.
 
@@ -136,34 +136,35 @@ module type S =
 This is a design pattern we will see at work again in the parser
 library `ParserLib`:
 
-1. Include and re-export the previous CLI in the compiler pipeline.
+  1. Include and re-export the previous CLI in the compiler pipeline.
 
-2. Extend the type `status` with any new error that may arise by
-   running this CLI.
+  2. Extend the type `status` with any new error that may arise by
+     running this CLI.
 
-3. Export a value `status` of that type.
+  3. Export a value `status` of that type.
 
-4. Add extra fields (e.g., `preprocess`, `mode`, `command`).
+  4. Add extra fields (e.g., `preprocess`, `mode`, `command`).
 
 This pattern makes it possible to accumulate CLIs from one pass of the
 compiler to the next: the command-line options of the previous stage
 are added to the current ones, and only the latter need defining.
 
 If the value `mode` is `` `Byte``, then the unit in which source
-positions and regions are expressed in messages is the byte. If `` `Point``, the unit is unicode points.
+positions and regions are expressed in messages is the byte. If ``
+`Point``, the unit is unicode points.
 
 The value `command` denotes some possible behaviours of the
 compiler. The constructors are
 
-- `` `Copy``: the lexemes of tokens and markup will be printed to
-  standard output, with the expectation of a perfect match with the
-  input file;
+  * `` `Copy``: the lexemes of tokens and markup will be printed to
+    standard output, with the expectation of a perfect match with the
+    input file;
 
-- `` `Units``: the tokens and markup will be printed to standard
-  output, that is, the abstract representation of the concrete
-  lexical syntax;
+  * `` `Units``: the tokens and markup will be printed to standard
+    output, that is, the abstract representation of the concrete
+    lexical syntax;
 
-- `` `Tokens``: the tokens only will be printed.
+  * `` `Tokens``: the tokens only will be printed.
 
 ### The Client Interface
 
@@ -219,18 +220,18 @@ returned.
 The type `client` gathers all the information the client lexer needs
 to provide:
 
-- A method `mk_string` that makes a string from a thread (it must be
-  provided by the client because only the client knows the
-  implementation of tokens, and that can be ascertained by
-  considering that they are type parameters in `Core`.).
+  * A method `mk_string` that makes a string from a thread (it must be
+    provided by the client because only the client knows the
+    implementation of tokens, and that can be ascertained by
+    considering that they are type parameters in `Core`.).
 
-- A method `callback` which is a lexer/scanner (both words are
-  equivalent in this documentation) for tokens other than strings
-  (as `mk_string` takes care of those).
+  * A method `callback` which is a lexer/scanner (both words are
+    equivalent in this documentation) for tokens other than strings
+    (as `mk_string` takes care of those).
 
-- A method `is_string_delimiter` which is a predicate telling
-  whether the character it is given delimits a string. This enables
-  to have different string delimiters for different client lexers.
+  * A method `is_string_delimiter` which is a predicate telling
+    whether the character it is given delimits a string. This enables
+    to have different string delimiters for different client lexers.
 
 ### The API Interface
 
@@ -238,13 +239,13 @@ The interface `API.mli` is the best place to start to understand the
 architecture and client-side features offered by the lexer
 library. It is made of the following sections.
 
-1. A functor `Make` that takes a client lexer (that is, scanning
-   tokens) and returns a module declining many kinds of lexers,
-   including specialisation from different sources to different
-   results.
+  1. A functor `Make` that takes a client lexer (that is, scanning
+     tokens) and returns a module declining many kinds of lexers,
+     including specialisation from different sources to different
+     results.
 
-2. A function `reset` that sets different components of a lexing
-   buffer.
+  2. A function `reset` that sets different components of a lexing
+     buffer.
 
 Let us start with the client lexer.
 
@@ -264,12 +265,12 @@ See the section about [the Client Interface](#the-client-interface).
 
 The functor `Make` is one of three tightly coupled components:
 
-1. a signature `LEXER`, which we just explained above in the
-   section about [the client-side](#the-client-interface);
+  1. a signature `LEXER`, which we just explained above in the
+     section about [the client-side](#the-client-interface);
 
-2. a signature `S`;
+  2. a signature `S`;
 
-3. a functor `Make` from `LEXER` to `S`.
+  3. a functor `Make` from `LEXER` to `S`.
 
 The signature `S` is best construed as a simplification and
 specialisation of the interface of `Core`, which is a private module,
@@ -398,26 +399,26 @@ type thread = <
 
 The fields are explained as follows:
 
-- The field `opening` holds the location of the opening marker of a
-  string or a comment.
+  * The field `opening` holds the location of the opening marker of a
+    string or a comment.
 
-- The field `length` is the length of the field `acc`.
+  * The field `length` is the length of the field `acc`.
 
-- The field `acc` is a stack made of the characters of the string or
-  comment being recognised (the characters are therefore reversed).
+  * The field `acc` is a stack made of the characters of the string or
+    comment being recognised (the characters are therefore reversed).
 
-- The field `to_string` extracts the string or comment, by relying
-  on the fields `acc` and `length`.
+  * The field `to_string` extracts the string or comment, by relying
+    on the fields `acc` and `length`.
 
-- The methods `push_char` and `push_string` push a recognised
-  character, respectively string, onto the accumulator.
+  * The methods `push_char` and `push_string` push a recognised
+    character, respectively string, onto the accumulator.
 
-- The method `set_opening` set the field `opening` to a given
-  value. It is used when scanning nested comments: when inside a
-  comment and finding the start of another one, the opening of the
-  current one is saved, the opening of the new one is set with
-  `set_opening` and scanning is resumed until the nested comment is
-  finished and we can restore the original opening.
+  * The method `set_opening` set the field `opening` to a given
+    value. It is used when scanning nested comments: when inside a
+    comment and finding the start of another one, the opening of the
+    current one is saved, the opening of the new one is set with
+    `set_opening` and scanning is resumed until the nested comment is
+    finished and we can restore the original opening.
 
 Threads are used in the module `State`.
 
@@ -483,37 +484,37 @@ type 'token config = <
 
 Let go through all the fields:
 
-- The value for the field `block` is `None` if the lexer should not
-  look for multi-line comments, also called here _block
-  comments_. If block comments are to be expected, the type
-  `block_comment` gathers how they start and how they close.
+  * The value for the field `block` is `None` if the lexer should not
+    look for multi-line comments, also called here _block
+    comments_. If block comments are to be expected, the type
+    `block_comment` gathers how they start and how they close.
 
-- The field `line` is the equivalent of `block` for one-line
-  comments, here called _line comments_, and holds the string that
-  act as an opening marker, if any.
+  * The field `line` is the equivalent of `block` for one-line
+    comments, here called _line comments_, and holds the string that
+    act as an opening marker, if any.
 
-- The value of the field `input` is `None` if the input is
-  `stdin`. Otherwise, it holds a filesystem path to the input file.
+  * The value of the field `input` is `None` if the input is
+    `stdin`. Otherwise, it holds a filesystem path to the input file.
 
-- The value for the field `offsets` is `true` to have any error
-  message report the location in the input source in terms of
-  horizontal offset, à la Emacs, instead of column number (`false`,
-  like Vim).
+  * The value for the field `offsets` is `true` to have any error
+    message report the location in the input source in terms of
+    horizontal offset, à la Emacs, instead of column number (`false`,
+    like Vim).
 
-- The field `mode` records whether error messages should report
-  locations in the source assuming UTF-8 codepoints or only bytes
-  (characters). UTF-8 is only recognised as such in comments, so
-  choosing `` `Point`` versus `` `Byte`` has an impact only on
-  errors happening after a UTF-8 comment.
+  * The field `mode` records whether error messages should report
+    locations in the source assuming UTF-8 codepoints or only bytes
+    (characters). UTF-8 is only recognised as such in comments, so
+    choosing `` `Point`` versus `` `Byte`` has an impact only on
+    errors happening after a UTF-8 comment.
 
-- The field `command` registers an optional action to undertake while
-  the lexer is running: `` Some `Copy `` will reproduce the input to
-  the output from the lexical units, `` Some `Units `` will print out
-  the lexical units, and `` Some `Tokens `` will print out only the
-  tokens. This is for debugging the lexer.
+  * The field `command` registers an optional action to undertake while
+    the lexer is running: ``Some `Copy`` will reproduce the input to
+    the output from the lexical units, ``Some `Units`` will print out
+    the lexical units, and ``Some `Tokens`` will print out only the
+    tokens. This is for debugging the lexer.
 
-- The remaining fields are functions extracting information from
-  tokens or converting them, mostly for printing purposes.
+  * The remaining fields are functions extracting information from
+    tokens or converting them, mostly for printing purposes.
 
 The type of the tokens is a parameter, because it is defined by the
 client of the library.
@@ -566,50 +567,50 @@ and 'token sync = {
 
 The fields and methods are as follows.
 
-- The field `config` is explained by the section on
-  [the type config](#the-state-interface).
+  * The field `config` is explained by the section on
+    [the type config](#the-state-interface).
 
-- The field `window` is explained above in this section.
+  * The field `window` is explained above in this section.
 
-- The field `pos` is the current position in the file.
+  * The field `pos` is the current position in the file.
 
-- The method `set_pos` sets the current position in the file. This
-  is useful when dealing with linemarkers, or newline characters. In
-  other cases, the field `pos` is updated by the method
-  `sync`. Indeed, the position is not always updated after a single
-  character has been matched: that depends on the regular expression
-  that matched the lexing buffer, and whether we decide to perform a
-  rollback by calling `rollback` or not.
+  * The method `set_pos` sets the current position in the file. This
+    is useful when dealing with linemarkers, or newline characters. In
+    other cases, the field `pos` is updated by the method
+    `sync`. Indeed, the position is not always updated after a single
+    character has been matched: that depends on the regular expression
+    that matched the lexing buffer, and whether we decide to perform a
+    rollback by calling `rollback` or not.
 
-- The method `slide_window` updates the field `window` when new
-  tokens are recognised.
+  * The method `slide_window` updates the field `window` when new
+    tokens are recognised.
 
-- The method `sync` updates the state after a regular expression
-  matched. It updates the current position in accordance with the
-  contents of the lexing buffer, more precisely, depending on the
-  length of the string which has just been recognised by the
-  scanner: that length is used as a positive offset to the current
-  column. The return type `sync` is a record meant to contain the
-  `region` of the lexeme in the input source, the `lexeme` itself
-  and the updated `state`. The method `sync` must be called in the
-  semantic action with the lexing buffer that was matched by the
-  regular expression.
+  * The method `sync` updates the state after a regular expression
+    matched. It updates the current position in accordance with the
+    contents of the lexing buffer, more precisely, depending on the
+    length of the string which has just been recognised by the
+    scanner: that length is used as a positive offset to the current
+    column. The return type `sync` is a record meant to contain the
+    `region` of the lexeme in the input source, the `lexeme` itself
+    and the updated `state`. The method `sync` must be called in the
+    semantic action with the lexing buffer that was matched by the
+    regular expression.
 
-- The field `decoder` and method `supply` offer the support needed
-  for the lexing of UTF-8 encoded characters in comments (the only
-  place where they are allowed in our input languages). The former
-  is the decoder proper and the latter is the effectful function
-  that takes a byte, a start index and a length and feed it to
-  `decoder`. See the documentation of the third-party library
-  [Uutf](https://github.com/dbuenzli/uutf).
+  * The field `decoder` and method `supply` offer the support needed
+    for the lexing of UTF-8 encoded characters in comments (the only
+    place where they are allowed in our input languages). The former
+    is the decoder proper and the latter is the effectful function
+    that takes a byte, a start index and a length and feed it to
+    `decoder`. See the documentation of the third-party library
+    [Uutf](https://github.com/dbuenzli/uutf).
 
-- The remaining methods have names of starting with `mk_` followed
-  by the kind of lexical unit (not a token) they build: `mk_line`
-  for line comments, `mk_block` for block comments, `mk_newline` for
-  newline characters, `mk_space` for blank space, `mk_tabs` for
-  tabulations and `mk_bom` for the UTF-8
-  [Byte-Ordered Mark](https://en.wikipedia.org/wiki/Byte_order_mark). Note
-  how they all return a new state, besides the lexical unit.
+  * The remaining methods have names of starting with `mk_` followed
+    by the kind of lexical unit (not a token) they build: `mk_line`
+    for line comments, `mk_block` for block comments, `mk_newline` for
+    newline characters, `mk_space` for blank space, `mk_tabs` for
+    tabulations and `mk_bom` for the UTF-8
+    [Byte-Ordered Mark](https://en.wikipedia.org/wiki/Byte_order_mark). Note
+    how they all return a new state, besides the lexical unit.
 
 A few words about the method `mk_linemarker`:
 
@@ -683,21 +684,21 @@ implementation of `Core`.
 The type `input` is straightforward: it informs about the kind of
 input. The type `instance` is worth explaining in more details.
 
-- The field `input` is obvious.
+  * The field `input` is obvious.
 
-- The field `read_token` is a lexer that returns one token or an
-  error message, almost in the fashion expected by `menhir`.
+  * The field `read_token` is a lexer that returns one token or an
+    error message, almost in the fashion expected by `menhir`.
 
-- The field `read_unit` is more general than `read_token`, as it
-  returns one lexical unit per call, in case of success.
+  * The field `read_unit` is more general than `read_token`, as it
+    returns one lexical unit per call, in case of success.
 
-- The field `lexbuf` is the current lexing buffer.
+  * The field `lexbuf` is the current lexing buffer.
 
-- The method `close` closes the input channel, if any (this depends
-  on the field `input`), to avoid memory leaks.
+  * The method `close` closes the input channel, if any (this depends
+    on the field `input`), to avoid memory leaks.
 
-- The method `window` returns an option window of the last and maybe
-  penultimate token (for error messages).
+  * The method `window` returns an option window of the last and maybe
+    penultimate token (for error messages).
 
 Finally, the consider the function `open_stream`:
 
@@ -724,19 +725,19 @@ We now cover the implementations.
 ### The CLI Implementation
 
 It is important to compare the files `CLI.ml` from
-`vendored-dune/Preprocessor` and `vendored-dune/LexerLib`, as the exercise will
+`vendors/Preprocessor` and `vendors/LexerLib`, as the exercise will
 reveal the rationale for their design. Please read the section `CLI`
-of `vendored-dune/Preprocessor/README.md`.
+of `vendors/Preprocessor/README.md`.
 
 We already went through [the interface](#the-cli-interface), so let us
 walk through now the functor `Make`.
 
-- In the `Preprocessor` library, the functor `Make` takes as
-  argument a module of signature `COMMENTS`.
+  * In the `Preprocessor` library, the functor `Make` takes as
+    argument a module of signature `COMMENTS`.
 
-- In the `LexerLib` library, the functor `Make` takes as argument a
-  module of signature `PREPROCESSOR_CLI`, which is equal to the
-  return signature `S` of `Make` in the preprocessor library.
+  * In the `LexerLib` library, the functor `Make` takes as argument a
+    module of signature `PREPROCESSOR_CLI`, which is equal to the
+    return signature `S` of `Make` in the preprocessor library.
 
 This means that we can compose a call to `Make` from the preprocessor
 library with a call to `Make` from `LexerLib`. We already saw that the
@@ -941,6 +942,7 @@ and `mk_block` do not produce a new state. For example:
 
 This is because they only make use of their _thread_ argument.
 
+
 ### The Thread Implementation
 
 The implementation of the module `Thread` is straightforward.
@@ -962,11 +964,12 @@ The function `lexbuf_from_input` creates a lexing buffer from the
 variety of possible inputs modelled by the type `input`. See
 [the Core Interface](#the-core-interface). Two points of note:
 
-1. In the case of `Buffer` as an input, we check whether the input
-   configuration `config` registers a file name: if so, the lexing
-   buffer is patched with that name. (This has to be done manually.)
+  1. In the case of `Buffer` as an input, we check whether the input
+     configuration `config` registers a file name: if so, the lexing
+     buffer is patched with that name. (This has to be done manually.)
 
-2. In the case of `File` as an input, we call `reset ~file:path lexbuf` for the same reason.
+  2. In the case of `File` as an input, we call `reset ~file:path
+     lexbuf` for the same reason.
 
 #### Error Handling
 
@@ -1075,8 +1078,10 @@ exported by the module `Core` is only used by `API` to instantiate the
 sundry kinds of lexers it offers. The functions is made of four parts.
 
 The first consists in defining some local variables of use in the
-following parts, in particular a reference `state` of type `State.t ref`. The reason for it is that `open_stream` returns lexers (fields
-`read_token` and `read_unit` in the lexer instance of type `'token instance`) of type:
+following parts, in particular a reference `state` of type `State.t
+ref`. The reason for it is that `open_stream` returns lexers (fields
+`read_token` and `read_unit` in the lexer instance of type `'token
+instance`) of type:
 
 ```
   read_token : Lexing.lexbuf -> ('token, message) result;
@@ -1180,15 +1185,15 @@ example when we start scanning the input file.
 
 The `scan` rule has five sections, or cases:
 
-1. markup (newline characters, whitespace, tabulations);
+  1. markup (newline characters, whitespace, tabulations);
 
-2. strings,
+  2. strings,
 
-3. comments,
+  3. comments,
 
-4. linemarkers,
+  4. linemarkers,
 
-5. tokens, including `eof` (end-of-file character).
+  5. tokens, including `eof` (end-of-file character).
 
 In the case of markup and linemarkers, regular expressions are used to
 completely characterise the category, because markup is simple and
@@ -1228,23 +1233,23 @@ for strings, but whether those are actually actual delimiters depends
 on the client, hence the conditional test on
 `client#is_string_delimiter lexeme`.
 
-- If not a valid delimiter, the lexing buffer is rolled back and the
-  client lexer is called back. Indeed, we assume that the characters
-  delimiting strings, comments and linemarkers are all
-  different. This can be a limitation in the case of a language like
-  Michelson, whose comments start with `#`, like a linemarker.
+  * If not a valid delimiter, the lexing buffer is rolled back and the
+    client lexer is called back. Indeed, we assume that the characters
+    delimiting strings, comments and linemarkers are all
+    different. This can be a limitation in the case of a language like
+    Michelson, whose comments start with `#`, like a linemarker.
 
-- If a valid string delimiter, we synchronise the logical state
-  `state` with the physical state of the implicit lexing
-  buffer. (See the section about
-  [the State Interface](#the-state-interface).) Then a _thread_ is
-  created (see the section on
-  [the Thread Interface](#the-thread-interface)) which starts with
-  the delimiter `lexeme`, and the specialised parsing rule
-  `in_string` is called. It is supposed to return with a pair made
-  of the final value of the thread and of the state, which are then
-  fed to the client method for making string tokens,
-  `client#mk_string`.
+  * If a valid string delimiter, we synchronise the logical state
+    `state` with the physical state of the implicit lexing
+    buffer. (See the section about
+    [the State Interface](#the-state-interface).) Then a _thread_ is
+    created (see the section on
+    [the Thread Interface](#the-thread-interface)) which starts with
+    the delimiter `lexeme`, and the specialised parsing rule
+    `in_string` is called. It is supposed to return with a pair made
+    of the final value of the thread and of the state, which are then
+    fed to the client method for making string tokens,
+    `client#mk_string`.
 
 Remains the case of comments, which come in two flavours: multi-line
 comments, or _block comments_, and one-line comments, or _line
@@ -1352,13 +1357,13 @@ rule `init` is to parse the optional Byte-Order Mark (BOM).
 
 The parsing of block comments is rather involved for several reasons:
 
-1. Manage different delimiters, depending on the client.
+  1. Manage different delimiters, depending on the client.
 
-2. Manage UTF-8 encoded glyphs.
+  2. Manage UTF-8 encoded glyphs.
 
-3. Manage nested block comments.
+  3. Manage nested block comments.
 
-4. Manage strings.
+  4. Manage strings.
 
 The lexer generator `ocamllex` we use is byte-oriented, meaning that
 its lexing buffer is seen as an array of bytes. Clearly, this would be
@@ -1370,7 +1375,7 @@ comment, and, if the location of that error would be reported in bytes
 (lines and horizontal offset, for example), it would be seem wrong if
 the text editor interprets UTF-8 and displays a glyph as one
 "character". This is why the module `Pos` in
-`vendored-dune/ligo-utils/simple-utils` can count in bytes or UTF-8
+`vendors/ligo-utils/simple-utils` can count in bytes or UTF-8
 codepoints. But it has to be instructed to do so, and this is why we
 must pay attention to UTF-8 in comments.
 
