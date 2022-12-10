@@ -19,10 +19,6 @@ verification:
     - .gitlab/issue_templates/**/*
     - tools/webide-new/.github/pull_request_template.md
 
-    - src/README.md
-    - src/coq/README.md
-    - tools/vim/ligo/README.md
-
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
   virtualFiles:
