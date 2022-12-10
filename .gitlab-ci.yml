@@ -184,7 +184,7 @@ xrefcheck:
     - job: changelog
       artifacts: true
   script:
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
+    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.2/xrefcheck-x86_64-linux
     - chmod 777 ./xrefcheck-x86_64-linux
     - ./xrefcheck-x86_64-linux
   rules:
