@@ -110,7 +110,6 @@
 %token <string Wrap.t> LT       "<"   [@recover.expr Token.wrap_lt       $loc]
 %token <string Wrap.t> GT       ">"   [@recover.expr Token.wrap_gt       $loc]
 %token <string Wrap.t> LE       "<="  [@recover.expr Token.wrap_le       $loc]
-%token <string Wrap.t> GE       ">="  [@recover.expr Token.wrap_ge       $loc]
 %token <string Wrap.t> PLUS_EQ  "+="  [@recover.expr Token.wrap_plus_eq  $loc]
 %token <string Wrap.t> MINUS_EQ "-="  [@recover.expr Token.wrap_minus_eq $loc]
 %token <string Wrap.t> MULT_EQ  "*="  [@recover.expr Token.wrap_mult_eq  $loc]

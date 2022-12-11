@@ -30,4 +30,6 @@ let wrap ?(attributes=[]) payload region =
     method set_attributes attr = {< attributes = attr >}
   end
 
+let make = wrap
+
 let ghost payload = wrap ~attributes:[] payload Region.ghost

@@ -12,4 +12,4 @@
   ;; LIGO
   lexing_shared
   lexing_pascaligo_self_tokens)
- (modules Self))
+ (modules Self ZWSP))

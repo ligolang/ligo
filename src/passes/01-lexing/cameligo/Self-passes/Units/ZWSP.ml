@@ -8,18 +8,17 @@ module Unit = LexerLib.Unit
 
 (* Local dependencies *)
 
-module Token = Lexing_jsligo_self_tokens.Token
+module Token = Lexing_cameligo_self_tokens.Token
 
 (* Injection *)
 
 let filter (units : Token.t Unit.lex_unit list) =
   let open! Token in
   let rec aux acc = function
-    (`Token GT _ as gt1) :: (`Token GT reg :: _ as units)
-  | (`Token GT _ as gt1) :: (`Token EQ reg :: _ as units) ->
-      aux (`Token (mk_ZWSP reg#region) :: gt1 :: acc) units
-  | unit :: units -> aux (unit :: acc) units
-  | [] -> List.rev acc
+    (`Token GT _ as gt1) :: (`Token EQ reg :: _ as units) ->
+        aux (`Token (mk_ZWSP reg#region) :: gt1 :: acc) units
+    | unit :: units -> aux (unit :: acc) units
+    | [] -> List.rev acc
   in aux [] units
 
 type units = Token.t Unit.t list

@@ -150,7 +150,6 @@ everything_else:
 | "<"           { LT $1       }
 | ">"           { GT $1       }
 | "<="          { LE $1       }
-| ">="          { GE $1       }
 | "!"           { NOT $1      }
 | "||"          { BOOL_OR $1  }
 | "&&"          { BOOL_AND $1 }
@@ -170,6 +169,7 @@ everything_else:
 | "type"        { Type $1     }
 | "module"      { Module $1   }
 | ":"           { COLON $1    }
+| ZWSP          { ZWSP $1     }
 
 inner:
   /* nothing */ { Solved [] }

@@ -678,13 +678,16 @@ comp_expr_level:
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, ">", cat_expr_level) {
     ELogic (CompExpr (Gt $1)) }
-| bin_op(comp_expr_level, ">=", cat_expr_level) {
+| bin_op(comp_expr_level, ge, cat_expr_level) {
     ELogic (CompExpr (Geq $1)) }
 | bin_op(comp_expr_level, "==", cat_expr_level) {
     ELogic (CompExpr (Equal $1)) }
 | bin_op(comp_expr_level, "!=", cat_expr_level) {
     ELogic (CompExpr (Neq $1)) }
 | cat_expr_level { $1 }
+
+ge:
+  ">" ZWSP "=" { Wrap.wrap ">=" (cover $1#region $3#region) }
 
 cat_expr_level:
   bin_op(add_expr_level, "++", cat_expr_level)    {  EString (Cat $1) }

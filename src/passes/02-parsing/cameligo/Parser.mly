@@ -734,13 +734,16 @@ comp_expr_level:
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, ">", cat_expr_level) {
     ELogic (CompExpr (Gt $1)) }
-| bin_op(comp_expr_level, ">=", cat_expr_level) {
+| bin_op(comp_expr_level, ge, cat_expr_level) {
     ELogic (CompExpr (Geq $1)) }
 | bin_op(comp_expr_level, "=", cat_expr_level) {
     ELogic (CompExpr (Equal $1)) }
 | bin_op(comp_expr_level, "<>", cat_expr_level) {
     ELogic (CompExpr (Neq $1)) }
 | cat_expr_level { $1 }
+
+ge:
+  ">" ZWSP "=" { Wrap.wrap ">=" (cover $1#region $3#region) }
 
 cat_expr_level:
   bin_op(cons_expr_level, "^", cat_expr_level)     { EString (Cat $1) }
@@ -910,7 +913,7 @@ field_path_assignment:
   field_name {
      let region = $1.region
       and value  = Path_punned_property $1
-        in {region; value} 
+        in {region; value}
   }
 | path "=" expr {
     let region = cover (path_to_region $1) (expr_to_region $3)
@@ -921,7 +924,7 @@ field_assignment:
   field_name {
     let region = $1.region
     and value  = Punned_property $1
-      in {region; value} 
+      in {region; value}
   }
 | field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
