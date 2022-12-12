@@ -37,10 +37,13 @@ let mk_wild region =
 %on_error_reduce disj_expr_level
 %on_error_reduce conj_expr_level
 %on_error_reduce shift_expr_level
-%on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
-%on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
+%on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
 %on_error_reduce bin_op(disj_expr_level,REV_APP,conj_expr_level)
+%on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
+%on_error_reduce bin_op(comp_expr_level,ge,cat_expr_level)
+%on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
+%on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
 %on_error_reduce base_expr(closed_expr)
@@ -54,8 +57,6 @@ let mk_wild region =
 %on_error_reduce const_ctor_expr
 %on_error_reduce const_ctor_pattern
 %on_error_reduce arguments
-%on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
-%on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
 %on_error_reduce seq(Attr)
 %on_error_reduce ctor_pattern
 %on_error_reduce cons_pattern_level
@@ -717,7 +718,7 @@ bin_op(arg1,op,arg2):
   arg1 op arg2 {
     let start  = expr_to_region $1 in
     let stop   = expr_to_region $3 in
-    let op = $2 in
+    let op     = $2 in
     let region = cover start stop
     and value  = {arg1=$1; op; arg2=$3}
     in {region; value} }
