@@ -297,9 +297,9 @@ xrefcheck:
     - job: changelog
       artifacts: true
   script:
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
-    - chmod 777 ./xrefcheck-x86_64-linux
-    - ./xrefcheck-x86_64-linux
+    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.2/xrefcheck-x86_64-linux --no-verbose -O xrefcheck
+    - chmod 777 ./xrefcheck
+    - ./xrefcheck
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
