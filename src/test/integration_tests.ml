@@ -3690,6 +3690,10 @@ let transitive_jsligo ~raise () : unit =
   ()
 
 
+let if_semi_jsligo ~raise () : unit =  
+  let _ = type_file ~raise "./contracts/if_semi.jsligo" in ()
+  
+
 let main =
   test_suite "Integration (End to End)"
   @@ [ (* Tezos stuff *) test_w "chain id" chain_id ]
@@ -3859,4 +3863,5 @@ let main =
     ; test_w "destruct func tuple param (jsligo)" func_tuple_destruct_jsligo
     ; test_w "switch_return (jsligo)" switch_return_jsligo
     ; test_w "transitive (jsligo)" transitive_jsligo
+    ; test_w "if_semi (jsligo)" if_semi_jsligo
     ]

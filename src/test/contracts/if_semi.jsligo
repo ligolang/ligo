@@ -1,0 +1,39 @@
+type storage = int;
+
+type parameter =
+  ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+let add = ([store, delta]: [storage, int]): storage => store + delta;
+let sub = ([store, delta]: [storage, int]): storage => store - delta;
+
+
+const main = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+  if (true) { 
+
+ return [
+   list([]),    // No operations
+   (match (action, {
+    Increment: n => add (store, n),
+    Decrement: n => sub (store, n),
+    Reset:     ()  => 0}))
+  ]
+  }
+  failwith("Not Allowed");
+};
+
+
+const main2 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+  if (true) { 
+
+ return [
+   list([]),    // No operations
+   (match (action, {
+    Increment: n => add (store, n),
+    Decrement: n => sub (store, n),
+    Reset:     ()  => 0}))
+  ]
+  } // comment should also work
+  failwith("Not Allowed");
+};
