@@ -90,7 +90,6 @@ module T =
     | LT       of lexeme Wrap.t  (* <    *)
     | GT       of lexeme Wrap.t  (* >    *)
     | LE       of lexeme Wrap.t  (* <=   *)
-    | GE       of lexeme Wrap.t  (* >=   *)
     | PLUS_EQ  of lexeme Wrap.t  (* +=   *)
     | MINUS_EQ of lexeme Wrap.t  (* -=   *)
     | MULT_EQ  of lexeme Wrap.t  (* *=   *)
@@ -204,7 +203,6 @@ module T =
     | LT       t
     | GT       t
     | LE       t
-    | GE       t
     | PLUS_EQ  t
     | MINUS_EQ t
     | MULT_EQ  t
@@ -490,7 +488,6 @@ module T =
     let mk_LT       region = LT       (wrap_lt       region)
     let mk_GT       region = GT       (wrap_gt       region)
     let mk_LE       region = LE       (wrap_le       region)
-    let mk_GE       region = GE       (wrap_ge       region)
     let mk_PLUS_EQ  region = PLUS_EQ  (wrap_plus_eq  region)
     let mk_MINUS_EQ region = MINUS_EQ (wrap_minus_eq region)
     let mk_MULT_EQ  region = MULT_EQ  (wrap_mult_eq  region)
@@ -541,7 +538,6 @@ module T =
       mk_LT;
       mk_GT;
       mk_LE;
-      mk_GE;
       mk_PLUS_EQ;
       mk_MINUS_EQ;
       mk_MULT_EQ;
@@ -651,7 +647,6 @@ module T =
     let ghost_LT       = LT       ghost_lt
     let ghost_GT       = GT       ghost_gt
     let ghost_LE       = LE       ghost_le
-    let ghost_GE       = GE       ghost_ge
     let ghost_PLUS_EQ  = PLUS_EQ  ghost_plus_eq
     let ghost_MINUS_EQ = MINUS_EQ ghost_minus_eq
     let ghost_MULT_EQ  = MULT_EQ  ghost_mult_eq
@@ -792,7 +787,6 @@ module T =
     | "LT"       -> ghost_lt#payload
     | "GT"       -> ghost_gt#payload
     | "LE"       -> ghost_le#payload
-    | "GE"       -> ghost_ge#payload
     | "PLUS_EQ"  -> ghost_plus_eq#payload
     | "MINUS_EQ" -> ghost_minus_eq#payload
     | "MULT_EQ"  -> ghost_mult_eq#payload
@@ -927,7 +921,6 @@ module T =
     | LT       t -> t#region, "LT"
     | GT       t -> t#region, "GT"
     | LE       t -> t#region, "LE"
-    | GE       t -> t#region, "GE"
     | PLUS_EQ  t -> t#region, "PLUS_EQ"
     | MINUS_EQ t -> t#region, "MINUS_EQ"
     | MULT_EQ  t -> t#region, "MULT_EQ"
@@ -1122,7 +1115,6 @@ module T =
     | LT _
     | GT _
     | LE _
-    | GE _
  (* | PLUS_EQ _
     | MINUS_EQ _
     | MULT_EQ _

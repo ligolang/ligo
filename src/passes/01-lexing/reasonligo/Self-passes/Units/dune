@@ -12,4 +12,4 @@
   ;; LIGO
   lexing_shared
   lx_re_selftoks)
- (modules Self))
+ (modules Self ZWSP))

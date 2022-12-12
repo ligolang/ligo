@@ -64,7 +64,7 @@ let private_attribute = {
 %on_error_reduce bin_op(comp_expr_level,LT,add_expr_level)
 %on_error_reduce bin_op(comp_expr_level,LE,add_expr_level)
 %on_error_reduce bin_op(comp_expr_level,gt,add_expr_level)
-%on_error_reduce bin_op(comp_expr_level,GE,add_expr_level)
+%on_error_reduce bin_op(comp_expr_level,ge,add_expr_level)
 %on_error_reduce bin_op(comp_expr_level,EQ2,add_expr_level)
 %on_error_reduce expr_stmt
 %on_error_reduce comp_expr_level
@@ -111,6 +111,9 @@ chevrons(X):
 
 gt:
   ">" ioption(ZWSP) { $1 }
+
+ge:
+  ">" ZWSP "=" { Wrap.wrap ">=" (cover $1#region $3#region) }
 
 %inline brackets(X):
   "[" X "]" {
@@ -358,7 +361,7 @@ comp_expr_level:
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, gt, add_expr_level)   {
     ELogic (CompExpr (Gt $1)) }
-| bin_op(comp_expr_level, ">=", add_expr_level) {
+| bin_op(comp_expr_level, ge, add_expr_level) {
     ELogic (CompExpr (Geq $1)) }
 | bin_op(comp_expr_level, "==", add_expr_level) {
     ELogic (CompExpr (Equal $1)) }

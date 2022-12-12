@@ -69,7 +69,6 @@ module T =
     | LT       of lexeme Wrap.t  (* <   *)
     | LE       of lexeme Wrap.t  (* <=  *)
     | GT       of lexeme Wrap.t  (* >   *)
-    | GE       of lexeme Wrap.t  (* >=  *)
     | NE       of lexeme Wrap.t  (* =/= *)
     | PLUS     of lexeme Wrap.t  (* +   *)
     | MINUS    of lexeme Wrap.t  (* -   *)
@@ -123,6 +122,10 @@ module T =
     | While      of lexeme Wrap.t  (* while     *)
     | With       of lexeme Wrap.t  (* with      *)
 
+    (* Virtual tokens *)
+
+    | ZWSP of lexeme Wrap.t  (* Zero-Width SPace *)
+
     (* End-Of-File *)
 
     | EOF of lexeme Wrap.t
@@ -169,7 +172,6 @@ module T =
     | LT       t
     | LE       t
     | GT       t
-    | GE       t
     | NE       t
     | PLUS     t
     | MINUS    t
@@ -222,6 +224,10 @@ module T =
     | Var       t
     | While     t
     | With      t -> t#payload
+
+    (* Virtual tokens *)
+
+    | ZWSP _ -> ""
 
     (* End-Of-File *)
 
@@ -490,7 +496,6 @@ module T =
     let mk_LT       region = LT       (wrap_lt       region)
     let mk_LE       region = LE       (wrap_le       region)
     let mk_GT       region = GT       (wrap_gt       region)
-    let mk_GE       region = GE       (wrap_ge       region)
     let mk_CARET    region = CARET    (wrap_caret    region)
     let mk_ARROW    region = ARROW    (wrap_arrow    region)
     let mk_NE       region = NE       (wrap_ne       region)
@@ -525,7 +530,6 @@ module T =
       mk_LT;
       mk_LE;
       mk_GT;
-      mk_GE;
       mk_CARET;
       mk_ARROW;
       mk_NE;
@@ -600,7 +604,6 @@ module T =
     let ghost_LT       = LT       ghost_lt
     let ghost_LE       = LE       ghost_le
     let ghost_GT       = GT       ghost_gt
-    let ghost_GE       = GE       ghost_ge
     let ghost_NE       = NE       ghost_ne
     let ghost_PLUS     = PLUS     ghost_plus
     let ghost_MINUS    = MINUS    ghost_minus
@@ -658,6 +661,13 @@ module T =
     let ghost_Attr   k v = Attr     (ghost_attr k v)
     let ghost_Lang     l = Lang     (ghost_lang l)
 
+    (* VIRTUAL TOKENS *)
+
+    let wrap_zwsp      = wrap ""
+    let ghost_zwsp     = wrap_zwsp Region.ghost
+    let mk_ZWSP region = ZWSP (wrap_zwsp region)
+    let ghost_ZWSP     = mk_ZWSP Region.ghost
+
     (* END-OF-FILE TOKEN *)
 
     let wrap_eof      = wrap ""
@@ -700,7 +710,6 @@ module T =
     | "LT"       -> ghost_lt#payload
     | "LE"       -> ghost_le#payload
     | "GT"       -> ghost_gt#payload
-    | "GE"       -> ghost_ge#payload
     | "NE"       -> ghost_ne#payload
     | "PLUS"     -> ghost_plus#payload
     | "MINUS"    -> ghost_minus#payload
@@ -753,6 +762,10 @@ module T =
     | "Var"       -> ghost_var#payload
     | "While"     -> ghost_while#payload
     | "With"      -> ghost_with#payload
+
+    (* Virtual tokens *)
+
+    | "ZWSP" -> ""
 
     (* End-Of-File *)
 
@@ -817,7 +830,6 @@ module T =
     | LT       t -> t#region, "LT"
     | LE       t -> t#region, "LE"
     | GT       t -> t#region, "GT"
-    | GE       t -> t#region, "GE"
     | NE       t -> t#region, "NE"
     | PLUS     t -> t#region, "PLUS"
     | MINUS    t -> t#region, "MINUS"
@@ -870,6 +882,10 @@ module T =
     | Var       t -> t#region, "Var"
     | While     t -> t#region, "While"
     | With      t -> t#region, "With"
+
+    (* Virtual tokens *)
+
+    | ZWSP   t -> t#region, "ZWSP"
 
     (* End-Of-File *)
 
@@ -996,7 +1012,6 @@ module T =
     | LT _
     | LE _
     | GT _
-    | GE _
     | NE _
     | PLUS _
     | MINUS _

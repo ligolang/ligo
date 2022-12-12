@@ -32,4 +32,7 @@ type t = filter list
 
 module Style' = Style.Make (Token)
 
-let filters : t = [Style'.filter]
+let filters : t = [
+  Style'.filter;
+    ZWSP.filter
+]
