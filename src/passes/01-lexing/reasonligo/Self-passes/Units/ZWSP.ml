@@ -3,12 +3,12 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
-module Std = Simple_utils.Std
-module Unit = LexerLib.Unit
+module Std    = Simple_utils.Std
+module Unit   = LexerLib.Unit
 
 (* Local dependencies *)
 
-module Token = Lexing_reasonligo_self_tokens.Token
+module Token = Lx_re_selftoks.Token
 
 (* Injection *)
 

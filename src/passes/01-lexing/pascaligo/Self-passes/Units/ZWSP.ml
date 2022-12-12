@@ -8,7 +8,7 @@ module Unit = LexerLib.Unit
 
 (* Local dependencies *)
 
-module Token = Lexing_pascaligo_self_tokens.Token
+module Token = Lx_psc_self_tokens.Token
 
 (* Injection *)
 
