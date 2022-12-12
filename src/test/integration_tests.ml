@@ -3690,9 +3690,10 @@ let transitive_jsligo ~raise () : unit =
   ()
 
 
-let if_semi_jsligo ~raise () : unit =  
-  let _ = type_file ~raise "./contracts/if_semi.jsligo" in ()
-  
+let if_semi_jsligo ~raise () : unit =
+  let _ = type_file ~raise "./contracts/if_semi.jsligo" in
+  ()
+
 
 let main =
   test_suite "Integration (End to End)"
