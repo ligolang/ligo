@@ -78,6 +78,7 @@ let parse_constant_pre ~raise code =
   Proto_pre_alpha_utils.Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer
   @@ Proto_pre_alpha_utils.Memory_proto_alpha.node_to_canonical code
 
+
 let dummy : Stacking.meta =
   { location = Location.dummy; env = []; binder = None; source_type = None }
 
@@ -137,7 +138,9 @@ let build_contract ~raise
     let tezos_context =
       List.fold_left constants ~init:environment.tezos_context ~f:(fun ctxt cnt ->
           let ctxt, _, _ =
-            Trace.trace_alpha_tzresult_lwt ~raise (typecheck_contract_tracer protocol_version contract)
+            Trace.trace_alpha_tzresult_lwt
+              ~raise
+              (typecheck_contract_tracer protocol_version contract)
             @@ Proto_alpha_utils.Memory_proto_alpha.register_constant ctxt cnt
           in
           ctxt)
@@ -155,7 +158,9 @@ let build_contract ~raise
       let typer_oracle : type a. (a, _) Micheline.Micheline.node -> _ =
        fun c ->
         let map, _ =
-          Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer protocol_version contract)
+          Trace.trace_tzresult_lwt
+            ~raise
+            (typecheck_contract_tracer protocol_version contract)
           @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c
         in
         map
