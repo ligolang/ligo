@@ -13,7 +13,7 @@ PASS,2annotated_michelson_record_comb.mligo,64,504,68,229,13
 PASS,2let_destructuring.mligo,64,971,85,460,14
 PASS,2let_multiple.mligo,51,575,97,238,15
 PASS,2local_type_decl.mligo,12,84,24,32,2
-PASS,2warning_unused.mligo,17,168,16,86,3
+PASS,2warning_unused.mligo,8,162,28,86,4
 PASS,4assert.mligo,30,302,62,108,9
 PASS,4check_signature.mligo,14,107,41,45,5
 PASS,4fibo.mligo,30,203,53,84,8

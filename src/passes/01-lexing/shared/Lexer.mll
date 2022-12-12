@@ -1,4 +1,5 @@
-(* Lexer specification for LIGO, to be processed by [ocamllex]. *)
+(* Lexer specification for all LIGO dialects, to be processed by
+   [ocamllex]. *)
 
 {
 (* START HEADER *)
@@ -254,7 +255,7 @@ let capital    = ['A'-'Z']
 let letter     = small | capital
 let ident      = small (letter | '_' | digit)*
                | '_' (letter | '_' (letter | digit) | digit)+
-let ext_ident  = (letter | digit | '_' | ':')+
+let ext_ident  = (letter | digit | '_')+
 let uident     = capital (letter | '_' | digit)*
 let string     = [^'"' '\\' '\n']*  (* For #include and attributes *)
 let attr       = letter (letter | digit | '_' | ':' | '.' | '@' | '%')*
@@ -268,15 +269,14 @@ let code_inj   = ("[%" as start) (attr as lang)
 (* Symbols *)
 
 let     common_sym =   ";" | "," | "(" | ")"  | "[" | "]"  | "{" | "}"
-                     | "=" | ":" | "|" | "." | "_" | "^"
-                     | "+" | "-" | "*" | "/"  | "<" | "<=" | ">" | ">="
-let  pascaligo_sym = "->" | "=/=" | "#" | ":="
-let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>"
-let reasonligo_sym = "!" | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
-let     jsligo_sym = "++" | "--" | "..." | "?" | "&" | "!" | "~" | "%"
-                     | "<<<" | "==" | "!=" | "+=" | "-=" | "*=" | "/="
-                     | "%=" | "<<<=" | "&=" | "|="
-                     | "^=" | "=>" (* | ">>>" | ">>>=" *)
+                     | "=" | ":" | "|" | "." | "_"
+                     | "+" | "-" | "*" | "/"  | "<" | "<=" | ">" (*| ">="*)
+let  pascaligo_sym = "->" | "=/=" | "#" | ":=" | "^"
+let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>" | "^"
+let reasonligo_sym = "!" | "=>" | "!=" | "==" | "++" | "..."
+                     | "||" | "&&" | "^"
+let     jsligo_sym =   "..." | "?" | "!" | "%" | "==" | "!=" | "+=" | "-="
+                     | "*=" | "/="| "%=" | "=>"
 
 let symbol =
       common_sym
@@ -287,25 +287,12 @@ let symbol =
 
 (* RULES *)
 
-(* The scanner [scan] has a parameter [state] that is threaded
-   through recursive calls. *)
+(* The scanner [scan] has a parameter [state] that is threaded through
+   recursive calls. We start with the special cases so if they fail in
+   their semantic actions, the normal cases can be tried next. *)
 
 rule scan state = parse
-  ident
-| '@' ext_ident { mk_ident            state lexbuf }
-| uident        { mk_uident           state lexbuf }
-| bytes         { mk_bytes bytes      state lexbuf }
-| nat "n"       { mk_nat   nat        state lexbuf }
-| nat "mutez"   { mk_mutez nat        state lexbuf }
-| nat tz_or_tez { mk_tez   nat tez    state lexbuf }
-| natural       { mk_int              state lexbuf }
-| symbol        { mk_sym              state lexbuf }
-| eof           { mk_eof              state lexbuf }
-| code_inj      { mk_lang  start lang state lexbuf }
-| decimal tz_or_tez {
-    mk_tez_dec integral fractional tez state lexbuf }
-
-| "[@" (attr as key) (blank+ (string as value))? "]" {
+  "[@" (attr as key) (blank+ (string as value))? "]" {
     let value =
       match value with
         None        -> None
@@ -319,9 +306,21 @@ rule scan state = parse
       let thread = Thread.make ~opening:region
       in scan_verbatim verb_close thread state lexbuf
          |> mk_verbatim
-    else
-      let _, Region.{region; _} = state#sync lexbuf
-      in fail region (Unexpected_character lexeme.[0]) }
+    else mk_sym state lexbuf }
+
+| ident
+| '@' ext_ident { mk_ident            state lexbuf }
+| uident        { mk_uident           state lexbuf }
+| bytes         { mk_bytes bytes      state lexbuf }
+| nat "n"       { mk_nat   nat        state lexbuf }
+| nat "mutez"   { mk_mutez nat        state lexbuf }
+| nat tz_or_tez { mk_tez   nat tez    state lexbuf }
+| natural       { mk_int              state lexbuf }
+| symbol        { mk_sym              state lexbuf }
+| eof           { mk_eof              state lexbuf }
+| code_inj      { mk_lang  start lang state lexbuf }
+| decimal tz_or_tez {
+    mk_tez_dec integral fractional tez state lexbuf }
 
 | _ as c { let _, Region.{region; _} = state#sync lexbuf
            in fail region (Unexpected_character c) }

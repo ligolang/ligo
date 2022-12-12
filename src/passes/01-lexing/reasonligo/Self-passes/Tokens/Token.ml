@@ -80,7 +80,6 @@ module T =
     | LT       of lexeme Wrap.t (* <   *)
     | GT       of lexeme Wrap.t (* >   *)
     | LE       of lexeme Wrap.t (* <=  *)
-    | GE       of lexeme Wrap.t (* >=  *)
     | BOOL_OR  of lexeme Wrap.t (* ||  *)
     | BOOL_AND of lexeme Wrap.t (* &&  *)
     | NOT      of lexeme Wrap.t (* !   *)
@@ -105,6 +104,7 @@ module T =
 
     (* Virtual tokens *)
 
+    | ZWSP   of lexeme Wrap.t  (* Zero-Width SPace *)
     | ES6FUN of lexeme Wrap.t
 
     (* End-Of-File *)
@@ -160,7 +160,6 @@ module T =
     | LT       t
     | GT       t
     | LE       t
-    | GE       t
     | ARROW    t
     | BOOL_OR  t
     | BOOL_AND t
@@ -186,6 +185,7 @@ module T =
 
     (* Virtual tokens *)
 
+    | ZWSP _
     | ES6FUN _ -> ""
 
     (* End-Of-File *)
@@ -350,7 +350,6 @@ module T =
     let mk_LT       region = LT       (wrap_lt       region)
     let mk_GT       region = GT       (wrap_gt       region)
     let mk_LE       region = LE       (wrap_le       region)
-    let mk_GE       region = GE       (wrap_ge       region)
     let mk_BOOL_OR  region = BOOL_OR  (wrap_bool_or  region)
     let mk_BOOL_AND region = BOOL_AND (wrap_bool_and region)
     let mk_NOT      region = NOT      (wrap_not      region)
@@ -379,8 +378,6 @@ module T =
       mk_LT;
       mk_LE;
       mk_GT;
-      mk_GE;
-
       mk_NE;
       mk_BOOL_OR;
       mk_BOOL_AND;
@@ -461,7 +458,6 @@ module T =
     let ghost_LT       = LT       ghost_lt
     let ghost_GT       = GT       ghost_gt
     let ghost_LE       = LE       ghost_le
-    let ghost_GE       = GE       ghost_ge
     let ghost_BOOL_OR  = BOOL_OR  ghost_bool_or
     let ghost_BOOL_AND = BOOL_AND ghost_bool_and
     let ghost_NOT      = NOT      ghost_not
@@ -511,6 +507,11 @@ module T =
     let ghost_Lang     l = Lang     (ghost_lang l)
 
     (* VIRTUAL TOKENS *)
+
+    let wrap_zwsp      = wrap ""
+    let ghost_zwsp     = wrap_zwsp Region.ghost
+    let mk_ZWSP region = ZWSP (wrap_zwsp region)
+    let ghost_ZWSP     = mk_ZWSP Region.ghost
 
     let wrap_es6fun      = wrap ""
     let mk_ES6FUN region = ES6FUN (wrap_es6fun region)
@@ -568,7 +569,6 @@ module T =
     | "LT"       -> ghost_lt#payload
     | "GT"       -> ghost_gt#payload
     | "LE"       -> ghost_le#payload
-    | "GE"       -> ghost_ge#payload
     | "BOOL_OR"  -> ghost_bool_or#payload
     | "BOOL_AND" -> ghost_bool_and#payload
     | "NOT"      -> ghost_not#payload
@@ -593,6 +593,7 @@ module T =
 
     (* Virtual tokens *)
 
+    | "ZWSP"
     | "ES6FUN" -> ""
 
     (* End-Of-File *)
@@ -665,7 +666,6 @@ module T =
     | LT       t -> t#region, "LT"
     | GT       t -> t#region, "GT"
     | LE       t -> t#region, "LE"
-    | GE       t -> t#region, "GE"
     | ARROW    t -> t#region, "ARROW"
     | NOT      t -> t#region, "NOT"
     | BOOL_OR  t -> t#region, "BOOL_OR"
@@ -691,6 +691,7 @@ module T =
 
     (* Virtual tokens *)
 
+    | ZWSP   t -> t#region, "ZWSP"
     | ES6FUN t -> t#region, "ES6FUN"
 
     (* End-Of-File *)
@@ -828,7 +829,6 @@ module T =
     | LT _
     | GT _
     | LE _
-    | GE _
     | BOOL_OR _
     | BOOL_AND _
     | NOT _ -> true
