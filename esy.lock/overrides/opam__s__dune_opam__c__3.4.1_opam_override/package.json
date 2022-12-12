@@ -1,0 +1,35 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "patch --ignore-whitespace -p1 < winpatch.patch"
+    ],
+    [
+      "bash",
+      "-c",
+      "patch --ignore-whitespace -p1 < winpatch-libgcc.patch"
+    ],
+    [
+      "bash",
+      "-c",
+      "patch --ignore-whitespace -p1 < winpatch-xdg.patch"
+    ],
+    [
+      "ocaml",
+      "bootstrap.ml",
+      "-j",
+      "4"
+    ],
+    [
+      "./dune.exe",
+      "build",
+      "-p",
+      "dune",
+      "--profile",
+      "dune-bootstrap",
+      "-j",
+      "4"
+    ]
+  ]
+}

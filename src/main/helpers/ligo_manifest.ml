@@ -62,7 +62,7 @@ let validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () =
           Lwt.map
             (fun status ->
               match status with
-              | Caml_unix.WEXITED 0 -> Ok ()
+              | Ligo_unix.WEXITED 0 -> Ok ()
               | _ -> Error "Error: unknown error")
             p#status)
     in
@@ -77,8 +77,8 @@ let validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () =
 
 
 let validate_main_file ~main =
-  match Sys_unix.file_exists main with
-  | `Yes ->
+  match Caml.Sys.file_exists main with
+  | true ->
     let ext_opt = snd @@ Filename.split_extension main in
     let ligo_syntax_opt = Syntax.of_ext_opt ext_opt in
     (match ligo_syntax_opt with
@@ -90,7 +90,7 @@ let validate_main_file ~main =
       Error
         "Error: Invalid LIGO file specifed in main field of package.json\n\
          Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) ")
-  | `No | `Unknown ->
+  | false ->
     Error
       "Error: main file does not exists.\n\
        Please specify a valid LIGO file in package.json."
@@ -106,7 +106,7 @@ let validate ~ligo_bin_path t =
 
 
 let try_readme ~project_root =
-  let ls = Sys_unix.ls_dir project_root in
+  let ls = Ligo_unix.ls_dir project_root in
   match
     List.find ls ~f:(fun d ->
         String.equal "readme.md" (String.lowercase d)
@@ -290,9 +290,9 @@ let read ~project_root =
   | Some project_root ->
     let ligo_manifest_path = Filename.concat project_root "package.json" in
     let () =
-      match Sys_unix.file_exists ligo_manifest_path with
-      | `No | `Unknown -> failwith "Error: Unable to find package.json!"
-      | `Yes -> ()
+      match Caml.Sys.file_exists ligo_manifest_path with
+      | false -> failwith "Error: Unable to find package.json!"
+      | true -> ()
     in
     let json =
       try Yojson.Safe.from_file ligo_manifest_path with

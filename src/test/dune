@@ -3,8 +3,8 @@
 (executables
  (names test doc_test repl_test parser_negative_tests vendors_test
    contract_test get_scope_tests)
- (libraries simple-utils tezos-memory-proto-alpha ligo bos repl interpreter
-   alcotest tezos-utils tezos-crypto ligo_api core_unix.filename_unix))
+ (libraries simple-utils tezos-memory-proto-alpha ligo ligo.unix bos repl
+   interpreter alcotest tezos-utils tezos-crypto ligo_api))
 
 (rule
  (alias doc-test)

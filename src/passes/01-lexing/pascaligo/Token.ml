@@ -1,1 +1,1 @@
-include Lexing_pascaligo_self_tokens.Token
+include Lx_psc_self_tokens.Token

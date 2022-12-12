@@ -4,6 +4,32 @@ module Raw_options = Compiler_options.Raw_options
 
 let is_dev = ref true
 
+let create_arg_type ?key of_string =
+  Core.Command.Arg_type.create ?key of_string ~complete:(fun _ ~part ->
+      let completions =
+        (* `compgen -f` handles some fiddly things nicely, e.g. completing "foo" and
+         "foo/" appropriately. *)
+        let command = sprintf "bash -c 'compgen -f %s'" part in
+        let chan_in = Ligo_unix.open_process_in command in
+        let completions = In_channel.input_lines chan_in in
+        ignore (Ligo_unix.close_process_in chan_in);
+        List.map (List.sort ~compare:String.compare completions) ~f:(fun comp ->
+            match Caml.Sys.is_directory comp with
+            | true -> comp ^ "/"
+            | _ -> comp)
+      in
+      match completions with
+      | [ dir ] when String.is_suffix dir ~suffix:"/" ->
+        (* If the only match is a directory, we fake out bash here by creating a bogus
+         entry, which the user will never see - it forces bash to push the completion
+         out to the slash. Then when the user hits tab again, they will be at the end
+         of the line, at the directory with a slash and completion will continue into
+         the subdirectory.
+      *)
+        [ dir; dir ^ "x" ]
+      | _ -> completions)
+
+
 let entry_point =
   let open Command.Param in
   let name = "e" in
@@ -15,7 +41,7 @@ let entry_point =
 let source_file =
   let name = "SOURCE_FILE" in
   let _doc = "the path to the smart contract file." in
-  Command.Param.(anon (name %: Filename_unix.arg_type))
+  Command.Param.(anon (name %: create_arg_type Fn.id))
 
 
 let package_name =
@@ -447,7 +473,7 @@ let ligo_bin_path =
   let open Command.Param in
   let name = "--ligo-bin-path" in
   let doc = "PATH path to LIGO executable." in
-  let spec = optional_with_default Sys_unix.executable_name string in
+  let spec = optional_with_default Caml.Sys.executable_name string in
   flag ~doc name spec
 
 
@@ -1900,7 +1926,7 @@ let run ?argv () =
       "Protocol built-in: %s"
       Environment.Protocols.(variant_to_string in_use)
   in
-  Command_unix.run ~build_info ~version:Version.version ?argv main;
+  Command_unx.run ~build_info ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
   | Done -> 0

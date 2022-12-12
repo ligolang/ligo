@@ -28,7 +28,7 @@ module T =
        redefine manually here (by type [t]) but the second one we need
        to satisfy Menhir's Inspection API.  *)
 
-    include Menhir_jsligo_tokens.MenhirToken
+    include Menhir_js_tokens.MenhirToken
 
     (* TOKENS *)
 

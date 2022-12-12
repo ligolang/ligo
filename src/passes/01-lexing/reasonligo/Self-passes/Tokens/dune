@@ -1,7 +1,7 @@
 ;; Build of the self passes on the tokens of ReasonLIGO
 
 (library
- (name lexing_reasonligo_self_tokens)
+ (name lx_re_selftoks)
  (public_name ligo.lexing.reasonligo.self.tokens)
  (instrumentation
   (backend bisect_ppx))
@@ -11,7 +11,7 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  menhir_reasonligo_tokens)
+  mh_re_tokens)
  (modules PreParErr PreParser State ES6FUN Token Self)
  (flags
   (:standard \ -open Core)))
@@ -29,8 +29,8 @@
     MenhirToken)))
 
 (library
- (name menhir_reasonligo_tokens)
- (public_name ligo.lexing.menhir_reasonligo_tokens)
+ (name mh_re_tokens)
+ (public_name ligo.lexing.menhir_re_tokens)
  (modules MenhirToken)
  (libraries
   ;; LIGO

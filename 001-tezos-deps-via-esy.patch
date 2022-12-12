@@ -1,0 +1,9 @@
+--- ./dune
++++ ./dune
+@@ -6,4 +6,4 @@
+  (public_name ligo.unix))
+ 
+ 
+-(vendored_dirs vendored-dune vendors)
++(vendored_dirs vendored-dune)
+

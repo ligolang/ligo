@@ -4,7 +4,7 @@ let contract basename = "../../test/contracts/" ^ basename
 let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 (* avoid pretty printing *)
-let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
+let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good

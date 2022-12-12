@@ -1,0 +1,15 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < 0001-Dune-expressions-lib-.-need-quoting-for-windows.patch' : 'true' }"
+    ],
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < 0002-Patch-missing-endian.h-declarations-needed-on-Window.patch' : 'true' }"
+    ],
+    "dune build -p core -j 4"
+  ]
+}

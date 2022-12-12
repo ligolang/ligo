@@ -1,0 +1,14 @@
+From 1cc62b8fa4947e48183624441465d7421ab57708 Mon Sep 17 00:00:00 2001
+From: prometheansacrifice
+Date: Mon, 28 Nov 2022 13:32:47 +0530
+Subject: [PATCH] Removes problematic sh script on macos
+
+--- ./vendors/tezos-ligo/dune
++++ ./vendors/tezos-ligo/dune
+@@ -12,4 +12,4 @@
+ (rule
+  (target static-link-flags.sexp)
+  (action (with-stdout-to %{target}
+-  (system "[ '%{profile}' = 'static' ] && echo '(-ccopt -static -cclib -lusb-1.0 -cclib -ludev)' || echo ()"))))
++  (system "echo '()'"))))
+
