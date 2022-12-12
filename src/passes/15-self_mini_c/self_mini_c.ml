@@ -6,7 +6,8 @@ open Ligo_prim
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
   fun e in_ty out_ty ->
-    let binder = Value_var.fresh () in
+    let loc = e.location in
+    let binder = Value_var.fresh ~loc () in
     let var = e_var binder in_ty in
     let app = e_application e out_ty var in
     { binder = binder ; body = app }
@@ -30,137 +31,6 @@ let map_expression = Helpers.map_expression
 
 (* Conservative purity test: ok to treat pure things as impure, must
    not treat impure things as pure. *)
-
-(* true if the name names a pure constant -- i.e. if uses will be pure
-   assuming arguments are pure *)
-let is_pure_constant : Constant.constant' -> bool =
-  function
-  | C_UNIT
-  | C_CAR | C_CDR | C_PAIR
-  | C_NIL | C_CONS
-  | C_NEG | C_OR | C_AND | C_XOR | C_NOT
-  | C_EQ  | C_NEQ | C_LT | C_LE | C_GT | C_GE
-  | C_NONE | C_SOME
-  | C_LEFT | C_RIGHT
-  | C_TRUE | C_FALSE
-  | C_UPDATE | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
-  | C_ADDRESS
-  | C_CONCAT
-  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SET_UPDATE
-  | C_LOOP_CONTINUE | C_LOOP_STOP
-  | C_SUB_MUTEZ
-  | C_BYTES_UNPACK
-  | C_SIZE | C_SLICE
-  | C_SET_EMPTY | C_SET_LITERAL | C_SET_SIZE
-  | C_LIST_EMPTY | C_LIST_LITERAL | C_LIST_SIZE
-  | C_MAP_EMPTY | C_MAP_LITERAL | C_MAP_SIZE
-  | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
-  | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
-  | C_BIG_MAP_EMPTY
-  | C_SAPLING_EMPTY_STATE
-  | C_SAPLING_VERIFY_UPDATE
-  | C_OPEN_CHEST
-  | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
-  | C_EMIT_EVENT
-    -> true
-  (* unfortunately impure: *)
-  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
-  (* impure: *)
-  | C_OPTION_MAP
-  | C_MAP_FIND
-  | C_CALL
-  | C_ITER
-  | C_LOOP_LEFT
-  | C_FOLD
-  | C_FOLD_LEFT
-  | C_FOLD_RIGHT
-  | C_SET_ITER
-  | C_SET_FOLD
-  | C_SET_FOLD_DESC
-  | C_LIST_ITER
-  | C_LIST_MAP
-  | C_LIST_FOLD
-  | C_LIST_FOLD_LEFT
-  | C_LIST_FOLD_RIGHT
-  | C_MAP_GET_FORCE
-  | C_MAP_ITER
-  | C_MAP_MAP
-  | C_MAP_FOLD
-  | C_SET_DELEGATE
-  | C_CREATE_CONTRACT
-  (* TODO? *)
-  | C_MAP
-  | C_BIG_MAP
-  | C_BIG_MAP_LITERAL
-  | C_CONTRACT
-  | C_CONTRACT_WITH_ERROR
-  | C_CONTRACT_OPT
-  | C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT
-  | C_SELF
-  | C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT
-  | C_VIEW
-  (* Test - ligo interpreter, should never end up here *)
-  | C_TEST_SIZE
-  | C_TEST_ORIGINATE
-  | C_TEST_GET_STORAGE_OF_ADDRESS
-  | C_TEST_GET_BALANCE
-  | C_TEST_SET_SOURCE
-  | C_TEST_SET_BAKER
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-  | C_TEST_GET_NTH_BS
-  | C_TEST_PRINT
-  | C_TEST_TO_STRING
-  | C_TEST_UNESCAPE_STRING
-  | C_TEST_STATE_RESET
-  | C_TEST_BOOTSTRAP_CONTRACT
-  | C_TEST_NTH_BOOTSTRAP_CONTRACT
-  | C_TEST_LAST_ORIGINATIONS
-  | C_TEST_MUTATE_CONTRACT
-  | C_TEST_MUTATE_VALUE
-  | C_TEST_SAVE_MUTATION
-  | C_TEST_RUN
-  | C_TEST_COMPILE_CONTRACT
-  | C_TEST_DECOMPILE
-  | C_TEST_TO_CONTRACT
-  | C_TEST_TO_ENTRYPOINT
-  | C_TEST_TO_TYPED_ADDRESS
-  | C_TEST_RANDOM
-  | C_TEST_GENERATOR_EVAL
-  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
-  | C_TEST_COMPILE_CONTRACT_FROM_FILE
-  | C_TEST_COMPILE_AST_CONTRACT
-  | C_TEST_SET_BIG_MAP
-  | C_TEST_CAST_ADDRESS
-  | C_TEST_CREATE_CHEST
-  | C_TEST_CREATE_CHEST_KEY
-  | C_TEST_ADD_ACCOUNT
-  | C_TEST_NEW_ACCOUNT
-  | C_TEST_BAKER_ACCOUNT
-  | C_TEST_REGISTER_DELEGATE
-  | C_TEST_BAKE_UNTIL_N_CYCLE_END
-  | C_TEST_GET_VOTING_POWER
-  | C_TEST_GET_TOTAL_VOTING_POWER
-  | C_TEST_REGISTER_CONSTANT
-  | C_TEST_CONSTANT_TO_MICHELSON
-  | C_TEST_REGISTER_FILE_CONSTANTS
-  | C_TEST_PUSH_CONTEXT
-  | C_TEST_POP_CONTEXT
-  | C_TEST_DROP_CONTEXT
-  | C_TEST_FAILWITH
-  | C_TEST_READ_CONTRACT_FROM_FILE
-  | C_TEST_SIGN
-  | C_TEST_GET_ENTRYPOINT
-  | C_TEST_INT64_OF_INT
-  | C_TEST_INT64_TO_INT
-  | C_TEST_LAST_EVENTS
-  | C_TEST_TRY_WITH
-  | C_ABS
-  | C_INT
-    -> false
 
 let rec is_pure : expression -> bool = fun e ->
   match e.content with
@@ -189,7 +59,7 @@ let rec is_pure : expression -> bool = fun e ->
     -> List.for_all ~f:is_pure [ expr ; update ]
 
   | E_constant (c)
-    -> is_pure_constant c.cons_name && List.for_all ~f:is_pure c.arguments
+    -> Constant.constant'_is_pure c.cons_name && List.for_all ~f:is_pure c.arguments
 
   | E_global_constant (_hash, _args) ->
     (* hashed code can be impure :( *)
@@ -198,7 +68,7 @@ let rec is_pure : expression -> bool = fun e ->
     (* very not pure *)
     false
 
-  (* TODO E_let_mut_in is pure when the rhs is pure and the body's
+ (* TODO E_let_mut_in is pure when the rhs is pure and the body's
      only impurity is assign/deref of the bound mutable variable *)
   | E_let_mut_in _
   | E_assign _
@@ -221,9 +91,13 @@ let rec is_pure : expression -> bool = fun e ->
 
 let occurs_count : Value_var.t -> expression -> int =
   fun x e ->
-  let fvs = Free_variables.expression [] e in
+  let fvs = get_fv [] e in
   Free_variables.mem_count x fvs
 
+let mutation_count : Value_var.t -> expression -> int =
+  fun x e ->
+    let muts = assigned_and_free_vars [] e in
+    Free_variables.mem_count x muts
 (* Let "inlining" mean transforming the code:
 
      let x = e1 in e2
@@ -252,11 +126,22 @@ let should_inline : Value_var.t -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 
+let should_inline_mut : Value_var.t -> expression -> bool =
+  fun x e2 ->
+  mutation_count x e2 = 0
+
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if (is_pure e1 && (should_inline_here || should_inline x e1 e2))
+    then
+      let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
+      (changed := true ; e2')
+    else
+      e
+  | E_let_mut_in (e1, ((x, _a), e2)) ->
+    if (is_pure e1 && (should_inline_mut x e2))
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
       (changed := true ; e2')
@@ -412,11 +297,14 @@ let etas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (eta changed)
 
+let not_comparable ~raise : expression -> expression =
+  map_expression (Michelson_restrictions.not_comparable ~raise)
+
 let contract_check ~raise ~(options : Compiler_options.t) (init: anon_function) : anon_function=
   if options.backend.experimental_disable_optimizations_for_debugging
   then init
   else
-    let all = [Michelson_restrictions.self_in_lambdas ~raise] in
+    let all = [Michelson_restrictions.self_in_lambdas ~raise; Michelson_restrictions.not_comparable ~raise] in
     let all_e = List.map ~f:(Helpers.map_sub_level_expression) all in
     List.fold ~f:(|>) all_e ~init
 
@@ -429,6 +317,7 @@ let rec all_expression ~raise (options : Compiler_options.t) : expression -> exp
     let e = inline_lets changed e in
     let e = betas changed e in
     let e = etas changed e in
+    let e = not_comparable ~raise e in
     if !changed
     then all_expression ~raise options e
     else e
@@ -437,7 +326,7 @@ let create_contract ~raise expr =
   let _ = map_expression (fun expr ->
                   match expr.content with
                   | E_create_contract (_, _, ((x, _), lambda), _) -> (
-                    let fvs = Free_variables.expression [x] lambda in
+                    let fvs = get_fv [x] lambda in
                     if Int.equal (List.length fvs) 0 then expr
                     else raise.error @@ fvs_in_create_contract_lambda expr (List.hd_exn fvs)
                   )

@@ -4,10 +4,9 @@ module Test.Common.Capabilities.DocumentSymbol
   , documentSymbolsExampleLetCamligoDriver
   , documentSymbolsExampleLetReligoDriver
   , documentSymbolsExampleLetJsligoDriver
+  , documentSymbolsCameligoModules
   ) where
 
-import Control.Lens ((^.))
-import Data.Text (Text)
 import Language.LSP.Types
   (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name),
   SymbolKind (..), UInt, Uri (Uri))
@@ -20,7 +19,7 @@ import Test.HUnit (Assertion)
 import AST.Capabilities.DocumentSymbol (extractDocumentSymbols)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.Util (ScopeTester, readContractWithScopes)
 
 contractsDir :: FilePath
@@ -41,7 +40,7 @@ documentSymbolsExampleHeapDriver = do
   fp <- makeAbsolute $ contractsDir </> "heap.ligo"
   tree <- readContractWithScopes @impl fp
   let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldBe`
+  map simplify symbols `shouldMatchList`
     [ ("heap", SkTypeParameter, (3, 5), (3, 9))
     , ("is_empty", SkFunction, (5,9), (5,17))
     , ("get_top", SkFunction, (7, 9), (7, 16))
@@ -57,7 +56,7 @@ documentSymbolsExampleAccessDriver = do
   fp <- makeAbsolute $ contractsDir </> "access.ligo"
   tree <- readContractWithScopes @impl fp
   let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldBe`
+  map simplify symbols `shouldMatchList`
     [ ("const owner", SkConstant , (2, 6), (2, 11))
     , ("main", SkFunction, (4,9), (4,13))
     ]
@@ -67,7 +66,7 @@ documentSymbolsExampleLetCamligoDriver = do
   fp <- makeAbsolute $ contractsDir </> "let.mligo"
   tree <- readContractWithScopes @impl fp
   let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldBe`
+  map simplify symbols `shouldMatchList`
     [ ("const a", SkConstant, (0, 4), (0, 5))
 
     , ("const b", SkConstant, (1, 5), (1, 6))
@@ -90,7 +89,7 @@ documentSymbolsExampleLetReligoDriver = do
   fp <- makeAbsolute $ contractsDir </> "let.religo"
   tree <- readContractWithScopes @impl fp
   let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldBe`
+  map simplify symbols `shouldMatchList`
     [ ("const a", SkConstant, (0, 4), (0, 5))
 
     , ("const b", SkConstant, (1, 5), (1, 6))
@@ -107,7 +106,7 @@ documentSymbolsExampleLetJsligoDriver :: forall impl. ScopeTester impl => Assert
 documentSymbolsExampleLetJsligoDriver = do
   tree <- readContractWithScopes @impl (contractsDir </> "let.jsligo")
   let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldBe`
+  map simplify symbols `shouldMatchList`
     [ ("const a", SkConstant, (0, 4), (0, 5))
 
     , ("const b", SkConstant, (1, 5), (1, 6))
@@ -115,4 +114,19 @@ documentSymbolsExampleLetJsligoDriver = do
 
     , ("const d", SkConstant, (2, 5), (2, 6))
     , ("const e", SkConstant, (2, 8), (2, 9))
+    ]
+
+documentSymbolsCameligoModules :: forall impl. ScopeTester impl => Assertion
+documentSymbolsCameligoModules = do
+  tree <- readContractWithScopes @impl (contractsDir </> "nested-modules.mligo")
+  let symbols = extractDocumentSymbols (Uri "<test>") tree
+  map simplify symbols `shouldMatchList`
+    [ ("module A", SkModule, (0, 7), (0, 8))
+    , ("const a", SkConstant, (1, 6), (1, 7))
+
+    , ("module B", SkModule, (2, 9), (2, 10))
+    , ("const b", SkConstant, (6, 8), (6, 9))
+
+    , ("module C", SkModule, (3, 11), (3, 12))
+    , ("const c", SkConstant, (4, 10), (4, 11))
     ]

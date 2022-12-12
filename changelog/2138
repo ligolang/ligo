@@ -1,0 +1,7 @@
+author: er433
+description: '\nNew function in `Test` module:\n\n\n```\nval get_time : unit
+  -> timestamp\n\n```\n\n\nIt returns the current timestamp in the context of tests
+  (similar to `Tezos.get_now` in contracts).\n\n'
+merge_request: '2138'
+title: 'Testing framework: add `Test.get_time` to discover current time'
+type: added

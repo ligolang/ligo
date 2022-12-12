@@ -31,9 +31,7 @@ let read ~ligorc_path =
 
 
 let update_token ~registry_key ~token ligorc =
-  { ligorc with
-    entries = SMap.update registry_key (fun _ -> Some token) ligorc.entries
-  }
+  { ligorc with entries = SMap.update registry_key (fun _ -> Some token) ligorc.entries }
 
 
 let write ligorc =

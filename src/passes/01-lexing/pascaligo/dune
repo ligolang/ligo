@@ -1,31 +1,31 @@
 ;; Build of the PascaLIGO lexer as a library
 
 (library
-  (name lexing_pascaligo)
-  (public_name ligo.lexing.pascaligo)
-  (modules Token)
-  (libraries
-    ;; LIGO
-    lexing_shared
-    menhir_pascaligo_tokens
-    lexing_pascaligo_self_tokens
-    lexing_pascaligo_self_units
-    ;; Third party
-    str
-    hex))
+ (name lexing_pascaligo)
+ (public_name ligo.lexing.pascaligo)
+ (modules Token)
+ (libraries
+  ;; LIGO
+  lexing_shared
+  mh_psc_tokens
+  lx_psc_self_tokens
+  lx_psc_self_units
+  ;; Third party
+  str
+  hex))
 
 ;; Build of a standalone lexer for PascaLIGO
 
 (executable
-  (name LexerMain)
-  (libraries
-    ;; LIGO
-    preprocessing_pascaligo
-    lexing_shared
-    lexing_pascaligo
-    ;; Third party
-    str)
-  (modules Version LexerMain))
+ (name LexerMain)
+ (libraries
+  ;; LIGO
+  preprocessing_pascaligo
+  lexing_shared
+  lexing_pascaligo
+  ;; Third party
+  str)
+ (modules Version LexerMain))
 
 ;; --------------------------------------------------------------------
 ;; Build of the unlexer (for covering the error states of the LR

@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function (props) {
-  const { title, selected, icon, Icon, width, noneIcon = "fas fa-file-excel" } = props;
+  const { title, selected, icon, Icon, logoIcon, width, noneIcon = "fas fa-file-excel" } = props;
   let key = "icon";
   if (icon) {
     key = `icon-${icon.replace(/\s/, "-")}`;
@@ -10,6 +10,7 @@ export default function (props) {
   const iconClassName = "nav-link-icon";
   let subtitle;
   let iconComponent;
+  let networkIcon;
   if (Icon) {
     iconComponent = (
       <span key="icon" className={iconClassName}>
@@ -25,9 +26,14 @@ export default function (props) {
     );
     subtitle = "(None)";
   } else {
+    if (title === "Network" && logoIcon) {
+      networkIcon = <img src={logoIcon} className="w-100 h-100" />;
+    } else {
+      networkIcon = <i className={`w-100 h-100 ${icon}`} />;
+    }
     iconComponent = (
       <span key={key} className={iconClassName}>
-        <i className={`w-100 h-100 ${icon}`} />
+        {networkIcon}
       </span>
     );
     subtitle = selected;

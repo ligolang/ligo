@@ -36,7 +36,7 @@ export default class TransactionRow extends PureComponent {
           <Address addr={tx.from} showTooltip={false} />
         </td>
         <td>
-          <Badge color="success" className="mr-1">
+          <Badge color="warning" className="mr-1">
             {tx.contractAddress && "contract creation"}
           </Badge>
           <Address
@@ -49,7 +49,7 @@ export default class TransactionRow extends PureComponent {
         <td align="right">
           <Badge
             pill
-            color={tx.value === "0" ? "secondary" : tx.from === owner ? "danger" : "success"}
+            color={tx.value === "0" ? "secondary" : tx.from === owner ? "danger" : "warning"}
           >
             {amount} {networkManager.symbol}
           </Badge>

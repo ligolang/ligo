@@ -10,10 +10,9 @@
 // Useful UI elements which is used to make the plugin more pleasant to use.
 
 import * as vscode from 'vscode';
-import { ExtensionContext, QuickPickItem } from 'vscode';
-import { DebuggedContractSession, Maybe, Ref, isDefined, ContractMetadata } from './base'
-
-export type InputBoxType = "parameter" | "storage"
+import { QuickPickItem } from 'vscode';
+import { Maybe, Ref, isDefined, InputBoxType, InputValueLang, InputValidationResult, ContractMetadata } from './base'
+import { LigoDebugContext, ValueAccess } from './LigoDebugContext'
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
 	const startsWith = (prefix: string, str: string): boolean =>
@@ -59,17 +58,13 @@ const oldValueSelection = (mitype: string, oldVal: string): Maybe<[number, numbe
 
 // Create QuickPick which remembers previously
 // inputted value in workspace storage.
-export const createRememberingQuickPick =
-	(debuggedContract: Ref<DebuggedContractSession>,
+export async function createRememberingQuickPick (
+		contractMetadata : ContractMetadata,
 		placeHolder: string
-	) => async (config: any): Promise<Maybe<string>> => {
-
-		if (!isDefined(debuggedContract.ref.contractMetadata)) {
-			throw new Error("Internal error: metadata is not defined at the moment of user input")
-		}
+	) : Promise<Maybe<string>> {
 
 		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-		const entrypoints = currentFilePath && debuggedContract.ref.contractMetadata.michelsonEntrypoints
+		const entrypoints = currentFilePath && contractMetadata.michelsonEntrypoints
 		const pickerOptions: QuickPickItem[] =
 			entrypoints ?
 				Object.entries(entrypoints).map(([name, _michelsonType]) => {
@@ -92,43 +87,27 @@ export const createRememberingQuickPick =
 					)
 
 		return quickpick.then(newVal => {
-			// Recreate an object to make it immune to changes of 'newVal'
-			if (newVal) {
-				debuggedContract.ref.pickedMichelsonEntrypoint = newVal.label
-			} else {
-				debuggedContract.ref.pickedMichelsonEntrypoint = undefined
-			}
-
 			if (newVal && newVal.label === "default") {
-				newVal.label = ""
+				newVal.label = "";
 			}
-			return newVal?.label
+			return newVal?.label;
 		})
 	}
 
-export type ValueType = "LIGO" | "Michelson";
-
-export const getEntrypoint = (
-		context: ExtensionContext,
+export async function getEntrypoint (
+		context: LigoDebugContext,
 		validateEntrypoint: (entrypoint: string) => Promise<Maybe<string>>,
-		getContractMetadata: (entrypoint: string) => Promise<void>,
-		debuggedContract: Ref<DebuggedContractSession>
-	) => async (_config: any): Promise<Maybe<String>> => {
+		entrypointsList: string[]
+	) : Promise<Maybe<string>> {
 
 		interface State {
-			pickedEntrypoint: string;
+			pickedEntrypoint?: string;
 		}
 
-		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
-			if (!isDefined(debuggedContract.ref.entrypoints)) {
-				throw new Error("Internal error: entrypoints must be defined");
-			}
+		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<State>) {
+			const entrypoints: QuickPickItem[] = entrypointsList.map(label => ({ label }));
 
-			const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-			const entrypoints: QuickPickItem[] = currentFilePath && debuggedContract.ref.entrypoints.map(label => ({ label }));
-
-			const currentKey: Maybe<string> = currentFilePath && "quickpick_entrypoint_" + currentFilePath;
-			const previousVal: Maybe<string> = currentKey && context.workspaceState.get<string>(currentKey);
+			const remembered = context.workspaceState.lastEntrypoint();
 
 			if (entrypoints.length <= 1) {
 				if (entrypoints.length === 0) {
@@ -139,9 +118,9 @@ export const getEntrypoint = (
 			}
 
 			let activeItem: Maybe<QuickPickItem>;
-			if (isDefined(previousVal)) {
+			if (isDefined(remembered.value)) {
 				for (let entrypoint of entrypoints) {
-					if (entrypoint.label === previousVal) {
+					if (entrypoint.label === remembered.value) {
 						activeItem = entrypoint;
 						break;
 					}
@@ -159,55 +138,61 @@ export const getEntrypoint = (
 			if (validateResult) {
 				vscode.window.showWarningMessage(validateResult);
 				input.doNotRecordStep();
-				return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state);
+				return (input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state);
 			} else {
-				if (isDefined(currentKey)) {
-					context.workspaceState.update(currentKey, pick.label);
-				}
-
+				remembered.value = pick.label;
 				state.ref.pickedEntrypoint = pick.label;
 			}
 		}
 
 		const result: State =
 			await MultiStepInput.run(
-				(input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state)
-			) as State;
+				(input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state), {}
+			);
 
-		if (isDefined(result.pickedEntrypoint)) {
-			await getContractMetadata(result.pickedEntrypoint);
-			debuggedContract.ref.pickedLigoEntrypoint = result.pickedEntrypoint;
-			return result.pickedEntrypoint;
-		}
+		return result.pickedEntrypoint;
 }
 
-export const getParameterOrStorage = (
-		context: ExtensionContext,
-		validateInput: (inputType: InputBoxType, valueType: ValueType) => (value: string) => Promise<Maybe<string>>,
+export async function getParameterOrStorage(
+		context: LigoDebugContext,
+		validateInput: (inputType: InputBoxType, valueLang: InputValueLang) => (value: string) => Promise<Maybe<string>>,
 		inputBoxType: InputBoxType,
 		placeHolder: string,
 		prompt: string,
-		debuggedContract: Ref<DebuggedContractSession>
-	) => async (_config: any): Promise<Maybe<string>> => {
-
-	if (!isDefined(debuggedContract.ref.pickedLigoEntrypoint)) {
-		throw new Error("Internal error: LIGO entrypoint is not defined");
-	}
-
-	const ligoEntrypoint: string = debuggedContract.ref.pickedLigoEntrypoint;
+		ligoEntrypoint: string,
+		contractMetadata: ContractMetadata,
+		michelsonEntrypoint: Maybe<string>
+	): Promise<Maybe<[string, InputValueLang]>> {
 
 	const totalSteps = 1;
-	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-	const switchButtonKey: Maybe<string> = currentFilePath
-		&& "switch_button_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
+
+	let rememberedVal: ValueAccess<[string, InputValueLang]>;
+	let michelsonType: string;
+	switch(inputBoxType) {
+		case "parameter":
+			// Consider picked entrypoint in the key to remember value depending on an entrypoint
+			rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, michelsonEntrypoint);
+			michelsonType = contractMetadata.parameterMichelsonType;
+			break;
+		case "storage":
+			rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint);
+			michelsonType = contractMetadata.storageMichelsonType;
+			break;
+	}
+
+	// These null checks is just a legacy. We can put them
+	// into the context before by the accident and now we don't want to fail.
+	if (!isDefined(rememberedVal.value) || rememberedVal.value[0] == null || rememberedVal.value[1] == null) {
+		rememberedVal.value = [suggestTypeValue(michelsonType).value, "LIGO"];
+	}
 
 	class SwitchButton implements vscode.QuickInputButton {
-		public typ: ValueType;
+		public lang: InputValueLang;
 		public tooltip: string;
 
-		constructor(public iconPath: vscode.Uri, typ: ValueType) {
-			this.typ = typ;
-			this.tooltip = "Input in " + typ + " format";
+		constructor(public iconPath: vscode.Uri, lang: InputValueLang) {
+			this.lang = lang;
+			this.tooltip = `Input in ${lang} format`;
 		}
 
 		static readonly LigoSwitch = new SwitchButton(
@@ -222,46 +207,24 @@ export const getParameterOrStorage = (
 	}
 
 	interface State {
-		value: string;
+		value?: string;
 		currentSwitch: SwitchButton;
 	}
 
-	async function askValue(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
-		if (!isDefined(debuggedContract.ref.contractMetadata)) {
-			throw new Error("Internal error: metadata is not defined at the moment of user input")
+	async function askValue(input: MultiStepInput<State>, state: Ref<State>) {
+		// This check seems redundant but without it
+		// `tsc` will coplain about `rememberVal.value may be undefined`.
+		if (!isDefined(rememberedVal.value)) {
+			return;
 		}
-
-		let currentKey: Maybe<string> = currentFilePath
-				&& "quickpick_" + inputBoxType + '_' + ligoEntrypoint + '_' + currentFilePath;
 
 		let placeholderExtra: string = ''
-		let michelsonType: string = ''
-		switch (inputBoxType) {
-			case "parameter":
-				michelsonType = debuggedContract.ref.contractMetadata.parameterMichelsonType
-				// Consider picked entrypoint in the key to remember value depending on an entrypoint
-				const entrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
-				if (entrypoint) {
-					// rewrite currentKey with entrypoint specific one
-					currentKey =
-						currentFilePath &&
-						"quickpick_" + inputBoxType +
-						(entrypoint ? + '_' + entrypoint : '') +
-						'_' + currentFilePath
-					placeholderExtra = " for '" + entrypoint + "' entrypoint"
-				}
-				break
-
-			case "storage":
-				michelsonType = debuggedContract.ref.contractMetadata.storageMichelsonType
-				break;
+		if (inputBoxType == "parameter" && michelsonEntrypoint) {
+			placeholderExtra = " for '" + michelsonEntrypoint + "' entrypoint";
 		}
 
-		const previousVal = currentKey && context.workspaceState.get<string>(currentKey)
-		const defaultValue =
-			isDefined(previousVal)
-				? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
-				: suggestTypeValue(michelsonType)
+		const [previousVal, _] = rememberedVal.value
+		const defaultValue = { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
 
 		// Unfortunately, we can't use 'valueSelection' in low-level 'createInputBox'.
 		// (https://github.com/microsoft/vscode/issues/56759)
@@ -270,14 +233,15 @@ export const getParameterOrStorage = (
 			placeholder: placeHolder + placeholderExtra,
 			prompt,
 			value: defaultValue.value,
-			validate: validateInput(inputBoxType, state.ref.currentSwitch.typ),
+			validate: validateInput(inputBoxType, state.ref.currentSwitch.lang),
 			buttons: [state.ref.currentSwitch],
 			// Keep input box open if focus is moved out
 			ignoreFocusOut: true
 		});
 
-		if (isDefined(input.getCurrentValue()) && isDefined(currentKey)) {
-			context.workspaceState.update(currentKey, input.getCurrentValue());
+		const currentValue = input.getCurrentValue();
+		if (isDefined(currentValue)) {
+			rememberedVal.value[0] = currentValue;
 		}
 
 		input.doNotRecordStep();
@@ -292,39 +256,31 @@ export const getParameterOrStorage = (
 					break;
 			}
 
-			if (isDefined(switchButtonKey)) {
-				context.workspaceState.update(switchButtonKey, state.ref.currentSwitch.typ);
-			}
-
-			return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askValue(input, state);
+			return (input: MultiStepInput<State>, state: Ref<State>) => askValue(input, state);
 		} else {
 			state.ref.value = pick;
 		}
 	}
 
-	let switchButton: SwitchButton = SwitchButton.LigoSwitch;
-	if (isDefined(switchButtonKey)) {
-		let switchButtonName: Maybe<ValueType> = context.workspaceState.get<ValueType>(switchButtonKey);
-		if (isDefined(switchButtonName)) {
-			switch(switchButtonName) {
-				case "LIGO":
-					switchButton = SwitchButton.LigoSwitch;
-					break;
-				case "Michelson":
-					switchButton = SwitchButton.MichelsonSwitch;
-					break;
-			}
-		}
+	let switchButton: SwitchButton;
+	switch(rememberedVal.value[1]) {
+		case "LIGO":
+			switchButton = SwitchButton.LigoSwitch;
+			break;
+		case "Michelson":
+			switchButton = SwitchButton.MichelsonSwitch;
+			break;
 	}
 
 	const result: State =
 		await MultiStepInput.run(
 			(input: MultiStepInput<State>, state) => askValue(input, state),
 			{ currentSwitch: switchButton }
-		) as State;
+		);
 
-	if (isDefined(result.value) && isDefined(result.currentSwitch.typ)) {
-		return result.value + '@' + result.currentSwitch.typ;
+	if (isDefined(result.value) && isDefined(result.currentSwitch.lang)) {
+		rememberedVal.value[1] = result.currentSwitch.lang;
+		return [result.value, result.currentSwitch.lang];
 	}
 }
 
@@ -333,7 +289,7 @@ class InputFlowAction {
 	static cancel = new InputFlowAction();
 }
 
-type InputStep<S> = (input: MultiStepInput<S>, state: Ref<Partial<S>>) => Thenable<InputStep<S> | void>;
+type InputStep<S> = (input: MultiStepInput<S>, state: Ref<S>) => Thenable<InputStep<S> | void>;
 
 interface QuickPickParameters<T extends QuickPickItem> {
 	totalSteps: number;
@@ -348,22 +304,20 @@ interface InputBoxParameters {
 	totalSteps: number;
 	value: string;
 	prompt: string;
-	validate: (value: string) => Promise<string | undefined>;
+	validate: (value: string) => Promise<InputValidationResult>;
 	buttons?: vscode.QuickInputButton[];
 	ignoreFocusOut: boolean;
 }
 
 class MultiStepInput<S> {
+	static async run<S>(start: InputStep<S>, state: S) {
+		const input = new MultiStepInput<S>();
+		input.state = { ref: state };
 
-	static async run<S>(start: InputStep<S>, state?: Partial<S>) {
-		const input = new MultiStepInput();
-		if (state) {
-			input.state.ref = state
-		}
 		return input.stepThrough(start);
 	}
 
-	private state: Ref<Partial<S>> = { ref: {} }
+	private state: Ref<S>;
 	private current?: vscode.QuickInput;
 	private steps: InputStep<S>[] = [];
 	private shouldRecordStep: boolean = true;
@@ -415,7 +369,7 @@ class MultiStepInput<S> {
 			this.current.dispose();
 		}
 
-		return this.state.ref as S
+		return this.state.ref;
 	}
 
 	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({ totalSteps, items, activeItem, buttons, placeholder }: P) {
@@ -480,30 +434,19 @@ class MultiStepInput<S> {
 					...(buttons || [])
 				];
 				input.ignoreFocusOut = ignoreFocusOut;
-				let validating = validate(value);
 
-				interface LastValidationResult {
-					value: string,
-					result: boolean
-				}
+				const validationTrigger = new class extends ValidationTrigger<string>{
+					validate = validate
 
-				let lastValidationResult: Maybe<LastValidationResult> = undefined;
+					isObviouslyInvalid(text: string): boolean {
+						return text.trim() === '';
+					}
 
-				let emitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
-				emitter.event(async text => {
-					const current = validate(text);
-					validating = current;
-					const validationMessage = await current;
-					if (current === validating) {
-						if (text.trim() === '') {
-							input.validationMessage = null;
-							return;
-						}
-
-						lastValidationResult = { value: text, result: !validationMessage };
+					onValidationResult(validationMessage: InputValidationResult): void {
 						input.validationMessage = validationMessage;
 					}
-				});
+				}
+				validationTrigger.fire(value);
 
 				disposables.push(
 					input.onDidTriggerButton(item => {
@@ -514,45 +457,194 @@ class MultiStepInput<S> {
 						}
 					}),
 					input.onDidAccept(async () => {
-						const value = input.value;
+						validationTrigger.fire(input.value);
+
+						// Note: turns out, "enabled" flag does not really work
+						// and so the user's input is not blocked, see
+						// https://github.com/microsoft/vscode/issues/159906
+						//
+						// This means that the user can type something after
+						// hitting Enter and that will be accepted, however only
+						// if it passes validation.
+						//
+						// Let's treat it as a feature rather than a bug?
 						input.enabled = false;
 						input.busy = true;
 
-						if (isDefined(lastValidationResult)) {
-							if (lastValidationResult.value === value && lastValidationResult.result) {
-								resolve(value);
-							}
-						} else {
-							const result: boolean = !(await validate(value));
-							lastValidationResult = { value, result };
-							if (result) {
-								resolve(value);
-							}
+						const passingValue = await validationTrigger.stablePassingValue()
+						if (isDefined(passingValue)) {
+							resolve(passingValue)
 						}
 
 						input.enabled = true;
 						input.busy = false;
 					}),
-					input.onDidChangeValue(async text => {
-						emitter.fire(text);
-					}),
+					input.onDidChangeValue(value => validationTrigger.fire(value)),
 					input.onDidHide(() => {
 						(async () => {
 							reject(InputFlowAction.cancel);
 						})()
 							.catch(reject);
 					}),
-					emitter
+					validationTrigger
 				);
 				if (this.current) {
 					this.current.dispose();
 				}
 				this.current = input;
-				emitter.fire(value);
+				validationTrigger.fire(value);
 				this.current.show();
 			});
 		} finally {
 			disposables.forEach(d => d.dispose());
 		}
+	}
+}
+
+// This class provides functionality close to EventEmitter but specialized to
+// events validation.
+//
+// Validation is a user-defined asynchronous and potentially long action,
+// and this class helps to work with such validation in a safe manner,
+// avoiding bugs due to race conditions.
+//
+// This is implemented via sequentially processing the values, keeping a queue
+// of values that are pending for validation, however this queue has capacity 1
+// and older values are dropped.
+abstract class ValidationTrigger<V> implements vscode.Disposable {
+	// An inner events emitter that helps to keep `fire` of non-Promise type.
+	private emitter: vscode.EventEmitter<V> = new vscode.EventEmitter();
+
+	// What are we doing at the moment / what we just did.
+	private status:
+		| { type: "neverCalled" }
+		| { type: "busy" }
+		| { type: "validated", value: V, successfull: boolean }
+		= { type: "neverCalled" }
+
+	// The last value that has been submitted for validation, given that
+	// we are already busy validating something.
+	private pendingValue: Maybe<V>
+
+	// Callbacks added by `awaitResult` that are yet waiting.
+	private resultWaiters: ((passingValue: Maybe<V>) => void)[] = new Array();
+
+	public constructor() {
+		this.emitter.event(v => this.executeValidation(v));
+	}
+
+	// Submit a value for validation.
+	public fire(value: V): void {
+		this.emitter.fire(value)
+	}
+
+	// Validation function.
+	protected abstract validate(value: V): Promise<InputValidationResult>
+
+	// Values that are obviously invalid and we don't want to show a "bad value"
+	// error for them.
+	protected isObviouslyInvalid(value: V): boolean { return false; }
+
+	// Invoked when some validation function is completed.
+	//
+	// This will be run in the same order in which values were passed for
+	// validation.
+	protected abstract onValidationResult(validationResult: InputValidationResult): void
+
+	// Safely run validation for a new value.
+	private async executeValidation(value: V): Promise<void> {
+		try {
+			// Check if we are busy validating something.
+			if (this.status.type == "busy") {
+				this.pendingValue = value;
+
+				// We exit, relying on the function that runs `this.executeValidation`
+				// to also run validation for the new value later.
+				return;
+			}
+
+			// The validation queue is empty, we can start the validation of
+			// the new value.
+
+			if (this.isObviouslyInvalid(value)) {
+				// Report that validation succeeded, making any old validation
+				// error disappear
+				this.onValidationResult(undefined);
+				this.status = { type: "validated", value: value, successfull: false };
+			} else {
+				const oldStatus = this.status;
+				this.status = { type: "busy" };
+				try {
+					const validationMessage = await this.validate(value);
+					this.onValidationResult(validationMessage);
+					this.status =
+						{ type: "validated", value: value
+						, successfull: !isDefined(validationMessage)
+						};
+				} catch (err) {
+					this.status = oldStatus;
+					throw err;
+				}
+			}
+
+			await this.keepValidatingPending(this.status.value, this.status.successfull);
+		} catch (err) {
+			vscode.window.showWarningMessage("Internal error in validation: " + err)
+		}
+
+	}
+
+	// Keep processing the values that are pending for validation.
+	//
+	// This function may execute for an arbitrary amount of time, so it must
+	// appear only as the last action in the sequence or in a separate thread.
+	private async keepValidatingPending(lastValidatedValue: V, lastValidationSuccessful: boolean): Promise<void> {
+		if (isDefined(this.pendingValue)) {
+			// Continue with validating a new value.
+			const pending = this.pendingValue
+			this.pendingValue = undefined;
+			this.executeValidation(pending);
+		} else {
+			// Pending values queue is empty.
+
+			// Call result waiters.
+			const passingValue = lastValidationSuccessful ? lastValidatedValue : undefined;
+			this.resultWaiters.forEach(waiter => waiter(passingValue));
+			this.resultWaiters = new Array();
+		}
+
+	}
+
+	// Awaits for a moment when we have validated all the values and no new values
+	// yet come, and returns the last value if it passed validation, and
+	// `undefined` otherwise.
+	//
+	// This rejects if no value has ever been validated.
+	public stablePassingValue(): Thenable<Maybe<V>> {
+		const this0 = this;
+		return {
+			// This is not entirely correct definition, it should be generic in
+			// the type of returned `Thenable`; but for our cases this is enough.
+			then(onFulfilled: (passingValue: Maybe<V>) => void, onRejected: (reason: any) => void): Thenable<void> {
+				switch (this0.status.type) {
+					case "neverCalled":
+						onRejected("Validation has never been called");
+						break;
+					case "validated":
+						const passingValue = this0.status.successfull ? this0.status.value : undefined
+						onFulfilled(passingValue);
+						break;
+					case "busy":
+						this0.resultWaiters.push(onFulfilled);
+						break;
+				}
+
+				return this;
+			}
+		}
+	}
+
+	public dispose() {
+		this.emitter.dispose();
 	}
 }

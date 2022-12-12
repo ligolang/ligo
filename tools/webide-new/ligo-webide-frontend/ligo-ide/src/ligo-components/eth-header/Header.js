@@ -1,10 +1,17 @@
 import React, { PureComponent } from "react";
 
-// import redux from '~/base-components/redux'
+import redux, { connect } from "~/base-components/redux";
 import Navbar from "~/base-components/navbar";
 // import keypairManager from '~/base-components/keypair'
-import { navbarItem, OpenProjectModal, NewProjectModal } from "~/base-components/workspace";
-// import { networkManager } from '~/ligo-components/eth-network'
+import {
+  navbarItem,
+  OpenProjectModal,
+  NewProjectModal,
+  RenameProjectModal,
+} from "~/base-components/workspace";
+import { networkManager } from "~/ligo-components/eth-network";
+
+import { default as CustomNetworkModal } from "~/ligo-components/eth-network/CustomNetwork/CustomNetworkModal";
 // import { utils } from '~/ligo-components/eth-sdk'
 
 // import headerActions from './headerActions'
@@ -14,12 +21,27 @@ export default class Header extends PureComponent {
     super(props);
     this.state = {
       keypairs: [],
+      showCustomNetworkModal: false,
     };
+    this.openProjectModalRef = React.createRef();
+    this.customModal = React.createRef();
   }
 
-  componentDidMount() {
-    // keypairManager.loadAllKeypairs().then(this.updateKeypairs)
-    // keypairManager.onUpdated(this.updateKeypairs)
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.customNetworkModalStatus &&
+      this.props.customNetworkModalStatus !== this.state.showCustomNetworkModal
+    ) {
+      this.setState({ showCustomNetworkModal: true });
+      this.customModal.current?.openModal();
+    }
+
+    if (
+      !this.props.customNetworkModalStatus &&
+      this.props.customNetworkModalStatus !== this.state.showCustomNetworkModal
+    ) {
+      this.setState({ showCustomNetworkModal: false });
+    }
   }
 
   updateKeypairs = (keypairs) => this.setState({ keypairs });
@@ -37,10 +59,12 @@ export default class Header extends PureComponent {
       // extraContractItems,
       // selectedContract,
       // selectedAccount,
-      // network,
-      // networkList,
+      network,
+      networkList,
       createProject,
-      logo = null,
+      customNetworks,
+      uiState,
+      customNetworkModalStatus,
     } = this.props;
 
     const username = projects.get("selected")?.toJS()?.author;
@@ -156,30 +180,42 @@ export default class Header extends PureComponent {
     //   },
     // }
 
-    // const networkReplaceName = Object.assign({}, network, {name: network.fullName})
-    // const networkNavbarItem = {
-    //   route: 'network',
-    //   title: 'Network',
-    //   icon: network.icon,
-    //   selected: networkReplaceName,
-    //   dropdown: networkList,
-    //   onClickItem: (_, network) => {
-    //     networkManager.setNetwork(network)
-    //   },
-    // }
+    const networkReplaceName = { ...network, name: network.name || network.fullName };
+    const networkNavbarItem = {
+      route: "network",
+      title: "Network",
+      icon: network.icon,
+      selected: networkReplaceName,
+      dropdown: networkList,
+      onClickItem: (_, nw) => {
+        if (nw.id === "custom") redux.dispatch("CUSTOM_MODAL_STATUS", true);
+        if (nw.id !== "custom") networkManager.setNetwork(nw);
+      },
+    };
 
     // const navbarRight = noExplorer
     //   ? [contractNavbarItem, networkNavbarItem]
     //   : [contractNavbarItem, explorerNavbarItem, networkNavbarItem]
+    const navbarRight = [networkNavbarItem];
 
     return (
       <>
-        <Navbar profile={profile} navbarLeft={navbarLeft} navbarRight={[]}>
-          {logo}
-        </Navbar>
+        <Navbar profile={profile} navbarLeft={navbarLeft} navbarRight={navbarRight} />
         <NewProjectModal createProject={createProject} />
-        <OpenProjectModal createProject={createProject} />
+        <RenameProjectModal />
+        <OpenProjectModal createProject={createProject} ref={this.openProjectModalRef} />
+        <CustomNetworkModal
+          ref={this.customModal}
+          networkId={network}
+          customNetworks={customNetworks}
+          option={uiState.get("customNetworkOption")}
+          openModal={this.state.showCustomNetworkModal}
+        />
       </>
     );
   }
 }
+
+// export default connect(["uiState", "network", "customNetworks", "customNetworkModalStatus"])(
+//   Header
+// );

@@ -29,12 +29,8 @@ module Range
 
 import Language.LSP.Types qualified as LSP
 
-import Control.Lens (Lens', Traversal', _1, makeLenses)
-import Data.ByteString (ByteString)
+import Control.Lens (makeLenses)
 import Data.ByteString qualified as BS
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
-import Data.Text.Encoding
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -63,13 +59,16 @@ rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
     <*> ((,,) <$> f fl <*> pure fc <*> pure fo)
     <*> pure file
 
+-- @UInt" is a newtype over @Int#@, so it can be converted to/from `Int` safely
+type instance IntBaseType LSP.UInt = IntBaseType Int
+
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
     text f <.> "@"
-    <.> int (fromIntegral ll) <.> ":"
-    <.> int (fromIntegral lc) <.> "-"
-    <.> int (fromIntegral rl) <.> ":"
-    <.> int (fromIntegral rc)
+    <.> int (fromIntegral @LSP.UInt @Int ll) <.> ":"
+    <.> int (fromIntegral @LSP.UInt @Int lc) <.> "-"
+    <.> int (fromIntegral @LSP.UInt @Int rl) <.> ":"
+    <.> int (fromIntegral @LSP.UInt @Int rc)
 
 -- | Like 'Range', but includes information on the preprocessed range of the
 -- file.
@@ -146,6 +145,7 @@ intersects (Range (ll1, lc1, _) (ll2, lc2, _) lf) (Range (rl1, rc1, _) (rl2, rc2
   -- Otherwise, the ranges are disjoint.
   | otherwise = False
 
+-- | Inclusion order
 instance Lattice Range where
   Range (ll1, lc1, _) (ll2, lc2, _) _
     `leq` Range (rl1, rc1, _) (rl2, rc2, _) _ =
@@ -156,6 +156,7 @@ instance Eq Range where
   Range (l, c, _) (r, d, _) f == Range (l1, c1, _) (r1, d1, _) f1 =
     (l, c, r, d, f) == (l1, c1, r1, d1, f1)
 
+-- | Lexicographic order
 instance Ord Range where
   Range (l, c, _) (r, d, _) f `compare` Range (l1, c1, _) (r1, d1, _) f1 =
     compare l l1 <> compare c c1 <> compare r r1 <> compare d d1 <> compare f f1

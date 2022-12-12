@@ -10,10 +10,12 @@ import WorkspaceContext from "./WorkspaceContext";
 
 import ProjectLoading from "./components/ProjectLoading";
 import ProjectInvalid from "./components/ProjectInvalid";
+import ProjectManager from "./ProjectManager/ProjectManager";
+import { CompilerManager } from "~/ligo-components/eth-compiler";
 
 import actions from "./actions";
 
-export default class WorkspaceLoader extends PureComponent {
+export class WorkspaceLoader extends PureComponent {
   constructor(props) {
     super(props);
     this.workspace = React.createRef();
@@ -28,9 +30,6 @@ export default class WorkspaceLoader extends PureComponent {
 
   componentDidMount() {
     this.prepareProject(this.props);
-    if (this.props.addLanguages) {
-      this.props.addLanguages();
-    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -38,18 +37,15 @@ export default class WorkspaceLoader extends PureComponent {
       window.dispatchEvent(new Event("resize"));
     }
     if (this.props.projectRoot !== prevProps.projectRoot) {
-      if (this.state.context.projectManager) {
-        this.state.context.projectManager.dispose();
-      }
       this.prepareProject(this.props);
     }
   }
 
-  async prepareProject({ ProjectManager, projectRoot, type }) {
+  async prepareProject({ projectRoot, type }) {
     if (projectRoot) {
       this.setState({ loading: true, invalid: false, context: {} });
 
-      const projectManager = new ProjectManager[type](this, projectRoot);
+      const projectManager = new ProjectManager(this, projectRoot);
 
       const result = await projectManager.prepareProject();
       if (result.error) {
@@ -76,7 +72,7 @@ export default class WorkspaceLoader extends PureComponent {
   toggleTerminal = (terminal) => {
     this.setState({ terminal });
     if (terminal) {
-      this.props.compilerManager?.focus();
+      CompilerManager.focus();
     }
   };
 
@@ -118,6 +114,7 @@ export default class WorkspaceLoader extends PureComponent {
       <WorkspaceContext.Provider value={context}>
         <Workspace
           ref={this.workspace}
+          addLanguagesCallback={this.props.addLanguages}
           theme={this.props.theme}
           initial={initial}
           terminal={terminal}

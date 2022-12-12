@@ -71,7 +71,6 @@ const sidebars = {
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
       "manpages/print ast-imperative",
-      "manpages/print ast-sugar",
       "manpages/print ast-typed",
       "manpages/print cst",
       "manpages/print dependency-graph",
@@ -85,6 +84,7 @@ const sidebars = {
       "manpages/run evaluate-expr",
       "manpages/run interpret",
       "manpages/run test",
+      "manpages/run test-expr",
       "manpages/transpile contract",
       "manpages/transpile expression"
     ],
@@ -106,7 +106,8 @@ const sidebars = {
       "protocol/hangzhou",
       "protocol/ithaca",
       "protocol/jakarta",
-      "protocol/kathmandu"
+      "protocol/kathmandu",
+      "protocol/lima"
     ]
   },
   "contributors-docs": {
@@ -155,7 +156,8 @@ const sidebars = {
       "faq/convert-address-to-contract",
       "faq/polymorphic-comparison",
       "faq/catch-error-view",
-      "faq/cameligo-ocaml-syntax-diff"
+      "faq/cameligo-ocaml-syntax-diff",
+      "faq/tezos-now-advance-time"
     ]
   }
 };

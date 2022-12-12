@@ -2,14 +2,15 @@ import React, { PureComponent } from "react";
 
 import { WorkspaceContext } from "~/base-components/workspace";
 import { ToolbarButton, DropdownToolbarButton } from "~/base-components/ui-components";
-import { CompilerButton } from "~/ligo-components/eth-compiler";
 import keypairManager from "~/base-components/keypair";
-import GistUploadModals from "~/base-components/workspace/components/GistUploadModals";
 import DeployScriptModal from "./DeployScriptModal";
+import DeployModal from "./DeployModal";
+import CompileModal from "./CompileModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
+import { networkManager } from "~/ligo-components/eth-network";
+import notification from "~/base-components/notification";
 
-// import DeployButton from './DeployButton'
-// import ScriptsButton from './ScriptsButton'
+import DeployButton from "./DeployButton";
 import SignRequestModal from "./SignRequestModal";
 
 export default class ProjectToolbar extends PureComponent {
@@ -18,17 +19,34 @@ export default class ProjectToolbar extends PureComponent {
 
   constructor(props) {
     super(props);
-    this.deployScriptModal = React.createRef();
+    this.deployScriptModalRef = React.createRef();
+    this.deployModalRef = React.createRef();
     this.expressionManagerModal = React.createRef();
+    this.compileModalRef = React.createRef();
     this.state = {
       isExpressionManagerModalOpen: false,
       currentTab: "",
       expressionManagerType: "",
+      tzFilePath: "",
     };
   }
 
-  gistUploadFileModal = () => {
-    this.deployScriptModal.current.openModal();
+  deployScriptModal = () => {
+    this.deployScriptModalRef.current.openModal();
+  };
+
+  deployModal = () => {
+    if (!networkManager.sdk) {
+      notification.error("Cannot Deploy", "No connected network.");
+      return;
+    }
+    this.deployModalRef.current.openModal();
+  };
+
+  compileModalOpen = () => {
+    const tzFilePath = this.context.projectSettings?.get("main") || "";
+    this.setState({ tzFilePath });
+    this.compileModalRef.current.openModal();
   };
 
   expressionExecutionModal = (type) => {
@@ -47,21 +65,26 @@ export default class ProjectToolbar extends PureComponent {
 
     return (
       <>
-        {!noBuild && (
-          <CompilerButton
-            className="rounded-0 border-0 flex-none w-5"
-            truffle={compilers[process.env.COMPILER_VERSION_KEY]}
-            solc={compilers.solc}
-            onClick={() => projectManager.compile(null, this.props.finalCall)}
-            readOnly={readOnly}
-          />
-        )}
+        <ToolbarButton
+          id="compile"
+          icon="fas fa-hammer"
+          tooltip="Compile"
+          readOnly={readOnly}
+          onClick={() => this.compileModalOpen()}
+        />
+        <ToolbarButton
+          id="deploy"
+          icon="fas fa-plane-departure"
+          tooltip="Deploy"
+          readOnly={readOnly}
+          onClick={() => this.deployModal()}
+        />
         <ToolbarButton
           id="deploy-script"
           icon="fas fa-file-export"
           tooltip="Deploy Script"
           readOnly={readOnly}
-          onClick={() => this.gistUploadFileModal()}
+          onClick={() => this.deployScriptModal()}
         />
         <ToolbarButton
           id="dry-run"
@@ -77,8 +100,6 @@ export default class ProjectToolbar extends PureComponent {
           readOnly={readOnly}
           onClick={() => this.expressionExecutionModal("compile")}
         />
-        {/* { !noDeploy && <DeployButton projectManager={projectManager} signer={signer} /> } */}
-        {/* <ScriptsButton projectManager={projectManager} /> */}
         <ExtraButtons projectManager={projectManager} signer={signer} />
         <div className="flex-1" />
         <ToolbarButton
@@ -88,8 +109,13 @@ export default class ProjectToolbar extends PureComponent {
           onClick={() => projectManager.openProjectSettings()}
         />
         <SignRequestModal ref={keypairManager.signReqModal} />
+        <CompileModal
+          modalRef={this.compileModalRef}
+          tzFilePath={this.state.tzFilePath}
+          onCompile={() => projectManager.compile(null, this.props.finalCall)}
+        />
         <DeployScriptModal
-          modalRef={this.deployScriptModal}
+          modalRef={this.deployScriptModalRef}
           projectSettings={projectSettings}
           projectManager={projectManager}
         />
@@ -100,6 +126,12 @@ export default class ProjectToolbar extends PureComponent {
           close={() => this.setState({ isExpressionManagerModalOpen: false })}
           managerType={this.state.expressionManagerType}
           projectManager={projectManager}
+        />
+        <DeployModal
+          modalRef={this.deployModalRef}
+          projectSettings={projectSettings}
+          projectManager={projectManager}
+          signer={signer}
         />
       </>
     );

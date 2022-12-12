@@ -9,6 +9,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import StatusTitle from "./statusTitle";
 import { travelTree, updateErrorInfo, findChildren, findInTree, mapTree, sortFile } from "./helper";
 import { modelSessionManager } from "~/base-components/code-editor";
+import { ProjectManager } from "~/base-components/workspace/ProjectManager";
 
 let disableSetActive = false; // stop useless setActive function when filetree trigger onSelect event
 
@@ -215,12 +216,13 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   };
 
   const updateTitle = (treeData) => {
-    const rawDecoration = modelSessionManager.decorationMap;
-    const hasError = Object.keys(rawDecoration).length !== 0;
-    if (!hasError) return;
-    const errorNode = updateErrorInfo(rawDecoration, treeData.key);
-    travelTree(treeData, renderTitle, errorNode);
-    setTreeData([treeData]);
+    // TODO: it should work some day
+    // const rawDecoration = modelSessionManager.decorationMap;
+    // const hasError = Object.keys(rawDecoration).length !== 0;
+    // if (!hasError) return;
+    // const errorNode = updateErrorInfo(rawDecoration, treeData.key);
+    // travelTree(treeData, renderTitle, errorNode);
+    // setTreeData([treeData]);
   };
 
   const refreshDirectory = async (data) => {
@@ -343,7 +345,7 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   };
 
   const initTree = async () => {
-    projectManager.onRefreshDirectory(refreshDirectory);
+    ProjectManager.onRefreshDirectory(refreshDirectory);
     await fetchTreeData(true);
   };
 
@@ -356,7 +358,7 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
     treeRef.current.setUncontrolledState({ indent: 0 });
     if (initFetch) {
       setSelectedKeys([initialPath]);
-      setSelectNode(findChildren(treeData, initialPath));
+      setSelectNode(findInTree(treeData.children, (node) => node.path === initialPath));
     }
   };
 
@@ -551,8 +553,8 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
     }
 
     isCopy
-      ? projectManager.copyOps(dragNode.path, `${targetFolderPath}/${dragNode.name}`, dragNode.type)
-      : projectManager.moveOps(
+      ? ProjectManager.copyOps(dragNode.path, `${targetFolderPath}/${dragNode.name}`, dragNode.type)
+      : ProjectManager.moveOps(
           dragNode.path,
           `${targetFolderPath}/${dragNode.name}`,
           dragNode.type

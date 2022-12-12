@@ -10,8 +10,8 @@ module Lexbuf = Simple_utils.Lexbuf
 
 module Config      = Preprocessing_jsligo.Config
 module Token       = Lexing_jsligo.Token
-module UnitPasses  = Lexing_jsligo_self_units.Self
-module TokenPasses = Lexing_jsligo_self_tokens.Self
+module UnitPasses  = Lx_jsl_self_units.Self
+module TokenPasses = Lx_js_self_tokens.Self
 module ParErr      = Parsing_jsligo.ParErr
 module Tree        = Cst_shared.Tree
 module CST         = Cst_jsligo.CST
@@ -67,7 +67,6 @@ module Pretty =
   struct
     include Parsing_jsligo.Pretty
     type tree = CST.t
-
   end
 
 module Print =
@@ -82,7 +81,6 @@ module Print =
 
 module Main =
   ParserAPI.Make
-    (Preprocessor)
     (Lexer)
     (Parameters)
     (ParErr)

@@ -19,6 +19,7 @@ default-extensions:
   - DeriveTraversable
   - DerivingStrategies
   - DerivingVia
+  - EmptyCase
   - FlexibleContexts
   - FlexibleInstances
   - FunctionalDependencies
@@ -66,6 +67,8 @@ ghc-options:
 library:
   dependencies:
     - aeson
+    - ansi-terminal
+    - attoparsec
     - bytestring
     - conduit
     - conduit-extra
@@ -84,10 +87,16 @@ library:
     - morley-debugger
     - mtl
     - nyan-interpolation
+    - nyan-interpolation-core
     - process
     - scientific
+    - semver
     - singletons
+    - singletons-th
     - stm
+    - syb
+    - template-haskell
+    - th-utilities
     - text
     - unliftio
     - unordered-containers
@@ -109,6 +118,7 @@ executables:
       - ligo-debugger
       - morley
       - morley-debugger
+      - semver
 
     source-dirs:
       - app/ligo-debugger
@@ -127,25 +137,30 @@ tests:
     main: Main.hs
 
     dependencies:
+      - aeson
       - containers
       - data-default
       - dir-traverse
       - directory
       - filepath
       - fmt
+      - hedgehog
       - lens
       - ligo-debugger
       - ligo-squirrel
+      - lorentz
       - nyan-interpolation
       - nyan-interpolation-core
       - morley
       - morley-debugger
+      - mtl
       - singletons
       - tasty
       - text
       - unliftio
       - unordered-containers
       - HUnit
+      - tasty-hedgehog
       - tasty-hunit-compat
 
     source-dirs:

@@ -7,15 +7,15 @@ export default function ToolbarButton({
   id,
   color = "default",
   size = "sm",
-  rounded,
+  rounded = undefined,
   onClick,
   icon,
-  loading,
+  loading = undefined,
   tooltip = null,
   tooltipPlacement = "bottom",
-  className,
-  children,
-  readOnly,
+  className = undefined,
+  children = undefined,
+  readOnly = undefined,
 }) {
   const childrenComponent = loading ? (
     <span key="loading">

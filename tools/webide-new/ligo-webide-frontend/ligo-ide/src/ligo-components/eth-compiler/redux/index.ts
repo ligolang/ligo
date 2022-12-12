@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 export default {
-  default: { showName: "Jakarta (mainnet)", name: "jakarta" },
+  default: { showName: "Kathmandu (mainnet)", name: "kathmandu" },
   persist: false,
   actions: {
     SET_PROTOCOL: {

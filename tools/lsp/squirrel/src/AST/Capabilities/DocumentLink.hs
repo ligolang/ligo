@@ -2,10 +2,6 @@ module AST.Capabilities.DocumentLink
   ( getDocumentLinks
   ) where
 
-import Control.Monad (zipWithM)
-import Control.Monad.IO.Class (MonadIO)
-import Data.IntMap.Strict qualified as IntMap
-import Data.Maybe (catMaybes)
 import Data.Text qualified as T
 import System.FilePath (takeDirectory, (</>))
 import UnliftIO.Directory (canonicalizePath)
@@ -13,8 +9,8 @@ import UnliftIO.Directory (canonicalizePath)
 import Duplo (collect, match)
 import Language.LSP.Types qualified as J (DocumentLink (..), Uri, filePathToUri)
 
-import AST.Includes (getMarkerInfos, getMarkers)
-import AST.Scope.Common (MarkerInfo (..))
+import AST.Includes
+  (ExtractionDepth (DirectInclusions), MarkerInfo (..), getMarkerInfos, getMarkers)
 import AST.Skeleton (Binding (..), Constant (..), LIGO)
 import Parser (LineMarker (..), LineMarkerType (..))
 import Product (Contains)
@@ -49,7 +45,7 @@ getUnprocessedDocumentLinks source ligo =
       _ -> pure Nothing
 
     toJUri :: T.Text -> m J.Uri
-    toJUri = fmap J.filePathToUri . withPwd . T.unpack . stripQuotes
+    toJUri = fmap J.filePathToUri . withPwd . toString . stripQuotes
 
     withPwd :: FilePath -> m FilePath
     withPwd = canonicalizePath . (pwd </>)
@@ -67,7 +63,7 @@ getPreprocessedDocumentLinks
   -> m [J.DocumentLink]
 getPreprocessedDocumentLinks source ligo = do
   let markers = getMarkers ligo
-  markerInfos <- IntMap.elems . fst <$> getMarkerInfos True source markers
+  markerInfos <- elems . fst <$> getMarkerInfos DirectInclusions source markers
   let includes = flip filter markerInfos $ \mi ->
         lmFlag (miMarker mi) == IncludedFile
         && miDepth mi == 1

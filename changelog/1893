@@ -1,5 +1,5 @@
 author: melwyn95
-description: '### Fix `ligo publish` in the case where `--project-root` is inferred'
+description: '#### Fix `ligo publish` in the case where `--project-root` is inferred'
 merge_request: '1893'
 title: '[Package Management] Fix: package tar-ball having absolute paths'
 type: fixed

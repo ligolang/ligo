@@ -20,30 +20,16 @@ let pp_braces printer (node : 'a braces reg) =
   in string "{" ^^ nest 1 (printer inside ^^ string "}")
 
 let rec print cst =
-  let decl = Utils.nseq_to_list cst.decl in
-  let decl = List.filter_map ~f:pp_declaration decl
-  in separate_map (hardline ^^ hardline) group decl
+    Utils.nseq_to_list cst.decl
+  |> List.map ~f:pp_declaration
+  |> separate_map hardline group
 
 and pp_declaration = function
-  ConstDecl   decl -> Some (pp_const_decl decl)
-| TypeDecl    decl -> Some (pp_type_decl  decl)
-| ModuleDecl  decl -> Some (pp_module_decl  decl)
-| ModuleAlias decl -> Some (pp_module_alias decl)
-| Directive      _ -> None
-
-(*
-and pp_dir_decl = function
-  Directive.PP_Linemarker {value; _} ->
-    let open Directive in
-    let linenum, file_path, flag_opt = value in
-    let flag =
-      match flag_opt with
-        Some Push -> " 1"
-      | Some Pop  -> " 2"
-      | None      -> "" in
-    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
-    in string lexeme
-*)
+  ConstDecl   decl -> pp_const_decl   decl ^^ hardline
+| TypeDecl    decl -> pp_type_decl    decl ^^ hardline
+| ModuleDecl  decl -> pp_module_decl  decl ^^ hardline
+| ModuleAlias decl -> pp_module_alias decl ^^ hardline
+| Directive   dir  -> string (Directive.to_lexeme dir).Region.value
 
 and pp_const_decl = function
 | {value = (_,rec_opt, binding, attr); _} ->

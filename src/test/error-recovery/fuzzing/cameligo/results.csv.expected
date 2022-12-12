@@ -1,5 +1,5 @@
 STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
-PASS,1annotated_michelson_record_tree.mligo,46,364,106,181,15
+PASS,1annotated_michelson_record_tree.mligo,48,364,106,181,15
 PASS,1condition.mligo,2,62,2,77,1
 PASS,1incr_decr.mligo,3,83,9,102,1
 PASS,1local_type_decl.mligo,10,70,32,32,3

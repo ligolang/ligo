@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, DebouncedFormGroup, DropdownInput } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
-import Api from "~/components/api/api";
+import { WebIdeApi } from "~/components/api/api";
 
 interface ExpressionManagerModalProps {
   modalRef: React.RefObject<Modal>;
@@ -12,14 +12,14 @@ interface ExpressionManagerModalProps {
   projectManager: any;
 }
 
-function ExpressionManagerModal({
+const ExpressionManagerModal = ({
   modalRef,
   currentTab,
   isOpen,
   close,
   managerType,
   projectManager,
-}: ExpressionManagerModalProps): React.ReactElement | null {
+}: ExpressionManagerModalProps): React.ReactElement | null => {
   const [storage, setStorage] = useState<string>("");
   const [params, setParams] = useState<string>("");
   const [name, setName] = useState<string>("");
@@ -49,15 +49,13 @@ function ExpressionManagerModal({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       setFiles(contractFiles);
 
-      const decls = await Api.listDeclarations({
-        /* eslint-disable */
-        sources: contractFiles,
-        main: projectManager.mainFilePath,
+      const decls = await WebIdeApi.listDeclarations({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        project: { sourceFiles: contractFiles, main: projectManager.mainFilePath },
         onlyEndpoint: false,
-        /* eslint-enable */
       });
       setDeclarations(
-        decls.map((d) => {
+        decls.data.map((d) => {
           return { id: d, display: d };
         })
       );
@@ -83,18 +81,20 @@ function ExpressionManagerModal({
     setLoading(true);
 
     await (managerType === "dryRun"
-      ? Api.dryRun({
-        /* eslint-disable */
+      ? WebIdeApi.dryRun({
           entrypoint: name,
-          sources: files,
-          main: projectManager.mainFilePath,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          project: { sourceFiles: files, main: projectManager.mainFilePath },
           storage,
           parameters: params,
         })
-      : Api.compileExpression({ function: name, sources: files, main: projectManager.mainFilePath })
-      /* eslint-enable */
+      : WebIdeApi.compileExpression({
+          function: name,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          project: { sourceFiles: files, main: projectManager.mainFilePath },
+        })
     )
-      .then((resp) => setResult(resp))
+      .then((resp) => setResult(resp.data))
       .catch((e: Error) => {
         modalRef.current?.closeModal().catch((me: Error) => {
           console.error(me);
@@ -137,7 +137,7 @@ function ExpressionManagerModal({
           </div>
         }
         options={declarations}
-        placeholder="Please select a faunction"
+        placeholder="Please select a function"
         value={name}
         onChange={(template: string) => setName(template)}
         size={managerType === "dryRun" ? "" : "short"}
@@ -160,9 +160,14 @@ function ExpressionManagerModal({
           />
         </>
       )}
-      {result && <code className="user-select">{result}</code>}
+      {result && (
+        <>
+          <div>Result</div>
+          <pre className="pre-box pre-wrap break-all bg-primary text-body">{result}</pre>
+        </>
+      )}
     </Modal>
   );
-}
+};
 
 export default ExpressionManagerModal;

@@ -1,5 +1,5 @@
 open Ligo_prim
-module AST = Ast_aggregated
+module AST = Ast_expanded
 open AST
 open Errors
 module Append_tree = Tree.Append
@@ -7,10 +7,14 @@ open! Mini_c
 open Simple_utils.Trace
 open Simple_utils.Function
 
-let annotation_or_label annot label = Option.value ~default:label (Helpers.remove_empty_annotation annot)
+let nonempty = function
+  | "" -> None
+  | s -> Some s
+
+let annotation_or_label annot label = nonempty (Option.value ~default:label annot)
 
 let t_sum ~raise ~layout return compile_type m =
-  let open AST.Helpers in
+  let open AST.Combinators in
   let lst = kv_list_of_t_sum ~layout m in
   match layout with
   | L_tree -> (
@@ -23,7 +27,7 @@ let t_sum ~raise ~layout return compile_type m =
       (fun (Label.Label label, ({associated_type;michelson_annotation;decl_pos=_}: AST.row_element)) ->
           let label = String.uncapitalize label in
           let a = compile_type associated_type in
-          (Some (annotation_or_label michelson_annotation label), a)
+          ((annotation_or_label michelson_annotation label), a)
       )
       aux node in
     snd m'
@@ -33,7 +37,7 @@ let t_sum ~raise ~layout return compile_type m =
     let aux (Label.Label l , (x : row_element )) =
       let l = String.uncapitalize l in
       let t = compile_type x.associated_type in
-      let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
+      let annot_opt = (annotation_or_label x.michelson_annotation l) in
       (annot_opt,t)
     in
     let rec lst_fold_right = function
@@ -65,7 +69,6 @@ and record_tree = {
 (* ...also there must be a better way to write this, is it even
    correct, I'm not sure? *)
 let record_tree ~layout ?source_type compile_type m =
-  let open AST.Helpers in
   let is_tuple_lmap = Record.is_tuple m in
   let lst = kv_list_of_t_record_or_tuple ~layout m in
   match layout with
@@ -81,7 +84,7 @@ let record_tree ~layout ?source_type compile_type m =
              let annot = (if is_tuple_lmap then
                             None
                           else
-                            Some (annotation_or_label michelson_annotation label)) in
+                            (annotation_or_label michelson_annotation label)) in
              (annot, { content = Field (Label label) ;
                           type_ = a })
           )
@@ -96,7 +99,6 @@ let record_tree ~layout ?source_type compile_type m =
                   source_type = None }}
 
 let t_record_to_pairs ~layout return compile_type m =
-  let open AST.Helpers in
   let is_tuple_lmap = Record.is_tuple m in
   let lst = kv_list_of_t_record_or_tuple ~layout m in
   match layout with
@@ -112,7 +114,7 @@ let t_record_to_pairs ~layout return compile_type m =
              ((if is_tuple_lmap then
                     None
                   else
-                    Some (annotation_or_label michelson_annotation label)),
+                    (annotation_or_label michelson_annotation label)),
                  a)
           )
           aux node in
@@ -122,7 +124,7 @@ let t_record_to_pairs ~layout return compile_type m =
       (* Right combs *)
       let aux (Label.Label l , (x : row_element)) =
         let t = compile_type x.associated_type in
-        let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
+        let annot_opt = (annotation_or_label x.michelson_annotation l) in
         (annot_opt,t)
       in
       let ts = List.map ~f:aux lst in
@@ -130,7 +132,6 @@ let t_record_to_pairs ~layout return compile_type m =
     )
 
 let record_access_to_lr ~raise ~layout ty m_ty index =
-  let open AST.Helpers in
   let lst = kv_list_of_t_record_or_tuple ~layout m_ty in
   match layout with
   | L_tree -> (
@@ -180,25 +181,23 @@ let record_access_to_lr ~raise ~layout ty m_ty index =
       aux index ty last
     )
 
-let record_to_pairs ~raise compile_expression return record_t record : Mini_c.expression =
-  let open AST.Helpers in
+let record_to_pairs (type exp) ~raise (compile_expression : _ -> exp) (ec_pair : exp -> exp -> exp) (e_tuple : exp list -> exp) (record_t : AST.rows) record : exp =
   let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.fields record in
   match record_t.layout with
   | L_tree -> (
     let node = Append_tree.of_list lst in
-    let aux a b : expression =
-      return @@ ec_pair a b
+    let aux a b : exp =
+      ec_pair a b
     in
     trace ~raise (fun _ -> corner_case ~loc:__LOC__ "record build") @@
     (fun ~raise:_-> Append_tree.fold_ne (compile_expression) aux node)
   )
   | L_comb -> (
       let exprs = List.map ~f:compile_expression lst in
-      return (E_tuple exprs)
+      e_tuple exprs
     )
 
 let constructor_to_lr ~raise ~(layout) ty m_ty index =
-  let open AST.Helpers in
   let lst = kv_list_of_t_sum ~layout m_ty in
   match layout with
   | L_tree -> (
@@ -293,7 +292,7 @@ let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
             let left = `Leaf khd , thd' in
             (`Node (left , (tl' , ttl)) , tv')
           ) in
-      let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ Helpers.kv_list_of_t_sum ~layout content in
+      let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ kv_list_of_t_sum ~layout content in
       let vp = aux lst in
       vp
     )

@@ -7,7 +7,7 @@ module AST.Capabilities.Folding
 
 import AST.Scope
 import AST.Skeleton
-import Control.Monad.Writer.Strict
+import Control.Monad.Writer.Strict (execWriter, tell)
 import Duplo.Tree
 import Language.LSP.Types qualified as J
 
@@ -24,8 +24,8 @@ foldingAST = execWriter . visit' handlers
       [ Visit @Binding \(getRange -> r) -> \case
           BFunction {} -> tell [r]
           BTypeDecl {} -> tell [r]
-          -- TODO: include blocks?
-          _ -> pure ()
+          BModuleDecl {} -> tell [r]
+          _ -> pass
       , Visit @Expr \(getRange -> r) -> \case
           If {} -> tell [r]
           Case {} -> tell [r]
@@ -36,7 +36,7 @@ foldingAST = execWriter . visit' handlers
           ForOfLoop {} -> tell [r]
           WhileLoop {} -> tell [r]
           ForBox {} -> tell [r]
-          _ -> pure ()
+          _ -> pass
       ]
 
 toFoldingRange :: Range -> J.FoldingRange

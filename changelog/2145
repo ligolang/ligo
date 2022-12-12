@@ -1,0 +1,5 @@
+author: melwyn95
+description: Fixes bug in publising packages which have `dependencies` & `devDependencies`.\n\n
+merge_request: '2145'
+title: 'Fix: Send `dependencies` & `devDependencies` while publishing a package'
+type: fixed

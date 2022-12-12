@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n\\n```pascal\\nfunction local_type (var u : unit) : int is {\\n  type toto is int;\\n  function foo (const b : toto) : toto is b\\n} with titi\\n\\n```\\n\\nIn the above example the local type `toto` was missing in the scopes for body of `foo` and `titi`\\n\\n"
+merge_request: '2197'
+title: "Fix `scopes` for local types"
+type: fixed
+            

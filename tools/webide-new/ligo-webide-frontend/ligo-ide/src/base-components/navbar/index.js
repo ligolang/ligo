@@ -9,7 +9,7 @@ import User from "./User";
 import "./styles.scss";
 
 export default class Header extends PureComponent {
-  renderLeftNavbar = (links, disable) => {
+  renderLeftNavbar = (links) => {
     return links.map((link) => (
       <NavLinkLeft
         key={`nav-link-${link.route}`}
@@ -19,7 +19,6 @@ export default class Header extends PureComponent {
         contextMenu={link.contextMenu}
         selected={link.selected}
         dropdown={link.dropdown}
-        disable={disable}
         onClickItem={link.onClickItem}
       />
     ));
@@ -35,6 +34,7 @@ export default class Header extends PureComponent {
         noneIcon={link.noneIcon}
         selected={link.selected}
         dropdown={link.dropdown}
+        logoIcon={link.logoIcon}
         onClickItem={link.onClickItem}
       />
     ));
@@ -67,16 +67,12 @@ export default class Header extends PureComponent {
 
   render() {
     const { profile, navbarLeft, navbarRight, extraLoggedInOptions, children } = this.props;
-    // const isLogin = profile.get('username')
     const username = "local";
-    // const disable = !isLogin && platform.isWeb
-
-    // console.log(isLogin + ' ' + username + ' ' + disable + ' ' + platform.isWeb)
 
     return (
       <Navbar tag="header" dark expand>
         <Nav navbar className="navbar-left">
-          {this.renderLeftNavbar(navbarLeft, false)}
+          {this.renderLeftNavbar(navbarLeft)}
         </Nav>
         {children}
         <Nav navbar className="ml-auto navbar-nav-scroll navbar-right">

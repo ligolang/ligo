@@ -16,6 +16,8 @@ stack exec ligo-webide-backend -- \
 
 To run the tests
 ```
-LIGO_PATH=/path/to/ligo/executable
-stack build --test
+LIGO_PATH=/path/to/ligo/executable \
+  OCTEZ_CLIENT_PATH=/path/to/octez-client/binary \
+  DOCKER_LIGO_VERSION=xx.xx.xx  \   # e.g. 0.54.0
+  stack build --test
 ```

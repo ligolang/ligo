@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '2049'
+title: 'Ligo daemon: output `\\x00` null char on stdout & stderr'
+type: internal

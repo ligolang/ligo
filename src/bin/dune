@@ -2,21 +2,10 @@
  (name cli)
  (instrumentation
   (backend bisect_ppx))
- (libraries
-  simple-utils
-  cmdliner
-  ligo
-  ligo_compile
-  build
-  repl
-  install
-  publish
-  user
-  cli_helpers
-  daemon
-  ligo_api)
- (modules cli version))
-
+ (libraries core_kernel.version_util core_kernel.caml_threads simple-utils
+   cmdliner ligo ligo_compile build repl install publish user cli_helpers
+   daemon ligo_api)
+ (modules command_unx cli version))
 
 (library
  (name repl)
@@ -37,24 +26,29 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix decompress.gz
-   bigstringaf base64 cohttp-lwt-unix yojson digestif core_unix core_unix.command_unix core_unix.filename_unix)
- (preprocess (pps ppx_deriving_yojson))
+   bigstringaf base64 cohttp-lwt-unix yojson digestif ligo.unix)
+ (preprocess
+  (pps ppx_deriving_yojson))
  (modules publish))
 
 (library
  (name user)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix lambda-term) ;Remove unused libs
- (preprocess (pps ppx_deriving_yojson))
+ (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix
+   lambda-term)
+ ;Remove unused libs
+ (preprocess
+  (pps ppx_deriving_yojson))
  (modules user))
 
 (library
  (name daemon)
  (instrumentation
   (backend bisect_ppx))
- (libraries parse-argv ligo_api cli_helpers)
- (preprocess (pps ppx_deriving_yojson))
+ (libraries parse-argv cli_helpers)
+ (preprocess
+  (pps ppx_deriving_yojson))
  (modules daemon))
 
 (rule
@@ -79,7 +73,8 @@
 
 (rule
  (targets win32-flags.sexp)
- (action (run ./configurator.exe)))
+ (action
+  (run ./configurator.exe)))
 
 (executable
  (name runligo)
@@ -87,6 +82,9 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils cmdliner ligo cli)
- (flags -open Core (:include win32-flags.sexp))
+ (flags
+  -open
+  Core
+  (:include win32-flags.sexp))
  (modules runligo)
  (package ligo))

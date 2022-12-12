@@ -10,8 +10,8 @@ module Lexbuf = Simple_utils.Lexbuf
 
 module Config      = Preprocessing_reasonligo.Config
 module Token       = Lexing_reasonligo.Token
-module UnitPasses  = Lexing_reasonligo_self_units.Self
-module TokenPasses = Lexing_reasonligo_self_tokens.Self
+module UnitPasses  = Lx_rsn_self_units.Self
+module TokenPasses = Lx_re_selftoks.Self
 module ParErr      = Parsing_reasonligo.ParErr
 module Tree        = Cst_shared.Tree
 module CST         = Cst_reasonligo.CST
@@ -67,7 +67,6 @@ module Pretty =
   struct
     include Parsing_reasonligo.Pretty
     type tree = CST.t
-
   end
 
 module Print =
@@ -82,7 +81,6 @@ module Print =
 
 module Main =
   ParserAPI.Make
-    (Preprocessor)
     (Lexer)
     (Parameters)
     (ParErr)

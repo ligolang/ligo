@@ -4,7 +4,8 @@ module Parser
   ( ParserM
   , LineMarkerType (..)
   , LineMarker (..)
-  , UnrecognizedFieldException (..)
+  , FieldDecodeExceptionReason (..)
+  , FieldDecodeException (..)
   , CodeSource (..)
   , Info
   , ParsedInfo
@@ -16,6 +17,7 @@ module Parser
   , field
   , fieldOpt
   , fields
+  , fields1
   , emptyParsedInfo
   , fillInfo
   , withComments
@@ -25,17 +27,14 @@ module Parser
   , noMatch
   ) where
 
-import Control.Arrow
-import Control.Exception (Exception (..), throwIO)
+import Prelude hiding (Product)
+
+import Control.Exception (throwIO)
 import Control.Monad.RWS hiding (Product)
-import Data.Foldable (find)
-import Data.Functor
-import Data.Maybe (fromJust, fromMaybe, isJust, mapMaybe)
 import Data.String.Interpolate (i)
-import Data.Text (Text)
 import Data.Text qualified as Text
 import Language.LSP.Types qualified as J
-import Text.Read (readMaybe)
+import Unsafe qualified
 
 import Duplo.Pretty
 import Duplo.Tree
@@ -105,9 +104,9 @@ data LineMarker = LineMarker
 
 parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, J.UInt)
 parseLineMarkerText marker = do
-  "#" : lineStr : fileText : flags <- Just $ Text.words marker
-  line <- readMaybe $ Text.unpack lineStr
-  let file = Text.unpack $ Text.init $ Text.tail fileText
+  "#" : lineStr : fileText : flags <- Just $ words marker
+  line <- readMaybe $ toString lineStr
+  let file = toString $ Text.init $ Text.tail fileText
   let markerType = case flags of
         -- TODO: There is an edge case when there are line markers and comments
         -- (see src/test/contracts/includer.{,m,re}ligo, so we assume for now
@@ -124,15 +123,26 @@ parseLineMarker ((range, _), ParseTree (ParseTreeNode ty _) _ marker) = do
   (file, markerType, line) <- parseLineMarkerText marker
   pure $ LineMarker file markerType line range
 
-data UnrecognizedFieldException = UnrecognizedFieldException
+data FieldDecodeExceptionReason
+  = UnrecognizedField
+  | EmptyField
+  deriving stock (Show)
+
+data FieldDecodeException = FieldDecodeException
   { ufeFieldName :: Text
   , ufeNodeType :: Text
   , ufeNodeRange :: Range
+  , ufeReason :: FieldDecodeExceptionReason
   } deriving stock (Show)
 
-instance Exception UnrecognizedFieldException where
-  displayException UnrecognizedFieldException {ufeFieldName, ufeNodeType, ufeNodeRange} =
-    [i|Cannot find field `#{ufeFieldName}` while decoding `#{ufeNodeType}` (at #{ufeNodeRange}).|]
+instance Exception FieldDecodeException where
+  displayException FieldDecodeException{ufeFieldName, ufeNodeType, ufeNodeRange, ufeReason} =
+    [i|Cannot decode field `#{ufeFieldName}` with `#{ufeNodeType}` (at #{ufeNodeRange}). Reason: #{reason}.|]
+    where
+      reason :: String
+      reason = case ufeReason of
+        UnrecognizedField -> "Field not found"
+        EmptyField -> "Expected 1 or more fields, but found 0"
 
 instance Scoped (Range, Text) ParserM RawTree ParseTree where
   before _ (ParseTree _ cs _) = do
@@ -184,7 +194,7 @@ field name =
     >>= maybe
       (do
         ParserEnv {peNodeType, peNodeRange} <- ask
-        lift $ throwIO $ UnrecognizedFieldException name peNodeType peNodeRange)
+        lift $ throwIO $ FieldDecodeException name peNodeType peNodeRange UnrecognizedField)
       pure
 
 fieldOpt :: Text -> ParserM (Maybe RawTree)
@@ -193,16 +203,22 @@ fieldOpt name = find ((== name) . snd . extract) <$> asks peNodes
 fields :: Text -> ParserM [RawTree]
 fields name = go <$> asks peNodes
   where
+    go [] = []
     go (tree : rest)
       | (_, n) <- extract tree, n == name = tree : go rest
       | errorAtTheTop tree = tree : go rest
       | otherwise = go rest
 
-    go _ = []
-
     errorAtTheTop :: RawTree -> Bool
     errorAtTheTop (match -> Just (_, ParseTree (ParseTreeNode "ERROR" _) _ _)) = True
     errorAtTheTop _ = False
+
+fields1 :: Text -> ParserM (NonEmpty RawTree)
+fields1 name = fields name >>= \case
+  [] -> do
+    ParserEnv {peNodeType, peNodeRange} <- ask
+    lift $ throwIO $ FieldDecodeException name peNodeType peNodeRange EmptyField
+  x : xs -> pure (x :| xs)
 
 newtype CodeSource = CodeSource { unCodeSource :: Text }
   deriving newtype (Eq, Ord, Show, Pretty)
@@ -237,7 +253,7 @@ withComments act = do
   first (comms :>) <$> act
 
 getMarkers :: [RawTree] -> [LineMarker]
-getMarkers = mapMaybe (parseLineMarker . fromJust . match)
+getMarkers = mapMaybe (parseLineMarker . Unsafe.fromJust . match)
 
 boilerplateImpl
   :: ParserM (f RawTree)

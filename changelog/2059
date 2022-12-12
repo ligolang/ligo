@@ -1,0 +1,5 @@
+author: rinderkn
+description: ''
+merge_request: '2059'
+title: Remove calling preprocessor with `ligo print pretty`.
+type: fixed

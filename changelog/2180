@@ -1,0 +1,7 @@
+
+author: er433
+description: '\n#### Example file\n\n\n```\n$ cat test_imm.ligo \ntype storage is int;\n\ntype return is list (operation) * storage\n\nfunction reset (var s : storage) : storage is {\n  s := 0;\n} with (s);\n\nfunction main (const _action : unit; const s : storage) : return is\n ((nil : list (operation)), reset(s));\n\nconst test_orig = {\n  const (_typed_address, _, _) = Test.originate(main, 42, 0tez);\n} with (Unit)\n\n```\n\n#### Before\n\n\n```\n$ ligo run test test_imm.ligo \nAn internal error ocurred. Please, contact the developers.\ninternal error, please report this as a bug: tried to substitute for mutated var File "src/passes/15-self_mini_c/subst.ml", line 317, characters 105-112.\n\n```\n\n#### After\n\n\n```\n$ ligo run test test_imm.ligo \nEverything at the top-level was executed.   \n- test_orig exited with value ().\n\n```\n\n'
+merge_request: '2180'
+title: 'Resolve "Internal error: tried to substitute for mutated var"'
+type: fixed
+            

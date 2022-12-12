@@ -14,13 +14,13 @@ class NavLinkRight extends PureComponent {
   onClickItem = (item) => {
     const { route, history } = this.props;
     this.props.onClickItem(item.id, item);
-    if (history.location.pathname.startsWith(`/${route}`)) {
+    if (history.location.pathname.startsWith(`/${route}`) && item.id !== "custom") {
       history.push(`/${route}/${item.id}`);
     }
   };
 
   render() {
-    const { route, title, selected, dropdown, icon, noneIcon } = this.props;
+    const { route, title, selected, dropdown, icon, noneIcon, logoIcon } = this.props;
 
     return (
       <NavLink
@@ -32,6 +32,8 @@ class NavLinkRight extends PureComponent {
           title={title}
           selected={selected.name}
           icon={icon}
+          logoIcon={selected.logoIcon}
+          id={selected.id}
           noneIcon={noneIcon}
           width="5.9rem"
         />
@@ -42,6 +44,7 @@ class NavLinkRight extends PureComponent {
           list={dropdown}
           onClickItem={this.onClickItem}
           icon={icon}
+          logoIcon={logoIcon}
         />
       </NavLink>
     );

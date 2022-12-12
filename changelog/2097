@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '2097'
+title: Use projections instead of matching in uncurried stdlib
+type: fixed

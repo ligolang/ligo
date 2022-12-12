@@ -11,7 +11,7 @@ export interface CompileFunctionState {
 
 const DEFAULT_STATE = {
   functionName: '',
-  protocol: 'jakarta'
+  protocol: 'kathmandu'
 };
 
 export class ChangeSelectedAction {

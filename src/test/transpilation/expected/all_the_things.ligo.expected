@@ -42,7 +42,7 @@ function transfer (const p : transfer; const s : storage)
 
   if Tezos.get_sender () = p.address_from
   then {
-    new_allowances := s.allowances
+    new_allowances := s.allowances;
   }
   else {
     var authorized_value : nat
@@ -55,15 +55,15 @@ function transfer (const p : transfer; const s : storage)
 
     if (authorized_value < p.value)
     then {
-      failwith ("Not Enough Allowance")
+      failwith ("Not Enough Allowance");
     }
     else {
       new_allowances :=
         Big_map.update
           ((Tezos.get_sender (), p.address_from),
            (Some (abs (authorized_value - p.value))),
-           s.allowances)
-    }
+           s.allowances);
+    };
   };
 
   var sender_balance : nat
@@ -91,8 +91,8 @@ function transfer (const p : transfer; const s : storage)
       Big_map.update
         (p.address_to,
          (Some (receiver_balance + p.value)),
-         new_tokens)
-  }
+         new_tokens);
+  };
 } with
     ((nil : list (operation)),
      s with
@@ -121,8 +121,8 @@ function approve (const p : approve; const s : storage)
       Big_map.update
         ((p.spender, Tezos.get_sender ()),
          (Some (p.value)),
-         s.allowances)
-  }
+         s.allowances);
+  };
 } with
     ((nil : list (operation)),
      s with record [allowances = new_allowances])
@@ -140,7 +140,7 @@ function getAllowance
     ];
 
   var op : operation
-  := Tezos.transaction (value, 0mutez, p.callback)
+  := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op], s)
 
 function getBalance
@@ -153,7 +153,7 @@ function getBalance
     ];
 
   var op : operation
-  := Tezos.transaction (value, 0mutez, p.callback)
+  := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op], s)
 
 function getTotalSupply
@@ -163,7 +163,7 @@ function getTotalSupply
   var total : nat := s.total_amount;
 
   var op : operation
-  := Tezos.transaction (total, 0mutez, p.callback)
+  := Tezos.transaction (total, 0mutez, p.callback);
 } with (list [op], s)
 
 function main (const a : action; const s : storage)
@@ -178,7 +178,7 @@ function main (const a : action; const s : storage)
 
 function main (const p : key_hash) : address is
 {
-  const c : contract (unit) = Tezos.implicit_account (p)
+  const c : contract (unit) = Tezos.implicit_account (p);
 } with Tezos.address (c)
 
 function check (const p : unit) : int is
@@ -187,7 +187,7 @@ function check (const p : unit) : int is
 
   if amount = 100000000mutez
   then result := 42
-  else result := 0
+  else result := 0;
 } with result
 
 const lst : list (int) = list []
@@ -228,7 +228,7 @@ function ediv_op (const n : int) : option (int * nat) is
 
 function main (var i : int) : int is
 {
-  i := i + 1
+  i := i + 1;
 } with i
 
 [@annot] const x : int = 1
@@ -236,7 +236,7 @@ function main (var i : int) : int is
 [@inline]
 function foo (const a : int) : int is
 {
-  [@inline] const test : int = 2 + a
+  [@inline] const test : int = 2 + a;
 } with test
 
 [@inline][@other] const y : int = 1
@@ -248,8 +248,8 @@ function bar (const b : int) : int is
   [@bar]
   function test (const z : int) : int is
   {
-    const r : int = 2 + b + z
-  } with r
+    const r : int = 2 + b + z;
+  } with r;
 } with test (b)
 
 type parameter is unit
@@ -289,21 +289,21 @@ function main (const p : parameter; var s : storage)
 
   toto := s.0 [23] ;
 
-  s.0 [2]  := 444
+  s.0 [2]  := 444;
 } with ((nil : list (operation)), s)
 
 type foo is big_map (int, int)
 
 function set_ (var n : int; var m : foo) : foo is
 {
-  m [23]  := n
+  m [23]  := n;
 } with m
 
 function add (var n : int; var m : foo) : foo is set_ (n, m)
 
 function rm (var m : foo) : foo is
 {
-  remove 42 from map m
+  remove 42 from map m;
 } with m
 
 function get (const m : foo) : option (int) is m [42]
@@ -319,7 +319,7 @@ function mutimaps (const m : foo; var n : foo) : foo is
 
   bar [42]  := 0;
 
-  n [42]  := get_force (42, bar)
+  n [42]  := get_force (42, bar);
 } with n
 
 function or_op (const n : nat) : nat is Bitwise.or (n, 4n)
@@ -357,18 +357,18 @@ function hasherman (const s : bytes) : bytes is
 
 function id_string (const p : string) : option (string) is
 {
-  const packed : bytes = Bytes.pack (p)
+  const packed : bytes = Bytes.pack (p);
 } with (Bytes.unpack (packed) : option (string))
 
 function id_int (const p : int) : option (int) is
 {
-  const packed : bytes = Bytes.pack (p)
+  const packed : bytes = Bytes.pack (p);
 } with (Bytes.unpack (packed) : option (int))
 
 function id_address (const p : address)
   : option (address) is
 {
-  const packed : bytes = Bytes.pack (p)
+  const packed : bytes = Bytes.pack (p);
 } with (Bytes.unpack (packed) : option (address))
 
 function chain_id (const tt : chain_id) : chain_id is
@@ -382,14 +382,14 @@ function check_signature
 
 function foo (const i : int) : int is
 {
-  function add (const j : int) : int is i + j
+  function add (const j : int) : int is i + j;
 } with add (i)
 
 function foobar (const i : int) : int is
 {
   const j : int = 3;
 
-  function add (const k : int) : int is i + j + k
+  function add (const k : int) : int is i + j + k;
 } with add (42)
 
 function foobar (const i : int) : int is
@@ -398,14 +398,14 @@ function foobar (const i : int) : int is
 
   const k : int = 4;
 
-  function add (const l : int) : int is i + j + k + l
+  function add (const l : int) : int is i + j + k + l;
 } with add (42)
 
 function toto (const i : int) : int is
 {
   function tata (const j : int) : int is i + j;
 
-  function titi (const j : int) : int is i + j
+  function titi (const j : int) : int is i + j;
 } with tata (i) + titi (i)
 
 type card_pattern_id is nat
@@ -467,7 +467,7 @@ function transfer_single
 
   cards [action.card_to_transfer]  := card;
 
-  s.cards := cards
+  s.cards := cards;
 } with ((nil : list (operation)), s)
 
 function sell_single
@@ -521,7 +521,7 @@ function sell_single
   const op : operation
   = Tezos.transaction (unit, price, receiver);
 
-  const operations : list (operation) = list [op]
+  const operations : list (operation) = list [op];
 } with (operations, s)
 
 function buy_single
@@ -559,7 +559,7 @@ function buy_single
 
   s.cards := cards;
 
-  s.next_id := s.next_id + 1n
+  s.next_id := s.next_id + 1n;
 } with ((nil : list (operation)), s)
 
 function main (const action : parameter; const s : storage)
@@ -577,12 +577,12 @@ function main (const i : int) : int is
 {
   var result : int := 23;
 
-  if i = 2 then result := 42 else result := 0
+  if i = 2 then result := 42 else result := 0;
 } with result
 
 function foo (const b : bool) : int is
 {
-  const x : int = 41
+  const x : int = 41;
 } with 1 + (if b then x else main (x))
 
 type t is int
@@ -590,7 +590,7 @@ type t is int
 function main (const p : int; const s : t)
   : list (operation) * int is
 {
-  skip
+  skip;
 } with ((nil : list (operation)), p + s)
 
 function hasherman512 (const s : bytes) : bytes is
@@ -601,7 +601,7 @@ function hasherman_blake (const s : bytes) : bytes is
 
 function main (const i : int) : int is
 {
-  const j : int = 42
+  const j : int = 42;
 } with j
 
 const foo : int = 42
@@ -620,12 +620,12 @@ function main (const toto : unit) : int is
   := (record [x = (0, 1); y = (10, 11)],
      record [x = (100, 101); y = (110, 111)]);
 
-  a.0. x. 0 := 2
+  a.0. x. 0 := 2;
 } with a.0. x. 0
 
 function asymetric_tuple_access (const foo : unit) : int is
 {
-  var tuple : int * (int * (int * int)) := (0, (1, (2, 3)))
+  var tuple : int * (int * (int * int)) := (0, (1, (2, 3)));
 } with tuple.0 + tuple.1. 0 + tuple.1. 1. 0 + tuple.1. 1. 1
 
 type nested_record_t is
@@ -634,7 +634,7 @@ type nested_record_t is
 function nested_record (var nee : nested_record_t)
   : string is
 {
-  nee.nesty. mymap [1]  := "one"
+  nee.nesty. mymap [1]  := "one";
 } with
     case nee.nesty. mymap [1]  of [
       Some (s) -> s
@@ -675,7 +675,7 @@ function main (const p : parameter; const s : storage)
 function main (const p : parameter; const s : storage)
   : return is
 {
-  const ret : return = main (p, s)
+  const ret : return = main (p, s);
 } with (ret.0, ret.1 + 1)
 
 type storage is michelson_or (int, "foo", string, "bar")
@@ -689,7 +689,7 @@ function main (const action : unit; const store : storage)
 {
   const foo : storage = (M_right ("one") : storage);
 
-  const bar : foobar = (M_right (1) : foobar)
+  const bar : foobar = (M_right (1) : foobar);
 } with ((nil : list (operation)), (foo : storage))
 
 type t is Bar of int | Baz
@@ -706,7 +706,7 @@ type return is list (operation) * storage
 function cb (const a : address; const s : storage)
   : return is
 {
-  const c : contract (unit) = get_entrypoint ("%cb", a)
+  const c : contract (unit) = get_entrypoint ("%cb", a);
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function cbo (const a : address; const s : storage)
@@ -720,14 +720,14 @@ function cbo (const a : address; const s : storage)
     | None ->
         (failwith ("cbo: Entrypoint not found.")
          : contract (unit))
-    ]
+    ];
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function main (const a : bool; const b : bool) : int is
 {
   var result : int := 27;
 
-  if a = b then result := 999 else result := 1
+  if a = b then result := 999 else result := 1;
 } with result
 
 type t is record [foo : nat; bar : string]
@@ -748,7 +748,7 @@ function main (const p : parameter; const s : storage)
   case p of [
     Zero (n) -> if n > 0n then failwith ("fail")
   | Pos (n) -> if not (n > 0n) then failwith ("fail")
-  ]
+  ];
 } with ((nil : list (operation)), s)
 
 function foobar (var i : int) : int is
@@ -765,13 +765,13 @@ function foobar (var i : int) : int is
 
       failwith ("who knows");
 
-      i := 30
-    }
+      i := 30;
+    };
   }
   else
     case p of [
       Zero (n) -> failwith (42n) | Pos (n) -> skip
-    ]
+    ];
 } with
     case p of [
       Zero (n) -> i | Pos (n) -> (failwith ("waaaa") : int)
@@ -779,7 +779,7 @@ function foobar (var i : int) : int is
 
 function failer (const p : int) : int is
 {
-  if p = 1 then failwith (42)
+  if p = 1 then failwith (42);
 } with p
 
 function main (const a : int) : int is
@@ -787,8 +787,8 @@ function main (const a : int) : int is
   for
     i := 0 to 100
     {
-      skip
-    }
+      skip;
+    };
 } with i
 
 const x : int
@@ -802,7 +802,7 @@ function main (const i : int) : int is
 
   j := k + i;
 
-  k := i + j
+  k := i + j;
 } with k + j
 
 function inc (const i : int) : int is i + 1
@@ -821,7 +821,7 @@ type return is list (operation) * storage
 function cb (const s : storage) : return is
 {
   const c : contract (unit)
-  = get_contract (Tezos.get_sender ())
+  = get_contract (Tezos.get_sender ());
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function cbo (const s : unit) : return is
@@ -833,7 +833,7 @@ function cbo (const s : unit) : return is
       Some (contract) -> contract
     | None ->
         (failwith ("contract not found") : contract (unit))
-    ]
+    ];
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 type heap_elt is int * string
@@ -863,7 +863,7 @@ function pop_switch (var h : heap) : heap is
 
   remove 1n from map h;
 
-  h [1n]  := last
+  h [1n]  := last;
 } with h
 
 function pop_ (var h : heap) : nat is
@@ -897,7 +897,7 @@ function pop_ (var h : heap) : nat is
   else
     if right <= s
        and heap_elt_lt (tmp, get_force (right, h))
-    then largest := right
+    then largest := right;
 } with largest
 
 function insert (var h : heap; const e : heap_elt) : heap is
@@ -928,10 +928,10 @@ function insert (var h : heap; const e : heap_elt) : heap is
 
         h [i]  := get_force (parent, h);
 
-        h [parent]  := tmp
-      }
-    }
-  }
+        h [parent]  := tmp;
+      };
+    };
+  };
 } with h
 
 function pop (var h : heap) : heap * heap_elt * nat is
@@ -978,8 +978,8 @@ function pop (var h : heap) : heap * heap_elt * nat is
 
         h [i]  := get_force (left, h);
 
-        h [left]  := tmp
-      }
+        h [left]  := tmp;
+      };
     }
     else
       if right <= s
@@ -994,17 +994,17 @@ function pop (var h : heap) : heap * heap_elt * nat is
 
           h [i]  := get_force (right, h);
 
-          h [left]  := tmp
-        }
-      }
-  }
+          h [left]  := tmp;
+        };
+      };
+  };
 } with (h, result, c)
 
 function foobar (const i : int) : int is
 {
   function foo (const i : int) : int is i;
 
-  function bar (const f : int -> int) : int is f (i)
+  function bar (const f : int -> int) : int is f (i);
 } with bar (foo)
 
 function higher2 (const i : int; const f : int -> int)
@@ -1012,14 +1012,14 @@ function higher2 (const i : int; const f : int -> int)
 
 function foobar2 (const i : int) : int is
 {
-  function foo2 (const i : int) : int is i
+  function foo2 (const i : int) : int is i;
 } with higher2 (i, foo2)
 
 const a : int = 0
 
 function foobar3 (const i : int) : int is
 {
-  function foo2 (const i : int) : int is a + i
+  function foo2 (const i : int) : int is a + i;
 } with higher2 (i, foo2)
 
 function f (const i : int) : int is i
@@ -1039,7 +1039,7 @@ function foobar5 (const i : int) : int is
 
   function foo (const i : int) : int is a + i;
 
-  function goo (const i : int) : int is foo (i)
+  function goo (const i : int) : int is foo (i);
 } with higher3 (i, foo, goo)
 
 function foobar6 (const i : int) : int -> int is f
@@ -1109,7 +1109,7 @@ function buy
       profile = profile
     ];
 
-  identities [new_id]  := new_id_details
+  identities [new_id]  := new_id_details;
 } with
     ((nil : list (operation)),
      storage with
@@ -1124,7 +1124,7 @@ function update_owner
 {
   if (amount =/= 0mutez)
   then {
-    failwith ("Updating owner doesn't cost anything.")
+    failwith ("Updating owner doesn't cost anything.");
   };
 
   const id : int = parameter.id;
@@ -1146,7 +1146,7 @@ function update_owner
 
   id_details.owner := new_owner;
 
-  identities [id]  := id_details
+  identities [id]  := id_details;
 } with
     ((nil : list (operation)),
      storage with record [identities = identities])
@@ -1202,7 +1202,7 @@ function update_details
 
   id_details.profile := profile;
 
-  identities [id]  := id_details
+  identities [id]  := id_details;
 } with
     ((nil : list (operation)),
      storage with record [identities = identities])
@@ -1212,7 +1212,7 @@ function skip_ (const p : unit; const storage : storage)
 {
   if amount = storage.skip_price
   then skip
-  else failwith ("Incorrect amount paid.")
+  else failwith ("Incorrect amount paid.");
 } with
     ((nil : list (operation)),
      storage with record [next_id = storage.next_id + 1])
@@ -1240,7 +1240,7 @@ function check_hash_key
   (const kh1 : key_hash;
    const k2 : key) : bool * key_hash is
 {
-  var kh2 : key_hash := Crypto.hash_key (k2)
+  var kh2 : key_hash := Crypto.hash_key (k2);
 } with ((kh1 = kh2), kh2)
 
 type storage is
@@ -1278,7 +1278,7 @@ const bl : foobar = list [144; 51; 42; 120; 421]
 function fold_op (const s : list (int)) : int is
 {
   function aggregate (const prec : int; const cur : int)
-    : int is prec + cur
+    : int is prec + cur;
 } with List.fold (aggregate, s, 10)
 
 function iter_op (const s : list (int)) : int is
@@ -1287,15 +1287,15 @@ function iter_op (const s : list (int)) : int is
 
   function aggregate (const i : int) : unit is
   {
-    skip
+    skip;
   } with unit;
 
-  List.iter (aggregate, s)
+  List.iter (aggregate, s);
 } with r
 
 function map_op (const s : list (int)) : list (int) is
 {
-  function increment (const i : int) : int is i + 1
+  function increment (const i : int) : int is i + 1;
 } with List.map (increment, s)
 
 function local_type (var u : unit) : int is
@@ -1304,7 +1304,7 @@ function local_type (var u : unit) : int is
 
   var titi : toto := 1;
 
-  titi := titi + 2
+  titi := titi + 2;
 } with titi
 
 function counter (var n : nat) : nat is
@@ -1313,8 +1313,8 @@ function counter (var n : nat) : nat is
 
   while i < n
   {
-    i := i + 1n
-  }
+    i := i + 1n;
+  };
 } with i
 
 function while_sum (var n : nat) : nat is
@@ -1327,8 +1327,8 @@ function while_sum (var n : nat) : nat is
   {
     i := i + 1n;
 
-    r := r + i
-  }
+    r := r + i;
+  };
 } with r
 
 function for_sum (var n : nat) : int is
@@ -1338,8 +1338,8 @@ function for_sum (var n : nat) : int is
   for
     i := 1 to int (n)
     {
-      acc := acc + i
-    }
+      acc := acc + i;
+    };
 } with acc
 
 function for_sum_step (var n : nat) : int is
@@ -1349,8 +1349,8 @@ function for_sum_step (var n : nat) : int is
   for
     i := 1 to int (2n * n) step 2
     {
-      acc := acc + i
-    }
+      acc := acc + i;
+    };
 } with acc
 
 function for_collection_list (var nee : unit)
@@ -1366,8 +1366,8 @@ function for_collection_list (var nee : unit)
   {
     acc := acc + x;
 
-    st := st ^ "to"
-  }
+    st := st ^ "to";
+  };
 } with (acc, st)
 
 function for_collection_set (var nee : unit)
@@ -1383,8 +1383,8 @@ function for_collection_set (var nee : unit)
   {
     acc := acc + x;
 
-    st := st ^ "to"
-  }
+    st := st ^ "to";
+  };
 } with (acc, st)
 
 function for_collection_if_and_local_var (var nee : unit)
@@ -1405,8 +1405,8 @@ function for_collection_if_and_local_var (var nee : unit)
     else
       if x = thetwo
       then acc := acc + thetwo
-      else acc := acc + 10
-  }
+      else acc := acc + 10;
+  };
 } with acc
 
 function for_collection_rhs_capture (var nee : unit)
@@ -1420,8 +1420,8 @@ function for_collection_rhs_capture (var nee : unit)
 
   for x in set myset
   {
-    if x = 1 then acc := acc + mybigint else acc := acc + 10
-  }
+    if x = 1 then acc := acc + mybigint else acc := acc + 10;
+  };
 } with acc
 
 function for_collection_proc_call (var nee : unit) : int is
@@ -1434,8 +1434,8 @@ function for_collection_proc_call (var nee : unit) : int is
   {
     if x = 1
     then acc := acc + for_collection_rhs_capture (unit)
-    else acc := acc + 10
-  }
+    else acc := acc + 10;
+  };
 } with acc
 
 function for_collection_comp_with_acc (var nee : unit)
@@ -1447,8 +1447,8 @@ function for_collection_comp_with_acc (var nee : unit)
 
   for x in list mylist
   {
-    if x < myint then skip else myint := myint + 10
-  }
+    if x < myint then skip else myint := myint + 10;
+  };
 } with myint
 
 function for_collection_with_patches (var nee : unit)
@@ -1462,8 +1462,8 @@ function for_collection_with_patches (var nee : unit)
 
   for x in list mylist
   {
-    patch mymap with map [x -> myint]
-  }
+    patch mymap with map [x -> myint];
+  };
 } with mymap
 
 function for_collection_empty (var nee : unit) : int is
@@ -1474,8 +1474,8 @@ function for_collection_empty (var nee : unit) : int is
 
   for x in set myset
   {
-    skip
-  }
+    skip;
+  };
 } with acc
 
 function for_collection_map_kv (var nee : unit)
@@ -1492,8 +1492,8 @@ function for_collection_map_kv (var nee : unit)
   {
     acc := acc + v;
 
-    st := st ^ k
-  }
+    st := st ^ k;
+  };
 } with (acc, st)
 
 function nested_for_collection (var nee : unit)
@@ -1522,10 +1522,10 @@ function nested_for_collection (var nee : unit)
 
       for k -> v in map mymap
       {
-        mystoo := mystoo ^ k ^ v
-      }
-    }
-  }
+        mystoo := mystoo ^ k ^ v;
+      };
+    };
+  };
 } with (myint, mystoo)
 
 function nested_for_collection_local_var (var nee : unit)
@@ -1549,19 +1549,19 @@ function nested_for_collection_local_var (var nee : unit)
     {
       myint := myint + i;
 
-      myst_loc := myst_loc ^ st
+      myst_loc := myst_loc ^ st;
     };
 
-    myst := myst_loc ^ myst
-  }
+    myst := myst_loc ^ myst;
+  };
 } with (myint, myst)
 
 function dummy (const n : nat) : nat is
 {
   while False
   {
-    skip
-  }
+    skip;
+  };
 } with n
 
 function inner_capture_in_conditional_block (var nee : unit)
@@ -1577,11 +1577,11 @@ function inner_capture_in_conditional_block (var nee : unit)
   {
     for it2 in list mylist
     {
-      if count = it2 then ret := not (ret)
+      if count = it2 then ret := not (ret);
     };
 
-    count := count + 1
-  }
+    count := count + 1;
+  };
 } with (ret, count)
 
 function shadowing_in_body (var nee : unit) : string is
@@ -1594,8 +1594,8 @@ function shadowing_in_body (var nee : unit) : string is
   {
     const x : string = "ta";
 
-    st := st ^ x
-  }
+    st := st ^ x;
+  };
 } with st
 
 function shadowing_assigned_in_body (var nee : unit)
@@ -1611,8 +1611,8 @@ function shadowing_assigned_in_body (var nee : unit)
 
     var st : string := "ta";
 
-    st := st ^ x
-  }
+    st := st ^ x;
+  };
 } with st
 
 type foobar is map (int, int)
@@ -1626,7 +1626,7 @@ const map2 : foobar = map [23 -> 0; 42 -> 0]
 
 function set_ (var n : int; var m : foobar) : foobar is
 {
-  m [23]  := n
+  m [23]  := n;
 } with m
 
 function add (var n : int; var m : foobar) : foobar is
@@ -1634,17 +1634,17 @@ function add (var n : int; var m : foobar) : foobar is
 
 function rm (var m : foobar) : foobar is
 {
-  remove 42 from map m
+  remove 42 from map m;
 } with m
 
 function patch_ (var m : foobar) : foobar is
 {
-  patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
+  patch m with map [0 -> 5; 1 -> 6; 2 -> 7];
 } with m
 
 function patch_deep (var m : foobar * nat) : foobar * nat is
 {
-  patch m.0 with map [1 -> 9]
+  patch m.0 with map [1 -> 9];
 } with m
 
 function size_ (const m : foobar) : nat is Map.size (m)
@@ -1659,20 +1659,20 @@ function iter_op (const m : foobar) : unit is
   function aggregate (const i : int; const j : int)
     : unit is
   {
-    if i =/= j then failwith ("fail")
-  } with unit
+    if i =/= j then failwith ("fail");
+  } with unit;
 } with Map.iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is
 {
   function increment (const i : int; const j : int) : int is
-    j + 1
+    j + 1;
 } with Map.map (increment, m)
 
 function fold_op (const m : foobar) : int is
 {
   function aggregate (const i : int; const j : int * int)
-    : int is i + j.0 + j.1
+    : int is i + j.0 + j.1;
 } with Map.fold (aggregate, m, 10)
 
 function deep_op (var m : foobar) : foobar is
@@ -1681,7 +1681,7 @@ function deep_op (var m : foobar) : foobar is
 
   remove 42 from map coco.1;
 
-  coco.1 [32]  := 16
+  coco.1 [32]  := 16;
 } with coco.1
 
 function match_bool (const i : int) : int is
@@ -1690,7 +1690,7 @@ function match_bool (const i : int) : int is
 
   case i = 2 of [
     True -> result := 42 | False -> result := 0
-  ]
+  ];
 } with result
 
 function match_option (const o : option (int)) : int is
@@ -1699,7 +1699,7 @@ function match_option (const o : option (int)) : int is
 
   case o of [
     None -> skip | Some (s) -> result := s
-  ]
+  ];
 } with result
 
 function match_expr_bool (const i : int) : int is
@@ -1720,7 +1720,7 @@ function match_expr_list (const l : list (int)) : int is
 function michelson_add (var n : nat * nat) : nat is
 {
   const f : (nat * nat -> nat)
-  = [%Michelson ({| { UNPAIR; ADD } |} : nat * nat -> nat)]
+  = [%Michelson ({| { UNPAIR; ADD } |} : nat * nat -> nat)];
 } with f (n)
 
 type inner_storage is michelson_or (int, "one", nat, "two")
@@ -1734,7 +1734,7 @@ function main (const action : unit; const store : storage)
   : return is
 {
   const foo : storage
-  = (M_right ((M_left (1) : inner_storage)) : storage)
+  = (M_right ((M_left (1) : inner_storage)) : storage);
 } with ((nil : list (operation)), (foo : storage))
 
 type inner_storage is michelson_or (int, "one", nat, "two")
@@ -1748,7 +1748,7 @@ function main (const action : unit; const store : storage)
   : return is
 {
   const foo : storage
-  = (M_right ((M_left (1) : inner_storage)) : storage)
+  = (M_right ((M_left (1) : inner_storage)) : storage);
 } with ((nil : list (operation)), (foo : storage))
 
 type inner_storage is
@@ -1762,7 +1762,7 @@ type return is list (operation) * storage
 function main (const action : unit; const store : storage)
   : return is
 {
-  const foo : storage = ("foo", (1, 2n))
+  const foo : storage = ("foo", (1, 2n));
 } with ((nil : list (operation)), (foo : storage))
 
 type inner_storage is
@@ -1776,7 +1776,7 @@ type return is list (operation) * storage
 function main (const action : unit; const store : storage)
   : return is
 {
-  const foo : storage = ("foo", (1, 2n))
+  const foo : storage = ("foo", (1, 2n));
 } with ((nil : list (operation)), (foo : storage))
 
 function ab (const a : int; const b : int) : int is a + b
@@ -1861,7 +1861,7 @@ function send (const param : send_pt; var s : storage)
                s.proposal_counters)
             + 1n;
 
-        new_store := Set.add (Tezos.get_sender (), voters)
+        new_store := Set.add (Tezos.get_sender (), voters);
       }
   | None ->
       {
@@ -1871,7 +1871,7 @@ function send (const param : send_pt; var s : storage)
              s.proposal_counters)
           + 1n;
 
-        new_store := set [Tezos.get_sender ()]
+        new_store := set [Tezos.get_sender ()];
       }
   ];
 
@@ -1896,10 +1896,10 @@ function send (const param : send_pt; var s : storage)
     for addr -> ctr in map s.proposal_counters
     {
       if Set.mem (addr, new_store)
-      then s.proposal_counters [addr]  := abs (ctr - 1n)
-    }
+      then s.proposal_counters [addr]  := abs (ctr - 1n);
+    };
   }
-  else s.message_store [packed_msg]  := new_store
+  else s.message_store [packed_msg]  := new_store;
 } with (ret_ops, s)
 
 function withdraw
@@ -1927,10 +1927,10 @@ function withdraw
 
         if Set.cardinal (new_set) = 0n
         then remove packed_msg from map s.message_store
-        else s.message_store [packed_msg]  := new_set
+        else s.message_store [packed_msg]  := new_set;
       }
   | None -> skip
-  ]
+  ];
 } with ((nil : list (operation)), s)
 
 function default (const p : default_pt; const s : storage)
@@ -2008,15 +2008,15 @@ function check_message
                     pkh_sig.1,
                     packed_payload)
               then valid := valid + 1n
-              else failwith ("Invalid signature")
+              else failwith ("Invalid signature");
           }
-      ]
+      ];
     };
 
     if valid < s.threshold
     then failwith ("Not enough signatures passed the check")
-    else s.counter := s.counter + 1n
-  }
+    else s.counter := s.counter + 1n;
+  };
 } with (message (unit), s)
 
 function main (const param : parameter; const s : storage)
@@ -2037,7 +2037,7 @@ function assign (var m : int) : foobar is
 
   coco := Some (m);
 
-  coco := (None : foobar)
+  coco := (None : foobar);
 } with coco
 
 function foo (const input : int) : int is input + 42
@@ -2069,14 +2069,14 @@ function projection (const r : foobar) : int is
 
 function modify (var r : foobar) : foobar is
 {
-  r.foo := 256
+  r.foo := 256;
 } with r
 
 function modify_abc (var r : abc) : abc is
 {
   const c : int = 42;
 
-  r := r with record [b = 2048; c = c]
+  r := r with record [b = 2048; c = c];
 } with r
 
 type big_record is
@@ -2090,7 +2090,7 @@ type double_record is record [inner : abc]
 function modify_inner (var r : double_record)
   : double_record is
 {
-  r := r with record [inner.b = 2048]
+  r := r with record [inner.b = 2048];
 } with r
 
 recursive function sum (const n : int; const acc : int)
@@ -2128,7 +2128,7 @@ function change_address
   (const param : change_addr_pt;
    const s : storage_t) : contract_return_t is
 {
-  if sender =/= s then failwith ("Unauthorized sender")
+  if sender =/= s then failwith ("Unauthorized sender");
 } with ((nil : list (operation)), param)
 
 function pass_message
@@ -2137,7 +2137,7 @@ function pass_message
 {
   if sender =/= s then failwith ("Unauthorized sender");
 
-  var message : pass_message_pt := param
+  var message : pass_message_pt := param;
 } with (param (unit), s)
 
 function main
@@ -2161,7 +2161,7 @@ function main (const p : parameter; const s : storage)
   : return is
 {
   const self_contract : contract (parameter)
-  = Tezos.self ("%default")
+  = Tezos.self ("%default");
 } with ((nil : list (operation)), s)
 
 type parameter is Default | Toto of int
@@ -2177,7 +2177,7 @@ function main (const p : parameter; const s : storage)
   = Tezos.self ("%toto");
 
   const op : operation
-  = Tezos.transaction (2, 300000000mutez, self_contract)
+  = Tezos.transaction (2, 300000000mutez, self_contract);
 } with (list [op], s)
 
 type parameter is int
@@ -2193,7 +2193,7 @@ function main (const p : parameter; const s : storage)
   = Tezos.self ("%default");
 
   const op : operation
-  = Tezos.transaction (2, 300000000mutez, self_contract)
+  = Tezos.transaction (2, 300000000mutez, self_contract);
 } with (list [op], s)
 
 function iter_op (const s : set (int)) : int is
@@ -2202,16 +2202,16 @@ function iter_op (const s : set (int)) : int is
 
   function aggregate (const i : int) : unit is
   {
-    skip
+    skip;
   } with unit;
 
-  set_iter (aggregate, s)
+  set_iter (aggregate, s);
 } with r
 
 function fold_op (const s : set (int)) : int is
 {
   function aggregate (const i : int; const j : int) : int is
-    i + j
+    i + j;
 } with set_fold (aggregate, s, 15)
 
 const s_e : set (string) = set_empty
@@ -2227,24 +2227,24 @@ function remove_op (const s : set (string))
 function remove_syntax (var s : set (string))
   : set (string) is
 {
-  remove "foobar" from set s
+  remove "foobar" from set s;
 } with s
 
 function remove_deep (var s : set (string) * nat)
   : set (string) * nat is
 {
-  remove "foobar" from set s.0
+  remove "foobar" from set s.0;
 } with s
 
 function patch_op (var s : set (string)) : set (string) is
 {
-  patch s with set ["foobar"]
+  patch s with set ["foobar"];
 } with s
 
 function patch_op_deep (var s : set (string) * nat)
   : set (string) * nat is
 {
-  patch s.0 with set ["foobar"]
+  patch s.0 with set ["foobar"];
 } with s
 
 function mem_op (const s : set (string)) : bool is
@@ -2254,12 +2254,12 @@ function main (const p : key_hash) : list (operation) is
 {
   const unused : operation = set_delegate (Some (p));
 
-  const dummy : list (operation) = nil
+  const dummy : list (operation) = nil;
 } with dummy
 
 function foo (const i : int) : int is
 {
-  function bar (const i : int) : int is i
+  function bar (const i : int) : int is i;
 } with bar (0)
 
 type tpi is int * int
@@ -2280,7 +2280,7 @@ function main (const toto : tpi) : int is
 
   b.x := a.0;
 
-  m ["x"]  := b.x
+  m ["x"]  := b.x;
 } with
     case m ["x"]  of [
       Some (s) -> s | None -> 42
@@ -2355,7 +2355,7 @@ function call (const p : call_pt; const s : storage_t)
 
   const message : message_t = p;
 
-  const ret_ops : list (operation) = message (unit)
+  const ret_ops : list (operation) = message (unit);
 } with (ret_ops, s)
 
 function default (const p : default_pt; const s : storage_t)
@@ -2384,7 +2384,7 @@ function projection_abc (const tpl : abc) : int is tpl.1
 
 function modify_abc (var tpl : abc) : abc is
 {
-  tpl.1 := 2048
+  tpl.1 := 2048;
 } with tpl
 
 type foobar is int * int
@@ -2403,7 +2403,7 @@ const br : big_tuple
 
 function update (var tpl : big_tuple) : big_tuple is
 {
-  tpl.11 := 2048
+  tpl.11 := 2048;
 } with tpl
 
 type toto is int

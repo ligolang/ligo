@@ -4,17 +4,10 @@ module Main (main) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Colog.Core qualified as Colog
-import Control.Lens hiding ((:>))
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, void, when)
+import Control.Lens (folded, to)
 import Data.Aeson qualified as Aeson
-import Data.Bool (bool)
 import Data.Default (def)
-import Data.Foldable (for_, traverse_)
-import Data.Maybe (fromMaybe, isNothing)
-import Data.Monoid (All (..))
 import Data.Set qualified as Set
-import Data.Text qualified as T
 import Focus qualified
 import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
@@ -22,26 +15,25 @@ import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import Prettyprinter qualified as PP
 import StmContainers.Map qualified as StmMap
-import System.Exit (ExitCode (ExitFailure), exitSuccess, exitWith)
+import System.Exit (ExitCode (ExitFailure))
 import System.FilePath (splitDirectories, takeDirectory)
-import System.IO (stdin, stdout)
-import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (tryReadMVar)
-import UnliftIO.STM (atomically)
+import UnliftIO.Exception (withException)
 
 import AST
-import Cli (TempSettings, getLigoVersion)
+import AST.Pretty ()
+import Cli (TempSettings, getLigoVersionSafe)
 import Config (Config (..))
+import Debug qualified (show)
 import Extension (isLigoFile)
 import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Log (i)
 import Log qualified
+import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
 import RIO.Indexing qualified as Indexing
 import RIO.Types (RIO, RioEnv (..))
-import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import Util (foldMapM, toLocation)
 import Util.Graph (traverseAM)
 
@@ -50,10 +42,13 @@ main = exit =<< mainLoop
 
 mainLoop :: IO Int
 mainLoop =
-  Log.withLogger $$(Log.flagBasedSeverity) "lls" $$(Log.flagBasedEnv) \runLogger -> do
+  Log.withLogger $$Log.flagBasedSeverity "lls" $$Log.flagBasedEnv \runLogger -> do
     let
       serverDefinition = S.ServerDefinition
-        { S.onConfigurationChange = \old _ -> Right old
+        { S.onConfigurationChange = \_old newValue ->
+          case Aeson.fromJSON newValue of
+            Aeson.Error err -> Left $ toText err
+            Aeson.Success new -> Right new
         , S.defaultConfig = def
         , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> RIO.newRioEnv
         , S.staticHandlers = catchExceptions handlers
@@ -95,29 +90,31 @@ mainLoop =
              S.Handler RIO meth -> S.Handler RIO meth
         wrapReq handler msg@J.RequestMessage{_method} resp = Log.addNamespace "wrapReq" $
           handler msg resp `withException` \(SomeException e) -> do
-            $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
-            resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
+            $Log.critical [i|Handling `#{_method}`: #{displayException e}|]
+            RIO.shutdownRio
+            resp . Left $ J.ResponseError J.InternalError (toText $ displayException e) Nothing
 
         wrapNotif
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
              S.Handler RIO meth -> S.Handler RIO meth
         wrapNotif handler msg@J.NotificationMessage{_method} = Log.addNamespace "wrapNotif" $
           handler msg `withException` \(SomeException e) -> do
-            $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
-            sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
+            $Log.critical [i|Handling `#{_method}`: #{displayException e}|]
+            RIO.shutdownRio
+            sendError $ "Error handling `" <> show _method <> "` (see logs)."
 
         addReqLogging
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
              S.Handler RIO meth -> S.Handler RIO meth
         addReqLogging handler msg@J.RequestMessage{_method} resp = Log.addNamespace [i|#{_method}|] do
-          version <- getLigoVersion
+          version <- getLigoVersionSafe
           maybe id Log.addContext version $ handler msg resp
 
         addNotifLogging
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
              S.Handler RIO meth -> S.Handler RIO meth
         addNotifLogging handler msg@J.NotificationMessage{_method} = Log.addNamespace [i|#{_method}|] do
-          version <- getLigoVersion
+          version <- getLigoVersionSafe
           maybe id Log.addContext version $ handler msg
 
         handleDisabledReq
@@ -125,7 +122,7 @@ mainLoop =
              S.Handler RIO meth -> S.Handler RIO meth
         handleDisabledReq handler msg@J.RequestMessage{_method} resp = do
           Config {_cDisabledFeatures} <- S.getConfig
-          let err = T.pack [i|Cannot handle #{_method}: disabled by user.|]
+          let err = [i|Cannot handle #{_method}: disabled by user.|]
           if Set.member (J.SomeClientMethod _method) _cDisabledFeatures
             then resp $ Left $ J.ResponseError J.RequestCancelled err Nothing
             else handler msg resp
@@ -133,11 +130,13 @@ mainLoop =
     lspLogger :: Colog.LogAction (S.LspM Config) (Colog.WithSeverity S.LspServerLog)
     lspLogger =
       Colog.filterBySeverity Colog.Error Colog.getSeverity
-      $ Colog.cmap (fmap (T.pack . show . PP.pretty)) L.logToLogMessage
+      $ Colog.cmap (fmap (Debug.show . PP.pretty)) L.logToLogMessage
 
 handlers :: S.Handlers RIO
 handlers = mconcat
   [ S.notificationHandler J.SInitialized handleInitialized
+
+  , S.requestHandler J.SShutdown handleShutdown
 
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
@@ -161,7 +160,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
   , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
 
-  , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
+  , S.notificationHandler J.SCancelRequest (\_msg -> pass)
   , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
   , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
 
@@ -172,6 +171,11 @@ handlers = mconcat
 
 handleInitialized :: S.Handler RIO 'J.Initialized
 handleInitialized _ = RIO.initializeRio
+
+handleShutdown :: S.Handler RIO 'J.Shutdown
+handleShutdown _ respond = do
+  RIO.shutdownRio
+  respond $ Right J.Empty
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
@@ -186,7 +190,7 @@ handleDidOpenTextDocument notif = do
 
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
-  $(Log.debug) [i|Changed text document: #{uri}|]
+  $Log.debug [i|Changed text document: #{uri}|]
 
   openDocs <- asks reOpenDocs
   atomically $ StmMap.focus (Focus.adjust \openDoc -> openDoc{RIO.odIsDirty = True}) uri openDocs
@@ -244,7 +248,7 @@ handleDefinitionRequest req respond = do
     let location = case AST.definitionOf pos tree of
           Just defPos -> [toLocation defPos]
           Nothing     -> []
-    $(Log.debug) [i|Definition request returned #{location}|]
+    $Log.debug [i|Definition request returned #{location}|]
     respond . Right . J.InR . J.InL . J.List $ location
 
 handleTypeDefinitionRequest :: S.Handler RIO 'J.TextDocumentTypeDefinition
@@ -258,7 +262,7 @@ handleTypeDefinitionRequest req respond = do
     let definition = case AST.typeDefinitionAt pos tree of
           Just defPos -> [J.Location uri $ toLspRange defPos]
           Nothing     -> []
-    $(Log.debug) [i|Type definition request returned #{definition}|]
+    $Log.debug [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
 formatImpl :: J.Uri -> RIO (TempSettings, ContractInfo')
@@ -290,7 +294,7 @@ handleFindReferencesRequest req respond = do
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing   -> []
-    $(Log.debug) [i|Find references request returned #{locations}|]
+    $Log.debug [i|Find references request returned #{locations}|]
     respond . Right . J.List $ locations
 
 handleDocumentHighlightRequest :: S.Handler RIO 'J.TextDocumentDocumentHighlight
@@ -300,7 +304,7 @@ handleDocumentHighlightRequest req respond = do
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing -> []
-    $(Log.debug) [i|Document highlight request returned #{locations}|]
+    $Log.debug [i|Document highlight request returned #{locations}|]
     let defaultKind = Just J.HkRead
         highlights = (`J.DocumentHighlight` defaultKind) . (^. J.range) <$> locations
     respond . Right . J.List $ highlights
@@ -396,11 +400,11 @@ handleRenameRequest req respond = do
     tree <- contractTree <$> Document.fetch Document.NormalEffort nuri
 
     case renameDeclarationAt pos tree newName of
-      NotFound -> do
-        $(Log.debug) [i|Declaration not found for: #{show req}|]
+      Nothing -> do
+        $Log.debug [i|Declaration not found for: #{req}|]
         respond . Left $
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
-      Ok edits -> do
+      Just edits -> do
         let
           -- XXX: This interface has two benefits: it allows to refer to a specific
           -- document version and it allows the creation/deletion/renaming of files.
@@ -442,7 +446,7 @@ handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
 handleDidChangeWatchedFiles notif = do
   let J.List changes = notif ^. J.params . J.changes
   for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) ->
-    for_ (J.uriToNormalizedFilePath uri) \nfp -> do
+    whenJust (J.uriToNormalizedFilePath uri) \nfp -> do
       let fp = J.fromNormalizedFilePath nfp
       -- We don't want to react on changes within the temporary directory.
       when (Document.tempDirTemplate `notElem` splitDirectories fp) $
@@ -464,7 +468,7 @@ handleCustomMethod'IndexDirectory
 handleCustomMethod'IndexDirectory _req respond = do
   indexOptsM <- tryReadMVar =<< asks reIndexOpts
   let pathM = Indexing.indexOptionsPath =<< indexOptsM
-  respond $ Right $ maybe Aeson.Null (Aeson.String . T.pack) pathM
+  respond $ Right $ maybe Aeson.Null (Aeson.String . toText) pathM
 
 -- | Handles whether a document is clean ('False') or dirty ('True'). If the
 -- provided file doesn't exist, returns null.
@@ -473,7 +477,7 @@ handleCustomMethod'IsDirty
 handleCustomMethod'IsDirty req respond =
   case req ^. J.params . to Aeson.fromJSON of
     Aeson.Error err ->
-      respond $ Left $ J.ResponseError J.InvalidParams (T.pack err) Nothing
+      respond $ Left $ J.ResponseError J.InvalidParams (toText err) Nothing
     Aeson.Success (params :: J.TextDocumentIdentifier) -> do
       let nuri = params ^. J.uri . to J.toNormalizedUri
       openDocM <- atomically . StmMap.lookup nuri =<< asks reOpenDocs

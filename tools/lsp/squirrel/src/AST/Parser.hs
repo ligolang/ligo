@@ -10,38 +10,31 @@ module AST.Parser
   , collectAllErrors
   ) where
 
-import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
-import Data.Foldable (toList)
-import Data.List (find, isPrefixOf)
-import Data.Maybe (fromMaybe, isJust)
-import Data.Text (Text)
-import Data.Text qualified as Text (lines, unlines)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import System.FilePath (splitDirectories, takeDirectory, takeFileName, (</>))
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 import UnliftIO.Directory (doesDirectoryExist, listDirectory)
-import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
+import UnliftIO.Exception (Handler (..), catches, fromEither)
 
 import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
+import AST.Parser.Jsligo qualified as Js
 import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
-import AST.Parser.Jsligo qualified as Js
-import AST.Skeleton
 import AST.Scope
-  ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
-  , addLigoErrsToMsg, addScopes, contractNotFoundException, lookupContract
-  )
+  (ContractInfo, ContractInfo', HasScopeForest, Includes (..), addLigoErrsToMsg, addScopes,
+  contractNotFoundException, lookupContract, pattern FindContract)
+import AST.Skeleton
 import Cli
-  ( HasLigoClient, LigoDecodedExpectedClientFailureException (..), SomeLigoException (..)
-  , TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
-  )
+  (HasLigoClient, LigoDecodedExpectedClientFailureException (..), LigoIOException,
+  SomeLigoException (..), TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess)
 import Diagnostic (Message)
 import Extension
 import Log (Log, NoLoggingT (..), i)
 import Log qualified
-import ParseTree (Source (..), pathToSrc, toParseTree)
 import Parser (collectTreeErrors, parseLineMarkerText, runParserM)
+import ParseTree (Source (..), pathToSrc, toParseTree)
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
 
@@ -58,7 +51,6 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-
 loadPreprocessed
   :: (HasLigoClient m, Log m)
   => TempSettings
@@ -71,11 +63,10 @@ loadPreprocessed tempSettings src = do
       ((, []) <$> preprocess tempSettings src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
-        , Handler \(_ :: SomeLigoException) ->
+        , Handler \(e :: LigoIOException) -> do
+          $Log.err [i|#{displayException e}|]
           pure (src', [])
-        , Handler \(e :: IOError) -> do
-          -- Likely LIGO isn't installed or was not found.
-          $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
+        , Handler \(_ :: SomeLigoException) ->
           pure (src', [])
         ]
     else
@@ -87,10 +78,10 @@ loadPreprocessed tempSettings src = do
     prePreprocess contents =
       let
         hasPreprocessor = contents =~ ("^#[ \t]*[a-z]+" :: Text)
-        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
+        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> lines contents
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in
-      (src{srcText = Text.unlines $ map fst prepreprocessed}, shouldPreprocess)
+      (src{srcText = unlines $ map fst prepreprocessed}, shouldPreprocess)
 
 parsePreprocessed :: (HasLigoClient m, Log m) => TempSettings -> Source -> m ContractInfo
 parsePreprocessed tempSettings src = do
@@ -112,8 +103,8 @@ parseWithScopes fp = runNoLoggingT do
     temp = TempSettings top $ GenerateDir $ template <> takeFileName fp
     ignore = not . any (template `isPrefixOf`) . splitDirectories
   graph <- includesGraph =<< parseContracts (parsePreprocessed temp) noProgress ignore top
-  let group = find (isJust . lookupContract fp) $ Includes <$> wcc (getIncludes graph)
-  scoped <- addScopes @impl temp noProgress $ fromMaybe graph group
+  let grp = find (isJust . lookupContract fp) $ Includes <$> wcc (getIncludes graph)
+  scoped <- addScopes @impl temp noProgress $ fromMaybe graph grp
   maybe (contractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.

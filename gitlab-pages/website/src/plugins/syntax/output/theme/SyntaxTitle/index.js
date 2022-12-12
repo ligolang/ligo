@@ -63,7 +63,7 @@ function SyntaxTitle(props) {
       }
     }
   } = useDocusaurusContext();
-  const lightModeTheme = prism.singleTheme || defaultTheme; // to fix Hook is called outside the <ColorModeProvider>. Please see https://docusaurus.io/docs/api/themes/configuration#use-color-mode.
+  const lightModeTheme = prism.singleTheme || defaultTheme; // todo fix Hook is called outside the <ColorModeProvider>. Please see https://docusaurus.io/docs/api/themes/configuration#use-color-mode.
   // const {colorMode, setColorMode} = useColorMode();
   // const prismTheme = colorMode === "dark" ? darkModeTheme : lightModeTheme;
 

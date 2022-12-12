@@ -2,7 +2,6 @@ open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
-
 let wrap_test_w name f =
   try_with
     (fun ~raise ~catch ->
@@ -25,15 +24,17 @@ let wrap_test_w name f =
 let test_case name test =
   Test (Alcotest.test_case name `Quick @@ fun () -> wrap_test_w name test)
 
+
 let comp_file_ ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
     let options = Compiler_options.set_syntax options syntax in
     Compiler_options.set_test_flag options test
   in
-  let _ : Ast_core.program = Test_helpers.core_file ~raise f options in
+  let (_ : Ast_core.program) = Test_helpers.core_file ~raise f options in
   ()
-  
+
+
 let type_file_ ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
@@ -43,6 +44,7 @@ let type_file_ ~raise f test syntax () =
   let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f Env options in
   ()
 
+
 let agg_file_ ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
@@ -50,9 +52,12 @@ let agg_file_ ~raise f test syntax () =
     Compiler_options.set_test_flag options test
   in
   let prg = Test_helpers.type_file ~raise f Env options in
-  let _ : Ast_aggregated.program = trace ~raise aggregation_tracer 
-    @@ Aggregation.compile_program (Ast_typed.e_a_unit ()) prg in
+  let (_ : Ast_aggregated.program) =
+    trace ~raise aggregation_tracer
+    @@ Aggregation.compile_program (Ast_typed.e_a_unit ~loc ()) prg
+  in
   ()
+
 
 let mini_c_file_ ~raise f test syntax () =
   let options =
@@ -61,32 +66,59 @@ let mini_c_file_ ~raise f test syntax () =
     Compiler_options.set_test_flag options test
   in
   let prg = Test_helpers.type_file ~raise f Env options in
-  let ctxt, exp = trace ~raise aggregation_tracer 
-    @@ Aggregation.compile_program (Ast_typed.e_a_unit ()) prg in
-  let ctxt, exp = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_program ~options:options.middle_end (ctxt, exp) in
+  let ctxt, exp =
+    trace ~raise aggregation_tracer
+    @@ Aggregation.compile_program (Ast_typed.e_a_unit ~loc ()) prg
+  in
+  let ctxt, exp =
+    trace ~raise self_ast_aggregated_tracer
+    @@ Self_ast_aggregated.all_program ~options:options.middle_end (ctxt, exp)
+  in
   let x = Ast_aggregated.context_apply ctxt exp in
-  let x = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end x in
-  let _ : Mini_c.expression = trace ~raise spilling_tracer @@ Spilling.compile_expression x in
+  let x =
+    trace ~raise self_ast_aggregated_tracer
+    @@ Self_ast_aggregated.all_expression ~options:options.middle_end x
+  in
+  let x = Expansion.compile x in
+  let (_ : Mini_c.expression) =
+    trace ~raise spilling_tracer @@ Spilling.compile_expression x
+  in
   ()
+
 
 let type_file f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_ f false None)
+
+
 let type_tfile f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_ f true None)
+
+
 let lex_file f =
   let f = "./lexer/" ^ f in
   test_case f (type_file_ f false None)
+
+
 let comp_file f =
   let f = "./contracts/" ^ f in
   test_case f (comp_file_ f false None)
+
+
 let aggregate_file f =
   let f = "./contracts/" ^ f in
   test_case f (agg_file_ f false None)
+
+
 let mini_c_file f =
   let f = "./contracts/" ^ f in
   test_case f (mini_c_file_ f false None)
+
+
+let compile_file_ f =
+  let f = "./contracts/" ^ f in
+  test_case f (Test_helpers.compile_main f)
 
 
 let typed_prod =
@@ -100,15 +132,18 @@ let typed_prod =
     ; type_file "sequence.mligo"
     ; type_file "remove_recursion.mligo"
     ; type_file "attributes.jsligo"
-    ; type_file "tuple_decl_pos.mligo" (* Check that decl_pos is not taken into account when "inferring" about tuples (including long tuples) *)
+    ; type_file "tuple_decl_pos.mligo"
+      (* Check that decl_pos is not taken into account when "inferring" about tuples (including long tuples) *)
     ; type_file "modules_and_free_vars/simple.mligo"
     ; type_file "modules_and_free_vars/nested_modules.mligo"
     ; type_file "modules_and_free_vars/module_with_free_vars.mligo"
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
     ; type_file "deep_pattern_matching/pm_test.religo"
     ; type_tfile "pattern_match4.jsligo"
+    ; type_file "layout.pligo"
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
     ]
+
 
 let core_prod =
   Test_helpers.test_suite
@@ -129,27 +164,74 @@ let core_prod =
     ; comp_file "deep_pattern_matching/list_pattern.religo"
     ]
 
+
 let agg_prod =
   Test_helpers.test_suite
-  "Ast-aggregated productions"
-  [ aggregate_file "aggregation/bug_alias.mligo"
-  ; aggregate_file "aggregation/bug_alias2.mligo"
-  ; aggregate_file "aggregation/bug_alias3.mligo"
-  ; aggregate_file "aggregation/bug_alias4.mligo"
-  ; aggregate_file "aggregation/bug_alias5.mligo"
-  ; aggregate_file "aggregation/bug_alias6.mligo"
-  ; aggregate_file "aggregation/bug_alias7.mligo"
-  ; aggregate_file "aggregation/bug_alias8.mligo"
-  ; aggregate_file "aggregation/bug_alias9.mligo"
-  ; aggregate_file "aggregation/bug_alias10.mligo"
-  ; aggregate_file "aggregation/bug_alias11.mligo"
-  ; aggregate_file "aggregation/bug_alias12.mligo"
-  ; aggregate_file "aggregation/bug_alias13.mligo"
-  ]
+    "Ast-aggregated productions"
+    [ aggregate_file "aggregation/bug_alias.mligo"
+    ; aggregate_file "aggregation/bug_alias2.mligo"
+    ; aggregate_file "aggregation/bug_alias3.mligo"
+    ; aggregate_file "aggregation/bug_alias4.mligo"
+    ; aggregate_file "aggregation/bug_alias5.mligo"
+    ; aggregate_file "aggregation/bug_alias6.mligo"
+    ; aggregate_file "aggregation/bug_alias7.mligo"
+    ; aggregate_file "aggregation/bug_alias8.mligo"
+    ; aggregate_file "aggregation/bug_alias9.mligo"
+    ; aggregate_file "aggregation/bug_alias10.mligo"
+    ; aggregate_file "aggregation/bug_alias11.mligo"
+    ; aggregate_file "aggregation/bug_alias12.mligo"
+    ; aggregate_file "aggregation/bug_alias13.mligo"
+    ]
+
 
 let mini_c_prod =
   Test_helpers.test_suite
-  "Mini-c productions"
-  [ mini_c_file "build/D.mligo"
-  ; mini_c_file "modules_env.mligo" (* Module being defined does not type with its own type *)
-  ]
+    "Mini-c productions"
+    [ mini_c_file "build/D.mligo"
+    ; mini_c_file "modules_env.mligo"
+      (* Module being defined does not type with its own type *)
+    ; mini_c_file "aggregation/nested_modules.mligo"
+    ]
+
+
+let contract_prod =
+  Test_helpers.test_suite
+    "Contract productions"
+    [ (*                 Toplevel patterns                 *)
+      compile_file_ "top_level_patterns/contracts/cameligo/nested_record.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/nested_tuple.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/record_tuple.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/record.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/ticket_record.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/ticket_tuple.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/tuple_record.mligo"
+    ; compile_file_ "top_level_patterns/contracts/cameligo/tuple.mligo"
+    ; compile_file_
+        "top_level_patterns/contracts/cameligo/constr_tuple_destructuring.mligo"
+    ; compile_file_
+        "top_level_patterns/contracts/cameligo/constr_record_destructuring.mligo"
+      (* ; compile_file_ "top_level_patterns/contracts/jsligo/nested_record.jsligo" *)
+    ; compile_file_ "top_level_patterns/contracts/jsligo/nested_tuple.jsligo"
+      (* ; compile_file_ "top_level_patterns/contracts/jsligo/record_tuple.jsligo" *)
+      (* ; compile_file_ "top_level_patterns/contracts/jsligo/record.jsligo" *)
+      (* ; compile_file_ "top_level_patterns/contracts/jsligo/ticket_record.jsligo" *)
+    ; compile_file_ "top_level_patterns/contracts/jsligo/ticket_tuple.jsligo"
+      (* ; compile_file_ "top_level_patterns/contracts/jsligo/tuple_record.jsligo" *)
+    ; compile_file_ "top_level_patterns/contracts/jsligo/tuple.jsligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/nested_record.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/nested_tuple.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/record_tuple.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/record.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/ticket_record.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/ticket_tuple.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple_record.ligo"
+    ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple.ligo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/nested_record.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/nested_tuple.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/record_tuple.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/record.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/ticket_record.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/ticket_tuple.religo"
+    ; compile_file_ "top_level_patterns/contracts/reasonligo/tuple_record.religo"
+    ; mini_c_file "top_level_patterns/contracts/reasonligo/tuple.religo"
+    ]

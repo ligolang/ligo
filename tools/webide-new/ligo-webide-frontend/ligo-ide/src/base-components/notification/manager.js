@@ -1,4 +1,4 @@
-class Notification {
+export class Notification {
   constructor(ref, { title, message, level = "success", autoDismiss = 2, action = undefined }) {
     this.ref = ref;
     if (this.ref) {

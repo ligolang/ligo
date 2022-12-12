@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nUsers can now install LIGO via NPM. `npm i -g ligolang` will install the Ligo compiler on Windows, Linux and MacOS (intel).\\n[https://www.npmjs.com/package/ligolang](https://www.npmjs.com/package/ligolang)\\nAlso adds a GUI installer for Windows. Can be downloaded from [here](https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_windows/current/ligo_installer_beta.exe)\\n\\n"
+merge_request: '2200'
+title: "Build ligo on Macos(intel), Linux and Windows and bundle into NPM tarball"
+type: added
+            

@@ -1,5 +1,6 @@
 import findIndex from "lodash/findIndex";
-import Workspace from "~/base-components/workspace";
+import pathHelper from "path-browserify";
+import { WorkspaceLoader } from "~/base-components/workspace";
 import fileOps from "~/base-components/file-ops";
 import {
   useBuiltinCustomTabs,
@@ -8,39 +9,41 @@ import {
 } from "~/base-components/code-editor";
 import compilerManager, { CompilerTerminal } from "~/ligo-components/eth-compiler";
 import platform from "~/base-components/platform";
-import ProjectManager from "../ProjectManager";
 
 import ProjectToolbar from "./ProjectToolbar";
 import ProjectSettingsTab from "./ProjectSettingsTab";
 
-import addSolidityLanguage from "./languages/solidity";
+import { addLigoLanguages } from "./languages/addLigoLanguages";
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useBuiltinCustomTabs(["markdown"]);
 modelSessionManager.registerCustomTab("settings", ProjectSettingsTab, "Project Settings");
 modelSessionManager.registerModeDetector((filePath) => {
   const { prefix, userId, projectId, settingsFilePath } = modelSessionManager.projectManager;
-  const { base } = fileOps.pathHelper.parse(filePath);
+  const { base } = pathHelper.parse(filePath);
   const settingFilePath = settingsFilePath; // platform.isDesktop ? settingsFilePath : `${prefix}/${userId}/${projectId}/config.json`
   const isRoot = settingFilePath === filePath;
 
   if (base === "config.json" && isRoot) {
     return "settings";
   }
-  if (base.endsWith(".sol")) {
-    return "solidity";
-  }
   if (base.endsWith(".religo")) {
-    return "javascript";
+    return "religoext";
   }
   if (base.endsWith(".ligo")) {
-    return "pascaligo";
+    return "pascaligoext";
+  }
+  if (base.endsWith(".pligo")) {
+    return "pascaligoext";
   }
   if (base.endsWith(".mligo")) {
-    return "cameligo";
+    return "cameligoext";
   }
   if (base.endsWith(".jsligo")) {
-    return "javascript";
+    return "jsligoext";
+  }
+  if (base.endsWith(".tz")) {
+    return "tzext";
   }
   return defaultModeDetector(filePath);
 });
@@ -61,7 +64,7 @@ const makeContextMenu = (contextMenu, projectManager) => (node) => {
   }
 
   if (node.name.endsWith(".json")) {
-    const { dir, name } = projectManager.path.parse(node.path);
+    const { dir, name } = pathHelper.parse(node.path);
     if (!name.endsWith(".abi")) {
       // && dir.endsWith(path.join('build', 'contracts'))
       const cloned = [...contextMenu];
@@ -92,13 +95,12 @@ const makeContextMenu = (contextMenu, projectManager) => (node) => {
   return contextMenu;
 };
 
-Workspace.defaultProps = {
-  ProjectManager,
+WorkspaceLoader.defaultProps = {
   compilerManager,
   ProjectToolbar,
   CompilerTerminal,
-  addLanguages: addSolidityLanguage,
+  addLanguages: addLigoLanguages,
   makeContextMenu,
 };
 
-export default Workspace;
+export { WorkspaceLoader };

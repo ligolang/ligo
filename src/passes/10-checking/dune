@@ -1,17 +1,9 @@
 (library
  (name checking)
  (public_name ligo.checking)
- (libraries
-  simple-utils
-  tezos-utils
-  ast_core
-  ast_typed
-  predefined
-  environment
-  self_ast_core
-  compiler_options
-  main_warnings
-  desugaring
-  syntax_types)
+ (libraries simple-utils tezos-utils ast_core ast_typed predefined
+   environment compiler_options main_warnings desugaring syntax_types
+   ocaml-compiler-libs.common)
  (preprocess
-  (pps ppx_poly_constructor ppx_compare ppx_let ppx_here ppx_hash)))
+  (pps ppx_poly_constructor ppx_woo ppx_map ppx_sexp_conv ppx_compare ppx_let
+    ppx_here ppx_hash ppx_import ppx_deriving_yojson)))

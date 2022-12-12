@@ -6,14 +6,15 @@
     { "include": "#string" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
+    { "include": "#typebinder" },
+    { "include": "#uppercaseidentifier" },
     { "include": "#attribute" },
     { "include": "#macro" },
     { "include": "#controlkeywords" },
+    { "include": "#moduledeclaration" },
     { "include": "#function" },
     { "include": "#operators" },
     { "include": "#typedefinition" },
-    { "include": "#module" },
-    { "include": "#identifierconstructor" },
     { "include": "#constorvar" },
     { "include": "#numericliterals" },
     { "include": "#typeannotation" }
@@ -58,6 +59,10 @@
       "match": "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b",
       "captures": {}
     },
+    "moduledeclaration": {
+      "match": "\\b(module)\\b",
+      "captures": { "1": { "name": "keyword.other.ligo" } }
+    },
     "function": {
       "match": "\\b(function)\\b\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
       "captures": {
@@ -84,24 +89,29 @@
       "match": "\\b(is)\\b",
       "captures": { "1": { "name": "keyword.other.ligo" } }
     },
-    "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
-      "captures": {
-        "2": { "name": "storage.var.ligo" },
-        "1": { "name": "storage.class.ligo" }
-      }
-    },
-    "identifier": {
-      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
-      "captures": {}
-    },
-    "identifierconstructor": {
+    "uppercaseidentifier": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
-      "captures": { "1": { "name": "variable.other.enummember.ligo" } }
+      "captures": { "1": { "name": "entity.name.type.ligo" } }
+    },
+    "lowercaseidentifier": {
+      "match": "\\b([a-z$_][a-zA-Z0-9$_]*)\\b",
+      "captures": { "1": { "name": "variable.ligo" } }
     },
     "constorvar": {
       "match": "\\b(const|var)\\b",
       "captures": { "1": { "name": "keyword.other.ligo" } }
+    },
+    "typebinder": {
+      "begin": "(<)\\s*(?=([a-zA-Z0-9_,]+|\\s)+>)",
+      "end": "(>)",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typename" },
+        { "include": "#typename" }
+      ]
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
@@ -112,9 +122,8 @@
         { "include": "#line_comment" },
         { "include": "#block_comment" },
         { "include": "#iskeyword" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeproduct" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -131,9 +140,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeproduct" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -150,9 +158,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeproduct" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -169,7 +176,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#identifier" },
+        { "include": "#lowercaseidentifier" },
         { "include": "#typeannotationfield" },
         { "include": "#semicolon" }
       ]
@@ -192,9 +199,8 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#ofkeyword" },
-        { "include": "#identifierconstructor" },
         { "include": "#typeproduct" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -202,11 +208,6 @@
         { "include": "#typeint" },
         { "include": "#string" }
       ]
-    },
-    "typemodule": {
-      "name": "storage.var.ligo",
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
-      "captures": {}
     },
     "typeint": {
       "name": "constant.numeric.ligo",

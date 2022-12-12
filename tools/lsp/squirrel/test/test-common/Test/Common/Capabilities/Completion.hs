@@ -4,11 +4,11 @@ module Test.Common.Capabilities.Completion
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
-import Data.Maybe (fromJust)
 import Language.LSP.Types (CompletionItemKind (..), UInt)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
+import Unsafe qualified
 
 import AST.Capabilities.Completion
 import AST.Scope.Common
@@ -246,6 +246,30 @@ caseInfos =
         , "./test/contracts/completion/import/innerFolder/inner-includer.ligo"
         ]
     }
+  , TestInfo
+    { tiContract = "modules.mligo"
+    , tiPosition = (8, 26)
+    , tiExpected =
+      [ Completion (Just CiVariable) (NameCompletion "nested") (Just $ TypeCompletion "int") (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
+  , TestInfo
+    { tiContract = "modules2.mligo"
+    , tiPosition = (5, 24)
+    , tiExpected =
+      [ Completion (Just CiVariable) (NameCompletion "bar") (Just $ TypeCompletion "int") (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
+  , TestInfo
+    { tiContract = "module-field.mligo"
+    , tiPosition = (8, 26)
+    , tiExpected =
+      [ Completion (Just CiVariable) (NameCompletion "baz") (Just $ TypeCompletion "int") (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
   ]
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
@@ -255,16 +279,15 @@ completionDriver testInfos = do
   where
     makeTestCase graph info =
       testCase (tiContract info) do
-
         let fp = contractsDir </> tiContract info
             pos = uncurry point $ tiPosition info
-            contract = fromJust $ lookupContract fp graph
+            contract = Unsafe.fromJust $ lookupContract fp graph
             tree = contractTree contract
             source = _cFile $ _getContract contract
         results <- Log.runNoLoggingT $ withCompleterM (CompleterEnv pos tree source (tiGraph info)) complete
         case (results, tiExpected info) of
-          (Nothing, []) -> pure ()
+          (Nothing, []) -> pass
           (Nothing, _) -> expectationFailure "Expected completion items, but got none"
-          (Just [], []) -> pure ()
+          (Just [], []) -> pass
           (Just _, []) -> expectationFailure "Expected no completion items, but got them"
           (Just results', expected') -> results' `shouldMatchList` expected'

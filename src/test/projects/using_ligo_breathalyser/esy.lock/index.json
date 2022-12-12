@@ -1,0 +1,33 @@
+{
+  "checksum": "f15ef6bce0020ffa2fd452aa9f8b3a73",
+  "root": "using_ligo_breathalyser@link-dev:./package.json",
+  "node": {
+    "using_ligo_breathalyser@link-dev:./package.json": {
+      "id": "using_ligo_breathalyser@link-dev:./package.json",
+      "name": "using_ligo_breathalyser",
+      "version": "link-dev:./package.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "package.json"
+      },
+      "overrides": [],
+      "dependencies": [ "ligo-breathalyzer@1.0.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "ligo-breathalyzer@1.0.0@d41d8cd9": {
+      "id": "ligo-breathalyzer@1.0.0@d41d8cd9",
+      "name": "ligo-breathalyzer",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://packages.ligolang.org/-/api/ligo-breathalyzer/-/ligo-breathalyzer-1.0.0.tgz#sha1:f2492e52d25f7921b51f6768df49782b5ff2533d"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    }
+  }
+}

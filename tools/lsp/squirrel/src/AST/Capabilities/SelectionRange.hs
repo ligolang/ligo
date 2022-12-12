@@ -5,8 +5,6 @@ module AST.Capabilities.SelectionRange
 
 import Language.LSP.Types qualified as J (Position, SelectionRange (..))
 
-import Data.Function ((&))
-import Data.Maybe (fromMaybe)
 import Duplo.Lattice (leq)
 import Duplo.Tree (spineTo)
 

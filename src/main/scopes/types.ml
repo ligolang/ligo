@@ -3,18 +3,15 @@ open Ligo_prim
 let generated_flag = "#?generated"
 
 let get_binder_name : Value_var.t -> string =
- fun v ->
-  if Value_var.is_generated v then generated_flag else Value_var.to_name_exn v
+ fun v -> if Value_var.is_generated v then generated_flag else Value_var.to_name_exn v
 
 
 let get_type_binder_name : Type_var.t -> string =
- fun v ->
-  if Type_var.is_generated v then generated_flag else Type_var.to_name_exn v
+ fun v -> if Type_var.is_generated v then generated_flag else Type_var.to_name_exn v
 
 
 let get_mod_binder_name : Module_var.t -> string =
- fun v ->
-  if Module_var.is_generated v then generated_flag else Module_var.to_name_exn v
+ fun v -> if Module_var.is_generated v then generated_flag else Module_var.to_name_exn v
 
 
 let counter = ref 0
@@ -55,6 +52,7 @@ type tdef =
   ; body_range : Location.t
   ; content : Ast_core.type_expression
   ; def_type : def_type
+  ; references : LSet.t
   }
 
 type mod_case =
@@ -119,58 +117,43 @@ let get_def_type = function
   | Module m -> m.def_type
 
 
-let make_v_def
-    : string -> type_case -> def_type -> Location.t -> Location.t -> def
-  =
+let make_v_def : string -> type_case -> def_type -> Location.t -> Location.t -> def =
  fun name t def_type range body_range ->
   let uid = make_def_id name in
-  Variable
-    { name; range; body_range; t; uid; references = LSet.empty; def_type }
+  Variable { name; range; body_range; t; uid; references = LSet.empty; def_type }
 
 
-let make_t_def
-    : string -> def_type -> Location.t -> Ast_core.type_expression -> def
-  =
+let make_t_def : string -> def_type -> Location.t -> Ast_core.type_expression -> def =
  fun name def_type loc te ->
   let uid = make_def_id name in
   Type
-    { name; range = loc; body_range = te.location; uid; content = te; def_type }
+    { name
+    ; range = loc
+    ; body_range = te.location
+    ; uid
+    ; content = te
+    ; def_type
+    ; references = LSet.empty
+    }
 
 
 let make_m_def
-    :  range:Location.t -> body_range:Location.t -> string -> def_type
-    -> def list -> def
+    : range:Location.t -> body_range:Location.t -> string -> def_type -> def list -> def
   =
  fun ~range ~body_range name def_type members ->
   let uid = make_def_id name in
   let mod_case = Def members in
-  Module
-    { name
-    ; range
-    ; body_range
-    ; mod_case
-    ; uid
-    ; references = LSet.empty
-    ; def_type
-    }
+  Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
 
 
 let make_m_alias_def
-    :  range:Location.t -> body_range:Location.t -> string -> def_type
-    -> string list -> def
+    :  range:Location.t -> body_range:Location.t -> string -> def_type -> string list
+    -> def
   =
  fun ~range ~body_range name def_type alias ->
   let uid = make_def_id name in
   let mod_case = Alias alias in
-  Module
-    { name
-    ; range
-    ; body_range
-    ; mod_case
-    ; uid
-    ; references = LSet.empty
-    ; def_type
-    }
+  Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
 
 
 let rec filter_local_defs : def list -> def list =
@@ -204,8 +187,7 @@ let merge_same_scopes : scopes -> scopes =
         List.partition_tf scopes ~f:(fun (_, s) -> List.equal def_equal s scope)
       in
       let merged_scope_loc =
-        List.fold_left same ~init:loc ~f:(fun loc (loc', _) ->
-            Location.cover loc loc')
+        List.fold_left same ~init:loc ~f:(fun loc (loc', _) -> Location.cover loc loc')
       in
       let merged_scope = merged_scope_loc, scope in
       aux different (merged_scope :: acc)

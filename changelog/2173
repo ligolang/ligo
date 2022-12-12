@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nFix a bug where functional value couldn't be decompiled in the testing framework\\n\\n"
+merge_request: '2173'
+title: 'testing framework: fixing decompile_value'
+type: fixed
+            

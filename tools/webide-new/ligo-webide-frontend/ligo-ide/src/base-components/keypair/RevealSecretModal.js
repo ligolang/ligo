@@ -41,7 +41,7 @@ export default class RevealSecretModal extends PureComponent {
         </div>
         <div className="row align-items-center">
           <div className="col-2">
-            <Badge pill color="success" className="ml-1">
+            <Badge pill color="warning" className="ml-1">
               {secretName}
             </Badge>
           </div>

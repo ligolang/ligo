@@ -9,8 +9,8 @@ module Name = struct
   let operators                 = "operators"
   let semicolon                 = "semicolon"
   let comma                     = "comma"
-  let identifier                = "identifier"
-  let identifier_constructor    = "identifierconstructor"
+  let lowercase_identifier      = "lowercaseidentifier"
+  let uppercase_identifier      = "uppercaseidentifier"
   let module_access             = "moduleaccess "
   let module_alias              = "modulealias"
   let module_declaration        = "moduledeclaration"
@@ -21,6 +21,7 @@ module Name = struct
   let object_property_string    = "objectpropertystring"
   let attribute                 = "attribute"
   (* Types *)
+  let type_binder               = "typebinder"
   let type_definition           = "typedefinition"
   let type_annotation           = "typeannotation"
   let type_annotation_field     = "typeannotationfield"
@@ -29,7 +30,6 @@ module Name = struct
   let type_generic_binder       = "typegenericbinder"
   let type_parentheses          = "typeparentheses"
   let type_operator             = "typeoperator"
-  let type_module               = "typemodule"
   let type_int                  = "typeint"
   let type_variant              = "typevariant"
   let type_product              = "typeproduct"
@@ -39,13 +39,14 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
-    Name.type_module;
+    Name.uppercase_identifier;
     Name.type_operator;
     Name.type_name;
     Name.type_parentheses;
     Name.type_int;
     Name.type_variant;
     Name.type_product;
+    Name.type_binder;
     "string";
   ] in
   {
@@ -144,14 +145,14 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
+      (* TODO: Name.lowercase_identifier; *)
+      Name.uppercase_identifier;
       Name.macro;
       Name.let_binding;
       Name.type_definition;
       Name.control_keywords;
       Name.numeric_literals;
       Name.operators;
-      Name.identifier_constructor;
-      Name.module_access;
       Name.module_alias;
       Name.module_declaration;
       Name.type_annotation;
@@ -208,17 +209,17 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.identifier;
+        name = Name.uppercase_identifier;
         kind = Match {
           match_name = None;
-          match_ = [(Regexp.let_binding_match2_jsligo, None)];
+          match_     = [(Regexp.identifier_constructor_match, Some Structure)];
         }
       };
       {
-        name = Name.identifier_constructor;
+        name = Name.lowercase_identifier;
         kind = Match {
           match_name = None;
-          match_     = [(Regexp.identifier_constructor_match, Some Label)]
+          match_     = [(Regexp.let_binding_match2_jsligo, Some Identifier)];
         }
       };
       {
@@ -244,11 +245,8 @@ let syntax_highlighting =
       {
         name = Name.module_declaration;
         kind = Match {
-          match_     = [
-            (Regexp.module_declaration_match1_jsligo, Some Keyword);
-            (Regexp.module_declaration_match2_jsligo, Some Structure)
-          ];
-          match_name = None
+          match_name = None;
+          match_     = [(Regexp.module_declaration_match1_jsligo, Some Keyword)];
         }
       };
       {
@@ -316,6 +314,15 @@ let syntax_highlighting =
         }
       };
       (* Types *)
+      {
+        name = Name.type_binder;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.chevron_begin, None)];
+          end_ = [(Regexp.chevron_end, None)];
+          patterns = [Name.type_name];
+        };
+      };
       {
         name = Name.type_definition;
         kind = Begin_end {
@@ -412,13 +419,6 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.type_module;
-        kind = Match {
-          match_name = Some Identifier;
-          match_ = [(Regexp.module_match1, None)];
-        }
-      };
-      {
         name = Name.type_int;
         kind = Match {
           match_name = Some Number;
@@ -446,7 +446,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.braces_begin, None)];
           end_ = [(Regexp.braces_end, None)];
-          patterns = [Name.identifier; Name.type_annotation_field; Name.comma];
+          patterns = [Name.lowercase_identifier; Name.type_annotation_field; Name.comma];
         }
       };
     ]

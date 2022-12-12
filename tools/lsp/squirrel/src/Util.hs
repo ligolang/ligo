@@ -1,6 +1,5 @@
 module Util
   ( foldMapM
-  , unconsFromEnd
   , safeIndex
   , toUri
   , toLocation
@@ -10,24 +9,19 @@ module Util
   , traverseJsonText
   , lazyBytesToText
   , textToLazyBytes
+  , (<<&>>)
 
   -- * Debugging utilities
   , validate
   ) where
 
 import Data.Aeson qualified as Aeson
-import Data.Aeson.KeyMap qualified as KM
 import Data.Aeson.Key qualified as Key
+import Data.Aeson.KeyMap qualified as KM
 import Data.Bitraversable (bitraverse)
-import Data.ByteString.Lazy (ByteString)
-import Data.Foldable (foldlM)
-import Data.Functor.Identity (Identity (..))
 import Data.Map.Internal qualified as MI
-import Data.Text (Text)
-import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TL
 import Language.LSP.Types qualified as J
-import Witherable (ordNub)
 
 import Duplo.Lattice
 import Duplo.Tree
@@ -38,14 +32,6 @@ foldMapM :: (Foldable t, Monad m, Monoid b) => (a -> m b) -> t a -> m b
 foldMapM f = foldlM folder mempty
   where
     folder !acc new = (acc <>) <$> f new
-
--- | Split into list into a pair of all but the last elements, and the last
--- element.
---
--- @unconsFromEnd [1, 2, 3] = Just ([1, 2], 3)@
-unconsFromEnd :: [a] -> Maybe ([a], a)
-unconsFromEnd [] = Nothing
-unconsFromEnd xs = Just (init xs, last xs) -- doubt we should care about two passes
 
 safeIndex :: (Eq t, Num t) => [a] -> t -> Maybe a
 safeIndex [] _ = Nothing
@@ -91,6 +77,10 @@ traverseJsonText f = \case
   b@(Aeson.Bool _) -> pure b
   Aeson.Null -> pure Aeson.Null
 
+(<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
+a <<&>> f = fmap (fmap f) a
+{-# INLINE (<<&>>) #-}
+
 -- | Throws an error if the tree contains any subtrees such that the ranges are
 -- not smaller than its parent nodes, or returns the tree unmodified, otherwise.
 --
@@ -98,7 +88,7 @@ traverseJsonText f = \case
 -- ranges.
 --
 -- Warning: Use only for debugging.
-validate :: (Functor f, Lattice a, Show a) => Cofree f a -> Cofree f a
+validate :: (Functor f, Lattice a, Show a, PrettyShow a) => Cofree f a -> Cofree f a
 validate (info :< tree) = info :< fmap (go info) tree
   where
     go info' (info'' :< tree')
@@ -106,9 +96,9 @@ validate (info :< tree) = info :< fmap (go info) tree
       | otherwise = error $ show info'' <> " ≰ " <> show info'
 
 -- | Decodes lazy @ByteString@ to strict @Text@.
-lazyBytesToText :: ByteString -> Text
-lazyBytesToText = TL.toStrict . TL.decodeUtf8
+lazyBytesToText :: LByteString -> Text
+lazyBytesToText = toText . TL.decodeUtf8
 
 -- | Encodes strict @Text@ to lazy @ByteString@.
-textToLazyBytes :: Text -> ByteString
-textToLazyBytes = TL.encodeUtf8 . TL.fromStrict
+textToLazyBytes :: Text -> LByteString
+textToLazyBytes = TL.encodeUtf8 . fromStrict

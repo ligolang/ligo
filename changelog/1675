@@ -1,5 +1,5 @@
 author: pewulfman
-description: '### Here put what you want to share with ligo users through changelog.
+description: '#### Here put what you want to share with ligo users through changelog.
   \nReplace polymorphism syntax to have explicit polymorphic type \"declaration\"'
 merge_request: '1675'
 title: Polymorphic types in jsligo and reasonligo

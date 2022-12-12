@@ -1,5 +1,5 @@
 author: er433
-description: '### New function `Test.sign`\n\nA new function `val sign : string ->
+description: '#### New function `Test.sign`\n\nA new function `val sign : string ->
   bytes -> signature` was added to sign data (represented as `bytes`) using a key
   (represented as a `string`).'
 merge_request: '1783'

@@ -2,6 +2,7 @@ module RIO
   ( module RIO.Types
   , newRioEnv
   , initializeRio
+  , shutdownRio
   , run
 
   , fetchConfig
@@ -9,20 +10,19 @@ module RIO
   ) where
 
 import Algebra.Graph.Class qualified as G (empty)
-import Control.Monad (void)
-import Control.Monad.Reader (runReaderT)
-import Data.Aeson (Value, Result (Success, Error), fromJSON)
+import Data.Aeson (Result (Error, Success), Value, fromJSON)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
-import UnliftIO.MVar (newEmptyMVar, newMVar)
 
 import AST (Standard)
 import ASTMap qualified
+import Cli qualified
 import Config (Config (..))
 import Log (LogT, i)
 import Log qualified
 import RIO.Document qualified (load)
+import RIO.Indexing (indexOptionsPath)
 import RIO.Registration qualified
 import RIO.Types (OpenDocument (..), RIO (..), RioEnv (..))
 
@@ -34,12 +34,22 @@ newRioEnv = do
   reTempFiles <- newIO
   reIndexOpts <- newEmptyMVar
   reBuildGraph <- newMVar G.empty
+  reLigo <- newIORef Nothing
   pure RioEnv {..}
 
 initializeRio :: RIO ()
 initializeRio = do
   RIO.Registration.registerDidChangeConfiguration
   RIO.Registration.registerFileWatcher
+
+  ligo <- asks reLigo
+  let getRootDir = fmap (indexOptionsPath =<<) (tryReadMVar =<< asks reIndexOpts)
+  writeIORef ligo . Just =<< Cli.startLigoDaemon getRootDir
+
+shutdownRio :: RIO ()
+shutdownRio = do
+  $Log.info "Shutting down"
+  Cli.cleanupLigoDaemon
 
   -- A note on configuration initialization: If the client decides to send the
   -- configuration on initialization, then the lsp library will call
@@ -69,14 +79,23 @@ fetchConfig =
    in void $ S.sendRequest J.SWorkspaceConfiguration params
         $ \case
             Right (J.List [value]) -> setConfigFromJSON value
-            err -> $(Log.warning) [i|Client did not provide config, instead got: #{err}|]
+            err -> $Log.warning [i|Client did not provide config, instead got: #{err}|]
 
--- Parse a Config from a JSON object and set it as the configuration on the server.
+-- | Parse a @Config@ from a JSON object and set it as the configuration on the
+-- server. This also restarts the LIGO daemon if the path to LIGO has changed.
 setConfigFromJSON :: Value -> RIO ()
 setConfigFromJSON value =
   case fromJSON value of
-    Success c -> S.setConfig c
-    Error err -> $(Log.warning) [i|Could not parse config #{err}|]
+    Success newConfig -> do
+      $Log.debug [i|Got new config: #{newConfig}|]
+      oldConfig <- S.getConfig
+      S.setConfig newConfig
+
+      -- Path to LIGO changed; daemon must be restarted.
+      unless (_cLigoBinaryPath oldConfig == _cLigoBinaryPath newConfig) do
+        $Log.debug [i|Restarting LIGO daemon with #{_cLigoBinaryPath newConfig}|]
+        Cli.cleanupLigoDaemon
+    Error err -> $Log.warning [i|Could not parse config #{err}|]
 
 run :: (S.LanguageContextEnv Config, RioEnv) -> RIO a -> LogT IO a
 run (lcEnv, env) (RIO action) = S.runLspT lcEnv $ runReaderT action env

@@ -4,12 +4,14 @@ module AST.Parser.Reasonligo
   ( recognise
   ) where
 
+import Prelude hiding (Alt)
+
 import AST.Skeleton
 
 import Duplo.Tree
 
-import ParseTree
 import Parser
+import ParseTree
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -39,7 +41,7 @@ recognise (SomeRawTree dialect rawTree)
         "record_punning"    -> Record     <$> fields "assignment"
         "tuple"             -> Tuple      <$> fields "item"
         "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
-        "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
+        "lambda"            -> Lambda     <$> fields "argument"    <*> fields   "type_name" <*> fieldOpt "type" <*> field "body"
         "code_inj"          -> CodeInj    <$> field  "lang"        <*> field    "code"
         "let_in"            -> Let        <$> field  "declaration" <*> field    "body"
         "paren_expr"        -> Paren      <$> field  "expr"
@@ -152,7 +154,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
-        "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
+        "let_decl"  -> BConst     <$> field "binding"   <*> pure [] <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl" -> BTypeDecl  <$> field "type_name" <*> fieldOpt "params"  <*> field "type_value"
         "p_include" -> BInclude   <$> field "filename"
         "p_import"  -> BImport    <$> field "filename" <*> field "alias"
@@ -161,10 +163,10 @@ recognise (SomeRawTree dialect rawTree)
         "module_alias" -> BModuleAlias <$> field "moduleName" <*> fields "module"
         _           -> fallthrough
 
-    -- TypeParams
+    -- QuotedTypeParams
   , Descent do
       boilerplate \case
-        "type_params" -> TypeParams <$> fields "param"
+        "type_params" -> QuotedTypeParams <$> fields "param"
         _             -> fallthrough
 
     -- Verbatim
@@ -201,7 +203,7 @@ recognise (SomeRawTree dialect rawTree)
         "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
         "record_type"      -> TRecord  <$> fields "field"
         "tuple_type"       -> TProduct <$> fields "element"
-        "sum_type"         -> TSum     <$> fields "variant"
+        "sum_type"         -> TSum     <$> fields1 "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable <$> field "name"
         _                  -> fallthrough

@@ -1,0 +1,5 @@
+author: rinderkn
+description: Fixed the tokenisation of linemarkers
+merge_request: '2092'
+title: Fixed the tokenisation of linemarkers
+type: fixed

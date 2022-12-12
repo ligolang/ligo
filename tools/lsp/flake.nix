@@ -65,13 +65,13 @@
         # also update the main functions of the respective tests.
         integration-test = squirrel.checks.integration-test.overrideAttrs (oldAttrs: {
           # 'ligo' binary that is used in these tests need ca-certificates in runtime
-          NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
           buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
         });
 
         lsp-handlers-test = squirrel.checks.lsp-handlers-test.overrideAttrs (oldAttrs: {
           # 'ligo' binary that is used in these tests need ca-certificates in runtime
-          NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
           buildInputs = [ ligo-bin self.packages.x86_64-linux.squirrel-static ] ++ oldAttrs.buildInputs;
         });
 
@@ -168,9 +168,15 @@
         defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only
         legacyPackages = pkgs;
-        devShell = pkgs.mkShell rec {
-          buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
+        devShells = {
+          default = pkgs.mkShell rec {
+            buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
+          };
+          ci = pkgs.mkShell {
+            buildInputs = [ pkgs.stylish-haskell pkgs.gnumake ];
+          };
         };
+
       }) // rec {
 
         lsp-docker-image-default = lsp-docker-image {};

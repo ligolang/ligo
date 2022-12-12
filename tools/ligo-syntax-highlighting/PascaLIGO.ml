@@ -10,12 +10,13 @@ module Name = struct
   let semicolon              = "semicolon"
   let of_keyword             = "ofkeyword"
   let is_keyword             = "iskeyword"
-  let module_                = "module"
-  let identifier             = "identifier"
-  let identifier_constructor = "identifierconstructor"
+  let lowercase_identifier   = "lowercaseidentifier"
+  let uppercase_identifier   = "uppercaseidentifier"
+  let module_declaration     = "moduledeclaration"
   let const_or_var           = "constorvar"
   let numeric_literals       = "numericliterals"
   (* Types *)
+  let type_binder            = "typebinder"
   let type_definition        = "typedefinition"
   let type_annotation        = "typeannotation"
   let type_annotation_field  = "typeannotationfield"
@@ -30,10 +31,9 @@ end
 let syntax_highlighting = 
   let open Core in
   let type_core_patterns = [
-    Name.type_module;
+    Name.uppercase_identifier;
     (* Sum type *)
     Name.of_keyword;
-    Name.identifier_constructor;
 
     Name.type_product;
     Name.type_operator;
@@ -136,14 +136,16 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
+      (* TODO: Name.lowercase_identifier; *)
+      Name.type_binder;
+      Name.uppercase_identifier;
       Name.attribute;
       Name.macro;
       Name.control_keywords;
+      Name.module_declaration;
       Name.function_;
       Name.operators;
       Name.type_definition;
-      Name.module_;
-      Name.identifier_constructor;
       Name.const_or_var;
       Name.numeric_literals;
       Name.type_annotation;
@@ -156,6 +158,13 @@ let syntax_highlighting =
         kind = Match {
           match_name = Some Conditional;
           match_ = [(Regexp.control_keywords_match_ligo, None)]
+        }
+      };
+      {
+        name = Name.module_declaration;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.module_keyword_match, Some Keyword)];
         }
       };
       {
@@ -198,27 +207,17 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.module_;
+        name = Name.uppercase_identifier;
         kind = Match {
-          match_     = [
-            (Regexp.module_match1, Some Structure);
-            (Regexp.module_match2, Some Identifier)
-          ];
-          match_name = None
+          match_name = None;
+          match_     = [(Regexp.identifier_constructor_match, Some Structure)];
         }
       };
       {
-        name = Name.identifier;
+        name = Name.lowercase_identifier;
         kind = Match {
           match_name = None;
-          match_ = [(Regexp.let_binding_match2_ligo, None)];
-        }
-      };
-      {
-        name = Name.identifier_constructor;
-        kind = Match {
-          match_name = None;
-          match_     = [(Regexp.identifier_constructor_match, Some Label)]
+          match_     = [(Regexp.identifier_match, Some Identifier)];
         }
       };
       {
@@ -229,6 +228,28 @@ let syntax_highlighting =
         }
       };
       (* Types *)
+      {
+        name = Name.type_binder;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.chevron_begin, None);
+            (*
+              FIXME: Breaks with type binders spanning multiple lines and
+              comments.
+                Until patterns are supported, it's very difficult to
+              disambiguate type params and less than/greater than expressions!
+              So we use an approximate solution for now.
+                To fix this, add support for patterns, make regions out of
+              `const`/`let/`function` declarations (and `function` expressions)
+              and expect a type_binder right after a pattern.
+            *)
+            (Regexp.type_binder_positive_lookahead_ligo, None);
+          ];
+          end_ = [(Regexp.chevron_end, None)];
+          patterns = [Name.type_name; Name.type_name];
+        };
+      };
       {
         name = Name.type_definition;
         kind = Begin_end {
@@ -268,7 +289,7 @@ let syntax_highlighting =
             (Regexp.brackets_begin, None);
           ];
           end_ = [(Regexp.brackets_end, None)];
-          patterns = [Name.identifier; Name.type_annotation_field; Name.semicolon];
+          patterns = [Name.lowercase_identifier; Name.type_annotation_field; Name.semicolon];
         }
       };
       {
@@ -292,13 +313,6 @@ let syntax_highlighting =
           begin_ = [(Regexp.parentheses_begin, None)];
           end_ = [(Regexp.parentheses_end, None)];
           patterns = type_core_patterns;
-        }
-      };
-      {
-        name = Name.type_module;
-        kind = Match {
-          match_name = Some Identifier;
-          match_ = [(Regexp.module_match1, None)];
         }
       };
       {

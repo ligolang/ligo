@@ -1,0 +1,13 @@
+author: er433
+description: \nThe comparison functions (`<`, `<=`, etc.) now can work with variant
+  types.\n\n#### Example\n\nGiven the file `test_compare.mligo`:\n\n```\ntype
+  c = [@layout:comb] | B of int | A of string\ntype cl = c list\n\nlet test_cmp_list
+  = Test.assert ([A \"hello\" ; A \"bye\"] > [A \"hello\" ; B 42])\n\n```\n\n\n##### Before
+  this change\n\n\n```\n\n$ ligo run test test_compare.mligo\nFile \"test_compare.mligo\",
+  line 4, characters 33-75:\n 3 | \n 4 | let test_cmp_list = Test.assert ([A \"hello\"
+  ; A \"bye\"] > [A \"hello\" ; B 42])\n\n\"Not comparable\"\n\n```\n\n\n##### After this
+  change\n\n\n```\n\n$ ligo run test test_compare.mligo \nEverything at the top-level
+  was executed. \n- test_cmp_list exited with value ().\n\n```\n\n\n
+merge_request: '2123'
+title: 'Testing framework: extend comparison'
+type: added

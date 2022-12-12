@@ -14,6 +14,8 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoGetContractMetadataRequestArguments (..)
   , LigoValidateValueRequest (..)
   , LigoValidateValueRequestArguments (..)
+  , LigoValidateConfigRequest (..)
+  , LigoValidateConfigRequestArguments (..)
   , LigoSpecificRequest (..)
 
   , LigoInitializeLoggerResponse (..)
@@ -23,6 +25,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , ContractMetadata (..)
   , LigoGetContractMetadataResponse (..)
   , LigoValidateValueResponse (..)
+  , LigoValidateConfigResponse (..)
   , LigoSpecificResponse (..)
   ) where
 
@@ -143,12 +146,29 @@ data LigoValidateValueRequestArguments = LigoValidateValueRequestArguments
     -- ^ Value to check.
   , categoryLigoValidateValueRequestArguments :: String
     -- ^ Category of the value (e.g. @parameter@).
-  , valueTypeLigoValidateValueRequestArguments :: String
-    -- ^ Type of value (@LIGO@ or @Michelson@)
+  , valueLangLigoValidateValueRequestArguments :: String
+    -- ^ Language of value (@LIGO@ or @Michelson@)
   , pickedMichelsonEntrypointLigoValidateValueRequestArguments :: Maybe String
     -- ^ Special michelson entrypoint that will be used.
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoValidateValueRequestArguments)
+
+data LigoValidateConfigRequest = LigoValidateConfigRequest
+  { seqLigoValidateConfigRequest :: Int
+  , typeLigoValidateConfigRequest :: String
+  , commandLigoValidateConfigRequest :: String
+  , argumentsLigoValidateConfigRequest :: LigoValidateConfigRequestArguments
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoValidateConfigRequest)
+
+data LigoValidateConfigRequestArguments = LigoValidateConfigRequestArguments
+  { michelsonEntrypointLigoValidateConfigRequestArguments :: Maybe String
+  , parameterLigoValidateConfigRequestArguments :: String
+  , parameterLangLigoValidateConfigRequestArguments :: String
+  , storageLigoValidateConfigRequestArguments :: String
+  , storageLangLigoValidateConfigRequestArguments :: String
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoValidateConfigRequestArguments)
 
 data LigoSpecificRequest
   = InitializeLoggerRequest LigoInitializeLoggerRequest
@@ -157,6 +177,7 @@ data LigoSpecificRequest
   | ValidateEntrypointRequest LigoValidateEntrypointRequest
   | GetContractMetadataRequest LigoGetContractMetadataRequest
   | ValidateValueRequest LigoValidateValueRequest
+  | ValidateConfigRequest LigoValidateConfigRequest
   deriving stock (Eq, Show, Generic)
   deriving Buildable via (GenericBuildable LigoSpecificRequest)
 
@@ -217,6 +238,13 @@ data LigoValidateValueResponse = LigoValidateValueResponse
   } deriving stock (Show, Eq, Generic)
     deriving Buildable via (GenericBuildable LigoValidateValueResponse)
 
+data LigoValidateConfigResponse = LigoValidateConfigResponse
+  { seqLigoValidateConfigResponse :: Int
+  , request_seqLigoValidateConfigResponse :: Int
+  , successLigoValidateConfigResponse :: Bool
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoValidateConfigResponse)
+
 data LigoSpecificResponse
   = InitializeLoggerResponse LigoInitializeLoggerResponse
   | SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
@@ -224,6 +252,7 @@ data LigoSpecificResponse
   | ValidateEntrypointResponse LigoValidateEntrypointResponse
   | GetContractMetadataResponse LigoGetContractMetadataResponse
   | ValidateValueResponse LigoValidateValueResponse
+  | ValidateConfigResponse LigoValidateConfigResponse
   deriving stock (Eq, Show, Generic)
   deriving Buildable via (GenericBuildable LigoSpecificResponse)
 

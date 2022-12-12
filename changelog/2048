@@ -1,0 +1,7 @@
+author: tomjack
+description: '#### An empty annot attribute (`[@annot:]`) on record fields and variant
+  cases now means that there will be no annot at all. Previously, it was ignored,
+  and the field/case name would be used as usual.'
+merge_request: '2048'
+title: 'Make [@annot:] mean no annot'
+type: breaking

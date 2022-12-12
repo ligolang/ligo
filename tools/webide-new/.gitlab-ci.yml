@@ -1,0 +1,53 @@
+webide-backend:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  script:
+    - nix build ./tools/webide-new#packages.x86_64-linux.backend
+
+webide-frontend:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  script:
+    - nix build ./tools/webide-new#packages.x86_64-linux.frontend
+
+
+webide-backend-checks:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  # webide backend tests need docker
+  tags: [nix-with-docker]
+  script:
+    - cd ./tools/webide-new
+    - nix build .#packages.x86_64-linux.ligo-bin --out-link ligo
+    - nix build .#packages.x86_64-linux.tezos-client --out-link tezos-client
+    - export LIGO_PATH=$PWD/ligo/bin/ligo
+    - export OCTEZ_CLIENT_PATH=$PWD/tezos-client/bin/octez-client
+    - export DOCKER_LIGO_VERSION=0.54.1
+    # These tests need docker, so they cannot be easily run as a flake check :(
+    - nix build .#tests.x86_64-linux.ligo-webide-backend-test
+    - cd ligo-webide-backend && ../result/bin/ligo-webide-backend-test
+
+webide-frontend-checks:
+  stage: webide
+  only: [ merge_requests ]
+  needs: [ print-nix-version ]
+  script:
+    - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-tscompile
+    - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-tslint
+    - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-openapi
+
+
+webide-deploy:
+  stage: webide
+  only: [ tooling ]
+  needs: [ print-nix-version ]
+  # Should we make this automatical? Or perhaps deploy on some other branch changes
+  when: manual
+  script:
+    - eval "$(ssh-agent -s)"
+    - echo "$WEBIDE_DEPLOYMENT_KEY" | base64 --decode | env SSH_ASKPASS="$(command -v false)" ssh-add -
+    - nix develop ./tools/webide-new -c deploy ./tools/webide-new#webide --ssh-user deploy --skip-checks
+    - kill "$SSH_AGENT_PID"

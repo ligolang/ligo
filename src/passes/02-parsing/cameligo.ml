@@ -9,8 +9,8 @@ module Trace = Simple_utils.Trace
 
 module Config      = Preprocessing_cameligo.Config
 module Token       = Lexing_cameligo.Token
-module UnitPasses  = Lexing_cameligo_self_units.Self
-module TokenPasses = Lexing_cameligo_self_tokens.Self
+module UnitPasses  = Lx_ml_self_units.Self
+module TokenPasses = Lx_ml_self_tokens.Self
 module ParErr      = Parsing_cameligo.ParErr
 module Parser      = Parsing_cameligo.Parser
 module Pretty      = Parsing_cameligo.Pretty
@@ -37,16 +37,16 @@ include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
 type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-let pretty_print_file ~raise buffer file_path =
-  parse_file ~raise buffer file_path |> pretty_print
+let pretty_print_file ?preprocess ~raise buffer file_path =
+  parse_file ?preprocess ~raise buffer file_path |> pretty_print
 
-let pretty_print_cst ~raise buffer file_path =
+let pretty_print_cst ?preprocess ~raise buffer file_path =
   let module PreprocParams =
     Preprocessor.CLI.MakeDefault (Config) in
   let module LexerParams =
     LexerLib.CLI.MakeDefault (PreprocParams) in
   let module Options = LexerParams.Options in
-  let tree   = parse_file ~raise buffer file_path in
+  let tree   = parse_file ?preprocess ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state  = Tree.mk_state
                  ~buffer

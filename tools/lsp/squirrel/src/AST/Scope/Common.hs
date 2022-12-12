@@ -3,10 +3,10 @@
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module AST.Scope.Common
-  ( MarkerInfo (..)
-  , ParsedContract (..)
+  ( ParsedContract (..)
   , FindFilepath (..)
   , HasScopeForest (..)
+  , Namespace (..)
   , Level (..)
   , Info'
   , ScopeForest (..)
@@ -39,10 +39,11 @@ module AST.Scope.Common
   , mergeScopeForest
   , withScopeForest
   , lookupEnv
-  , spine
   , addScopes
   , lookupContract
   ) where
+
+import Prelude hiding (Element, Product)
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G (edges, gmap, overlay, vertices)
@@ -50,42 +51,32 @@ import Algebra.Graph.Class (Graph)
 import Algebra.Graph.Export qualified as G (export, literal, render)
 import Algebra.Graph.ToGraph (ToGraph)
 import Algebra.Graph.ToGraph qualified as G
-import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
-import Control.Lens.Operators ((&), (%~))
-import Control.Monad.Reader
 import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.DList (DList, snoc)
-import Data.Foldable (toList)
-import Data.Function (on)
-import Data.Functor.Identity (runIdentity)
-import Data.List (sortOn)
-import Data.Map (Map)
+import Data.DList qualified as DList (toList)
+import Data.Foldable qualified as Foldable (toList)
 import Data.Map qualified as Map
-import Data.Monoid (First (..))
-import Data.Set (Set)
 import Data.Set qualified as Set
-import Data.Text (Text)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
-import UnliftIO.Exception (Exception (..), throwIO)
-import UnliftIO.MVar (modifyMVar, newMVar)
-import Witherable (ordNub)
+import UnliftIO.Exception (throwIO)
+import UnliftIO.MVar (modifyMVar)
 
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics(..))
+import AST.Scope.ScopedDecl
+  (DeclarationSpecifics (..), Namespace (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..))
 import AST.Skeleton
-  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, TypeName (..)
-  , TypeVariableName (..), withNestedLIGO
-  )
+  (Ctor, LIGO, ModuleName, Name, NameDecl, RawLigoList, SomeLIGO, TypeName, TypeVariableName,
+  withNestedLIGO)
 import Cli.Types
 import Diagnostic (Message)
 import Log qualified
+import Parser (Info, ParsedInfo)
 import ParseTree
-import Parser (Info, LineMarker, ParsedInfo)
 import Product
 import Progress (Progress (..), ProgressCallback, (%))
 import Range
@@ -94,12 +85,6 @@ import Util.Graph (forAMConcurrently, traverseAMConcurrently)
 
 -- TODO: Many of these datatypes don't make sense to be defined here. Consider
 -- moving into different or new modules.
-data MarkerInfo = MarkerInfo
-  { miMarker    :: LineMarker
-  , miLastRange :: Range
-  , miDepth     :: Int
-  } deriving stock (Show)
-
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
   , _cTree :: info -- ^ The payload of the contract.
@@ -162,14 +147,20 @@ class HasLigoClient m => HasScopeForest impl m where
     -- ^ Inclusion graph of the parsed contracts.
     -> m (FindFilepath ScopeForest)
 
-data Level = TermLevel | TypeLevel
-  deriving stock (Eq, Show)
-  deriving Pretty via ShowPP Level
+data Level = TermLevel | TypeLevel | ModuleLevel
+  deriving stock (Eq, Generic, Ord, Show)
+  deriving anyclass (Hashable)
+
+instance Pretty Level where
+  pp TermLevel   = "term"
+  pp TypeLevel   = "type"
+  pp ModuleLevel = "module"
 
 ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
   (TermLevel, ValueSpec{}) -> True
   (TypeLevel, TypeSpec{}) -> True
+  (ModuleLevel, ModuleSpec{}) -> True
   _ -> False
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
@@ -251,7 +242,7 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
     descend :: [ScopeTree] -> [ScopeTree] -> [ScopeTree]
     descend xs ys = concat $ zipWithStrategy fst (go `on` snd) (pure . snd) (sortMap xs) (sortMap ys)
       where
-        sortMap = sortOn fst . map (scopeRange &&& id)
+        sortMap = sortWith fst . map (scopeRange &&& id)
 
     -- Merges the references of two 'ScopedDecl's in a right-biased fashion.
     -- In the current implementation, the compiler's scopes will be on the right
@@ -282,7 +273,7 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       & Set.fromList
 
     mapFromFoldable :: (Foldable f, Ord k) => (a -> k) -> f a -> Map k a
-    mapFromFoldable f = Map.fromList . map (f &&& id) . toList
+    mapFromFoldable f = Map.fromList . map (f &&& id) . Foldable.toList
 
 withScopeForest
   :: (  ([ScopeTree], Map DeclRef ScopedDecl)
@@ -297,25 +288,27 @@ instance Pretty ScopeForest where
       go = sexpr "list" . map go'
       go' :: ScopeTree -> Doc
       go' ((decls, r) :< list') =
-        sexpr "scope" (pp r : map pp (Set.toList decls) ++ [go list' | not $ null list'])
+        sexpr "scope" (pp r : map pp (toList decls) ++ [go list' | not $ null list'])
 
-      decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
+      decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . toPairs
 
-lookupEnv :: Text -> Scope -> Maybe ScopedDecl
-lookupEnv name = getFirst . foldMap \decl ->
+lookupEnv :: Text -> Range -> Scope -> Maybe ScopedDecl
+lookupEnv name pos = getFirst . foldMap \decl@ScopedDecl{..} ->
   First do
-    guard (_sdName decl == name)
+    guard (_sdName == name && (_sdOrigin == pos || pos `elem` _sdRefs))
     return decl
 
+-- | return scoped declarations related to the range
 envAtPoint :: Range -> ScopeForest -> Scope
-envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= toList . spine r >>= Set.toList
+envAtPoint pos (ScopeForest sf ds) = do
+  let sp = sf >>= DList.toList . spine pos >>= toList
   map (ds Map.!) sp
-
-spine :: Range -> ScopeTree -> DList (Set DeclRef)
-spine r ((decls, r') :< trees)
-  | leq r r' = foldMap (spine r) trees `snoc` decls
-  | otherwise = mempty
+  where
+    -- find all nodes that spans the range and take their references
+    spine :: Range -> ScopeTree -> DList (Set DeclRef)
+    spine r ((decls, r') :< trees)
+      | leq r r' = foldMap (spine r) trees `snoc` decls
+      | otherwise = mempty
 
 addLocalScopes
   :: SomeLIGO ParsedInfo
@@ -328,28 +321,36 @@ addLocalScopes tree forest =
       fs' <- traverse f fs
       let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
+
+    insertScope
+      :: (Element f RawLigoList, Pretty (f (LIGO xs)))
+      => Level
+      -> Product ParsedInfo
+      -> f (LIGO xs)
+      -> Identity (Product Info', f (LIGO xs))
+    insertScope level i name = do
+      let env = envAtPoint (getPreRange i) forest
+      -- TODO: This is temporary solution developed in LIGO-700, and should be fixed in LIGO-830
+      let declaredScope = Map.lookup (DeclRef (ppToText name) (getRange i)) (sfDecls forest)
+      return ((maybeToList declaredScope <> env) :> Just level :> i, name)
+
+    insertTerm, insertType, insertModule
+      :: (Element f RawLigoList, Pretty (f (LIGO xs)))
+      => Product ParsedInfo
+      -> f (LIGO xs)
+      -> Identity (Product Info', f (LIGO xs))
+    insertTerm   = insertScope TermLevel
+    insertType   = insertScope TypeLevel
+    insertModule = insertScope ModuleLevel
   in
   runIdentity $ withNestedLIGO tree $
     descent' @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
-    [ Descent \i (Name t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, Name t)
-
-    , Descent \i (NameDecl t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, NameDecl t)
-
-    , Descent \i (Ctor t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TermLevel :> i, Ctor t)
-
-    , Descent \i (TypeName t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TypeLevel :> i, TypeName t)
-
-    , Descent \i (TypeVariableName t) -> do
-        let env = envAtPoint (getPreRange i) forest
-        return (env :> Just TypeLevel :> i, TypeVariableName t)
+    [ Descent @Name insertTerm
+    , Descent @NameDecl insertTerm
+    , Descent @Ctor insertTerm
+    , Descent @TypeName insertType
+    , Descent @TypeVariableName insertType
+    , Descent @ModuleName insertModule
     ]
 
 addScopes

@@ -64,8 +64,7 @@ export default class CodeEditorCollection extends PureComponent {
   };
 
   // NOTE: there is no pathInProject props return in the local project, while will return it in remote project
-  // see: packages/workspace/src/ProjectManager/LocalProjectManager.js
-  // see: packages/workspace/src/ProjectManager/RemoteProjectManager.js
+  // see: packages/workspace/src/ProjectManager/ProjectManager.ts
   copyPath = ({ pathInProject, path }) => {
     const filePath = pathInProject || path;
     const clipboard = new ClipBoardService();
@@ -241,6 +240,7 @@ export default class CodeEditorCollection extends PureComponent {
             onChange={this.setCurrentTabUnsaved}
             onCommand={this.onCommand}
             onChangeDecorations={this.props.onChangeDecorations}
+            addLanguagesCallback={this.props.addLanguagesCallback}
           />
         </Tabs>
       </div>

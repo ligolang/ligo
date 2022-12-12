@@ -3,8 +3,7 @@
  (public_name ligo.predefined)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils ast_imperative ast_sugar ast_core
-            ast_typed mini_c environment
-            stacking ligo_coq_ocaml)
+ (libraries simple-utils tezos-utils ast_imperative ast_core ast_typed mini_c
+   environment stacking ligo_coq_ocaml)
  (flags
   (:standard -open Core)))

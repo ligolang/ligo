@@ -8,14 +8,13 @@
     { "include": "#string" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
+    { "include": "#uppercaseidentifier" },
     { "include": "#macro" },
     { "include": "#letbinding" },
     { "include": "#typedefinition" },
     { "include": "#controlkeywords" },
     { "include": "#numericliterals" },
     { "include": "#operators" },
-    { "include": "#identifierconstructor" },
-    { "include": "#moduleaccess " },
     { "include": "#modulealias" },
     { "include": "#moduledeclaration" },
     { "include": "#typeannotation" },
@@ -83,34 +82,31 @@
     },
     "semicolon": { "match": "(;)", "captures": {} },
     "comma": { "match": "(,)", "captures": {} },
-    "identifier": {
-      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
-      "captures": {}
-    },
-    "identifierconstructor": {
+    "uppercaseidentifier": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
-      "captures": { "1": { "name": "variable.other.enummember.jsligo" } }
+      "captures": { "1": { "name": "entity.name.type.jsligo" } }
+    },
+    "lowercaseidentifier": {
+      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
+      "captures": { "1": { "name": "variable.jsligo" } }
     },
     "moduleaccess ": {
       "match": "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.\\s*\\b([a-zA-Z0-9_$]*)\\b",
       "captures": {
-        "2": { "name": "storage.var.jsligo" },
-        "1": { "name": "storage.class.jsligo" }
+        "2": { "name": "variable.jsligo" },
+        "1": { "name": "entity.name.type.jsligo" }
       }
     },
     "modulealias": {
       "match": "\\b(import)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": {
-        "2": { "name": "storage.class.jsligo" },
+        "2": { "name": "entity.name.type.jsligo" },
         "1": { "name": "keyword.control.jsligo" }
       }
     },
     "moduledeclaration": {
-      "match": "\\b(namespace)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)\\b",
-      "captures": {
-        "2": { "name": "storage.class.jsligo" },
-        "1": { "name": "keyword.other.jsligo" }
-      }
+      "match": "\\b(namespace)\\b",
+      "captures": { "1": { "name": "keyword.other.jsligo" } }
     },
     "objectorblock": {
       "begin": "({)",
@@ -181,6 +177,17 @@
         { "include": "$self" }
       ]
     },
+    "typebinder": {
+      "begin": "(<)",
+      "end": "(>)",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typename" }
+      ]
+    },
     "typedefinition": {
       "begin": "\\b(type)\\b",
       "end": "(?=;|}|\\b(else|default|case)\\b)",
@@ -189,13 +196,14 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -207,13 +215,14 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -225,13 +234,14 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -243,13 +253,14 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -290,20 +301,16 @@
         { "include": "#typefunparam" },
         { "include": "#typeannotation" },
         { "include": "#comma" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
-    },
-    "typemodule": {
-      "name": "storage.var.jsligo",
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
-      "captures": {}
     },
     "typeint": {
       "name": "constant.numeric.jsligo",
@@ -319,13 +326,14 @@
         { "include": "#line_comment" },
         { "include": "#block_comment" },
         { "include": "#comma" },
-        { "include": "#typemodule" },
+        { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
+        { "include": "#typebinder" },
         { "include": "#string" }
       ]
     },
@@ -337,7 +345,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
-        { "include": "#identifier" },
+        { "include": "#lowercaseidentifier" },
         { "include": "#typeannotationfield" },
         { "include": "#comma" }
       ]

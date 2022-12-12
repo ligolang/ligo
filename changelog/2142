@@ -1,0 +1,10 @@
+author: er433
+description: '\n#### Before change\n\n\n```\n\n$ cat monomorphisation_fail.mligo \nlet
+  f (_ : unit) s = ([], s)\n\nlet main ((p, s) : unit * unit) : operation list * unit = f p s\n$ ligo compile contract monomorphisation_fail.mligo
+  \nInternal error: Monomorphisation: cannot resolve non-variables with instantiations\n\n```\n\n###
+  After change\n\n\n```\n\n$ cat monomorphisation_fail.mligo \nlet f (_ : unit) s = ([],
+  s)\n\nlet main ((p, s) : unit * unit) : operation list * unit = f p s\n$ ligo compile contract monomorphisation_fail.mligo \nFile \"monomorphisation_fail.mligo\",
+  line 3, characters 58-63:\n 2 | \n 3 | let main ((p, s) : unit * unit = f p s\n\nCannot monomorphise the expression.\n\n```\n\n'
+merge_request: '2142'
+title: 'Monomorphisation: add a better error message'
+type: fixed

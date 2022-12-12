@@ -5,8 +5,7 @@ module Test.Capabilities.Rename
   , unit_rename_example_in_included_file
   ) where
 
-import Control.Lens hiding ((:>))
-import Data.Text (Text)
+import Data.List ((\\))
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 
@@ -18,8 +17,8 @@ import Language.LSP.Types qualified as LSP
 import Language.LSP.Types.Lens qualified as LSP
 import Test.HUnit (Assertion)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
-import Test.Common.FixedExpectations (expectationFailure, shouldBe, shouldThrow, anyException)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
+import Test.Common.FixedExpectations (anyException, expectationFailure, shouldSatisfy, shouldThrow)
 import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
@@ -43,7 +42,10 @@ testRename fp pos newName edits = do
     getRename doc pos newName
   case workspaceEdit ^. LSP.changes of
     Nothing -> expectationFailure "should be able to rename"
-    Just weMap -> weMap `shouldBe` toWorkspaceEditMap newName edits
+    Just weMap ->
+      let expected = toWorkspaceEditMap newName edits
+          isSubsetOf (LSP.List a) (LSP.List b) = null $ a \\ b
+      in weMap `shouldSatisfy` HashMap.isSubmapOfBy isSubsetOf expected
 
 toWorkspaceEditMap :: Text -> [(FilePath, [LSP.Range])] -> WorkspaceEditMap
 toWorkspaceEditMap newName = HashMap.fromList . fmap toKeyValue
@@ -56,9 +58,8 @@ testRenameFail fp pos newName = do
   workspaceEdit <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc fp
     getRename doc pos newName
-  case workspaceEdit ^. LSP.changes of
-    Just _  -> expectationFailure "should not be able to edit"
-    Nothing -> pure ()
+  whenJust (workspaceEdit ^. LSP.changes) $
+    const $ expectationFailure "should not be able to edit"
 
 unit_rename_example_fail :: Assertion
 unit_rename_example_fail = do

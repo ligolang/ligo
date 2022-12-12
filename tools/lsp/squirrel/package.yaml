@@ -1,7 +1,8 @@
 name: ligo-squirrel
 
 dependencies:
-  - base
+  - base-noprelude
+  - morley-prelude
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -13,6 +14,7 @@ default-extensions:
   - DeriveAnyClass
   - DeriveFoldable
   - DeriveFunctor
+  - DeriveGeneric
   - DeriveTraversable
   - DerivingStrategies
   - DerivingVia
@@ -108,6 +110,7 @@ library:
     - tree-sitter
     - unliftio
     - unliftio-core
+    - unliftio-pool
     - unordered-containers
     - witherable
 
@@ -122,10 +125,10 @@ executables:
       - co-log-core
       - containers
       - data-default
+      - dlist
       - duplo
       - filepath
       - focus
-      - hashable
       - katip
       - lens
       - ligo-squirrel
@@ -134,9 +137,9 @@ executables:
       - prettyprinter
       - stm
       - stm-containers
-      - text
       - unliftio
       - unliftio-core
+      - unliftio-pool
       - unordered-containers
       - witherable
 
@@ -163,7 +166,6 @@ executables:
     dependencies:
       - duplo
       - ligo-squirrel
-      - mtl
       - optparse-applicative
       - with-utf8
 
@@ -185,6 +187,7 @@ tests:
       - algebraic-graphs
       - data-default
       - directory
+      - duplo
       - filepath
       - hspec-expectations
       - HUnit
@@ -228,6 +231,7 @@ tests:
       - algebraic-graphs
       - HUnit
       - directory
+      - duplo
       - filepath
       - hspec-expectations
       - lens
@@ -262,6 +266,7 @@ tests:
     dependencies:
       - algebraic-graphs
       - directory
+      - duplo
       - filepath
       - hspec-expectations
       - HUnit
@@ -295,6 +300,7 @@ tests:
     dependencies:
       - algebraic-graphs
       - directory
+      - duplo
       - filepath
       - hspec-expectations
       - HUnit

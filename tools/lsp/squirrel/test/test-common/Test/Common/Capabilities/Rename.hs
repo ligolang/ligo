@@ -5,20 +5,19 @@ module Test.Common.Capabilities.Rename
   , renameInIncludedFile
   , renameNestedInclude
   , renameTypeVariable
+  , renameConflictingModuleName
   ) where
 
 import Control.Arrow ((***))
 import Data.HashMap.Strict qualified as HM
-import Data.List (sort)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Language.LSP.Types qualified as J
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
-import AST.Capabilities.Rename (RenameDeclarationResult (NotFound, Ok), prepareRenameDeclarationAt, renameDeclarationAt)
-import Range (Range (..), toLspRange, interval, point)
+import AST.Capabilities.Rename (prepareRenameDeclarationAt, renameDeclarationAt)
+import Range (Range (..), interval, point, toLspRange)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
@@ -53,8 +52,8 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
             (J.Position (declLine - 1) (declCol + len - 1))
 
     case renameDeclarationAt pos tree newName of
-      NotFound -> expectationFailure "Should return edits"
-      Ok results -> sortWSMap results `shouldBe` sortWSMap expected'
+      Nothing -> expectationFailure "Should return edits"
+      Just results -> sortWSMap results `shouldBe` sortWSMap expected'
   where
     len = fromIntegral $ T.length name
 
@@ -69,13 +68,11 @@ testRenameFail
 testRenameFail fp pos = do
     tree <- readContractWithScopes @impl fp
 
-    case prepareRenameDeclarationAt (uncurry point pos) tree of
-      Nothing -> pure ()
-      Just _ -> expectationFailure "Should not be able to rename"
+    whenJust (prepareRenameDeclarationAt (uncurry point pos) tree) $
+      const $ expectationFailure "Should not be able to rename"
 
-    case renameDeclarationAt (uncurry point pos) tree "<newName>" of
-      NotFound -> pure ()
-      Ok _ -> expectationFailure "Should not return edits"
+    whenJust (renameDeclarationAt (uncurry point pos) tree "<newName>") $
+      const $ expectationFailure "Should not return edits"
 
 renameFail :: forall impl. ScopeTester impl => Assertion
 renameFail = do
@@ -117,4 +114,19 @@ renameTypeVariable = do
   fp <- makeAbsolute (contractsDir </> "parametric.religo")
   testRenameOk @impl (point 1 36){_rFile = fp} "a" (point 1 36){_rFile = fp} "key"
     [ (fp, [(interval 1 36 37){_rFile = fp}, (interval 1 11 12){_rFile = fp}])
+    ]
+  testRenameOk @impl (point 3 29){_rFile = fp} "a" (point 3 15){_rFile = fp} "key"
+    [ (fp, [(interval 3 15 16){_rFile = fp}, (interval 3 29 30){_rFile = fp}])
+    ]
+
+renameConflictingModuleName :: forall impl. ScopeTester impl => Assertion
+renameConflictingModuleName = do
+  fp <- makeAbsolute (contractsDir </> "module-name-colision.pligo")
+  -- Rename the module field name:
+  testRenameOk @impl (point 10 13){_rFile = fp} "some_name" (point 6 9){_rFile = fp} "renamed"
+    [ (fp, [(interval 10 13 22){_rFile = fp}, (interval 6 9 18){_rFile = fp}])
+    ]
+  -- Rename the module as well:
+  testRenameOk @impl (point 10 9){_rFile = fp} "Top" (point 5 8){_rFile = fp} "Module"
+    [ (fp, [(interval 10 9 12){_rFile = fp}, (interval 5 8 11){_rFile = fp}])
     ]

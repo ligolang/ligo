@@ -6,4 +6,4 @@ type t =
   | CameLIGO
   | ReasonLIGO
   | JsLIGO
-  [@@deriving eq, ord]
+[@@deriving eq, ord]

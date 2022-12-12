@@ -17,7 +17,7 @@ module.exports = grammar({
     [$.ConstrName, $.ModuleName],
     [$.ConstrNameType, $.String],
     [$.FieldName, $.NameDecl],
-    [$.FieldName, $.Name]
+    [$.FieldName, $.Name],
   ],
 
   rules: {
@@ -25,9 +25,9 @@ module.exports = grammar({
       common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
     _toplevel: $ => choice(
-      seq(optional($._Expor_kwd), $.toplevel_binding),
-      seq(optional($._Expor_kwd), $.type_decl),
-      seq(optional($._Expor_kwd), $.namespace_statement),
+      withAttrs($, seq(optional($._Export_kwd), $.toplevel_binding)),
+      withAttrs($, seq(optional($._Export_kwd), $.type_decl)),
+      withAttrs($, seq(optional($._Export_kwd), $.namespace_statement)),
       $.import_statement,
       $.preprocessor
     ),
@@ -41,10 +41,16 @@ module.exports = grammar({
 
     _statement: $ => field("statement", $._base_statement),
 
+    _declaration: $ => withAttrs($,
+      choice(
+        $.let_binding,
+        $.const_binding,
+        $.type_decl,
+      )
+    ),
+
     _base_statement: $ => prec(5, choice(
-      $.let_binding,
-      $.const_binding,
-      $.type_decl,
+      $._declaration,
       $._expr_statement,
       $.return_statement,
       $.block_statement,
@@ -66,7 +72,17 @@ module.exports = grammar({
       $.list_literal,
       $.pattern_match,
       $._member_expr,
+      $.ternary_expr,
+      $.type_as_annotation,
     ),
+
+    ternary_expr: $ => prec.right(seq(
+      field("selector", $._expr),
+      '?',
+      field("then_branch", $._expr),
+      ':',
+      field("else_branch", $._expr)
+    )),
 
     list_literal: $ => seq('list', common.par($._list_elements)),
 
@@ -131,7 +147,7 @@ module.exports = grammar({
     ),
 
     list_case: $ => seq(
-      common.par(seq(field("pattern", $.list_pattern), ':', $._type_expr)),
+      common.par(seq(field("pattern", $.list_pattern), optional(seq(':', $._type_expr)))),
       '=>',
       field("expr", $._body)
     ),
@@ -155,7 +171,10 @@ module.exports = grammar({
     constr_pattern: $ => seq(
       field("constructor", $.ConstrName),
       ':',
-      common.par(optional(field("arg", $.ctor_params)))
+      choice(
+        common.par(optional(field("arg", $.ctor_params))),
+        field("arg", $._binding_pattern)
+      )
     ),
 
     _member_expr: $ => choice(
@@ -176,7 +195,6 @@ module.exports = grammar({
       $.paren_expr,
       $.module_access,
       $.tuple,
-      $.type_as_annotation,
     ),
 
     tuple: $ => common.brackets(common.sepBy(',', field("item", $._annot_expr))),
@@ -195,7 +213,7 @@ module.exports = grammar({
     module_access: $ => seq(
       common.sepBy1('.', field("path", $.ModuleName)),
       '.',
-      field("field", $.FieldName),
+      field("field", $.Name),
     ),
 
     _list_elements: $ => common.brackets(common.sepBy(',', field("element", $._list_item))),
@@ -214,7 +232,7 @@ module.exports = grammar({
         field("body", $._body),
       ),
       seq(
-        field("argument", $.Name), '=>',
+        field("argument", choice($.wildcard, $.Name)), '=>',
         field("body", $._body),
       )
     ),
@@ -230,7 +248,7 @@ module.exports = grammar({
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
-    fun_arg: $ => seq(field("argument", $._binding_pattern), ':', optional($.type_params), field("type", $._type_expr)),
+    fun_arg: $ => seq(field("argument", $._binding_pattern), optional(seq(':', optional($.type_params), field("type", $._type_expr)))),
 
     return_statement: $ => prec.right(seq('return', optional(field("expr", $._expr)))),
 
@@ -292,6 +310,7 @@ module.exports = grammar({
       $.string_type,
       $.module_access_t,
       $.record_type,
+      $.disc_union_type,
       $.app_type,
       $.tuple_type,
       $.paren_type
@@ -305,6 +324,8 @@ module.exports = grammar({
 
     record_type: $ => withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
 
+    disc_union_type: $ => common.sepBy2('|', field("variant", $.record_type)),
+
     field_decl: $ => withAttrs($, choice(
       field("field_name", $.FieldName),
       seq(field("field_name", $.FieldName), ':', field("field_type", $._type_expr))
@@ -316,45 +337,49 @@ module.exports = grammar({
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
-    toplevel_binding:  $ => withAttrs($,
+    toplevel_binding: $ =>
       seq(
         choice($._Let_kwd, $._Const_kwd),
         field("binding_pattern", $._binding_pattern),
         optional(
-          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+          seq(':', optional($._type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)
-      )
-    ),
+      ),
 
-    let_binding: $ => withAttrs($,
+    let_binding: $ =>
       seq(
         $._Let_kwd,
         field("binding_pattern", $._binding_pattern),
         optional(
-          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+          seq(':', optional($._type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)
-      )
-    ),
+      ),
 
-    const_binding: $ => withAttrs($,
+    const_binding: $ =>
       seq(
         $._Const_kwd,
         field("binding_pattern", $._binding_pattern),
         optional(
-          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+          seq(':', optional($._type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)
-      )
+      ),
+
+    type_decl: $ => seq(
+      'type',
+      field("type_name", $.TypeName),
+      optional(field("params", $.type_params)),
+      '=',
+      field("type_value", $._type_expr),
     ),
 
-    type_decl: $ => seq("type", field("type_name", $.TypeName), optional(field("params", $.type_params)), '=', field("type_value", $._type_expr)),
-
-    type_params: $ => common.chev(common.sepBy1(',', field("param", $.var_type))),
+    _type_params: $ => common.chev(common.sepBy1(',', field("param", $.var_type))),
+    type_params:  $ => $._type_params,
 
     var_type: $ => field("name", $.TypeVariableName),
 
@@ -486,7 +511,7 @@ module.exports = grammar({
     ConstrNameType: $ => /\"(\\.|[^"])+\"/,
     FieldName: $ => $._Name,
     ModuleName: $ => $._NameCapital,
-    TypeName: $ => prec(1, choice($._Name, $._NameCapital)),
+    TypeName: $ => choice($._Name, $._NameCapital),
     TypeVariableName: $ => choice($._Name, $._NameCapital),
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
@@ -515,7 +540,7 @@ module.exports = grammar({
     wildcard: $ => '_',
     _Let_kwd: $ => 'let',
     _Const_kwd: $ => 'const',
-    _Expor_kwd: $ => 'export',
+    _Export_kwd: $ => 'export',
     Else_kwd: $ => 'else',
   }
 })

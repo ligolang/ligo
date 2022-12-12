@@ -2,13 +2,11 @@ module AST.Scope.Standard
   ( Standard
   ) where
 
-import Data.Foldable (toList)
-import UnliftIO.Exception (Handler (..), catches, displayException)
+import UnliftIO.Exception (Handler (..), catches)
 
 import AST.Scope.Common
-  ( pattern FindContract, FindFilepath (..), HasScopeForest (..), MergeStrategy (..)
-  , ParsedContract (..), ScopeForest, mergeScopeForest
-  )
+  (FindFilepath (..), HasScopeForest (..), MergeStrategy (..), ParsedContract (..), ScopeForest,
+  mergeScopeForest, pattern FindContract)
 import AST.Scope.Fallback (Fallback)
 import AST.Scope.FromCompiler (FromCompiler)
 import Cli.Impl
@@ -31,12 +29,11 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
       [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) -> do
           -- catch only errors that we expect from ligo and try to use fallback parser
           pure $ LigoErrors $ fromLigoErrorToMsg <$> toList errs <> warns
+      , Handler \(e :: LigoIOException) -> do
+          $Log.err [i|#{displayException e}|]
+          pure Failure
       , Handler \(_ :: SomeLigoException) ->
           pure Failure
-      , Handler \(e :: IOError) -> do
-        -- Likely LIGO isn't installed or was not found.
-        $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
-        pure Failure
       ]
     FindFilepath fallback <- scopeContract @Fallback tempSettings contract
     let src = _cFile $ _getContract contract

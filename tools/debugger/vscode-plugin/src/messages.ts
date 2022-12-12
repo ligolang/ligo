@@ -1,6 +1,5 @@
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
-import { ContractMetadata } from './base'
-import { ValueType } from './ui'
+import { ContractMetadata, InputValueLang } from './base'
 
 // InitializeLogger //
 
@@ -68,7 +67,7 @@ export type ValidateValueCategory = "parameter" | "storage"
 export interface ValidateValueArguments {
 	value: string
 	category: ValidateValueCategory
-	valueType: ValueType
+	valueLang: InputValueLang
 	pickedMichelsonEntrypoint?: string
 }
 
@@ -94,4 +93,22 @@ export interface GetContractMetadataArguments {
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
 	contractMetadata: ContractMetadata
+}
+
+// ValidateConfig //
+
+export interface ValidateConfigArguments {
+	michelsonEntrypoint?: string
+	parameter: string
+	parameterLang: InputValueLang
+	storage: string
+	storageLang: InputValueLang
+}
+
+export interface ValidateConfigRequest extends DebugProtocol.Request {
+	command: 'validateConfig'
+	arguments: ValidateConfigArguments
+}
+
+export interface ValidateConfigResponse extends DebugProtocol.Response {
 }

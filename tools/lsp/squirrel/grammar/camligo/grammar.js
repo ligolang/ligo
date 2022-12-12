@@ -36,6 +36,10 @@ module.exports = grammar({
   externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
+  conflicts: $ => [
+    [$.fun_decl, $.var_pattern],
+  ],
+
   rules: {
     source_file: $ => repeat(field("declaration", $._declaration)),
 
@@ -58,20 +62,20 @@ module.exports = grammar({
 
     type_decl: $ => seq(
       "type",
-      optional(field("params", $._type_params)),
+      optional(field("params", $._quoted_type_params)),
       field("name", $.TypeName),
       "=",
       field("type", $._type_expr)
     ),
 
-    _type_params: $ => choice(
-      $.type_param,
-      $.type_params,
+    _quoted_type_params: $ => choice(
+      $.quoted_type_param,
+      $.quoted_type_params,
     ),
 
-    type_param: $ => field("param", $.var_type),
+    quoted_type_param: $ => field("param", $.var_type),
 
-    type_params: $ => common.par(
+    quoted_type_params: $ => common.par(
       common.sepBy1(",", field("param", $.var_type)),
     ),
 
@@ -168,12 +172,18 @@ module.exports = grammar({
         field("type", $.TypeName),
       ),
 
+    _type_params: $ => common.par(seq(
+      'type',
+      common.some(field("type_name", $.TypeVariableName)),
+    )),
+
     /// FUNCTION DECLARATION
 
     fun_decl: $ => common.withAttrs($, seq(
       "let",
       optional(field("recursive", "rec")),
       field("name", $.NameDecl),
+      optional($._type_params),
       // TODO: we treat arguments as an annotated pattern. Once we set up proper
       // argument and its type resolution, this must be changed.
       common.some(field("arg", $._irrefutable)),
@@ -191,6 +201,7 @@ module.exports = grammar({
       "let",
       optional(field("recursive", "rec")),
       field("name", $._irrefutable),
+      optional($._type_params),
       optional(seq(
         ":",
         field("type", $._type_expr)
@@ -393,7 +404,7 @@ module.exports = grammar({
       prec.right(13, mkOp($, "^")),
       prec.left(12, mkOp($, choice("=", "<>", "<", "<=", ">", ">="))),
       prec.left(11, mkOp($, "&&")),
-      prec.left(10, mkOp($, choice("or", "||"))),
+      prec.left(10, mkOp($, choice("or", "||", "|>"))),
     ),
 
     tup_expr: $ => prec.right(9, seq(
@@ -448,17 +459,20 @@ module.exports = grammar({
       ")",
     ),
 
-    // { p with a.x = b; c = d }
+    // { p with a.x = b; c = d; e }
     record_expr: $ => seq(
       "{",
       field("subject", $._path),
       "with",
-      common.sepEndBy1(";", field("field", $.record_path_assignment)),
+      common.sepEndBy1(";", field("field", choice($.record_path_assignment, $.record_capture))),
       "}"
     ),
 
+    record_capture: $ => field("accessor", $.FieldName),
+
     // a.x = b;
     // a = b;
+    // a;
     record_path_assignment: $ => seq(
       $._path,
       "=",
@@ -467,14 +481,15 @@ module.exports = grammar({
 
     _path: $ => choice($.Name, $.data_projection),
 
-    // { a = b; c = d }
+    // { a = b; c = d; e }
     record_literal: $ => seq(
       "{",
-      common.sepEndBy1(";", field("field", $.record_assignment)),
+      common.sepEndBy1(";", field("field", choice($.record_assignment, $.record_capture))),
       "}"
     ),
 
     // a = b;
+    // a;
     record_assignment: $ => seq(
       field("accessor", $.FieldName),
       "=",
@@ -495,6 +510,7 @@ module.exports = grammar({
 
     lambda_expr: $ => common.withAttrs($, seq(
       "fun",
+      optional($._type_params),
       repeat1(field("arg", $._sub_irrefutable)),
       optional(seq(
         ":",
@@ -541,7 +557,7 @@ module.exports = grammar({
     module_access: $ => seq(
       common.sepBy1('.', field("path", $.ModuleName)),
       '.',
-      field("field", $.FieldName),
+      field("field", $.Name),
     ),
 
     block_expr: $ => seq(

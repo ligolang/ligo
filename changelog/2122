@@ -1,0 +1,9 @@
+author: melwyn95
+description: \nFixes bug in `#includ`ing jsligo files when semicolon is missing
+  the last declaration of included file\n\nBefore:\n\n```\n\n$ ligo.54 run
+  test b.jsligo\nAn internal error ocurred. Please, contact the developers.\n(\"Simple_utils__Region.Different_files(\\\"b.jsligo\\\",
+  \\\"a.jsligo\\\")\").\n\n```\n\n\nAfter:\n\n```\n\n$ ligo run test b.jsligo\nEverything
+  at the top-level was executed.\n- test exited with value ().\n\n```\n\n\n
+merge_request: '2122'
+title: Fix `#include` for jsligo due to missing case in ASI
+type: fixed

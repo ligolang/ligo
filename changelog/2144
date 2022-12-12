@@ -1,0 +1,10 @@
+author: melwyn95
+description: '\n#### Before change\n\n\n```\n\n$ ligo.55 compile contract x.ligo \n\nInvalid
+  type(s)\nCannot unify int with ( list (operation) *
+  int ).\n\n\n```\n\n\n#### After change\n\n\n```\n\n$ ligo compile contract x.mligo \nFile \"x.ligo\",
+  line 3, characters 71-72:\n 2 | \n 3 | function updateAdmin(const _new_admin: address;
+  var s: int): return is s\n 4 | \n\nInvalid type(s)\nCannot unify int with ( list
+  (operation) * int ).\n\n```\n\n'
+merge_request: '2144'
+title: Fix location for error message for PascaLIGO
+type: fixed

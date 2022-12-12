@@ -6,18 +6,14 @@ endif
 syntax cluster top contains=TOP
 
 " typeproduct
-syntax region typeproduct start="{" end="}" contained contains=identifier,typeannotation,comma 
+syntax region typeproduct start="{" end="}" contained contains=uppercaseidentifier,typeannotation,comma 
 
 " typeint
 syntax match typeint "\<[0-9]+\>" contained 
 highlight link typeint Number 
 
-" typemodule
-syntax match typemodule "\<[A-Z][a-zA-Z0-9_$]*\." contained 
-highlight link typemodule Identifier 
-
 " typeparentheses
-syntax region typeparentheses start="(" end=")" contained contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeparentheses start="(" end=")" contained contains=uppercaseidentifier,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 
 " typevar
 syntax match typevar "'\<[a-z_][a-zA-Z0-9_]*\>" contained 
@@ -32,11 +28,11 @@ syntax match typeoperator "\(=>\|\.\||\)" contained
 highlight link typeoperator Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|}\|=\|,\|=>\)\@=" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|}\|=\|,\|=>\)\@=" contains=uppercaseidentifier,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|module\|let\)\>\|;\|}\|^#\|\[@\)\@=" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|module\|let\)\>\|;\|}\|,\|)\|^#\|\[@\)\@=" contains=uppercaseidentifier,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
 " recordfield
@@ -47,18 +43,13 @@ highlight link recordfield____ Operator
 " recordorblock
 syntax region recordorblock start="{" end="}" contains=recordfield,comma,@top 
 
-" identifierconstructor
-syntax match identifierconstructor "\<[A-Z][a-zA-Z0-9_$]*\>" 
-highlight link identifierconstructor Label 
+" lowercaseidentifier
+syntax match lowercaseidentifier "\<[a-z$_][a-zA-Z0-9$_]*\>" contained 
+highlight link lowercaseidentifier Identifier 
 
-" identifier
-syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
-
-" module
-syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
-highlight link module_ Identifier 
-syntax match module "\<[A-Z][a-zA-Z0-9_$]*\." nextgroup=module_ skipempty skipwhite
-highlight link module Structure 
+" uppercaseidentifier
+syntax match uppercaseidentifier "\<[A-Z][a-zA-Z0-9_$]*\>" 
+highlight link uppercaseidentifier Structure 
 
 " comma
 syntax match comma "," contained 
@@ -78,6 +69,10 @@ syntax match letbinding_ "\<rec\>\|" contained nextgroup=letbinding__ skipempty 
 highlight link letbinding_ StorageClass 
 syntax match letbinding "\<\(let\)\>" nextgroup=letbinding_ skipempty skipwhite
 highlight link letbinding Keyword 
+
+" moduledeclaration
+syntax match moduledeclaration "\<module\>" 
+highlight link moduledeclaration Keyword 
 
 " controlkeywords
 syntax match controlkeywords "\<\(switch\|if\|else\|assert\|failwith\)\>" 

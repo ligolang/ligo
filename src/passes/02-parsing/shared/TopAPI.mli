@@ -7,7 +7,6 @@ module Region          = Simple_utils.Region
 module Utils           = Simple_utils.Utils
 module Std             = Simple_utils.Std
 module Lexbuf          = Simple_utils.Lexbuf
-module PreprocAPI      = Preprocessor.TopAPI
 module Unit            = LexerLib.Unit
 module type LEXER      = ParserLib.LowAPI.LEXER
 module type PARSER     = ParserLib.LowAPI.PARSER
@@ -47,18 +46,17 @@ module type WARNING =
   end
 
 module Make
-         (Preprocessor : PreprocAPI.S)
-         (Lexer        : LexerAPI.S)
-         (Parameters   : PARAMETERS)
-         (ParErr       : sig val message : int -> string end)
-         (Warning      : WARNING)
-         (UnitPasses   : PASSES with type item = Lexer.Token.t Unit.t)
-         (TokenPasses  : PASSES with type item = Lexer.Token.t)
-         (CST          : sig type t end)
-         (Parser       : PARSER with type token = Lexer.Token.t
-                                 and type tree = CST.t)
-         (Print        : PRINTER with type tree = CST.t)
-         (Pretty       : PRETTY with type tree = CST.t) :
+         (Lexer       : LexerAPI.S)
+         (Parameters  : PARAMETERS)
+         (ParErr      : sig val message : int -> string end)
+         (Warning     : WARNING)
+         (UnitPasses  : PASSES with type item = Lexer.Token.t Unit.t)
+         (TokenPasses : PASSES with type item = Lexer.Token.t)
+         (CST         : sig type t end)
+         (Parser      : PARSER with type token = Lexer.Token.t
+                                and type tree = CST.t)
+         (Print       : PRINTER with type tree = CST.t)
+         (Pretty      : PRETTY with type tree = CST.t) :
   sig
     (* Re-exporting the lexer *)
 

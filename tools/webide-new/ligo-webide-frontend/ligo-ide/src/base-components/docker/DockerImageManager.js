@@ -108,7 +108,7 @@ export default class DockerImageManager extends PureComponent {
         title={modalTitle}
         ActionBtn={
           <DownloadImageButton
-            color="success"
+            color="warning"
             imageName={imageName}
             channel={this.channel}
             downloadingTitle={downloadingTitle}

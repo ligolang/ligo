@@ -61,15 +61,21 @@ let record_keyword_match: Core.regexp = {
 }
 
 let control_keywords_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\|end\\\\|in\\\\)\\\\b";
-  textmate = "\\b(match|with|if|then|else|assert|failwith|begin|end|in)\\b";
-  vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\)\\>"
+  emacs    = "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\)\\\\b";
+  textmate = "\\b(match|with|if|then|else|assert|failwith|begin)\\b";
+  vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\)\\>"
 }
 
 let control_keywords_match_reasonligo: Core.regexp = {
   emacs    = "\\\\b\\\\(switch\\\\|if\\\\|else\\\\|assert\\\\|failwith\\\\)\\\\b";
   textmate = "\\b(switch|if|else|assert|failwith)\\b";
   vim      = "\\<\\(switch\\|if\\|else\\|assert\\|failwith\\)\\>"
+}
+
+let structure_keywords_match: Core.regexp = {
+  emacs    = "\\\\b\\\\(struct\\\\|end\\\\|in\\\\)\\\\b";
+  textmate = "\\b(struct|end|in)\\b";
+  vim      = "\\<\\(struct\\|end\\|in\\)\\>";
 }
 
 let control_keywords_match_ligo: Core.regexp = {
@@ -96,7 +102,6 @@ let operators_match_ligo: Core.regexp = {
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\>"
 }
 
-
 let module_match1: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\.";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\.";
@@ -104,11 +109,22 @@ let module_match1: Core.regexp = {
 }
 
 let module_match2: Core.regexp = {
-  emacs    = "\\\\([a-z_][a-zA-Z0-9_$]*\\\\)\\\\b";
-  textmate = "([a-z][a-zA-Z0-9_$]*)";
-  vim      = "[a-z_][a-zA-Z0-9_$]*"
+  emacs    = "\\\\b\\\\([a-z_][a-zA-Z0-9_$]*\\\\)\\\\b";
+  textmate = "\\b([a-z][a-zA-Z0-9_$]*)\\b";
+  vim      = "\\<[a-z_][a-zA-Z0-9_$]*\\>";
 }
 
+let module_keyword_match: Core.regexp = {
+  emacs    = "\\\\bmodule\\\\b";
+  textmate = "\\b(module)\\b";
+  vim      = "\\<module\\>";
+}
+
+let identifier_match: Core.regexp = {
+  emacs    = "\\\\b\\\\([a-z$_][a-zA-Z0-9$_]*\\\\)\\\\b";
+  textmate = "\\b([a-z$_][a-zA-Z0-9$_]*)\\b";
+  vim      = "\\<[a-z$_][a-zA-Z0-9$_]*\\>";
+}
 
 let identifier_constructor_match: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";
@@ -311,14 +327,15 @@ let type_definition_match: Core.regexp = {
   * Locally inside a "let", immediately before an "in".
 
   follow(type_decl) = Type Module Let In End EOF Directive Attr
+  Heads-up for an extra token: ")". This is for parametric types.
 *)
 let type_definition_begin: Core.regexp = type_definition_match
 
 let type_definition_end: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
-  emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\b";
-  textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b)";
-  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\)\\@="
+  emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\|)\\\\b";
+  textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b|\\))";
+  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\|)\\)\\@=";
 }
 
 let type_name_match: Core.regexp = {
@@ -440,6 +457,13 @@ let type_as_end_jsligo: Core.regexp = {
   vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@=";
 }
 
+let type_binder_positive_lookahead_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = "(?=([a-zA-Z0-9_,]+|\\s)+>)";
+  vim      = "\\([a-zA-Z0-9_,]\\|\\s\\)\\+>\\@=";
+}
+
 (*
   follow(type_annotation) = SEMI RPAR RBRACKET Is EQ ASS
   n.b.: Remove the `%inline` from `type_annotation` before running Menhir to see
@@ -490,14 +514,17 @@ let type_annotation_end_reasonligo: Core.regexp = {
   vim      = "\\()\\|}\\|=\\|,\\|=>\\)\\@=";
 }
 
-(* follow(type_decl) = Type SEMI RBRACE Module Let EOF Directive Attr *)
+(*
+  follow(type_decl) = Type SEMI RBRACE Module Let EOF Directive Attr
+  Heads-up for extra tokens: RPAR and COMMA. This is for parametric types.
+*)
 let type_definition_begin_reasonligo: Core.regexp = type_definition_begin
 
 let type_definition_end_reasonligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
-  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|}\\\\|^#\\\\|\\\\[@";
-  textmate = "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)";
-  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|}\\|^#\\|\\[@\\)\\@=";
+  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|}\\\\|,\\\\|)\\\\|^#\\\\|\\\\[@";
+  textmate = "(?=\\b(type|module|let)\\b|;|}|,|\\)|^#|\\[@)";
+  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|}\\|,\\|)\\|^#\\|\\[@\\)\\@=";
 }
 
 let type_operator_match_reasonligo: Core.regexp = {

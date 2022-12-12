@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: '\n\nfix a bug where bytes literals extraction was not working happening in JsLIGO\n\n'
+merge_request: '2150'
+title: fix byte extract
+type: fixed
+            

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
-import Api from "~/components/api/api";
-import compilerManager from "~/ligo-components/eth-compiler";
+import { WebIdeApi } from "~/components/api/api";
+import { CompilerManager } from "~/ligo-components/eth-compiler";
 
 interface DeployScriptModalProps {
   modalRef: React.RefObject<Modal>;
@@ -10,11 +10,11 @@ interface DeployScriptModalProps {
   projectManager: any;
 }
 
-function DeployScriptModal({
+const DeployScriptModal = ({
   modalRef,
   projectSettings,
   projectManager,
-}: DeployScriptModalProps): React.ReactElement | null {
+}: DeployScriptModalProps): React.ReactElement | null => {
   const [storage, setStorage] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -41,21 +41,20 @@ function DeployScriptModal({
       return;
     }
 
-    await Api.generateDeployScript({
+    await WebIdeApi.generateDeployScript({
       name,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      sources: contractFiles,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      main: projectManager.mainFilePath,
+      project: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        sourceFiles: contractFiles,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        main: projectManager.mainFilePath,
+      },
       storage,
     })
       .then(async (resp) => {
-        /* eslint-disable */
-        // @ts-ignore
-        setResult(resp.script);
-        // @ts-ignore
-        await compilerManager.saveCompiledContract(resp.build, projectManager);
-        /* eslint-enable */
+        setResult(resp.data.script);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        await CompilerManager.saveCompiledContract(resp.data.build, projectManager);
       })
       .catch((e: Error) => {
         modalRef.current?.closeModal().catch((me: Error) => {
@@ -99,9 +98,14 @@ function DeployScriptModal({
         onChange={(n: string) => setName(n)}
         placeholder="Name"
       />
-      {result && <code className="user-select">{result}</code>}
+      {result && (
+        <>
+          <div>Result</div>
+          <pre className="pre-box pre-wrap break-all bg-primary text-body">{result}</pre>
+        </>
+      )}
     </Modal>
   );
-}
+};
 
 export default DeployScriptModal;

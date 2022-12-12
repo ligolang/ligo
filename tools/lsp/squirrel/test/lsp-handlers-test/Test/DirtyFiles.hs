@@ -2,11 +2,8 @@ module Test.DirtyFiles
   ( unit_changed_file_is_dirty
   ) where
 
-import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (Result (..), fromJSON, toJSON)
-import Data.Bool (bool)
 import Data.String.Interpolate (i)
-import GHC.Stack (HasCallStack)
 import Language.LSP.Test (Session, changeDoc, closeDoc, request, sendNotification)
 import Language.LSP.Types as LSP
 import System.FilePath ((</>))
@@ -53,6 +50,6 @@ expectStatus expectedDirty doc = do
     Error err -> expectationFailure err
     Success actualDirty
       | expectedDirty == actualDirty ->
-        pure ()
+        pass
       | otherwise ->
         expectationFailure [i|Expected file to be marked #{dirty expectedDirty}, but it's #{dirty actualDirty}.|]

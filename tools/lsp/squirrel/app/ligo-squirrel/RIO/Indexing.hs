@@ -8,27 +8,21 @@ module RIO.Indexing
   , handleProjectFileChanged
   ) where
 
-import Control.Lens (view)
-import Control.Monad (void, when)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
 import Data.Aeson (eitherDecodeFileStrict', encodeFile)
-import Data.Bool (bool)
 import Data.Default (def)
-import Data.List (inits)
-import Data.Maybe (catMaybes)
-import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
-import System.IO (IOMode (ReadMode), hFileSize, withFile)
+import System.IO (hFileSize)
 import UnliftIO.Directory (canonicalizePath, findFile, withCurrentDirectory)
-import UnliftIO.Exception (displayException, tryIO)
-import UnliftIO.MVar (isEmptyMVar, putMVar, swapMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
+import UnliftIO.Exception (tryIO)
+import UnliftIO.MVar (isEmptyMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
+import Unsafe qualified
 import Witherable (ordNubOn)
 
+import Cli qualified
 import Language.LSP.Util (sendError, sendInfo)
 import Log qualified
 import RIO.Types (IndexOptions (..), ProjectSettings (..), RIO, RioEnv (..))
@@ -79,7 +73,7 @@ decodeProjectSettings projectDir = do
   eitherSettings <- liftIO $ eitherDecodeFileStrict' $ projectDir </> ligoProjectName
   case eitherSettings of
     Left err -> do
-      $(Log.err) [Log.i|Failed to read project settings.\n#{err}|]
+      $Log.err [Log.i|Failed to read project settings.\n#{err}|]
       sendError [Log.i|Failed to read project settings. Using default settings. Check the logs for more information.|]
       pure def
     Right settings -> do
@@ -103,14 +97,18 @@ getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
   indexOptsVar <- asks reIndexOpts
   tryReadMVar indexOptsVar >>= \case
-    Nothing -> checkForLigoProjectFile contractDir >>= \case
-      Nothing -> askForIndexDirectory contractDir
-      Just ligoProjectDir -> do
-        upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
-        projectSettings <- decodeProjectSettings ligoProjectDir
-        let indexOpts = FromLigoProject ligoProjectDir projectSettings
-        hasNoOpts <- isEmptyMVar indexOptsVar
-        indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+    Nothing -> do
+      newOpts <- checkForLigoProjectFile contractDir >>= \case
+        Nothing -> askForIndexDirectory contractDir
+        Just ligoProjectDir -> do
+          upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
+          projectSettings <- decodeProjectSettings ligoProjectDir
+          let indexOpts = FromLigoProject ligoProjectDir projectSettings
+          hasNoOpts <- isEmptyMVar indexOptsVar
+          indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+
+      -- A root directory was set; restart the daemon.
+      newOpts <$ Cli.cleanupLigoDaemon
     Just opts -> pure opts
 
 askForIndexDirectory :: FilePath -> RIO IndexOptions
@@ -163,13 +161,13 @@ askForIndexDirectory contractDir = do
           }
         (\(fmap (fmap (view J.title)) -> choice) ->
           bool don'tCreate doCreate (choice == Right (Just "Yes")))
-    handleChosenOption _ = pure ()
+    handleChosenOption _ = pass
 
     mkGitDirectory :: RIO (Maybe FilePath)
     mkGitDirectory = tryIO (readCreateProcess git "") >>= either
-      (\e -> Nothing <$ $(Log.warning) [Log.i|#{displayException e}|])
+      (\e -> Nothing <$ $Log.warning [Log.i|#{displayException e}|])
       -- The output includes a trailing newline, we remove it with `init`.
-      (pure . Just . init)
+      (pure . Just . Unsafe.init)
       where
         git :: CreateProcess
         git = (proc "git" ["rev-parse", "--show-toplevel"])
@@ -180,7 +178,7 @@ askForIndexDirectory contractDir = do
     mkRequest suggestions = J.ShowMessageRequestParams
       { _xtype = J.MtInfo
       , _message = [Log.i|Choose a directory to index LIGO files. See #{projectIndexingMarkdownLink} for more details.|]
-      , _actions = Just $ J.MessageActionItem . T.pack . prettyIndexOptions <$> suggestions
+      , _actions = Just $ J.MessageActionItem . toText . prettyIndexOptions <$> suggestions
       }
 
     handleParams
@@ -193,7 +191,7 @@ askForIndexDirectory contractDir = do
       (maybe DoNotIndex getPathFromChosenOption)
       where
         getPathFromChosenOption :: J.MessageActionItem -> IndexOptions
-        getPathFromChosenOption (view J.title -> T.unpack -> chosen)
+        getPathFromChosenOption (view J.title -> toString -> chosen)
           | Just path <- gitProject
           , chosen == path = FromGitProject path
           | Just path <- rootProject
@@ -210,7 +208,7 @@ handleProjectFileChanged nfp change = do
   -- the trouble.
   _ <- tryTakeMVar indexOptsVar
   let fp = J.fromNormalizedFilePath nfp
-  $(Log.debug) case change of
+  $Log.debug case change of
     J.FcCreated -> [Log.i|Created #{fp}|]
     J.FcChanged -> [Log.i|Changed #{fp}|]
     J.FcDeleted -> [Log.i|Deleted #{fp}|]

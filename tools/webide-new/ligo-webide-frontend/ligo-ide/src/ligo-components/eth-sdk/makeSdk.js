@@ -21,7 +21,6 @@ export default function makeSdk({
   Client,
   Contract,
   TxManager,
-  BrowserExtension,
 }) {
   let browserExtension;
 
@@ -38,12 +37,8 @@ export default function makeSdk({
       return customNetworks;
     }
 
-    static InitBrowserExtension(networkManager) {
-      browserExtension = BrowserExtension && BrowserExtension.Init(networkManager);
-    }
-
-    constructor({ id, ...option }) {
-      this.client = new Client({ networkId: id, ...option });
+    constructor({ id, ...option }, browserExtension) {
+      this.client = new Client({ networkId: id, ...option }, browserExtension);
       this.networkId = id;
       this.txManager = new TxManager(this.client);
     }
@@ -104,8 +99,37 @@ export default function makeSdk({
       return await this.txManager.getDeployTx(...args);
     }
 
-    async estimate(arg) {
-      return await this.txManager.estimate(arg);
+    async deployContract({
+      type,
+      tzfile,
+      storage,
+      selectedSigner,
+      isWallet,
+      delegateAddress,
+      balance,
+      gasLimit,
+      storageLimit,
+      suggestedFeeMutez,
+    }) {
+      if (type === "origination") {
+        return await this.txManager.originate(
+          tzfile,
+          storage,
+          selectedSigner,
+          isWallet,
+          delegateAddress,
+          balance,
+          gasLimit,
+          storageLimit,
+          suggestedFeeMutez
+        );
+      }
+    }
+
+    async estimate({ type, isWallet, selectedSigner, tzfile, storage }) {
+      if (type === "origination") {
+        return await this.txManager.estimateContract(isWallet, selectedSigner, tzfile, storage);
+      }
     }
 
     sendTransaction(arg) {

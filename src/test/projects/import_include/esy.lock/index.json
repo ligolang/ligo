@@ -1,0 +1,61 @@
+{
+  "checksum": "51d10fba22ccf6ec6e2479b066298e59",
+  "root": "import_include@link-dev:./package.json",
+  "node": {
+    "pkg-a@1.0.0@d41d8cd9": {
+      "id": "pkg-a@1.0.0@d41d8cd9",
+      "name": "pkg-a",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://beta.packages.ligolang.org/-/api/pkg-a/-/pkg-a-1.0.0.tgz#sha1:d1fb4eb393bfb432cd34dd106c63190aae4e39b2"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "include-a@1.0.1@d41d8cd9": {
+      "id": "include-a@1.0.1@d41d8cd9",
+      "name": "include-a",
+      "version": "1.0.1",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://beta.packages.ligolang.org/-/api/include-a/-/include-a-1.0.1.tgz#sha1:e9640a286be16bdd4daa38616f23c4be96b8020f"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [ "pkg-a@1.0.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "import_include@link-dev:./package.json": {
+      "id": "import_include@link-dev:./package.json",
+      "name": "import_include",
+      "version": "link-dev:./package.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "package.json"
+      },
+      "overrides": [],
+      "dependencies": [ "import-include@1.0.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "import-include@1.0.0@d41d8cd9": {
+      "id": "import-include@1.0.0@d41d8cd9",
+      "name": "import-include",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://beta.packages.ligolang.org/-/api/import-include/-/import-include-1.0.0.tgz#sha1:ef74a07ef35d8721047404d253a23574fb5c7abc"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [ "include-a@1.0.1@d41d8cd9" ],
+      "devDependencies": []
+    }
+  }
+}

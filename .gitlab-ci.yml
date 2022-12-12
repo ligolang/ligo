@@ -1,6 +1,8 @@
 variables:
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
+  WEBIDE_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${CI_COMMIT_SHORT_SHA}"
+  WEBIDE_FRONTEND_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
@@ -21,7 +23,6 @@ include:
 
 .submodule-clone:
   before_script:
-    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
     - git submodule sync --recursive
     - git submodule update --init --recursive --remote
 
@@ -30,6 +31,120 @@ include:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+
+esy-windows:
+  extends: .submodule-clone
+  tags:
+    - windows
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^release/.*$/
+  script:
+    # - $env:GIT_CURL_VERBOSE = 1
+    # - $env:GIT_TRACE = 1
+    # - $env:GIT_TRACE_PACKET = 1
+    - git config http.postBuffer 1048576000
+    - npm i -g @esy-nightly/esy --force
+    - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
+    - esy i
+    - bash -c "esy release || esy release || esy release"
+    - rm -Recurse -Force _esy
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - cp ./windows-installer/*.dll _release/bin/
+    - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./_release
+    - cp ./windows-installer/WindowsInstaller.nsi _release
+    - cd _release; makensis .\WindowsInstaller.nsi
+    - cd .. ; mv _release platform-windows-x64
+  artifacts:
+    paths:
+      - platform-windows-x64
+
+esy-macos-intel:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - i7
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^release/.*$/
+  script:
+    - mkdir -p ~/.npm
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g @esy-nightly/esy --force
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+  artifacts:
+    paths:
+      - platform-darwin
+
+esy-macos-m1:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - m1
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^release/.*$/
+  script:
+    - mkdir -p ~/.npm
+    - brew install node
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g esy@beta --force
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin-arm64
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+  artifacts:
+    paths:
+      - platform-darwin-arm64
+
+prepare_npm_tarball:
+  tags:
+  - docker
+  stage: push
+  needs:
+    - job: docker_extract
+      artifacts: true
+    - job: esy-windows
+      artifacts: true
+    - job: esy-macos-intel
+      artifacts: true
+    - job: esy-macos-m1
+      artifacts: true
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /^release/.*$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - mkdir -p _release/platform-linux/bin
+    - cp platform-windows-x64/esyInstallRelease.js _release
+    - mv platform-* _release/
+    - cp ./ligo _release/platform-linux/bin
+    - node scripts/pipelines-release.js
+    - cp ./scripts/release-postinstall.js _release/postinstall.js
+    - cd _release && npm pack
+  artifacts:
+    paths:
+      - _release/ligo-*.tgz
 
 changelog:
   stage: pretooling
@@ -101,7 +216,10 @@ docker_extract:
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
-    - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    # previous command, but it seems statically meant something a bit different.
+    # - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    # the string depends on ldd...
+    - if ! ldd ligo; then echo "ldd failed, i.e. expecting that it is statically linked."; else echo "Expected ldd ligo to fail (not a dynamic executable)."; fi
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
     # Generate ligo.deb
@@ -131,19 +249,6 @@ check-generated-highlighting:
       changes:
         - tools/ligo-syntax-highlighting/**/*
       when: always
-
-xrefcheck:
-  stage: tooling
-  only:
-    - merge_requests
-  script:
-    # Should be replaced with
-    # nix run github:serokell/xrefcheck
-    # Once flakes roll out to stable
-    # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
-    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
-    - xrefcheck/bin/xrefcheck
-  allow_failure: true #TODO could be better if we do not allow failure for realeases
 
 .docker-image:
   stage: push
@@ -186,6 +291,20 @@ docker-push:
 #     - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
 #     - docker push "${LIGO_REGISTRY_FULL_NAME}"
 
+xrefcheck:
+  stage: tooling
+  needs:
+    - job: changelog
+      artifacts: true
+  script:
+    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.1/xrefcheck-x86_64-linux 
+    - chmod 777 ./xrefcheck-x86_64-linux
+    - ./xrefcheck-x86_64-linux
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+  allow_failure: true
+  
 webide-backend-build-and-push-backend:
   extends: .docker-image
   stage: deploy
@@ -205,6 +324,42 @@ webide-backend-build-and-push-backend:
     - docker push "${WEBIDE_IMAGE_TAG}"
   after_script:
     - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
+
+webide-new-backend-build-and-push-backend:
+  extends: .docker-image
+  stage: deploy
+  needs:
+    - job: changelog
+      artifacts: false
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide-new/ligo-webide-backend/**/*
+      when: always
+  script:
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}
+    - docker push "${WEBIDE_NEW_IMAGE_TAG}"
+  after_script:
+    - docker image rm "${WEBIDE_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
+
+webide-new-frontend-build-and-push:
+  extends: .docker-image
+  stage: deploy
+  needs:
+    - job: changelog
+      artifacts: false
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
+      when: always
+  script:
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - docker build tools/webide-new/ligo-webide-frontend/ligo-ide -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
+    - docker push "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}"
+  after_script:
+    - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
 
 .website:
   stage: push
@@ -233,12 +388,33 @@ pages:
   extends: .website
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
+      changes:
+        - gitlab-pages/**/*
+        - changelog/*
 
 pages-attempt:
   extends: .website
+  needs:
+    - job: changelog
+      artifacts: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - gitlab-pages/**/*
+        - changelog/*
+      when: on_success
+
+algolia-crawl:
+  stage: push
+  needs:
+    - job: pages
+  script:
+    # We want to trigger the job after page:deploy to reindex the website but job can't depends on page:deploy. So we put a artificial sleep of 10 seconds before triggering algolia crawler to be sure that it'll works
+    - |
+      sleep 10 
+      curl -X post  -H "Content-Type: application/json" --user ${ALGOLIA_CRAWLER_ID}:${ALGOLIA_CRAWLER_TOKEN} https://crawler.algolia.com/api/1/crawlers/bb0597ba-5abc-45ba-bdf9-99f8152e87b0/reindex
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - gitlab-pages/**/*
       when: on_success
@@ -265,6 +441,7 @@ deploy_website_preview:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - gitlab-pages/**/*
+        - changelog/*
       when: on_success
 
 # This job will deploy the web-ide docker container to the test server.
@@ -319,7 +496,7 @@ build-preview-ligo-webide-front-end:
     - yarn install
     - CI= yarn workspaces run build
     - cd ./packages/client
-    - npm install netlify-cli
+    - npm install netlify-cli@11.1.0-rc.2
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json
     - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
@@ -346,7 +523,8 @@ build-ligo-webide-front-end:
     - yarn install
     - CI= yarn workspaces run build
     - cd ./packages/client
-    - npm install netlify-cli
+    # new version of CLI is incompatible with node:12:20. 
+    - npm install netlify-cli@11.1.0-rc.2
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --prod > netlify.json
   rules:
     - if: '$CI_COMMIT_BRANCH == "dev"'

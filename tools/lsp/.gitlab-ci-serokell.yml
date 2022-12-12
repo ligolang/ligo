@@ -5,10 +5,13 @@ variables:
   FLAKE_FLAGS: --accept-flake-config -L
 
 stages:
+  - validate
   - nix
   - ligo
   - debugger
   - lsp
+  - webide
+  - validate-final
   - push
 
 default:
@@ -18,11 +21,21 @@ default:
 include:
   #  ligo-debugger CI
   - '/tools/debugger/.gitlab-ci.yml'
+  # webIDE CI
+  - '/tools/webide-new/.gitlab-ci.yml'
+
+validate-cabal-files:
+  stage: validate
+  only: [merge_requests, tooling]
+  script:
+    - cd tools/lsp/squirrel
+    - nix-shell -p 'haskell.lib.overrideCabal haskellPackages.stack2cabal (drv:{ jailbreak = true; broken = false; })' --command scripts/validate-cabal-files.sh
 
 ligo-build:
   stage: ligo
   needs:
     - print-nix-version
+    - validate-cabal-files  # otherwise build will rely on the outdated deps list
   only: [merge_requests, tooling]
   tags: [nix-with-docker]
   script:
@@ -66,6 +79,15 @@ lsp-lint:
     # Nix has some trouble with git so we run it directly from the CI
     - cd tools/lsp
     - bash squirrel/scripts/check-trailing-whitespace.sh
+
+lsp-stylish:
+  stage: lsp
+  needs: []
+  only: [merge_requests, tooling]
+  script:
+    - cd tools/lsp/squirrel
+    - nix develop ..#ci -c ./scripts/validate-stylish.sh
+
 
 print-nix-version:
   stage: nix
@@ -111,6 +133,13 @@ vscode-extension-lsp-handler-tests:
   script:
     - git add ./ligo # Ligo binary is needed for this tests
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-handlers-test
+
+vscode-extension-ligo-contracts-test:
+  stage: lsp
+  needs: []
+  only: [merge_requests, tooling]
+  script:
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.ligo-contracts-test
 
 vscode-extension-linux:
   stage: nix

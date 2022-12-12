@@ -41,6 +41,8 @@ okayTests =
       , "build" </> "type_B.mligo"
       , "build" </> "Xfoo.mligo"
       , "build" </> "Xmain.mligo"
+      , "build" </> "common" </> "storage.mligo"
+      , "build" </> "instance" </> "main.mligo"
       , "interpreter_tests" </> "A.mligo"
       , "interpreter_tests" </> "C.mligo"
       , "interpreter_tests" </> "imported_modules" </> "a.mligo"
@@ -49,8 +51,8 @@ okayTests =
       , "interpreter_tests" </> "imported_modules" </> "test.mligo"
       , "interpreter_tests" </> "test_importer.mligo"
       , "interpreter_tests" </> "test_many_imports.mligo"
-      , "polymorphism" </> "use_error.mligo" -- polymorphism/* tests also depend on
-      , "polymorphism" </> "use_monad.mligo" --   LIGO-331
+      , "polymorphism" </> "use_error.mligo"
+      , "polymorphism" </> "use_monad.mligo"
       , "polymorphism" </> "use_monad_set.mligo"
       , "polymorphism" </> "use_nelist.mligo"
       , "negative" </> "polymorphism" </> "use_error.mligo"
@@ -58,47 +60,10 @@ okayTests =
       , "view_import.mligo"
       , "view_import_and_alias.mligo"
 
-        -- LIGO-331
-      , "polymorphism" </> "cases_annotation1.mligo"
-      , "polymorphism" </> "cases_annotation2.mligo"
-      , "polymorphism" </> "comb.ligo"
-      , "polymorphism" </> "comb.mligo"
-      , "polymorphism" </> "comb.religo"
-      , "polymorphism" </> "ctrct.mligo"
-      , "polymorphism" </> "error_monad.mligo"
-      , "polymorphism" </> "lambda.mligo"
-      , "polymorphism" </> "list_monad.mligo"
-      , "polymorphism" </> "map.mligo"
-      , "polymorphism" </> "module_k.mligo"
-      , "polymorphism" </> "nelist.mligo"
-      , "polymorphism" </> "set_monad.mligo"
-      , "polymorphism" </> "test.mligo"
-      , "polymorphism" </> "modules.mligo"
-      , "polymorphism" </> "modules.religo"
-      , "polymorphism" </> "annotate.mligo"
-      , "polymorphism" </> "same_vars.mligo"
-      , "negative" </> "interpreter_tests" </> "test_random.mligo"
-      , "negative" </> "polymorphism" </> "cases_annotation.mligo"
-      , "negative" </> "polymorphism" </> "constants.mligo"
-      , "negative" </> "polymorphism" </> "error_monad.mligo"
-      , "negative" </> "polymorphism" </> "unresolved" </> "contract2.mligo"
-
-        -- LIGO-757
-      , "negative" </> "error_reverse_app.mligo"
-      , "negative" </> "error_reverse_app_2.mligo"
-      , "reverse_app.mligo"
-      , "build" </> "common" </> "storage.mligo"
-      , "build" </> "instance" </> "main.mligo"
-
         -- LIGO-808
-      , "jsligo_destructure_object.jsligo"
-      , "switch_return.jsligo"
-      , "views_using_view.test.mligo"
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "a" </> "b" </> "test.mligo"
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "c" </> "d" </> "foo.mligo"
-      , "ternary.jsligo"
       , "infer_fun_application.mligo"
-      , "disc_union.jsligo"
 
         -- LIGO fails to parse these:
       , "match.ligo"
@@ -115,6 +80,8 @@ okayTests =
       , "negative" </> "switch_jsligo" </> "empty_switch.jsligo"
       , "negative" </> "switch_jsligo" </> "default_in_between.jsligo"
       , "negative" </> "switch_jsligo" </> "more_than_one_default.jsligo"
+      , "top_level_patterns" </> "contracts" </> "jsligo" </> "nested_record.jsligo"
+      , "top_level_patterns" </> "contracts" </> "jsligo" </> "record.jsligo"
       ]
     , tdIgnoreDirs = []
     }
@@ -189,6 +156,7 @@ badTests =
       , "simple" </> "pascaligo" </> "unfinished_code00.ligo"
       , "simple" </> "pascaligo" </> "unfinished_code04.ligo"
       , "simple" </> "jsligo"    </> "missing_semicolon_in_top_level.jsligo"
+      , "simple" </> "jsligo"    </> "missing_type_annotation_in_lambda_in_match.jsligo"
 
         -- Will be fixed when (MISSING) nodes will be handled
       , "simple" </> "jsligo" </> "missing_curly_bracket_in_record_decl.jsligo"
@@ -278,4 +246,4 @@ test_contractsWithMissingNodes
   = testGroup "Trying to parse contracts with missing nodes" <$> testCases
   where
     testCases = map makeTestCase <$> getContracts contractsWithMissingNodes
-    makeTestCase contractPath = testCase contractPath (checkFile @Fallback True contractPath)
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback False contractPath)

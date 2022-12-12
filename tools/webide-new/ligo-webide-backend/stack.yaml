@@ -1,11 +1,11 @@
-resolver: lts-19.20
+resolver: lts-19.29
 packages:
 - .
 extra-deps:
 - hspec-wai-0.11.0@sha256:79f8aab21161cd551e0bb740f5416fb622fe94f710bedc97dabd39fe901b5291,2314
 - hspec-wai-json-0.11.0@sha256:1fdd66a61c84a9ba6f2e1673ed49b2da1f57f025cd3fb9a46d62620ff9259d63,1629
-- git: git@gitlab.com:morley-framework/morley
-  commit: 3bf4eef3c6f622979f36489fe7c780f06fb5d222
+- git: https://gitlab.com/morley-framework/morley.git
+  commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
   subdirs:
   - code/lorentz
   - code/morley
@@ -18,6 +18,12 @@ extra-deps:
 - colourista-0.1.0.1@sha256:98353ee0e2f5d97d2148513f084c1cd37dfda03e48aa9dd7a017c9d9c0ba710e,3307
 - named-0.3.0.1@sha256:418543272f0c844a77639b05276ee3906d5f305cd4cab46fafcb4f15b7f1e60d,2312
 - show-type-0.1.1
+
+  # Lootbox (prelude)
+- git: https://github.com/serokell/lootbox.git
+  commit: 65b4d337285ec42d8e998ac141de39dc20ff6ea0
+  subdirs:
+    - code/prelude
  
 # TODO [#853]: set to a base-4.15-compatible version when one is released
 - git: https://github.com/co-log/co-log.git

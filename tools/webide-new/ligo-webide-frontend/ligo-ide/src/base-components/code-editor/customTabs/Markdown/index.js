@@ -244,7 +244,7 @@ export default class Markdown extends Component {
       openningPath = path.join(dir, filePath);
     }
 
-    if (await modelSessionManager.projectManager.isFile(openningPath)) {
+    if (await fileOps.isFile(openningPath)) {
       modelSessionManager.openFile(openningPath);
     } else {
       notification.error("File not exists", `There is no file at <b>${openningPath}</b>.`);

@@ -104,7 +104,9 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let expr = replace expr in
     let update = replace update in
     return @@ E_update (expr, i, update, n)
-  | E_raw_michelson _ -> e
+  | E_raw_michelson (code, args) ->
+    let args = List.map ~f:replace args in
+    return @@ E_raw_michelson (code, args)
   | E_global_constant (hash, args) ->
     let args = List.map ~f:replace args in
     return @@ E_global_constant (hash, args)
@@ -159,7 +161,7 @@ let subst_binder : type body.
     if Value_var.equal x y
     then (y, body)
     (* else, if no capture, subst in binder *)
-    else if not (Free_variables.mem (Free_variables.expression [] expr) y)
+    else if not (Free_variables.mem (get_fv [] expr) y)
     then (y, subst ~body ~x ~expr)
     (* else, avoid capture and subst in binder *)
     else
@@ -276,7 +278,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (name_r, r) = self_binder1 ~body:(name_r, r) in
     return @@ E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r))
   )
-  | E_literal _ | E_raw_michelson _ ->
+  | E_raw_michelson (code, args) ->
+    let args = List.map ~f:self args in
+    return @@ E_raw_michelson (code, args)
+  | E_literal _ ->
     return_id
   | E_constant {cons_name; arguments} -> (
       let arguments = List.map ~f:self arguments in
@@ -332,6 +337,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
 
 
 let%expect_test _ =
+  let loc = Location.dummy in
   let dummy_type = Expression.make_t @@ T_base TB_unit in
   let wrap e = Expression.make e dummy_type in
 
@@ -342,9 +348,9 @@ let%expect_test _ =
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = Value_var.of_input_var "x" in
-  let y = Value_var.of_input_var "y" in
-  let z = Value_var.of_input_var "z" in
+  let x = Value_var.of_input_var ~loc "x" in
+  let y = Value_var.of_input_var ~loc "y" in
+  let z = Value_var.of_input_var ~loc "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
@@ -544,7 +550,7 @@ let%expect_test _ =
 
   (* old bug *)
   Value_var.reset_counter () ;
-  let y0 = Value_var.fresh ~name:"y" () in
+  let y0 = Value_var.fresh ~loc ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x

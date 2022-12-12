@@ -6,7 +6,8 @@ import * as monaco from "monaco-editor";
 import throttle from "lodash/throttle";
 
 import modelSessionManager from "./modelSessionManager";
-import registerThemes from "./languages/registerThemes";
+import { theme } from "./theme";
+import { actions } from "~/base-components/workspace";
 
 export default class MonacoEditor extends Component {
   static propTypes = {
@@ -18,12 +19,14 @@ export default class MonacoEditor extends Component {
   };
 
   componentDidMount() {
-    registerThemes();
+    monaco.editor.defineTheme("obsidians", theme);
 
     this.throttledLayoutEditor = throttle(this.layoutEditor, 500);
     this.monacoEditor = this.createEditorWith(this.props.modelSession.model);
 
     this.monacoEditor.onDidChangeModelDecorations(this.props.onChangeDecorations);
+
+    this.props.addLanguagesCallback(this.monacoEditor);
 
     this.throttledLayoutEditor();
     // api.bridge.send('languageClient.create')
@@ -41,7 +44,6 @@ export default class MonacoEditor extends Component {
       props.modelSession.recoverInEditor(this.monacoEditor);
 
       this.throttledLayoutEditor();
-      // $.bottomBar.updatePosition(this.monacoEditor.getPosition())
     }
 
     if (props.editorConfig !== this.props.editorConfig) {
@@ -87,7 +89,7 @@ export default class MonacoEditor extends Component {
       modelSessionManager.projectManager.onFileChanged();
     });
     monacoEditor.onDidChangeCursorPosition(({ position }) => {
-      // $.bottomBar.updatePosition(position)
+      actions.updatePosition([position.lineNumber, position.column]);
     });
     monacoEditor.onDidBlurEditorWidget(() => {
       // monacoEditor.focus()

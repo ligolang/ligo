@@ -3,14 +3,16 @@ module AST.Parser.Jsligo
   ( recognise
   ) where
 
+import Prelude hiding (Alt)
+
 import AST.Skeleton
 
 import Duplo.Tree
 
 import Data.Text qualified as T
 
-import ParseTree
 import Parser
+import ParseTree
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -34,11 +36,12 @@ recognise (SomeRawTree dialect rawTree)
         "list_literal"        -> List       <$> fields "element"
         "annot_expr"          -> Annot      <$> field  "subject"     <*> field    "type"
         "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then_branch" <*> fieldOpt "else_branch"
+        "ternary_expr"        -> Ternary    <$> field  "selector"    <*> field    "then_branch" <*> field "else_branch"
         "record"              -> Record     <$> fields "assignment"
         "record_update"       -> RecordUpd  <$> field  "subject"     <*> fields   "field"
         "paren_expr"          -> Paren      <$> field  "expr"
         "tuple"               -> Tuple      <$> fields "item"
-        "lambda"              -> Lambda     <$> fields "argument"    <*> fieldOpt "type"       <*> field "body"
+        "lambda"              -> Lambda     <$> fields "argument"    <*> pure [] <*> fieldOpt "type" <*> field "body"
         "code_inj"            -> CodeInj    <$> field  "lang"        <*> field    "code"
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
@@ -150,9 +153,9 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "toplevel_binding"    -> BConst       <$> field "binding_pattern" <*> fieldOpt "type_annot" <*> fieldOpt "value"
-        "const_binding"       -> BConst       <$> field "binding_pattern" <*> fieldOpt "type_annot" <*> fieldOpt "value"
-        "let_binding"         -> BVar         <$> field "binding_pattern" <*> fieldOpt "type_annot" <*> fieldOpt "value"
+        "toplevel_binding"    -> BConst       <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
+        "const_binding"       -> BConst       <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
+        "let_binding"         -> BVar         <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
         "type_decl"           -> BTypeDecl    <$> field "type_name"       <*> fieldOpt "params"     <*> field    "type_value"
         "p_include"           -> BInclude     <$> field "filename"
         "p_import"            -> BImport      <$> field "filename"        <*> field "alias"
@@ -161,10 +164,10 @@ recognise (SomeRawTree dialect rawTree)
         "import_statement"    -> BModuleAlias <$> field "moduleName"      <*> fields "module"
         _                     -> fallthrough
 
-    -- TypeParams
+    -- QuotedTypeParams
   , Descent do
       boilerplate \case
-        "type_params" -> TypeParams <$> fields "param"
+        "type_params" -> QuotedTypeParams <$> fields "param"
         _             -> fallthrough
 
     -- Verbatim
@@ -199,7 +202,8 @@ recognise (SomeRawTree dialect rawTree)
         "app_type"         -> TApply         <$> field  "functor"    <*> fields "argument"
         "record_type"      -> TRecord        <$> fields "field_decl"
         "tuple_type"       -> TProduct       <$> fields "element"
-        "sum_type"         -> TSum           <$> fields "variant"
+        "sum_type"         -> TSum           <$> fields1 "variant"
+        "disc_union_type"  -> TSum           <$> fields1 "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable      <$> field  "name"
         "domain"           -> TProduct       <$> fields "type"
