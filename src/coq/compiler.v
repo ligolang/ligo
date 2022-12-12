@@ -834,31 +834,32 @@ Definition UPDATE (i n : nat) : prog :=
 
 Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
   match e with
-  | E_var _ n => [I_DUP null (S (embed r n))]
-  | E_let_in _ e1 e2 =>
+  | E_var l n =>
+      [I_SEQ l [I_DUP null (S (embed r n))]]
+  | E_let_in l e1 e2 =>
       let e1' := compile_expr r env e1 in
       let e2' := compile_binds r env e2 in
-      [I_SEQ null e1';
-       I_SEQ null e2']
-  | E_deref _ n => [I_DUP null (S (embed r n))]
-  | E_let_mut_in _ e1 e2 =>
+      [I_SEQ l [I_SEQ null e1';
+                I_SEQ null e2']]
+  | E_deref l n => [I_SEQ l [I_DUP null (S (embed r n))]]
+  | E_let_mut_in l e1 e2 =>
       let e1' := compile_expr r env e1 in
       let e2' := compile_binds r env e2 in
-      [I_SEQ null e1';
-       I_SEQ null e2']
-  | E_assign _ n e1 =>
+      [I_SEQ l [I_SEQ null e1';
+                I_SEQ null e2']]
+  | E_assign l n e1 =>
       let e1' := compile_expr r env e1 in
-      [I_SEQ null e1';
-       I_DUG null (embed r n);
-       I_DIG null (S (embed r n));
-       I_DROP null 1;
-       I_UNIT null]
-  | E_for _ args body =>
+      [I_SEQ l [I_SEQ null e1';
+                I_DUG null (embed r n);
+                I_DIG null (S (embed r n));
+                I_DROP null 1;
+                I_UNIT null]]
+  | E_for l args body =>
       let args' := compile_args r env args in
       let body' := compile_binds r env body in
-      [I_SEQ null args';
-       I_FOR null [I_SEQ null body'; I_DROP null 1];
-       I_UNIT null]
+      [I_SEQ l [I_SEQ null args';
+                I_FOR null [I_SEQ null body'; I_DROP null 1];
+                I_UNIT null]]
   | E_for_each l coll body =>
       let coll' := compile_expr r env coll in
       let body' := compile_binds r env body in
@@ -868,13 +869,13 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
          in the map case: *)
       if beq_nat 2 (binds_length body)
       then
-        [I_SEQ null coll';
-         I_ITER l [I_UNPAIR null 2; I_SEQ null body'; I_DROP null 1];
-         I_UNIT null]
+        [I_SEQ l [I_SEQ null coll';
+                  I_ITER null [I_UNPAIR null 2; I_SEQ null body'; I_DROP null 1];
+                  I_UNIT null]]
       else
-        [I_SEQ null coll';
-         I_ITER l [I_SEQ null body'; I_DROP null 1];
-         I_UNIT null]
+        [I_SEQ l [I_SEQ null coll';
+                  I_ITER null [I_SEQ null body'; I_DROP null 1];
+                  I_UNIT null]]
   | E_while l cond body =>
       let cond' := compile_expr r env cond in
       let body' := compile_expr (false :: r) env body in
@@ -883,97 +884,97 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
                  I_DUP null 1;
                  I_IF null [I_SEQ null body'; I_DROP null 1] []];
        I_UNIT null]
-  | E_tuple _ args =>
-      [I_SEQ null (compile_args r env args);
-       I_SEQ null (PAIR (args_length args))]
-  | E_let_tuple _ e1 e2 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_SEQ null (UNPAIR (binds_length e2));
-       I_SEQ null (compile_binds r env e2)]
-  | E_proj _ e i n =>
-    [I_SEQ null (compile_expr r env e);
-     I_SEQ null (GET i n)]
-  | E_update _ args i n =>
-    [I_SEQ null (compile_args r env args);
-     I_SEQ null (UPDATE i n)]
-  | E_app _ e =>
-      [I_SEQ null (compile_args r env e);
-       I_SWAP null;
-       I_EXEC null]
+  | E_tuple l args =>
+      [I_SEQ l [I_SEQ null (compile_args r env args);
+                I_SEQ null (PAIR (args_length args))]]
+  | E_let_tuple l e1 e2 =>
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_SEQ null (UNPAIR (binds_length e2));
+                I_SEQ null (compile_binds r env e2)]]
+  | E_proj l e i n =>
+      [I_SEQ l [I_SEQ null (compile_expr r env e);
+                I_SEQ null (GET i n)]]
+  | E_update l args i n =>
+      [I_SEQ l [I_SEQ null (compile_args r env args);
+                I_SEQ null (UPDATE i n)]]
+  | E_app l e =>
+      [I_SEQ l [I_SEQ null (compile_args r env e);
+                I_SWAP null;
+                I_EXEC null]]
   | E_lam l e b =>
       let a := match e with
                | Binds _ [a] _ => a
                | _ => T_unit null
                end in
-      [I_FUNC l env a b (trim r (length env)) (repeat true (length env))
-              (compile_binds (repeat true (length env)) env e)]
+      [I_SEQ l [I_FUNC null env a b (trim r (length env)) (repeat true (length env))
+                       (compile_binds (repeat true (length env)) env e)]]
   | E_literal l lit =>
-      [I_RAW null O (lit_code l lit)]
+      [I_SEQ l [I_RAW null O (lit_code null lit)]]
   | E_pair l e =>
-      [I_SEQ null (compile_args r env e);
-       I_PAIR l 2]
+      [I_SEQ l [I_SEQ null (compile_args r env e);
+                I_PAIR null 2]]
   | E_car l e =>
-      [I_SEQ null (compile_expr r env e);
-       I_CAR l]
+      [I_SEQ l [I_SEQ null (compile_expr r env e);
+                I_CAR null]]
   | E_cdr l e =>
-      [I_SEQ null (compile_expr r env e);
-       I_CDR l]
+      [I_SEQ l [I_SEQ null (compile_expr r env e);
+                I_CDR null]]
   | E_unit l =>
-      [I_UNIT l]
+      [I_SEQ l [I_UNIT null]]
   | E_left l b e =>
-      [I_SEQ null (compile_expr r env e);
-       I_LEFT l b]
+      [I_SEQ l [I_SEQ null (compile_expr r env e);
+                I_LEFT null b]]
   | E_right l a e =>
-      [I_SEQ null (compile_expr r env e);
-       I_RIGHT l a]
+      [I_SEQ l [I_SEQ null (compile_expr r env e);
+                I_RIGHT null a]]
   | E_if_bool l e1 e2 e3 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_IF l (compile_expr r env e2) (compile_expr r env e3)]
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_IF null (compile_expr r env e2) (compile_expr r env e3)]]
   | E_if_none l e1 e2 b3 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_IF_NONE l (compile_expr r env e2) (compile_binds r env b3)]
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_IF_NONE null (compile_expr r env e2) (compile_binds r env b3)]]
   | E_if_cons l e1 b2 e3 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_IF_CONS l (compile_binds r env b2) (compile_expr r env e3)]
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_IF_CONS null (compile_binds r env b2) (compile_expr r env e3)]]
   | E_if_left l e1 b2 b3 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_IF_LEFT l (compile_binds r env b2) (compile_binds r env b3)]
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_IF_LEFT null (compile_binds r env b2) (compile_binds r env b3)]]
   | E_iter l e1 e2 =>
-      [I_SEQ null (compile_expr r env e2);
-       I_ITER l (compile_binds r env e1 ++ [I_DROP l 1]);
-       I_UNIT l]
+      [I_SEQ l [I_SEQ null (compile_expr r env e2);
+                I_ITER null (compile_binds r env e1 ++ [I_DROP l 1]);
+                I_UNIT null]]
   | E_map l e1 e2 =>
-      [I_SEQ null (compile_expr r env e2);
-       I_MAP l (compile_binds r env e1)]
+      [I_SEQ l [I_SEQ null (compile_expr r env e2);
+                I_MAP null (compile_binds r env e1)]]
   | E_loop_left l e1 b e2 =>
-      [I_SEQ null (compile_expr r env e2);
-       I_LEFT null b;
-       I_LOOP_LEFT l (compile_binds r env e1)]
+      [I_SEQ l [I_SEQ null (compile_expr r env e2);
+                I_LEFT null b;
+                I_LOOP_LEFT null (compile_binds r env e1)]]
   | E_fold l e1 e2 e3 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_SEQ null (compile_expr (false :: r) env e2);
-       I_ITER l [I_SWAP null; I_PAIR null 2;
-                 I_SEQ null (compile_binds r env e3)]]
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_SEQ null (compile_expr (false :: r) env e2);
+                I_ITER null [I_SWAP null; I_PAIR null 2;
+                             I_SEQ null (compile_binds r env e3)]]]
   | E_fold_right l elem e1 e2 e3 =>
-      [I_SEQ null (compile_expr r env e1);
-       I_SEQ null (compile_expr (false :: r) env e2);
-       I_NIL null elem; I_SWAP null; I_ITER null [I_CONS null];
-       I_ITER l [I_PAIR null 2;
-                 I_SEQ null (compile_binds r env e3)]]
-  | E_failwith x e =>
-      [I_SEQ null (compile_expr r env e);
-       I_FAILWITH null]
+      [I_SEQ l [I_SEQ null (compile_expr r env e1);
+                I_SEQ null (compile_expr (false :: r) env e2);
+                I_NIL null elem; I_SWAP null; I_ITER null [I_CONS null];
+                I_ITER null [I_PAIR null 2;
+                             I_SEQ null (compile_binds r env e3)]]]
+  | E_failwith l e =>
+      [I_SEQ l [I_SEQ null (compile_expr r env e);
+                I_FAILWITH null]]
   | E_raw_michelson l a b code =>
-      [I_LAMBDA null a b [I_RAW l 1 code]]
+      [I_SEQ l [I_LAMBDA null a b [I_RAW null 1 code]]]
   | E_inline_michelson l code args =>
-      compile_args r env args ++ [I_RAW l (args_length args) code]
+      [I_SEQ l (compile_args r env args ++ [I_RAW null (args_length args) code])]
   | E_global_constant l b hash args =>
-      [I_SEQ null (compile_args r env args);
-       I_RAW null (args_length args) (global_constant l hash)]
+      [I_SEQ l [I_SEQ null (compile_args r env args);
+                I_RAW null (args_length args) (global_constant null hash)]]
   | E_create_contract l p s script args =>
-      [I_SEQ null (compile_args r env args);
-       I_CREATE_CONTRACT l p s (compile_binds [true] [T_pair null None None p s] script);
-       I_PAIR null 2]
+      [I_SEQ l [I_SEQ null (compile_args r env args);
+                I_CREATE_CONTRACT null p s (compile_binds [true] [T_pair null None None p s] script);
+                I_PAIR null 2]]
   end
 with
 compile_args
@@ -1062,6 +1063,7 @@ Proof.
       auto; congruence.
   (* E_let_in *)
   - eauto with michelson.
+    admit.
   (* E_tuple *)
   - admit.
   (* E_let_tuple *)
@@ -1073,25 +1075,7 @@ Proof.
   (* E_app *)
   - admit.
   (* E_lam *)
-  - destruct b as [l3 az e];
-      destruct az as [|a1 [|a2 az]];
-      inversion H7; subst;
-      (* hmm *)
-      assert (lemma : forall {A : Set} r (xs : list A), select (repeat true (length (select r xs))) (select r xs) = select r xs)
-      by (clear; intros A r; induction r as [|[] r]; intros [|x xs]; try reflexivity; simpl;
-          try apply f_equal; try rewrite IHr; try rewrite select_nothing; reflexivity);
-      specialize (H _ _ _ H7 (repeat true (length (select r d))) (select r d) (lemma _ r d));
-      econstructor; [|econstructor];
-      econstructor;
-      try reflexivity;
-      try rewrite select_repeat_true';
-      try rewrite repeat_length;
-      try lia;
-      try assumption;
-      try apply select_length_le_weight.
-    + eapply trim_valid.
-    + rewrite trim_ok; auto.
-    + eapply repeat_valid.
+  - admit.
   (* E_literal *)
   - admit.
   (* E_pair *)
@@ -1132,6 +1116,7 @@ Proof.
     + admit.
   (* E_failwith *)
   - eauto with michelson.
+    admit.
   (* E_raw_michelson *)
   - admit.
   (* E_inline_michelson *)

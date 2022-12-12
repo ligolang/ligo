@@ -368,7 +368,12 @@ let rec remove_last : (_ michelson -> bool) ->  _ michelson -> _ michelson = fun
           [Prim (l, p, [bt; bf], t)]
        | Prim _ as prim when pred prim ->
           []
-       | _ -> [last] in
+       | Seq _ ->
+          let last = remove_last pred last in
+          [last]
+       (* if _don't_ remove something (should be impossible) we will
+          wind up in an infinite loop, so better to raise an error: *)
+       | _ -> failwith ("Internal error: " ^ __LOC__) in
      Seq (l, init @ last)
   | t -> t
 
