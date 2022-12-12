@@ -20,7 +20,7 @@ let no_lock_file ~raise:_ () =
 let working_project ~raise:_ () =
   let project_root = "projects/working_project" in
   let t = ModRes.make project_root in
-  let pwd = Sys_unix.getcwd () in
+  let pwd = Caml.Sys.getcwd () in
   let relative p = Filename.concat (Filename.concat pwd project_root) p in
   let inclusion_paths =
     ModRes.get_dependencies ~file:"projects/working_project/main.mligo" t
@@ -56,7 +56,7 @@ let working_project ~raise:_ () =
 let complex_project ~raise:_ () =
   let project_root = "projects/complex_project" in
   let t = ModRes.make project_root in
-  let pwd = Sys_unix.getcwd () in
+  let pwd = Caml.Sys.getcwd () in
   let relative p = Filename.concat (Filename.concat pwd project_root) p in
   let base_inclusion_paths =
     ModRes.get_dependencies ~file:"projects/complex_project/main.mligo" t

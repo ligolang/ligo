@@ -1,8 +1,8 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
-let pwd = Sys_unix.getcwd ()
-let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/polymorphism/"
 
 let%expect_test _ =
   run_ligo_good
@@ -518,8 +518,8 @@ let%expect_test _ =
   [%expect {| 4 |}]
 
 let () =
-  Sys_unix.chdir pwd;
-  Sys_unix.chdir "../../test/contracts/negative/polymorphism/"
+  Caml.Sys.chdir pwd;
+  Caml.Sys.chdir "../../test/contracts/negative/polymorphism/"
 
 
 let%expect_test _ =
@@ -670,4 +670,4 @@ let%expect_test _ =
 
     Cannot monomorphise the expression. |}]
 
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd

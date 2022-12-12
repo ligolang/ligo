@@ -25,8 +25,8 @@ let output_file output_directory file s =
 let vim_syntax_highlighting dir syntaxes =
   let write_file file_name subdir_name contents =
     let subdir = Filename.concat dir subdir_name in
-    if (Sys_unix.file_exists subdir = `No) then
-      Core_unix.mkdir ~perm:0o777 subdir;
+    if not (Sys.file_exists subdir) then
+      Ligo_unix.mkdir subdir ~perm:0o777;
     output_file subdir file_name contents
   in
   let vim_file_name = "ligo.vim" in
@@ -93,13 +93,13 @@ let ( let* ) o f : _ Term.ret  =
   | `Ok x -> f x
 
 let output: string -> string -> string -> string -> _ Term.ret = fun vscode_directory vim_directory emacs_directory textmate_directory ->
-  if not (Sys_unix.is_directory vscode_directory = `Yes) then
+  if not (Sys.is_directory vscode_directory) then
     `Error (false, "Not a valid directory to output Visual Studio Code files")
-  else if not (Sys_unix.is_directory vim_directory = `Yes) then
+  else if not (Sys.is_directory vim_directory) then
     `Error (false, "Not a valid directory to output Vim files")
-  else if not (Sys_unix.is_directory emacs_directory = `Yes) then
+  else if not (Sys.is_directory emacs_directory) then
     `Error (false, "Not a valid directory to output Emacs files")
-  else if not (Sys_unix.is_directory textmate_directory = `Yes) then
+  else if not (Sys.is_directory textmate_directory) then
     `Error (false, "Not a valid directory to output TextMate files")
   else (
     let syntaxes_without_jsligo = [

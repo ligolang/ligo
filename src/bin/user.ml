@@ -7,7 +7,7 @@ class read_username term =
 
     method! send_action =
       function
-      | LTerm_read_line.Break -> raise Sys_unix.Break
+      | LTerm_read_line.Break -> raise Caml.Sys.Break
       | action -> super#send_action action
 
     method! show_box = false
@@ -21,7 +21,7 @@ class read_password term =
 
     method! send_action =
       function
-      | LTerm_read_line.Break -> raise Sys_unix.Break
+      | LTerm_read_line.Break -> raise Caml.Sys.Break
       | action -> super#send_action action
 
     initializer self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 "Password: "))
@@ -40,7 +40,7 @@ let prompt stdout_term =
     let u, p = Lwt_main.run (prompt stdout_term) in
     Ok (Zed_string.to_utf8 u, Zed_string.to_utf8 p)
   with
-  | LTerm_read_line.Interrupt | Sys_unix.Break -> Error ("Error: Login canceled", "")
+  | LTerm_read_line.Interrupt | Caml.Sys.Break -> Error ("Error: Login canceled", "")
 
 
 type data =

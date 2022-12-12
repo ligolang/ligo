@@ -1,0 +1,17 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
+    ],
+    [
+      "bash",
+      "-c",
+      "dune build -p class_group_vdf || dune build -p class_group_vdf"
+    ]
+  ],
+  "dependencies": {
+    "esy-gmp": "*"
+  }
+}

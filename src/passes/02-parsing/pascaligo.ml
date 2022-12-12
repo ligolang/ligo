@@ -9,8 +9,8 @@ module Trace = Simple_utils.Trace
 
 module Config      = Preprocessing_pascaligo.Config
 module Token       = Lexing_pascaligo.Token
-module UnitPasses  = Lexing_pascaligo_self_units.Self
-module TokenPasses = Lexing_pascaligo_self_tokens.Self
+module UnitPasses  = Lx_psc_self_units.Self
+module TokenPasses = Lx_psc_self_tokens.Self
 module ParErr      = Parsing_pascaligo.ParErr
 module Parser      = Parsing_pascaligo.Parser
 module Pretty      = Parsing_pascaligo.Pretty
