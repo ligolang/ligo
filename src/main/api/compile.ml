@@ -211,13 +211,44 @@ let parameter
   let constants = constants @ file_constants in
   let entry_point = Value_var.of_input_var ~loc entry_point in
   let app_typed_prg = Build.qualified_typed ~raise ~options Env source_file in
+  let Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } =
+    Trace.trace ~raise Main_errors.self_ast_typed_tracer
+    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point app_typed_prg
+  in
+  let parameter_ty = Checking.untype_type_expression parameter_ty in
   let typed_param =
-    Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg
+    Trace.try_with
+      (fun ~raise ~catch:_ ->
+        Ligo_compile.Utils.type_expression
+          ~raise
+          ~options
+          ~annotation:parameter_ty
+          syntax
+          expression
+          app_typed_prg)
+      (fun ~catch:_ _ ->
+        let typed_param =
+          Ligo_compile.Utils.type_expression
+            ~raise
+            ~options
+            syntax
+            expression
+            app_typed_prg
+        in
+        let () =
+          Ligo_compile.Of_typed.assert_equal_contract_type
+            ~raise
+            Check_parameter
+            entry_point
+            app_typed_prg
+            typed_param
+        in
+        typed_param)
   in
   let typed_param, typed_prg =
     Self_ast_typed.remove_unused_expression typed_param app_typed_prg
   in
-  let _contract : Mini_c.meta Run.Michelson.michelson =
+  let (_ : Mini_c.meta Run.Michelson.michelson) =
     let aggregated_contract =
       Ligo_compile.Of_typed.apply_to_entrypoint_contract
         ~raise
@@ -312,13 +343,44 @@ let storage
   let app_typed_prg =
     Build.qualified_typed ~raise ~options Ligo_compile.Of_core.Env source_file
   in
+  let Self_ast_typed.Helpers.{ parameter = _; storage = storage_ty } =
+    Trace.trace ~raise Main_errors.self_ast_typed_tracer
+    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point app_typed_prg
+  in
+  let storage_ty = Checking.untype_type_expression storage_ty in
   let typed_param =
-    Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg
+    Trace.try_with
+      (fun ~raise ~catch:_ ->
+        Ligo_compile.Utils.type_expression
+          ~raise
+          ~options
+          ~annotation:storage_ty
+          syntax
+          expression
+          app_typed_prg)
+      (fun ~catch:_ _ ->
+        let typed_param =
+          Ligo_compile.Utils.type_expression
+            ~raise
+            ~options
+            syntax
+            expression
+            app_typed_prg
+        in
+        let () =
+          Ligo_compile.Of_typed.assert_equal_contract_type
+            ~raise
+            Check_storage
+            entry_point
+            app_typed_prg
+            typed_param
+        in
+        typed_param)
   in
   let typed_param, typed_prg =
     Self_ast_typed.remove_unused_expression typed_param app_typed_prg
   in
-  let _contract : Mini_c.meta Run.Michelson.michelson =
+  let (_ : Mini_c.meta Run.Michelson.michelson) =
     let aggregated_contract =
       Ligo_compile.Of_typed.apply_to_entrypoint_contract
         ~raise

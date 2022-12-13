@@ -302,7 +302,15 @@ let fetch_contract_type ~raise : Value_var.t -> program -> contract_type =
         trace_option ~raise (expected_same_entry main_fname storage storage' expr)
         @@ Ast_typed.assert_type_expression_eq (storage, storage')
       in
-      (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
+      let () =
+        trace_option ~raise (expected_non_vars_in_storage main_fname storage expr)
+        @@ Ast_typed.assert_no_type_vars storage
+      in
+      let () =
+        trace_option ~raise (expected_non_vars_in_parameter main_fname parameter expr)
+        @@ Ast_typed.assert_no_type_vars parameter
+      in
+      (* TODO: on storage/parameter : assert_storable, assert_passable? *)
       { parameter; storage }
     | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location var))
   | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location var)
