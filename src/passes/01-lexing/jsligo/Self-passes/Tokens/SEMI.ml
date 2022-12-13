@@ -15,6 +15,8 @@ let semicolon_insertion tokens =
     inner (t :: result) rest
   | (BlockCom _ as t) :: rest ->
     inner (t :: result) rest
+  | (RBRACE _ as r) :: (LineCom _ as t) :: rest -> 
+    inner (t:: Token.ghost_SEMI :: r :: result) rest
   | (_ as semi) :: (LineCom _ as t) :: rest
   | (_ as semi) :: (BlockCom _ as t) :: rest
   | (SEMI _ as semi) :: (Directive _ as t)  :: rest
@@ -48,8 +50,8 @@ let semicolon_insertion tokens =
   | (RBRACE _ as rbrace) :: (Export _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Let _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Const _ as r)  :: rest
-  | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest
-  | (RBRACE _ as rbrace) :: (Return _ as r)  :: rest ->
+  | (RBRACE _ as rbrace) :: (Ident _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest ->
     inner (r :: Token.ghost_SEMI :: rbrace :: result ) rest
   | token :: (Directive _ as t) :: rest
   | token :: (Namespace _ as t) :: rest
