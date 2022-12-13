@@ -98,6 +98,7 @@ module Michelson_formatter = struct
   type shrunk_meta =
     { location : Location.t
     ; env : shrunk_variable_meta option list
+    ; source_type : int option
     }
 
   type shrunk_result =
@@ -108,7 +109,7 @@ module Michelson_formatter = struct
   let comment michelson_comments =
     match michelson_comments with
     | { location = show_location; source = _; env = show_env } ->
-      fun ({ location; env } : shrunk_meta) ->
+      fun ({ location; env; source_type = _ } : shrunk_meta) ->
         let loc =
           if show_location && not (Simple_utils.Location.is_virtual location)
           then Format.asprintf "%a" Location.pp location
@@ -203,8 +204,13 @@ module Michelson_formatter = struct
       fold_micheline
         node
         ~f:(fun init node ->
-          let Mini_c.{ location = _; env; binder = _ } =
+          let Mini_c.{ location = _; env; binder = _; source_type } =
             Tezos_micheline.Micheline.location node
+          in
+          let init =
+            match source_type with
+            | None -> init
+            | Some source_type -> TypeSet.add source_type init
           in
           List.fold_left env ~init ~f:(fun init binder_meta ->
               match binder_meta with
@@ -226,7 +232,8 @@ module Michelson_formatter = struct
     (* now substitute all source types for their indices *)
     let node =
       Micheline.map_node
-        (fun Mini_c.{ location; env; binder = _ } ->
+        (fun Mini_c.{ location; env; binder = _; source_type } ->
+          let source_type = Option.map ~f:type_index source_type in
           let env =
             List.map
               ~f:
@@ -237,7 +244,7 @@ module Michelson_formatter = struct
                      }))
               env
           in
-          { location; env })
+          { location; env; source_type })
         (fun prim -> prim)
         node
     in
@@ -259,7 +266,7 @@ module Michelson_formatter = struct
   let meta_encoding : shrunk_meta Data_encoding.t =
     Data_encoding.(
       conv
-        (fun { location; env } ->
+        (fun { location; env; source_type } ->
           json_object
             [ "location", location_to_json location
             ; ( "environment"
@@ -271,6 +278,8 @@ module Michelson_formatter = struct
                       (List.map env ~f:(function
                           | None -> `Null
                           | Some binder_meta -> variable_meta_to_json binder_meta))) )
+            ; ( "source_type"
+              , Option.map ~f:(fun n -> `String (string_of_int n)) source_type )
             ])
         (fun _s -> failwith ("internal error: not implemented @ " ^ __LOC__))
         Data_encoding.json)

@@ -152,8 +152,10 @@ type meta =
     env : binder_meta option list
   ; (* environment descriptor on special environment Seq nodes *)
     binder : binder_meta option
-        (* binder descriptor on the translated type of binders (since
+  ; (* binder descriptor on the translated type of binders (since
        backend environments are lists of types) *)
+    source_type : Ast_typed.type_expression option
   }
 
-let dummy_meta : meta = { location = Location.dummy; env = []; binder = None }
+let dummy_meta : meta =
+  { location = Location.dummy; env = []; binder = None; source_type = None }
