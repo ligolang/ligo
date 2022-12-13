@@ -973,7 +973,10 @@ Fixpoint compile_expr (r : ope) (env : list ty) (e : expr) {struct e} : prog :=
                 I_RAW null (args_length args) (global_constant null hash)]]
   | E_create_contract l p s script args =>
       [I_SEQ l [I_SEQ null (compile_args r env args);
-                I_CREATE_CONTRACT null p s (compile_binds [true] [T_pair null None None p s] script);
+                (* following CREATE_CONTRACT is also given location l
+                   because "view_restrictions" error messages depended
+                   on it, hmm *)
+                I_CREATE_CONTRACT l p s (compile_binds [true] [T_pair null None None p s] script);
                 I_PAIR null 2]]
   end
 with
