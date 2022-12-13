@@ -1,0 +1,20 @@
+;; Build of the preprocessor of PyLIGO as a library
+
+(library
+  (name preprocessing_pyligo)
+  (public_name ligo.preprocessing.pyligo)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+     ;; Vendors
+     Preprocessor)
+  (modules Config))
+
+;; Build of a standalone preprocessor for JsLIGO
+
+(executable
+  (name PreprocMain)
+  (libraries
+    ;; LIGO
+    preprocessing_pyligo
+    preprocessing_shared)
+  (modules PreprocMain))
