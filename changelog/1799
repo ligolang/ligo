@@ -1,5 +1,5 @@
 author: er433
-description: '### A new module `Test.PBT`\nThis new module is introduced to do simple
+description: '#### A new module `Test.PBT`\nThis new module is introduced to do simple
   property-based testing. It''s composed of:\n- `val gen : ''a gen`: gives a generator
   for type `''a` (must be annotated).\n- `val gen_small : ''a gen`: : gives a small
   generator for type `''a` (must be annotated).\n- `val make_test : ''a gen -> (''a

@@ -21,6 +21,7 @@ module Name = struct
   let object_property_string    = "objectpropertystring"
   let attribute                 = "attribute"
   (* Types *)
+  let type_binder               = "typebinder"
   let type_definition           = "typedefinition"
   let type_annotation           = "typeannotation"
   let type_annotation_field     = "typeannotationfield"
@@ -45,6 +46,7 @@ let syntax_highlighting =
     Name.type_int;
     Name.type_variant;
     Name.type_product;
+    Name.type_binder;
     "string";
   ] in
   {
@@ -312,6 +314,15 @@ let syntax_highlighting =
         }
       };
       (* Types *)
+      {
+        name = Name.type_binder;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.chevron_begin, None)];
+          end_ = [(Regexp.chevron_end, None)];
+          patterns = [Name.type_name];
+        };
+      };
       {
         name = Name.type_definition;
         kind = Begin_end {

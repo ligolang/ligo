@@ -1,64 +1,42 @@
-# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
-#
-# SPDX-License-Identifier: Unlicense
-
 # Parameters of repository traversal.
 traversal:
-  # Files and folders which we pretend do not exist
+  # Glob patterns describing files which we pretend do not exist
   # (so they are neither analyzed nor can be referenced).
   ignored:
-    # Git files
-    - .git
-    - xrefcheck
+    - vendors/**/*
+    - esy.lock/**/*
+    - static.esy.esy.lock/**/*
 
 # Verification parameters.
 verification:
-  # On 'anchor not found' error, how much similar anchors should be displayed as
-  # hint. Number should be between 0 and 1, larger value means stricter filter.
-  anchorSimilarityThreshold: 0.5
-
   # When checking external references, how long to wait on request before
   # declaring "Response timeout".
   externalRefCheckTimeout: 60s
 
-  # Prefixes of files, references in which should not be analyzed.
+  # Glob patterns describing the files, references in which should not be analyzed.
   notScanned:
-    # GitHub-specific files
-    - .github/pull_request_template.md
-    - .github/issue_template.md
-    - .github/PULL_REQUEST_TEMPLATE
-    - .github/ISSUE_TEMPLATE
-
-    # GitLab-specific files
-    - .gitlab/merge_request_templates/
-    - .gitlab/issue_templates/
-
-    # For some reason glob patterns don't work :(
-    - static.esy.esy.lock/overrides/5a340488c657db45d2ed088d31b1c36d/Readme.md
-    - static.esy.esy.lock/overrides/c96ee6805a1ac070e5ef89cd99c2f722/Readme.md
-    - src/README.md
-    - src/coq/README.md
-    - vendors/tezos-ligo/src/lib_webassembly/bin/test/README.md
-    - vendors/tezos-ligo/src/lib_webassembly/bin/README.md
-    - vendors/tezos-ligo/src/README.md
-    - vendors/tezos-ligo/devtools/README.md
-    - vendors/tezos-ligo/README.md
+    - .gitlab/merge_request_templates/**/*
+    - .gitlab/issue_templates/**/*
     - tools/webide-new/.github/pull_request_template.md
-    - tools/vim/ligo/README.md
-    - vendors/tezos-ligo/devtools/protocol-print/README.md
-    - vendors/tezos-ligo/devtools/protocol-print/README.md
 
   # Glob patterns describing the files which do not physically exist in the
   # repository but should be treated as existing nevertheless.
   virtualFiles:
-    # GitHub pages
-    - ../../../issues
-    - ../../../issues/*
-    - ../../../pulls
-    - ../../../pulls/*
-
-    # GitLab pages
     - ../../issues
     - ../../issues/*
     - ../../merge_requests
     - ../../merge_requests/*
+
+  # POSIX extended regular expressions that match external references
+  # that have to be ignored (not verified).
+  ignoreRefs:
+    # Ignore localhost links by default
+    - ^(https?|ftps?)://(localhost|127\.0\.0\.1).*
+
+# Parameters of scanners for various file types.
+scanners:
+  markdown:
+    # Flavor of markdown, e.g. GitHub-flavor.
+    #
+    # This affects which anchors are generated for headers.
+    flavor: GitLab

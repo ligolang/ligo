@@ -1,0 +1,6 @@
+const [b, _] = [Tezos.create_ticket("one", 10 as nat), 1]
+
+type storage = ticket<string>
+
+const main = (_ : unit, _ : storage) : [list<operation>, storage]
+  => [list([]), Option.unopt (Tezos.join_tickets (b, b))]

@@ -1,19 +1,30 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
+let contract basename = "../../test/contracts/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good ["run"; "evaluate-call" ; contract "failwith.ligo"; "1" ; "-e"; "failer"; "--no-warn" ] ;
-  [%expect{| failed with: 42 |}]
+  run_ligo_good
+    [ "run"; "evaluate-call"; contract "failwith.ligo"; "1"; "-e"; "failer"; "--no-warn" ];
+  [%expect {| failed with: 42 |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "evaluate-call" ; contract "failwith.ligo" ; "1" ; "-e" ; "failer" ; "--format";"json" ; "--no-warn" ] ;
-  [%expect{| { "value": null, "failure": "42" } |}]
+  run_ligo_good
+    [ "run"
+    ; "evaluate-call"
+    ; contract "failwith.ligo"
+    ; "1"
+    ; "-e"
+    ; "failer"
+    ; "--format"
+    ; "json"
+    ; "--no-warn"
+    ];
+  [%expect {| { "value": null, "failure": "42" } |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "dry-run" ; contract "subtle_nontail_fail.mligo" ; "()" ; "()" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "dry-run"; contract "subtle_nontail_fail.mligo"; "()"; "()" ];
+  [%expect
+    {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
       2 |   if true
@@ -24,26 +35,26 @@ let%expect_test _ =
     failed with: "This contract always fails" |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "interpret" ; "assert(1=1)" ; "--syntax";"pascaligo" ] ;
+  run_ligo_good [ "run"; "interpret"; "assert(1=1)"; "--syntax"; "pascaligo" ];
   [%expect {|
     unit |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "interpret" ; "assert(1=2)" ; "--syntax";"pascaligo" ] ;
+  run_ligo_good [ "run"; "interpret"; "assert(1=2)"; "--syntax"; "pascaligo" ];
   [%expect {|
     failed with: "failed assertion" |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "interpret" ; "assert(1=1)" ; "--syntax";"cameligo" ] ;
+  run_ligo_good [ "run"; "interpret"; "assert(1=1)"; "--syntax"; "cameligo" ];
   [%expect {|
     unit |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "interpret" ; "assert(1=2)" ; "--syntax";"cameligo" ] ;
+  run_ligo_good [ "run"; "interpret"; "assert(1=2)"; "--syntax"; "cameligo" ];
   [%expect {|
     failed with: "failed assertion" |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "interpret" ; "(failwith (1,2n) : unit)" ; "--syntax";"cameligo" ] ;
+  run_ligo_good [ "run"; "interpret"; "(failwith (1,2n) : unit)"; "--syntax"; "cameligo" ];
   [%expect {|
     failed with: (Pair 1 2) |}]

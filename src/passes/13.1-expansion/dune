@@ -1,0 +1,10 @@
+(library
+ (name expansion)
+ (public_name ligo.expansion)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils ast_aggregated ast_expanded)
+ (preprocess
+  (pps ppx_poly_constructor ppx_here))
+ (flags
+  (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils)))

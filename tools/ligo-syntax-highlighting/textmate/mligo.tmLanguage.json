@@ -112,7 +112,7 @@
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
-      "end": "(?=^#|\\[%|\\b(let|in|type|end|module)\\b)",
+      "end": "(?=^#|\\[%|\\b(let|in|type|end|module)\\b|\\))",
       "beginCaptures": { "1": { "name": "keyword.other.mligo" } },
       "endCaptures": {},
       "patterns": [

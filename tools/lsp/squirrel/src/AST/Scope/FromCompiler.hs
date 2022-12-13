@@ -2,29 +2,18 @@ module AST.Scope.FromCompiler
   ( FromCompiler
   ) where
 
-import Control.Arrow ((&&&))
 import Control.Category ((>>>))
 import Control.Comonad.Cofree (Cofree (..), _extract)
-import Control.Lens (view)
-import Control.Monad.Reader (runReader)
-import Data.Either (partitionEithers)
-import Data.Foldable (foldlM)
-import Data.Function (on)
-import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
-import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.String (IsString)
-import Data.Text (Text)
 import Duplo.Lattice
 import UnliftIO.Directory (canonicalizePath)
 
+
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), ScopedDecl (..), Type (ArrowType), Module (..)
-  , ModuleDeclSpecifics (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..)
-  , _tdsInit
-  )
+  (DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..),
+  Type (ArrowType), TypeDeclSpecifics (..), ValueDeclSpecifics (..), _tdsInit)
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
@@ -47,7 +36,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
 fromCompiler :: forall m. Log m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
   let msgs = map fromLigoErrorToMsg (errors <> warnings)
-  allRefs <- fromScopes (Namespace []) decls
+  allRefs <- fromScopes (Namespace empty) decls
   foldlM
     (\(sf, errs) (LigoScope r es _ts ms) -> do
       let env = reverse $ es <> ms
@@ -67,10 +56,10 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       -> m (HashMap Text ScopedDecl)
     fromScopes namespace (LigoDefinitionsInner variables _ modules moduleAliases) =
       foldMapM id
-        [ foldMapM (uncurry (fromVariableDecl namespace)) $ HashMap.toList variables
+        [ foldMapM (uncurry (fromVariableDecl namespace)) $ toPairs variables
         -- TODO (LIGO-593): Types are ignored!
-        , foldMapM (uncurry (fromModuleDecl namespace)) $ HashMap.toList modules
-        , foldMapM (uncurry (fromModuleAliasDecl namespace)) $ HashMap.toList moduleAliases
+        , foldMapM (uncurry (fromModuleDecl namespace)) $ toPairs modules
+        , foldMapM (uncurry (fromModuleAliasDecl namespace)) $ toPairs moduleAliases
         ]
 
     normalizeRange :: Range -> m Range
@@ -112,7 +101,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
           , _mdsName = moduleName
           }
         moduleDecl = ScopedDecl moduleName r (r : rs) [] dialect moduleSpec namespace
-      decls' <- fromScopes (namespace <> Namespace [moduleName]) members
+      decls' <- fromScopes (namespace <> Namespace (one moduleName)) members
       pure $ HashMap.insert mangled moduleDecl decls'
 
     fromModuleAliasDecl
@@ -127,7 +116,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       let
         moduleSpec = ModuleSpec ModuleDeclSpecifics
           { _mdsInitRange = fromLigoRangeOrDef bodyR
-          , _mdsInit = ModuleAlias $ Namespace alias
+          , _mdsInit = ModuleAlias $ Namespace $ fromList alias
           , _mdsName = moduleName
           }
         moduleDecl = ScopedDecl moduleName r (r : rs) [] dialect moduleSpec namespace
@@ -140,7 +129,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       where
         loop
           = withListZipper
-          $ find (subject `isCoveredBy`) >>> atLocus maybeLoop
+          $ ListZipper.find (subject `isCoveredBy`) >>> atLocus maybeLoop
 
         isCoveredBy = leq `on` snd . view _extract
 

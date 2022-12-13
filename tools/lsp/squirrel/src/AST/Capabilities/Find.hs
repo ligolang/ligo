@@ -11,22 +11,19 @@ module AST.Capabilities.Find
   , findModuleDecl
   ) where
 
-import Control.Lens (_Just, _2, (^.), (^?))
-import Control.Monad
-import Data.List (find)
-import Data.Maybe (fromMaybe, listToMaybe)
+import Prelude hiding (Product (..), Type)
+
+import Control.Lens (_Just)
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
+import Unsafe qualified
 
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  ( Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec
-  , _ValueSpec, extractRefName, sdSpec, vdsTspec
-  )
-import AST.Skeleton
-  ( Binding (BModuleAlias, BModuleDecl), LIGO, ModuleName, SomeLIGO, nestedLIGO
-  )
+  (Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec, _ValueSpec, extractRefName,
+  sdSpec, vdsTspec)
+import AST.Skeleton (Binding (BModuleAlias, BModuleDecl), LIGO, ModuleName, SomeLIGO, nestedLIGO)
 
 import Product
 import Range
@@ -132,7 +129,7 @@ findModuleDecl pos tree = do
     BModuleDecl _ _ -> pure decl
     -- Alias, must resolve it:
     BModuleAlias _ path -> do
-      (aliasR, _aliasNode) <- match @ModuleName $ last path
+      (aliasR, _aliasNode) <- match @ModuleName $ Unsafe.last path
       findModuleDecl (getRange aliasR) tree
     -- Impossible:
     _ -> Nothing

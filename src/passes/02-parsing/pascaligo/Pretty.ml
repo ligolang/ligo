@@ -21,7 +21,7 @@ open! PPrint
 
 let unroll_D_Attr (attr, decl) =
   let rec aux attrs = function
-    D_Attr (attr, decl) -> aux (attr :: attrs) decl
+    D_Attr { value = (attr, decl); _ } -> aux (attr :: attrs) decl
   | decl                -> List.rev attrs, decl
   in aux [attr] decl
 
@@ -110,8 +110,8 @@ and print_declaration = function
 
 (* Attributed declaration *)
 
-and print_D_Attr (node : attribute * declaration) =
-  let attributes, declaration = unroll_D_Attr node in
+and print_D_Attr (node) =
+  let attributes, declaration = unroll_D_Attr node.value in
   let thread = print_declaration declaration
   in print_attributes thread attributes
 

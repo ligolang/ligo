@@ -1,16 +1,15 @@
 open Cli_expect
 
-let bad_contract basename =
-  "../../test/contracts/negative/" ^ basename
+let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 (* avoid pretty printing *)
-let () = Core_unix.putenv ~key:"TERM" ~data:"dumb"
+let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_michelson_insertion_1.ligo" ] ;
-  [%expect{xxx|
-    File "../../test/contracts/negative/bad_michelson_insertion_1.ligo", line 3, character 72 to line 5, character 41:
-      2 |
+  run_ligo_bad [ "compile"; "contract"; bad_contract "bad_michelson_insertion_1.ligo" ];
+  [%expect
+    {xxx|
+    File "../../test/contracts/negative/bad_michelson_insertion_1.ligo", line 4, characters 32-74:
       3 | function main (const p : nat; const s: nat ) : list (operation)* nat is {
       4 |   const f : (nat * nat -> nat)= [%Michelson ({| ADD |} : nat *nat -> nat)];
       5 | } with ((nil: list(operation)), f (p, s))
@@ -18,11 +17,12 @@ let%expect_test _ =
     Raw Michelson must be seq (with curly braces {}), got: ADD. |xxx}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_michelson_insertion_2.ligo" ] ;
-  [%expect{xxx|
+  run_ligo_bad [ "compile"; "contract"; bad_contract "bad_michelson_insertion_2.ligo" ];
+  [%expect
+    {xxx|
 File "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 34-40:
   4 |   const f : (nat -> nat -> nat)= [%Michelson ({| ADD |} : nat -> nat -> nat)];
   5 | } with ((nil: list(operation)), f (p, s))
 
 Invalid type(s)
-Cannot unify ( nat * nat ) with nat. |xxx}]
+Cannot unify "( nat * nat )" with "nat". |xxx}]

@@ -6,6 +6,7 @@ const {
   addWebpackExternals,
   addWebpackAlias,
   addWebpackPlugin,
+  addExternalBabelPlugins
 } = require('customize-cra');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const BundleAnalyzerPlugin =
@@ -52,6 +53,11 @@ function addWasmLoader(options) {
         }
       });
     });
+    config.module.rules.push({
+      test: /node_modules[\\/]onigasm[\\/]lib[\\/]onigasm\.wasm$/,
+      loader: "file-loader",
+      type: "javascript/auto",
+    })
     return config;
   };
 }
@@ -132,6 +138,8 @@ const overrides = [
     BUILD_TIME: JSON.stringify(process.env.BUILD_TIME),
     MEASUREMENT_ID: JSON.stringify(process.env.MEASUREMENT_ID),
   }),
+  addExternalBabelPlugins("@babel/plugin-proposal-class-properties", "@babel/plugin-proposal-optional-chaining", "@babel/plugin-proposal-nullish-coalescing-operator"),
+  // addBabelPreset("@babel/preset-env"),
   enableTS(),
   turnOffMangle(),
   addWasmLoader(),
@@ -173,7 +181,7 @@ module.exports = {
     return function (proxy, allowedHost) {
       const config = configFunction({
         '/api': {
-          target: 'http://localhost:8080',
+          target: 'http://127.0.0.1:8080',
           pathRewrite: { '^/api': '' },
         },
       }, allowedHost);

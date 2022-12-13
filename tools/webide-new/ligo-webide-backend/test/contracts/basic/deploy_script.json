@@ -1,4 +1,4 @@
 {
   "build": "{ parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;\n  storage int ;\n  code { UNPAIR ;\n         IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;\n         NIL operation ;\n         PAIR } }\n\n",
-  "script": "tezos-client \\ originate \\ contract \\ increment-cameligo \\ transferring 0 \\ from $YOUR_SOURCE_ACCOUNT \\ running '{ parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ; storage int ; code { UNPAIR ; IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ; NIL operation ; PAIR } }' \\ --init '0' \\ --burn-cap 0.09525\n"
+  "script": "octez-client \\ originate \\ contract \\ increment-cameligo \\ transferring 0 \\ from $YOUR_SOURCE_ACCOUNT \\ running '{ parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ; storage int ; code { UNPAIR ; IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ; NIL operation ; PAIR } }' \\ --init '0' \\ --burn-cap 0.09525\n"
 }

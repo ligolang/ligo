@@ -1,24 +1,21 @@
 module AST.Scope.ScopedDecl.Parser
   ( parseType
   , parseTypeDeclSpecifics
-  , parseTypeParams
+  , parseQuotedTypeParams
   , parseParameters
   , parseModule
   ) where
 
+import Prelude hiding (Type)
+
 import Control.Lens ((??))
-import Control.Monad.Reader (Reader, ask, lift)
-import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Coerce (coerce)
-import Data.Foldable (asum)
-import Data.Functor ((<&>))
-import Data.List.NonEmpty (nonEmpty, toList)
 import Duplo.Tree (layer, match)
 import Witherable (wither)
 
 import AST.Pretty (PPableLIGO, lppDialect, ppToText)
 import AST.Scope.ScopedDecl
-import AST.Skeleton (Lang, LIGO)
+import AST.Skeleton (LIGO, Lang)
 import AST.Skeleton qualified as LIGO
 import Product (Contains)
 import Range (Range, getRange)
@@ -54,9 +51,6 @@ parseType node = do
       , parseVariableType
       , parseParenType
       ]
-
-hoistMaybe :: Applicative f => Maybe a -> MaybeT f a
-hoistMaybe = MaybeT . pure
 
 parseParenType :: PPableLIGO info => LIGO info -> Parser (Maybe Type)
 parseParenType node = runMaybeT do
@@ -112,8 +106,7 @@ parseTupleType node = runMaybeT do
 
 parseVariableType :: Contains Range info => LIGO info -> Parser (Maybe Type)
 parseVariableType node = runMaybeT do
-  LIGO.TVariable t <- hoistMaybe $ layer node
-  var <- MaybeT $ parseTypeVariable t
+  var <- MaybeT $ parseTypeVariable node
   pure $ VariableType var
 
 -- Since we don't care right now about distinguishing functions or whatever, we
@@ -127,14 +120,14 @@ parseAliasType node = do
 
 -- * Parsers for type variables.
 
-parseTypeParams :: Contains Range info => LIGO info -> Parser (Maybe TypeParams)
-parseTypeParams node = runMaybeT $ asum
+parseQuotedTypeParams :: Contains Range info => LIGO info -> Parser (Maybe QuotedTypeParams)
+parseQuotedTypeParams node = runMaybeT $ asum
   [ do
-      LIGO.TypeParam t <- hoistMaybe $ layer node
-      TypeParam <$> MaybeT (parseTypeVariableSpecifics t)
+      LIGO.QuotedTypeParam t <- hoistMaybe $ layer node
+      QuotedTypeParam <$> MaybeT (parseTypeVariableSpecifics t)
   , do
-      LIGO.TypeParams ts <- hoistMaybe $ layer node
-      TypeParams <$> lift (wither parseTypeVariableSpecifics ts)
+      LIGO.QuotedTypeParams ts <- hoistMaybe $ layer node
+      QuotedTypeParams <$> lift (wither parseTypeVariableSpecifics ts)
   ]
 
 parseTypeVariableSpecifics
@@ -217,5 +210,5 @@ parseRecordFieldPattern node = do
 parseModule :: [LIGO info] -> Parser Module
 parseModule =
   pure
-  . maybe ModuleDecl (ModuleAlias . Namespace . coerce)
+  . maybe ModuleDecl (ModuleAlias . Namespace . fromList . coerce)
   . traverse (layer @LIGO.ModuleName)

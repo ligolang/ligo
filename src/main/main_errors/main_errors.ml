@@ -1,6 +1,5 @@
 module Formatter = Formatter
 module Types = Types
-
 include Types
 
 let typecheck_contract_tracer protocol c errs : all =

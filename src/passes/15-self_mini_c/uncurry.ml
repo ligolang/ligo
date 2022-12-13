@@ -147,10 +147,11 @@ let comb_expr (es : expression list) : expression =
     type_expression = comb_type (List.map ~f:(fun e -> e.type_expression) es) }
 
 let uncurry_rhs (depth : int) (expr : expression) : expression =
+  let loc = expr.location in
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
 
   let (vars, body) = uncurry_lambda depth expr in
-  let binder = Value_var.fresh () in
+  let binder = Value_var.fresh ~loc () in
 
   (* generate fresh vars in order to specify binding precedence for
      duplicate vars *)

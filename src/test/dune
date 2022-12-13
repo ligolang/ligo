@@ -1,26 +1,10 @@
 (ocamllex md)
 
 (executables
- (names
-  test
-  doc_test
-  repl_test
-  parser_negative_tests
-  vendors_test
-  contract_test
-  get_scope_tests)
- (libraries
-  simple-utils
-  tezos-memory-proto-alpha
-  ligo
-  bos
-  repl
-  interpreter
-  alcotest
-  tezos-utils
-  tezos-crypto
-  ligo_api
-  core_unix.filename_unix))
+ (names test doc_test repl_test vendors_test ;; parser_negative_tests
+   contract_test get_scope_tests)
+ (libraries simple-utils tezos-memory-proto-alpha ligo ligo.unix bos repl
+   interpreter alcotest tezos-utils tezos-crypto ligo_api))
 
 (rule
  (alias doc-test)
@@ -44,14 +28,13 @@
   (source_tree ../../gitlab-pages/docs)
   (source_tree projects)))
 
-(rule
- (alias parser-negative-tests)
- (action
-  (run ./parser_negative_tests.exe))
- (deps
-  ../passes/02-parsing/pascaligo/all.ligo
-   ../passes/02-parsing/cameligo/all.mligo
-   ../passes/02-parsing/reasonligo/all.religo))
+;; (rule
+;;  (alias parser-negative-tests)
+;;  (action
+;;   (run ./parser_negative_tests.exe))
+;;  (deps ../passes/02-parsing/pascaligo/all.ligo
+;;    ../passes/02-parsing/cameligo/all.mligo
+;;    ../passes/02-parsing/reasonligo/all.religo))
 
 (rule
  (alias ligo-test)
@@ -95,8 +78,7 @@
   (glob_files error-recovery/simple/pascaligo/original/*.ligo)
   (glob_files error-recovery/simple/reasonligo/*.religo)
   (glob_files error-recovery/simple/reasonligo/original/*.religo)
-  (glob_files error-recovery/multiple_errors/*)
- )
+  (glob_files error-recovery/multiple_errors/*))
  (action
   (run ./get_scope_tests.exe -q -c)))
 
@@ -114,8 +96,7 @@
   (glob_files error-recovery/simple/pascaligo/original/*.ligo)
   (glob_files error-recovery/simple/reasonligo/*.religo)
   (glob_files error-recovery/simple/reasonligo/original/*.religo)
-  (glob_files error-recovery/multiple_errors/*)
- )
+  (glob_files error-recovery/multiple_errors/*))
  (action
   (run ./get_scope_tests.exe -c)))
 
@@ -125,7 +106,7 @@
   (alias vendors_test)
   (alias ligo-test)
   (alias doc-test)
-  (alias parser-negative-tests)
+;;  (alias parser-negative-tests)
   (alias repl-test)
   (alias contract_test)
   (alias error-recovery/recovery-test)

@@ -1,13 +1,14 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
-let pwd = Sys_unix.getcwd ()
-let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
 
 (* test comparison on sum/record types *)
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_compare.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_compare.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_cmp exited with value ().
     - test_cmp_list exited with value ().
@@ -15,22 +16,25 @@ let%expect_test _ =
 
 (* events payload being records and not decompiled to pairs in the interpreter *)
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_events_pair_vs_record.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_events_pair_vs_record.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_foo exited with value 3n. |}]
 
 (* decompilation of timestamp *)
 let%expect_test _ =
-  run_ligo_good ["run" ; "test" ; test "test_timestamp_contract.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_timestamp_contract.mligo" ];
+  [%expect
+    {|
     Success (2109n)
     Everything at the top-level was executed.
     - test_timestamp exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "interpret_test.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_lambda_call exited with value ().
     - test_higher_order1 exited with value ().
@@ -104,44 +108,50 @@ let%expect_test _ =
     - test_key_hash exited with value ().
     - test_check exited with value ().
     - test_int_bls exited with value ().
-    - test_not exited with value (). |}]
+    - test_not exited with value ().
+    - test_chain_id exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
-  run_ligo_good ["run"; "test" ; test "imported_modules/test.mligo" ; "--format" ; "dev" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "imported_modules/test.mligo"; "--format"; "dev" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test1 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "views_test.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "interpret_test_log.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "interpret_test_log.mligo" ];
+  [%expect
+    {|
     {a = 1 ; b = 2n ; c = "aaa"}
     One (())
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_fail.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_fail.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_fail_from_file.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_fail_from_file.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
 
-
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "compile_expr.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "compile_expr.mligo" ];
+  [%expect
+    {|
   Everything at the top-level was executed.
   - test1 exited with value ().
   - test2 exited with value ().
@@ -149,8 +159,9 @@ let%expect_test _ =
   - test4 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "compile_expr_from_file.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "compile_expr_from_file.mligo" ];
+  [%expect
+    {|
   Everything at the top-level was executed.
   - test1 exited with value ().
   - test2 exited with value ().
@@ -158,40 +169,46 @@ let%expect_test _ =
   - test4 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value 111.
     - test2 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value 111.
     - test2 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "catch_balance_too_low.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "catch_balance_too_low.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_subst_with_storage.mligo" ];
+  [%expect
+    {|
   Everything at the top-level was executed.
   - test exited with value 0. |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_subst_with_storage_from_file.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_subst_with_storage_from_file.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "nesting_modules.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "nesting_modules.mligo" ];
+  [%expect
+    {|
     File "./nesting_modules.mligo", line 15, characters 6-7:
      14 | let foo () =
      15 |   let x = 1 in
@@ -205,8 +222,9 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "map_map.jsligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "map_map.jsligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value ["one" -> "foo" ; "two" -> "foo"]. |}]
 
@@ -226,31 +244,35 @@ run_ligo_good ["run";"test" ; test "bootstrapped_contracts.mligo" ] ;
 *)
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "override_function.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "override_function.mligo" ];
+  [%expect
+    {|
     4
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_fresh.mligo" ] ;
-  [%expect{| Everything at the top-level was executed. |}]
+  run_ligo_good [ "run"; "test"; test "test_fresh.mligo" ];
+  [%expect {| Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_rec_contract.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_rec_contract.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_importer.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_importer.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_bigmap.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_bigmap.mligo" ];
+  [%expect
+    {|
     [32 -> 42n]
     None (())
     [32 -> 42n]
@@ -261,49 +283,54 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_bigmap_compare.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_bigmap_compare.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_bigmap_set.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_bigmap_set.mligo" ];
+  [%expect
+    {|
     9n
     0n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_module.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_module.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value 1. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "interpreter_nested_comparison_test.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "interpreter_nested_comparison_test.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value ().
     - test_equal exited with value ().
     - test_not_equal exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_no_mutation.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_no_mutation.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value ().
     - test_mutation exited with value ().
     - test_mutation_all exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_mutate_from_file.mligo" ] ;
-  [%expect{|
-    File "./test_mutate_from_file.mligo", line 7, character 2 to line 8, character 4:
+  run_ligo_good [ "run"; "test"; test "test_mutate_from_file.mligo" ];
+  [%expect
+    {|
+    File "./test_mutate_from_file.mligo", line 7, characters 11-65:
       6 |   let _ = Test.transfer_exn a (Test.eval 1) 0tez in
       7 |   let () = assert (Test.get_storage_of_address a = (Test.eval 1)) in
       8 |   ()
-      9 |
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
@@ -317,34 +344,39 @@ let%expect_test _ =
     )]. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "iteration.jsligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_set exited with value 3.
     - test_list exited with value 3. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "func_michelson.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "func_michelson.mligo" ];
+  [%expect
+    {|
     42
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "func_michelson_loop.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "func_michelson_loop.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_many_imports.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_many_imports.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_part_1.jsligo" ; "--no-warn" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "switch_case_part_1.jsligo"; "--no-warn" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test1 exited with value ().
     - test2 exited with value ().
@@ -366,8 +398,9 @@ let%expect_test _ =
     - test18 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_part_2.jsligo" ; "--no-warn" ] ;
-    [%expect{|
+  run_ligo_good [ "run"; "test"; test "switch_case_part_2.jsligo"; "--no-warn" ];
+  [%expect
+    {|
       Everything at the top-level was executed.
       - test1 exited with value ().
       - test2 exited with value ().
@@ -425,8 +458,9 @@ let%expect_test _ =
       - test54 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_part_3.jsligo" ; "--no-warn" ] ;
-    [%expect{|
+  run_ligo_good [ "run"; "test"; test "switch_case_part_3.jsligo"; "--no-warn" ];
+  [%expect
+    {|
       Everything at the top-level was executed.
       - test1 exited with value ().
       - test2 exited with value ().
@@ -449,8 +483,9 @@ let%expect_test _ =
       - test19 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_if_else.jsligo" ; "--no-warn" ] ;
-    [%expect{|
+  run_ligo_good [ "run"; "test"; test "switch_case_if_else.jsligo"; "--no-warn" ];
+  [%expect
+    {|
       Everything at the top-level was executed.
       - test_if_switch_break exited with value ().
       - test_if_switch_return exited with value ().
@@ -459,14 +494,23 @@ let%expect_test _ =
       - test_switch_switch_break exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_negative_big_map_id.mligo" ] ;
-    [%expect{|
+  run_ligo_good [ "run"; "test"; test "let_rec.mligo" ];
+  [%expect
+    {|
+      Everything at the top-level was executed.
+      - test exited with value true. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_negative_big_map_id.mligo" ];
+  [%expect
+    {|
       Everything at the top-level was executed.
       - test_main exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_FA12.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_FA12.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_transfer exited with value ().
     - test_transfer_not_e_allowance exited with value ().
@@ -478,8 +522,9 @@ let%expect_test _ =
     - test_get_total_supply exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "pack_unpack.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "pack_unpack.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_string exited with value ().
     - test_int exited with value ().
@@ -487,41 +532,47 @@ let%expect_test _ =
     - test_string_string exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_pack_unpack.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_pack_unpack.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "pairing_check.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "pairing_check.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "gas_consum.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (2136n , 2331n , 2331n). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_implicit_account.jsligo" ];
+  [%expect
+    {|
     0mutez
     123mutez
     Everything at the top-level was executed.
     - test_addresses exited with value [tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx]. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_accounts.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_accounts.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_new exited with value 110000000mutez.
     - test_add exited with value 110000000mutez. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_baker_account.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_baker_account.mligo" ];
+  [%expect
+    {|
     "STARTING BALANCE AND VOTING POWER"
     3800000000000mutez
     4000000000000n
@@ -535,8 +586,9 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_register_delegate.mligo" ];
+  [%expect
+    {|
     "STARTING BALANCE AND VOTING POWER"
     950000000000mutez
     0n
@@ -550,33 +602,38 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_global_constant.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_global_constant_2.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "recursion_uncurry.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "recursion_uncurry.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value 112. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_timestamp.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_timestamp.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_sub exited with value ().
     - test_get_time exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_context.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_context.mligo" ];
+  [%expect
+    {|
     "test_contract:"
     0
     10
@@ -597,16 +654,18 @@ let%expect_test _ =
     - test_drop exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_error_balance.jsligo"; "--no-warn" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_error_balance.jsligo"; "--no-warn" ];
+  [%expect
+    {|
     100000000000000mutez
     3799997904750mutez
     Everything at the top-level was executed.
     - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_inline.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_x exited with value (KT19hFZZxPTue1oBw7cc46L1p6pJ3xTo3vRF , { parameter unit ;
       storage
@@ -638,148 +697,225 @@ let%expect_test _ =
              PAIR } } , 222). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
+  [%expect
+    {|
     KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj
+    [1 -> "hi"]
     Everything at the top-level was executed.
-    - test_foo exited with value (). |}]
+    - test_foo exited with value ().
+    - test_bar exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "cli_arg.mligo"; "--arg"; "[ 1 ; 2 ; 3]" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_cli_arg exited with value [1 ; 2 ; 3]. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "reset_time.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "reset_time.mligo" ];
+  [%expect
+    {|
   Everything at the top-level was executed.
   - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(2012-02-02T10:10:10Z)). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_get_account.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_get_account.mligo" ];
+  [%expect
+    {|
     (tz1MBWU1WkszFfkEER2pgn4ATKXE9ng7x1sR , edpkusHqa6fxkGPPL9YpgbcakvSTvcTBcwnLAmCdcevmws4Mh2MdHB , "edsk41aRaPPBpidY7w5xu54edk76uJJtJ6myTwYDEWhAwNHce9gKNo")
     3800000000000mutez
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_sign.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_sign.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_create.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_create.mligo" ];
+  [%expect
+    {|
     42
     42
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_transfer_entrypoint.ligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_create2.mligo" ];
+  [%expect
+    {|
+    42
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_print.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_transfer_entrypoint.ligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_print.mligo" ];
+  [%expect
+    {|
     Hello world
     @42
     Everything at the top-level was executed.
     - test exited with value "(true , 42n)". |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_eprint.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_eprint.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value ().
     Ooops |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_random.mligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed.
-    - test exited with value (). |}]
-
-
-let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "get_contract.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_random.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_key.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "get_contract.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_key.mligo" ];
+  [%expect
+    {|
     edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
     Everything at the top-level was executed.
     - test exited with value Success (2797n). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_tickets_and_bigmaps.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
+  [%expect
+    {|
     Success (3504n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_chain_id.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_chain_id.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value 0x050a0000000400000000. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_print_values.mligo" ] ;
+  run_ligo_good [ "run"; "test"; test "test_print_values.mligo" ];
   [%expect {| aloh |}]
 
-
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_to_json.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test_to_json.mligo" ];
+  [%expect
+    {|
     ["typed_address","KT1Eip4VjDintiWphUf9fAM7cCikw3NajBAG"]
     ["record",{"foo":["constant",["int","42"]],"bar":["list",[["constant",["string","hello"]],["constant",["string","world"]]]]}] |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_imm.ligo" ];
+  [%expect
+    {xxx|
+    Everything at the top-level was executed.
+    - test_orig exited with value (). |xxx}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_record.ligo" ];
+  [%expect
+    {xxx|
+    0
+    Everything at the top-level was executed.
+    - test_reproducing exited with value "OK". |xxx}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_compare_setmap.mligo" ];
+  [%expect
+    {xxx|
+    Everything at the top-level was executed.
+    - test_address_set exited with value { "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" ;
+      "tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ" }.
+    - test_int_set exited with value { 3 ; 4 }.
+    - test_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
+      Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }.
+    - test_big_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
+      Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |xxx}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "run"
+    ; "test-expr"
+    ; "cameligo"
+    ; "type t = [@layout:comb] { num : int ; num_nat : nat ; str : string } in let v = \
+       Test.parse_michelson {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.decompile v : \
+       (nat, t) big_map))"
+    ];
+  [%expect
+    {xxx|
+    Everything at the top-level was executed.
+    - eval exited with value [1n -> {num = 1 ; num_nat = 1n ; str = "q"}]. |xxx}]
+
 (* do not remove that :) *)
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd
 
-let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
+let () =
+  Caml.Sys.chdir
+    "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
+
+
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test"; test "test.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
-  run_ligo_good [ "run"; "test" ; test "test.jsligo" ] ;
-  [%expect {|
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}];
+  run_ligo_good [ "run"; "test"; test "test.jsligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
-let () = Sys_unix.chdir pwd
 
-let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+let () = Caml.Sys.chdir pwd
+
+let () =
+  Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+
+
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test/a/b/test.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; test "test/a/b/test.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
-  run_ligo_good [ "run"; "test" ; test "test/a/b/test.jsligo" ] ;
-  [%expect{|
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}];
+  run_ligo_good [ "run"; "test"; test "test/a/b/test.jsligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
-let () = Sys_unix.chdir pwd
 
-
-let bad_test n = bad_test ("/interpreter_tests/"^n)
+let () = Caml.Sys.chdir pwd
+let bad_test n = bad_test ("/interpreter_tests/" ^ n)
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "test_random.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 6, characters 46-58:
       5 |   (* We generate the property *)
       6 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) pbt_gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
@@ -788,16 +924,17 @@ let%expect_test _ =
     Generator for type contract (int) is not implemented. For now, only unit, string, bytes, address, int, nat, tez, records, sums, lists, sets, maps and big_maps can be generated. |}]
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 1, character 0 to line 2, character 25:
+  run_ligo_bad [ "run"; "test"; bad_test "test_failure1.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test : unit =
       2 |   failwith "I am failing"
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
 
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 1, character 0 to line 2, character 25:
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test : unit =
       2 |   failwith "I am failing"
 
@@ -805,8 +942,9 @@ let%expect_test _ =
     Failwith: "I am failing" |}]
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_failure2.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
       2 |     assert false
@@ -824,26 +962,29 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 |}]
 
 let%expect_test _ =
-  run_ligo_bad ["run"; "test" ; bad_test "bad_balances_reset.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "bad_balances_reset.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
       1 | let test = Test.reset_state 2n [4000tez;4000tez]
 
      baker account initial balance must at least reach 6000 tez |}]
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_failure3.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 17-18:
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
       3 |   Test.originate f () 0tez
 
     Invalid type(s)
-    Cannot unify unit with ( list (operation) * unit ). |}]
+    Cannot unify "unit" with "( list (operation) * unit )". |}]
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_trace.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
       2 |   if x < 0 then
       3 |     (failwith "negative" : int)
@@ -866,11 +1007,13 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 |}]
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "test_trace2.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_trace2.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88:
       5 | let make_call (contr : unit contract) =
       6 |   let _ = Test.get_storage_of_address ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
@@ -883,18 +1026,17 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 12, characters 2-33 |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_mutation_loop.mligo" ; "--steps" ; "1000" ] ;
-  [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
-     16 |     | None -> ()
+  run_ligo_bad [ "run"; "test"; bad_test "test_mutation_loop.mligo"; "--steps"; "1000" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
     You are using Michelson failwith primitive (loaded from standard library).
     Consider using `Test.failwith` for throwing a testing framework failure.
 
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
-     16 |     | None -> ()
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
@@ -908,8 +1050,9 @@ let%expect_test _ =
     Replacing by: 2. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_source1.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_source1.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
       9 |   let () = Test.set_source addr in
      10 |   let (_, _, _) = Test.originate main () 0tez in
@@ -919,8 +1062,9 @@ let%expect_test _ =
     KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_source2.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 10, characters 10-52:
       9 |   let () = Test.set_source addr in
      10 |   let _ = Test.transfer_exn addr (Test.eval ()) 0tez in
@@ -930,39 +1074,43 @@ let%expect_test _ =
     KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_run_types.jsligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 26-44:
       1 | const foo = (x: {field: int}): {field: int} => {return x};
       2 | const bar = Test.run(foo, {property: "toto"});
       3 |
 
     Invalid type(s)
-    Cannot unify record[property -> string] with record[field -> int]. |}]
+    Cannot unify "record[property -> string]" with "record[field -> int]". |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_run_types2.jsligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 26-32:
       1 | const foo = (x:  {b:int}):  {b:int} => {return x};
       2 | const bar = Test.run(foo, "toto");
 
     Invalid type(s)
-    Cannot unify string with record[b -> int]. |}]
+    Cannot unify "string" with "record[b -> int]". |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_run_types3.jsligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 26-41:
       1 | const foo = (x: int): int => {return x};
       2 | const bar = Test.run(foo, {field: "toto"});
 
     Invalid type(s)
-    Cannot unify record[field -> string] with int. |}]
+    Cannot unify "record[field -> string]" with "int". |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_decompile.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 2-29:
       2 |   let x = Test.eval 4n in
       3 |   (Test.decompile x : string)
@@ -970,8 +1118,9 @@ let%expect_test _ =
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run"; "test" ; bad_test "test_register_delegate.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
      18 |   let () = Test.set_baker a in
      19 |   let (ta, _, _) = Test.originate main 41 5tez in
@@ -982,22 +1131,14 @@ let%expect_test _ =
     95000000000mutez
     100000000000n |}]
 
-let%expect_test _ =
-  run_ligo_bad [ "run"; "test" ; bad_test "test_create.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_create.mligo", line 11, characters 12-44:
-     10 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage fact_ta)) in
-     11 |   Test.log (Test.get_storage_of_address addr)
-
-    Not supported (yet) when the provided account has been fetched from Test.get_last_originations |}]
-
-let pwd = Sys_unix.getcwd ()
-let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
-run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
-[%expect{|
+  run_ligo_bad [ "run"; "test"; "typed_addr_in_bytes_pack.mligo" ];
+  [%expect
+    {|
   File "typed_addr_in_bytes_pack.mligo", line 14, character 17 to line 18, character 5:
    13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
@@ -1010,25 +1151,23 @@ run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
   Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
   unit) |}]
 
-let () = Sys_unix.chdir pwd
+let () = Caml.Sys.chdir pwd
 
 let%expect_test _ =
-  run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
-  [%expect {xxx|
-    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, character 2 to line 7, character 5:
+  run_ligo_bad [ "run"; "test"; bad_test "test_michelson_non_func.mligo" ];
+  [%expect
+    {xxx|
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
       1 | let test =
       2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
       3 |   begin
-      4 |     Test.log x;
-      5 |     assert (x = x);
-      6 |     assert (x = 1)
-      7 |   end
 
     Embedded raw code can only have a functional type |xxx}]
 
 let%expect_test _ =
-  run_ligo_bad ["run";"test" ; bad_test "get_contract.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "run"; "test"; bad_test "get_contract.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
      14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
      15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
@@ -1045,4 +1184,5 @@ let%expect_test _ =
     An uncaught error occured:
     Failwith: "foo"
     Trace:
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 ,
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]

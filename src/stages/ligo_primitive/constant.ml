@@ -1,14 +1,14 @@
 type constant' =
-  | C_UNIT
-  | C_NIL
-  | C_SOME
-  | C_NONE
-  | C_UPDATE
+  | C_UNIT [@pure]
+  | C_NIL [@pure]
+  | C_SOME [@pure]
+  | C_NONE [@pure]
+  | C_UPDATE [@pure]
   (* Loops *)
   | C_ITER
   | C_LOOP_LEFT
-  | C_LOOP_CONTINUE
-  | C_LOOP_STOP
+  | C_LOOP_CONTINUE [@pure]
+  | C_LOOP_STOP [@pure]
   | C_FOLD
   | C_FOLD_LEFT
   | C_FOLD_RIGHT
@@ -16,81 +16,81 @@ type constant' =
   | C_ABS
   | C_INT
   (* MATH *)
-  | C_NEG
+  | C_NEG [@pure]
   | C_ADD
   | C_SUB
   | C_MUL
   | C_DIV
   | C_MOD
   (* LOGIC *)
-  | C_NOT
-  | C_AND
-  | C_OR
-  | C_XOR
+  | C_NOT [@pure]
+  | C_AND [@pure]
+  | C_OR [@pure]
+  | C_XOR [@pure]
   | C_LSL
   | C_LSR
   (* COMPARATOR *)
-  | C_EQ
-  | C_NEQ
-  | C_LT
-  | C_GT
-  | C_LE
-  | C_GE
+  | C_EQ [@pure]
+  | C_NEQ [@pure]
+  | C_LT [@pure]
+  | C_GT [@pure]
+  | C_LE [@pure]
+  | C_GE [@pure]
   (* Bytes/ String *)
-  | C_CONCAT
-  | C_CONS
-  | C_SIZE
-  | C_SLICE
+  | C_CONCAT [@pure]
+  | C_CONS [@pure]
+  | C_SIZE [@pure]
+  | C_SLICE [@pure]
   (* Pair *)
-  | C_PAIR
-  | C_CAR
-  | C_CDR
-  | C_TRUE
-  | C_FALSE
+  | C_PAIR [@pure]
+  | C_CAR [@pure]
+  | C_CDR [@pure]
+  | C_TRUE [@pure]
+  | C_FALSE [@pure]
   | C_LEFT
   | C_RIGHT
   (* Set *)
-  | C_SET_EMPTY
-  | C_SET_LITERAL
-  | C_SET_ADD
-  | C_SET_REMOVE
+  | C_SET_EMPTY [@pure]
+  | C_SET_LITERAL [@pure]
+  | C_SET_ADD [@pure]
+  | C_SET_REMOVE [@pure]
   | C_SET_ITER
   | C_SET_FOLD
   | C_SET_FOLD_DESC
-  | C_SET_MEM
-  | C_SET_UPDATE
-  | C_SET_SIZE
+  | C_SET_MEM [@pure]
+  | C_SET_UPDATE [@pure]
+  | C_SET_SIZE [@pure]
   (* List *)
-  | C_LIST_EMPTY
-  | C_LIST_LITERAL
+  | C_LIST_EMPTY [@pure]
+  | C_LIST_LITERAL [@pure]
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
   | C_LIST_FOLD_LEFT
   | C_LIST_FOLD_RIGHT
-  | C_LIST_SIZE
+  | C_LIST_SIZE [@pure]
   (* Maps *)
   | C_MAP
-  | C_MAP_EMPTY
-  | C_MAP_LITERAL
-  | C_MAP_GET
+  | C_MAP_EMPTY [@pure]
+  | C_MAP_LITERAL [@pure]
+  | C_MAP_GET [@pure]
   | C_MAP_GET_FORCE
-  | C_MAP_ADD
-  | C_MAP_REMOVE
-  | C_MAP_UPDATE
+  | C_MAP_ADD [@pure]
+  | C_MAP_REMOVE [@pure]
+  | C_MAP_UPDATE [@pure]
   | C_MAP_ITER
   | C_MAP_MAP
   | C_MAP_FOLD
   | C_MAP_FIND
-  | C_MAP_FIND_OPT
-  | C_MAP_GET_AND_UPDATE
-  | C_MAP_SIZE
-  | C_MAP_MEM
+  | C_MAP_FIND_OPT [@pure]
+  | C_MAP_GET_AND_UPDATE [@pure]
+  | C_MAP_SIZE [@pure]
+  | C_MAP_MEM [@pure]
   (* Big Maps *)
   | C_BIG_MAP
-  | C_BIG_MAP_EMPTY
+  | C_BIG_MAP_EMPTY [@pure]
   | C_BIG_MAP_LITERAL
-  | C_BIG_MAP_GET_AND_UPDATE
+  | C_BIG_MAP_GET_AND_UPDATE [@pure]
   (* Blockchain *)
   | C_CREATE_CONTRACT
   (* Check - used for checking conditions and giving errors *)
@@ -156,36 +156,47 @@ type constant' =
   | C_TEST_TRY_WITH [@only_interpreter]
   | C_TEST_SET_PRINT_VALUES [@only_interpreter]
   (* New with EDO*)
-  | C_GLOBAL_CONSTANT
+  | C_GLOBAL_CONSTANT [@pure]
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
-  | C_SUB_MUTEZ
+  | C_SUB_MUTEZ [@pure]
   | C_OPTION_MAP
-[@@deriving eq,compare,yojson,hash, print_constant, only_interpreter_tags, read_constant ]
+[@@deriving
+  eq
+  , compare
+  , yojson
+  , hash
+  , print_constant
+  , is { tags = [ "only_interpreter"; "pure" ] }
+  , read_constant]
 
+type deprecated =
+  { name : string
+  ; const : constant'
+  }
 
-type deprecated = {
-  name : string ;
-  const : constant' ;
-}
-
-type rich_constant =
-  | Const of constant'
-  [@@deriving eq,compare,yojson,hash]
+type rich_constant = Const of constant' [@@deriving eq, compare, yojson, hash]
 
 let const_name (Const c) = c
-type 'e t = {
-  cons_name: constant' ; (* this is in enum *)
-  arguments: 'e list ;
-  } [@@deriving eq,compare,yojson,hash, fold, map]
 
-let pp f ppf = fun {cons_name;arguments} ->
-  Format.fprintf ppf "@[%a@[<hv 1>(%a)@]@]"
-    pp_constant' cons_name
-    Simple_utils.PP_helpers.(list_sep_d f) arguments
+type 'e t =
+  { cons_name : constant' (* this is in enum *)
+  ; arguments : 'e list
+  }
+[@@deriving eq, compare, yojson, hash, fold, map]
 
-let fold_map : ('acc -> 'a ->  'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
-= fun f acc {cons_name;arguments} ->
-  let acc,arguments = List.fold_map ~f ~init:acc arguments in
-  (acc,{cons_name;arguments})
+let pp f ppf { cons_name; arguments } =
+  Format.fprintf
+    ppf
+    "@[%a@[<hv 1>(%a)@]@]"
+    pp_constant'
+    cons_name
+    Simple_utils.PP_helpers.(list_sep_d f)
+    arguments
+
+
+let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t =
+ fun f acc { cons_name; arguments } ->
+  let acc, arguments = List.fold_map ~f ~init:acc arguments in
+  acc, { cons_name; arguments }

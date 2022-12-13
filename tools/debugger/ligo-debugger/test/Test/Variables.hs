@@ -17,17 +17,19 @@ import Test.HUnit ((@?=))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
+import AST (Lang (Caml))
+
 import Language.LIGO.DAP.Variables (createVariables, runBuilder)
 import Language.LIGO.Debugger.CLI.Types
-  (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry),
-  LigoType (LTUnresolved), LigoVariable (LigoVariable))
+  (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry), LigoType (..),
+  LigoVariable (LigoVariable), Name, NameType (Concise))
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 
-mkStackItem :: (SingI t) => Value t -> Maybe Text -> StackItem
+mkStackItem :: (SingI t) => Value t -> Maybe (Name 'Concise) -> StackItem 'Concise
 mkStackItem v nameMb = StackItem desc (SomeValue v)
   where
     desc =
-      LigoStackEntry $ LigoExposedStackEntry (LigoVariable <$> nameMb) LTUnresolved
+      LigoStackEntry $ LigoExposedStackEntry (LigoVariable <$> nameMb) (LigoType Nothing)
 
 test_Variables :: TestTree
 test_Variables = testGroup "variables"
@@ -42,7 +44,7 @@ testAddresses = testGroup "addresses"
   [ testCase "address with entrypoint \"foo\"" do
       let epAddress = EpAddress address (UnsafeEpName "foo")
       let addressItem = mkStackItem (VAddress epAddress) (Just "addr")
-      snd (runBuilder $ createVariables [addressItem]) @?=
+      snd (runBuilder $ createVariables Caml [addressItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -85,7 +87,7 @@ testAddresses = testGroup "addresses"
   , testCase "address without entrypoint" do
       let epAddress = EpAddress address DefEpName
       let addressItem = mkStackItem (VAddress epAddress) (Just "addr")
-      snd (runBuilder $ createVariables [addressItem]) @?=
+      snd (runBuilder $ createVariables Caml [addressItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -117,7 +119,7 @@ testContracts = testGroup "contracts"
       case mkEntrypoint of
         MkEntrypointCallRes _ entrypoint -> do
           let contractItem = mkStackItem (VContract address (SomeEpc entrypoint)) (Just "contract")
-          snd (runBuilder $ createVariables [contractItem]) @?=
+          snd (runBuilder $ createVariables Caml [contractItem]) @?=
             M.fromList
               [ (1,
                   [ Variable
@@ -159,7 +161,7 @@ testContracts = testGroup "contracts"
               ]
   , testCase "contract without entrypoint" do
       let contractItem = mkStackItem (VContract address (sepcPrimitive @'TUnit)) (Just "contract")
-      snd (runBuilder $ createVariables [contractItem]) @?=
+      snd (runBuilder $ createVariables Caml [contractItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -184,7 +186,7 @@ testOption :: TestTree
 testOption = testGroup "option"
   [ testCase "nothing" do
       let vNothingItem = mkStackItem (VOption @'TUnit Nothing) (Just "nothingVar")
-      snd (runBuilder $ createVariables [vNothingItem]) @?=
+      snd (runBuilder $ createVariables Caml [vNothingItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -203,7 +205,7 @@ testOption = testGroup "option"
           ]
   , testCase "contains unit" do
       let vUnitItem = mkStackItem (VOption $ Just VUnit) (Just "someUnit")
-      snd (runBuilder $ createVariables [vUnitItem]) @?=
+      snd (runBuilder $ createVariables Caml [vUnitItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -240,7 +242,7 @@ testList :: TestTree
 testList = testGroup "list"
   [ testCase "empty list" do
       let vList = mkStackItem (VList @'TUnit []) (Just "list")
-      snd (runBuilder $ createVariables [vList]) @?=
+      snd (runBuilder $ createVariables Caml [vList]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -259,7 +261,7 @@ testList = testGroup "list"
           ]
   , testCase "list of two units" do
       let vList = mkStackItem (VList [VUnit, VUnit]) (Just "list")
-      snd (runBuilder $ createVariables [vList]) @?=
+      snd (runBuilder $ createVariables Caml [vList]) @?=
         M.fromList
           [ (1,
               [ Variable

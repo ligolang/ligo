@@ -42,15 +42,7 @@ export class DeployAction extends CancellableAction {
     beaconWallet: any,
     launchNetwork: string
   ): Promise<void> => {
-    if (launchNetwork === NetworkType.JAKARTANET) {
-      await beaconWallet.requestPermissions({
-        network: {
-          type: NetworkType.JAKARTANET,
-          name: 'Jakartanet',
-          rpcUrl: `https://jakartanet.ecadinfra.com`,
-        },
-      });
-    } else if (launchNetwork === NetworkType.GHOSTNET) {
+    if (launchNetwork === NetworkType.GHOSTNET) {
       await beaconWallet.requestPermissions({
         network: {
           type: NetworkType.GHOSTNET,
@@ -99,13 +91,10 @@ export class DeployAction extends CancellableAction {
       MichelsonFormat.Json
     );
 
-    let networkURL = 'https://jakartanet.ecadinfra.com';
-    let network = { type: NetworkType.JAKARTANET };
+    let networkURL = 'https://ghostnet.ecadinfra.com';
+    let network = { type: NetworkType.GHOSTNET };
 
-    if (deployState.network === 'Jakartanet') {
-      networkURL = 'https://jakartanet.ecadinfra.com';
-      network = { type: NetworkType.JAKARTANET };
-    } else if (deployState.network === NetworkType.KATHMANDUNET) {
+    if (deployState.network === NetworkType.KATHMANDUNET) {
       networkURL = 'https://kathmandunet.ecadinfra.com';
       network = { type: NetworkType.KATHMANDUNET };
     }else if (deployState.network === NetworkType.GHOSTNET) {

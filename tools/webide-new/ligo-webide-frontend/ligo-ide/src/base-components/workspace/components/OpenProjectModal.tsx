@@ -7,7 +7,7 @@ import notification from "~/base-components/notification";
 
 import { ProjectManager } from "../ProjectManager";
 import actions from "../actions";
-import { GistContent } from "~base-components/file-ops/GistFs";
+import { GistContent } from "~/base-components/file-ops/GistFs";
 
 const OpenProjectModal = forwardRef((_, ref) => {
   actions.openProjectModal = ref;

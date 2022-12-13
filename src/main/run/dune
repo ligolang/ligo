@@ -4,5 +4,5 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils tezos-utils parsing tree_abstraction
-   self_ast_imperative desugaring ast_core checking ast_typed
-   spilling mini_c predefined stacking ligo_compile))
+   self_ast_imperative desugaring ast_core checking ast_typed spilling mini_c
+   predefined stacking ligo_compile))

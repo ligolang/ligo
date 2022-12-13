@@ -7,8 +7,6 @@ module Test.Common.Capabilities.DocumentSymbol
   , documentSymbolsCameligoModules
   ) where
 
-import Control.Lens ((^.))
-import Data.Text (Text)
 import Language.LSP.Types
   (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name),
   SymbolKind (..), UInt, Uri (Uri))

@@ -4,7 +4,7 @@ module AST.Scope.ScopedDecl
   , ScopedDecl (..), sdName, sdOrigin, sdRefs, sdDoc, sdDialect, sdSpec, sdNamespace
   , DeclarationSpecifics (..), _TypeSpec, _ModuleSpec, _ValueSpec
   , TypeVariable (..), tvName
-  , TypeParams (..), _TypeParam, _TypeParams
+  , QuotedTypeParams (..), _QuotedTypeParam, _QuotedTypeParams
   , TypeDeclSpecifics (..), tdsInitRange, tdsInit
   , Type (..)
   , _RecordType
@@ -26,18 +26,14 @@ module AST.Scope.ScopedDecl
   , lppDeclCategory
   , lppLigoLike
   , fillTypeIntoCon
-  , fillTypeParams
+  , fillQuotedTypeParams
   , extractRefName
   ) where
 
-import Control.Applicative ((<|>))
-import Control.Lens ((%~), (&), (^?))
+import Prelude hiding (Type)
+
 import Control.Lens.TH (makeLenses, makePrisms)
-import Data.Hashable (Hashable)
-import Data.List (find)
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Sum (inject)
-import Data.Text (Text)
 import Duplo.Tree (Cofree ((:<)), Element)
 
 import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr, (<+>))
@@ -49,12 +45,12 @@ import Range (Range)
 import Util (safeIndex)
 
 newtype Namespace = Namespace
-  { getNamespace :: [Text]
+  { getNamespace :: Seq Text
   } deriving stock (Eq, Ord, Show)
     deriving newtype (Hashable, Semigroup, Monoid)
 
 instance Pretty Namespace where
-  pp (Namespace ns) = sexpr "::" (map pp ns)
+  pp (Namespace ns) = sexpr "::" $ map pp $ toList ns
 
 type Scope = [ScopedDecl]
 
@@ -69,14 +65,14 @@ data ScopedDecl = ScopedDecl
   } deriving stock (Show)
 
 data DeclarationSpecifics
-  = TypeSpec (Maybe TypeParams) (TypeDeclSpecifics Type)
+  = TypeSpec (Maybe QuotedTypeParams) (TypeDeclSpecifics Type)
   | ModuleSpec ModuleDeclSpecifics
   | ValueSpec ValueDeclSpecifics
   deriving stock (Eq, Show)
 
-data TypeParams
-  = TypeParam (TypeDeclSpecifics TypeVariable)
-  | TypeParams [TypeDeclSpecifics TypeVariable]
+data QuotedTypeParams
+  = QuotedTypeParam (TypeDeclSpecifics TypeVariable)
+  | QuotedTypeParams [TypeDeclSpecifics TypeVariable]
   deriving stock (Eq, Show)
 
 newtype TypeVariable = TypeVariable
@@ -213,9 +209,9 @@ instance IsLIGO Type where
   toLIGO (VariableType var) = node (LIGO.TVariable (toLIGO var))
   toLIGO (ParenType typ) = node (LIGO.TParen (toLIGO typ))
 
-instance IsLIGO TypeParams where
-  toLIGO (TypeParam t) = node (LIGO.TypeParam (toLIGO t))
-  toLIGO (TypeParams ts) = node (LIGO.TypeParams (map toLIGO ts))
+instance IsLIGO QuotedTypeParams where
+  toLIGO (QuotedTypeParam t) = node (LIGO.QuotedTypeParam (toLIGO t))
+  toLIGO (QuotedTypeParams ts) = node (LIGO.QuotedTypeParams (map toLIGO ts))
 
 instance IsLIGO TypeVariable where
   toLIGO (TypeVariable t) = node (LIGO.TypeVariableName t)
@@ -257,7 +253,7 @@ instance IsLIGO RecordFieldPattern where
   toLIGO (IsRecordField name body) = node (LIGO.IsRecordField (node (LIGO.FieldName name)) (toLIGO body))
   toLIGO (IsRecordCapture name) = node (LIGO.IsRecordCapture (node (LIGO.NameDecl name)))
 
-node :: Element f RawLigoList => f (LIGO '[]) -> LIGO '[]
+node :: Duplo.Tree.Element f RawLigoList => f (LIGO '[]) -> LIGO '[]
 node element = Nil :< inject element
 
 $(makeLenses ''ScopedDecl)
@@ -266,7 +262,7 @@ $(makeLenses ''TypeDeclSpecifics)
 $(makeLenses ''ModuleDeclSpecifics)
 $(makeLenses ''ValueDeclSpecifics)
 $(makePrisms ''Type)
-$(makePrisms ''TypeParams)
+$(makePrisms ''QuotedTypeParams)
 $(makeLenses ''TypeVariable)
 $(makeLenses ''TypeField)
 
@@ -285,8 +281,8 @@ fillTypeIntoCon typDecl conDecl
 
 -- | Assuming that 'typeDecl' contains a '_sdSpec' which is a 'TypeSpec', try to
 -- fill its field with the provided params, if they are not filled already.
-fillTypeParams :: TypeParams -> ScopedDecl -> ScopedDecl
-fillTypeParams newParams typeDecl = typeDecl
+fillQuotedTypeParams :: QuotedTypeParams -> ScopedDecl -> ScopedDecl
+fillQuotedTypeParams newParams typeDecl = typeDecl
   { _sdSpec = case _sdSpec typeDecl of
       TypeSpec oldParams tspec -> TypeSpec (oldParams <|> Just newParams) tspec
       spec                     -> spec

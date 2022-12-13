@@ -1,23 +1,14 @@
 module Method.GenerateDeployScript (generateDeployScript) where
 
 import Control.Arrow ((>>>))
-import Control.Monad ((>=>))
-import Control.Monad.Except (runExcept, throwError)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, runReaderT)
-import Control.Monad.Trans (lift)
+import Control.Monad.Except (runExcept)
 import Data.Aeson (decodeStrict)
 import Data.ByteString qualified as BS
-import Data.ByteString.Lazy.Char8 qualified as LBS
-import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NonEmpty
-import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Numeric (showFFloat)
-import Servant (err400, err500, errBody)
 import Servant.Client (BaseUrl(..), Scheme(Https))
 import Text.Megaparsec (errorBundlePretty)
 
@@ -33,7 +24,7 @@ import Morley.Michelson.Macro (expandContract)
 import Morley.Michelson.Parser
   (MichelsonSource(MSUnspecified), ParserException(..), parseExpandValue, parseNoEnv, program)
 import Morley.Michelson.Printer (renderDoc)
-import Morley.Michelson.Printer.Util (doesntNeedParens)
+import Morley.Michelson.Printer.Util (doesntNeedParens, printDocS)
 import Morley.Michelson.TypeCheck (TypeCheckOptions(..), typeCheckContractAndStorage)
 import Morley.Michelson.Typed (SomeContractAndStorage(..))
 import Morley.Michelson.Untyped (Contract, Value)
@@ -45,6 +36,7 @@ import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey
 
 import Common (WebIDEM)
 import Config (Config(..))
+import Error (LigoCompilerError(..), MorleyError(..))
 import Method.Compile (compile)
 import Schema.CompileRequest (CompileRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
@@ -91,14 +83,12 @@ generateDeployScript request = do
 
   contract :: Contract <-
     case parseNoEnv program MSUnspecified michelsonCodeJson of
-      Left bundle -> lift . throwError $
-        err400 {errBody = LBS.pack $ errorBundlePretty bundle}
+      Left bundle -> throwM $ MorleyError $ Text.pack $ errorBundlePretty bundle
       Right y -> pure (expandContract y)
 
   storage :: Value <-
     case parseExpandValue MSUnspecified michelsonStorageJson of
-      Left (ParserException bundle) -> lift . throwError $
-        err400 {errBody = LBS.pack $ errorBundlePretty bundle}
+      Left (ParserException bundle) -> throwM $ MorleyStorageParsingError $ Text.pack $ errorBundlePretty bundle
       Right y -> pure y
 
   typeCheckResult :: SomeContractAndStorage <- do
@@ -111,22 +101,20 @@ generateDeployScript request = do
                runExcept
              $ runReaderT (typeCheckContractAndStorage contract storage) options
        in case typeCheck of
-            Left tcError -> lift . throwError $
-              err400 {errBody = LBS.pack (show (renderDoc doesntNeedParens tcError))}
+            Left tcError -> throwM $ MorleyError $ Text.pack $ printDocS True $ renderDoc doesntNeedParens tcError
             Right good -> pure good
 
   let originationData :: OriginationData
       originationData = mkOriginationData typeCheckResult
 
-  tezosClientPath <- lift (asks cTezosClientPath) >>= \case
-    Nothing -> lift . throwError $ err500
-      {errBody = "server doesn't have access to LIGO binary."}
+  octezClientPath <- lift (asks cOctezClientPath) >>= \case
+    Nothing -> throwM NoLigoBinary
     Just p -> pure p
 
   let morleyConfig :: MorleyClientConfig
       morleyConfig = MorleyClientConfig
         { mccEndpointUrl = Just (BaseUrl Https "kathmandu.testnet.tezos.serokell.team" 443 "")
-        , mccTezosClientPath = tezosClientPath
+        , mccTezosClientPath = octezClientPath
         , mccMbTezosClientDataDir = Nothing
         , mccVerbosity = 0
         , mccSecretKey = Nothing
@@ -143,7 +131,7 @@ generateDeployScript request = do
   let burnFee = fromIntegral costPerByte * storageLimit
 
   let script = Text.pack $
-          "tezos-client \\\
+          "octez-client \\\
         \ originate \\\
         \ contract \\\
         \ " ++ Text.unpack (gdsrName request) ++ " \\\
@@ -164,8 +152,7 @@ decodeTextCode text =
         mp <- decodeStrict @(Map Text Text) . Text.encodeUtf8 $ text
         Map.lookup "text_code" mp
    in case mvalue of
-        Nothing -> lift . throwError $ err500
-          {errBody = "could not decode compiler call"}
+        Nothing -> throwM $ LigoCompilerError "Could not decode compiler call"
         Just value -> pure value
 
 mkOriginationData :: SomeContractAndStorage -> OriginationData

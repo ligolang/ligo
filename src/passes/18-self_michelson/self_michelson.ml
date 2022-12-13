@@ -624,6 +624,19 @@ let opt_eta2 : _ peep2 = function
     Some []
   | _ -> None
 
+(* PUSH int 1 ; NEG  ↦  PUSH int -1 *)
+(* PUSH nat 1 ; NEG  ↦  PUSH int -1 *)
+let opt_neg_int : _ peep2 = function
+  | Prim (l1, "PUSH", [Prim (l2, ("int" | "nat"), [], a1); Int (l3, n)], a2), Prim (_, "NEG", [], _) ->
+    Some [Prim (l1, "PUSH", [Prim (l2, "int", [], a1); Int (l3, Z.neg n)], a2)]
+  | _ -> None
+
+(* PUSH nat 1 ; INT ; NEG  ↦  PUSH int -1 *)
+let opt_nat_int_neg : _ peep3 = function
+  | Prim (l1, "PUSH", [Prim (l2, "nat", [], a1); Int (l3, n)], a2), Prim (_, "INT", [], _),Prim (_, "NEG", [], _) ->
+    Some [Prim (l1, "PUSH", [Prim (l2, "int", [], a1); Int (l3, Z.neg n)], a2)]
+  | _ -> None
+
 let opt_unpair_edo : _ peep4 = function
   | (Prim (l, "DUP", [], []),
      Prim (_, "CDR", [], []),
@@ -852,6 +865,8 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
                      peephole @@ opt_digdug_drop () ;
                      peephole @@ opt_get () ;
                      peephole @@ opt_push () ;
+                     peephole @@ peep2 opt_neg_int ;
+                     peephole @@ peep3 opt_nat_int_neg ;
                    ] in
   let optimizers = List.map ~f:on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in

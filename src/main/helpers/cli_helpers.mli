@@ -1,25 +1,9 @@
 module LigoRC = Ligo_rc
 module LigoManifest = Ligo_manifest
+module LigoIgnore = Ligo_ignore
 module RepositoryUrl = Repository_url
-
-module Constants : sig
-  type command = string * string array
-
-  val esy : string
-  val ligo_install_path : string
-  val ligo_rc_path : string
-  val ligo_registry : string
-
-  val esy_add
-    :  package_name:string
-    -> cache_path:string
-    -> ligo_registry:string
-    -> command
-
-  val esy_install : cache_path:string -> ligo_registry:string -> command
-  val git_clone : project_url:string -> project_name:string -> command
-  val git_checkout : dir_path:string -> ref:string -> command
-end
+module Constants = Constants
+module Semver = LigoManifest.Semver
 
 val find_project_root : unit -> string option
 

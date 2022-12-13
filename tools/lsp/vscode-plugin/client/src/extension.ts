@@ -106,6 +106,9 @@ export async function activate(context: vscode.ExtensionContext) {
       // Notify the server about file changes to '.clientrc files contained in the workspace
       // fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
     },
+    initializationOptions: {
+      ligoLanguageServer: vscode.workspace.getConfiguration('ligoLanguageServer'),
+    },
   };
 
   // Create the language client and start the client.

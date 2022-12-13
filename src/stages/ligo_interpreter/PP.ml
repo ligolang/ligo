@@ -16,8 +16,7 @@ let pp_ct : Format.formatter -> constant_val -> unit =
     Format.fprintf
       ppf
       "timestamp(%s)"
-      Memory_proto_alpha.Protocol.Time_repr.(
-        to_notation @@ of_seconds (Z.to_int64 t))
+      Memory_proto_alpha.Protocol.Time_repr.(to_notation @@ of_seconds (Z.to_int64 t))
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | C_address c ->
@@ -31,8 +30,7 @@ let pp_ct : Format.formatter -> constant_val -> unit =
       (PP_helpers.option PP_helpers.string)
       c.entrypoint
   | C_mutez n -> Format.fprintf ppf "%smutez" (Z.to_string n)
-  | C_key_hash c ->
-    Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c
+  | C_key_hash c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c
   | C_key c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key.pp c
   | C_signature s -> Format.fprintf ppf "%a" Tezos_crypto.Signature.pp s
   | C_bls12_381_g1 b ->
@@ -41,7 +39,7 @@ let pp_ct : Format.formatter -> constant_val -> unit =
     Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.G2.to_bytes b))
   | C_bls12_381_fr b ->
     Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.Fr.to_bytes b))
-  | C_chain_id s -> Format.fprintf ppf "%s" s
+  | C_chain_id c -> Format.fprintf ppf "%s" (Bytes.to_string (Chain_id.to_bytes c))
 
 
 let rec pp_value : Format.formatter -> value -> unit =
@@ -63,24 +61,15 @@ let rec pp_value : Format.formatter -> value -> unit =
       let aux : Format.formatter -> value -> unit =
        fun ppf v -> Format.fprintf ppf "%a" pp_value v
       in
-      Format.fprintf
-        ppf
-        "(%a)"
-        (list_sep aux (tag " , "))
-        (Record.LMap.to_list recmap))
+      Format.fprintf ppf "(%a)" (list_sep aux (tag " , ")) (Record.LMap.to_list recmap))
     else (
       let aux : Format.formatter -> Label.t * value -> unit =
        fun ppf (Label l, v) -> Format.fprintf ppf "%s = %a" l pp_value v
       in
-      Format.fprintf
-        ppf
-        "{%a}"
-        (list_sep aux (tag " ; "))
-        (Record.LMap.to_kv_list recmap))
-  | V_Michelson (Ty_code { micheline_repr = { code; _ }; _ } | Untyped_code code)
-    -> Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
-  | V_Michelson_contract code ->
+      Format.fprintf ppf "{%a}" (list_sep aux (tag " ; ")) (Record.LMap.to_kv_list recmap))
+  | V_Michelson (Ty_code { micheline_repr = { code; _ }; _ } | Untyped_code code) ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
+  | V_Michelson_contract code -> Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Ast_contract { main; views = _ } ->
     Format.fprintf ppf "%a" Ast_aggregated.PP.expression main
   | V_Mutation (l, _, s) ->

@@ -1,14 +1,15 @@
 ;; Build of the self passes on the lexical units of CameLIGO
 
 (library
-  (name lexing_cameligo_self_units)
-  (public_name ligo.lexing.cameligo.self.units)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     LexerLib
-     ;; LIGO
-     lexing_shared
-     lexing_cameligo_self_tokens)
-  (modules Self))
+ (name lx_ml_self_units)
+ (public_name ligo.lexing.cameligo.self.units)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  LexerLib
+  ;; LIGO
+  lexing_shared
+  lx_ml_self_tokens)
+ (modules Self ZWSP))

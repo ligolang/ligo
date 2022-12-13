@@ -13,7 +13,7 @@ import platform from "~/base-components/platform";
 import ProjectToolbar from "./ProjectToolbar";
 import ProjectSettingsTab from "./ProjectSettingsTab";
 
-import addSolidityLanguage from "./languages/solidity";
+import { addLigoLanguages } from "./languages/addLigoLanguages";
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useBuiltinCustomTabs(["markdown"]);
@@ -27,20 +27,23 @@ modelSessionManager.registerModeDetector((filePath) => {
   if (base === "config.json" && isRoot) {
     return "settings";
   }
-  if (base.endsWith(".sol")) {
-    return "solidity";
-  }
   if (base.endsWith(".religo")) {
-    return "javascript";
+    return "religoext";
   }
   if (base.endsWith(".ligo")) {
-    return "pascaligo";
+    return "pascaligoext";
+  }
+  if (base.endsWith(".pligo")) {
+    return "pascaligoext";
   }
   if (base.endsWith(".mligo")) {
-    return "cameligo";
+    return "cameligoext";
   }
   if (base.endsWith(".jsligo")) {
-    return "javascript";
+    return "jsligoext";
+  }
+  if (base.endsWith(".tz")) {
+    return "tzext";
   }
   return defaultModeDetector(filePath);
 });
@@ -96,7 +99,7 @@ WorkspaceLoader.defaultProps = {
   compilerManager,
   ProjectToolbar,
   CompilerTerminal,
-  addLanguages: addSolidityLanguage,
+  addLanguages: addLigoLanguages,
   makeContextMenu,
 };
 

@@ -13,9 +13,9 @@ RUN apk update && apk upgrade && apk --no-cache add \
   libffi-dev \
   cargo py3-pip \
   && pip3 install jsonschema \
-# install opam:
-# not using install_opam.sh because it does `opam init` with `-a` and not `--disable-sandboxing`
-# not using official opam installer because it requires user input
+  # install opam:
+  # not using install_opam.sh because it does `opam init` with `-a` and not `--disable-sandboxing`
+  # not using official opam installer because it requires user input
   && chmod u+x /usr/local/bin/opam \
   && opam init --disable-sandboxing --bare
 
@@ -30,25 +30,26 @@ COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
 COPY vendors /ligo/vendors
+COPY vendored-dune /ligo/vendored-dune
 
 # install all transitive deps
 RUN opam update && sh scripts/install_opam_deps.sh
 
 COPY gitlab-pages /ligo/gitlab-pages
 # Install LIGO
+COPY dune dune-project ligo_unix.ml /ligo/
 COPY src /ligo/src
-COPY dune /ligo
-COPY dune-project /ligo/dune-project
 COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 # Run tests
-RUN opam exec -- dune runtest --profile static --no-buffer \
+RUN opam exec -- dune build @check \
+  && opam exec -- dune runtest --profile static --no-buffer \
 # Coverage (only the overall)
   && find . -name '*.coverage' | xargs rm -f \
   && opam exec -- dune clean \
   && mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode highlighting/textmate \
-    # Generate syntax highlighting files
+  # Generate syntax highlighting files
   && opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode --textmate=highlighting/textmate
 
 # Version info and changelog
@@ -62,7 +63,7 @@ ENV CI_COMMIT_TIMESTAMP=$ci_commit_timestamp
 COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
 RUN LIGO_VERSION=$(/ligo/scripts/version.sh) opam exec -- dune build -p ligo --profile static \
-# Copy binary now to avoid problems with BISECT_ENABLE below
+  # Copy binary now to avoid problems with BISECT_ENABLE below
   && cp /ligo/_build/install/default/bin/ligo /tmp/ligo \
   # Run doc
   && opam exec -- dune build @doc

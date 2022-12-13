@@ -4,5 +4,8 @@
       "val": "#{self.lib / 'ctypes' : $CAML_LD_LIBRARY_PATH}",
       "scope": "global"
     }
+  },
+  "dependencies": {
+    "@opam/conf-libffi": "*"
   }
 }

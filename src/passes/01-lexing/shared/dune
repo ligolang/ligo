@@ -5,22 +5,21 @@
 ;; Build of the common lexer facilities as a library
 
 (library
-  (name lexing_shared)
-  (public_name ligo.lexing.shared)
-  (modules
-     Errors Warnings Formatter Token Common Attr
-     Wrap Style Lexer Pipeline TopAPI UnlexerGen)
-  (modules_without_implementation
-     Token)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     Preprocessor
-     LexerLib
-     ;; LIGO
-     preprocessing_shared
-     main_warnings
-     ;; Third party
-     zarith
-     str))
+ (name lexing_shared)
+ (public_name ligo.lexing.shared)
+ (modules Errors Warnings Formatter Token Common Attr Wrap Style Lexer
+   Pipeline TopAPI UnlexerGen)
+ (modules_without_implementation Token)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  Preprocessor
+  LexerLib
+  ;; LIGO
+  preprocessing_shared
+  main_warnings
+  ;; Third party
+  zarith
+  str))

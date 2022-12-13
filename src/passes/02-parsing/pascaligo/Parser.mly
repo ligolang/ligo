@@ -139,7 +139,9 @@ let mk_mod_path :
    patch afterwards in semantic actions. *)
 
 let rec terminate_decl terminator = function
-  D_Attr  (a,d) -> D_Attr     (a, terminate_decl terminator d)
+  D_Attr      d ->
+  let a, d' = d.value in
+  D_Attr     {d with value = (a, terminate_decl terminator d') }
 | D_Const     d -> D_Const    {d with value = {d.value with terminator}}
 | D_Directive d -> D_Directive d
 | D_Fun       d -> D_Fun      {d with value = {d.value with terminator}}
@@ -419,7 +421,11 @@ declaration:
 (* Attributed declaration *)
 
 attr_decl:
- "[@attr]" declaration { $1,$2 }
+ "[@attr]" declaration {
+    let start = $1.region in
+    let stop = decl_to_region $2 in
+    let region = cover start stop in
+    { region; value = ($1, $2) } }
 
 (* Type declarations *)
 
@@ -1133,10 +1139,13 @@ comp_expr_level:
   bin_op(comp_expr_level, "<",   cat_expr_level) { E_Lt    $1 }
 | bin_op(comp_expr_level, "<=",  cat_expr_level) { E_Leq   $1 }
 | bin_op(comp_expr_level, ">",   cat_expr_level) { E_Gt    $1 }
-| bin_op(comp_expr_level, ">=",  cat_expr_level) { E_Geq   $1 }
+| bin_op(comp_expr_level, ge,    cat_expr_level) { E_Geq   $1 }
 | bin_op(comp_expr_level, "=",   cat_expr_level) { E_Equal $1 }
 | bin_op(comp_expr_level, "=/=", cat_expr_level) { E_Neq   $1 }
 | cat_expr_level                                 { $1 }
+
+ge:
+  ">" ZWSP "=" { Wrap.wrap ">=" (cover $1#region $3#region) }
 
 (* Concatenation *)
 

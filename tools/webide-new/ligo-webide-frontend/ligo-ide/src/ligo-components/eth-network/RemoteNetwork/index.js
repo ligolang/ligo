@@ -9,7 +9,6 @@ export default class RemoteNetwork extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      info: null,
       status: null,
     };
   }
@@ -33,18 +32,11 @@ export default class RemoteNetwork extends PureComponent {
   }
 
   async refresh() {
-    this.setState({ info: null, status: null });
+    this.setState({ status: null });
     if (!networkManager.sdk) {
       return;
     }
     this.refreshBlock();
-    const { networkId } = this.props;
-    try {
-      const info = await networkManager.sdk?.networkInfo();
-      if (this.props.networkId === networkId) {
-        this.setState({ info });
-      }
-    } catch {}
   }
 
   async refreshBlock() {
@@ -72,7 +64,7 @@ export default class RemoteNetwork extends PureComponent {
 
   render() {
     const { networkId, url, EditButton, RemoteNetworkInfo = DefaultRemoteNetworkInfo } = this.props;
-    const { status, info } = this.state;
+    const { status } = this.state;
 
     return (
       <div className="d-flex flex-1 flex-column overflow-auto">
@@ -80,7 +72,6 @@ export default class RemoteNetwork extends PureComponent {
           networkId={networkId}
           url={url}
           EditButton={EditButton}
-          info={info}
           status={status}
         />
         <div className="d-flex flex-fill">

@@ -393,6 +393,7 @@ module Test = struct
   let register_constant (m : michelson_program) : string = [%external ("TEST_REGISTER_CONSTANT", m)]
   let to_typed_address (type a b) (c : a contract) : (a, b) typed_address = [%external ("TEST_TO_TYPED_ADDRESS", c)]
   let constant_to_michelson_program (s : string) : michelson_program = [%external ("TEST_CONSTANT_TO_MICHELSON", s)]
+  let parse_michelson (s : string) : michelson_program = [%external ("TEST_CONSTANT_TO_MICHELSON", s)]
   let restore_context (u : unit) : unit = [%external ("TEST_POP_CONTEXT", u)]
   let save_context (u : unit) : unit = [%external ("TEST_PUSH_CONTEXT", u)]
   let drop_context (u : unit) : unit = [%external ("TEST_DROP_CONTEXT", u)]

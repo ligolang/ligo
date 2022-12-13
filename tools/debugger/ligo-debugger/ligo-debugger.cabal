@@ -17,10 +17,13 @@ library
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
       Language.LIGO.Debugger.Common
+      Language.LIGO.Debugger.Error
+      Language.LIGO.Debugger.Functions
       Language.LIGO.Debugger.Handlers.Helpers
       Language.LIGO.Debugger.Handlers.Impl
       Language.LIGO.Debugger.Handlers.Types
       Language.LIGO.Debugger.Michelson
+      Language.LIGO.Debugger.Navigate
       Language.LIGO.Debugger.Snapshots
       Util
   other-modules:
@@ -44,6 +47,7 @@ library
       DeriveTraversable
       DerivingStrategies
       DerivingVia
+      EmptyCase
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -74,6 +78,8 @@ library
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages
   build-depends:
       aeson
+    , ansi-terminal
+    , attoparsec
     , base-noprelude
     , bytestring
     , conduit
@@ -99,6 +105,7 @@ library
     , scientific
     , semver
     , singletons
+    , singletons-th
     , stm
     , syb
     , template-haskell
@@ -134,6 +141,7 @@ executable ligo-debugger
       DeriveTraversable
       DerivingStrategies
       DerivingVia
+      EmptyCase
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -179,8 +187,10 @@ test-suite ligo-debugger-test
       Test.Breakpoints
       Test.DebugInfo
       Test.LigoCall
+      Test.Navigation
       Test.Snapshots
       Test.Util
+      Test.Util.Options
       Test.Variables
       Paths_ligo_debugger
   hs-source-dirs:
@@ -200,6 +210,7 @@ test-suite ligo-debugger-test
       DeriveTraversable
       DerivingStrategies
       DerivingVia
+      EmptyCase
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -232,6 +243,7 @@ test-suite ligo-debugger-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , aeson
     , base-noprelude
     , containers
     , data-default
@@ -239,16 +251,20 @@ test-suite ligo-debugger-test
     , directory
     , filepath
     , fmt
+    , hedgehog
     , lens
     , ligo-debugger
     , ligo-squirrel
+    , lorentz
     , morley
     , morley-debugger
     , morley-prelude
+    , mtl
     , nyan-interpolation
     , nyan-interpolation-core
     , singletons
     , tasty
+    , tasty-hedgehog
     , tasty-hunit-compat
     , text
     , unliftio

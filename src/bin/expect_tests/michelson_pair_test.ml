@@ -1,11 +1,11 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
+let contract basename = "../../test/contracts/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.ligo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.ligo" ];
+  [%expect
+    {|
     File "../../test/contracts/michelson_pair_tree.ligo", line 6, characters 21-27:
       5 |
       6 | function main (const action : unit; const store : storage) : return is {
@@ -34,8 +34,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.mligo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/michelson_pair_tree.mligo", line 6, characters 10-16:
       5 |
       6 | let main (action, store : unit * storage) : return =
@@ -64,8 +65,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.religo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.religo" ];
+  [%expect
+    {|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     Reasonligo is depreacted, support will be dropped in a few versions.
@@ -100,8 +102,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.jsligo" ] ;
-  [%expect {|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.jsligo" ];
+  [%expect
+    {|
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, character 0 to line 11, character 1:
       7 |
       8 | let main = ([action, store] : [unit, storage]) : return_ => {
@@ -139,8 +142,10 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree_intermediary.ligo" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "compile"; "contract"; contract "michelson_pair_tree_intermediary.ligo" ];
+  [%expect
+    {|
     File "../../test/contracts/michelson_pair_tree_intermediary.ligo", line 6, characters 21-27:
       5 |
       6 | function main (const action : unit; const store : storage) : return is {

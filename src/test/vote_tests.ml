@@ -6,30 +6,43 @@ let get_program = get_program "./contracts/vote.mligo"
 
 open Ast_imperative
 
-let init_storage name = e_record_ez [
-    ("title" , e_string name) ;
-    ("yea", e_nat 0) ;
-    ("nay", e_nat 0) ;
-    ("voters" , e_typed_set [] (t_address ())) ;
-    ("start_time" , e_timestamp 0) ;
-    ("finish_time" , e_timestamp 1000000000) ;
-  ]
+let init_storage name =
+  e_record_ez
+    ~loc
+    [ "title", e_string ~loc name
+    ; "yea", e_nat ~loc 0
+    ; "nay", e_nat ~loc 0
+    ; "voters", e_typed_set ~loc [] (t_address ~loc ())
+    ; "start_time", e_timestamp ~loc 0
+    ; "finish_time", e_timestamp ~loc 1000000000
+    ]
 
-let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
+
+let yea = e_constructor ~loc "Vote" (e_constructor ~loc "Yea" (e_unit ~loc ()))
 
 let init_vote ~raise () =
   let program = get_program ~raise () in
   let result =
-    Test_helpers.run_typed_program_with_imperative_input ~raise
-      program "main" (e_pair yea (init_storage "basic")) in
-  let (_, storage) = trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_pair result in
-  let storage' = trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_record storage in
-(*  let votes = List.assoc (Label "voters") storage' in
+    Test_helpers.run_typed_program_with_imperative_input
+      ~raise
+      program
+      "main"
+      (e_pair ~loc yea (init_storage "basic"))
+  in
+  let _, storage =
+    trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_pair result
+  in
+  let storage' =
+    trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_record storage
+  in
+  (*  let votes = List.assoc (Label "voters") storage' in
   let votes' = extract_map votes in *)
-  let yea = List.Assoc.find_exn ~equal:Caml.(=) storage' (Label "yea") in
-  let () = trace_option ~raise (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
+  let yea = List.Assoc.find_exn ~equal:Caml.( = ) storage' (Label "yea") in
+  let () =
+    trace_option ~raise (test_internal __LOC__)
+    @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat ~loc Z.one)
+  in
   ()
 
-let main = test_suite "Vote" [
-    test_w "type" init_vote;
-  ]
+
+let main = test_suite "Vote" [ test_w "type" init_vote ]

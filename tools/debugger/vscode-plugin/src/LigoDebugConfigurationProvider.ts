@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
-import { ContractMetadata, getBinaryPath, InputValueType, isDefined, Maybe, tryExecuteCommand } from './base'
+import { ContractMetadata, getBinaryPath, InputValueLang, isDefined, Maybe, tryExecuteCommand } from './base'
 import { LigoDebugContext } from './LigoDebugContext'
 import LigoProtocolClient from './LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
@@ -24,10 +24,7 @@ export type ConfigField
 	;
 
 export type ConfigCommand
-	= "AskForEntrypoint"
-	| "AskForMichelsonEntrypoint"
-	| "AskForParameter"
-	| "AskForStorage"
+	= "AskOnStart"
 	;
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -58,9 +55,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const entrypoint : string =
 			await tryExecuteCommand(
 				"entrypoint",
-				"AskForEntrypoint",
+				"AskOnStart",
 				config.entrypoint,
-				getEntrypoint(
+				() => getEntrypoint(
 					this.context,
 					async (entrypoint) => {
 						return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).message;
@@ -70,40 +67,36 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 			);
 		config.entrypoint = entrypoint;
 
-		const contractMetadata : Maybe<ContractMetadata> =
+		const contractMetadata : ContractMetadata =
 			(await this.client.sendMsg('getContractMetadata', { entrypoint })).contractMetadata;
 
-		if (!isDefined(contractMetadata)) {
-			return config;
-		}
-
-		const michelsonEntrypoint : string =
+		const michelsonEntrypoint : Maybe<string> =
 			await tryExecuteCommand(
 				"michelsonEntrypoint",
-				"AskForMichelsonEntrypoint",
-				config.michelsonEntrypoint,
-				createRememberingQuickPick(
+				"AskOnStart",
+				config.michelsonEntrypoint as Maybe<string>,
+				() => createRememberingQuickPick(
 					contractMetadata,
 					"Please pick a Michelson entrypoint to run"
 				)
 			);
 		config.michelsonEntrypoint = michelsonEntrypoint;
 
-		const validateInput = (category: ValidateValueCategory, valueType: InputValueType) => async (value: string): Promise<Maybe<string>> => {
+		const validateInput = (category: ValidateValueCategory, valueLang: InputValueLang) => async (value: string): Promise<Maybe<string>> => {
 			return (
 				await this.client.sendMsg(
 					'validateValue',
-					{ value, category, valueType, pickedMichelsonEntrypoint: michelsonEntrypoint }
+					{ value, category, valueLang, pickedMichelsonEntrypoint: michelsonEntrypoint }
 				)
 			).message;
 		}
 
-		const parameter : string =
+		const [parameter, parameterLang] : [string, InputValueLang] =
 			await tryExecuteCommand(
 				"parameter",
-				"AskForParameter",
+				"AskOnStart",
 				config.parameter,
-				getParameterOrStorage(
+				() => getParameterOrStorage(
 					this.context,
 					validateInput,
 					"parameter",
@@ -112,16 +105,18 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 					entrypoint,
 					contractMetadata,
 					michelsonEntrypoint
-				)
+				),
+				[config.parameter, config.parameterLang]
 			);
 		config.parameter = parameter;
+		config.parameterLang = parameterLang;
 
-		const storage : string =
+		const [storage, storageLang] : [string, InputValueLang] =
 			await tryExecuteCommand(
 				"storage",
-				"AskForStorage",
+				"AskOnStart",
 				config.storage,
-				getParameterOrStorage(
+				() => getParameterOrStorage(
 					this.context,
 					validateInput,
 					"storage",
@@ -130,10 +125,13 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 					entrypoint,
 					contractMetadata,
 					michelsonEntrypoint
-				)
+				),
+				[config.storage, config.storageLang]
 			);
 		config.storage = storage;
+		config.storageLang = storageLang;
 
+		await this.client.sendMsg('validateConfig', { michelsonEntrypoint, parameter, parameterLang, storage, storageLang });
 		return config;
 	}
 
@@ -149,9 +147,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
-				config.entrypoint = '{AskForEntrypoint}'
-				config.parameter = "{AskForParameter}"
-				config.storage = "{AskForStorage}"
+				config.entrypoint = '{AskOnStart}'
+				config.parameter = '{AskOnStart}'
+				config.storage = '{AskOnStart}'
 			}
 		}
 
@@ -160,7 +158,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
-		config.entrypoint ??= '{AskForEntrypoint}'
+		config.entrypoint ??= '{AskOnStart}'
+		config.parameterLang ??= 'LIGO'
+		config.storageLang ??= 'LIGO'
 
 		if (config.logDir === '') {
 			config.logDir = undefined

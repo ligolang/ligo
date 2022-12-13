@@ -3,11 +3,9 @@ module Schema.DeployScript (DeployScript (..)) where
 import Data.Aeson
   (FromJSON, ToJSON, defaultOptions, fieldLabelModifier, genericParseJSON, genericToJSON, parseJSON,
   toJSON)
-import Data.Swagger.Schema
+import Data.OpenApi.Schema
   (ToSchema, declareNamedSchema, defaultSchemaOptions, fieldLabelModifier,
   genericDeclareNamedSchema)
-import Data.Text
-import GHC.Generics (Generic)
 
 import Schema.CompilerResponse (CompilerResponse(..))
 import Util (prepareField)

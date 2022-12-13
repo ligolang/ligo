@@ -91,6 +91,7 @@ export default class ProjectSettings {
     const settings = {
       main: rawSettings.main || "./contracts/Contract.sol",
       deploy: rawSettings.deploy,
+      storage: rawSettings.storage,
       framework: rawSettings.framework || `${process.env.COMPILER_VERSION_KEY}-docker`,
       npmClient: rawSettings.npmClient,
       compilers: {

@@ -1,0 +1,414 @@
+{
+    "title": "LIGO's testing framework values",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+
+    "$ref": "#/$defs/value",
+
+    "$defs": {
+        "value": {
+            "oneOf": [
+                { "$ref": "#/$defs/v_ct" },
+                { "$ref": "#/$defs/v_typed_address" },
+                { "$ref": "#/$defs/v_michelson_contract" },
+                { "$ref": "#/$defs/v_michelson" },
+                { "$ref": "#/$defs/v_list" },
+                { "$ref": "#/$defs/v_record" },
+                { "$ref": "#/$defs/v_constructor" },
+                { "$ref": "#/$defs/v_set" },
+                { "$ref": "#/$defs/v_map" },
+                { "$ref": "#/$defs/v_gen" },
+                { "$ref": "#/$defs/v_mutation" },
+                { "$ref": "#/$defs/v_location" },
+                { "$ref": "#/$defs/v_ast_contract" },
+                { "$ref": "#/$defs/v_func_val" }
+            ]
+        },
+        "v_ct": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["constant"] },
+                { "$ref": "#/$defs/constant" }
+            ]
+        },
+        "v_list": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["list"] },
+                { "type": "array",
+                  "items": { "$ref": "#/$defs/value" } }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_record": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["record"] },
+                { "type": "object",
+                  "patternProperties": {
+                    "^[a-zA-Z_0-9]+$": { "$ref": "#/$defs/value" }
+                  }
+                }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_constructor": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["constructor"] },
+                { "type": "array",
+                  "prefixItems": [
+                    { "type" : "string" },
+                    { "$ref": "#/$defs/value" }
+                  ]
+                }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_set": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["set"] },
+                { "type": "array",
+                  "items": { "$ref": "#/$defs/value" } }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_map": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["map"] },
+                { "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/value" },
+                    "minItems": 2,
+                    "maxItems": 2
+                    } }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_typed_address": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["typed_address"] },
+                { "type": "string" }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_michelson": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["michelson"] },
+                { "oneOf": [
+                    { "type": "array",
+                      "prefixItems": [
+                        { "enum": ["Untyped_code"] }
+                      ],
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    { "type": "array",
+                      "prefixItems": [
+                        { "enum": ["Ty_code"] },
+                        { "type": "object",
+                          "properties": {
+                                "ast_ty": { "type": "object" },
+                                "micheline_repr": { "type": "object" }
+                            },
+                          "additionalProperties": false,
+                          "required": ["ast_ty", "micheline_repr"]
+                        }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                ] }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_michelson_contract": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["contract_code"] }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_gen": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["generator"] }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_location": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["location"] }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_mutation": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["mutation"] }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_ast_contract": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["ast_contract"] }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "v_func_val": {
+            "type": "array",
+            "prefixItems": [
+                { "enum": ["function"] },
+                { "type": "object",
+                  "properties": {
+                      "rec_name": { "oneOf": [{"type": "null"}, {"$ref": "#/$defs/var"}] },
+                      "orig_lambda": { "type": "object" },
+                      "body": { "type": "object" },
+                      "arg_binder": { "$ref": "#/$defs/var" },
+                      "arg_mut_flag": {
+                        "type": "array",
+                        "prefixItems": [ { "enum": ["Immutable", "Mutable"] } ],
+                        "minItems": 1,
+                        "maxItems": 1
+                        },
+                      "env": { "type": "array",
+                               "items": {
+                                 "type": "array",
+                                 "prefixItems": [
+                                    { "$ref": "#/$defs/var" },
+                                    { "$ref": "#/$defs/env_item" }
+                                 ],
+                                 "minItems": 2,
+                                 "maxItems": 2
+                               }
+                             }
+                  },
+                "additionalProperties": false,
+                "required": ["rec_name", "orig_lambda", "body", "arg_binder", "arg_mut_flag", "env"]
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "env_item": {
+            "type": "object",
+            "properties": {
+                "item": { "$ref": "#/$defs/value_expr" },
+                "no_mutation": { "type": "boolean" },
+                "inline": { "type": "boolean" }
+            },
+            "additionalProperties": false,
+            "required": ["item", "no_mutation", "inline"]
+        },
+        "value_expr": {
+            "type": "object",
+            "properties": {
+                "ast_type": { "type": "object" },
+                "eval_term": { "$ref": "#/$defs/value" }
+            },
+            "additionalProperties": false,
+            "required": ["ast_type", "eval_term"]
+        },
+        "var": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "counter": { "type": "number" },
+                "generated": { "type": "boolean" },
+                "location": { "type": "array" }
+            },
+            "additionalProperties": false,
+            "required": ["name", "counter", "generated", "location"]
+        },
+        "contract": {
+            "type": "object",
+            "properties": {
+                "address": { "type": "string" },
+                "entrypoint": { "oneOf": [{"type": "null"}, {"type": "string"}] }
+            }
+        },
+        "constant": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["string"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["bytes"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["address"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["contract"] },
+                        { "$ref": "#/$defs/contract" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["nat"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["timestamp"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["key_hash"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["key"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["signature"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["bls12_381_g1"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["bls12_381_g2"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["bls12_381_fr"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["chain_id"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["int"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["int64"] },
+                        { "type": "number" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["mutez"] },
+                        { "type": "string" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["bool"] },
+                        { "type": "boolean" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                {
+                    "type": "array",
+                    "prefixItems": [
+                        { "enum": ["unit"] }
+                    ],
+                    "minItems": 1,
+                    "maxItems": 1
+                }
+            ]
+        }
+    }
+}

@@ -1,5 +1,6 @@
 import React, { PureComponent } from "react";
 
+import { utils } from "~/ligo-components/eth-sdk";
 import {
   Modal,
   ButtonOptions,
@@ -11,6 +12,7 @@ import {
 } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
+import FaucetButton from "~/ligo-components/eth-explorer/buttons/FaucetButton";
 
 import keypairManager from "./keypairManager";
 
@@ -47,6 +49,7 @@ export default class KeypairManagerModal extends PureComponent {
       keypairs: [],
       keypairFilter: null,
       showPrivateKeys: false,
+      delBtnStatus: true,
     };
   }
 
@@ -69,7 +72,7 @@ export default class KeypairManagerModal extends PureComponent {
   }
 
   async refresh() {
-    this.setState({ loading: true });
+    this.setState({ loading: true, delBtnStatus: true });
     const keypairs = await keypairManager.loadAllKeypairs();
     this.setState({ keypairs, loading: false });
   }
@@ -111,6 +114,7 @@ export default class KeypairManagerModal extends PureComponent {
   };
 
   deleteKey = async (keypair) => {
+    this.setState({ delBtnStatus: false });
     const { keypairText } = this.props;
     await keypairManager.deleteKeypair(keypair);
     notification.info(
@@ -186,10 +190,9 @@ export default class KeypairManagerModal extends PureComponent {
   };
 
   renderKeypairRow = (keypair) => {
-    // 过滤地址中包含的不合法字符（禁止出现在 html attr 中的字符）
-    // filter the illegal address
     const validAddress = keypair?.address?.replaceAll(/[^-_a-zA-Z0-9]/g, "-");
     const { networkManager } = require("~/ligo-components/eth-network");
+    const address = validAddress;
     return (
       <tr key={`key-${validAddress}`} className="hover-flex">
         <td>
@@ -212,12 +215,7 @@ export default class KeypairManagerModal extends PureComponent {
         </td>
         <td>
           <div className="d-flex align-items-center">
-            <code className="small">
-              {networkManager?.sdk?.utils?.formatAddress(
-                keypair.address,
-                networkManager.network.chainId
-              ) || keypair.address}
-            </code>
+            <code className="small">{address}</code>
             <span className="text-transparent">.</span>
             <DeleteButton
               color="primary"
@@ -229,12 +227,26 @@ export default class KeypairManagerModal extends PureComponent {
           </div>
         </td>
         <td>
-          <Badge pill color="success" className="ml-1">
-            {keypair.balance} {networkManager?.symbol}
-          </Badge>
+          <div className="d-flex align-items-center">
+            <Badge pill color="warning" className="ml-1 mr-2">
+              {keypair.balance} {networkManager?.symbol}
+            </Badge>
+            {networkManager?.network && networkManager?.network.name !== "Mainnet" && (
+              <FaucetButton
+                address={keypair.address}
+                network={networkManager?.network.id}
+                isIconButton
+                kid={keypair.address}
+              >
+                <UncontrolledTooltip target={`kp-faucet-${keypair.address}`}>
+                  <p>{`${networkManager?.network.fullName} faucet`}</p>
+                </UncontrolledTooltip>
+              </FaucetButton>
+            )}
+          </div>
         </td>
         <td align="right">
-          {!this.props.deletionDisabled && (
+          {!this.props.deletionDisabled && this.state.delBtnStatus && (
             <DeleteButton className="hover-show" onConfirm={() => this.deleteKey(keypair)} />
           )}
         </td>
@@ -291,9 +303,9 @@ export default class KeypairManagerModal extends PureComponent {
             tableSm
             TableHead={
               <tr>
-                <th style={{ width: "25%" }}>{head[0]}</th>
-                <th style={{ width: "58%" }}>{head[1]}</th>
-                <th style={{ width: "12%" }}>{head[2]}</th>
+                <th style={{ width: "15%" }}>{head[0]}</th>
+                <th style={{ width: "50%" }}>{head[1]}</th>
+                <th style={{ width: "30%" }}>{head[2]}</th>
                 <th />
               </tr>
             }

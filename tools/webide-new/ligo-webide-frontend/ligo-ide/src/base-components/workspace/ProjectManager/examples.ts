@@ -1,5 +1,4 @@
-const incrementM = `
-type storage = int
+const incrementM = `type storage = int
 
 type parameter =
   Increment of int
@@ -24,8 +23,7 @@ let main (action, store : parameter * storage) : return =
  | Reset         -> 0)
 `;
 
-const incrementL = `
-type storage is int
+const incrementL = `type storage is int
 
 type parameter is
   Increment of int
@@ -54,8 +52,7 @@ function main (const action : parameter; const store : storage) : return is
   ])
 `;
 
-const incrementR = `
-type storage = int;
+const incrementR = `type storage = int;
 
 type parameter =
   Increment (int)
@@ -81,8 +78,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 };
 `;
 
-const incrementJ = `
-type storage = int;
+const incrementJ = `type storage = int;
 
 type parameter =
 | ["Increment", int]
@@ -108,8 +104,7 @@ const main = ([action, store] : [parameter, storage]) : return_ => {
 };
 `;
 
-const idM = `
-type id = int
+const idM = `type id = int
 
 type id_details = {
   owner: address;
@@ -288,8 +283,7 @@ let main (action, storage: action * storage) : operation list * storage =
   | Skip s -> skip ((), storage)
 `;
 
-const idL = `
-type id is int
+const idL = `type id is int
 
 type id_details is
   record [
@@ -465,8 +459,7 @@ function main (const action : action; const storage : storage) : list(operation)
   ];
 `;
 
-const idR = `
-/* */
+const idR = `/* */
 
 type id = int
 
@@ -654,8 +647,7 @@ let main = ((action, storage): (action, storage)) : (list(operation), storage) =
 };
 `;
 
-const idJ = `
-/* */
+const idJ = `/* */
 
 type id = int;
 
@@ -838,8 +830,7 @@ let main = ([action, storage]: [action, storage]) : [list<operation>, storage] =
 };
 `;
 
-const hashlockM = `
-type commit = {
+const hashlockM = `type commit = {
   date        : timestamp;
   salted_hash : bytes;
 }
@@ -908,8 +899,7 @@ let main (p, s : parameter * storage) : return =
   | Reveal r -> reveal (r,s)
 `;
 
-const hashlockL = `
-type commit is record [
+const hashlockL = `type commit is record [
   date        : timestamp;
   salted_hash : bytes;
 ]
@@ -971,8 +961,7 @@ function main (const p: parameter; const s: storage) : return is
   ]
 `;
 
-const hashlockR = `
-/*
+const hashlockR = `/*
 */
 type commit = {
   date:        timestamp,
@@ -1047,8 +1036,7 @@ let main = ((p, s): (parameter, storage)) : return => {
 };
 `;
 
-const hashlockJ = `
-/*
+const hashlockJ = `/*
 */
 type commit = {
   date:        timestamp,
@@ -1122,9 +1110,113 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
 };
 `;
 
+const incrementMStorage = "0";
+
+const incrementLStorage = "0";
+
+const incrementRStorage = "0";
+
+const incrementJStorage = "0";
+
+const idMStorage = `{
+  identities=Big_map.literal[
+    (1,
+    {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+     controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+     profile=0x0501000000026869}
+    );
+   ]; 
+  next_id=2; 
+  name_price=10tez; 
+  skip_price=333mutez
+}
+`;
+
+const idLStorage = `record [
+  identities=big_map[
+    1->record
+    [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+     controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+     profile=0x0501000000026869]
+  ];
+  next_id=2;
+  name_price=0tez;
+  skip_price=50mutez;
+]
+`;
+
+const idRStorage = `{
+  identities:Big_map.literal([
+    (1,
+     {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+     controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address),
+     profile:0x0501000000026869}
+    )
+  ]),
+  next_id:2,
+  name_price:10tez,
+  skip_price:333mutez
+}
+`;
+
+const idJStorage = `{
+  identities:Big_map.literal(list([
+    [1,
+     {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address),
+     controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address),
+     profile:0x0501000000026869}
+    ]
+  ])),
+  next_id:2,
+  name_price:(10 as tez),
+  skip_price:(333 as mutez)
+}
+`;
+
+const hashlockMStorage = `{ hashed=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce; 
+  unused=false; 
+  commits=(Big_map.literal[(
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),  
+    {date=("2020-05-29T11:22:33Z" : timestamp); 
+     salted_hash=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce}
+    );]
+  )}
+`;
+
+const hashlockLStorage = `record [ 
+  hashed=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce; 
+  unused=False; 
+  commits=big_map [
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record [
+      date=("2020-05-29T11:22:33Z" : timestamp); 
+      salted_hash=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce
+      ]
+  ]
+]
+`;
+
+const hashlockRStorage = `{
+  hashed:0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce, 
+  unused:false, 
+  commits:Big_map.literal([(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+  {date:("2020-06-02T10:23:41Z":timestamp),
+  salted_hash:0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce})])
+}
+`;
+
+const hashlockJStorage = `{
+  hashed: 0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce,
+  unused: false,
+  commits: Big_map.literal(list([
+    [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), {date: ("2020-06-02T10:23:41Z" as timestamp),
+    salted_hash: 0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce}]])),
+}
+`;
+
 const config = (name: string, projectName: string) => `{
   "main": "./contracts/${name}.mligo",
   "deploy": "./build/contracts/${name}.tz",
+  "storage": "./storages/Storage.mligo",
   "framework": "#framework",
   "compilers": {
     "solc": "0.6.12"
@@ -1140,22 +1232,40 @@ export const getExamples = (
 ): { [a: string]: { name: string; content: string } } => {
   if (template === "increment") {
     return {
-      storageM: {
+      contractM: {
         name: `.workspaces/${name}/contracts/Increment.mligo`,
         content: incrementM,
       },
-      storageL: {
+      contractL: {
         name: `.workspaces/${name}/contracts/Increment.ligo`,
         content: incrementL,
       },
-      storageR: {
+      contractR: {
         name: `.workspaces/${name}/contracts/Increment.religo`,
         content: incrementR,
       },
-      storageJ: {
+      contractJ: {
         name: `.workspaces/${name}/contracts/Increment.jsligo`,
         content: incrementJ,
       },
+
+      storageM: {
+        name: `.workspaces/${name}/storages/Storage.mligo`,
+        content: incrementMStorage,
+      },
+      storageL: {
+        name: `.workspaces/${name}/storages/Storage.ligo`,
+        content: incrementLStorage,
+      },
+      storageR: {
+        name: `.workspaces/${name}/storages/Storage.religo`,
+        content: incrementRStorage,
+      },
+      storageJ: {
+        name: `.workspaces/${name}/storages/Storage.jsligo`,
+        content: incrementJStorage,
+      },
+
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
@@ -1165,19 +1275,37 @@ export const getExamples = (
   }
   if (template === "id") {
     return {
-      storageM: {
+      contractM: {
         name: `.workspaces/${name}/contracts/ID.mligo`,
         content: idM,
       },
-      storageL: { name: `.workspaces/${name}/contracts/ID.ligo`, content: idL },
-      storageR: {
+      contractL: { name: `.workspaces/${name}/contracts/ID.ligo`, content: idL },
+      contractR: {
         name: `.workspaces/${name}/contracts/ID.religo`,
         content: idR,
       },
-      storageJ: {
+      contractJ: {
         name: `.workspaces/${name}/contracts/ID.jsligo`,
         content: idJ,
       },
+
+      storageM: {
+        name: `.workspaces/${name}/storages/Storage.mligo`,
+        content: idMStorage,
+      },
+      storageL: {
+        name: `.workspaces/${name}/storages/Storage.ligo`,
+        content: idLStorage,
+      },
+      storageR: {
+        name: `.workspaces/${name}/storages/Storage.religo`,
+        content: idRStorage,
+      },
+      storageJ: {
+        name: `.workspaces/${name}/storages/Storage.jsligo`,
+        content: idJStorage,
+      },
+
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
@@ -1187,22 +1315,40 @@ export const getExamples = (
   }
   if (template === "hashlock") {
     return {
-      storageM: {
+      contractM: {
         name: `.workspaces/${name}/contracts/Hashlock.mligo`,
         content: hashlockM,
       },
-      storageL: {
+      contractL: {
         name: `.workspaces/${name}/contracts/Hashlock.ligo`,
         content: hashlockL,
       },
-      storageR: {
+      contractR: {
         name: `.workspaces/${name}/contracts/Hashlock.religo`,
         content: hashlockR,
       },
-      storageJ: {
+      contractJ: {
         name: `.workspaces/${name}/contracts/Hashlock.jsligo`,
         content: hashlockJ,
       },
+
+      storageM: {
+        name: `.workspaces/${name}/storages/Storage.mligo`,
+        content: hashlockMStorage,
+      },
+      storageL: {
+        name: `.workspaces/${name}/storages/Storage.ligo`,
+        content: hashlockLStorage,
+      },
+      storageR: {
+        name: `.workspaces/${name}/storages/Storage.religo`,
+        content: hashlockRStorage,
+      },
+      storageJ: {
+        name: `.workspaces/${name}/storages/Storage.jsligo`,
+        content: hashlockJStorage,
+      },
+
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
@@ -1212,8 +1358,12 @@ export const getExamples = (
   }
 
   return {
-    storage: {
+    contract: {
       name: `.workspaces/${name}/contracts/Contract.mligo`,
+      content: "",
+    },
+    storage: {
+      name: `.workspaces/${name}/storages/Storages.mligo`,
       content: "",
     },
     readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },

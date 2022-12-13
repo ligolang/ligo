@@ -200,6 +200,7 @@ export default class Workspace extends Component {
       defaultSize,
       readOnly: readOnlyInProps = false,
       makeContextMenu = (x) => x,
+      addLanguagesCallback,
     } = this.props;
 
     const readOnly =
@@ -233,6 +234,7 @@ export default class Workspace extends Component {
             onSelectTab={this.onSelectTab}
             readOnly={readOnly}
             onChangeDecorations={this.updateTree}
+            addLanguagesCallback={addLanguagesCallback}
           />
           {Terminal}
         </SplitPane>
@@ -250,6 +252,7 @@ export default class Workspace extends Component {
           onSelectTab={this.onSelectTab}
           readOnly={readOnly}
           onChangeDecorations={this.updateTree}
+          addLanguagesCallback={addLanguagesCallback}
         />
       );
     }

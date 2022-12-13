@@ -32,18 +32,18 @@ export default class NavGuard {
   preflight(pathname) {
     const state = redux.getState();
 
-    if (pathname === "/") {
-      // go to seleted project
-      const selected = state.projects.get("selected");
-      if (selected) {
-        const author = selected.get("author");
-        const id = selected.get("id");
-        if (author && id) {
-          this.history.replace(`/${author}/${id}`);
-          return false;
-        }
-      }
-    }
+    // if (pathname === '/') {
+    //   // go to seleted project
+    //   const selected = state.projects.get('selected')
+    //   if (selected) {
+    //     const author = selected.get('author')
+    //     const id = selected.get('id')
+    //     if (author && id) {
+    //       this.history.replace(`/${author}/${id}`)
+    //       return false
+    //     }
+    //   }
+    // }
 
     return true;
   }

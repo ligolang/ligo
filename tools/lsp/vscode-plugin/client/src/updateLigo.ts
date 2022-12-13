@@ -35,7 +35,6 @@ export async function installLigo(ligoPath: string, latest: Release): Promise<vo
   }
 
   const fileOptions = {
-    mode: 0o755,
     encoding: 'binary' as BufferEncoding,
   }
 
@@ -186,8 +185,14 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
 
     data = execFileSync(ligoPath, ['--version']).toString().trim()
   } catch (err) {
+    const isLikelyPermissionDeniedError = /EACCES/.test(err.message)
+    const errorMessage = `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}${
+      isLikelyPermissionDeniedError
+        ? '. Hint: Check the file permissions for LIGO.'
+        : ''}`
+
     const answer = await vscode.window.showInformationMessage(
-      `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}`,
+      errorMessage,
       'Choose path',
       'Download',
       'Cancel',

@@ -16,7 +16,8 @@ import {
 
 import notification from "~/base-components/notification";
 
-import keypairManager from "./keypairManager";
+import keypairManager, { KeypairManager } from "./keypairManager";
+import { keypairNameValidator } from "./helper";
 
 export default class CreateKeypairModal extends PureComponent {
   constructor(props) {
@@ -46,11 +47,7 @@ export default class CreateKeypairModal extends PureComponent {
   }
 
   regenerateKeypair = async () => {
-    const keypair = await keypairManager.newKeypair(
-      this.props.kp,
-      this.state.chain,
-      this.state.secretType
-    );
+    const keypair = await KeypairManager.newKeypair(this.props.kp, this.state.secretType);
     this.setState({ keypair });
   };
 
@@ -111,11 +108,11 @@ export default class CreateKeypairModal extends PureComponent {
     if (this.props.mnemonic) {
       return (
         <ButtonGroup>
-          <Button color="success" onClick={this.regenerateKeypair}>
+          <Button color="warning" onClick={this.regenerateKeypair}>
             Regenerate
           </Button>
           <UncontrolledButtonDropdown>
-            <DropdownToggle color="success" className="pr-2 pl-1" caret />
+            <DropdownToggle color="warning" className="pr-2 pl-1" caret />
             <DropdownMenu>
               <DropdownItem
                 onClick={() => this.setState({ secretType: "privkey" }, this.regenerateKeypair)}
@@ -133,7 +130,7 @@ export default class CreateKeypairModal extends PureComponent {
       );
     }
     return (
-      <Button color="success" onClick={this.regenerateKeypair}>
+      <Button color="warning" onClick={this.regenerateKeypair}>
         Regenerate
       </Button>
     );
@@ -162,7 +159,9 @@ export default class CreateKeypairModal extends PureComponent {
           label="Name"
           maxLength="200"
           placeholder="Please enter a name for the keypair"
+          value={this.state.name}
           onChange={(name) => this.setState({ name })}
+          validator={keypairNameValidator}
         />
         {this.renderChainOptions()}
         <Label>Keypair info</Label>
@@ -178,7 +177,7 @@ export default class CreateKeypairModal extends PureComponent {
         </div>
         <div className="row align-items-center">
           <div className="col-2">
-            <Badge pill color="success" className="ml-1">
+            <Badge pill color="warning" className="ml-1">
               {secretName}
             </Badge>
           </div>

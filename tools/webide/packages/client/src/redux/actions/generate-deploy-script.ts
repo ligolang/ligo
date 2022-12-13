@@ -15,9 +15,9 @@ import { ChangeOutputAction } from '../result';
 import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
-const URL = 'https://api.tez.ie/keys/jakartanet/';
+const URL = 'https://api.tez.ie/keys/kathmandunet/';
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
-const Tezos = new TezosToolkit('https://jakartanet.ecadinfra.com');
+const Tezos = new TezosToolkit('https://kathmandunet.ecadinfra.com');
 
 export async function fetchRandomPrivateKey(): Promise<string> {
   const response = await fetch(URL, {

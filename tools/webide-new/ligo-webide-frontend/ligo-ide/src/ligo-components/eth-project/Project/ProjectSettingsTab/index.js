@@ -76,6 +76,14 @@ class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 placeholder="Path to the built contract to deploy"
                 readOnly={readOnly}
               />
+              <DebouncedFormGroup
+                label="Contract storage (optional)"
+                className="bg-black"
+                value={projectSettings?.get("storage")}
+                onChange={this.onChange("storage")}
+                placeholder="Path to the contract storage"
+                readOnly={readOnly}
+              />
 
               <h4 className="mt-4">Gist</h4>
               <DebouncedFormGroup

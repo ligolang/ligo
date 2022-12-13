@@ -4,8 +4,6 @@ import CacheRoute, { CacheSwitch } from "react-router-cache-route";
 
 import { Input, LoadingScreen, CenterScreen } from "~/base-components/ui-components";
 
-import BottomBar from "./BottomBar";
-
 import actions from "~/base-components/workspace/actions";
 import fileOps from "~/base-components/file-ops";
 import { ProjectManager } from "~/base-components/workspace/ProjectManager";
@@ -51,13 +49,13 @@ export default function (props) {
             component={Network}
             className="p-relative w-100 h-100"
           />
-          <Route
+          <CacheRoute
             exact
             path="/:username"
             className="p-relative w-100 h-100"
             component={UserHomepage}
           />
-          <Route
+          <CacheRoute
             exact
             path="/share/:gistid"
             className="p-relative w-100 h-100"
@@ -82,7 +80,6 @@ export default function (props) {
           <Route render={() => <CenterScreen>Invalid URL</CenterScreen>} />
         </CacheSwitch>
       </Suspense>
-      <CacheRoute component={BottomBar} className="border-top-1 d-flex flex-row" />
     </>
   );
 }

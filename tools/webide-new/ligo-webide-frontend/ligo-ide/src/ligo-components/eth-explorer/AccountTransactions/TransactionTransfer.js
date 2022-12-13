@@ -21,7 +21,7 @@ export default function ({ tx, owner }) {
         )}
         {!tx.contractCreated && <Address addr={tx.to} showTooltip={false} />}
       </div>
-      <Badge pill color={tx.from === owner ? "danger" : "success"}>
+      <Badge pill color={tx.from === owner ? "danger" : "warning"}>
         {amount}
       </Badge>
     </div>

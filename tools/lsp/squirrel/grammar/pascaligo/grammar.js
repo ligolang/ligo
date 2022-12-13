@@ -37,6 +37,7 @@ const block_with = ($, right_expr) => seq(
 
 const fun_expr = ($, right_expr) => seq(
   'function',
+  optional($._type_params),
   $.parameters,
   optional(seq(':', field("type", $._type_expr))),
   'is',
@@ -87,12 +88,16 @@ module.exports = grammar({
       seq(
         'type',
         field("typeName", $.TypeName),
-        optional(field("params", $.type_params)),
+        optional(field("params", $.type_vars)),
         'is',
         field("typeValue", $._type_expr),
       ),
 
-    type_params: $ => common.par(
+    _type_params: $ => common.chev(
+      common.sepBy1(',', field("param", $.var_type)),
+    ),
+
+    type_vars: $ => common.par(
       common.sepBy1(',', field("param", $.var_type)),
     ),
 
@@ -189,6 +194,7 @@ module.exports = grammar({
       seq(
         'const',
         field("name", $._core_pattern),
+        optional($._type_params),
         optional(seq(
           ':',
           field("type", $._type_expr),
@@ -205,6 +211,7 @@ module.exports = grammar({
         field("recursive", optional($.recursive)),
         'function',
         field("name", $.NameDecl),
+        optional($._type_params),
         $.parameters,
         optional(seq(':', field("type", $._type_expr))),
         'is',
@@ -282,6 +289,7 @@ module.exports = grammar({
       seq(
         'var',
         field("name", $._pattern),
+        optional($._type_params),
         optional(seq(':', field("type", $._type_expr))),
         ':=',
         field("value", $._expr),

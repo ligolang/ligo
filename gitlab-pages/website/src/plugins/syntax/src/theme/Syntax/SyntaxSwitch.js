@@ -21,8 +21,9 @@ function SyntaxSwitch(props) {
 
         const url = new URL(window.location);
         url.searchParams.set("lang", e.target.value);
-        window.history.pushState(null, "", url.toString());
+        window.history.replaceState(null, "", url.toString());
 
+        localStorage.setItem("syntax", e.target.value);
         props.onSyntaxChange(e.target.value);
       }}
     >

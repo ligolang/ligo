@@ -56,8 +56,19 @@ test_SourceMapper = testGroup "Reading source mapper"
           Left err -> assertFailure $ pretty err
 
       let metasAndInstrs =
+            map (first stripSuffixHashFromLigoIndexedInfo) $
             filter (hasn't (_1 . _Empty)) $
             toList $ collectMetas (T.unContractCode $ T.cCode contract)
+
+      let mainType = LigoTypeResolved
+            ( mkPairType
+                (mkSimpleConstantType "Unit")
+                (mkSimpleConstantType "Int")
+              `mkArrowType`
+              mkPairType
+                (mkConstantType "List" [mkSimpleConstantType "operation"])
+                (mkSimpleConstantType "Int")
+            )
 
       metasAndInstrs
         @?=
@@ -118,22 +129,42 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr T.PAIR
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "main" (LTArrow $ LigoTypeArrow LTUnresolved LTUnresolved)
+            [ LigoStackEntryVar "main" mainType
             , LigoHiddenStackEntry
             ]
             ?- SomeInstr dummyInstr
 
         ]
 
-      (_slSrcPos <$> toList exprLocs)
+      ((_slStart &&& _slEnd) <$> toList (getInterestingSourceLocations exprLocs))
         @?=
-        -- Note: some ranges have the same start position and different
-        -- end positions - since we account for only the former, they
-        -- get de-duplicated.
-        [ SrcPos (Pos 1) (Pos 11)
-        , SrcPos (Pos 1) (Pos 15)
-        , SrcPos (Pos 2) (Pos 11)
-        , SrcPos (Pos 2) (Pos 21)
-        , SrcPos (Pos 3) (Pos 3)
+        -- Note: the order of entries below is not the interpretation order
+        -- because we extracted these pairs from Set with its lexicographical order
+        [ ( SrcPos (Pos 1) (Pos 11)
+          , SrcPos (Pos 1) (Pos 17)
+          )
+        , ( SrcPos (Pos 2) (Pos 11)
+          , SrcPos (Pos 2) (Pos 18)
+          )
+        , ( SrcPos (Pos 2) (Pos 11)
+          , SrcPos (Pos 2) (Pos 22)
+          )
+        , ( SrcPos (Pos 3) (Pos 3)
+          , SrcPos (Pos 3) (Pos 24)
+          )
+        , ( SrcPos (Pos 3) (Pos 3)
+          , SrcPos (Pos 3) (Pos 28)
+          )
         ]
+  ]
+
+
+test_Errors :: TestTree
+test_Errors = testGroup "Errors"
+  [ testCase "duplicated ticket error is recognized" do
+      let file = contractsDir </> "dupped-ticket.mligo"
+      ligoMapper <- compileLigoContractDebug "main" file
+      void (readLigoMapper ligoMapper typesReplaceRules instrReplaceRules)
+        @?= Left (PreprocessError UnsupportedTicketDup)
+
   ]

@@ -57,7 +57,7 @@
             unitConfig.ConditionPathExists = [ webide-cfg.package webide-cfg.ligo-package webide-cfg.tezos-client-package ];
             script =
               ''
-                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --tezos-client-path ${webide-cfg.tezos-client-package}/bin/tezos-client
+                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --octez-client-path ${webide-cfg.tezos-client-package}/bin/octez-client
               '';
 
           };
@@ -114,11 +114,16 @@
         # ligo 0.50.0
         "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/2959700000/artifacts/raw/ligo"; hash = "sha256-9AdoS8tUYeqdnCUSRbUxj3dZQLhk9pbEq93hFF6uSEI="; };
       };
+      ligo-syntaxes = pkgs.callPackage ../lsp/vscode-plugin/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
-      frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { };
+      frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { inherit ligo-syntaxes; };
       backend = pkgs.callPackage ./ligo-webide-backend { };
+      swagger-file = backend.swagger-file // {
+        meta.artifacts = [ "/swagger.json" ];
+      };
+      backend-generated-openapi = frontend.openapi-client swagger-file;
       frontendCheck = checkPhase:
-        frontend.overrideAttrs (o: {
+        frontend.package.overrideAttrs (o: {
           buildInputs = o.buildInputs ++ [ pkgs.nodePackages.typescript pkgs.nodePackages.eslint ];
           buildPhase = "yarn";
           doCheck = true;
@@ -131,15 +136,21 @@
         ligo-bin = pkgs.runCommand "ligo-bin" { } ''
           install -Dm777 ${pkgs.fetchurl ligo-binary.${system}} $out/bin/ligo
         '';
-        inherit frontend tezos-client;
-        backend = backend.components.exes.ligo-webide-backend;
+        inherit tezos-client swagger-file;
+        frontend = frontend.package;
+        backend = backend.ligo-webide-backend.components.exes.ligo-webide-backend;
+        openapi-client = frontend.openapi-client swagger-file;
       };
       tests = {
-        ligo-webide-backend-test = backend.components.tests.ligo-webide-backend-test;
+        ligo-webide-backend-test = backend.ligo-webide-backend.components.tests.ligo-webide-backend-test;
       };
       checks = {
         frontend-tscompile = frontendCheck "yarn run tscompile";
         frontend-tslint = frontendCheck "yarn run tslint";
+        frontend-openapi = pkgs.runCommand "frontend-api-check" {} ''
+          diff -q ${backend-generated-openapi} ${frontend.src}/src/components/api/generated
+          touch $out
+        '';
       } // deploy-rs.lib.${system}.deployChecks self.deploy;
       devShell = pkgs.mkShell {
         buildInputs = [

@@ -1,35 +1,62 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_function_annotation_1.mligo"];
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_function_annotation_1.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_function_annotation_1.mligo", line 1, characters 26-27:
       1 | let main (a:int) : unit = a
 
     Invalid type(s)
-    Cannot unify int with unit. |}];
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_function_annotation_2.mligo"; "--entry-point"; "f"];
-  [%expect {|
+    Cannot unify "int" with "unit". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_function_annotation_2.mligo"
+    ; "--entry-point"
+    ; "f"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_function_annotation_2.mligo", line 1, characters 14-43:
       1 | let f : int = fun (x, y : int*int) -> x + y
       2 | let g (x, y : int * int) : int = f (x, y)
 
     Invalid type(s)
-    Cannot unify ( int * int ) -> int with int. |}];
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_function_annotation_3.mligo"; "--entry-point"; "f"];
-  [%expect {|
+    Cannot unify "( int * int ) -> int" with "int". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_function_annotation_3.mligo"
+    ; "--entry-point"
+    ; "f"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_function_annotation_3.mligo", line 8, characters 14-20:
       7 |   match s with
       8 |   | Add si -> Add si
       9 |   | Sub si -> Sub si
 
     Invalid type(s)
-    Cannot unify sum[Add -> int , Sub -> int] with ( list (operation) * sum[Add -> int , Sub -> int] ). |}];
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "--entry-point"; "unvalid"];
-  [%expect {|
+    Cannot unify "op" with "( list (operation) * op )". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"
+    ; "--entry-point"
+    ; "unvalid"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_no_tail_recursive_function.mligo", line 2, characters 14-21:
       1 | let rec unvalid (n:int):int =
       2 |     let res = unvalid (n) in
@@ -37,108 +64,159 @@ let%expect_test _ =
 
     Recursive call not in tail position.
     The value of a recursive call must be immediately returned by the defined function. |}];
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_type.ligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_type.ligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_type.ligo", line 3, characters 18-28:
       2 |
       3 | const foo : nat = 42 + "bar"
 
     Invalid type(s)
-    Cannot unify int with string. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_type_record_access.mligo" ] ;
-  [%expect {|
+    Cannot unify "int" with "string". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_type_record_access.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_type_record_access.mligo", line 6, characters 17-20:
       5 | let bar (x : foo) : int =
       6 |   let y : bool = x.i in
       7 |   42
 
     Invalid type(s)
-    Cannot unify int with bool. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_type_record_update.mligo" ] ;
-  [%expect {|
+    Cannot unify "int" with "bool". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_type_record_update.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_type_record_update.mligo", line 7, characters 23-26:
       6 | let bar (x : foo) : foo =
       7 |   let x = { x with i = x.j } in
       8 |   x
 
     Invalid type(s)
-    Cannot unify bool with int. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_1.mligo" ] ;
-  [%expect {|
+    Cannot unify "bool" with "int". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_1.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_1.mligo", line 3, characters 19-27:
       2 |
       3 | let foo : string = 42 + 127
       4 |
 
     Invalid type(s)
-    Cannot unify int with string. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_2.mligo" ] ;
-  [%expect {|
+    Cannot unify "int" with "string". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_2.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_2.mligo", line 3, characters 24-39:
       2 |
       3 | let foo : string list = Some (42 + 127)
       4 |
 
     Invalid type(s)
-    Cannot unify option (int) with list (string). |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_3.mligo" ] ;
-  [%expect {|
+    Cannot unify "toto" with "list (string)". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_3.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_3.mligo", line 3, characters 34-53:
       2 |
       3 | let foo : (int * string * bool) = ((1, "foo") : toto)
       4 |
 
     Invalid type(s)
-    Cannot unify ( int * string ) with ( int * string * bool ).
-    Difference between the types:
-      int
-      string
-    + bool |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_4.mligo" ] ;
-  [%expect {|
+    Cannot unify "toto" with "( int * string * bool )". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_4.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_4.mligo", line 4, characters 17-56:
       3 |
       4 | let foo : tata = ({a = 1 ; b = "foo" ; c = true} : toto)
       5 |
 
     Invalid type(s)
-    Cannot unify record[a -> int , b -> string , c -> bool] with record[a -> int , c -> bool , d -> string]. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_5.mligo" ] ;
-  [%expect {|
+    Cannot unify "toto" with "tata". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_5.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_5.mligo", line 1, characters 10-17:
       1 | let foo : boolean = 3
       2 |
 
-    Type "boolean" not found. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_6.mligo" ] ;
-  [%expect {|
+    Type "boolean" not found. |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_6.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_6.mligo", line 1, characters 30-64:
       1 | let foo : (int, string) map = (Map.literal [] : (int, bool) map)
       2 | let main (p:int) (storage : int) =
 
     Invalid type(s)
-    Cannot unify bool with string. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_7.mligo" ] ;
-  [%expect {|
+    Cannot unify "bool" with "string". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_7.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_7.mligo", line 4, characters 18-48:
       3 |
       4 | let foo : tata = ({a = 1 ; b = "foo" ; c = true} : toto)
       5 |
 
-    Mismatching record labels. Expected record of type record[a -> int , b -> string]. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/error_typer_1.jsligo" ] ;
-  [%expect {|
+    Mismatching record labels. Expected record of type "toto". |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/error_typer_1.jsligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/error_typer_1.jsligo", line 9, character 0 to line 12, character 1:
       8 |
       9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
@@ -163,17 +241,19 @@ let%expect_test _ =
      11 |     return [list([]) as list<operation>, newStorage];
 
     Invalid type(s)
-    Cannot unify ( nat * nat ) with nat. |} ] ;
-
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/id.mligo" ] ;
-  [%expect {|
+    Cannot unify "( nat * nat )" with "nat". |}];
+  run_ligo_bad
+    [ "compile"; "contract"; "--no-colour"; "../../test/contracts/negative/id.mligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative/id.mligo", line 45, characters 26-40:
      44 |   let updated_identities: (id, id_details) big_map =
      45 |     Big_map.update new_id new_id_details identities
      46 |   in
 
     Invalid type(s)
-    Cannot unify record[controller -> address , owner -> address , profile -> bytes] with option (^gen#494). |}]
+    Cannot unify "id_details" with "option (^a)".
+    Hint: "^a" represent placeholder type(s). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -181,13 +261,26 @@ let%expect_test _ =
   EDIT: With EDO, all kind of pairs are comparable
 *)
 let%expect_test _ =
-  run_ligo_good [ "run"; "interpret" ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]" ; "--syntax"; "cameligo" ] ;
-  [%expect {|
+  run_ligo_good
+    [ "run"
+    ; "interpret"
+    ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]"
+    ; "--syntax"
+    ; "cameligo"
+    ];
+  [%expect
+    {|
     SET_ADD(( 2 , ( 3 , 4 ) ) , SET_ADD(( 1 , ( 2 , 3 ) ) , SET_EMPTY())) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/invalid_field_record_update.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/invalid_field_record_update.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/invalid_field_record_update.mligo", line 4, characters 29-36:
       3 | let main (p:int) (storage : abc) =
       4 |   (([] : operation list) , { storage with nofield=2048} )
@@ -195,27 +288,42 @@ let%expect_test _ =
     Invalid record field "nofield" in record. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/override_option.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/override_option.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/override_option.mligo", line 3, characters 53-57:
       2 |
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
-    Constructor "None" not found. |} ]
+    Constructor "None" not found. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ;  "../../test/contracts/negative/will_be_ignored.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-55:
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/will_be_ignored.mligo"
+    ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-62:
       6 |      let receiver : contract =
       7 |       match (Tezos.get_contract_opt(s.owner) : contract option) with
       8 |         Some (contract) -> contract
 
-    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
+    Invalid type
+    Ill formed type "contract".Hint: you might be missing some type arguments. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/double_for_each.ligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"; "contract"; "../../test/contracts/negative/double_for_each.ligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative/double_for_each.ligo", line 19, characters 23-28:
      18 |       (* param was accidentally still in the typing context after this point *)
      19 |       s.some_map[0] := param;
@@ -224,8 +332,10 @@ let%expect_test _ =
     Variable "param" not found. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/wrong_return1.ligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"; "contract"; "../../test/contracts/negative/wrong_return1.ligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative/wrong_return1.ligo", line 3, character 71 to line 5, character 8:
       2 |
       3 | function updateAdmin(const _new_admin: address; var s: int): return is {
@@ -233,18 +343,19 @@ let%expect_test _ =
       5 | } with s
 
     Invalid type(s)
-    Cannot unify int with ( list (operation) * int ). |}]
+    Cannot unify "int" with "return". |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/wrong_return2.ligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"; "contract"; "../../test/contracts/negative/wrong_return2.ligo" ];
+  [%expect
+    {|
     File "../../test/contracts/negative/wrong_return2.ligo", line 3, characters 71-72:
       2 |
       3 | function updateAdmin(const _new_admin: address; var s: int): return is s
 
     Invalid type(s)
-    Cannot unify int with ( list (operation) * int ). |}]
-
+    Cannot unify "int" with "return". |}]
 
 (* Compiles due to inference ;) *)
 (* let%expect_test _ =
@@ -259,34 +370,45 @@ let%expect_test _ =
       Expected: "contract ('a)", but got: "contract (int)". |}] *)
 
 (* Note : Disabling color in below tests (through the [--no-colour] option) prevents
-   the introduction of ANSI escape sequences in the expected output *) 
-
+   the introduction of ANSI escape sequences in the expected output *)
 
 (* In this case, the types are not record types,
    no diff should be displayed *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo", line 4, characters 16-17:
       3 |   let x : int = 42 in
       4 |   let y : nat = x in
       5 |   ([] : operation list), s
 
     Invalid type(s)
-    Cannot unify int with nat. |}]
+    Cannot unify "int" with "nat". |}]
 
 (* In this case, one of the types is a tuple but not the other
    no diff should be displayed *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo", line 4, characters 31-32:
       3 |   let x : int                = 42 in
       4 |   let y : nat * int * string = x in
       5 |   ([] : operation list), s
 
     Invalid type(s)
-    Cannot unify int with ( nat * int * string ). |}]
+    Cannot unify "int" with "( nat * int * string )". |}]
 
 (*
   Here, the two tuples have no types in common and different sizes.
@@ -319,15 +441,21 @@ let%expect_test _ =
 
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo", line 4, characters 40-41:
       3 |   let y : string * int * int * string = "foo", 42, 24, "bar" in
       4 |   let x : tez    * nat * tez          = y in
       5 |   ([] : operation list), s
 
     Invalid type(s)
-    Cannot unify ( string * int * int * string ) with ( tez * nat * tez ).
+    Cannot unify "( string * int * int * string )" with "( tez * nat * tez )".
     Difference between the types:
     - string
     + tez
@@ -343,30 +471,42 @@ let%expect_test _ =
   on the first difference only (here, [string] vs. [tez])
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo", line 4, characters 53-54:
       3 |   let  x : string * int * nat * int *       string = "foo" , 42  , 24n , 42 ,        "bar" in
       4 |   let _y : tez    * int       * tez * nat * string = x in
       5 |   //       ^^^^^^         ^^^         ^^^
 
     Invalid type(s)
-    Cannot unify string with tez. |}]
+    Cannot unify "string" with "tez". |}]
 
 (*
   Here, the two tuples have 4 changes and different sizes.
   The diff should display these changes.
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo", line 4, characters 59-60:
       3 |   let  x : string * int * nat * tez *       string * int =  "foo" , 42  , 24n , 42tez ,        "bar",  42 in
       4 |   let _y : tez    * int       * tez * nat * string       = x in
       5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
     Invalid type(s)
-    Cannot unify ( string * int * nat * tez * string * int ) with ( tez * int * tez * nat * string ).
+    Cannot unify "( string * int * nat * tez * string * int )" with "( tez * int * tez * nat * string )".
     Difference between the types:
     - string
     + tez
@@ -379,15 +519,21 @@ let%expect_test _ =
 
 (* Yet another example, with longer tuples this time *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo", line 4, characters 72-73:
       3 |   let x  : int *                nat * int * nat     * int *       nat = 42 , 4n , 42 , 24n , 42 , 24n in
       4 |   let _y : int * tez * string * nat * int * address * int * tez * nat = x in
       5 | //               ^^^   ^^^^^^               ^^^^^^^         ^^^
 
     Invalid type(s)
-    Cannot unify ( int * nat * int * nat * int * nat ) with ( int * tez * string * nat * int * address * int * tez * nat ).
+    Cannot unify "( int * nat * int * nat * int * nat )" with "( int * tez * string * nat * int * address * int * tez * nat )".
     Difference between the types:
       int
     + tez
@@ -437,15 +583,21 @@ let%expect_test _ =
   into subtuple_b is low (it's 0 + 0 + 1 = 1), so this diff is prefered.
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo", line 4, characters 71-72:
       3 |   let  x : int * string * (nat * tez * nat) *          tez           = 1, "a", (1n, 1tez, 1n), 1tez in
       4 |   let _y : int *          (nat * tez * int) * string * tez * address = x in
       5 |   //             ^^^^^^                ^^^    ^^^^^^         ^^^^^^^
 
     Invalid type(s)
-    Cannot unify ( int * string * ( nat * tez * nat ) * tez ) with ( int * ( nat * tez * int ) * string * tez * address ).
+    Cannot unify "( int * string * ( nat * tez * nat ) * tez )" with "( int * ( nat * tez * int ) * string * tez * address )".
     Difference between the types:
       int
     - string
@@ -469,22 +621,28 @@ let%expect_test _ =
          diff of the subtuples themselves.
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo", line 9, characters 48-49:
       8 |   let  x : int *           s       *      nat = 42, (1n, 1tez, 1tez, 1n), 1n in
       9 |   let _y : int * s1 * s2 * s_close * s2 * nat = x in
      10 |   ([] : operation list), s
 
     Invalid type(s)
-    Cannot unify ( int * ( nat * tez * tez * nat ) * nat ) with ( int * ( string * address * string * tez ) * ( address * int * int * int ) * ( nat * tez * int * nat ) * ( address * int * int * int ) * nat ).
+    Cannot unify "( int * s * nat )" with "( int * s1 * s2 * s_close * s2 * nat )".
     Difference between the types:
       int
-    + ( string * address * string * tez )
-    + ( address * int * int * int )
-    - ( nat * tez * tez * nat )
-    + ( nat * tez * int * nat )
-    + ( address * int * int * int )
+    - s
+    + s1
+    + s2
+    + s_close
+    + s2
       nat |}]
 
 (*
@@ -496,15 +654,21 @@ let%expect_test _ =
     cannot unify [tuple_a list] with [tuple_b list]
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo", line 4, characters 65-66:
       3 |   let x : (string * int *       nat * int * string * int) list = [ "foo" , 42  , 24n , 42 ,        "bar",  42 ] in
       4 |   let y : (tez    * int * tez * nat *       string)       list = x in
       5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
     Invalid type(s)
-    Cannot unify ( string * int * nat * int * string * int ) with ( tez * int * tez * nat * string ).
+    Cannot unify "( string * int * nat * int * string * int )" with "( tez * int * tez * nat * string )".
     Difference between the types:
     - string
     + tez
@@ -528,15 +692,21 @@ let%expect_test _ =
   the mismatch when the types are long.
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo", line 4, characters 47-48:
       3 |   let y : {foo : int ; bar : (nat * string)} = {foo = 1 ; bar = (2n, "lol") } in
       4 |   let x : {foo : int ; bar : (nat * nat   )} = y in
       5 |   //                                ^^^^^^
 
     Invalid type(s)
-    Cannot unify string with nat. |}]
+    Cannot unify "string" with "nat". |}]
 
 (*
   In this case, the two records DON'T have the same field labels.
@@ -545,16 +715,22 @@ let%expect_test _ =
   to clarify where is the mismatch.
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo", line 4, characters 67-68:
       3 |   let y : {foo : int ; bar : (nat * string) ; third_field : tez} = {foo = 1 ; bar = (2n, "lol") ; third_field = 42tez } in
       4 |   let x : {foo : int ; bar : (nat * nat   )}                     = y in
       5 |   //                                ^^^^^^    ^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
-    Cannot unify record[bar -> ( nat * string ) , foo -> int , third_field -> tez] with
-    record[bar -> ( nat * nat ) , foo -> int]. |}]
+    Cannot unify "record[bar -> ( nat * string ) , foo -> int , third_field -> tez]" with "
+    record[bar -> ( nat * nat ) , foo -> int]". |}]
 
 (*
   In this case, the typer will stop at the first mismatch
@@ -565,14 +741,18 @@ let%expect_test _ =
   and pinpoint a clear diff between both arrow types ?
 *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "--no-colour" ; "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-colour"
+    ; "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo"
+    ];
+  [%expect
+    {|
     File "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo", line 4, characters 45-46:
       3 |   let  x : int -> nat -> nat -> tez        = (fun _x _y _z -> 1tez) in
       4 |   let _y : int -> int -> int -> int -> nat = x in
       5 |   //              ^^^    ^^^    ^^^    ^^^
 
     Invalid type(s)
-    Cannot unify int with nat. |}]
-
-
+    Cannot unify "int" with "nat". |}]

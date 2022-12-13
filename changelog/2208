@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "Given the following correct JsLIGO:\\n\\n```\\ntype t <a>= a;\\n\\n```\\nWe had before this MR:\\n\\n```\\n$ ~/tmp/ligo/dev/_build/default/src/passes/02-parsing/jsligo/ParserMain.exe --cst --tokens -- Tests/ge.jsligo \\nge.jsligo:1:0-4: Type\\nge.jsligo:1:5-6: Ident \"t\"\\nge.jsligo:1:7-8: LT\\nge.jsligo:1:8-9: Ident \"a\"\\nge.jsligo:1:9-11: GE\\nge.jsligo:1:12-13: Ident \"a\"\\nge.jsligo:1:13-14: SEMI\\nge.jsligo:2:0-0: EOF\\n\\nFile \"Tests/ge.jsligo\", line 1, characters 9-11:\\n  1 | type t <a>= a;\\nIll-formed parametric type declaration.\\nAt this point, one of the following is expected:\\n  * a comma ',' followed by another type parameter;\\n  * a closing chevron '>' if there are no more type parameters.\\n\\n```\\nAfter change:\\n\\n```\\n$ ~/tmp/ligo/rinderknecht\@fix_gt/_build/default/src/passes/02-parsing/jsligo/ParserMain.exe --cst --tokens -- Tests/ge.jsligo \\nge.jsligo:1:0-4: Type\\nge.jsligo:1:5-6: Ident \"t\"\\nge.jsligo:1:7-8: LT\\nge.jsligo:1:8-9: Ident \"a\"\\nge.jsligo:1:9-10: GT\\nge.jsligo:1:10-11: ZWSP\\nge.jsligo:1:10-11: EQ\\nge.jsligo:1:12-13: Ident \"a\"\\nge.jsligo:1:13-14: SEMI\\nge.jsligo:2:0-0: EOF\\n\\n<ast>\\n└ SType (ge.jsligo:1:0-13)\\n  ├ t (ge.jsligo:1:5-6)\\n  └ TVar\\n    └ a (ge.jsligo:1:12-13)\\n\\n```\\nNote: The printed CST lacks the type parameters (future refactoring).\\n"
+merge_request: '2208'
+title: "[Fix] The shared Lexer.mll used to scan \">=\" but we want each *syntax* to decide based on the context."
+type: fixed
+            

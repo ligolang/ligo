@@ -1,42 +1,45 @@
 ;; Build of the self passes on the tokens of ReasonLIGO
 
 (library
-  (name lexing_reasonligo_self_tokens)
-  (public_name ligo.lexing.reasonligo.self.tokens)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     LexerLib
-     ;; LIGO
-     lexing_shared
-     menhir_reasonligo_tokens)
-  (modules PreParErr PreParser State ES6FUN Token Self)
-  (flags (:standard \ -open Core)))
+ (name lx_re_selftoks)
+ (public_name ligo.lexing.reasonligo.self.tokens)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  LexerLib
+  ;; LIGO
+  lexing_shared
+  mh_re_tokens)
+ (modules PreParErr PreParser State ES6FUN Token Self)
+ (flags
+  (:standard \ -open Core)))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of
 ;; Menhir for error recovery
 
 (rule
-  (targets MenhirToken.ml MenhirToken.mli)
-  (deps
-    (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly))
-  (action
-    (run menhir %{ParToken} --only-tokens --inspection
-                            --table --base MenhirToken)))
+ (targets MenhirToken.ml MenhirToken.mli)
+ (deps
+  (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly))
+ (action
+  (run menhir %{ParToken} --only-tokens --inspection --table --base
+    MenhirToken)))
 
 (library
-  (name menhir_reasonligo_tokens)
-  (public_name ligo.lexing.menhir_reasonligo_tokens)
-  (modules MenhirToken)
-  (libraries
-    ;; LIGO
-    lexing_shared
-    ;; Third party
-    menhirLib
-    hex)
-  (flags (:standard -open Lexing_shared -open Wrap)))
+ (name mh_re_tokens)
+ (public_name ligo.lexing.menhir_re_tokens)
+ (modules MenhirToken)
+ (libraries
+  ;; LIGO
+  lexing_shared
+  ;; Third party
+  menhirLib
+  hex)
+ (flags
+  (:standard -open Lexing_shared -open Wrap)))
 
 ;; --------------------------------------------------------------------
 ;; Building the PreParser
@@ -51,29 +54,28 @@
 ;; Building the error state mapping for ES6FUN tokens
 
 (rule
-  (targets es6fun_errors.msg)
-  (deps
-     PreParser.mly
-     (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly)
-     es6fun_errors.msg.in)
-  (action
-    (with-stdout-to
-     %{targets}
-     (run menhir --unused-tokens --update-errors es6fun_errors.msg.in --table
-          --strict --external-tokens Token --base PreParser.mly %{ParToken}
-          PreParser.mly))))
+ (targets es6fun_errors.msg)
+ (deps
+  PreParser.mly
+  (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly)
+  es6fun_errors.msg.in)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run menhir --unused-tokens --update-errors es6fun_errors.msg.in --table
+     --strict --external-tokens Token --base PreParser.mly %{ParToken}
+     PreParser.mly))))
 
 (rule
  (target es6fun_errors.msg.new)
  (deps
-   PreParser.mly
-   (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly))
+  PreParser.mly
+  (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly))
  (action
-   (with-stdout-to
-    %{target}
-    (run menhir --unused-tokens --list-errors --table --strict
-         --external-tokens Token --base PreParser.mly %{ParToken}
-         PreParser.mly))))
+  (with-stdout-to
+   %{target}
+   (run menhir --unused-tokens --list-errors --table --strict
+     --external-tokens Token --base PreParser.mly %{ParToken} PreParser.mly))))
 
 (rule
  (alias runtest)
@@ -82,9 +84,9 @@
   es6fun_errors.msg.new
   (:ParToken ../../../../02-parsing/reasonligo/ParToken.mly))
  (action
-  (run menhir --unused-tokens --table --strict --external-tokens
-    Token --base PreParser.mly %{ParToken} PreParser.mly
-    --compare-errors es6fun_errors.msg.new --compare-errors es6fun_errors.msg)))
+  (run menhir --unused-tokens --table --strict --external-tokens Token --base
+    PreParser.mly %{ParToken} PreParser.mly --compare-errors
+    es6fun_errors.msg.new --compare-errors es6fun_errors.msg)))
 
 (rule
  (targets PreParErr.ml)
@@ -95,6 +97,6 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir --unused-tokens --table --strict --external-tokens
-     Token --base PreParser.mly %{ParToken} PreParser.mly
-     --compile-errors es6fun_errors.msg.in))))
+   (run menhir --unused-tokens --table --strict --external-tokens Token
+     --base PreParser.mly %{ParToken} PreParser.mly --compile-errors
+     es6fun_errors.msg.in))))

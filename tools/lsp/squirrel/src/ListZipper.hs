@@ -7,7 +7,7 @@ module ListZipper
   , next
   ) where
 
-import Data.Maybe (listToMaybe, maybeToList)
+import Prelude hiding (find)
 
 data ListZipper a = ListZipper
   { before :: [a]

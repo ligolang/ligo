@@ -1,31 +1,37 @@
 open Cli_expect
 
-let base path = "../../../gitlab-pages/website/src/components/HomepageCodeExamples/" ^ path
+let base path =
+  "../../../gitlab-pages/website/src/components/HomepageCodeExamples/" ^ path
+
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; base "cameligo.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; base "cameligo.mligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_initial_storage exited with value ().
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; base "jsligo.jsligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; base "jsligo.jsligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_initial_storage exited with value ().
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; base "pascaligo.ligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; base "pascaligo.ligo" ];
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_initial_storage exited with value ().
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; base "reasonligo.religo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test"; base "reasonligo.religo" ];
+  [%expect
+    {|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     Reasonligo is depreacted, support will be dropped in a few versions.
@@ -37,8 +43,9 @@ let%expect_test _ =
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract" ; base "cameligo.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; base "cameligo.mligo" ];
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -47,8 +54,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract" ; base "jsligo.jsligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; base "jsligo.jsligo" ];
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -57,8 +65,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract" ; base "pascaligo.ligo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; base "pascaligo.ligo" ];
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -67,8 +76,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract" ; base "reasonligo.religo" ] ;
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; base "reasonligo.religo" ];
+  [%expect
+    {|
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     Reasonligo is depreacted, support will be dropped in a few versions.

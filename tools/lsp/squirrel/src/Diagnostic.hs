@@ -5,13 +5,9 @@ module Diagnostic
   , filterDiagnostics
   ) where
 
-import Data.Foldable (find)
-import Data.List.NonEmpty (NonEmpty (..), (<|))
+import Data.List.NonEmpty ((<|))
 import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
-import Data.Semigroup (sconcat)
-import Data.Text (Text)
-import Data.Text qualified as Text
 import Duplo.Pretty (Pretty (..))
 
 import Range (HasRange (..), Range (..), merged)
@@ -26,6 +22,8 @@ data Message = Message
   , mSeverity :: Severity
   , mRange :: Range
   } deriving stock (Eq, Ord, Show)
+
+type instance PrettyShow Message = ()
 
 instance HasRange Message where
   getRange = mRange
@@ -42,7 +40,7 @@ data MessageDetail
 instance Pretty MessageDetail where
   pp (FromLanguageServer msg) = pp msg
   pp (FromLIGO msg) = pp msg
-  pp (MissingContract path) = "Missing contract: " <> pp (Text.pack path)
+  pp (MissingContract path) = "Missing contract: " <> pp (toText path)
   pp (Missing src) = "Missing: " <> pp src
   pp (Unexpected src) = "Unexpected: " <> pp src
   pp (Unrecognized src) = "Unrecognized: " <> pp src
@@ -53,7 +51,7 @@ data Severity
   deriving stock (Eq, Ord, Show)
 
 groupByIntersections :: HasRange a => [a] -> [NonEmpty a]
-groupByIntersections = Map.elems . foldr go Map.empty
+groupByIntersections = elems . foldr go Map.empty
   where
     go a regions = case pivotM of
       Nothing -> Map.insert (merged glb lub) conj disj
@@ -66,7 +64,7 @@ groupByIntersections = Map.elems . foldr go Map.empty
         -- disjoint elements unchanged.
         (left,  leftDisj)  = Map.partitionWithKey (\k _ -> _rFinish k >  _rStart  r) smaller
         (right, rightDisj) = Map.partitionWithKey (\k _ -> _rStart  k <= _rFinish r) greater
-        conj = sconcat ((a :| []) :| (Map.elems left <> Map.elems right))
+        conj = sconcat ((a :| []) :| (elems left <> elems right))
         disj = Map.union leftDisj rightDisj
         -- Find the greatest lower bound (GLB) and least upper bound (LUB).
         glb = maybe r fst $ Map.lookupMax left

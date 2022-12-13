@@ -14,10 +14,10 @@ You can also try LIGO in a Gitpod environment
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo), make it executable, and you are done!
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/3438281030/artifacts/raw/ligo), make it executable, and you are done!
 
 ```zsh
-wget https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo
+wget https://gitlab.com/ligolang/ligo/-/jobs/3438281030/artifacts/raw/ligo
 chmod +x ./ligo
 ```
 
@@ -40,33 +40,33 @@ brew install ligolang/ligo/ligo
 ## Debian Linux package installation
 
 A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3297657598/artifacts/raw/ligo.deb), and then install using: 
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3438281030/artifacts/raw/ligo.deb), and then install using: 
 
 ```zsh
 sudo apt install ./ligo.deb
 ```
 
 ## Dockerised installation
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.55.0](./changelog.md):
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.57.0](./changelog.md):
 
 Linux or OSX:
 > ```sh
-> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.55.0
+> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.57.0
 > ```
 > For convenience you can alias the above command
 > ```sh
-> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.55.0"
+> alias ligo='docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.57.0'
 > ```
 > To make this `alias` persistent across terminal sessions you need to configure your shell.     
 > Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.
 
 Windows:
 > ```dos
-> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.55.0`
+> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.57.0`
 > ```
 > For convenience you can alias the above command
 > ```dos
-> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.55.0 $*
+> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.57.0 $*
 > ```
 > To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.  
 > Follow [this stackoverflow answer](https://stackoverflow.com/a/21040825) for the steps on how to do that.
@@ -74,6 +74,38 @@ Windows:
 Or if you want the development version, replace the version above with `next`.
 
 Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
+
+## Windows
+
+> **Disclaimer**
+>
+> Windows version is beta quality and is still working in progress. Please report any issues found
+> and feature requests.
+
+### via NPM
+Windows users can install LIGO via NPM.
+
+```sh
+npm i -g ligolang@windows-beta
+```
+
+### via GUI installer
+
+You can download the installer from [here hosted on our Gitlab](https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_windows/current/ligo_installer_beta.exe).
+
+#### Prerequisite
+
+The installer use `nodejs` you will need to [install](https://nodejs.org/en/download/) it if it's not already done. 
+
+#### Working around the "unrecognised app" warning screen
+
+The installer hasn't been signed with a recognized Windows Developer ID. So for now, you might see the following.
+![Unrecognised App Warning](/img/windows-unrecognised.png)
+
+For now, you'll have to click on `More info`, and then, `Run anyway`.
+![Run Anyway](/img/windows-more-info-clicked.png)
+
+
 
 ## Releases
 

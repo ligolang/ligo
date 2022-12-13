@@ -19,9 +19,7 @@ export function isDefined<T>(x: T | undefined | null): x is T {
   return x !== null && x !== undefined
 }
 
-// Sometimes we need to manually execute some commands.
-// For example, we want to execute `AskForEntrypoint` command
-// before other commands (like `AskForParameter` or `AskForStorage`).
+// Extract the name of a pseudo-command (like `{AskOnStart}`).
 export function getCommand(str: Maybe<string>): Maybe<string> {
   if (isDefined(str)) {
     const matches = str.match(/^\{(.*)\}$/);
@@ -46,7 +44,7 @@ export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<
 // Type if input box that initializ
 export type InputBoxType = "parameter" | "storage"
 
-export type InputValueType = "LIGO" | "Michelson";
+export type InputValueLang = "LIGO" | "Michelson";
 
 /** The type of validation in an input box.
  *
@@ -83,16 +81,17 @@ export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfigur
   }
 }
 
-export async function tryExecuteCommand(
+export async function tryExecuteCommand<T extends Maybe<string>>(
   field: ConfigField,
   expectedExtractedCommand: ConfigCommand,
-  configItem: string,
-  resultPromise: Promise<Maybe<string>>
-): Promise<string> {
+  configItem: T,
+  resultPromise: () => Promise<Maybe<T>>,
+  defaultItem: T = configItem
+): Promise<T> {
   const extractedCommand = getCommand(configItem);
   if (isDefined(extractedCommand)) {
     if (extractedCommand === expectedExtractedCommand) {
-      const result : Maybe<string> = await resultPromise;
+      const result : Maybe<T> = await resultPromise();
       if (!isDefined(result)) {
         // If user decided to close entrypoint quickpick
         // then we want to stop debugging session immediately.
@@ -109,6 +108,6 @@ export async function tryExecuteCommand(
       throw new Error("Expected command for field \"" + field + "\" is \"" + expectedExtractedCommand + "\". Got \"" + extractedCommand + "\"");
     }
   } else {
-    return configItem;
+    return defaultItem;
   }
 }

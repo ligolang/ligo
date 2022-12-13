@@ -84,6 +84,7 @@ const sidebars = {
       "manpages/run evaluate-expr",
       "manpages/run interpret",
       "manpages/run test",
+      "manpages/run test-expr",
       "manpages/transpile contract",
       "manpages/transpile expression"
     ],

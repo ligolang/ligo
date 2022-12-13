@@ -11,6 +11,7 @@ import WorkspaceContext from "./WorkspaceContext";
 import ProjectLoading from "./components/ProjectLoading";
 import ProjectInvalid from "./components/ProjectInvalid";
 import ProjectManager from "./ProjectManager/ProjectManager";
+import { CompilerManager } from "~/ligo-components/eth-compiler";
 
 import actions from "./actions";
 
@@ -29,9 +30,6 @@ export class WorkspaceLoader extends PureComponent {
 
   componentDidMount() {
     this.prepareProject(this.props);
-    if (this.props.addLanguages) {
-      this.props.addLanguages();
-    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -74,7 +72,7 @@ export class WorkspaceLoader extends PureComponent {
   toggleTerminal = (terminal) => {
     this.setState({ terminal });
     if (terminal) {
-      this.props.compilerManager?.focus();
+      CompilerManager.focus();
     }
   };
 
@@ -116,6 +114,7 @@ export class WorkspaceLoader extends PureComponent {
       <WorkspaceContext.Provider value={context}>
         <Workspace
           ref={this.workspace}
+          addLanguagesCallback={this.props.addLanguages}
           theme={this.props.theme}
           initial={initial}
           terminal={terminal}
