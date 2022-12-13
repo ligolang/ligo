@@ -3224,3 +3224,37 @@ let%expect_test _ =
     * "%bar" is expected for entrypoint "Bar"
     * "%default" when no entrypoint is used.
     Valid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9'). |}]
+
+(* make sure that in compile storage we annotate the type *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "storage"
+    ; contract "annotated_storage_and_parameter.mligo"
+    ; "Map.empty"
+    ];
+  [%expect {| {} |}]
+
+(* make sure that in compile parameter we annotate the type *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "parameter"; contract "annotated_storage_and_parameter.mligo"; "[]" ];
+  [%expect {| {} |}]
+
+(* make sure that in compile parameter we do not allow polymorphic type *)
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "parameter"
+    ; bad_contract "annotated_storage_and_parameter.mligo"
+    ; "([] : int list)"
+    ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/annotated_storage_and_parameter.mligo", line 4, character 0 to line 5, character 8:
+      3 |
+      4 | let main ((_p, s) : parameter * storage) : operation list * storage =
+      5 |  ([], s)
+
+    Invalid type for entrypoint "main".
+    The parameter type "funtype 'a : * . list ('a)" of the entrypoint function must not contain polymorphic variables. |}]
