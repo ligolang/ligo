@@ -1,5 +1,6 @@
 open Types
 
+val assert_no_type_vars : type_expression -> unit option
 val assert_type_expression_eq : type_expression * type_expression -> unit option
 val type_expression_eq : type_expression * type_expression -> bool
 

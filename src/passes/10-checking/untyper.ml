@@ -36,9 +36,7 @@ let rec untype_type_expression (t : O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant { language = _; injection; parameters } ->
     let arguments = List.map ~f:self parameters in
-    let type_operator =
-      Type_var.fresh ~loc ~name:(Literal_types.to_string injection) ()
-    in
+    let type_operator = Type_var.of_input_var ~loc (Literal_types.to_string injection) in
     return @@ I.T_app { type_operator; arguments }
   | O.T_singleton l -> return @@ I.T_singleton l
   | O.T_abstraction x ->

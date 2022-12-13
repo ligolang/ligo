@@ -70,7 +70,7 @@ let type_program_string ~raise ~options syntax expression =
   typed, core
 
 
-let type_expression ~raise ~options syntax expression init_prog =
+let type_expression ~raise ~options ?annotation syntax expression init_prog =
   let meta = Of_source.make_meta syntax in
   (* TODO: should be computed outside *)
   let c_unit_exp, _ =
@@ -82,6 +82,11 @@ let type_expression ~raise ~options syntax expression init_prog =
   in
   let imperative_exp = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let core_exp = Of_imperative.compile_expression ~raise imperative_exp in
+  let core_exp =
+    match annotation with
+    | None -> core_exp
+    | Some ann -> Ast_core.e_ascription ~loc:core_exp.location core_exp ann
+  in
   let typed_exp = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
   typed_exp
 

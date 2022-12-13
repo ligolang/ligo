@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat annotated_storage_and_parameter.mligo \\ntype storage = (int, int) map\\ntype parameter = int list\\n\\nlet main ((_p, s) : parameter * storage) : operation list * storage = \\n ([], s)\\n\\n```\\n\\n#### Before fix\\n\\n\\n```\\n$ ligo compile storage annotated_storage_and_parameter.mligo \"Map.empty\"\\nFile \"src/passes/14-spilling/compiler.ml\", line 180, characters 36-43\\n corner case: For all type uncaught\\nSorry, we don't have a proper error message for this error. Please report this use case so we can improve on this.\\n\\n```\\n\\n#### After fix\\n\\n\\n```\\n$ ligo compile storage annotated_storage_and_parameter.mligo \"Map.empty\"\\n{}\\n\\n```\\n\\n"
+merge_request: '2205'
+title: "Resolve \"Internal error: `ligo compile storage`\""
+type: fixed
+            
