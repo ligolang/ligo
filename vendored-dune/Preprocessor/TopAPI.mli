@@ -1,10 +1,8 @@
 (* This module is meant to be used by clients of the library to create
-   standalone preprocessors tailored to their conventions. It build
+   standalone preprocessors tailored to their conventions. It builds
    upon [LowAPI] by adding support for reading the CLI and specifying
    the source as one value of type [Lexbuf.input]. By contrast,
-   [LowAPI] exports a preprocessor for each type of input. This module
-   is also internally used by PreprocMain.ml with default settings,
-   for testing purposes. *)
+   [LowAPI] exports a preprocessor for each type of input. *)
 
 module Std    = Simple_utils.Std
 module Lexbuf = Simple_utils.Lexbuf
