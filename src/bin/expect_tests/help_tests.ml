@@ -487,6 +487,7 @@ let%expect_test _ =
                                    meanwhile.
       [--only-ep]                . Only display declarations that have the type of
                                    an entrypoint
+      [--project-root PATH]      . The path to root of the project.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
                                    syntaxes are "pascaligo", "cameligo",
                                    "reasonligo" and "jsligo". By default, the syntax
