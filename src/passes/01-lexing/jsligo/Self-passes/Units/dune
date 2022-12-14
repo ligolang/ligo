@@ -12,4 +12,4 @@
   ;; LIGO
   lexing_shared
   lx_js_self_tokens)
- (modules Self ZWSP Token_of))
+ (modules Self ZWSP Attributes))
