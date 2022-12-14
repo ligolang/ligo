@@ -111,6 +111,30 @@ executables:
       - aeson
       - ligo-webide-backend
 
+  simple-language-server:
+    main: Main.hs
+    source-dirs: simple-language-server
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aeson
+    - aeson-pretty
+    - async
+    - bytestring
+    - directory
+    - katip
+    - lens
+    - lsp-types
+    - monad-control
+    - optparse-applicative
+    - process
+    - unliftio
+    - text
+    - transformers
+    - websockets
+
 tests:
   ligo-webide-backend-test:
     main: Main.hs

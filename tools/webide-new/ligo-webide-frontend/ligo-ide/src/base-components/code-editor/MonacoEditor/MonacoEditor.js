@@ -17,7 +17,7 @@ import { theme } from "./theme";
 import { actions } from "~/base-components/workspace";
 
 function createWebSocket() {
-  const url = "ws://localhost:3001";
+  const url = "ws://localhost:3002";
   const webSocket = new WebSocket(url);
   webSocket.onopen = () => {
     const socket = toSocket(webSocket);
@@ -37,7 +37,7 @@ function createLanguageClient(transports) {
     name: "Sample Language Client",
     clientOptions: {
       // use a language id as a document selector
-      documentSelector: ["json"],
+      documentSelector: ["*"],
       // disable the default error handler
       errorHandler: {
         error: () => ({ action: ErrorAction.Continue }),
