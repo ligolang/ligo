@@ -18,6 +18,17 @@ type markup =
 
 type t = markup
 
+(* Projecting regions *)
+
+let to_region = function
+  Tabs     Region.{region; _}
+| Space    Region.{region; _}
+| Newline  Region.{region; _}
+| LineCom  Region.{region; _}
+| BlockCom Region.{region; _}
+| BOM      Region.{region; _} -> region
+
+
 (* Pretty-printing *)
 
 let sprintf = Printf.sprintf
