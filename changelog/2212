@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nBefore:\\n\\n```bash\\n$ ligo info list-declarations src/test/projects/include_include/main.mligo \\nFile \"src/test/projects/include_include/main.mligo\", line 1, characters 0-41:\\n  1 | #import \"include-include/index.mligo\" \"M\"\\n  2 | #include \"include-include/index.mligo\"\\nFile \"include-include/index.mligo\" not found.\\n\\n```\\n\\nAfter\\n\\n```bash\\n$ ligo info list-declarations src/test/projects/include_include/main.mligo --project-root src/test/projects/include_include/\\nsrc/test/projects/include_include/main.mligo declarations:\\nmain\\nhello\\n\\n```\\n\\n"
+merge_request: '2212'
+title: "Add `--project-root` for missing commands"
+type: fixed
+            
