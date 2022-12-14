@@ -1,0 +1,4210 @@
+contract: ZWSP
+##
+## Ends in an error in state: 0.
+##
+## contract' -> . contract [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+contract: TOP_LEVEL ZWSP
+##
+## Ends in an error in state: 1.
+##
+## top_declaration -> TOP_LEVEL . declaration [ TOP_LEVEL EOF Directive ]
+##
+## The known suffix of the stack is as follows:
+## TOP_LEVEL
+##
+
+Ill-formed contract.
+At this point, a top-level declaration is expected.
+
+contract: TOP_LEVEL UIdent ZWSP
+##
+## Ends in an error in state: 627.
+##
+## type_decl -> class_name . EQ decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+## type_decl -> class_name . par(nsepseq(class_type_superclass,COMMA)) EQ decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## class_name
+##
+
+Ill-formed class type declaration.
+At this point, one of the following is expected:
+  * an opening parenthesis '(' followed by a superclass;
+  * the type assignment symbol '=' followed by a type expression.
+
+contract: TOP_LEVEL UIdent LPAR ZWSP
+##
+## Ends in an error in state: 628.
+##
+## par(nsepseq(class_type_superclass,COMMA)) -> LPAR . nsepseq(class_type_superclass,COMMA) RPAR [ EQ ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+Ill-formed generic class declaration.
+At this point, a superclass is expected.
+
+contract: TOP_LEVEL Class UIdent LPAR ZWSP
+##
+## Ends in an error in state: 555.
+##
+## par(nsepseq(superclass,COMMA)) -> LPAR . nsepseq(superclass,COMMA) RPAR [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+Ill-formed generic class declaration.
+At this point, a superclass is expected.
+
+contract: TOP_LEVEL Class UIdent LPAR UIdent LBRACKET UIdent RBRACKET ZWSP
+##
+## Ends in an error in state: 556.
+##
+## nsepseq(superclass,COMMA) -> superclass . [ RPAR ]
+## nsepseq(superclass,COMMA) -> superclass . COMMA nsepseq(superclass,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## superclass
+##
+
+Ill-formed generic class declaration.
+At this point, one of the following is expected:
+  * a comma ',' followed by another superclass;
+  * a closing parenthesis ')' if there are no more superclasses.
+
+contract: TOP_LEVEL Class UIdent LPAR UIdent COMMA ZWSP
+##
+## Ends in an error in state: 557.
+##
+## nsepseq(superclass,COMMA) -> superclass COMMA . nsepseq(superclass,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## superclass COMMA
+##
+
+Ill-formed generic class declaration.
+At this point, a superclass is expected.
+
+contract: TOP_LEVEL UIdent LPAR UIdent ZWSP
+##
+## Ends in an error in state: 559.
+##
+## superclass -> class_name . [ RPAR COMMA ]
+## superclass -> class_name . class_params [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## class_name
+##
+
+Ill-formed superclasses' declarations.
+At this point, one of the following is expected:
+  * a comma ',' followed by another superclass;
+  * an opening bracket '[' followed by a class name, if the super
+    class is generic;
+  * a closing parenthesis ')' if there are no more superclasses.
+
+contract: TOP_LEVEL UIdent LPAR UIdent LBRACKET ZWSP
+##
+## Ends in an error in state: 560.
+##
+## brackets(nsepseq(class_name,COMMA)) -> LBRACKET . nsepseq(class_name,COMMA) RBRACKET [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+Ill-formed generic superclass declaration.
+At this point, a class name is expected.
+
+contract: TOP_LEVEL UIdent LPAR UIdent LBRACKET UIdent ZWSP
+##
+## Ends in an error in state: 563.
+##
+## nsepseq(class_name,COMMA) -> class_name . [ RBRACKET ]
+## nsepseq(class_name,COMMA) -> class_name . COMMA nsepseq(class_name,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## class_name
+##
+
+Ill-formed generic superclass declaration.
+At this point, one of the following is expected:
+  * a comma ',' followed by another class parameter (name);
+  * a closing bracket ']' if there are no more superclass parameters.
+
+contract: TOP_LEVEL UIdent LPAR UIdent LBRACKET UIdent COMMA ZWSP
+##
+## Ends in an error in state: 564.
+##
+## nsepseq(class_name,COMMA) -> class_name COMMA . nsepseq(class_name,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## class_name COMMA
+##
+
+Ill-formed generic superclass declaration.
+At this point, a another class parameter (name) is expected.
+
+contract: TOP_LEVEL UIdent LPAR UIdent LBRACKET UIdent RBRACKET ZWSP
+##
+## Ends in an error in state: 632.
+##
+## nsepseq(class_type_superclass,COMMA) -> class_type_superclass . [ RPAR ]
+## nsepseq(class_type_superclass,COMMA) -> class_type_superclass . COMMA nsepseq(class_type_superclass,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## class_type_superclass
+##
+
+Ill-formed generic class type declaration.
+At this point, one of the following is expected:
+  * a comma ',' followed by another superclass;
+  * a closing parenthesis ')' if there are no more superclasses.
+
+contract: TOP_LEVEL UIdent LPAR UIdent COMMA ZWSP
+##
+## Ends in an error in state: 633.
+##
+## nsepseq(class_type_superclass,COMMA) -> class_type_superclass COMMA . nsepseq(class_type_superclass,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## class_type_superclass COMMA
+##
+
+Ill-formed generic class type declaration.
+At this point, another superclass is expected.
+
+contract: TOP_LEVEL UIdent LPAR UIdent RPAR ZWSP
+##
+## Ends in an error in state: 637.
+##
+## type_decl -> class_name par(nsepseq(class_type_superclass,COMMA)) . EQ decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## class_name par(nsepseq(class_type_superclass,COMMA))
+##
+contract: TOP_LEVEL Type Ident ZWSP
+##
+## Ends in an error in state: 5.
+##
+## type_decl -> Type type_name . EQ decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Type type_name
+##
+
+Ill-formed type declaration.
+At this point, the type assignment operator '=' is expected, followed
+by a type expression.
+
+contract: TOP_LEVEL UIdent LPAR UIdent RPAR EQ ZWSP
+##
+## Ends in an error in state: 638.
+##
+## type_decl -> class_name par(nsepseq(class_type_superclass,COMMA)) EQ . decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## class_name par(nsepseq(class_type_superclass,COMMA)) EQ
+##
+contract: TOP_LEVEL UIdent EQ ZWSP
+##
+## Ends in an error in state: 635.
+##
+## type_decl -> class_name EQ . decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## class_name EQ
+##
+contract: TOP_LEVEL Type Ident EQ ZWSP
+##
+## Ends in an error in state: 6.
+##
+## type_decl -> Type type_name EQ . decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Type type_name EQ
+##
+contract: TOP_LEVEL UIdent EQ BEGIN ZWSP
+##
+## Ends in an error in state: 66.
+##
+## decl_rhs(type_expr) -> BEGIN . INDENT type_expr END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN
+##
+contract: TOP_LEVEL UIdent EQ BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 67.
+##
+## decl_rhs(type_expr) -> BEGIN INDENT . type_expr END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN INDENT
+##
+
+Ill-formed class type declaration.
+At this point, the right-hand side is expected as a type expression.
+
+interactive_expr: UIdent LBRACKET VBAR ZWSP
+##
+## Ends in an error in state: 8.
+##
+## sum_type -> VBAR . variant [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## VBAR
+##
+interactive_expr: UIdent LBRACKET VBAR Attr ZWSP
+##
+## Ends in an error in state: 12.
+##
+## variant -> Attr . variant [ VBAR TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+interactive_expr: UIdent LBRACKET UIdent VBAR ZWSP
+##
+## Ends in an error in state: 23.
+##
+## sum_type -> variant VBAR . nsepseq(variant,VBAR) [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## variant VBAR
+##
+interactive_expr: UIdent LBRACKET UIdent VBAR UIdent VBAR ZWSP
+##
+## Ends in an error in state: 25.
+##
+## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## variant VBAR
+##
+
+Ill-formed variant type.
+At this point, a variant is expected, starting with a backtick.
+
+interactive_expr: UIdent LBRACKET ZWSP
+##
+## Ends in an error in state: 15.
+##
+## brackets(nsepseq(type_expr,COMMA)) -> LBRACKET . nsepseq(type_expr,COMMA) RBRACKET [ VBAR TOP_LEVEL TIMES RPAR RBRACKET LPAR INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+Ill-formed generic class type.
+At this point, a class argument is expected as a type expression.
+
+interactive_expr: UIdent LBRACKET LPAR ZWSP
+##
+## Ends in an error in state: 17.
+##
+## par(__anonymous_2(core_type)) -> LPAR . core_type COMMA nsepseq(core_type,COMMA) RPAR [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+## par(type_expr) -> LPAR . type_expr RPAR [ TOP_LEVEL TIMES RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+Ill-formed type expression.
+At this point, a type expression is expected.
+
+interactive_expr: GRAVE ZWSP Ident DOT ZWSP
+##
+## Ends in an error in state: 10.
+##
+## qualified_class -> Ident DOT . class_name [ VBAR TOP_LEVEL TIMES RPAR RBRACKET LPAR LBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Ident DOT
+##
+interactive_expr: Ident DOT ZWSP
+##
+## Ends in an error in state: 125.
+##
+## qualified_class -> Ident DOT . class_name [ LPAR LBRACKET ]
+## qualified_member -> Ident DOT . nsepseq(selection,DOT) [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LPAR LE LBRACKET If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Ident DOT
+##
+
+Ill-formed selection from a module.
+At this point, one of the following is expected:
+  * a class name, if selecting from a module;
+  * a member name, if selecting from an object;
+  * the index of a tuple component, '0' or '@0' denoting the first
+    component
+
+interactive_expr: GRAVE ZWSP Ident ZWSP
+##
+## Ends in an error in state: 9.
+##
+## qualified_class -> Ident . DOT class_name [ VBAR TOP_LEVEL RPAR RBRACKET LPAR LBRACKET INDENT EQ EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+Ill-formed qualified class name in a module.
+At this point, the selection operator '.' is expected, followed by a
+class name.
+
+interactive_expr: UIdent LBRACKET Attr ZWSP
+##
+## Ends in an error in state: 20.
+##
+## attr_type -> Attr . core_type [ TOP_LEVEL TIMES RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+## variant -> Attr . variant [ VBAR ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+
+Ill-formed type expression.
+At this point, one of the following is expected:
+  * a type expression;
+  * a variant starting with a backtick.
+
+interactive_expr: UIdent LBRACKET UIdent ARROW Attr ZWSP
+##
+## Ends in an error in state: 39.
+##
+## attr_type -> Attr . core_type [ TOP_LEVEL TIMES RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+
+Ill-formed type expression.
+At this point, a type expression is expected.
+
+interactive_expr: UIdent LBRACKET Attr LPAR ZWSP
+##
+## Ends in an error in state: 21.
+##
+## par(type_expr) -> LPAR . type_expr RPAR [ TOP_LEVEL TIMES RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+Ill-formed parenthesised type expression.
+At this point, a type expression is expected.
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case Ident DOT UIdent ZWSP
+##
+## Ends in an error in state: 360.
+##
+## ctor_call(pattern) -> class_type . par(option(nsepseq(member(pattern),COMMA))) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## class_type
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+##
+
+Ill-formed object pattern.
+At this point, if the class type is complete, the construtor's
+parameters are expected as patterns between parentheses.
+
+interactive_expr: UIdent LBRACKET LPAR UIdent ZWSP
+##
+## Ends in an error in state: 30.
+##
+## par(type_expr) -> LPAR type_expr . RPAR [ TOP_LEVEL TIMES RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR type_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 51, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+##
+
+Ill-formed parenthesised type expression.
+At this point, if the type expression is complete, a closing
+parenthesis ')' is expected.
+
+interactive_expr: UIdent LBRACKET UIdent TIMES ZWSP
+##
+## Ends in an error in state: 38.
+##
+## cartesian_level -> core_type TIMES . nsepseq(core_type,TIMES) [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## core_type TIMES
+##
+interactive_expr: UIdent LBRACKET UIdent TIMES UIdent TIMES ZWSP
+##
+## Ends in an error in state: 45.
+##
+## nsepseq(core_type,TIMES) -> core_type TIMES . nsepseq(core_type,TIMES) [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## core_type TIMES
+##
+interactive_expr: UIdent LBRACKET LPAR UIdent COMMA ZWSP
+##
+## Ends in an error in state: 52.
+##
+## par(__anonymous_2(core_type)) -> LPAR core_type COMMA . nsepseq(core_type,COMMA) RPAR [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR core_type COMMA
+##
+interactive_expr: UIdent LBRACKET LPAR UIdent COMMA UIdent COMMA ZWSP
+##
+## Ends in an error in state: 56.
+##
+## nsepseq(core_type,COMMA) -> core_type COMMA . nsepseq(core_type,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## core_type COMMA
+##
+interactive_expr: UIdent LBRACKET UIdent COMMA ZWSP
+##
+## Ends in an error in state: 59.
+##
+## nsepseq(type_expr,COMMA) -> type_expr COMMA . nsepseq(type_expr,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## type_expr COMMA
+##
+
+Ill-formed product type.
+At this point, a type expression is expected.
+Hint: You may want to check the priority and associativity of
+type operators, or use parentheses.
+
+interactive_expr: UIdent LBRACKET UIdent ARROW ZWSP
+##
+## Ends in an error in state: 49.
+##
+## fun_type_level -> cartesian_level ARROW . fun_type_level [ TOP_LEVEL RPAR RBRACKET INDENT EQ EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## cartesian_level ARROW
+##
+
+Ill-formed function type.
+At this point, the return type is expected.
+
+interactive_expr: UIdent LBRACKET LPAR UIdent COMMA UIdent ZWSP
+##
+## Ends in an error in state: 55.
+##
+## nsepseq(core_type,COMMA) -> core_type . [ RPAR ]
+## nsepseq(core_type,COMMA) -> core_type . COMMA nsepseq(core_type,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## core_type
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 41, spurious reduction of production core_type -> class_type
+##
+
+Ill-formed product type.
+At this point, if the type expression is complete, one of the
+following is expected:
+  * a comma ',' followed by another type component as a type
+    expression;
+  * a closing parenthesis ')' if no more components.
+
+interactive_expr: UIdent LBRACKET Ident ZWSP
+##
+## Ends in an error in state: 58.
+##
+## nsepseq(type_expr,COMMA) -> type_expr . [ RBRACKET ]
+## nsepseq(type_expr,COMMA) -> type_expr . COMMA nsepseq(type_expr,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## type_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 19, spurious reduction of production core_type -> Ident
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+##
+
+Ill-formed class type.
+At this point, if the type expression is complete, one of the
+following is expected:
+  * a comma ',' followed by another class parameter as a type
+    expression;
+  * a closing bracket ']' if no more parameters.
+
+contract: TOP_LEVEL UIdent EQ BEGIN INDENT UIdent ZWSP
+##
+## Ends in an error in state: 68.
+##
+## decl_rhs(type_expr) -> BEGIN INDENT type_expr . END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN INDENT type_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+##
+
+Ill-formed type declaration.
+At this point, if the type expression is complete, please report this
+message to the maintainers. [#1]
+Hint: Use a multiline type declaration instead of indenting the
+right-hand side.
+
+contract: TOP_LEVEL Type ZWSP
+##
+## Ends in an error in state: 3.
+##
+## type_decl -> Type . type_name EQ decl_rhs(type_expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Type
+##
+
+Ill-formed type declaration.
+At this point, the name of the type being defined is expected.
+
+contract: TOP_LEVEL Def ZWSP
+##
+## Ends in an error in state: 72.
+##
+## fun_decl -> Def . fun_name fun_params COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def . fun_name fun_params return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def . fun_name fun_class_params fun_params COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def . fun_name fun_class_params fun_params return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def
+##
+
+Ill-formed function declaration.
+At this point, the name of the function being defined is expected.
+
+contract: TOP_LEVEL Def Ident ZWSP
+##
+## Ends in an error in state: 74.
+##
+## fun_decl -> Def fun_name . fun_params COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def fun_name . fun_params return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def fun_name . fun_class_params fun_params COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def fun_name . fun_class_params fun_params return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name
+##
+
+Ill-formed generic function declaration.
+At this point, an opening bracket '[' is expected, followed by the
+first class type parameter.
+
+contract: TOP_LEVEL Def Ident LPAR ZWSP
+##
+## Ends in an error in state: 75.
+##
+## par(ioption(nsepseq(param_decl,COMMA))) -> LPAR . RPAR [ COLON ARROW ]
+## par(ioption(nsepseq(param_decl,COMMA))) -> LPAR . nsepseq(param_decl,COMMA) RPAR [ COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+Ill-formed function declaration.
+At this point, one of the following is expected:
+  * a parameter declaration;
+  * a closing parenthesis ')' if there are no parameters.
+
+interactive_expr: Lambda LPAR Const ZWSP
+##
+## Ends in an error in state: 79.
+##
+## const_param_decl -> Const . var_param_decl [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Const
+##
+
+Ill-formed function parameter declaration.
+At this point, the parameter is expected as a variable or '_', if it
+is not used in the body of the function.
+
+interactive_expr: Lambda LPAR Ident ZWSP
+##
+## Ends in an error in state: 81.
+##
+## var_param_decl -> ext_var . [ RPAR COMMA ]
+## var_param_decl -> ext_var . COLON type_expr [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## ext_var
+##
+
+Ill-formed function parameter declaration.
+At this point, one of the following is expected:
+  * a colon ':' followed by a type expression (annotation);
+  * a comma ',' followed by another parameter;
+  * a closing parenthesis ')' if there no more parameters.
+
+interactive_expr: Lambda LPAR Ident COLON ZWSP
+##
+## Ends in an error in state: 82.
+##
+## var_param_decl -> ext_var COLON . type_expr [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## ext_var COLON
+##
+
+Ill-formed function parameter declaration.
+At this point, a type expression (annotation) is expected.
+
+contract: TOP_LEVEL Def Ident LPAR Ident COLON UIdent ZWSP
+##
+## Ends in an error in state: 85.
+##
+## nsepseq(param_decl,COMMA) -> param_decl . [ RPAR ]
+## nsepseq(param_decl,COMMA) -> param_decl . COMMA nsepseq(param_decl,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## param_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 83, spurious reduction of production var_param_decl -> ext_var COLON type_expr
+## In state 84, spurious reduction of production param_decl -> var_param_decl
+##
+
+Ill-formed function parameter declaration.
+At this point, one of the following is expected:
+  * a comma ',' followed by another declaration;
+  * a closing parenthesis ')' if there are no more parameters.
+
+contract: TOP_LEVEL Def Ident LPAR Ident COMMA ZWSP
+##
+## Ends in an error in state: 86.
+##
+## nsepseq(param_decl,COMMA) -> param_decl COMMA . nsepseq(param_decl,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## param_decl COMMA
+##
+
+Ill-formed function parameter declaration.
+At this point, another parameter declaration is expected.
+
+contract: TOP_LEVEL Def Ident LBRACKET ZWSP
+##
+## Ends in an error in state: 91.
+##
+## brackets(nsepseq(fun_class_name,COMMA)) -> LBRACKET . nsepseq(fun_class_name,COMMA) RBRACKET [ LPAR ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+Ill-formed generic function declaration.
+At this point, a class name is expected.
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent ZWSP
+##
+## Ends in an error in state: 94.
+##
+## nsepseq(fun_class_name,COMMA) -> fun_class_name . [ RBRACKET ]
+## nsepseq(fun_class_name,COMMA) -> fun_class_name . COMMA nsepseq(fun_class_name,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## fun_class_name
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent COMMA ZWSP
+##
+## Ends in an error in state: 95.
+##
+## nsepseq(fun_class_name,COMMA) -> fun_class_name COMMA . nsepseq(fun_class_name,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## fun_class_name COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR ZWSP
+##
+## Ends in an error in state: 99.
+##
+## fun_decl -> Def fun_name fun_params . COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def fun_name fun_params . return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_params
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON ZWSP
+##
+## Ends in an error in state: 100.
+##
+## fun_decl -> Def fun_name fun_params COLON . block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_params COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT ZWSP
+##
+## Ends in an error in state: 101.
+##
+## block -> INDENT . simple_stmts [ TOP_LEVEL INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: UIdent LPAR ZWSP
+##
+## Ends in an error in state: 138.
+##
+## par(option(nsepseq(member(expr),COMMA))) -> LPAR . option(nsepseq(member(expr),COMMA)) RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: TILDE ZWSP
+##
+## Ends in an error in state: 104.
+##
+## unary_op(TILDE,core_expr) -> TILDE . core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## TILDE
+##
+interactive_expr: MINUS ZWSP
+##
+## Ends in an error in state: 112.
+##
+## unary_op(MINUS,core_expr) -> MINUS . core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## MINUS
+##
+
+Ill-formed unary expression.
+At this point, an arithmetic expression is expected.
+Hint: You may want to check the priority and associativity of
+operators, or use parentheses.
+
+interactive_expr: Lang ZWSP
+##
+## Ends in an error in state: 108.
+##
+## code_inj -> Lang . expr RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Lang
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Not ZWSP
+##
+## Ends in an error in state: 109.
+##
+## unary_op(Not,core_expr) -> Not . core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Not
+##
+
+Ill-formed unary expression.
+At this point, a boolean expression is expected.
+Hint: You may want to check the priority and associativity of
+operators, or use parentheses.
+
+interactive_expr: LPAR ZWSP
+##
+## Ends in an error in state: 110.
+##
+## par(__anonymous_2(expr)) -> LPAR . expr COMMA nsepseq(expr,COMMA) RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## par(__anonymous_8) -> LPAR . disj_expr_level COLON type_expr RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## par(expr) -> LPAR . expr RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LPAR LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive DOT COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match ZWSP
+##
+## Ends in an error in state: 111.
+##
+## match_expr -> Match . exprs COLON BEGIN nseq(case_expr) END [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Match
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET ZWSP
+##
+## Ends in an error in state: 113.
+##
+## brackets(comprehension_expr) -> LBRACKET . expr For indices In disj_expr_level RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## brackets(comprehension_expr) -> LBRACKET . expr For indices In disj_expr_level predicate RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## brackets(option(nsepseq(list_elt,COMMA))) -> LBRACKET . option(nsepseq(list_elt,COMMA)) RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+Ill-formed list expression.
+At this point, one of the following is expected:
+  * a generator expression for the elements, if defining the list by
+    comprehension;
+  * an element as an expression, if defining the list by extension;
+  * a closing bracket ']' if the list is empty.
+
+interactive_expr: Lambda ZWSP
+##
+## Ends in an error in state: 114.
+##
+## fun_expr -> Lambda . option(lambda_params) COLON expr [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Lambda
+##
+
+Ill-formed lambda expression.
+At this point, one of the following is expected:
+  * a lambda parameter without type annotation;
+  * a lambda parameter between parentheses with a type annotation;
+  * a colon ':' is the lambda has a unique parameter of class 'Unit'.
+
+interactive_expr: Lambda LPAR ZWSP
+##
+## Ends in an error in state: 115.
+##
+## par(param_decl) -> LPAR . param_decl RPAR [ COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+Ill-formed lambda expression.
+At this point, one of the following is expected:
+  * a parameter mutable within the scope of the function;
+  * a constant parameter introduce by the keyword 'const'.
+
+interactive_expr: Lambda LPAR Ident COMMA
+##
+## Ends in an error in state: 116.
+##
+## par(param_decl) -> LPAR param_decl . RPAR [ COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR param_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 81, spurious reduction of production var_param_decl -> ext_var
+## In state 84, spurious reduction of production param_decl -> var_param_decl
+##
+
+Ill-formed lambda expression.
+At this point, a closing parenthesis ')' is expected to end the
+parameters' declaration.
+
+interactive_expr: Lambda COLON ZWSP
+##
+## Ends in an error in state: 121.
+##
+## fun_expr -> Lambda option(lambda_params) COLON . expr [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Lambda option(lambda_params) COLON
+##
+
+Ill-formed lambda expression.
+At this point, its body is expected as an expression.
+
+interactive_expr: LBRACE ZWSP
+##
+## Ends in an error in state: 122.
+##
+## braces(comprehension_expr) -> LBRACE . expr For indices In disj_expr_level RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(comprehension_expr) -> LBRACE . expr For indices In disj_expr_level predicate RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(comprehension_map_expr) -> LBRACE . comprehension_map_expr RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(nsepseq(binding,COMMA)) -> LBRACE . nsepseq(binding,COMMA) RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(nsepseq(set_element,COMMA)) -> LBRACE . nsepseq(set_element,COMMA) RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+Ill-formed set or map expression.
+At this point, one of the following is expected:
+  * a generator expression for set elements, if defining a set by
+    comprehension;
+  * a set element as an expression, if defining a set by extension;
+  * a key/value generator for the bindings, if defining a map by
+    comprehension;
+  * a key/value binding, if defining a map by extension;
+  * a closing brace '}' if the set or map is empty.
+
+interactive_expr: Ident DOT Int DOT ZWSP
+##
+## Ends in an error in state: 127.
+##
+## nsepseq(selection,DOT) -> Int DOT . nsepseq(selection,DOT) [ XOR_EQ XOR VBAR TOP_LEVEL TIMES_EQ TIMES SLASH2_EQ SLASH2 SEMI RSHIFT_EQ RSHIFT RPAR RBRACKET RBRACE PLUS_EQ PLUS PERCENT_EQ PERCENT Or OR_EQ NE MINUS_EQ MINUS LT LSHIFT_EQ LSHIFT LPAR LE LBRACKET If INDENT GT GE For Else Elif EXP_EQ EXP EQ2 EQ EOF END Directive COMMA COLON And AND_EQ AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Int DOT
+##
+
+Ill-formed selection from an object or a tuple.
+At this point, one of the following is expected:
+  * a member name, if selecting from an object;
+  * the index of a tuple component, '0' or '@0' denoting the first
+    component.
+
+interactive_expr: Ident DOT Ident DOT ZWSP
+##
+## Ends in an error in state: 131.
+##
+## nsepseq(selection,DOT) -> member_name DOT . nsepseq(selection,DOT) [ XOR_EQ XOR VBAR TOP_LEVEL TIMES_EQ TIMES SLASH2_EQ SLASH2 SEMI RSHIFT_EQ RSHIFT RPAR RBRACKET RBRACE PLUS_EQ PLUS PERCENT_EQ PERCENT Or OR_EQ NE MINUS_EQ MINUS LT LSHIFT_EQ LSHIFT LPAR LE LBRACKET If INDENT GT GE For Else Elif EXP_EQ EXP EQ2 EQ EOF END Directive COMMA COLON And AND_EQ AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## member_name DOT
+##
+
+Ill-formed selection from a module.
+At this point, one of the following is expected:
+  * a submodule name;
+  * XXX
+
+interactive_expr: GRAVE XOR_EQ
+##
+## Ends in an error in state: 134.
+##
+## variant_expr -> GRAVE . ZWSP ctor_call(expr) [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## GRAVE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: GRAVE ZWSP ZWSP
+##
+## Ends in an error in state: 135.
+##
+## variant_expr -> GRAVE ZWSP . ctor_call(expr) [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## GRAVE ZWSP
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Attr ZWSP
+##
+## Ends in an error in state: 140.
+##
+## attr_expr -> Attr . TOP_LEVEL core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## attr_expr -> Attr . INDENT core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+interactive_expr: Attr TOP_LEVEL ZWSP
+##
+## Ends in an error in state: 141.
+##
+## attr_expr -> Attr TOP_LEVEL . core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Attr TOP_LEVEL
+##
+interactive_expr: Attr INDENT ZWSP
+##
+## Ends in an error in state: 265.
+##
+## attr_expr -> Attr INDENT . core_expr [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Attr INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LPAR ZWSP
+##
+## Ends in an error in state: 149.
+##
+## par(option(arguments)) -> LPAR . option(arguments) RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Bytes LSHIFT ZWSP
+##
+## Ends in an error in state: 182.
+##
+## bin_op(unary_expr_level,LSHIFT,shift_expr_level) -> unary_expr_level LSHIFT . shift_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## unary_expr_level LSHIFT
+##
+interactive_expr: Bytes RSHIFT ZWSP
+##
+## Ends in an error in state: 154.
+##
+## bin_op(unary_expr_level,RSHIFT,shift_expr_level) -> unary_expr_level RSHIFT . shift_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## unary_expr_level RSHIFT
+##
+interactive_expr: Bytes EXP ZWSP
+##
+## Ends in an error in state: 185.
+##
+## bin_op(shift_expr_level,EXP,power_expr_level) -> shift_expr_level EXP . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## shift_expr_level EXP
+##
+interactive_expr: Bytes VBAR ZWSP
+##
+## Ends in an error in state: 195.
+##
+## bin_op(mult_expr_level,VBAR,power_expr_level) -> mult_expr_level VBAR . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level VBAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LBRACKET ZWSP
+##
+## Ends in an error in state: 257.
+##
+## brackets(expr) -> LBRACKET . expr RBRACKET [ XOR_EQ XOR VBAR TOP_LEVEL TIMES_EQ TIMES SLASH2_EQ SLASH2 SEMI RSHIFT_EQ RSHIFT RPAR RBRACKET RBRACE PLUS_EQ PLUS PERCENT_EQ PERCENT Or OR_EQ NE MINUS_EQ MINUS LT LSHIFT_EQ LSHIFT LE LBRACKET If INDENT GT GE For Else Elif EXP_EQ EXP EQ2 EQ EOF END Directive COMMA COLON And AND_EQ AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR Bytes RPAR DOT ZWSP
+##
+## Ends in an error in state: 157.
+##
+## qualified_expr -> par(expr) DOT . nsepseq(selection,DOT) [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LPAR LE LBRACKET If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## par(expr) DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: UIdent EQ
+##
+## Ends in an error in state: 137.
+##
+## ctor_call(expr) -> class_type . par(option(nsepseq(member(expr),COMMA))) [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## class_type
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+
+interactive_expr: Bytes PLUS ZWSP
+##
+## Ends in an error in state: 228.
+##
+## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level PLUS
+##
+interactive_expr: Bytes MINUS ZWSP
+##
+## Ends in an error in state: 230.
+##
+## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level MINUS
+##
+interactive_expr: Bytes TIMES ZWSP
+##
+## Ends in an error in state: 197.
+##
+## bin_op(mult_expr_level,TIMES,power_expr_level) -> mult_expr_level TIMES . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level TIMES
+##
+interactive_expr: Bytes SLASH2 ZWSP
+##
+## Ends in an error in state: 199.
+##
+## bin_op(mult_expr_level,SLASH2,power_expr_level) -> mult_expr_level SLASH2 . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level SLASH2
+##
+interactive_expr: Bytes PERCENT ZWSP
+##
+## Ends in an error in state: 201.
+##
+## bin_op(mult_expr_level,PERCENT,power_expr_level) -> mult_expr_level PERCENT . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level PERCENT
+##
+interactive_expr: Bytes AMPERSAND ZWSP
+##
+## Ends in an error in state: 203.
+##
+## bin_op(mult_expr_level,AMPERSAND,power_expr_level) -> mult_expr_level AMPERSAND . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level AMPERSAND
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LBRACKET Bytes ZWSP
+##
+## Ends in an error in state: 258.
+##
+## brackets(expr) -> LBRACKET expr . RBRACKET [ XOR_EQ XOR VBAR TOP_LEVEL TIMES_EQ TIMES SLASH2_EQ SLASH2 SEMI RSHIFT_EQ RSHIFT RPAR RBRACKET RBRACE PLUS_EQ PLUS PERCENT_EQ PERCENT Or OR_EQ NE MINUS_EQ MINUS LT LSHIFT_EQ LSHIFT LE LBRACKET If INDENT GT GE For Else Elif EXP_EQ EXP EQ2 EQ EOF END Directive COMMA COLON And AND_EQ AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Bytes If ZWSP
+##
+## Ends in an error in state: 210.
+##
+## if_else_expr -> disj_expr_level If . disj_expr_level Else expr [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level If
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Bytes If Bytes ZWSP
+##
+## Ends in an error in state: 211.
+##
+## if_else_expr -> disj_expr_level If disj_expr_level . Else expr [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level If disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Bytes If Bytes Else ZWSP
+##
+## Ends in an error in state: 212.
+##
+## if_else_expr -> disj_expr_level If disj_expr_level Else . expr [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level If disj_expr_level Else
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Bytes Or ZWSP
+##
+## Ends in an error in state: 215.
+##
+## bin_op(conj_expr_level,Or,disj_expr_level) -> conj_expr_level Or . disj_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE If INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## conj_expr_level Or
+##
+interactive_expr: Bytes XOR ZWSP
+##
+## Ends in an error in state: 193.
+##
+## bin_op(mult_expr_level,XOR,power_expr_level) -> mult_expr_level XOR . power_expr_level [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level XOR
+##
+interactive_expr: Bytes NE ZWSP
+##
+## Ends in an error in state: 218.
+##
+## bin_op(comp_expr_level,NE,add_expr_level) -> comp_expr_level NE . add_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or NE LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level NE
+##
+interactive_expr: Bytes LT ZWSP
+##
+## Ends in an error in state: 232.
+##
+## bin_op(comp_expr_level,LT,add_expr_level) -> comp_expr_level LT . add_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or NE LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level LT
+##
+interactive_expr: Bytes LE ZWSP
+##
+## Ends in an error in state: 234.
+##
+## bin_op(comp_expr_level,LE,add_expr_level) -> comp_expr_level LE . add_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or NE LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level LE
+##
+interactive_expr: Bytes GT ZWSP
+##
+## Ends in an error in state: 236.
+##
+## bin_op(comp_expr_level,GT,add_expr_level) -> comp_expr_level GT . add_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or NE LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level GT
+##
+interactive_expr: Bytes GE ZWSP
+##
+## Ends in an error in state: 238.
+##
+## bin_op(comp_expr_level,GE,add_expr_level) -> comp_expr_level GE . add_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or NE LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level GE
+##
+interactive_expr: Bytes EQ2 ZWSP
+##
+## Ends in an error in state: 240.
+##
+## bin_op(comp_expr_level,EQ2,add_expr_level) -> comp_expr_level EQ2 . add_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or NE LT LE If INDENT GT GE For Else Elif EQ2 EOF END Directive COMMA COLON And ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level EQ2
+##
+interactive_expr: Bytes And ZWSP
+##
+## Ends in an error in state: 242.
+##
+## bin_op(comp_expr_level,And,conj_expr_level) -> comp_expr_level And . conj_expr_level [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE Or If INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level And
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LPAR Bytes ZWSP
+##
+## Ends in an error in state: 254.
+##
+## nsepseq(argument,COMMA) -> argument . [ RPAR ]
+## nsepseq(argument,COMMA) -> argument . COMMA nsepseq(argument,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## argument
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 208, spurious reduction of production argument -> expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LPAR Bytes COMMA ZWSP
+##
+## Ends in an error in state: 255.
+##
+## nsepseq(argument,COMMA) -> argument COMMA . nsepseq(argument,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## argument COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COMMA Bytes ZWSP
+##
+## Ends in an error in state: 278.
+##
+## nsepseq(set_element,COMMA) -> set_element . [ RBRACE ]
+## nsepseq(set_element,COMMA) -> set_element . COMMA nsepseq(set_element,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## set_element
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 281, spurious reduction of production set_element -> expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COMMA ZWSP
+##
+## Ends in an error in state: 279.
+##
+## nsepseq(set_element,COMMA) -> set_element COMMA . nsepseq(set_element,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## set_element COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes COMMA Bytes ZWSP
+##
+## Ends in an error in state: 286.
+##
+## binding -> key . COLON value [ RBRACE For COMMA ]
+##
+## The known suffix of the stack is as follows:
+## key
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 319, spurious reduction of production key -> expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON ZWSP
+##
+## Ends in an error in state: 287.
+##
+## binding -> key COLON . value [ RBRACE For COMMA ]
+##
+## The known suffix of the stack is as follows:
+## key COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes ZWSP
+##
+## Ends in an error in state: 290.
+##
+## braces(comprehension_expr) -> LBRACE expr . For indices In disj_expr_level RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(comprehension_expr) -> LBRACE expr . For indices In disj_expr_level predicate RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## key -> expr . [ COLON ]
+## set_element -> expr . [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For ZWSP
+##
+## Ends in an error in state: 291.
+##
+## braces(comprehension_expr) -> LBRACE expr For . indices In disj_expr_level RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(comprehension_expr) -> LBRACE expr For . indices In disj_expr_level predicate RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE expr For
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For Ident In ZWSP
+##
+## Ends in an error in state: 295.
+##
+## braces(comprehension_expr) -> LBRACE expr For indices In . disj_expr_level RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(comprehension_expr) -> LBRACE expr For indices In . disj_expr_level predicate RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE expr For indices In
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For Ident In Bytes If ZWSP
+##
+## Ends in an error in state: 298.
+##
+## predicate -> If . expr [ RBRACKET RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For Ident ZWSP
+##
+## Ends in an error in state: 302.
+##
+## nsepseq(index,COMMA) -> index . [ In ]
+## nsepseq(index,COMMA) -> index . COMMA nsepseq(index,COMMA) [ In ]
+##
+## The known suffix of the stack is as follows:
+## index
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For Ident COMMA ZWSP
+##
+## Ends in an error in state: 303.
+##
+## nsepseq(index,COMMA) -> index COMMA . nsepseq(index,COMMA) [ In ]
+##
+## The known suffix of the stack is as follows:
+## index COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident COMMA Ident RPAR In Bytes If Bytes ZWSP
+##
+## Ends in an error in state: 305.
+##
+## braces(comprehension_map_expr) -> LBRACE comprehension_map_expr . RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE comprehension_map_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 299, spurious reduction of production predicate -> If expr
+## In state 316, spurious reduction of production comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR In disj_expr_level predicate
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For Ident In Bytes RBRACKET
+##
+## Ends in an error in state: 296.
+##
+## braces(comprehension_expr) -> LBRACE expr For indices In disj_expr_level . RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## braces(comprehension_expr) -> LBRACE expr For indices In disj_expr_level . predicate RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE expr For indices In disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes ZWSP
+##
+## Ends in an error in state: 307.
+##
+## comprehension_map_expr -> binding . For LPAR Ident COMMA Ident RPAR In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding . For LPAR Ident COMMA Ident RPAR In disj_expr_level predicate [ RBRACE ]
+## nsepseq(binding,COMMA) -> binding . [ RBRACE ]
+## nsepseq(binding,COMMA) -> binding . COMMA nsepseq(binding,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 289, spurious reduction of production value -> expr
+## In state 288, spurious reduction of production binding -> key COLON value
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For ZWSP
+##
+## Ends in an error in state: 308.
+##
+## comprehension_map_expr -> binding For . LPAR Ident COMMA Ident RPAR In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For . LPAR Ident COMMA Ident RPAR In disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR ZWSP
+##
+## Ends in an error in state: 309.
+##
+## comprehension_map_expr -> binding For LPAR . Ident COMMA Ident RPAR In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR . Ident COMMA Ident RPAR In disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident ZWSP
+##
+## Ends in an error in state: 310.
+##
+## comprehension_map_expr -> binding For LPAR Ident . COMMA Ident RPAR In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR Ident . COMMA Ident RPAR In disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident COMMA ZWSP
+##
+## Ends in an error in state: 311.
+##
+## comprehension_map_expr -> binding For LPAR Ident COMMA . Ident RPAR In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR Ident COMMA . Ident RPAR In disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR Ident COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident COMMA Ident ZWSP
+##
+## Ends in an error in state: 312.
+##
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident . RPAR In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident . RPAR In disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR Ident COMMA Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident COMMA Ident RPAR ZWSP
+##
+## Ends in an error in state: 313.
+##
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR . In disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR . In disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR Ident COMMA Ident RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident COMMA Ident RPAR In ZWSP
+##
+## Ends in an error in state: 314.
+##
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR In . disj_expr_level [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR In . disj_expr_level predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR Ident COMMA Ident RPAR In
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes For LPAR Ident COMMA Ident RPAR In Bytes ZWSP
+##
+## Ends in an error in state: 315.
+##
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR In disj_expr_level . [ RBRACE ]
+## comprehension_map_expr -> binding For LPAR Ident COMMA Ident RPAR In disj_expr_level . predicate [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding For LPAR Ident COMMA Ident RPAR In disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes COMMA ZWSP
+##
+## Ends in an error in state: 317.
+##
+## nsepseq(binding,COMMA) -> binding COMMA . nsepseq(binding,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes COLON Bytes COMMA Bytes COLON Bytes ZWSP
+##
+## Ends in an error in state: 320.
+##
+## nsepseq(binding,COMMA) -> binding . [ RBRACE ]
+## nsepseq(binding,COMMA) -> binding . COMMA nsepseq(binding,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## binding
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 289, spurious reduction of production value -> expr
+## In state 288, spurious reduction of production binding -> key COLON value
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Lambda Ident ZWSP
+##
+## Ends in an error in state: 324.
+##
+## nsepseq(lambda_param,COMMA) -> lambda_param . [ COLON ]
+## nsepseq(lambda_param,COMMA) -> lambda_param . COMMA nsepseq(lambda_param,COMMA) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## lambda_param
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Lambda Ident COMMA ZWSP
+##
+## Ends in an error in state: 325.
+##
+## nsepseq(lambda_param,COMMA) -> lambda_param COMMA . nsepseq(lambda_param,COMMA) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## lambda_param COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes COMMA Bytes ZWSP
+##
+## Ends in an error in state: 330.
+##
+## nsepseq(list_elt,COMMA) -> list_elt . [ RBRACKET ]
+## nsepseq(list_elt,COMMA) -> list_elt . COMMA nsepseq(list_elt,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## list_elt
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 333, spurious reduction of production list_elt -> expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes COMMA ZWSP
+##
+## Ends in an error in state: 331.
+##
+## nsepseq(list_elt,COMMA) -> list_elt COMMA . nsepseq(list_elt,COMMA) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## list_elt COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes ZWSP
+##
+## Ends in an error in state: 334.
+##
+## brackets(comprehension_expr) -> LBRACKET expr . For indices In disj_expr_level RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## brackets(comprehension_expr) -> LBRACKET expr . For indices In disj_expr_level predicate RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## list_elt -> expr . [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes For Ident In Bytes RBRACE
+##
+## Ends in an error in state: 338.
+##
+## brackets(comprehension_expr) -> LBRACKET expr For indices In disj_expr_level . RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## brackets(comprehension_expr) -> LBRACKET expr For indices In disj_expr_level . predicate RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr For indices In disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes RPAR
+##
+## Ends in an error in state: 344.
+##
+## match_expr -> Match exprs . COLON BEGIN nseq(case_expr) END [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Match exprs
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 410, spurious reduction of production nsepseq(expr,COMMA) -> expr
+## In state 343, spurious reduction of production exprs -> nsepseq(expr,COMMA)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON ZWSP
+##
+## Ends in an error in state: 345.
+##
+## match_expr -> Match exprs COLON . BEGIN nseq(case_expr) END [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Match exprs COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN ZWSP
+##
+## Ends in an error in state: 346.
+##
+## match_expr -> Match exprs COLON BEGIN . nseq(case_expr) END [ TOP_LEVEL SEMI RPAR RBRACKET RBRACE INDENT For Else Elif EOF END Directive COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Match exprs COLON BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 347.
+##
+## case_expr -> INDENT . Case pattern COLON decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case ZWSP
+##
+## Ends in an error in state: 348.
+##
+## case_expr -> INDENT Case . pattern COLON decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT Case
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case UIdent ZWSP
+##
+## Ends in an error in state: 373.
+##
+## literal_pattern -> class_name . [ RPAR COMMA COLON ]
+## qualified_class -> class_name . [ LPAR LBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## class_name
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case UIdent LPAR ZWSP
+##
+## Ends in an error in state: 361.
+##
+## par(option(nsepseq(member(pattern),COMMA))) -> LPAR . option(nsepseq(member(pattern),COMMA)) RPAR [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR ZWSP
+##
+## Ends in an error in state: 354.
+##
+## par(__anonymous_2(pattern)) -> LPAR . pattern COMMA nsepseq(pattern,COMMA) RPAR [ RPAR COMMA COLON ]
+## par(pattern) -> LPAR . pattern RPAR [ RPAR COMMA COLON ]
+## par(typed_pattern) -> LPAR . typed_pattern RPAR [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case Ident ZWSP
+##
+## Ends in an error in state: 356.
+##
+## literal_pattern -> Ident . [ RPAR COMMA COLON ]
+## qualified_class -> Ident . DOT class_name [ LPAR LBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case GRAVE XOR_EQ
+##
+## Ends in an error in state: 357.
+##
+## variant_pattern -> GRAVE . ZWSP ctor_call(pattern) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## GRAVE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case GRAVE ZWSP ZWSP
+##
+## Ends in an error in state: 358.
+##
+## variant_pattern -> GRAVE ZWSP . ctor_call(pattern) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## GRAVE ZWSP
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case Attr ZWSP
+##
+## Ends in an error in state: 364.
+##
+## attr_pattern -> Attr . pattern [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR Bytes COLON UIdent ZWSP
+##
+## Ends in an error in state: 386.
+##
+## par(typed_pattern) -> LPAR typed_pattern . RPAR [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR typed_pattern
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 397, spurious reduction of production typed_pattern -> pattern COLON type_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR Bytes ZWSP
+##
+## Ends in an error in state: 388.
+##
+## par(__anonymous_2(pattern)) -> LPAR pattern . COMMA nsepseq(pattern,COMMA) RPAR [ RPAR COMMA COLON ]
+## par(pattern) -> LPAR pattern . RPAR [ RPAR COMMA COLON ]
+## typed_pattern -> pattern . COLON type_expr [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## LPAR pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR Bytes COMMA ZWSP
+##
+## Ends in an error in state: 390.
+##
+## par(__anonymous_2(pattern)) -> LPAR pattern COMMA . nsepseq(pattern,COMMA) RPAR [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR Bytes COMMA Bytes ZWSP
+##
+## Ends in an error in state: 391.
+##
+## nsepseq(pattern,COMMA) -> pattern . [ RPAR ]
+## nsepseq(pattern,COMMA) -> pattern . COMMA nsepseq(pattern,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR Bytes COMMA Bytes COMMA ZWSP
+##
+## Ends in an error in state: 392.
+##
+## nsepseq(pattern,COMMA) -> pattern COMMA . nsepseq(pattern,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case LPAR Bytes COLON ZWSP
+##
+## Ends in an error in state: 396.
+##
+## typed_pattern -> pattern COLON . type_expr [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## pattern COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case UIdent LPAR Ident ZWSP
+##
+## Ends in an error in state: 379.
+##
+## member(pattern) -> member_name . EQ pattern [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## member_name
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 362, spurious reduction of production member_name -> Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case UIdent LPAR Ident EQ ZWSP
+##
+## Ends in an error in state: 380.
+##
+## member(pattern) -> member_name EQ . pattern [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## member_name EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case UIdent LPAR Bytes ZWSP
+##
+## Ends in an error in state: 382.
+##
+## nsepseq(member(pattern),COMMA) -> member(pattern) . [ RPAR ]
+## nsepseq(member(pattern),COMMA) -> member(pattern) . COMMA nsepseq(member(pattern),COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## member(pattern)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case UIdent LPAR Ident COMMA ZWSP
+##
+## Ends in an error in state: 383.
+##
+## nsepseq(member(pattern),COMMA) -> member(pattern) COMMA . nsepseq(member(pattern),COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## member(pattern) COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case Bytes ZWSP
+##
+## Ends in an error in state: 398.
+##
+## case_expr -> INDENT Case pattern . COLON decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT Case pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case Bytes COLON ZWSP
+##
+## Ends in an error in state: 399.
+##
+## case_expr -> INDENT Case pattern COLON . decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT Case pattern COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident EQ BEGIN ZWSP
+##
+## Ends in an error in state: 400.
+##
+## decl_rhs(expr) -> BEGIN . INDENT expr END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident EQ BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 401.
+##
+## decl_rhs(expr) -> BEGIN INDENT . expr END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident EQ BEGIN INDENT Bytes ZWSP
+##
+## Ends in an error in state: 402.
+##
+## decl_rhs(expr) -> BEGIN INDENT expr . END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN INDENT expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COLON BEGIN INDENT Case Bytes COLON Bytes ZWSP
+##
+## Ends in an error in state: 408.
+##
+## nseq(case_expr) -> case_expr . [ END ]
+## nseq(case_expr) -> case_expr . nseq(case_expr) [ END ]
+##
+## The known suffix of the stack is as follows:
+## case_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 404, spurious reduction of production decl_rhs(expr) -> expr
+## In state 405, spurious reduction of production case_expr -> INDENT Case pattern COLON decl_rhs(expr)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes ZWSP
+##
+## Ends in an error in state: 410.
+##
+## nsepseq(expr,COMMA) -> expr . [ RPAR COLON ]
+## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RPAR COLON ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Bytes COMMA ZWSP
+##
+## Ends in an error in state: 411.
+##
+## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RPAR COLON ]
+##
+## The known suffix of the stack is as follows:
+## expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR Bytes ZWSP
+##
+## Ends in an error in state: 413.
+##
+## par(__anonymous_2(expr)) -> LPAR expr . COMMA nsepseq(expr,COMMA) RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## par(expr) -> LPAR expr . RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LPAR LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive DOT COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 418, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR Bytes COMMA ZWSP
+##
+## Ends in an error in state: 415.
+##
+## par(__anonymous_2(expr)) -> LPAR expr COMMA . nsepseq(expr,COMMA) RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR Bytes COMMA Bytes COLON
+##
+## Ends in an error in state: 416.
+##
+## par(__anonymous_2(expr)) -> LPAR expr COMMA nsepseq(expr,COMMA) . RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR expr COMMA nsepseq(expr,COMMA)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 410, spurious reduction of production nsepseq(expr,COMMA) -> expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR Bytes COLON ZWSP
+##
+## Ends in an error in state: 419.
+##
+## par(__anonymous_8) -> LPAR disj_expr_level COLON . type_expr RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR disj_expr_level COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR Bytes COLON UIdent ZWSP
+##
+## Ends in an error in state: 420.
+##
+## par(__anonymous_8) -> LPAR disj_expr_level COLON type_expr . RPAR [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LPAR disj_expr_level COLON type_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Lang Bytes ZWSP
+##
+## Ends in an error in state: 423.
+##
+## code_inj -> Lang expr . RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## Lang expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: UIdent LPAR Ident EQ ZWSP
+##
+## Ends in an error in state: 271.
+##
+## member(expr) -> member_name EQ . expr [ RPAR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## member_name EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: UIdent LPAR Bytes ZWSP
+##
+## Ends in an error in state: 273.
+##
+## nsepseq(member(expr),COMMA) -> member(expr) . [ RPAR ]
+## nsepseq(member(expr),COMMA) -> member(expr) . COMMA nsepseq(member(expr),COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## member(expr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 276, spurious reduction of production member(expr) -> expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: UIdent LPAR Bytes COMMA ZWSP
+##
+## Ends in an error in state: 274.
+##
+## nsepseq(member(expr),COMMA) -> member(expr) COMMA . nsepseq(member(expr),COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## member(expr) COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Module ZWSP
+##
+## Ends in an error in state: 428.
+##
+## module_alias -> Module . module_name EQ decl_rhs(module_name) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Module
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Module Ident ZWSP
+##
+## Ends in an error in state: 430.
+##
+## module_alias -> Module module_name . EQ decl_rhs(module_name) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Module module_name
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Module Ident EQ ZWSP
+##
+## Ends in an error in state: 431.
+##
+## module_alias -> Module module_name EQ . decl_rhs(module_name) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Module module_name EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Module Ident EQ BEGIN ZWSP
+##
+## Ends in an error in state: 432.
+##
+## decl_rhs(module_name) -> BEGIN . INDENT module_name END [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Module Ident EQ BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 433.
+##
+## decl_rhs(module_name) -> BEGIN INDENT . module_name END [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Module Ident EQ BEGIN INDENT Ident ZWSP
+##
+## Ends in an error in state: 434.
+##
+## decl_rhs(module_name) -> BEGIN INDENT module_name . END [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN INDENT module_name
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT LPAR ZWSP
+##
+## Ends in an error in state: 438.
+##
+## par(expr) -> LPAR . expr RPAR [ LPAR DOT ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT LPAR Bytes ZWSP
+##
+## Ends in an error in state: 439.
+##
+## par(expr) -> LPAR expr . RPAR [ LPAR DOT ]
+##
+## The known suffix of the stack is as follows:
+## LPAR expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Assert ZWSP
+##
+## Ends in an error in state: 442.
+##
+## assert_stmt -> Assert . expr [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+## assert_stmt -> Assert . expr COMMA expr [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Assert
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Assert Bytes COMMA ZWSP
+##
+## Ends in an error in state: 444.
+##
+## assert_stmt -> Assert expr COMMA . expr [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Assert expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Return SEMI ZWSP
+##
+## Ends in an error in state: 448.
+##
+## nsepseq(simple_stmt,SEMI) -> simple_stmt SEMI . nsepseq(simple_stmt,SEMI) [ TOP_LEVEL INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## simple_stmt SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT LPAR Bytes RPAR DOT Ident ZWSP
+##
+## Ends in an error in state: 451.
+##
+## call_expr -> qualified_expr . par(option(arguments)) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+## map_lookup -> qualified_expr . nseq(brackets(expr)) [ XOR_EQ TIMES_EQ SLASH2_EQ RSHIFT_EQ PLUS_EQ PERCENT_EQ OR_EQ MINUS_EQ LSHIFT_EQ EXP_EQ EQ COMMA AND_EQ ]
+##
+## The known suffix of the stack is as follows:
+## qualified_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 130, spurious reduction of production nsepseq(selection,DOT) -> member_name
+## In state 158, spurious reduction of production qualified_expr -> par(expr) DOT nsepseq(selection,DOT)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT LPAR Bytes RPAR ZWSP
+##
+## Ends in an error in state: 453.
+##
+## call_expr -> par(expr) . par(option(arguments)) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+## qualified_expr -> par(expr) . DOT nsepseq(selection,DOT) [ LPAR LBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## par(expr)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident ZWSP
+##
+## Ends in an error in state: 455.
+##
+## assignment -> nsepseq(left_expr,COMMA) . assign_sym assign_rhs [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## nsepseq(left_expr,COMMA)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 440, spurious reduction of production member_name -> Ident
+## In state 162, spurious reduction of production qualified_member -> member_name
+## In state 450, spurious reduction of production left_expr -> qualified_member
+## In state 485, spurious reduction of production nsepseq(left_expr,COMMA) -> left_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ ZWSP
+##
+## Ends in an error in state: 468.
+##
+## assignment -> nsepseq(left_expr,COMMA) assign_sym . assign_rhs [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## nsepseq(left_expr,COMMA) assign_sym
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ BEGIN ZWSP
+##
+## Ends in an error in state: 470.
+##
+## assign_rhs -> BEGIN . nsepseq(__anonymous_5,COMMA) END [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 471.
+##
+## nsepseq(__anonymous_5,COMMA) -> option(INDENT) . expr [ END ]
+## nsepseq(__anonymous_5,COMMA) -> option(INDENT) . expr COMMA nsepseq(__anonymous_5,COMMA) [ END ]
+##
+## The known suffix of the stack is as follows:
+## option(INDENT)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ BEGIN Bytes ZWSP
+##
+## Ends in an error in state: 472.
+##
+## nsepseq(__anonymous_5,COMMA) -> option(INDENT) expr . [ END ]
+## nsepseq(__anonymous_5,COMMA) -> option(INDENT) expr . COMMA nsepseq(__anonymous_5,COMMA) [ END ]
+##
+## The known suffix of the stack is as follows:
+## option(INDENT) expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ BEGIN Bytes COMMA ZWSP
+##
+## Ends in an error in state: 473.
+##
+## nsepseq(__anonymous_5,COMMA) -> option(INDENT) expr COMMA . nsepseq(__anonymous_5,COMMA) [ END ]
+##
+## The known suffix of the stack is as follows:
+## option(INDENT) expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ INDENT ZWSP
+##
+## Ends in an error in state: 477.
+##
+## nsepseq(__anonymous_4,COMMA) -> option(INDENT) . expr [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+## nsepseq(__anonymous_4,COMMA) -> option(INDENT) . expr COMMA nsepseq(__anonymous_4,COMMA) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## option(INDENT)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident AND_EQ Bytes COMMA ZWSP
+##
+## Ends in an error in state: 479.
+##
+## nsepseq(__anonymous_4,COMMA) -> option(INDENT) expr COMMA . nsepseq(__anonymous_4,COMMA) [ TOP_LEVEL SEMI INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## option(INDENT) expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident COMMA ZWSP
+##
+## Ends in an error in state: 486.
+##
+## nsepseq(left_expr,COMMA) -> left_expr COMMA . nsepseq(left_expr,COMMA) [ XOR_EQ TIMES_EQ SLASH2_EQ RSHIFT_EQ PLUS_EQ PERCENT_EQ OR_EQ MINUS_EQ LSHIFT_EQ EXP_EQ EQ AND_EQ ]
+##
+## The known suffix of the stack is as follows:
+## left_expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident COMMA Ident DOT ZWSP
+##
+## Ends in an error in state: 441.
+##
+## qualified_member -> Ident DOT . nsepseq(selection,DOT) [ XOR_EQ TIMES_EQ SLASH2_EQ RSHIFT_EQ PLUS_EQ PERCENT_EQ OR_EQ MINUS_EQ LSHIFT_EQ LPAR LBRACKET EXP_EQ EQ COMMA AND_EQ ]
+##
+## The known suffix of the stack is as follows:
+## Ident DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident COMMA Ident LPAR
+##
+## Ends in an error in state: 487.
+##
+## map_lookup -> qualified_expr . nseq(brackets(expr)) [ XOR_EQ TIMES_EQ SLASH2_EQ RSHIFT_EQ PLUS_EQ PERCENT_EQ OR_EQ MINUS_EQ LSHIFT_EQ EXP_EQ EQ COMMA AND_EQ ]
+##
+## The known suffix of the stack is as follows:
+## qualified_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 440, spurious reduction of production member_name -> Ident
+## In state 162, spurious reduction of production qualified_member -> member_name
+## In state 450, spurious reduction of production qualified_expr -> qualified_member
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON INDENT Ident COMMA LPAR Bytes RPAR ZWSP
+##
+## Ends in an error in state: 488.
+##
+## qualified_expr -> par(expr) . DOT nsepseq(selection,DOT) [ LBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## par(expr)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN ZWSP
+##
+## Ends in an error in state: 494.
+##
+## block -> BEGIN . statements END [ TOP_LEVEL INDENT Else Elif EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 495.
+##
+## statement -> INDENT . seq(__anonymous_3) local_stmt [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Attr ZWSP
+##
+## Ends in an error in state: 496.
+##
+## seq(__anonymous_3) -> Attr . TOP_LEVEL seq(__anonymous_3) [ While WILD Var UIdent Type Return Pass Module Match LPAR If Ident For Def Const Class Assert ]
+## seq(__anonymous_3) -> Attr . INDENT seq(__anonymous_3) [ While WILD Var UIdent Type Return Pass Module Match LPAR If Ident For Def Const Class Assert ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Attr TOP_LEVEL ZWSP
+##
+## Ends in an error in state: 497.
+##
+## seq(__anonymous_3) -> Attr TOP_LEVEL . seq(__anonymous_3) [ While WILD Var UIdent Type Return Pass Module Match LPAR If Ident For Def Const Class Assert ]
+##
+## The known suffix of the stack is as follows:
+## Attr TOP_LEVEL
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Attr INDENT ZWSP
+##
+## Ends in an error in state: 499.
+##
+## seq(__anonymous_3) -> Attr INDENT . seq(__anonymous_3) [ While WILD Var UIdent Type Return Pass Module Match LPAR If Ident For Def Const Class Assert ]
+##
+## The known suffix of the stack is as follows:
+## Attr INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT While ZWSP
+##
+## Ends in an error in state: 502.
+##
+## while_stmt -> While . expr COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## While
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT While Bytes ZWSP
+##
+## Ends in an error in state: 503.
+##
+## while_stmt -> While expr . COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## While expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT While Bytes COLON ZWSP
+##
+## Ends in an error in state: 504.
+##
+## while_stmt -> While expr COLON . block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## While expr COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Var ZWSP
+##
+## Ends in an error in state: 506.
+##
+## var_decl -> Var . ext_var option(type_annotation) EQ decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Var
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Var Ident ZWSP
+##
+## Ends in an error in state: 507.
+##
+## var_decl -> Var ext_var . option(type_annotation) EQ decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Var ext_var
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident COLON ZWSP
+##
+## Ends in an error in state: 508.
+##
+## option(type_annotation) -> COLON . type_expr [ EQ ]
+##
+## The known suffix of the stack is as follows:
+## COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Var Ident COLON UIdent ZWSP
+##
+## Ends in an error in state: 510.
+##
+## var_decl -> Var ext_var option(type_annotation) . EQ decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Var ext_var option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 509, spurious reduction of production option(type_annotation) -> COLON type_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Var Ident EQ ZWSP
+##
+## Ends in an error in state: 511.
+##
+## var_decl -> Var ext_var option(type_annotation) EQ . decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Var ext_var option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match ZWSP
+##
+## Ends in an error in state: 513.
+##
+## match_stmt -> Match . exprs COLON BEGIN nseq(case_stmt) END [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Match
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes RPAR
+##
+## Ends in an error in state: 514.
+##
+## match_stmt -> Match exprs . COLON BEGIN nseq(case_stmt) END [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Match exprs
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 410, spurious reduction of production nsepseq(expr,COMMA) -> expr
+## In state 343, spurious reduction of production exprs -> nsepseq(expr,COMMA)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON ZWSP
+##
+## Ends in an error in state: 515.
+##
+## match_stmt -> Match exprs COLON . BEGIN nseq(case_stmt) END [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Match exprs COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON BEGIN ZWSP
+##
+## Ends in an error in state: 516.
+##
+## match_stmt -> Match exprs COLON BEGIN . nseq(case_stmt) END [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Match exprs COLON BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 517.
+##
+## case_stmt -> INDENT . Case pattern COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON BEGIN INDENT Case ZWSP
+##
+## Ends in an error in state: 518.
+##
+## case_stmt -> INDENT Case . pattern COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT Case
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON BEGIN INDENT Case Bytes ZWSP
+##
+## Ends in an error in state: 519.
+##
+## case_stmt -> INDENT Case pattern . COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT Case pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON BEGIN INDENT Case Bytes COLON ZWSP
+##
+## Ends in an error in state: 520.
+##
+## case_stmt -> INDENT Case pattern COLON . block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT Case pattern COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Match Bytes COLON BEGIN INDENT Case Bytes COLON INDENT Return XOR
+##
+## Ends in an error in state: 524.
+##
+## nseq(case_stmt) -> case_stmt . [ END ]
+## nseq(case_stmt) -> case_stmt . nseq(case_stmt) [ END ]
+##
+## The known suffix of the stack is as follows:
+## case_stmt
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 102, spurious reduction of production return_stmt -> Return
+## In state 449, spurious reduction of production simple_stmt -> return_stmt
+## In state 447, spurious reduction of production nsepseq(simple_stmt,SEMI) -> simple_stmt
+## In state 493, spurious reduction of production simple_stmts -> nsepseq(simple_stmt,SEMI)
+## In state 446, spurious reduction of production block -> INDENT simple_stmts
+## In state 521, spurious reduction of production case_stmt -> INDENT Case pattern COLON block
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If ZWSP
+##
+## Ends in an error in state: 526.
+##
+## if_stmt -> If . expr COLON block elif_stmt [ INDENT END ]
+## if_stmt -> If . expr COLON block [ INDENT END ]
+## if_stmt -> If . expr COLON block else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes ZWSP
+##
+## Ends in an error in state: 527.
+##
+## if_stmt -> If expr . COLON block elif_stmt [ INDENT END ]
+## if_stmt -> If expr . COLON block [ INDENT END ]
+## if_stmt -> If expr . COLON block else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## If expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON ZWSP
+##
+## Ends in an error in state: 528.
+##
+## if_stmt -> If expr COLON . block elif_stmt [ INDENT END ]
+## if_stmt -> If expr COLON . block [ INDENT END ]
+## if_stmt -> If expr COLON . block else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## If expr COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return XOR
+##
+## Ends in an error in state: 529.
+##
+## if_stmt -> If expr COLON block . elif_stmt [ INDENT END ]
+## if_stmt -> If expr COLON block . [ INDENT END ]
+## if_stmt -> If expr COLON block . else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## If expr COLON block
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 102, spurious reduction of production return_stmt -> Return
+## In state 449, spurious reduction of production simple_stmt -> return_stmt
+## In state 447, spurious reduction of production nsepseq(simple_stmt,SEMI) -> simple_stmt
+## In state 493, spurious reduction of production simple_stmts -> nsepseq(simple_stmt,SEMI)
+## In state 446, spurious reduction of production block -> INDENT simple_stmts
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return Else ZWSP
+##
+## Ends in an error in state: 530.
+##
+## else_block -> Else . COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Else
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return Else COLON ZWSP
+##
+## Ends in an error in state: 531.
+##
+## else_block -> Else COLON . block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Else COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return Elif ZWSP
+##
+## Ends in an error in state: 533.
+##
+## elif_stmt -> Elif . expr COLON block elif_stmt [ INDENT END ]
+## elif_stmt -> Elif . expr COLON block [ INDENT END ]
+## elif_stmt -> Elif . expr COLON block else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Elif
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return Elif Bytes ZWSP
+##
+## Ends in an error in state: 534.
+##
+## elif_stmt -> Elif expr . COLON block elif_stmt [ INDENT END ]
+## elif_stmt -> Elif expr . COLON block [ INDENT END ]
+## elif_stmt -> Elif expr . COLON block else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Elif expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return Elif Bytes COLON ZWSP
+##
+## Ends in an error in state: 535.
+##
+## elif_stmt -> Elif expr COLON . block elif_stmt [ INDENT END ]
+## elif_stmt -> Elif expr COLON . block [ INDENT END ]
+## elif_stmt -> Elif expr COLON . block else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Elif expr COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT If Bytes COLON INDENT Return Elif Bytes COLON INDENT Return XOR
+##
+## Ends in an error in state: 536.
+##
+## elif_stmt -> Elif expr COLON block . elif_stmt [ INDENT END ]
+## elif_stmt -> Elif expr COLON block . [ INDENT END ]
+## elif_stmt -> Elif expr COLON block . else_block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Elif expr COLON block
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 102, spurious reduction of production return_stmt -> Return
+## In state 449, spurious reduction of production simple_stmt -> return_stmt
+## In state 447, spurious reduction of production nsepseq(simple_stmt,SEMI) -> simple_stmt
+## In state 493, spurious reduction of production simple_stmts -> nsepseq(simple_stmt,SEMI)
+## In state 446, spurious reduction of production block -> INDENT simple_stmts
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT For ZWSP
+##
+## Ends in an error in state: 542.
+##
+## for_stmt -> For . indices In expr COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## For
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT For Ident In ZWSP
+##
+## Ends in an error in state: 544.
+##
+## for_stmt -> For indices In . expr COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## For indices In
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT For Ident In Bytes ZWSP
+##
+## Ends in an error in state: 545.
+##
+## for_stmt -> For indices In expr . COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## For indices In expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT For Ident In Bytes COLON ZWSP
+##
+## Ends in an error in state: 546.
+##
+## for_stmt -> For indices In expr COLON . block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## For indices In expr COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const ZWSP
+##
+## Ends in an error in state: 548.
+##
+## const_decl -> Const . ext_var option(type_annotation) EQ decl_rhs(expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Const
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident ZWSP
+##
+## Ends in an error in state: 549.
+##
+## const_decl -> Const ext_var . option(type_annotation) EQ decl_rhs(expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Const ext_var
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident COLON UIdent ZWSP
+##
+## Ends in an error in state: 550.
+##
+## const_decl -> Const ext_var option(type_annotation) . EQ decl_rhs(expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Const ext_var option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 509, spurious reduction of production option(type_annotation) -> COLON type_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Const Ident EQ ZWSP
+##
+## Ends in an error in state: 551.
+##
+## const_decl -> Const ext_var option(type_annotation) EQ . decl_rhs(expr) [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Const ext_var option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class ZWSP
+##
+## Ends in an error in state: 553.
+##
+## class_decl -> Class . class_name COLON class_body [ TOP_LEVEL INDENT EOF END Directive ]
+## class_decl -> Class . class_name superclasses COLON class_body [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Class
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent ZWSP
+##
+## Ends in an error in state: 554.
+##
+## class_decl -> Class class_name . COLON class_body [ TOP_LEVEL INDENT EOF END Directive ]
+## class_decl -> Class class_name . superclasses COLON class_body [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Class class_name
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON ZWSP
+##
+## Ends in an error in state: 570.
+##
+## class_decl -> Class class_name COLON . class_body [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Class class_name COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN ZWSP
+##
+## Ends in an error in state: 571.
+##
+## class_body -> BEGIN . member_decls END [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## BEGIN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT ZWSP
+##
+## Ends in an error in state: 572.
+##
+## nseq(__anonymous_7) -> INDENT . seq(__anonymous_3) member_decl [ END ]
+## nseq(__anonymous_7) -> INDENT . seq(__anonymous_3) member_decl nseq(__anonymous_7) [ END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Attr INDENT While
+##
+## Ends in an error in state: 573.
+##
+## nseq(__anonymous_7) -> INDENT seq(__anonymous_3) . member_decl [ END ]
+## nseq(__anonymous_7) -> INDENT seq(__anonymous_3) . member_decl nseq(__anonymous_7) [ END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT seq(__anonymous_3)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 499, spurious reduction of production seq(__anonymous_3) ->
+## In state 500, spurious reduction of production seq(__anonymous_3) -> Attr INDENT seq(__anonymous_3)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def ZWSP
+##
+## Ends in an error in state: 574.
+##
+## member_fun_decl -> Def . fun_name member_fun_params option(return_type) COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Def
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident ZWSP
+##
+## Ends in an error in state: 575.
+##
+## member_fun_decl -> Def fun_name . member_fun_params option(return_type) COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident LPAR ZWSP
+##
+## Ends in an error in state: 576.
+##
+## par(ioption(nsepseq(member_vars_decl,COMMA))) -> LPAR . RPAR [ COLON ARROW ]
+## par(ioption(nsepseq(member_vars_decl,COMMA))) -> LPAR . nsepseq(member_vars_decl,COMMA) RPAR [ COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Const ZWSP
+##
+## Ends in an error in state: 579.
+##
+## member_vars_decl -> option(Const) . nsepseq(variable,COMMA) COLON type_expr [ RPAR INDENT END COMMA ]
+##
+## The known suffix of the stack is as follows:
+## option(Const)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Ident ZWSP
+##
+## Ends in an error in state: 580.
+##
+## nsepseq(variable,COMMA) -> Ident . [ COLON ]
+## nsepseq(variable,COMMA) -> Ident . COMMA nsepseq(variable,COMMA) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Ident COMMA ZWSP
+##
+## Ends in an error in state: 581.
+##
+## nsepseq(variable,COMMA) -> Ident COMMA . nsepseq(variable,COMMA) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## Ident COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Ident COLON ZWSP
+##
+## Ends in an error in state: 584.
+##
+## member_vars_decl -> option(Const) nsepseq(variable,COMMA) COLON . type_expr [ RPAR INDENT END COMMA ]
+##
+## The known suffix of the stack is as follows:
+## option(Const) nsepseq(variable,COMMA) COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident LPAR Ident COLON UIdent ZWSP
+##
+## Ends in an error in state: 588.
+##
+## nsepseq(member_vars_decl,COMMA) -> member_vars_decl . [ RPAR ]
+## nsepseq(member_vars_decl,COMMA) -> member_vars_decl . COMMA nsepseq(member_vars_decl,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## member_vars_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 585, spurious reduction of production member_vars_decl -> option(Const) nsepseq(variable,COMMA) COLON type_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident LPAR Ident COLON UIdent COMMA ZWSP
+##
+## Ends in an error in state: 589.
+##
+## nsepseq(member_vars_decl,COMMA) -> member_vars_decl COMMA . nsepseq(member_vars_decl,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## member_vars_decl COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident LPAR RPAR ZWSP
+##
+## Ends in an error in state: 592.
+##
+## member_fun_decl -> Def fun_name member_fun_params . option(return_type) COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name member_fun_params
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR ARROW ZWSP
+##
+## Ends in an error in state: 593.
+##
+## return_type -> ARROW . type_expr [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident LPAR RPAR ARROW UIdent ZWSP
+##
+## Ends in an error in state: 596.
+##
+## member_fun_decl -> Def fun_name member_fun_params option(return_type) . COLON block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name member_fun_params option(return_type)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 594, spurious reduction of production return_type -> ARROW type_expr
+## In state 595, spurious reduction of production option(return_type) -> return_type
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Def Ident LPAR RPAR COLON ZWSP
+##
+## Ends in an error in state: 597.
+##
+## member_fun_decl -> Def fun_name member_fun_params option(return_type) COLON . block [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name member_fun_params option(return_type) COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent COLON BEGIN INDENT Ident COLON UIdent XOR
+##
+## Ends in an error in state: 601.
+##
+## nseq(__anonymous_7) -> INDENT seq(__anonymous_3) member_decl . [ END ]
+## nseq(__anonymous_7) -> INDENT seq(__anonymous_3) member_decl . nseq(__anonymous_7) [ END ]
+##
+## The known suffix of the stack is as follows:
+## INDENT seq(__anonymous_3) member_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 585, spurious reduction of production member_vars_decl -> option(Const) nsepseq(variable,COMMA) COLON type_expr
+## In state 599, spurious reduction of production member_decl -> member_vars_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent LPAR UIdent RPAR ZWSP
+##
+## Ends in an error in state: 607.
+##
+## class_decl -> Class class_name superclasses . COLON class_body [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Class class_name superclasses
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Class UIdent LPAR UIdent RPAR COLON ZWSP
+##
+## Ends in an error in state: 608.
+##
+## class_decl -> Class class_name superclasses COLON . class_body [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Class class_name superclasses COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT WILD ZWSP
+##
+## Ends in an error in state: 620.
+##
+## var_decl -> ext_var . COLON type_expr EQ decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## ext_var
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Ident COLON ZWSP
+##
+## Ends in an error in state: 621.
+##
+## var_decl -> ext_var COLON . type_expr EQ decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## ext_var COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Ident COLON UIdent ZWSP
+##
+## Ends in an error in state: 622.
+##
+## var_decl -> ext_var COLON type_expr . EQ decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## ext_var COLON type_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Ident COLON UIdent EQ ZWSP
+##
+## Ends in an error in state: 623.
+##
+## var_decl -> ext_var COLON type_expr EQ . decl_rhs(expr) [ INDENT END ]
+##
+## The known suffix of the stack is as follows:
+## ext_var COLON type_expr EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR COLON BEGIN INDENT Return XOR
+##
+## Ends in an error in state: 643.
+##
+## nseq(statement) -> statement . [ END ]
+## nseq(statement) -> statement . nseq(statement) [ END ]
+##
+## The known suffix of the stack is as follows:
+## statement
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 102, spurious reduction of production return_stmt -> Return
+## In state 449, spurious reduction of production simple_stmt -> return_stmt
+## In state 614, spurious reduction of production local_stmt -> simple_stmt
+## In state 616, spurious reduction of production statement -> INDENT seq(__anonymous_3) local_stmt
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR ARROW UIdent ZWSP
+##
+## Ends in an error in state: 647.
+##
+## fun_decl -> Def fun_name fun_params return_type . COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_params return_type
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 594, spurious reduction of production return_type -> ARROW type_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LPAR RPAR ARROW UIdent COLON ZWSP
+##
+## Ends in an error in state: 648.
+##
+## fun_decl -> Def fun_name fun_params return_type COLON . block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_params return_type COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent RBRACKET ZWSP
+##
+## Ends in an error in state: 650.
+##
+## fun_decl -> Def fun_name fun_class_params . fun_params COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def fun_name fun_class_params . fun_params return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_class_params
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent RBRACKET LPAR RPAR ZWSP
+##
+## Ends in an error in state: 651.
+##
+## fun_decl -> Def fun_name fun_class_params fun_params . COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+## fun_decl -> Def fun_name fun_class_params fun_params . return_type COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_class_params fun_params
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent RBRACKET LPAR RPAR COLON ZWSP
+##
+## Ends in an error in state: 652.
+##
+## fun_decl -> Def fun_name fun_class_params fun_params COLON . block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_class_params fun_params COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent RBRACKET LPAR RPAR ARROW UIdent ZWSP
+##
+## Ends in an error in state: 654.
+##
+## fun_decl -> Def fun_name fun_class_params fun_params return_type . COLON block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_class_params fun_params return_type
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 14, spurious reduction of production class_type -> qualified_class
+## In state 47, spurious reduction of production core_type -> class_type
+## In state 37, spurious reduction of production cartesian_level -> core_type
+## In state 48, spurious reduction of production fun_type_level -> cartesian_level
+## In state 36, spurious reduction of production type_expr -> fun_type_level
+## In state 594, spurious reduction of production return_type -> ARROW type_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Def Ident LBRACKET UIdent RBRACKET LPAR RPAR ARROW UIdent COLON ZWSP
+##
+## Ends in an error in state: 655.
+##
+## fun_decl -> Def fun_name fun_class_params fun_params return_type COLON . block [ TOP_LEVEL INDENT EOF END Directive ]
+##
+## The known suffix of the stack is as follows:
+## Def fun_name fun_class_params fun_params return_type COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Attr ZWSP
+##
+## Ends in an error in state: 658.
+##
+## attr_decl -> Attr . option(TOP_LEVEL) declaration [ TOP_LEVEL EOF Directive ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: TOP_LEVEL Attr TOP_LEVEL ZWSP
+##
+## Ends in an error in state: 660.
+##
+## attr_decl -> Attr option(TOP_LEVEL) . declaration [ TOP_LEVEL EOF Directive ]
+##
+## The known suffix of the stack is as follows:
+## Attr option(TOP_LEVEL)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Directive XOR
+##
+## Ends in an error in state: 669.
+##
+## nseq(top_declaration) -> top_declaration . [ EOF ]
+## nseq(top_declaration) -> top_declaration . nseq(top_declaration) [ EOF ]
+##
+## The known suffix of the stack is as follows:
+## top_declaration
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ZWSP
+##
+## Ends in an error in state: 674.
+##
+## interactive_expr' -> . interactive_expr [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Bytes ZWSP
+##
+## Ends in an error in state: 676.
+##
+## interactive_expr -> expr . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Bytes For Ident In Bytes If Bytes ZWSP
+##
+## Ends in an error in state: 300.
+##
+## braces(comprehension_expr) -> LBRACE expr For indices In disj_expr_level predicate . RBRACE [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE expr For indices In disj_expr_level predicate
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 299, spurious reduction of production predicate -> If expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes For Ident In Bytes If Bytes ZWSP
+##
+## Ends in an error in state: 340.
+##
+## brackets(comprehension_expr) -> LBRACKET expr For indices In disj_expr_level predicate . RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr For indices In disj_expr_level predicate
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 153, spurious reduction of production shift_expr_level -> unary_expr_level
+## In state 184, spurious reduction of production power_expr_level -> shift_expr_level
+## In state 188, spurious reduction of production mult_expr_level -> power_expr_level
+## In state 192, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 251, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 217, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 214, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 209, spurious reduction of production expr -> disj_expr_level
+## In state 299, spurious reduction of production predicate -> If expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes For ZWSP
+##
+## Ends in an error in state: 335.
+##
+## brackets(comprehension_expr) -> LBRACKET expr For . indices In disj_expr_level RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## brackets(comprehension_expr) -> LBRACKET expr For . indices In disj_expr_level predicate RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr For
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET Bytes For Ident In ZWSP
+##
+## Ends in an error in state: 337.
+##
+## brackets(comprehension_expr) -> LBRACKET expr For indices In . disj_expr_level RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+## brackets(comprehension_expr) -> LBRACKET expr For indices In . disj_expr_level predicate RBRACKET [ XOR VBAR TOP_LEVEL TIMES SLASH2 SEMI RSHIFT RPAR RBRACKET RBRACE PLUS PERCENT Or NE MINUS LT LSHIFT LE If INDENT GT GE For Else Elif EXP EQ2 EOF END Directive COMMA COLON And AMPERSAND ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr For indices In
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

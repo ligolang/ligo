@@ -33,6 +33,10 @@ type t = markup
 val to_lexeme : t -> lexeme
 val to_string : offsets:bool -> [`Byte | `Point] -> t -> string
 
+(* Extracting regions *)
+
+val to_region : t -> Region.t
+
 (* Comments *)
 
 (* Basic comments classify all comments in two categories. *)
