@@ -892,9 +892,19 @@ let transpile_group =
 
 (** Mutate commands *)
 let mutate_cst =
-  let f source_file syntax protocol_version libraries display_format seed generator () =
+  let f
+      source_file
+      syntax
+      protocol_version
+      libraries
+      display_format
+      seed
+      generator
+      project_root
+      ()
+    =
     let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~libraries ~generator ()
+      Raw_options.make ~syntax ~protocol_version ~libraries ~generator ~project_root ()
     in
     return_result ~return
     @@ Api.Mutate.mutate_cst raw_options source_file display_format seed
@@ -914,13 +924,24 @@ let mutate_cst =
     <*> libraries
     <*> display_format
     <*> seed
-    <*> generator)
+    <*> generator
+    <*> project_root)
 
 
 let mutate_ast =
-  let f source_file syntax protocol_version libraries display_format seed generator () =
+  let f
+      source_file
+      syntax
+      protocol_version
+      libraries
+      display_format
+      seed
+      generator
+      project_root
+      ()
+    =
     let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~libraries ~generator ()
+      Raw_options.make ~syntax ~protocol_version ~libraries ~generator ~project_root ()
     in
     return_result ~return
     @@ Api.Mutate.mutate_ast raw_options source_file display_format seed
@@ -940,7 +961,8 @@ let mutate_ast =
     <*> libraries
     <*> display_format
     <*> seed
-    <*> generator)
+    <*> generator
+    <*> project_root)
 
 
 let mutate_group =
@@ -1315,8 +1337,8 @@ let run_group =
 
 (** Info commands *)
 let list_declarations =
-  let f source_file only_ep syntax display_format () =
-    let raw_options = Raw_options.make ~only_ep ~syntax () in
+  let f source_file only_ep syntax display_format project_root () =
+    let raw_options = Raw_options.make ~only_ep ~syntax ~project_root () in
     return_result ~return
     @@ Api.Info.list_declarations raw_options source_file display_format
   in
@@ -1328,7 +1350,7 @@ let list_declarations =
   Command.basic
     ~summary
     ~readme
-    (f <$> source_file <*> only_ep <*> syntax <*> display_format)
+    (f <$> source_file <*> only_ep <*> syntax <*> display_format <*> project_root)
 
 
 let measure_contract =
@@ -1445,8 +1467,10 @@ let preprocessed =
 
 
 let pretty_print =
-  let f source_file syntax display_format warning_as_error no_colour () =
-    let raw_options = Raw_options.make ~syntax ~warning_as_error ~no_colour () in
+  let f source_file syntax display_format warning_as_error no_colour project_root () =
+    let raw_options =
+      Raw_options.make ~syntax ~warning_as_error ~no_colour ~project_root ()
+    in
     return_result ~return @@ Api.Print.pretty_print raw_options source_file display_format
   in
   let summary = "pretty-print the source file." in
@@ -1456,7 +1480,13 @@ let pretty_print =
      it cannot be determined)."
   in
   Command.basic ~summary ~readme
-  @@ (f <$> source_file <*> syntax <*> display_format <*> werror <*> no_colour)
+  @@ (f
+     <$> source_file
+     <*> syntax
+     <*> display_format
+     <*> werror
+     <*> no_colour
+     <*> project_root)
 
 
 let print_graph =
@@ -1478,8 +1508,8 @@ let print_graph =
 
 
 let print_cst =
-  let f source_file syntax display_format no_colour () =
-    let raw_options = Raw_options.make ~syntax ~no_colour () in
+  let f source_file syntax display_format no_colour project_root () =
+    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root () in
     return_result ~return @@ Api.Print.cst raw_options source_file display_format
   in
   let summary =
@@ -1490,12 +1520,12 @@ let print_cst =
      preprocessing and parsing."
   in
   Command.basic ~summary ~readme
-  @@ (f <$> source_file <*> syntax <*> display_format <*> no_colour)
+  @@ (f <$> source_file <*> syntax <*> display_format <*> no_colour <*> project_root)
 
 
 let print_ast =
-  let f source_file syntax display_format no_colour () =
-    let raw_options = Raw_options.make ~syntax ~no_colour () in
+  let f source_file syntax display_format no_colour project_root () =
+    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root () in
     return_result ~return @@ Api.Print.ast raw_options source_file display_format
   in
   let summary =
@@ -1507,7 +1537,7 @@ let print_ast =
      desugaring step is applied."
   in
   Command.basic ~summary ~readme
-  @@ (f <$> source_file <*> syntax <*> display_format <*> no_colour)
+  @@ (f <$> source_file <*> syntax <*> display_format <*> no_colour <*> project_root)
 
 
 let print_ast_core =

@@ -389,7 +389,18 @@ let%expect_test _ =
     ];
   print_endline @@ test [%expect.output];
   [%expect {|
-    Test passed |}]
+    Test passed |}];
+  run_ligo_good
+    [ "info"
+    ; "list-declarations"
+    ; "include_include/main.mligo"
+    ; "--project-root"
+    ; "include_include"
+    ];
+  [%expect {|
+    include_include/main.mligo declarations:
+    main
+    hello |}]
 
 (* ligo publish tests *)
 
