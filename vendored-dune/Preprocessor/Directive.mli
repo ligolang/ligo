@@ -23,14 +23,13 @@ type ending = [
 (* The method [region] covers "#include". The method [file_path] is
    the string containing the file to include, with its region. *)
 
-class type include_directive =
-  object
-    method region       : Region.t
-    method file_path    : file_path Region.reg
-    method trailing_comment : string Region.reg option
-  end
+type include_directive = <
+  region           : Region.t;
+  file_path        : file_path Region.reg;
+  trailing_comment : string Region.reg option
+>
 
-class mk_include :
+val mk_include :
   ?trailing_comment:message Region.reg ->
   Region.t -> file_path Region.reg -> include_directive
 
@@ -41,15 +40,14 @@ class mk_include :
    region. The method [module_name] is a string with the name of the
    module to fetch, with its region. *)
 
-class type import_directive =
-  object
-    method region           : Region.t
-    method file_path        : file_path Region.reg
-    method module_name      : module_name Region.reg
-    method trailing_comment : string Region.reg option
-  end
+type import_directive = <
+  region           : Region.t;
+  file_path        : file_path Region.reg;
+  module_name      : module_name Region.reg;
+  trailing_comment : message Region.reg option
+>
 
-class mk_import :
+val mk_import :
   ?trailing_comment:message Region.reg ->
   Region.t ->
   file_path Region.reg ->
@@ -60,17 +58,16 @@ class mk_import :
 (* The method [region] covers "#if" or "#elif". The method
    [expression] is the argument of "#if" (a boolean expression). *)
 
-class type bool_expr =
-  object
-    method region           : Region.t
-    method expression       : E_AST.t
-    method trailing_comment : string Region.reg option
-  end
+type bool_expr = <
+  region           : Region.t;
+  expression       : E_AST.t;
+  trailing_comment : string Region.reg option
+>
 
-class type if_directive = bool_expr
-class type elif_directive = bool_expr
+type if_directive   = bool_expr
+type elif_directive = bool_expr
 
-class mk_bool_expr :
+val mk_bool_expr :
   ?trailing_comment:message Region.reg ->
   Region.t ->
   E_AST.t -> if_directive
@@ -80,17 +77,16 @@ class mk_bool_expr :
 (* The method [region] covers "#define" or "#undef". The method [sym]
    is the argument of "#define" (an identifier), with its region. *)
 
-class type symbol =
-  object
-    method region           : Region.t
-    method symbol           : variable Region.reg
-    method trailing_comment : message Region.reg option
-  end
+type symbol = <
+  region           : Region.t;
+  symbol           : variable Region.reg;
+  trailing_comment : message Region.reg option
+>
 
-class type define_directive = symbol
-class type undef_directive  = symbol
+type define_directive = symbol
+type undef_directive  = symbol
 
-class mk_symbol :
+val mk_symbol :
   ?trailing_comment:message Region.reg ->
   Region.t ->
   variable Region.reg -> symbol
@@ -116,15 +112,14 @@ type error_directive = Region.t * string Region.reg
 
 type flag  = Push | Pop
 
-class type line_directive =
-  object
-    method region    : Region.t
-    method linenum   : int Region.reg
-    method file_path : string Region.reg
-    method flag      : flag Region.reg option
-  end
+type line_directive = <
+  region    : Region.t;
+  linenum   : int Region.reg;
+  file_path : string Region.reg;
+  flag      : flag Region.reg option
+>
 
-class mk_line_directive :
+val mk_line_directive :
   Region.t ->
   int Region.reg ->
   file_path Region.reg ->

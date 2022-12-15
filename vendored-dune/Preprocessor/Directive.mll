@@ -64,14 +64,13 @@ type ending = [
 
 (* #include *)
 
-class type include_directive =
-  object
-    method region           : Region.t
-    method file_path        : file_path Region.reg
-    method trailing_comment : string Region.reg option
-  end
+type include_directive = <
+  region           : Region.t;
+  file_path        : file_path Region.reg;
+  trailing_comment : string Region.reg option
+>
 
-class mk_include ?trailing_comment dir_region file_path =
+let mk_include ?trailing_comment dir_region file_path =
   object
     method region           : Region.t = dir_region
     method file_path        : file_path Region.reg = file_path
@@ -80,15 +79,14 @@ class mk_include ?trailing_comment dir_region file_path =
 
 (* #import *)
 
-class type import_directive =
-  object
-    method region           : Region.t
-    method file_path        : file_path Region.reg
-    method module_name      : module_name Region.reg
-    method trailing_comment : message Region.reg option
-  end
+type import_directive = <
+  region           : Region.t;
+  file_path        : file_path Region.reg;
+  module_name      : module_name Region.reg;
+  trailing_comment : message Region.reg option
+>
 
-class mk_import ?trailing_comment dir_region file_path module_name =
+let mk_import ?trailing_comment dir_region file_path module_name =
   object
     method region           : Region.t = dir_region
     method file_path        : file_path Region.reg = file_path
@@ -98,17 +96,16 @@ class mk_import ?trailing_comment dir_region file_path module_name =
 
 (* #if and #elif *)
 
-class type bool_expr =
-  object
-    method region           : Region.t
-    method expression       : E_AST.t
-    method trailing_comment : string Region.reg option
-  end
+type bool_expr = <
+  region           : Region.t;
+  expression       : E_AST.t;
+  trailing_comment : string Region.reg option
+>
 
-class type if_directive   = bool_expr
-class type elif_directive = bool_expr
+type if_directive   = bool_expr
+type elif_directive = bool_expr
 
-class mk_bool_expr ?trailing_comment dir_region expr =
+let mk_bool_expr ?trailing_comment dir_region expr =
   object
     method region           : Region.t = dir_region
     method expression       : E_AST.t = expr
@@ -117,17 +114,16 @@ class mk_bool_expr ?trailing_comment dir_region expr =
 
 (* #define and #undef *)
 
-class type symbol =
-  object
-    method region           : Region.t
-    method symbol           : variable Region.reg
-    method trailing_comment : message Region.reg option
-  end
+type symbol = <
+  region           : Region.t;
+  symbol           : variable Region.reg;
+  trailing_comment : message Region.reg option
+>
 
-class type define_directive = symbol
-class type undef_directive  = symbol
+type define_directive = symbol
+type undef_directive  = symbol
 
-class mk_symbol ?trailing_comment dir_region sym =
+let mk_symbol ?trailing_comment dir_region sym =
   object
     method region           : Region.t = dir_region
     method symbol           : variable Region.reg = sym
@@ -140,15 +136,14 @@ type error_directive = Region.t * string Region.reg
 
 (* Linemarkers (line directives) *)
 
-class type line_directive =
-  object
-    method region    : Region.t
-    method linenum   : int Region.reg
-    method file_path : string Region.reg
-    method flag      : flag Region.reg option
-  end
+type line_directive = <
+  region    : Region.t;
+  linenum   : int Region.reg;
+  file_path : string Region.reg;
+  flag      : flag Region.reg option
+>
 
-class mk_line_directive dir_region linenum file_path flag =
+let mk_line_directive dir_region linenum file_path flag =
   object
     method region    : Region.t = dir_region
     method linenum   : int Region.reg = linenum
@@ -368,8 +363,7 @@ rule scan_include hash_pos state = parse
              trailing_comment state lexbuf in
            let region =
              Region.make ~start:hash_pos ~stop:state#pos in
-           let dir =
-             new mk_include ?trailing_comment region file
+           let dir = mk_include ?trailing_comment region file
            in Ok (state, dir, PP_Include dir, ending) }
 | _      { mk_Error2 lexbuf Error.Missing_filename }
 
@@ -425,7 +419,7 @@ and scan_import hash_pos state = parse
         let region =
           Region.make ~start:hash_pos ~stop:state#pos in
         let dir =
-          new mk_import ?trailing_comment region file module_name
+          mk_import ?trailing_comment region file module_name
         in Ok (state, dir, PP_Import dir, ending) }
 | _ { mk_Error2 lexbuf Error.Missing_filename }
 
@@ -447,8 +441,7 @@ and scan_def_undef mk_dir hash_pos state = parse
       trailing_comment state lexbuf in
     let region =
       Region.make ~start:hash_pos ~stop:state#pos in
-    let symbol =
-      new mk_symbol ?trailing_comment region symbol
+    let symbol = mk_symbol ?trailing_comment region symbol
     in Ok (state, symbol, mk_dir symbol, ending) }
 | nl | eof { mk_Error2 lexbuf Error.Missing_symbol }
 | _ { missing_space lexbuf }
@@ -536,7 +529,7 @@ and scan_flag state = parse
         let stop   = state#pos in
         let region = Region.make ~start:hash_pos ~stop in
         let bool_expr =
-          new mk_bool_expr ?trailing_comment region ast in
+          mk_bool_expr ?trailing_comment region ast in
         Ok (state, bool_expr, mk_dir bool_expr, ending)
 
   let scan_if   = scan_expr (fun bool_expr -> PP_If   bool_expr)
@@ -581,7 +574,7 @@ and scan_flag state = parse
     and region  =
       Region.make ~start:hash_pos ~stop:state#pos in
     let line_directive =
-      new mk_line_directive region linenum file flag in
+      mk_line_directive region linenum file flag in
     let linemarker = PP_Linemarker line_directive
     in Ok (state, line_directive, linemarker, ending)
 
