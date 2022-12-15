@@ -6,6 +6,9 @@ traversal:
     - vendors/**/*
     - esy.lock/**/*
     - static.esy.esy.lock/**/*
+    - src/README.md
+    - src/coq/README.md
+    - tools/vim/ligo/README.md
 
 # Verification parameters.
 verification:
