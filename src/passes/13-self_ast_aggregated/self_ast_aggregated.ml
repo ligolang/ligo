@@ -2,7 +2,6 @@ open Ligo_prim
 module Errors = Errors
 module Helpers = Helpers
 
-let reset_counter () = Monomorphisation.poly_counter_reset ()
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 
 let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =

@@ -456,9 +456,9 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         )
     )
   | E_lambda l ->
-    compile_lambda ~raise l ae.type_expression
+    return @@ compile_lambda ~raise l
   | E_recursive r ->
-    compile_recursive ~raise r
+    return @@ compile_recursive ~raise r
   | E_matching {matchee=expr; cases=m} -> (
       let expr' = self expr in
       match m with
@@ -659,16 +659,13 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     let body = self body in
     return @@ E_while (cond, body)
 
-and compile_lambda ~raise l fun_type =
+and compile_lambda ~raise l =
   let { binder ; output_type ; result } : _ Lambda.t = l in
   let result' = compile_expression ~raise result in
-  let fun_type = compile_type ~raise fun_type in
   let param = Param.map (compile_type ~raise) binder in
   let output_type = compile_type ~raise output_type in
   let (binder, body) = make_lambda ~loc:result.location param result' output_type in
-  let closure = E_closure { binder; body } in
-  (* TODO this ~loc is wrong, the actual location is not in scope here? *)
-  Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
+  E_closure { binder; body }
 
 and compile_binder ~raise binder = 
   let ascr = compile_type ~raise (Binder.get_ascr binder) in
@@ -837,7 +834,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let (binder, body) = make_lambda ~loc:body.location param body loop_type in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((binder, input_type), body), expr)) output_type in
-  Expression.make (E_closure {binder;body}) fun_type
+  E_closure {binder;body}
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->
   compile_expression ~raise p

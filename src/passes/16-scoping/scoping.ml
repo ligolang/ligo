@@ -15,7 +15,8 @@ type binder_meta = Mini_c.binder_meta
 let nil : meta =
   { location = Location.generated;
     env = [];
-    binder = None }
+    binder = None;
+    source_type = None }
 
 type base_type = (meta, string) Micheline.node
 
@@ -34,10 +35,11 @@ let rec translate_type ?var : I.type_expression -> oty =
   let nil : meta =
     { location = Location.generated;
       env = [];
-      binder = binder_meta var a } in
+      binder = binder_meta var a;
+      source_type = None } in
   match a.type_content with
   | I.T_tuple ts ->
-    tuple_comb ts
+    tuple_comb nil ts
   | I.T_or ((ann1, a1), (ann2, a2)) ->
     O.T_or (nil, ann1, ann2, translate_type a1, translate_type a2)
   | I.T_function (a1, a2) ->
@@ -79,17 +81,17 @@ let rec translate_type ?var : I.type_expression -> oty =
 
 (* could consider delaying this to the next pass, in Coq, but
    currently the Coq pass type translation is the identity *)
-and tuple_comb_ann ts =
+and tuple_comb_ann nil ts =
   match ts with
   | [] -> (None, O.T_unit nil)
   | [(ann, t)] -> (ann, translate_type t)
   | (ann1, t1) :: ts ->
     let t1 = translate_type t1 in
-    let (ann, ts) = tuple_comb_ann ts in
+    let (ann, ts) = tuple_comb_ann nil ts in
     (None, O.T_pair (nil, ann1, ann, t1, ts))
 
-and tuple_comb ts =
-  snd (tuple_comb_ann ts)
+and tuple_comb nil ts =
+  snd (tuple_comb_ann nil ts)
 
 let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
   if x <= 0
@@ -121,7 +123,8 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
   let meta : meta =
     { location = expr.location;
       env = [];
-      binder = None } in
+      binder = None;
+      source_type = expr.type_expression.source_type } in
   let ty = expr.type_expression in
   let translate_expression = translate_expression ~raise ~proto in
   let translate_args = translate_args ~raise ~proto in

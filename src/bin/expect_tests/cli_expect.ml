@@ -14,7 +14,6 @@ let run_ligo args =
   Ligo_prim.Value_var.reset_counter ();
   Ligo_prim.Type_var.reset_counter ();
   Ligo_prim.Module_var.reset_counter ();
-  Self_ast_aggregated.reset_counter ();
   Cli.reset_return ();
   let argv = "ligo" :: args in
   let result = Cli.run ~argv () in

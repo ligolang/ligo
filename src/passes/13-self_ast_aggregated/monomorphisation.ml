@@ -3,16 +3,7 @@ module AST = Ast_aggregated
 open Ligo_prim
 
 let fold_map_expression = AST.Helpers.fold_map_expression
-let to_name_safe v = fst (Value_var.internal_get_name_and_counter v)
-let poly_counter = ref 0
-let poly_counter_reset () = poly_counter := 0
-
-let poly_name ~loc v =
-  poly_counter := !poly_counter + 1;
-  Value_var.of_input_var
-    ~loc
-    ("poly_" ^ to_name_safe v ^ "_" ^ string_of_int !poly_counter)
-
+let poly_name ~loc v = Value_var.fresh_like ~loc v
 
 module Instance = struct
   (* This is a polymorphic instance of the polymorphic function (or value) lid *)

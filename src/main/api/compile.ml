@@ -15,7 +15,7 @@ let no_comment node =
 let has_env_comments michelson_comments =
   Option.is_some
     (List.find michelson_comments ~f:(function
-        | `Env -> true
+        | `Location | `Env -> true
         | _ -> false))
 
 

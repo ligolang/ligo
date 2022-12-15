@@ -5,7 +5,9 @@ open Trace
 open! Stacking
 open Tezos_micheline
 
-let dummy : Stacking.meta = { location = Location.dummy; env = []; binder = None }
+let dummy : Stacking.meta =
+  { location = Location.dummy; env = []; binder = None; source_type = None }
+
 
 let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (meta, 'p) Micheline.node =
  fun e -> Micheline.(inject_locations (fun _ -> dummy) (strip_locations e))
@@ -15,8 +17,9 @@ let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (meta, 'p) Micheline.nod
    to preserve Seq nodes which are used only for comments. Currently
    only env data is important. *)
 let has_comment : Compiler_options.t -> meta -> bool =
- fun options { env; location = _; binder = _ } ->
-  options.backend.has_env_comments && not (List.is_empty env)
+ fun options { env; location; binder = _; source_type = _ } ->
+  options.backend.has_env_comments
+  && ((not (List.is_empty env)) || not (Location.is_dummy_or_generated location))
 
 
 (* this function exist to satisfy 'print mini-c' .. *)
