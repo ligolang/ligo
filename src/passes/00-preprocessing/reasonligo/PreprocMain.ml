@@ -1,7 +1,6 @@
 (* Driving the standalone preprocessor for ReasonLIGO *)
 
-module PreprocMainGen = Preprocessing_shared.PreprocMainGen
-module Config         = Preprocessing_reasonligo.Config
-module PreprocMain    = PreprocMainGen.Make (Config)
+module Config      = Preprocessing_reasonligo.Config
+module PreprocMain = Preprocessing_shared.PreprocMain.Make (Config)
 
 let () = PreprocMain.run ()

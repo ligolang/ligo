@@ -13,7 +13,7 @@
    Strings and comments are only recognised in text areas that are to
    be copied.
 
-   Comments can be chose from the following list:
+   Comments can be chosen from the following list:
       * "(*" and "*)" for blocks and "//" for lines;
       * "/*" and "*/" for blocks and "//" for lines;
       * "/*" and "*/" for blocks and "#" for lines;

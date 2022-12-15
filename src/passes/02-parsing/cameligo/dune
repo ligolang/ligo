@@ -59,42 +59,6 @@
  (flags
   (:standard \ -open Core)))
 
-;; Build of the covering of error states in the LR automaton
-
-;; (rule
-;;  (targets Parser.msg)
-;;  (deps
-;;   (:script_messages
-;;     ../../../../vendored-dune/ligo-utils/simple-utils/messages.sh)
-;;   Parser.mly
-;;   ParToken.mly)
-;;  (action
-;;   (run %{script_messages} --lex-tokens=Token.mli --par-tokens=ParToken.mly
-;;     Parser.mly)))
-
-;; (rule
-;;  (targets Parser_msg.ml)
-;;  (deps Parser.mly ParToken.mly errors.msg)
-;;  (action
-;;   (with-stdout-to
-;;    %{targets}
-;;    (bash
-;;      "menhir --compile-errors errors.msg --external-tokens Token --base Parser ParToken.mly Parser.mly"))))
-
-;; ;; Build of all the LIGO source file that cover all error states
-
-;; (rule
-;;  (targets all.mligo)
-;;  (deps
-;;   (:script_cover ../../../../vendored-dune/ligo-utils/simple-utils/cover.sh)
-;;   Parser.mly
-;;   ParToken.mly
-;;   errors.msg)
-;;  (action
-;;   (run %{script_cover} --lex-tokens=Token.mli --par-tokens=ParToken.mly
-;;     --ext=mligo --unlexer=%{exe:../../01-lexing/cameligo/Unlexer.exe}
-;;     --messages=errors.msg --dir=. --concatenate Parser.mly)))
-
 ;; Error messages
 
 (rule
