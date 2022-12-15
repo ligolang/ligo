@@ -8,7 +8,7 @@
  (name lexing_shared)
  (public_name ligo.lexing.shared)
  (modules Errors Warnings Formatter Token Common Attr Wrap Style Lexer
-   Pipeline TopAPI UnlexerGen)
+   Pipeline TopAPI)
  (modules_without_implementation Token)
  (instrumentation
   (backend bisect_ppx))

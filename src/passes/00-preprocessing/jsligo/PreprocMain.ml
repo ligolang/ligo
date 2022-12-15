@@ -1,7 +1,6 @@
 (* Driving the standalone preprocessor for JsLIGO *)
 
-module PreprocMainGen = Preprocessing_shared.PreprocMainGen
-module Config         = Preprocessing_jsligo.Config
-module PreprocMain    = PreprocMainGen.Make (Config)
+module Config      = Preprocessing_jsligo.Config
+module PreprocMain = Preprocessing_shared.PreprocMain.Make (Config)
 
 let () = PreprocMain.run ()

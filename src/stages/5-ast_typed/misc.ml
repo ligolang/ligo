@@ -109,6 +109,17 @@ let rec assert_list_eq f a b =
 
 let constant_compare ia ib = Literal_types.compare ia ib
 
+let assert_no_type_vars (t : type_expression) : unit option =
+  let f r te =
+    let open Option in
+    let* () = r in
+    match te.type_content with
+    | T_variable _ | T_for_all _ -> None
+    | _ -> return ()
+  in
+  Helpers.fold_type_expression t ~init:(Some ()) ~f
+
+
 let rec assert_type_expression_eq ((a, b) : type_expression * type_expression)
     : unit option
   =

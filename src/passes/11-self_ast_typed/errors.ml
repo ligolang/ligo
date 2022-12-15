@@ -26,6 +26,10 @@ type self_ast_typed_error =
     * Ast_typed.type_expression
     * Ast_typed.type_expression
     * Ast_typed.expression
+  | `Self_ast_typed_expected_non_vars_in_storage of
+    Value_var.t * Ast_typed.type_expression * Ast_typed.expression
+  | `Self_ast_typed_expected_non_vars_in_parameter of
+    Value_var.t * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_pair_in of Location.t * [ `View | `Contract ]
   | `Self_ast_typed_expected_pair_out of Location.t
   | `Self_ast_typed_storage_view_contract of
@@ -181,6 +185,28 @@ let error_ppformat
         t1
         Ast_typed.PP.type_expression
         t2
+    | `Self_ast_typed_expected_non_vars_in_storage (entrypoint, t, e) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the \
+         entrypoint function must not contain polymorphic variables.@]"
+        Snippet.pp
+        e.location
+        Value_var.pp
+        entrypoint
+        Ast_typed.PP.type_expression
+        t
+    | `Self_ast_typed_expected_non_vars_in_parameter (entrypoint, t, e) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The parameter type \"%a\" of the \
+         entrypoint function must not contain polymorphic variables.@]"
+        Snippet.pp
+        e.location
+        Value_var.pp
+        entrypoint
+        Ast_typed.PP.type_expression
+        t
     | `Self_ast_typed_expected_pair_in (loc, t) ->
       let ep =
         match t with
@@ -343,6 +369,32 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
         t1
         Ast_typed.PP.type_expression
         t2
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_typed_expected_non_vars_in_storage (entrypoint, t, e) ->
+    let location = e.location in
+    let message =
+      Format.asprintf
+        "Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the entrypoint \
+         function must not contain polymorphic variables."
+        Value_var.pp
+        entrypoint
+        Ast_typed.PP.type_expression
+        t
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_typed_expected_non_vars_in_parameter (entrypoint, t, e) ->
+    let location = e.location in
+    let message =
+      Format.asprintf
+        "Invalid type for entrypoint \"%a\".@.The parameter type \"%a\" of the \
+         entrypoint function must not contain polymorphic variables."
+        Value_var.pp
+        entrypoint
+        Ast_typed.PP.type_expression
+        t
     in
     let content = make_content ~message ~location () in
     make ~stage ~content

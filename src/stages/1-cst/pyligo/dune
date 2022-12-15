@@ -1,0 +1,15 @@
+(library
+  (name cst_pyligo)
+  (public_name ligo.cst.pyligo)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+    ;; Input
+    lexing_pyligo
+    cst_shared
+    ;; Vendors
+    LexerLib
+    simple-utils
+    ;; Third party
+    hex
+    zarith)
+  (modules CST Print))

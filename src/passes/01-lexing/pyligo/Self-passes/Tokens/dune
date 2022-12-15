@@ -1,0 +1,35 @@
+;; Build of the self passes on the tokens of PyLIGO
+
+(library
+  (name lexing_pyligo_self_tokens)
+  (public_name ligo.lexing.pyligo.self.tokens)
+  (instrumentation (backend bisect_ppx))
+  (libraries
+     ;; Vendors
+     simple-utils
+     LexerLib
+     ;; LIGO
+     lexing_shared
+     menhir_pyligo_tokens)
+  (modules Token Self))
+
+;; --------------------------------------------------------------------
+;; Build the type ['a terminal] to complete the inspection API of
+;; Menhir
+
+(rule
+  (targets MenhirToken.ml MenhirToken.mli)
+  (deps (:ParToken ../../../../02-parsing/pyligo/ParToken.mly))
+  (action (run menhir %{ParToken} --only-tokens --inspection
+                                  --table --base MenhirToken)))
+
+(library
+  (name menhir_pyligo_tokens)
+  (public_name ligo.lexing.menhir_pyligo_tokens)
+  (modules MenhirToken)
+  (libraries
+    ;; LIGO
+    lexing_shared
+    ;; Third party
+    hex)
+  (flags (:standard -open Lexing_shared -open Wrap)))

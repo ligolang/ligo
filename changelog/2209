@@ -1,0 +1,7 @@
+
+author: SanderSpies
+description: "Improve semicolon insertion after rbrace '}'.\\n\\n"
+merge_request: '2209'
+title: "JsLIGO: improve semicolon handling for #1511"
+type: fixed
+            

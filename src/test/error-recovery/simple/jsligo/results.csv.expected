@@ -26,7 +26,7 @@ PASS,missing_namespace_kw_in_namespace_decl.jsligo,18,142,24,125,1
 PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,29,243,49,125,9
 PASS,missing_par_in_call.jsligo,2,7,3,193,0
 PASS,missing_par_in_if_condition.jsligo,0,0,0,185,1
-PASS,missing_semicolon_before_return_on_same_line.jsligo,0,0,0,185,0
+PASS,missing_semicolon_before_return_on_same_line.jsligo,3,164,8,185,1
 PASS,missing_semicolon_in_top_level.jsligo,0,0,0,193,0
 PASS,missing_type_annotation_in_lambda_in_match.jsligo,3,9,9,193,0
 PASS,switch_with_empty_body.jsligo,2,7,7,96,0
