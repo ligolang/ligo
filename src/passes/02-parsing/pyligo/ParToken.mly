@@ -21,7 +21,7 @@
     and filename  = Region.wrap_ghost "_none_"
     and flag      = None in
     let open Directive in
-    PP_Linemarker (new mk_line_directive region linenum filename flag)
+    PP_Linemarker (mk_line_directive region linenum filename flag)
 
   let mk_lang region =
     Region.{value = {value = "Ghost_lang"; region}; region}
