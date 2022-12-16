@@ -37,14 +37,14 @@ PASS,switch_with_not_last_default.jsligo,4,20,8,150,1
 PASS,triple_eq_in_if_condition.jsligo,2,17,3,113,0
 PASS,unfinished_code00.jsligo,3,6,6,446,0
 PASS,unfinished_code01.jsligo,2,2,2,446,0
-PASS,unfinished_code02.jsligo,18,174,64,446,2
-PASS,unfinished_code03.jsligo,65,810,108,446,22
+PASS,unfinished_code02.jsligo,5,10,8,446,0
+PASS,unfinished_code03.jsligo,63,804,102,446,20
 PASS,unfinished_code04.jsligo,2,25,23,446,0
 PASS,unfinished_code05.jsligo,2,8,8,446,0
 PASS,unfinished_code06.jsligo,2,10,10,446,0
 PASS,unfinished_code07.jsligo,2,2,2,446,0
 PASS,unfinished_code08.jsligo,4,8,6,446,0
-PASS,unfinished_code09.jsligo,5,7,7,125,1
+PASS,unfinished_code09.jsligo,2,2,2,125,0
 PASS,unfinished_code10.jsligo,2,234,8,444,0
 PASS,unfinished_code11.jsligo,2,2,2,446,0
 PASS,unfinished_code12.jsligo,2,7,7,185,0
