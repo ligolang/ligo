@@ -672,12 +672,14 @@ let resolve_module_aliases_to_module_ids : def list -> def list =
 
 
 let scopes
-    :  with_types:bool -> options:Compiler_options.middle_end -> AST.module_
-    -> def list * scopes
+    :  with_types:bool -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program
+    -> AST.module_ -> def list * scopes
   =
- fun ~with_types ~options prg ->
+ fun ~with_types ~options ~stdlib prg ->
   let () = reset_counter () in
   let tenv = { type_env = options.init_env; bindings = Misc.Bindings_map.empty } in
+  let type_env = Environment.append options.init_env stdlib in
+  let tenv = { tenv with type_env } in
   let defs, _, _, scopes = declarations ~with_types ~options tenv prg in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
