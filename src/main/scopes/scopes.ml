@@ -27,6 +27,18 @@ let rec drop_last : 'a list -> 'a * 'a list =
     last, x :: xs
 
 
+let set_core_type_if_possible
+    :  AST.type_expression option Binder.t list -> AST.expression
+    -> AST.type_expression option Binder.t list * AST.expression
+  =
+ fun binders expr ->
+  match binders, expr.expression_content with
+  | [ binder ], AST.E_ascription { anno_expr; type_annotation } ->
+    let binder = Binder.set_ascr binder (Some type_annotation) in
+    [ binder ], anno_expr
+  | _ -> binders, expr
+
+
 let update_typing_env
     :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
     -> AST.declaration -> typing_env
@@ -382,6 +394,7 @@ let rec expression
   | E_let_in { let_binder; rhs; let_result; _ } ->
     let t_refs = find_pattern_type_references let_binder in
     let binders = AST.Pattern.binders let_binder in
+    let binders, rhs = set_core_type_if_possible binders rhs in
     let defs_binder =
       List.concat_map binders ~f:(fun binder ->
           let var = Binder.get_var binder in
@@ -596,9 +609,7 @@ and declaration
   | D_irrefutable_match { pattern; expr; _ } ->
     let t_refs = find_pattern_type_references pattern in
     let binders = AST.Pattern.binders pattern in
-    (* 
-      TODO: neeed to handle core_type when P_ascr   
-    let core_type = Binder.get_ascr binder in *)
+    let binders, expr = set_core_type_if_possible binders expr in
     let defs, refs, env, scopes =
       declaration_expression ~with_types ~options tenv binders expr
     in
