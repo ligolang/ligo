@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n### For a file like\\n\\n\\n```ts\\ntype user = {\\n  is_admin : bool,\\n};\\n\\nconst alice : user = {\\n  is_admin : true,\\n};\\n\\nconst alice_admin : bool = alice.i\\n\\n```\\n\\n### Before fix\\n\\n\\n```bash\\n$ ligo.57 info get-scope y.jsligo --format dev --with-types\\n...\\nVariable definitions:\\n(alice#1 -> alice) \\n...\\nContent: |unresolved|\\n...\\n(alice_admin#2 -> alice_admin) \\n...\\nContent: |unresolved|\\n...\\n...\\n\\n```\\n\\n### After fix\\n\\n\\n```bash\\n$ ligo info get-scope y.jsligo --format dev --with-types\\n...\\nVariable definitions:\\n(alice#1 -> alice) \\n...\\nContent: |core: user|\\n...\\n(alice_admin#2 -> alice_admin) \\n...\\nContent: |core: bool|\\n...\\n...\\n\\n```\\n\\n"
+merge_request: '2219'
+title: "Fix `unresolved` types in `get-scope`"
+type: fixed
+            
