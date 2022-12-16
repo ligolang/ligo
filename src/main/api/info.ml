@@ -54,4 +54,6 @@ let get_scope (raw_options : Raw_options.t) source_file display_format () =
   let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
   let Compiler_options.{ with_types; _ } = options.tools in
   let core_prg = Build.unqualified_core ~raise ~options source_file in
-  Scopes.scopes ~options:options.middle_end ~with_types core_prg
+  let lib = Build.Stdlib.get ~options in
+  let stdlib = Build.Stdlib.select_lib_typed syntax lib in
+  Scopes.scopes ~options:options.middle_end ~with_types ~stdlib core_prg 

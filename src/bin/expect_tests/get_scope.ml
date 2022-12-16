@@ -514,7 +514,7 @@ let%expect_test _ =
     (b#4 -> b)
     Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 3, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 33
-    Content: |unresolved|
+    Content: |resolved: list (int)|
     references: []
     (c#1 -> c)
     Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 10-11
@@ -525,13 +525,13 @@ let%expect_test _ =
     (d#2 -> d)
     Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 26-27
     Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 30-31
-    Content: |unresolved|
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 35-36
     (e#3 -> e)
     Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 9-10
     Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 13-14
-    Content: |unresolved|
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 20-21 ,
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 27-28

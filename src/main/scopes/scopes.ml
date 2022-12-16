@@ -27,6 +27,18 @@ let rec drop_last : 'a list -> 'a * 'a list =
     last, x :: xs
 
 
+let set_core_type_if_possible
+    :  AST.type_expression option Binder.t list -> AST.expression
+    -> AST.type_expression option Binder.t list * AST.expression
+  =
+ fun binders expr ->
+  match binders, expr.expression_content with
+  | [ binder ], AST.E_ascription { anno_expr; type_annotation } ->
+    let binder = Binder.set_ascr binder (Some type_annotation) in
+    [ binder ], anno_expr
+  | _ -> binders, expr
+
+
 let update_typing_env
     :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
     -> AST.declaration -> typing_env
@@ -380,8 +392,9 @@ let rec expression
     defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
-    let t_refs = find_pattern_type_references let_binder in
     let binders = AST.Pattern.binders let_binder in
+    let binders, rhs = set_core_type_if_possible binders rhs in
+    let t_refs = List.concat (List.map ~f:find_binder_type_references binders) in
     let defs_binder =
       List.concat_map binders ~f:(fun binder ->
           let var = Binder.get_var binder in
@@ -594,11 +607,9 @@ and declaration
     let def, defs_expr = drop_last defs_expr in
     defs_expr @ [ def ], refs_rhs @ t_refs, tenv, scopes
   | D_irrefutable_match { pattern; expr; _ } ->
-    let t_refs = find_pattern_type_references pattern in
     let binders = AST.Pattern.binders pattern in
-    (* 
-      TODO: neeed to handle core_type when P_ascr   
-    let core_type = Binder.get_ascr binder in *)
+    let binders, expr = set_core_type_if_possible binders expr in
+    let t_refs = List.concat (List.map ~f:find_binder_type_references binders) in
     let defs, refs, env, scopes =
       declaration_expression ~with_types ~options tenv binders expr
     in
@@ -672,12 +683,14 @@ let resolve_module_aliases_to_module_ids : def list -> def list =
 
 
 let scopes
-    :  with_types:bool -> options:Compiler_options.middle_end -> AST.module_
-    -> def list * scopes
+    :  with_types:bool -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program
+    -> AST.module_ -> def list * scopes
   =
- fun ~with_types ~options prg ->
+ fun ~with_types ~options ~stdlib prg ->
   let () = reset_counter () in
   let tenv = { type_env = options.init_env; bindings = Misc.Bindings_map.empty } in
+  let type_env = Environment.append options.init_env stdlib in
+  let tenv = { tenv with type_env } in
   let defs, _, _, scopes = declarations ~with_types ~options tenv prg in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
