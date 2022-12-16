@@ -6,6 +6,28 @@ module Std = Simple_utils.Std
 
 (* Insertion *)
 
+let mk_semi r =
+  let open! Token in
+  let start = (r#shift_one_uchar (-1))#stop in
+  let stop = r#stop in
+  let region = Region.make ~start ~stop in
+  SEMI (Token.wrap_semi region)
+
+let rec there_is_a_decl_next tokens =
+  let open! Token in
+  match tokens with
+  | [] -> false
+  | LineCom _ :: tokens
+  | BlockCom _ :: tokens ->
+    there_is_a_decl_next tokens
+  | Directive _ :: _
+  | Namespace _ :: _
+  | Export _ :: _
+  | Let _ :: _
+  | Const _ :: _
+  | Type _ :: _-> true
+  | _ -> false
+
 let semicolon_insertion tokens =
   let open! Token in
   let rec inner result = function
@@ -15,10 +37,11 @@ let semicolon_insertion tokens =
     inner (t :: result) rest
   | (BlockCom _ as t) :: rest ->
     inner (t :: result) rest
-  | (RBRACE _ as r) :: (LineCom _ as t) :: rest -> 
-    inner (t:: Token.ghost_SEMI :: r :: result) rest
-  | (_ as semi) :: (LineCom _ as t) :: rest
-  | (_ as semi) :: (BlockCom _ as t) :: rest
+  | (RBRACE _ as rbrace) :: (LineCom _ as t) :: rest ->
+    let (s, _) = Token.proj_token rbrace in
+    inner (t:: mk_semi s :: rbrace :: result) rest
+  | (SEMI _ as semi) :: (LineCom _ as t) :: rest
+  | (SEMI _ as semi) :: (BlockCom _ as t) :: rest
   | (SEMI _ as semi) :: (Directive _ as t)  :: rest
   | (SEMI _ as semi) :: (Namespace _ as t)  :: rest
   | (SEMI _ as semi) :: (Export _ as t)  :: rest
@@ -26,6 +49,8 @@ let semicolon_insertion tokens =
   | (SEMI _ as semi) :: (Const _ as t)  :: rest
   | (SEMI _ as semi) :: (Type _ as t)  :: rest
   | (SEMI _ as semi) :: (Return _ as t)  :: rest
+  | (LBRACE _ as semi) :: (LineCom _ as t) :: rest
+  | (LBRACE _ as semi) :: (BlockCom _ as t) :: rest
   | (LBRACE _ as semi) :: (Directive _ as t)  :: rest
   | (LBRACE _ as semi) :: (Namespace _ as t)  :: rest
   | (LBRACE _ as semi) :: (Export _ as t)  :: rest
@@ -33,6 +58,8 @@ let semicolon_insertion tokens =
   | (LBRACE _ as semi) :: (Const _ as t)  :: rest
   | (LBRACE _ as semi) :: (Type _ as t)  :: rest
   | (LBRACE _ as semi) :: (Return _ as t)  :: rest
+  | (COLON _ as semi) :: (LineCom _ as t) :: rest
+  | (COLON _ as semi) :: (BlockCom _ as t) :: rest
   | (COLON _ as semi) :: (Directive _ as t)  :: rest  
   | (COLON _ as semi) :: (Namespace _ as t)  :: rest
   | (COLON _ as semi) :: (Export _ as t)  :: rest
@@ -41,6 +68,13 @@ let semicolon_insertion tokens =
   | (COLON _ as semi) :: (Type _ as t)  :: rest
   | (COLON _ as semi) :: (Return _ as t)  :: rest ->
     inner (t:: semi :: result) rest
+  | token :: (LineCom _ as t) :: rest
+  | token :: (BlockCom _ as t) :: rest ->
+    if there_is_a_decl_next rest then
+      let (r, _) = Token.proj_token token in
+      inner (t :: mk_semi r :: token :: result) rest
+    else
+      inner (t :: token :: result) rest
   | (SEMI _) :: (Case _ as t) :: rest
   | (SEMI _) :: (Default _ as t) :: rest
   | (SEMI _) :: (Else _ as t) :: rest ->
@@ -52,7 +86,8 @@ let semicolon_insertion tokens =
   | (RBRACE _ as rbrace) :: (Const _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Ident _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest ->
-    inner (r :: Token.ghost_SEMI :: rbrace :: result ) rest
+    let (s, _) = Token.proj_token rbrace in
+    inner (r :: mk_semi s :: rbrace :: result ) rest
   | token :: (Directive _ as t) :: rest
   | token :: (Namespace _ as t) :: rest
   | token :: (Export _ as t) :: rest
@@ -62,13 +97,14 @@ let semicolon_insertion tokens =
   | token :: (Return _ as t) :: rest ->
     let (r, _) = Token.proj_token token in
     let (r2, _) = Token.proj_token t in
+    let semi = mk_semi r in
     if r#stop#line < r2#start#line  then (
-      inner (t :: SEMI (Token.wrap ";" (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop)) :: token :: result) rest
+      inner (t :: semi :: token :: result) rest
     )
     else (
       match token with
         RBRACE _ as t ->
-        inner (t :: SEMI (Token.wrap_semi (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop)) :: token :: result) rest
+        inner (t :: semi :: token :: result) rest
       | _ ->
         inner (t :: token :: result) rest
     )
