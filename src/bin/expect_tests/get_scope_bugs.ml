@@ -4,8 +4,15 @@ let gs s = "../../test/contracts/get_scope_tests/bugs/" ^ s
 
 let%expect_test _ =
   run_ligo_good
-    [ "info"; "get-scope"; gs "missing_stdlib_and_let_mut_in.jsligo"; "--format"; "dev"; "--with-types" ];
-  [%expect {|
+    [ "info"
+    ; "get-scope"
+    ; gs "missing_stdlib_and_let_mut_in.jsligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ];
+  [%expect
+    {|
     Scopes:
     [ _useless#2 s#0  ] File "../../test/contracts/get_scope_tests/bugs/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
     [ do_nothing#1 s#0  ] File "../../test/contracts/get_scope_tests/bugs/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 2-26
@@ -46,7 +53,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good
     [ "info"; "get-scope"; gs "missing_stdlib.ligo"; "--format"; "dev"; "--with-types" ];
-  [%expect {|
+  [%expect
+    {|
     Scopes:
     [ p#0  ] File "../../test/contracts/get_scope_tests/bugs/missing_stdlib.ligo", line 2, characters 30-55
     [ c#1 p#0  ] File "../../test/contracts/get_scope_tests/bugs/missing_stdlib.ligo", line 3, characters 7-23
@@ -71,3 +79,44 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/bugs/missing_stdlib.ligo", line 2, characters 54-55
     Type definitions:
     Module definitions: |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "buggy_file_with_core_types.jsligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [ user#0  ] File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 8, character 13 to line 9, character 17
+    [ user#0  ] File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 10, characters 13-20
+    [ alice#1 user#0  ] File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 13, characters 25-30
+
+    Variable definitions:
+    (alice#1 -> alice)
+    Range: File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 7, characters 6-11
+    Body Range: File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 7, character 21 to line 11, character 1
+    Content: |core: user|
+    references:
+      File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 13, characters 25-30
+    (alice_admin#2 -> alice_admin)
+    Range: File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 13, characters 4-15
+    Body Range: File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 13, characters 25-32
+    Content: |core: bool|
+    references: []
+    Type definitions:
+    (user#0 -> user)
+    Range: File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 1, characters 5-9
+    Body Range: File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 1, character 12 to line 5, character 1
+    Content: : |record[id -> nat , is_admin -> bool , name -> string]|
+    references: []
+    Module definitions:
+    File "../../test/contracts/get_scope_tests/bugs/buggy_file_with_core_types.jsligo", line 13, characters 0-32:
+     12 |
+     13 | let alice_admin : bool = alice.i
+
+    Toplevel let declaration are silently change to const declaration. |}]
