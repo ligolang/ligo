@@ -392,9 +392,9 @@ let rec expression
     defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
-    let t_refs = find_pattern_type_references let_binder in
     let binders = AST.Pattern.binders let_binder in
     let binders, rhs = set_core_type_if_possible binders rhs in
+    let t_refs = List.concat (List.map ~f:find_binder_type_references binders) in
     let defs_binder =
       List.concat_map binders ~f:(fun binder ->
           let var = Binder.get_var binder in
@@ -607,9 +607,9 @@ and declaration
     let def, defs_expr = drop_last defs_expr in
     defs_expr @ [ def ], refs_rhs @ t_refs, tenv, scopes
   | D_irrefutable_match { pattern; expr; _ } ->
-    let t_refs = find_pattern_type_references pattern in
     let binders = AST.Pattern.binders pattern in
     let binders, expr = set_core_type_if_possible binders expr in
+    let t_refs = List.concat (List.map ~f:find_binder_type_references binders) in
     let defs, refs, env, scopes =
       declaration_expression ~with_types ~options tenv binders expr
     in
