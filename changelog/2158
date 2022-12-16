@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nImproves the semi-colon insertion for jsligo\\n\\n### Example file\\n\\n\\n```ts\\nconst test1 = 1\\n/* Hello */\\n// There\\n/* Hello */\\n// Again\\nconst test2 = 2\\n\\n```\\n\\n### Before Fix\\n\\n\\n```bash\\n$ ligo.57 run test y.jsligo \\nFile \"y.jsligo\", line 6, characters 0-5:\\n  5 | // Again\\n  6 | const test2 = 2\\nIll-formed top-level statement.\\nAt this point, if the statement is complete, one of the following is\\nexpected:\\n  * a semicolon ';' followed by another statement;\\n  * a semicolon ';' followed by the end of file;\\n  * the end of the file.\\n\\n```\\n\\n### After Fix\\n\\n\\n```bash\\n$ ligo run test y.jsligo \\nEverything at the top-level was executed.\\n- test1 exited with value 1.\\n- test2 exited with value 2.\\n\\n```\\n\\n"
+merge_request: '2158'
+title: "Fix missing semicolon before comments in jsligo"
+type: fixed
+            
