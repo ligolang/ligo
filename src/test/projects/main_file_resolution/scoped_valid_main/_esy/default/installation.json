@@ -1,0 +1,6 @@
+{
+  "scoped_valid_main@link-dev:./package.json":
+    "/home/melwyn95/projects/ligo/src/test/projects/main_file_resolution/scoped_valid_main",
+  "@ligo/bigarray@1.0.0@d41d8cd9":
+    "./.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c"
+}
