@@ -165,7 +165,12 @@ const main = (action: parameter, store: storage): [list<operation>, storage] => 
 </Syntax>
 <br/>
 
-> Note: When using LIGO packages the `#import`/`#include` syntax is of the form
+> Note: When using LIGO packages via `#import`/`#include` 
+>
+> If only the name of the package is provided, it will be resolved to
+> the `main` file of the package.
+>
+> If you want to import a specific file from the package, the syntax is of the form
 > 
 > `#import "<pkg name>/<file in package>" "Module"`
 >
