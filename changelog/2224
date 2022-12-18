@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n### For a file like\\n\\n\\n```ocaml\\n#import \"@ligo/bigarray\" \"BA\"\\n\\nlet test = BA.concat [1 ; 2 ; 3] [4 ; 5 ; 6]\\n\\n```\\n\\n### Before change\\n\\n\\n```bash\\n$ ligo.55 run test main.mligo \\nFile \"main.mligo\", line 1, characters 0-29:\\n  1 | #import \"@ligo/bigarray\" \"BA\"\\n  2 | \\nFile \"@ligo/bigarray\" not found.\\n\\n```\\n\\n### After change\\n\\n\\n```bash\\n$ ligo run test main.mligo\\nEverything at the top-level was executed.\\n- test exited with value [1 ; 2 ; 3 ; 4 ; 5 ; 6].\\n\\n```\\n\\n"
+merge_request: '2224'
+title: "[Package Management] Resolve `main` file when only the package name is provided in `#import`/`#include`"
+type: added
+            
