@@ -1,14 +1,15 @@
 ;; Build of the self passes on the lexical units of PyLIGO
 
 (library
-  (name lexing_pyligo_self_units)
-  (public_name ligo.lexing.pyligo.self.units)
-  (instrumentation (backend bisect_ppx))
-  (libraries
-     ;; Vendors
-     simple-utils
-     LexerLib
-     ;; LIGO
-     lexing_shared
-     lexing_pyligo_self_tokens)
-  (modules Self ZWSP Multiline Indent))
+ (name lexing_pyligo_self_units)
+ (public_name ligo.lexing.pyligo.self.units)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries
+  ;; Vendors
+  simple-utils
+  LexerLib
+  ;; LIGO
+  lexing_shared
+  lexing_pyligo_self_tokens)
+ (modules Self ZWSP Multiline Indent))
