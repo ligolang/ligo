@@ -1,0 +1,27 @@
+{
+  "name": "@ligo/bigarray",
+  "version": "1.0.0",
+  "description": "A LIGO library with a neat abstraction over list",
+  "main": "lib/bigarray.mligo",
+  "author": "LIGO developers",
+  "repository": "https://github.com/ligolang/bigarray-cameligo",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ligolang/bigarray-cameligo.git"
+  },
+  "keywords": [
+    "ligo",
+    "tezos",
+    "tezos-ligo",
+    "cameligo"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ligolang/bigarray-cameligo/issues"
+  },
+  "homepage": "https://ligolang.org/"
+}

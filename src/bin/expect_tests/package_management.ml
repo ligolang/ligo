@@ -402,6 +402,45 @@ let%expect_test _ =
     main
     hello |}]
 
+(* main file resolution tests *)
+
+let () = Caml.Sys.chdir "main_file_resolution/valid_main"
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; "main.mligo" ];
+  [%expect
+    {|
+    "Hello World"
+    Everything at the top-level was executed.
+    - test exited with value (). |}];
+  Caml.Sys.chdir pwd;
+  Caml.Sys.chdir "main_file_resolution/invalid_main";
+  run_ligo_bad [ "run"; "test"; "main.mligo" ];
+  [%expect
+    {|
+    File "main.mligo", line 1, characters 0-36:
+      1 | #import "ligo-breathalyzer" "Breath"
+      2 |
+    File "ligo-breathalyzer" not found. |}];
+  Caml.Sys.chdir pwd;
+  Caml.Sys.chdir "main_file_resolution/scoped_valid_main";
+  run_ligo_good [ "run"; "test"; "main.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value [1 ; 2 ; 3 ; 4 ; 5 ; 6]. |}];
+  Caml.Sys.chdir pwd;
+  Caml.Sys.chdir "main_file_resolution/scoped_invalid_main";
+  run_ligo_bad [ "run"; "test"; "main.mligo" ];
+  [%expect
+    {|
+    File "main.mligo", line 1, characters 0-29:
+      1 | #import "@ligo/bigarray" "BA"
+      2 |
+    File "@ligo/bigarray" not found. |}]
+
+let () = Caml.Sys.chdir pwd
+
 (* ligo publish tests *)
 
 let ligo_bin_path = "../../../../../install/default/bin/ligo"

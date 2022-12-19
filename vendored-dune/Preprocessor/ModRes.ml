@@ -187,6 +187,15 @@ module Esy =
   struct
     let ( / ) = Path.join
 
+    (* The function [find_manifest_path] finds manifest file for a package. *)
+
+    let find_manifest_path directory = 
+      if Stdlib.Sys.file_exists (directory / "esy.json") 
+      then Some (directory / "esy.json")
+      else if Stdlib.Sys.file_exists (directory / "package.json")
+      then Some (directory / "package.json")
+      else None
+
     (* Path to installation.json *)
 
     let installation_json_path path =
@@ -475,6 +484,22 @@ let get_dependencies ~file = function
     in
     aux path
 
+(* The function [get_main_field_from_manifest] take a root [directory] 
+   and reads the LIGO manifest inside the directory and looks for the 
+   main field in the manifest.
+
+   Note: The main field in the LIGO manifest is the path the main file that
+   exposes the functionality of a package. *)
+
+let get_main_field_from_manifest directory =
+  let  module Util = Yojson.Basic.Util in
+  let* ligo_manifest = Esy.find_manifest_path directory in
+  let* manifest = JsonHelpers.from_file_opt ligo_manifest in
+  let  main = Util.member "main" manifest in
+  match main with
+    `Null -> None
+  | `String f -> Some (Path.join directory f)
+
 (* The call [find_external_file ~file ~inclusion_paths] specifically
    resolves files for LIGO packages downloaded via esy.
 
@@ -495,7 +520,7 @@ let get_dependencies ~file = function
    [inclusion_paths]. *)
 
 let find_external_file ~file ~inclusion_paths =
-  let find_in_inclusion_paths ?scope pkg_name =
+  let find_package_root_dir ?scope pkg_name =
     let normalized_pkg_name = Esy.normalize_pkg_name ?scope pkg_name in
     let predicate (Path pkg_path) =
       String.(normalized_pkg_name = Esy.extract_pkg_name pkg_path)
@@ -504,17 +529,26 @@ let find_external_file ~file ~inclusion_paths =
   let* segs = Path.segs (Path.v file) in
   let* segs =
     match segs with
-      scope :: pkg_name :: rest_of_path
-        when Core.String.is_prefix ~prefix:"@" scope ->
-        (* scoped npm packages are of the form `@scope/pkg` *)
+      [scope ; pkg_name]
+      when Core.String.is_prefix ~prefix:"@" scope -> 
       let scope = Core.String.chop_prefix_exn ~prefix:"@" scope in
-      let* Path dir = find_in_inclusion_paths ~scope pkg_name in
+      let* Path dir = find_package_root_dir ~scope pkg_name in
+      let* main_file = get_main_field_from_manifest dir in
+      Some main_file
+    | [pkg_name] -> 
+      let* Path dir = find_package_root_dir pkg_name in
+      let* main_file = get_main_field_from_manifest dir in
+      Some main_file
+    | scope :: pkg_name :: rest_of_path
+      when Core.String.is_prefix ~prefix:"@" scope ->
+      (* scoped npm packages are of the form `@scope/pkg` *)
+      let scope = Core.String.chop_prefix_exn ~prefix:"@" scope in
+      let* Path dir = find_package_root_dir ~scope pkg_name in
       let rest_of_path =
         String.concat ~sep:"/" rest_of_path
       in Some (Path.join dir rest_of_path)
-    | [pkg_name] -> None
     | pkg_name :: rest_of_path ->
-       let* Path dir = find_in_inclusion_paths pkg_name in
+       let* Path dir = find_package_root_dir pkg_name in
        let rest_of_path =
          String.concat ~sep:"/" rest_of_path
        in Some (Path.join dir rest_of_path)
