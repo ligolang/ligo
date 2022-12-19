@@ -2,16 +2,16 @@ type t is record[ a : ticket(int) ; b : ticket(string) ; c : ticket(nat) ]
 
 const record[ a = a1 ; b = b1 ; c = c1 ]
     = record
-      [ a = Tezos.create_ticket (1, 10n)
-      ; b = Tezos.create_ticket ("one", 10n)
-      ; c = Tezos.create_ticket (1n, 10n)
+      [ a = Option.unopt (Tezos.create_ticket (1, 10n))
+      ; b = Option.unopt (Tezos.create_ticket ("one", 10n))
+      ; c = Option.unopt (Tezos.create_ticket (1n, 10n))
       ]
 
 const record[ a = a2 ; c = c2 ; b = b2 ]
     = record
-      [ a = Tezos.create_ticket (2, 10n)
-      ; b = Tezos.create_ticket ("TWO", 10n)
-      ; c = Tezos.create_ticket (3n, 10n)
+      [ a = Option.unopt (Tezos.create_ticket (2, 10n))
+      ; b = Option.unopt (Tezos.create_ticket ("TWO", 10n))
+      ; c = Option.unopt (Tezos.create_ticket (3n, 10n))
       ]
 
 type storage is ticket(int) * ticket(string) * ticket(nat)

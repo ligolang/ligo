@@ -1,6 +1,6 @@
 type t = { b : string ticket }
 
-let { b } = { b = Tezos.create_ticket "one" 10n }
+let { b } = { b = Option.unopt (Tezos.create_ticket "one" 10n) }
 
 type storage = string ticket
 

@@ -1,6 +1,6 @@
 type t = { b : ticket<string> }
 
-const { b } = { b : Tezos.create_ticket("one", 10 as nat) }
+const { b } = { b : Option.unopt(Tezos.create_ticket("one", 10 as nat)) }
 
 type storage = ticket<string>
 

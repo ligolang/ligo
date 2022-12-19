@@ -1025,12 +1025,13 @@ let create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 
 To create a ticket, the value and the amount of tickets to be created needs to be provided.
 The ticket will also contain the contract address it originated from (which corresponds to `Tezos.self`).
+The resulting value is `None` if the amount is zero.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=manip_ticket
-const my_ticket1 = Tezos.create_ticket (1, 10n)
-const my_ticket2 = Tezos.create_ticket ("one", 10n)
+const my_ticket1 = Option.unopt (Tezos.create_ticket (1, 10n))
+const my_ticket2 = Option.unopt (Tezos.create_ticket ("one", 10n))
 ```
 
 </Syntax>
@@ -1038,8 +1039,8 @@ const my_ticket2 = Tezos.create_ticket ("one", 10n)
 <Syntax syntax="cameligo">
 
 ```cameligo group=manip_ticket
-let my_ticket1 = Tezos.create_ticket 1 10n
-let my_ticket2 = Tezos.create_ticket "one" 10n
+let my_ticket1 = Option.unopt (Tezos.create_ticket 1 10n)
+let my_ticket2 = Option.unopt (Tezos.create_ticket "one" 10n)
 ```
 
 </Syntax>
@@ -1047,16 +1048,16 @@ let my_ticket2 = Tezos.create_ticket "one" 10n
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=manip_ticket
-let my_ticket1 = Tezos.create_ticket(1, 10n);
-let my_ticket2 = Tezos.create_ticket("one", 10n);
+let my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
+let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-let my_ticket1 = Tezos.create_ticket(1, 10 as nat);
-let my_ticket2 = Tezos.create_ticket("one", 10 as nat);
+let my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10 as nat));
+let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10 as nat));
 ```
 
 </Syntax>
@@ -1217,8 +1218,8 @@ an amount equal to the sum of the amounts of the input tickets.
 
 ```pascaligo group=manip_ticket
 const tc = {
-  const ta = Tezos.create_ticket (1, 10n);
-  const tb = Tezos.create_ticket (1, 5n)
+  const ta = Option.unopt (Tezos.create_ticket (1, 10n));
+  const tb = Option.unopt (Tezos.create_ticket (1, 5n))
 } with Tezos.join_tickets ((ta, tb))
 ```
 
@@ -1228,8 +1229,8 @@ const tc = {
 
 ```cameligo group=manip_ticket
 let tc : int ticket option =
-  let ta = Tezos.create_ticket 1 10n in
-  let tb = Tezos.create_ticket 1 5n in
+  let ta = Option.unopt (Tezos.create_ticket 1 10n) in
+  let tb = Option.unopt (Tezos.create_ticket 1 5n) in
   Tezos.join_tickets (ta, tb)
 ```
 
@@ -1239,8 +1240,8 @@ let tc : int ticket option =
 
 ```reasonligo group=manip_ticket
 let tc =
-  let ta = Tezos.create_ticket(1, 10n);
-  let tb = Tezos.create_ticket(1, 5n);
+  let ta = Option.unopt(Tezos.create_ticket(1, 10n));
+  let tb = Option.unopt(Tezos.create_ticket(1, 5n));
   Tezos.join_tickets((ta, tb));
 ```
 
@@ -1248,8 +1249,8 @@ let tc =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket2
-let ta = Tezos.create_ticket(1, 10 as nat);
-let tb = Tezos.create_ticket(1, 5 as nat);
+let ta = Option.unopt(Tezos.create_ticket(1, 10 as nat));
+let tb = Option.unopt(Tezos.create_ticket(1, 5 as nat));
 let tc = Tezos.join_tickets([ta, tb]);
 ```
 
@@ -1268,7 +1269,7 @@ type parameter is int
 type return is list (operation) * storage
 
 function main (const i : parameter ; const store : storage) : return is {
-  const my_ticket1 = Tezos.create_ticket (i, 10n);
+  const my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
   const res = Big_map.get_and_update ("hello", (Some (my_ticket1)), store);
   var res := (nil, store);
   case res of [(t,x) -> res := (nil, x)]
@@ -1286,7 +1287,7 @@ type return = operation list * storage
 
 let main (x : parameter * storage) : return =
   let i, store = x in
-  let my_ticket1 = Tezos.create_ticket i 10n in
+  let my_ticket1 = Option.unopt (Tezos.create_ticket i 10n) in
   let _, x = Big_map.get_and_update "hello" (Some my_ticket1) store
   in [], x
 ```
@@ -1303,7 +1304,7 @@ type return = (list (operation), storage);
 
 let main = (x : (parameter , storage)) : return => {
   let (i,store) = x ;
-  let my_ticket1 = Tezos.create_ticket (i, 10n) ;
+  let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n)) ;
   let (_,x) = Big_map.get_and_update ("hello", Some(my_ticket1), store) ;
   ([], x)
 };
@@ -1321,7 +1322,7 @@ type return_ = [list<operation>, storage];
 
 let main = (x: [parameter, storage]): return_ => {
   let [i, store] = x ;
-  let my_ticket1 = Tezos.create_ticket (i, 10 as nat);
+  let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10 as nat));
   let [_, x] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
   return [list([]), x]
 };

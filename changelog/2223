@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nBy default, Lima protocol is used as current. This affects compilation of certain primitives (such as `Tezos.create_ticket` and contracts using `chest`, [see changelog for Lima protocol introduction for more information](https://gitlab.com/ligolang/ligo/-/merge_requests/2094#changelog)).\\n\\nKathmandu can still be used passing the flag `--protocol kathmandu`.\\n\\n"
+merge_request: '2223'
+title: "Set `current` protocol to Lima"
+type: breaking
+            

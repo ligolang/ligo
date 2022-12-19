@@ -1,4 +1,4 @@
-let (b, _) = (Tezos.create_ticket ("one", 10n), 1)
+let (b, _) = (Option.unopt (Tezos.create_ticket ("one", 10n)), 1)
 
 type storage = ticket(string)
 

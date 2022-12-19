@@ -1,4 +1,4 @@
-const (b, _) = (Tezos.create_ticket ("one", 10n), 1)
+const (b, _) = (Option.unopt (Tezos.create_ticket ("one", 10n)), 1)
 
 type storage is ticket(string)
 

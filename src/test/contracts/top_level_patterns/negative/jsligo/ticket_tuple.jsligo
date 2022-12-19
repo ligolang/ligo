@@ -1,4 +1,4 @@
-const [b, _] = [Tezos.create_ticket("one", 10 as nat), 1]
+const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1]
 
 type storage = ticket<string>
 
