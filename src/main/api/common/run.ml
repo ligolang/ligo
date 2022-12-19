@@ -22,7 +22,9 @@ let test (raw_options : Raw_options.t) source_file display_format no_colour () =
   in
   let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
   let Compiler_options.{ steps; _ } = options.test_framework in
-  let typed = Build.qualified_typed ~raise ~options Env source_file in
+  let typed =
+    Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
+  in
   Interpreter.eval_test ~raise ~steps ~options typed
 
 
@@ -51,7 +53,8 @@ let test_expression
   let module Source_input = BuildSystem.Source_input in
   let init_prg =
     let f : Source_input.file_name -> Ast_typed.program =
-     fun filename -> Build.qualified_typed ~raise ~options Env filename
+     fun filename ->
+      Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file filename)
     in
     let default = Stdlib.select_lib_typed syntax (Stdlib.get ~options) in
     Option.value_map source_file ~f ~default
@@ -91,7 +94,9 @@ let dry_run
   let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
   let Compiler_options.{ entry_point; _ } = options.frontend in
   let entry_point = Value_var.of_input_var ~loc:Location.dummy entry_point in
-  let typed_prg = Build.qualified_typed ~raise ~options Env source_file in
+  let typed_prg =
+    Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
+  in
   let aggregated_prg =
     Compile.Of_typed.apply_to_entrypoint_contract
       ~raise
@@ -205,7 +210,9 @@ let evaluate_call
     Compiler_options.make ~protocol_version ~raw_options ~syntax ()
   in
   let Compiler_options.{ entry_point; _ } = options.frontend in
-  let init_prog = Build.qualified_typed ~raise Env ~options source_file in
+  let init_prog =
+    Build.qualified_typed ~raise Env ~options (Build.Source_input.From_file source_file)
+  in
   let meta = Compile.Of_source.extract_meta syntax in
   let c_unit_param, _ =
     Compile.Of_source.preprocess_string ~raise ~options:options.frontend ~meta parameter

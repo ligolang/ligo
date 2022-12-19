@@ -533,7 +533,7 @@ let compile_file =
     return_result ~return ~show_warnings ?output_file
     @@ Api.Compile.contract
          raw_options
-         source_file
+         (Api.Compile.File source_file)
          display_format
          michelson_format
          michelson_comments
