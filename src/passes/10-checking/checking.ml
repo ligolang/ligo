@@ -89,12 +89,12 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
     let%bind row = evaluate_row row in
     const @@ T_record row
   | T_variable tvar ->
-    (match%bind Context.get_type tvar with
-    | Some type_ -> lift type_
-    | None ->
-      (match%bind Context.get_type_var tvar with
-      | Some _ -> const @@ T_variable tvar
-      | None -> raise (unbound_type_variable tvar)))
+    (* Get the closest type or type variable with type var [tvar] *)
+    (match%bind
+       Context.get_type_or_type_var_exn tvar ~error:(unbound_type_variable tvar)
+     with
+    | `Type type_ -> lift type_
+    | `Type_var _kind -> const @@ T_variable tvar)
   | T_app { type_operator; arguments } ->
     (* TODO: Remove strong normalization (GA) *)
     (* 1. Find the type of the operator *)

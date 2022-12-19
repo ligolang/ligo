@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nFixed type variable shadowing issues. \\n\\n"
+merge_request: '2221'
+title: "🐛 Fix: Type Variable Shadowing Error"
+type: fixed
+            

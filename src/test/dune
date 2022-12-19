@@ -1,8 +1,7 @@
 (ocamllex md)
 
 (executables
- (names test doc_test repl_test vendors_test
-   contract_test get_scope_tests)
+ (names test doc_test repl_test vendors_test contract_test get_scope_tests)
  (libraries simple-utils tezos-memory-proto-alpha ligo ligo.unix bos repl
    interpreter alcotest tezos-utils tezos-crypto ligo_api))
 
@@ -98,7 +97,7 @@
   (alias vendors_test)
   (alias ligo-test)
   (alias doc-test)
-;;  (alias parser-negative-tests)
+  ;;  (alias parser-negative-tests)
   (alias repl-test)
   (alias contract_test)
   (alias error-recovery/recovery-test)

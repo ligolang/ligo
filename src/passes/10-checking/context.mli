@@ -79,6 +79,12 @@ val get_texists_var : t -> Type_var.t -> Kind.t option
 val get_texists_eq : t -> Type_var.t -> Type.t option
 val get_lexists_eq : t -> Layout_var.t -> Type.layout option
 val get_signature : t -> Module_var.t List.Ne.t -> Signature.t option
+
+val get_type_or_type_var
+  :  t
+  -> Type_var.t
+  -> [ `Type of Type.t | `Type_var of Kind.t ] option
+
 val add_signature_item : t -> Signature.item -> t
 val add_signature_items : t -> Signature.item list -> t
 val insert_at : t -> at:item -> hole:t -> t

@@ -1,31 +1,31 @@
 ;; Build of the PyLIGO lexer as a library
 
 (library
-  (name lexing_pyligo)
-  (public_name ligo.lexing.pyligo)
-  (modules Token)
-  (libraries
-    ;; LIGO
-    lexing_shared
-    menhir_pyligo_tokens
-    lexing_pyligo_self_units
-    lexing_pyligo_self_tokens
-    ;; Third party
-    str
-    hex))
+ (name lexing_pyligo)
+ (public_name ligo.lexing.pyligo)
+ (modules Token)
+ (libraries
+  ;; LIGO
+  lexing_shared
+  menhir_pyligo_tokens
+  lexing_pyligo_self_units
+  lexing_pyligo_self_tokens
+  ;; Third party
+  str
+  hex))
 
 ;; Build of a standalone lexer for CameLIGO
 
 (executable
-  (name LexerMain)
-  (libraries
-    ;; LIGO
-    preprocessing_pyligo
-    lexing_shared
-    lexing_pyligo
-    ;; Third party
-    str)
-  (modules Version LexerMain))
+ (name LexerMain)
+ (libraries
+  ;; LIGO
+  preprocessing_pyligo
+  lexing_shared
+  lexing_pyligo
+  ;; Third party
+  str)
+ (modules Version LexerMain))
 
 ;; --------------------------------------------------------------------
 ;; Build of the version source (for the user, as a CLI option)

@@ -379,6 +379,14 @@ module Context = struct
   let get_type tvar : _ t = lift_ctx (fun ctx -> Context.get_type ctx tvar)
   let get_type_exn tvar ~error = get_type tvar >>= raise_opt ~error
 
+  let get_type_or_type_var tvar : _ t =
+    lift_ctx (fun ctx -> Context.get_type_or_type_var ctx tvar)
+
+
+  let get_type_or_type_var_exn tvar ~error =
+    get_type_or_type_var tvar >>= raise_opt ~error
+
+
   let get_texists_var tvar ~error : _ t =
     lift_ctx (fun ctx -> Context.get_texists_var ctx tvar) >>= raise_opt ~error
 

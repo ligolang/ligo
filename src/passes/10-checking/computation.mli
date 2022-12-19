@@ -132,7 +132,10 @@ module Context : sig
   val get_mut_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
-      Returning [None] if not found in the current context. *)
+      Returning [None] if not found in the current context.
+        
+      Warning: you may encouter shadowing issues if you also want to access 
+      declared types. e.g. [type foo = int in ...] *)
 
   val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
 
@@ -142,10 +145,24 @@ module Context : sig
     -> (Kind.t, 'err, 'wrn) t
 
   (** [get_type tvar] returns the type bound to the type variable [tvar].
-      Returning [None] if not found in the current context. *)
+      Returning [None] if not found in the current context.
+        
+      Warning: you may encouter shadowing issues if you also want to access 
+      bound type variables. e.g. [fun (type a) ... -> ...] *)
 
   val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
   val get_type_exn : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+
+  (** [get_type_or_type_var tvar] returns the type or kind of the type variable [tvar].
+      Returning [None] if not found in the current context. *)
+  val get_type_or_type_var
+    :  Type_var.t
+    -> ([ `Type of Type.t | `Type_var of Kind.t ] option, 'err, 'wrn) t
+
+  val get_type_or_type_var_exn
+    :  Type_var.t
+    -> error:'err Errors.with_loc
+    -> ([ `Type of Type.t | `Type_var of Kind.t ], 'err, 'wrn) t
 
   (** [get_module mvar] returns signature of the module [mvar].
       Returning [None] if not found in the current context. *)

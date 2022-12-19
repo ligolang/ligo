@@ -37,8 +37,10 @@
   hex)
  (flags
   (:standard \ -open Core)
-  (-open Cst_jsligo ;; for CST in Parser.mli
-   -open Lexing_shared)))
+  (-open
+   Cst_jsligo ;; for CST in Parser.mli
+   -open
+   Lexing_shared)))
 
 ;; for Attr, Wrap in Parser.mli
 

@@ -142,6 +142,7 @@ let typed_prod =
     ; type_tfile "pattern_match4.jsligo"
     ; type_file "layout.pligo"
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
+    ; type_file "type_shadowing.mligo"
     ]
 
 

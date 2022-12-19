@@ -379,6 +379,18 @@ let get_type_var =
           | _ -> None) [@landmark "get_type_var"]))
 
 
+let get_type_or_type_var =
+  memoize2
+    hashable
+    (module Type_var)
+    (fun t tvar ->
+      (List.find_map t ~f:(function
+          | C_type_var (tvar', kind) when Type_var.equal tvar tvar' ->
+            Some (`Type_var kind)
+          | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some (`Type type_)
+          | _ -> None) [@landmark "get_type_or_type_var"]))
+
+
 let get_lexists_eq =
   memoize2
     hashable
