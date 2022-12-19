@@ -116,7 +116,7 @@ let rec pattern_env_extend_ ~(attributes : ValueAttr.t) ~(mut : bool)
   | P_tuple tups, V_Record vf ->
     let pf = List.mapi ~f:(fun i x -> Label.of_int i, x) tups in
     let* lst =
-      match List.zip pf (Record.to_list vf) with
+      match List.zip pf (Record.tuple_of_record vf) with
       | Ok pf -> return pf
       | Unequal_lengths -> fail @@ error_type ()
     in

@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat tuple_long.mligo \\ntype big_tuple = int * int * int * int * int * int * int * int * int * int * int * int\\n\\nlet br : big_tuple = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)\\n\\nlet f (x : big_tuple) =\\n  match x with\\n  | (x0, _x1, _x2, _x3, _x4, _x5, _x61, _x7, _x8, _x9, _x45, _x111) -> x0\\n\\nlet test = Test.assert (f br = 0)\\n\\n```\\n\\n#### Before fix\\n\\n\\n```\\n$ ligo run test tuple_long.mligo \\nFile \"tuple_long.mligo\", line 9, characters 24-28:\\n  8 | \\n  9 | let test = Test.assert (f br = 0)\\n\\nNo pattern matched\\n\\n```\\n\\n#### After fix\\n\\n\\n```\\n$ ligo run test tuple_long.mligo \\nEverything at the top-level was executed.   \\n- test exited with value ().\\n\\n```\\n\\n"
+merge_request: '2227'
+title: "Testing framework: issue with long tuples in matching"
+type: fixed
+            
