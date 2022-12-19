@@ -50,16 +50,16 @@ let%expect_test _ =
     ];
   [%expect
     {|
-  File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-50:
+  File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65:
     1 | module Foo = struct
-    2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
+    2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
     3 | end
   :
   Warning: variable "Foo.x" cannot be used more than once.
 
   Error(s) occurred while checking the contract:
-  At (unshown) location 8, type option (ticket nat) cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-  At (unshown) location 8, Ticket in unauthorized position (type error). |}]
+  At (unshown) location 15, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
+  At (unshown) location 15, Ticket in unauthorized position (type error). |}]
 
 let%expect_test _ =
   run_ligo_bad

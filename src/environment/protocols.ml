@@ -3,7 +3,7 @@ type t =
   | Lima
 [@@deriving eq, compare]
 
-let current = Kathmandu
+let current = Lima
 let in_use = Lima (* Protocol we depend on *)
 
 (* this list is used to print the list of protocols in the CLI help *)

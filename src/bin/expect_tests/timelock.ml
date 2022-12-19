@@ -1,7 +1,8 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; test "timelock.mligo" ];
+  run_ligo_good
+    [ "compile"; "contract"; test "timelock.mligo"; "--protocol"; "kathmandu" ];
   [%expect
     {|
     { parameter (pair chest_key chest) ;
@@ -21,7 +22,8 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; test "open_chest_result.mligo" ];
+  run_ligo_good
+    [ "compile"; "contract"; test "open_chest_result.mligo"; "--protocol"; "kathmandu" ];
   [%expect
     {|
     { parameter (or (or (unit %fail_d) (unit %fail_t)) (bytes %ok_o)) ;

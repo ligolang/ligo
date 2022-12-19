@@ -1113,7 +1113,7 @@ let%expect_test _ =
       3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
     At line 3 characters 38 to 50, value "KT1badaddr"
     is invalid for type address.
-    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
+    { "id": "proto.015-PtLimaPt.destination_repr.invalid_b58check",
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
       "data": { "input": "KT1badaddr" } } |}]
@@ -1850,7 +1850,13 @@ let%expect_test _ =
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "warning_duplicate3.mligo" ];
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "warning_duplicate3.mligo"
+    ; "--protocol"
+    ; "kathmandu"
+    ];
   [%expect
     {|
     { parameter (pair (chest %c) (chest_key %ck)) ;
@@ -3599,7 +3605,7 @@ let%expect_test _ =
     {|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }  |}]
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -3614,7 +3620,7 @@ let%expect_test _ =
     {|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }
            |}]
 
 let%expect_test _ =

@@ -211,7 +211,7 @@ let%expect_test _ =
 
     File "../../test/contracts/top_level_patterns/negative/reasonligo/ticket_record.religo", line 3, characters 6-7:
       2 |
-      3 | let { b } = { b : Tezos.create_ticket ("one", 10n) }
+      3 | let { b } = { b : Option.unopt (Tezos.create_ticket ("one", 10n)) }
       4 |
     :
     Warning: variable "b" cannot be used more than once.
@@ -224,7 +224,7 @@ let%expect_test _ =
 
     File "../../test/contracts/top_level_patterns/negative/reasonligo/ticket_record.religo", line 3, characters 6-7:
       2 |
-      3 | let { b } = { b : Tezos.create_ticket ("one", 10n) }
+      3 | let { b } = { b : Option.unopt (Tezos.create_ticket ("one", 10n)) }
       4 |
     :
     Warning: variable "b" cannot be used more than once.
@@ -234,6 +234,7 @@ let%expect_test _ =
              PUSH nat 10 ;
              PUSH string "one" ;
              TICKET ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
              DUP ;
              PAIR ;
              JOIN_TICKETS ;
@@ -258,7 +259,7 @@ let%expect_test _ =
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     File "../../test/contracts/top_level_patterns/negative/reasonligo/ticket_tuple.religo", line 1, characters 5-6:
-      1 | let (b, _) = (Tezos.create_ticket ("one", 10n), 1)
+      1 | let (b, _) = (Option.unopt (Tezos.create_ticket ("one", 10n)), 1)
       2 |
     :
     Warning: variable "b" cannot be used more than once.
@@ -270,7 +271,7 @@ let%expect_test _ =
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     File "../../test/contracts/top_level_patterns/negative/reasonligo/ticket_tuple.religo", line 1, characters 5-6:
-      1 | let (b, _) = (Tezos.create_ticket ("one", 10n), 1)
+      1 | let (b, _) = (Option.unopt (Tezos.create_ticket ("one", 10n)), 1)
       2 |
     :
     Warning: variable "b" cannot be used more than once.
@@ -281,6 +282,7 @@ let%expect_test _ =
              PUSH nat 10 ;
              PUSH string "one" ;
              TICKET ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
              SWAP ;
              DROP ;
              DUP ;

@@ -1,6 +1,6 @@
 type t is record[ b : ticket(string) ]
 
-const record[ b ] = record[ b = Tezos.create_ticket ("one", 10n) ]
+const record[ b ] = record[ b = Option.unopt (Tezos.create_ticket ("one", 10n)) ]
 
 type storage is ticket(string)
 
