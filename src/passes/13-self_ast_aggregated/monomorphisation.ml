@@ -299,17 +299,22 @@ let rec mono_polymorphic_expression ~raise
   | E_lambda { binder; output_type; result } ->
     let data, result = self data result in
     data, return (E_lambda { binder; output_type; result })
-  | E_type_abstraction { type_binder; result } ->
-    ignore (type_binder, result);
+  | E_type_abstraction { type_binder = _; result } ->
     raise.Trace.error
-      (Errors.corner_case
-         "Monomorphisation: E_type_abstraction found in unexpected position")
+      (Errors.monomorphisation_unexpected_type_abs expr.type_expression result)
   | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
     let data, result = self data result in
     ( data
     , return
         (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }) )
   | E_let_in { let_binder; rhs; let_result; attributes } ->
+    let () =
+      match AST.Combinators.get_t_arrow rhs.type_expression with
+      | Some { type1 = _; type2 } when AST.Combinators.is_t_for_all type2 ->
+        raise.Trace.error
+          (Errors.monomorphisation_unexpected_type_abs rhs.type_expression expr)
+      | _ -> ()
+    in
     let rhs =
       Trace.trace_option ~raise (Errors.monomorphisation_non_for_all rhs)
       @@ AST.Combinators.forall_expand_opt ~loc rhs

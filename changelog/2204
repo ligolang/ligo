@@ -1,0 +1,6 @@
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat annotate_arrow.mligo \\nlet f (_:unit) (_:nat option) = None\\n\\n```\\n\\n#### After fix\\n\\n\\n```\\n$ ligo compile expression cameligo \"f\" --init-file annotate_arrow.mligo\\nFile \"annotate_arrow.mligo\", line 1, characters 0-36:\\n  1 | let f (_:unit) (_:nat option) = None\\n\\nCannot monomorphise the expression.\\nThe inferred type was \"unit -> ∀ a . option (nat) -> option (a)\".\\nHint: Try adding additional annotations.\\n\\n```\\n\\n"
+merge_request: '2204'
+title: "Improve monomorphisation error message"
+type: fixed
+            

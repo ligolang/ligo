@@ -532,6 +532,24 @@ let%expect_test _ =
     Type "_a" not found. |}]
 
 let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "f"
+    ; "--init-file"
+    ; test "annotate_arrow.mligo"
+    ];
+  [%expect
+    {|
+    File "./annotate_arrow.mligo", line 1, characters 0-36:
+      1 | let f (_:unit) (_:nat option) = None
+
+    Cannot monomorphise the expression.
+    The inferred type was "unit -> ∀ a . option (nat) -> option (a)".
+    Hint: Try adding additional annotations. |}]
+
+let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; test "constants.mligo" ];
   [%expect
     {|
@@ -654,11 +672,13 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "monomorphisation_fail.mligo" ];
   [%expect
     {|
-    File "./monomorphisation_fail.mligo", line 3, characters 58-63:
+    File "./monomorphisation_fail.mligo", line 1, characters 0-28:
+      1 | let f (_ : unit) s = ([], s)
       2 |
-      3 | let main ((p, s) : unit * unit) : operation list * unit = f p s
 
-    Cannot monomorphise the expression. |}]
+    Cannot monomorphise the expression.
+    The inferred type was "unit -> ∀ a . ∀ b . a -> ( list (b) * a )".
+    Hint: Try adding additional annotations. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "monomorphisation_fail2.mligo" ];
