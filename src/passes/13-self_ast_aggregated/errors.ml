@@ -8,6 +8,8 @@ type self_ast_aggregated_error =
   | `Self_ast_aggregated_polymorphism_unresolved of Location.t
   | `Self_ast_aggregated_monomorphisation_non_var of Ast_aggregated.expression
   | `Self_ast_aggregated_monomorphisation_non_for_all of Ast_aggregated.expression
+  | `Self_ast_aggregated_monomorphisation_unexpected_type_abs of
+    Ast_aggregated.type_expression * Ast_aggregated.expression
   | `Self_ast_aggregated_fvs_in_create_contract_lambda of
     Ast_aggregated.expression * Value_var.t
   | `Self_ast_aggregated_create_contract_lambda of
@@ -31,6 +33,8 @@ let error_ppformat
     -> self_ast_aggregated_error -> unit
   =
  fun ~display_format f a ->
+  let name_tbl = Ast_aggregated.PP.With_name_tbl.Type_var_name_tbl.create () in
+  let pp_type = Ast_aggregated.PP.With_name_tbl.pp_with_name_tbl ~tbl:name_tbl in
   match display_format with
   | Human_readable | Dev ->
     (match a with
@@ -61,6 +65,26 @@ let error_ppformat
           "@[<hv>%a@.Cannot monomorphise the expression.@]"
           Snippet.pp
           expr.location
+    | `Self_ast_aggregated_monomorphisation_unexpected_type_abs (ty, expr) ->
+      if Location.is_dummy_or_generated expr.location
+      then
+        Format.fprintf
+          f
+          "@[<hv>%a@.Cannot monomorphise the expression.@.The inferred type was \
+           \"%a\".@.Hint: Try adding additional annotations.@]"
+          Ast_aggregated.PP.expression
+          expr
+          pp_type
+          ty
+      else
+        Format.fprintf
+          f
+          "@[<hv>%a@.Cannot monomorphise the expression.@.The inferred type was \
+           \"%a\".@.Hint: Try adding additional annotations.@]"
+          Snippet.pp
+          expr.location
+          pp_type
+          ty
     | `Self_ast_aggregated_fvs_in_create_contract_lambda (e, v) ->
       Format.fprintf
         f
@@ -150,6 +174,7 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
     let content = make_content ~message ~location () in
     make ~stage ~content
   | `Self_ast_aggregated_monomorphisation_non_var expr
+  | `Self_ast_aggregated_monomorphisation_unexpected_type_abs (_, expr)
   | `Self_ast_aggregated_monomorphisation_non_for_all expr ->
     let message = "Cannot monomorphise the expression." in
     let content = make_content ~message ~location:expr.location () in
