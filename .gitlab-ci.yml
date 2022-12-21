@@ -131,9 +131,7 @@ prepare_npm_tarball:
   only:
     - merge_requests
     - dev
-    - /^.*-run-dev$/
     - /^release/.*$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
     - mkdir -p _release/platform-linux/bin
     - cp platform-windows-x64/esyInstallRelease.js _release
