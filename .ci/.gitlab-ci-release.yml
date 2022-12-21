@@ -155,6 +155,7 @@ create_docker_stable_version:
       fi
 
 update_release_metadata:
+  extends: .submodule-clone
   stage: push
   tags:
     - docker
@@ -194,7 +195,8 @@ update_release_metadata:
     - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_RELEASE_VERSION $CI_COMMIT_TAG
     - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_TAG_JOB_ID $RELEASE_CI_JOB_ID 
     - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_STABLE_VERSION $STABLE_VERSION 
-    - git commit -am "[Bot] Update release metadata $CI_COMMIT_TAG"
+    - git commit -a .ci/metadata.yml
+    - git commit -m "[Bot] Update release metadata $CI_COMMIT_TAG"
     - git push -o ci.variable="TRIGGER_DOC_UPDATE='true'" origin HEAD:release/$CI_COMMIT_TAG
 
 #######################################################################
