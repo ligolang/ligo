@@ -1,29 +1,29 @@
-type comb_two = [@layout:tree] {
-  [@annot:anfoo]
+type comb_two = [@layout tree] {
+  [@annot anfoo]
   foo : int ;
-  [@annot:anbar]
+  [@annot anbar]
   bar : string ;
 }
 
-type comb_three = [@layout:tree] {
-  [@annot:ana]
+type comb_three = [@layout tree] {
+  [@annot ana]
   a : int ;
-  [@annot:anb]
+  [@annot anb]
   b : string ;
-  [@annot:anc] 
+  [@annot anc]
   c : nat ;
 }
 
-type comb_five = [@layout:tree] {
-  [@annot:an_One]
+type comb_five = [@layout tree] {
+  [@annot an_One]
   one : int ;
-  [@annot:an_Two]
+  [@annot an_Two]
   two : string ;
-  [@annot:an_Three]
+  [@annot an_Three]
   three : bool;
-  [@annot:an_Four]
+  [@annot an_Four]
   four : nat ;
-  [@annot:an_Five]
+  [@annot an_Five]
   five : int ;
 }
 

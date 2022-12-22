@@ -2,7 +2,9 @@
 
 type key = string
 
-type value = String of string
+type value =
+  String of string
+| Ident  of string
 
 type attribute = key * value option
 

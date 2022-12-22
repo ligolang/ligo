@@ -1,11 +1,11 @@
-type storage = [@layout:comb] {
+type storage = [@layout comb] {
   tata : int;
   toto : int;
   titi : int;
   tutu : int;
 }
 
-type storage1 = [@layout:tree] {
+type storage1 = [@layout tree] {
   tata : int;
   toto : int;
   titi : int;

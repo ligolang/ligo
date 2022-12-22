@@ -34,7 +34,7 @@ type getTotalSupply is record [
 ]
 
 type action is
-    Transfer       of transfer
+   Transfer       of transfer
 |  Approve        of approve
 |  GetAllowance   of getAllowance
 |  GetBalance     of getBalance

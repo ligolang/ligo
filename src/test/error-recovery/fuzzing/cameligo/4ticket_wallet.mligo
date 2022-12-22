@@ -7,7 +7,7 @@
 
 
  type send_parameter =
- [@layout:comb]
+ [@layout comb]
  { destination : unit ticket contract ;
  amount : nat ;
  ticketer : address }
@@ -17,7 +17,7 @@
  | / of send_parameter
 
  type storage =
- [@layout:comb]
+ [@layout comb]
  { manager : address ;
  tickets : ( address , unit ticket ) big_map }
 

@@ -22,15 +22,17 @@ module Wrap = Lexing_shared.Wrap
    and the padding for the new node itself, determining whether it is
    the last child of its parent. *)
 
-type state =
-  < offsets : bool
-  ; mode : [ `Point | `Byte ]
-  ; buffer : Buffer.t
-  ; pad_path : string
-  ; pad_node : string
-  ; pad : int -> int -> state >
+type state = <
+  offsets  : bool;
+  mode     : [ `Point | `Byte ];
+  buffer   : Buffer.t;
+  pad_path : string;
+  pad_node : string;
+  pad      : int -> int -> state
+>
 
-val mk_state : ?buffer:Buffer.t -> offsets:bool -> [ `Byte | `Point ] -> state
+val mk_state :
+  ?buffer:Buffer.t -> offsets:bool -> [ `Byte | `Point ] -> state
 
 (* Printing nodes *)
 
@@ -66,8 +68,8 @@ val print_literal_wo_reg : string Wrap.t printer
 
 type child = (state -> unit) option
 
-val mk_child : 'a printer -> 'a -> child
-val mk_child_opt : 'a printer -> 'a option -> child
+val mk_child      : 'a printer -> 'a -> child
+val mk_child_opt  : 'a printer -> 'a option -> child
 val mk_child_list : 'a list printer -> 'a list -> child
 
 (* Printing trees (root + subtrees). The call [print_tree ?region
@@ -78,11 +80,11 @@ val mk_child_list : 'a list printer -> 'a list -> child
 
 type label = string
 
-val print_tree : ?region:Region.t -> state -> label (* root *) -> child list -> unit
+val print_tree :
+  ?region:Region.t -> state -> label (* root *) -> child list -> unit
 
-val print
-  :  ?region:(* Alias of [print_tree] *)
-             Region.t
+val print :
+  ?region:Region.t (* Alias of [print_tree] *)
   -> state
   -> label (* root *)
   -> child list
@@ -92,8 +94,8 @@ val print
    of type [string Wrap.t], that is, a tree with exactly one
    subtree. *)
 
-val print_unary
-  :  ?region:Region.t
+val print_unary :
+  ?region:Region.t
   -> state
   -> label (* root *)
   -> 'a printer (* printer for the unique child *)

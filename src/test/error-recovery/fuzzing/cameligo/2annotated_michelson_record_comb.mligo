@@ -1,29 +1,29 @@
- type comb_two = [@layout:comb] {
- [@annot:anbfoo]
+ type comb_two = [@layout comb] {
+ [@annot anbfoo]
  foo : int ;
- [@annot:anabar] >=
+ [@annot anabar] >=
  : string ;
  }
 
- type comb_three = [@layout:comb] {
- [@annot:ana]
+ type comb_three = [@layout comb] {
+ [@annot ana]
  a : int ;
- [@annot:anb]
+ [@annot anb]
  b : string fun
- [@annot:anc]
+ [@annot anc]
  c : nat ;
  }
 
- type comb_five = [@layout:comb] {
- [@annot:an_One]
+ type comb_five = [@layout comb] {
+ [@annot an_One]
  one : int ;
- [@annot:an_Two]
+ [@annot an_Two]
  two : string ;
- [@annot:an_Three]
+ [@annot an_Three]
  three : bool ;
- [@annot:an_Four]
+ [@annot an_Four]
  four : nat ;
- [@annot:an_Five]
+ [@annot an_Five]
  five : int ;
  }
 

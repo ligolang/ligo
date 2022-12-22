@@ -66,7 +66,7 @@ let compile_attributes : CST.attribute list -> AST.attributes =
    fun x ->
     let (k, v_opt), _loc = r_split x in
     match v_opt with
-    | Some (String v) -> String.concat ~sep:":" [ k; v ]
+    | Some (Ident v | String v) -> String.concat ~sep:":" [ k; v ]
     | None -> k
   in
   List.map ~f attr

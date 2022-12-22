@@ -13,8 +13,8 @@ module Int64 = Caml.Int64
 
 (* VENDOR DEPENDENCIES *)
 
-module Region = Simple_utils.Region
-
+module Region    = Simple_utils.Region
+module Lexbuf    = Simple_utils.Lexbuf
 module Options   = LexerLib.Options   (* For instantiation only *)
 module Unit      = LexerLib.Unit      (* For instantiation only *)
 module Client    = LexerLib.Client    (* For the interface only *)
@@ -41,6 +41,7 @@ module Make (Options : Options.S) (Token : Token.S) =
     | Overflow_mutez
     | Underflow_mutez
     | Invalid_directive of Preprocessor.Error.t
+    | Unterminated_comment
 
     let sprintf = Printf.sprintf
 
@@ -69,6 +70,9 @@ module Make (Options : Options.S) (Token : Token.S) =
         "Mutez amount not an integer."
     | Invalid_directive err ->
         Preprocessor.Error.to_string err
+    | Unterminated_comment ->
+       sprintf "Unterminated comment.\n\
+                Note: Check any ill-formed attribute."
 
     (* Raising the exception for lexical errors *)
 
@@ -195,8 +199,21 @@ module Make (Options : Options.S) (Token : Token.S) =
 
     (* Attributes *)
 
-    let mk_attr key value state buffer =
-      let state, Region.{region; _} = state#sync buffer in
+    let mk_str_attr key ?value state buffer =
+      let state, Region.{region; _} = state#sync buffer
+      and value =
+        match value with
+          None        -> None
+        | Some string -> Some (Attr.String string) in
+      let token = Token.mk_attr ~key ?value region
+      in token, state
+
+    let mk_id_attr key ?value state buffer =
+      let state, Region.{region; _} = state#sync buffer
+      and value =
+        match value with
+          None      -> None
+        | Some name -> Some (Attr.Ident name) in
       let token = Token.mk_attr ~key ?value region
       in token, state
 
@@ -243,28 +260,32 @@ module Make (Options : Options.S) (Token : Token.S) =
 
 (* Named regular expressions *)
 
-let nl         = ['\n' '\r'] | "\r\n"
-let blank      = ' ' | '\t'
-let digit      = ['0'-'9']
-let natural    = digit | digit (digit | '_')* digit
-let nat        = natural as nat
-let tz_or_tez  = "tz" | "tez" as tez
-let decimal    = (natural as integral) '.' (natural as fractional)
-let small      = ['a'-'z']
-let capital    = ['A'-'Z']
-let letter     = small | capital
-let ident      = small (letter | '_' | digit)*
-               | '_' (letter | '_' (letter | digit) | digit)+
-let ext_ident  = (letter | digit | '_')+
-let uident     = capital (letter | '_' | digit)*
-let string     = [^'"' '\\' '\n']*  (* For #include and attributes *)
-let attr       = letter (letter | digit | '_' | ':' | '.' | '@' | '%')*
-let hex_digit  = digit | ['A'-'F' 'a'-'f']
-let byte       = hex_digit hex_digit
-let byte_seq   = byte | byte (byte | '_')* byte
-let bytes      = "0x" (byte_seq? as bytes)
-let directive  = '#' (blank* as space) (small+ as id) (* For #include *)
-let code_inj   = ("[%" as start) (attr as lang)
+let nl        = ['\n' '\r'] | "\r\n"
+let blank     = ' ' | '\t'
+let digit     = ['0'-'9']
+let natural   = digit | digit (digit | '_')* digit
+let nat       = natural as nat
+let tz_or_tez = "tz" | "tez" as tez
+let decimal   = (natural as integral) '.' (natural as fractional)
+let small     = ['a'-'z']
+let capital   = ['A'-'Z']
+let letter    = small | capital
+let ident     = (small | '_'+ (letter | digit)) (letter | '_' | digit)*
+let ext_ident = '@' (letter | digit | '_')+
+let uident    = capital (letter | '_' | digit)*
+
+let string    = '"' [^ '"' '\\' '\n']* '"' as value
+let key       = letter (letter | digit | '_' | '.' (letter | digit))*
+let str_attr  = (key as key) ((blank* ':' blank* | blank+) (string as value))?
+let id_attr   = (key as key)
+                ((blank* ':' blank* | blank+) (ident | uident as value))?
+
+let hex_digit = digit | ['A'-'F' 'a'-'f']
+let byte      = hex_digit hex_digit
+let byte_seq  = byte | byte (byte | '_')* byte
+let bytes     = "0x" (byte_seq? as bytes)
+let directive = '#' (blank* as space) (small+ as id) (* For #include *)
+let code_inj  = ("[%" as start) (key as lang)
 
 (* Symbols *)
 
@@ -297,14 +318,7 @@ let symbol =
    their semantic actions, the normal cases can be tried next. *)
 
 rule scan state = parse
-  "[@" (attr as key) (blank+ (string as value))? "]" {
-    let value =
-      match value with
-        None        -> None
-      | Some string -> Some (Attr.String string)
-    in mk_attr key value state lexbuf }
-
-| "`" | "{|" as lexeme {
+  "`" | "{|" as lexeme {
     let verb_open, verb_close = Token.verbatim_delimiters in
     if String.(lexeme = verb_open) then
       let state, Region.{region; _} = state#sync lexbuf in
@@ -313,22 +327,62 @@ rule scan state = parse
          |> mk_verbatim
     else mk_sym state lexbuf }
 
-| ident
-| '@' ext_ident { mk_ident            state lexbuf }
-| uident        { mk_uident           state lexbuf }
-| bytes         { mk_bytes bytes      state lexbuf }
-| nat "n"       { mk_nat   nat        state lexbuf }
-| nat "mutez"   { mk_mutez nat        state lexbuf }
-| nat tz_or_tez { mk_tez   nat tez    state lexbuf }
-| natural       { mk_int              state lexbuf }
-| symbol        { mk_sym              state lexbuf }
-| eof           { mk_eof              state lexbuf }
-| code_inj      { mk_lang  start lang state lexbuf }
-| decimal tz_or_tez {
-    mk_tez_dec integral fractional tez state lexbuf }
+| "[@" str_attr "]"  { mk_str_attr key ?value state lexbuf }
+| "[@" id_attr  "]"  { mk_id_attr  key ?value state lexbuf }
+| ident | ext_ident  { mk_ident               state lexbuf }
+| uident             { mk_uident              state lexbuf }
+| bytes              { mk_bytes bytes         state lexbuf }
+| nat "n"            { mk_nat   nat           state lexbuf }
+| nat "mutez"        { mk_mutez nat           state lexbuf }
+| nat tz_or_tez      { mk_tez   nat tez       state lexbuf }
+| natural            { mk_int                 state lexbuf }
+| symbol             { mk_sym                 state lexbuf }
+| eof                { mk_eof                 state lexbuf }
+| code_inj           { mk_lang  start lang    state lexbuf }
+| decimal tz_or_tez  { mk_tez_dec integral fractional
+                                          tez state lexbuf }
 
 | _ as c { let _, Region.{region; _} = state#sync lexbuf
            in fail region (Unexpected_character c) }
+
+(* Attribute scanning for JsLIGO. Accumulator [acc] is list of
+   previous tokens in reverse order. *)
+
+and line_comment_attr acc state = parse
+  "//" blank* { let state = state#sync lexbuf |> fst in
+                scan_attributes true scan_eof acc state lexbuf }
+| eof | _     { Lexbuf.rollback lexbuf; acc }
+
+and scan_attributes first_call scan_end acc state = parse
+  '@' id_attr {
+    let attr, state = mk_id_attr key ?value state lexbuf in
+    let state       = scan_blanks state lexbuf in
+    scan_attributes false scan_end (attr::acc) state lexbuf }
+| '@' str_attr {
+    let attr, state = mk_str_attr key ?value state lexbuf in
+    let state       = scan_blanks state lexbuf in
+    scan_attributes false scan_end (attr::acc) state lexbuf }
+| eof | _ {
+    Lexbuf.rollback lexbuf;
+    if first_call then acc else scan_end acc state lexbuf }
+
+and scan_blanks state = parse
+  blank* { state#sync lexbuf |> fst }
+
+and scan_eof acc state = parse
+  blank* eof { acc }
+| _          { let _, Region.{region; _} = state#sync lexbuf
+               in fail region Unterminated_comment }
+
+and block_comment_attr acc state = parse
+  "/*" blank* { let state = state#sync lexbuf |> fst in
+                scan_attributes true scan_close acc state lexbuf }
+| eof | _ { Lexbuf.rollback lexbuf; scan_close acc state lexbuf }
+
+and scan_close acc state = parse
+  blank* "*/" eof { acc }
+| eof | _ { let _, Region.{region; _} = state#sync lexbuf
+            in fail region Unterminated_comment }
 
 (* Scanning verbatim strings with or without inclusion of Michelson
    code *)
@@ -382,11 +436,26 @@ and scan_verbatim verb_close thread state = parse
       Lexing.lexbuf ->
       (token * token State.t, message) Stdlib.result
 
-    let callback state lexbuf =
+    let handle scan state lexbuf =
       try Stdlib.Ok (scan state lexbuf) with
         Error msg -> Stdlib.Error msg
 
+    let callback state = handle scan state
+
     let mk_eof = Token.mk_eof (* For EOFs from the preprocessor *)
+
+    let mk_state lexbuf =
+      let file  = Lexbuf.current_filename lexbuf
+      and line  = Lexbuf.current_linenum lexbuf in
+      let state = State.empty ~file in
+      let pos   = state#pos#set_line line
+      in state#set_pos pos
+
+    let line_comment_attr acc lexbuf =
+      handle (line_comment_attr acc) (mk_state lexbuf) lexbuf
+
+    let block_comment_attr acc lexbuf =
+      handle (block_comment_attr acc) (mk_state lexbuf) lexbuf
 
   end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

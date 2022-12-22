@@ -10,6 +10,7 @@
   simple-utils
   LexerLib
   ;; LIGO
+  preprocessing_jsligo
   lexing_shared
   menhir_js_tokens)
  (modules PreParser State Token ES6FUN ES6FUN_hook VBAR VBAR_hook SEMI

@@ -2,40 +2,48 @@
 
 (* Vendor dependencies *)
 
-module Std = Simple_utils.Std
+module Std           = Simple_utils.Std
+module Region        = Simple_utils.Region
+module Lexbuf        = Simple_utils.Lexbuf
+module Config        = Preprocessing_jsligo.Config
+module PreprocParams = Preprocessor.CLI.Make (Config)
+module Parameters    = LexerLib.CLI.Make (PreprocParams)
+module Options       = Parameters.Options
+module Lexer         = Lexing_shared.Lexer.Make (Options) (Token)
 
-(* Insertion *)
-
-let attribute_regexp = Str.regexp "@\\([a-zA-Z:0-9_]+\\)"
-
-let collect_attributes str : string list =
-  let x : Str.split_result list =
-    Str.full_split attribute_regexp str in
-  let f (acc : string list) = function
-    Str.Text _ -> acc
-  | Str.Delim string -> string :: acc
-  in List.rev @@ List.fold_left ~f ~init:[] x
+let scan_comment scan comment =
+  let lexbuf = Lexing.from_string comment#payload in
+  let ()     = Lexbuf.reset_file comment#region#file lexbuf in
+  let line   = comment#region#start#line in
+  let ()     = Lexbuf.reset_line line lexbuf
+  in scan lexbuf
 
 let collect_attributes tokens =
   let open! Token in
-  let rec inner result = function
-    LineCom  c :: tl
-  | BlockCom c :: tl ->
-      let attrs = collect_attributes c#payload in
-      let apply key = Token.mk_attr ~key c#region in
-      let attrs = List.map ~f:apply attrs
-      in inner (attrs @ result) tl
-  | hd :: tl -> inner (hd :: result) tl
-  | [] -> List.rev result
-  in Ok (inner [] tokens)
+  let rec inner acc = function
+    LineCom c :: tokens -> (
+      match scan_comment (Lexer.line_comment_attr acc) c with
+        Ok acc    -> inner acc tokens
+      | Error msg -> Error (acc, msg))
+
+  | BlockCom c :: tokens -> (
+      match scan_comment (Lexer.block_comment_attr acc) c with
+        Ok acc    -> inner acc tokens
+      | Error msg -> Error (acc, msg))
+
+  | token :: tokens -> inner (token :: acc) tokens
+  | [] -> Ok (List.rev acc)
+  in inner [] tokens
 
 (* Exported *)
 
-let filter
-    : ?print_passes:Std.t ->
+type message = string Region.reg
+
+let filter :
+      ?print_passes:Std.t ->
       add_warning:(Main_warnings.all -> unit) ->
       Token.t list ->
-      _ result =
+      (Token.t list, Token.t list * message) result =
   fun ?print_passes ~add_warning:_ tokens -> (* No warning registered *)
   let () =
     match print_passes with

@@ -1,10 +1,10 @@
 (* Some basic types and functions *)
-type some_r = [@layout:comb] { one : int ; two : nat ; three : string ; four : bytes ; five : unit }
-type some_v = [@layout:comb] | Foo of int | Bar of string | Bare of string | Baz of nat
+type some_r = [@layout comb] { one : int ; two : nat ; three : string ; four : bytes ; five : unit }
+type some_v = [@layout comb] | Foo of int | Bar of string | Bare of string | Baz of nat
 let f = fun (x:some_r) -> x.one
 
-type some_r_2 = [@layout:tree] { one2 : int ; two2 : nat ; three2 : string ; four2 : bytes ; five2 : unit }
-type some_v_2 = [@layout:tree] | Foo2 of int | Bar2 of string | Bare2 of string | Baz2 of nat
+type some_r_2 = [@layout tree] { one2 : int ; two2 : nat ; three2 : string ; four2 : bytes ; five2 : unit }
+type some_v_2 = [@layout tree] | Foo2 of int | Bar2 of string | Bare2 of string | Baz2 of nat
 let f_2 = fun (x:some_r_2) -> x.one2
 
 let test1 =
@@ -28,4 +28,3 @@ let test4 =
   let x1 = Test.eval ({ one = 1 ; two = 2n ; three = "a" ; four = 0xFF00 ; five = () } : some_r) in
   let x2 = Test.eval ({ one2 = 1 ; two2 = 2n ; three2 = "a" ; four2 = 0xFF00 ; five2 = () } : some_r_2) in
   assert (not (Test.michelson_equal x1 x2))
-
