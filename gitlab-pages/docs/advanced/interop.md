@@ -48,14 +48,17 @@ works not with
 ```
 
 :::info
-In the case of annotated entrypoints - the annotated `or` tree directly under
-`parameter` in a contract - you should use annotations, as otherwise it's
-unclear which entrypoint you are referring to.
+In the case of annotated entrypoints --- the annotated `or` tree
+directly under `parameter` in a contract --- you should use
+annotations, as otherwise it's unclear which entrypoint you are
+referring to.
 :::
 
 ## Default LIGO output
-By default LIGO translates its datatypes into a alphabetically left balanced
-tree. So, for example:
+
+By default LIGO translates its datatypes into a alphabetically left
+balanced tree. So, for example:
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=orig
@@ -91,32 +94,29 @@ will translate to:
 (or
   (or
     (unit %cat)
-    (unit %dog)
-  )
-  (unit %elephant)
-)
+    (unit %dog))
+  (unit %elephant))
 ```
 
-## Right combed tree output
-If you want to change the data representation in Michelson to a location
-retaining right combed tree, like this:
+## Right-combed tree output
+
+If you want to change the data representation in Michelson to a
+location retaining right combed tree, like this:
 
 ```
   (or
     (unit %elephant)
     (or (unit %dog)
-        (unit %cat)
-    )
-  )
+        (unit %cat)))
 ```
 
-you can use the `layout:comb` attribute:
+You can use the `@layout comb` (or `@layout:comb`) attribute:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
 type animal is
-[@layout:comb]
+[@layout comb]
 | Elephant
 | Dog
 | Cat
@@ -131,7 +131,7 @@ type animal is
 
 ```cameligo
 type animal =
-[@layout:comb]
+[@layout comb]
 | Elephant
 | Dog
 | Cat
@@ -142,7 +142,7 @@ type animal =
 
 ```reasonligo
 type animal =
-[@layout:comb]
+[@layout comb]
 | Elephant
 | Dog
 | Cat
@@ -153,7 +153,7 @@ type animal =
 
 ```jsligo
 type animal =
-// @layout:comb
+// @layout comb
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -161,17 +161,19 @@ type animal =
 
 </Syntax>
 
-The `layout:comb` attribute can also be used on record types:
+The `@layout comb` (or `@layout:comb`) attribute can also be used on
+record types:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
 type artist is
-  [@layout:comb] record [
-  genre : string;
-  since : timestamp;
-  name  : string;
-]
+  [@layout comb]
+  record [
+    genre : string;
+    since : timestamp;
+    name  : string;
+  ]
 ```
 
 </Syntax>
@@ -179,7 +181,7 @@ type artist is
 
 ```cameligo
 type artist =
-  [@layout:comb] {
+  [@layout comb] {
   genre : string;
   since : timestamp;
   name  : string
@@ -191,7 +193,7 @@ type artist =
 
 ```reasonligo
 type artist =
-  [@layout:comb] {
+  [@layout comb] {
   genre : string,
   since : timestamp,
   name  : string
@@ -203,7 +205,7 @@ type artist =
 
 ```jsligo
 type artist =
-// @layout:comb
+// @layout comb
 {
   genre : string,
   since : timestamp,
@@ -214,18 +216,19 @@ type artist =
 </Syntax>
 
 
-
 ## Different Michelson annotations
-If the Michelson annotation should be different from the LIGO representation,
-the `annot:<string>` attribute can be used. For example:
+
+If the Michelson annotation should be different from the LIGO
+attribute, give it as an argument to the LIGO attribute. For
+example:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=annot
 type animal is
-| [@annot:memory] Elephant
-| [@annot:face] Dog
-| [@annot:fish] Cat
+| [@annot memory] Elephant
+| [@annot face] Dog
+| [@annot fish] Cat
 ```
 
 </Syntax>
@@ -233,9 +236,9 @@ type animal is
 
 ```cameligo group=annot
 type animal =
-| [@annot:memory] Elephant
-| [@annot:face] Dog
-| [@annot:fish] Cat
+| [@annot memory] Elephant
+| [@annot face] Dog
+| [@annot fish] Cat
 ```
 
 </Syntax>
@@ -243,9 +246,9 @@ type animal =
 
 ```reasonligo group=annot
 type animal =
-| [@annot:memory] Elephant
-| [@annot:face] Dog
-| [@annot:fish] Cat
+| [@annot memory] Elephant
+| [@annot face] Dog
+| [@annot fish] Cat
 ```
 
 </Syntax>
@@ -253,13 +256,12 @@ type animal =
 
 ```jsligo group=annot
 type animal =
-| /* @annot:memory */ ["Elephant"]
-| /* @annot:face */ ["Dog"]
-| /* @annot:fish */ ["Cat"]
+| /* @annot memory */ ["Elephant"]
+| /* @annot face */ ["Dog"]
+| /* @annot fish */ ["Cat"]
 ```
 
 </Syntax>
-
 
 will result into:
 
@@ -267,21 +269,20 @@ will result into:
 (or
   (or
     (unit %fish)
-    (unit %face)
-  )
-  (unit %memory)
-)
+    (unit %face))
+  (unit %memory))
 ```
 
-The `annot:<string>` attribute can also be used on record field annotations:
+The `@annot <name>` attribute can also be used on record field
+annotations:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=annot
 type artist is record [
-  [@annot:style] genre: string;
-  [@annot:from] since: timestamp;
-  [@annot:performer] name: string;
+  [@annot style] genre: string;
+  [@annot from] since: timestamp;
+  [@annot performer] name: string;
 ]
 ```
 
@@ -290,9 +291,9 @@ type artist is record [
 
 ```cameligo group=annot
 type artist = {
-  [@annot:style] genre: string;
-  [@annot:from] since: timestamp;
-  [@annot:performer] name: string;
+  [@annot style] genre: string;
+  [@annot from] since: timestamp;
+  [@annot performer] name: string;
 }
 ```
 
@@ -301,38 +302,38 @@ type artist = {
 
 ```reasonligo group=annot
 type artist = {
-  [@annot:style] genre: string,
-  [@annot:from] since: timestamp,
-  [@annot:performer] name: string
+  [@annot style] genre: string,
+  [@annot from] since: timestamp,
+  [@annot performer] name: string
 }
 ```
-
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=annot
 type artist = {
-  /* @annot:style */ genre: string,
-  /* @annot:from */ since: timestamp,
-  /* @annot:performer */ name: string
+  /* @annot style */ genre: string,
+  /* @annot from */ since: timestamp,
+  /* @annot performer */ name: string
 }
 ```
 
 </Syntax>
 
-If the `layout:comb` and `annot:<string>` attributes are not adequate
-enough for your use case, LIGO has more advanced advanced interop
-features which we will we discuss next.
+If the `@layout comb` and `@annot <name>` attributes are not adequate
+enough for your use-case, LIGO has more advanced advanced
+interoperability features, which we will we discuss next.
 
-## Advanced interop with Michelson
+## Advanced interoperability with Michelson
 
-To interop with existing Michelson code or for compatibility with
-certain development tooling, LIGO has two special interop types:
-`michelson_or` and `michelson_pair`. These types give the flexibility
-to model the exact Michelson output, including field annotations.
+To interoperate with existing Michelson code or to be compatible with
+certain development tooling, LIGO has two special interoperation
+types: `michelson_or` and `michelson_pair`. These types give the
+flexibility to model the exact Michelson output, including field
+annotations.
 
-Take for example the following Michelson type that we want to interop
-with:
+Take for example the following Michelson type that we want to
+interoperate with:
 
 ```michelson
 (or
@@ -351,10 +352,10 @@ To reproduce this type we can use the following LIGO code:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-type w_and_v is michelson_pair(int, "w", nat, "v")
-type x_and is michelson_pair(string, "x", w_and_v, "other")
-type y_or is michelson_or(unit, "y", x_and, "other")
-type z_or is michelson_or(unit, "z", y_or, "other")
+type w_and_v is michelson_pair (int, "w", nat, "v")
+type x_and is michelson_pair (string, "x", w_and_v, "other")
+type y_or is michelson_or (unit, "y", x_and, "other")
+type z_or is michelson_or (unit, "z", y_or, "other")
 ```
 
 </Syntax>
@@ -371,10 +372,10 @@ type z_or = (unit, "z", y_or, "other") michelson_or
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-type w_and_v = michelson_pair(int, "w", nat, "v")
-type x_and = michelson_pair(string, "x", w_and_v, "other")
-type y_or = michelson_or(unit, "y", x_and, "other")
-type z_or = michelson_or(unit, "z", y_or, "other")
+type w_and_v = michelson_pair (int, "w", nat, "v")
+type x_and = michelson_pair (string, "x", w_and_v, "other")
+type y_or = michelson_or (unit, "y", x_and, "other")
+type z_or = michelson_or (unit, "z", y_or, "other")
 ```
 
 </Syntax>
@@ -389,16 +390,17 @@ type z_or = michelson_or<[unit, "z", y_or, "other"]>;
 
 </Syntax>
 
-If you don't want to have an annotation, you need to provide an empty string.
+If you do not want to inject a Michelson annotation, the you simply
+provide an empty string.
 
 :::info
 Alternatively, if annotations are not important you can also use plain tuples
 for pair's instead. Plain tuples don't have any annotations.
 :::
 
-To use variables of type `michelson_or` you have to use `M_left` and `M_right`.
-`M_left` picks the left `or` case while `M_right` picks the right `or` case.
-For `michelson_pair` you need to use tuples.
+To use variables of type `michelson_or` you have to use `M_left` and
+`M_right`.  `M_left` picks the left `or` case while `M_right` picks
+the right `or` case.  For `michelson_pair` you need to use tuples.
 
 <Syntax syntax="pascaligo">
 
@@ -458,10 +460,10 @@ let x : z_or = M_right (y_1);
 </Syntax>
 
 ## Manual data structure conversion
-If you want to get your hands dirty, it's also possible to do manual data
-structure conversion.
 
-The following code can be used as inspiration:
+If you want to get your hands dirty, it is also possible to do manual
+data structure conversion. The following code can be used as
+inspiration:
 
 <Syntax syntax="pascaligo">
 
@@ -473,10 +475,10 @@ type z_to_v is
 | W
 | V
 
-type w_or_v is michelson_or(unit, "w", unit, "v")
-type x_or is michelson_or(unit, "x", w_or_v, "other")
-type y_or is michelson_or(unit, "y", x_or, "other")
-type z_or is michelson_or(unit, "z", y_or, "other")
+type w_or_v is michelson_or (unit, "w", unit, "v")
+type x_or is michelson_or (unit, "x", w_or_v, "other")
+type y_or is michelson_or (unit, "y", x_or, "other")
+type z_or is michelson_or (unit, "z", y_or, "other")
 
 type test is record [
   z: string;
@@ -536,19 +538,23 @@ function make_abstract_sum (const z_or: z_or) : z_to_v is
     ]
   ]
 
-function make_abstract_record (const z : string; const y : int; const x : string; const w : bool; const v : int) : test is
+function make_abstract_record
+  (const z : string;
+   const y : int;
+   const x : string;
+   const w : bool;
+   const v : int) : test is
   record [z = z; y = y; x = x; w = w; v = v]
 
 ```
 
 </Syntax>
 
-
 <Syntax syntax="cameligo">
 
 ```cameligo group=helper_functions
 type z_to_v =
-| Z
+  Z
 | Y
 | X
 | W
@@ -564,12 +570,12 @@ type test = {
   y: int;
   x: string;
   w: bool;
-  v: int;
+  v: int
 }
 
 let make_concrete_sum (r: z_to_v) : z_or =
   match r with
-  | Z -> M_left (unit)
+    Z -> M_left (unit)
   | Y -> M_right (M_left (unit))
   | X -> M_right (M_right (M_left (unit)))
   | W -> M_right (M_right (M_right (M_left (unit))))
@@ -754,7 +760,7 @@ type parameter =
  | Right of int
 
 let main ((p, x): (parameter * storage)): (operation list * storage) =
-  [], 
+  [],
   (match p with
   | Left i -> x - i
   | Right i -> x + i
@@ -834,7 +840,7 @@ type parameter = int
 
 type x = Left of int
 
-let main (p, s: parameter * storage): operation list * storage = 
+let main (p, s: parameter * storage): operation list * storage =
   let contract =
     match Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) with
     | Some c -> c

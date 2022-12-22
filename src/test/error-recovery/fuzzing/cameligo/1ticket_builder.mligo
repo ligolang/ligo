@@ -7,7 +7,7 @@
 
 
  type mint_parameter =
- [@layout:comb]
+ [@layout comb]
  { destination : unit ticket contract ;
  amount : nat }
 
@@ -16,7 +16,7 @@
  | Mint of mint_parameter
 
  type storage =
- [@layout:comb]
+ [@layout comb]
  { admin : address }
 
  let main ( arg : parameter * storage ) : operation list * storage =

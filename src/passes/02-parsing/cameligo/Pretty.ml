@@ -57,7 +57,7 @@ and pp_attribute (node : Attr.t reg) =
   let key, val_opt = node.value in
   let thread = string "[@" ^^ string key in
   let thread = match val_opt with
-                 Some String value ->
+                 Some (String value | Ident value) ->
                    group (thread ^/^ nest 2 (string value))
                | None -> thread in
   let thread = thread ^^ string "]"
@@ -330,8 +330,8 @@ and pp_constr_expr {value; _} =
 and pp_record_expr ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
 and pp_field_assign {value; _} =
-  match value with 
-    Property {field_name; field_expr; _} -> 
+  match value with
+    Property {field_name; field_expr; _} ->
       prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
   | Punned_property field_name ->
     pp_ident field_name
@@ -391,9 +391,9 @@ and pp_code_inj {value; _} =
   string "[%" ^^ language ^/^ code ^^ string "]"
 
 and pp_field_path_assign {value; _} =
-  match value with 
+  match value with
     Path_property {field_path; field_expr; _} ->
-      let path = pp_path field_path in 
+      let path = pp_path field_path in
       prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
   | Path_punned_property field_name ->
     pp_ident field_name

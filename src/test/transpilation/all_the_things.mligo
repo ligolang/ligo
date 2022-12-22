@@ -8,91 +8,91 @@ type storage = {
 }
 
 type transfer = {
-	address_from : address;
-	address_to   : address;
-	value        : nat;
+  address_from : address;
+  address_to   : address;
+  value        : nat;
 }
 
 type approve = {
-	spender : address;
-	value   : nat;
+  spender : address;
+  value   : nat;
 }
 
 type getAllowance = {
-	owner    : address;
-	spender  : address;
-	callback : nat contract;
+  owner    : address;
+  spender  : address;
+  callback : nat contract;
 }
 
 type getBalance = {
-	owner    : address;
-	callback : nat contract;
+  owner    : address;
+  callback : nat contract;
 }
 
 type getTotalSupply = {
-	callback : nat contract;
+  callback : nat contract;
 }
 
 type action =
-  	Transfer       of transfer
-|	Approve        of approve
-|	GetAllowance   of getAllowance
-|	GetBalance     of getBalance
-|	GetTotalSupply of getTotalSupply
+    Transfer       of transfer
+|  Approve        of approve
+|  GetAllowance   of getAllowance
+|  GetBalance     of getBalance
+|  GetTotalSupply of getTotalSupply
 
 let transfer (p,s : transfer * storage) : operation list * storage =
    let new_allowances =
-		if Tezos.get_sender () = p.address_from then s.allowances
-		else
-			let authorized_value = match Big_map.find_opt (Tezos.get_sender (),p.address_from) s.allowances with
-				Some value -> value
-			|	None       -> 0n
-			in
-			if (authorized_value < p.value)
-			then (failwith "Not Enough Allowance" : allowances)
-			else Big_map.update (Tezos.get_sender (),p.address_from) (Some (abs(authorized_value - p.value))) s.allowances
+    if Tezos.get_sender () = p.address_from then s.allowances
+    else
+      let authorized_value = match Big_map.find_opt (Tezos.get_sender (),p.address_from) s.allowances with
+        Some value -> value
+      |  None       -> 0n
+      in
+      if (authorized_value < p.value)
+      then (failwith "Not Enough Allowance" : allowances)
+      else Big_map.update (Tezos.get_sender (),p.address_from) (Some (abs(authorized_value - p.value))) s.allowances
    in
-	let sender_balance = match Big_map.find_opt p.address_from s.tokens with
-		Some value -> value
-	|	None        -> 0n
-	in
-	if (sender_balance < p.value)
-	then (failwith "Not Enough Balance" : operation list * storage)
-	else
-		let new_tokens = Big_map.update p.address_from (Some (abs(sender_balance - p.value))) s.tokens in
-		let receiver_balance = match Big_map.find_opt p.address_to s.tokens with
-			Some value -> value
-		|	None        -> 0n
-		in
-		let new_tokens = Big_map.update p.address_to (Some (receiver_balance + p.value)) new_tokens in
-		([]:operation list), {s with tokens = new_tokens; allowances = new_allowances}
+  let sender_balance = match Big_map.find_opt p.address_from s.tokens with
+    Some value -> value
+  |  None        -> 0n
+  in
+  if (sender_balance < p.value)
+  then (failwith "Not Enough Balance" : operation list * storage)
+  else
+    let new_tokens = Big_map.update p.address_from (Some (abs(sender_balance - p.value))) s.tokens in
+    let receiver_balance = match Big_map.find_opt p.address_to s.tokens with
+      Some value -> value
+    |  None        -> 0n
+    in
+    let new_tokens = Big_map.update p.address_to (Some (receiver_balance + p.value)) new_tokens in
+    ([]:operation list), {s with tokens = new_tokens; allowances = new_allowances}
 
 let approve (p,s : approve * storage) : operation list * storage =
-	let previous_value = match Big_map.find_opt (p.spender, Tezos.get_sender ()) s.allowances with
-		Some value -> value
-	|	None -> 0n
-	in
-	if previous_value > 0n && p.value > 0n
-	then (failwith "Unsafe Allowance Change" : operation list * storage)
-	else
-		let new_allowances = Big_map.update (p.spender, Tezos.get_sender ()) (Some (p.value)) s.allowances in
-		([] : operation list), {s with allowances = new_allowances}
+  let previous_value = match Big_map.find_opt (p.spender, Tezos.get_sender ()) s.allowances with
+    Some value -> value
+  |  None -> 0n
+  in
+  if previous_value > 0n && p.value > 0n
+  then (failwith "Unsafe Allowance Change" : operation list * storage)
+  else
+    let new_allowances = Big_map.update (p.spender, Tezos.get_sender ()) (Some (p.value)) s.allowances in
+    ([] : operation list), {s with allowances = new_allowances}
 
 let getAllowance (p,s : getAllowance * storage) : operation list * storage =
-	let value = match Big_map.find_opt (p.owner, p.spender) s.allowances with
-		Some value -> value
-	|	None -> 0n
-	in
-	let op = Tezos.transaction value 0mutez p.callback in
-	([op],s)
+  let value = match Big_map.find_opt (p.owner, p.spender) s.allowances with
+    Some value -> value
+  |  None -> 0n
+  in
+  let op = Tezos.transaction value 0mutez p.callback in
+  ([op],s)
 
 let getBalance (p,s : getBalance * storage) : operation list * storage =
-	let value = match Big_map.find_opt p.owner s.tokens with
-		Some value -> value
-	|	None -> 0n
-	in
-	let op = Tezos.transaction value 0mutez p.callback in
-	([op],s)
+  let value = match Big_map.find_opt p.owner s.tokens with
+    Some value -> value
+  |  None -> 0n
+  in
+  let op = Tezos.transaction value 0mutez p.callback in
+  ([op],s)
 
 let getTotalSupply (p,s : getTotalSupply * storage) : operation list * storage =
   let total = s.total_amount in
@@ -101,12 +101,12 @@ let getTotalSupply (p,s : getTotalSupply * storage) : operation list * storage =
 
 
 let main (a,s:action * storage) =
- 	match a with
-   	Transfer p -> transfer (p,s)
-	|	Approve  p -> approve (p,s)
-	|	GetAllowance p -> getAllowance (p,s)
-	|  GetBalance p -> getBalance (p,s)
-	|	GetTotalSupply p -> getTotalSupply (p,s)
+   match a with
+     Transfer p -> transfer (p,s)
+  |  Approve  p -> approve (p,s)
+  |  GetAllowance p -> getAllowance (p,s)
+  |  GetBalance p -> getBalance (p,s)
+  |  GetTotalSupply p -> getTotalSupply (p,s)
 let main (p : key_hash) =
   let c : unit contract = Tezos.implicit_account p
   in Tezos.address c
@@ -122,32 +122,32 @@ let f2 (x : unit) : unit -> tez =
 
 let main (b,s : bool * (unit -> tez)) : operation list * (unit -> tez) =
   (([] : operation list), (if b then f1 () else f2 ()))
-type comb_two = [@layout:comb] {
-  [@annot:anbfoo]
+type comb_two = [@layout comb] {
+  [@annot anbfoo]
   foo : int ;
-  [@annot:anabar]
+  [@annot anabar]
   bar : string ;
 }
 
-type comb_three = [@layout:comb] {
-  [@annot:ana]
+type comb_three = [@layout comb] {
+  [@annot ana]
   a : int ;
-  [@annot:anb]
+  [@annot anb]
   b : string ;
-  [@annot:anc]
+  [@annot anc]
   c : nat ;
 }
 
-type comb_five = [@layout:comb] {
-  [@annot:an_One]
+type comb_five = [@layout comb] {
+  [@annot an_One]
   one : int ;
-  [@annot:an_Two]
+  [@annot an_Two]
   two : string ;
-  [@annot:an_Three]
+  [@annot an_Three]
   three : bool;
-  [@annot:an_Four]
+  [@annot an_Four]
   four : nat ;
-  [@annot:an_Five]
+  [@annot an_Five]
   five : int ;
 }
 
@@ -167,32 +167,32 @@ let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_fiv
 
 let r : comb_five = { one = 1 ; two = "" ; three = true ; four = 1n ; five = 2 }
 let accesses = r.one , r.two , r.three , r.four , r.five
-type comb_two = [@layout:tree] {
-  [@annot:anfoo]
+type comb_two = [@layout tree] {
+  [@annot anfoo]
   foo : int ;
-  [@annot:anbar]
+  [@annot anbar]
   bar : string ;
 }
 
-type comb_three = [@layout:tree] {
-  [@annot:ana]
+type comb_three = [@layout tree] {
+  [@annot ana]
   a : int ;
-  [@annot:anb]
+  [@annot anb]
   b : string ;
-  [@annot:anc]
+  [@annot anc]
   c : nat ;
 }
 
-type comb_five = [@layout:tree] {
-  [@annot:an_One]
+type comb_five = [@layout tree] {
+  [@annot an_One]
   one : int ;
-  [@annot:an_Two]
+  [@annot an_Two]
   two : string ;
-  [@annot:an_Three]
+  [@annot an_Three]
   three : bool;
-  [@annot:an_Four]
+  [@annot an_Four]
   four : nat ;
-  [@annot:an_Five]
+  [@annot an_Five]
   five : int ;
 }
 
@@ -209,21 +209,21 @@ let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_t
 
 let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
   ([] : operation list), store
-  type comb_two = [@layout:comb]
-  | [@annot:anbfoo] Foo of int
-  | [@annot:anabar] Bar of string
+  type comb_two = [@layout comb]
+  | [@annot anbfoo] Foo of int
+  | [@annot anabar] Bar of string
 
-type comb_three = [@layout:comb]
-  | [@annot:ana] A of int
-  | [@annot:anb] B of string
-  | [@annot:anc] C of nat
+type comb_three = [@layout comb]
+  | [@annot ana] A of int
+  | [@annot anb] B of string
+  | [@annot anc] C of nat
 
-type comb_five = [@layout:comb]
-  | [@annot:an_One] One of int
-  | [@annot:an_Two] Two of string
-  | [@annot:an_Three] Three of bool
-  | [@annot:an_Four] Four of nat
-  | [@annot:an_Five] Five of int
+type comb_five = [@layout comb]
+  | [@annot an_One] One of int
+  | [@annot an_Two] Two of string
+  | [@annot an_Three] Three of bool
+  | [@annot an_Four] Four of nat
+  | [@annot an_Five] Five of int
 
 type parameter = unit
 type op_list = operation list
@@ -249,21 +249,21 @@ let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_fiv
     | Five a -> One 1
   in
   ([] : operation list), o
-  type comb_two = [@layout:tree]
-  | [@annot:anbfoo] Foo of int
-  | [@annot:anabar] Bar of string
+  type comb_two = [@layout tree]
+  | [@annot anbfoo] Foo of int
+  | [@annot anabar] Bar of string
 
-type comb_three = [@layout:tree]
-  | [@annot:ana] A of int
-  | [@annot:anb] B of string
-  | [@annot:anc] C of nat
+type comb_three = [@layout tree]
+  | [@annot ana] A of int
+  | [@annot anb] B of string
+  | [@annot anc] C of nat
 
-type comb_five = [@layout:tree]
-  | [@annot:an_One] One of int
-  | [@annot:an_Two] Two of string
-  | [@annot:an_Three] Three of bool
-  | [@annot:an_Four] Four of nat
-  | [@annot:an_Five] Five of int
+type comb_five = [@layout tree]
+  | [@annot an_One] One of int
+  | [@annot an_Two] Two of string
+  | [@annot an_Three] Three of bool
+  | [@annot an_Four] Four of nat
+  | [@annot an_Five] Five of int
 
 type parameter = unit
 type op_list = operation list
@@ -1216,10 +1216,11 @@ let iter_op (s : int list) : unit =
   let do_nothing = fun (_ : int) -> unit
   in List.iter do_nothing s
 let local_type ( u : unit) : int =
-	type toto = int in
-	let titi : toto = 1 in
-	let titi = titi + 2 in
-	titi
+  type toto = int in
+  let titi : toto = 1 in
+  let titi = titi + 2 in
+  titi
+
 (* Test functional iterators in CameLIGO *)
 
 let rec aux_simple (i : int) : int =
@@ -1648,7 +1649,7 @@ Goes with ticket_wallet.mligo.
 *)
 
 type mint_parameter =
-  [@layout:comb]
+  [@layout comb]
   {destination : unit ticket contract;
    amount : nat}
 
@@ -1657,7 +1658,7 @@ type parameter =
   | Mint of mint_parameter
 
 type storage =
-  [@layout:comb]
+  [@layout comb]
   {admin : address}
 
 let main (arg : parameter * storage) : operation list * storage =
@@ -1688,7 +1689,7 @@ Goes with ticket_builder.mligo.
 *)
 
 type send_parameter =
-  [@layout:comb]
+  [@layout comb]
   {destination : unit ticket contract;
    amount : nat;
    ticketer : address}
@@ -1698,7 +1699,7 @@ type parameter =
   | Send of send_parameter
 
 type storage =
-  [@layout:comb]
+  [@layout comb]
   {manager : address;
    tickets : (address, unit ticket) big_map}
 

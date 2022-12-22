@@ -1,13 +1,14 @@
 type my_record is
-[@layout:comb]
-record [
- field1 : int;
- field2 : nat;
-]
+  [@layout comb]
+  record [
+    field1 : int;
+    field2 : nat
+  ]
 
 //declaring the function that returns the sender’s balance
-function get_balance (const entry : option (int)) : my_record is 
+
+  function get_balance (const entry : option (int)) : my_record is
    case entry of [
-     None -> (failwith ("ba bla"): record[field1: int ; field2 : nat])
+     None -> (failwith ("blah blah"): record [field1: int ; field2 : nat])
    | Some (_o) -> record [field1 = 1 ; field2 = 0n]
    ]

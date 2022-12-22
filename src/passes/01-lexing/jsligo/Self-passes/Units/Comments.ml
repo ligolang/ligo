@@ -1,4 +1,5 @@
-(* Extracting attributes from line comments *)
+(* Transformiing comments into tokens so that a self-pass on them can
+   try to extract attributes *)
 
 (* Vendor dependencies *)
 
@@ -13,19 +14,15 @@ module Unit      = LexerLib.Unit
 
 module Token = Lx_js_self_tokens.Token
 
-let filter (units : Token.t Unit.lex_unit list) : Token.t Unit.t list =
+let filter (units : Token.t Unit.t list) : Token.t Unit.t list =
   let open! Token in
   let rec aux acc = function
-  | `Token token :: remaining ->
-      aux ((`Token token)::acc) remaining
-  | `Markup (Markup.BlockCom {value; region}) :: remaining ->
+    `Markup (Markup.BlockCom {value; region}) :: remaining ->
       aux (`Token (mk_BlockCom value region) :: acc) remaining
   | `Markup (Markup.LineCom {value; region}) :: remaining ->
       aux (`Token (mk_LineCom value region) :: acc) remaining
-  | `Markup _  :: remaining ->
-      aux acc remaining
-  | `Directive d  :: remaining ->
-      aux (`Token (mk_directive d) :: acc) remaining
+  | other :: remaining ->
+      aux (other :: acc) remaining
   | [] -> List.rev acc
   in aux [] units
 

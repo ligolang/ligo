@@ -150,23 +150,23 @@ let main (b, s : bool * (unit -> tez))
   (([] : operation list), (if b then f1 () else f2 ()))
 
 type comb_two =
-  [@layout:comb]
-  {[@annot:anbfoo] foo : int;
-   [@annot:anabar] bar : string}
+  [@layout comb]
+  {[@annot anbfoo] foo : int;
+   [@annot anabar] bar : string}
 
 type comb_three =
-  [@layout:comb]
-  {[@annot:ana] a : int;
-   [@annot:anb] b : string;
-   [@annot:anc] c : nat}
+  [@layout comb]
+  {[@annot ana] a : int;
+   [@annot anb] b : string;
+   [@annot anc] c : nat}
 
 type comb_five =
-  [@layout:comb]
-  {[@annot:an_One] one : int;
-   [@annot:an_Two] two : string;
-   [@annot:an_Three] three : bool;
-   [@annot:an_Four] four : nat;
-   [@annot:an_Five] five : int}
+  [@layout comb]
+  {[@annot an_One] one : int;
+   [@annot an_Two] two : string;
+   [@annot an_Three] three : bool;
+   [@annot an_Four] four : nat;
+   [@annot an_Five] five : int}
 
 type parameter = unit
 
@@ -192,23 +192,23 @@ let r : comb_five =
 let accesses = r.one, r.two, r.three, r.four, r.five
 
 type comb_two =
-  [@layout:tree]
-  {[@annot:anfoo] foo : int;
-   [@annot:anbar] bar : string}
+  [@layout tree]
+  {[@annot anfoo] foo : int;
+   [@annot anbar] bar : string}
 
 type comb_three =
-  [@layout:tree]
-  {[@annot:ana] a : int;
-   [@annot:anb] b : string;
-   [@annot:anc] c : nat}
+  [@layout tree]
+  {[@annot ana] a : int;
+   [@annot anb] b : string;
+   [@annot anc] c : nat}
 
 type comb_five =
-  [@layout:tree]
-  {[@annot:an_One] one : int;
-   [@annot:an_Two] two : string;
-   [@annot:an_Three] three : bool;
-   [@annot:an_Four] four : nat;
-   [@annot:an_Five] five : int}
+  [@layout tree]
+  {[@annot an_One] one : int;
+   [@annot an_Two] two : string;
+   [@annot an_Three] three : bool;
+   [@annot an_Four] four : nat;
+   [@annot an_Five] five : int}
 
 type parameter = unit
 
@@ -229,20 +229,20 @@ let main_comb_five (action, store : parameter * comb_five)
   ([] : operation list), store
 
 type comb_two =
-[@layout:comb]
-| [@annot:anbfoo] Foo of int | [@annot:anabar] Bar of string
+[@layout comb]
+| [@annot anbfoo] Foo of int | [@annot anabar] Bar of string
 
 type comb_three =
-[@layout:comb]
-| [@annot:ana] A of int | [@annot:anb] B of string
-| [@annot:anc] C of nat
+[@layout comb]
+| [@annot ana] A of int | [@annot anb] B of string
+| [@annot anc] C of nat
 
 type comb_five =
-[@layout:comb]
-| [@annot:an_One] One of int | [@annot:an_Two] Two of string
-| [@annot:an_Three] Three of bool
-| [@annot:an_Four] Four of nat
-| [@annot:an_Five] Five of int
+[@layout comb]
+| [@annot an_One] One of int | [@annot an_Two] Two of string
+| [@annot an_Three] Three of bool
+| [@annot an_Four] Four of nat
+| [@annot an_Five] Five of int
 
 type parameter = unit
 
@@ -273,20 +273,20 @@ let main_comb_five (action, store : parameter * comb_five)
   ([] : operation list), o
 
 type comb_two =
-[@layout:tree]
-| [@annot:anbfoo] Foo of int | [@annot:anabar] Bar of string
+[@layout tree]
+| [@annot anbfoo] Foo of int | [@annot anabar] Bar of string
 
 type comb_three =
-[@layout:tree]
-| [@annot:ana] A of int | [@annot:anb] B of string
-| [@annot:anc] C of nat
+[@layout tree]
+| [@annot ana] A of int | [@annot anb] B of string
+| [@annot anc] C of nat
 
 type comb_five =
-[@layout:tree]
-| [@annot:an_One] One of int | [@annot:an_Two] Two of string
-| [@annot:an_Three] Three of bool
-| [@annot:an_Four] Four of nat
-| [@annot:an_Five] Five of int
+[@layout tree]
+| [@annot an_One] One of int | [@annot an_Two] Two of string
+| [@annot an_Three] Three of bool
+| [@annot an_Four] Four of nat
+| [@annot an_Five] Five of int
 
 type parameter = unit
 
@@ -1701,14 +1701,14 @@ let add_more_tez : tez =
   + 1000mutez
 
 type mint_parameter =
-  [@layout:comb]
+  [@layout comb]
   {destination : unit ticket contract;
    amount : nat}
 
 type parameter =
   Burn of unit ticket | Mint of mint_parameter
 
-type storage = [@layout:comb] {admin : address}
+type storage = [@layout comb] {admin : address}
 
 let main (arg : parameter * storage)
 : operation list * storage =
@@ -1735,7 +1735,7 @@ let main (arg : parameter * storage)
   end
 
 type send_parameter =
-  [@layout:comb]
+  [@layout comb]
   {destination : unit ticket contract;
    amount : nat;
    ticketer : address}
@@ -1744,7 +1744,7 @@ type parameter =
   Receive of unit ticket | Send of send_parameter
 
 type storage =
-  [@layout:comb]
+  [@layout comb]
   {manager : address;
    tickets : (address, unit ticket) big_map}
 

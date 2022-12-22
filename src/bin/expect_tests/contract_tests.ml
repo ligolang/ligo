@@ -1876,7 +1876,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
-      2 |   [@layout:comb]
+      2 |   [@layout comb]
       3 |     B of nat
       4 |   | C of int
       5 |   | D of string

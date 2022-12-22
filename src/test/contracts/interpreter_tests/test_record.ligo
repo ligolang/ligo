@@ -1,9 +1,10 @@
-type internal_storage is [@layout:comb] record [
-  value : int;
-]
+type internal_storage is [@layout comb]
+  record [
+    value : int;
+  ]
 
 type storage is record [
-  internal_storage : internal_storage; 
+  internal_storage : internal_storage;
 ]
 
 const initial_storage: storage = record [

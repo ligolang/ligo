@@ -151,7 +151,7 @@ let alice_admin = alice.is_admin;
 
 ### Destructuring Records
 
-We can also access fields of a record using the destructuring syntax. 
+We can also access fields of a record using the destructuring syntax.
 This allows accessing multiple fields of a record in a concise manner, like so:
 
 <Syntax syntax="pascaligo">
@@ -166,7 +166,7 @@ function user_to_tuple (const u : user) is {
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
-let user_to_tuple (u : user) = 
+let user_to_tuple (u : user) =
   let { id ; is_admin ; name } = u in
   (id, is_admin, name)
 ```
@@ -175,7 +175,7 @@ let user_to_tuple (u : user) =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=records1
-let user_to_tuple = (u : user) => { 
+let user_to_tuple = (u : user) => {
   let { id, is_admin, name } = u;
   (id, is_admin, name)
 }
@@ -193,7 +193,7 @@ let userToTuple = (u : user) => {
 
 </Syntax>
 
-We can ignore some fields of the records we can do so by 
+We can ignore some fields of the records we can do so by
 using `_` (underscore), like so:
 
 <Syntax syntax="pascaligo">
@@ -208,7 +208,7 @@ function get_id (const u : user) is {
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
-let get_id (u : user) = 
+let get_id (u : user) =
   let { id ; is_admin = _ ; name = _ } = u in
   id
 ```
@@ -217,7 +217,7 @@ let get_id (u : user) =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=records1
-let get_id = (u : user) => { 
+let get_id = (u : user) => {
   let { id, is_admin: _, name: _ } = u;
   id
 }
@@ -639,10 +639,11 @@ The hiding of a variable by another (here `p`) is called `shadowing`.
 
 Record types are comparable, which allows to check for equality and
 use records as key in sets or maps. By default, the ordering of
-records is **undefined and implementation dependent**. Ultimately, the
+records is **undefined and implementation-dependent**. Ultimately, the
 order is determined by the translated Michelson type. When using the
-`[@layout:comb]` attribute, fields are translated in their order in
-the record, and records are then ordered with lexicographic ordering.
+`@layout comb` (or `@layout:comb`) attribute, fields are translated in
+their order in the record, and records are then ordered with
+lexicographic ordering.
 
 ## Maps
 

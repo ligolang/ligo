@@ -46,7 +46,7 @@ let compile_attributes : CST.attributes -> string list =
    fun x ->
     let (k, v_opt), _loc = r_split x in
     match v_opt with
-    | Some (String v) -> String.concat ~sep:":" [ k; v ]
+    | Some (String v | Ident v) -> String.concat ~sep:":" [ k; v ]
     | None -> k
   in
   List.map ~f attr
@@ -969,7 +969,7 @@ and compile_declaration ~raise : CST.declaration -> AST.declaration option =
       let (type a b) foo bar = ..
     not function:
       let x = ..
-      let (x,y) = ..   
+      let (x,y) = ..
     *)
     (match kwd_rec, args, type_params with
     | None, [], None ->

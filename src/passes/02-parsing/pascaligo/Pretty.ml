@@ -102,7 +102,7 @@ and print_declarations (node : declarations) =
 
 and print_declaration = function
   D_Attr      d -> print_D_Attr d
-| D_Const     d -> print_D_Const d 
+| D_Const     d -> print_D_Const d
 | D_Directive d -> string (Directive.to_lexeme d).Region.value
 | D_Fun       d -> print_D_Fun d
 | D_Module    d -> print_D_Module d
@@ -119,7 +119,7 @@ and print_attribute (node : Attr.t reg) =
   let key, val_opt = node.value in
   let thread = string "[@" ^^ string key in
   let thread = match val_opt with
-                 Some String value ->
+                 Some (String value | Ident value) ->
                    group (thread ^/^ nest 2 (string value))
                | None -> thread in
   let thread = thread ^^ string "]"

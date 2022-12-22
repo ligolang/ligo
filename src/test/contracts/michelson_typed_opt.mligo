@@ -1,10 +1,10 @@
 type r1 =
-  [@layout:comb]
+  [@layout comb]
   { x : nat;
     y : int }
 
 type r2 =
-  [@layout:comb]
+  [@layout comb]
   { x : nat;
     y : int }
 
@@ -19,7 +19,7 @@ let main2 (p, _ : p * nat) : operation list * nat =
     | Two r -> r.x))
 
 type r3 =
-  [@layout:comb]
+  [@layout comb]
   { x : nat;
     z : int }
 
@@ -34,7 +34,7 @@ let main3 (p, _ : p * nat) : operation list * nat =
     | Three r -> r.x))
 
 type r4 =
-  [@layout:comb]
+  [@layout comb]
   { x : nat;
     y : timestamp }
 

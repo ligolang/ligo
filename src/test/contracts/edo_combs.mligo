@@ -1,7 +1,7 @@
 (* This example demonstrates the compiler's handling of Edo combs *)
 
 type param =
-  [@layout:comb]
+  [@layout comb]
   { x : int;
     y : int;
     z : int;

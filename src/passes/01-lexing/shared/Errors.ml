@@ -38,7 +38,7 @@ let error_ppformat :
            Format.pp_print_string format value
       | `Unbalanced_token region ->
           Snippet.pp_lift format region;
-          Format.pp_print_string format "Unbalanced token. Please ensure that left braces/parenthesis are properly balanced with right braces/parenthesis."
+          Format.pp_print_string format "Unbalanced token. Please ensure that left braces/parentheses are properly balanced with right braces/parentheses."
 
 (* JSON *)
 
@@ -53,6 +53,6 @@ let error_json : error -> Simple_utils.Error.t =
          make ~stage ~content
     | `Unbalanced_token region ->
         let location = Location.lift region in
-        let message = "Unbalanced token" in 
+        let message = "Unbalanced token" in
         let content = make_content ~message ~location () in
         make ~stage ~content
