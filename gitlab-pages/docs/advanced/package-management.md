@@ -117,29 +117,7 @@ let main (action, store : parameter * storage) : operation list * storage =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
-
-type parameter =
-  Concat(list(int))
-| Reverse;
-
-type storage = list(int);
-
-let main = ((action, store) : (parameter, storage)): (list(operation), storage) => {
-  (
-   [],
-   (switch (action) {
-    | Concat (ys) => (BA.concat(store))(ys)
-    | Reverse     => BA.reverse(store)
-    })
-  )
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -210,23 +188,7 @@ let test =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-#include "main.religo"
-
-let test = {
-    let storage = Test.compile_value([1, 2, 3]);
-    let (addr, _, _) = Test.originate_from_file("./main.religo", "main", ([] : list(string)), storage, 0tez);
-    let taddr : typed_address(parameter, storage) = Test.cast_address(addr);
-    let contr : contract(parameter) = Test.to_contract(taddr);
-    let _ = Test.transfer_to_contract_exn(contr, Reverse, 1mutez);
-    assert (Test.get_storage(taddr) == [3, 2, 1])
-}
-
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -261,13 +223,7 @@ $ ligo compile contract main.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```bash
-$ ligo compile contract main.religo
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```bash
@@ -295,13 +251,7 @@ $ ligo run test main.test.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```bash
-$ ligo run test main.test.religo
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```bash
@@ -383,23 +333,7 @@ In  [3]:
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```
-$ ligo repl reasonligo
-Welcome to LIGO's interpreter!
-Included directives:
-  #use "file_path";;
-  #import "file_path" "module_name";;
-In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
-Out [1]: Done.
-In  [2]: (BA.concat ([1, 2, 3]))([4, 5, 6]);;
-Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
-In  [3]:
-
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```
@@ -524,22 +458,7 @@ let reverse (type a) (xs : a list) : a list =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=pkg
-/* LIGO library for working with lists */
-
-let concat = (type a, xs : list(a), ys : list(a)) : list(a) =>
-    let f = ((x,ys) : (a, list(a))) : list(a) => [x, ...ys];
-    List.fold_right(f, xs, ys)
-
-let reverse = (type a, xs : list(a)) : list(a) =>
-    let f = ((ys,x) : (list(a), a)) : list(a) => [x, ...ys];
-    List.fold_left(f, ([] : list(a)), xs)
-
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=pkg
@@ -598,26 +517,7 @@ let test_reverse =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-#include "list.religo"
-
-let test_concat = {
-    let xs = [1, 2, 3];
-    let ys = [4, 5, 6];
-    let zs = concat(xs, ys);
-    assert (zs == [1, 2, 3, 4, 5, 6])
-};
-
-let test_reverse = {
-    let xs = [1, 2, 3];
-    assert (reverse(xs) == [3, 2, 1])
-};
-
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -656,13 +556,7 @@ $ ligo run test list.test.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```bash
-$ ligo run test list.test.religo
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```bash
@@ -753,13 +647,7 @@ $ ligo compile contract main.mligo --project-root PATH
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```bash
-$ ligo compile contract main.religo --project-root PATH
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```bash

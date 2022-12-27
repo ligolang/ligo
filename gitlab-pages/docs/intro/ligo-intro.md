@@ -36,7 +36,7 @@ them a good target for formal methods, and what can't be easily proven can at le
 be extensively tested. The simplicity of LIGO also keeps its compiled output
 unbloated. Our hope is to have a simple, strongly typed language with a low footprint.
 
-LIGO currently offers four syntaxes:
+LIGO currently offers three syntaxes:
 
   - **JsLIGO**, a TypeScript/JavaScript inspired syntax that aims to be familiar 
     to those coming from TypeScript/JavaScript.
@@ -46,11 +46,8 @@ LIGO currently offers four syntaxes:
 
   - **PascaLIGO**, a syntax inspired by Pascal which provides an
     imperative developer experience.
-
-  - **ReasonLIGO**, a [ReasonML](https://reasonml.github.io/) inspired syntax
-    that builds on the strong points of OCaml.
   
-Let's define some LIGO contract in the four flavours above. Do
+Let's define some LIGO contract in the three flavours above. Do
 not worry if it is a little confusing at first; we will explain all
 the syntax in the upcoming sections of the documentation.
 
@@ -61,7 +58,6 @@ the syntax in the upcoming sections of the documentation.
     { label: 'JsLIGO', value: 'jsligo', },
     { label: 'CameLIGO', value: 'cameligo', },
     { label: 'PascaLIGO', value: 'pascaligo', },
-    { label: 'ReasonLIGO', value: 'reasonligo', },
   ]
 }>
 <TabItem value="jsligo">
@@ -132,28 +128,7 @@ function main (const action : parameter; const store : storage) : return is
 ```
 
 </TabItem>
-<TabItem value="reasonligo">
 
-```reasonligo group=a
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int)
-| Reset;
-
-type return = (list (operation), storage);
-
-let main = ((action, store): (parameter, storage)) : return => {
-  ([],
-  (switch (action) {
-   | Increment (n) => store + n
-   | Decrement (n) => store - n
-   | Reset         => 0}));
-};
-```
-
-</TabItem>
 
 </Tabs>
 

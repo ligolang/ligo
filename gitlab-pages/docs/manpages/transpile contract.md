@@ -15,7 +15,7 @@ the format that will be used by the CLI. Available formats are 'dev', 'json', an
 if used, prints the output into the specified file instead of stdout (alias: -o)
 
 **--syntax SYNTAX**
-the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively). (alias: -s)
+the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, and .jsligo respectively). (alias: -s)
 
 **-help**
 print this help text and exit (alias: -?)

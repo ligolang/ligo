@@ -73,13 +73,7 @@ type animal = Elephant | Dog | Cat
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=orig
-type animal = | Elephant | Dog | Cat
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=orig
@@ -138,17 +132,7 @@ type animal =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type animal =
-[@layout comb]
-| Elephant
-| Dog
-| Cat
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -189,18 +173,7 @@ type artist =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type artist =
-  [@layout comb] {
-  genre : string,
-  since : timestamp,
-  name  : string
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -242,16 +215,7 @@ type animal =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=annot
-type animal =
-| [@annot memory] Elephant
-| [@annot face] Dog
-| [@annot fish] Cat
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=annot
@@ -298,16 +262,7 @@ type artist = {
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=annot
-type artist = {
-  [@annot style] genre: string,
-  [@annot from] since: timestamp,
-  [@annot performer] name: string
-}
-```
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=annot
@@ -369,16 +324,7 @@ type z_or = (unit, "z", y_or, "other") michelson_or
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type w_and_v = michelson_pair (int, "w", nat, "v")
-type x_and = michelson_pair (string, "x", w_and_v, "other")
-type y_or = michelson_or (unit, "y", x_and, "other")
-type z_or = michelson_or (unit, "z", y_or, "other")
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -430,20 +376,7 @@ let x : z_or = M_right y_1
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let z : z_or = (M_left (unit) : z_or)
-
-let y_1 : y_or = (M_left (unit): y_or)
-let y   : z_or = (M_right (y_1) : z_or)
-
-let x_pair : x_and = ("foo", (2, 3n))
-let x_1    : y_or = (M_right (x_pair): y_or)
-let x      : z_or = (M_right (y_1) : z_or)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -605,66 +538,7 @@ let make_abstract_record z y x w v =
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo group=helper_functions
-type z_to_v =
-| Z
-| Y
-| X
-| W
-| V
-
-type w_or_v = michelson_or(unit, "w", unit, "v")
-type x_or = michelson_or(unit, "x", w_or_v, "other")
-type y_or = michelson_or(unit, "y", x_or, "other")
-type z_or = michelson_or(unit, "z", y_or, "other")
-
-type test = {
-  z: string,
-  y: int,
-  x: string,
-  w: bool,
-  v: int
-}
-
-let make_concrete_sum = (r: z_to_v) : z_or =>
-  switch(r){
-  | Z => (M_left (unit) : z_or)
-  | Y => (M_right (M_left (unit): y_or) : z_or )
-  | X => (M_right (M_right (M_left (unit): x_or): y_or) : z_or )
-  | W => (M_right (M_right (M_right (M_left (unit): w_or_v): x_or): y_or) : z_or )
-  | V => (M_right (M_right (M_right (M_right (unit): w_or_v): x_or): y_or) : z_or )
-  }
-
-let make_concrete_record = (r: test) : (string, int, string, bool, int) =>
-  (r.z, r.y, r.x, r.w, r.v)
-
-let make_abstract_sum = (z_or: z_or) : z_to_v =>
-  switch (z_or) {
-  | M_left n => Z
-  | M_right y_or => (
-    switch (y_or) {
-    | M_left n => Y
-    | M_right x_or => (
-        switch (x_or) {
-        | M_left n => X
-        | M_right w_or => (
-            switch (w_or) {
-            | M_left n => W
-            | M_right n => V
-            })
-        })
-    })
-  }
-
-
-let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) : test =>
-  { z : z, y, x, w, v }
-
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -769,25 +643,7 @@ let main ((p, x): (parameter * storage)): (operation list * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type storage = int
-
-type parameter =
- | Left(int)
- | Right(int)
-
-let main = ((p, x): (parameter, storage)): (list(operation), storage) => {
-  ([], (switch(p) {
-  | Left(i) => x - i
-  | Right(i) => x + i
-  }))
-};
-
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -851,26 +707,7 @@ let main (p, s: parameter * storage): operation list * storage =
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo group=get_entrypoint_opt
-type storage = int;
-
-type parameter = int;
-
-type x = Left(int);
-
-let main = ((p, s): (parameter, storage)): (list(operation), storage) => {
-  let contract =
-    switch (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address))) {
-      | Some c => c
-      | None => failwith ("contract does not match")
-    };
-  ([Tezos.transaction(Left(2), 2mutez, contract)], s);
-};
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 

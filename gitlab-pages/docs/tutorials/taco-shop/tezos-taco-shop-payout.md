@@ -100,44 +100,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-type taco_supply = {
-    current_stock : nat ,
-    max_price     : tez
-}
-
-type taco_shop_storage = map (nat, taco_supply) 
-
-type return = (list(operation), taco_shop_storage)
-
-let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
-  // Retrieve the taco_kind from the contract's storage or fail
-  let taco_kind : taco_supply =
-    switch (Map.find_opt (taco_kind_index, taco_shop_storage)) {
-    | Some (kind) => kind
-    | None => (failwith ("Unknown kind of taco.") : taco_supply)
-  };
-
-  let current_purchase_price : tez =
-    taco_kind.max_price / taco_kind.current_stock;
-
-  // We won't sell tacos if the amount is not correct
-  let _ = 
-    assert_with_error (((Tezos.get_amount ()) != current_purchase_price),
-      "Sorry, the taco you are trying to purchase has a different price");
-
-  // Decrease the stock by 1n, because we have just sold one
-  let taco_kind = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - 1n)) };
-
-  // Update the storage with the refreshed taco_kind
-  let taco_shop_storage = Map.update (taco_kind_index, (Some taco_kind), taco_shop_storage);
-  ([], taco_shop_storage)
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
@@ -198,14 +161,7 @@ let current_purchase_price : tez =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let current_purchase_price : tez =
-  taco_kind.max_price / taco_kind.current_stock
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -272,18 +228,7 @@ let receiver : unit contract =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=ex1
-let ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
-let receiver : contract(unit) =
-  switch (Tezos.get_contract_opt (ownerAddress) : option(contract(unit))) {
-  | Some (contract) => contract
-  | None => (failwith ("Not a contract") : contract(unit))
-  }
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=ex1
@@ -324,14 +269,7 @@ let operations : operation list = [payoutOperation]
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=ex1
-let payoutOperation : operation = Tezos.transaction ((), Tezos.get_amount (), receiver);
-let operations : list(operation) = [payoutOperation];
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=ex1
@@ -446,57 +384,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-type taco_supply = {
-    current_stock : nat ,
-    max_price     : tez
-}
-
-type taco_shop_storage = map (nat, taco_supply) 
-
-type return = (list(operation), taco_shop_storage)
-
-let ownerAddress : address =
-  ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
-
-let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
-  // Retrieve the taco_kind from the contract's storage or fail
-  let taco_kind : taco_supply =
-    switch (Map.find_opt (taco_kind_index, taco_shop_storage)) {
-    | Some (kind) => kind
-    | None => (failwith ("Unknown kind of taco.") : taco_supply)
-  };
-
-  let current_purchase_price : tez =
-    taco_kind.max_price / taco_kind.current_stock;
-
-  // We won't sell tacos if the amount is not correct
-  let _ = 
-    assert_with_error (((Tezos.get_amount ()) != current_purchase_price),
-      "Sorry, the taco you are trying to purchase has a different price");
-
-  // Decrease the stock by 1n, because we have just sold one
-  let taco_kind = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - 1n)) };
-
-  // Update the storage with the refreshed taco_kind
-  let taco_shop_storage = Map.update (taco_kind_index, (Some taco_kind), taco_shop_storage);
-
-  let receiver : contract(unit) =
-    switch (Tezos.get_contract_opt (ownerAddress) : option(contract(unit))) {
-    | Some (contract) => contract
-    | None => (failwith ("Not a contract") : contract(unit))
-  };
-
-  let payoutOperation : operation = Tezos.transaction ((), Tezos.get_amount (), receiver);
-  let operations : list(operation) = [payoutOperation];
-
-  (operations, taco_shop_storage)
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -581,16 +469,7 @@ ligo run dry-run taco-shop.mligo --syntax cameligo --amount 1 --entry-point buy_
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-ligo run dry-run taco-shop.religo --syntax reasonligo --amount 1 --entry-point buy_taco 1n "Map.literal ([
-    (1n, { current_stock : 50n, max_price : 50tez }) ,
-    (2n, { current_stock : 20n, max_price : 75tez }) ,
-])"
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -679,36 +558,7 @@ let operations : operation list =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=bonus
-let ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
-let donationAddress : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
-
-let receiver : contract(unit) =
-  switch ((Tezos.get_contract_opt (ownerAddress)) : option(contract(unit))) {
-  | Some(contract) => contract
-  | None => ((failwith ("Not a contract")) : contract(unit))
-  }
-
-let donationReceiver : contract(unit)  =
-  switch ((Tezos.get_contract_opt (donationAddress)) : option(contract(unit))) {
-  | Some(contract) => contract
-  | None => ((failwith ("Not a contract")) : contract(unit))
-  }
-
-let donationAmount : tez = (Tezos.get_amount ()) / 10n
-
-let operations : list(operation) =
-    // Pedro will get 90% of the amount
-    let op = switch ((Tezos.get_amount ()) - donationAmount) {
-    | Some(x) => Tezos.transaction ((), x, receiver)
-    | None => failwith ("Insufficient balance")
-    };
-    [ op , Tezos.transaction ((), donationAmount, donationReceiver) ]
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=bonus

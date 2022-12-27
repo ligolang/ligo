@@ -45,18 +45,7 @@ let main (p, store : unit * storage) : operation list * storage =
 The call to failwith should be annotated with a type as the type-checker cannot infer the correct type yet.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=failwith
-let main = (p : unit, s : unit) =>
-  if (true) {
-    failwith("This contract always fails");
-  };
-```
-
-The call to failwith should be annotated with a type as the type-checker cannot infer the correct type yet.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
@@ -104,20 +93,7 @@ let some (o : unit option) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=failwith
-let main = (p : bool, s : unit) : (list(operation) , unit) => {
-  let u : unit = assert (p);
-  ([], s);
-};
-
-let some = (o : option (unit)) => {
-  assert_some (o)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith_alt
@@ -153,16 +129,7 @@ let main (p, s : bool * unit) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=failwith
-let main = (p : bool, s : unit) => {
-  assert_with_error (p, "My custom error message.");
-  ([], s);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith

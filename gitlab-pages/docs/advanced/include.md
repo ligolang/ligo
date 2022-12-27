@@ -31,15 +31,7 @@ let foo = 144
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-// Demonstrate ReasonLIGO inclusion statements, see includer.religo
-
-let foo : int = 144;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -70,15 +62,7 @@ let bar = foo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-#include "included.religo"
-
-let bar : int = foo;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip

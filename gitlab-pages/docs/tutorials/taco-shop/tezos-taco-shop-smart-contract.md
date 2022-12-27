@@ -94,15 +94,7 @@ function main (const parameter : int; const contractStorage : int) : list (opera
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-let main = ((parameter, contractStorage) : (int, int)) : (list (operation), int) => {
-  ([], contractStorage + parameter)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
@@ -183,15 +175,7 @@ ligo run dry-run taco-shop.mligo 4 3 --entry-point main
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```zsh
-ligo run dry-run taco-shop.religo 4 3 --entry-point main
-# OUTPUT:
-# ( LIST_EMPTY() , 7 )
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```zsh
@@ -234,15 +218,7 @@ type taco_shop_storage = (nat, taco_supply) map
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-type taco_supply = { current_stock : nat , max_price : tez } ;
-
-type taco_shop_storage = map (nat, taco_supply) ;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -280,17 +256,7 @@ let main (parameter, taco_shop_storage : unit * taco_shop_storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-type return = (list(operation), taco_shop_storage)
-
-let main = ((parameter, taco_shop_storage) : (unit, taco_shop_storage)) : return => {
-  ([], taco_shop_storage)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -332,16 +298,7 @@ let init_storage = Map.literal [
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-let init_storage = Map.literal ([
-  (1n, { current_stock : 50n , max_price : 50tez }),
-  (2n, { current_stock : 20n , max_price : 75tez })
-])
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -378,16 +335,7 @@ ligo compile expression pascaligo --init-file taco-shop.mligo init_storage
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```zsh
-ligo compile expression pascaligo --init-file taco-shop.religo init_storage
-# Output:
-#
-# { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```zsh
@@ -437,15 +385,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
-  ([], taco_shop_storage)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -509,25 +449,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
-  /* Retrieve the taco_kind from the contract's storage or fail */
-  let taco_kind =
-    switch (Map.find_opt (taco_kind_index, taco_shop_storage)) {
-    | Some k => k
-    | None => (failwith ("Unknown kind of taco"): taco_supply) } ;
-  /* Update the storage decreasing the stock by 1n */
-  let taco_shop_storage = Map.update (
-    taco_kind_index,
-    (Some ({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) })),
-    taco_shop_storage );
-  ([], taco_shop_storage)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -617,30 +539,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage)) : return => {
-  /* Retrieve the taco_kind from the contract's storage or fail */
-  let taco_kind : taco_supply =
-    switch (Map.find_opt (taco_kind_index, taco_shop_storage)) {
-    | Some k => k
-    | None => (failwith ("Unknown kind of taco"): taco_supply) } ;
-  let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
-  /* We won't sell tacos if the amount is not correct */
-  let _ = if ((Tezos.get_amount ()) != current_purchase_price) {
-    failwith ("Sorry, the taco you are trying to purchase has a different price")
-  } ;
-  /* Update the storage decreasing the stock by 1n */
-  let taco_shop_storage = Map.update (
-    taco_kind_index,
-    (Some ({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) })),
-    taco_shop_storage );
-  (([]: list(operation)), taco_shop_storage)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -785,63 +684,7 @@ let test =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.religo"
-
-let assert_string_failure = ((res,expected) : (test_exec_result, string)) => {
-  let expected = Test.eval (expected) ;
-  switch (res) {
-  | Fail (Rejected (actual,_)) => assert (Test.michelson_equal (actual, expected))
-  | Fail _ => failwith ("contract failed for an unknown reason")
-  | Success (_) => failwith ("bad price check")
-  }
-} ;
-
-let test =
-  /* originate the contract with a initial storage */
-  let init_storage = Map.literal ([
-      (1n, { current_stock : 50n , max_price : 50tez }) ,
-      (2n, { current_stock : 20n , max_price : 75tez }) , ]) ;
-  let (pedro_taco_shop_ta, _code, _size) = Test.originate (buy_taco, init_storage, 0tez) ;
-  /* Convert typed_address to contract */
-  let pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
-  /* Convert contract to address */
-  let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
-
-  /* Test inputs */
-  let classico_kind = 1n ;
-  let unknown_kind = 3n ;
-
-  /* Auxiliary function for testing equality in maps */
-  let eq_in_map = ((r, m, k) : (taco_supply, taco_shop_storage, nat)) =>
-    switch (Map.find_opt (k, m)) {
-    | None => false
-    | Some (v) => v.current_stock == r.current_stock && v.max_price == r.max_price
-    };
-
-  /* Purchasing a Taco with 1tez and checking that the stock has been updated */
-  let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1tez) ;
-  let _u = switch (ok_case) {
-    | Success (_) =>
-      let storage = Test.get_storage (pedro_taco_shop_ta) ;
-      assert (eq_in_map({ current_stock : 49n , max_price : 50tez }, storage, 1n) &&
-              eq_in_map({ current_stock : 20n , max_price : 75tez }, storage, 2n))
-    | Fail (x) => failwith ("ok test case failed")
-  } ;
-
-  /* Purchasing an unregistred Taco */
-  let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1tez) ;
-  let _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
-
-  /* Attempting to Purchase a Taco with 2tez */
-  let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2tez) ;
-  let _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
-  ()
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test
@@ -944,17 +787,7 @@ ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```zsh
-ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.religo
-# Output:
-#
-# Everything at the top-level was executed.
-# - test exited with value ().
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```zsh
@@ -993,13 +826,7 @@ if (Tezos.get_amount ()) <> current_purchase_price then
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-if ((Tezos.get_amount ()) != current_purchase_price)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -1024,13 +851,7 @@ if (Tezos.get_amount ()) >= current_purchase_price then
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-if ((Tezos.get_amount ()) >= current_purchase_price)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip

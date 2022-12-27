@@ -43,13 +43,7 @@ In a contract, we can make reference to a global constant by using the
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```
-(Tezos.constant(("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")) : int => int))
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```
@@ -79,13 +73,7 @@ ligo compile contract global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ;
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile contract global_call.religo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -155,17 +143,7 @@ let main ((p, s) : string * int) : operation list * int =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=pre_global
-let helper = ((s, x) : (string, int)) : int =>
-  String.length(s) + x * 3 + 2;
-
-let main = ((p, s) : (string, int)) : (list (operation), int) =>
-  (([] : list (operation)), helper (p, s));
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=pre_global
@@ -231,31 +209,7 @@ ligo compile constant cameligo "helper" --init-file global_call.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile constant reasonligo "helper" --init-file global_call.religo
-// Outputs:
-// Michelson constant as JSON string:
-// "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
-// This string can be passed in `--constants` argument when compiling a contract.
-//
-// Remember to register it in the network, e.g.:
-// > tezos-client register global constant "{ UNPAIR ;
-//   PUSH int 2 ;
-//   PUSH int 3 ;
-//   DIG 3 ;
-//   MUL ;
-//   DIG 2 ;
-//   SIZE ;
-//   ADD ;
-//   ADD }" from bootstrap1
-//
-// Constant hash:
-// exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -299,13 +253,7 @@ exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```
-exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```
@@ -331,13 +279,7 @@ references to `helper` by
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```
-(Tezos.constant(("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")) : ((string, int) => int))
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```
@@ -364,14 +306,7 @@ let main ((p, s) : string * int) : operation list * int =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let main = ((p, s) : (string, int)) : (list (operation), int) =>
-  (([] : list (operation)), (((Tezos.constant(("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")) : ((string, int) => int)))(p, s)));
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -399,13 +334,7 @@ consisting of the string returned by `compile constant`:
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```
-["{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"]
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```
@@ -443,19 +372,7 @@ ligo compile contract global_call.mligo --file-constants consts.json
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile contract global_call.religo --file-constants consts.json
-// Outputs:
-// { parameter string ;
-//   storage int ;
-//   code { constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf" ;
-//          NIL operation ;
-//          PAIR } }
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -532,27 +449,7 @@ let test =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=test_global
-type storage = int
-type parameter = unit
-
-let f = (x : int) => x * 3 + 2;
-
-let ct : string = Test.register_constant(Test.eval(f));
-
-let main = ((p, s) : (parameter, storage)) : (list (operation), storage) =>
-  (([] : list (operation)), (((Tezos.constant(ct) : (int => int)))(s)));
-
-let test =
-  let (taddr, _, _) = Test.originate(main, 1, 0tez);
-  let ctr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(ctr, (), 0tez);
-  assert (Test.get_storage(taddr) == 5);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_global

@@ -115,35 +115,7 @@ let main (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-// This is testme.religo
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int)
-| Reset;
-
-type return = (list (operation), storage);
-
-// Two entrypoints
-let add = ((store, delta) : (storage, int)) : storage => store + delta;
-let sub = ((store, delta) : (storage, int)) : storage => store - delta;
-
-/* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. */
-let main = ((action, store) : (parameter, storage)) : return => {
- (([] : list (operation)),    // No operations
- (switch (action) {
-  | Increment (n) => add ((store, n))
-  | Decrement (n) => sub ((store, n))
-  | Reset         => 0}))
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
@@ -205,18 +177,7 @@ let test =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-// This continues testnew.religo
-
-let test =
-  let initial_storage = 42;
-  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
-  assert (Test.get_storage(taddr) == initial_storage)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
@@ -259,16 +220,7 @@ ligo run test gitlab-pages/docs/advanced/src/testnew.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo run test gitlab-pages/docs/advanced/src/testnew.religo
-// Outputs:
-// Everything at the top-level was executed.
-// - test exited with value true.
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -326,21 +278,7 @@ let test2 =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-// This continues testnew.religo
-
-let test2 =
-  let initial_storage = 42;
-  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
-  let contr = Test.to_contract(taddr);
-  let gas_cons = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
-  let _unit = Test.log(("gas consumption",gas_cons));
-  assert (Test.get_storage(taddr) == initial_storage + 1)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
@@ -827,20 +765,6 @@ function balances_under (const b : balances ; const threshold : tez) is {
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
-
-```reasonligo group=rmv_bal
-// This is remove-balance.religo
-
-type balances = map(address, tez);
-
-let balances_under = ( (b, threshold) : (balances, tez) ) : balances =>
-  let f = ( (acc,(k,v)) : (balances, (address, tez)) ) =>  if (v < threshold) { Map.remove (k,acc) } else {acc} ;
-  Map.fold (f,b,b)
-```
-
-</Syntax>
-
 <Syntax syntax="jsligo">
 
 ```jsligo group=rmv_bal
@@ -881,14 +805,7 @@ const _u = Test.reset_state (5n, (list [] : list (tez)))
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=rmv_bal_test
-#include "./gitlab-pages/docs/advanced/src/remove-balance.religo"
-let _u = Test.reset_state (5n, ([] : list(tez)));
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=rmv_bal_test
@@ -920,15 +837,7 @@ const balances : balances = {
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=rmv_bal_test
-let balances : balances =
-  let (a1, a2, a3) = (Test.nth_bootstrap_account(1), Test.nth_bootstrap_account(2), Test.nth_bootstrap_account(3));
-  Map.literal([ (a1, 10tz), (a2, 100tz), (a3, 1000tz)]);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=rmv_bal_test
@@ -991,22 +900,7 @@ const test =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=rmv_bal_test
-let test =
-  List.iter (
-    (((threshold , expected_size) : (tez, nat)) =>
-      let tester = ((balances, threshold) : (balances, tez)) => Map.size (balances_under (balances, threshold));
-      let size = Test.run(tester, (balances, threshold));
-      let expected_size = Test.eval(expected_size) ;
-      let _u = Test.log (("expected", expected_size)) ;
-      let _u = Test.log (("actual", size)) ;
-      assert ( Test.michelson_equal (size, expected_size) )),
-    [ (15tez, 2n), (130tez, 1n), (1200tez, 0n)] );
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=rmv_bal_test
@@ -1061,22 +955,7 @@ You can now execute the test:
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```shell
-> ligo run test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.religo
-// Outputs:
-// ("expected" , 2)
-// ("actual" , 2)
-// ("expected" , 1)
-// ("actual" , 1)
-// ("expected" , 0)
-// ("actual" , 0)
-// Everything at the top-level was executed.
-// - test exited with value ().
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -1170,37 +1049,7 @@ let main (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-// This is testme.religo
-
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int)
-| Reset;
-
-type return = (list (operation), storage);
-
-// Two entrypoints
-let add = ((store, delta) : (storage, int)) : storage => store + delta;
-let sub = ((store, delta) : (storage, int)) : storage => store - delta;
-
-/* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. */
-
-let main = ((action, store) : (parameter, storage)) : return => {
- (([] : list (operation)),    // No operations
- (switch (action) {
-  | Increment (n) => add ((store, n))
-  | Decrement (n) => sub ((store, n))
-  | Reset         => 0}))
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -1263,15 +1112,7 @@ ligo run interpret "main (Increment (32), 10)" --init-file testme.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo run interpret "main (Increment (32), 10)" --init-file testme.religo
-// Outputs:
-// ( LIST_EMPTY() , 42 )
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell

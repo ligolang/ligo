@@ -1,6 +1,6 @@
 # LIGO language support for Vim
 
-This plugin adds support for PascaLIGO, CameLIGO, and ReasonLIGO to Vim.
+This plugin adds support for PascaLIGO and CameLIGO to Vim.
 
 Syntax highlighting is supported out-of-the box. Language features are provided
 via LSP. The language server (`ligo-squirrel`) should be installed separately.

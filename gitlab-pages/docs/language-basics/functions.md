@@ -227,53 +227,7 @@ This operator actually comes from [OCaml's pervasives](https://v2.ocaml.org/rele
 Other similar operators will be added when enabling support for custom operator definition.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-Functions in ReasonLIGO are defined using the `let` keyword, like
-other values. The difference is that a tuple of parameters is provided
-after the value name, with its type, then followed by the return type.
-
-Here is how you define a basic function that sums two integers:
-```reasonligo group=b
-let add = ((a, b): (int, int)) : int => a + b;
-```
-
-You can call the function `add` defined above using the LIGO compiler
-like this:
-```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.religo '(1,2)' --entry-point add
-# Outputs: 3
-```
-
-As in CameLIGO and with blockless functions in PascaLIGO, the function
-body is a single expression, whose value is returned.
-
-If the body contains more than a single expression, you use block
-between braces:
-```reasonligo group=b
-let myFun = ((x, y) : (int, int)) : int => {
-  let doubleX = x + x;
-  let doubleY = y + y;
-  doubleX + doubleY
-};
-```
-
-By default, LIGO will warn about unused arguments inside
-functions. In case we do not use an argument, we can use the wildcard
-`_` to prevent warnings. Either use `_` instead of the argument
-identifier:
-
-```reasonligo
-let k = ((x, _) : (int, int)) => x;
-```
-
-or use an identifier starting with wildcard:
-
-```reasonligo
-let k = ((x, _y) : (int, int)) => x;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 Functions in JsLIGO are defined using the `let` or `const` keyword, like
@@ -371,21 +325,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mlig
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=c
-let increment = (b : int) : int => (a => a + 1) (b);
-let a = increment (1); // a == 2
-```
-
-You can check the value of `a` defined above using the LIGO compiler
-like this:
-```shell
-ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.religo --entry-point a
-# Outputs: 2
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -443,22 +383,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.mligo --entry-point inc
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=c
-let incr_map = (l : list (int)) : list (int) =>
-  List.map ((i) => i + 1, l);
-```
-You can call the function `incr_map` defined above using the LIGO compiler
-like so:
-```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.religo --entry-point incr_map
-"[1,2,3]"
-# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to [ 2 , 3 , 4 ]
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -499,16 +424,7 @@ let closure_example (i : int) : int =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let closure_example = (i : int) : int => {
-  let closure = (j) => i + j;
-  closure(i);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -560,25 +476,6 @@ let rec sum (n, acc : int * int) : int =
 
 let rec fibo (n, n_1, n_0 : int * int * int) : int =
   if n < 2 then n_1 else fibo (n-1, n_1 + n_0, n_1)
-```
-</Syntax>
-<Syntax syntax="reasonligo">
-
-LIGO functions are not recursive by default, the user need to specify
-that the function is recursive.
-
-At the moment, recursive function are limited to one, e.g., a tuple,
-parameter and recursion is limited to __tail recursion__, that is, the
-recursive call should be the last expression of the function.
-
-In ReasonLIGO recursive functions are defined using the `rec` keyword
-
-```reasonligo group=d
-let rec sum = ((n, acc) : (int, int)): int =>
-  if (n < 1) { acc; } else { sum ((n-1, acc + n)); };
-
-let rec fibo = ((n, n_1, n_0) : (int, int, int)): int =>
-    if (n < 2) { n_1; } else { fibo ((n-1, n_1 + n_0, n_1)); };
 ```
 </Syntax>
 <Syntax syntax="jsligo">

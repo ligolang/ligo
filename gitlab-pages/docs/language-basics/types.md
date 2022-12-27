@@ -42,14 +42,7 @@ let dog_breed : breed = "Saluki"
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-type breed = string;
-let dog_breed : breed = "Saluki";
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
@@ -91,19 +84,7 @@ let ledger : account_balances =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-// The type account_balances denotes maps from addresses to tez
-
-type account_balances = map (address, tez);
-
-let ledger: account_balances =
-  Map.literal
-    ([("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, 10mutez)]);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -185,32 +166,7 @@ let my_ledger : ledger = Map.literal
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=c
-// Type aliasing
-
-type account = address;
-type number_of_transactions = nat;
-
-// The type account_data is a record with two fields.
-
-type account_data = {
-  balance : tez,
-  transactions : number_of_transactions
-};
-
-// A ledger is a map from accounts to account_data
-
-type ledger = map (account, account_data);
-
-let my_ledger : ledger =
-  Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address,
-     {balance: 10mutez, transactions: 5n})]);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -295,35 +251,7 @@ let back (param, store : unit * storage) : operation list * storage = // Annotat
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=d
-type parameter = | Back | Claim | Withdraw;
-
-type storage = {
-  owner    : address,
-  goal     : tez,
-  deadline : timestamp,
-  backers  : map (address, tez),
-  funded   : bool,
-};
-
-let back = ((param, store) : (unit, storage)) : (list (operation), storage) => { // Annotation
-  if (Tezos.get_now () > store.deadline) {
-    failwith ("Deadline passed.");
-  }
-  else {
-    switch (Map.find_opt (Tezos.get_sender(), store.backers)) {
-    | None => {
-        let backers = Map.update (Tezos.get_sender(), Some (Tezos.get_amount()), store.backers);
-        ([], {...store, backers:backers}) }
-    | Some (x) => ([], store)
-    }
-  }
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=d

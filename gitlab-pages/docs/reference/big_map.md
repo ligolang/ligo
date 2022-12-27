@@ -25,9 +25,7 @@ val empty%lt;key,value&gt; : big_map (key, value)
 <SyntaxTitle syntax="cameligo">
 val empty : ('key, 'value) big_map
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let empty: big_map('key, 'value)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let empty: big_map&lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
@@ -60,16 +58,7 @@ let empty : register = Big_map.empty
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-type move = (int, int);
-type register = big_map (address, move);
-
-let empty: register = Big_map.empty
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
@@ -88,9 +77,7 @@ val literal&lt;key,value&gt; : list (key * value) -> big_map (key, value)
 <SyntaxTitle syntax="cameligo">
 val literal : ('key * 'value) list -> ('key, 'value) big_map
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let literal: list(('key, 'value)) => big_map('key, 'value)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let literal: (items: list&lt;[&apos;key, &apos;value]&gt;) => big_map&lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
@@ -126,16 +113,7 @@ let moves : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-let moves: register =
-  Big_map.literal ([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
@@ -153,9 +131,7 @@ val find_opt&lt;key,value&gt; : key -> big_map (key, value) -> option (value)
 <SyntaxTitle syntax="cameligo">
 val find_opt : 'key -> ('key, 'value) big_map -> 'value option
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let find_opt: ('key, big_map ('key, 'value)) => option ('value)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let find_opt: (key: &apos;key, big_map: big_map &lt;&apos;key, &apos;value&gt;) => option &lt;&apos;value&gt;
 </SyntaxTitle>
@@ -189,14 +165,7 @@ let my_balance : move option =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-let my_balance: option (move) =
-  Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
@@ -213,9 +182,7 @@ val mem&lt;key,value&gt; : key -> big_map (key, value) -> bool
 <SyntaxTitle syntax="cameligo">
 val mem : 'key -> ('key, 'value) big_map -> bool
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let mem: ('key, big_map ('key, 'value)) => bool
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let mem: (key: &apos;key, big_map: big_map &lt;&apos;key, &apos;value&gt;) => bool
 </SyntaxTitle>
@@ -238,14 +205,7 @@ let has_balance : bool =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-let has_balance: bool =
-  Big_map.mem("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
@@ -261,9 +221,7 @@ val update&lt;key,value&gt; : key -> option (value) -> big_map (key, value) -> b
 <SyntaxTitle syntax="cameligo">
 val update: 'key -> 'value option -> ('key, 'value) big_map -> ('key, 'value) big_map
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let update: ('key, option('value), big_map('key, 'value)) => big_map('key, 'value)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let update: (key: &apos;key, value: option&lt;&apos;value&gt;, big_map: big_map&lt;&apos;key, &apos;value&gt;) => big_map&lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
@@ -312,15 +270,7 @@ let updated_map : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-let updated_map: register =
-  Big_map.update
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some((4,9)), moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
@@ -337,9 +287,7 @@ val get_and_update&lt;key,value&gt; : key -> option (value) -> big_map (key, val
 <SyntaxTitle syntax="cameligo">
 val get_and_update : 'key -> 'value option -> ('key, 'value) big_map -> value option * ('key, 'value) big_map
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let get_and_update : 'key => option('value) => big_map ('key, 'value) => option('value) * big_map ('key, 'value)
-</SyntaxTitle>
+
 
 Similar to `update` but it also returns the value that was previously stored in the big_map
 
@@ -349,9 +297,7 @@ val add&lt;key,value&gt; : key -> value -> big_map (key, value) -> big_map (key,
 <SyntaxTitle syntax="cameligo">
 val add : 'key -> 'value -> ('key, 'value) big_map  -> ('key, 'value) big_map
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let add: ('key, 'value, big_map('key, 'value)) => big_map('key, 'value)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let add: (key: &apos;key, value: &apos;value, big_map: big_map&lt;&apos;key, &apos;value&gt;) => big_map&lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
@@ -371,15 +317,7 @@ let add (m : register) : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-let add = (m: register): register =>
-  Big_map.add
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (4,9), m);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
@@ -397,9 +335,7 @@ val remove&lt;key,value&gt; : key -> big_map (key, value) -> big_map (key, value
 <SyntaxTitle syntax="cameligo">
 val remove: 'key -> ('key, 'value) big_map -> ('key, 'value) big_map
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let remove: ('key, big_map('key, 'value)) => big_map('key, 'value)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let remove: (key: &apos;key, big_map: big_map&lt;&apos;key, &apos;value&gt;) => big_map&lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
@@ -432,14 +368,7 @@ let updated_map : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
-let updated_map: register =
-  Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map

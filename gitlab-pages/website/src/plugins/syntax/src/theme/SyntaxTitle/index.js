@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import Highlight, { defaultProps } from "prism-react-renderer";
 
 // THE PROBLEM IS USE THEME CONTEXT ==>>>>
@@ -8,7 +8,7 @@ import { SyntaxContext } from '@theme/Syntax';
 
 import defaultTheme from 'prism-react-renderer/themes/palenight';
 
-const {Prism} = require("prism-react-renderer");
+const { Prism } = require("prism-react-renderer");
 
 Prism.languages = {
   ...Prism.languages,
@@ -59,22 +59,14 @@ Prism.languages = {
     ],
     'punctuation': /\(\.|\.\)|[()\[\]:;,.]/
   },
-  reasonligo: 
-  {...Prism.languages.reason, 
-    'comment': [
-      /(^|[^\\])\/\*[\s\S]*?\*\//,
-      /\(\*[\s\S]*?\*\)/,   
-      /\/\/.*/   
-    ]
-      
-  },
   cameligo: {
-    ...Prism.languages.ocaml, 
+    ...Prism.languages.ocaml,
     'comment': [
       /(^|[^\\])\/\*[\s\S]*?\*\//,
-      /\(\*[\s\S]*?\*\)/,   
-      /\/\/.*/   
-    ]},
+      /\(\*[\s\S]*?\*\)/,
+      /\/\/.*/
+    ]
+  },
   jsligo: Prism.languages.typescript
 };
 
@@ -82,7 +74,7 @@ Prism.languages = {
 function SyntaxTitle(props) {
   const {
     siteConfig: {
-      themeConfig: {prism = {}},
+      themeConfig: { prism = {} },
     }
   } = useDocusaurusContext();
 
@@ -97,25 +89,25 @@ function SyntaxTitle(props) {
     setMounted(true);
   }, []);
 
-  return ( 
+  return (
     <SyntaxContext.Consumer>
-      {( ({syntax}) => {
+      {(({ syntax }) => {
         if (syntax === props.syntax) {
-          return ( 
+          return (
             <Highlight {...defaultProps} key={mounted} language={props.syntax} code={props.children} theme={lightModeTheme}>
               {({ className, tokens, getLineProps, getTokenProps }) => (
-                  <pre className={className} style={{backgroundColor: 'var(--ifm-background-color)', fontSize: '1.1rem', fontWeight: 'bold', padding: 0, whiteSpace: 'break-spaces', marginTop: '3rem' }}>
-                    {tokens.map((line, i) => (
-                        <div {...getLineProps({ line, key: i })}>
-                        {line.map((token, key) => (
-                            <span {...getTokenProps({ token, key })} />
-                        ))}
-                        </div>
-                    ))}
-                    </pre>
-                )}
+                <pre className={className} style={{ backgroundColor: 'var(--ifm-background-color)', fontSize: '1.1rem', fontWeight: 'bold', padding: 0, whiteSpace: 'break-spaces', marginTop: '3rem' }}>
+                  {tokens.map((line, i) => (
+                    <div {...getLineProps({ line, key: i })}>
+                      {line.map((token, key) => (
+                        <span {...getTokenProps({ token, key })} />
+                      ))}
+                    </div>
+                  ))}
+                </pre>
+              )}
             </Highlight>
-            )
+          )
         } else {
           return <div></div>
         }

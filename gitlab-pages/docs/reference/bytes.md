@@ -14,9 +14,7 @@ val concat : bytes -> bytes -> bytes
 <SyntaxTitle syntax="cameligo">
 val concat : bytes -> bytes -> bytes
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let concat: (bytes, bytes) => bytes
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let concat: (a: bytes, b: bytes) => bytes
 </SyntaxTitle>
@@ -38,13 +36,7 @@ let concat_op (s : bytes) : bytes = Bytes.concat s 0x7070
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -59,9 +51,7 @@ val sub : nat -> nat -> bytes -> bytes
 <SyntaxTitle syntax="cameligo">
 val sub : nat -> nat -> bytes -> bytes
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let sub : (nat, nat, bytes) => bytes
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let sub : (start: nat, length: nat, input: bytes) => bytes
 </SyntaxTitle>
@@ -83,13 +73,7 @@ let slice_op (s : bytes) = Bytes.sub 1n 2n s
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```
-let slice_op = (s: bytes) => Bytes.sub(1n, 2n, s);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```
@@ -106,9 +90,7 @@ val pack&lt;a&gt; : a -> bytes
 <SyntaxTitle syntax="cameligo">
 val pack : 'a -> bytes
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let pack : 'a => bytes
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let pack : (data: &apos;a) => bytes
 </SyntaxTitle>
@@ -137,16 +119,7 @@ let id_string (p : string) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let id_string = (p: string) => {
-  let packed : bytes = Bytes.pack(p);
-  Bytes.unpack(packed);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=pack
@@ -165,9 +138,7 @@ val unpack&lt;a&gt; : bytes -> option (a)
 <SyntaxTitle syntax="cameligo">
 val unpack : bytes -> 'a option
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let unpack: bytes => option('a)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let unpack: (serialized_data: bytes) => option&lt;&apos;a&gt;
 </SyntaxTitle>
@@ -198,16 +169,7 @@ let id_string (p : string) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let id_string = (p: string) => {
-  let packed : bytes = Bytes.pack(p);
-  Bytes.unpack(packed);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -225,9 +187,7 @@ val length : bytes -> nat
 <SyntaxTitle syntax="cameligo">
 val length : bytes -> nat
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let length: bytes => nat
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let length: (b: bytes) => nat
 </SyntaxTitle>

@@ -29,15 +29,7 @@ type ('s,'f) result = Ok of 's | Error of 'f
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO :
-
-```reasonligo group=failwith_view
-type result ('s,'f) = Ok('s) | Error('f)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO :

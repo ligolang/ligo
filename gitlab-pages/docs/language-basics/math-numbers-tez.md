@@ -144,37 +144,7 @@ let g : int = 1_000_000
 >```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-// int + int yields int
-let a : int = 5 + 10;
-
-// nat + int yields int
-let b : int = 5n + 10;
-
-// tez + tez yields tez
-let c : tez = 5mutez + 0.000_010tez;
-
-// tez + int or tez + nat is invalid:
-// let d : tez = 5mutez + 10n;
-
-// two nats yield a nat
-let e : nat = 5n + 10n;
-
-// nat + int yields an int: invalid
-// let f : nat = 5n + 10;
-
-let g : int = 1_000_000;
-```
-
-> Pro tip: you can use underscores for readability when defining large
-> numbers:
->```reasonligo
->let sum : tez = 100_000mutez;
->```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
@@ -240,19 +210,7 @@ let b : int = 5n - 2n
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-let a : int = 5 - 10;
-
-// Subtraction of two nats yields an int
-let b : int = 5n - 2n;
-
-// Therefore the following is invalid
-// let c : nat = 5n - 2n;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -292,17 +250,7 @@ let e : tez option = 1mutez - 5mutez (* None *)
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-
-let d : option(tez) = 5mutez - 1mutez /* Some (4mutez) */
-
-let e : option(tez) = 1mutez - 5mutez /* None */
-
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -341,17 +289,7 @@ let c : tez = 5n * 5mutez
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=c
-let a : int = 5 * 5;
-let b : nat = 5n * 5n;
-
-// You can also multiply `nat` and `tez`
-let c : tez = 5n * 5mutez;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -390,15 +328,7 @@ let c : nat = 10mutez / 3mutez
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=d
-let a : int = 10 / 3;
-let b : nat = 10n / 3n;
-let c : nat = 10mutez / 3mutez;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
@@ -442,20 +372,7 @@ let rem4 : nat = a mod d  // 3
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=d
-let a : int = 120;
-let b : int = 9;
-let rem1 : nat = a mod b;  // 3
-let c : nat = 120n;
-let rem2 : nat = c mod b;  // 3
-let d : nat = 9n;
-let rem3 : nat = c mod d;  // 3
-let rem4 : nat = a mod d;  // 3
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 > The behaviour of the `%` operator in JsLIGO is different from JavaScript.
@@ -510,20 +427,7 @@ let ediv4 : (int * nat) option = ediv a d  // Some (7, 2)
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=f
-let a : int = 37;
-let b : int = 5;
-let ediv1 : option((int , nat)) = ediv(a, b);  // Some (7, 2)
-let c : nat = 37n;
-let ediv2 : option((int , nat)) = ediv(c, b);  // Some (7, 2)
-let d : nat = 5n;
-let ediv3 : option((nat , nat)) = ediv(c, d);  // Some (7, 2)
-let ediv4 : option((int , nat)) = ediv(a, d);  // Some (7, 2)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
@@ -561,14 +465,7 @@ let b : nat = abs (1)
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=e
-let a : int = int (1n);
-let b : nat = abs (1);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
@@ -601,13 +498,7 @@ let is_a_nat : nat option = is_nat (1)
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=e
-let is_a_nat : option (nat) = is_nat (1);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
@@ -641,27 +532,4 @@ let seven_ : nat = 14n land 1n // 7
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-## Bitwise operations
-You can perform bitwise operations as follows:
-
-> bitwise operations can be performed mostly with `nat`'s
->
-> only in case of bitwise and, the first operand can be either `int` or `nat`
-
-```reasonligo
-// Bitwise and (first operand can be int or nat)
-let four : nat = 4n land 4n; // 4
-let four_ : nat = 7 land 4n; // 4
-// Bitwise or
-let seven : nat = 7n lor 4n; // 7
-// Bitwise xor
-let three : nat = 7n lxor 4n; // 3
-// Bitwise shift left
-let fourteen : nat = 7n lsl 1n; // 14
-// Bitwise shift right
-let seven_ : nat = 14n lsr 1n; // 7
-```
-
-</Syntax>

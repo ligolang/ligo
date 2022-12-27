@@ -60,25 +60,7 @@ let main (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-// This is mockup_testme.religo
-type storage = string;
-
-type parameter = Append (string)
-
-type return = (list (operation), storage);
-
-let main = ((action, store) : (parameter, storage)) : return => {
- (([] : list (operation)),    // No operations
- (switch (action) {
-  | Append (s) => store ++ s
-  }))
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -124,17 +106,7 @@ ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.religo --entry-point main
-// Outputs:
-// { parameter string ;
-//   storage string ;
-//   code { DUP ; CAR ; SWAP ; CDR ; CONCAT ; NIL operation ; PAIR } }
-```
-
-</Syntax>
 
 Instead of outputting the resulted compiled code in the screen, we can
 tell LIGO to write it in a file called `mockup_testme.tz`:
@@ -153,13 +125,7 @@ ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.religo --entry-point main --output-file mockup_testme.tz
-```
-
-</Syntax>
 
 Now it is time to test this Michelson code we obtained: we want to
 execute it using the mockup mode.
@@ -248,15 +214,7 @@ ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.mlig
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.religo "Append (\"bar\")" --entry-point main
-// Outputs:
-// "bar"
-```
-
-</Syntax>
 
 So our parameter is simply the string (notice that the constructor
 `Append` was removed). We execute a call to the contract with this

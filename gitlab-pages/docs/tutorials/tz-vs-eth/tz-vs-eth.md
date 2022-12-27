@@ -16,7 +16,7 @@ The current Tezos protocol uses the Michelson language under the hood. Michelson
 
 Having a human-readable representation of compiled contracts makes it harder for compiler bugs to pass unnoticed: everyone can review the Michelson code of the contract and even formally prove its correctness.
 
-LIGO is a family of high-level languages. There are several _flavours_ or _syntaxes_ of LIGO – PascaLIGO, CameLIGO, and ReasonLIGO. The developers may choose whatever syntax looks more familiar to them.
+LIGO is a family of high-level languages. There are several _flavours_ or _syntaxes_ of LIGO – PascaLIGO, CameLIGO, and JsLIGO. The developers may choose whatever syntax looks more familiar to them.
 
 ## Terminology
 
@@ -63,15 +63,7 @@ type token_amount = TokenAmount of nat
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type nat_alias = nat;
-
-type token_amount = TokenAmount(nat);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b2
@@ -99,13 +91,7 @@ type creature = {heads_count : nat; legs_count : nat; tails_count : nat}
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type creature = { heads_count: nat, legs_count: nat, tails_count: nat };
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -145,19 +131,7 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type int_option = Number(int) | Null;
-
-let x = Number (5);
-
-let y = Null;
-```
-
-Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number (5)`, `Number (10)`, etc.) or `Null`. Notice how `Null` does not hold any value.
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -217,27 +191,7 @@ let x_or_zero =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let x: option(int) = Some (5);
-
-let y: option(int) = None;
-```
-
-This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option(address)`. We can then use `switch` to see if there is something inside:
-
-```reasonligo
-let x: option(int) = Some (5);
-
-let x_or_zero =
-  switch(x){
-  | Some (value) => value
-  | None => 0
-  };
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b5
@@ -287,17 +241,7 @@ type authority = Dictatorship of leader | Democracy of committee
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type committee = {members: list(address), quorum: nat };
-
-type leader = {name: string, address: address };
-
-type authority = Dictatorship(leader) | Democracy(committee);
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -387,39 +331,7 @@ let main (p, s : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let main = ((parameter, storage): (bytes, int)) => {
-  if (parameter == 0xbc1ecb8e) {
-    ([], storage + 1)
-  } else {
-
-    if (parameter == 0x36e44653) {
-      ([], storage - 1)
-    } else {
-      failwith("Unknown entrypoint")
-    }
-  }
-};
-```
-
-However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `switch`:
-
-```reasonligo
-type parameter = Increment | Decrement;
-
-type storage = int;
-
-let main = ((p, s): (parameter, storage)) => {
-  switch(p){
-  | Increment => ([], s + 1)
-  | Decrement => ([], s - 1)
-  }
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a2
@@ -488,22 +400,7 @@ let main (p, s : parameter * storage) =
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type parameter = Add(int) | Subtract(int);
-
-type storage = int;
-
-let main = ((p, s): (parameter, storage)) => {
-  switch(p){
-  | Add n => ([], s + n)
-  | Subtract n => ([], s - n)
-  }
-};
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -581,25 +478,7 @@ let main (param, storage : parameter * storage) : operation list * storage =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let multiplyBy2 = (storage: int) => storage * 2;
-
-let multiplyBy4 = (storage: int) => multiplyBy2(multiplyBy2(storage));
-
-type parameter = MultiplyBy4 | MultiplyBy16;
-
-let main = ((param, storage): (parameter, storage)) : (list(operation) , storage) => {
-  let op = [] ;
-  switch(param){
-  | MultiplyBy4 => (op, multiplyBy4(storage))
-  | MultiplyBy16 => (op, multiplyBy4(multiplyBy4(storage)))
-  }
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a5
@@ -668,25 +547,7 @@ ligo run interpret 'main (Compute (fun (x : int) -> x * x + 2 * x + 1), 3)' --in
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type parameter = Compute((int => int));
-
-type storage = int;
-
-let main = ((p, s): (parameter, storage)) : (list(operation) , storage) =>
-  switch(p){
-  | Compute(func) => ([], func(s))
-  };
-```
-
-We can then call this contract with the parameter of the form `Compute ((x : int) => x * x + 2 * x + 1)`. Try this out with:
-```
-ligo run interpret 'main (Compute ((x : int) => x * x + 2 * x + 1), 3)' --init-file examples/contracts/religo/Lambda.religo
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a6
@@ -759,33 +620,7 @@ let main (p, s : parameter * storage) : operation list * storage =
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction (fun (x : int) -> ...)`.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type storage = {fn: option(int => int), value: int };
-
-type parameter = CallFunction | SetFunction((int => int));
-
-let call = ((fn, value): (option((int => int)), int)) => {
-  switch(fn){
-  | Some (f) => f(value)
-  | None => failwith("Lambda is not set")
-  }
-};
-
-let main = ((p, s): (parameter, storage)) : (list(operation) , storage) => {
-  let newStorage =
-    switch(p){
-    | SetFunction fn => {...s, fn: Some (fn)}
-    | CallFunction => {...s, value: call(s.fn, s.value)}
-    };
-  ([], newStorage)
-};
-```
-
-Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction ((x : int) => ...)`.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a1
@@ -896,32 +731,7 @@ let treasury (p, s : unit * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type storage = {rewardsLeft: tez, beneficiaryAddress: address };
-
-let treasury = ((_, s): (unit, storage)) => {
-  // We do our computations first
-  let newStorage = {...s, rewardsLeft: 0mutez};
-
-  // Then we find our beneficiary's `handleRewards` entrypoint:
-  let beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
-  let beneficiary =
-    switch(beneficiaryOpt){
-    | Some (contract) => contract
-    | None => failwith("Beneficiary does not exist")
-    };
-
-  // Then we prepare the internal operation we want to perform
-  let operation = Tezos.transaction((), s.rewardsLeft, beneficiary);
-  
-  // ...and return both the operations and the updated storage
-  ([operation], newStorage)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b1
@@ -982,21 +792,7 @@ let doSomethingCont (p, s : int * int) = ([] : operation list), p + s
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-type parameter = DoSomething | DoSomethingCont(int);
-
-let doSomething = ((p, s): (unit, int)) => {
-  /* The callee should call `%doSomethingCont` with the value we want */
-  let op = Tezos.transaction ...;
-  ([op], s)
-}
-
-let doSomethingCont = ((p, s): (int, int)) => (([] : list(operation)), p + s);
-```
-
-</Syntax>
 <Syntax>
 
 ```jsligo skip
@@ -1034,10 +830,10 @@ In this article, we discussed some Solidity patterns and their LIGO counterparts
 
 | Solidity pattern | LIGO pattern |
 |------------------|--------------|
-| `public` field   | A field in the storage record, e.g. <Syntax syntax="pascaligo">`type storage is record [ x : int; y : nat ]`</Syntax><Syntax syntax="cameligo">`type storage = { x : int; y : nat }`</Syntax><Syntax syntax="reasonligo">`type storage = { x : int, y : nat }`</Syntax><Syntax syntax="jsligo">`type storage = { x : int, y : nat }`</Syntax> |
+| `public` field   | A field in the storage record, e.g. <Syntax syntax="pascaligo">`type storage is record [ x : int; y : nat ]`</Syntax><Syntax syntax="cameligo">`type storage = { x : int; y : nat }`</Syntax><Syntax syntax="jsligo">`type storage = { x : int, y : nat }`</Syntax> |
 | `private` field  | N/A: all fields are public |
-| `private` method | A regular function, e.g., <Syntax syntax="pascaligo">`function func (const a : int) is ...`</Syntax><Syntax syntax="cameligo">`let func (a : int) = ...`</Syntax><Syntax syntax="reasonligo">`let func = (a : int) => ...`</Syntax><Syntax syntax="jsligo">`let func = (a : int) => ...`</Syntax> |
-| `public` /  `external` method  | A separate entrypoint in the parameter: <Syntax syntax="pascaligo">`type parameter = F of int`</Syntax><Syntax syntax="cameligo">`type parameter = F of int`</Syntax><Syntax syntax="reasonligo">`type parameter = F (int)`</Syntax><Syntax syntax="jsligo">`type parameter = ["F", int]`</Syntax>. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
+| `private` method | A regular function, e.g., <Syntax syntax="pascaligo">`function func (const a : int) is ...`</Syntax><Syntax syntax="cameligo">`let func (a : int) = ...`</Syntax><Syntax syntax="jsligo">`let func = (a : int) => ...`</Syntax> |
+| `public` /  `external` method  | A separate entrypoint in the parameter: <Syntax syntax="pascaligo">`type parameter = F of int`</Syntax><Syntax syntax="cameligo">`type parameter = F of int`</Syntax><Syntax syntax="jsligo">`type parameter = ["F", int]`</Syntax>. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
 | `internal` method | There is no concept of inheritance in Tezos |
 | Constructor      | Set the initial storage upon origination |
 | Method that returns a value | Inspect the contract storage directly |

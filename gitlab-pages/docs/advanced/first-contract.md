@@ -90,30 +90,7 @@ let main (action, store : parameter * storage) : return =
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type parameter =
-  Increment (int)
-| Decrement (int)
-;
-
-type storage = int;
-
-type return = (list (operation), storage);
-
-let add = ((n, store) : (int, storage)) : storage => store + n;
-let sub = ((n, store) : (int, storage)) : storage => store - n;
-
-let main = ((action, store) : (parameter, storage)) : return =>
-  (([]: list (operation)),
-    (switch (action) {
-     | Increment (n) => add ((n, store))
-     | Decrement (n) => sub ((n, store))
-    }));
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 

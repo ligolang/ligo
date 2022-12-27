@@ -40,17 +40,7 @@ let main (p : nat * nat) (s : nat * nat) : operation list * (nat * nat) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-[@inline]
-let fst = (p: (nat, nat)) : nat => p[0]
-
-let main = (p : (nat, nat), s : (nat, nat)) : (list(operation), (nat, nat)) =>
-    (([]: list(operation)), (fst((p[0], p[1])), fst((s[1], s[0]))))
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo

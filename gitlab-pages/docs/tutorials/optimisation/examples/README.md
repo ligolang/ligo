@@ -28,4 +28,4 @@ You can use the provided script (`./bin/estimateGas`) to compare the different v
 
 ## Switching between the dialects
 
-By default, all the scripts run CameLIGO contracts. To change this behaviour, set the `syntax` variable in `truffle-config.js` to one of `ligo`, `mligo`, or `religo`. You would need to re-run your migrations to deploy the new contracts to your development network (run `npx truffle migrate --reset` to do it).
+By default, all the scripts run CameLIGO contracts. To change this behaviour, set the `syntax` variable in `truffle-config.js` to one of `ligo` or `mligo`. You would need to re-run your migrations to deploy the new contracts to your development network (run `npx truffle migrate --reset` to do it).
