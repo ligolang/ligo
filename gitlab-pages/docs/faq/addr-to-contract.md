@@ -35,18 +35,7 @@ let test =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=addr2contract
-let test = {
-  let addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-  let taddr : typed_address(unit,unit) = Test.cast_address(addr);
-  let contract : contract(unit) = Test.to_contract(taddr);
-  contract;
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=addr2contract

@@ -16,9 +16,7 @@ val empty&lt;elt&gt; : set (elt)
 <SyntaxTitle syntax="cameligo">
 val empty : 'elt set
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let empty: set('elt)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let empty: set&lt;&apos;elt&gt;
 </SyntaxTitle>
@@ -45,13 +43,7 @@ let my_set : int set = Set.empty
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let my_set : set (int) = Set.empty;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -66,9 +58,7 @@ val literal&lt;elt&gt; : list (elt) -> set (elt)
 <SyntaxTitle syntax="cameligo">
 val literal : 'elt list -> 'elt set
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let literal: list('elt) => set('elt)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let literal: (input: list&lt;&apos;elt&gt;) => set&lt;&apos;elt&gt;
 </SyntaxTitle>
@@ -95,13 +85,7 @@ let my_set : int set = Set.literal [3; 2; 2; 1]
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let my_set : set (int) = Set.literal ([3, 2, 2, 1]);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets2
@@ -116,9 +100,7 @@ val mem&lt;elt&gt; : elt * set (elt) -> bool
 <SyntaxTitle syntax="cameligo">
 val mem : 'elt -> 'elt set -> bool
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let mem: ('elt, set('elt)) => bool
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let mem: (v: &apos;elt, set: set&lt;&apos;elt&gt;) => bool
 </SyntaxTitle>
@@ -145,13 +127,7 @@ let contains_3 : bool = Set.mem 3 my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let contains_3 : bool = Set.mem (3, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets2
@@ -166,9 +142,7 @@ val cardinal&lt;elt&gt; : set (elt) -> nat
 <SyntaxTitle syntax="cameligo">
 val cardinal : 'elt set -> nat
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let cardinal: set('elt) => nat
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let cardinal: (set: set&lt;&apos;elt&gt;) => nat
 </SyntaxTitle>
@@ -193,13 +167,7 @@ let card : nat = Set.cardinal my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let card : nat = Set.cardinal (my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -214,9 +182,7 @@ val add&lt;elt&gt; : elt * set (elt) -> set(elt)
 <SyntaxTitle syntax="cameligo">
 val add : 'elt -> 'elt set -> 'elt set
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let add: ('elt, set('elt)) => set('elt)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let add: (elt: &apos;elt, set: set&lt;&apos;elt&gt;) => set&lt;&apos;elt&gt;
 </SyntaxTitle>
@@ -237,13 +203,7 @@ let updated_set = Set.add 4 my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let updated_set = Set.add (4, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -258,9 +218,7 @@ val remove&lt;elt&gt; : elt * set (elt) -> set (elt)
 <SyntaxTitle syntax="cameligo">
 val remove : 'elt -> 'elt set -> 'elt set
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let remove: ('elt, set('elt)) => set('elt)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let remove: (elt: &apos;elt, set: set&lt;&apos;elt&gt;) => set&lt;&apos;elt&gt;
 </SyntaxTitle>
@@ -281,13 +239,7 @@ let updated_set = Set.remove 3 my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let updated_set = Set.remove (3, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets2
@@ -302,9 +254,7 @@ val update&lt;elt&gt; : elt * bool * set (elt) -> set (elt)
 <SyntaxTitle syntax="cameligo">
 val update : 'elt -> bool -> 'elt set -> 'elt set
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let update: ('elt, bool, set('elt)) => set('elt)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let update: (elt : 'elt, flag : bool, set : set&lt;'elt&gt;) => set&lt;'elt&gt;
 </SyntaxTitle>
@@ -334,18 +284,7 @@ let updated_set = Set.update 4 false my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-/* in case of true value will be added to the set */
-let updated_set = Set.update (4, true, my_set);
-
-
-/* in case of false value will be removed from the set */
-let updated_set = Set.update (4, false, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -365,9 +304,7 @@ val iter&lt;elt&gt; : (elt -> unit) * set (elt) -> unit
 <SyntaxTitle syntax="cameligo">
 val iter : ('elt -> unit) -> 'elt set -> unit
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let iter: (('elt => unit), set('elt)) => unit
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let iter: (iterator: ((item: &apos;a) => unit), set: set&lt;&apos;a&gt;) => unit
 </SyntaxTitle>
@@ -397,16 +334,7 @@ let iter_op (s : int set) : unit =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let iter_op = (s : set (int)) : unit => {
-  let predicate = (i : int) => assert (i > 3);
-  Set.iter (predicate, s);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -424,9 +352,7 @@ val fold&lt;item,acc&gt; : ((acc -> item -> acc) * set (item) * acc) -> acc
 <SyntaxTitle syntax="cameligo">
 val fold : ('acc * 'item -> 'acc) -> 'item set -> 'acc -> 'acc
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let fold: ((('acc, 'item) => 'acc), set('item), 'acc) => 'acc
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let fold: ((iterator: [acc: &apos;acc, item: &apos;item]) => &apos;acc), set: set&lt;&apos;item&gt;, acc: &apos;acc) => &apos;acc
 </SyntaxTitle>
@@ -452,14 +378,7 @@ let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let sum = ((acc, i) : (int, int)) : int => acc + i;
-let sum_of_elements : int = Set.fold (sum, my_set, 0);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -474,9 +393,7 @@ val fold_desc&lt;item,acc&gt; : (item * acc -> acc) * set (item) * acc -> acc
 <SyntaxTitle syntax="cameligo">
 val fold_desc : (('item * 'acc) -> 'acc) -> 'item set -> 'acc -> 'acc
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let fold_desc: ((('item, 'acc) => 'acc), set('item), 'acc) => 'acc
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let fold_desc: (((a: [&apos;item, &apos;acc]) => &apos;acc), set&lt;&apos;item&gt;, &apos;acc) => &apos;acc
 </SyntaxTitle>
@@ -500,14 +417,7 @@ let sum_of_elements : int = Set.fold_desc sum_right my_set 0
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let sum_right = ((i, acc) : (int, int)) : int => acc + i;
-let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets

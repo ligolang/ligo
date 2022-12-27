@@ -33,7 +33,7 @@ the sender the Michelson interpreter transaction will use.
 the source the Michelson interpreter transaction will use.
 
 **--syntax SYNTAX**
-the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively). (alias: -s)
+the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, and .jsligo respectively). (alias: -s)
 
 **--warn-unused-rec**
 warn about unused recursion in a recursive function

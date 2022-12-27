@@ -27,14 +27,7 @@ let b : bool = false
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-let a : bool = true;
-let b : bool = false;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
@@ -290,128 +283,6 @@ let lte: bool = 4 <= 3
 </div>
 </Syntax>
 
-<Syntax syntax="reasonligo">
-<div className="boolean-example-table">
-  <div className="operation">
-    &&
-  </div>
-  <div className="description">
-    Logical and
-  </div>
-  <div className="example">
-
-```reasonligo
-let logical_and: bool = true && true;
-```
-
-  </div>
-  <div className="operation">
-    ||
-  </div>
-  <div className="description">
-    Logical or
-  </div>
-  <div className="example">
-
-```reasonligo
-let logical_or: bool = false || true;
-```
-
-  </div>
-  <div className="operation">
-    !
-  </div>
-  <div className="description">
-    Logical not
-  </div>
-  <div className="example">
-
-```reasonligo
-let logical_not: bool = !false;
-```
-
-  </div>
-  <div className="operation">
-    ==
-  </div>
-  <div className="description">
-    Equals
-  </div>
-  <div className="example">
-
-```reasonligo
-let eq: bool = 2 == 3;
-```
-
-  </div>
-  <div className="operation">
-    !=
-  </div>
-  <div className="description">
-    Not equals
-  </div>
-  <div className="example">
-
-```reasonligo
-let not_eq: bool = 2 != 3;
-```
-
-  </div>
-  <div className="operation">
-    &gt;
-  </div>
-  <div className="description">
-    Greater than
-  </div>
-  <div className="example">
-
-```reasonligo
-let gt: bool = 4 > 3;
-```
-
-  </div>
-  <div className="operation">
-    &lt;
-  </div>
-  <div className="description">
-    Less than
-  </div>
-  <div className="example">
-
-```reasonligo
-let lt: bool = 4 < 3;
-```
-
-  </div>
-  <div className="operation">
-    &gt;=
-  </div>
-  <div className="description">
-    Greater than or equal to
-  </div>
-  <div className="example">
-
-```reasonligo
-let gte: bool = 4 >= 3;
-```
-
-  </div>
-  <div className="operation">
-    &lt;=
-  </div>
-  <div className="description">
-    Less than or equal to
-  </div>
-  <div className="example">
-
-```reasonligo
-let lte: bool = 4 <= 3;
-```
-
-  </div>
-</div>
-</Syntax>
-
 
 <Syntax syntax="jsligo">
 <div className="boolean-example-table">
@@ -573,15 +444,7 @@ let c : bool = (a = b) // true
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-let a : string = "Alice";
-let b : string = "Alice";
-let c : bool = (a == b); // true
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -624,20 +487,6 @@ let h : bool = (a <> b)
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
-
-```reasonligo group=c
-let a : int  = 5;
-let b : int  = 4;
-let c : bool = (a == b);
-let d : bool = (a > b);
-let e : bool = (a < b);
-let f : bool = (a <= b);
-let g : bool = (a >= b);
-let h : bool = (a != b);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -677,15 +526,7 @@ let c : bool = (a = b) // false
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=d
-let a : tez  = 5mutez;
-let b : tez  = 10mutez;
-let c : bool = (a == b); // false
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
@@ -776,24 +617,6 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo '21n' --entry-p
 > closest previous `then`.
 
 </Syntax>
-<Syntax syntax="reasonligo">
-
-```reasonligo group=e
-type magnitude = Small | Large; // See variant types.
-
-let compare = (n : nat) : magnitude =>
-  if (n < 10n) { Small; } else { Large; };
-```
-
-You can run the `compare` function defined above using the LIGO compiler
-like this:
-```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo '21n' --entry-point compare
-# Outputs: Large
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
@@ -813,7 +636,7 @@ You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
 ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo '21n' --entry-point compare
+gitlab-pages/docs/language-basics/src/boolean-if-else/cond.jsligo '21n' --entry-point compare
 # Outputs: Large
 ```
 

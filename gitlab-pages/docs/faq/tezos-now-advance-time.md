@@ -37,10 +37,6 @@ let _dummy : nat -> unit = Test.bake_until_n_cycle_end
 let _dummy : timestamp -> nat -> tez list -> unit = Test.reset_state_at
 ```
 
-```reasonligo test-ligo group=log
-let _dummy : nat => unit = Test.bake_until_n_cycle_end
-let _dummy : (timestamp, nat, list(tez)) => unit = Test.reset_state_at
-```
 
 ```jsligo test-ligo group=log
 let _dummy : (cycles : nat) => unit = Test.bake_until_n_cycle_end
@@ -58,9 +54,6 @@ val Test.bake_until_n_cycle_end : nat -> unit
 val Test.bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
 
-<SyntaxTitle syntax="reasonligo">
-let Test.bake_until_n_cycle_end: nat => unit
-</SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
 let Test.bake_until_n_cycle_end = (cycles : nat) => unit
@@ -76,9 +69,7 @@ val Test.reset_state_at : timestamp * nat * list (tez) -> unit
 val Test.reset_state_at : timestamp -> nat -> tez list -> unit
 </SyntaxTitle>
 
-<SyntaxTitle syntax="reasonligo">
-let Test.reset_state_at: (timestamp, nat, list(tez)) => unit
-</SyntaxTitle>
+
 
 <SyntaxTitle syntax="jsligo">
 let Test.reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list&lt;tez&gt;) => unit

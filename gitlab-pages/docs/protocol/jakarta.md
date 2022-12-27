@@ -18,9 +18,7 @@ type tx_rollup_l2_address
 <SyntaxTitle syntax="cameligo">
 type tx_rollup_l2_address
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type tx_rollup_l2_address
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 type tx_rollup_l2_address
 </SyntaxTitle>
@@ -37,9 +35,7 @@ val min_block_time : unit -> nat
 <SyntaxTitle syntax="cameligo">
 val min_block_time : unit -> nat
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let min_block_time: unit => nat
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let min_block_time: unit => nat;
 </SyntaxTitle>

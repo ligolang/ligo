@@ -26,9 +26,7 @@ val create_ticket&lt;value&gt; : value -> nat -> option (ticket (value))
 <SyntaxTitle syntax="cameligo">
 val create_ticket : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let create_ticket : 'value => nat => option(ticket('value))
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>

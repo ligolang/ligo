@@ -40,14 +40,7 @@ type return = operation list * storage
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-type storage = ...;  // Any name, any type
-type return = (list (operation), storage);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -89,18 +82,7 @@ let save (action, store: parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-type parameter = nat;
-type storage = nat;
-type return = (list (operation), storage);
-
-let main = ((action, store): (parameter, storage)) : return =>
-  ([], store);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
@@ -191,34 +173,7 @@ let main (action, store: parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=b
-type parameter =
-| Action_A (nat)
-| Action_B (string);
-
-type storage = {
-  counter : nat,
-  name    : string
-};
-
-type return = (list (operation), storage);
-
-let entry_A = ((n, store): (nat, storage)) : return =>
-  ([], {...store, counter : n});
-
-let entry_B = ((s, store): (string, storage)) : return =>
-  ([], {...store, name : s});
-
-let main = ((action, store): (parameter, storage)) : return =>
-  switch (action) {
-  | Action_A (n) => entry_A ((n, store))
-  | Action_B (s) => entry_B ((s, store))
-  };
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
@@ -289,22 +244,7 @@ let deny (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=c
-type parameter = unit;
-type storage = unit;
-type return = (list (operation), storage);
-
-let deny = ((action, store): (parameter, storage)) : return => {
-  if (Tezos.get_amount () > 0tez) {
-    failwith("This contract does not accept tokens.")
-  }
-  else { ([], store); };
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -350,18 +290,7 @@ let main (action, store: parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=c
-let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
-
-let main = ((action, store) : (parameter, storage)) : return => {
-  if (Tezos.get_sender () != owner) { failwith ("Access denied."); }
-  else { ([], store) };
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
@@ -489,48 +418,7 @@ let proxy (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-// counter.religo
-
-type parameter =
-| Increment (nat)
-| Decrement (nat)
-| Reset
-
-// ...
-```
-
-```reasonligo group=d
-// proxy.religo
-
-type parameter =
-| Increment (nat)
-| Decrement (nat)
-| Reset;
-
-type storage = unit;
-
-type return = (list (operation), storage);
-
-let dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address);
-
-let proxy = ((action, store): (parameter, storage)) : return => {
-  let counter : contract (parameter) =
-    switch (Tezos.get_contract_opt (dest)) {
-    | Some (contract) => contract;
-    | None => failwith ("Contract not found.");
-    };
-  /* Reuse the parameter in the subsequent
-     transaction or use another one, `mock_param`. */
-  let mock_param : parameter = Increment (5n);
-  let op = Tezos.transaction (action, 0tez, counter);
-  ([op], store)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip

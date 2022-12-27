@@ -1,4 +1,4 @@
-#import "imported.religo" "EURO"
+#import "imported.jsligo" "EURO"
 type storage = EURO.t;
 
 let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>

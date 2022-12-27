@@ -38,14 +38,7 @@ let michelson_add n =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let michelson_add = (n : (nat, nat)) : nat =>
-  [%Michelson ({| { UNPAIR ; ADD } |} : ((nat, nat) => nat))](n);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -94,15 +87,7 @@ ligo compile expression cameligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile expression reasonligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : (nat => nat))]"
-// Outputs:
-// { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
-```
-
-</Syntax>
 
 As we can see, the embedded Michelson code was not modified. However,
 if the resulting function is applied, then the embedded Michelson code
@@ -129,15 +114,7 @@ ligo compile expression cameligo "fun n -> [%Michelson ({| { PUSH nat 42; DROP ;
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile expression reasonligo "((n : nat) => [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : (nat => nat))](n))"
-// Outputs:
-// { PUSH nat 1 ; ADD }
-```
-
-</Syntax>
 
 ## Compiling Embedded Code
 
@@ -187,26 +164,7 @@ let main (action, store : parameter * storage) : operation list * storage =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-type parameter =
-| Increment (int)
-| Extend (never);
-
-type storage = int;
-
-let main = ((action,store): (parameter, storage)) => {
-  let storage =
-    switch (action) {
-    | Increment (n) => store + n
-    | Extend (k) => [%Michelson ({| { NEVER } |} : (never => int))](k)
-    };
-  ([]: list(operation), storage);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -245,13 +203,7 @@ ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pag
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.religo --entry-point main
-```
-
-</Syntax>
 
 > ⚠️ Just for reference, there is support now for generating the
 > instruction `NEVER` directly from LIGO, using `Tezos.never`.

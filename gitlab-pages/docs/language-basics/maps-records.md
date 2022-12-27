@@ -41,17 +41,7 @@ type user = {
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=records1
-type user = {
-  id       : nat,
-  is_admin : bool,
-  name     : string
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
@@ -91,17 +81,7 @@ let alice : user = {
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=records1
-let alice : user = {
-  id       : 1n,
-  is_admin : true,
-  name     : "Alice"
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
@@ -134,13 +114,7 @@ let alice_admin : bool = alice.is_admin
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=records1
-let alice_admin : bool = alice.is_admin;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
@@ -172,16 +146,7 @@ let user_to_tuple (u : user) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=records1
-let user_to_tuple = (u : user) => {
-  let { id, is_admin, name } = u;
-  (id, is_admin, name)
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
@@ -214,16 +179,7 @@ let get_id (u : user) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=records1
-let get_id = (u : user) => {
-  let { id, is_admin: _, name: _ } = u;
-  id
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
@@ -349,36 +305,7 @@ gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
 > returned.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-The syntax for the functional updates of record in ReasonLIGO follows
-that of ReasonML:
-
-```reasonligo group=records2
-type point = {x : int, y : int, z : int};
-type vector = {dx : int, dy : int};
-
-let origin : point = {x : 0, y : 0, z : 0};
-
-let xy_translate = ((p, vec) : (point, vector)) : point =>
-  {...p, x : p.x + vec.dx, y : p.y + vec.dy};
-```
-
-You can call the function `xy_translate` defined above by running the
-following command of the shell:
-
-```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
-"({x:2,y:3,z:1}, {dx:3,dy:4})" --entry-point xy_translate
-# Outputs: {z = 1 , y = 7 , x = 5}
-```
-
-> You have to understand that `p` has not been changed by the
-> functional update: a nameless new version of it has been created and
-> returned.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 The syntax for the functional updates of record in JsLIGO:
@@ -454,27 +381,7 @@ type account = {
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-A unique feature of LIGO is the ability to perform nested updates on records.
-
-For example if you have the following record structure:
-
-```reasonligo
-type color = Blue | Green;
-
-type preferences = {
-  color : color,
-  other : int
-}
-
-type account = {
-  id          : int,
-  preferences : preferences
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 A unique feature of LIGO is the ability to perform nested updates on records.
@@ -520,14 +427,7 @@ let change_color_preference (account : account) (color : color) : account =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let change_color_preference = (account : account, color : color): account =>
-  { ...account, preferences.color: color };
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
@@ -674,14 +574,7 @@ type register = (address, move) map
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-type move = (int, int);
-type register = map (address, move);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -712,13 +605,7 @@ let empty : register = Map.empty
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let empty : register = Map.empty
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -763,21 +650,7 @@ separate individual map entries.  `("<string value>": address)` means
 that we type-cast a string into an address.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let moves : register =
-  Map.literal ([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
-```
-
-The `Map.literal` predefined function builds a map from a list of
-key-value pair tuples, `(<key>, <value>)`.  Note also the `,` to
-separate individual map entries.  `("<string value>": address)` means
-that we type-cast a string into an address.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -818,14 +691,7 @@ let my_balance : move option =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let my_balance : option (move) =
-  Map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -863,18 +729,7 @@ let force_access (key, moves : address * register) : move =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let force_access = ((key, moves) : (address, register)) : move => {
-  switch (Map.find_opt (key, moves)) {
-  | Some (move) => move
-  | None => failwith ("No move.")
-  }
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -947,29 +802,7 @@ let add (m : register) : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-We can update a binding in a map in ReasonLIGO by means of the
-`Map.update` built-in function:
-
-```reasonligo group=maps
-let assign = (m : register) : register =>
-  Map.update
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), Some ((4,9)), m);
-```
-
-Notice the optional value `Some (4,9)` instead of `(4,9)`. If we used
-`None` instead that would have meant that the binding is removed.
-
-As a particular case, we can only add a key and its associated value.
-
-```reasonligo group=maps
-let add = (m : register) : register =>
-  Map.add
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4,9), m);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 We can update a binding in a map in JsLIGO by means of the
@@ -1019,16 +852,7 @@ let delete (key, moves : address * register) : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, we use the predefined function `Map.remove` as follows:
-
-```reasonligo group=maps
-let delete = ((key, moves) : (address, register)) : register =>
-  Map.remove (key, moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, we use the predefined function `Map.remove` as follows:
@@ -1086,16 +910,7 @@ let iter_op (m : register) : unit =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let iter_op = (m : register) : unit => {
-  let predicate = ((i,j) : (address, move)) => assert (j[0] > 3);
-  Map.iter (predicate, m);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -1136,16 +951,7 @@ let map_op (m : register) : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let map_op = (m : register) : register => {
-  let increment = ((_,j): (address, move)) => (j[0], j[1] + 1);
-  Map.map (increment, m);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -1190,16 +996,7 @@ let fold_op (m : register) : int =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=maps
-let fold_op = (m : register) : int => {
-  let folded = ((i,j): (int, (address, move))) => i + j[1][1];
-  Map.fold (folded, m, 5);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
@@ -1244,14 +1041,7 @@ type register = (address, move) big_map
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_maps
-type move = (int, int);
-type register = big_map (address, move);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
@@ -1283,13 +1073,7 @@ let empty : register = Big_map.empty
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_maps
-let empty : register = Big_map.empty
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
@@ -1333,21 +1117,7 @@ separating individual map entries.  The annotated value `("<string>
 value>" : address)` means that we cast a string into an address.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_maps
-let moves : register =
-  Big_map.literal ([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
-```
-
-The predefined function `Big_map.literal` constructs a big map from a
-list of key-value pairs `(<key>, <value>)`. Note also the semicolon
-separating individual map entries.  The annotated value `("<string>
-value>" : address)` means that we cast a string into an address.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
@@ -1390,14 +1160,7 @@ let my_balance : move option =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=big_maps
-let my_balance : option (move) =
-  Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
@@ -1446,18 +1209,7 @@ let updated_map : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-We can update a big map in ReasonLIGO using the `Big_map.update`
-built-in:
-
-```reasonligo group=big_maps
-let updated_map : register =
-  Big_map.update
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some ((4,9)), moves);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 We can update a big map in JsLIGO using the `Big_map.update`
@@ -1503,17 +1255,7 @@ let updated_map : register =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, the predefined function which removes a binding in a map
-is called `Map.remove` and is used as follows:
-
-```reasonligo group=big_maps
-let updated_map : register =
-  Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, the predefined function which removes a binding in a map

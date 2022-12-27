@@ -18,9 +18,7 @@ type chest
 <SyntaxTitle syntax="cameligo">
 type chest
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chest
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 type chest
 </SyntaxTitle>
@@ -32,9 +30,7 @@ type chest_key
 <SyntaxTitle syntax="cameligo">
 type chest_key
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chest_key
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 type chest_key
 </SyntaxTitle>
@@ -52,12 +48,7 @@ type chest_opening_result =
   | Fail_decrypt
   | Fail_timelock
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chest_opening_result =
-    Ok_opening(bytes)
-  | Fail_decrypt
-  | Fail_timelock
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 type chest_opening_result =
    ["Ok_opening", bytes]
@@ -77,9 +68,7 @@ val open_chest : chest_key -> chest -> nat -> chest_opening_result
 <SyntaxTitle syntax="cameligo">
 val open_chest : chest_key -> chest -> nat -> chest_opening_result
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let open_chest : chest_key => chest => nat => chest_opening_result
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let open_chest : chest_key => chest => nat => chest_opening_result
 </SyntaxTitle>
@@ -90,9 +79,7 @@ val call_view&lt;arg,reg&gt; : string -> arg -> address -> option (ret)
 <SyntaxTitle syntax="cameligo">
 val call_view : string -> 'arg -> address -> 'ret option
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let call_view : string => 'arg => address => option ('ret)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let call_view : string => 'arg => address => option &lt;&apos;ret&gt;
 </SyntaxTitle>
@@ -104,9 +91,7 @@ function constant: string -> 'a
 <SyntaxTitle syntax="cameligo">
 val constant : string -> 'a
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let constant : string => 'a
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let constant : string => 'a
 </SyntaxTitle>
@@ -121,9 +106,7 @@ val originate_from_file : string -> string -> list (string) -> michelson_program
 <SyntaxTitle syntax="cameligo">
 val originate_from_file : string -> string -> string list -> michelson_program -> tez -> (address * michelson_program * int)
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let originate_from_file : string => string => list(string) => michelson_program => tez => (address, michelson_program, int)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let originate_from_file = (filepath: string, entrypoint: string , views : list &lt;&apos;string&gt; , init: michelson_program, balance: tez) => [address, michelson_program, int]
 </SyntaxTitle>
@@ -136,9 +119,7 @@ val create_chest : bytes -> nat -> chest * chest_key
 <SyntaxTitle syntax="cameligo">
 val create_chest : bytes -> nat -> chest * chest_key
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let create_chest : bytes => nat => (chest , chest_key)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let create_chest : bytes => nat => [chest , chest_key]
 </SyntaxTitle>
@@ -152,9 +133,7 @@ val create_chest_key : chest -> nat -> chest_key
 <SyntaxTitle syntax="cameligo">
 val create_chest_key : chest -> nat -> chest_key
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let create_chest_key : chest => nat => chest_key
-</SyntaxTitle>
+
 <SyntaxTitle syntax="jsligo">
 let create_chest_key : chest => nat => chest_key
 </SyntaxTitle>
@@ -230,19 +209,7 @@ let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
-  switch (Tezos.open_chest(ck,c,@time)) {
-    | Ok_opening b => b
-    | Fail_decrypt => failwith("decrypt")
-    | Fail_timelock => failwith("timelock")
-  }
-};
-```
-
-</Syntax>
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
@@ -319,23 +286,7 @@ let view3 = ([_ , _s]: [unit , storage]) : int => 42;
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=views
-type storage = string
-let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => ([] , s);
-
-/* view 'view1', simply returns the storage */
-[@view] let view1 = ((_ , s): (unit , storage)) : storage => s;
-
-/* view 'v2', returns true if the storage has a given length */
-[@view] let v2 = ((expected_length,s) : (nat , storage)) : bool => (String.length (s) == expected_length);
-
-/* view 'view3' returns a constant int */
-[@view] let view3 = ((_ , _): (unit , storage)) : int => 42;
-```
-
-</Syntax>
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=views
@@ -382,13 +333,7 @@ let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> 
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=views
-let view_call = ((name,parameter,addr): (string , int , address)) : option(int) => Tezos.call_view ("sto_plus_n", 1, addr)
-```
-
-</Syntax>
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=views

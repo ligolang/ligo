@@ -38,20 +38,7 @@ triple of the same type: `(x,y)` has always a different type from
 `(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-Tuples gather a given number of values in a specific order and those
-values, called *components*, can be retrieved by their index
-(position).  Probably the most common tuple is the *pair*. For
-example, if we were storing coordinates on a two dimensional grid we
-might use a pair `(x,y)` to store the coordinates `x` and `y`. There
-is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
-general. The number of components is part of the type of a tuple, so,
-for example, we cannot add an extra component to a pair and obtain a
-triple of the same type: `(x,y)` has always a different type from
-`(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 Tuples gather a given number of values in a specific order and those
@@ -94,15 +81,7 @@ let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=tuple
-type full_name = (string, string);  // Alias
-
-let full_name : full_name = ("Alice", "Johnson");
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
@@ -136,29 +115,7 @@ Notice that we use the underscore to indicate that we ignore the last element
 of the tuple.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-### Destructuring
-
-If we want to get the first and last name of the `full_name` type, we can use
-destructuring. Destructuring a tuple allows you to give names to the elements
-inside the tuple.
-
-```reasonligo group=tuple
-let (first_name, last_name) : full_name = full_name
-```
-
-This also works in functions:
-
-```reasonligo group=tuple
-let first_name = ((first_name, _): full_name) => first_name
-let alice = first_name(full_name)
-```
-
-Notice that we use the underscore to indicate that we ignore the last element
-of the tuple.
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ### Destructuring
@@ -226,13 +183,7 @@ let first_name : string = full_name.0
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=tuple
-let first_name : string = full_name[0];
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
@@ -274,14 +225,7 @@ let my_list : int list = [1; 2; 2] // The head is 1
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=lists
-let empty_list : list (int) = [];
-let my_list : list (int) = [1, 2, 2]; // The head is 1
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
@@ -323,17 +267,7 @@ let larger_list : int list = 5 :: my_list // [5;1;2;2]
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, the *cons operator* is infix and noted `, ...`. It is
-not symmetric: on the left lies the element to cons, and, on the
-right, a list on which to cons.
-
-```reasonligo group=lists
-let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, the *cons operator* is infix and noted `, ...`. It is
@@ -369,14 +303,7 @@ let tail : int list option = List.tail_opt my_list // [2;2]
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=lists
-let head : option (int) = List.head_opt (my_list); // 1
-let tail : option (list (int)) = List.tail_opt (my_list); // [2,2]
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
@@ -435,16 +362,7 @@ let iter_op (l : int list) : unit =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=lists
-let iter_op = (l : list (int)) : unit => {
-  let predicate = i => assert (i > 3);
-  List.iter (predicate, l);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
@@ -488,16 +406,7 @@ let plus_one : int list = List.map increment larger_list
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=lists
-let increment = (i) => i + 1;
-
-// Creates a new list with all elements incremented by 1
-let plus_one : list (int) = List.map (increment, larger_list);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
@@ -547,14 +456,7 @@ let sum_of_elements : int = List.fold_left sum 0 my_list
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=lists
-let sum = ((result, i): (int, int)) => result + i;
-let sum_of_elements : int = List.fold_left (sum, 0, my_list);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
@@ -596,16 +498,7 @@ let my_set : int set = Set.empty
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, the empty set is denoted by the predefined value
-`Set.empty`.
-
-```reasonligo group=sets
-let my_set : set (int) = Set.empty;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, the empty set is denoted by the predefined value
@@ -659,26 +552,7 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo --entry-point
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, you can create a non-empty set using the `Set.literal` function
-which takes a list of elements & returns a set.
-
-```reasonligo group=sets
-let my_set : set (int) = Set.literal([3, 2, 2, 1]);
-```
-
-You can check that `2` is not repeated in `my_set` by using the LIGO
-compiler like this (the output will sort the elements of the set, but
-that order is not significant for the compiler):
-
-```shell
-ligo run evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo --entry-point my_set
-# Outputs: { 3 ; 2 ; 1 }
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, you can define a non-empty set using the `Set.literal` function
@@ -718,13 +592,7 @@ let add_999 : int set = Set.add 999 my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let add_999 : set(int) = Set.add(999, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -757,16 +625,7 @@ let contains_3 : bool = Set.mem 3 my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, the predefined predicate `Set.mem` tests for membership
-in a set as follows:
-
-```reasonligo group=sets
-let contains_3 : bool = Set.mem (3, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, the predefined predicate `Set.mem` tests for membership
@@ -801,13 +660,7 @@ let cardinal : nat = Set.size my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let cardinal : nat = Set.size (my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -867,18 +720,7 @@ let smaller_set : int set = Set.remove 3 my_set
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-In ReasonLIGO, we can use the predefined functions `Set.add` and
-`Set.remove`. We update a given set by creating another one, with or
-without some elements.
-
-```reasonligo group=sets
-let larger_set  : set (int) = Set.add (4, my_set);
-let smaller_set : set (int) = Set.remove (3, my_set);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 In JsLIGO, we can use the predefined functions `Set.add` and
@@ -938,16 +780,7 @@ let iter_op (s : int set) : unit =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=sets
-let iter_op = (s : set (int)) : unit => {
-  let predicate = (i) => assert (i > 3);
-  Set.iter (predicate, s);
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
@@ -993,17 +826,6 @@ let iter_op = s => {
 <!-- let plus_one : int set = Set.map increment larger_set -->
 <!-- ``` -->
 
-<!-- <\!--ReasonLIGO-\-> -->
-
-<!-- In ReasonLIGO, the predefined functional iterator implementing the -->
-<!-- mapped operation over sets is called `Set.map` and is used as follows: -->
-
-<!-- ```reasonligo skip -->
-<!-- let increment = (i : int) : int => i + 1; -->
-
-<!-- // Creates a new set with all elements incremented by 1 -->
-<!-- let plus_one : set (int) = Set.map (increment, larger_set); -->
-<!-- ``` -->
 
 <!-- <\!--END_DOCUSAURUS_CODE_TABS-\-> -->
 
@@ -1055,19 +877,7 @@ let sum_of_elements : int = Set.fold sum my_set 0
 
 </Syntax>
 
-<Syntax syntax="reasonligo">
 
-The predefined fold over sets is called `Set.fold`, however an
-additional function, `Set.fold_right`, has been added with the
-signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
-'acc`.
-
-```reasonligo group=sets
-let sum = ((acc, i) : (int, int)) : int => acc + i;
-let sum_of_elements : int = Set.fold (sum, my_set, 0);
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 

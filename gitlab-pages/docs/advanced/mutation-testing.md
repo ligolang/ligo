@@ -30,13 +30,7 @@ let twice (x : int) = x + x
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-let twice = (x : int) : int => x + x;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
@@ -77,20 +71,7 @@ let test = simple_tests twice
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-let simple_tests = (f : (int => int)) => {
-  /* Test 1 */
-  assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
-  /* Test 2 */
-  assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
-};
-
-let test = simple_tests(twice);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
@@ -133,16 +114,7 @@ ligo run test gitlab-pages/docs/advanced/src/mutation.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation.religo
-// Outputs:
-// Everything at the top-level was executed.
-// - test exited with value ().
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -171,13 +143,7 @@ let twice (x : int) = x * x
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-let twice = (x : int) : int => x * x;
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage2
@@ -219,13 +185,7 @@ val Test.mutation_test : 'a -> ('a -> 'b) -> ('b * mutation) option
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-val Test.mutation_test : ('a, ('a -> 'b)) => option ('b, mutation)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -274,19 +234,7 @@ let test_mutation =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let test_mutation =
-  switch(Test.mutation_test(twice, simple_tests)) {
-  | None => ()
-  | Some (_, mutation) =>
-      { Test.log(mutation);
-      failwith ("Some mutation also passes the tests! ^^") }
-  };
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -343,26 +291,7 @@ ligo run test gitlab-pages/docs/advanced/src/mutation.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation.religo
-// Outputs:
-// Mutation at: File "gitlab-pages/docs/advanced/src/mutation.religo", line 1, characters 25-30:
-//   1 | let twice = (x : int) => x + x;
-//   2 |
-//
-// Replacing by: MUL(x ,
-// x).
-// File "gitlab-pages/docs/advanced/src/mutation.religo", line 18, characters 28-80:
-//  17 |   | Some (_, mutation) => { Test.log(mutation);
-//  18 |                             failwith ("Some mutation also passes the tests! ^^") }
-//  19 |   };
-//
-// Test failed with "Some mutation also passes the tests! ^^"
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -420,20 +349,7 @@ let simple_tests (f : int -> int) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let simple_tests = (f : (int => int)) => {
-  /* Test 1 */
-  assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
-  /* Test 2 */
-  assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
-  /* Test 3 */
-  assert (Test.michelson_equal(Test.run(f, 1), Test.eval(2)));
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -476,17 +392,7 @@ ligo run test gitlab-pages/docs/advanced/src/mutation.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation.religo
-// Outputs:
-// Everything at the top-level was executed.
-// - test exited with value ().
-// - test_mutation exited with value ().
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -561,33 +467,7 @@ let main (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-// This is mutation-contract.religo
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int);
-
-type return = (list (operation), storage);
-
-// Two entrypoints
-let add = ((store, delta) : (storage, int)) : storage => store + delta;
-let sub = ((store, delta) : (storage, int)) : storage => store - delta;
-
-/* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. */
-let main = ((action, store) : (parameter, storage)) : return => {
- (([] : list (operation)),    // No operations
- (switch (action) {
-  | Increment (n) => add ((store, n))
-  | Decrement (n) => sub ((store, n))}))
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage3
@@ -660,23 +540,7 @@ let test = originate_and_test main
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo test-ligo group=frontpage
-// This continues mutation-contract.religo
-
-let originate_and_test = (mainf : (parameter, storage) => return) => {
-  let initial_storage = 5;
-  let (taddr, _, _) = Test.originate(mainf, initial_storage, 0tez);
-  let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1mutez);
-  assert (Test.get_storage(taddr) == initial_storage + 7)
-};
-
-let test = originate_and_test(main);
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage3
@@ -721,18 +585,7 @@ let test_mutation =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let test_mutation =
-  switch(Test.mutation_test(main, originate_and_test)) {
-  | None => ()
-  | Some (_, mutation) => { Test.log(mutation);
-                            failwith ("Some mutation also passes the tests! ^^") }
-  };
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -790,27 +643,7 @@ ligo run test gitlab-pages/docs/advanced/src/mutation-contract.mligo
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-$ ligo run test gitlab-pages/docs/advanced/src/mutation-contract.religo
-// Outputs:
-// Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.religo", line 12, characters 57-70:
-//  11 | let add = ((store, delta) : (storage, int)) : storage => store + delta;
-//  12 | let sub = ((store, delta) : (storage, int)) : storage => store - delta;
-//  13 |
-//
-// Replacing by: ADD(store ,
-// delta).
-// File "gitlab-pages/docs/advanced/src/mutation-contract.religo", line 36, characters 28-80:
-//  35 |   | Some (_, mutation) => { Test.log(mutation);
-//  36 |                             failwith ("Some mutation also passes the tests! ^^") }
-//  37 |   };
-//
-// Test failed with "Some mutation also passes the tests! ^^"
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -867,20 +700,7 @@ let originate_and_test (mainf : parameter * storage -> return) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let originate_and_test = (mainf : (parameter, storage) => return) => {
-  let initial_storage = 5;
-  let (taddr, _, _) = Test.originate(mainf, initial_storage, 0tez);
-  let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1mutez);
-  let _ = Test.transfer_to_contract_exn(contr, (Decrement (3)), 1mutez);
-  assert (Test.get_storage(taddr) == initial_storage + 4)
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -920,13 +740,7 @@ Test.mutation_test_all : 'a -> ('a -> 'b) -> ('b * mutation) list
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-Test.mutation_test_all : ('a, ('a -> 'b)) => list ('b, mutation)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -970,21 +784,7 @@ let test_mutation =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-let test_mutation =
-  switch(Test.mutation_test_all(main, originate_and_test)) {
-  | [] => ()
-  | ms => { List.iter ((((_, mutation) : (unit, mutation)) => {
-                        let path = Test.save_mutation(".", mutation);
-                        Test.log("saved at:");
-                        Test.log(path);}), ms);
-            failwith ("Some mutation also passes the tests! ^^") }
-  };
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -1022,13 +822,7 @@ Test.save_mutation : string -> mutation -> string option
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-Test.save_mutation : (string, mutation) => option (string)
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
@@ -1107,34 +901,7 @@ let main (action, store : parameter * storage) : return =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-// This is mutation-contract.religo
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int);
-
-type return = (list (operation), storage);
-
-// Two entrypoints
-let add = ((store, delta) : (storage, int)) : storage => store + delta;
-[@no_mutation] let sub = ((store, delta) : (storage, int)) : storage => store - delta;
-
-/* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. */
-let main = ((action, store) : (parameter, storage)) : return => {
- [@no_mutation] let _ = assert (0 == 0);
- (([] : list (operation)),    // No operations
- (switch (action) {
-  | Increment (n) => add ((store, n))
-  | Decrement (n) => sub ((store, n))}))
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip

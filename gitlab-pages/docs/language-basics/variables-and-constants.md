@@ -43,20 +43,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-const
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-let age : int = 25;
-```
-
-You can evaluate the constant definition above using the following CLI
-command:
-```shell
-ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.religo --entry-point age
-# Outputs: 25
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 > Constants in JsLIGO are enforced:
@@ -156,27 +143,7 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-const
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-As expected in the pure subset of a functional language, ReasonLIGO
-only features *constant values*: once they are declared, the value
-cannot be changed (or "mutated").
-
-```reasonligo group=c
-let add = ((a, b): (int, int)): int => {
-  let c = a + b;
-  c;
-};
-```
-
-You can run the `add` function defined above using the LIGO compiler
-like this:
-```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.religo '(1,1)' --entry-point add
-# Outputs: 2
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 Variables, unlike constants, are *mutable*.
@@ -234,13 +201,7 @@ let @Unique_name = true
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=a
-let @Unique_name = true
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a

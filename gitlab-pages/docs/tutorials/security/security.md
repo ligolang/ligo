@@ -88,46 +88,7 @@ let main (p, s : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type parameter = Fund | Send((address, tez));
-
-type transaction = Incoming((address, tez)) | Outgoing((address, tez));
-
-type storage = {owner: address, transactionLog: list(transaction) };
-
-let send = ((dst, @amount): (address, tez)) => {
-  let callee = Tezos.get_contract_opt(dst);
-  switch(callee){
-  | Some (contract) =>
-      {
-        let op = Tezos.transaction((), @amount, contract);
-        (Outgoing (dst, @amount), [op])
-      }
-  | None => (failwith("Could not send tokens") : (transaction, list(operation)))
-  }
-};
-
-let receive = ((from, @amount): (address, tez)) =>
-  (Incoming (from, @amount), ([] : list(operation)));
-
-let main = ((p, s): (parameter, storage)) => {
-  let tx, ops =
-    switch(p){
-    | Fund => receive(Tezos.get_sender (), Tezos.get_amount ())
-    | Send(args) =>
-        {
-          assert((Tezos.get_sender ()) == s.owner && (Tezos.get_amount ()) == 0mutez);
-          send(args)
-        }
-    };
-  (ops, {...s, transactionLog: [tx, ...s.transactionLog]})
-};
-
-```
-
-</Syntax>
 
 This contract:
 1. Can receive funds sent to it via the `Fund` entrypoint.
@@ -190,21 +151,7 @@ let main (p, s : parameter * storage) = ...
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-type order = {price: nat, volume: nat };
-
-type storage = {bids: list(order), asks: list(order) };
-
-type parameter = Buy(order) | Sell(order);
-
-let buy = ((order, s) : (order, storage)) => ...
-let sell = ((order, s) : (order, storage)) => ...
-let main = ((p, s) : (parameter, storage)) => ...
-```
-
-</Syntax>
 
 An attacker may notice some transaction, for example, a request to buy some big volume of asset. They may then _front-run_ this transaction and, anticipating the price going up, insert a _buy_ order at the current price before the trader's transaction. Thus, they can benefit from the price change by selling the asset at a higher price.
 
@@ -291,32 +238,7 @@ let withdraw (param, s : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type storage = {beneficiary: address, balances: map(address, tez) };
-
-type parameter = (tez, contract(unit));
-
-let withdraw = ((param, s): (parameter, storage)) => {
-  let @amount, beneficiary = param;
-  let beneficiary_addr = Tezos.address(beneficiary);
-  let @balance =
-    switch(Map.find_opt(beneficiary_addr, s.balances)){
-    | Some (v) => v
-    | None => 0mutez
-    };
-  let new_balance = switch (@balance - @amount) {
-    | Some (x) => x
-    | None => (failwith ("Insufficient balance") : tez) } ;
-  let op = Tezos.transaction((), @amount, beneficiary);
-  let new_balances =
-    Map.update(beneficiary_addr, (Some new_balance), s.balances);
-  ([op], {...s, balances: new_balances})
-};
-```
-
-</Syntax>
 
 Notice that the code flow is similar: we first check whether the beneficiary has enough balance, then forge an operation that sends the money, and finally we update the balances mapping. The difference is that in Tezos the operations are not executed immediately: we store the operation and later return it as a result of the entrypoint. Hence, the balances are updated by the time the operation is executed, so the reentrancy attack is mitigated.
 
@@ -403,33 +325,7 @@ let main (p, s : unit * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type storage = {owner: address, beneficiaries: list(address) };
-
-let send_rewards = (beneficiary_addr: address) => {
-  let maybe_contract =
-    Tezos.get_contract_opt(beneficiary_addr);
-  let beneficiary =
-    switch(maybe_contract){
-    | Some contract => contract
-    | None => (failwith("CONTRACT_NOT_FOUND") : contract(unit))
-    };
-  Tezos.transaction((), 5000000mutez, beneficiary)
-};
-
-let main = ((p, s): (unit, storage)) =>
-  if ((Tezos.get_sender ()) != s.owner) {
-    (failwith("ACCESS_DENIED") : (list(operation), storage))
-  } else {
-
-    let ops = List.map(send_rewards, s.beneficiaries);
-    (ops, s)
-  };
-```
-
-</Syntax>
 
 The contract emits a bunch of operations that transfer 5 tez to each of the beneficiaries listed in storage. The flaw here is that one of the receiver contracts may fail, preventing others from receiving the reward. This may be intentional censorship or a bug in the receiver contract – in either case, the contract gets stuck.
 

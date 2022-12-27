@@ -180,16 +180,7 @@ let main (parameter, storage : int * int) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let sum = ((x, y): (int, int)) => x + y;
-
-let main = ((parameter, storage): (int, int)) =>
-  ([], sum(parameter, storage));
-```
-
-</Syntax>
 
 There are two major ways to represent functions (like `sum`) in Michelson. The first way is to first push the function `f` to the stack, and then execute it with the argument `(parameter, storage)`:
 
@@ -236,15 +227,7 @@ let main (_, _ : unit * int) = [], n * n
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-let n = 4;
-
-let main = ((_, _): (unit, int)) => ([], n * n);
-```
-
-</Syntax>
 
 LIGO will automatically inline declarations if two conditions are met:
 1. The declaration is only used once
@@ -327,38 +310,6 @@ let main (parameter, storage : parameter * storage) : operation list * storage =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
-
-It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
-
-Here is how it looks like:
-```reasonligo skip
-type parameter = LargeEntrypoint(int) | ...;
-
-type storage = {large_entrypoint: big_map(bool, (int => int)), result: int };
-
-let load_large_ep = (storage: storage) => {
-  let maybe_large_entrypoint: option(int => int) =
-    Map.find_opt(true, storage.large_entrypoint);
-  switch(maybe_large_entrypoint){
-  | Some (ep) => ep
-  | None => (failwith("Internal error") : (int => int))
-  }
-};
-
-let main = ((parameter, storage): (parameter, storage)) => {
-  let nop: list(operation) = [];
-  switch(parameter){
-  | LargeEntrypoint n =>
-      (nop, {...storage, result: (load_large_ep(storage))(n)})
-  | ...
-    /* Other entrypoints */
-  | ...
-  }
-};
-```
-
-</Syntax>
 
 We can now put the code of this large entrypoint to storage upon the contract origination. If we do not provide any means to change the stored lambda, the immutability of the contract will not be affected.
 
@@ -372,11 +323,7 @@ This pattern is also useful if you have long code blocks that repeat across some
 This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params -> bool)` to the storage and call it upon transfer.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params => bool)` to the storage and call it upon transfer.
-
-</Syntax>
 
 However, you always need to measure the gas consumption and the occupied storage. It may be the case that the wrapper code that extracts the lambda from storage and calls it is costlier than the piece of code you are trying to optimise.
 

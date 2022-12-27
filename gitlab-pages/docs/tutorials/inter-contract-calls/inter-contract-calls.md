@@ -68,26 +68,7 @@ let main (destination_addr, _ : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-type parameter = address;
-
-type storage = unit;
-
-let main = ((destination_addr, _): (parameter, storage)) => {
-  let maybe_contract = Tezos.get_contract_opt(destination_addr);
-  let destination_contract =
-    switch(maybe_contract){
-    | Some (contract) => contract
-    | None => failwith("Contract does not exist")
-    };
-  let op = Tezos.transaction((), (Tezos.get_amount ()), destination_contract);
-  ([op], ())
-};
-```
-
-</Syntax>
 
 It accepts a destination address as the parameter. Then we need to check whether the address points to a contract that accepts a unit. We do this with `Tezos.get_contract_opt`. This function returns `Some (value)` if the contract exists and the parameter type is correct. Otherwise, it returns `None`. In case it is `None`, we fail with an error, otherwise we use `Tezos.transaction` to forge the internal transaction to the destination contract.
 
@@ -140,31 +121,7 @@ let main (param, callee_addr : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-/* examples/contracts/religo/Proxy.religo */
-
-type parameter = int;
-
-type storage = address;
-
-let get_contract = (addr: address) => {
-  let maybe_contract = Tezos.get_contract_opt(addr);
-  switch(maybe_contract){
-  | Some (contract) => contract
-  | None => failwith("Callee does not exist")
-  }
-};
-
-let main = ((param, callee_addr): (parameter, storage)) => {
-  let callee = get_contract(callee_addr);
-  let op = Tezos.transaction(param, 0mutez, callee);
-  ([op], callee_addr)
-};
-```
-
-</Syntax>
 
 To call a contract, we need to add a type annotation `: int contract option` for `Tezos.get_contract_opt`. LIGO knows that `Tezos.get_contract_opt` returns a `contract option` but at the time of type inference it does not know that the callee accepts an `int`. In this case, we expect the callee to accept an `int`. Such a callee can be implemented like this:
 
@@ -187,16 +144,7 @@ let main (param, storage : int * int) = [], param + storage
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-/* examples/contracts/religo/SimpleCounter.religo */
-
-let main = ((param, storage): (int, int)) =>
-  ([], param + storage);
-```
-
-</Syntax>
 
 But what if we want to make a transaction to a contract but do not know the full type of its parameter? For example, we may know that some contract accepts `Add 5` as its parameter, but we do not know what other entrypoints are there.
 
@@ -238,26 +186,7 @@ let main (param, storage : parameter * int) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-/* examples/contracts/religo/AdvancedCounter.religo */
-
-type parameter = Set(int) | Add(int) | Subtract(int) | Multiply(int) | Reset;
-
-let main = ((param, storage): (parameter, int)) => {
-  let nop = [];
-  switch(param){
-  | Set n => (nop, n)
-  | Add n => (nop, storage + n)
-  | Subtract n => (nop, storage - n)
-  | Multiply n => (nop, storage * n)
-  | Reset => (nop, 0)
-  }
-};
-```
-
-</Syntax>
 
 LIGO compiler generates the following Michelson type for the parameter of this contract:
 
@@ -320,31 +249,7 @@ let main (param, callee_addr : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-/* examples/contracts/religo/EntrypointProxy.religo */
-
-type parameter = int;
-
-type storage = address;
-
-let get_add_entrypoint = (addr: address) => {
-  let entrypoint = Tezos.get_entrypoint_opt("%add", addr);
-  switch(entrypoint){
-  | Some (contract) => contract
-  | None => failwith("The entrypoint does not exist")
-  }
-};
-
-let main = ((param, callee_addr): (parameter, storage)) => {
-  let add: contract(int) = get_add_entrypoint(callee_addr);
-  let op = Tezos.transaction(param, 0mutez, add);
-  ([op], callee_addr)
-};
-```
-
-</Syntax>
 
 To get the entrypoint names from parameter constructors, you should make the first letters lowercase and prepend a percent sign: `Add` -> `%add`, `CallThePolice` -> `%callThePolice`. LIGO does this transformation internally when it compiles your code into Michelson.
 
@@ -372,14 +277,7 @@ type t = {hello : int; l : nat; i : bytes; g : string; o : address}
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-LIGO automatically converts a complex type `type t = Hello | L | I | G | O;` into an annotated left-balanced tree with items sorted alphabetically: `(or (or (or (unit %g) (unit %hello)) (or (unit %i) (unit %l))) (unit %o))`. LIGO applies the same transformation to record types: 
-```reasonligo
-type t = {hello: int, l: nat, i: bytes, g: string, o: address };
-```
-
-</Syntax>
 
 ```
 (pair (pair (pair (string %g)
@@ -507,41 +405,7 @@ let main (p, s : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-/* examples/contracts/religo/AccessController.religo */
-
-type parameter =
-  Call((unit => operation))
-| IsWhitelisted((address, contract(bool)));
-
-type storage = {senders_whitelist: set(address) };
-
-let main = ((p, s): (parameter, storage)) => {
-  let op =
-    switch(p){
-    | Call op =>
-        {
-          if (Set.mem((Tezos.get_sender ()), s.senders_whitelist)) {
-            op()
-          } else {
-            failwith("Sender is not whitelisted")
-          }
-        }
-    | IsWhitelisted addr_and_callback =>
-        {
-          let addr = addr_and_callback[0];
-          let callback_contract = addr_and_callback[1];
-          let whitelisted = Set.mem(addr, s.senders_whitelist);
-          Tezos.transaction(whitelisted, 0mutez, callback_contract)
-        }
-    };
-  ([op], s)
-};
-```
-
-</Syntax>
 
 Now imagine we want to control a contract with the following interface (we omit the full code of the contract for clarity; you can find it in the [examples folder](https://gitlab.com/ligolang/ligo/-/tree/dev/gitlab-pages/docs/tutorials/inter-contract-calls/examples)):
 
@@ -609,38 +473,7 @@ let main (p, s : parameter * storage) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo skip
-/* examples/contracts/religo/PausableToken.religo */
-
-type parameter = SetPaused(bool) | Transfer((address, address, nat));
-
-type storage = {ledger: big_map(address, nat), owner: address, paused: bool };
-
-let transfer = ((src, dst, amount_, storage): (address, address, nat, storage)) => /* ... */
-
-let main = ((p, s): (parameter, storage)) => {
-  let nop = [];
-  switch(p){
-  | Transfer transfer_params =>
-      if (s.paused) {
-        failwith("The contract is paused")
-      } else {
-        let (src, dst, amount_) = transfer_params;
-        (nop, transfer(src, dst, amount_, s))
-      }
-  | SetPaused paused =>
-      if ((Tezos.get_sender()) != s.owner) {
-        failwith("Access denied")
-      } else {
-        (nop, {...s, paused: paused})
-      }
-  }
-};
-```
-
-</Syntax>
 
 You may notice that we can abuse the `IsWhitelisted` entrypoint to pause and unpause the token, even if we are not among the whitelisted senders. Try it out:
 
@@ -678,18 +511,7 @@ let op = Tezos.create_contract
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=solo_create_contract
-let op = Tezos.create_contract(
-    ((p, s): (int, int)) => ([], p + s),
-    None,
-    0mutez,
-    1
-);
-```
-
-</Syntax>
 
 `Tezos.create_contract` returns a pair of _origination operation_ and the _address_ of the new contract. Note that, at this stage, the contract has not been originated yet! That is why you cannot forge a transaction to the newly-created contract: `Tezos.get_{contract, entrypoint}_opt` would fail if called before the origination operation has been processed.
 
@@ -743,34 +565,7 @@ let create_and_call (storage : address list) =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo
-/* examples/contracts/religo/CreateAndCall.religo */
-
-// Here we create two operations: the one that will originate
-// the contract, and an operation to self, that will continue
-// the execution after the contract is originated.
-
-let create_and_call = (st: list(address)) => {
-    let (create_op, addr) =
-        Tezos.create_contract(
-            ((p, s): (int, int)) => ([], (p + s)),
-            None,
-            0mutez,
-            1
-        );
-    let call_op =
-        Tezos.transaction(
-            (addr, 41),
-            0mutez,
-            Tezos.self("%callback")
-        );
-    ([create_op, call_op], [addr, ...st]);
-};
-```
-
-</Syntax>
 
 By the time `%callback` is called, the `create_op` would be completed. Thus, the factory `%callback` can forge yet another operation to call the default entrypoint of the new contract:
 

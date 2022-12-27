@@ -65,23 +65,7 @@ As we can see, in CameLIGO we also use a `struct ... end` block to
 group together the definitions made in the module.
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-Modules are introduced using the `module` keyword. For example, the
-following code defines a module `EURO` that packages together a type,
-called `t`, together with an operation `add` that sums two values of
-the given currency, as well as constants for zero and one.
-
-```reasonligo group=EURO
-module EURO = {
-  type t = nat
-  let add = ((a, b) : (t, t)) : t => a + b
-  let zero : t = 0n
-  let one : t = 1n
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 Modules are introduced using the `namespace` keyword. For example, the
@@ -129,16 +113,7 @@ let main (action, store : unit * storage) : operation list * storage =
  ([], EURO.add(store, EURO.one))
 ```
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=EURO
-type storage = EURO.t
-
-let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- ([], EURO.add(store, EURO.one))
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=EURO
@@ -179,18 +154,7 @@ end
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=EURO2
-module EURO = {
-  type t = int
-  let add = ((a, b) : (t, t)) : t => a + b
-  let zero : t = 0
-  let one : t = 1
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=EURO2
@@ -253,20 +217,7 @@ module EURO =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=EURO3
-module EURO = {
-    type t = nat
-    let add = ((a, b) : (t, t)) : t => a + b
-    module CONST = {
-        let zero : t = 0n
-        let one : t = 1n
-    }
-}
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=EURO3
@@ -307,16 +258,7 @@ let main (action, store : unit * storage) : operation list * storage =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=EURO3
-type storage = EURO.t
-
-let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- ([], EURO.add(store, EURO.CONST.one))
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=EURO3
@@ -368,20 +310,7 @@ let one : t = 1n
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-For example, in ReasonLIGO, we can create a file `imported.religo`:
-
-```reasonligo group=imported
-type t = nat
-
-let add = ((a, b) : (t, t)) : t => a + b
-
-let zero : t = 0n
-let one : t = 1n
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 For example, in JsLIGO, we can create a file `imported.jsligo`:
@@ -431,22 +360,7 @@ let main (action, store : unit * storage) : operation list * storage =
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-Later, in another file, we can import `imported.religo` as a module, and
-use its definitions. For example, we could create a `importer.religo`
-that imports all definitions from `imported.religo` as the module
-`EURO`:
-
-```reasonligo skip
-#import "./gitlab-pages/docs/language-basics/src/modules/imported.religo" "EURO"
-type storage = EURO.t
-
-let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
- ([], EURO.add(store, EURO.one))
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 Later, in another file, we can import `imported.jsligo` as a module, and
@@ -482,13 +396,7 @@ ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.mli
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```shell
-ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.religo --entry-point main
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
@@ -519,13 +427,7 @@ module US_DOLLAR = EURO
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-```reasonligo group=EURO
-module US_DOLLAR = EURO
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=EURO

@@ -76,29 +76,7 @@ gitlab-pages/docs/language-basics/src/loops/gcd.mligo '(2n*2n*3n*11n, 2n*2n*2n*3
 ```
 
 </Syntax>
-<Syntax syntax="reasonligo">
 
-ReasonLIGO is a functional language where user-defined values are
-constant, therefore it makes no sense in ReasonLIGO to feature loops,
-which we understand as syntactic constructs where the state of a
-stopping condition is mutated, as with "while" loops in PascaLIGO.
-
-Instead, ReasonLIGO loops are written by means of tail recursive functions
-
-Here is how to compute the greatest common divisors of two natural
-numbers by means of Euclid's algorithm:
-
-```reasonligo group=a
-let rec iter = ((x,y) : (nat, nat)) : nat =>
-  if (y == 0n) { x; } else { iter ((y, x mod y)); };
-
-let gcd = ((x,y) : (nat, nat)) : nat => {
-  let (x,y) = if (x < y) { (y,x); } else { (x,y); };
-  iter ((x,y))
-};
-```
-
-</Syntax>
 <Syntax syntax="jsligo">
 
 JsLIGO currently supports iteration through while while loops and
