@@ -4,12 +4,10 @@ open Main_errors
 open Syntax_types
 
 let file_extension_to_variant ~raise sf : t option =
+  ignore raise;
   match sf with
   | ".ligo" | ".pligo" -> Some PascaLIGO
   | ".mligo" -> Some CameLIGO
-  | ".religo" ->
-    raise.warning `Deprecated_reasonligo;
-    Some ReasonLIGO
   | ".jsligo" -> Some JsLIGO
   | _ -> None
 
@@ -18,7 +16,6 @@ let of_ext_opt = function
   | None -> None
   | Some "ligo" | Some "pligo" -> Some PascaLIGO
   | Some "mligo" -> Some CameLIGO
-  | Some "religo" -> Some ReasonLIGO
   | Some "jsligo" -> Some JsLIGO
   | Some _ -> None
 
@@ -33,9 +30,6 @@ let of_string_opt ~raise (Syntax_name syntax) source =
       (file_extension_to_variant ~raise ext)
   | ("pascaligo" | "PascaLIGO"), _ -> PascaLIGO
   | ("cameligo" | "CameLIGO"), _ -> CameLIGO
-  | ("reasonligo" | "ReasonLIGO"), _ ->
-    raise.warning `Deprecated_reasonligo;
-    ReasonLIGO
   | ("jsligo" | "JsLIGO"), _ -> JsLIGO
   | _ -> raise.error (main_invalid_syntax_name syntax)
 
@@ -43,12 +37,10 @@ let of_string_opt ~raise (Syntax_name syntax) source =
 let to_string = function
   | PascaLIGO -> "pascaligo"
   | CameLIGO -> "cameligo"
-  | ReasonLIGO -> "reasonligo"
   | JsLIGO -> "jsligo"
 
 
 let to_ext = function
   | PascaLIGO -> ".ligo"
   | CameLIGO -> ".mligo"
-  | ReasonLIGO -> ".religo"
   | JsLIGO -> ".jsligo"

@@ -1,0 +1,7 @@
+
+author: SanderSpies
+description: "Remove ReasonLIGO tests and remove ReasonLIGO from CLI.\\n\\n"
+merge_request: '2234'
+title: "Remove ReasonLIGO tests and remove ReasonLIGO from CLI."
+type: breaking
+            

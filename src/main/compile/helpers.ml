@@ -24,7 +24,6 @@ let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta)
     match meta.syntax with
     | PascaLIGO -> Pascaligo.preprocess_file
     | CameLIGO -> Cameligo.preprocess_file
-    | ReasonLIGO -> Reasonligo.preprocess_file
     | JsLIGO -> Jsligo.preprocess_file
   in
   trace ~raise preproc_tracer
@@ -43,7 +42,6 @@ let preprocess_string
     match meta.syntax with
     | PascaLIGO -> Pascaligo.preprocess_string
     | CameLIGO -> Cameligo.preprocess_string
-    | ReasonLIGO -> Reasonligo.preprocess_string
     | JsLIGO -> Jsligo.preprocess_string
   in
   trace ~raise preproc_tracer
@@ -89,25 +87,6 @@ let parse_and_abstract_expression_cameligo ~raise buffer =
   imperative
 
 
-let parse_and_abstract_reasonligo ~raise buffer file_path =
-  let raw =
-    trace ~raise parser_tracer @@ Parsing.Reasonligo.parse_file buffer file_path
-  in
-  let imperative =
-    trace ~raise cit_reasonligo_tracer @@ Tree_abstraction.Reasonligo.compile_program raw
-  in
-  imperative
-
-
-let parse_and_abstract_expression_reasonligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Reasonligo.parse_expression buffer in
-  let imperative =
-    trace ~raise (Fn.compose cit_reasonligo_tracer List.return)
-    @@ Tree_abstraction.Reasonligo.compile_expression raw
-  in
-  imperative
-
-
 let parse_and_abstract_jsligo ~raise buffer file_path =
   let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_file buffer file_path in
   let imperative =
@@ -130,7 +109,6 @@ let parse_and_abstract ~raise ~(meta : meta) buffer file_path : Ast_imperative.p
     match meta.syntax with
     | PascaLIGO -> parse_and_abstract_pascaligo
     | CameLIGO -> parse_and_abstract_cameligo
-    | ReasonLIGO -> parse_and_abstract_reasonligo
     | JsLIGO -> parse_and_abstract_jsligo
   in
   let abstracted = parse_and_abstract ~raise buffer file_path in
@@ -147,7 +125,6 @@ let parse_and_abstract_expression ~raise ~(meta : meta) buffer =
     match meta.syntax with
     | PascaLIGO -> parse_and_abstract_expression_pascaligo
     | CameLIGO -> parse_and_abstract_expression_cameligo
-    | ReasonLIGO -> parse_and_abstract_expression_reasonligo
     | JsLIGO -> parse_and_abstract_expression_jsligo
   in
   let abstracted = parse_and_abstract ~raise buffer in
@@ -157,14 +134,6 @@ let parse_and_abstract_expression ~raise ~(meta : meta) buffer =
     @@ Self_ast_imperative.all_expression ~js_style_no_shadowing abstracted
   in
   applied
-
-
-let parse_and_abstract_string_reasonligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Reasonligo.parse_string buffer in
-  let imperative =
-    trace ~raise cit_reasonligo_tracer @@ Tree_abstraction.Reasonligo.compile_program raw
-  in
-  imperative
 
 
 let parse_and_abstract_string_pascaligo ~raise buffer =
@@ -197,7 +166,6 @@ let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
     match syntax with
     | PascaLIGO -> parse_and_abstract_string_pascaligo
     | CameLIGO -> parse_and_abstract_string_cameligo
-    | ReasonLIGO -> parse_and_abstract_string_reasonligo
     | JsLIGO -> parse_and_abstract_string_jsligo
   in
   let abstracted = parse_and_abstract ~raise buffer in
@@ -211,7 +179,6 @@ let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
 
 let pretty_print_pascaligo_cst = Parsing.Pascaligo.pretty_print_cst
 let pretty_print_cameligo_cst = Parsing.Cameligo.pretty_print_cst
-let pretty_print_reasonligo_cst = Parsing.Reasonligo.pretty_print_cst
 let pretty_print_jsligo_cst = Parsing.Jsligo.pretty_print_cst
 
 let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
@@ -219,7 +186,6 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
     match meta.syntax with
     | PascaLIGO -> pretty_print_pascaligo_cst
     | CameLIGO -> pretty_print_cameligo_cst
-    | ReasonLIGO -> pretty_print_reasonligo_cst
     | JsLIGO -> pretty_print_jsligo_cst
   in
   trace ~raise parser_tracer @@ print buffer file_path
@@ -227,7 +193,6 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
 
 let pretty_print_pascaligo = Parsing.Pascaligo.pretty_print_file
 let pretty_print_cameligo = Parsing.Cameligo.pretty_print_file
-let pretty_print_reasonligo = Parsing.Reasonligo.pretty_print_file
 let pretty_print_jsligo = Parsing.Jsligo.pretty_print_file
 
 let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =
@@ -235,7 +200,6 @@ let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =
     match meta.syntax with
     | PascaLIGO -> pretty_print_pascaligo
     | CameLIGO -> pretty_print_cameligo
-    | ReasonLIGO -> pretty_print_reasonligo
     | JsLIGO -> pretty_print_jsligo
   in
   trace ~raise parser_tracer @@ print ?preprocess buffer file_path

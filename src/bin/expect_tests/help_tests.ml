@@ -92,10 +92,10 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                file instead of stdout
   [--project-root PATH]      . The path to root of the project.
   [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                               syntaxes are "pascaligo", "cameligo",
-                               "reasonligo" and "jsligo". By default, the syntax
-                               is guessed from the extension (.ligo, .mligo,
-                               .religo, and .jsligo respectively).
+                               syntaxes are "pascaligo", "cameligo" and
+                               "jsligo". By default, the syntax is guessed from
+                               the extension (.ligo, .mligo, and .jsligo
+                               respectively).
   [--views VIEWS], -v        . A list of declaration name that will be compiled
                                as on-chain views, separated by ','
   [--warn-unused-rec]        . warn about unused recursion in a recursive
@@ -157,10 +157,10 @@ let%expect_test _ =
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
+                                   syntaxes are "pascaligo", "cameligo" and
+                                   "jsligo". By default, the syntax is guessed from
+                                   the extension (.ligo, .mligo, and .jsligo
+                                   respectively).
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -220,10 +220,10 @@ let%expect_test _ =
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
+                                   syntaxes are "pascaligo", "cameligo" and
+                                   "jsligo". By default, the syntax is guessed from
+                                   the extension (.ligo, .mligo, and .jsligo
+                                   respectively).
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -304,10 +304,10 @@ let%expect_test _ =
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
+                                   syntaxes are "pascaligo", "cameligo" and
+                                   "jsligo". By default, the syntax is guessed from
+                                   the extension (.ligo, .mligo, and .jsligo
+                                   respectively).
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -353,10 +353,10 @@ let%expect_test _ =
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
+                                   syntaxes are "pascaligo", "cameligo" and
+                                   "jsligo". By default, the syntax is guessed from
+                                   the extension (.ligo, .mligo, and .jsligo
+                                   respectively).
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -402,10 +402,10 @@ let%expect_test _ =
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
+                                   syntaxes are "pascaligo", "cameligo" and
+                                   "jsligo". By default, the syntax is guessed from
+                                   the extension (.ligo, .mligo, and .jsligo
+                                   respectively).
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -489,10 +489,10 @@ let%expect_test _ =
                                    an entrypoint
       [--project-root PATH]      . The path to root of the project.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
+                                   syntaxes are "pascaligo", "cameligo" and
+                                   "jsligo". By default, the syntax is guessed from
+                                   the extension (.ligo, .mligo, and .jsligo
+                                   respectively).
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]

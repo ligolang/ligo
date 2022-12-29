@@ -687,35 +687,6 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "transpile"; "contract"; "../../test/contracts/recursion.ligo"; "reasonligo" ];
-  [%expect
-    {|
-    let rec sum: (int, int) => int =
-      ((gen__parameters2: (int, int)): int =>
-         switch  gen__parameters2 {
-         | (n, acc) =>
-             if(((n) < (1))) {
-               acc
-             } else {
-
-               sum(((n) - (1)), ((acc) + (n)))
-               }
-         });
-
-    let rec fibo: (int, int, int) => int =
-      ((gen__parameters3: (int, int, int)): int =>
-         switch  gen__parameters3 {
-         | (n, n_1, n_0) =>
-             if(((n) < (2))) {
-               n_1
-             } else {
-
-               fibo(((n) - (1)), ((n_1) + (n_0)), n_1)
-               }
-         }); |}]
-
-let%expect_test _ =
-  run_ligo_good
     [ "transpile"; "contract"; "../../test/contracts/transpiler_nested.ligo"; "cameligo" ];
   [%expect
     {|
