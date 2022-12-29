@@ -138,7 +138,6 @@ let typed_prod =
     ; type_file "modules_and_free_vars/nested_modules.mligo"
     ; type_file "modules_and_free_vars/module_with_free_vars.mligo"
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
-    ; type_file "deep_pattern_matching/pm_test.religo"
     ; type_tfile "pattern_match4.jsligo"
     ; type_file "layout.pligo"
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
@@ -157,12 +156,10 @@ let core_prod =
     ; comp_file "vars_consts/multiple_vars.ligo"
     ; comp_file "vars_consts/multiple_vars.jsligo"
     ; comp_file "letin.mligo"
-    ; comp_file "letin.religo"
     ; comp_file "type_puning.ligo"
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.ligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
-    ; comp_file "deep_pattern_matching/list_pattern.religo"
     ]
 
 
@@ -227,12 +224,4 @@ let contract_prod =
     ; compile_file_ "top_level_patterns/contracts/pascaligo/ticket_tuple.ligo"
     ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple_record.ligo"
     ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple.ligo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/nested_record.religo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/nested_tuple.religo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/record_tuple.religo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/record.religo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/ticket_record.religo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/ticket_tuple.religo"
-    ; compile_file_ "top_level_patterns/contracts/reasonligo/tuple_record.religo"
-    ; mini_c_file "top_level_patterns/contracts/reasonligo/tuple.religo"
     ]

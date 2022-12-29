@@ -270,7 +270,6 @@ let decompile_pattern_to_string ~syntax pattern =
     | Some Syntax_types.JsLIGO ->
       Tree_abstraction.Jsligo.decompile_pattern_to_string pattern
     | Some CameLIGO -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
-    | Some ReasonLIGO -> Tree_abstraction.Reasonligo.decompile_pattern_to_string pattern
     | Some PascaLIGO -> Tree_abstraction.Pascaligo.decompile_pattern_to_string pattern
     | None -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
   in

@@ -40,20 +40,6 @@ let%expect_test _ =
     Pattern not of the expected type "foo". |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "run"; "interpret"; "t1"; "--init-file"; test "let_destructuring.religo" ];
-  [%expect {| 1 |}];
-  run_ligo_good
-    [ "run"; "interpret"; "t2"; "--init-file"; test "let_destructuring.religo" ];
-  [%expect {| "7" |}];
-  run_ligo_good
-    [ "run"; "interpret"; "t3"; "--init-file"; test "let_destructuring.religo" ];
-  [%expect {| ( 3 , +3 , "7" ) |}];
-  run_ligo_good
-    [ "run"; "interpret"; "t4"; "--init-file"; test "let_destructuring.religo" ];
-  [%expect {| ( 4 , +3 ) |}]
-
-let%expect_test _ =
   run_ligo_good [ "run"; "interpret"; "t1"; "--init-file"; test "let_destructuring.ligo" ];
   [%expect {| 1 |}];
   run_ligo_good [ "run"; "interpret"; "t2"; "--init-file"; test "let_destructuring.ligo" ];

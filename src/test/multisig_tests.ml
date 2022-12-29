@@ -3,7 +3,6 @@ open Test_helpers
 
 let file = "./contracts/multisig.ligo"
 let mfile = "./contracts/multisig.mligo"
-let refile = "./contracts/multisig.religo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
 open Ligo_prim
@@ -228,12 +227,4 @@ let main =
     ; test_w "valid_2_of_3 (mligo)" (valid_2_of_3 mfile)
     ; test_w "invalid_3_of_3 (mligo)" (invalid_3_of_3 mfile)
     ; test_w "not_enough_2_of_3 (mligo)" (not_enough_2_of_3 mfile)
-    ; test_w "compile (religo)" (compile_main refile)
-    ; test_w "unmatching_counter (religo)" (unmatching_counter refile)
-    ; test_w "valid_1_of_1 (religo)" (valid_1_of_1 refile)
-    ; test_w "invalid_1_of_1 (religo)" (invalid_1_of_1 refile)
-    ; test_w "not_enough_signature (religo)" (not_enough_1_of_2 refile)
-    ; test_w "valid_2_of_3 (religo)" (valid_2_of_3 refile)
-    ; test_w "invalid_3_of_3 (religo)" (invalid_3_of_3 refile)
-    ; test_w "not_enough_2_of_3 (religo)" (not_enough_2_of_3 refile)
     ]

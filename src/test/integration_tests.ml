@@ -152,16 +152,6 @@ let closure_mligo ~raise () : unit =
   ()
 
 
-let closure_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/closure.religo" in
-  let _ =
-    let input = e_int ~loc 0 in
-    let expected = e_int ~loc 25 in
-    expect_eq ~raise program "test" input expected
-  in
-  ()
-
-
 let closure_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/closure.jsligo" in
   let _ =
@@ -596,11 +586,6 @@ let include_mligo ~raise () : unit =
   expect_eq_evaluate ~raise program "bar" (e_int ~loc 144)
 
 
-let include_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/includer.religo" in
-  expect_eq_evaluate ~raise program "bar" (e_int ~loc 144)
-
-
 let include_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/includer.jsligo" in
   expect_eq_evaluate ~raise program "bar" (e_int ~loc 144)
@@ -623,11 +608,6 @@ let modules_ligo ~raise () : unit =
 
 let modules_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/modules.mligo" in
-  modules ~raise program
-
-
-let modules_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/modules.religo" in
   modules ~raise program
 
 
@@ -661,22 +641,6 @@ let multiple_parameters ~raise f : unit =
 
 let multiple_parameters_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/multiple-parameters.mligo" in
-  let aux ((name : string), make_input, make_output) =
-    let make_output' n = e_int ~loc @@ make_output n in
-    expect_eq_n ~raise program name make_input make_output'
-  in
-  let _ =
-    List.map
-      ~f:aux
-      [ (* Didn't include the other tests because they're probably not necessary *)
-        ("abcde", tuple_ez_int [ "a"; "b"; "c"; "d"; "e" ], fun n -> (2 * n) + 3)
-      ]
-  in
-  ()
-
-
-let multiple_parameters_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/multiple-parameters.religo" in
   let aux ((name : string), make_input, make_output) =
     let make_output' n = e_int ~loc @@ make_output n in
     expect_eq_n ~raise program name make_input make_output'
@@ -1057,11 +1021,6 @@ let eq_bool_mligo ~raise () : unit =
   eq_bool_common ~raise program
 
 
-let eq_bool_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/eq_bool.religo" in
-  eq_bool_common ~raise program
-
-
 let eq_bool_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/eq_bool.jsligo" in
   eq_bool_common ~raise program
@@ -1396,26 +1355,6 @@ let loop_mligo ~raise () : unit =
   ()
 
 
-let loop_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/loop.religo" in
-  let () =
-    let input = e_int ~loc 0 in
-    let expected = e_int ~loc 100 in
-    expect_eq ~raise program "counter_simple" input expected
-  in
-  let () =
-    let input = e_int ~loc 100 in
-    let expected = e_int ~loc 5050 in
-    expect_eq ~raise program "counter" input expected
-  in
-  let () =
-    let input = e_int ~loc 100 in
-    let expected = e_int ~loc 10000 in
-    expect_eq ~raise program "counter_nest" input expected
-  in
-  ()
-
-
 let loop_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/loop.jsligo" in
   let () =
@@ -1687,12 +1626,6 @@ let failwith_mligo ~raise () : unit =
   expect_fail ~raise program "main" make_input
 
 
-let failwith_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/failwith.religo" in
-  let make_input = e_pair ~loc (e_unit ~loc ()) (e_unit ~loc ()) in
-  expect_fail ~raise program "main" make_input
-
-
 let failwith_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/failwith.jsligo" in
   let make_input = e_pair ~loc (e_unit ~loc ()) (e_unit ~loc ()) in
@@ -1720,17 +1653,6 @@ let assert_mligo ~raise () : unit =
       (e_annotation ~loc (e_none ~loc ()) (t_option ~loc (t_unit ~loc ())))
       (e_unit ~loc ())
   in
-  ()
-
-
-let assert_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/assert.religo" in
-  let make_input b = e_pair ~loc (e_bool ~loc b) (e_unit ~loc ()) in
-  let make_expected =
-    e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_unit ~loc ())
-  in
-  let _ = expect_fail ~raise program "main" (make_input false) in
-  let _ = expect_eq ~raise program "main" (make_input true) make_expected in
   ()
 
 
@@ -1774,34 +1696,8 @@ let basic_mligo ~raise () : unit =
   expect_eq_evaluate ~raise typed "foo" (e_int ~loc (42 + 127))
 
 
-let basic_religo ~raise () : unit =
-  let typed = type_file ~raise "./contracts/basic.religo" in
-  expect_eq_evaluate ~raise typed "foo" (e_int ~loc (42 + 127))
-
-
 let let_in_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/letin.mligo" in
-  let () =
-    let make_input n =
-      e_pair ~loc (e_int ~loc n) (e_pair ~loc (e_int ~loc 3) (e_int ~loc 5))
-    in
-    let make_expected n =
-      e_pair
-        ~loc
-        (e_typed_list ~loc [] (t_operation ~loc ()))
-        (e_pair ~loc (e_int ~loc (7 + n)) (e_int ~loc (3 + 5)))
-    in
-    expect_eq_n ~raise program "main" make_input make_expected
-  in
-  let () =
-    expect_eq ~raise program "letin_nesting" (e_unit ~loc ()) (e_string ~loc "test")
-  in
-  let () = expect_eq ~raise program "letin_nesting2" (e_int ~loc 4) (e_int ~loc 9) in
-  ()
-
-
-let let_in_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/letin.religo" in
   let () =
     let make_input n =
       e_pair ~loc (e_int ~loc n) (e_pair ~loc (e_int ~loc 3) (e_int ~loc 5))
@@ -1891,17 +1787,6 @@ let match_variant ~raise () : unit =
   ()
 
 
-let match_variant_re ~raise () : unit =
-  let program = type_file ~raise "./contracts/match.religo" in
-  let make_input n =
-    e_pair ~loc (e_constructor ~loc "Sub" (e_int ~loc n)) (e_int ~loc 3)
-  in
-  let make_expected n =
-    e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_int ~loc (3 - n))
-  in
-  expect_eq_n ~raise program "main" make_input make_expected
-
-
 let match_variant_js ~raise () : unit =
   let program = type_file ~raise "./contracts/match.jsligo" in
   let make_input n =
@@ -1915,17 +1800,6 @@ let match_variant_js ~raise () : unit =
 
 let match_matej ~raise () : unit =
   let program = type_file ~raise "./contracts/match_bis.mligo" in
-  let make_input n =
-    e_pair ~loc (e_constructor ~loc "Decrement" (e_int ~loc n)) (e_int ~loc 3)
-  in
-  let make_expected n =
-    e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_int ~loc (3 - n))
-  in
-  expect_eq_n ~raise program "main" make_input make_expected
-
-
-let match_matej_re ~raise () : unit =
-  let program = type_file ~raise "./contracts/match_bis.religo" in
   let make_input n =
     e_pair ~loc (e_constructor ~loc "Decrement" (e_int ~loc n)) (e_int ~loc 3)
   in
@@ -1994,53 +1868,6 @@ let mligo_list ~raise () : unit =
   let () = expect_eq_evaluate ~raise program "find_y4" (e_some ~loc (e_int ~loc 4)) in
   let () = expect_eq_evaluate ~raise program "find_y6" (e_none ~loc ()) in
   let () = expect_eq_evaluate ~raise program "find_z2" (e_some ~loc (e_int ~loc 2)) in
-  let () = expect_eq ~raise program "map_op" (aux [ 2; 3; 4; 5 ]) (aux [ 3; 4; 5; 6 ]) in
-  let () = expect_eq ~raise program "iter_op" (aux [ 2; 3; 4; 5 ]) (e_unit ~loc ()) in
-  ()
-
-
-let religo_list ~raise () : unit =
-  let program = type_file ~raise "./contracts/list.religo" in
-  let () =
-    expect_eq
-      ~raise
-      program
-      "size_"
-      (e_list ~loc [ e_int ~loc 0; e_int ~loc 1; e_int ~loc 2 ])
-      (e_nat ~loc 3)
-  in
-  let aux lst = e_list ~loc @@ List.map ~f:(e_int ~loc) lst in
-  let () = expect_eq ~raise program "fold_op" (aux [ 1; 2; 3 ]) (e_int ~loc 16) in
-  let () =
-    let make_input n =
-      e_pair
-        ~loc
-        (e_list ~loc [ e_int ~loc n; e_int ~loc (2 * n) ])
-        (e_pair ~loc (e_int ~loc 3) (e_list ~loc [ e_int ~loc 8 ]))
-    in
-    let make_expected n =
-      e_pair
-        ~loc
-        (e_typed_list ~loc [] (t_operation ~loc ()))
-        (e_pair ~loc (e_int ~loc (n + 3)) (e_list ~loc [ e_int ~loc (2 * n) ]))
-    in
-    expect_eq_n ~raise program "main" make_input make_expected
-  in
-  let () = expect_eq_evaluate ~raise program "x" (e_list ~loc []) in
-  let () =
-    expect_eq_evaluate
-      ~raise
-      program
-      "y"
-      (e_list ~loc @@ List.map ~f:(e_int ~loc) [ 3; 4; 5 ])
-  in
-  let () =
-    expect_eq_evaluate
-      ~raise
-      program
-      "z"
-      (e_list ~loc @@ List.map ~f:(e_int ~loc) [ 2; 3; 4; 5 ])
-  in
   let () = expect_eq ~raise program "map_op" (aux [ 2; 3; 4; 5 ]) (aux [ 3; 4; 5; 6 ]) in
   let () = expect_eq ~raise program "iter_op" (aux [ 2; 3; 4; 5 ]) (e_unit ~loc ()) in
   ()
@@ -2219,26 +2046,6 @@ let mligo_let_multiple ~raise () : unit =
   ()
 
 
-let religo_let_multiple ~raise () : unit =
-  let program = type_file ~raise "./contracts/let_multiple.religo" in
-  let () =
-    let input = e_unit ~loc () in
-    let expected = e_int ~loc 3 in
-    expect_eq ~raise program "main" input expected
-  in
-  let () =
-    let input = e_unit ~loc () in
-    let expected = e_int ~loc 6 in
-    expect_eq ~raise program "main_paren" input expected
-  in
-  let () =
-    let input = e_unit ~loc () in
-    let expected = e_int ~loc 65 in
-    expect_eq ~raise program "non_tuple_rhs" input expected
-  in
-  ()
-
-
 let jsligo_let_multiple ~raise () : unit =
   let program = type_file ~raise "./contracts/let_multiple.jsligo" in
   let () =
@@ -2318,11 +2125,6 @@ let self_address ~raise f : unit =
 
 let implicit_account ~raise f : unit =
   let _ = type_file ~raise f in
-  ()
-
-
-let tuples_sequences_functions_religo ~raise () : unit =
-  let _ = type_file ~raise "./contracts/tuples_sequences_functions.religo" in
   ()
 
 
@@ -2536,27 +2338,6 @@ let tuple_param_destruct ~raise () : unit =
   ()
 
 
-let tuple_param_destruct_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/tuple_param_destruct.religo" in
-  let () =
-    expect_eq
-      ~raise
-      program
-      "sum"
-      (e_tuple ~loc [ e_int ~loc 20; e_int ~loc 10 ])
-      (e_int ~loc 10)
-  in
-  let () =
-    expect_eq
-      ~raise
-      program
-      "parentheses"
-      (e_tuple ~loc [ e_int ~loc 20; e_int ~loc 10 ])
-      (e_int ~loc 10)
-  in
-  ()
-
-
 let let_in_multi_bind ~raise () : unit =
   let program = type_file ~raise "./contracts/let_in_multi_bind.mligo" in
   let () =
@@ -2643,31 +2424,6 @@ let tuple_type_mligo ~raise () : unit =
   ()
 
 
-let tuple_type_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/tuple_type.religo" in
-  let () =
-    let input _ = e_int ~loc 0 in
-    let expected _ = e_int ~loc 8 in
-    expect_eq_n ~raise program "arguments_test" input expected
-  in
-  let () =
-    let input _ = e_int ~loc 0 in
-    let expected _ = e_int ~loc 8 in
-    expect_eq_n ~raise program "tuple_test" input expected
-  in
-  let () =
-    let input _ = e_int ~loc 0 in
-    let expected _ = e_int ~loc 8 in
-    expect_eq_n ~raise program "arguments_test_inline" input expected
-  in
-  let () =
-    let input _ = e_int ~loc 0 in
-    let expected _ = e_int ~loc 8 in
-    expect_eq_n ~raise program "tuple_test_inline" input expected
-  in
-  ()
-
-
 let tuple_type_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/tuple_type.jsligo" in
   let () =
@@ -2693,16 +2449,6 @@ let tuple_type_jsligo ~raise () : unit =
   ()
 
 
-let no_semicolon_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/no_semicolon.religo" in
-  let () =
-    let input _ = e_int ~loc 2 in
-    let expected _ = e_int ~loc 3 in
-    expect_eq_n ~raise program "a" input expected
-  in
-  ()
-
-
 let no_semicolon_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/no_semicolon.jsligo" in
   let () =
@@ -2713,18 +2459,8 @@ let no_semicolon_jsligo ~raise () : unit =
   ()
 
 
-let tuple_list_religo ~raise () : unit =
-  let _ = type_file ~raise "./contracts/tuple_list.religo" in
-  ()
-
-
 let tuple_list_jsligo ~raise () : unit =
   let _ = type_file ~raise "./contracts/tuple_list.jsligo" in
-  ()
-
-
-let single_record_expr_religo ~raise () : unit =
-  let _ = type_file ~raise "./contracts/single_record_item.religo" in
   ()
 
 
@@ -2770,11 +2506,6 @@ let tuple_assignment_jsligo ~raise () : unit =
 let chained_assignment_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/chained_assignment.jsligo" in
   expect_eq ~raise program "bar" (e_unit ~loc ()) (e_int ~loc 9)
-
-
-let no_arg_func_religo ~raise () : unit =
-  let program = type_file ~raise "./contracts/no_arg_func.religo" in
-  expect_eq ~raise program "no_arg_func2" (e_unit ~loc ()) (e_int ~loc 2)
 
 
 let block_scope_jsligo ~raise () : unit =
@@ -3536,11 +3267,6 @@ let if_if_return_jsligo ~raise () : unit =
   ()
 
 
-let tuple_fun_religo ~raise () : unit =
-  let _ = type_file ~raise "./contracts/tuple_fun.religo" in
-  ()
-
-
 let while_and_for_loops_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/loops.jsligo" in
   let _ =
@@ -3721,7 +3447,6 @@ let main =
       (* test_w "fibo4 (mligo)" fibo4_mligo ; *) ]
   @ test_w_all "tuple" tuple
   @ [ test_w "tuple type (mligo)" tuple_type_mligo
-    ; test_w "tuple type (religo)" tuple_type_religo
     ; test_w "tuple type (jsligo)" tuple_type_jsligo
     ]
   @ test_w_all "record" record
@@ -3742,7 +3467,6 @@ let main =
     ; test_w "various applications" application
     ; test_w "closure" closure
     ; test_w "closure (mligo)" closure_mligo
-    ; test_w "closure (religo)" closure_religo
     ; test_w "closure (jsligo)" closure_jsligo
     ]
   @ test_w_all "shared-function" shared_function
@@ -3751,13 +3475,10 @@ let main =
   @ [ test_w "matching" matching
     ; test_w "variant matching" variant_matching
     ; test_w "match variant (mligo)" match_variant
-    ; test_w "match variant (religo)" match_variant_re
     ; test_w "match variant (jsligo)" match_variant_js
     ; test_w "match variant 2 (mligo)" match_matej
-    ; test_w "match variant 2 (religo)" match_matej_re
     ; test_w "match variant 2 (jsligo)" match_matej_js
     ; test_w "list matching (mligo)" mligo_list
-    ; test_w "list matching (religo)" religo_list
     ; test_w "list matching (jsligo)" jsligo_list
     ; test_w "failwith ligo" failwith_ligo
     ; test_w "failwith jsligo" failwith_jsligo
@@ -3803,7 +3524,6 @@ let main =
     ; test_w "nested_for_loop" nested_for_loop
     ; test_w "loop" loop
     ; test_w "loop (mligo)" loop_mligo
-    ; test_w "loop (religo)" loop_religo
     ; test_w "loop (jsligo)" loop_jsligo
     ; test_w "loop2 (jsligo)" loop2_jsligo
     ; test_w "declarations" declarations
@@ -3815,12 +3535,9 @@ let main =
   @ test_w_all "super-counter" super_counter_contract
   @ [ test_w "dispatch counter contract" dispatch_counter_contract
     ; test_w "basic (mligo)" basic_mligo
-    ; test_w "basic (religo)" basic_religo
     ; test_w "let-in (mligo)" let_in_mligo
-    ; test_w "let-in (religo)" let_in_religo
     ; test_w "let-in (jsligo)" let_in_jsligo
     ; test_w "let multiple (mligo)" mligo_let_multiple
-    ; test_w "let multiple (religo)" religo_let_multiple
     ; test_w "let multiple (jsligo)" jsligo_let_multiple
     ; test_w "local_type_decl" local_type_decl
     ]
@@ -3831,8 +3548,7 @@ let main =
   @ test_w_all "website2" website2_ligo
   @ test_w_all "set delegate" set_delegate
   @ test_w_all "is_nat" is_nat
-  @ [ test_w "tuples_sequences_functions (religo)" tuples_sequences_functions_religo
-    ; test_w "tuples_sequences_functions (jsligo)" tuples_sequences_functions_jsligo
+  @ [ test_w "tuples_sequences_functions (jsligo)" tuples_sequences_functions_jsligo
     ; test_w "simple_access (ligo)" simple_access_ligo
     ; test_w "deep_access (ligo)" deep_access_ligo
     ; test_w "curry (mligo)" curry
@@ -3842,21 +3558,15 @@ let main =
   @ test_w_all "empty case" empty_case
   @ [ test_w "let in multi-bind (mligo)" let_in_multi_bind
     ; test_w "tuple param destruct (mligo)" tuple_param_destruct
-    ; test_w "tuple param destruct (religo)" tuple_param_destruct_religo
-    ; test_w "no semicolon (religo)" no_semicolon_religo
     ; test_w "loop_bugs (ligo)" loop_bugs_ligo
     ; test_w "loop_bugs (jsligo)" loop_bugs_jsligo
-    ; test_w "tuple_list (religo)" tuple_list_religo
-    ; test_w "single_record_expr (religo)" single_record_expr_religo
     ; test_w "if no else (jsligo)" if_no_else_jsligo
     ; test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo
     ; test_w "chained_assignment (jsligo)" chained_assignment_jsligo
-    ; test_w "no_arg_func (religo)" no_arg_func_religo
     ; test_w "block_scope (jsligo)" block_scope_jsligo
     ; test_w "assignment_operators (jsligo)" assignment_operators_jsligo
     ; test_w "if_if_return (jsligo)" if_if_return_jsligo
     ; test_w "switch case (jsligo)" switch_cases_jsligo
-    ; test_w "tuple fun (religo)" tuple_fun_religo
     ; test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
     ; test_w "discriminated_union (jsligo)" disc_union_jsligo
     ; test_w "ternary (jsligo)" ternary_jsligo

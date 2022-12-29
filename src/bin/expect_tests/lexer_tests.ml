@@ -27,19 +27,6 @@ The comment starting here is not closed.
 Hint: Close it with "*)".
 |test}];
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_comment.religo" ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/LexerLib/unterminated_comment.religo", line 1, characters 0-2:
-  1 | /* not closed
-The comment starting here is not closed.
-Hint: Close it with "*/".
-|test}];
-  run_ligo_bad
     [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_comment.jsligo" ];
   [%expect
     {test|
@@ -68,19 +55,6 @@ A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
 |test}];
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_string.religo" ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/LexerLib/unterminated_string.religo", line 1, characters 0-1:
-  1 | "open
-A string cannot be interrupted by a line break.
-Hint: Remove it or close the string before.
-|test}];
-  run_ligo_bad
     [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_string.jsligo" ];
   [%expect
     {test|
@@ -103,19 +77,6 @@ Hint: Remove it or close the string before.
   [%expect
     {test|
 File "../../test/lexer/LexerLib/broken_string.mligo", line 1, characters 8-9:
-  1 | let a = "broken
-  2 | over
-A string cannot be interrupted by a line break.
-Hint: Remove it or close the string before.
-|test}];
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/LexerLib/broken_string.religo" ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/LexerLib/broken_string.religo", line 1, characters 8-9:
   1 | let a = "broken
   2 | over
 A string cannot be interrupted by a line break.
@@ -158,22 +119,6 @@ Hint: Use non-control characters 7-bit ASCII.
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "../../test/lexer/LexerLib/invalid_character_in_string.religo"
-    ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/LexerLib/invalid_character_in_string.religo", line 1, characters 9-10:
-  1 | let z = "\t";
-Invalid character "\\t" in string.
-Hint: Use non-control characters 7-bit ASCII.
-|test}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
     ; "../../test/lexer/LexerLib/invalid_character_in_string.jsligo"
     ];
   [%expect
@@ -198,22 +143,6 @@ Hint: Remove or replace the sequence.
   [%expect
     {test|
 File "../../test/lexer/LexerLib/undefined_escape_sequence.mligo", line 1, characters 1-3:
-  1 | "\\z"
-Undefined escape sequence.
-Hint: Remove or replace the sequence.
-|test}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "../../test/lexer/LexerLib/undefined_escape_sequence.religo"
-    ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/LexerLib/undefined_escape_sequence.religo", line 1, characters 1-3:
   1 | "\\z"
 Undefined escape sequence.
 Hint: Remove or replace the sequence.
@@ -251,22 +180,6 @@ Hint: 1 or 2 are allowed.
   [%expect
     {test|
 File "../../test/lexer/LexerLib/undefined_linemarker_argument.mligo", line 1, characters 41-42:
-  1 | # 1 "undefined_linemarker_argument.ligo" WRONG
-Invalid flag.
-Hint: 1 or 2 are allowed.
-|test}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "../../test/lexer/LexerLib/undefined_linemarker_argument.religo"
-    ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/LexerLib/undefined_linemarker_argument.religo", line 1, characters 41-42:
   1 | # 1 "undefined_linemarker_argument.ligo" WRONG
 Invalid flag.
 Hint: 1 or 2 are allowed.
@@ -325,17 +238,6 @@ File "../../test/lexer/Lexing/invalid_symbol.mligo", line 1, characters 10-13:
   2 |
 Invalid symbol: "...".
 Hint: Check the LIGO syntax you use.
-|test}];
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/invalid_symbol.religo" ];
-  [%expect
-    {test|
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-Reasonligo is depreacted, support will be dropped in a few versions.
-
-File "../../test/lexer/Lexing/invalid_symbol.religo", line 1, characters 14-15:
-  1 | let b = 1 # 10;
-File name expected in a string literal.
 |test}];
   run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/invalid_symbol.jsligo" ];
   [%expect

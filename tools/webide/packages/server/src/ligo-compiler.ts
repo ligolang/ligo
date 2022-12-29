@@ -78,7 +78,6 @@ export class LigoCompiler {
   private getExtensionFromSyntax(syntax: string) {
     switch (syntax) {
       case "cameligo": return ".mligo"
-      case "reasonligo": return ".religo"
       case "jsligo": return ".jsligo"
       case "pascaligo": return ".ligo"
       default: return ".ligo"
@@ -138,7 +137,7 @@ export class LigoCompiler {
 
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'compile', 
+        'compile',
         'contract',
         name,
         '-e',
@@ -209,7 +208,7 @@ export class LigoCompiler {
 
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'compile', 
+        'compile',
         'storage',
         name,
         storage,

@@ -5,7 +5,6 @@ open Ast_imperative
 
 let file = "./contracts/pledge.ligo"
 let mfile = "./contracts/pledge.mligo"
-let refile = "./contracts/pledge.religo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
 let oracle_addr, oracle_contract =
@@ -97,7 +96,4 @@ let main =
     ; test_w "donate" (pledge mfile)
     ; test_w "distribute" (distribute mfile)
     ; test_w "distribute (unauthorized)" (distribute_unauthorized mfile)
-    ; test_w "donate" (pledge refile)
-    ; test_w "distribute" (distribute refile)
-    ; test_w "distribute (unauthorized)" (distribute_unauthorized refile)
     ]

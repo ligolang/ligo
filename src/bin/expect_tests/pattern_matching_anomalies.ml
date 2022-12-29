@@ -146,22 +146,6 @@ let%expect_test _ =
     - (_, (record [c = _; b = Two; a = _], _)) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "t_r_c.religo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/t_r_c.religo", line 7, character 2 to line 10, character 3:
-      6 | let s = (x : t) =>
-      7 |   switch (x) {
-      8 |   | (n, ({ a, c, b: One }, s))  => ()
-      9 |   | (n, ({ a, b: Four, c }, s)) => ()
-     10 |   }
-
-    Error : this pattern-matching is not exhaustive.
-    Here are examples of cases that are not matched:
-    - (_, ({c : _,b : Three,a : _}, _))
-    - (_, ({c : _,b : Two,a : _}, _)) |}]
-
-let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "r_t_c.mligo" ];
   [%expect
     {|
@@ -191,22 +175,6 @@ let%expect_test _ =
     Here are examples of cases that are not matched:
     - record [c = _; b = ((_, _), (Four, _)); a = _]
     - record [c = _; b = ((_, _), (Three, _)); a = _] |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "r_t_c.religo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/r_t_c.religo", line 7, character 2 to line 9, character 3:
-      6 | let s = (x : t) =>
-      7 |   switch (x) {
-      8 |   | { a, c, b: ((x, y), (One, z)) } => ()
-      9 |   }
-
-    Error : this pattern-matching is not exhaustive.
-    Here are examples of cases that are not matched:
-    - {c : _,b : ((_, _), (Four, _)),a : _}
-    - {c : _,b : ((_, _), (Three, _)),a : _}
-    - {c : _,b : ((_, _), (Two, _)),a : _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "r_r_c.mligo" ];

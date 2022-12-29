@@ -2,8 +2,18 @@
 
 (executables
  (names test doc_test repl_test vendors_test contract_test get_scope_tests)
- (libraries simple-utils tezos-memory-proto-alpha ligo ligo.unix bos repl
-   interpreter alcotest tezos-utils tezos-crypto ligo_api))
+ (libraries
+  simple-utils
+  tezos-memory-proto-alpha
+  ligo
+  ligo.unix
+  bos
+  repl
+  interpreter
+  alcotest
+  tezos-utils
+  tezos-crypto
+  ligo_api))
 
 (rule
  (alias doc-test)
@@ -67,8 +77,6 @@
   (glob_files error-recovery/simple/jsligo/original/*.jsligo)
   (glob_files error-recovery/simple/pascaligo/*.ligo)
   (glob_files error-recovery/simple/pascaligo/original/*.ligo)
-  (glob_files error-recovery/simple/reasonligo/*.religo)
-  (glob_files error-recovery/simple/reasonligo/original/*.religo)
   (glob_files error-recovery/multiple_errors/*))
  (action
   (run ./get_scope_tests.exe -q -c)))
@@ -85,8 +93,6 @@
   (glob_files error-recovery/simple/jsligo/original/*.jsligo)
   (glob_files error-recovery/simple/pascaligo/*.ligo)
   (glob_files error-recovery/simple/pascaligo/original/*.ligo)
-  (glob_files error-recovery/simple/reasonligo/*.religo)
-  (glob_files error-recovery/simple/reasonligo/original/*.religo)
   (glob_files error-recovery/multiple_errors/*))
  (action
   (run ./get_scope_tests.exe -c)))

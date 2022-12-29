@@ -73,44 +73,6 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"
-    ; "reasonligo"
-    ; "(zip([1,2,3]))([4n,5n,6n])"
-    ; "--init-file"
-    ; test "comb.religo"
-    ];
-  [%expect
-    {|
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "compile"
-    ; "expression"
-    ; "reasonligo"
-    ; "(zip((zip([1,2,3]))([4n,5n,6n])))([\"a\",\"b\",\"c\"])"
-    ; "--init-file"
-    ; test "comb.religo"
-    ];
-  [%expect
-    {|
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "compile"
-    ; "expression"
     ; "jsligo"
     ; "(zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))"
     ; "--init-file"
@@ -307,19 +269,6 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"; "expression"; "cameligo"; "bar"; "--init-file"; test "modules.mligo" ];
   [%expect {|
-    (Pair (Some 1) (Some "hello")) |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "expression"; "reasonligo"; "bar"; "--init-file"; test "modules.religo" ];
-  [%expect
-    {|
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
-    Reasonligo is depreacted, support will be dropped in a few versions.
-
     (Pair (Some 1) (Some "hello")) |}]
 
 let%expect_test _ =
