@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Modal } from "~/base-components/ui-components";
+import { Button, Modal } from "~/base-components/ui-components";
 import { KeypairInputSelector } from "~/base-components/keypair";
 import { networkManager } from "~/ligo-components/eth-network";
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 import { WebIdeApi } from "~/components/api/api";
 import { ActionParamFormGroup } from "~/ligo-components/eth-contract";
+import { actions } from "~/base-components/workspace";
 
 interface DeployModalProps {
   modalRef: React.RefObject<Modal>;
@@ -183,23 +184,25 @@ const DeployModal: React.FC<DeployModalProps> = ({
       confirmDisabled={storage === "" || selectedSigner === ""}
       onConfirm={confirmDeployment}
       onCancel={() => {
-        setLoading(false);
-        setStorage("");
-        setResult("");
-        setIsWallet(false);
-        setSelectedSigner("");
-        setDelegateAddress("");
-        setTxOptions(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-          networkManager.sdk?.utils.txOptions?.list.reduce(
-            (a: { [name: string]: string }, opt: { name: string }) => ({ ...a, [opt.name]: "" }),
-            {}
-          )
-        );
-        setNeedEstimate(true);
-        setBalance("");
-        setLoadedCompiledStorage("");
-        setCompiledContract("");
+        if (result !== "") {
+          setLoading(false);
+          setStorage("");
+          setResult("");
+          setIsWallet(false);
+          setSelectedSigner("");
+          setDelegateAddress("");
+          setTxOptions(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            networkManager.sdk?.utils.txOptions?.list.reduce(
+              (a: { [name: string]: string }, opt: { name: string }) => ({ ...a, [opt.name]: "" }),
+              {}
+            )
+          );
+          setNeedEstimate(true);
+          setBalance("");
+          setLoadedCompiledStorage("");
+          setCompiledContract("");
+        }
         return true;
       }}
       onOpened={refreshStorage}
@@ -221,33 +224,46 @@ const DeployModal: React.FC<DeployModalProps> = ({
         size=""
         type="string"
       />
-      <KeypairInputSelector
-        label="Signer"
-        extra={
-          networkManager.isWallet &&
-          signer && [
-            {
-              group: networkManager.browserExtension.name.toLowerCase(),
-              badge: networkManager.browserExtension.name,
-              children: [
-                {
-                  address: signer,
-                  name: networkManager.browserExtension.name,
-                  onClick: () => {
-                    setIsWallet(true);
-                    setSelectedSigner(signer);
+      {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+      {/* @ts-ignore */}
+      <div style={{ display: "flex", "align-items": "flex-end" }}>
+        <KeypairInputSelector
+          label="Signer"
+          extra={
+            networkManager.isWallet &&
+            signer && [
+              {
+                group: networkManager.browserExtension.name.toLowerCase(),
+                badge: networkManager.browserExtension.name,
+                children: [
+                  {
+                    address: signer,
+                    name: networkManager.browserExtension.name,
+                    onClick: () => {
+                      setIsWallet(true);
+                      setSelectedSigner(signer);
+                    },
                   },
-                },
-              ],
-            },
-          ]
-        }
-        value={selectedSigner}
-        onChange={(newSigner: string) => {
-          setIsWallet(false);
-          setSelectedSigner(newSigner);
-        }}
-      />
+                ],
+              },
+            ]
+          }
+          value={selectedSigner}
+          onChange={(newSigner: string) => {
+            setIsWallet(false);
+            setSelectedSigner(newSigner);
+          }}
+          style={{ flex: "auto" }}
+        />
+        <Button
+          color="warning"
+          className="ml-2 mb-3"
+          style={{ height: "fit-content" }}
+          onClick={() => actions.openKeypair()}
+        >
+          Edit
+        </Button>
+      </div>
       <ActionParamFormGroup
         key="deploy-param-balance"
         className="mb-2"

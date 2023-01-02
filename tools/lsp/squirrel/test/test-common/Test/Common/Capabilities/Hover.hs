@@ -98,6 +98,7 @@ unit_hover_inferred_simple = do
   fp <- makeAbsolute $ contractsDir </> "simple.mligo"
   let type' = AliasType "int"
   checkHover @parser fp (point 2 9){_rFile = fp} (hover' (interval 1 5 6){_rFile = fp} "x" type' Caml Value)
+  checkHover @parser fp (point 2 5){_rFile = fp} (hover' (interval 2 5 6){_rFile = fp} "y" type' Caml Value)
 
 unit_hover_inferred_recursion :: forall parser. ScopeTester parser => Assertion
 unit_hover_inferred_recursion = do

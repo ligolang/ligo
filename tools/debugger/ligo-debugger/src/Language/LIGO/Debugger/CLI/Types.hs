@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-{-# LANGUAGE StandaloneKindSignatures, UndecidableInstances #-}
+{-# LANGUAGE DeriveDataTypeable, StandaloneKindSignatures, UndecidableInstances #-}
 
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
@@ -17,6 +17,7 @@ import Data.Aeson.Parser (scientific)
 import Data.Aeson.Types qualified as Aeson
 import Data.Attoparsec.ByteString (parseOnly)
 import Data.Char (isDigit)
+import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
@@ -73,7 +74,7 @@ data LigoPosition = LigoPosition
     -- ^ 1-indexed line number
   , lpCol  :: Int
     -- ^ 0-indexed column number
-  } deriving stock (Show, Eq, Ord, Generic)
+  } deriving stock (Show, Eq, Ord, Generic, Data)
     deriving anyclass (NFData, Hashable)
 
 instance Buildable LigoPosition where
@@ -94,7 +95,7 @@ data LigoRange = LigoRange
   { lrFile  :: FilePath
   , lrStart :: LigoPosition
   , lrEnd   :: LigoPosition
-  } deriving stock (Show, Eq, Generic)
+  } deriving stock (Show, Eq, Generic, Data)
     deriving anyclass (NFData, Hashable)
 
 makeLensesWith postfixLFields ''LigoRange
@@ -157,6 +158,7 @@ data NameType
 genSingletons [''NameType]
 
 newtype Name (u :: NameType) = Name Text
+  deriving stock (Data)
   deriving newtype (Show, NFData, FromJSON)
 
 deriving newtype instance FromBuilder (Name 'Concise)
@@ -206,7 +208,7 @@ instance (SingI u) => Buildable (Name u) where
 -- | Describes a variable.
 newtype LigoVariable (u :: NameType) = LigoVariable
   { lvName :: Name u
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Generic, Data)
     deriving newtype (Buildable)
     deriving anyclass (NFData)
 
@@ -242,6 +244,7 @@ instance Buildable LigoTypeRef where
   build (LigoTypeRef i) = [int||type##{i}|]
 
 newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
+  deriving stock (Data)
   deriving newtype (Show, Generic, NFData)
 
 pattern LigoTypeResolved :: LigoTypeExpression -> LigoType
@@ -271,7 +274,7 @@ instance Eq LigoType where
 data LigoExposedStackEntry u = LigoExposedStackEntry
   { leseDeclaration :: Maybe (LigoVariable u)
   , leseType        :: LigoType
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Generic, Data)
     deriving anyclass (NFData)
 
 deriving stock instance Eq (LigoExposedStackEntry 'Concise)
@@ -297,7 +300,7 @@ data LigoStackEntry u
     -- ^ Stack entry that is unknown.
     -- This can denote some auxiliary entry added by LIGO, like
     -- reusable functions or part of sum type when unfolding via @IF_LEFT@s.
-  deriving stock (Show, Generic)
+  deriving stock (Show, Generic, Data)
   deriving anyclass (NFData)
 
 deriving stock instance Eq (LigoStackEntry 'Concise)
@@ -377,7 +380,7 @@ data LigoIndexedInfo u = LigoIndexedInfo
 
     -}
 
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Generic, Data)
     deriving anyclass (NFData)
 
 deriving stock instance Eq (LigoIndexedInfo 'Concise)
@@ -430,7 +433,7 @@ instance {-# OVERLAPPING #-} (SingI u) => Buildable [LigoIndexedInfo u] where
 
 -- | The debug output produced by LIGO.
 data LigoMapper u = LigoMapper
-  { lmLocations :: V.Vector (LigoIndexedInfo u)
+  { lmLocations :: [LigoIndexedInfo u]
   , lmMichelsonCode :: Micheline.Expression
   }
 
@@ -485,6 +488,7 @@ instance Exception LigoCallException where
 instance DebuggerException LigoCallException where
   type ExceptionTag LigoCallException = "LigoCall"
   debuggerExceptionType _ = LigoLayerException
+  shouldInterruptDebuggingSession = False
 
 -- | Failed to decode LIGO output.
 data LigoDecodeException = LigoDecodeException
@@ -504,6 +508,7 @@ instance Exception LigoDecodeException where
 instance DebuggerException LigoDecodeException where
   type ExceptionTag LigoDecodeException = "LigoDecode"
   debuggerExceptionType _ = MidLigoLayerException
+  shouldInterruptDebuggingSession = False
 
 newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
   deriving newtype (Buildable)
@@ -535,6 +540,7 @@ instance Exception ConfigurationException where
 instance DebuggerException ConfigurationException where
   type ExceptionTag ConfigurationException = "Configuration"
   debuggerExceptionType _ = UserException
+  shouldInterruptDebuggingSession = False
 
 -- | Some unexpected error in communication with the plugin.
 newtype PluginCommunicationException = PluginCommunicationException Text
@@ -546,6 +552,7 @@ instance Exception PluginCommunicationException where
 instance DebuggerException PluginCommunicationException where
   type ExceptionTag PluginCommunicationException = "PluginComminication"
   debuggerExceptionType _ = MidPluginLayerException
+  shouldInterruptDebuggingSession = True
 
 -- | An expression source location with boolean indicator
 -- that tells us whether it is interesting or not.

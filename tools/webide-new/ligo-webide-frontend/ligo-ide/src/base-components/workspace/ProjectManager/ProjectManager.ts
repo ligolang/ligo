@@ -67,8 +67,8 @@ export default class ProjectManager {
     };
   }
 
-  static async createProject(name: string, template: string) {
-    return this.processProject(name, undefined, template);
+  static async createProject(name: string, template: string, syntax: string, gitLink?: string) {
+    return this.processProject(name, undefined, template, syntax, gitLink);
   }
 
   static async openProject(obj: GistContent, gistId: string, name?: string) {
@@ -106,13 +106,15 @@ export default class ProjectManager {
     projectData["/config.json"].content = JSON.stringify(config);
     /* eslint-enable */
 
-    return this.processProject(projectName, projectData, undefined);
+    return this.processProject(projectName, projectData, undefined, undefined, undefined);
   }
 
   static async processProject(
     name: string,
-    obj: GistContent | undefined,
-    template: string | undefined
+    obj?: GistContent,
+    template?: string,
+    syntax?: string,
+    gitLink?: string
   ) {
     const data = {
       id: name,
@@ -135,14 +137,25 @@ export default class ProjectManager {
           console.error(error);
         }
       }
-    } else if (template) {
-      const examples = getExamples(data.name, template, data.name);
-
-      for (const file of Object.keys(examples)) {
+    } else if (template && syntax) {
+      if (gitLink) {
         try {
-          await fileOps.writeFile(examples[file].name, examples[file].content);
+          await fileOps.cloneGitRepo(data.name, `https://github.com/ligolang/${gitLink}`);
         } catch (error) {
           console.error(error);
+        }
+      } else {
+        const examples = getExamples(data.name, template, data.name, syntax);
+
+        for (const file of Object.keys(examples)) {
+          const fileObject = examples[file];
+          try {
+            if (fileObject) {
+              await fileOps.writeFile(fileObject.name, fileObject.content);
+            }
+          } catch (error) {
+            console.error(error);
+          }
         }
       }
     }
@@ -244,6 +257,40 @@ export default class ProjectManager {
       pathInProject: this.pathInProject(item.path),
     }));
     return sortFile(rawData);
+  }
+
+  static getFilesFromContent = (c: (FolderInfo | FileInfo)[]) => {
+    const filePaths: string[] = [];
+    c.forEach((v) => {
+      if (v.type === "file") {
+        filePaths.push(v.path);
+      } else {
+        filePaths.push(...this.getFilesFromContent(v.children));
+      }
+    });
+    return filePaths;
+  };
+
+  static async loadDirectoryFilePathsRecursively(path: string) {
+    const children = await this.loadDirectoryFilePaths(path);
+
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (child.type === "folder") {
+        child.children = await this.loadDirectoryFilePathsRecursively(child.path);
+      }
+    }
+
+    return children;
+  }
+
+  static async loadDirectoryFilePaths(path: string) {
+    const result = await fileOps.readDirectory(path);
+    const rawData = result.map((item) => ({
+      ...item,
+      pathInProject: "",
+    }));
+    return rawData;
   }
 
   async readProjectSettings() {
@@ -412,6 +459,7 @@ export default class ProjectManager {
     try {
       if (type === "file") {
         await fileOps.copyMoveFile(from, to, "move");
+        modelSessionManager.updateEditorAfterMovedFile(from, to);
       }
 
       if (type === "folder") {
@@ -439,7 +487,16 @@ export default class ProjectManager {
       }
 
       if (type === "folder") {
+        const dirContent = await this.loadDirectoryFilePathsRecursively(from);
+        const dirFiles = this.getFilesFromContent(dirContent);
+
         await fileOps.copyMoveFolder(from, to, "copy");
+        for (let i = 0; i < dirFiles.length; i++) {
+          modelSessionManager.updateEditorAfterMovedFile(
+            dirFiles[i],
+            dirFiles[i].replace(from, to)
+          );
+        }
       }
     } catch (e: any) {
       if (e instanceof Error) {
@@ -463,13 +520,26 @@ export default class ProjectManager {
     const isFile = await fileOps.isFile(oldPath);
 
     try {
-      await fileOps.rename(oldPath, newPath);
+      if (isFile) {
+        await fileOps.rename(oldPath, newPath);
+        modelSessionManager.updateEditorAfterMovedFile(oldPath, newPath);
+      } else {
+        const dirContent = await this.loadDirectoryFilePathsRecursively(oldPath);
+        const dirFiles = this.getFilesFromContent(dirContent);
+
+        await fileOps.rename(oldPath, newPath);
+        for (let i = 0; i < dirFiles.length; i++) {
+          modelSessionManager.updateEditorAfterMovedFile(
+            dirFiles[i],
+            dirFiles[i].replace(oldPath, newPath)
+          );
+        }
+      }
     } catch (e) {
       console.log(e);
       throw new Error(`Fail to rename <b>${oldPath}</b>.`);
     }
 
-    modelSessionManager.updateEditorAfterMovedFile(oldPath, newPath);
     ProjectManager.refreshDirectory({
       type: isFile ? "renameFile" : "renameDirectory",
       oldPath,
@@ -484,9 +554,16 @@ export default class ProjectManager {
     });
     if (response === 0) {
       if (node.type === "folder" && node.children) {
+        const dirContent = await this.loadDirectoryFilePathsRecursively(node.path);
+        const dirFiles = this.getFilesFromContent(dirContent);
+
         await fileOps.deleteDirectory(node.path);
+        for (let i = 0; i < dirFiles.length; i++) {
+          modelSessionManager.updateEditorAfterMovedFile(dirFiles[i], undefined);
+        }
       } else {
         await fileOps.deleteFile(node.path);
+        modelSessionManager.updateEditorAfterMovedFile(node.path, undefined);
       }
       ProjectManager.refreshDirectory({
         type: node.type === "folder" ? "deleteDirectory" : "deleteFile",

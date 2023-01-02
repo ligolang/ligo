@@ -5,7 +5,6 @@ module Cli.Impl
   , LigoErrorNodeParseErrorException  (..)
   , LigoClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
-  , LigoUnexpectedCrashException (..)
   , LigoIOException (..)
 
     -- * Versioning
@@ -40,18 +39,17 @@ import Data.Coerce (coerce)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Debug qualified
-import Duplo.Pretty (pp)
+import Duplo.Pretty (Doc, pp, vcat)
 import GHC.IO.Exception qualified as IOException
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
-import System.FilePath (takeDirectory, takeFileName)
+import System.FilePath (isPathSeparator, takeDirectory, takeFileName, (</>))
 import System.IO (hFlush, hGetChar)
 -- 'UnliftIO.Process' forgot to lift 'cleanupProcess'.
 import System.Process (cleanupProcess)
 import System.Process.ByteString.Lazy qualified as PExtras
-import Text.Regex.TDFA (getAllTextSubmatches, (=~))
 import UnliftIO.Concurrent (getNumCapabilities)
-import UnliftIO.Directory (canonicalizePath)
+import UnliftIO.Directory (canonicalizePath, doesFileExist)
 import UnliftIO.Exception qualified as UnliftIO (bracket, handle, throwIO, try)
 import UnliftIO.Pool (Pool)
 import UnliftIO.Pool qualified as Pool
@@ -88,13 +86,6 @@ data LigoDecodedExpectedClientFailureException = LigoDecodedExpectedClientFailur
   { decfeErrorsDecoded :: NonEmpty LigoError -- ^ Successfully decoded ligo errors
   , decfeWarningsDecoded :: [LigoError]
   , decfeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (LigoException)
-    deriving stock (Show)
-
--- | Ligo has unexpectedly crashed.
-data LigoUnexpectedCrashException = LigoUnexpectedCrashException
-  { uceMessage :: Text -- ^ extracted failure message
-  , uceFile :: FilePath -- ^ File that caused the error
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
@@ -162,7 +153,6 @@ instance Exception SomeLigoException where
       , SomeLigoException <$> fromException @LigoErrorNodeParseErrorException          e
       , SomeLigoException <$> fromException @LigoMalformedJSONException                e
       , SomeLigoException <$> fromException @LigoDefinitionParseErrorException         e
-      , SomeLigoException <$> fromException @LigoUnexpectedCrashException              e
       , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
       , SomeLigoException <$> fromException @LigoFormatFailedException                 e
       , SomeLigoException <$> fromException @LigoIOException                           e
@@ -216,11 +206,6 @@ instance Exception LigoDefinitionParseErrorException where
 Caused by: #{ldpeFile}
 JSON output dumped:
 #{ldpeOutput}|]
-
-instance Exception LigoUnexpectedCrashException where
-  displayException LigoUnexpectedCrashException {..} =
-    [i|LIGO binary crashed with error: #{uceMessage}
-Caused by: #{uceFile}|]
 
 instance Exception LigoPreprocessFailedException where
   displayException LigoPreprocessFailedException {..} =
@@ -495,6 +480,21 @@ callForFormat tempSettings source = Log.addNamespace "callForFormat" $ Log.addCo
   where
     fp = srcPath source
 
+findProjectRoot :: FilePath -> IO (Maybe FilePath)
+findProjectRoot currentDirectory = do
+  packageExists <- doesFileExist $ currentDirectory </> packageName
+  if
+    | packageExists -> pure $ Just currentDirectory
+    | currentDirectory == "." || isRoot currentDirectory -> pure Nothing
+    | otherwise -> findProjectRoot $ takeDirectory currentDirectory
+  where
+    packageName = "package.json"
+    isRoot [c] = isPathSeparator c
+    isRoot _   = False
+
+projectRootToCliArg :: Maybe FilePath -> [LigoCliArg]
+projectRootToCliArg = maybe [] (\projectRoot -> ["--project-root", strArg projectRoot])
+
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
 --
 -- This function will call the contract with a temporary file path, dumping the
@@ -511,8 +511,14 @@ preprocess
   -> m Source
 preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext source do
   $Log.debug [i|preprocessing the following source:\n#{fp}|]
+  maybeProjectRoot <- liftIO $ findProjectRoot dir
   withLigo source tempSettings
-    (\tempFp -> ["print", "preprocessed", strArg tempFp, "--lib", strArg dir, "--format", "json"])
+    (\tempFp ->
+      [ "print", "preprocessed", strArg tempFp
+      , "--lib", strArg dir
+      , "--format", "json"
+      ] ++ projectRootToCliArg maybeProjectRoot
+    )
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
@@ -532,8 +538,15 @@ getLigoDefinitions
   -> m LigoDefinitions
 getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $ Log.addContext source do
   $Log.debug [i|parsing the following source:\n#{fp}|]
+  maybeProjectRoot <- liftIO $ findProjectRoot dir
   withLigo source tempSettings
-    (\tempFp -> ["info", "get-scope", strArg tempFp, "--format", "json", "--with-types", "--lib", strArg dir])
+    (\tempFp ->
+      [ "info", "get-scope", strArg tempFp
+      , "--format", "json"
+      , "--with-types"
+      , "--lib", strArg dir
+      ] ++ projectRootToCliArg maybeProjectRoot
+    )
     (\(Source tempFp isDirty output) json -> do
       json' <- bool
         pure
@@ -549,60 +562,38 @@ getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $
     fp = srcPath source
     dir = takeDirectory fp
 
+prettyErrors :: [LigoError] -> Doc
+prettyErrors = vcat . intersperse "\n" . map pp
+
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
-handleLigoError :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
-handleLigoError path encodedErr = Log.addNamespace "handleLigoError" do
-  case eitherDecodeStrict' @LigoError . encodeUtf8 $ encodedErr of
+handleLigoErrors :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
+handleLigoErrors path encodedErr = Log.addNamespace "handleLigoErrors" do
+  case eitherDecodeStrict' @(NonEmpty LigoError) $ encodeUtf8 encodedErr of
     Left err -> do
-      let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ toString encodedErr
-      case failureRecovery of
-        Left failure -> do
-          $Log.err [i|ligo error decoding failure: #{failure}|]
-          UnliftIO.throwIO $ LigoErrorNodeParseErrorException (toText failure) encodedErr path
-        Right recovered -> do
-          -- LIGO doesn't dump any information we can extract to figure out
-          -- where this error occurred, so we just log it for now. E.g.: a
-          -- type-checker error just crashes with "Update an expression which is not a record"
-          -- in the old typer. In the new typer, the error is the less
-          -- intuitive "type error : break_ctor propagator".
-          $Log.err [i|ligo crashed: #{recovered}|]
-          UnliftIO.throwIO $ LigoUnexpectedCrashException (toText recovered) path
-    Right decodedError -> do
+      $Log.err [i|LIGO errors decoding failure: #{err}|]
+      UnliftIO.throwIO $ LigoErrorNodeParseErrorException (toText err) encodedErr path
+    Right decodedErrors -> do
       $Log.err
-        [i|ligo error decoding successful with:\n#{decodedError}|]
+        [i|LIGO errors decoding successful with:\n#{prettyErrors $ toList decodedErrors}|]
       UnliftIO.throwIO $
-        LigoDecodedExpectedClientFailureException (pure decodedError) [] path
+        LigoDecodedExpectedClientFailureException decodedErrors [] path
 
 -- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
 -- happen. On a decode failure, attempts to decode as a single LIGO error
 -- instead.
 handleLigoMessages :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
-handleLigoMessages path encodedErr = Log.addNamespace "handleLigoErrors" do
+handleLigoMessages path encodedErr = Log.addNamespace "handleLigoMessages" do
   case eitherDecodeStrict' @LigoMessages $ encodeUtf8 encodedErr of
-    Left err -> do
-      $Log.err [i|ligo errors decoding failure: #{err}|]
-      -- It's possible it's the old format, with only one error. Try to decode
-      -- it instead:
-      handleLigoError path encodedErr
+    Left _ ->
+      -- It's possible LIGO has output a list of errors instead. Try to decode
+      -- it:
+      handleLigoErrors path encodedErr
     Right (LigoMessages decodedErrors decodedWarnings) -> do
       $Log.err
-        [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
+        [i|LIGO errors decoding successful with:\n#{prettyErrors $ toList decodedErrors <> decodedWarnings}|]
       UnliftIO.throwIO $
         LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
-
--- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to
--- extract the error message that was included with the crash.
--- Returns 'Left' if we failed to decode with the first parameter, otherwise
--- returns 'Right' with the recovered crash message.
-attemptToRecoverFromPossibleLigoCrash :: String -> String -> Either String String
-attemptToRecoverFromPossibleLigoCrash errDecoded stdErr =
-  case getAllTextSubmatches (stdErr =~ regex) of
-    [_, err] -> Right err
-    _        -> Left errDecoded
-    where
-      regex :: String
-      regex = "Fatal error: exception \\(Failure \"(.*)\"\\)"
 
 ----------------------------------------------------------------------------
 -- Debugging utilities

@@ -16,13 +16,17 @@ import {
 	ValidateEntrypointArguments,
 	ValidateEntrypointResponse,
 	ValidateValueArguments,
-	ValidateValueResponse
+	ValidateValueResponse,
+	SetSteppingGranularityArguments,
+	SetSteppingGranularityResponse,
 } from "./messages";
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 import stream from 'stream'
 import * as ee from 'events'
 import * as vscode from 'vscode'
 import { isDefined, Maybe } from './base';
+import { DebugAdapterTracker, DebugAdapterTrackerFactory } from "vscode";
+import { SteppingGranularity } from "./ui";
 
 type LigoSpecificRequest
 	= 'initializeLogger'
@@ -44,7 +48,7 @@ function largeError(...messageParts: string[]): vscode.MessageOptions {
 	return { modal: true, detail: messageParts.join("\n\n") }
 }
 
-function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
+export function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
 	if (!isDefined(response.body.error)) {
 		return
 	}
@@ -276,7 +280,7 @@ class ProtocolClient extends ee.EventEmitter {
 	}
 }
 
-export default class LigoProtocolClient extends ProtocolClient {
+export class LigoProtocolClient extends ProtocolClient {
 	socket: Net.Socket
 	constructor(pipeName: string) {
 		super();
@@ -294,5 +298,46 @@ export default class LigoProtocolClient extends ProtocolClient {
 	sendMsg(command: 'validateConfig', args: ValidateConfigArguments): Promise<ValidateConfigResponse>
 	sendMsg(command: LigoSpecificRequest, args: any): Promise<DebugProtocol.Response> {
 		return this.send(command, args)
+	}
+}
+
+/**
+ * This class overrides the messages submitted by the VSCode to our backend,
+ * attaching granularities to each message.
+ *
+ * We have to do this manually because VSCode lacks UI capabilities that
+ * would allow the user specifying the desired granularity, see
+ * https://github.com/microsoft/vscode/issues/102236
+ *
+ * We have to do this here, not in `LigoProtocolClient`, since the latter
+ * is only used for our custom handlers. LIGO-859 may change this.
+ */
+export class GranularityFillingTracker implements DebugAdapterTracker {
+	private getGranularity: () => SteppingGranularity
+
+	constructor(getGranularity: () => SteppingGranularity) {
+		this.getGranularity = getGranularity;
+	}
+
+	onWillReceiveMessage(message: any){
+		switch(message.command) {
+			case 'next':
+			case 'stepIn':
+			case 'stepOut':
+			case 'stepBack':
+				message.arguments.granularity = this.getGranularity();
+		}
+	}
+}
+
+export class GranularityFillingTrackerFactory implements DebugAdapterTrackerFactory {
+	private getGranularity: () => SteppingGranularity
+
+	constructor(getGranularity: () => SteppingGranularity) {
+		this.getGranularity = getGranularity;
+	}
+
+	createDebugAdapterTracker() {
+		return new GranularityFillingTracker(this.getGranularity);
 	}
 }

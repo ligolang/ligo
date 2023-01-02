@@ -11,12 +11,9 @@ packages:
 extra-deps:
 - git: https://github.com/serokell/base-noprelude.git
   commit: c8b06c4c8a271fce0c2f41ab18e88d58e64bac52
-- git: https://github.com/haskell/lsp.git
-  commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-  subdirs:
-    - lsp-types
-    - lsp
-    - lsp-test
+- lsp-types-1.6.0.0
+- lsp-1.6.0.0
+- lsp-test-0.14.1.0
 - git: https://github.com/serokell/tree-sitter.git
   commit: 59b427b5739c5ae348addcedac31632a663f2a45
 - git: https://github.com/co-log/co-log-core.git

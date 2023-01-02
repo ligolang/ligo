@@ -205,6 +205,7 @@ code {
 
 p, th, td, .alert {
   user-select: text;
+  word-break: break-word;
 }
 .cursor-pointer {
   cursor: pointer !important;
@@ -236,6 +237,7 @@ a.badge {
 }
 
 .p-half { padding: 0.15rem !important; }
+.py-75 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
 .w-2 { width: map-get($spacers, 2) !important; }
 .w-3 { width: map-get($spacers, 3) !important; }
 .w-4 { width: map-get($spacers, 4) !important; }

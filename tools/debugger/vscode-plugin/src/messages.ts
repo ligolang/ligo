@@ -1,5 +1,6 @@
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 import { ContractMetadata, InputValueLang } from './base'
+import { SteppingGranularity } from './ui'
 
 // InitializeLogger //
 
@@ -111,4 +112,18 @@ export interface ValidateConfigRequest extends DebugProtocol.Request {
 }
 
 export interface ValidateConfigResponse extends DebugProtocol.Response {
+}
+
+// SetSteppingGranularity //
+
+export interface SetSteppingGranularityArguments {
+	granularity: SteppingGranularity
+}
+
+export interface SetSteppingGranularityRequest extends DebugProtocol.Request {
+	command: 'SetSteppingGranularity'
+	arguments: SetSteppingGranularityArguments;
+}
+
+export interface SetSteppingGranularityResponse extends DebugProtocol.Response {
 }

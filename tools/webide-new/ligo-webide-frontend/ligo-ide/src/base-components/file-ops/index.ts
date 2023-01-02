@@ -5,13 +5,14 @@
 /* eslint-disable class-methods-use-this */
 import pathHelper from "path-browserify";
 import GistFs, { GistContent, GistData } from "~/base-components/file-ops/GistFs";
+import GitFs from "~/base-components/file-ops/GitFs";
 import IndexedLocalFs from "./IndexedLocalFs";
 
 export type FolderInfo = {
   type: "folder";
   title: string;
   key: string;
-  children: any; // TODO add proper type
+  children: (FolderInfo | FileInfo)[];
   isLeaf: boolean;
   name: string;
   path: string;
@@ -129,7 +130,7 @@ class FileManager {
           cb(e, undefined);
         }
         if (e.code === "ENOENT") {
-          throw new Error(`Fail to fetch file: "${path}" is not exists.`);
+          throw new Error(`Fail to fetch file: "${path}" does not exists.`);
         } else {
           console.error(JSON.stringify(e));
           throw new Error(`Fail to fetch file: ${JSON.stringify(e)}.`);
@@ -281,10 +282,13 @@ class FileManager {
 
     const obj: GistContent = {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    Object.keys(data).forEach((element) => {
-      const path = element.replace(/\.\.\./g, "/");
-      obj[path] = data[element];
-    });
+    Object.keys(data)
+      .filter((element) => data[element].content !== "D8FB22E08fDf3ec364EbAA839134040cC2740cf1")
+      .forEach((element) => {
+        // We use \u2215 char here, as gist desn't support / in file names
+        const path = element.replace(/∕/g, "/");
+        obj[path] = data[element];
+      });
     return obj;
   }
 
@@ -298,14 +302,18 @@ class FileManager {
     packaged.forEach(({ path, content }) => {
       packagedObject[path] = { content };
     });
-    const description = "Description";
+    packagedObject[`           ${projectRoot.replace(".workspaces/", "")}`] = {
+      content: "D8FB22E08fDf3ec364EbAA839134040cC2740cf1",
+    };
+    const description = "";
     return GistFs.uploadData(packagedObject, description, token, gistId);
   }
 
   async copyFolderToJson(path: string): Promise<{ path: string; content: string }[]> {
     const files = await this.collectFiles(path);
     return files.map(({ path: filePath, content }) => {
-      const gistFilePath = filePath.replace(path, "").replace(/\//g, "...");
+      // We use \u2215 char here, as gist desn't support / in file names
+      const gistFilePath = filePath.replace(path, "").replace(/\//g, "∕");
       const gistFileContent =
         /^\s+$/.test(content) || !content.length
           ? "// this line is added to create a gist. Empty file is not allowed."
@@ -334,6 +342,21 @@ class FileManager {
     }
 
     return files;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async cloneGitRepo(name: string, gitUrl: string) {
+    await this.writeDirectory(`.workspaces/${name}`);
+    await GitFs.clone(`/.workspaces/${name}`, gitUrl);
+    await this.writeFile(
+      `.workspaces/${name}/config.json`,
+      `{
+      "main": "",
+      "deploy": "",
+      "projectName": "${name}"
+    }
+    `
+    );
   }
 
   // eslint-disable-next-line class-methods-use-this

@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 module Test.Common.Diagnostics
-  ( DiagnosticSource (..)
-  , simpleTest
+  ( simpleTest
   , treeDoesNotContainNameTest
   , parseDiagnosticsDriver
   ) where
@@ -11,7 +10,7 @@ import System.FilePath ((</>))
 import UnliftIO.Directory (makeAbsolute)
 
 import AST.Parser (collectAllErrors, parseWithScopes)
-import AST.Scope (Fallback, FromCompiler, Standard)
+import AST.Scope (ScopingSystem (..))
 import Diagnostic (Message (..), MessageDetail (..), Severity (..), filterDiagnostics)
 import Range
 
@@ -20,10 +19,6 @@ import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.Util (ScopeTester)
 import Test.Tasty.HUnit (Assertion)
 
-data DiagnosticSource impl where
-  CompilerSource :: DiagnosticSource FromCompiler
-  FallbackSource :: DiagnosticSource Fallback
-  StandardSource :: DiagnosticSource Standard
 
 data MessageGroup = MessageGroup
   { mgParserMsgs   :: [Message]
@@ -103,16 +98,16 @@ mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)
 parseDiagnosticsDriver
   :: forall impl
    . (HasCallStack, ScopeTester impl)
-  => DiagnosticSource impl
+  => ScopingSystem impl
   -> DiagnosticTest
   -> Assertion
 parseDiagnosticsDriver source (DiagnosticTest file expectedAllMsgs expectedFilteredMsgs) = do
   contract <- parseWithScopes @impl file
   let
     catMsgs (MessageGroup parser fromCompiler fallback) = parser <> case source of
-      CompilerSource -> fromCompiler
-      FallbackSource -> fallback
-      StandardSource -> fallback <> fromCompiler
+      CompilerScopes -> fromCompiler
+      FallbackScopes -> fallback
+      StandardScopes -> fallback <> fromCompiler
     -- FIXME (LIGO-507): Remove duplicated diagnostics.
     msgs = ordNub $ collectAllErrors contract
   msgs `shouldMatchList` catMsgs expectedAllMsgs

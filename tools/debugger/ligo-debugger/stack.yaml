@@ -14,7 +14,7 @@ extra-deps:
   commit: 540990acfd2d4aaffa17a8337cbfa9a38cb3f2aa  # master with quasi-quoter
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
-  commit: 8853266cea86e90b3b6d2c355f03473bc448cafc  # master
+  commit: 11febb820b6e692ecc16733c28fe26fba9676b4d  # master
 - base58-bytestring-0.1.0
 - monad-stm-0.1.0.2
 - git: https://github.com/serokell/base-noprelude.git
@@ -23,10 +23,14 @@ extra-deps:
 - elliptic-curve-0.3.0
 - hex-text-0.1.0.0
 - show-type-0.1.1
-- morley-prelude-0.5.1
-- morley-1.17.0
-- lorentz-0.14.0
-- morley-client-0.2.0
+- git: https://gitlab.com/morley-framework/morley.git
+  commit: 940442fc138975f49a8a702481231bed0f908296 # master
+  subdirs:
+    - code/morley-prelude
+    - code/morley
+    - code/lorentz
+    - code/morley-client
+    - code/cleveland
 - git: https://github.com/int-index/caps.git
   commit: c5d61837eb358989b581ed82b1e79158c4823b1b
 - named-0.3.0.1@sha256:418543272f0c844a77639b05276ee3906d5f305cd4cab46fafcb4f15b7f1e60d,2312
@@ -52,12 +56,9 @@ extra-deps:
   commit: 59b427b5739c5ae348addcedac31632a663f2a45
 - git: https://github.com/serokell/duplo.git
   commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
-- git: https://github.com/haskell/lsp.git
-  commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-  subdirs:
-    - lsp-types
-    - lsp
-    - lsp-test
+- lsp-types-1.6.0.0
+- lsp-1.6.0.0
+- lsp-test-0.14.1.0
 - git: https://github.com/Bodigrim/text-rope
   commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
   # nix-sha256: 16fgpzc0rrkypryapqh33dvj40bcp6biyp1janlwq34aj4yc4y8l

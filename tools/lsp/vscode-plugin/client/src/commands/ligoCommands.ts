@@ -5,6 +5,8 @@ import {
 } from './common';
 import * as ex from '../exceptions'
 
+/* eslint-disable no-bitwise */
+
 export type CompileContractResult = {
   entrypoint: string,
   format: string,
@@ -27,6 +29,13 @@ export type SilentCompilationOptions = {
 
 const ligoBinaryInfo = { name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }
 
+const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<string>) => {
+  if (projectRootDirectory) {
+    return args.concat(['--project-root', projectRootDirectory])
+  }
+  return args
+}
+
 export async function executeSilentCompileContract(
   client: LanguageClient,
   options: SilentCompilationOptions,
@@ -38,9 +47,9 @@ export async function executeSilentCompileContract(
 
   return executeCommand(
     ligoBinaryInfo,
-    (path) => args.concat([path]),
+    (path: string) => withProjectRootFlag(args.concat([path])),
     client,
-    CommandRequiredArguments.Path,
+    CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     options.printToConsole,
   )
 }
@@ -71,7 +80,7 @@ export async function executeCompileContract(
 
   const result = await executeCommand(
     ligoBinaryInfo,
-    (path: string) => [
+    (path: string) => withProjectRootFlag([
       'compile',
       'contract',
       path,
@@ -79,9 +88,9 @@ export async function executeCompileContract(
       entrypoint,
       '--michelson-format',
       format,
-    ],
+    ]),
     client,
-    CommandRequiredArguments.Path,
+    CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
   )
 
@@ -125,7 +134,7 @@ export async function executeCompileStorage(
 
   const result = await executeCommand(
     ligoBinaryInfo,
-    (path: string) => [
+    (path: string) => withProjectRootFlag([
       'compile',
       'storage',
       path,
@@ -134,9 +143,9 @@ export async function executeCompileStorage(
       entrypoint,
       '--michelson-format',
       format,
-    ],
+    ]),
     client,
-    CommandRequiredArguments.Path,
+    CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
   )
 
@@ -151,9 +160,9 @@ export async function executeCompileStorage(
 export async function executeCompileExpression(client: LanguageClient) {
   const listOfExpressions = await executeCommand(
     ligoBinaryInfo,
-    (path: string) => ['info', 'list-declarations', path],
+    (path: string) => withProjectRootFlag(['info', 'list-declarations', path]),
     client,
-    1,
+    CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     false,
   )
 
@@ -162,16 +171,18 @@ export async function executeCompileExpression(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string, syntax: string) => [
+    (path: string) => (syntax: string) => withProjectRootFlag([
       'compile',
       'expression',
       syntax,
       maybeExpression,
       '--init-file',
       path,
-    ],
+    ]),
     client,
-    CommandRequiredArguments.PathAndExt,
+    CommandRequiredArguments.Path
+    | CommandRequiredArguments.Ext
+    | CommandRequiredArguments.ProjectRoot,
   )
 }
 
@@ -197,7 +208,14 @@ export async function executeDryRun(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => ['run', 'dry-run', path, maybeParameter, maybeStorage, '-e', maybeEntrypoint],
+    (path: string) => withProjectRootFlag([
+      'run',
+      'dry-run',
+      path,
+      maybeParameter,
+      maybeStorage,
+      '-e',
+      maybeEntrypoint]),
     client,
   )
 }
@@ -218,7 +236,7 @@ export async function executeEvaluateFunction(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => ['run', 'evaluate-call', path, maybeExpr, '-e', maybeEntrypoint],
+    (path: string) => withProjectRootFlag(['run', 'evaluate-call', path, maybeExpr, '-e', maybeEntrypoint]),
     client,
   )
 }
@@ -233,7 +251,7 @@ export async function executeEvaluateValue(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => ['run', 'evaluate-expr', path, '-e', maybeEntrypoint],
+    (path: string) => withProjectRootFlag(['run', 'evaluate-expr', path, '-e', maybeEntrypoint]),
     client,
   )
 }

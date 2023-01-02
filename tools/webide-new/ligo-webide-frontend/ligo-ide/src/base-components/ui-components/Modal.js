@@ -64,8 +64,12 @@ export default class BaseModal extends PureComponent {
     } else {
       e.keyCode === 27;
     }
+    const isEnter = e.keyCode ? e.keyCode === 13 : false;
     if (isEsc) {
       this.closeModal();
+    }
+    if (isEnter && !this.props.confirmDisabled) {
+      this.props.onConfirm();
     }
   };
 

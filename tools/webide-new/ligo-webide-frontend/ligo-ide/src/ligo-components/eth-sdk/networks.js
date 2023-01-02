@@ -92,7 +92,7 @@ export default networks;
 export const customNetworks = [
   {
     id: "custom",
-    group: "others",
+    group: "Others",
     name: "Custom",
     fullName: "Custom Network",
     icon: "fas fa-edit",

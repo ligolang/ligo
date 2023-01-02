@@ -89,35 +89,15 @@ export default class ProjectSettings {
   trimSettings = (rawSettings = {}) => {
     const compilers = rawSettings.compilers || {};
     const settings = {
-      main: rawSettings.main || "./contracts/Contract.sol",
+      main: rawSettings.main,
       deploy: rawSettings.deploy,
       storage: rawSettings.storage,
-      framework: rawSettings.framework || `${process.env.COMPILER_VERSION_KEY}-docker`,
-      npmClient: rawSettings.npmClient,
-      compilers: {
-        ...compilers,
-        [process.env.COMPILER_VERSION_KEY]: compilers[process.env.COMPILER_VERSION_KEY] || "",
-        solc: compilers.solc || "",
-        evmVersion: compilers.evmVersion || "istanbul",
-        optimizer: compilers.optimizer,
-      },
-      linter: rawSettings.linter || "solhint",
-      editor: {
-        fontFamily: rawSettings.editor?.fontFamily || "Hack",
-        fontSize: rawSettings.editor?.fontSize || "13px",
-        ligatures: Boolean(rawSettings.editor?.ligatures),
-      },
-      projectName: rawSettings.projectName,
-      gistId: rawSettings.gistId,
     };
-    if (rawSettings.language) {
-      settings.language = rawSettings.language;
-    }
-    if (!settings.npmClient) {
-      delete settings.npmClient;
-    }
     if (rawSettings.gistId) {
       settings.gistId = rawSettings.gistId;
+    }
+    if (rawSettings.projectName) {
+      settings.projectName = rawSettings.projectName;
     }
     return settings;
   };

@@ -11,6 +11,8 @@ module AST.Skeleton
   , Tree'
   , RawLigoList
   , Lang (..)
+  , allLangs
+  , langExtension
   , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
@@ -19,7 +21,7 @@ module AST.Skeleton
   , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..), Attr (..)
   , QuotedTypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
-
+  , pattern ErrorTypeUnresolved
   , getLIGO
   , setLIGO
   , nestedLIGO
@@ -36,7 +38,7 @@ import Text.Show qualified
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
-import Diagnostic (MessageDetail)
+import Diagnostic (MessageDetail (..))
 import Product (Product)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
@@ -79,7 +81,21 @@ data Lang
   | Caml
   | Reason
   | Js
-  deriving stock Show
+  deriving stock (Show, Eq, Enum, Bounded)
+
+allLangs :: [Lang]
+allLangs = [minBound .. maxBound]
+
+-- | Get file extension by LIGO language.
+--
+-- If the language matches multiple file extensions, a specific one of them
+-- will be returned.
+langExtension :: Lang -> FilePath
+langExtension = \case
+  Pascal -> ".pligo"
+  Caml -> ".mligo"
+  Reason -> ".religo"
+  Js -> ".jsligo"
 
 pascaLIGOKeywords :: HashSet Text
 pascaLIGOKeywords = HashSet.fromList
@@ -326,6 +342,9 @@ newtype Attr it = Attr Text
 
 data Error it = Error MessageDetail [it]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
+pattern ErrorTypeUnresolved :: Error it
+pattern ErrorTypeUnresolved = Error (FromLIGO "unresolved type given") []
 
 --------------------------------------------------------------------------------
 

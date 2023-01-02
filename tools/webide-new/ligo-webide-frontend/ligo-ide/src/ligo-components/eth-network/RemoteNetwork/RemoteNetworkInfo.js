@@ -13,7 +13,7 @@ export default class RemoteNetworkInfo extends PureComponent {
       <div className="d-flex">
         <div className="col-6 p-0 border-right-black">
           <TableCard title={networkManager.current?.fullName} right={EditButton}>
-            {networkManager.current?.group !== "others" && networkManager.current?.symbol && (
+            {networkManager.current?.group !== "Others" && networkManager.current?.symbol && (
               <TableCardRow name="Native Coin" badge={networkManager.current?.symbol} />
             )}
             {url && <TableCardRow name="Node URL" badge={url} badgeColor="primary" />}

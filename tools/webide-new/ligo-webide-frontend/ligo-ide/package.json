@@ -41,6 +41,7 @@
     "ethers": "^5.4.7",
     "gists": "^2.0.0",
     "immutable": "^4.0.0-rc.12",
+    "isomorphic-git": "^1.21.0",
     "js-base64": "^3.6.0",
     "loadjs": "^4.2.0",
     "lodash": "^4.17.20",

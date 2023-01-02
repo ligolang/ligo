@@ -11,6 +11,7 @@ import Morley.Debugger.Core.Navigate qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 
 import Language.LIGO.Debugger.Snapshots
 
@@ -26,8 +27,8 @@ test_test = minor <$>
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 2) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 5) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 2) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 5) (Pos 0))
 
         liftIO $ step "Visiting 1st breakpoint"
         N.continueUntilBreakpoint N.NextBreak
@@ -85,23 +86,23 @@ test_test = minor <$>
       let nestedFile2 = modulePath </> "imported2.ligo"
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 5) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 7) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 9) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 5) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 7) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 8) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 9) (Pos 0))
 
-        N.switchBreakpoint (N.SourcePath nestedFile) (SrcPos (Pos 8) (Pos 0))
-        N.switchBreakpoint (N.SourcePath nestedFile) (SrcPos (Pos 13) (Pos 0))
-        N.switchBreakpoint (N.SourcePath nestedFile) (SrcPos (Pos 18) (Pos 0))
+        N.switchBreakpoint (MSFile nestedFile) (SrcPos (Pos 8) (Pos 0))
+        N.switchBreakpoint (MSFile nestedFile) (SrcPos (Pos 13) (Pos 0))
+        N.switchBreakpoint (MSFile nestedFile) (SrcPos (Pos 18) (Pos 0))
 
-        N.switchBreakpoint (N.SourcePath nestedFile2) (SrcPos (Pos 0) (Pos 0))
+        N.switchBreakpoint (MSFile nestedFile2) (SrcPos (Pos 0) (Pos 0))
 
         liftIO $ step "Go to first breakpoint"
         goToNextBreakpoint
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 5) (Pos 2))
               (SrcPos (Pos 5) (Pos 26))
             )
@@ -111,7 +112,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 5) (Pos 21))
               (SrcPos (Pos 5) (Pos 25))
             )
@@ -121,7 +122,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath nestedFile)
+              (MSFile nestedFile)
               (SrcPos (Pos 14) (Pos 5))
               (SrcPos (Pos 14) (Pos 10))
             )
@@ -131,7 +132,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 7) (Pos 2))
               (SrcPos (Pos 7) (Pos 30))
             )
@@ -141,7 +142,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 7) (Pos 23))
               (SrcPos (Pos 7) (Pos 29))
             )
@@ -152,7 +153,7 @@ test_test = minor <$>
           N.frozen do
             N.getExecutedPosition @@?= Just
               (N.SourceLocation
-                (N.SourcePath nestedFile)
+                (MSFile nestedFile)
                 (SrcPos (Pos 11) (Pos 18))
                 (SrcPos (Pos 11) (Pos 25))
               )
@@ -162,7 +163,7 @@ test_test = minor <$>
           N.frozen do
             N.getExecutedPosition @@?= Just
               (N.SourceLocation
-                (N.SourcePath nestedFile)
+                (MSFile nestedFile)
                 (SrcPos (Pos 11) (Pos 18))
                 (SrcPos (Pos 11) (Pos 28))
               )
@@ -172,7 +173,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 8) (Pos 2))
               (SrcPos (Pos 8) (Pos 45))
             )
@@ -182,7 +183,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 8) (Pos 27))
               (SrcPos (Pos 8) (Pos 44))
             )
@@ -192,7 +193,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 9) (Pos 74))
               (SrcPos (Pos 9) (Pos 79))
             )
@@ -201,7 +202,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 9) (Pos 67))
               (SrcPos (Pos 9) (Pos 72))
             )
@@ -210,7 +211,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath file)
+              (MSFile file)
               (SrcPos (Pos 9) (Pos 64))
               (SrcPos (Pos 9) (Pos 79))
             )
@@ -220,7 +221,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath nestedFile)
+              (MSFile nestedFile)
               (SrcPos (Pos 18) (Pos 80))
               (SrcPos (Pos 18) (Pos 87))
             )
@@ -232,7 +233,7 @@ test_test = minor <$>
           N.frozen do
             N.getExecutedPosition @@?= Just
               (N.SourceLocation
-                (N.SourcePath nestedFile2)
+                (MSFile nestedFile2)
                 (SrcPos (Pos 4) (Pos 4))
                 (SrcPos (Pos 4) (Pos 18))
               )
@@ -241,7 +242,7 @@ test_test = minor <$>
           N.frozen do
             N.getExecutedPosition @@?= Just
               (N.SourceLocation
-                (N.SourcePath nestedFile2)
+                (MSFile nestedFile2)
                 (SrcPos (Pos 4) (Pos 11))
                 (SrcPos (Pos 4) (Pos 18))
               )
@@ -251,7 +252,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath nestedFile)
+              (MSFile nestedFile)
               (SrcPos (Pos 18) (Pos 57))
               (SrcPos (Pos 18) (Pos 64))
             )
@@ -261,7 +262,7 @@ test_test = minor <$>
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
-              (N.SourcePath nestedFile2)
+              (MSFile nestedFile2)
               (SrcPos (Pos 4) (Pos 11))
               (SrcPos (Pos 4) (Pos 18))
             )

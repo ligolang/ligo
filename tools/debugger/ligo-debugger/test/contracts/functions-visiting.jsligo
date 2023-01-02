@@ -1,0 +1,14 @@
+const f = (a: int) : int => {
+    const x = a + 100;
+    const x2 = x + 100;
+    return x2
+}
+const g = (): int => {
+    const y = 10 + 10
+    return y
+}
+const main = ([_, s] : [unit, int]) : [list<operation>, int] => {
+    const s2 = s + 1;
+    const s3 = g() + f(s2);
+    return [(list([]) as list<operation>), s3]
+}

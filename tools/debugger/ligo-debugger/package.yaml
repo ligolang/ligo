@@ -80,6 +80,7 @@ library:
     - filepath
     - fmt
     - hashable
+    - hedgehog
     - lens
     - lens-aeson
     - ligo-squirrel
@@ -140,6 +141,7 @@ tests:
       - aeson
       - containers
       - data-default
+      - Diff
       - dir-traverse
       - directory
       - filepath
@@ -156,6 +158,7 @@ tests:
       - mtl
       - singletons
       - tasty
+      - tasty-golden
       - text
       - unliftio
       - unordered-containers

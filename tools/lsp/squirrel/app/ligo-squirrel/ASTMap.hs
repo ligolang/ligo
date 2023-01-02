@@ -32,14 +32,16 @@ module ASTMap
 
     -- * Invalidation
   , invalidate
+  , reset
   ) where
 
 import Control.Concurrent.STM (retry)
 import Focus (Focus)
 import Focus qualified
+import ListT qualified
 import StmContainers.Map qualified as StmMap
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
-import UnliftIO (Async, MonadUnliftIO, async, wait)
+import UnliftIO (Async, MonadUnliftIO, async, cancel, wait)
 
 ----
 ---- Implementation notes:
@@ -90,6 +92,15 @@ empty :: (k -> m v) -> IO (ASTMap k v m)
 empty load = atomically $
   ASTMap <$> StmMap.new <*> StmMap.new <*> StmMap.new <*> StmMap.new <*> StmMap.new <*> pure load
 
+reset :: MonadIO m => ASTMap k v m -> m ()
+reset (ASTMap{..}) = do
+  mapM_ (cancel . snd) =<< atomically (ListT.toList $ StmMap.listT amWorkers)
+  atomically $ do
+    StmMap.reset amValues
+    StmMap.reset amLoadStarted
+    StmMap.reset amInvalid
+    StmMap.reset amWorkers
+    StmMap.reset amSyncValue
 -- | Insert some value into an 'ASTMap'.
 insert
   :: ( Eq k, Hashable k

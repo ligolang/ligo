@@ -5,6 +5,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Gists from "gists";
+import { WebIdeApi } from "~/components/api/api";
+import { SourceFile } from "~/components/api/generated";
 
 export type GistContent = { [a: string]: { content: string } };
 
@@ -36,13 +38,28 @@ export default class GistFs {
     token: string,
     gistId?: string
   ): Promise<string> {
+    if (token === "default") {
+      const dataRequest: SourceFile[] = [];
+      Object.keys(data).forEach((k) => {
+        dataRequest.push({ filePath: k, source: data[k].content });
+      });
+      return WebIdeApi.createUpdateGist({
+        description,
+        gistId,
+        sourceFiles: dataRequest,
+      })
+        .then((v) => v.data)
+        .catch((e) => {
+          throw new Error(e.message ? e.message : e);
+        });
+    }
     const gists = new Gists({ token });
 
     const action = gistId
       ? (options: any) => gists.edit(gistId, options)
       : (options: any) => gists.create(options);
 
-    return action({ description, public: true, files: data })
+    return action({ description, public: false, files: data })
       .then(
         (result: {
           body: { html_url: any };

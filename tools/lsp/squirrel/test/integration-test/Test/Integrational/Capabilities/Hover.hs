@@ -33,18 +33,13 @@ unit_hover_arrow_type_mligo = do
 
 unit_hover_arrow_type_jsligo :: Assertion
 unit_hover_arrow_type_jsligo = do
-  -- FIXME: LIGO-797 (https://gitlab.com/ligolang/ligo/-/issues/1514)
-  --Hover.unit_hover_arrow_type_jsligo @Standard
-  -- FIXME: LIGO doesn't yield all references in this test
-  --Hover.unit_hover_arrow_type_jsligo @FromCompiler
-  pass
+  Hover.unit_hover_arrow_type_jsligo @Standard
+  Hover.unit_hover_arrow_type_jsligo @FromCompiler
 
 unit_hover_apply_type :: Assertion
 unit_hover_apply_type = do
-  -- FIXME: LIGO-797 (https://gitlab.com/ligolang/ligo/-/issues/1514)
-  --Hover.unit_hover_apply_type @Standard
-  --Hover.unit_hover_apply_type @FromCompiler
-  pass
+  Hover.unit_hover_apply_type @Standard
+  Hover.unit_hover_apply_type @FromCompiler
 
 unit_hover_inferred_simple_from_compiler :: Assertion
 unit_hover_inferred_simple_from_compiler = do

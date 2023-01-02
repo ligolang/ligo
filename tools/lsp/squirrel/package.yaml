@@ -132,6 +132,7 @@ executables:
       - katip
       - lens
       - ligo-squirrel
+      - list-t
       - lsp
       - mtl
       - prettyprinter

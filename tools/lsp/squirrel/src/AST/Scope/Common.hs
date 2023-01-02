@@ -68,10 +68,7 @@ import Duplo.Tree hiding (loop)
 
 import AST.Pretty
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), Namespace (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..))
 import AST.Skeleton
-  (Ctor, LIGO, ModuleName, Name, NameDecl, RawLigoList, SomeLIGO, TypeName, TypeVariableName,
-  withNestedLIGO)
 import Cli.Types
 import Diagnostic (Message)
 import Log qualified
@@ -257,8 +254,15 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
     -- FromCompiler scope doesn't have correct `_vdsParams`.
     -- We have to take it from Fallback scope.
     -- FIXME (LIGO-679)
+    -- Also, in case compiler can't infer a type, but Fallback can, we
+    -- should still use type from Fallback.
     mergeValueSpecs :: DeclarationSpecifics -> DeclarationSpecifics -> DeclarationSpecifics
-    mergeValueSpecs (ValueSpec l) (ValueSpec r) = ValueSpec r{ _vdsParams = _vdsParams l }
+    mergeValueSpecs (ValueSpec l) (ValueSpec r) = ValueSpec r
+      { _vdsParams = _vdsParams l
+      , _vdsTspec = case (_vdsTspec l, _vdsTspec r) of
+        (Just tl, Just (TypeDeclSpecifics {_tdsInit = UnresolvedType})) -> Just tl
+        (_, tr) -> tr
+      }
     mergeValueSpecs _ r = r
 
     -- Merge two sets of DeclRefs preferring decls that have a smaller range
@@ -302,13 +306,18 @@ lookupEnv name pos = getFirst . foldMap \decl@ScopedDecl{..} ->
 envAtPoint :: Range -> ScopeForest -> Scope
 envAtPoint pos (ScopeForest sf ds) = do
   let sp = sf >>= DList.toList . spine pos >>= toList
-  map (ds Map.!) sp
+  map lookupDecl sp
   where
     -- find all nodes that spans the range and take their references
     spine :: Range -> ScopeTree -> DList (Set DeclRef)
     spine r ((decls, r') :< trees)
       | leq r r' = foldMap (spine r) trees `snoc` decls
       | otherwise = mempty
+
+    lookupDecl ref = case ds Map.!? ref of
+      Just decl -> decl
+      Nothing -> error
+        [Log.i|envAtPoint: no scoped decl for #{ref}. Env contains #{keys ds}.|]
 
 addLocalScopes
   :: SomeLIGO ParsedInfo

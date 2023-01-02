@@ -15,26 +15,30 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
 
-import AST (Standard)
+import AST (Fallback)
 import ASTMap qualified
 import Cli qualified
 import Config (Config (..))
 import Log (LogT, i)
 import Log qualified
 import RIO.Document qualified (load)
-import RIO.Indexing (indexOptionsPath)
+import RIO.Indexing (IndexOptions (..), indexOptionsPath)
 import RIO.Registration qualified
 import RIO.Types (OpenDocument (..), RIO (..), RioEnv (..))
 
 newRioEnv :: IO RioEnv
 newRioEnv = do
-  reCache <- ASTMap.empty $ RIO.Document.load @Standard
+  reCache <- ASTMap.empty
+    $ RIO.Document.load @Fallback -- Scoping system in `test_completions` from
+                                  -- `Test.Capabilities.Completion` should match
+                                  -- active scoping system selected here
   reOpenDocs <- newIO
-  reIncludes <- newMVar G.empty
+  reIncludes <- newTVarIO G.empty
   reTempFiles <- newIO
-  reIndexOpts <- newEmptyMVar
-  reBuildGraph <- newMVar G.empty
+  reIndexOpts <- newTVarIO IndexOptionsNotSetYet
+  reBuildGraph <- newTVarIO G.empty
   reLigo <- newIORef Nothing
+  reActiveFile <- newTVarIO Nothing
   pure RioEnv {..}
 
 initializeRio :: RIO ()
@@ -43,7 +47,7 @@ initializeRio = do
   RIO.Registration.registerFileWatcher
 
   ligo <- asks reLigo
-  let getRootDir = fmap (indexOptionsPath =<<) (tryReadMVar =<< asks reIndexOpts)
+  let getRootDir = fmap indexOptionsPath . readTVarIO =<< asks reIndexOpts
   writeIORef ligo . Just =<< Cli.startLigoDaemon getRootDir
 
 shutdownRio :: RIO ()

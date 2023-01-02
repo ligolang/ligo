@@ -8,20 +8,22 @@ module RIO.Indexing
   , handleProjectFileChanged
   ) where
 
+import Algebra.Graph.Class qualified as G (empty)
 import Data.Aeson (eitherDecodeFileStrict', encodeFile)
 import Data.Default (def)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import StmContainers.Map qualified as StmMap
 import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
 import System.IO (hFileSize)
 import UnliftIO.Directory (canonicalizePath, findFile, withCurrentDirectory)
 import UnliftIO.Exception (tryIO)
-import UnliftIO.MVar (isEmptyMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
 import Unsafe qualified
 import Witherable (ordNubOn)
 
+import ASTMap qualified
 import Cli qualified
 import Language.LSP.Util (sendError, sendInfo)
 import Log qualified
@@ -29,6 +31,7 @@ import RIO.Types (IndexOptions (..), ProjectSettings (..), RIO, RioEnv (..))
 
 indexOptionsPath :: IndexOptions -> Maybe FilePath
 indexOptionsPath = \case
+  IndexOptionsNotSetYet -> Nothing
   IndexChoicePending -> Nothing
   DoNotIndex -> Nothing
   FromRoot path -> Just path
@@ -37,6 +40,7 @@ indexOptionsPath = \case
 
 prettyIndexOptions :: IndexOptions -> String
 prettyIndexOptions = \case
+  IndexOptionsNotSetYet -> "Index options were not set yet"
   IndexChoicePending -> "Pending index choice"
   DoNotIndex -> "Do not index"
   FromRoot path -> path
@@ -54,9 +58,9 @@ projectIndexingMarkdownLink =
 -- then this function will return it.
 tryGetIgnoredPaths :: RIO (Maybe [FilePath])
 tryGetIgnoredPaths = do
-  indexOptsM <- tryReadMVar =<< asks reIndexOpts
-  pure case indexOptsM of
-    Just (FromLigoProject _ ProjectSettings{psIgnorePaths}) -> psIgnorePaths
+  indexOpts <- readTVarIO =<< asks reIndexOpts
+  pure case indexOpts of
+    FromLigoProject _ ProjectSettings{psIgnorePaths} -> psIgnorePaths
     _ -> Nothing
 
 -- | Given a path /foo/bar/baz, check for a `.ligoproject` file in the specified
@@ -70,7 +74,9 @@ checkForLigoProjectFile = liftIO
 
 decodeProjectSettings :: FilePath -> RIO ProjectSettings
 decodeProjectSettings projectDir = do
-  eitherSettings <- liftIO $ eitherDecodeFileStrict' $ projectDir </> ligoProjectName
+  let ligoProjectFile = projectDir </> ligoProjectName
+  $Log.debug [Log.i|Using project file: #{ligoProjectFile}|]
+  eitherSettings <- liftIO $ eitherDecodeFileStrict' ligoProjectFile
   case eitherSettings of
     Left err -> do
       $Log.err [Log.i|Failed to read project settings.\n#{err}|]
@@ -96,20 +102,43 @@ upgradeProjectSettingsFormat projectPath = do
 getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
   indexOptsVar <- asks reIndexOpts
-  tryReadMVar indexOptsVar >>= \case
-    Nothing -> do
+  readTVarIO indexOptsVar >>= \case
+    IndexOptionsNotSetYet -> do
       newOpts <- checkForLigoProjectFile contractDir >>= \case
         Nothing -> askForIndexDirectory contractDir
-        Just ligoProjectDir -> do
-          upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
-          projectSettings <- decodeProjectSettings ligoProjectDir
-          let indexOpts = FromLigoProject ligoProjectDir projectSettings
-          hasNoOpts <- isEmptyMVar indexOptsVar
-          indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+        Just ligoProjectDir -> useNewLigoProjectDir ligoProjectDir
+      restartStateDependingOnIndexOpts
+      return newOpts
 
-      -- A root directory was set; restart the daemon.
-      newOpts <$ Cli.cleanupLigoDaemon
-    Just opts -> pure opts
+    oldOpts -> checkForLigoProjectFile contractDir >>= \case
+      Just dirWithLigoProject -> do
+        newOpts <- useNewLigoProjectDir dirWithLigoProject
+        when (newOpts /= oldOpts) restartStateDependingOnIndexOpts
+        return newOpts
+      _ -> pure oldOpts
+
+    where
+      useNewLigoProjectDir ligoProjectDir = do
+        indexOptsVar <- asks reIndexOpts
+        upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
+        projectSettings <- decodeProjectSettings ligoProjectDir
+        let indexOpts = FromLigoProject ligoProjectDir projectSettings
+        atomically $ writeTVar indexOptsVar indexOpts
+        return indexOpts
+
+      -- A root directory was set; restart the daemon and delete indexing cache.
+      restartStateDependingOnIndexOpts = do
+        Cli.cleanupLigoDaemon
+        astMap <- asks reCache
+        ASTMap.reset astMap
+        tempFilesMap <- asks reTempFiles
+        buildGraphVar <- asks reBuildGraph
+        includesVar <- asks reIncludes
+        atomically $ do
+          StmMap.reset tempFilesMap
+          writeTVar buildGraphVar G.empty
+          writeTVar includesVar G.empty
+
 
 askForIndexDirectory :: FilePath -> RIO IndexOptions
 askForIndexDirectory contractDir = do
@@ -133,7 +162,7 @@ askForIndexDirectory contractDir = do
         (mkRequest suggestions)
         (\response -> do
           let choice = handleParams gitDirectoryM rootDirectoryM response
-          _ <- tryPutMVar indexVar choice
+          atomically $ writeTVar indexVar choice
           handleChosenOption choice)
       -- FIXME (LIGO-490): lsp provides no easy way to get the callback of a
       -- request and MVars will block indefinitely. We don't index for now with
@@ -200,13 +229,11 @@ askForIndexDirectory contractDir = do
 
 handleProjectFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
 handleProjectFileChanged nfp change = do
-  indexOptsVar <- asks reIndexOpts
-  -- Regardless of the change, try to empty this MVar and let the project
-  -- indexing mechanism take care of it.
-  -- FIXME: Should probably invalidate contracts as well. Changing this file
-  -- should hopefully be uncommon enough that taking care of it is not worth
-  -- the trouble.
-  _ <- tryTakeMVar indexOptsVar
+
+  -- We update indexing settings variable each time some project file was changed.
+  lastActiveFile <- readTVarIO =<< asks reActiveFile
+  whenJust lastActiveFile $ void . getIndexDirectory . J.fromNormalizedFilePath
+
   let fp = J.fromNormalizedFilePath nfp
   $Log.debug case change of
     J.FcCreated -> [Log.i|Created #{fp}|]

@@ -32,6 +32,7 @@ export default class KeypairManagerModal extends PureComponent {
     RevealSecretModal,
     CreateKeypairModal,
     ImportKeypairModal,
+    onCancel: () => {},
   };
 
   constructor(props) {
@@ -266,6 +267,7 @@ export default class KeypairManagerModal extends PureComponent {
       RevealSecretModal,
       CreateKeypairModal,
       ImportKeypairModal,
+      onCancel,
     } = this.props;
 
     let warningComponent = null;
@@ -296,6 +298,10 @@ export default class KeypairManagerModal extends PureComponent {
           textActions={actions ? textActions : []}
           textCancel="Close"
           onActions={[this.createKeypair, this.importKeypair]}
+          onCancel={() => {
+            onCancel();
+            return true;
+          }}
         >
           {warningComponent}
           {this.renderChainOptions()}

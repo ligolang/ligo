@@ -98,7 +98,7 @@ test_findDefinitionAndGoToReferencesCorrespondence :: IO TestTree
 test_findDefinitionAndGoToReferencesCorrespondence =
   testGroup "Find definition and go to references correspondence" <$> sequenceA
     [ findDefinitionAndGoToReferencesCorrespondence @Standard allVariants
-    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-592) (LIGO-596) (LIGO-679)
+    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-596) (LIGO-679)
     ]
   where
     allVariants = invariants <> includeInvariants
@@ -117,7 +117,7 @@ unit_definitionOfId = do
 unit_referenceOfId :: Assertion
 unit_referenceOfId = do
   referenceOfId @Standard
-  --referenceOfId @FromCompiler  -- FIXME (LIGO-592)
+  referenceOfId @FromCompiler
 
 unit_definitionOfLeft :: Assertion
 unit_definitionOfLeft = do
@@ -127,7 +127,7 @@ unit_definitionOfLeft = do
 unit_referenceOfLeft :: Assertion
 unit_referenceOfLeft = do
   referenceOfLeft @Standard
-  --referenceOfLeft @FromCompiler  -- FIXME (LIGO-592)
+  referenceOfLeft @FromCompiler
 
 unit_definitionOfXInWildcard :: Assertion
 unit_definitionOfXInWildcard = do
@@ -137,12 +137,12 @@ unit_definitionOfXInWildcard = do
 unit_referenceOfXInWildcard :: Assertion
 unit_referenceOfXInWildcard = do
   referenceOfXInWildcard @Standard
-  --referenceOfXInWildcard @FromCompiler  -- FIXME (LIGO-592)
+  referenceOfXInWildcard @FromCompiler
 
 unit_type_of_heap_const :: Assertion
 unit_type_of_heap_const = do
   typeOfHeapConst @Standard
-  --typeOfHeapConst @FromCompiler  -- FIXME (LIGO-592)
+  typeOfHeapConst @FromCompiler
 
 unit_type_of_heap_arg :: Assertion
 unit_type_of_heap_arg = do

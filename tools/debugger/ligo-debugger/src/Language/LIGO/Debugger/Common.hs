@@ -7,7 +7,7 @@ module Language.LIGO.Debugger.Common
   , getStatementLocs
   , isLigoStdLib
   , errorValueType
-  , createErrorValue
+  , errorAddress
   , ReplacementException(..)
   , replacementErrorValueToException
   , refineStack
@@ -32,16 +32,17 @@ import Range (Range (..), getRange)
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
-import Morley.Debugger.Core.Snapshots (SourceType (..))
+import Morley.Debugger.Core.Snapshots ()
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.Interpret (StkEl (seValue))
-import Morley.Michelson.Parser (utypeQ)
+import Morley.Michelson.Parser (MichelsonSource (MSFile), utypeQ)
 import Morley.Michelson.Text (MText)
 import Morley.Michelson.Typed
-  (EpAddress (..), Instr (LAMBDA, PUSH), SomeConstrainedValue (SomeValue), SomeValue, Value,
-  Value' (..), withValueTypeSanity)
+  (Constrained (SomeValue), EpAddress (..), Instr (LAMBDA, PUSH), SomeValue, Value, Value' (..),
+  withValueTypeSanity)
 import Morley.Michelson.Untyped qualified as U
-import Morley.Tezos.Address (Address, mformatAddress, ta)
+import Morley.Tezos.Address (KindedAddress (ImplicitAddress), ta)
+import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Error
@@ -58,7 +59,7 @@ ligoPositionToSrcPos (LigoPosition l c) =
 
 ligoRangeToSourceLocation :: HasCallStack => LigoRange -> SourceLocation
 ligoRangeToSourceLocation LigoRange{..} =
-  SourceLocation (SourcePath lrFile) (ligoPositionToSrcPos lrStart) (ligoPositionToSrcPos lrEnd)
+  SourceLocation (MSFile lrFile) (ligoPositionToSrcPos lrStart) (ligoPositionToSrcPos lrEnd)
 
 -- | Returns all nodes which cover given range
 -- ordered from the most local to the least local.
@@ -76,7 +77,7 @@ getStatementLocs locs parsedContracts =
     & Set.fromList
   where
     sourceLocationToRange :: SourceLocation -> Range
-    sourceLocationToRange (SourceLocation (SourcePath file) startPos endPos) = Range
+    sourceLocationToRange (SourceLocation (MSFile file) startPos endPos) = Range
       { _rStart = posToTuple startPos
       , _rFinish = posToTuple endPos
       , _rFile = file
@@ -91,7 +92,7 @@ getStatementLocs locs parsedContracts =
     rangeToSourceLocation :: Range -> SourceLocation
     rangeToSourceLocation Range{..} =
       SourceLocation
-        (SourcePath _rFile)
+        (MSFile _rFile)
         (tupleToPos _rStart)
         (tupleToPos _rFinish)
       where
@@ -144,13 +145,7 @@ isLigoStdLib path =
 errorValueType :: U.Ty
 errorValueType = [utypeQ|pair address string|]
 
-createErrorValue :: MText -> U.Value
-createErrorValue errMsg =
-  U.ValuePair (U.ValueString addrText) (U.ValueString errMsg)
-  where
-    addrText = mformatAddress errorAddress
-
-errorAddress :: Address
+errorAddress :: KindedAddress 'AddressKindImplicit
 errorAddress = [ta|tz1fakefakefakefakefakefakefakcphLA5|]
 
 -- | Something was found to be wrong after replacing Michelson code
@@ -164,6 +159,7 @@ instance Exception ReplacementException where
 instance DebuggerException ReplacementException where
   type ExceptionTag ReplacementException = "Replacement"
   debuggerExceptionType _ = MidLigoLayerException
+  shouldInterruptDebuggingSession = False
 
 -- | We're replacing some @Michelson@ instructions.
 -- Sometimes we perform unsafe unwrapping in the replaced code.
@@ -172,7 +168,8 @@ instance DebuggerException ReplacementException where
 -- contains the error message.
 replacementErrorValueToException :: Value t -> Maybe ReplacementException
 replacementErrorValueToException = \case
-  (VPair (VAddress (EpAddress addr _), VString errMsg)) | addr == errorAddress -> do
+  (VPair (VAddress (EpAddress addr@ImplicitAddress{} _), VString errMsg))
+    | addr == errorAddress -> do
     pure $ ReplacementException errMsg
   _ -> Nothing
 

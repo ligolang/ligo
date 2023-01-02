@@ -124,7 +124,7 @@ export default class Tabs extends PureComponent {
 
   updateTab = (updates, key = this.tabKey()) => {
     const target = this.findTab(key);
-    const index = this.findTabIndex();
+    const index = this.findTabIndex(key);
 
     if (target) {
       Object.keys(updates).forEach((key) => {

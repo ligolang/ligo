@@ -3,15 +3,17 @@ module Test.Variables
   ) where
 
 import Data.Map qualified as M
+import Unsafe (fromJust)
+
 import Morley.Debugger.Protocol.DAP (Variable (..))
 import Morley.Michelson.Typed
-  (EpAddress (EpAddress), EpName (UnsafeEpName), MkEntrypointCallRes (MkEntrypointCallRes),
-  ParamNotes (pnRootAnn), SingI, SomeConstrainedValue (SomeValue), SomeEntrypointCallT (SomeEpc),
-  T (TUnit), Value, Value' (VAddress, VContract, VList, VOption, VUnit), mkEntrypointCall,
-  sepcPrimitive, tyImplicitAccountParam)
+  (Constrained (SomeValue), EpAddress (EpAddress'), EpName (UnsafeEpName),
+  MkEntrypointCallRes (MkEntrypointCallRes), ParamNotes (pnRootAnn), SingI,
+  SomeEntrypointCallT (SomeEpc), T (TUnit), Value,
+  Value' (VAddress, VContract, VList, VOption, VUnit), mkEntrypointCall, sepcPrimitive,
+  tyImplicitAccountParam)
 import Morley.Michelson.Untyped (Annotation (UnsafeAnnotation), pattern DefEpName)
 import Morley.Tezos.Address (parseAddress)
-import Unsafe (fromJust)
 
 import Test.HUnit ((@?=))
 import Test.Tasty (TestTree, testGroup)
@@ -42,7 +44,7 @@ test_Variables = testGroup "variables"
 testAddresses :: TestTree
 testAddresses = testGroup "addresses"
   [ testCase "address with entrypoint \"foo\"" do
-      let epAddress = EpAddress address (UnsafeEpName "foo")
+      let epAddress = EpAddress' address (UnsafeEpName "foo")
       let addressItem = mkStackItem (VAddress epAddress) (Just "addr")
       snd (runBuilder $ createVariables Caml [addressItem]) @?=
         M.fromList
@@ -85,7 +87,7 @@ testAddresses = testGroup "addresses"
               ])
           ]
   , testCase "address without entrypoint" do
-      let epAddress = EpAddress address DefEpName
+      let epAddress = EpAddress' address DefEpName
       let addressItem = mkStackItem (VAddress epAddress) (Just "addr")
       snd (runBuilder $ createVariables Caml [addressItem]) @?=
         M.fromList

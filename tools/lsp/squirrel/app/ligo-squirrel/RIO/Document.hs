@@ -38,7 +38,7 @@ import UnliftIO.Directory
   (Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist,
   getPermissions, setPermissions)
 import UnliftIO.Exception (tryIO)
-import UnliftIO.MVar (modifyMVar, modifyMVar_, withMVar)
+import UnliftIO.MVar (modifyMVar_, withMVar)
 import Witherable (iwither)
 
 import AST
@@ -103,10 +103,10 @@ forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNor
 
 wccForFilePath :: FilePath -> RIO (G.AdjacencyMap FilePath)
 wccForFilePath fp = do
-  buildGraphM <- tryReadMVar =<< asks reBuildGraph
+  buildGraph <- readTVarIO =<< asks reBuildGraph
   -- It's possible that the file is ignored, so let's return a graph containing
   -- only this file.
-  pure $ fromMaybe (G.vertex fp) $ wccFor fp . getIncludes =<< buildGraphM
+  pure $ fromMaybe (G.vertex fp) $ wccFor fp . getIncludes $ buildGraph
 
 delete :: J.NormalizedUri -> RIO ()
 delete uri = do
@@ -119,10 +119,11 @@ delete uri = do
           (Source fp True "")
           (SomeLIGO Caml $ fastMake emptyParsedInfo (Error (FromLanguageServer "Impossible") []))
           []
-      modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
-
       buildGraphVar <- asks reBuildGraph
-      modifyMVar_ buildGraphVar $ pure . Includes . G.removeVertex fp . getIncludes
+
+      atomically $ do
+        modifyTVar' imap $ Includes . G.removeVertex c . getIncludes
+        modifyTVar' buildGraphVar $ Includes . G.removeVertex fp . getIncludes
 
   tmap <- asks reCache
   deleted <- ASTMap.delete uri tmap
@@ -182,8 +183,8 @@ tempDirTemplate = ".ligo-work"
 
 getTempPath :: FilePath -> RIO TempSettings
 getTempPath fallbackPath = do
-  optsM <- tryReadMVar =<< asks reIndexOpts
-  let path = fromMaybe fallbackPath (indexOptionsPath =<< optsM)
+  opts <- readTVarIO =<< asks reIndexOpts
+  let path = fromMaybe fallbackPath (indexOptionsPath opts)
   let tempDir = path </> tempDirTemplate
   createDirectoryIfMissing False tempDir
   pure $ TempSettings path $ UseDir tempDir
@@ -237,32 +238,32 @@ loadDirectory root rootFileName includes = do
 
   shouldIndexFile <- getFilePredicate
 
-  buildGraphM <- tryReadMVar =<< asks reBuildGraph
-  S.withProgress "Indexing directory" S.NotCancellable \reportProgress -> if
-    | Just (Includes buildGraph) <- buildGraphM
-    , Just grp <- wccFor rootFileName buildGraph -> do
-      let
-        grp' = G.induce shouldIndexFile grp
-        total = G.vertexCount grp'
-      progressVar <- newMVar 0
+  Includes buildGraph <- readTVarIO =<< asks reBuildGraph
+  S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
+    case wccFor rootFileName buildGraph of
+      Just grp -> do
+        let
+          grp' = G.induce shouldIndexFile grp
+          total = G.vertexCount grp'
+        progressVar <- newMVar 0
 
-      msgsVar <- newMVar Map.empty
-      loaded <- forAMConcurrently grp' \fp -> do
-        progress <- withMVar progressVar $ pure . succ
-        reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
-        (src, msg) <- lookupOrLoad =<< pathToSrc fp
-        modifyMVar_ msgsVar $ pure . Map.insert fp msg
-        pure $ Arg fp src
-      (Includes loaded, ) <$> readMVar msgsVar
-    | otherwise -> do
-      loaded <- parseContracts
-        lookupOrLoad
-        (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-        shouldIndexFile
-        root
-      Includes graph <- includesGraph' (map fst loaded)
-      let filtered = G.induce (\(Arg fp _) -> shouldIndexFile fp) graph
-      pure (Includes filtered, Map.fromListWith (<>) (map (first srcPath) loaded))
+        msgsVar <- newMVar Map.empty
+        loaded <- forAMConcurrently grp' \fp -> do
+          progress <- withMVar progressVar $ pure . succ
+          reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
+          (src, msg) <- lookupOrLoad =<< pathToSrc fp
+          modifyMVar_ msgsVar $ pure . Map.insert fp msg
+          pure $ Arg fp src
+        (Includes loaded, ) <$> readMVar msgsVar
+      Nothing -> do
+        loaded <- parseContracts
+          lookupOrLoad
+          (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+          shouldIndexFile
+          root
+        Includes graph <- includesGraph' (map fst loaded)
+        let filtered = G.induce (\(Arg fp _) -> shouldIndexFile fp) graph
+        pure (Includes filtered, Map.fromListWith (<>) (map (first srcPath) loaded))
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -272,10 +273,11 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes normFp
   includesVar <- asks reIncludes
   shouldIndexFile <- getFilePredicate
-  modifyMVar includesVar \includes'@(Includes includes) -> do
+  newIncludes <- do
+    includes'@(Includes includes) <- readTVarIO includesVar
     let rootFileName = contractFile rootContract
     let groups = Includes <$> wcc includes
-    join (,) <$> case find (isJust . lookupContract rootFileName) groups of
+    case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         let fp = J.fromNormalizedFilePath normFp
@@ -284,7 +286,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
 
         let buildGraph = Includes $ G.gmap (\(Arg f _) -> f) paths
         buildGraphVar <- asks reBuildGraph
-        void $ swapMVar buildGraphVar buildGraph
+        atomically $ writeTVar buildGraphVar buildGraph
 
         temp <- getTempPath root
         connectedContractsE <-
@@ -337,6 +339,8 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
             $ G.replaceVertex rootContract' rootContract'
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
         pure $ G.overlays (Includes newGroup : groups')
+  atomically $ writeTVar includesVar newIncludes
+  return newIncludes
 
 load
   :: forall parser

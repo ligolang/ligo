@@ -1,0 +1,16 @@
+Steping out immediately on start
+InterpretSnapshot:
+  isStatus: terminated ok
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/functions-visiting.mligo:13:3-13:28
+      sfStack:
+        [StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: Pair { } 221
+        , StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: 0
+        ]
+    ]

@@ -114,13 +114,14 @@ class User extends Component {
         onClick={(event) => event.preventDefault()}
       >
         <DropdownToggle tag="div" className="nav-dropdown-toggle px-2">
-          <div className="d-flex bg-secondary align-items-center justify-content-center user-avatar">
+          <div
+            className="d-flex align-items-center justify-content-center user-avatar"
+            style={{ fontSize: "1.25rem" }}
+          >
             {this.state.loaded && profile.get("avatar") ? (
               <img className="user-avatar" src={profile.get("avatar")} crossOrigin="true" />
             ) : (
-              <span>
-                <span className="fa fa-user-alt" />
-              </span>
+              <span className="fas fa-bars" />
             )}
           </div>
         </DropdownToggle>

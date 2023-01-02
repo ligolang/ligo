@@ -16,44 +16,26 @@ packages:
     commit: c8b06c4c8a271fce0c2f41ab18e88d58e64bac52
     git: https://github.com/serokell/base-noprelude.git
 - completed:
-    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-    git: https://github.com/haskell/lsp.git
-    name: lsp-types
+    hackage: lsp-types-1.6.0.0@sha256:06be28f931eff0b58bc7210f0567ae07713f98735b5a8fb8a6b7adde43d7c782,5690
     pantry-tree:
-      sha256: 8700dc38e8aeac889d0ba7ce2a7dd2b8579e26608f64b220f5e790f0633dce24
-      size: 4160
-    subdir: lsp-types
-    version: 1.5.0.0
+      sha256: 0b790822bcac982b9bf3b4e249c1395d5f76a4c0cb1287eee5a5613f74a8eafd
+      size: 4909
   original:
-    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-    git: https://github.com/haskell/lsp.git
-    subdir: lsp-types
+    hackage: lsp-types-1.6.0.0
 - completed:
-    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-    git: https://github.com/haskell/lsp.git
-    name: lsp
+    hackage: lsp-1.6.0.0@sha256:2b95e406cc85ffa95406ae8ad7d16b82283a6ca2fcb7ea5308a4ef3e6d6e68e6,4397
     pantry-tree:
-      sha256: 8d13180ceb84b5b0f24ba4df81109dd7300adc5e471579b933a86f5941bbe5c0
-      size: 1551
-    subdir: lsp
-    version: 1.5.0.0
+      sha256: 43a82c501ec3074d888f2bf4960e4b447028c1537abbca4cf65e74944604bf62
+      size: 1044
   original:
-    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-    git: https://github.com/haskell/lsp.git
-    subdir: lsp
+    hackage: lsp-1.6.0.0
 - completed:
-    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-    git: https://github.com/haskell/lsp.git
-    name: lsp-test
+    hackage: lsp-test-0.14.1.0@sha256:a535014ed008a6584cd3c59d31435d046aa3d346ce9a36a4f6e006586e29b4a4,4852
     pantry-tree:
-      sha256: 415236a1e28d1c93b0f87f0422c86e7becf7be8fc23f557abab628298b0a7b3c
-      size: 2061
-    subdir: lsp-test
-    version: 0.14.0.3
+      sha256: a720cfe18e3575e8d32f7937912340601c2f7e8b2aa9b8cc91346ed531983793
+      size: 1559
   original:
-    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
-    git: https://github.com/haskell/lsp.git
-    subdir: lsp-test
+    hackage: lsp-test-0.14.1.0
 - completed:
     commit: 59b427b5739c5ae348addcedac31632a663f2a45
     git: https://github.com/serokell/tree-sitter.git

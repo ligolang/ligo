@@ -3,8 +3,12 @@
 module Test.Util
   ( -- * Shared helpers
     (</>)
+  , (<.>)
   , contractsDir
   , hasLigoExtension
+  , LSP.Lang (..)
+  , LSP.allLangs
+  , LSP.langExtension
   , pattern SomeLorentzValue
 
     -- * Test utilities
@@ -23,12 +27,15 @@ module Test.Util
   , HUnit.assertBool
   , getStackFrameNames
   , getVariableNamesFromStackFrame
+    -- * Generators
+  , genStepGranularity
     -- * Helpers for breakpoints
   , goToNextBreakpoint
   , goToPreviousBreakpoint
   , goesAfter
   , goesBefore
   , goesBetween
+  , isAtLine
     -- * Snapshot unilities
   , ContractRunData (..)
   , mkSnapshotsFor
@@ -62,8 +69,11 @@ import Data.List.NonEmpty (singleton)
 import Data.Singletons (demote)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
-import System.FilePath (takeExtension, (</>))
+import Hedgehog (Gen)
+import Hedgehog.Gen qualified as Gen
+import System.FilePath (takeExtension, (<.>), (</>))
 import Test.HUnit (Assertion)
+import Test.HUnit.Lang qualified as HUnit
 import Test.Tasty.HUnit qualified as HUnit
 import Text.Interpolation.Nyan
 import Text.Interpolation.Nyan.Core (RMode (..))
@@ -75,12 +85,13 @@ import Morley.Debugger.Core.Navigate
   (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
   HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition),
   SourceLocation (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
-import Morley.Michelson.ErrorPos (SrcPos)
+import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Typeable
 
+import AST.Skeleton qualified as LSP
 import Cli.Json
   (LigoRange (LRVirtual), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
   LigoTypeContent (LTCArrow, LTCConstant, LTCRecord), LigoTypeExpression (..),
@@ -190,11 +201,6 @@ infixl 0 @?==
     [int||Expected #tb{xs} to be a permutation of #tb{ys}|]
     (xs `isPermutationOf` ys)
 
-goesBetween
-  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcPos -> SrcPos -> FrozenPredicate (DebuggerState is) m
-goesBetween left right = goesAfter left && goesBefore right
-
 compareWithCurLocation
   :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
   => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
@@ -212,6 +218,19 @@ goesBefore
   => SrcPos -> FrozenPredicate (DebuggerState is) m
 goesBefore loc = FrozenPredicate $ fromMaybe False <$>
   ((\(SourceLocation _ _ endPos) -> endPos <= loc) <<$>> getExecutedPosition)
+
+goesBetween
+  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
+  => SrcPos -> SrcPos -> FrozenPredicate (DebuggerState is) m
+goesBetween left right = goesAfter left && goesBefore right
+
+isAtLine
+  :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
+  => Word -> FrozenPredicate (DebuggerState is) m
+isAtLine line =
+  goesBetween
+    (SrcPos (Pos line) (Pos 0))
+    (SrcPos (Pos $ line + 1) (Pos 0))
 
 goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToNextBreakpoint = do
@@ -372,6 +391,15 @@ getVariableNamesFromStackFrame :: (SingI u) => StackFrame u -> [Text]
 getVariableNamesFromStackFrame stackFrame = maybe unknownVariable pretty <$> variablesMb
   where
     variablesMb = stackFrame ^.. sfStackL . each . siLigoDescL . _LigoStackEntry . leseDeclarationL
+
+genStepGranularity :: Gen LigoStepGranularity
+genStepGranularity = Gen.frequency do
+  gran <- allLigoStepGranularities
+  weight <- pure case gran of
+    GExpExt -> 5
+    GExp -> 2
+    GStmt -> 3
+  return (weight, pure gran)
 
 mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
 mkTypeExpression content = LigoTypeExpression

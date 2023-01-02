@@ -20,7 +20,7 @@ networkManager.addSdk(EthSdk, EthSdk.customNetworks);
 function networkCustomGroupData(networkMap) {
   return Object.keys(networkMap)
     .map((name) => ({
-      group: "others",
+      group: "Others",
       icon: "fas fa-vial",
       id: name,
       name,
@@ -39,7 +39,13 @@ if (customeNetworkGroup.length > 0) networkManager.addSdk(EthSdk, customeNetwork
 class HeaderWithRedux extends PureComponent {
   state = {
     interval: null,
+    isOpenKeypair: false,
   };
+
+  constructor(props) {
+    super(props);
+    actions.headerRef = this;
+  }
 
   componentDidMount() {
     actions.history = this.props.history;
@@ -62,6 +68,10 @@ class HeaderWithRedux extends PureComponent {
       if (!matchedNet || networkId === "custom") return;
       networkManager.setNetwork(matchedNet);
     }
+  }
+
+  openKeypair() {
+    this.setState({ isOpenKeypair: true });
   }
 
   async refresh() {
@@ -116,7 +126,7 @@ class HeaderWithRedux extends PureComponent {
       (item) =>
         item.group === group &&
         item.chainId &&
-        (group === "others" ? true : item.fullName.includes("Testnet"))
+        (group === "Others" ? true : item.fullName.includes("Testnet"))
     );
   };
 
@@ -195,6 +205,8 @@ class HeaderWithRedux extends PureComponent {
         uiState={this.props.uiState}
         customNetworks={this.props.customNetworks}
         customNetworkModalStatus={this.props.customNetworkModalStatus}
+        onCancelKp={() => this.setState({ setIsOpenKeypair: false })}
+        isOpenKeypair={this.state.isOpenKeypair}
       />
     );
   }

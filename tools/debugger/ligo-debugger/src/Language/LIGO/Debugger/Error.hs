@@ -22,6 +22,14 @@ class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
   -- | Category of exception.
   debuggerExceptionType :: e -> DebuggerExceptionType
 
+  -- | Flag that indicates whether debugging session
+  -- should be interrupted or not.
+  --
+  -- Note that a debugging session would be interrupted
+  -- only if an exception raises after @Launch@ request
+  -- (in case it's @True@ of course).
+  shouldInterruptDebuggingSession :: Bool
+
   -- | Additional data that will be provided to the plugin.
   debuggerExceptionData :: e -> Map String String
   debuggerExceptionData _ = mempty
@@ -81,6 +89,7 @@ instance Exception ImpossibleHappened where
 instance DebuggerException ImpossibleHappened where
   type ExceptionTag ImpossibleHappened = "ImpossibleHappened"
   debuggerExceptionType _ = AdapterInternalException
+  shouldInterruptDebuggingSession = True
 
 ----------------------------------------------------------------------------
 -- Instances for LSP types
@@ -92,7 +101,9 @@ instance DebuggerException LSP.LigoIOException where
     -- This is usually some "ligo executable not found in path", i.e.
     -- something to be fixed by the user
     UserException
+  shouldInterruptDebuggingSession = False
 
 instance DebuggerException LSP.UnsupportedExtension where
   type ExceptionTag LSP.UnsupportedExtension = "UnsupportedExtension"
   debuggerExceptionType _ = MidLigoLayerException
+  shouldInterruptDebuggingSession = False

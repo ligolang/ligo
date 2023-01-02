@@ -122,6 +122,7 @@ export default class KeypairInputSelector extends PureComponent {
       extra = [],
       abbreviationOption = false,
       invalid,
+      style,
     } = this.props;
 
     const { options, extraOptions } = this.state;
@@ -129,7 +130,7 @@ export default class KeypairInputSelector extends PureComponent {
     const onClick = () => {
       if (!editable && !options.length && !extraOptions.length) {
         notification.error(
-          "No Available Keypiar",
+          "No Available Keypair",
           "Please create or import a keypair in the keypair manager first."
         );
       }
@@ -155,6 +156,7 @@ export default class KeypairInputSelector extends PureComponent {
         onChange={onChange}
         invalid={invalid}
         onClick={onClick}
+        style={style}
       />
     );
   }

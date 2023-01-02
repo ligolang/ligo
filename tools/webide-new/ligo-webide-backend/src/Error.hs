@@ -5,6 +5,7 @@ module Error
   , ServerLikeError (..)
   , LigoCompilerError (..)
   , MorleyError (..)
+  , GistError (..)
 
   , notFoundFormatter
   , convertToServerError
@@ -99,6 +100,14 @@ instance ServerLikeError MorleyError where
       jsonError err400 NormalError "MorleyError" $ "Morley error:" +| text |+ ""
     MorleyStorageParsingError text ->
       jsonError err400 NormalError "MorleyStorageParsingError" $ "Morley can't parse storage:" +| text |+ ""
+
+newtype GistError = GistError Text
+  deriving stock Show
+  deriving anyclass Exception
+
+instance ServerLikeError GistError where
+  toServerError = \case
+    GistError text -> jsonError err400 NormalError "GistError" $ "Gist error:" +| text |+ ""
 
 instance ServerLikeError SomeException where
   toServerError e = jsonError err500 ServerInternal "Server internal error" (toText $ displayException e)

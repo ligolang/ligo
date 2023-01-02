@@ -24,6 +24,7 @@ export default class Header extends PureComponent {
       showCustomNetworkModal: false,
     };
     this.openProjectModalRef = React.createRef();
+    this.newProjectModalRef = React.createRef();
     this.customModal = React.createRef();
   }
 
@@ -65,6 +66,8 @@ export default class Header extends PureComponent {
       customNetworks,
       uiState,
       customNetworkModalStatus,
+      onCancelKp,
+      isOpenKeypair,
     } = this.props;
 
     const username = projects.get("selected")?.toJS()?.author;
@@ -200,8 +203,14 @@ export default class Header extends PureComponent {
 
     return (
       <>
-        <Navbar profile={profile} navbarLeft={navbarLeft} navbarRight={navbarRight} />
-        <NewProjectModal createProject={createProject} />
+        <Navbar
+          profile={profile}
+          navbarLeft={navbarLeft}
+          navbarRight={navbarRight}
+          onCancelKp={onCancelKp}
+          isOpenKeypair={isOpenKeypair}
+        />
+        <NewProjectModal createProject={createProject} ref={this.newProjectModalRef} />
         <RenameProjectModal />
         <OpenProjectModal createProject={createProject} ref={this.openProjectModalRef} />
         <CustomNetworkModal

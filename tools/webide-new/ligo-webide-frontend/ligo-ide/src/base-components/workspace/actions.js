@@ -12,6 +12,7 @@ export class ProjectActions {
     this.renameProjectModal = null;
     this.workspace = null;
     this.bottomBarRef = null;
+    this.headerRef = null;
   }
 
   get codeEditor() {
@@ -19,11 +20,15 @@ export class ProjectActions {
   }
 
   async newProject() {
-    await this.processNewProject(this.newProjectModal);
+    await this.processNewProject(this.newProjectModal.current);
   }
 
   async openProject() {
     await this.processNewProject(this.openProjectModal.current);
+  }
+
+  openKeypair() {
+    this.headerRef.openKeypair();
   }
 
   async processNewProject(modal) {
