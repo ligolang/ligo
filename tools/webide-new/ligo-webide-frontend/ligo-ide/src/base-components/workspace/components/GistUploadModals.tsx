@@ -2,7 +2,7 @@ import React, { forwardRef, useState, useRef, useImperativeHandle } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import fileOps from "~/base-components/file-ops";
 
-import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
+import { Modal, DebouncedFormGroup, Button } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import FileTree from "~/base-components/filetree";
@@ -181,23 +181,37 @@ const GistUploadModals = forwardRef(
           <>
             <DebouncedFormGroup
               label={
-                <div>
-                  To upload your project you need to add github token, or leave the default one to
-                  create a gist without a Github account. Currenty you are going to use{" "}
-                  <kbd>{token}</kbd>{" "}
-                  {token === atob("Z2hwXzl4c2dpZ0p4MVBMNmo3a285WHUxeFgxTWlyZzhSMjRaZ0trMA==") ? (
-                    <b>default</b>
-                  ) : (
-                    <b>custom</b>
-                  )}{" "}
-                  token. You can change saved token below.
-                </div>
+                <p>
+                  To upload your project you need to add{" "}
+                  <a
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                    href="////docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    github token
+                  </a>
+                  , or leave the default one to create a gist without a Github account. Currenty you
+                  are going to use {token === "default" ? "" : <kbd>{token}</kbd>}{" "}
+                  {token === "default" ? <b>default</b> : <b>custom</b>} token. You can change saved
+                  token below or reset to default.
+                </p>
               }
-              maxLength="50"
+              maxLength="100"
               value={newToken}
               placeholder="Token"
               onChange={(t: string) => setNewToken(t)}
-            />
+            >
+              <Button
+                color="warning"
+                className="btn-left-round-zero"
+                onClick={() => {
+                  dispatch({ type: "SET_GIST_TOKEN", payload: "default" });
+                }}
+              >
+                Reset
+              </Button>
+            </DebouncedFormGroup>
             {gistId !== "" && (
               <div>
                 You can simply update project in gist using <b>Update</b> button.

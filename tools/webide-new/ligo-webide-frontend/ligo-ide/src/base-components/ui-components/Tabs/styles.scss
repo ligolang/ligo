@@ -238,3 +238,8 @@ button, .btn, .nav-link {
 .btn {
   transition: none !important;
 }
+
+.btn-left-round-zero {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}

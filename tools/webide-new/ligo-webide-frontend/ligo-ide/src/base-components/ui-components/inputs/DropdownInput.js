@@ -222,6 +222,7 @@ export default class DropdownInput extends PureComponent {
       onClick,
       value,
       readOnly,
+      style,
     } = this.props;
     const selectedOption = this.findSelectedOption(options, value);
     const dropdownOptions = this.renderOptions();
@@ -329,7 +330,7 @@ export default class DropdownInput extends PureComponent {
     }
 
     return (
-      <FormGroup className={classnames(size === "sm" && "mb-2")} readOnly>
+      <FormGroup style={style} className={classnames(size === "sm" && "mb-2")} readOnly>
         <Label className={classnames(size === "sm" && "mb-1 small")}>{label}</Label>
         {inputGroup}
       </FormGroup>

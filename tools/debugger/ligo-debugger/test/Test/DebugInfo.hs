@@ -9,6 +9,7 @@ import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
+import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core (SourceLocation (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
@@ -30,12 +31,26 @@ instance Buildable SomeInstr where
   build (SomeInstr i) = build i
 
 -- | Get instructions with associated 'InstrNo' metas.
-collectMetas :: T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
-collectMetas = T.dfsFoldInstr def { dsGoToValues = True } \case
+collectCodeMetas :: T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
+collectCodeMetas = T.dfsFoldInstr def { dsGoToValues = True } \case
   T.Meta (T.SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) i -> case i of
     T.LAMBDA _ -> mempty
     _ -> one (meta, SomeInstr i)
   _ -> mempty
+
+collectContractMetas :: T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
+collectContractMetas = collectCodeMetas . T.unContractCode . T.cCode
+
+-- | Run the given contract + entrypoint, build code with embedded ligo metadata,
+buildSourceMapper
+  :: FilePath
+  -> String
+  -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath])
+buildSourceMapper file entrypoint = do
+  ligoMapper <- compileLigoContractDebug entrypoint file
+  case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
+    Right v -> pure v
+    Left err -> assertFailure $ pretty err
 
 (?-) :: a -> b -> (a, b)
 (?-) = (,)
@@ -49,16 +64,12 @@ test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
-      ligoMapper <- compileLigoContractDebug "main" file
-      (exprLocs, T.SomeContract contract, _) <-
-        case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
-          Right v -> pure v
-          Left err -> assertFailure $ pretty err
 
-      let metasAndInstrs =
+      (exprLocs, T.SomeContract contract, _) <- buildSourceMapper file "main"
+      let nonEmptyMetasAndInstrs =
             map (first stripSuffixHashFromLigoIndexedInfo) $
             filter (hasn't (_1 . _Empty)) $
-            toList $ collectMetas (T.unContractCode $ T.cCode contract)
+            collectContractMetas contract
 
       let mainType = LigoTypeResolved
             ( mkPairType
@@ -70,7 +81,7 @@ test_SourceMapper = testGroup "Reading source mapper"
                 (mkSimpleConstantType "Int")
             )
 
-      metasAndInstrs
+      nonEmptyMetasAndInstrs
         @?=
         [ LigoMereEnvInfo
             [LigoHiddenStackEntry]
@@ -156,6 +167,19 @@ test_SourceMapper = testGroup "Reading source mapper"
           , SrcPos (Pos 3) (Pos 28)
           )
         ]
+
+  , testCase "metas are not shifted in `if` blocks" do
+      let file = contractsDir </> "if.mligo"
+      (_, T.SomeContract contract, _) <- buildSourceMapper file "main"
+
+      forM_ @_ @_ @() (collectContractMetas contract)
+        \(LigoIndexedInfo{..}, SomeInstr instr) -> case instr of
+          T.MUL -> liiLocation @?= Just
+            do LigoRange file (LigoPosition 2 26) (LigoPosition 2 31)
+          T.CAR -> liiLocation @?= Just
+            do LigoRange file (LigoPosition 2 37) (LigoPosition 2 42)
+          _ -> pass
+
   ]
 
 
@@ -164,7 +188,7 @@ test_Errors = testGroup "Errors"
   [ testCase "duplicated ticket error is recognized" do
       let file = contractsDir </> "dupped-ticket.mligo"
       ligoMapper <- compileLigoContractDebug "main" file
-      void (readLigoMapper ligoMapper typesReplaceRules instrReplaceRules)
-        @?= Left (PreprocessError UnsupportedTicketDup)
-
+      case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
+        Left (PreprocessError UnsupportedTicketDup) -> pass
+        _ -> assertFailure [int||Expected "UnsupportedTicketDup" error.|]
   ]

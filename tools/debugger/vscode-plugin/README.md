@@ -96,6 +96,17 @@ With such a contract, you can specify in `launch.json`:
 }
 ```
 
+## Stepping
+
+Use the available `Next`, `StepIn`, and other commands to go over the contract execution.
+Stepping back is supported too.
+
+You can change the stepping granularity with a button at the lower panel:
+
+![Granularity selection button](./docs/stepping-granularity-selection.png)
+
+which is useful for evaluating complex expressions step-by-step.
+
 ## FAQ
 
 ### I've set `"entrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for an entrypoint when starting a debug session.

@@ -1,23 +1,26 @@
 module Test.Common.Capabilities.Completion
-  ( completionDriver
+  ( TestInfo(..)
+  , completionDriver
   , caseInfos
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Language.LSP.Types (CompletionItemKind (..), UInt)
+import System.Directory (canonicalizePath)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 import Unsafe qualified
 
 import AST.Capabilities.Completion
-import AST.Scope.Common
+import AST.Scope
 import Log qualified
 import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldMatchList)
 import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
+import Util.Graph (traverseAM)
 
 contractsDir :: FilePath
 contractsDir = Test.Common.Capabilities.Util.contractsDir </> "completion"
@@ -34,7 +37,7 @@ data TestInfo = TestInfo
 -- filters the completion results.
 -- See this for a discussion on the matter:
 -- https://gitlab.com/serokell/ligo/ligo/-/merge_requests/176#note_679710028
-caseInfos :: [TestInfo]
+caseInfos :: forall parser. ScopeTester parser => [TestInfo]
 caseInfos =
   [ TestInfo
     { tiContract = "no-prefix.ligo"
@@ -214,7 +217,10 @@ caseInfos =
     { tiContract = "incr.mligo"
     , tiPosition = (3, 13)
     , tiExpected =
-      [ Completion (Just CiFunction) (NameCompletion "incr_my_stuff") (Just $ TypeCompletion "nat") (DocCompletion "")
+      [ let t = case knownScopingSystem @parser of
+                  FallbackScopes -> "nat" -- FIXME LIGO-942
+                  _ -> "nat -> nat"
+        in Completion (Just CiFunction) (NameCompletion "incr_my_stuff") (Just $ TypeCompletion t) (DocCompletion "")
       , CompletionKeyword (NameCompletion "begin")
       , CompletionKeyword (NameCompletion "in")
       ]
@@ -270,6 +276,36 @@ caseInfos =
       ]
     , tiGraph = Includes G.empty
     }
+  , TestInfo
+    { tiContract = "local-namespace.mligo"
+    , tiPosition = (2, 30)
+    , tiExpected =
+      [ Completion (Just CiVariable) (NameCompletion "baz") (Just $ TypeCompletion "int") (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
+  , TestInfo
+    { tiContract = "nested-modules.mligo"
+    , tiPosition = (14, 25)
+    , tiExpected =
+      [ let (k, t) = case knownScopingSystem @parser of
+                      FallbackScopes -> (Nothing, Nothing) -- Fallback can't infer types here
+                      _ -> (Just CiVariable, Just $ TypeCompletion "int")
+        in Completion k (NameCompletion "baz") t (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
+  , TestInfo
+    { tiContract = "nested-modules.mligo"
+    , tiPosition = (15, 27)
+    , tiExpected =
+      [ let (k, t) = case knownScopingSystem @parser of
+                      FallbackScopes -> (Nothing, Nothing) -- Fallback can't infer types here
+                      _ -> (Just CiVariable, Just $ TypeCompletion "int")
+        in Completion k (NameCompletion "bax") t (DocCompletion "")
+      ]
+    , tiGraph = Includes G.empty
+    }
   ]
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
@@ -284,7 +320,8 @@ completionDriver testInfos = do
             contract = Unsafe.fromJust $ lookupContract fp graph
             tree = contractTree contract
             source = _cFile $ _getContract contract
-        results <- Log.runNoLoggingT $ withCompleterM (CompleterEnv pos tree source (tiGraph info)) complete
+        tiGraphNormalized <- Includes <$> traverseAM canonicalizePath (getIncludes $ tiGraph info)
+        results <- Log.runNoLoggingT $ withCompleterM (CompleterEnv pos tree source tiGraphNormalized) complete
         case (results, tiExpected info) of
           (Nothing, []) -> pass
           (Nothing, _) -> expectationFailure "Expected completion items, but got none"

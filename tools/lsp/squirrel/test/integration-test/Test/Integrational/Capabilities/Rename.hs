@@ -6,7 +6,7 @@ module Test.Integrational.Capabilities.Rename
   , unit_rename_in_included_file_fallback
   , unit_rename_nested_include
   , unit_rename_nested_include_fallback
---  , unit_rename_type_variable
+  -- , unit_rename_type_variable
   , unit_rename_conflicting_module_name
   ) where
 
@@ -23,17 +23,17 @@ unit_rename_fail = do
 unit_rename_id :: Assertion
 unit_rename_id = do
   renameId @Standard
-  --renameId @FromCompiler -- FIXME (LIGO-93)
+  renameId @FromCompiler
 
 unit_rename_param :: Assertion
 unit_rename_param = do
   renameParam @Standard
-  --renameParam @FromCompiler -- FIXME (LIGO-93)
+  renameParam @FromCompiler
 
 unit_rename_in_included_file :: Assertion
 unit_rename_in_included_file = do
   renameInIncludedFile @Standard
-  --renameInIncludedFile @FromCompiler -- FIXME (LIGO-93)
+  renameInIncludedFile @FromCompiler
 
 -- Since we require `ligo preprocess` for includes, we run `Fallback` tests for
 -- includes in integration tests.
@@ -43,18 +43,20 @@ unit_rename_in_included_file_fallback = renameInIncludedFile @Fallback
 unit_rename_nested_include :: Assertion
 unit_rename_nested_include = do
   renameNestedInclude @Standard
-  --renameNestedInclude @FromCompiler -- FIXME (LIGO-93)
+  --renameNestedInclude @FromCompiler -- FIXME (https://gitlab.com/ligolang/ligo/-/issues/1528)
 
 unit_rename_nested_include_fallback :: Assertion
 unit_rename_nested_include_fallback = renameNestedInclude @Fallback
 
--- FIXME (LIGO-331)
+-- FIXME (https://gitlab.com/ligolang/ligo/-/issues/1528)
 --unit_rename_type_variable :: Assertion
 --unit_rename_type_variable = do
 --  renameTypeVariable @Standard
---  --renameTypeVariable @FromCompiler -- FIXME (LIGO-93)
+--  renameTypeVariable @FromCompiler
 
+-- FIXME despite this test passes, described renaming from (10,13) is not working,
+-- see (https://gitlab.com/ligolang/ligo/-/issues/1521).
 unit_rename_conflicting_module_name :: Assertion
 unit_rename_conflicting_module_name = do
-  renameConflictingModuleName @Standard
-  renameConflictingModuleName @FromCompiler
+ renameConflictingModuleName @Standard
+ renameConflictingModuleName @FromCompiler

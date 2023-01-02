@@ -5,9 +5,15 @@ interface CompileModalProps {
   modalRef: React.RefObject<Modal>;
   tzFilePath: string;
   onCompile: any;
+  isPreDeploy: boolean;
 }
 
-const CompileModal: React.FC<CompileModalProps> = ({ modalRef, tzFilePath, onCompile }) => {
+const CompileModal: React.FC<CompileModalProps> = ({
+  modalRef,
+  tzFilePath,
+  onCompile,
+  isPreDeploy,
+}) => {
   const onCreate = async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     onCompile();
@@ -15,11 +21,23 @@ const CompileModal: React.FC<CompileModalProps> = ({ modalRef, tzFilePath, onCom
   };
 
   return (
-    <Modal ref={modalRef} title="Compile" textConfirm="Compile" onConfirm={onCreate}>
-      <div>
-        You are going to compile <kbd>{tzFilePath}</kbd> contract. If you want to use another
-        contract, please change it in config.
-      </div>
+    <Modal
+      ref={modalRef}
+      title={isPreDeploy ? "Contract is not compiled" : "Compile"}
+      textConfirm="Compile"
+      onConfirm={onCreate}
+    >
+      {isPreDeploy ? (
+        <div>
+          You are going to deploy <kbd>{tzFilePath}</kbd> contract but it is not compiled. Please
+          compile it before deploying.
+        </div>
+      ) : (
+        <div>
+          You are going to compile <kbd>{tzFilePath}</kbd> contract. If you want to use another
+          contract, please change it in config.
+        </div>
+      )}
     </Modal>
   );
 };

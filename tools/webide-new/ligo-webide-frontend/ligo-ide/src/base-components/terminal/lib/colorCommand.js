@@ -6,7 +6,7 @@ chalk.level = 2;
 
 const hex = (value) => {
   const hexValue = Number(value || 0).toString(16);
-  return hexValue.length === 1 ? `0${hex}` : hexValue;
+  return hexValue.length === 1 ? `0${hexValue}` : hexValue;
 };
 
 export default function colorCommand(cmdString, colorStr = "#000") {

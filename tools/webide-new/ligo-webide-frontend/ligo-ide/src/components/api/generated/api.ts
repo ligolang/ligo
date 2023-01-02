@@ -206,6 +206,31 @@ export interface GenerateDeployScriptRequest {
 /**
  * 
  * @export
+ * @interface GistCreateUpdateRequest
+ */
+export interface GistCreateUpdateRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GistCreateUpdateRequest
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GistCreateUpdateRequest
+     */
+    'gistId'?: string;
+    /**
+     * 
+     * @type {Array<SourceFile>}
+     * @memberof GistCreateUpdateRequest
+     */
+    'sourceFiles': Array<SourceFile>;
+}
+/**
+ * 
+ * @export
  * @interface ListDeclarationsRequest
  */
 export interface ListDeclarationsRequest {
@@ -335,6 +360,39 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @param {GistCreateUpdateRequest} [gistCreateUpdateRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createUpdateGistPost: async (gistCreateUpdateRequest?: GistCreateUpdateRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/create-update-gist`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json;charset=utf-8';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(gistCreateUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {DryRunRequest} [dryRunRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -432,6 +490,35 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listTemplatesPost: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/list-templates`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -464,6 +551,16 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {GistCreateUpdateRequest} [gistCreateUpdateRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createUpdateGistPost(gistCreateUpdateRequest?: GistCreateUpdateRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createUpdateGistPost(gistCreateUpdateRequest, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @param {DryRunRequest} [dryRunRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -490,6 +587,15 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          */
         async listDeclarationsPost(listDeclarationsRequest?: ListDeclarationsRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listDeclarationsPost(listDeclarationsRequest, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listTemplatesPost(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listTemplatesPost(options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
     }
@@ -522,6 +628,15 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @param {GistCreateUpdateRequest} [gistCreateUpdateRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createUpdateGistPost(gistCreateUpdateRequest?: GistCreateUpdateRequest, options?: any): AxiosPromise<string> {
+            return localVarFp.createUpdateGistPost(gistCreateUpdateRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {DryRunRequest} [dryRunRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -546,6 +661,14 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         listDeclarationsPost(listDeclarationsRequest?: ListDeclarationsRequest, options?: any): AxiosPromise<Array<string>> {
             return localVarFp.listDeclarationsPost(listDeclarationsRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listTemplatesPost(options?: any): AxiosPromise<Array<string>> {
+            return localVarFp.listTemplatesPost(options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -581,6 +704,17 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
+     * @param {GistCreateUpdateRequest} [gistCreateUpdateRequest] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public createUpdateGistPost(gistCreateUpdateRequest?: GistCreateUpdateRequest, options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).createUpdateGistPost(gistCreateUpdateRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @param {DryRunRequest} [dryRunRequest] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -610,6 +744,16 @@ export class DefaultApi extends BaseAPI {
      */
     public listDeclarationsPost(listDeclarationsRequest?: ListDeclarationsRequest, options?: AxiosRequestConfig) {
         return DefaultApiFp(this.configuration).listDeclarationsPost(listDeclarationsRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public listTemplatesPost(options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).listTemplatesPost(options).then((request) => request(this.axios, this.basePath));
     }
 }
 

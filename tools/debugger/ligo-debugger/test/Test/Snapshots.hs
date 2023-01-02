@@ -25,11 +25,11 @@ import UnliftIO (forConcurrently_)
 import Morley.Debugger.Core
   (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), HistoryReplayM,
   MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation),
-  SourceType (..), curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
+  curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
 import Morley.Debugger.Core.Breakpoint qualified as N
-import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
@@ -383,7 +383,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 8) (Pos 0))
 
         let checkLinePosition pos = do
               frozen getExecutedPosition >>= \case
@@ -440,7 +440,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 4) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 4) (Pos 0))
 
         liftIO $ step "Check that \"fold\" build-in works correctly"
         moveTill Forward isAtBreakpoint
@@ -475,7 +475,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 11) (Pos 0))
+        N.switchBreakpoint (MSFile file) (SrcPos (Pos 11) (Pos 0))
 
         N.continueUntilBreakpoint N.NextBreak
         liftIO $ step "Check function namings"
@@ -749,8 +749,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
+        moveTill Forward $ isAtLine 1
         liftIO $ step [int||Check stack frame names on entering "recursive"|]
         checkSnapshot ((@=?) ["recursive", "main"] . getStackFrameNames)
 
@@ -773,8 +772,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step [int||Check that we have only one "main" stack frame|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
+        moveTill Forward $ isAtLine 1
         liftIO $ step [int||Check that we have "f" stack frame on entering local function|]
         checkSnapshot ((@=?) ["f", "main"] . getStackFrameNames)
 
@@ -788,13 +786,11 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 2) (Pos 0)) (SrcPos (Pos 3) (Pos 0))
+        moveTill Forward $ isAtLine 2
         liftIO $ step [int||Calling top level function "complex"|]
         checkSnapshot ((@=?) ["complex", "main"] . getStackFrameNames)
 
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 0) (Pos 0)) (SrcPos (Pos 1) (Pos 0))
+        moveTill Forward $ isAtLine 0
         liftIO $ step [int||Calling function "add" from "complex"|]
         checkSnapshot ((@=?) ["add", "complex", "main"] . getStackFrameNames)
 
@@ -851,7 +847,7 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         moveTill Forward $
           goesBetween (SrcPos (Pos 8) (Pos 0)) (SrcPos (Pos 12) (Pos 0))
-          && matchesSrcType (N.SourcePath nestedFile)
+          && matchesSrcType (MSFile nestedFile)
         liftIO $ step [int||Check variables for "sum" snapshot|]
         checkSnapshot \case
           InterpretSnapshot
@@ -863,7 +859,7 @@ test_Snapshots = testGroup "Snapshots collection"
           snap -> unexpectedSnapshot snap
 
         moveTill Forward $
-          goesAfter (SrcPos (Pos 4) (Pos 0)) && matchesSrcType (N.SourcePath nestedFile2)
+          goesAfter (SrcPos (Pos 4) (Pos 0)) && matchesSrcType (MSFile nestedFile2)
         liftIO $ step [int||Check variables for "strange" snapshot|]
         checkSnapshot \case
           InterpretSnapshot
@@ -913,8 +909,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 0) (Pos 0)) (SrcPos (Pos 1) (Pos 0))
+        moveTill Forward $ isAtLine 0
 
         liftIO $ step [int||Check stack frames after entering "add5"|]
         checkSnapshot ((@=?) ["add", "add5", "main"] . getStackFrameNames)
@@ -933,8 +928,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 1) (Pos 0)) (SrcPos (Pos 2) (Pos 0))
+        moveTill Forward $ isAtLine 1
 
         liftIO $ step [int||Go into "add5"|]
         checkSnapshot ((@=?) ["add", "add5", "myFunc", "main"] . getStackFrameNames)
@@ -954,14 +948,12 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 7) (Pos 0)) (SrcPos (Pos 8) (Pos 0))
+        moveTill Forward $ isAtLine 7
 
         liftIO $ step [int||Check stack frames for inner "sub"|]
         checkSnapshot ((@=?) ["sub", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
 
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 5) (Pos 0)) (SrcPos (Pos 6) (Pos 0))
+        moveTill Forward $ isAtLine 5
 
         liftIO $ step [int||Check stack frames for inner "add"|]
         checkSnapshot ((@=?) ["add", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
@@ -982,8 +974,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 5) (Pos 0)) (SrcPos (Pos 6) (Pos 0))
+        moveTill Forward $ isAtLine 5
 
         liftIO $ step [int||Check "sub" stack frames inside "lambdaFun"|]
 
@@ -991,8 +982,7 @@ test_Snapshots = testGroup "Snapshots collection"
         -- but LIGO source mapper treats these "f"s from this contract as different.
         checkSnapshot ((@=?) ["sub", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
 
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 4) (Pos 0)) (SrcPos (Pos 5) (Pos 0))
+        moveTill Forward $ isAtLine 4
 
         liftIO $ step [int||Check "add" stack frames inside "lambdaFun"|]
 
@@ -1015,8 +1005,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
-          goesBetween (SrcPos (Pos 7) (Pos 0)) (SrcPos (Pos 8) (Pos 0))
+        moveTill Forward $ isAtLine 7
 
         liftIO $ step [int||Check stack frames in inner "act"|]
 
@@ -1094,8 +1083,12 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStackFrames = StackFrame
                 { sfLoc = LigoRange _ (LigoPosition 6 56) (LigoPosition 6 58)
-                , sfName = "failwith$1"
+                , sfName = "failwith$2"
                 } :|
+                  StackFrame
+                    { sfName = "failwith$1"
+                    }
+                  :
                   StackFrame
                     { sfName = "unsafeCompute"
                     }
@@ -1143,13 +1136,13 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
       when coCheckSourceLocations do
         forM_ (getAllSourceLocations locations) \srcLoc@(SourceLocation loc _ _) -> do
           case loc of
-            SourcePath path ->
+            MSFile path ->
               -- Some paths can be empty in @SourceLocation@ because of some ligo issues.
               -- So, we want to check them for sensibility.
               when (path == "") do
                 assertFailure [int||Expected non-empty file name in loc #{srcLoc} in contract #{contractName}|]
-            LorentzContract ->
-              assertFailure [int||Unexpected "Lorentz contract" in loc #{srcLoc} in contract #{contractName}|]
+            _ ->
+              assertFailure [int||Unexpected source location in loc field of #{srcLoc} in contract #{contractName}|]
 
       when coCheckEntrypointsList do
         try @_ @SomeException (getAvailableEntrypoints (contractsDir </> contractName)) >>= \case
@@ -1168,6 +1161,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
       , ("poly", def & coCheckSourceLocationsL .~ False)
       , ("self", def & coCheckSourceLocationsL .~ False)
       , ("iterate-big-map", def & coCheckSourceLocationsL .~ False)
+      , ("big-map-storage", def & coCheckSourceLocationsL .~ False)
       , ("two-entrypoints", def & coEntrypointL ?~ "main1")
       ]
 

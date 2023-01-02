@@ -4,14 +4,18 @@ To build and run the backend server:
 ```
 stack build
 stack exec ligo-webide-backend -- \
-    --ligo-path /path/to/ligo/executable
+    --ligo-path /path/to/ligo/executable \
+    --octez-client-path /path/to/octez-client/executable \
+    --gist-token <gist token for creating gists>
 ```
 
 To build and run the backend server with a Dockerized LIGO:
 ```
 stack build
 stack exec ligo-webide-backend -- \
-    --dockerized-ligo-version 0.50.0
+    --dockerized-ligo-version 0.50.0 \
+    --octez-client-path /path/to/octez-client/executable \
+    --gist-token <gist token for creating gists>
 ```
 
 To run the tests

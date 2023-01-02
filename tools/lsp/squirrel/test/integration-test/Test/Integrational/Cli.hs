@@ -17,7 +17,6 @@ filterException :: SomeException -> Maybe SomeLigoException
 filterException e = asum
   [ SomeLigoException <$> fromException @LigoDecodedExpectedClientFailureException e
   , SomeLigoException <$> fromException @LigoErrorNodeParseErrorException          e
-  , SomeLigoException <$> fromException @LigoUnexpectedCrashException              e
   ]
 
 checkFile :: HasCallStack => FilePath -> TestTree

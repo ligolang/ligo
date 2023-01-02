@@ -9,6 +9,6 @@ import Test.Tasty (TestTree, testGroup)
 
 test_completion :: IO TestTree
 test_completion = testGroup "Simple completion" <$> sequenceA
-  [ completionDriver @Standard caseInfos
-  --, completionDriver @FromCompiler caseInfos  -- FIXME (LIGO-596) (LIGO-679)
+  [ completionDriver @Standard $ caseInfos @Standard
+  --, completionDriver @FromCompiler $ caseInfos @FromCompiler -- FIXME (LIGO-596) (LIGO-679)
   ]

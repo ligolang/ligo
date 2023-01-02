@@ -40,6 +40,7 @@ main = do
         , cPort = 0 -- not used
         , cVerbose = False
         , cDockerizedLigoVersion = Nothing
+        , cGistToken = ""
         }
   let dockerizedConfig = standardConfig
         {cDockerizedLigoVersion = Just dockerLigoVersion}

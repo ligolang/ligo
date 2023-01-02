@@ -26,7 +26,7 @@ include:
 
 validate-cabal-files:
   stage: validate
-  only: [merge_requests, tooling]
+  only: [merge_requests]
   script:
     - cd tools/lsp/squirrel
     - nix-shell -p 'haskell.lib.overrideCabal haskellPackages.stack2cabal (drv:{ jailbreak = true; broken = false; })' --command scripts/validate-cabal-files.sh
@@ -35,7 +35,6 @@ ligo-build:
   stage: ligo
   needs:
     - print-nix-version
-    - validate-cabal-files  # otherwise build will rely on the outdated deps list
   only: [merge_requests, tooling]
   tags: [nix-with-docker]
   script:

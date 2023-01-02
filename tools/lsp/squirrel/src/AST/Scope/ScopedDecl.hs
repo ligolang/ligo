@@ -95,6 +95,7 @@ data Type
   | ArrowType Type Type
   | VariableType TypeVariable
   | ParenType (TypeDeclSpecifics Type)
+  | UnresolvedType
   deriving stock (Eq, Show)
 
 data TypeField = TypeField
@@ -208,6 +209,7 @@ instance IsLIGO Type where
   toLIGO (ArrowType left right) = node (LIGO.TArrow (toLIGO left) (toLIGO right))
   toLIGO (VariableType var) = node (LIGO.TVariable (toLIGO var))
   toLIGO (ParenType typ) = node (LIGO.TParen (toLIGO typ))
+  toLIGO UnresolvedType = node LIGO.ErrorTypeUnresolved
 
 instance IsLIGO QuotedTypeParams where
   toLIGO (QuotedTypeParam t) = node (LIGO.QuotedTypeParam (toLIGO t))

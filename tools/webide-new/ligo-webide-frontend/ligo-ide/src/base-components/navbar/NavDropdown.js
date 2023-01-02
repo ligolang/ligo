@@ -127,7 +127,7 @@ export default class NavDropdown extends Component {
       </Button>
     );
 
-    if (testnetLen > 1 && item.group !== "others") {
+    if (testnetLen > 1 && item.group !== "Others") {
       networkBtns = (
         <div className="d-flex" size="sm">
           <ButtonDropdown
@@ -220,6 +220,7 @@ export default class NavDropdown extends Component {
             <div>
               <div className="d-flex flex-1 w-100">
                 <Button
+                  id="wallet-enable-button"
                   size="sm"
                   className={classnames("p-relative", "ml-2", {
                     active: this.state.isWallet,
@@ -240,7 +241,11 @@ export default class NavDropdown extends Component {
                 >
                   Enable
                 </Button>
+                <UncontrolledTooltip placement="bottom" target="wallet-enable-button">
+                  Connect wallet extension
+                </UncontrolledTooltip>
                 <Button
+                  id="wallet-disable-button"
                   size="sm"
                   className={classnames("p-relative", "ml-2", {
                     active: !this.state.isWallet,
@@ -252,6 +257,9 @@ export default class NavDropdown extends Component {
                 >
                   Disable
                 </Button>
+                <UncontrolledTooltip placement="bottom" target="wallet-disable-button">
+                  Disconnect wallet extension
+                </UncontrolledTooltip>
               </div>
             </div>
           </div>

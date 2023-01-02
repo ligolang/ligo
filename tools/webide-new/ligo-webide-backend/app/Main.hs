@@ -50,3 +50,9 @@ main =
                   \LIGO binary. If this is specified, 'ligo-path' \
                   \will be ignored."
           ))
+        <*> option str
+          ( long "gist-token"
+            <> short 'g'
+            <> metavar "STRING"
+            <> help "print received requests and the responses"
+          )

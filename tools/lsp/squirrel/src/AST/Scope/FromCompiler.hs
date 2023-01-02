@@ -35,19 +35,35 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
 -- | Extract `ScopeForest` from LIGO scope dump.
 fromCompiler :: forall m. Log m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
-  let msgs = map fromLigoErrorToMsg (errors <> warnings)
   allRefs <- fromScopes (Namespace empty) decls
-  foldlM
-    (\(sf, errs) (LigoScope r es _ts ms) -> do
-      let env = reverse $ es <> ms
-      r' <- normalizeRange $ fromLigoRangeOrDef r
-      (errs', decodedDecls) <- partitionEithers <$> traverse (decodeOrReport allRefs r') env
-      let ds = Map.fromList $ map (declToRef &&& id) decodedDecls
-      let rs = Map.keysSet ds
-      pure (injectScope ((rs, r') :< []) ds sf, errs <> errs'))
-    (emptyScopeForest, msgs)
-    scopes
+  let
+    msgs = map fromLigoErrorToMsg (errors <> warnings)
+
+    collectScopes :: ([Message], [ScopeTree]) -> LigoScope -> m ([Message], [ScopeTree])
+    collectScopes
+      (prevErrs, prevScopesGraph)
+      (LigoScope scopeLigoRange exprEnv _typeEnv moduleEnv)
+      = do
+        let env = exprEnv <> moduleEnv
+        scopeRange <- normalizeRange $ fromLigoRangeOrDef scopeLigoRange
+        (errs, decodedDecls) <- partitionEithers <$>
+          traverse (decodeOrReport allRefs scopeRange) env
+        let scopeInfo = (fromList (map declToRef decodedDecls), scopeRange) :< []
+        return (prevErrs <> errs, injectScope scopeInfo prevScopesGraph)
+
+  (errsDecls, fullDecls) <- fmap partitionEithers .
+    traverse (\(v,r) -> decodeOrReport allRefs r v) $ [(v, _sdOrigin d) | (v,d) <- toPairs allRefs]
+  (errsScopes, scopesGraph) <- foldM collectScopes ([],[]) scopes
+  return
+    ( ScopeForest
+      { sfDecls = Map.fromList $ map (declToRef &&& id) fullDecls
+      , sfScopes = scopesGraph
+      }
+    , msgs <> errsDecls <> errsScopes
+    )
   where
+    -- Keys are variables/functions defined in current file, e.g. x#0. Includes both global
+    -- and local variables (e.g. both @x@ and @y@ from @let z = let y = 1 in y@)
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.
     fromScopes
@@ -122,14 +138,11 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
         moduleDecl = ScopedDecl moduleName r (r : rs) [] dialect moduleSpec namespace
       pure $ HashMap.singleton mangled moduleDecl
 
-    -- Find a place for a scope inside a ScopeForest.
-    injectScope :: ScopeTree -> Map DeclRef ScopedDecl -> ScopeForest -> ScopeForest
-    injectScope subject ds' (ScopeForest forest ds) =
-        ScopeForest (loop forest) (ds <> ds')
+    -- Find a place for a scope inside a fore.
+    injectScope :: ScopeTree -> [ScopeTree] -> [ScopeTree]
+    injectScope subject =
+      withListZipper $ ListZipper.find (subject `isCoveredBy`) >>> atLocus maybeLoop
       where
-        loop
-          = withListZipper
-          $ ListZipper.find (subject `isCoveredBy`) >>> atLocus maybeLoop
 
         isCoveredBy = leq `on` snd . view _extract
 
@@ -139,7 +152,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
         maybeLoop = Just . maybe subject restart
 
         -- Take a forest out of tree, loop, put it back.
-        restart (r :< trees) = r :< loop trees
+        restart (r :< trees) = r :< injectScope subject trees
 
 decodeOrReport
   :: Log m

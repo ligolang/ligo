@@ -1213,14 +1213,10 @@ const hashlockJStorage = `{
 }
 `;
 
-const config = (name: string, projectName: string) => `{
-  "main": "./contracts/${name}.mligo",
+const config = (name: string, projectName: string, syntax: string) => `{
+  "main": "./contracts/${name}.${syntax}",
   "deploy": "./build/contracts/${name}.tz",
-  "storage": "./storages/Storage.mligo",
-  "framework": "#framework",
-  "compilers": {
-    "solc": "0.6.12"
-  },
+  "storage": "./storages/Storage.${syntax}",
   "projectName": "${projectName}"
 }
 `;
@@ -1228,131 +1224,204 @@ const config = (name: string, projectName: string) => `{
 export const getExamples = (
   name: string,
   template: string,
-  projectName: string
-): { [a: string]: { name: string; content: string } } => {
+  projectName: string,
+  syntax: string
+): { [a: string]: { name: string; content: string } | undefined } => {
   if (template === "increment") {
     return {
-      contractM: {
-        name: `.workspaces/${name}/contracts/Increment.mligo`,
-        content: incrementM,
-      },
-      contractL: {
-        name: `.workspaces/${name}/contracts/Increment.ligo`,
-        content: incrementL,
-      },
-      contractR: {
-        name: `.workspaces/${name}/contracts/Increment.religo`,
-        content: incrementR,
-      },
-      contractJ: {
-        name: `.workspaces/${name}/contracts/Increment.jsligo`,
-        content: incrementJ,
-      },
+      contractM:
+        syntax === "mligo"
+          ? {
+              name: `.workspaces/${name}/contracts/Increment.mligo`,
+              content: incrementM,
+            }
+          : undefined,
+      contractL:
+        syntax === "ligo"
+          ? {
+              name: `.workspaces/${name}/contracts/Increment.ligo`,
+              content: incrementL,
+            }
+          : undefined,
+      contractR:
+        syntax === "religo"
+          ? {
+              name: `.workspaces/${name}/contracts/Increment.religo`,
+              content: incrementR,
+            }
+          : undefined,
+      contractJ:
+        syntax === "jsligo"
+          ? {
+              name: `.workspaces/${name}/contracts/Increment.jsligo`,
+              content: incrementJ,
+            }
+          : undefined,
 
-      storageM: {
-        name: `.workspaces/${name}/storages/Storage.mligo`,
-        content: incrementMStorage,
-      },
-      storageL: {
-        name: `.workspaces/${name}/storages/Storage.ligo`,
-        content: incrementLStorage,
-      },
-      storageR: {
-        name: `.workspaces/${name}/storages/Storage.religo`,
-        content: incrementRStorage,
-      },
-      storageJ: {
-        name: `.workspaces/${name}/storages/Storage.jsligo`,
-        content: incrementJStorage,
-      },
+      storageM:
+        syntax === "mligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.mligo`,
+              content: incrementMStorage,
+            }
+          : undefined,
+      storageL:
+        syntax === "ligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.ligo`,
+              content: incrementLStorage,
+            }
+          : undefined,
+      storageR:
+        syntax === "religo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.religo`,
+              content: incrementRStorage,
+            }
+          : undefined,
+      storageJ:
+        syntax === "jsligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.jsligo`,
+              content: incrementJStorage,
+            }
+          : undefined,
 
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
-        content: config("Increment", projectName),
+        content: config("Increment", projectName, syntax),
       },
     };
   }
   if (template === "id") {
     return {
-      contractM: {
-        name: `.workspaces/${name}/contracts/ID.mligo`,
-        content: idM,
-      },
-      contractL: { name: `.workspaces/${name}/contracts/ID.ligo`, content: idL },
-      contractR: {
-        name: `.workspaces/${name}/contracts/ID.religo`,
-        content: idR,
-      },
-      contractJ: {
-        name: `.workspaces/${name}/contracts/ID.jsligo`,
-        content: idJ,
-      },
+      contractM:
+        syntax === "mligo"
+          ? {
+              name: `.workspaces/${name}/contracts/ID.mligo`,
+              content: idM,
+            }
+          : undefined,
+      contractL:
+        syntax === "ligo"
+          ? { name: `.workspaces/${name}/contracts/ID.ligo`, content: idL }
+          : undefined,
+      contractR:
+        syntax === "religo"
+          ? {
+              name: `.workspaces/${name}/contracts/ID.religo`,
+              content: idR,
+            }
+          : undefined,
+      contractJ:
+        syntax === "jsligo"
+          ? {
+              name: `.workspaces/${name}/contracts/ID.jsligo`,
+              content: idJ,
+            }
+          : undefined,
 
-      storageM: {
-        name: `.workspaces/${name}/storages/Storage.mligo`,
-        content: idMStorage,
-      },
-      storageL: {
-        name: `.workspaces/${name}/storages/Storage.ligo`,
-        content: idLStorage,
-      },
-      storageR: {
-        name: `.workspaces/${name}/storages/Storage.religo`,
-        content: idRStorage,
-      },
-      storageJ: {
-        name: `.workspaces/${name}/storages/Storage.jsligo`,
-        content: idJStorage,
-      },
+      storageM:
+        syntax === "mligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.mligo`,
+              content: idMStorage,
+            }
+          : undefined,
+      storageL:
+        syntax === "ligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.ligo`,
+              content: idLStorage,
+            }
+          : undefined,
+      storageR:
+        syntax === "religo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.religo`,
+              content: idRStorage,
+            }
+          : undefined,
+      storageJ:
+        syntax === "jsligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.jsligo`,
+              content: idJStorage,
+            }
+          : undefined,
 
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
-        content: config("ID", projectName),
+        content: config("ID", projectName, syntax),
       },
     };
   }
   if (template === "hashlock") {
     return {
-      contractM: {
-        name: `.workspaces/${name}/contracts/Hashlock.mligo`,
-        content: hashlockM,
-      },
-      contractL: {
-        name: `.workspaces/${name}/contracts/Hashlock.ligo`,
-        content: hashlockL,
-      },
-      contractR: {
-        name: `.workspaces/${name}/contracts/Hashlock.religo`,
-        content: hashlockR,
-      },
-      contractJ: {
-        name: `.workspaces/${name}/contracts/Hashlock.jsligo`,
-        content: hashlockJ,
-      },
+      contractM:
+        syntax === "mligo"
+          ? {
+              name: `.workspaces/${name}/contracts/Hashlock.mligo`,
+              content: hashlockM,
+            }
+          : undefined,
+      contractL:
+        syntax === "ligo"
+          ? {
+              name: `.workspaces/${name}/contracts/Hashlock.ligo`,
+              content: hashlockL,
+            }
+          : undefined,
+      contractR:
+        syntax === "religo"
+          ? {
+              name: `.workspaces/${name}/contracts/Hashlock.religo`,
+              content: hashlockR,
+            }
+          : undefined,
+      contractJ:
+        syntax === "jsligo"
+          ? {
+              name: `.workspaces/${name}/contracts/Hashlock.jsligo`,
+              content: hashlockJ,
+            }
+          : undefined,
 
-      storageM: {
-        name: `.workspaces/${name}/storages/Storage.mligo`,
-        content: hashlockMStorage,
-      },
-      storageL: {
-        name: `.workspaces/${name}/storages/Storage.ligo`,
-        content: hashlockLStorage,
-      },
-      storageR: {
-        name: `.workspaces/${name}/storages/Storage.religo`,
-        content: hashlockRStorage,
-      },
-      storageJ: {
-        name: `.workspaces/${name}/storages/Storage.jsligo`,
-        content: hashlockJStorage,
-      },
+      storageM:
+        syntax === "mligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.mligo`,
+              content: hashlockMStorage,
+            }
+          : undefined,
+      storageL:
+        syntax === "ligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.ligo`,
+              content: hashlockLStorage,
+            }
+          : undefined,
+      storageR:
+        syntax === "religo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.religo`,
+              content: hashlockRStorage,
+            }
+          : undefined,
+      storageJ:
+        syntax === "jsligo"
+          ? {
+              name: `.workspaces/${name}/storages/Storage.jsligo`,
+              content: hashlockJStorage,
+            }
+          : undefined,
 
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
-        content: config("Hashlock", projectName),
+        content: config("Hashlock", projectName, syntax),
       },
     };
   }
@@ -1363,13 +1432,13 @@ export const getExamples = (
       content: "",
     },
     storage: {
-      name: `.workspaces/${name}/storages/Storages.mligo`,
+      name: `.workspaces/${name}/storages/Storage.${syntax}`,
       content: "",
     },
     readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
     config: {
       name: `.workspaces/${name}/config.json`,
-      content: config("Contract", projectName),
+      content: config("Contract", projectName, syntax),
     },
   };
 };

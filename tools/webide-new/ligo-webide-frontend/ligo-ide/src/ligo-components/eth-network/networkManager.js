@@ -236,7 +236,7 @@ class NetworkManager {
   getNewNetList() {
     const customNetworkGroup = Object.keys(this.customNetWorks)
       .map((name) => ({
-        group: "others",
+        group: "Others",
         icon: "fas fa-vial",
         id: name,
         networkId: this.customNetWorks[name]?.networkId || name,
@@ -249,11 +249,11 @@ class NetworkManager {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     return this.networks
-      .filter((item) => item.group !== "others" || item.id === "others")
+      .filter((item) => item.group !== "Others" || item.id === "Others")
       .concat([
         {
           fullName: "Custom Network",
-          group: "others",
+          group: "Others",
           icon: "fas fa-edit",
           id: "custom",
           name: "Custom",

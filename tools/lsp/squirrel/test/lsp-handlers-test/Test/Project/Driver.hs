@@ -1,6 +1,7 @@
 module Test.Project.Driver
   ( unit_simple
   , unit_two_project_files
+  , unit_two_projects
   , unit_backward_include
   , unit_no_edge
   , unit_ignore_paths
@@ -19,12 +20,20 @@ import AST (Includes (..))
 
 import Test.HUnit (Assertion)
 
+import Language.LSP.Test (getHover)
+import Language.LSP.Types (Position (Position))
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.LSP (openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "projects"
+
+getBuildGraph :: LSP.Session (AM.AdjacencyMap FilePath)
+getBuildGraph = do
+  LSP.ResponseMessage {LSP._result = Right p} <- LSP.request (LSP.SCustomMethod "buildGraph") Null
+  let Success (Includes actualGraph) = fromJSON p
+  return actualGraph
 
 checkBuildGraph :: HasCallStack => FilePath -> FilePath -> Includes FilePath -> Assertion
 checkBuildGraph rootDirectory docName (Includes expectedBuildGraph) = do
@@ -36,8 +45,7 @@ checkBuildGraph' :: HasCallStack => FilePath -> FilePath -> Includes FilePath ->
 checkBuildGraph' rootDirectory docName (Includes expectedGraph) =
   runHandlersTest rootDirectory do
     _doc <- openLigoDoc docName
-    LSP.ResponseMessage {LSP._result = Right p} <- LSP.request (LSP.SCustomMethod "buildGraph") Null
-    let Success (Includes actualGraph) = fromJSON p
+    actualGraph <- getBuildGraph
     liftIO $ actualGraph `shouldBe` expectedGraph
 
 unit_simple :: Assertion
@@ -50,6 +58,26 @@ unit_two_project_files = do
   checkBuildGraph root "a.mligo" $ G.edge "a.mligo" ("inner" </> "b.mligo")
   -- From inner we need to see only the inner one.
   checkBuildGraph (root </> "inner") "b.mligo" $ G.vertex "b.mligo"
+
+-- We update indexing settings to use the last active file
+unit_two_projects :: Assertion
+unit_two_projects = do
+  projectPathAbsolute <- canonicalizePath $ contractsDir </> "two_projects"
+  let
+      checkGraph :: Includes FilePath -> LSP.Session ()
+      checkGraph (Includes expectedRelative) = do
+        let expectedAbsolute = AM.gmap (projectPathAbsolute </>) expectedRelative
+        actual <- getBuildGraph
+        liftIO $ actual `shouldBe` expectedAbsolute
+  runHandlersTest projectPathAbsolute $ do
+    aDoc <- openLigoDoc $ "a" </> "a.ligo"
+    checkGraph $ G.vertex $ "a" </> "a.ligo"
+    bDoc <- openLigoDoc $ "b" </> "b.ligo"
+    checkGraph $ G.vertex $ "b" </> "b.ligo"
+    _ <- getHover aDoc (Position 0 7)
+    checkGraph $ G.vertex $ "a" </> "a.ligo"
+    _ <- getHover bDoc (Position 0 7)
+    checkGraph $ G.vertex $ "b" </> "b.ligo"
 
 unit_backward_include :: Assertion
 unit_backward_include = do

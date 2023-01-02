@@ -82,4 +82,6 @@ export const WebIdeApi = {
   generateDeployScript: (args: GenerateDeployScriptRequest) =>
     DefaultApiFactory(undefined, baseUrl, mkAxios()).generateDeployScriptPost(addProtocol(args)),
   listDeclarations: DefaultApiFactory(undefined, baseUrl, mkAxios()).listDeclarationsPost,
+  createUpdateGist: DefaultApiFactory(undefined, baseUrl, mkAxios()).createUpdateGistPost,
+  listTemplates: DefaultApiFactory(undefined, baseUrl, mkAxios()).listTemplatesPost,
 };

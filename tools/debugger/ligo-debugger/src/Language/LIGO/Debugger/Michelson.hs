@@ -1,129 +1,185 @@
+{-# LANGUAGE DeriveDataTypeable, UndecidableInstances #-}
+
 module Language.LIGO.Debugger.Michelson
   ( DecodeError (..)
   , MichelsonDecodeException (..)
-  , EmbedError (..)
   , PreprocessError (..)
   , typesReplaceRules
   , instrReplaceRules
   , readLigoMapper
   ) where
 
-import Unsafe qualified
-
-import Control.Lens (at, cons, each, (%=), (.=))
+import Control.Lens (at, backwards, devoid, forOf, traverseOf, unsafePartsOf)
+import Control.Lens.Extras (template)
 import Control.Lens.Prism (_Just)
 import Control.Monad.Except (Except, liftEither, runExcept, throwError)
-import Data.Char (isAsciiUpper, isDigit)
-import Data.Coerce (coerce)
 import Data.DList qualified as DL
+import Data.Data (Data)
 import Data.Default (Default, def)
 import Data.HashSet qualified as HS
-import Data.Map qualified as M
 import Data.Set qualified as Set
-import Data.Text qualified as Text
-import Data.Vector qualified as V
-import Fmt (Buildable (..), Builder, pretty)
-import Generics.SYB (everywhere, everywhereM, mkM, mkT)
+import Fmt (Buildable (..), Builder, indentF, pretty, unlinesF, (+|), (|+))
+import Generics.SYB (everywhere, mkM, mkT)
 import Text.Interpolation.Nyan
 import Text.Show qualified
 import Util (everywhereM')
 
 import Morley.Debugger.Core.Common (debuggerTcOptions)
-import Morley.Micheline.Class (FromExpressionError, fromExpression)
+import Morley.Micheline.Class (FromExp, FromExpError (FromExpError), fromExp)
 import Morley.Micheline.Expression
-  (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
-import Morley.Michelson.Text (mt)
+  (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), annotToText)
+import Morley.Micheline.Expression.WithMeta (ExpressionWithMeta, WithMeta, expAllExtraL, expMetaL)
+import Morley.Michelson.Printer (RenderDoc, isRenderable, renderDoc)
+import Morley.Michelson.Printer.Util (renderOpsList)
+import Morley.Michelson.Text (MText, mt)
 import Morley.Michelson.TypeCheck
-  (TCError (..), TCTypeError (..), typeCheckContract, typeCheckingWith)
+  (TcError' (..), TcTypeError (UnsupportedTypeForScope), typeCheckingWith)
+import Morley.Michelson.TypeCheck qualified as Tc
+import Morley.Michelson.TypeCheck.Helpers qualified as Tc
+import Morley.Michelson.TypeCheck.Instr qualified as Tc
 import Morley.Michelson.Typed
-  (BadTypeForScope (BtHasTicket), Contract' (..), ContractCode' (ContractCode, unContractCode),
-  CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta),
-  dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr, pattern ConcreteMeta)
+  (BadTypeForScope (BtHasTicket), Contract' (..), ContractCode' (unContractCode), DfsSettings (..),
+  HandleImplicitDefaultEp (WithImplicitDefaultEp), Instr (..), SomeContract (..), dfsFoldInstr,
+  pattern ConcreteMeta)
+import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
-import Morley.Util.Lens (makeLensesWith, postfixLFields)
+import Morley.Tezos.Address (mformatAddress)
+import Morley.Tezos.Crypto (encodeBase58Check)
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 
--- | When it comes to information attached to entries in Michelson code,
--- so-called table encoding stands for representing that info in a list
--- in the order of DFS traversal over Micheline tree.
---
--- This type stands for index in such list, i.e. it is number of the
--- Micheline node that we will visit if we go with DFS.
-newtype TableEncodingIdx = TableEncodingIdx { unTableEncodingIdx :: Int }
-  deriving stock (Show, Eq, Ord)
-  deriving newtype (Buildable)
+-- | Untyped Michelson instruction with meta embedded.
+data OpWithMeta meta
+  = MPrimEx (InstrWithMeta meta)
+  | MSeqEx [OpWithMeta meta]
+  | MMetaEx meta (OpWithMeta meta)
+  deriving stock (Eq, Show, Data)
 
--- | Enumerates all the Micheline nodes starting from 0 and
--- returns only those indices that correspond to actual instructions.
-extractInstructionsIndexes :: Expression -> [TableEncodingIdx]
-extractInstructionsIndexes =
-  -- We drop the head since we are not interested in the initial seq.
-  -- Why dropping the second element - is yet a mistery
-  drop 2 . evaluatingState 0 . go
-  where
-    go :: Expression -> State Int [TableEncodingIdx]
-    go = \case
-      ExpInt _ _ -> skip
-      ExpString _ _ -> skip
-      ExpBytes _ _ -> skip
-      ExpSeq _ exprs -> addFold exprs
-      ExpPrim _ MichelinePrimAp {mpaPrim, mpaArgs}
-        | Set.member (coerce mpaPrim) primInstrs -> addFold mpaArgs
-        | otherwise -> modify (+ 1) *> (fold <$> traverse go mpaArgs)
+instance RenderDoc (OpWithMeta meta) where
+  renderDoc pn (MMetaEx _ op) = renderDoc pn op
+  renderDoc pn (MPrimEx i) = renderDoc pn i
+  renderDoc _  (MSeqEx i) = renderOpsList False i
+  isRenderable =
+    \case MPrimEx i -> isRenderable i
+          MMetaEx _ op -> isRenderable op
+          _ -> True
 
-    skip :: State Int [TableEncodingIdx]
-    skip = mempty <$ modify (+ 1)
+instance (Buildable meta) => Buildable (OpWithMeta meta) where
+  build (MMetaEx meta op) = [int||<MMetaEx: #{meta} #{op}>|]
+  build (MPrimEx expandedInstr) = [int||<MPrimEx: #{expandedInstr}>|]
+  build (MSeqEx expandedOps)    = [int||<MSeqEx: #{expandedOps}>|]
 
-    addFold :: [Expression] -> State Int [TableEncodingIdx]
-    addFold exprs = do
-      index <- get
-      put $ index + 1
-      (TableEncodingIdx index :) . fold <$> traverse go exprs
+type InstrWithMeta meta = U.InstrAbstract (OpWithMeta meta)
+type ContractWithMeta meta = U.Contract' (OpWithMeta meta)
 
-    prims, primInstrs :: Set Text
-    primInstrs = Set.filter (Text.all (\c -> isAsciiUpper c || isDigit c || c == '_')) prims
-    prims = Set.fromList $ toList michelsonPrimitive
+instance (meta ~ meta') => FromExp (WithMeta meta) (OpWithMeta meta') where
+  fromExp e = MMetaEx (view expMetaL e) <$> case e of
+    ExpSeq _ exps -> MSeqEx <$> traverse fromExp exps
+    other -> MPrimEx <$> fromExp other
 
--- | In this state we store two lists with metas.
--- When we're processing one meta then we're taking it
--- from the first list and prepening it to the second one.
--- We're processing them in such manner because sometimes
--- we want to insert empty metas for replaced instr.
-data PreprocessState meta = PreprocessState
-  { psMetasIn :: [meta]
-    -- ^ Metas to process.
-  , psMetasOut :: [meta]
-    -- ^ Processed metas (in reversed order).
-  }
+typeCheckOpWithMeta
+  :: (Show meta, NFData meta, Data meta)
+  => Tc.TcInstrBase (OpWithMeta meta)
+typeCheckOpWithMeta instr hst = case instr of
+  MMetaEx m i ->
+    typeCheckOpWithMeta i hst <&> Tc.mapSeq (Tc.mapSomeInstr $ T.Meta (T.SomeMeta m))
+  MPrimEx i ->
+    Tc.typeCheckInstr typeCheckOpWithMeta i hst
+  MSeqEx is ->
+    Tc.typeCheckImpl typeCheckOpWithMeta is hst <&> Tc.mapSeq (Tc.mapSomeInstr T.Nested)
 
-makeLensesWith postfixLFields ''PreprocessState
+instance Data meta => Tc.IsInstrOp (OpWithMeta meta) where
+  liftInstr = MPrimEx
+  pickErrorSrcPos _ = Nothing
+  tryOpToVal = \case
+    MMetaEx _ i -> Tc.tryOpToVal i
+    MSeqEx is -> case nonEmpty is of
+      Nothing -> pure $ U.ValueNil
+      Just is' -> U.ValueSeq <$> traverse Tc.tryOpToVal is'
+    MPrimEx _ -> mzero
+  tryValToOp = \case
+    U.ValueNil -> Just $ MSeqEx []
+    U.ValueSeq xs -> MSeqEx . toList <$> traverse Tc.tryValToOp xs
+    _ -> Nothing
 
-data DecodeError
-  = FromExpressionFailed FromExpressionError
-  | TypeCheckFailed TCError
-  | InsufficientMeta TableEncodingIdx
-  | MetaEmbeddingError EmbedError
+newtype FromExpressionWithMetaError meta
+  = FromExpressionWithMetaError (FromExpError (WithMeta meta))
+  deriving newtype (Eq)
+
+instance Buildable (FromExpressionWithMetaError EmbeddedLigoMeta) where
+  build (FromExpressionWithMetaError (FromExpError expr err)) =
+    unlinesF
+      [ "Failed to convert expression:"
+      , indentF 2 $ buildExpWithMeta expr
+      , ""
+      , "Error:"
+      , indentF 2 $ build err
+      ]
+    where
+      buildExpWithMeta :: Exp (WithMeta EmbeddedLigoMeta) -> Builder
+      buildExpWithMeta = \case
+        ExpInt _ i -> build i
+        ExpString _ s -> build s
+        ExpBytes _ b ->
+          build $ encodeBase58Check b
+        ExpSeq _ s -> "(" +| buildList buildExpWithMeta s |+ ")"
+        ExpPrim _ (MichelinePrimAp (MichelinePrimitive text) s annots) ->
+          text <> " " |+ "(" +|
+          buildList buildExpWithMeta s +| ") " +|
+          buildList (build . annotToText) annots
+        where
+          buildList buildElem = mconcat . intersperse ", " . map buildElem
+
+newtype TcErrorWithMeta meta = TcErrorWithMeta (TcError' (OpWithMeta meta))
+  deriving newtype (Eq, Buildable)
+
+data DecodeError meta
+  = FromExpressionFailed (FromExpressionWithMetaError meta)
+  | MetaEmbeddingError MetaEmbeddingError
+  | TypeCheckFailed (TcErrorWithMeta meta)
   | PreprocessError PreprocessError
   deriving stock (Eq, Generic)
 
-instance Buildable DecodeError where
+instance (Buildable (FromExpressionWithMetaError meta)) => Buildable (DecodeError meta) where
   build = \case
     FromExpressionFailed err ->
       [int||Failed to parse Micheline expression: #{err}|]
-    TypeCheckFailed err ->
-      [int||Failed to typecheck the Michelson contract: #{err}|]
-    InsufficientMeta idx ->
-      [int||Not enough metadata, missing at index #{idx}|]
     MetaEmbeddingError err ->
       pretty err
+    TypeCheckFailed err ->
+      [int||Failed to typecheck the Michelson contract: #{err}|]
     PreprocessError err ->
       pretty err
 
-newtype MichelsonDecodeException = MichelsonDecodeException DecodeError
+data MetaEmbeddingError
+  = InsufficientMetas Int
+  | ExtraMetas Int
   deriving stock (Eq, Generic)
+
+instance Buildable MetaEmbeddingError where
+  build = \case
+    InsufficientMetas n -> [int||Insufficient number of entries: #s{n}|]
+    ExtraMetas n -> [int||Too many debug entries left: #s{n}|]
+
+-- | Embeds metas in DFS order. If the length of metas list is not equal to
+-- the size of @Micheline@ tree, then the error would be thrown.
+embedMetas :: forall meta. [meta] -> Expression -> Either MetaEmbeddingError (ExpressionWithMeta meta)
+embedMetas metas expr = forOf (unsafePartsOf (expAllExtraL devoid)) expr (ensureLength metas)
+  where
+    ensureLength :: [meta] -> [()] -> Either MetaEmbeddingError [meta]
+    ensureLength [] [] = pure []
+    ensureLength (x : xs) (_ : ys) = (x :) <$> ensureLength xs ys
+    ensureLength [] ys = throwError (InsufficientMetas $ length ys)
+    ensureLength xs [] = throwError (ExtraMetas $ length xs)
+
+expressionToUntypedContract :: forall meta. ExpressionWithMeta meta -> Either (DecodeError meta) (ContractWithMeta meta)
+expressionToUntypedContract expWithMeta = first (FromExpressionFailed . FromExpressionWithMetaError) $
+  fromExp @(WithMeta meta) @(ContractWithMeta _) expWithMeta
+
+newtype MichelsonDecodeException = MichelsonDecodeException (DecodeError EmbeddedLigoMeta)
+  deriving stock (Generic)
   deriving newtype Buildable
 
 instance Show MichelsonDecodeException where
@@ -135,31 +191,28 @@ instance DebuggerException MichelsonDecodeException where
   type ExceptionTag MichelsonDecodeException = "MichelsonDecode"
   debuggerExceptionType (MichelsonDecodeException err) = case err of
     FromExpressionFailed{} -> MidLigoLayerException
-    TypeCheckFailed{} -> MidLigoLayerException
-    InsufficientMeta{} -> MidLigoLayerException
     MetaEmbeddingError{} -> MidLigoLayerException
+    TypeCheckFailed{} -> MidLigoLayerException
     PreprocessError err' -> case err' of
       EntrypointTypeNotFound{} -> UserException
       UnsupportedTicketDup -> UserException
+  shouldInterruptDebuggingSession = False
 
-wrapTypeCheckFailed :: TCError -> DecodeError
+wrapTypeCheckFailed :: TcError' (OpWithMeta meta) -> DecodeError meta
 wrapTypeCheckFailed = \case
-  TCFailedOnInstr _ _ _ _ (Just (UnsupportedTypeForScope _ BtHasTicket)) ->
+  TcFailedOnInstr _ _ _ _ (Just (UnsupportedTypeForScope _ BtHasTicket)) ->
     PreprocessError UnsupportedTicketDup
-  other -> TypeCheckFailed other
+  other -> TypeCheckFailed $ TcErrorWithMeta other
 
-fromExpressionToTyped
-  :: (Default meta)
-  => Expression
-  -> [meta]
+fromUntypedToTyped
+  :: (Default meta, Data meta, Show meta, NFData meta)
+  => ContractWithMeta meta
   -> (U.T -> U.T)
-  -> (U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
-  -> Either DecodeError (SomeContract, [meta])
-fromExpressionToTyped expr metas typeRules instrRules = do
-  uContract <- first FromExpressionFailed $ fromExpression expr
-  (processedUContract, newMetas, oldMetas) <- first PreprocessError $ preprocessContract uContract metas typeRules instrRules
-  contract <- first wrapTypeCheckFailed $ typeCheckingWith debuggerTcOptions $ typeCheckContract processedUContract
-  pure (contract, reverse newMetas <> oldMetas)
+  -> (InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
+  -> Either (DecodeError meta) SomeContract
+fromUntypedToTyped uContract typeRules instrRules = do
+  processedUContract <- first PreprocessError $ preprocessContract uContract typeRules instrRules
+  first wrapTypeCheckFailed $ typeCheckingWith debuggerTcOptions $ Tc.typeCheckContract' typeCheckOpWithMeta processedUContract
 
 data PreprocessError
   = EntrypointTypeNotFound U.EpName
@@ -182,58 +235,19 @@ instance Buildable PreprocessError where
 
 type PreprocessMonad meta =
   ReaderT (Map U.EpName U.Ty) $
-  ExceptT PreprocessError $
-  State (PreprocessState meta)
+  Except PreprocessError
 
-metasToProcess :: U.ExpandedInstr -> Int
-metasToProcess = \case
-  U.IF{} -> 3
-  U.IF_NONE{} -> 3
-  U.IF_LEFT{} -> 3
-  U.IF_CONS{} -> 3
-
-  U.LOOP{} -> 2
-  U.LOOP_LEFT{} -> 2
-
-  U.MAP{} -> 2
-  U.ITER{} -> 2
-
-  U.DIP{} -> 2
-  U.DIPN{} -> 2
-
-  U.LAMBDA{} -> 2
-
-  _ -> 1
-
--- | This function may generate a wrong number of empty metas for
--- complex replacable instructions (e.g. @LAMBDA@, @IF@ or @LOOP@).
--- For all other instructions this function works correctly.
-generateEmptyMetas :: forall meta. (Default meta) => U.ExpandedInstr -> U.ExpandedOp -> PreprocessMonad meta ()
-generateEmptyMetas replacableInstr op = do
-  generateEmptyMetasImpl op
-  psMetasOutL %= drop (metasToProcess replacableInstr)
+createErrorValue :: MText -> U.Value' (OpWithMeta meta)
+createErrorValue errMsg =
+  U.ValuePair (U.ValueString addrText) (U.ValueString errMsg)
   where
-    generateEmptyMetasImpl :: U.ExpandedOp -> PreprocessMonad meta ()
-    generateEmptyMetasImpl = \case
-      U.PrimEx instr -> do
-        replicateM_ (metasToProcess instr) insertEmptyMeta
-        traverseOps instr
-      U.SeqEx ops -> insertEmptyMeta >> mapM_ generateEmptyMetasImpl ops
-      U.WithSrcEx _ op' -> generateEmptyMetasImpl op'
-      where
-        traverseOps :: U.ExpandedInstr -> PreprocessMonad meta ()
-        traverseOps =
-          void . everywhereM (mkM \op' -> generateEmptyMetasImpl op' >> pure op')
+    addrText = mformatAddress errorAddress
 
-    insertEmptyMeta :: PreprocessMonad meta ()
-    insertEmptyMeta = do
-      psMetasOutL %= cons def
-
-instrReplaceRules :: (Default meta) => U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp
+instrReplaceRules :: InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
 instrReplaceRules = \case
   U.EMPTY_BIG_MAP typeAnn varAnn tyKey tyValue ->
-    pure $ U.PrimEx $ U.EMPTY_MAP typeAnn varAnn tyKey tyValue
-  selfInstr@(U.SELF varAnn fieldAnn) -> do
+    pure $ MPrimEx $ U.EMPTY_MAP typeAnn varAnn tyKey tyValue
+  U.SELF varAnn fieldAnn -> do
     let epName = U.epNameFromSelfAnn fieldAnn
     ty <- do
       tyMb <- view $ at epName
@@ -245,21 +259,20 @@ instrReplaceRules = \case
     let errorValue =
           createErrorValue [mt|Cannot find self contract in the contract's environment|]
 
-    let replacement = U.SeqEx $ U.PrimEx <$>
-          [ U.SELF_ADDRESS varAnn
-          , U.CONTRACT varAnn fieldAnn ty
-          , U.IF_NONE
-              do
-                U.PrimEx <$>
-                  [ U.PUSH def errorValueType errorValue
-                  , U.FAILWITH
-                  ]
-              do []
-          ]
+    pure $
+      MSeqEx $ MPrimEx <$>
+        [ U.SELF_ADDRESS varAnn
+        , U.CONTRACT varAnn fieldAnn ty
+        , U.IF_NONE
+            do
+              MPrimEx <$>
+                [ U.PUSH def errorValueType errorValue
+                , U.FAILWITH
+                ]
+            do []
+        ]
 
-    generateEmptyMetas selfInstr replacement
-    pure replacement
-  instr -> pure $ U.PrimEx instr
+  instr -> pure $ MPrimEx instr
 
 typesReplaceRules :: U.T -> U.T
 typesReplaceRules = \case
@@ -274,128 +287,37 @@ typesReplaceRules = \case
 --    We're doing this by replacing all big-map's @Ty@ to map ones
 --    and replacing @EMPTY_BIG_MAP@ instr to @EMPTY_MAP@.
 --
--- Returns processed contract, processed metas (in reversed order) and not processed metas.
+-- Returns a contract with replaced instructions and types.
 preprocessContract
   :: forall meta
-   . (Default meta)
-  => U.Contract
-  -> [meta]
+   . (Default meta, Data meta)
+  => ContractWithMeta meta
   -> (U.T -> U.T)
-  -> (U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
-  -> Either PreprocessError (U.Contract, [meta], [meta])
-preprocessContract con@U.Contract{..} metas typesRules instrRules =
+  -> (InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
+  -> Either PreprocessError (ContractWithMeta meta)
+preprocessContract con@U.Contract{..} typesRules instrRules =
   let
-    (U.ParameterType rootType _) = contractParameter
-    ctx = U.mkEntrypointsMap contractParameter <> M.fromList [(U.DefEpName, rootType)]
+    ctx = U.mkEntrypointsMap WithImplicitDefaultEp contractParameter
     mappedOpsInMonad = mapM go contractCode
-    (mappedOpsE, PreprocessState{..}) = runState (runExceptT $ runReaderT mappedOpsInMonad ctx) (PreprocessState metas [])
-  in (\ops -> (con { U.contractCode = ops }, psMetasOut, psMetasIn)) <$> mappedOpsE
+    mappedOpsE = runExcept $ runReaderT mappedOpsInMonad ctx
+  in mappedOpsE <&> \ops -> con
+      { U.contractCode = ops
+      , U.contractParameter = everywhere (mkT typesRules) contractParameter
+      , U.contractStorage = everywhere (mkT typesRules) contractStorage
+      }
   where
-    processOneMeta :: PreprocessMonad meta ()
-    processOneMeta = do
-      metasIn <- use psMetasInL
-      case metasIn of
-        [] -> pass
-        (meta : xs) -> do
-          psMetasOutL %= cons meta
-          psMetasInL .= xs
-
-    processMetas :: U.ExpandedInstr -> PreprocessMonad meta ()
-    processMetas instr = replicateM_ (metasToProcess instr) processOneMeta
-
-    go :: U.ExpandedOp -> PreprocessMonad meta U.ExpandedOp
+    go :: OpWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
     go = fmap (everywhere $ mkT typesRules) . everywhereM' (mkM preprocessExpandedOps)
       where
-        preprocessExpandedOps :: U.ExpandedOp -> PreprocessMonad meta U.ExpandedOp
+        preprocessExpandedOps :: OpWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
         preprocessExpandedOps = \case
-          U.PrimEx instr -> do
-            processMetas instr
+          MPrimEx instr -> do
             case instr of
               U.CREATE_CONTRACT varAnn1 varAnn2 contract -> do
-                oldMetas <- use psMetasInL
-                (processedContract, newMetas, unusedMetas) <- liftEither $ preprocessContract contract oldMetas typesRules instrRules
-                psMetasOutL %= mappend newMetas
-                psMetasInL .= unusedMetas
-                pure $ U.PrimEx $ U.CREATE_CONTRACT varAnn1 varAnn2 processedContract
+                processedContract <- liftEither $ preprocessContract contract typesRules instrRules
+                pure $ MPrimEx $ U.CREATE_CONTRACT varAnn1 varAnn2 processedContract
               _ -> instrRules instr
-          seqEx@U.SeqEx{} -> do
-            processOneMeta
-            pure seqEx
           other -> pure other
-
--- Using proper content in this type is too inconvenient at the moment
-data EmbedError
-  = RemainingExtraEntries Word
-  | InsufficientEntries Builder
-  deriving stock (Show, Eq)
-
-instance Buildable EmbedError where
-  build = \case
-    RemainingExtraEntries num ->
-      [int||Too many debug entries left: #s{num}|]
-    InsufficientEntries msg -> build msg
-
--- | Embed data into typed instructions visiting them in DFS order.
-embedInInstr
-  :: forall meta inp out.
-     (Show meta, Typeable meta, NFData meta)
-  => [meta]
-  -> Instr inp out
-  -> Either EmbedError (Instr inp out)
-embedInInstr metaTape instr = do
-  (resInstr, tapeRest) <- runExcept $ usingStateT metaTape $
-    dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } instr
-  unless (null tapeRest) $
-    Left $ RemainingExtraEntries (Unsafe.fromIntegral @Int @Word $ length tapeRest)
-  return resInstr
-  where
-    isActualInstr = \case
-      Seq{} -> False
-      i -> isMichelsonInstr i
-
-    recursionImpl :: CtorEffectsApp $ StateT [meta] $ Except EmbedError
-    recursionImpl = CtorEffectsApp "embed" $ \oldInstr mkNewInstr ->
-      if not $ isActualInstr oldInstr
-      then mkNewInstr
-      else get >>= \case
-        [] -> throwError . InsufficientEntries $
-          [int||Insufficient number of entries, broke at #{oldInstr}|]
-        (meta : rest) -> do
-          -- We have to skip several metas due to difference between typed
-          -- representation and Micheline.
-          -- In Micheline every Seq is a separate node that has a corresponding
-          -- meta, and in our typed representation we tend to avoid 'Nested'
-          -- wrapper where Michelson's @{ }@ are mandatory.
-          -- I.e. @IF ADD (SWAP # SUB)@ in typed representation corresponds to
-          -- @Prim "IF" [ [Prim "ADD"], [Prim "SWAP", Prim "SUB"] ]@ in Micheline
-          -- and we have to account for these inner @[]@ manually.
-          let metasToDrop = michelsonInstrInnerBranches oldInstr
-          put $ drop (Unsafe.fromIntegral @Word @Int metasToDrop) rest
-
-          Meta (SomeMeta meta) <$> mkNewInstr
-
--- TODO: extract this to Morley
--- | For Michelson instructions this returns how many sub-instructions this
--- instruction directly contains. For non-Michelson instructions this returns 1.
-michelsonInstrInnerBranches :: Instr i o -> Word
-michelsonInstrInnerBranches = \case
-  IF{} -> 2
-  IF_NONE{} -> 2
-  IF_LEFT{} -> 2
-  IF_CONS{} -> 2
-
-  LOOP{} -> 1
-  LOOP_LEFT{} -> 1
-
-  MAP{} -> 1
-  ITER{} -> 1
-
-  DIP{} -> 1
-  DIPN{} -> 1
-
-  LAMBDA{} -> 1
-
-  _ -> 0
 
 -- | Read LIGO's debug output and produce
 --
@@ -407,26 +329,20 @@ michelsonInstrInnerBranches = \case
 readLigoMapper
   :: LigoMapper 'Unique
   -> (U.T -> U.T)
-  -> (forall meta. (Default meta) => U.ExpandedInstr -> PreprocessMonad meta U.ExpandedOp)
-  -> Either DecodeError (Set ExpressionSourceLocation, SomeContract, [FilePath])
+  -> (forall meta. (Default meta) => InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
+  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath])
 readLigoMapper ligoMapper typeRules instrRules = do
-  let indexes :: [TableEncodingIdx] =
-        extractInstructionsIndexes (lmMichelsonCode ligoMapper)
-  metaPerInstrWithDuplicateLocations :: [LigoIndexedInfo 'Unique] <-
-    forM indexes \i ->
-      maybe (Left $ InsufficientMeta i) pure $
-        lmLocations ligoMapper V.!? unTableEncodingIdx i
+  extendedExpression <- first MetaEmbeddingError $
+    embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
 
-  let metaPerInstr = stripDuplicateLocations metaPerInstrWithDuplicateLocations
+  uContract <-
+    expressionToUntypedContract extendedExpression
+      <&> stripDuplicateLocations
 
-  (SomeContract contract, newMetas) <- fromExpressionToTyped (lmMichelsonCode ligoMapper) metaPerInstr typeRules instrRules
-  extendedContract@(SomeContract extContract) <- first MetaEmbeddingError $
-    (\code -> SomeContract contract{ cCode = ContractCode code }) <$>
-      embedInInstr @EmbeddedLigoMeta
-        newMetas
-        (unContractCode $ cCode contract)
+  extendedContract@(SomeContract extContract) <-
+    fromUntypedToTyped uContract typeRules instrRules
 
-  let allFiles = metaPerInstr ^.. each . liiLocationL . _Just . lrFileL
+  let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . lrFileL
         -- We want to remove duplicates
         & unstableNub
         & filter (not . isLigoStdLib)
@@ -461,18 +377,14 @@ readLigoMapper ligoMapper typeRules instrRules = do
     -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
     -- both having the same @location@ meta; we don't want the user to
     -- see that.
-    stripDuplicateLocations :: [EmbeddedLigoMeta] -> [EmbeddedLigoMeta]
-    stripDuplicateLocations metas = metas
-      & reverse
-      & do
-          evaluatingState HS.empty . mapM \el ->
-            case liiLocation el of
-              Just loc -> do
-                ifM (HS.member loc <$> get)
-                  do
-                    pure (el & liiLocationL .~ Nothing)
-                  do
-                    modify $ HS.insert loc
-                    pure el
-              Nothing -> pure el
-      & reverse
+    stripDuplicateLocations :: ContractWithMeta EmbeddedLigoMeta -> ContractWithMeta EmbeddedLigoMeta
+    stripDuplicateLocations = evaluatingState HS.empty . traverseOf (backwards template) \(el :: EmbeddedLigoMeta) -> do
+      case liiLocation el of
+        Just loc -> do
+          ifM (HS.member loc <$> get)
+            do
+              pure (el & liiLocationL .~ Nothing)
+            do
+              modify $ HS.insert loc
+              pure el
+        Nothing -> pure el

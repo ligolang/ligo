@@ -24,6 +24,8 @@ import Method.CompileExpression (compileExpression)
 import Method.DryRun (dryRun)
 import Method.GenerateDeployScript (generateDeployScript)
 import Method.ListDeclarations (listDeclarations)
+import Method.CreateGist (createGist)
+import Method.ListTemplates (listTemplates)
 import SwaggerSchema (webIdeOpenApi)
 
 startApp :: Config -> IO ()
@@ -47,9 +49,15 @@ mkApp config =
           {corsRequestHeaders = ["Content-Type"]}
 
     server :: Server SwaggeredAPI
-    server =
-      swaggerSchemaUIServer webIdeOpenApi
-        :<|> hoistServer (Proxy @API) hoist (compile :<|> generateDeployScript :<|> compileExpression :<|> dryRun :<|> listDeclarations)
+    server = swaggerSchemaUIServer webIdeOpenApi :<|> hoistServer (Proxy @API) hoist 
+      (    compile 
+      :<|> generateDeployScript 
+      :<|> compileExpression 
+      :<|> dryRun 
+      :<|> listDeclarations 
+      :<|> createGist 
+      :<|> listTemplates
+      )
 
     hoist :: WebIDEM a -> Handler a
     hoist x = convertToServerError @'[LigoCompilerError, MorleyError, SomeException] $ Handler $ do

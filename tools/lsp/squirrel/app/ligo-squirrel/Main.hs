@@ -18,6 +18,7 @@ import StmContainers.Map qualified as StmMap
 import System.Exit (ExitCode (ExitFailure))
 import System.FilePath (splitDirectories, takeDirectory)
 import UnliftIO.Exception (withException)
+import Unsafe qualified
 
 import AST
 import AST.Pretty ()
@@ -32,6 +33,7 @@ import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toL
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
+import RIO.Indexing (getIndexDirectory)
 import RIO.Indexing qualified as Indexing
 import RIO.Types (RIO, RioEnv (..))
 import Util (foldMapM, toLocation)
@@ -132,33 +134,71 @@ mainLoop =
       Colog.filterBySeverity Colog.Error Colog.getSeverity
       $ Colog.cmap (fmap (Debug.show . PP.pretty)) L.logToLogMessage
 
+handleWithActiveFileUpdateN
+  :: forall (a :: J.Method 'J.FromClient 'J.Notification) doc.
+  (J.HasTextDocument (J.MessageParams a) doc, J.HasUri doc J.Uri)
+  => J.SMethod a -> S.Handler RIO a -> S.Handlers RIO
+handleWithActiveFileUpdateN method handler = S.notificationHandler method $
+  \notif -> do
+    handleNewActiveFile notif
+    handler notif
+
+handleWithActiveFileUpdateR
+  :: forall (a :: J.Method 'J.FromClient 'J.Request) doc.
+  ( J.HasTextDocument (J.MessageParams a) doc, J.HasUri doc J.Uri)
+  => J.SMethod a -> S.Handler RIO a -> S.Handlers RIO
+handleWithActiveFileUpdateR method handler = S.requestHandler method $
+  \resp req -> do
+    handleNewActiveFile resp
+    handler resp req
+
+handleNewActiveFile
+  :: (J.HasParams message q, J.HasUri doc J.Uri , J.HasTextDocument q doc)
+  => message -> RIO ()
+handleNewActiveFile message = do
+  activeFileVar <- asks reActiveFile
+
+  previousActiveFile <- readTVarIO activeFileVar
+  let fileFromNotif = Unsafe.fromJust $ message
+        ^.J.params
+        .J.textDocument
+        .J.uri
+        .to J.toNormalizedUri
+        .to J.uriToNormalizedFilePath
+      changed = previousActiveFile /= Just fileFromNotif
+  when changed $ do
+    atomically $ writeTVar activeFileVar (Just fileFromNotif)
+    void . getIndexDirectory . J.fromNormalizedFilePath $ fileFromNotif
+  -- reindexing in case this file belong to different ligo project.
+
 handlers :: S.Handlers RIO
 handlers = mconcat
   [ S.notificationHandler J.SInitialized handleInitialized
 
   , S.requestHandler J.SShutdown handleShutdown
 
-  , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
-  , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
-  , S.notificationHandler J.STextDocumentDidSave handleDidSaveTextDocument
+  , handleWithActiveFileUpdateN J.STextDocumentDidOpen handleDidOpenTextDocument
+  , handleWithActiveFileUpdateN J.STextDocumentDidChange handleDidChangeTextDocument
+  , handleWithActiveFileUpdateN J.STextDocumentDidSave handleDidSaveTextDocument
+
   , S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
 
-  , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
-  , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
-  , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
-  , S.requestHandler J.STextDocumentDocumentHighlight handleDocumentHighlightRequest
-  , S.requestHandler J.STextDocumentCompletion handleCompletionRequest
-  , S.requestHandler J.STextDocumentSignatureHelp handleSignatureHelpRequest
-  , S.requestHandler J.STextDocumentFoldingRange handleFoldingRangeRequest
-  , S.requestHandler J.STextDocumentSelectionRange handleSelectionRangeRequest
-  , S.requestHandler J.STextDocumentDocumentLink handleDocumentLinkRequest
-  , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
-  , S.requestHandler J.STextDocumentHover handleHoverRequest
-  , S.requestHandler J.STextDocumentRename handleRenameRequest
-  , S.requestHandler J.STextDocumentPrepareRename handlePrepareRenameRequest
-  , S.requestHandler J.STextDocumentFormatting handleDocumentFormattingRequest
-  , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
-  , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
+  , handleWithActiveFileUpdateR J.STextDocumentDefinition  handleDefinitionRequest
+  , handleWithActiveFileUpdateR J.STextDocumentTypeDefinition  handleTypeDefinitionRequest
+  , handleWithActiveFileUpdateR J.STextDocumentReferences  handleFindReferencesRequest
+  , handleWithActiveFileUpdateR J.STextDocumentDocumentHighlight  handleDocumentHighlightRequest
+  , handleWithActiveFileUpdateR J.STextDocumentCompletion  handleCompletionRequest
+  , handleWithActiveFileUpdateR J.STextDocumentFoldingRange  handleFoldingRangeRequest
+  , handleWithActiveFileUpdateR J.STextDocumentSelectionRange  handleSelectionRangeRequest
+  , handleWithActiveFileUpdateR J.STextDocumentDocumentLink  handleDocumentLinkRequest
+  , handleWithActiveFileUpdateR J.STextDocumentDocumentSymbol  handleDocumentSymbolsRequest
+  , handleWithActiveFileUpdateR J.STextDocumentHover  handleHoverRequest
+  , handleWithActiveFileUpdateR J.STextDocumentRename  handleRenameRequest
+  , handleWithActiveFileUpdateR J.STextDocumentPrepareRename  handlePrepareRenameRequest
+  , handleWithActiveFileUpdateR J.STextDocumentFormatting  handleDocumentFormattingRequest
+  , handleWithActiveFileUpdateR J.STextDocumentRangeFormatting  handleDocumentRangeFormattingRequest
+  , handleWithActiveFileUpdateR J.STextDocumentCodeAction  handleTextDocumentCodeAction
+  , handleWithActiveFileUpdateR J.STextDocumentSignatureHelp  handleSignatureHelpRequest
 
   , S.notificationHandler J.SCancelRequest (\_msg -> pass)
   , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
@@ -235,15 +275,8 @@ handleDidCloseTextDocument notif = do
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
 handleDefinitionRequest req respond = do
-    -- XXX: They forgot lenses for DefinitionParams :/
-    {-
-    let uri = req^.J.textDocument.J.uri
-    let pos = fromLspPosition $ req^.J.position
-    -}
-    let
-      J.DefinitionParams{_textDocument, _position} = req ^. J.params
-      uri = _textDocument ^. J.uri
-      pos = fromLspPosition _position
+    let uri = req ^. J.params . J.textDocument . J.uri
+        pos = fromLspPosition $ req ^. J.params . J.position
     tree <- contractTree <$> Document.fetch Document.LeastEffort (J.toNormalizedUri uri)
     let location = case AST.definitionOf pos tree of
           Just defPos -> [toLocation defPos]
@@ -253,10 +286,8 @@ handleDefinitionRequest req respond = do
 
 handleTypeDefinitionRequest :: S.Handler RIO 'J.TextDocumentTypeDefinition
 handleTypeDefinitionRequest req respond = do
-    let
-      J.TypeDefinitionParams{_textDocument, _position} = req ^. J.params
-      uri = _textDocument ^. J.uri
-      pos = _position ^. to fromLspPosition
+    let uri = req ^. J.params . J.textDocument . J.uri
+        pos = req ^. J.params . J.position . to fromLspPosition
     tree <- contractTree <$> Document.fetch Document.LeastEffort (J.toNormalizedUri uri)
     let wrapAndRespond = respond . Right . J.InR . J.InL . J.List
     let definition = case AST.typeDefinitionAt pos tree of
@@ -315,24 +346,17 @@ handleCompletionRequest req respond = do
     let pos = fromLspPosition $ req ^. J.params . J.position
     FindContract source tree _ <- Document.fetch Document.LeastEffort uri
     graphVar <- asks reBuildGraph
-    graph <- liftIO $ fromMaybe (Includes G.empty) <$> tryReadMVar graphVar
+    graph <- readTVarIO graphVar
     listCompl <- withCompleterM (CompleterEnv pos tree source graph) complete
     let completions = fmap toCompletionItem . fromMaybe [] $ listCompl
     respond . Right . J.InL . J.List $ completions
 
 handleSignatureHelpRequest :: S.Handler RIO 'J.TextDocumentSignatureHelp
 handleSignatureHelpRequest req respond = do
-  -- XXX: They forgot lenses for  SignatureHelpParams :/
-  {-
   let uri = req ^. J.params . J.textDocument . J.uri
-  let position = req ^. J.params . J.position & fromLspPosition
-  -}
-  let
-    J.SignatureHelpParams{_textDocument, _position} = req ^. J.params
-    uri = _textDocument ^. J.uri
-    position = fromLspPosition _position
+      pos = req ^. J.params . J.position & fromLspPosition
   tree <- contractTree <$> Document.fetch Document.LeastEffort (J.toNormalizedUri uri)
-  let signatureHelp = getSignatureHelp (tree ^. nestedLIGO) position
+  let signatureHelp = getSignatureHelp (tree ^. nestedLIGO) pos
   respond . Right $ signatureHelp
 
 handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
@@ -380,15 +404,8 @@ handleDocumentSymbolsRequest req respond = do
 
 handleHoverRequest :: S.Handler RIO 'J.TextDocumentHover
 handleHoverRequest req respond = do
-    -- XXX: They forgot lenses for  HoverParams :/
-    {-
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    let pos = fromLspPosition $ req ^. J.params . J.position
-    -}
-    let
-      J.HoverParams{_textDocument, _position} = req ^. J.params
-      uri = _textDocument ^. J.uri . to J.toNormalizedUri
-      pos = fromLspPosition _position
+        pos = fromLspPosition $ req ^. J.params . J.position
     tree <- contractTree <$> Document.fetch Document.LeastEffort uri
     respond . Right $ hoverDecl pos tree
 
@@ -457,8 +474,8 @@ handleCustomMethod'BuildGraph
 handleCustomMethod'BuildGraph req respond =
   case req ^. J.params of
     Aeson.Null -> do
-      buildGraphM <- tryReadMVar =<< asks reBuildGraph
-      respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
+      buildGraph <- readTVarIO =<< asks reBuildGraph
+      respond $ Right $ Aeson.toJSON buildGraph
     other -> do
       let msg = [i|This message expects Null, but got #{other}|]
       respond $ Left $ J.ResponseError J.InvalidParams msg Nothing
@@ -466,8 +483,8 @@ handleCustomMethod'BuildGraph req respond =
 handleCustomMethod'IndexDirectory
   :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
 handleCustomMethod'IndexDirectory _req respond = do
-  indexOptsM <- tryReadMVar =<< asks reIndexOpts
-  let pathM = Indexing.indexOptionsPath =<< indexOptsM
+  indexOpts <- readTVarIO =<< asks reIndexOpts
+  let pathM = Indexing.indexOptionsPath indexOpts
   respond $ Right $ maybe Aeson.Null (Aeson.String . toText) pathM
 
 -- | Handles whether a document is clean ('False') or dirty ('True'). If the

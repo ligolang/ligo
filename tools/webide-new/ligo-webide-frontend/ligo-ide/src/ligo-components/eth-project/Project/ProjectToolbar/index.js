@@ -12,6 +12,7 @@ import notification from "~/base-components/notification";
 
 import DeployButton from "./DeployButton";
 import SignRequestModal from "./SignRequestModal";
+import fileOps from "~/base-components/file-ops";
 
 export default class ProjectToolbar extends PureComponent {
   // eslint-disable-next-line react/static-property-placement
@@ -28,6 +29,7 @@ export default class ProjectToolbar extends PureComponent {
       currentTab: "",
       expressionManagerType: "",
       tzFilePath: "",
+      isPreDeploy: false,
     };
   }
 
@@ -35,12 +37,18 @@ export default class ProjectToolbar extends PureComponent {
     this.deployScriptModalRef.current.openModal();
   };
 
-  deployModal = () => {
+  deployModal = async () => {
     if (!networkManager.sdk) {
       notification.error("Cannot Deploy", "No connected network.");
       return;
     }
-    this.deployModalRef.current.openModal();
+    const deployPath = this.context.projectSettings?.get("deploy") || "";
+    if (!(await fileOps.exists(this.context.projectManager.pathForProjectFile(deployPath)))) {
+      this.setState({ isPreDeploy: true });
+      this.compileModalOpen();
+    } else {
+      this.deployModalRef.current.openModal();
+    }
   };
 
   compileModalOpen = () => {
@@ -67,7 +75,7 @@ export default class ProjectToolbar extends PureComponent {
       <>
         <ToolbarButton
           id="compile"
-          icon="fas fa-hammer"
+          icon="fas fa-play"
           tooltip="Compile"
           readOnly={readOnly}
           onClick={() => this.compileModalOpen()}
@@ -112,7 +120,11 @@ export default class ProjectToolbar extends PureComponent {
         <CompileModal
           modalRef={this.compileModalRef}
           tzFilePath={this.state.tzFilePath}
-          onCompile={() => projectManager.compile(null, this.props.finalCall)}
+          onCompile={() => {
+            projectManager.compile(null, this.props.finalCall);
+            this.setState({ isPreDeploy: false });
+          }}
+          isPreDeploy={this.state.isPreDeploy}
         />
         <DeployScriptModal
           modalRef={this.deployScriptModalRef}

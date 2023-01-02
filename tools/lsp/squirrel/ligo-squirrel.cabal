@@ -223,6 +223,7 @@ executable ligo-squirrel
     , katip
     , lens
     , ligo-squirrel
+    , list-t
     , lsp
     , morley-prelude
     , mtl

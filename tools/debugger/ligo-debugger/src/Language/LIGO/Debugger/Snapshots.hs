@@ -65,7 +65,7 @@ import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
+import Morley.Debugger.Core.Snapshots (DebuggerFailure, InterpretHistory (..))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsFailed), MorleyLogsBuilder,
@@ -123,7 +123,7 @@ data InterpretStatus
   | InterpretTerminatedOk
 
     -- | Interpretation failed.
-  | InterpretFailed MichelsonFailureWithStack
+  | InterpretFailed (MichelsonFailureWithStack DebuggerFailure)
 
   deriving stock (Show, Eq)
 
@@ -259,7 +259,7 @@ type CollectingEvalOp m =
   -- Including ConduitT to build snapshots sequence lazily.
   -- Normally ConduitT lies on top of the stack, but here we put it under
   -- ExceptT to make it record things even when a failure occurs.
-  ExceptT MichelsonFailureWithStack $
+  ExceptT (MichelsonFailureWithStack DebuggerFailure) $
   ConduitT () (InterpretSnapshot 'Unique) $
   RWST ContractEnv MorleyLogsBuilder (CollectorState m) $
   m

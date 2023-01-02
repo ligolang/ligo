@@ -5,8 +5,13 @@
 #    extra-substituters = "ssh-ng://bunda.aquarius.serokell.team";
   };
 
+  inputs = {
+    hackage.flake = false;
+    haskell-nix.inputs.hackage.follows = "hackage";
+  };
+
   outputs =
-    { self, haskell-nix, flake-utils, nixpkgs }@inputs:
+    { self, haskell-nix, flake-utils, nixpkgs, hackage  }@inputs:
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         haskellPkgs = haskell-nix.legacyPackages."${system}";

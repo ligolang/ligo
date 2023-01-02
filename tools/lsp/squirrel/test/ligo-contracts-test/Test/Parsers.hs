@@ -65,6 +65,17 @@ okayTests =
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "c" </> "d" </> "foo.mligo"
       , "infer_fun_application.mligo"
 
+        -- https://gitlab.com/ligolang/ligo/-/issues/1545
+      , "ticket_wallet.mligo", "ticket_builder.mligo", "negative" </> "layout.mligo"
+      , "michelson_typed_opt.mligo", "annotated_michelson_record_tree.mligo"
+      , "annotation_cases.mligo", "annotated_michelson_record_comb.mligo"
+      , "build" </> "F.mligo", "edo_combs.mligo", "layout.pligo"
+      , "interpreter_tests" </> "compile_expr.mligo", "interpreter_tests" </> "test_compare.mligo"
+      , "interpreter_tests" </> "compile_expr_from_file.mligo"
+      , "interpreter_tests" </> "test_record.ligo", "warning_layout.mligo"
+      , "self_annotations.mligo", "annotated_michelson_variant_tree.mligo"
+      , "annotated_michelson_variant_comb.mligo", "FA1.2.mligo"
+
         -- LIGO fails to parse these:
       , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
@@ -122,7 +133,15 @@ okayTests =
     }
   , TestDir
     { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "cameligo" </> "original"
-    , tdIgnoreFiles = []
+    , tdIgnoreFiles =
+      [ -- https://gitlab.com/ligolang/ligo/-/issues/1545
+        "4annotated_michelson_record_comb.mligo"
+      , "2annotated_michelson_record_comb.mligo"
+      , "1annotated_michelson_record_tree.mligo"
+      , "4ticket_wallet.mligo"
+      , "1ticket_wallet.mligo"
+      , "1ticket_builder.mligo"
+      ]
     , tdIgnoreDirs = []
     }
   , TestDir

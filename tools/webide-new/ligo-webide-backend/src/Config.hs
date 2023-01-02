@@ -6,4 +6,5 @@ data Config = Config
   , cPort :: Int
   , cVerbose :: Bool
   , cDockerizedLigoVersion :: Maybe String
+  , cGistToken :: String
   }

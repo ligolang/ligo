@@ -42,6 +42,10 @@
             type = types.path;
             default = self.packages.x86_64-linux.tezos-client;
           };
+          gist-token = mkOption {
+            type = types.path;
+            description = "Path to the file with token that is used to manage GitHub gists.";
+          };
         };
 
         config = with pkgs.lib; let
@@ -57,7 +61,10 @@
             unitConfig.ConditionPathExists = [ webide-cfg.package webide-cfg.ligo-package webide-cfg.tezos-client-package ];
             script =
               ''
-                ${webide-cfg.package}/bin/ligo-webide-backend --ligo-path ${webide-cfg.ligo-package}/bin/ligo --octez-client-path ${webide-cfg.tezos-client-package}/bin/octez-client
+                ${webide-cfg.package}/bin/ligo-webide-backend \
+                  --ligo-path ${webide-cfg.ligo-package}/bin/ligo \
+                  --octez-client-path ${webide-cfg.tezos-client-package}/bin/octez-client \
+                  --gist-token "$(cat ${webide-cfg.gist-token})"
               '';
 
           };
@@ -85,22 +92,23 @@
 
         };
       };
-    deploy = {
+    deploy = let
+      webide-profile = (import nixpkgs { localSystem = "x86_64-linux"; }).linkFarm "webide-profile" [
+        { name = "backend"; path = self.packages.x86_64-linux.backend; }
+        { name = "frontend"; path = self.packages.x86_64-linux.frontend; }
+        { name = "tezos-client"; path = self.packages.x86_64-linux.tezos-client; }
+        { name = "ligo"; path = self.packages.x86_64-linux.ligo-bin; }
+      ];
+    in {
       sshOpts = [ "-p 17788" ];
       nodes.webide = {
         # TODO: perhaps it should be moved to a dedicated server
         hostname = "tejat-prior.gemini.serokell.team";
         user = "deploy";
         profiles = {
-          backend.path = deploy-rs.lib.x86_64-linux.activate.custom
-            self.packages.x86_64-linux.backend
+          webide.path = deploy-rs.lib.x86_64-linux.activate.custom
+            webide-profile
             "sudo /run/current-system/sw/bin/systemctl restart container@ligo-webide-thing.service";
-          frontend.path = deploy-rs.lib.x86_64-linux.activate.noop
-            self.packages.x86_64-linux.frontend;
-          ligo.path = deploy-rs.lib.x86_64-linux.activate.noop
-            self.packages.x86_64-linux.ligo-bin;
-          tezos-client.path = deploy-rs.lib.x86_64-linux.activate.noop
-            self.packages.x86_64-linux.tezos-client;
         };
       };
     };
@@ -111,8 +119,8 @@
         localSystem = system;
       };
       ligo-binary = {
-        # ligo 0.50.0
-        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/2959700000/artifacts/raw/ligo"; hash = "sha256-9AdoS8tUYeqdnCUSRbUxj3dZQLhk9pbEq93hFF6uSEI="; };
+        # ligo 0.56.0
+        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/3370208693/artifacts/raw/ligo"; hash = "sha256-SAW2Vq1yJnMPnpcySgc9b+unmF675tR5JbTY7Z2jiVw="; };
       };
       ligo-syntaxes = pkgs.callPackage ../lsp/vscode-plugin/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;

@@ -48,30 +48,56 @@ class ModelSessionManager {
   editorRef = null;
 
   updateEditorAfterMovedFile(oldPath, newPath) {
-    // include move file and rename file
     if (!this.sessions[oldPath]) return;
-    const newModelSession = this.replaceModelSession(oldPath, newPath);
-    this.sessions[newPath] = newModelSession;
-    this.decorationMap[newPath] = this.decorationMap[oldPath];
+
+    const tabsState = this.tabsRef.current.state;
+
+    const sessionsIds = tabsState.tabs.map((v, i) => [v.key, i]);
+    const currentSessionIndex = sessionsIds.filter((v) => v[0] === oldPath)[0][1];
+    const nextSessionId = (currentSessionIndex + 1) % sessionsIds.length;
+    const nextSessionKey = sessionsIds[nextSessionId][0];
+
+    if (newPath) {
+      const newModelSession = this.replaceModelSession(oldPath, newPath);
+      this.sessions[newPath] = newModelSession;
+      this.decorationMap[newPath] = this.decorationMap[oldPath];
+    }
     this.sessions[oldPath].dispose();
     delete this.sessions[oldPath];
     delete this.decorationMap[oldPath];
-    const tabsState = this.tabsRef.current.state;
+
     const oldTab = tabsState.tabs.find((tab) => tab.path.endsWith(oldPath));
-    if (!oldTab) return;
-    const tab = {
-      path: oldTab.path && oldTab.path.replace(oldPath, newPath),
-      key: oldTab.key && oldTab.key.replace(oldPath, newPath),
-      pathInProject: oldTab.pathInProject && oldTab.pathInProject.replace(oldPath, newPath),
-      remote: oldTab.remote,
-    };
-    const newTab = this.tabsRef.current.updateTab(tab, oldTab.key);
+    if (newPath) {
+      if (!oldTab) return;
+      const tab = {
+        path: oldTab.path && oldTab.path.replace(oldPath, newPath),
+        key: oldTab.key && oldTab.key.replace(oldPath, newPath),
+        pathInProject: oldTab.pathInProject && oldTab.pathInProject.replace(oldPath, newPath),
+        remote: oldTab.remote,
+      };
+      const newTab = this.tabsRef.current.updateTab(tab, oldTab.key);
+      if (this.currentFilePath === oldPath) {
+        this.tabsRef.current.changeCurrentTab(newTab);
+      }
+    } else {
+      this.tabsRef.current.onCloseTab(oldTab);
+    }
+
     if (this.currentFilePath !== oldPath) return;
-    this.tabsRef.current.changeCurrentTab(newTab);
-    this.currentModelSession = this.sessions[newPath];
-    this.editorRef.current.setState({
-      modelSession: this.sessions[newPath],
-    });
+
+    if (newPath) {
+      this.currentModelSession = this.sessions[newPath];
+      this.editorRef.current.setState({
+        modelSession: this.sessions[newPath],
+      });
+    } else if (this.tabsRef.current.state.tabs.length === 1) {
+      this._editorContainer.refresh();
+    } else {
+      this._currentModelSession = this.sessions[nextSessionKey];
+      this.editorRef.current.setState({
+        modelSession: this.sessions[nextSessionKey],
+      });
+    }
   }
 
   replaceModelSession(oldPath, newPath) {

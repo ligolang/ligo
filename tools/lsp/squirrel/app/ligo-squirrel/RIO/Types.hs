@@ -34,7 +34,9 @@ newtype OpenDocument = OpenDocument
 
 -- | Represents the user's choice on how to index the project.
 data IndexOptions
-  = IndexChoicePending
+  = IndexOptionsNotSetYet
+  -- ^ Waiting for `getIndexDirectory` to set correct `IndexOptions`.
+  | IndexChoicePending
   -- ^ The choice was not yet processed and is pending. Only the currently
   -- opened contract is indexed.
   | DoNotIndex
@@ -63,17 +65,20 @@ data RioEnv = RioEnv
   , reOpenDocs :: StmMap.Map J.NormalizedUri OpenDocument
   -- ^ Records which files are current open in the editor, and keeps track of
   -- extra information, such as whether that file is dirty.
-  , reIncludes :: MVar (Includes ParsedContractInfo)
+  , reIncludes :: TVar (Includes ParsedContractInfo)
   -- ^ Stores the inclusion graph with respect to the currently open file.
   , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
   -- ^ Provides a way to look which temporary files correspond to which open files.
-  , reIndexOpts :: MVar IndexOptions
+  , reIndexOpts :: TVar IndexOptions
   -- ^ Stores the user's choice (or lack of) in how the project should be indexed.
-  , reBuildGraph :: MVar (Includes FilePath)
+  , reBuildGraph :: TVar (Includes FilePath)
   -- ^ Represents the build graph for all files that were looked up.
   , reLigo :: IORef (Maybe (Pool LigoProcess))
   -- ^ The spawned LIGO processes. This might be 'Nothing' in case the daemon
   -- was not initialized yet.
+  , reActiveFile :: TVar (Maybe J.NormalizedFilePath)
+  -- ^ Last file mentioned by LSP client. Can be `Nothing` only right after
+  -- initializing (when no files were mentioned yet).
   }
 
 newtype ProjectSettings = ProjectSettings

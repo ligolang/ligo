@@ -1,4 +1,4 @@
-import React, { memo, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 
 import KeypairManagerModal from "./KeypairManagerModal";
@@ -10,16 +10,20 @@ type KeypairButtonProps = {
   modifyNameDisabled?: string;
   deletionDisabled?: string;
   children?: React.ReactNode;
+  isOpenKeypair: boolean;
+  onCancel: () => void;
 };
 
 const KeypairButton: React.FC<KeypairButtonProps> = memo(
   ({
     chains,
-    mnemonic,
+    mnemonic = true,
     secretName = "Private Key",
     modifyNameDisabled,
     deletionDisabled,
     children,
+    isOpenKeypair,
+    onCancel,
   }) => {
     const modal = useRef<KeypairManagerModal>(null);
     /* eslint-disable */
@@ -38,9 +42,18 @@ const KeypairButton: React.FC<KeypairButtonProps> = memo(
       }
     };
 
+    useEffect(() => {
+      if (isOpenKeypair && modal.current) {
+        openModal();
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpenKeypair]);
+
     return (
       <>
-        <div onClick={openModal}>{children}</div>
+        <div className="nav-link-inner" onClick={openModal}>
+          {children}
+        </div>
         <KeypairManagerModal
           ref={modal}
           chains={chains}
@@ -48,6 +61,7 @@ const KeypairButton: React.FC<KeypairButtonProps> = memo(
           secretName={secretName}
           modifyNameDisabled={modifyNameDisabled}
           deletionDisabled={deletionDisabled}
+          onCancel={onCancel}
         />
       </>
     );

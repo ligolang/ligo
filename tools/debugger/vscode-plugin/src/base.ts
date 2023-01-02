@@ -10,6 +10,16 @@ import { ConfigCommand, ConfigField } from './LigoDebugConfigurationProvider';
 
 export type Maybe<T> = T | undefined
 
+// Interrupts debugging execution.
+//
+// Note if debugging session is started then you need
+// to manually terminate it.
+export function interruptExecution(): never {
+  // 1000 - 7 is just a random value. We're throwing it
+  // in order not to trigger all internal `vscode` executions.
+  throw 1000 - 7;
+}
+
 // Make from an object reference
 export type Ref<T> = {
   ref: T
@@ -97,10 +107,7 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
         // then we want to stop debugging session immediately.
         // We can do this by throwing something (tried to throw `Error`
         // but I see annoying error message in bottom right corner).
-        //
-        // Note: 1000 - 7 is just a random value. We're throwing it
-        // in order not to trigger `vscode` to show error message.
-        throw 1000 - 7;
+        interruptExecution();
       } else {
         return result;
       }
@@ -110,4 +117,8 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
   } else {
     return defaultItem;
   }
+}
+
+export function impossible(x: never) {
+  throw new Error("An impossible happened! Value: " + x)
 }

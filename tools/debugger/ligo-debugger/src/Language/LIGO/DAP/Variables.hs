@@ -15,7 +15,7 @@ import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuil
 import Morley.Debugger.Protocol.DAP (Variable)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Typed
-  (EntrypointCallT (..), EpAddress (..), SingI, SomeConstrainedValue (SomeValue),
+  (Constrained (SomeValue), EntrypointCallT (..), EpAddress (..), SingI,
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
 import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
@@ -111,7 +111,7 @@ getInnerTypeFromRecord name = \case
   _ -> LigoType Nothing
 
 getEpAddressChildren :: Lang -> EpAddress -> [Variable]
-getEpAddressChildren lang EpAddress{..} =
+getEpAddressChildren lang EpAddress'{..} =
   if isDefEpName eaEntrypoint
   then []
   else [addr, ep]
@@ -137,7 +137,7 @@ buildSubVars lang typ = \case
       let name = pretty $ debugBuild DpmNormal k
       buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
   VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
-    pure $ getEpAddressChildren lang EpAddress{..}
+    pure $ getEpAddressChildren lang EpAddress'{..}
   VAddress epAddress -> pure $ getEpAddressChildren lang epAddress
   -- Other value types do not have nested structure
   _ -> return []

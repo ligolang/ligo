@@ -50,6 +50,7 @@ parseType node = do
       , parseArrowType
       , parseVariableType
       , parseParenType
+      , parseUnresolvedType
       ]
 
 parseParenType :: PPableLIGO info => LIGO info -> Parser (Maybe Type)
@@ -108,6 +109,11 @@ parseVariableType :: Contains Range info => LIGO info -> Parser (Maybe Type)
 parseVariableType node = runMaybeT do
   var <- MaybeT $ parseTypeVariable node
   pure $ VariableType var
+
+parseUnresolvedType :: LIGO info -> Parser (Maybe Type)
+parseUnresolvedType node = runMaybeT $ do
+  LIGO.ErrorTypeUnresolved <- hoistMaybe $ layer node
+  pure UnresolvedType
 
 -- Since we don't care right now about distinguishing functions or whatever, we
 -- just treat the whole node as a type name. It _is_ possible that the node is

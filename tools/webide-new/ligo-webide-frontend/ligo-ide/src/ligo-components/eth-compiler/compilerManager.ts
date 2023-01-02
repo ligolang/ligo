@@ -121,7 +121,17 @@ export class CompilerManager {
         );
 
         if (CompilerManager.terminal) {
-          CompilerManager.terminal.writeToTerminal(`\nwrote output to ${amendedBuildPath}\n\r\n\r`);
+          if (amendedBuildPath.type === "success") {
+            CompilerManager.terminal.writeToTerminal(
+              `\nwrote output to ${amendedBuildPath.message}\n\r\n\r`
+            );
+          }
+          if (amendedBuildPath.type === "error") {
+            CompilerManager.terminal.writeToTerminal(
+              `\n${amendedBuildPath.message}\n\r\n\r`,
+              "red"
+            );
+          }
         }
       })
       .catch((e) => {
@@ -153,8 +163,13 @@ export class CompilerManager {
     for (let i = 0; i < buildRelatedFolders.length; i++) {
       if (!(await fileOps.exists(`${curFolder}/${buildRelatedFolders[i]}`))) {
         await ProjectManager.writeDirectory(curFolder, buildRelatedFolders[i]);
-        curFolder = `${curFolder}/${buildRelatedFolders[i]}`;
+      } else if (await fileOps.isFile(`${curFolder}/${buildRelatedFolders[i]}`)) {
+        return {
+          type: "error",
+          message: `Error during contract saving: on path ${buildFolder}/${buildRelatedPath}, path ${curFolder}/${buildRelatedFolders[i]} is already existing file`,
+        };
       }
+      curFolder = `${curFolder}/${buildRelatedFolders[i]}`;
     }
 
     const buildPath = `${projectManager.projectRoot}/build${projectManager.mainFilePath.replace(
@@ -175,7 +190,7 @@ export class CompilerManager {
       await fileOps.writeFile(amendedBuildPath, data);
     }
 
-    return amendedBuildPath;
+    return { type: "success", message: amendedBuildPath };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

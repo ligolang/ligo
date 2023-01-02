@@ -8,9 +8,13 @@
       [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
   };
 
-  inputs = { utils.url = "github:numtide/flake-utils"; };
+  inputs = {
+    utils.url = "github:numtide/flake-utils";
+    hackage.flake = false;
+    haskell-nix.inputs.hackage.follows = "hackage";
+  };
 
-  outputs = { self, utils, haskell-nix }:
+  outputs = { self, utils, haskell-nix, hackage }:
     let haskellSystems = (builtins.attrNames haskell-nix.legacyPackages);
     in utils.lib.eachSystem haskellSystems (system:
       let

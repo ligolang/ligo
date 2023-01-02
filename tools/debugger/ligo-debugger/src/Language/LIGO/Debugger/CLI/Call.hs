@@ -19,7 +19,6 @@ module Language.LIGO.Debugger.CLI.Call
 import Data.Aeson qualified as Aeson
 import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
-import Data.SemVer.QQ qualified as SemVer.QQ
 import Data.Text qualified as T
 import Fmt (Buildable, build, pretty)
 import System.FilePath ((</>))
@@ -127,6 +126,7 @@ instance DebuggerException UnsupportedLigoVersionException where
     [ ("actualVersion", [int||#semv{verActual}|])
     , ("recommendedVersion", [int||#semv{recommendedVersion}|])
     ]
+  shouldInterruptDebuggingSession = False
 
 -- | Run ligo to get the version of executable.
 getLigoVersion :: (HasLigoClient m) => m LSP.Version
