@@ -20,7 +20,7 @@ let test =
   let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr) in
 
   (* Test inputs *)
-  let classico_kind = 1n in
+  let clasico_kind = 1n in
   let unknown_kind = 3n in
 
   (* Auxiliary function for testing equality in maps *)
@@ -30,7 +30,7 @@ let test =
     | Some v -> v.current_stock = r.current_stock && v.max_price = r.max_price in
 
   (* Purchasing a Taco with 1tez and checking that the stock has been updated *)
-  let ok_case : test_exec_result = Test.transfer_to_contract pedro_taco_shop_ctr classico_kind 1tez in
+  let ok_case : test_exec_result = Test.transfer_to_contract pedro_taco_shop_ctr clasico_kind 1tez in
   let () = match ok_case with
     | Success  ->
       let storage = Test.get_storage pedro_taco_shop_ta in
@@ -44,6 +44,6 @@ let test =
   let () = assert_string_failure nok_unknown_kind "Unknown kind of taco" in
 
   (* Attempting to Purchase a Taco with 2tez *)
-  let nok_wrong_price = Test.transfer_to_contract pedro_taco_shop_ctr classico_kind 2tez in
+  let nok_wrong_price = Test.transfer_to_contract pedro_taco_shop_ctr clasico_kind 2tez in
   let () = assert_string_failure nok_wrong_price "Sorry, the taco you are trying to purchase has a different price" in
   ()
