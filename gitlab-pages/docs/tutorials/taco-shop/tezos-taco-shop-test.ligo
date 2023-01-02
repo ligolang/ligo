@@ -22,7 +22,7 @@ const test = {
   const pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
 
   // Test inputs
-  const classico_kind = 1n ;
+  const clasico_kind = 1n ;
   const unknown_kind = 3n ;
 
   // Auxiliary function for testing equality in maps
@@ -34,7 +34,7 @@ const test = {
   } with b;
 
   // Purchasing a Taco with 1tez and checking that the stock has been updated
-  const ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1tez) ;
+  const ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 1tez) ;
   const _unit =
      case ok_case of [
     | Success  -> {
@@ -49,6 +49,6 @@ const test = {
   const _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   // Attempting to Purchase a Taco with 2tez
-  const nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2tez) ;
+  const nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 2tez) ;
   const _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   } with unit

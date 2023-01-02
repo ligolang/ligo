@@ -18,11 +18,11 @@ const test = {
     |} : ligo_program) ] ) ;
   const (pedro_taco_shop, _code, _size) = Test.originate_from_file (filename, "buy_taco", nil : list (string), init_storage, 0tez) ;
   // compile test inputs
-  const classico_kind = Test.compile_value (1n) ;
+  const clasico_kind = Test.compile_value (1n) ;
   const unknown_kind = Test.compile_value (3n) ;
 
   // Purchasing a Taco with 1tez and checking that the stock has been updated
-  const ok_case : test_exec_result = Test.transfer (pedro_taco_shop, classico_kind, 1tez) ;
+  const ok_case : test_exec_result = Test.transfer (pedro_taco_shop, clasico_kind, 1tez) ;
   const _unit =
     case ok_case of [
     | Success  -> {
@@ -41,6 +41,6 @@ const test = {
   const _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   // Attempting to Purchase a Taco with 2tez
-  const nok_wrong_price = Test.transfer (pedro_taco_shop, classico_kind, 2tez) ;
+  const nok_wrong_price = Test.transfer (pedro_taco_shop, clasico_kind, 2tez) ;
   const _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   } with unit

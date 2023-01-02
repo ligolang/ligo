@@ -17,11 +17,11 @@ let test =
   in
   let (pedro_taco_shop, _code, _size) = Test.originate_from_file filename "buy_taco" ([] : string list) init_storage 0tez in
   (* compile test inputs *)
-  let classico_kind = Test.compile_value 1n in
+  let clasico_kind = Test.compile_value 1n in
   let unknown_kind = Test.compile_value 3n in
 
   (* Purchasing a Taco with 1tez and checking that the stock has been updated *)
-  let ok_case : test_exec_result = Test.transfer pedro_taco_shop classico_kind 1tez in
+  let ok_case : test_exec_result = Test.transfer pedro_taco_shop clasico_kind 1tez in
   let () = match ok_case with
     | Success  ->
       let storage = Test.get_storage_of_address pedro_taco_shop in
@@ -40,6 +40,6 @@ let test =
   let () = assert_string_failure nok_unknown_kind "Unknown kind of taco" in
 
   (* Attempting to Purchase a Taco with 2tez *)
-  let nok_wrong_price = Test.transfer pedro_taco_shop classico_kind 2tez in
+  let nok_wrong_price = Test.transfer pedro_taco_shop clasico_kind 2tez in
   let () = assert_string_failure nok_wrong_price "Sorry, the taco you are trying to purchase has a different price" in
   ()
