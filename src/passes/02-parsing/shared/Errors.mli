@@ -17,6 +17,7 @@ type error = t
 
 type pp_formater =
   display_format:(string Display.display_format) ->
+  no_colour:bool ->
   Format.formatter ->
   t ->
   unit

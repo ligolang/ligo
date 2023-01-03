@@ -31,7 +31,10 @@ let mich_value_jsonformat michelson_format code : json =
     `Assoc [ "json_code", `String code_as_str ]
 
 
-let mich_value_ppformat michelson_format ~display_format f code =
+let mich_value_ppformat michelson_format ~display_format ~no_colour f code =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   let mich_pp michelson_format =
     match michelson_format with
     | `Text -> pp_comment
@@ -50,9 +53,9 @@ let mich_value_format michelson_format : 'a format =
   }
 
 
-let tests_ppformat ~display_format f (print_values, toplevel_env) =
+let tests_ppformat ~display_format ~no_colour f (print_values, toplevel_env) =
   let pp_result ppf (n, v) =
-    Format.fprintf ppf "- %s exited with value %a." n PP.pp_value v
+    Format.fprintf ppf "- %s exited with value %a." n (PP.pp_value ~no_colour) v
   in
   let pp_toplevel_env ppf lst =
     Format.fprintf

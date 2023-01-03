@@ -143,8 +143,8 @@ module MakeParser
         struct
           include MainLexer
 
-          let scan_token lexbuf =
-            match scan_token lexbuf with
+          let scan_token ~no_colour lexbuf =
+            match scan_token ~no_colour lexbuf with
               Ok _ as ok -> ok
             | Error {message; _} -> Error message
         end in
@@ -165,9 +165,10 @@ module MakeParser
       let tree =
         let string = Buffer.contents buffer in
         let lexbuf = Lexing.from_string string in
+        let no_colour = DefaultPreprocParams.Options.no_colour in
         let     () = Lexbuf.reset ?file:file_path lexbuf in
         let     () = Lexer.clear () in
-        MainParser.recov_from_lexbuf (module ParErr) lexbuf
+        MainParser.recov_from_lexbuf ~no_colour (module ParErr) lexbuf
 
       in lift ~raise tree
 

@@ -31,7 +31,7 @@ module type LEXER =
 
     type message = string Region.reg
 
-    val scan_token : Lexing.lexbuf -> (token, message) result
+    val scan_token : no_colour:bool -> Lexing.lexbuf -> (token, message) result
 
     val used_tokens : unit -> token list (* Scanned tokens *)
 
@@ -140,11 +140,11 @@ module Make (Lexer  : LEXER)
             else Region.ghost (* No pertinent region *)
           in region, used_tokens
 
-    let format_error ~file value (region: Region.t) =
+    let format_error ~no_colour ~file value (region: Region.t) =
       let value =
         if file then
           sprintf "%s%s"
-            (Format.asprintf "%a" Snippet.pp_lift region)
+            (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
             (Std.redden value)
         else
           let header =
@@ -155,15 +155,15 @@ module Make (Lexer  : LEXER)
           in sprintf "%s:\n%s" header value
       in Region.{region; value}
 
-    let wrap_parse_error lexbuf (message: string) : error =
+    let wrap_parse_error ~no_colour lexbuf (message: string) : error =
       let region, used_tokens = get_current_token_region lexbuf in
-      let message = format_error ~file:true message region
+      let message = format_error ~no_colour ~file:true message region
       in {used_tokens; message}
 
     exception LexingError of error
 
-    let menhir_lexer lexbuf =
-      match Lexer.scan_token lexbuf with
+    let menhir_lexer ~no_colour lexbuf =
+      match Lexer.scan_token ~no_colour lexbuf with
         Stdlib.Ok token -> token
       | Error message ->
           let used_tokens = Lexer.used_tokens () in
@@ -171,17 +171,18 @@ module Make (Lexer  : LEXER)
 
     (* THE MONOLITHIC API *)
 
-    let mono_menhir lexbuf_of source : (Parser.tree, pass_error) result =
+    let mono_menhir ~no_colour lexbuf_of source : (Parser.tree, pass_error) result =
       let lexbuf = lexbuf_of source in
+      let menhir_lexer = menhir_lexer ~no_colour in
       try Stdlib.Ok (Parser.main menhir_lexer lexbuf) with
         LexingError error ->
           Stdlib.Error (Lexing error)
       | Parser.Error -> (* Menhir exception *)
-          Error (Parsing (wrap_parse_error lexbuf "Syntax error."))
+          Error (Parsing (wrap_parse_error ~no_colour lexbuf "Syntax error."))
 
-    let mono_from_lexbuf  = mono_menhir (fun x -> x)
-    let mono_from_channel = mono_menhir Lexing.from_channel
-    let mono_from_string  = mono_menhir Lexing.from_string
+    let mono_from_lexbuf  ~no_colour = mono_menhir ~no_colour (fun x -> x)
+    let mono_from_channel ~no_colour = mono_menhir ~no_colour Lexing.from_channel
+    let mono_from_string  ~no_colour = mono_menhir ~no_colour Lexing.from_string
 
     type file_path = string
 
@@ -197,11 +198,11 @@ module Make (Lexer  : LEXER)
         let message = Region.{region; value=msg}
         in Stdlib.Error {used_tokens=[]; message}
 
-    let mono_from_file path =
+    let mono_from_file ~no_colour path =
       match lexbuf_from_file path with
         Stdlib.Error error -> Error (System error)
       | Ok (lexbuf, close) ->
-          let tree = mono_menhir (fun x -> x) lexbuf
+          let tree = mono_menhir ~no_colour (fun x -> x) lexbuf
           in close (); tree
 
     (* THE INCREMENTAL API *)
@@ -327,10 +328,10 @@ module Make (Lexer  : LEXER)
 
     (* Incremental parsing *)
 
-    let incr_menhir lexbuf_of (module ParErr : PAR_ERR) source =
+    let incr_menhir ~no_colour lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf      = lexbuf_of source in
       let supplier    = lexer_lexbuf_to_supplier
-                          Debug.mode menhir_lexer lexbuf in
+                          Debug.mode (menhir_lexer ~no_colour) lexbuf in
       let failure     = raise_on_failure (module ParErr) in (* Exception *)
       let interpreter = Inter.loop_handle success failure supplier in
       let module Incr = Parser.Incremental in
@@ -338,18 +339,18 @@ module Make (Lexer  : LEXER)
       let tree =
         try Stdlib.Ok (interpreter parser) with
           LexingError error -> Error (Lexing error)
-        | ParsingError msg  -> Error (Parsing (wrap_parse_error lexbuf msg))
+        | ParsingError msg  -> Error (Parsing (wrap_parse_error ~no_colour lexbuf msg))
       in (flush_all (); tree)
 
-    let incr_from_lexbuf  = incr_menhir (fun x -> x)
-    let incr_from_channel = incr_menhir Lexing.from_channel
-    let incr_from_string  = incr_menhir Lexing.from_string
+    let incr_from_lexbuf  ~no_colour = incr_menhir ~no_colour (fun x -> x)
+    let incr_from_channel ~no_colour = incr_menhir ~no_colour Lexing.from_channel
+    let incr_from_string  ~no_colour = incr_menhir ~no_colour Lexing.from_string
 
-    let incr_from_file (module ParErr : PAR_ERR) path =
+    let incr_from_file ~no_colour (module ParErr : PAR_ERR) path =
       match lexbuf_from_file path with
         Stdlib.Error error -> Error (System error)
       | Ok (lexbuf, close) ->
-          let tree = incr_from_lexbuf (module ParErr) lexbuf
+          let tree = incr_from_lexbuf ~no_colour (module ParErr) lexbuf
           in (close (); tree)
 
     (* Incremental parsing with recovery *)
@@ -570,10 +571,10 @@ module Make (Lexer  : LEXER)
       and region, _ = get_current_token_region lexbuf
       in Region.{value; region}
 
-    let incr_menhir_recovery lexbuf_of (module ParErr : PAR_ERR) source =
+    let incr_menhir_recovery ~no_colour lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source in
       let supplier     = lexer_lexbuf_to_supplier
-                           Debug.mode menhir_lexer lexbuf in
+                           Debug.mode (menhir_lexer ~no_colour) lexbuf in
       let failure      = get_message_on_failure lexbuf (module ParErr) in
       let interpreter  = Recover.loop_handle lexbuf success failure supplier in
       let module Incr  = Parser.Incremental in
@@ -581,15 +582,15 @@ module Make (Lexer  : LEXER)
       let result       = interpreter parser
       in (flush_all (); result)
 
-    let recov_from_lexbuf  = incr_menhir_recovery (fun x -> x)
-    let recov_from_channel = incr_menhir_recovery Lexing.from_channel
-    let recov_from_string  = incr_menhir_recovery Lexing.from_string
+    let recov_from_lexbuf  ~no_colour = incr_menhir_recovery ~no_colour (fun x -> x)
+    let recov_from_channel ~no_colour = incr_menhir_recovery ~no_colour Lexing.from_channel
+    let recov_from_string ~no_colour  = incr_menhir_recovery ~no_colour Lexing.from_string
 
-    let recov_from_file (module ParErr : PAR_ERR) path =
+    let recov_from_file ~no_colour (module ParErr : PAR_ERR) path =
       match lexbuf_from_file path with
         Stdlib.Error error ->
           Stdlib.Error (error.message, [])
       | Ok (lexbuf, close) ->
-          let result = recov_from_lexbuf (module ParErr) lexbuf
+          let result = recov_from_lexbuf ~no_colour (module ParErr) lexbuf
           in (close (); result)
   end

@@ -57,8 +57,9 @@ let determine_map ~kind =
 
 let list' ~kind = List.sort ~compare:String.compare @@ Map.keys (determine_map ~kind)
 
-let list ~kind ~display_format () =
-  format_result ~display_format Formatter.list_format @@ fun ~raise:_ -> list' ~kind
+let list ~kind ~display_format ~no_colour () =
+  format_result ~display_format ~no_colour Formatter.list_format
+  @@ fun ~raise:_ -> list' ~kind
 
 
 let new_project'
@@ -89,11 +90,11 @@ let new_project'
   [ project_name ]
 
 
-let new_project ~version ~kind ~project_name_opt ~template ~display_format () =
+let new_project ~version ~kind ~project_name_opt ~template ~display_format ~no_colour () =
   let project_name =
     match project_name_opt with
     | Some e -> e
     | None -> template
   in
-  format_result ~display_format Formatter.new_project_format
+  format_result ~display_format ~no_colour Formatter.new_project_format
   @@ fun ~raise -> new_project' ~raise ~kind ~template ~project_name ~version

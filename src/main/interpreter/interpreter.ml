@@ -37,7 +37,7 @@ pattern_env_extend_ [locs,env] [pattern] [ty] [value]
   Bounded variable in [pattern] can also be mutable -- in which case locations are push through
   the execution monad
 *)
-let rec pattern_env_extend_ ~(attributes : ValueAttr.t) ~(mut : bool)
+let rec pattern_env_extend_ ~(no_colour : bool) ~(attributes : ValueAttr.t) ~(mut : bool)
     :  location list * env -> _ AST.Pattern.t -> AST.type_expression -> value
     -> (location list * env) Monad.t
   =
@@ -51,12 +51,12 @@ let rec pattern_env_extend_ ~(attributes : ValueAttr.t) ~(mut : bool)
           "Type error: evaluating pattern %a with value:@.%a : %a@."
           (Pattern.pp PP.type_expression)
           pattern
-          Ligo_interpreter.PP.pp_value
+          (Ligo_interpreter.PP.pp_value ~no_colour)
           value
           PP.type_expression
           ty)
   in
-  let self = pattern_env_extend_ ~attributes ~mut in
+  let self = pattern_env_extend_ ~no_colour ~attributes ~mut in
   let get_prod_ty ty label =
     match AST.get_record_field_type ty label with
     | Some s -> return s
@@ -145,13 +145,15 @@ let rec pattern_env_extend_ ~(attributes : ValueAttr.t) ~(mut : bool)
   | _ -> fail @@ error_type ()
 
 
-and pattern_env_extend_mut ~attributes env pattern ty value =
-  pattern_env_extend_ ~attributes ~mut:true ([], env) pattern ty value
+and pattern_env_extend_mut ~no_colour ~attributes env pattern ty value =
+  pattern_env_extend_ ~no_colour ~attributes ~mut:true ([], env) pattern ty value
 
 
-and pattern_env_extend ~attributes env pattern ty value =
+and pattern_env_extend ~no_colour ~attributes env pattern ty value =
   let open Monad in
-  let* _, env = pattern_env_extend_ ~attributes ~mut:false ([], env) pattern ty value in
+  let* _, env =
+    pattern_env_extend_ ~no_colour ~attributes ~mut:false ([], env) pattern ty value
+  in
   return env
 
 
@@ -200,7 +202,7 @@ let wrap_compare_result comp cmpres loc calltrace =
     @@ v_string "Only valid comparisons are: EQ, NEQ, LT, LE, GT, GE"
 
 
-let compare_constants ~raise o1 o2 loc calltrace =
+let compare_constants ~no_colour ~raise o1 o2 loc calltrace =
   match o1, o2 with
   | V_Ct (C_int64 a'), V_Ct (C_int64 b') -> Int64.compare a' b'
   | V_Ct (C_int a'), V_Ct (C_int b')
@@ -223,37 +225,44 @@ let compare_constants ~raise o1 o2 loc calltrace =
       (addr2, entr2)
   | operand, operand' ->
     let msg =
+      let pp_value = Ligo_interpreter.PP.pp_value ~no_colour in
       Format.asprintf
         "Comparison not supported: %a"
-        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (PP_helpers.pair pp_value pp_value)
         (operand, operand')
     in
     raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
 
-let rec apply_comparison ~raise
+let rec apply_comparison ~no_colour ~raise
     : Location.t -> calltrace -> Ast_aggregated.type_expression -> value -> value -> int
   =
  fun loc calltrace type_ operand operand' ->
+  let pp_value = Ligo_interpreter.PP.pp_value ~no_colour in
   match operand, operand' with
   | (V_Michelson _ as a), (V_Michelson _ as b) ->
     Michelson_backend.compare_michelson ~raise loc a b
-  | (V_Ct _ as v1), (V_Ct _ as v2) -> compare_constants ~raise v1 v2 loc calltrace
+  | (V_Ct _ as v1), (V_Ct _ as v2) ->
+    compare_constants ~no_colour ~raise v1 v2 loc calltrace
   | V_List xs, V_List ys ->
     let type_ =
       trace_option ~raise (Errors.generic_error ~calltrace loc "Expected list type")
       @@ AST.get_t_list type_
     in
-    List.compare (apply_comparison ~raise loc calltrace type_) xs ys
+    List.compare (apply_comparison ~no_colour ~raise loc calltrace type_) xs ys
   | V_Set s, V_Set s' ->
     let type_ =
       trace_option ~raise (Errors.generic_error ~calltrace loc "Expected set type")
       @@ AST.get_t_set type_
     in
     List.compare
-      (apply_comparison ~raise loc calltrace type_)
-      (List.dedup_and_sort ~compare:(apply_comparison ~raise loc calltrace type_) s)
-      (List.dedup_and_sort ~compare:(apply_comparison ~raise loc calltrace type_) s')
+      (apply_comparison ~no_colour ~raise loc calltrace type_)
+      (List.dedup_and_sort
+         ~compare:(apply_comparison ~no_colour ~raise loc calltrace type_)
+         s)
+      (List.dedup_and_sort
+         ~compare:(apply_comparison ~no_colour ~raise loc calltrace type_)
+         s')
   | V_Map m, V_Map m' ->
     let type_key, type_value =
       trace_option
@@ -261,8 +270,8 @@ let rec apply_comparison ~raise
         (Errors.generic_error ~calltrace loc "Expected map or big_map type")
       @@ AST.get_t_map_or_big_map type_
     in
-    let compare_key = apply_comparison ~raise loc calltrace type_key in
-    let compare_value = apply_comparison ~raise loc calltrace type_value in
+    let compare_key = apply_comparison ~raise ~no_colour loc calltrace type_key in
+    let compare_value = apply_comparison ~raise ~no_colour loc calltrace type_value in
     let compare_kv = Tuple2.compare ~cmp1:compare_key ~cmp2:compare_value in
     let m = List.sort ~compare:compare_kv m in
     let m' = List.sort ~compare:compare_kv m' in
@@ -281,7 +290,16 @@ let rec apply_comparison ~raise
       | (label, ({ associated_type; _ } : row_element)) :: row_kv ->
         let value_a = Record.LMap.find label r in
         let value_b = Record.LMap.find label r' in
-        (match apply_comparison ~raise loc calltrace associated_type value_a value_b with
+        (match
+           apply_comparison
+             ~no_colour
+             ~raise
+             loc
+             calltrace
+             associated_type
+             value_a
+             value_b
+         with
         | 0 -> aux row_kv
         | c -> c)
     in
@@ -301,7 +319,7 @@ let rec apply_comparison ~raise
       let ({ associated_type; _ } : row_element) =
         Record.LMap.find (Label ctor_a) fields
       in
-      apply_comparison ~raise loc calltrace associated_type args_a args_b
+      apply_comparison ~no_colour ~raise loc calltrace associated_type args_a args_b
     | c -> c)
   | V_Func_val _, V_Func_val _
   | V_Gen _, V_Gen _
@@ -314,7 +332,7 @@ let rec apply_comparison ~raise
     let msg =
       Format.asprintf
         "Comparison not supported: %a"
-        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (PP_helpers.pair pp_value pp_value)
         (operand, operand')
     in
     raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
@@ -349,19 +367,19 @@ let rec apply_comparison ~raise
     let msg =
       Format.asprintf
         "Different value types, cannot be compared: %a"
-        (PP_helpers.pair Ligo_interpreter.PP.pp_value Ligo_interpreter.PP.pp_value)
+        (PP_helpers.pair pp_value pp_value)
         (operand, operand')
     in
     raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
 
-let apply_comparison ~raise
+let apply_comparison ~no_colour ~raise
     :  Location.t -> calltrace -> Ast_aggregated.type_expression
     -> Ligo_prim.Constant.constant' -> value -> value -> value Monad.t
   =
  fun loc calltrace type_ c operand operand' ->
   let open Monad in
-  let cmpres = apply_comparison ~raise loc calltrace type_ operand operand' in
+  let cmpres = apply_comparison ~no_colour ~raise loc calltrace type_ operand operand' in
   let* b = wrap_compare_result c cmpres loc calltrace in
   return @@ v_bool b
 
@@ -406,6 +424,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   let eval_ligo = eval_ligo ~raise ~steps ~options in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
+  let no_colour =
+    let open Compiler_options in
+    options.test_framework.no_colour
+  in
+  let pp_value = Ligo_interpreter.PP.pp_value ~no_colour in
   let error_type () =
     Errors.generic_error
       loc
@@ -483,7 +506,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), [ operand; operand' ] ->
     (* we use the type of the first argument to guide comparison *)
     let type_ = nth_type 0 in
-    apply_comparison ~raise loc calltrace type_ c operand operand'
+    apply_comparison ~no_colour ~raise loc calltrace type_ c operand operand'
   | (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE), _ -> fail @@ error_type ()
   | C_SUB, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] -> return @@ v_int64 Int64.(a' - b')
   | C_SUB, [ V_Ct (C_int a' | C_nat a'); V_Ct (C_int b' | C_nat b') ] ->
@@ -1146,7 +1169,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       let json = Ligo_interpreter.Types.value_to_yojson v in
       return (v_string @@ Yojson.Safe.to_string json)
     | _ ->
-      let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
+      let s = Format.asprintf "%a" pp_value v in
       return (v_string s))
   | C_TEST_TO_STRING, _ -> fail @@ error_type ()
   | C_TEST_UNESCAPE_STRING, [ V_Ct (C_string s) ] -> return (v_string (Scanf.unescaped s))
@@ -1525,6 +1548,8 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     else return ()
   in
   let loc = term.location in
+  let no_colour = options.test_framework.no_colour in
+  let snippet_pp = Snippet.pp ~no_colour in
   match term.expression_content with
   | E_application { lamb = f; args } ->
     let* f' = eval_ligo f calltrace env in
@@ -1587,7 +1612,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
          }
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let* rhs' = eval_ligo rhs calltrace env in
-    let* env = pattern_env_extend ~attributes env let_binder rhs.type_expression rhs' in
+    let* env =
+      pattern_env_extend ~no_colour ~attributes env let_binder rhs.type_expression rhs'
+    in
     eval_ligo let_result calltrace env
   | E_literal l -> eval_literal l
   | E_variable var ->
@@ -1670,6 +1697,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
           try_or
             (let* env =
                pattern_env_extend
+                 ~no_colour
                  ~attributes:ValueAttr.default_attributes
                  env
                  pattern
@@ -1816,7 +1844,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         failwith
           (Format.asprintf
              "@[<hv>%a@.unbound variable mutable: %a@]"
-             Snippet.pp
+             snippet_pp
              term.location
              Value_var.pp
              (Binder.get_var binder))
@@ -1832,7 +1860,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         failwith
           (Format.asprintf
              "@[<hv>%a@.unbound variable mutable: %a@]"
-             Snippet.pp
+             snippet_pp
              term.location
              Value_var.pp
              mut_var)
@@ -1842,7 +1870,13 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let* rhs' = eval_ligo rhs calltrace env in
     let* locs, env =
-      pattern_env_extend_mut ~attributes env let_binder rhs.type_expression rhs'
+      pattern_env_extend_mut
+        ~no_colour
+        ~attributes
+        env
+        let_binder
+        rhs.type_expression
+        rhs'
     in
     let* let_result = eval_ligo let_result calltrace env in
     let* () =

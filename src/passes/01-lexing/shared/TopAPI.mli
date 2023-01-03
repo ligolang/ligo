@@ -68,7 +68,7 @@ module type S =
 
     type token = Token.t
 
-    val scan_token : Lexing.lexbuf -> (token, token error) result
+    val scan_token : no_colour:bool -> Lexing.lexbuf -> (token, token error) result
 
     val used_tokens : unit -> token list
 
@@ -88,7 +88,7 @@ module type S =
        preprocessor may be run before, and/or the pipeline of
        self-passes [UnitPasses] after. *)
 
-    val scan_all_units : token Unit.t lexer
+    val scan_all_units : no_colour:bool -> token Unit.t lexer
 
     (* Scanning all tokens. *)
 
@@ -99,7 +99,7 @@ module type S =
        type [Std.t] produced by [scan_all_units] and [scan_all_tokens]
        has been used by the self-passes to accumulate their I/O. *)
 
-    val scan_all_tokens : token lexer
+    val scan_all_tokens : no_colour:bool -> token lexer
   end
 
 module Make

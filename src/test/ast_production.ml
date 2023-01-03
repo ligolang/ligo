@@ -2,27 +2,29 @@ open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
-let wrap_test_w name f =
+let wrap_test_w ~no_colour name f =
   try_with
     (fun ~raise ~catch ->
       let () = f ~raise () in
       List.iter ~f:(fun w ->
-          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w)
+          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev ~no_colour) w)
       @@ catch.warnings ())
     (fun ~catch error ->
       let value = Error (test_err_tracer name error) in
       let format = Display.bind_format test_format Formatter.error_format in
       let disp = Simple_utils.Display.Displayable { value; format } in
-      let s = Simple_utils.Display.convert ~display_format:Dev disp in
+      let s = Simple_utils.Display.convert ~display_format:Dev ~no_colour disp in
       List.iter ~f:(fun w ->
-          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w)
+          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev ~no_colour) w)
       @@ catch.warnings ();
       Format.printf "%s\n" s;
       Stdlib.raise Alcotest.Test_error)
 
 
 let test_case name test =
-  Test (Alcotest.test_case name `Quick @@ fun () -> wrap_test_w name test)
+  let options = Test_helpers.options in
+  let no_colour = options.tools.no_colour in
+  Test (Alcotest.test_case name `Quick @@ fun () -> wrap_test_w ~no_colour name test)
 
 
 let comp_file_ ~raise f test syntax () =

@@ -49,10 +49,11 @@ let type_view_io_in loc got = view_io loc got `In
 let type_view_io_out loc got = view_io loc got `Out
 
 let error_ppformat
-    :  display_format:string display_format -> Format.formatter -> self_ast_typed_error
-    -> unit
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> self_ast_typed_error -> unit
   =
- fun ~display_format f a ->
+ fun ~display_format ~no_colour f a ->
+  let snippet_pp = Snippet.pp ~no_colour in
   match display_format with
   | Human_readable | Dev ->
     (match a with
@@ -60,14 +61,14 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.This declaration holds an annotation and is later shadowed.@]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Self_ast_typed_storage_view_contract (loc, main_name, view_name, ct, vt) ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid view argument.@.View '%a' has storage type '%a' and contract \
          '%a' has storage type '%a'.@]"
-        Snippet.pp
+        snippet_pp
         loc
         Value_var.pp
         view_name
@@ -86,7 +87,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid view.@.Type '%a' is forbidden as %s argument.@]"
-        Snippet.pp
+        snippet_pp
         loc
         Ast_typed.PP.type_expression
         got
@@ -96,7 +97,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Recursive call not in tail position. @.The value of a recursive call \
          must be immediately returned by the defined function. @]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Self_ast_typed_bad_self_type (expected, got, loc) ->
       Format.fprintf
@@ -104,7 +105,7 @@ let error_ppformat
         "@[<hv>%a@.Invalid type annotation.@.\"%a\" was given, but \"%a\" was \
          expected.@.Note that \"Tezos.self\" refers to this contract, so the parameters \
          should be the same. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Ast_typed.PP.type_expression
         got
@@ -116,7 +117,7 @@ let error_ppformat
         "@[<hv>%a@.Invalid entrypoint \"%s\". One of the following patterns is \
          expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when \
          no entrypoint is used."
-        Snippet.pp
+        snippet_pp
         loc
         ep
     | `Self_ast_typed_entrypoint_ann_not_literal loc ->
@@ -124,21 +125,21 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value must be a string \
          literal. @]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Self_ast_typed_unmatched_entrypoint loc ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value does not match a \
          constructor of the contract parameter. @]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Self_ast_typed_nested_bigmap loc ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid big map nesting.@.A big map cannot be nested inside another \
          big map. @]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Self_ast_typed_corner_case desc ->
       Format.fprintf f "@[<hv>Internal error: %s @]" desc
@@ -147,7 +148,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \
          \"parameter * storage -> operation list * storage\". @]"
-        Snippet.pp
+        snippet_pp
         location
         Value_var.pp
         entrypoint
@@ -155,7 +156,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type for view \"%a\".@.An view must be a function. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Value_var.pp
         entrypoint
@@ -165,7 +166,7 @@ let error_ppformat
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \
          \"parameter * storage -> operation list * storage\".@.We expected a list of \
          operations but we got %a@]"
-        Snippet.pp
+        snippet_pp
         e.location
         Value_var.pp
         entrypoint
@@ -177,7 +178,7 @@ let error_ppformat
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the \
          function parameter must be the same as the storage type \"%a\" of the return \
          value.@]"
-        Snippet.pp
+        snippet_pp
         e.location
         Value_var.pp
         entrypoint
@@ -190,7 +191,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the \
          entrypoint function must not contain polymorphic variables.@]"
-        Snippet.pp
+        snippet_pp
         e.location
         Value_var.pp
         entrypoint
@@ -201,7 +202,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The parameter type \"%a\" of the \
          entrypoint function must not contain polymorphic variables.@]"
-        Snippet.pp
+        snippet_pp
         e.location
         Value_var.pp
         entrypoint
@@ -216,7 +217,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid %s.@.Expected a tuple as argument.@]"
-        Snippet.pp
+        snippet_pp
         loc
         ep
     | `Self_ast_typed_expected_pair_out loc ->
@@ -224,7 +225,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as \
          return value.@]"
-        Snippet.pp
+        snippet_pp
         loc)
 
 

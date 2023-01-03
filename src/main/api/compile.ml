@@ -45,6 +45,7 @@ let contract
   format_result
     ~warning_as_error
     ~display_format
+    ~no_colour:raw_options.no_colour
     (Formatter.Michelson_formatter.michelson_format
        michelson_code_format
        michelson_comments)
@@ -96,6 +97,7 @@ let expression
   format_result
     ~warning_as_error
     ~display_format
+    ~no_colour:raw_options.no_colour
     (Formatter.Michelson_formatter.michelson_format michelson_format [])
   @@ fun ~raise ->
   let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
@@ -145,6 +147,7 @@ let constant (raw_options : Raw_options.t) constants init_file display_format ()
   format_result
     ~warning_as_error
     ~display_format
+    ~no_colour:raw_options.no_colour
     Formatter.Michelson_formatter.michelson_constant_format
   @@ fun ~raise ->
   let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
@@ -189,6 +192,7 @@ let parameter
   format_result
     ~warning_as_error
     ~display_format
+    ~no_colour:raw_options.no_colour
     (Formatter.Michelson_formatter.michelson_format michelson_format [])
   @@ fun ~raise ->
   let protocol_version =
@@ -319,6 +323,7 @@ let storage
   format_result
     ~warning_as_error
     ~display_format
+    ~no_colour:raw_options.no_colour
     (Formatter.Michelson_formatter.michelson_format michelson_format [])
   @@ fun ~raise ->
   let protocol_version =

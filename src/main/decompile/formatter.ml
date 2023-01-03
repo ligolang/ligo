@@ -1,7 +1,10 @@
 open Simple_utils.Display
 open Simple_utils.Runned_result
 
-let expression_ppformat ~display_format f runned_result =
+let expression_ppformat ~display_format ~no_colour f runned_result =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev ->
     (match runned_result with

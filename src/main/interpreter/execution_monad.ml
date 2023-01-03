@@ -230,6 +230,8 @@ module Command = struct
     =
    fun ~raise ~options command ctxt _log ->
     let loc = Location.interpreter in
+    let no_colour = options.test_framework.no_colour in
+    let snippet_pp = Simple_utils.Snippet.pp ~no_colour in
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let k_ty, v_ty =
@@ -677,7 +679,7 @@ module Command = struct
           else
             Format.eprintf
               "@[<hv>%a:@.Run-time warning: cast changing the type of an address.\n@]"
-              Simple_utils.Snippet.pp
+              snippet_pp
               loc
       in
       let storage_tys =

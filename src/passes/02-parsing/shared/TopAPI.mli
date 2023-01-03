@@ -93,5 +93,6 @@ module Make
        [parser.tree]) *)
 
     val parse :
+      no_colour:bool ->
       Lexbuf.input -> Std.t * (Parser.tree * message list, error) result
   end

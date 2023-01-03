@@ -27,7 +27,7 @@ module type LEXER =
 
     type message = string Region.reg
 
-    val scan_token : Lexing.lexbuf -> (token, message) result
+    val scan_token : no_colour:bool -> Lexing.lexbuf -> (token, message) result
 
     val used_tokens : unit -> token list (* Scanned tokens *)
 
@@ -123,17 +123,17 @@ module Make (Lexer  : LEXER)
 
     type file_path = string
 
-    val mono_from_lexbuf  : Lexing.lexbuf parser
-    val mono_from_channel : in_channel    parser
-    val mono_from_string  : string        parser
-    val mono_from_file    : file_path     parser
+    val mono_from_lexbuf  : no_colour:bool -> Lexing.lexbuf parser
+    val mono_from_channel : no_colour:bool -> in_channel    parser
+    val mono_from_string  : no_colour:bool -> string        parser
+    val mono_from_file    : no_colour:bool -> file_path     parser
 
     (* Incremental API of Menhir without recovery on error *)
 
-    val incr_from_lexbuf  : (module PAR_ERR) -> Lexing.lexbuf parser
-    val incr_from_channel : (module PAR_ERR) -> in_channel    parser
-    val incr_from_string  : (module PAR_ERR) -> string        parser
-    val incr_from_file    : (module PAR_ERR) -> file_path     parser
+    val incr_from_lexbuf  : no_colour:bool -> (module PAR_ERR) -> Lexing.lexbuf parser
+    val incr_from_channel : no_colour:bool -> (module PAR_ERR) -> in_channel    parser
+    val incr_from_string  : no_colour:bool -> (module PAR_ERR) -> string        parser
+    val incr_from_file    : no_colour:bool -> (module PAR_ERR) -> file_path     parser
 
     (* Incremental API with recovery *)
 
@@ -153,12 +153,12 @@ module Make (Lexer  : LEXER)
 
     (* Parsing with recovery from various sources *)
 
-    val recov_from_lexbuf  : (module PAR_ERR) -> Lexing.lexbuf recovery_parser
-    val recov_from_channel : (module PAR_ERR) -> in_channel    recovery_parser
-    val recov_from_string  : (module PAR_ERR) -> string        recovery_parser
-    val recov_from_file    : (module PAR_ERR) -> file_path     recovery_parser
+    val recov_from_lexbuf  : no_colour:bool -> (module PAR_ERR) -> Lexing.lexbuf recovery_parser
+    val recov_from_channel : no_colour:bool -> (module PAR_ERR) -> in_channel    recovery_parser
+    val recov_from_string  : no_colour:bool -> (module PAR_ERR) -> string        recovery_parser
+    val recov_from_file    : no_colour:bool -> (module PAR_ERR) -> file_path     recovery_parser
 
     (* Formatting syntax error messages *)
 
-    val format_error : file:bool -> string -> Region.t -> string Region.reg
+    val format_error : no_colour:bool -> file:bool -> string -> Region.t -> string Region.reg
   end

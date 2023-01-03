@@ -8,7 +8,11 @@ let loc = Location.dummy
 
 let pretty_print (raw_options : Raw_options.t) source_file display_format () =
   let warning_as_error = raw_options.warning_as_error in
-  format_result ~warning_as_error ~display_format Parsing.Formatter.ppx_format
+  format_result
+    ~warning_as_error
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
@@ -24,7 +28,10 @@ let pretty_print (raw_options : Raw_options.t) source_file display_format () =
 
 
 let dependency_graph (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format BuildSystem.Formatter.graph_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    BuildSystem.Formatter.graph_format
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
@@ -35,7 +42,10 @@ let dependency_graph (raw_options : Raw_options.t) source_file display_format ()
 
 
 let preprocess (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Parsing.Formatter.ppx_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   fst
   @@
@@ -48,7 +58,10 @@ let preprocess (raw_options : Raw_options.t) source_file display_format () =
 
 
 let cst (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Parsing.Formatter.ppx_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
@@ -64,7 +77,10 @@ let cst (raw_options : Raw_options.t) source_file display_format () =
 
 
 let ast (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Ast_imperative.Formatter.program_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Ast_imperative.Formatter.program_format
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
@@ -78,7 +94,10 @@ let ast (raw_options : Raw_options.t) source_file display_format () =
 
 
 let ast_core (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Ast_core.Formatter.program_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Ast_core.Formatter.program_format
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
@@ -93,7 +112,10 @@ let ast_core (raw_options : Raw_options.t) source_file display_format () =
 
 
 let ast_typed (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Ast_typed.Formatter.program_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Ast_typed.Formatter.program_format
   @@ fun ~raise ->
   let options =
     (* TODO: options should be computed outside of the API *)
@@ -120,7 +142,10 @@ let ast_typed (raw_options : Raw_options.t) source_file display_format () =
 
 
 let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Ast_aggregated.Formatter.expression_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Ast_aggregated.Formatter.expression_format
   @@ fun ~raise ->
   let options =
     (* TODO: options should be computed outside of the API *)
@@ -143,7 +168,10 @@ let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
 
 
 let ast_expanded (raw_options : Raw_options.t) source_file display_format () =
-  format_result ~display_format Ast_expanded.Formatter.expression_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Ast_expanded.Formatter.expression_format
   @@ fun ~raise ->
   let options =
     (* TODO: options should be computed outside of the API *)
@@ -169,7 +197,10 @@ let ast_expanded (raw_options : Raw_options.t) source_file display_format () =
 
 
 let mini_c (raw_options : Raw_options.t) source_file display_format optimize () =
-  format_result ~display_format Mini_c.Formatter.program_format
+  format_result
+    ~display_format
+    ~no_colour:raw_options.no_colour
+    Mini_c.Formatter.program_format
   @@ fun ~raise ->
   let options =
     (* TODO: options should be computed outside of the API *)

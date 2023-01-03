@@ -853,9 +853,9 @@ let compile_group =
 
 (** Transpile commands *)
 let transpile_contract =
-  let f source_file new_syntax syntax display_format output_file () =
+  let f source_file new_syntax syntax display_format no_colour output_file () =
     return_result ~return ?output_file
-    @@ Api.Transpile.contract source_file new_syntax syntax display_format
+    @@ Api.Transpile.contract source_file new_syntax syntax display_format no_colour
   in
   let summary = "[BETA] transpile a contract to another syntax." in
   let readme () =
@@ -866,13 +866,19 @@ let transpile_contract =
   Command.basic
     ~summary
     ~readme
-    (f <$> source_file <*> req_syntax <*> syntax <*> display_format <*> output_file)
+    (f
+    <$> source_file
+    <*> req_syntax
+    <*> syntax
+    <*> display_format
+    <*> no_colour
+    <*> output_file)
 
 
 let transpile_expression =
-  let f syntax expression new_syntax display_format () =
+  let f syntax expression new_syntax display_format no_colour () =
     return_result ~return
-    @@ Api.Transpile.expression expression new_syntax syntax display_format
+    @@ Api.Transpile.expression expression new_syntax syntax display_format no_colour
   in
   let summary = "[BETA] transpile an expression to another syntax." in
   let readme () =
@@ -882,7 +888,7 @@ let transpile_expression =
   Command.basic
     ~summary
     ~readme
-    (f <$> req_syntax <*> expression "" <*> req_syntax <*> display_format)
+    (f <$> req_syntax <*> expression "" <*> req_syntax <*> display_format <*> no_colour)
 
 
 let transpile_group =
@@ -1769,9 +1775,11 @@ let print_group =
 
 (** init *)
 let init_library =
-  let f project_name template (template_list : bool) display_format () =
+  let f project_name template (template_list : bool) display_format no_colour () =
     if template_list
-    then return_result ~return @@ Ligo_api.Ligo_init.list ~kind:`LIBRARY ~display_format
+    then
+      return_result ~return
+      @@ Ligo_api.Ligo_init.list ~kind:`LIBRARY ~display_format ~no_colour
     else
       return_result ~return
       @@ Ligo_api.Ligo_init.new_project
@@ -1780,6 +1788,7 @@ let init_library =
            ~project_name_opt:project_name
            ~template
            ~display_format
+           ~no_colour
   in
   let summary = "Generate new folder which contains wished library template" in
   let readme () =
@@ -1788,13 +1797,15 @@ let init_library =
   Command.basic
     ~summary
     ~readme
-    (f <$> project_name <*> template <*> template_list <*> display_format)
+    (f <$> project_name <*> template <*> template_list <*> display_format <*> no_colour)
 
 
 let init_contract =
-  let f project_name template (template_list : bool) display_format () =
+  let f project_name template (template_list : bool) display_format no_colour () =
     if template_list
-    then return_result ~return @@ Ligo_api.Ligo_init.list ~kind:`CONTRACT ~display_format
+    then
+      return_result ~return
+      @@ Ligo_api.Ligo_init.list ~kind:`CONTRACT ~display_format ~no_colour
     else
       return_result ~return
       @@ Ligo_api.Ligo_init.new_project
@@ -1803,6 +1814,7 @@ let init_contract =
            ~project_name_opt:project_name
            ~template
            ~display_format
+           ~no_colour
   in
   let summary = "Generate new folder which contains wished contract template" in
   let readme () =
@@ -1811,7 +1823,7 @@ let init_contract =
   Command.basic
     ~summary
     ~readme
-    (f <$> project_name <*> template <*> template_list <*> display_format)
+    (f <$> project_name <*> template <*> template_list <*> display_format <*> no_colour)
 
 
 let init_group =
@@ -1822,10 +1834,12 @@ let init_group =
 
 (** other *)
 let changelog =
-  let f display_format () = return_result ~return @@ Api.dump_changelog display_format in
+  let f display_format no_colour () =
+    return_result ~return @@ Api.dump_changelog display_format no_colour
+  in
   let summary = "print the ligo changelog" in
   let readme () = "Dump the LIGO changelog to stdout." in
-  Command.basic ~summary ~readme (f <$> display_format)
+  Command.basic ~summary ~readme (f <$> display_format <*> no_colour)
 
 
 let repl =

@@ -42,54 +42,60 @@ let pp_ct : Format.formatter -> constant_val -> unit =
   | C_chain_id c -> Format.fprintf ppf "%s" (Bytes.to_string (Chain_id.to_bytes c))
 
 
-let rec pp_value : Format.formatter -> value -> unit =
- fun ppf v ->
-  match v with
-  | V_Ct c -> Format.fprintf ppf "%a" pp_ct c
-  | V_Func_val _ -> Format.fprintf ppf "<fun>"
-  | V_Construct (name, v) -> Format.fprintf ppf "%s (%a)" name pp_value v
-  | V_List vl -> Format.fprintf ppf "[%a]" (list_sep pp_value (tag " ; ")) vl
-  | V_Set sl -> Format.fprintf ppf "{%a}" (list_sep pp_value (tag " ; ")) sl
-  | V_Map vmap ->
-    let aux : Format.formatter -> value * value -> unit =
-     fun ppf (k, v) -> Format.fprintf ppf "%a -> %a" pp_value k pp_value v
-    in
-    Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
-  | V_Record recmap ->
-    if Record.is_tuple recmap
-    then (
-      let aux : Format.formatter -> value -> unit =
-       fun ppf v -> Format.fprintf ppf "%a" pp_value v
+let rec pp_value ~no_colour : Format.formatter -> value -> unit =
+  let pp_value ppf v = pp_value ~no_colour ppf v in
+  let snippet_pp = Snippet.pp ~no_colour in
+  fun ppf v ->
+    match v with
+    | V_Ct c -> Format.fprintf ppf "%a" pp_ct c
+    | V_Func_val _ -> Format.fprintf ppf "<fun>"
+    | V_Construct (name, v) -> Format.fprintf ppf "%s (%a)" name pp_value v
+    | V_List vl -> Format.fprintf ppf "[%a]" (list_sep pp_value (tag " ; ")) vl
+    | V_Set sl -> Format.fprintf ppf "{%a}" (list_sep pp_value (tag " ; ")) sl
+    | V_Map vmap ->
+      let aux : Format.formatter -> value * value -> unit =
+       fun ppf (k, v) -> Format.fprintf ppf "%a -> %a" pp_value k pp_value v
       in
-      Format.fprintf ppf "(%a)" (list_sep aux (tag " , ")) (Record.LMap.to_list recmap))
-    else (
-      let aux : Format.formatter -> Label.t * value -> unit =
-       fun ppf (Label l, v) -> Format.fprintf ppf "%s = %a" l pp_value v
-      in
-      Format.fprintf ppf "{%a}" (list_sep aux (tag " ; ")) (Record.LMap.to_kv_list recmap))
-  | V_Michelson (Ty_code { micheline_repr = { code; _ }; _ } | Untyped_code code) ->
-    Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
-  | V_Michelson_contract code -> Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
-  | V_Ast_contract { main; views = _ } ->
-    Format.fprintf ppf "%a" Ast_aggregated.PP.expression main
-  | V_Mutation (l, _, s) ->
-    Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." Snippet.pp l s
-  | V_Gen _ -> Format.fprintf ppf "Generator"
-  | V_Location _ -> Format.fprintf ppf "Heap location"
-  | V_Typed_address c ->
-    Format.fprintf ppf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp c
+      Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
+    | V_Record recmap ->
+      if Record.is_tuple recmap
+      then (
+        let aux : Format.formatter -> value -> unit =
+         fun ppf v -> Format.fprintf ppf "%a" pp_value v
+        in
+        Format.fprintf ppf "(%a)" (list_sep aux (tag " , ")) (Record.LMap.to_list recmap))
+      else (
+        let aux : Format.formatter -> Label.t * value -> unit =
+         fun ppf (Label l, v) -> Format.fprintf ppf "%s = %a" l pp_value v
+        in
+        Format.fprintf
+          ppf
+          "{%a}"
+          (list_sep aux (tag " ; "))
+          (Record.LMap.to_kv_list recmap))
+    | V_Michelson (Ty_code { micheline_repr = { code; _ }; _ } | Untyped_code code) ->
+      Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
+    | V_Michelson_contract code -> Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
+    | V_Ast_contract { main; views = _ } ->
+      Format.fprintf ppf "%a" Ast_aggregated.PP.expression main
+    | V_Mutation (l, _, s) ->
+      Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." snippet_pp l s
+    | V_Gen _ -> Format.fprintf ppf "Generator"
+    | V_Location _ -> Format.fprintf ppf "Heap location"
+    | V_Typed_address c ->
+      Format.fprintf ppf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp c
 
 
-let pp_value_expr : Format.formatter -> value_expr -> unit =
- fun ppf v -> Format.fprintf ppf "%a" pp_value v.eval_term
+let pp_value_expr ~no_colour : Format.formatter -> value_expr -> unit =
+ fun ppf v -> Format.fprintf ppf "%a" (pp_value ~no_colour) v.eval_term
 
 
-let pp_env : Format.formatter -> env -> unit =
+let pp_env ~no_colour : Format.formatter -> env -> unit =
  fun ppf env ->
   let aux : Format.formatter -> Value_var.t * env_item -> unit =
    fun ppf -> function
     | name, { item; no_mutation = _; inline = _ } ->
-      Format.fprintf ppf "%a -> %a" Value_var.pp name pp_value_expr item
+      Format.fprintf ppf "%a -> %a" Value_var.pp name (pp_value_expr ~no_colour) item
   in
   Format.fprintf
     ppf

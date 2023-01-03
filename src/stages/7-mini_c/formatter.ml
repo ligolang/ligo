@@ -7,7 +7,10 @@ type optim =
   | Optimized of expression
   | Raw of expression
 
-let program_ppformat ~display_format f p =
+let program_ppformat ~display_format ~no_colour f p =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev ->
     (match p with

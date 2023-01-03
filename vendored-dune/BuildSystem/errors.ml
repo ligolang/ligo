@@ -8,9 +8,9 @@ let build_corner_case (loc:string) (msg:string)  = `Build_corner_case (loc,msg)
 
 open Simple_utils.Display
 
-let rec error_ppformat : display_format:string display_format ->
+let rec error_ppformat : display_format:string display_format -> no_colour:bool ->
   Format.formatter -> t -> unit =
-  fun ~display_format f a ->
+  fun ~display_format ~no_colour f a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with

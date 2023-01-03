@@ -1,6 +1,9 @@
 open Simple_utils.Display
 
-let program_ppformat ~display_format f p =
+let program_ppformat ~display_format ~no_colour f p =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev -> PP.program f p
 

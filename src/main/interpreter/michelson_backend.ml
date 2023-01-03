@@ -927,6 +927,11 @@ let rec compile_value ~raise ~options ~loc
   let open Ast_aggregated in
   let open Ast_aggregated.Combinators in
   let self = compile_value ~raise ~options ~loc in
+  let no_colour =
+    let open Compiler_options in
+    options.backend.no_colour
+  in
+  let pp_value = Ligo_interpreter.PP.pp_value ~no_colour in
   match v with
   | V_Ct (C_string s) ->
     let () =
@@ -1460,7 +1465,7 @@ let rec compile_value ~raise ~options ~loc
          loc
          (Format.asprintf
             "Cannot decompile value %a of type %a"
-            Ligo_interpreter.PP.pp_value
+            pp_value
             v
             Ast_aggregated.PP.type_expression
             ty)

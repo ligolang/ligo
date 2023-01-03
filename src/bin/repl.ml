@@ -78,7 +78,7 @@ type repl_result =
 
 open Simple_utils.Display
 
-let repl_result_ppformat ~display_format f = function
+let repl_result_ppformat ~display_format ~no_colour:_ f = function
   | Expression_value expr ->
     (match display_format with
     | Human_readable | Dev -> Ast_core.PP.expression f expr)
@@ -302,25 +302,25 @@ let parse s =
 
 (* REPL main and loop *)
 
-let eval display_format state c =
+let eval display_format no_colour state c =
   let (Ex_display_format t) = display_format in
   match to_stdlib_result c with
   | Ok ((state, out), _w) ->
     let disp = Displayable { value = out; format = repl_result_format } in
     let out : string =
       match t with
-      | Human_readable -> convert ~display_format:t disp
-      | Dev -> convert ~display_format:t disp
-      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp
+      | Human_readable -> convert ~display_format:t ~no_colour disp
+      | Dev -> convert ~display_format:t ~no_colour disp
+      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t ~no_colour disp
     in
     1, state, out
   | Error (e, _w) ->
     let disp = Displayable { value = e; format = Main_errors.Formatter.error_format } in
     let out : string =
       match t with
-      | Human_readable -> convert ~display_format:t disp
-      | Dev -> convert ~display_format:t disp
-      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp
+      | Human_readable -> convert ~display_format:t ~no_colour disp
+      | Dev -> convert ~display_format:t ~no_colour disp
+      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t ~no_colour disp
     in
     0, state, out
 
@@ -332,7 +332,8 @@ let parse_and_eval ~raw_options display_format state s =
     | Import (fn, mn) -> import_file state ~raw_options fn mn
     | Expr s -> try_declaration ~raw_options state s
   in
-  eval display_format state c
+  let no_colour = raw_options.no_colour in
+  eval display_format no_colour state c
 
 
 let welcome_msg =
@@ -443,7 +444,7 @@ let main
       | None -> state
       | Some file_name ->
         let c = use_file state ~raw_options file_name in
-        let _, state, _ = eval (Ex_display_format Dev) state c in
+        let _, state, _ = eval (Ex_display_format Dev) raw_options.no_colour state c in
         state
     in
     Lwt_main.run (LTerm.fprintls term (LTerm_text.eval [ S welcome_msg ]));
