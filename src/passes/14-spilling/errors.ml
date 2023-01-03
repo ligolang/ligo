@@ -23,9 +23,10 @@ let corner_case_message () =
   "Sorry, we don't have a proper error message for this error. Please report \
   this use case so we can improve on this."
 
-let error_ppformat : display_format:string display_format ->
+let error_ppformat : display_format:string display_format -> no_colour:bool ->
   Format.formatter -> spilling_error -> unit =
-  fun ~display_format f a ->
+  fun ~display_format ~no_colour f a ->
+  let snippet_pp = Snippet.pp ~no_colour in
   match display_format with
   | Human_readable | Dev -> (
     match a with
@@ -34,15 +35,15 @@ let error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s
     | `Spilling_no_type_variable tv ->
       let s = Format.asprintf "%a@.Type \"%a\" not found (should not happen and be caught earlier)."
-        Snippet.pp (Type_var.get_location tv)
+        snippet_pp (Type_var.get_location tv)
         Type_var.pp tv in
       Format.pp_print_string f s
     | `Spilling_unsupported_pattern_matching loc ->
-      let s = Format.asprintf "%a@.Invalid pattern matching.@Tuple patterns are not (yet) supported." Snippet.pp loc in
+      let s = Format.asprintf "%a@.Invalid pattern matching.@Tuple patterns are not (yet) supported." snippet_pp loc in
       Format.pp_print_string f s
     | `Spilling_unsupported_recursive_function (loc,var) ->
       let s = Format.asprintf "%a@.Invalid recursive function \"%a\".@.A recursive function can only have one argument."
-        Snippet.pp loc
+        snippet_pp loc
         Value_var.pp var in
       Format.pp_print_string f s
     | `Spilling_wrong_mini_c_value (expected , actual) ->
@@ -56,13 +57,13 @@ let error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s
     | `Spilling_could_not_parse_raw_michelson (loc, code) ->
       Format.fprintf f "@[<hv>%a@.Could not parse raw Michelson:@.\"%s\".@]"
-        Snippet.pp loc
+        snippet_pp loc
         code
     | `Spilling_raw_michelson_must_be_seq (loc, code) ->
       let open Tezos_micheline.Micheline in
       let open Tezos_micheline.Micheline_printer in
       Format.fprintf f "@[<hv>%a@.Raw Michelson must be seq (with curly braces {}), got: %a.@]"
-        Snippet.pp loc
+        snippet_pp loc
         print_expr
         (printable (fun s -> s) (strip_locations code))
   )

@@ -1,0 +1,7 @@
+
+author: nicolas.van.phan
+description: "\\n\\n#### Before\\n\\n```\\n$ ligo1 compile contract '~/ligo/src/test/contracts/warning_duplicate2.mligo'\\nFile \"~/ligo/src/test/contracts/warning_duplicate2.mligo\", line 2, characters 14-16:\\n  1 |\\n  2 | let x : nat = [0;31;1m42[0m\\n  3 |\\n\\nInvalid type(s).\\nExpected \"nat\", but got: \"int\".\\n\\n```\\n\\n#### After\\n\\n\\n```\\n$ ligo1 compile contract '~/ligo/src/test/contracts/warning_duplicate2.mligo' --no-colour\\nFile \"~/ligo/src/test/contracts/warning_duplicate2.mligo\", line 2, characters 14-16:\\n  1 |\\n  2 | let x : nat = 42\\n  3 |\\n\\nInvalid type(s).\\nExpected \"nat\", but got: \"int\".\\n\\n```\\n\\n"
+merge_request: '2236'
+title: "Bring no-colour option to code snippet printer"
+type: added
+            

@@ -2,22 +2,28 @@ open Environment
 module Default_options = Raw_options.Default_options
 module Raw_options = Raw_options
 
+(* TODO : Add a [common] section for options used in many stages,
+   like the [no_colour] or the [syntax] options for example *)
+
 type frontend =
   { syntax : Syntax_types.t option
   ; (* dialect : string ; [@dead "frontend.dialect"]  *)
     entry_point : string
   ; libraries : string list
   ; project_root : string option
+  ; no_colour : bool
   }
 
 type tools =
   { with_types : bool
   ; self_pass : bool
+  ; no_colour : bool
   }
 
 type test_framework =
   { steps : int
   ; cli_expr_inj : string option
+  ; no_colour : bool
   }
 
 type middle_end =
@@ -43,6 +49,7 @@ type backend =
         (* true if --michelson-comments env. if
                                true, empty seqs {} with comments will
                                not be erased during optimisation *)
+  ; no_colour : bool
   }
 
 type t =
@@ -73,13 +80,20 @@ let make
     ; libraries = raw_options.libraries
     ; entry_point = raw_options.entry_point
     ; project_root = raw_options.project_root
+    ; no_colour = raw_options.no_colour
     }
   in
   let tools =
-    { with_types = raw_options.with_types; self_pass = raw_options.self_pass }
+    { with_types = raw_options.with_types
+    ; self_pass = raw_options.self_pass
+    ; no_colour = raw_options.no_colour
+    }
   in
   let test_framework =
-    { steps = raw_options.steps; cli_expr_inj = raw_options.cli_expr_inj }
+    { steps = raw_options.steps
+    ; cli_expr_inj = raw_options.cli_expr_inj
+    ; no_colour = raw_options.no_colour
+    }
   in
   let middle_end =
     { test = raw_options.test
@@ -102,6 +116,7 @@ let make
     ; constants = raw_options.constants
     ; file_constants = raw_options.file_constants
     ; has_env_comments
+    ; no_colour = raw_options.no_colour
     }
   in
   { frontend; tools; test_framework; middle_end; backend }

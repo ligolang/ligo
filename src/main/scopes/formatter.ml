@@ -1,6 +1,9 @@
 open Simple_utils.Display
 
-let scope_ppformat ~display_format f (d, s) =
+let scope_ppformat ~display_format ~no_colour f (d, s) =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable ->
     Format.fprintf
@@ -22,15 +25,15 @@ let error_format = Main_errors.Formatter.error_format
 let warn_format = Main_warnings.format
 
 let pp_get_scope_output : get_scope_output pp =
- fun ~display_format f { errors; warns; info } ->
+ fun ~display_format ~no_colour f { errors; warns; info } ->
   (match info with
-  | Some info -> scope_ppformat ~display_format f info
+  | Some info -> scope_ppformat ~display_format ~no_colour f info
   | None -> ());
   List.iter errors ~f:(fun err ->
-      error_format.pp ~display_format f err;
+      error_format.pp ~display_format ~no_colour f err;
       Format.fprintf f "\n");
   List.iter warns ~f:(fun warn ->
-      warn_format.pp ~display_format f warn;
+      warn_format.pp ~display_format ~no_colour f warn;
       Format.fprintf f "\n")
 
 

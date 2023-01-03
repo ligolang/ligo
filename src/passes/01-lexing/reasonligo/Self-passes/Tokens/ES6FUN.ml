@@ -79,13 +79,14 @@ let pre_parser (tokens : token list) : _ result =
   let failure = function
     Inter.Accepted s ->  Ok s
   | HandlingError env ->
+    let no_colour = true in (* TODO NP Will be removed along with ReasonLIGO *)
     (match Inter.top env with
         Some (Inter.Element (s, _, _, _)) ->
           let window = get_window() in
           let prefix = match window with
             Some window ->
               let region = Token.to_region window#current_token in
-              Format.asprintf "%a\n" Snippet.pp_lift region
+              Format.asprintf "%a\n" (Snippet.pp_lift ~no_colour) region
           | None ->
               "" in
           let state = Inter.number s in

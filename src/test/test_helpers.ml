@@ -23,34 +23,37 @@ let loc = Location.test
 let test_format : 'a Simple_utils.Display.format =
   { (* do not display anything if test succeed *)
     pp =
-      (fun ~display_format _ _ ->
+      (fun ~display_format ~no_colour _ _ ->
         ignore display_format;
+        ignore no_colour;
         ())
   ; to_json = (fun _ : Display.json -> `Null)
   }
 
 
-let wrap_test_w name f =
+let wrap_test_w ~no_colour name f =
   try_with
     (fun ~raise ~catch ->
       let () = f ~raise () in
       List.iter ~f:(fun w ->
-          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w)
+          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev ~no_colour) w)
       @@ catch.warnings ())
     (fun ~catch error ->
       let value = Error (test_err_tracer name error) in
       let format = Display.bind_format test_format Formatter.error_format in
       let disp = Simple_utils.Display.Displayable { value; format } in
-      let s = Simple_utils.Display.convert ~display_format:Dev disp in
+      let s = Simple_utils.Display.convert ~display_format:Dev ~no_colour disp in
       List.iter ~f:(fun w ->
-          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w)
+          Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev ~no_colour) w)
       @@ catch.warnings ();
       Format.printf "%s\n" s;
       Stdlib.raise Alcotest.Test_error)
 
 
 let test_w name test =
-  Test (Alcotest.test_case name `Quick @@ fun () -> wrap_test_w name test)
+  Test
+    (Alcotest.test_case name `Quick
+    @@ fun () -> wrap_test_w ~no_colour:options.tools.no_colour name test)
 
 
 let test_w_all name test =
@@ -63,19 +66,24 @@ let test_w_all name test =
     [ "ligo"; "mligo"; "jsligo" ]
 
 
-let wrap_test name f =
+let wrap_test ~no_colour name f =
   try_with
     (fun ~raise ~catch:_ -> f ~raise ())
     (fun ~catch:_ error ->
       let value = Error (test_err_tracer name error) in
       let format = Display.bind_format test_format Formatter.error_format in
       let disp = Simple_utils.Display.Displayable { value; format } in
-      let s = Simple_utils.Display.convert ~display_format:Dev disp in
+      let s = Simple_utils.Display.convert ~display_format:Dev ~no_colour disp in
       Format.printf "%s\n" s;
       raise Alcotest.Test_error)
 
 
-let test name f = Test (Alcotest.test_case name `Quick @@ fun () -> wrap_test name f)
+let test name f =
+  Test
+    (Alcotest.test_case name `Quick
+    @@ fun () -> wrap_test ~no_colour:options.tools.no_colour name f)
+
+
 let test_suite name lst = Test_suite (name, lst)
 
 let rec test_height : test -> int =

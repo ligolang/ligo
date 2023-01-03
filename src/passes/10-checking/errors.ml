@@ -134,13 +134,15 @@ type typer_error =
 [@@deriving poly_constructor { prefix = "typer_" }]
 
 let error_ppformat
-    : display_format:string display_format -> Format.formatter -> typer_error -> unit
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> typer_error -> unit
   =
- fun ~display_format f a ->
+ fun ~display_format ~no_colour f a ->
   (* Create a fresh name table for printing types in errors *)
   Type.Type_var_name_tbl.Exists.clear ();
   let name_tbl = Type.Type_var_name_tbl.create () in
   let pp_type = Type.pp_with_name_tbl ~tbl:name_tbl in
+  let snippet_pp = Snippet.pp ~no_colour in
   match display_format with
   | Human_readable | Dev ->
     (match a with
@@ -148,7 +150,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid capture of mutable variable \"%a\"@]"
-        Snippet.pp
+        snippet_pp
         loc
         Value_var.pp
         var
@@ -158,7 +160,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid type@.Ill formed type \"%a\".Hint: you might be missing some \
          type arguments.%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type_
@@ -169,7 +171,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Mismatching record labels. Expected record of type \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type_
@@ -181,7 +183,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Expected \"%a\", but received \"%a\". Types are not compatitable.%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type2
@@ -193,7 +195,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.A type system corner case occurred:@.%s@]"
-        Snippet.pp
+        snippet_pp
         loc
         desc
     | `Typer_occurs_check_failed (tvar, type_, loc) ->
@@ -201,7 +203,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.The type variable \"^%s\" occurs inside \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         (Type.Type_var_name_tbl.Exists.name_of tvar)
         pp_type
@@ -221,18 +223,18 @@ let error_ppformat
         f
         "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples \
          of cases that are not matched:@.%s@]"
-        Snippet.pp
+        snippet_pp
         loc
         ps
     | `Typer_pattern_redundant_case loc ->
-      Format.fprintf f "@[<hv>%a@.Error : this match case is unused.@]" Snippet.pp loc
+      Format.fprintf f "@[<hv>%a@.Error : this match case is unused.@]" snippet_pp loc
     | `Typer_cannot_unify (no_color, type1, type2, loc) ->
       let type1 = type_improve type1 in
       let type2 = type_improve type2 in
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\".%a%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type1
@@ -249,7 +251,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\" due to differing \
          layouts (%a and %a).%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type1
@@ -266,7 +268,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a.Expected constructor \"%a\" in expected sum type \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         Label.pp
         label
@@ -278,13 +280,13 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Pattern do not match returned expression.@]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Typer_unbound_module_variable (mv, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Module \"%a\" not found. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Module_var.pp
         mv
@@ -292,21 +294,21 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Type \"%s\" not found. @]"
-        Snippet.pp
+        snippet_pp
         loc
         (Type.Type_var_name_tbl.name_of name_tbl tv)
     | `Typer_unbound_texists_var (tvar, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Existential variable \"^%s\" not found. @]"
-        Snippet.pp
+        snippet_pp
         loc
         (Type.Type_var_name_tbl.Exists.name_of tvar)
     | `Typer_unbound_variable (v, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Variable \"%a\" not found. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Value_var.pp
         v
@@ -314,7 +316,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Mutable variable \"%a\" not found. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Value_var.pp
         v
@@ -324,7 +326,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Expected collection of type \"%a\", but recieved collection of type \
          \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         For_each_loop.pp_collect_type
         collection_type
@@ -337,7 +339,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Expected for each loop to bind %d variables, but loop binds %d \
          variables.@]"
-        Snippet.pp
+        snippet_pp
         loc
         expected_arity
         recieved_arity
@@ -345,7 +347,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Constructor \"%a\" not found. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Label.pp
         c
@@ -360,7 +362,7 @@ let error_ppformat
         f
         "@[<hv>%a@ Type%a is applied to a wrong number of arguments, expected: %i got: \
          %i@]"
-        Snippet.pp
+        snippet_pp
         loc
         aux
         op_opt
@@ -371,7 +373,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must \
          be annotated with a variant type. @]"
-        Snippet.pp
+        snippet_pp
         loc
         Label.pp
         c
@@ -380,7 +382,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         lamb_type
@@ -390,7 +392,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid record field \"%a\" in record.@]"
-        Snippet.pp
+        snippet_pp
         loc
         Label.pp
         field
@@ -398,20 +400,20 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
-        Snippet.pp
+        snippet_pp
         l
     | `Typer_comparator_composed (_a, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid arguments.@.Only composed types of not more than two element \
          are allowed to be compared.@]"
-        Snippet.pp
+        snippet_pp
         loc
     | `Typer_assert_equal (expected, actual, loc) ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\".@]"
-        Snippet.pp
+        snippet_pp
         loc
         Ast_typed.PP.type_expression_orig
         expected
@@ -423,7 +425,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument of type \
          \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type_
@@ -436,7 +438,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid arguments.@.These types cannot be compared: \"%a\" and \
          \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type1
@@ -459,7 +461,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Pattern %anot of the expected type \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         pat.location
         pf
         pat
@@ -473,7 +475,7 @@ let error_ppformat
         f
         "@[<hv>%a@.Mutable binding has the polymorphic type \"%a\"@.Hint: Add an \
          annotation.%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type_
@@ -486,13 +488,13 @@ let error_ppformat
         | [ mvar ] -> Format.fprintf ppf "%a" Module_var.pp mvar
         | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
       in
-      Format.fprintf f "@[<hv>%a@. Module \"%a\" not found.@]" Snippet.pp loc pp_path path
+      Format.fprintf f "@[<hv>%a@. Module \"%a\" not found.@]" snippet_pp loc pp_path path
     | `Typer_cannot_decode_texists (type_, loc) ->
       let type_ = type_improve type_ in
       Format.fprintf
         f
         "@[<hv>%a@.Underspecified type \"%a\".@.Please add additional annotations.%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         type_
@@ -504,7 +506,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type(s).@.Expected \"%a\", but got: \"%a\".%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         pp_type
         expected_type

@@ -9,17 +9,21 @@ type aggregation_error =
 [@@deriving poly_constructor { prefix = "aggregation_" }]
 
 let error_ppformat
-    :  display_format:string display_format -> Format.formatter -> aggregation_error
-    -> unit
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> aggregation_error -> unit
   =
- fun ~display_format f a ->
+ fun ~display_format ~no_colour f a ->
   match display_format with
   | Human_readable | Dev ->
     (match a with
     | `Aggregation_corner_case desc ->
       Format.fprintf f "@[<hv>An aggregation corner case occurred:@.%s@]" desc
     | `Aggregation_redundant_pattern loc ->
-      Format.fprintf f "@[<hv>%a@.Redundant pattern matching@]" Snippet.pp loc)
+      Format.fprintf
+        f
+        "@[<hv>%a@.Redundant pattern matching@]"
+        (Snippet.pp ~no_colour)
+        loc)
 
 
 let error_json : aggregation_error -> Simple_utils.Error.t =

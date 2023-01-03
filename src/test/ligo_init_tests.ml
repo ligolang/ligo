@@ -20,7 +20,7 @@ let folder_existence_state fpath ~should_exist ~raise:_ =
     failwith @@ "Unexpected error during testing if " ^ Fpath.to_string fpath ^ " exist"
 
 
-let clone_and_check ~kind ~template ?project_name_opt () =
+let clone_and_check ~no_colour ~kind ~template ?project_name_opt () =
   let result =
     Ligo_api.Ligo_init.new_project
       ~version:"mock"
@@ -28,6 +28,7 @@ let clone_and_check ~kind ~template ?project_name_opt () =
       ~project_name_opt
       ~template
       ~display_format:Display.human_readable
+      ~no_colour
       ()
   in
   let project_name =
@@ -50,9 +51,10 @@ let clone_and_check ~kind ~template ?project_name_opt () =
   | Error (e, _) -> Error e
 
 
-let test_init_new_contract_with_template ~raise:_ () =
+let test_init_new_contract_with_template ~no_colour ~raise:_ () =
   let res =
     clone_and_check
+      ~no_colour
       ~kind:`CONTRACT
       ~template:"advisor-cameligo"
       ~project_name_opt:project_mock_name
@@ -63,9 +65,10 @@ let test_init_new_contract_with_template ~raise:_ () =
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
 
 
-let test_init_new_library_with_template ~raise:_ () =
+let test_init_new_library_with_template ~no_colour ~raise:_ () =
   let res =
     clone_and_check
+      ~no_colour
       ~kind:`LIBRARY
       ~template:"ligo-breathalyzer"
       ~project_name_opt:project_mock_name
@@ -76,9 +79,10 @@ let test_init_new_library_with_template ~raise:_ () =
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
 
 
-let test_init_project_with_unexisting_template_raise_exception ~raise:_ () =
+let test_init_project_with_unexisting_template_raise_exception ~no_colour ~raise:_ () =
   let r =
     clone_and_check
+      ~no_colour
       ~kind:`CONTRACT
       ~template:"unexisting-template"
       ~project_name_opt:project_mock_name
@@ -98,8 +102,8 @@ let test_init_project_with_unexisting_template_raise_exception ~raise:_ () =
       err
 
 
-let test_init_project_with_default_name ~raise:_ () =
-  let res = clone_and_check ~kind:`LIBRARY ~template:"ligo-breathalyzer" () in
+let test_init_project_with_default_name ~no_colour ~raise:_ () =
+  let res = clone_and_check ~no_colour ~kind:`LIBRARY ~template:"ligo-breathalyzer" () in
   match res with
   | Ok () -> ()
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
@@ -113,9 +117,9 @@ let cleanup_test () =
   ()
 
 
-let test_new_project_wrapper behaviour ~raise:_ () =
+let test_new_project_wrapper ~no_colour behaviour ~raise:_ () =
   let () = setup_test () in
-  let () = behaviour ~raise () in
+  let () = behaviour ~no_colour ~raise () in
   let () = cleanup_test () in
   ()
 
@@ -161,12 +165,16 @@ let test_init_list_template_library_template_with_format ~raise:_ () =
   assert (List.equal String.equal expected_library_list result_list)
 
 
-let test_init_list_template_contract_template ~raise:_ () =
+let test_init_list_template_contract_template ~no_colour ~raise:_ () =
   let expected_output =
     "list of projects:\n" ^ String.concat ~sep:"\n" expected_contract_list ^ "\n"
   in
   let result_list =
-    Ligo_api.Ligo_init.list ~kind:`CONTRACT ~display_format:Display.human_readable ()
+    Ligo_api.Ligo_init.list
+      ~kind:`CONTRACT
+      ~display_format:Display.human_readable
+      ~no_colour
+      ()
   in
   let _ =
     match result_list with
@@ -178,6 +186,11 @@ let test_init_list_template_contract_template ~raise:_ () =
 
 
 let main =
+  let no_colour = Test_helpers.options.tools.no_colour in
+  let test_new_project_wrapper = test_new_project_wrapper ~no_colour in
+  let test_init_list_template_contract_template =
+    test_init_list_template_contract_template ~no_colour
+  in
   test_suite
     "LIGO init tests"
     [ test

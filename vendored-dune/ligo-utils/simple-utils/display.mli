@@ -11,7 +11,7 @@ val human_readable : ex_display_format
 val dev : ex_display_format
 val json : ex_display_format
 
-type 'a pp = display_format:(string display_format) -> Format.formatter -> 'a -> unit
+type 'a pp = display_format:(string display_format) -> no_colour:bool -> Format.formatter -> 'a -> unit
 type 'a format = {
     pp : 'a pp ;
     to_json : 'a -> json ;
@@ -24,7 +24,7 @@ type 'a with_format = {
 
 type displayable = Displayable : 'a with_format -> displayable
 
-val convert : display_format:'output display_format -> displayable -> 'output
+val convert : display_format:'output display_format -> no_colour:bool -> displayable -> 'output
 
 val to_json : displayable -> json
 

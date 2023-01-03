@@ -24,28 +24,31 @@ type abs_error =
 [@@deriving poly_constructor { prefix = "concrete_cameligo_" }]
 
 let error_ppformat
-    : display_format:string display_format -> Format.formatter -> abs_error -> unit
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> abs_error -> unit
   =
- fun ~display_format f a ->
+ fun ~display_format ~no_colour f a ->
+  let snippet_pp = Snippet.pp ~no_colour in
+  let snippet_pp_lift = Snippet.pp_lift ~no_colour in
   match display_format with
   | Human_readable | Dev ->
     (match a with
     | `Concrete_cameligo_expected_access_to_variable reg ->
-      Format.fprintf f "@[<hv>%a@.Expected access to a variable.@]" Snippet.pp_lift reg
+      Format.fprintf f "@[<hv>%a@.Expected access to a variable.@]" snippet_pp_lift reg
     | `Concrete_cameligo_untyped_recursive_fun reg ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to \
          have a type annotation (for now). @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         reg
     | `Concrete_cameligo_unknown_constant (s, reg) ->
-      Format.fprintf f "@[<hv>%a@.Unknown constant: %s" Snippet.pp reg s
+      Format.fprintf f "@[<hv>%a@.Unknown constant: %s" snippet_pp reg s
     | `Concrete_cameligo_unsupported_pattern_type pl ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid pattern.@.Can't match on values. @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         (List.fold_left
            ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p))
            ~init:Region.ghost
@@ -54,20 +57,20 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         (Raw.type_expr_to_region te)
     | `Concrete_cameligo_recursion_on_non_function reg ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid let declaration.@.Only functions can be recursive. @]"
-        Snippet.pp
+        snippet_pp
         reg
     | `Concrete_cameligo_michelson_type_wrong (texpr, name) ->
       Format.fprintf
         f
         "@[<hv>%a@.Invalid \"%s\" type.@.At this point, an annotation, in the form of a \
          string, is expected for the preceding type. @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         (Raw.type_expr_to_region texpr)
         name
     | `Concrete_cameligo_michelson_type_wrong_arity (loc, name) ->
@@ -75,14 +78,14 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid \"%s\" type.@.An even number of 2 or more arguments is \
          expected, where each odd item is a type annotated by the following string. @]"
-        Snippet.pp
+        snippet_pp
         loc
         name
     | `Concrete_cameligo_missing_funarg_annotation v ->
       Format.fprintf
         f
         "@[<hv>%a@.Missing a type annotation for argument \"%s\". @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         v.region
         v.value
     | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) ->
@@ -91,7 +94,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.The tuple \"%s\" does not have the expected type \"%s\". @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         region
         p
         t
@@ -99,7 +102,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Functions with type parameters need to be annotated. @]"
-        Snippet.pp_lift
+        snippet_pp_lift
         reg)
 
 

@@ -19,17 +19,18 @@ type error = t
 
 type pp_formater =
   display_format:(string Display.display_format) ->
+  no_colour:bool ->
   Format.formatter ->
   t ->
   unit
 
 let error_ppformat : pp_formater =
-  fun ~display_format format error ->
+  fun ~display_format ~no_colour format error ->
   match display_format with
     Human_readable | Dev ->
       match error with
         `Parsing Region.{value; region} ->
-           Snippet.pp_lift format region;
+           Snippet.pp_lift ~no_colour format region;
            Format.pp_print_string format value
 
 let to_ppformat = error_ppformat

@@ -24,10 +24,11 @@ type self_ast_imperative_error =
 [@@deriving poly_constructor { prefix = "self_ast_imperative_" }]
 
 let error_ppformat
-    :  display_format:string display_format -> Format.formatter
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
     -> self_ast_imperative_error -> unit
   =
- fun ~display_format f a ->
+ fun ~display_format ~no_colour f a ->
+  let snippet_pp = Snippet.pp ~no_colour in
   match display_format with
   | Human_readable | Dev ->
     (match a with
@@ -35,39 +36,39 @@ let error_ppformat
       Format.fprintf
         f
         "@[<v>%a@.Duplicated record field@.Hint: Change the name.@]"
-        Snippet.pp
+        snippet_pp
         e.location
     | `Self_ast_imperative_reserved_name (str, loc) ->
       Format.fprintf
         f
         "@[<v>%a@.Reserved name %S.@.Hint: Change the name.@]"
-        Snippet.pp
+        snippet_pp
         loc
         str
     | `Self_ast_imperative_non_linear_pattern t ->
       Format.fprintf
         f
         "@[<v>%a@.Repeated variable in pattern.@.Hint: Change the name.@]"
-        Snippet.pp
+        snippet_pp
         t.location
     | `Self_ast_imperative_non_linear_type_decl t ->
       Format.fprintf
         f
         "@[<v>%a@.Repeated type variable in type.@.Hint: Change the name.@]"
-        Snippet.pp
+        snippet_pp
         t.location
     | `Self_ast_imperative_non_linear_row t ->
       Format.fprintf
         f
         "@[<v>%a@.Duplicated field or variant name.@.Hint: Change the name.@]"
-        Snippet.pp
+        snippet_pp
         t.location
     | `Self_ast_imperative_duplicate_parameter exp ->
       Format.fprintf
         f
         "@[<v>%a@.Duplicated variable name in function parameter.@.Hint: Change the \
          name.@]"
-        Snippet.pp
+        snippet_pp
         exp.location
     | `Self_ast_imperative_long_constructor (c, e) ->
       Format.fprintf
@@ -75,7 +76,7 @@ let error_ppformat
         "@[<hv>%a@ Ill-formed data constructor \"%s\".@.Data constructors have a maximum \
          length of 32 characters, which is a limitation imposed by annotations in Tezos. \
          @]"
-        Snippet.pp
+        snippet_pp
         e.location
         c
     | `Self_ast_imperative_bad_timestamp (t, e) ->
@@ -83,7 +84,7 @@ let error_ppformat
         f
         "@[<hv>%a@ Ill-formed timestamp \"%s\".@.At this point, a string with a RFC3339 \
          notation or the number of seconds since Epoch is expected. @]"
-        Snippet.pp
+        snippet_pp
         e.location
         t
     | `Self_ast_imperative_bad_format_literal e ->
@@ -93,7 +94,7 @@ let error_ppformat
          expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 \
          encoded hash and terminated by a 4-byte checksum.@.In the case of a key_hash, \
          signature, or key a Base58 encoded hash is expected. @]"
-        Snippet.pp
+        snippet_pp
         e.location
         Ast_imperative.PP.expression
         e
@@ -102,18 +103,18 @@ let error_ppformat
         f
         "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \
          \"ff7a7aff\". @]"
-        Snippet.pp
+        snippet_pp
         e.location
     | `Self_ast_imperative_vars_captured vars ->
       let pp_var ppf ((decl_loc, var) : Location.t * Value_var.t) =
         Format.fprintf
           ppf
           "@[<hv>%a@ Invalid capture of non-constant variable \"%a\", declared at@.%a@]"
-          Snippet.pp
+          snippet_pp
           (Value_var.get_location var)
           Value_var.pp
           var
-          Snippet.pp
+          snippet_pp
           decl_loc
       in
       Format.fprintf f "%a" (PP_helpers.list_sep pp_var (PP_helpers.tag "@.")) vars
@@ -121,14 +122,14 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@ Invalid assignment to constant variable \"%a\", declared at@.%a@]"
-        Snippet.pp
+        snippet_pp
         loc
         Value_var.pp
         var
-        Snippet.pp
+        snippet_pp
         (Value_var.get_location var)
     | `Self_ast_imperative_no_shadowing l ->
-      Format.fprintf f "@[<hv>%a@ Cannot redeclare block-scoped variable. @]" Snippet.pp l)
+      Format.fprintf f "@[<hv>%a@ Cannot redeclare block-scoped variable. @]" snippet_pp l)
 
 
 let error_json : self_ast_imperative_error -> Simple_utils.Error.t =

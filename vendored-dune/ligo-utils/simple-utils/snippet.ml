@@ -11,9 +11,9 @@ let escape s =
 
 let fprintf = Format.fprintf
 
-let print_code ppf (region : Region.t) (in_chan : In_channel.t) =
+let print_code ~(no_colour:bool) ppf (region : Region.t) (in_chan : In_channel.t) =
   let is_dumb    = match Sys.getenv "TERM" with
-                     Some value -> String.(value = "dumb")
+                     Some value -> String.(value = "dumb") || no_colour
                    | None -> false
   and start      = region#start#line
   and start_offs = region#start#offset `Point
@@ -59,7 +59,7 @@ let print_code ppf (region : Region.t) (in_chan : In_channel.t) =
                                    ~pos:stop_offs
                                    ~len:(width - stop_offs) in
                   let after = escape after in
-                  if is_dumb then fprintf ppf "%s%!%s\n" between after
+                  if is_dumb  then fprintf ppf "%s%!%s\n" between after
                   else fprintf ppf "\027[1m\027[31m%s\027[0m%!%s\n" between after
                 else
                   let after =
@@ -83,7 +83,7 @@ let print_code ppf (region : Region.t) (in_chan : In_channel.t) =
        | Stdlib.End_of_file -> () (* Normal exit *)
     in loop_over_lines 0 start stop
 
-let pp ppf : Location.t -> unit = function
+let pp ~no_colour ppf : Location.t -> unit = function
   Virtual _ as loc ->
     Location.pp ppf loc
 | File region ->
@@ -91,10 +91,10 @@ let pp ppf : Location.t -> unit = function
       fprintf ppf "%s:\n" (region#to_string `Point);
     try
       let in_chan = In_channel.create region#file in
-      let result = print_code ppf region in_chan in
+      let result = print_code ~no_colour ppf region in_chan in
       In_channel.close in_chan;
       result
     with Sys_error _msg -> () (* TODO: Report to maintainers? *)
 
 let lift : Region.region -> Location.t = fun x -> File x
-let pp_lift ppf r = pp ppf (File r)
+let pp_lift ~no_colour ppf r = pp ~no_colour ppf (File r)

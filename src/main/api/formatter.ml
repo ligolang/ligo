@@ -2,7 +2,10 @@ open Ligo_prim
 open Simple_utils.Display
 module List = Simple_utils.List
 
-let declarations_ppformat ~display_format f (source_file, decls) =
+let declarations_ppformat ~display_format ~no_colour f (source_file, decls) =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file;
@@ -19,7 +22,10 @@ let declarations_format : 'a format =
   { pp = declarations_ppformat; to_json = declarations_jsonformat }
 
 
-let changelog_ppformat ~display_format f changelog =
+let changelog_ppformat ~display_format ~no_colour f changelog =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev -> Format.fprintf f "%s" changelog
 
@@ -30,7 +36,10 @@ let changelog_format : 'a format =
   { pp = changelog_ppformat; to_json = changelog_jsonformat }
 
 
-let contract_size_ppformat ~display_format f contract_size =
+let contract_size_ppformat ~display_format ~no_colour f contract_size =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev -> Format.fprintf f "%d bytes" contract_size
 
@@ -41,7 +50,10 @@ let contract_size_format : 'a format =
   { pp = contract_size_ppformat; to_json = contract_size_jsonformat }
 
 
-let list_ppformat ~display_format f lst =
+let list_ppformat ~display_format ~no_colour f lst =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "list of projects:\n";
@@ -51,7 +63,10 @@ let list_ppformat ~display_format f lst =
 let list_jsonformat (_lst : string list) : json = `Null
 let list_format : 'a format = { pp = list_ppformat; to_json = list_jsonformat }
 
-let new_project_ppformat ~display_format f lst =
+let new_project_ppformat ~display_format ~no_colour f lst =
+  (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+  let () = ignore no_colour in
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "Folder created: ";
@@ -309,9 +324,13 @@ module Michelson_formatter = struct
       michelson_format
       michelson_comments
       ~display_format
+      ~no_colour
       f
       (a : shrunk_result)
     =
+    (* The [no_colour] option is provided to all [_ppformat] functions by default,
+       but not needed by all of them. Remove the [ignore] if you need it. *)
+    let () = ignore no_colour in
     let mich_pp michelson_format michelson_comments =
       match michelson_format with
       | `Text ->
@@ -391,7 +410,10 @@ module Michelson_formatter = struct
       `Assoc [ "json_code", `String code_as_str ]
 
 
-  let michelson_constant_ppformat ~display_format f (hash, a) =
+  let michelson_constant_ppformat ~display_format ~no_colour f (hash, a) =
+    (* The [no_colour] option is provided to all [_ppformat] functions by default,
+     but not needed by all of them. Remove the [ignore] if you need it. *)
+    let () = ignore no_colour in
     match display_format with
     | Human_readable | Dev ->
       let code =

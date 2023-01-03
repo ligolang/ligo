@@ -3,8 +3,8 @@ module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
 
-let contract source_file new_syntax syntax display_format () =
-  format_result ~display_format Parsing.Formatter.ppx_format
+let contract source_file new_syntax syntax display_format no_colour () =
+  format_result ~display_format ~no_colour Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   let syntax = Syntax.of_string_opt ~raise (Syntax_name syntax) (Some source_file) in
   let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
@@ -20,8 +20,8 @@ let contract source_file new_syntax syntax display_format () =
   buffer
 
 
-let expression expression new_syntax syntax display_format () =
-  format_result ~display_format Parsing.Formatter.ppx_format
+let expression expression new_syntax syntax display_format no_colour () =
+  format_result ~display_format ~no_colour Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   (* Compiling chain *)
   let syntax = Syntax.of_string_opt ~raise (Syntax_name syntax) None in

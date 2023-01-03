@@ -23,15 +23,16 @@ let generic reg = `Preprocessing_generic reg
 
 let error_ppformat :
       display_format:(string Display.display_format) ->
+      no_colour:bool ->
       Format.formatter ->
       error ->
       unit =
-  fun ~display_format format error ->
+  fun ~display_format ~no_colour format error ->
   match display_format with
     Human_readable | Dev ->
       match error with
         `Preprocessing_generic Region.{region; value} ->
-           Snippet.pp_lift format region;
+           Snippet.pp_lift ~no_colour format region;
            Format.pp_print_string format value
 
 (* JSON *)

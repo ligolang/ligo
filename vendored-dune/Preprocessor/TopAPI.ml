@@ -54,6 +54,7 @@ module Make (Parameters : CLI.PARAMETERS) =
 
     let format_error (msg : string Region.reg) : string =
       let Region.{value; region} = msg in
+      let no_colour = Options.no_colour in
       match Options.input with
         None ->
           let header =
@@ -64,7 +65,7 @@ module Make (Parameters : CLI.PARAMETERS) =
           in sprintf "%s:\n%s" header value
       | Some file ->
           sprintf "%s%s"
-            (Format.asprintf "%a" Snippet.pp_lift region)
+            (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
             (Std.redden value)
 
     (* Logging preprocessing results *)
