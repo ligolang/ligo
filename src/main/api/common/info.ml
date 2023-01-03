@@ -23,7 +23,12 @@ let measure_contract (raw_options : Raw_options.t) source_file display_format no
   let Compiler_options.{ entry_point; _ } = options.frontend in
   let Compiler_options.{ views; _ } = options.backend in
   let michelson, views =
-    Build.build_contract ~raise ~options entry_point views source_file
+    Build.build_contract
+      ~raise
+      ~options
+      entry_point
+      views
+      (Build.Source_input.From_file source_file)
   in
   let contract =
     Compile.Of_michelson.build_contract
@@ -49,7 +54,9 @@ let list_declarations
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
   in
   let options = Compiler_options.make ~raw_options ~syntax () in
-  let prg = Build.qualified_typed ~raise Env ~options source_file in
+  let prg =
+    Build.qualified_typed ~raise Env ~options (Build.Source_input.From_file source_file)
+  in
   let declarations = Compile.Of_typed.list_declarations raw_options.only_ep prg in
   source_file, declarations
 
@@ -79,7 +86,8 @@ let get_scope_raw
        that is the reason for no_stdlib as true *)
     let options = Compiler_options.set_no_stdlib options true in
     match source_file with
-    | From_file file_name -> Build.qualified_core ~raise ~options file_name
+    | From_file file_name ->
+      Build.qualified_core ~raise ~options (Build.Source_input.From_file file_name)
     | Raw file -> Build.qualified_core_from_string ~raise ~options file
     | Raw_input_lsp { file; code } ->
       Build.qualified_core_from_raw_input ~raise ~options file code

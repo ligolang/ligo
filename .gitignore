@@ -23,3 +23,6 @@ env/
 _esy
 node_modules
 /src/main/build/ligo_lib/loaded.ml
+
+jsoo/dist
+jsoo/lib

@@ -221,6 +221,7 @@ let qualified_core ~raise
 
     let top_level_syntax =
       match source with
+      | Raw_input_lsp _ -> Syntax_types.CameLIGO
       | From_file filename -> get_top_level_syntax ~options ~filename ()
       | Raw _ -> Syntax_types.CameLIGO
   end) in

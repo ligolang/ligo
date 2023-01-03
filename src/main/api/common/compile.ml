@@ -236,7 +236,9 @@ let parameter
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
   let entry_point = Value_var.of_input_var ~loc entry_point in
-  let app_typed_prg = Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file) in
+  let app_typed_prg =
+    Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
+  in
   let ( app_typed_prg
       , entry_point
       , Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } )

@@ -21,7 +21,7 @@ let main source syntax =
       ~syntax
       ~views
       ~protocol_version
-      ~disable_michelson_typechecking:false
+      ~disable_michelson_typechecking:true
       ~experimental_disable_optimizations_for_debugging:false
       ~enable_typed_opt:false
       ~no_stdlib:false
@@ -55,9 +55,9 @@ let main source syntax =
 
 let _ =
   Js.export
-    "compile"
+    "ligo"
     (object%js
-       method main code syntax =
+       method compile code syntax =
          let code = Js.to_string code in
          let syntax = Js.to_string syntax in
          let michelson = main code syntax in

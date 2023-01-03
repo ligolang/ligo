@@ -1,5 +1,5 @@
 (* Virtual module. Will be linked in later *)
-module Raw_options = Compiler_options.Raw_options
+open Compiler_options
 
 val mutate_cst
   :  Raw_options.t
