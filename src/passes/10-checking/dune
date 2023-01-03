@@ -1,7 +1,7 @@
 (library
  (name checking)
  (public_name ligo.checking)
- (libraries simple-utils tezos-utils ast_core ast_typed predefined
+ (libraries simple-utils ast_core ast_typed predefined
    environment compiler_options main_warnings desugaring syntax_types
    ocaml-compiler-libs.common simple-diff)
  (preprocess

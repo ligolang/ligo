@@ -3,5 +3,5 @@
  (public_name ligo.build)
  (instrumentation
   (backend bisect_ppx))
- (libraries main_errors preprocessing simple-utils tezos-utils ligo_compile
-   ligo_lib ligo_prim BuildSystem))
+ (libraries main_errors preprocessing simple-utils ligo_compile ligo_lib
+   ligo_prim BuildSystem))

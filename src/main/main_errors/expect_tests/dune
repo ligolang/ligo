@@ -1,6 +1,6 @@
 (library
  (name main_errors_test)
- (libraries simple-utils main_errors cst ast_typed tezos-utils)
+ (libraries simple-utils main_errors cst ast_typed)
  (inline_tests)
  (preprocess
   (pps ppx_expect)))

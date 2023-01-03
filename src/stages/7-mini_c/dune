@@ -3,7 +3,7 @@
  (public_name ligo.mini_c)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils ligo_prim ast_expanded)
+ (libraries simple-utils tezos-micheline ligo_prim ast_expanded)
  (inline_tests)
  (preprocess
   (pps ppx_expect)))

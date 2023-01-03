@@ -3,7 +3,7 @@
  (public_name ligo.self_michelson)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils environment tezos-hacl proto-alpha-utils)
+ (libraries simple-utils environment tezos-hacl proto-alpha-utils)
  (preprocess
   (pps ppx_expect))
  (inline_tests))

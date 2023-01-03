@@ -3,7 +3,6 @@
  (public_name ligo.ligo_interpreter)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils proto-alpha-utils tezos-utils ast_aggregated
-   ligo_prim qcheck)
+ (libraries simple-utils proto-alpha-utils ast_aggregated ligo_prim qcheck)
  (preprocess
   (pps ppx_deriving_yojson)))

@@ -3,7 +3,7 @@
  (public_name ligo.ligo_primitive)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils hex tezos-utils tezos-hacl)
+ (libraries simple-utils hex tezos-hacl)
  (inline_tests)
  (preprocess
   (pps ppx_expect ppx_deriving.eq ppx_deriving.ord ppx_deriving.fold
