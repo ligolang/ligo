@@ -466,7 +466,7 @@ let ligorc_path =
   let open Command.Param in
   let name = "--ligorc-path" in
   let doc = "PATH path to .ligorc file." in
-  let spec = optional_with_default Constants.ligo_rc_path string in
+  let spec = optional_with_default (Constants.ligo_rc_path ()) string in
   flag ~doc name spec
 
 

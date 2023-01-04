@@ -3,7 +3,7 @@ type command = string * string array
 val esy : string
 val windows : string
 val ligo_install_path : string
-val ligo_rc_path : string
+val ligo_rc_path : unit -> string
 val ligo_registry : string
 val esy_add : package_name:string -> cache_path:string -> ligo_registry:string -> command
 val esy_install : cache_path:string -> ligo_registry:string -> command
