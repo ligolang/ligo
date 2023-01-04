@@ -1,0 +1,130 @@
+
+esy-windows:
+  extends: .submodule-clone
+  tags:
+    - windows
+  stage: build
+  except:
+    - merge_requests
+  script:
+    # - $env:GIT_CURL_VERBOSE = 1
+    # - $env:GIT_TRACE = 1
+    # - $env:GIT_TRACE_PACKET = 1
+    - git config http.postBuffer 1048576000
+    - npm i -g @esy-nightly/esy --force
+    - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
+    - esy i
+    - bash -c "esy release || esy release || esy release"
+    - rm -Recurse -Force _esy
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - cp ./windows-installer/*.dll _release/bin/
+    - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./_release
+    - cp ./windows-installer/WindowsInstaller.nsi _release
+    - cd _release; makensis .\WindowsInstaller.nsi
+    - cd .. ; mv _release platform-windows-x64
+  artifacts:
+    paths:
+      - platform-windows-x64
+
+esy-macos-intel:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - i7
+  stage: build
+  except:
+    - merge_requests
+  script:
+    - mkdir -p ~/.npm
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g @esy-nightly/esy --force
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+  artifacts:
+    paths:
+      - platform-darwin
+
+esy-macos-m1:
+  extends: .submodule-clone
+  tags:
+    - mac
+    - m1
+  stage: build
+  except:
+    - merge_requests
+  script:
+    - mkdir -p ~/.npm
+    - brew install node
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i -g esy@beta --force
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - bash -c "patch -p1 --force < 0001-Removes-problematic-sh-script-on-macos.patch"
+    - esy i
+    - esy release
+    - mv _release platform-darwin-arm64
+    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+  artifacts:
+    paths:
+      - platform-darwin-arm64
+
+prepare_npm_tarball:
+  tags:
+  - docker
+  stage: push
+  needs:
+    - job: docker_extract
+      artifacts: true
+    - job: esy-windows
+      artifacts: true
+    - job: esy-macos-intel
+      artifacts: true
+    - job: esy-macos-m1
+      artifacts: true
+  except:
+    - merge_requests
+  script:
+    - mkdir -p _release/platform-linux/bin
+    - cp platform-windows-x64/esyInstallRelease.js _release
+    - mv platform-* _release/
+    - cp ./ligo _release/platform-linux/bin
+    - node scripts/pipelines-release.js
+    - cp ./scripts/release-postinstall.js _release/postinstall.js
+    - cd _release && npm pack
+  artifacts:
+    paths:
+      - _release/ligo-*.tgz
+
+publish_npm_build_fail:
+  stage: push
+  needs:
+    - job: prepare_npm_tarball
+    - job: esy-windows
+    - job: esy-macos-intel
+    - job: esy-macos-m1
+  when: on_failure
+  except:
+    - merge_requests
+  script:
+    - echo "npm_build_status 1" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG
+
+publish_npm_build_success:
+  stage: push
+  needs:
+    - job: prepare_npm_tarball
+    - job: esy-windows
+    - job: esy-macos-intel
+    - job: esy-macos-m1
+  when: on_success
+  except:
+    - merge_requests
+  script:
+    - echo "npm_build_status 0" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG
