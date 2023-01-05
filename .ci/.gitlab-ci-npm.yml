@@ -4,8 +4,13 @@ esy-windows:
   tags:
     - windows
   stage: build
-  except:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
     # - $env:GIT_CURL_VERBOSE = 1
     # - $env:GIT_TRACE = 1
@@ -35,8 +40,13 @@ esy-macos-intel:
     - mac
     - i7
   stage: build
-  except:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
     - mkdir -p ~/.npm
     - npm config set prefix '~/.npm'
@@ -58,8 +68,13 @@ esy-macos-m1:
     - mac
     - m1
   stage: build
-  except:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
     - mkdir -p ~/.npm
     - brew install node
@@ -89,8 +104,11 @@ prepare_npm_tarball:
       artifacts: true
     - job: esy-macos-m1
       artifacts: true
-  except:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
     - mkdir -p _release/platform-linux/bin
     - cp platform-windows-x64/esyInstallRelease.js _release
@@ -110,9 +128,11 @@ publish_npm_build_fail:
     - job: esy-windows
     - job: esy-macos-intel
     - job: esy-macos-m1
-  when: on_failure
-  except:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: on_failure
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
     - echo "npm_build_status 1" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG
 
@@ -123,8 +143,10 @@ publish_npm_build_success:
     - job: esy-windows
     - job: esy-macos-intel
     - job: esy-macos-m1
-  when: on_success
-  except:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
-    - echo "npm_build_status 0" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG
+    - echo "npm_build_status 0" | curl --data-binary @- -u "$PROM_PUSH_AUTH" https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG
