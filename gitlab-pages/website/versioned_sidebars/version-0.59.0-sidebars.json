@@ -36,10 +36,7 @@
       "advanced/package-management",
       "advanced/global-constants"
     ],
-    "Reference": [
-      "api/cli-commands",
-      "api/cheat-sheet"
-    ],
+    "Reference": ["api/cli-commands", "api/cheat-sheet"],
     "Sub-Commands": [
       "manpages/changelog",
       "manpages/add-user",
@@ -119,27 +116,47 @@
       "contributors/road-map/long-term"
     ]
   },
-  "tutorials": {
-    "Get-started": [
-      "tutorials/getting-started/getting-started"
-    ],
-    "First-contract": [
-      "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-      "tutorials/taco-shop/tezos-taco-shop-payout"
-    ],
-    "Migrating from Ethereum": [
-      "tutorials/tz-vs-eth/tz-vs-eth"
-    ],
-    "Inter-contract invocations": [
-      "tutorials/inter-contract-calls/inter-contract-calls"
-    ],
-    "Security": [
-      "tutorials/security/security"
-    ],
-    "Optimisation": [
-      "tutorials/optimisation/optimisation"
-    ]
-  },
+  "tutorials": [
+    {
+      "label": "Getting started",
+      "type": "doc",
+      "id": "tutorials/getting-started/getting-started"
+    },
+    {
+      "type": "category",
+      "label": "First contract",
+      "collapsible": true,
+      "collapsed": true,
+      "items": [
+        "tutorials/taco-shop/tezos-taco-shop-smart-contract",
+        "tutorials/taco-shop/tezos-taco-shop-payout"
+      ]
+    },
+    {
+      "type": "doc",
+      "id": "tutorials/start-a-project-from-a-template"
+    },
+    {
+      "type": "doc",
+      "label": "Migrating from Ethereum",
+      "id": "tutorials/tz-vs-eth/tz-vs-eth"
+    },
+    {
+      "type": "doc",
+      "label": "Inter-contract invocations",
+      "id": "tutorials/inter-contract-calls/inter-contract-calls"
+    },
+    {
+      "type": "doc",
+      "label": "Smart contract security",
+      "id": "tutorials/security/security"
+    },
+    {
+      "label": "Optimisation",
+      "type": "doc",
+      "id": "tutorials/optimisation/optimisation"
+    }
+  ],
   "faq": {
     "FAQ": [
       "faq/intro",
