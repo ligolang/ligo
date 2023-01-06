@@ -325,10 +325,10 @@ let rec all_expression ~raise (options : Compiler_options.t) : expression -> exp
 let create_contract ~raise expr =
   let _ = map_expression (fun expr ->
                   match expr.content with
-                  | E_create_contract (_, _, ((x, _), lambda), _) -> (
-                    let fvs = get_fv [x] lambda in
+                  | E_create_contract (_, _, ((x, t), lambda), _) -> (
+                    let fvs = get_fv [(x, t)] lambda in
                     if Int.equal (List.length fvs) 0 then expr
-                    else raise.error @@ fvs_in_create_contract_lambda expr (List.hd_exn fvs)
+                    else raise.error @@ fvs_in_create_contract_lambda expr (fst @@ List.hd_exn fvs)
                   )
                   | _ -> expr) expr in
   expr
@@ -337,4 +337,5 @@ let all_expression ~raise options e =
   let e = Uncurry.uncurry_expression e in
   let e = all_expression ~raise options e in
   let e = create_contract ~raise e in
+  let e = Check_apply.capture_expression ~raise e in
   e

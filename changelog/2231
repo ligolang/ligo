@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Before fix\\n\\n\\n```\\n$ ligo compile expression cameligo \"fun (x : operation) -> fun (y : int) -> x\"\\nError(s) occurred while checking the contract:\\nAt (unshown) location 16, operation type forbidden in parameter, storage and constants\\n\\n```\\n\\n#### After fix\\n\\n\\n```\\n$ ligo compile expression cameligo \"fun (x : operation) -> fun (y : int) -> x\"\\n                                           \\nInvalid capturing, term captures the type operation.\\nHint: Uncurry or use tuples instead of high-order functions.\\n\\n```\\n\\n"
+merge_request: '2231'
+title: "Error checking for closure capturing big maps/operation/contract"
+type: added
+            
