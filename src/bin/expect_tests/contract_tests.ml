@@ -1039,6 +1039,57 @@ let%expect_test _ =
         code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract"; bad_contract "capture_big_map.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/capture_big_map.mligo", line 16, characters 10-16:
+     15 |   let ledger_module (data: l) : l interface = {
+     16 |     data; supply
+     17 |   }
+
+    Invalid capturing, term captures the type big_map (address ,
+    nat).
+    Hint: Uncurry or use tuples instead of high-order functions. |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"; "expression"; "cameligo"; "fun (x : operation) -> fun (y : int) -> x" ];
+  [%expect
+    {|
+    Invalid capturing, term captures the type operation.
+    Hint: Uncurry or use tuples instead of high-order functions. |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "fun (x : 4 sapling_transaction) -> fun (y : int) -> x"
+    ];
+  [%expect
+    {|
+    Invalid capturing, term captures the type sapling_transaction (4).
+    Hint: Uncurry or use tuples instead of high-order functions. |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "fun (x : operation -> int contract) -> fun (y : int) -> x"
+    ];
+  [%expect
+    {|
+    { LAMBDA
+        (pair (lambda operation (contract int)) int)
+        (lambda operation (contract int))
+        { CAR } ;
+      DUP 2 ;
+      APPLY ;
+      SWAP ;
+      DROP } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "amount_lambda.mligo" ];
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect
