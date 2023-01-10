@@ -151,3 +151,20 @@ let concat_syntax_alt = (s: string): string => s + "test_literal";
 ```
 
 </Syntax>
+
+
+<SyntaxTitle syntax="pascaligo">
+val concats : list (string) -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val concats : string list -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let concats: list(string) => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let concats: (ss: list&lt;string&gt;) => string
+</SyntaxTitle>
+
+
+Concatenate together a list of `string` and return the result.

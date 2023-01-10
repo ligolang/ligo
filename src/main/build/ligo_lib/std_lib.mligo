@@ -240,6 +240,7 @@ end
 
 module String = struct
   let length (b : string) : nat = [%external ("SIZE", b)]
+  let concats (bs : string list) : string = [%external ("CONCATS", bs)]
 
 #if CURRY
   let concat (b1 : string) (b2 : string) : string = [%external ("CONCAT", b1, b2)]
@@ -269,6 +270,7 @@ module Option = struct
 end
 
 module Bytes = struct
+  let concats (bs : bytes list) : bytes = [%external ("CONCATS", bs)]
   let pack (type a) (v : a) : bytes = [%Michelson ({| { PACK } |} : a -> bytes)] v
   let unpack (type a) (b : bytes) : a option = [%Michelson (({| { UNPACK (type $0) } |} : bytes -> a option), (() : a))] b
   let length (b : bytes) : nat = [%external ("SIZE", b)]

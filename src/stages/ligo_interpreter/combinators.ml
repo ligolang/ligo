@@ -141,6 +141,11 @@ let get_string : value -> string option = function
   | _ -> None
 
 
+let get_bytes : value -> bytes option = function
+  | V_Ct (C_bytes x) -> Some x
+  | _ -> None
+
+
 let get_key : value -> _ option = function
   | V_Ct (C_key x) -> Some x
   | _ -> None

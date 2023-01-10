@@ -46,6 +46,22 @@ let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
+val concats : list (bytes) -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val concats : bytes list -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let concats: list(bytes) => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let concats: (bs: list&lt;bytes&gt;) => bytes
+</SyntaxTitle>
+
+
+Concatenate together a list of `bytes` and return the result.
+
+<SyntaxTitle syntax="pascaligo">
 val sub : nat -> nat -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

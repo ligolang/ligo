@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew functions have been implemented for concatenating lists of strings and bytes:\\n`String.concats : string list -> string``Bytes.concats : bytes list -> bytes`\\n"
+merge_request: '2228'
+title: "Implement `String.concats` and `Bytes.concats` in stdlib"
+type: added
+            
