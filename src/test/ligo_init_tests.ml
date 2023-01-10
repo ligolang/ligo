@@ -20,7 +20,7 @@ let folder_existence_state fpath ~should_exist ~raise:_ =
     failwith @@ "Unexpected error during testing if " ^ Fpath.to_string fpath ^ " exist"
 
 
-let clone_and_check ~no_colour ~kind ~template ?project_name_opt () =
+let clone_and_check ~no_colour ~kind ~template ~registry ?project_name_opt () =
   let result =
     Ligo_api.Ligo_init.new_project
       ~version:"mock"
@@ -29,6 +29,7 @@ let clone_and_check ~no_colour ~kind ~template ?project_name_opt () =
       ~template
       ~display_format:Display.human_readable
       ~no_colour
+      ~registry
       ()
   in
   let project_name =
@@ -51,13 +52,14 @@ let clone_and_check ~no_colour ~kind ~template ?project_name_opt () =
   | Error (e, _) -> Error e
 
 
-let test_init_new_contract_with_template ~no_colour ~raise:_ () =
+let test_init_new_contract_with_template ~no_colour ~registry ~raise:_ () =
   let res =
     clone_and_check
       ~no_colour
       ~kind:`CONTRACT
       ~template:"advisor-cameligo"
       ~project_name_opt:project_mock_name
+      ~registry
       ()
   in
   match res with
@@ -65,13 +67,14 @@ let test_init_new_contract_with_template ~no_colour ~raise:_ () =
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
 
 
-let test_init_new_library_with_template ~no_colour ~raise:_ () =
+let test_init_new_library_with_template ~no_colour ~registry ~raise:_ () =
   let res =
     clone_and_check
       ~no_colour
       ~kind:`LIBRARY
       ~template:"ligo-breathalyzer"
       ~project_name_opt:project_mock_name
+      ~registry
       ()
   in
   match res with
@@ -79,13 +82,19 @@ let test_init_new_library_with_template ~no_colour ~raise:_ () =
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
 
 
-let test_init_project_with_unexisting_template_raise_exception ~no_colour ~raise:_ () =
+let test_init_project_with_unexisting_template_raise_exception
+    ~no_colour
+    ~registry
+    ~raise:_
+    ()
+  =
   let r =
     clone_and_check
       ~no_colour
       ~kind:`CONTRACT
       ~template:"unexisting-template"
       ~project_name_opt:project_mock_name
+      ~registry
       ()
   in
   match r with
@@ -97,13 +106,16 @@ let test_init_project_with_unexisting_template_raise_exception ~no_colour ~raise
          "Error: Unrecognized template\n\
           Hint: Use the option --template \"TEMPLATE_NAME\" \n\n\
           Please select a template from the following list: \n\
-          - %s"
+          - %s\n\
+          Or check if template exists on LIGO registry.\n"
          (String.concat ~sep:"\n- " (Ligo_api.Ligo_init.list' ~kind:`CONTRACT)))
       err
 
 
-let test_init_project_with_default_name ~no_colour ~raise:_ () =
-  let res = clone_and_check ~no_colour ~kind:`LIBRARY ~template:"ligo-breathalyzer" () in
+let test_init_project_with_default_name ~no_colour ~registry ~raise:_ () =
+  let res =
+    clone_and_check ~no_colour ~kind:`LIBRARY ~template:"ligo-breathalyzer" ~registry ()
+  in
   match res with
   | Ok () -> ()
   | Error e -> failwith @@ "Unexpected error during init new project : " ^ e
@@ -117,9 +129,9 @@ let cleanup_test () =
   ()
 
 
-let test_new_project_wrapper ~no_colour behaviour ~raise:_ () =
+let test_new_project_wrapper ~no_colour behaviour ~raise:_ ~registry () =
   let () = setup_test () in
-  let () = behaviour ~no_colour ~raise () in
+  let () = behaviour ~no_colour ~registry ~raise () in
   let () = cleanup_test () in
   ()
 
@@ -187,7 +199,8 @@ let test_init_list_template_contract_template ~no_colour ~raise:_ () =
 
 let main =
   let no_colour = Test_helpers.options.tools.no_colour in
-  let test_new_project_wrapper = test_new_project_wrapper ~no_colour in
+  let registry = Cli_helpers.Constants.ligo_registry in
+  let test_new_project_wrapper = test_new_project_wrapper ~no_colour ~registry in
   let test_init_list_template_contract_template =
     test_init_list_template_contract_template ~no_colour
   in

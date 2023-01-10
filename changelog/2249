@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n#### New Feature\\n\\n\\n```bash\\n$ ligo init library --template @ligo/bigarray\\nFolder created: @ligo_bigarray\\n\\n$ tree .\\n.\\n└── @ligo_bigarray\\n    ├── LICENSE\\n    ├── Makefile\\n    ├── README.md\\n    ├── examples\\n    │   ├── main.mligo\\n    │   └── package.json\\n    ├── lib\\n    │   └── bigarray.mligo\\n    ├── package.json\\n    └── test\\n        └── bigarray.test.mligo\\n\\n4 directories, 8 files\\n\\n```\\n\\n#### Before\\n\\n\\n```bash\\n$ ligo.59 init contract --template nft-factory-cameligo\\nError: Unrecognized template\\nHint: Use the option --template \"TEMPLATE_NAME\" \\n\\nPlease select a template from the following list: \\n- NFT-factory-cameligo\\n- NFT-factory-jsligo\\n- advisor-cameligo\\n...\\n\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo init contract --template nft-factory-cameligo\\nCloning into 'nft-factory-cameligo'...\\nremote: Enumerating objects: 166, done.\\nremote: Counting objects: 100% (17/17), done.\\nremote: Compressing objects: 100% (15/15), done.\\nremote: Total 166 (delta 2), reused 7 (delta 2), pack-reused 149\\nReceiving objects: 100% (166/166), 216.51 KiB | 6.98 MiB/s, done.\\nResolving deltas: 100% (63/63), done.\\nFolder created: nft-factory-cameligo\\n\\n\\n```\\n\\n"
+merge_request: '2249'
+title: "`ligo init` templates & libraries from LIGO registry"
+type: added
+            
