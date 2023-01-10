@@ -739,6 +739,14 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                [ t_string ~loc () ^-> t_string ~loc () ^~> t_string ~loc ()
                ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
+    ; ( C_CONCATS
+      , of_type
+          (create
+             ~mode_annot:[ Inferred ]
+             ~types:
+               [ t_list ~loc (t_string ~loc ()) () ^~> t_string ~loc ()
+               ; t_list ~loc (t_bytes ~loc ()) () ^~> t_bytes ~loc ()
+               ]) )
       (* Option *)
     ; ( C_NONE
       , of_type

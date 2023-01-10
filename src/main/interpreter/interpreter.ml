@@ -635,6 +635,17 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_CONCAT, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
     return @@ v_bytes (BytesLabels.cat a' b')
   | C_CONCAT, _ -> fail @@ error_type ()
+  | C_CONCATS, [ V_List ss ]
+    when List.for_all ss ~f:(fun v -> Option.is_some (get_string v))
+         && Ast_aggregated.is_t_string expr_ty ->
+    let ss = List.map ss ~f:(fun v -> Option.value_exn (get_string v)) in
+    return @@ v_string (String.concat ss)
+  | C_CONCATS, [ V_List bs ]
+    when List.for_all bs ~f:(fun v -> Option.is_some (get_bytes v))
+         && Ast_aggregated.is_t_bytes expr_ty ->
+    let bs = List.map bs ~f:(fun v -> Option.value_exn (get_bytes v)) in
+    return @@ v_bytes (BytesLabels.concat ~sep:BytesLabels.empty bs)
+  | C_CONCATS, _ -> fail @@ error_type ()
   | C_OR, [ V_Ct (C_bool a'); V_Ct (C_bool b') ] -> return @@ v_bool (a' || b')
   | C_AND, [ V_Ct (C_bool a'); V_Ct (C_bool b') ] -> return @@ v_bool (a' && b')
   | C_XOR, [ V_Ct (C_bool a'); V_Ct (C_bool b') ] ->

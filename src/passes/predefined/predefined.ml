@@ -120,6 +120,7 @@ module Michelson = struct
         (simple_binary @@ seq [ dip (i_push (prim "bool") (prim "False")); prim "UPDATE" ])
     | C_SET_UPDATE, _ -> Some (simple_ternary @@ prim "UPDATE")
     | C_CONCAT, _ -> Some (simple_binary @@ prim "CONCAT")
+    | C_CONCATS, _ -> Some (simple_unary @@ prim "CONCAT")
     | C_SLICE, _ ->
       Some
         (simple_ternary @@ seq [ prim "SLICE"; i_assert_some_msg (i_push_string "SLICE") ])

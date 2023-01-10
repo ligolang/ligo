@@ -432,3 +432,14 @@ let test_not =
 let test_chain_id = 
   let chain_id = Test.eval ("NetXH12Aer3be93" : chain_id) in
   assert (chain_id = Test.eval (Tezos.get_chain_id ()))
+
+let test_concats =
+  let ss = ["aa"; "bb"; ""; "cc"] in
+  let () = assert (String.concats ss = "aabbcc") in
+  let bs = [(0x00 : bytes); (0x0102 : bytes); (0x03 : bytes)] in
+  let () = assert (Bytes.concats bs = (0x00010203 : bytes)) in
+  let () = assert (String.concats [] = "") in
+  let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
+  let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
+  let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
+  ()

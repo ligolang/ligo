@@ -38,6 +38,7 @@ type constant' =
   | C_GE [@pure]
   (* Bytes/ String *)
   | C_CONCAT [@pure]
+  | C_CONCATS [@pure]
   | C_CONS [@pure]
   | C_SIZE [@pure]
   | C_SLICE [@pure]
