@@ -1775,7 +1775,7 @@ let print_group =
 
 (** init *)
 let init_library =
-  let f project_name template (template_list : bool) display_format no_colour () =
+  let f project_name template (template_list : bool) display_format no_colour registry () =
     if template_list
     then
       return_result ~return
@@ -1789,6 +1789,7 @@ let init_library =
            ~template
            ~display_format
            ~no_colour
+           ~registry
   in
   let summary = "Generate new folder which contains wished library template" in
   let readme () =
@@ -1797,11 +1798,17 @@ let init_library =
   Command.basic
     ~summary
     ~readme
-    (f <$> project_name <*> template <*> template_list <*> display_format <*> no_colour)
+    (f
+    <$> project_name
+    <*> template
+    <*> template_list
+    <*> display_format
+    <*> no_colour
+    <*> ligo_registry)
 
 
 let init_contract =
-  let f project_name template (template_list : bool) display_format no_colour () =
+  let f project_name template (template_list : bool) display_format no_colour registry () =
     if template_list
     then
       return_result ~return
@@ -1815,6 +1822,7 @@ let init_contract =
            ~template
            ~display_format
            ~no_colour
+           ~registry
   in
   let summary = "Generate new folder which contains wished contract template" in
   let readme () =
@@ -1823,7 +1831,13 @@ let init_contract =
   Command.basic
     ~summary
     ~readme
-    (f <$> project_name <*> template <*> template_list <*> display_format <*> no_colour)
+    (f
+    <$> project_name
+    <*> template
+    <*> template_list
+    <*> display_format
+    <*> no_colour
+    <*> ligo_registry)
 
 
 let init_group =

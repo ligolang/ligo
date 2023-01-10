@@ -547,8 +547,11 @@ let rec error_ppformat
         "Error: Unrecognized template\n\
          Hint: Use the option --template \"TEMPLATE_NAME\" \n\n\
          Please select a template from the following list: \n\
-         - %s"
-      @@ String.concat ~sep:"\n- " lststr)
+         - %s\n\
+         Or check if template exists on LIGO registry.\n"
+      @@ String.concat ~sep:"\n- " lststr
+    | `Ligo_init_registry_template_error e -> Format.fprintf f "@[<hv>@.%s@.@]" e
+    | `Ligo_init_git_template_error e -> Format.fprintf f "@[<hv>@.%s@.@]" e)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -715,7 +718,13 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_decompile_typed e -> [ Checking.Errors.error_json e ]
   | `Ligo_init_unrecognized_template _lsttr ->
     let content = make_content ~message:"Ligo init tracer" () in
-    [ make ~stage:"typer" ~content ]
+    [ make ~stage:"init" ~content ]
+  | `Ligo_init_registry_template_error _ ->
+    let content = make_content ~message:"Ligo init tracer" () in
+    [ make ~stage:"init" ~content ]
+  | `Ligo_init_git_template_error _ ->
+    let content = make_content ~message:"Ligo init tracer" () in
+    [ make ~stage:"init" ~content ]
   | `Repl_unexpected ->
     let content = make_content ~message:"REPL tracer" () in
     [ make ~stage:"repl" ~content ]

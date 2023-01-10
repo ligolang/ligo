@@ -43,6 +43,8 @@ type all =
   | `Scoping_tracer of Scoping.Errors.scoping_error
   | `Stacking_tracer of Stacking.Errors.stacking_error
   | `Ligo_init_unrecognized_template of string list
+  | `Ligo_init_registry_template_error of string
+  | `Ligo_init_git_template_error of string
   | (* | `Main_interpreter of Interpreter.interpreter_error *)
     `Main_interpret_test_entry_not_found of
     string
