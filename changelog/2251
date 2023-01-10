@@ -1,0 +1,7 @@
+
+author: Laucans
+description: "Ligo can be installed on archlinux through the Arch linux User repository. The artifact name is ligo-bin ([https://aur.archlinux.org/packages/ligo-bin](https://aur.archlinux.org/packages/ligo-bin))\\n\\n"
+merge_request: '2251'
+title: "add publication to AUR into release process"
+type: added
+            
