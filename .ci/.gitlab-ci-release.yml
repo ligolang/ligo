@@ -18,6 +18,7 @@ initialize-ssh:
       - chmod 600 ~/.ssh/id_rsa
       - ssh-keyscan gitlab.com  >> ~/.ssh/known_hosts
       - chmod 644 ~/.ssh/known_hosts
+      - cp .ci/scripts/AUR/ssh_config ~/.ssh/config
 
 initialize-git:
   stage: pretooling
@@ -203,6 +204,21 @@ update_release_metadata:
 # Following script is executed when pipeline has executed Tag process
 # Related to documentation and web-ide
 #######################################################################
+initialize-aur-repo:
+  stage: pretooling
+  script:
+    - git clone "ssh://aur@aur.archlinux.org/ligo-bin.git"
+    - git branch
+  needs:
+    - job: initialize-ssh
+    - job: initialize-git
+  artifacts:
+    paths:
+      - ligo-bin
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
+      when: always
+
 generate-homebrew-version:
   stage: pretooling
   needs:
@@ -277,6 +293,46 @@ bottle-ventura-m1:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
 
+update-ligo-bin-PKGBUILD:
+  stage: pretooling
+  script:
+    - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
+    - ./.ci/scripts/create_new_pkgbuild_version.sh https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo.deb $RELEASE_VERSION
+    - cp ./PKGBUILD/ligo.PKGBUILD ./ligo-bin/PKGBUILD
+  needs:
+    - job: initialize-aur-repo
+      artifacts: true
+    - job: build_release_env_vars
+      artifacts: true
+  artifacts:
+    paths:
+      - ligo-bin
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
+      when: always
+
+create-AUR-package:
+  stage: tooling
+  tags:
+    - docker
+  image: archlinux:base-devel
+  script: 
+    - useradd -m ligo-user
+    - chmod -R 777 .
+    - chmod +x /home/ligo-user
+    - cd ligo-bin
+    - su ligo-user -c "makepkg --printsrcinfo" > .SRCINFO
+    - cd ..
+  needs:
+    - job: update-ligo-bin-PKGBUILD
+      artifacts: true
+  artifacts:
+    paths:
+      - ligo-bin
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
+      when: always
+
 update-versionned-doc:
   stage: tooling
   tags:
@@ -329,6 +385,22 @@ create-doc-update-MR:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
+      when: always
+
+publish-AUR-package:
+  stage: push
+  script:
+    - cd ligo-bin
+    - git remote rm origin && git remote add origin ssh://aur@aur.archlinux.org/ligo-bin.git
+    - git add PKGBUILD .SRCINFO
+    - git status
+    - git commit -am "[Bot] Update Ligo pkg version [ $RELEASE_VERSION ]"
+    - git push origin master
+  needs:
+    - job: create-AUR-package
+      artifacts: true
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
 #######################################################################
 # Following script is executed when pipeline has executed Tag process
