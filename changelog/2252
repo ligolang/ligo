@@ -1,0 +1,7 @@
+
+author: tomjack
+description: "\\n\\nAllow forbidden types in views when they occur under lambda/arrow types.\\n\\n"
+merge_request: '2252'
+title: "Relax view restrictions under arrow types"
+type: added
+            

@@ -113,7 +113,7 @@ let%expect_test _ =
       code { CDR ; NIL operation ; PAIR } ;
       view "ok_view"
            unit
-           bytes
+           (lambda int (pair operation address))
            { DROP ;
              LAMBDA
                int
@@ -122,8 +122,7 @@ let%expect_test _ =
                  NONE key_hash ;
                  CREATE_CONTRACT
                    { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } ;
-                 PAIR } ;
-             PACK } } |}]
+                 PAIR } } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "view_tuple_storage.mligo" ];
