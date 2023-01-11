@@ -32,16 +32,26 @@ let check_view_type ~raise
          v_storage)
     @@ Ast_typed.assert_type_expression_eq (c_storage, v_storage)
   in
-  let type_check err (t : Ast_typed.type_expression) : unit =
-    let aux (t : Ast_typed.type_expression) =
-      match t.type_content with
-      | T_constant { injection = Big_map; _ }
-      | T_constant { injection = Sapling_state; _ }
-      | T_constant { injection = Operation; _ }
-      | T_constant { injection = Ticket; _ } -> raise.error err
-      | _ -> ()
-    in
-    Helpers.iter_type_expression aux t
+  let rec type_check err (t : Ast_typed.type_expression) : unit =
+    let self = type_check err in
+    match t.type_content with
+    | T_variable _ -> ()
+    | T_constant { injection = Big_map; _ }
+    | T_constant { injection = Sapling_state; _ }
+    | T_constant { injection = Operation; _ }
+    | T_constant { injection = Ticket; _ }
+      -> raise.error err
+    | T_constant x -> List.iter ~f:self x.parameters
+    | T_sum x ->
+       List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
+    | T_record x ->
+       List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
+    | T_arrow _ ->
+       (* lambdas are always OK *)
+       ()
+    | T_singleton _ -> ()
+    | T_abstraction x -> self x.type_
+    | T_for_all x -> self x.type_
   in
   let () = type_check (type_view_io_out view_loc return) return in
   let () = type_check (type_view_io_in view_loc arg) arg in
