@@ -87,7 +87,7 @@ let validate_main_file ~main =
     | None ->
       Error
         "Error: Invalid LIGO file specifed in main field of package.json\n\
-         Valid extension for LIGO files are (.ligo, .mligo, .religo, .jsligo) ")
+         Valid extension for LIGO files are (.ligo, .mligo, .jsligo) ")
   | false ->
     Error
       "Error: main file does not exists.\n\

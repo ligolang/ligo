@@ -1,0 +1,7 @@
+
+author: SanderSpies
+description: "Remove remainder of ReasonLIGO from compiler, editor tooling, website, fuzzer, LSP, etc. But not the debugger.\\n\\n"
+merge_request: '2244'
+title: "Remove remainder of ReasonLIGO (except debugger)"
+type: breaking
+            

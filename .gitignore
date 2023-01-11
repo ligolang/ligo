@@ -8,7 +8,6 @@ version.ml
 /_opam/
 /*.pp.ligo
 /*.pp.mligo
-/*.pp.religo
 **/.DS_Store
 .vscode/
 /ligo.install
@@ -19,7 +18,6 @@ version.ml
 /to-dos.html
 /*.ligo
 /*.mligo
-/*.religo
 /*.jsligo
 env/
 _esy

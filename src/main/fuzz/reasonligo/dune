@@ -1,6 +1,0 @@
-(library
- (name fuzz_reasonligo)
- (public_name ligo.fuzz.reasonligo)
- (instrumentation
-  (backend bisect_ppx))
- (libraries fuzz_shared ligo_compile))

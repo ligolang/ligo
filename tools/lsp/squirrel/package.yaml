@@ -68,15 +68,12 @@ library:
 
   include-dirs:
     - grammar/pascaligo/src
-    - grammar/reasonligo/src
     - grammar/camligo/src
     - grammar/jsligo/src
 
   c-sources:
     - grammar/pascaligo/src/parser.c
     - grammar/pascaligo/src/scanner.c
-    - grammar/reasonligo/src/parser.c
-    - grammar/reasonligo/src/scanner.c
     - grammar/camligo/src/parser.c
     - grammar/camligo/src/scanner.c
     - grammar/jsligo/src/parser.c

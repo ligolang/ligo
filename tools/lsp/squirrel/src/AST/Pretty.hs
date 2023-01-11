@@ -605,142 +605,6 @@ instance LPP1 'Pascal CaseOrDefaultStm where
     DefaultStm _ -> error "unexpected `DefaultStm` node"
 
 ----------------------------------------------------------------------------
--- Reason
-----------------------------------------------------------------------------
-
-prettyTyVarsReason :: [Doc] -> Doc
-prettyTyVarsReason []   = DPretty.empty
-prettyTyVarsReason [ty] = "type" <+> ty
-prettyTyVarsReason tys  = "type" <+> "(" <.> train ", " tys <.> ")"
-
-instance LPP1 'Reason AST.Type where
-  lpp1 = \case
-    TArrow    dom codom -> dom <+> "=>" <+> codom
-    TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
-    TProduct  elements  -> tuple elements
-    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
-    TApply    f xs      -> f <+> tuple xs
-    TString   t         -> "\"" <.> lpp t <.> "\""
-    TWildcard           -> "_"
-    TVariable v         -> v
-    TParen    t         -> "(" <+> lpp t <+> ")"
-
-instance LPP1 'Reason TypeVariableName where
-  lpp1 = \case
-    TypeVariableName raw -> "'" <.> lpp raw
-
-instance LPP1 'Reason Binding where
-  lpp1 = \case
-    BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name _ ty body -> foldr (<+>) DPretty.empty
-      [ "let"
-      , name
-      , maybe "" ((":" <+>) . lpp) ty
-      , "="
-      , lpp body
-      , ";"  -- TODO: maybe append ";" to *all* the expressions in the contract
-      ]
-    BAttribute    name          -> brackets ("@" <.> name)
-    BInclude      fname         -> "#include" <+> pp fname
-    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
-    BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
-    node                        -> error "unexpected `Binding` node failed with: " <+> pp node
-
-instance LPP1 'Reason QuotedTypeParams where
-  lpp1 = \case
-    QuotedTypeParam  t  -> parens t
-    QuotedTypeParams ts -> tuple ts
-
-instance LPP1 'Reason Variant where
-  lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor mTy -> case mTy of
-      Just ty -> ctor <+> parens (lpp ty)
-      Nothing -> ctor
-
-instance LPP1 'Reason Expr where
-  lpp1 = \case
-    Let       decl body  -> "let" `indent` decl `above` "in" <+> body
-    Apply     f xs       -> f <+> tuple xs
-    Ident     qname      -> qname
-    BinOp     l o r      -> l <+> o <+> r
-    UnOp        o r      -> lpp o <+> lpp r
-    Op          o        -> lpp o
-    Record    az         -> "{" `indent` blockWith (<.> ",") az `above` "}"
-    If        b t e      -> "if" <+> b <+> braces (lpp t) <+> "else" <+> lpp e -- TODO: primitive return values should be enclosed in braces
-    List      l          -> lpp l
-    ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
-    Tuple     l          -> tuple l
-    Annot     n t        -> parens (n <+> ":" <+> t)
-    Case      s az       -> foldr (<+>) DPretty.empty
-      [ "switch"
-      , lpp s
-      , "{\n"
-      , foldr above DPretty.empty $ lpp <$> az
-      , "\n}"
-      ]
-    Seq       es         -> train " " es
-    Lambda    ps tys ty b -> foldr (<+>) DPretty.empty
-      [ parens (prettyTyVarsReason tys <+> train ", " ps)
-      , maybe "" ((":" <+>) . lpp) ty
-      , "=> {", lpp b, "}"
-      ]
-    Paren     e          -> "(" <+> lpp e <+> ")"
-    node                 -> error "unexpected `Expr` node failed with: " <+> pp node
-
-instance LPP1 'Reason PatchableExpr where
-  lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
-
-instance LPP1 'Reason Alt where
-  lpp1 = \case
-    Alt p b -> "|" <+> lpp p <+> "=>" <+> lpp b
-
-instance LPP1 'Reason FieldAssignment where
-  lpp1 = \case
-    FieldAssignment n e -> lpp n <+> "=" <+> lpp e
-    Spread n -> "..." <.> n
-    Capture n -> lpp n
-
-instance LPP1 'Reason Constant where
-  lpp1 = \case
-    CInt           z   -> lpp z
-    CNat           z   -> lpp z
-    CString        z   -> lpp z
-    CFloat         z   -> lpp z
-    CBytes         z   -> lpp z
-    CTez           z   -> lpp z
-
-instance LPP1 'Reason Pattern where
-  lpp1 = \case
-    IsConstr     ctor arg  -> ctor <+> lpp arg
-    IsVar        name      -> name
-    IsAnnot      s t       -> parens (lpp s <+> ":" <+> lpp t)
-    IsWildcard             -> "_"
-    IsSpread     n         -> "..." <.> lpp n
-    IsList       l         -> brackets $ train "," l
-    IsTuple      t         -> train "," t
-    IsRecord     fields    -> "{" <+> train "," fields <+> "}"
-    IsParen      x         -> parens x
-    pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
-
-instance LPP1 'Reason RecordFieldPattern where
-  lpp1 = \case
-    IsRecordField name body -> name <+> "=" <+> body
-    IsRecordCapture name -> name
-
-instance LPP1 'Reason TField where
-  lpp1 = \case
-    TField      n t -> n <.> maybe "" (":" `indent`) t
-
-instance LPP1 'Reason MapBinding where
-  lpp1 = \case
-    MapBinding k v -> lpp k <+> "->" <+> lpp v
-
-instance LPP1 'Reason CaseOrDefaultStm where
-  lpp1 = \case
-    CaseStm _ _  -> error "unexpected `CaseStm` node"
-    DefaultStm _ -> error "unexpected `DefaultStm` node"
-
-----------------------------------------------------------------------------
 -- Js
 ----------------------------------------------------------------------------
 
@@ -1027,13 +891,12 @@ instance LPP1 'Caml CaseOrDefaultStm where
     CaseStm _ _  -> error "unexpected `CaseStm` node"
     DefaultStm _ -> error "unexpected `DefaultStm` node"
 
-type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr, LPP 'Js expr)
+type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc
 lppDialect dialect = case dialect of
   Pascal -> lpp @'Pascal
   Caml   -> lpp @'Caml
-  Reason -> lpp @'Reason
   Js     -> lpp @'Js
 
 type PPableLIGO info =

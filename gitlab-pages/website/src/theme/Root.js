@@ -12,7 +12,7 @@ export default function Root({ children }) {
       get: (searchParams, prop) => searchParams.get(prop),
     });
 
-    const valid = ["jsligo", "cameligo", "reasonligo", "pascaligo"];
+    const valid = ["jsligo", "cameligo", "pascaligo"];
 
     const lang = (params.lang || "").toLowerCase();
 

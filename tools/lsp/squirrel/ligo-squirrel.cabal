@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.7.
+-- This file has been generated from package.yaml by hpack version 0.34.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -29,7 +29,6 @@ library
       AST.Parser.Camligo
       AST.Parser.Jsligo
       AST.Parser.Pascaligo
-      AST.Parser.Reasonligo
       AST.Pretty
       AST.Scope
       AST.Scope.Common
@@ -104,14 +103,11 @@ library
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   include-dirs:
       grammar/pascaligo/src
-      grammar/reasonligo/src
       grammar/camligo/src
       grammar/jsligo/src
   c-sources:
       grammar/pascaligo/src/parser.c
       grammar/pascaligo/src/scanner.c
-      grammar/reasonligo/src/parser.c
-      grammar/reasonligo/src/scanner.c
       grammar/camligo/src/parser.c
       grammar/camligo/src/scanner.c
       grammar/jsligo/src/parser.c

@@ -2,7 +2,6 @@ module Test.Common.Capabilities.DocumentSymbol
   ( documentSymbolsExampleHeapDriver
   , documentSymbolsExampleAccessDriver
   , documentSymbolsExampleLetCamligoDriver
-  , documentSymbolsExampleLetReligoDriver
   , documentSymbolsExampleLetJsligoDriver
   , documentSymbolsCameligoModules
   ) where
@@ -82,24 +81,6 @@ documentSymbolsExampleLetCamligoDriver = do
     , ("const k", SkConstant, (4, 13), (4, 14))
     , ("const m", SkConstant, (4, 23), (4, 24))
     , ("const n", SkConstant, (4, 26), (4, 27))
-    ]
-
-documentSymbolsExampleLetReligoDriver :: forall impl. ScopeTester impl => Assertion
-documentSymbolsExampleLetReligoDriver = do
-  fp <- makeAbsolute $ contractsDir </> "let.religo"
-  tree <- readContractWithScopes @impl fp
-  let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldMatchList`
-    [ ("const a", SkConstant, (0, 4), (0, 5))
-
-    , ("const b", SkConstant, (1, 5), (1, 6))
-    , ("const c", SkConstant, (1, 8), (1, 9))
-
-    , ("const d", SkConstant, (2, 6), (2, 7))
-    , ("const e", SkConstant, (2, 16), (2, 17))
-
-    , ("const f", SkConstant, (3, 6), (3, 7))
-    , ("const h", SkConstant, (3, 14), (3, 15))
     ]
 
 documentSymbolsExampleLetJsligoDriver :: forall impl. ScopeTester impl => Assertion

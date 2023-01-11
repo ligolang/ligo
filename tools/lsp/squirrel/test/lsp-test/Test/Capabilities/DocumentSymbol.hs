@@ -2,7 +2,6 @@ module Test.Capabilities.DocumentSymbol
   ( unit_document_symbols_example_heap
   , unit_document_symbols_example_access
   , unit_document_symbols_example_let_camligo
-  , unit_document_symbols_example_let_religo
   , unit_document_symbols_example_let_jsligo
   , unit_document_symbols_cameligo_modules
   ) where
@@ -20,9 +19,6 @@ unit_document_symbols_example_access = documentSymbolsExampleAccessDriver @Fallb
 
 unit_document_symbols_example_let_camligo :: Assertion
 unit_document_symbols_example_let_camligo = documentSymbolsExampleLetCamligoDriver @Fallback
-
-unit_document_symbols_example_let_religo :: Assertion
-unit_document_symbols_example_let_religo = documentSymbolsExampleLetReligoDriver @Fallback
 
 unit_document_symbols_example_let_jsligo :: Assertion
 unit_document_symbols_example_let_jsligo = documentSymbolsExampleLetJsligoDriver @Fallback

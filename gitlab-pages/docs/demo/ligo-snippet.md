@@ -12,7 +12,7 @@ The user will see Ligo code with syntax highlighting, and an action button allow
 
 Each code snippet can have preset Ligo Web IDE configurations (e.g. entrypoint, parameters or storage). These configurations are optional and will be passed onto the Ligo Web IDE when present. This will allow examples to provide the proper configurations for the reader to experiment with.
 
-The “ligo-snippets” React component uses the CodeJar editor (https://github.com/antonmedv/codejar), which is extremely lightweight (only 2kB).  It currently supports syntax highlighting for PascaLigo, CameLigo and ReasonLigo. Additionally, it has both a light and dark theme mode.
+The “ligo-snippets” React component uses the CodeJar editor (https://github.com/antonmedv/codejar), which is extremely lightweight (only 2kB).  It currently supports syntax highlighting for PascaLigo and CameLigo.. Additionally, it has both a light and dark theme mode.
 
 
 

@@ -19,7 +19,6 @@
     "activationEvents": [
         "onLanguage:ligo",
         "onLanguage:mligo",
-        "onLanguage:religo",
         "onLanguage:jsligo"
     ],
     "icon": "logo.png",
@@ -56,20 +55,6 @@
                 "configuration": "./syntaxes/mligo.configuration.json"
             },
             {
-                "id": "religo",
-                "aliases": [
-                    "ReasonLIGO"
-                ],
-                "extensions": [
-                    ".religo"
-                ],
-                "icon": {
-                    "light": "logo.png",
-                    "dark": "logo.png"
-                },
-                "configuration": "./syntaxes/religo.configuration.json"
-            },
-            {
                 "id": "jsligo",
                 "aliases": [
                     "JsLIGO"
@@ -94,11 +79,6 @@
                 "language": "mligo",
                 "scopeName": "source.mligo",
                 "path": "./syntaxes/mligo.tmLanguage.json"
-            },
-            {
-                "language": "religo",
-                "scopeName": "source.religo",
-                "path": "./syntaxes/religo.tmLanguage.json"
             },
             {
                 "language": "jsligo",

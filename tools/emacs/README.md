@@ -17,7 +17,6 @@ Put `ligo-mode.el` to the emacs load path, and add the following lines to your `
 (add-to-list 'auto-mode-alist '("\\.ligo\\'" . ligo-pascal-mode))
 (add-to-list 'auto-mode-alist '("\\.pligo\\'" . ligo-pascal-mode))
 (add-to-list 'auto-mode-alist '("\\.mligo\\'" . ligo-caml-mode))
-(add-to-list 'auto-mode-alist '("\\.religo\\'" . ligo-reason-mode))
 (autoload 'ligo-pascal-mode "ligo-mode" "LIGO pascal mode" t)
 (autoload 'ligo-caml-mode "ligo-mode" "LIGO caml mode" t)
 (autoload 'ligo-reason-mode "ligo-mode" "LIGO reason mode" t)

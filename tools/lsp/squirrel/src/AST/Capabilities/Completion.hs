@@ -184,7 +184,6 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
     keywords = case dialect of
       Caml   -> cameLIGOKeywords
       Pascal -> pascaLIGOKeywords
-      Reason -> reasonLIGOKeywords
       Js     -> jsLIGOKeywords
 
 completeFieldTypeAware

@@ -23,7 +23,7 @@ You can use the following language client plugins:
 "languageserver": {
   "Ligo": {
     "command": "path/to/ligo-squirrel",
-    "filetypes": ["ligo", "mligo", "religo"]
+    "filetypes": ["ligo", "mligo"]
   }
 }
 ```
@@ -33,6 +33,5 @@ You can use the following language client plugins:
 let g:LanguageClient_serverCommands = {
     \ 'ligo': ['path/to/ligo-squirrel'],
     \ 'mligo': ['path/to/ligo-squirrel'],
-    \ 'religo': ['path/to/ligo-squirrel'],
     \ }
 ```

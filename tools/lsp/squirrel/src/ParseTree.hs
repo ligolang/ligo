@@ -44,7 +44,6 @@ import Log qualified
 import Range
 
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
-foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
 foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
@@ -117,7 +116,6 @@ toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
-        Reason -> tree_sitter_ReasonLigo
         Js     -> tree_sitter_JsLigo
 
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do

@@ -30,7 +30,6 @@ type all =
   | `Use_meta_ligo of Location.t
   | `Self_ast_aggregated_warning_bad_self_type of
     Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
-  | `Deprecated_reasonligo
   ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc, lab)
@@ -189,11 +188,7 @@ let pp
         Ast_aggregated.PP.type_expression
         got
         Ast_aggregated.PP.type_expression
-        expected
-    | `Deprecated_reasonligo ->
-      Format.fprintf
-        f
-        "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]")
+        expected)
 
 
 let to_warning : all -> Simple_utils.Warning.t =
@@ -354,14 +349,6 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"aggregation" ~content
-  | `Deprecated_reasonligo ->
-    let message =
-      Format.sprintf
-        "Reasonligo is depreacted, support will be dropped in a few versions.@"
-    in
-    let location = Location.dummy in
-    let content = make_content ~message ~location () in
-    make ~stage:"cli parsing" ~content
 
 
 let to_json : all -> Yojson.Safe.t =

@@ -200,8 +200,7 @@ let try_declaration ~raise ~raw_options state s =
         | (`Parser_tracer _ : Main_errors.all)
         | (`Cit_jsligo_tracer _ : Main_errors.all)
         | (`Cit_pascaligo_tracer _ : Main_errors.all)
-        | (`Cit_cameligo_tracer _ : Main_errors.all)
-        | (`Cit_reasonligo_tracer _ : Main_errors.all) ->
+        | (`Cit_cameligo_tracer _ : Main_errors.all) ->
           try_eval ~raise ~raw_options state s
         | e -> raise.error e)
   with

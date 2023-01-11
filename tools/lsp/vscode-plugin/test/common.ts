@@ -4,7 +4,6 @@ import * as vscode from 'vscode'
 export enum Dialect {
   PASCALIGO,
   CAMELIGO,
-  REASONLIGO,
   JSLIGO
 }
 
@@ -14,8 +13,6 @@ export function getExt(lang: Dialect): string {
       return 'ligo'
     case Dialect.CAMELIGO:
       return 'mligo'
-    case Dialect.REASONLIGO:
-      return 'religo'
     case Dialect.JSLIGO:
       return 'jsligo'
     default:
@@ -29,8 +26,6 @@ export function getLang(lang: Dialect): string {
       return 'PascaLIGO'
     case Dialect.CAMELIGO:
       return 'CameLIGO'
-    case Dialect.REASONLIGO:
-      return 'ReasonLIGO'
     case Dialect.JSLIGO:
       return 'JsLIGO'
     default:

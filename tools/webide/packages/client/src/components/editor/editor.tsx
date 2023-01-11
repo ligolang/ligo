@@ -52,7 +52,7 @@ const CursorPosition = styled.div`
 `;
 
 
-export const EditorComponent = ({editorHeight}) => {
+export const EditorComponent = ({ editorHeight }) => {
   const dispatch = useDispatch();
   const title = useSelector<AppState, string>(state => state.editor && state.editor.title);
   const language = useSelector<AppState, EditorState['language']>(
@@ -62,9 +62,9 @@ export const EditorComponent = ({editorHeight}) => {
   const cursorPosition = useSelector<AppState, EditorState['cursorPosition']>(
     state => state.editor && state.editor.cursorPosition
   );
-  
+
   const getCursorPosition = () => {
-    if(cursorPosition) {
+    if (cursorPosition) {
       return `Line ${cursorPosition.lineNumber}, Column ${cursorPosition.column}`
     }
   }
@@ -93,7 +93,6 @@ export const EditorComponent = ({editorHeight}) => {
           >
             <Option value={Language.PascaLigo}>PascaLIGO</Option>
             <Option value={Language.CameLigo}>CameLIGO</Option>
-            <Option value={Language.ReasonLigo}>ReasonLIGO</Option>
             <Option value={Language.JsLigo}>JsLIGO</Option>
           </SelectLanguage>
         </LeftActions>

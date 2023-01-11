@@ -1232,59 +1232,59 @@ export const getExamples = (
       contractM:
         syntax === "mligo"
           ? {
-              name: `.workspaces/${name}/contracts/Increment.mligo`,
-              content: incrementM,
-            }
+            name: `.workspaces/${name}/contracts/Increment.mligo`,
+            content: incrementM,
+          }
           : undefined,
       contractL:
         syntax === "ligo"
           ? {
-              name: `.workspaces/${name}/contracts/Increment.ligo`,
-              content: incrementL,
-            }
+            name: `.workspaces/${name}/contracts/Increment.ligo`,
+            content: incrementL,
+          }
           : undefined,
       contractR:
         syntax === "religo"
           ? {
-              name: `.workspaces/${name}/contracts/Increment.religo`,
-              content: incrementR,
-            }
+            name: `.workspaces/${name}/contracts/Increment.religo`,
+            content: incrementR,
+          }
           : undefined,
       contractJ:
         syntax === "jsligo"
           ? {
-              name: `.workspaces/${name}/contracts/Increment.jsligo`,
-              content: incrementJ,
-            }
+            name: `.workspaces/${name}/contracts/Increment.jsligo`,
+            content: incrementJ,
+          }
           : undefined,
 
       storageM:
         syntax === "mligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.mligo`,
-              content: incrementMStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.mligo`,
+            content: incrementMStorage,
+          }
           : undefined,
       storageL:
         syntax === "ligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.ligo`,
-              content: incrementLStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.ligo`,
+            content: incrementLStorage,
+          }
           : undefined,
       storageR:
         syntax === "religo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.religo`,
-              content: incrementRStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.religo`,
+            content: incrementRStorage,
+          }
           : undefined,
       storageJ:
         syntax === "jsligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.jsligo`,
-              content: incrementJStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.jsligo`,
+            content: incrementJStorage,
+          }
           : undefined,
 
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
@@ -1299,9 +1299,9 @@ export const getExamples = (
       contractM:
         syntax === "mligo"
           ? {
-              name: `.workspaces/${name}/contracts/ID.mligo`,
-              content: idM,
-            }
+            name: `.workspaces/${name}/contracts/ID.mligo`,
+            content: idM,
+          }
           : undefined,
       contractL:
         syntax === "ligo"
@@ -1310,45 +1310,45 @@ export const getExamples = (
       contractR:
         syntax === "religo"
           ? {
-              name: `.workspaces/${name}/contracts/ID.religo`,
-              content: idR,
-            }
+            name: `.workspaces/${name}/contracts/ID.religo`,
+            content: idR,
+          }
           : undefined,
       contractJ:
         syntax === "jsligo"
           ? {
-              name: `.workspaces/${name}/contracts/ID.jsligo`,
-              content: idJ,
-            }
+            name: `.workspaces/${name}/contracts/ID.jsligo`,
+            content: idJ,
+          }
           : undefined,
 
       storageM:
         syntax === "mligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.mligo`,
-              content: idMStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.mligo`,
+            content: idMStorage,
+          }
           : undefined,
       storageL:
         syntax === "ligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.ligo`,
-              content: idLStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.ligo`,
+            content: idLStorage,
+          }
           : undefined,
       storageR:
         syntax === "religo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.religo`,
-              content: idRStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.religo`,
+            content: idRStorage,
+          }
           : undefined,
       storageJ:
         syntax === "jsligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.jsligo`,
-              content: idJStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.jsligo`,
+            content: idJStorage,
+          }
           : undefined,
 
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
@@ -1363,59 +1363,59 @@ export const getExamples = (
       contractM:
         syntax === "mligo"
           ? {
-              name: `.workspaces/${name}/contracts/Hashlock.mligo`,
-              content: hashlockM,
-            }
+            name: `.workspaces/${name}/contracts/Hashlock.mligo`,
+            content: hashlockM,
+          }
           : undefined,
       contractL:
         syntax === "ligo"
           ? {
-              name: `.workspaces/${name}/contracts/Hashlock.ligo`,
-              content: hashlockL,
-            }
+            name: `.workspaces/${name}/contracts/Hashlock.ligo`,
+            content: hashlockL,
+          }
           : undefined,
       contractR:
         syntax === "religo"
           ? {
-              name: `.workspaces/${name}/contracts/Hashlock.religo`,
-              content: hashlockR,
-            }
+            name: `.workspaces/${name}/contracts/Hashlock.religo`,
+            content: hashlockR,
+          }
           : undefined,
       contractJ:
         syntax === "jsligo"
           ? {
-              name: `.workspaces/${name}/contracts/Hashlock.jsligo`,
-              content: hashlockJ,
-            }
+            name: `.workspaces/${name}/contracts/Hashlock.jsligo`,
+            content: hashlockJ,
+          }
           : undefined,
 
       storageM:
         syntax === "mligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.mligo`,
-              content: hashlockMStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.mligo`,
+            content: hashlockMStorage,
+          }
           : undefined,
       storageL:
         syntax === "ligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.ligo`,
-              content: hashlockLStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.ligo`,
+            content: hashlockLStorage,
+          }
           : undefined,
       storageR:
         syntax === "religo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.religo`,
-              content: hashlockRStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.religo`,
+            content: hashlockRStorage,
+          }
           : undefined,
       storageJ:
         syntax === "jsligo"
           ? {
-              name: `.workspaces/${name}/storages/Storage.jsligo`,
-              content: hashlockJStorage,
-            }
+            name: `.workspaces/${name}/storages/Storage.jsligo`,
+            content: hashlockJStorage,
+          }
           : undefined,
 
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
