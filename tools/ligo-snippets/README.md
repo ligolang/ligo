@@ -32,7 +32,7 @@ function main (const action : parameter; const store : storage) : return is
   end)`
 
     const snippetData = {
-        "language": "pascaligo", // Required - Takes a string value of a Ligo language (e.g. "pascaligo", "reasonligo" or "cameligo").
+        "language": "pascaligo", // Required - Takes a string value of a Ligo language (e.g. "pascaligo" or "cameligo").
         "code": code, // Required - Takes a string value of your code snippet.
         "name": "PascaLigo Code Snippet Example", // Optional - Takes a string value to display as your snippet's title on the Ligo Web IDE.
         "theme": "dark", // Optional - Takes a string value of either "dark" or "light".

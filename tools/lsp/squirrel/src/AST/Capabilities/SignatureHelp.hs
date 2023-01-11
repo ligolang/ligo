@@ -142,8 +142,6 @@ makeSignatureLabel Pascal name params
   = "function " <> name <> " (" <> Text.intercalate "; " params <> ")"
 makeSignatureLabel Caml name params
   = "let " <> name <> " " <> unwords params
-makeSignatureLabel Reason name params
-  = "let " <> name <> " = (" <> Text.intercalate ", " params <> ")"
 makeSignatureLabel Js name params
   = "let " <> name <> " = (" <> Text.intercalate ", " params <> ")"
 

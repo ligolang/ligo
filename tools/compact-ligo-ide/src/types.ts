@@ -1,7 +1,6 @@
 export enum Language {
   PascaLigo = 'pascaligo',
   CameLigo = 'cameligo',
-  ReasonLigo = 'reasonligo'
 };
 
 export interface ShareParams {

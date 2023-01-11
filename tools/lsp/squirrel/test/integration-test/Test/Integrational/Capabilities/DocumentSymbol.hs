@@ -2,7 +2,6 @@ module Test.Integrational.Capabilities.DocumentSymbol
   ( unit_document_symbols_example_heap
   , unit_document_symbols_example_access
   , unit_document_symbols_example_let_camligo
-  , unit_document_symbols_example_let_religo
   , unit_document_symbols_example_let_jsligo
   , unit_document_symbols_cameligo_modules
   ) where
@@ -26,11 +25,6 @@ unit_document_symbols_example_let_camligo :: Assertion
 unit_document_symbols_example_let_camligo = do
   documentSymbolsExampleLetCamligoDriver @Standard
   --documentSymbolsExampleLetCamligoDriver @FromCompiler  -- FIXME (LIGO-93) (LIGO-679)
-
-unit_document_symbols_example_let_religo :: Assertion
-unit_document_symbols_example_let_religo = do
-  documentSymbolsExampleLetReligoDriver @Standard
-  --documentSymbolsExampleLetReligoDriver @FromCompiler  -- FIXME (LIGO-596) (LIGO-679)
 
 unit_document_symbols_example_let_jsligo :: Assertion
 unit_document_symbols_example_let_jsligo = do

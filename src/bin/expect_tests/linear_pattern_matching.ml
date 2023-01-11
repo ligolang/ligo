@@ -39,13 +39,3 @@ let%expect_test _ =
     [ "run"; "interpret"; "case (1,2) of [ (a,b) -> a ]"; "--syntax"; "pascaligo" ];
   [%expect {|
     1 |}]
-
-(* let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--syntax=reasonligo" ; "switch (1,2) { (a,b) => a }" ] ;
-   [%expect {|
-    1 |}] ; *)
-
-(* TODO: Syntax error #238 (?) not sure why *)
-(* run_ligo_good [ "interpret" ; "--syntax=reasonligo" ; "(switch (1,2,\"3\") { | (a,b,c) => a } : int)" ] ;
-   [%expect {|
-    1 ss|}] ; *)

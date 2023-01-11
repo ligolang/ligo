@@ -13,7 +13,7 @@ module AST.Skeleton
   , Lang (..)
   , allLangs
   , langExtension
-  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords, jsLIGOKeywords
+  , cameLIGOKeywords, pascaLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
@@ -64,7 +64,7 @@ instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
---   TODO: Rename; add stuff if CamelLIGO/ReasonLIGO needs something.
+--   TODO: Rename; add stuff if CamelLIGO needs something.
 type LIGO xs = Tree' RawLigoList xs
 type Tree' fs xs = Tree fs (Product xs)
 
@@ -79,7 +79,6 @@ type RawLigoList =
 data Lang
   = Pascal
   | Caml
-  | Reason
   | Js
   deriving stock (Show, Eq, Enum, Bounded)
 
@@ -94,7 +93,6 @@ langExtension :: Lang -> FilePath
 langExtension = \case
   Pascal -> ".pligo"
   Caml -> ".mligo"
-  Reason -> ".religo"
   Js -> ".jsligo"
 
 pascaLIGOKeywords :: HashSet Text
@@ -110,12 +108,6 @@ cameLIGOKeywords = HashSet.fromList
   [ "in", "struct", "begin", "end", "match", "with", "rec", "if", "then", "else"
   , "let", "module", "type", "of", "fun", "or", "mod", "land", "lor", "lxor"
   , "lsl", "lsr", "not"
-  ]
-
-reasonLIGOKeywords :: HashSet Text
-reasonLIGOKeywords = HashSet.fromList
-  [ "rec", "if", "else", "switch", "let", "module", "type", "or", "mod", "land"
-  , "lor", "lxor", "lsl", "lsr"
   ]
 
 jsLIGOKeywords :: HashSet Text

@@ -111,12 +111,12 @@ renameNestedInclude = do
 
 renameTypeVariable :: forall impl. ScopeTester impl => Assertion
 renameTypeVariable = do
-  fp <- makeAbsolute (contractsDir </> "parametric.religo")
-  testRenameOk @impl (point 1 36){_rFile = fp} "a" (point 1 36){_rFile = fp} "key"
-    [ (fp, [(interval 1 36 37){_rFile = fp}, (interval 1 11 12){_rFile = fp}])
+  fp <- makeAbsolute (contractsDir </> "parametric.mligo")
+  testRenameOk @impl (point 1 33){_rFile = fp} "a" (point 1 33){_rFile = fp} "key"
+    [ (fp, [(interval 1 33 34){_rFile = fp}, (interval 1 8 9){_rFile = fp}])
     ]
-  testRenameOk @impl (point 3 29){_rFile = fp} "a" (point 3 15){_rFile = fp} "key"
-    [ (fp, [(interval 3 15 16){_rFile = fp}, (interval 3 29 30){_rFile = fp}])
+  testRenameOk @impl (point 3 19){_rFile = fp} "a" (point 3 13){_rFile = fp} "key"
+    [ (fp, [(interval 3 13 14){_rFile = fp}, (interval 3 19 20){_rFile = fp}])
     ]
 
 renameConflictingModuleName :: forall impl. ScopeTester impl => Assertion

@@ -57,16 +57,6 @@ Prism.languages = {
         ],
         'punctuation': /\(\.|\.\)|[()\[\]:;,.]/
     },
-    reasonligo:
-    {
-        ...Prism.languages.reason,
-        'comment': [
-            /(^|[^\\])\/\*[\s\S]*?\*\//,
-            /\(\*[\s\S]*?\*\)/,
-            /\/\/.*/
-        ]
-
-    },
     cameligo: {
         ...Prism.languages.ocaml,
         'comment': [
@@ -145,7 +135,7 @@ function getTheme(data, showOutput) {
             fontFamily: "'Source Code Pro', monospace",
             fontSize: "14px",
             fontWeight: "400",
-            color:"black",
+            color: "black",
             height: "350px",
             letterSpacing: "normal",
             lineHeight: "20px",
@@ -194,7 +184,7 @@ function getTheme(data, showOutput) {
         }
     }
 
-    if(showOutput) {
+    if (showOutput) {
         theme.outputContainer.display = "block";
     }
 
@@ -221,15 +211,13 @@ function getLanguageHighlight(language) {
     switch (language) {
         case 'cameligo':
             return Prism.languages.cameligo
-        case 'reasonligo':
-            return Prism.languages.reasonligo
         default:
             return Prism.languages.pascaligo
     }
 }
 
 export const LigoSnippet = (props) => {
-    
+
     const data = props.data
     const editorParams = parseEditorConfigs(data);
 
@@ -243,20 +231,20 @@ export const LigoSnippet = (props) => {
         setTheme(getTheme(data, true));
         const entrypoint = "main", syntax = snippetCode.editor.language, code = snippetCode.editor.code;
         let response;
-        if(data.api && data.api != "") {
+        if (data.api && data.api != "") {
             response = await axios.post(data.api, {
                 syntax,
                 code,
-                entrypoint  
+                entrypoint
             });
         } else {
             response = await axios.post('https://cors-anywhere.herokuapp.com/https://ide.ligolang.org/api/compile-contract', {
                 syntax,
                 code,
-                entrypoint  
+                entrypoint
             });
         }
-        
+
         const output = await response.data;
         setOutput(JSON.stringify(output).replace(/\\n/g, "\n"));
         setLoading(false);
@@ -276,15 +264,15 @@ export const LigoSnippet = (props) => {
         <div>
             <ReactCodeJar style={theme.editorStyle} code={snippetCode} onUpdate={onUpdate} highlight={highlight} />
             <div style={theme.buttonContainer}>
-                <button style={theme.buttonStyle} className={ data.compile ? '' : 'hidden' } onClick={() => compileCode(editorParams, snippetCode)} title="Compile">Compile</button>
+                <button style={theme.buttonStyle} className={data.compile ? '' : 'hidden'} onClick={() => compileCode(editorParams, snippetCode)} title="Compile">Compile</button>
                 <button style={theme.buttonStyle} onClick={() => openInIde(snippetCode)} title="Open in Ligo Web IDE">I D E ↵ </button>
                 <div style={theme.outputContainer}>
                     <div style={theme.loadingTab}><PushSpinner size={50} loading={loading} color="#fedace" /></div>
                     <div style={theme.outputTab}>
-                    {output}
-                </div></div>
+                        {output}
+                    </div></div>
             </div>
-            
+
         </div>
     );
 }

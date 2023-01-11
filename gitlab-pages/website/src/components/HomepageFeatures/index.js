@@ -11,7 +11,7 @@ const FEATURES = [
     image: 'img/ligo_features/syntax-agnostic.svg',
     title: 'Polyglot',
     content:
-      'Code in your language. Write PascaLIGO, CameLIGO, ReasonLIGO, JsLIGO or add your own syntax.'
+      'Code in your language. Write PascaLIGO, CameLIGO, JsLIGO or add your own syntax.'
   },
   {
     image: 'img/ligo_features/easy-integration.svg',
@@ -32,9 +32,9 @@ const Feature = (props) => (
 export default function HomepageFeatures() {
   return (
     <div id="features" className="centered">
-      {FEATURES.map(entry => 
-        <Feature key={entry.title} title={entry.title} content={entry.content} image={entry.image} /> 
-        )}
+      {FEATURES.map(entry =>
+        <Feature key={entry.title} title={entry.title} content={entry.content} image={entry.image} />
+      )}
     </div>
   );
 }

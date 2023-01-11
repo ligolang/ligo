@@ -21,7 +21,6 @@ import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Jsligo qualified as Js
 import AST.Parser.Pascaligo qualified as Pascal
-import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope
   (ContractInfo, ContractInfo', HasScopeForest, Includes (..), addLigoErrsToMsg, addScopes,
   contractNotFoundException, lookupContract, pattern FindContract)
@@ -45,7 +44,6 @@ parse src = do
   (recogniser, dialect) <- fromEither $ onExt ElimExt
     { eePascal = (Pascal.recognise, Pascal)
     , eeCaml   = (Caml.recognise,   Caml)
-    , eeReason = (Reason.recognise, Reason)
     , eeJs     = (Js.recognise,     Js)
     } (srcPath src)
   tree <- toParseTree dialect src

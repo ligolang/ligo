@@ -1,6 +1,6 @@
 import React from "react";
 
-const valid = ["jsligo", "cameligo", "reasonligo", "pascaligo"];
+const valid = ["jsligo", "cameligo", "pascaligo"];
 
 const ctx = {
   syntax: (() => {
@@ -18,7 +18,7 @@ const ctx = {
 
     return syntax ?? "jsligo";
   })(),
-  setSyntax: () => {},
+  setSyntax: () => { },
 };
 
 const SyntaxContext = React.createContext(ctx);

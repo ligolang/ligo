@@ -64,22 +64,23 @@ simpleTest = do
 -- LIGO-474 regression test
 treeDoesNotContainNameTest :: IO DiagnosticTest
 treeDoesNotContainNameTest = do
-  dtFile <- makeAbsolute $ inputDir </> "LIGO-474.religo"
+  dtFile <- makeAbsolute $ inputDir </> "LIGO-474.mligo"
   let
     msgGroup = MessageGroup
       { mgParserMsgs =
-        [ Message (Unexpected "r") SeverityError (mkRange (1, 17) (1, 18) dtFile)
+        [ Message (Unrecognized "") SeverityError (mkRange (2, 7) (2, 7) dtFile)
         ]
       , mgCompilerMsgs =
-        [ Message (FromLIGO "Syntax error #200.") SeverityError (mkRange (1, 14) (1, 16) dtFile)
-        , Message (FromLIGO "Syntax error #233.") SeverityError (mkRange (1, 17) (1, 18) dtFile)
-        , Message
-          (FromLIGO "Reasonligo is depreacted, support will be dropped in a few versions.@")
-          SeverityWarning
-          (mkRange (0, 0) (0, 0) "")
+        [ Message
+          (FromLIGO "Ill-formed type declaration.\nAt this point, one of the following is expected:\n  * the name of the type being defined;\n  * a quoted type parameter, like 'a;\n  * a tuple of quoted type parameters, like ('a, 'b).\n")
+          SeverityError
+          (mkRange (2, 9) (2, 10) dtFile)
         ]
       , mgFallbackMsgs =
-        [ Message (FromLanguageServer "Expected to find a name, but got `42`") SeverityError (mkRange (1, 14) (1, 16) dtFile)
+        [ Message
+          (FromLanguageServer "Expected to find a type name, but got `(ERROR \"Unrecognized: \" [])`")
+          SeverityError
+          (mkRange (2, 7) (2, 7) dtFile)
         ]
       }
   pure DiagnosticTest

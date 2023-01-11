@@ -1,9 +1,0 @@
-(library
- (name reasonligo)
- (public_name ligo.reasonligo)
- (instrumentation
-  (backend bisect_ppx))
- (libraries tree_abstraction_shared simple-utils tezos-utils cst
-   ast_imperative predefined parsing)
- (preprocess
-  (pps ppx_poly_constructor)))

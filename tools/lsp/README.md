@@ -1,7 +1,6 @@
-
 ## What
 
-A language server for all four dialects of LIGO.
+A language server for all three dialects of LIGO.
 
 ## Design choices
 

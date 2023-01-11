@@ -293,10 +293,6 @@ let cameligo_block_comment_opening   = "(*"
 let cameligo_block_comment_closing   = "*)"
 let cameligo_line_comment_opening    = "//"
 
-let reasonligo_block_comment_opening = "/*"
-let reasonligo_block_comment_closing = "*/"
-let reasonligo_line_comment_opening  = "//"
-
 let jsligo_block_comment_opening     = "/*"
 let jsligo_block_comment_closing     = "*/"
 let jsligo_line_comment_opening      = "//"
@@ -308,21 +304,18 @@ let pyligo_line_comment_opening      = "##"
 let block_comment_opening =
    pascaligo_block_comment_opening
 |   cameligo_block_comment_opening
-| reasonligo_block_comment_opening
 |     jsligo_block_comment_opening
 |     pyligo_block_comment_opening
 
 let block_comment_closing =
    pascaligo_block_comment_closing
 |   cameligo_block_comment_closing
-| reasonligo_block_comment_closing
 |     jsligo_block_comment_closing
 |     pyligo_block_comment_closing
 
 let line_comment_opening =
    pascaligo_line_comment_opening
 |   cameligo_line_comment_opening
-| reasonligo_line_comment_opening
 |     jsligo_line_comment_opening
 |     pyligo_line_comment_opening
 
@@ -330,14 +323,12 @@ let line_comment_opening =
 
 let  pascaligo_string_delimiter = "\""
 let   cameligo_string_delimiter = "\""
-let reasonligo_string_delimiter = "\""
 let     jsligo_string_delimiter = "\""
 let     pyligo_string_delimiter = "\""
 
 let string_delimiter =
    pascaligo_string_delimiter
 |   cameligo_string_delimiter
-| reasonligo_string_delimiter
 |     jsligo_string_delimiter
 |     pyligo_string_delimiter
 

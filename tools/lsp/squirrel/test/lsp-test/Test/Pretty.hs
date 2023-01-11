@@ -2,7 +2,6 @@ module Test.Pretty
   ( unit_pretty_sum_type_jsligo
   , unit_pretty_sum_type_mligo
   , unit_pretty_sum_type_pascaligo
-  , unit_pretty_sum_type_religo
   ) where
 
 import AST (SomeLIGO (..), contractTree, lppDialect, parse)
@@ -35,7 +34,3 @@ unit_pretty_sum_type_mligo = checkPretty "sum-type.mligo"
 unit_pretty_sum_type_pascaligo :: Assertion
 unit_pretty_sum_type_pascaligo = checkPretty "sum-type.ligo"
   [i|type parameter is Increment of int | Decrement of int | Reset|]
-
-unit_pretty_sum_type_religo :: Assertion
-unit_pretty_sum_type_religo = checkPretty "sum-type.religo"
-  [i|type parameter = Increment (int) | Decrement (int) | Reset|]

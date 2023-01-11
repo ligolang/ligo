@@ -12,7 +12,6 @@ function getBlockComment(lang: Dialect): [string, string] {
     case Dialect.CAMELIGO:
       return ['(*', '*)']
     case Dialect.JSLIGO:
-    case Dialect.REASONLIGO:
       return ['/*', '*/']
     default:
       throw new Error(`Unrecognized dialect: ${lang}`)
@@ -62,10 +61,8 @@ function blockCommentTest(lang: Dialect) {
 suite('LIGO: Insert comments (LIGO-425 regression)', () => {
   lineCommentTest(Dialect.PASCALIGO)
   lineCommentTest(Dialect.CAMELIGO)
-  lineCommentTest(Dialect.REASONLIGO)
   lineCommentTest(Dialect.JSLIGO)
   blockCommentTest(Dialect.PASCALIGO)
   blockCommentTest(Dialect.CAMELIGO)
-  blockCommentTest(Dialect.REASONLIGO)
   blockCommentTest(Dialect.JSLIGO)
 })

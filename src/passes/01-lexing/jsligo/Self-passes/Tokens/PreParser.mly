@@ -136,7 +136,7 @@ let concat a b =
   handle_state s
 %}
 
-(* See [../../02-parsing/reasonligo/ParToken.mly] for the definition of tokens. *)
+(* See [../../02-parsing/jsligo/ParToken.mly] for the definition of tokens. *)
 
 (* Entry points *)
 

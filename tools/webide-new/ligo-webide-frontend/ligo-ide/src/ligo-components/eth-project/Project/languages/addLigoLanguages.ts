@@ -5,8 +5,6 @@ import { wireTmGrammars } from "monaco-editor-textmate";
 import tzTm from "./syntaxes/michelson.tmLanguage.json";
 import mligoTm from "./syntaxes/mligo.tmLanguage.json";
 import mligoConfiguration from "./syntaxes/mligo.configuration.json";
-import religoTm from "./syntaxes/religo.tmLanguage.json";
-import religoConfiguration from "./syntaxes/religo.configuration.json";
 import jsligoTm from "./syntaxes/jsligo.tmLanguage.json";
 import jsligoConfiguration from "./syntaxes/jsligo.configuration.json";
 import ligoTm from "./syntaxes/ligo.tmLanguage.json";
@@ -41,13 +39,11 @@ const convertConfiguration = (conf: {
 };
 
 export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
-  monaco.languages.register({ id: "religoext" });
   monaco.languages.register({ id: "pascaligoext" });
   monaco.languages.register({ id: "cameligoext" });
   monaco.languages.register({ id: "jsligoext" });
   monaco.languages.register({ id: "tzext" });
 
-  monaco.languages.setLanguageConfiguration("religoext", convertConfiguration(religoConfiguration));
   monaco.languages.setLanguageConfiguration(
     "pascaligoext",
     convertConfiguration(ligoConfiguration)
@@ -59,16 +55,6 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
   monaco.languages.setLanguageConfiguration("jsligoext", convertConfiguration(jsligoConfiguration));
   monaco.languages.setLanguageConfiguration("tzext", convertConfiguration(jsligoConfiguration));
 
-  const religoRegistry = new Registry({
-    getGrammarDefinition: async () => {
-      return new Promise((resolve) => {
-        resolve({
-          format: "json",
-          content: religoTm,
-        });
-      });
-    },
-  });
 
   const ligoRegistry = new Registry({
     getGrammarDefinition: async () => {
@@ -114,8 +100,6 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
     },
   });
 
-  const religoGrammars = new Map<string, string>();
-  religoGrammars.set("religoext", "source.religo");
 
   const ligoGrammars = new Map<string, string>();
   ligoGrammars.set("pascaligoext", "source.ligo");
@@ -129,7 +113,6 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
   const tzGrammars = new Map<string, string>();
   tzGrammars.set("tzext", "source.michelson");
 
-  await wireTmGrammars(monaco, religoRegistry, religoGrammars, editor);
   await wireTmGrammars(monaco, ligoRegistry, ligoGrammars, editor);
   await wireTmGrammars(monaco, mligoRegistry, mligoGrammars, editor);
   await wireTmGrammars(monaco, jsligoRegistry, jsligoGrammars, editor);

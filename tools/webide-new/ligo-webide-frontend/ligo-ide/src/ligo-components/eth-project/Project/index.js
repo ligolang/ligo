@@ -27,9 +27,6 @@ modelSessionManager.registerModeDetector((filePath) => {
   if (base === "config.json" && isRoot) {
     return "settings";
   }
-  if (base.endsWith(".religo")) {
-    return "religoext";
-  }
   if (base.endsWith(".ligo")) {
     return "pascaligoext";
   }

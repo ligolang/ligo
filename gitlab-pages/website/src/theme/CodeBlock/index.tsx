@@ -8,15 +8,15 @@
 
 /* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import clsx from 'clsx';
-import Highlight, {defaultProps} from 'prism-react-renderer';
+import Highlight, { defaultProps } from 'prism-react-renderer';
 import copy from 'copy-text-to-clipboard';
 import defaultTheme from 'prism-react-renderer/themes/palenight';
 import rangeParser from 'parse-numeric-range';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useColorMode } from '@docusaurus/theme-common';
-import type {Props} from '@theme/CodeBlock';
+import type { Props } from '@theme/CodeBlock';
 
 import styles from './styles.module.css';
 import Prism from 'prism-react-renderer/prism';
@@ -69,16 +69,6 @@ Prism.languages = {
       }
     ],
     'punctuation': /\(\.|\.\)|[()\[\]:;,.]/
-  },
-  reasonligo:
-  {
-    ...Prism.languages.reason,
-    'comment': [
-      /(^|[^\\])\/\*[\s\S]*?\*\//,
-      /\(\*[\s\S]*?\*\)/,
-      /\/\/.*/
-    ]
-
   },
   cameligo: {
     ...Prism.languages.ocaml,
@@ -233,7 +223,7 @@ export default ({
     const lines = children.replace(/\n$/, '').split('\n');
     let blockStart;
     // loop through lines
-    for (let index = 0; index < lines.length; ) {
+    for (let index = 0; index < lines.length;) {
       const line = lines[index];
       // adjust for 0-index
       const lineNumber = index + 1;
@@ -288,7 +278,7 @@ export default ({
       code={code}
       // @ts-expect-error: prism-react-renderer doesn't export Language type
       language={language}>
-      {({className, style, tokens, getLineProps, getTokenProps}) => (
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <>
           {codeBlockTitle && (
             <div style={style} className={styles.codeBlockTitle}>
@@ -317,7 +307,7 @@ export default ({
                     line[0].content = '\n'; // eslint-disable-line no-param-reassign
                   }
 
-                  const lineProps = getLineProps({line, key: i});
+                  const lineProps = getLineProps({ line, key: i });
 
                   if (highlightLines.includes(i + 1)) {
                     lineProps.className = `${lineProps.className} docusaurus-highlight-code-line`;
@@ -326,7 +316,7 @@ export default ({
                   return (
                     <div key={i} {...lineProps}>
                       {line.map((token, key) => (
-                        <span key={key} {...getTokenProps({token, key})} />
+                        <span key={key} {...getTokenProps({ token, key })} />
                       ))}
                     </div>
                   );

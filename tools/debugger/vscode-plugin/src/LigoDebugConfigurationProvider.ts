@@ -28,15 +28,15 @@ export type ConfigCommand
 	;
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
-	private client : LigoProtocolClient;
-	private context : LigoDebugContext;
+	private client: LigoProtocolClient;
+	private context: LigoDebugContext;
 
 	constructor(client: LigoProtocolClient, context: LigoDebugContext) {
 		this.client = client;
 		this.context = context;
 	}
 
-	private async resolveConfig(config: vscode.DebugConfiguration) : Promise<vscode.DebugConfiguration> {
+	private async resolveConfig(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
 		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 
 		if (!isDefined(currentFilePath)) {
@@ -49,10 +49,10 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, pluginConfig);
 		await this.client.sendMsg('setLigoBinaryPath', { binaryPath });
 
-		const entrypoints : string[] =
+		const entrypoints: string[] =
 			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).entrypoints.reverse();
 
-		const entrypoint : string =
+		const entrypoint: string =
 			await tryExecuteCommand(
 				"entrypoint",
 				"AskOnStart",
@@ -67,10 +67,10 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 			);
 		config.entrypoint = entrypoint;
 
-		const contractMetadata : ContractMetadata =
+		const contractMetadata: ContractMetadata =
 			(await this.client.sendMsg('getContractMetadata', { entrypoint })).contractMetadata;
 
-		const michelsonEntrypoint : Maybe<string> =
+		const michelsonEntrypoint: Maybe<string> =
 			await tryExecuteCommand(
 				"michelsonEntrypoint",
 				"AskOnStart",
@@ -91,7 +91,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 			).message;
 		}
 
-		const [parameter, parameterLang] : [string, InputValueLang] =
+		const [parameter, parameterLang]: [string, InputValueLang] =
 			await tryExecuteCommand(
 				"parameter",
 				"AskOnStart",
@@ -111,7 +111,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.parameter = parameter;
 		config.parameterLang = parameterLang;
 
-		const [storage, storageLang] : [string, InputValueLang] =
+		const [storage, storageLang]: [string, InputValueLang] =
 			await tryExecuteCommand(
 				"storage",
 				"AskOnStart",
@@ -142,7 +142,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 	): Promise<vscode.DebugConfiguration> {
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor
-			if (editor && (editor.document.languageId === 'ligo' || editor.document.languageId === 'mligo' || editor.document.languageId === 'religo' || editor.document.languageId === 'jsligo')) {
+			if (editor && (editor.document.languageId === 'ligo' || editor.document.languageId === 'mligo' || editor.document.languageId === 'jsligo')) {
 				config.type = 'ligo'
 				config.name = 'Launch LIGO'
 				config.request = 'launch'

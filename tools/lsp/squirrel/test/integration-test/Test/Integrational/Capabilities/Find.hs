@@ -47,7 +47,7 @@ includeInvariants =
       ]
     }
   , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "C2.religo"
+    { driFile = contractsDir </> "includes" </> "C2.mligo"
     , driDesc = "c2, find references in other files"
     , driDef = Just (interval 1 5 7)
     , driRefs =
