@@ -428,6 +428,15 @@ module Context = struct
   end
 
   let tapply = Apply.type_
+
+  (* Useful debugging function :) *)
+  let[@warning "-32"] trace fn in_ =
+    let open Let_syntax in
+    let%bind ctx_before = context () in
+    let%bind result = in_ in
+    let%bind ctx_after = context () in
+    fn (fun ppf () -> Context_.Diff.pp ppf (ctx_before, ctx_after));
+    return result
 end
 
 let occurs_check ~tvar (type_ : Type.t) =
