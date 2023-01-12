@@ -72,6 +72,7 @@ const config = {
             label: 'Tutorials',
             position: 'left'
           },
+          { to: 'https://packages.ligolang.org/packages', label: 'Packages', position: 'left', target: '_blank' },
           { to: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
           { to: 'https://ide-v2-beta.ligolang.org/', label: 'IdeV2 beta', position: 'left', target: '_self' },
           { to: '/contact', label: 'Ask Questions', position: 'left' },
