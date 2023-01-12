@@ -3695,6 +3695,11 @@ let if_semi_jsligo ~raise () : unit =
   ()
 
 
+let return_handling ~raise () : unit =
+  let _ = type_file ~raise "./contracts/return_handling.sligo" in
+  ()
+
+
 let main =
   test_suite "Integration (End to End)"
   @@ [ (* Tezos stuff *) test_w "chain id" chain_id ]
@@ -3865,4 +3870,5 @@ let main =
     ; test_w "switch_return (jsligo)" switch_return_jsligo
     ; test_w "transitive (jsligo)" transitive_jsligo
     ; test_w "if_semi (jsligo)" if_semi_jsligo
+    ; test_w "return_handling (jsligo)" if_semi_jsligo
     ]
