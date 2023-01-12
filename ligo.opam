@@ -54,6 +54,7 @@ depends: [
   "irmin"
   "cmdliner" {= "1.1.0"}
   "ocaml-compiler-libs"
+  "simple-diff"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.3.0" }
   # dependencies of vendored dependencies

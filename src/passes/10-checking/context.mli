@@ -113,6 +113,7 @@ val get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) l
 module Well_formed : sig
   val context : t -> bool
   val type_ : ctx:t -> Type.t -> Kind.t option
+  val layout : ctx:t -> Type.layout -> bool
 end
 
 module Apply : sig
@@ -127,4 +128,8 @@ module Hashes : sig
   val set_context : t -> unit
   val hash_types : unit -> unit
   val find_type : Type.t -> (Module_var.t list * Type_var.t) option
+end
+
+module Diff : sig
+  val pp : Format.formatter -> t * t -> unit
 end

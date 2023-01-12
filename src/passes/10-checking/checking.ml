@@ -64,7 +64,9 @@ let check_let_annomalies ~syntax binder type_expr =
     type_expr
 
 
-let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
+let rec evaluate_type ~default_layout (type_ : I.type_expression)
+    : (Type.t, 'err, 'wrn) C.t
+  =
   let open C in
   let open Let_syntax in
   set_loc type_.location
@@ -79,14 +81,14 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
   in
   match type_.type_content with
   | T_arrow { type1; type2 } ->
-    let%bind type1 = evaluate_type type1 in
-    let%bind type2 = evaluate_type type2 in
+    let%bind type1 = evaluate_type ~default_layout type1 in
+    let%bind type2 = evaluate_type ~default_layout type2 in
     const @@ T_arrow { type1; type2 }
   | T_sum row ->
-    let%bind row = evaluate_row row in
+    let%bind row = evaluate_row ~default_layout row in
     const @@ T_sum row
   | T_record row ->
-    let%bind row = evaluate_row row in
+    let%bind row = evaluate_row ~default_layout row in
     const @@ T_record row
   | T_variable tvar ->
     (* Get the closest type or type variable with type var [tvar] *)
@@ -102,7 +104,9 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
       Context.get_type_exn type_operator ~error:(unbound_type_variable type_operator)
     in
     (* 2. Evaluate arguments *)
-    let%bind arguments = arguments |> List.map ~f:evaluate_type |> all in
+    let%bind arguments =
+      arguments |> List.map ~f:(evaluate_type ~default_layout) |> all
+    in
     (* 3. Kind check (TODO: Improve this, currently just checks if kind is Type for args) *)
     let%bind () =
       arguments
@@ -140,7 +144,7 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
       def_type_var
         [ ty_binder, kind ]
         ~on_exit:Lift_type
-        ~in_:(evaluate_type type_ >>| fun type_ -> type_, ())
+        ~in_:(evaluate_type ~default_layout type_ >>| fun type_ -> type_, ())
     in
     const @@ T_abstraction { ty_binder; kind; type_ }
   | T_for_all { ty_binder; kind; type_ } ->
@@ -148,20 +152,24 @@ let rec evaluate_type (type_ : I.type_expression) : (Type.t, 'err, 'wrn) C.t =
       def_type_var
         [ ty_binder, kind ]
         ~on_exit:Lift_type
-        ~in_:(evaluate_type type_ >>| fun type_ -> type_, ())
+        ~in_:(evaluate_type ~default_layout type_ >>| fun type_ -> type_, ())
     in
     const @@ T_for_all { ty_binder; kind; type_ }
 
 
-and evaluate_row ({ fields; layout } : I.rows) : (Type.row, 'err, 'wrn) C.t =
+and evaluate_row ~default_layout ({ fields; layout } : I.rows)
+    : (Type.row, 'err, 'wrn) C.t
+  =
   let open C in
   let open Let_syntax in
   let%bind layout =
     match layout with
     | Some layout -> return @@ evaluate_layout layout
-    | None -> lexists ()
+    | None -> default_layout ()
   in
-  let%bind fields = fields |> Record.map ~f:evaluate_row_elem |> all_lmap in
+  let%bind fields =
+    fields |> Record.map ~f:(evaluate_row_elem ~default_layout) |> all_lmap
+  in
   return { Type.fields; layout }
 
 
@@ -171,11 +179,23 @@ and evaluate_layout (layout : Layout.t) : Type.layout =
   | L_comb -> L_comb
 
 
-and evaluate_row_elem (row_elem : I.row_element) : (Type.row_element, 'err, 'wrn) C.t =
+and evaluate_row_elem ~default_layout (row_elem : I.row_element)
+    : (Type.row_element, 'err, 'wrn) C.t
+  =
   let open C in
   let open Let_syntax in
-  let%map associated_type = evaluate_type row_elem.associated_type in
+  let%map associated_type = evaluate_type ~default_layout row_elem.associated_type in
   { row_elem with associated_type }
+
+
+let evaluate_type_with_lexists type_ =
+  let open C in
+  evaluate_type ~default_layout:lexists type_
+
+
+let evaluate_type_with_default_layout type_ =
+  let open C in
+  evaluate_type ~default_layout:(fun () -> return Type.default_layout) type_
 
 
 let infer_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
@@ -428,7 +448,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         return (O.E_let_in { let_binder; rhs; let_result; attributes }))
       res_type
   | E_type_in { type_binder = tvar; rhs; let_result } ->
-    let%bind rhs = evaluate_type rhs in
+    let%bind rhs = evaluate_type_with_default_layout rhs in
     let%bind res_type, let_result =
       def_type [ tvar, rhs ] ~on_exit:Lift_type ~in_:(infer let_result)
     in
@@ -446,7 +466,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind code, code_type =
       raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
     in
-    let%bind code_type = evaluate_type code_type in
+    let%bind code_type = evaluate_type_with_lexists code_type in
     (* TODO: Shouldn't [code] have the type of [string]? *)
     let%bind _, code = infer code in
     let%bind args =
@@ -457,7 +477,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
                @@ I.get_e_ascription arg.I.expression_content
              in
              let%bind _, arg = infer arg in
-             let%bind arg_type = evaluate_type arg_type in
+             let%bind arg_type = evaluate_type_with_lexists arg_type in
              lift arg arg_type)
       |> all
     in
@@ -474,7 +494,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind code, code_type =
       raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
     in
-    let%bind code_type = evaluate_type code_type in
+    let%bind code_type = evaluate_type_with_lexists code_type in
     let%bind _, code = infer code in
     const
       E.(
@@ -484,12 +504,12 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         @@ O.E_raw_code { language; code = { code with type_expression = code_type } })
       code_type
   | E_ascription { anno_expr; type_annotation } ->
-    let%bind ascr = evaluate_type type_annotation in
+    let%bind ascr = evaluate_type_with_lexists type_annotation in
     let%bind expr = check anno_expr ascr in
     let%bind expr = lift expr ascr in
     return (ascr, expr)
   | E_recursive { fun_name; fun_type; lambda } ->
-    let%bind fun_type = evaluate_type fun_type in
+    let%bind fun_type = evaluate_type_with_lexists fun_type in
     let%bind Arrow.{ type1 = arg_type; type2 = ret_type } =
       raise_opt
         ~error:(corner_case "Expected function type annotation for recursive function")
@@ -768,7 +788,7 @@ and check_lambda
   let%bind arg_type, f =
     match Param.get_ascr binder with
     | Some arg_ascr ->
-      let%bind arg_ascr = evaluate_type arg_ascr in
+      let%bind arg_ascr = evaluate_type_with_default_layout arg_ascr in
       (* TODO: Kinding check for ascription *)
       let%bind _f = subtype ~received:arg_type ~expected:arg_ascr in
       (* TODO: Generate let binding for ascription subtyping, will be inlined later on *)
@@ -819,7 +839,7 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
        ~in_:
          (let%bind arg_type =
             match Param.get_ascr binder with
-            | Some arg_ascr -> evaluate_type arg_ascr
+            | Some arg_ascr -> evaluate_type_with_lexists arg_ascr
             | None -> exists Type
           in
           let%bind ret_type, result =
@@ -963,7 +983,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     let%bind () =
       match Binder.get_ascr binder with
       | Some ascr ->
-        let%bind ascr = lift @@ evaluate_type ascr in
+        let%bind ascr = lift @@ evaluate_type_with_lexists ascr in
         unify ascr type_
       | None -> return ()
     in
@@ -1068,7 +1088,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let var = Binder.get_var binder in
     let%bind type_ =
       match Binder.get_ascr binder with
-      | Some ascr -> lift @@ evaluate_type ascr
+      | Some ascr -> lift @@ evaluate_type_with_lexists ascr
       | None -> exists Type
     in
     let%bind () = extend [ var, (if mut then Mutable else Immutable), type_ ] in
@@ -1322,7 +1342,7 @@ and infer_declaration (decl : I.declaration)
         return @@ O.D_irrefutable_match { pattern; expr; attr })
       (List.map ~f:(fun (v, _, ty) -> Context.Signature.S_value (v, ty)) frags)
   | D_type { type_binder; type_expr; type_attr = { public; hidden } } ->
-    let%bind type_expr = evaluate_type type_expr in
+    let%bind type_expr = evaluate_type_with_default_layout type_expr in
     let type_expr = { type_expr with orig_var = Some type_binder } in
     const
       E.(
