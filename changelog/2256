@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat error_no_tail_recursive_function2.mligo\\nlet rec foo (xs : int list) : int =\\n  let rec loop (xs : int list) : int =\\n    loop (foo xs :: xs)\\n  in\\n  loop xs\\n\\n```\\n\\n#### Before fix\\n\\n\\n```\\n$ ligo compile expression cameligo foo --init-file error_no_tail_recursive_function2.mligo\\nAn internal error ocurred. Please, contact the developers.\\nCorner case: foo not found in env.\\n\\n```\\n\\n#### After fix\\n\\n\\n```\\n$ ligo compile expression cameligo foo --init-file error_no_tail_recursive_function2.mligo\\nFile \"error_no_tail_recursive_function2.mligo\", line 3, characters 10-13:\\n  2 |   let rec loop (xs : int list) : int =\\n  3 |     loop (foo xs :: xs)\\n  4 |   in\\n\\nRecursive call not in tail position.\\nThe value of a recursive call must be immediately returned by the defined function.\\n\\n```\\n\\n"
+merge_request: '2256'
+title: "Add missing cases/fix wrong cases in tail recursiveness check"
+type: fixed
+            
