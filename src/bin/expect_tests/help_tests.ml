@@ -84,7 +84,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                              . format that will be used by compile-contract for
                                the resulting Michelson. Available formats are
                                'text' (default), 'json' and 'hex'.
-  [--no-colour]              . disable coloring in CLI output
+  [--no-color]               . disable coloring in CLI output
   [--no-stdlib]              . disable stdlib inclusion.
   [--no-warn]                . disable warning messages
   [--output-file FILENAME], -o
@@ -145,6 +145,7 @@ let%expect_test _ =
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
                                    'text' (default), 'json' and 'hex'.
+      [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
                                    (e.g. '2000-01-01T10:10:10Z')
@@ -208,6 +209,7 @@ let%expect_test _ =
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
                                    'text' (default), 'json' and 'hex'.
+      [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
                                    (e.g. '2000-01-01T10:10:10Z')
@@ -258,6 +260,7 @@ let%expect_test _ =
                                    meanwhile.
       [--init-file FILENAME]     . the path to the smart contract file to be used
                                    for context initialization.
+      [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--project-root PATH]      . The path to root of the project.
       [--warn-unused-rec]        . warn about unused recursion in a recursive
@@ -295,6 +298,7 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
                                    (e.g. '2000-01-01T10:10:10Z')
@@ -344,6 +348,7 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
                                    (e.g. '2000-01-01T10:10:10Z')
@@ -393,6 +398,7 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
                                    (e.g. '2000-01-01T10:10:10Z')
@@ -451,6 +457,7 @@ let%expect_test _ =
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
                                    'text' (default), 'json' and 'hex'.
+      [--no-color]               . disable coloring in CLI output
       [--no-stdlib]              . disable stdlib inclusion.
       [--no-warn]                . disable warning messages
       [--project-root PATH]      . The path to root of the project.
@@ -485,6 +492,7 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--no-color]               . disable coloring in CLI output
       [--only-ep]                . Only display declarations that have the type of
                                    an entrypoint
       [--project-root PATH]      . The path to root of the project.

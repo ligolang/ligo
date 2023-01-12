@@ -167,11 +167,8 @@ let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
     (Ast_typed.e_a_unit ~loc ())
 
 
-let ast_expanded (raw_options : Raw_options.t) source_file display_format () =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Ast_expanded.Formatter.expression_format
+let ast_expanded (raw_options : Raw_options.t) source_file display_format no_colour () =
+  format_result ~display_format ~no_colour Ast_expanded.Formatter.expression_format
   @@ fun ~raise ->
   let options =
     (* TODO: options should be computed outside of the API *)

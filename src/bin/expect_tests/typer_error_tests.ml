@@ -4,7 +4,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_function_annotation_1.mligo"
     ];
   [%expect
@@ -17,7 +17,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_function_annotation_2.mligo"
     ; "--entry-point"
     ; "f"
@@ -33,7 +33,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_function_annotation_3.mligo"
     ; "--entry-point"
     ; "f"
@@ -50,7 +50,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"
     ; "--entry-point"
     ; "unvalid"
@@ -67,7 +67,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_type.ligo"
     ];
   [%expect
@@ -81,7 +81,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_type_record_access.mligo"
     ];
   [%expect
@@ -96,7 +96,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_type_record_update.mligo"
     ];
   [%expect
@@ -111,7 +111,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_1.mligo"
     ];
   [%expect
@@ -126,7 +126,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_2.mligo"
     ];
   [%expect
@@ -141,7 +141,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_3.mligo"
     ];
   [%expect
@@ -156,7 +156,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_4.mligo"
     ];
   [%expect
@@ -171,7 +171,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_5.mligo"
     ];
   [%expect
@@ -184,7 +184,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_6.mligo"
     ];
   [%expect
@@ -198,7 +198,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_7.mligo"
     ];
   [%expect
@@ -212,7 +212,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_typer_1.jsligo"
     ];
   [%expect
@@ -243,7 +243,7 @@ let%expect_test _ =
     Invalid type(s)
     Cannot unify "( nat * nat )" with "nat". |}];
   run_ligo_bad
-    [ "compile"; "contract"; "--no-colour"; "../../test/contracts/negative/id.mligo" ];
+    [ "compile"; "contract"; "--no-color"; "../../test/contracts/negative/id.mligo" ];
   [%expect
     {|
     File "../../test/contracts/negative/id.mligo", line 45, characters 26-40:
@@ -276,7 +276,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/invalid_field_record_update.mligo"
     ];
   [%expect
@@ -291,7 +291,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/override_option.mligo"
     ];
   [%expect
@@ -306,7 +306,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/will_be_ignored.mligo"
     ];
   [%expect
@@ -369,7 +369,7 @@ let%expect_test _ =
       Invalid type(s).
       Expected: "contract ('a)", but got: "contract (int)". |}] *)
 
-(* Note : Disabling color in below tests (through the [--no-colour] option) prevents
+(* Note : Disabling color in below tests (through the [--no-color] option) prevents
    the introduction of ANSI escape sequences in the expected output *)
 
 (* In this case, the types are not record types,
@@ -378,7 +378,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_nat.mligo"
     ];
   [%expect
@@ -397,7 +397,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/int_vs_tuple.mligo"
     ];
   [%expect
@@ -444,7 +444,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_1.mligo"
     ];
   [%expect
@@ -474,7 +474,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_2.mligo"
     ];
   [%expect
@@ -495,7 +495,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_3.mligo"
     ];
   [%expect
@@ -522,7 +522,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/tuple_vs_tuple_4.mligo"
     ];
   [%expect
@@ -586,7 +586,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_1.mligo"
     ];
   [%expect
@@ -624,7 +624,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/subtuples_2.mligo"
     ];
   [%expect
@@ -657,7 +657,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/tuple_lists.mligo"
     ];
   [%expect
@@ -695,7 +695,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record.mligo"
     ];
   [%expect
@@ -718,7 +718,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/record_vs_record_2.mligo"
     ];
   [%expect
@@ -744,7 +744,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "--no-colour"
+    ; "--no-color"
     ; "../../test/contracts/negative/typer_unify_error_diff/arrow_vs_arrow.mligo"
     ];
   [%expect

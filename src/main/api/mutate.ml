@@ -12,11 +12,8 @@ let generator_to_variant ~raise s =
   else raise.error @@ Main_errors.main_invalid_generator_name s
 
 
-let mutate_ast (raw_options : Raw_options.t) source_file display_format seed () =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Parsing.Formatter.ppx_format
+let mutate_ast (raw_options : Raw_options.t) source_file display_format seed no_colour () =
+  format_result ~display_format ~no_colour Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   let generator = generator_to_variant ~raise raw_options.generator in
   let get_module =
@@ -48,11 +45,8 @@ let mutate_ast (raw_options : Raw_options.t) source_file display_format seed () 
   buffer
 
 
-let mutate_cst (raw_options : Raw_options.t) source_file display_format seed () =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Parsing.Formatter.ppx_format
+let mutate_cst (raw_options : Raw_options.t) source_file display_format seed no_colour () =
+  format_result ~display_format ~no_colour Parsing.Formatter.ppx_format
   @@ fun ~raise ->
   let generator = generator_to_variant ~raise raw_options.generator in
   let get_module =

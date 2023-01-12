@@ -172,7 +172,7 @@ let protocol_version =
 let cli_expr_inj =
   let open Command.Param in
   let doc =
-    "EXPRESSION a expression passed to LIGO interpreter, accessible through variable \
+    "EXPRESSION an expression passed to LIGO interpreter, accessible through variable \
      'cli_arg'"
   in
   let spec = optional string in
@@ -301,7 +301,7 @@ let now =
 
 let no_colour =
   let open Command.Param in
-  let name = "--no-colour" in
+  let name = "--no-color" in (* Using the american standard for the CLI *)
   let doc = "disable coloring in CLI output" in
   flag ~doc name no_arg
 
@@ -582,6 +582,7 @@ let compile_parameter =
       source
       now
       display_format
+      no_colour
       michelson_format
       output_file
       show_warnings
@@ -615,6 +616,7 @@ let compile_parameter =
          source
          now
          display_format
+         no_colour
          michelson_format
   in
   let summary = "compile parameters to a Michelson expression." in
@@ -638,6 +640,7 @@ let compile_parameter =
     <*> source
     <*> now
     <*> display_format
+    <*> no_colour
     <*> michelson_code_format
     <*> output_file
     <*> warn
@@ -655,6 +658,7 @@ let compile_expression =
       protocol_version
       init_file
       display_format
+      no_colour
       without_run
       no_stdlib
       michelson_format
@@ -685,6 +689,7 @@ let compile_expression =
          expression
          init_file
          display_format
+         no_colour
          michelson_format
   in
   let summary = "compile to a Michelson value." in
@@ -702,6 +707,7 @@ let compile_expression =
     <*> protocol_version
     <*> init_file
     <*> display_format
+    <*> no_colour
     <*> without_run
     <*> no_stdlib
     <*> michelson_code_format
@@ -726,6 +732,7 @@ let compile_storage =
       source
       now
       display_format
+      no_colour
       michelson_format
       output_file
       show_warnings
@@ -759,6 +766,7 @@ let compile_storage =
          source
          now
          display_format
+         no_colour
          michelson_format
   in
   let summary = "compile an initial storage in LIGO syntax to a Michelson expression." in
@@ -782,6 +790,7 @@ let compile_storage =
     <*> source
     <*> now
     <*> display_format
+    <*> no_colour
     <*> michelson_code_format
     <*> output_file
     <*> warn
@@ -799,6 +808,7 @@ let compile_constant =
       protocol_version
       init_file
       display_format
+      no_colour
       without_run
       show_warnings
       warning_as_error
@@ -817,7 +827,7 @@ let compile_constant =
         ()
     in
     return_result ~return ~show_warnings
-    @@ Api.Compile.constant raw_options expression init_file display_format
+    @@ Api.Compile.constant raw_options expression init_file display_format no_colour
   in
   let summary = "compile constant to a Michelson value and its hash." in
   let readme () =
@@ -834,6 +844,7 @@ let compile_constant =
     <*> protocol_version
     <*> init_file
     <*> display_format
+    <*> no_colour
     <*> without_run
     <*> warn
     <*> werror
@@ -904,6 +915,7 @@ let mutate_cst =
       protocol_version
       libraries
       display_format
+      no_colour
       seed
       generator
       project_root
@@ -913,7 +925,7 @@ let mutate_cst =
       Raw_options.make ~syntax ~protocol_version ~libraries ~generator ~project_root ()
     in
     return_result ~return
-    @@ Api.Mutate.mutate_cst raw_options source_file display_format seed
+    @@ Api.Mutate.mutate_cst raw_options source_file display_format seed no_colour
   in
   let summary = "return a mutated version for a given file." in
   let readme () =
@@ -929,6 +941,7 @@ let mutate_cst =
     <*> protocol_version
     <*> libraries
     <*> display_format
+    <*> no_colour
     <*> seed
     <*> generator
     <*> project_root)
@@ -941,6 +954,7 @@ let mutate_ast =
       protocol_version
       libraries
       display_format
+      no_colour
       seed
       generator
       project_root
@@ -950,7 +964,7 @@ let mutate_ast =
       Raw_options.make ~syntax ~protocol_version ~libraries ~generator ~project_root ()
     in
     return_result ~return
-    @@ Api.Mutate.mutate_ast raw_options source_file display_format seed
+    @@ Api.Mutate.mutate_ast raw_options source_file display_format seed no_colour
   in
   let summary = "return a mutated version for a given file." in
   let readme () =
@@ -966,6 +980,7 @@ let mutate_ast =
     <*> protocol_version
     <*> libraries
     <*> display_format
+    <*> no_colour
     <*> seed
     <*> generator
     <*> project_root)
@@ -984,6 +999,7 @@ let test =
       steps
       cli_expr_inj
       display_format
+      no_colour
       show_warnings
       project_root
       warn_unused_rec
@@ -1000,7 +1016,7 @@ let test =
         ()
     in
     return_result ~return ~show_warnings
-    @@ Api.Run.test raw_options source_file display_format
+    @@ Api.Run.test raw_options source_file display_format no_colour
   in
   let summary = "test a contract with the LIGO test framework." in
   let readme () =
@@ -1017,6 +1033,7 @@ let test =
     <*> steps
     <*> cli_expr_inj
     <*> display_format
+    <*> no_colour
     <*> warn
     <*> project_root
     <*> warn_unused_rec)
@@ -1030,6 +1047,7 @@ let test_expr =
       steps
       cli_expr_inj
       display_format
+      no_colour
       show_warnings
       project_root
       warn_unused_rec
@@ -1046,7 +1064,7 @@ let test_expr =
         ()
     in
     return_result ~return ~show_warnings
-    @@ Api.Run.test_expression raw_options expr source_file display_format
+    @@ Api.Run.test_expression raw_options expr source_file display_format no_colour
   in
   let summary = "test a expression with the LIGO test framework." in
   let readme () =
@@ -1064,6 +1082,7 @@ let test_expr =
     <*> steps
     <*> cli_expr_inj
     <*> display_format
+    <*> no_colour
     <*> warn
     <*> project_root
     <*> warn_unused_rec)
@@ -1083,6 +1102,7 @@ let dry_run =
       syntax
       protocol_version
       display_format
+      no_colour
       show_warnings
       warning_as_error
       project_root
@@ -1111,6 +1131,7 @@ let dry_run =
          source
          now
          display_format
+         no_colour
   in
   let summary = "run a smart-contract with the given storage and input." in
   let readme () =
@@ -1134,6 +1155,7 @@ let dry_run =
     <*> syntax
     <*> protocol_version
     <*> display_format
+    <*> no_colour
     <*> warn
     <*> werror
     <*> project_root
@@ -1153,6 +1175,7 @@ let evaluate_call =
       syntax
       protocol_version
       display_format
+      no_colour
       show_warnings
       warning_as_error
       project_root
@@ -1180,6 +1203,7 @@ let evaluate_call =
          source
          now
          display_format
+         no_colour
   in
   let summary = "run a function with the given parameter." in
   let readme () =
@@ -1202,6 +1226,7 @@ let evaluate_call =
     <*> syntax
     <*> protocol_version
     <*> display_format
+    <*> no_colour
     <*> warn
     <*> werror
     <*> project_root
@@ -1220,6 +1245,7 @@ let evaluate_expr =
       syntax
       protocol_version
       display_format
+      no_colour
       show_warnings
       warning_as_error
       project_root
@@ -1246,6 +1272,7 @@ let evaluate_expr =
          source
          now
          display_format
+         no_colour
   in
   let summary = "evaluate a given definition." in
   let readme () =
@@ -1267,6 +1294,7 @@ let evaluate_expr =
     <*> syntax
     <*> protocol_version
     <*> display_format
+    <*> no_colour
     <*> warn
     <*> werror
     <*> project_root
@@ -1285,6 +1313,7 @@ let interpret =
       source
       now
       display_format
+      no_colour
       project_root
       warn_unused_rec
       ()
@@ -1303,6 +1332,7 @@ let interpret =
          source
          now
          display_format
+         no_colour
   in
   let summary =
     "interpret the expression in the context initialized by the provided source file."
@@ -1325,6 +1355,7 @@ let interpret =
     <*> source
     <*> now
     <*> display_format
+    <*> no_colour
     <*> project_root
     <*> warn_unused_rec)
 
@@ -1343,10 +1374,10 @@ let run_group =
 
 (** Info commands *)
 let list_declarations =
-  let f source_file only_ep syntax display_format project_root () =
+  let f source_file only_ep syntax display_format no_colour project_root () =
     let raw_options = Raw_options.make ~only_ep ~syntax ~project_root () in
     return_result ~return
-    @@ Api.Info.list_declarations raw_options source_file display_format
+    @@ Api.Info.list_declarations raw_options source_file display_format no_colour
   in
   let summary = "list all the top-level declarations." in
   let readme () =
@@ -1356,7 +1387,13 @@ let list_declarations =
   Command.basic
     ~summary
     ~readme
-    (f <$> source_file <*> only_ep <*> syntax <*> display_format <*> project_root)
+    (f
+    <$> source_file
+    <*> only_ep
+    <*> syntax
+    <*> display_format
+    <*> no_colour
+    <*> project_root)
 
 
 let measure_contract =
@@ -1367,6 +1404,7 @@ let measure_contract =
       syntax
       protocol_version
       display_format
+      no_colour
       enable_typed_opt
       show_warnings
       warning_as_error
@@ -1387,7 +1425,7 @@ let measure_contract =
         ()
     in
     return_result ~return ~show_warnings
-    @@ Api.Info.measure_contract raw_options source_file display_format
+    @@ Api.Info.measure_contract raw_options source_file display_format no_colour
   in
   let summary = "measure a contract's compiled size in bytes." in
   let readme () =
@@ -1404,6 +1442,7 @@ let measure_contract =
     <*> syntax
     <*> protocol_version
     <*> display_format
+    <*> no_colour
     <*> enable_michelson_typed_opt
     <*> warn
     <*> werror
@@ -1412,11 +1451,21 @@ let measure_contract =
 
 
 let get_scope =
-  let f source_file protocol_version libraries display_format with_types project_root () =
+  let f
+      source_file
+      protocol_version
+      libraries
+      display_format
+      no_colour
+      with_types
+      project_root
+      ()
+    =
     let raw_options =
       Raw_options.make ~protocol_version ~libraries ~with_types ~project_root ()
     in
-    return_result ~return @@ Api.Info.get_scope raw_options source_file display_format
+    return_result ~return
+    @@ Api.Info.get_scope raw_options source_file display_format no_colour
   in
   let summary = "return the JSON encoded environment for a given file." in
   let readme () =
@@ -1431,6 +1480,7 @@ let get_scope =
     <*> protocol_version
     <*> libraries
     <*> display_format
+    <*> no_colour
     <*> with_types
     <*> project_root)
 
@@ -1669,6 +1719,7 @@ let print_ast_expanded =
       syntax
       protocol_version
       display_format
+      no_colour
       self_pass
       project_root
       warn_unused_rec
@@ -1685,7 +1736,8 @@ let print_ast_expanded =
         ~test
         ()
     in
-    return_result ~return @@ Api.Print.ast_expanded raw_options source_file display_format
+    return_result ~return
+    @@ Api.Print.ast_expanded raw_options source_file display_format no_colour
   in
   let summary =
     "print the contract after aggregation.\n\
@@ -1702,6 +1754,7 @@ let print_ast_expanded =
     <*> syntax
     <*> protocol_version
     <*> display_format
+    <*> no_colour
     <*> self_pass
     <*> project_root
     <*> warn_unused_rec
@@ -1866,13 +1919,23 @@ let repl =
       source
       now
       display_format
+      no_colour
       init_file
       project_root
       ()
     =
     let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root () in
     return_result ~return
-    @@ Repl.main raw_options display_format now amount balance sender source init_file
+    @@ Repl.main
+         raw_options
+         display_format
+         no_colour
+         now
+         amount
+         balance
+         sender
+         source
+         init_file
   in
   let summary = "interactive ligo interpreter" in
   let readme () = "REPL (Read-Eval-Print-Loop) for LIGO" in
@@ -1888,6 +1951,7 @@ let repl =
     <*> source
     <*> now
     <*> display_format
+    <*> no_colour
     <*> init_file
     <*> project_root)
 

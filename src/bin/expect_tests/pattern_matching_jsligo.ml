@@ -65,7 +65,7 @@ let%expect_test _ =
   - C |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match7.jsligo"; "--no-colour" ];
+  run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match7.jsligo"; "--no-color" ];
   [%expect
     {|
     File "../../test/contracts/negative/pattern_match7.jsligo", line 1, characters 11-20:
