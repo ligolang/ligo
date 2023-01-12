@@ -142,14 +142,14 @@ and within a code block:
 ```jsligo group=tuple
 let destruct_tuple = (x : [ int , [int , nat] ]) : nat => {
   let [a,[b,c]] = x ;
-  c
+  return c
 };
 ```
 
 ```jsligo group=tuple
 let destruct_record = (x : { a : int , b : string }) : int => {
   let { a , b } = x ;
-  a
+  return a
 };
 ```
 

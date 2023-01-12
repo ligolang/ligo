@@ -1,0 +1,7 @@
+
+author: SanderSpies
+description: "Improve the return handling in JsLIGO\\n\\n"
+merge_request: '2229'
+title: "improve Jsligo proper return handling"
+type: breaking
+            

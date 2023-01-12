@@ -8,7 +8,7 @@ type ('e, 't) t =
 [@@deriving eq, compare, yojson, hash, fold, map]
 
 let pp f g ppf { binder; output_type; result } =
-  Format.fprintf ppf "fun (%a%a) -> %a" (Param.pp g) binder g output_type f result
+  Format.fprintf ppf "fun (%a)%a -> %a" (Param.pp g) binder g output_type f result
 
 
 let fold_map

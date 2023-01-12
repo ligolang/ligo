@@ -403,7 +403,7 @@ const proxy_transfer_contract :
   <vt , whole_p>
     (x : (ticket:ticket<vt>) => whole_p) => ((x : [[[vt , nat] , address] , unit] ) => [list<operation> , unit]) =
   ( mk_param :  ((ticket:ticket<vt>) => whole_p)) => {
-    (p : [[[vt , nat] , address] , unit] ) => {
+    return (p : [[[vt , nat] , address] , unit] ) => {
     const [p,_] = p ;
     const [[v,amt],dst_addr] = p ;
     const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
@@ -427,7 +427,7 @@ const proxy_originate_contract :
             ((ticket:ticket<vt>) => whole_s),
             ((x : [ vp , whole_s]) => [list<operation> , whole_s])
           ]) => {
-      (p : [[vt , nat] , option<address>]) => {
+      return (p : [[vt , nat] , option<address>]) => {
         const [p,_] = p;
         const [v,amt] = p ;
         const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
@@ -465,7 +465,7 @@ const originate : <vt, whole_s, vp>
         proxy_originate_contract (mk_storage, contract) ;
       const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;
       const _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0 as tez) ;
-      match (Test.get_storage (taddr_proxy), {
+      return match (Test.get_storage (taddr_proxy), {
         Some: (addr:address) => {
         const _taddr = (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;
         return addr
@@ -685,9 +685,9 @@ const main = (_: unit, s: storage) : [ list<operation> , storage] => {
     match (s, {
       Some: (ticket: ticket<bytes>) => {
         let [_ , t] = Tezos.read_ticket (ticket) ;
-        Some (t)
+        return Some (t)
       },
-      None: () => { None () }
+      None: () => { return None () }
     });
   return [list ([]), x]
 };
@@ -707,7 +707,7 @@ const test_originate_contract_ = () : unit => {
     let { ticketer , value , amount } = x ;
     let _ = assert (value == ticket_info[0]) ;
     let _ = assert (amount == ticket_info[1]) ;
-    unit
+    return unit
   },
   None: () => failwith ("impossible")
   }

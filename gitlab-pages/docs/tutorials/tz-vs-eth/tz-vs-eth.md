@@ -641,7 +641,7 @@ let main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => {
       SetFunction: fn => ({...s, fn: Some (fn)}),
       CallFunction: () => ({...s, value: call(s.fn, s.value)})
     });
-  [list([]), newStorage]
+  return [list([]), newStorage]
 };
 ```
 
