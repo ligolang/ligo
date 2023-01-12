@@ -22,8 +22,8 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
     check_recursive_call ~raise n false args
   | E_lambda { result; _ } -> check_recursive_call ~raise n final_path result
   | E_type_abstraction { result; _ } -> check_recursive_call ~raise n final_path result
-  | E_recursive { fun_name; fun_type = _; lambda } ->
-    check_recursive_call ~raise fun_name true lambda.result
+  | E_recursive { fun_name = _; fun_type = _; lambda } ->
+    check_recursive_call ~raise n final_path lambda.result
   | E_let_in { rhs; let_result; _ } ->
     check_recursive_call ~raise n false rhs;
     check_recursive_call ~raise n final_path let_result
@@ -40,11 +40,17 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
   | E_update { struct_; update; _ } ->
     check_recursive_call ~raise n false struct_;
     check_recursive_call ~raise n false update
-  | E_module_accessor _
-  | E_type_inst _
-  (* Wtf?? *)
-  | E_assign _
-  | _ -> ()
+  | E_module_accessor _ -> ()
+  | E_type_inst { forall; type_ = _ } -> check_recursive_call ~raise n final_path forall
+  (* Mutation *)
+  | E_assign { expression; _ } -> check_recursive_call ~raise n false expression
+  | E_let_mut_in { rhs; let_result; _ } ->
+    check_recursive_call ~raise n false rhs;
+    check_recursive_call ~raise n final_path let_result
+  | E_deref _ -> ()
+  (* Loops *)
+  | E_for _ | E_for_each _ | E_while _ ->
+    raise.error (recursive_call_is_only_allowed_as_the_last_operation n e.location)
 
 
 and check_recursive_call_in_matching ~raise n final_path ms =
