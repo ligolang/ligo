@@ -3,12 +3,13 @@ module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
 
-let measure_contract (raw_options : Raw_options.t) source_file display_format () =
+let measure_contract (raw_options : Raw_options.t) source_file display_format no_colour ()
+  =
   let warning_as_error = raw_options.warning_as_error in
   format_result
     ~warning_as_error
     ~display_format
-    ~no_colour:raw_options.no_colour
+    ~no_colour
     Formatter.contract_size_format
   @@ fun ~raise ->
   let protocol_version =
@@ -34,11 +35,14 @@ let measure_contract (raw_options : Raw_options.t) source_file display_format ()
   Compile.Of_michelson.measure ~raise contract
 
 
-let list_declarations (raw_options : Raw_options.t) source_file display_format () =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Formatter.declarations_format
+let list_declarations
+    (raw_options : Raw_options.t)
+    source_file
+    display_format
+    no_colour
+    ()
+  =
+  format_result ~display_format ~no_colour Formatter.declarations_format
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
@@ -49,8 +53,8 @@ let list_declarations (raw_options : Raw_options.t) source_file display_format (
   source_file, declarations
 
 
-let get_scope (raw_options : Raw_options.t) source_file display_format () =
-  Scopes.Api_helper.format_result ~display_format ~no_colour:raw_options.no_colour
+let get_scope (raw_options : Raw_options.t) source_file display_format no_colour () =
+  Scopes.Api_helper.format_result ~display_format ~no_colour
   @@ fun ~raise ->
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)

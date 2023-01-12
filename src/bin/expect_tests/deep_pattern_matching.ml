@@ -31,7 +31,7 @@ let%expect_test _ =
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_test "pm_fail15.mligo"; "--no-colour" ];
+  run_ligo_bad [ "print"; "ast-typed"; bad_test "pm_fail15.mligo"; "--no-color" ];
   [%expect
     {|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 7, character 2 to line 9, character 25:

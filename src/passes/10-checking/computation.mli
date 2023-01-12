@@ -71,7 +71,7 @@ module Options : sig
       This is equivalent to [options () >>| fun opt -> opt.syntax] *)
   val syntax : unit -> (Syntax_types.t option, 'err, 'wrn) t
 
-  (** [no_color ()] returns whether the [--no-colour] flag was passed via compiler options.
+  (** [no_color ()] returns whether the [--no-color] flag was passed via compiler options.
       This is equivalent to [options () >>| fun opt -> opt.no_colour] *)
   val no_color : unit -> (bool, 'err, 'wrn) t
 end

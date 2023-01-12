@@ -12,14 +12,19 @@ let validate_json_file file_name =
   if status > 0 then Alcotest.fail "JSON schema validation failed"
 
 
-let schema_test_positive ?(with_types = false) ?(speed = `Quick) source_file =
+let schema_test_positive
+    ?(no_colour = false)
+    ?(with_types = false)
+    ?(speed = `Quick)
+    source_file
+  =
   let _test () =
     let temp_file_name =
       Caml.Filename.temp_file ~temp_dir:"./" "get_scope_test" ".json"
     in
     let write data = Out_channel.write_all temp_file_name ~data in
     let options = Raw_options.make ~with_types ~protocol_version:"current" () in
-    match InfoApi.get_scope options source_file json () with
+    match InfoApi.get_scope options source_file json no_colour () with
     | Ok (res_str, _) ->
       write res_str;
       validate_json_file temp_file_name
@@ -29,6 +34,7 @@ let schema_test_positive ?(with_types = false) ?(speed = `Quick) source_file =
 
 
 let schema_test_negative
+    ?(no_colour = false)
     ?(with_types = false)
     ?(speed = `Quick)
     ?(expected_status = Some true)
@@ -42,7 +48,7 @@ let schema_test_negative
     let write data = Out_channel.write_all temp_file_name ~data in
     let options = Raw_options.make ~with_types ~protocol_version:"current" () in
     let res_str, actual_status =
-      match InfoApi.get_scope options source_file json () with
+      match InfoApi.get_scope options source_file json no_colour () with
       | Ok (res_str, _) ->
         res_str, true (* Alcotest.fail "None errors are detected in negative test" *)
       | Error (res_str, _) -> res_str, false

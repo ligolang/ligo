@@ -6,11 +6,8 @@ module Run = Ligo_run.Of_michelson
 module Raw_options = Compiler_options.Raw_options
 open Ligo_prim
 
-let test (raw_options : Raw_options.t) source_file display_format () =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Ligo_interpreter.Formatter.tests_format
+let test (raw_options : Raw_options.t) source_file display_format no_colour () =
+  format_result ~display_format ~no_colour Ligo_interpreter.Formatter.tests_format
   @@ fun ~raise ->
   let raw_options =
     { raw_options with
@@ -29,11 +26,15 @@ let test (raw_options : Raw_options.t) source_file display_format () =
   Interpreter.eval_test ~raise ~steps ~options typed
 
 
-let test_expression (raw_options : Raw_options.t) expr source_file display_format () =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Ligo_interpreter.Formatter.tests_format
+let test_expression
+    (raw_options : Raw_options.t)
+    expr
+    source_file
+    display_format
+    no_colour
+    ()
+  =
+  format_result ~display_format ~no_colour Ligo_interpreter.Formatter.tests_format
   @@ fun ~raise ->
   let raw_options =
     { raw_options with
@@ -71,13 +72,14 @@ let dry_run
     source
     now
     display_format
+    no_colour
     ()
   =
   let warning_as_error = raw_options.warning_as_error in
   format_result
     ~warning_as_error
     ~display_format
-    ~no_colour:raw_options.no_colour
+    ~no_colour
     Decompile.Formatter.expression_format
   @@ fun ~raise ->
   let protocol_version =
@@ -146,12 +148,10 @@ let interpret
     source
     now
     display_format
+    no_colour
     ()
   =
-  format_result
-    ~display_format
-    ~no_colour:raw_options.no_colour
-    Decompile.Formatter.expression_format
+  format_result ~display_format ~no_colour Decompile.Formatter.expression_format
   @@ fun ~raise ->
   let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
   let options =
@@ -185,13 +185,14 @@ let evaluate_call
     source
     now
     display_format
+    no_colour
     ()
   =
   let warning_as_error = raw_options.warning_as_error in
   format_result
     ~warning_as_error
     ~display_format
-    ~no_colour:raw_options.no_colour
+    ~no_colour
     Decompile.Formatter.expression_format
   @@ fun ~raise ->
   let syntax =
@@ -241,13 +242,14 @@ let evaluate_expr
     source
     now
     display_format
+    no_colour
     ()
   =
   let warning_as_error = raw_options.warning_as_error in
   format_result
     ~warning_as_error
     ~display_format
-    ~no_colour:raw_options.no_colour
+    ~no_colour
     Decompile.Formatter.expression_format
   @@ fun ~raise ->
   let syntax =
