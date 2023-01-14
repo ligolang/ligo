@@ -301,7 +301,8 @@ let now =
 
 let no_colour =
   let open Command.Param in
-  let name = "--no-color" in (* Using the american standard for the CLI *)
+  (* Using the american standard for the CLI *)
+  let name = "--no-color" in
   let doc = "disable coloring in CLI output" in
   flag ~doc name no_arg
 
