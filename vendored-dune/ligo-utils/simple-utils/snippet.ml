@@ -12,6 +12,11 @@ let escape s =
 let fprintf = Format.fprintf
 
 let print_code ~(no_colour:bool) ppf (region : Region.t) (in_chan : In_channel.t) =
+  (* Colours are disabled if the corresponding environment variable or CLI flag is set *)
+  let no_color_env = match Sys.getenv "NO_COLOR" with
+                       Some value -> String.(value <> "")
+                     | None -> false in
+  let no_colour = no_color_env || no_colour in
   let is_dumb    = match Sys.getenv "TERM" with
                      Some value -> String.(value = "dumb") || no_colour
                    | None -> false
