@@ -56,12 +56,11 @@ let func_of_cases ~loc (cs : cases) =
 
 let generate_impl ~ctxt (_rec_flag, type_declarations) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
-  List.map type_declarations ~f:(fun (td : type_declaration) ->
+  List.filter_map type_declarations ~f:(fun (td : type_declaration) ->
       match td with
-      | { ptype_kind = Ptype_abstract | Ptype_record _ | Ptype_open; _ } ->
-        Location.raise_errorf ~loc "Cannot derive accessors for non variant types"
+      | { ptype_kind = Ptype_abstract | Ptype_record _ | Ptype_open; _ } -> None
       | { ptype_kind = Ptype_variant constructors; _ } ->
-        List.map constructors ~f:constructor_impl)
+        Some (List.map constructors ~f:constructor_impl))
   |> List.map ~f:(fun xs ->
          List.append xs [ case ~lhs:(ppat_any ~loc) ~guard:None ~rhs:[%expr None] ])
   |> List.map ~f:(func_of_cases ~loc)
