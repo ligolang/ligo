@@ -7,6 +7,9 @@ stages:
   - build                           # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
+  - tools-precheck                  # preliminary checks done for projects from 'tools'
+  - tools-build                     # build projects from 'tools'
+  - tools-check                     # run tests for projects from 'tools'
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
   - push                            # deploy docker images, pages, releases (tag)
   - deploy                          # deploy web IDE, website preview
@@ -21,6 +24,10 @@ include:
   - '/.ci/.gitlab-ci-npm.yml'
   # Manage pipeline related to webide
   - '/.ci/.gitlab-ci-webide.yml'
+  # CI jobs for projects from 'tools'
+  - '/.ci/.gitlab-ci-lsp.yml'
+  - '/.ci/.gitlab-ci-debugger.yml'
+  - '/.ci/.gitlab-ci-webide-new.yml'
 .submodule-clone:
   before_script:
     - git submodule sync --recursive
@@ -76,8 +83,9 @@ docker_build:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-  dependencies:
-    - changelog
+  needs:
+    - job: changelog
+      artifacts: true
   script:
     - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
@@ -104,8 +112,9 @@ docker_extract:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-  dependencies :
-    - docker_build
+  needs:
+    - job: docker_build
+      artifacts: true
   script:
     - docker load -i ligo.tar.gz
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .

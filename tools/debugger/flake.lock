@@ -372,6 +372,20 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1667318090,
+        "narHash": "sha256-AvxgT+t1BWZs8IfdseHl8+7wvWWm9pvysupMT9wXdH0=",
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "rev": "4bce79cf151aad3c0bed46a32bdb4b165f00cb7e",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
     "old-ghc-nix": {
       "flake": false,
       "locked": {
@@ -393,6 +407,7 @@
       "inputs": {
         "hackage": "hackage",
         "haskell-nix": "haskell-nix",
+        "nixpkgs": "nixpkgs_2",
         "utils": "utils"
       }
     },

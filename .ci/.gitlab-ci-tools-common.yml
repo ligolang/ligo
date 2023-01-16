@@ -1,0 +1,25 @@
+# Env variables and yaml anchors/references used by jobs for projects from 'tools' directory
+variables:
+  FLAKE_FLAGS: --accept-flake-config -L
+  DANGER_GITLAB_API_TOKEN: "$TOKEN_API"
+
+.dev:
+  if: $CI_COMMIT_BRANCH == "dev"
+
+.vscode_production:
+  if: $CI_COMMIT_BRANCH == "vscode-production"
+
+.lsp_mr_changes:
+  if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  changes:
+    - tools/lsp/**/*
+
+.debugger_mr_changes:
+  if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  changes:
+    - tools/debugger/**/*
+
+.webide_mr_changes:
+  if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  changes:
+    - tools/webide-new/**/*

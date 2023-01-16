@@ -1,0 +1,137 @@
+## LSP/Squirrel
+
+include:
+  - '/.ci/.gitlab-ci-tools-common.yml'
+
+lsp-validate-cabal-files:
+  stage: tools-precheck
+  rules:
+    - !reference [.lsp_mr_changes]
+  needs: []
+  script:
+    - cd tools/lsp/squirrel
+    - nix develop $FLAKE_FLAGS ..#ci --command scripts/validate-cabal-files.sh
+
+lsp-lint:
+  stage: tools-precheck
+  rules:
+    - !reference [.lsp_mr_changes]
+  needs: []
+  script:
+    - nix --version
+    - nix build $FLAKE_FLAGS ./tools/lsp#checks.x86_64-linux.lint
+    # Nix has some trouble with git so we run it directly from the CI
+    - cd tools/lsp
+    - bash squirrel/scripts/check-trailing-whitespace.sh
+
+lsp-stylish:
+  stage: tools-precheck
+  rules:
+    - !reference [.lsp_mr_changes]
+  needs: []
+  script:
+    - cd tools/lsp/squirrel
+    - nix develop ..#ci -c ./scripts/validate-stylish.sh
+
+lsp-build:
+  stage: tools-build
+  rules: &lsp_mr_dev
+    - !reference [.lsp_mr_changes]
+    - !reference [.dev]
+  needs: []
+  script:
+    - nix build $FLAKE_FLAGS ./tools/lsp#packages.x86_64-linux.squirrel
+
+lsp-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [lsp-build]
+  script:
+    - nix build $FLAKE_FLAGS ./tools/lsp#checks.x86_64-linux.lsp-test
+
+lsp-integration-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [docker_extract, lsp-build]
+  script:
+    - git add ./ligo # Ligo binary is needed for this tests
+    - cd tools/lsp
+    - nix build $FLAKE_FLAGS .#tests.x86_64-linux.integration-test
+    - nix develop .#integration-test -c bash -c 'cd ./squirrel && ../result/bin/integration-test'
+
+lsp-sexp-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [lsp-build]
+  script:
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.squirrel-sexp-test
+
+lsp-grammar-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [lsp-build]
+  script:
+    - nix build $FLAKE_FLAGS ./tools/lsp#checks.x86_64-linux.squirrel-grammar-test
+
+lsp-handler-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [docker_extract, lsp-build]
+  script:
+    - git add ./ligo # Ligo binary is needed for this tests
+    - nix build $FLAKE_FLAGS ./tools/lsp#checks.x86_64-linux.lsp-handlers-test
+
+lsp-contract-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [lsp-build]
+  script:
+    - nix build $FLAKE_FLAGS ./tools/lsp#checks.x86_64-linux.ligo-contracts-test
+
+vscode-lsp-extension-linux:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [lsp-build]
+  script:
+    - nix build $FLAKE_FLAGS ./tools/lsp#vscode-extension-native
+
+vscode-extension-docker-test:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: [docker_extract, lsp-build]
+  script:
+    - git add ./ligo # Ligo binary is needed for these tests
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#tests.x86_64-linux.vscode-extenstion-test-docker-image
+    - docker load -i result
+    - docker run --rm vscode-extension-test
+
+vscode-extension-publish-check:
+  stage: tools-check
+  rules: *lsp_mr_dev
+  needs: []
+  script:
+    - nix flake $FLAKE_FLAGS check ./tools/vsce
+
+vscode-lsp-extension:
+  stage: tooling
+  rules:
+    - !reference [.lsp_mr_changes]
+    - !reference [.dev]
+    - !reference [.vscode_production]
+  needs: []
+  script:
+    - nix build $FLAKE_FLAGS ./tools/lsp#vscode-extension
+    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
+  artifacts:
+    paths:
+      - ligo-extension.vsix
+
+vscode-lsp-extension-publish:
+  stage: push
+  rules:
+    - !reference [.vscode_production]
+  needs: [vscode-lsp-extension]
+  when: manual
+  script:
+    - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix develop ./tools/vsce --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
