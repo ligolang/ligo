@@ -11,6 +11,8 @@ module AST.Scope
 
 import Algebra.Graph.Class qualified as G (vertex)
 import Algebra.Graph.ToGraph qualified as G (vertexList)
+import Data.Aeson
+import Text.Show qualified
 import Unsafe qualified
 
 import AST.Includes (insertPreprocessorRanges)
@@ -35,13 +37,28 @@ addShallowScopes tempSettings reportProgress =
   (fmap (Unsafe.head . G.vertexList) . addScopes @parser tempSettings reportProgress . G.vertex)
   <=< insertPreprocessorRanges
 
-data ScopingSystem impl where
-  CompilerScopes :: ScopingSystem FromCompiler
-  FallbackScopes :: ScopingSystem Fallback
-  StandardScopes :: ScopingSystem Standard
+data ScopingSystem = CompilerScopes | FallbackScopes | StandardScopes
+  deriving stock Eq
+
+instance Show ScopingSystem where
+  show FallbackScopes = "Fallback"
+  show StandardScopes = "Standard"
+  show CompilerScopes = "FromCompiler"
+
+type instance PrettyShow ScopingSystem = ()
+
+instance ToJSON ScopingSystem where
+  toJSON = String . show
+
+instance FromJSON ScopingSystem where
+  parseJSON = withText "Scoping system" $ \case
+    "Fallback" -> pure FallbackScopes
+    "Standard" -> pure StandardScopes
+    "FromCompiler" -> pure CompilerScopes
+    bad -> fail $ "Unknown scoping system: " <> toString bad
 
 class KnownScopingSystem impl where
-  knownScopingSystem :: ScopingSystem impl
+  knownScopingSystem :: ScopingSystem
 
 instance KnownScopingSystem FromCompiler where
   knownScopingSystem = CompilerScopes

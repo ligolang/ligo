@@ -1,7 +1,9 @@
 { buildYarnPackage, fetchurl, python3, openapi-generator-cli, runCommand, pkg-config, libsecret, ligo-syntaxes }:
+{ git-proxy }:
 let
   src = ./.;
   package = buildYarnPackage {
+    GIT_PROXY = git-proxy;
     inherit src;
     # some files in ./src/ligo-components/eth-project/Project/languages/syntaxes are symlinks
     # from some adjacent file tree, so they have to be copied explicitly

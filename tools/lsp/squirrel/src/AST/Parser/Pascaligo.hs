@@ -178,7 +178,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate \case
         "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "param" <*> fields "parameter" <*> fieldOpt "type" <*> field "body"
-        "const_decl" -> BConst    <$>             field    "name"       <*> fields "param" <*> fieldOpt "type" <*> fieldOpt "value"
+        "const_decl" -> BConst False <$> field    "name"       <*> fields "param" <*> fieldOpt "type" <*> fieldOpt "value"
         "var_decl"   -> BVar      <$>             field    "name"       <*> fields "type_name" <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> fieldOpt "params" <*> field "typeValue"
         "p_include"  -> BInclude  <$>             field    "filename"

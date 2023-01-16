@@ -55,7 +55,6 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
   monaco.languages.setLanguageConfiguration("jsligoext", convertConfiguration(jsligoConfiguration));
   monaco.languages.setLanguageConfiguration("tzext", convertConfiguration(jsligoConfiguration));
 
-
   const ligoRegistry = new Registry({
     getGrammarDefinition: async () => {
       return new Promise((resolve) => {
@@ -99,7 +98,6 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
       });
     },
   });
-
 
   const ligoGrammars = new Map<string, string>();
   ligoGrammars.set("pascaligoext", "source.ligo");

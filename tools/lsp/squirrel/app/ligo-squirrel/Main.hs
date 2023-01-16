@@ -296,18 +296,26 @@ handleTypeDefinitionRequest req respond = do
     $Log.debug [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
-formatImpl :: J.Uri -> RIO (TempSettings, ContractInfo')
-formatImpl uri = do
+handleDocumentFormatImpl :: J.Uri -> RIO (TempSettings, ContractInfo)
+handleDocumentFormatImpl uri = do
   let nuri = J.toNormalizedUri uri
-  contract <- Document.fetch Document.BestEffort nuri
+  let nFp = Unsafe.fromJust $ J.uriToNormalizedFilePath nuri  -- FIXME: non-exhaustive
+  -- n.b.: We load the document for formatting directly, as we don't want to do
+  -- any sort of preprocessing or scoping, thus bypassing LIGO. This has the
+  -- side effect that we will always reload the document, even if it's valid.
+  -- But this is desirable and acceptable for two reasons:
+  -- * We always save the document after preprocessing.
+  -- * Formatting is done infrequently, so there will be no visible performance
+  -- penalties for the user.
+  src <- Document.preload nFp
   Document.invalidate nuri
-  (, contract) <$> Document.getTempPath (takeDirectory $ contractFile contract)
+  (,) <$> Document.getTempPath (takeDirectory $ srcPath src) <*> parse src
 
 handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
 handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-  (temp, contract) <- formatImpl uri
+  (temp, contract) <- handleDocumentFormatImpl uri
   respond . Right =<< AST.formatDocument temp contract
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
@@ -315,7 +323,7 @@ handleDocumentRangeFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
     pos = fromLspRange $ req ^. J.params . J.range
-  (temp, contract) <- formatImpl uri
+  (temp, contract) <- handleDocumentFormatImpl uri
   respond . Right =<< AST.formatAt temp pos contract
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences

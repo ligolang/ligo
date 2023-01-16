@@ -4,8 +4,10 @@ module AST.Scope.Fallback
   , loopM
   , loopM_
   ) where
-import Prelude hiding (Alt (..), Product (..), Sum (..))
 
+import Prelude hiding (Alt (..), Product (..), Sum (..), exp)
+
+import Control.Category ((>>>))
 import Control.Lens (makeLenses, (|>))
 import Control.Monad.RWS.Strict (RWS, evalRWS, tell)
 import Control.Monad.Writer (Writer, execWriter)
@@ -20,13 +22,14 @@ import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<+>), (<.>))
 import Duplo.Tree hiding (loop)
 import Witherable (wither)
 
-import AST.Pretty (PPableLIGO)
+import AST.Pretty (PPableLIGO, lppDialect)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
   (DeclarationSpecifics (..), Module (..), ModuleDeclSpecifics (..), ScopedDecl (..),
   Type (VariableType), TypeDeclSpecifics (..), TypeVariable (..), ValueDeclSpecifics (..),
   _ModuleSpec, mdsInit, sdName, sdNamespace, sdOrigin, sdRefs, sdSpec)
-import AST.Scope.ScopedDecl.Parser (parseModule, parseParameters, parseTypeDeclSpecifics)
+import AST.Scope.ScopedDecl.Parser
+  (parseModule, parseParameters, parseQuotedTypeParams, parseTypeDeclSpecifics)
 import AST.Skeleton hiding (QuotedTypeParams (..), Type)
 import AST.Skeleton qualified as Skeleton (QuotedTypeParams (..), Type (..))
 import Cli.Types
@@ -454,10 +457,10 @@ instance HasGo Expr where
       pure $ Just ((Set.empty, getRange r) :< sts, Set.toList refs)
     Block {} -> pure Nothing
     Lambda params tys typ body -> do
-      tyRefs <- scopeParams tys Nothing
+      tyRefs <- referencesForTypeParams tys
       withScopes tyRefs do
         mapM_ walk tys
-        paramRefs <- scopeParams params typ
+        paramRefs <- referencesForParams params typ
         subforest <- fmap (fmap getTree) do
           void (maybe (pure Nothing) walk typ)
           for_ (zip (tyRefs <> paramRefs) (tys <> params)) \(pr, p) ->
@@ -468,7 +471,7 @@ instance HasGo Expr where
           , []
           )
     ForBox name mname2 coll expr1 expr2 -> do
-      declRefs <- scopeParams (catMaybes [Just name, mname2]) Nothing
+      declRefs <- referencesForParams (catMaybes [Just name, mname2]) Nothing
       withScopes declRefs $ do
         void (walk name)
         whenJust mname2 $ void . walk
@@ -516,60 +519,93 @@ instance HasGo Skeleton.Type where
     TVariable var -> Nothing <$ walk var
     TParen typ -> walk typ
 
-scopeParams :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM [ExtendedDeclRef]
-scopeParams args ty = foldMapM go args
+referencesForParams :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM [ExtendedDeclRef]
+referencesForParams params returnType = foldMapM go params
   where
     go :: LIGO ParsedInfo -> ScopeM [ExtendedDeclRef]
-    go node = case node of
-      (layer -> Just (BParameter (layer -> Just (IsParen xs)) _)) ->
-        scopeParams [xs] ty
-      (layer -> Just (BParameter (layer -> Just (IsTuple xs)) _)) ->
-        foldMapM go xs
-      (layer -> Just (BParameter name mType)) -> do
-        mkDecl (valueScopedDecl [] name mType Nothing)
-          >>= maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
-      (layer -> Just (IsAnnot pat _)) -> go pat
-      (layer -> Just (IsTuple xs)) -> foldMapM go xs
-      (layer -> Just (IsParen x)) -> go x
-      (layer -> Just (IsVar x)) -> go x
-      (layer -> Just (NameDecl _)) -> do
-        mkDecl (valueScopedDecl [] node ty Nothing) >>=
-          maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
-      (layer -> Just (IsRecord rfps)) -> do
-        flip foldMapM rfps $ \case
-          (layer -> Just x) -> case x of
+    go = \case
+      -- @const a : b@ -> @a : b@
+      -- @const a@ -> @a@
+      (match -> Just (r, BParameter pat mType)) ->
+        go $ maybe id (\t p -> fastMake r $ IsAnnot p t) mType pat
+      node@(match -> Just (r, pattern')) -> case pattern' of
+        -- @(pat) : typ@ -> @pat : typ@
+        IsAnnot (layer -> Just (IsParen pat)) typ ->
+          go $ fastMake r $ IsAnnot pat typ
+        -- @pat : (typ)@ -> @pat : typ@
+        IsAnnot pat (layer -> Just (TParen typ)) ->
+          go $ fastMake r $ IsAnnot pat typ
+        -- @pat1, pat2 : typ1 * typ2@ -> @(pat1 : typ1), (pat2 : typ2)@
+        IsAnnot (layer -> Just (IsTuple pats)) (layer -> Just (TProduct typs)) ->
+          foldMapM go $ zipWith (\p t -> fastMake r $ IsAnnot p t) pats typs
+        IsAnnot _pat typ ->
+          mkDecl (valueScopedDecl [] node (Just typ) Nothing) >>=
+            maybe (pure []) (fmap (: []) . insertScope (OrdinaryRef TermLevel))
+        IsTuple xs -> foldMapM go xs
+        IsParen x -> go x
+        IsVar x -> go x
+        IsRecord rfps ->
+          flip foldMapM rfps $ layer >>> maybe (pure []) \case
             IsRecordField _ var -> go var
             IsRecordCapture var -> go var
-          _ -> pure []
-      (match -> Just (r, TypeVariableName name)) -> do
-        scopedDecl <- mkTypeVariableScope name (getRange r)
-        (:[]) <$> insertScope (OrdinaryRef TypeLevel) scopedDecl
-      (layer -> Just (TVariable tvar)) -> go tvar
+        IsConstr _ _ -> pure []
+        IsConstant _ -> pure []
+        IsCons hd tl -> foldMapM go [hd, tl]
+        IsWildcard -> pure []
+        IsSpread _ -> pure []
+        IsList xs -> foldMapM go xs
+      node@(layer -> Just (NameDecl _)) ->
+        mkDecl (valueScopedDecl [] node returnType Nothing) >>=
+          maybe (pure []) (fmap (:[]) . insertScope (OrdinaryRef TermLevel))
       _ -> pure []
 
+referencesForTypeParams :: [LIGO ParsedInfo] -> ScopeM [ExtendedDeclRef]
+referencesForTypeParams = foldMapM go
+  where
+    go :: LIGO ParsedInfo -> ScopeM [ExtendedDeclRef]
+    go = \case
+      (layer -> Just (TVariable tvar)) -> go tvar
+      (match -> Just (r, TypeVariableName name)) -> do
+        scopedDecl <- mkTypeVariableScope name (getRange r)
+        (: []) <$> insertScope (OrdinaryRef TypeLevel) scopedDecl
+      _ -> pure []
+
+-- | Removes all immediate layers of parentheses from the given node. That is,
+-- all 'Paren', 'TParen', and 'IsParen' nodes.
+peel :: LIGO xs -> LIGO xs
+peel = \case
+  (layer -> Just (Paren   exp)) -> peel exp
+  (layer -> Just (TParen  typ)) -> peel typ
+  (layer -> Just (IsParen pat)) -> peel pat
+  node -> node
+
 walkLet
-  :: Product ParsedInfo
-  -> LIGO ParsedInfo
-  -> [LIGO ParsedInfo]
-  -> Maybe (LIGO ParsedInfo)
-  -> Maybe (LIGO ParsedInfo)
+  :: Product ParsedInfo  -- ^ The information about this node.
+  -> Bool  -- ^ Whether this is recursive ('True') or not ('False').
+  -> LIGO ParsedInfo  -- ^ The name node of this function. It may be any pattern.
+  -> [LIGO ParsedInfo]  -- ^ Parametric types declared by this node.
+  -> Maybe (LIGO ParsedInfo)  -- ^ The optional return type of this node.
+  -> Maybe (LIGO ParsedInfo)  -- ^ The optional body of this declaration.
   -> ScopeM (Maybe ScopeRet)
-walkLet r name tys typ (Just (layer -> Just (Lambda params tys' typ' body))) = do
+-- @let rec (type tys) pat : typ = fun (type tys') params : typ' -> body@
+walkLet r isRec name tys typ (Just (peel -> layer -> Just (Lambda params tys' typ' body))) = do
   let returnType = typ' <|> typ
-  tyRefs <- scopeParams tys Nothing
+  tyRefs <- referencesForTypeParams tys
   withScopes tyRefs $ mkDecl (functionScopedDecl [] name params returnType (Just body))
     >>= maybe (pure Nothing) \functionDecl -> do
       traverse_ walk tys
       functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
-      tyRefs' <- scopeParams tys' Nothing
+      tyRefs' <- referencesForTypeParams tys'
       withScopes tyRefs' do
-        mapM_ walk tys'
-        paramRefs <- scopeParams params returnType
-        subforest <- fmap (fmap getTree) do
+        traverse_ walk tys'
+        paramRefs <- referencesForParams params returnType
+        subforest <- getTree <<$>> do
           void $ withScope functionRef (walk name)
           for_ (zip paramRefs params) \(pr, p) ->
             withScope pr (walk p)
-          withScopes (functionRef : paramRefs) (walk body)
+          isJsLIGO <- (== Js) <$> askDialect  -- Functions in JsLIGO are always recursive.
+          withScopes (bool id (functionRef :) (isRec || isJsLIGO) paramRefs) (walk body)
+        whenJust returnType $ void . walk
         pure $ Just
           ( (Set.singleton functionRef, getRange r) :<
             [ (Set.fromList (tyRefs <> tyRefs'), getRange r) :< []
@@ -577,13 +613,13 @@ walkLet r name tys typ (Just (layer -> Just (Lambda params tys' typ' body))) = d
             ]
           , [functionRef]
           )
-walkLet r pat tys ty mexpr = do
-  tyRefs <- scopeParams tys Nothing
+walkLet r _isRec pat tys typ mexpr = do
+  tyRefs <- referencesForTypeParams tys
   withScopes tyRefs do
     traverse_ walk tys
-    refs <- scopeParams [pat] ty
+    refs <- referencesForParams [pat] typ
     void $ withScopes refs (walk pat)
-    whenJust ty $ void . walk
+    whenJust typ $ void . walk
     subforest <- maybe (pure Nothing) (fmap (fmap getTree) . walk) mexpr
     pure $ Just
       ( (Set.fromList refs, getRange r) :<
@@ -594,37 +630,45 @@ walkLet r pat tys ty mexpr = do
       )
 
 instance HasGo Binding where
+  -- A few cases that need to be handled. Note that arbitrary parentheses may be
+  -- inserted _anywhere_.
+  --
+  -- [X] let f (a : t, b : u) : v = ...
+  -- [X] let f (a, t : b * u) : v = ...
+  -- [X] let f (a : t) (b : u) : v = ...
+  -- [X] let f = fun (a : t, b : u) : v -> ...
+  -- [X] let f = fun (a, b : t * u) : v -> ...
+  -- [X] let f = fun (a : t) (b : u) : v -> ...
+  -- [ ] let f : (t * u) -> v = fun (a, b) -> ...
+  -- [ ] let f : t -> u -> v = fun a b -> ...
   walk' r = \case
+    -- We convert a function to an equivalent written in terms of lambdas in
+    -- order to reuse 'walkLet'. For example:
+    --
+    -- > let rec f (type t u) (x : t) : u = y
+    --
+    -- Becomes:
+    --
+    -- > let rec f = fun (type t u) (x : t) : u -> y
+    --
+    -- Note that LIGO doesn't really accept the above format of recursive
+    -- functions (the return type must be in the header), but that is not a
+    -- problem for us because this is only for scoping and won't be called in
+    -- LIGO.
+    --
+    -- Note that this doesn't cover every case, for example, what if the 'body'
+    -- is a lambda as well? But I hope this is a good enough approximation for
+    -- most cases.
     BFunction isRec name tys params typ body -> do
-      tyRefs <- scopeParams tys Nothing
-      withScopes tyRefs $ mkDecl (functionScopedDecl [] name params typ (Just body))
-        >>= maybe (pure Nothing) \functionDecl -> do
-          traverse_ walk tys
-          functionRef <- insertScope (OrdinaryRef TermLevel) functionDecl
-          paramRefs <- scopeParams params typ
-          subforest <- fmap (fmap getTree) $ do
-            void $ withScope functionRef (walk name)
-            mapM_ (withScopes paramRefs . walk) params
-            whenJust typ $ void . walk
-            withScopes (bool id (functionRef :) isRec paramRefs) (walk body)
-          pure $ Just (
-            ( Set.singleton functionRef, getRange r) :<
-              [ (Set.fromList tyRefs, getRange r) :< []
-              , (Set.fromList paramRefs, getRange r) :< maybeToList subforest
-              ]
-            , [functionRef]
-            )
-
+      let body' = fastMake r $ Lambda params tys typ body
+      walkLet r isRec name [] Nothing (Just body')
     BParameter name typ -> do
       void (walk name)
       maybe (pure Nothing) walk typ
-
-    BVar   pat tys ty mexpr ->
-      walkLet r pat tys ty mexpr
-
-    BConst pat tys ty mexpr ->
-      walkLet r pat tys ty mexpr
-
+    BVar pat tys ty mexpr ->
+      walkLet r False pat tys ty mexpr
+    BConst isRec pat tys ty mexpr ->
+      walkLet r isRec pat tys ty mexpr
     BTypeDecl name mparams expr -> do
       let scopeVariant, scopeTField :: LIGO ParsedInfo -> ScopeM (Maybe ScopeRet)
           scopeVariant = \case
@@ -645,7 +689,7 @@ instance HasGo Binding where
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
             _ -> pure Nothing
 
-      mkDecl (typeScopedDecl (getElem r) name expr) >>=
+      mkDecl (typeScopedDecl (getElem r) name mparams expr) >>=
         maybe (pure Nothing) \scopedDecl -> do
           declRef <- insertScope (OrdinaryRef TypeLevel) scopedDecl
           let params = case mparams of
@@ -653,7 +697,7 @@ instance HasGo Binding where
                 Just (layer -> Just (Skeleton.QuotedTypeParam p)) -> [p]
                 _ -> []
 
-          paramRefs <- scopeParams params Nothing
+          paramRefs <- referencesForTypeParams params
           void (withScope declRef (walk name))
           for_ (zip paramRefs params) $ \(pr, p) ->
             withScope pr (walk p)
@@ -672,7 +716,6 @@ instance HasGo Binding where
             ( (Set.fromList (declRef : paramRefs), getRange r) :< maybeToList subforest
             , declRef : paramRefs ++ subRefs
             )
-
     BAttribute    {} -> pure Nothing
     BInclude      {} -> pure Nothing
     BImport       {} -> pure Nothing
@@ -788,7 +831,7 @@ instance HasGo Skeleton.QuotedTypeParams where
     Skeleton.QuotedTypeParams tys -> walkQuotedTypeParams tys
     where
       walkQuotedTypeParams tys = do
-        tyRefs <- scopeParams tys Nothing
+        tyRefs <- referencesForTypeParams tys
         withScopes tyRefs do
           traverse_ walk tys
           pure $ Just ((Set.fromList tyRefs, getRange r) :< [], [])
@@ -905,11 +948,14 @@ typeScopedDecl
      )
   => [Text]  -- ^ documentation comments
   -> LIGO info  -- ^ name node
+  -> Maybe (LIGO info)  -- ^ type parameters
   -> LIGO info  -- ^ type body node
   -> ScopeM (Either TreeDoesNotContainName ScopedDecl)
-typeScopedDecl docs nameNode body = do
+typeScopedDecl docs nameNode mparams body = do
   dialect <- askDialect
   namespace <- askNamespace
+  let paramsSpec = mparams >>= usingReader dialect . parseQuotedTypeParams
+  let typeSpec = runReader (parseTypeDeclSpecifics body) dialect
   getTypeName nameNode <<&>> \(PreprocessedRange origin, name) ->
     ScopedDecl
       { _sdName = name
@@ -917,7 +963,7 @@ typeScopedDecl docs nameNode body = do
       , _sdRefs = []
       , _sdDoc = docs
       , _sdDialect = dialect
-      , _sdSpec = TypeSpec Nothing $ runReader (parseTypeDeclSpecifics body) dialect  -- The type variables are filled later
+      , _sdSpec = TypeSpec paramsSpec typeSpec
       , _sdNamespace = unqualified namespace
       }
 
@@ -967,28 +1013,29 @@ mkDecl = (either ((empty <$) . tell . Endo . (<>) . pure) (pure . pure) =<<)
 
 select
   :: ( PPableLIGO info
-     , Monad m
+     , MonadReader ScopeEnv m
      , Contains PreprocessedRange info
      )
   => Text
   -> [Visit RawLigoList (Product info) (Writer [LIGO info])]
   -> LIGO info
   -> m (Either TreeDoesNotContainName (PreprocessedRange, Text))
-select what handlers t
-  = pure
-  $ maybe
-      (Left $ TreeDoesNotContainName (pp t) (extractRange $ getElem $ extract t) what)
-      (Right . (getElem . extract &&& ppToText))
-  $ listToMaybe
-  $ execWriter
-  $ visit' handlers
-    t
+select what handlers t = do
+  dialect <- view seDialect
+  pure
+    $ maybe
+        (Left $ TreeDoesNotContainName (lppDialect dialect t) (extractRange $ getElem $ extract t) what)
+        (Right . (getElem . extract &&& ppToText))
+    $ listToMaybe
+    $ execWriter
+    $ visit' handlers
+      t
   where
     extractRange (PreprocessedRange r) = r
 
 getName
   :: ( PPableLIGO info
-     , Monad m
+     , MonadReader ScopeEnv m
      , Contains PreprocessedRange info
      )
   => LIGO info
@@ -1009,7 +1056,7 @@ getName = select "name"
 
 getTypeName
   :: ( PPableLIGO info
-     , Monad m
+     , MonadReader ScopeEnv m
      , Contains PreprocessedRange info
      )
   => LIGO info

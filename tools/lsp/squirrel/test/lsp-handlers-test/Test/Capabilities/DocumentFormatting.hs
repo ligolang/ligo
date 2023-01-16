@@ -1,6 +1,7 @@
 module Test.Capabilities.DocumentFormatting
   ( unit_document_formatting
   , unit_format_dirty
+  , unit_format_dirty_with_inclusion
   ) where
 
 import Language.LSP.Test
@@ -49,6 +50,25 @@ unit_format_dirty = do
         (Just $ Range (Position 0 30) (Position 0 30))
         Nothing
         "2 + "
+      ]
+    formatDoc doc defaultFormattingOptions
+
+    expectedDoc <- openLigoDoc expectedFilename
+    (,) <$> documentContents doc <*> documentContents expectedDoc
+  formattedContents `shouldBe` expectedContents
+
+unit_format_dirty_with_inclusion :: Assertion
+unit_format_dirty_with_inclusion = do
+  let filename = "dirty_includer.mligo"
+  let expectedFilename = "dirty_includer_expected.mligo"
+
+  (formattedContents, expectedContents) <- runHandlersTest contractsDir do
+    doc <- openLigoDoc filename
+    changeDoc doc
+      [ TextDocumentContentChangeEvent
+        (Just $ Range (Position 1 10) (Position 1 11))
+        Nothing
+        "1"
       ]
     formatDoc doc defaultFormattingOptions
 

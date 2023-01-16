@@ -11,6 +11,7 @@
         (? initial) sum_aggregator (record (.= counter 0) (.= sum 0)))
     (let
       (const
+        rec
         (? aggregate)
         (sum_aggregator -> int)
         (lam

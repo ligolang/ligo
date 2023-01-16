@@ -137,6 +137,11 @@ delete uri = do
 invalidate :: J.NormalizedUri -> RIO ()
 invalidate uri = ASTMap.invalidate uri =<< asks reCache
 
+-- | Attempts to load a file from the virtual file text from @lsp@, or from the
+-- disk if it's not available. This function checks whether the file exists or
+-- not and attempts to persist the file in a temporary directory if it doesn't.
+-- This file also reads from 'reOpenDocs' in order to figure out whether the
+-- file is dirty or not and set the appropriate value in the 'Source'.
 preload :: J.NormalizedFilePath -> RIO Source
 preload normFp = Log.addNamespace "preload" do
   let
@@ -342,6 +347,12 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
   atomically $ writeTVar includesVar newIncludes
   return newIncludes
 
+-- | Loads a file with the given scoping system. This function will use
+-- 'preload' to handle dirty files and deleted files if possible, but it also
+-- loads all relevant files needed for scoping and calls the preprocessor on
+-- each of them. In order words, this function does the entire pipeline needed
+-- in order to convert the given source file to the final AST that was
+-- preprocessed and scoped.
 load
   :: forall parser
    . HasScopeForest parser RIO

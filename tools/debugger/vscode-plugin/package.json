@@ -26,6 +26,7 @@
         "onDebugResolve:jsligo",
         "onCommand:extension.ligo-debugger.switchSteppingGranularity"
     ],
+
     "icon": "logo.png",
     "main": "./out/extension",
     "contributes": {

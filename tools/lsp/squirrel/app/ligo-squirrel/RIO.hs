@@ -15,7 +15,7 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
 
-import AST (Fallback)
+import AST (Fallback, FromCompiler, ScopingSystem (..), Standard)
 import ASTMap qualified
 import Cli qualified
 import Config (Config (..))
@@ -28,10 +28,12 @@ import RIO.Types (OpenDocument (..), RIO (..), RioEnv (..))
 
 newRioEnv :: IO RioEnv
 newRioEnv = do
-  reCache <- ASTMap.empty
-    $ RIO.Document.load @Fallback -- Scoping system in `test_completions` from
-                                  -- `Test.Capabilities.Completion` should match
-                                  -- active scoping system selected here
+  reCache <- ASTMap.empty $ \doc -> do
+    scopes <- _cScopingSystem <$> S.getConfig
+    case scopes of
+      FallbackScopes -> RIO.Document.load @Fallback doc
+      StandardScopes -> RIO.Document.load @Standard doc
+      CompilerScopes -> RIO.Document.load @FromCompiler doc
   reOpenDocs <- newIO
   reIncludes <- newTVarIO G.empty
   reTempFiles <- newIO
@@ -99,6 +101,11 @@ setConfigFromJSON value =
       unless (_cLigoBinaryPath oldConfig == _cLigoBinaryPath newConfig) do
         $Log.debug [i|Restarting LIGO daemon with #{_cLigoBinaryPath newConfig}|]
         Cli.cleanupLigoDaemon
+
+      -- Scoping system was changed, so we interrupt old scoping threads and clear old cache
+      unless (_cScopingSystem oldConfig == _cScopingSystem newConfig) do
+        ASTMap.reset =<< asks reCache
+
     Error err -> $Log.warning [i|Could not parse config #{err}|]
 
 run :: (S.LanguageContextEnv Config, RioEnv) -> RIO a -> LogT IO a
