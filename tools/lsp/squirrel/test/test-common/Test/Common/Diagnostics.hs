@@ -10,7 +10,7 @@ import System.FilePath ((</>))
 import UnliftIO.Directory (makeAbsolute)
 
 import AST.Parser (collectAllErrors, parseWithScopes)
-import AST.Scope (ScopingSystem (..))
+import AST.Scope (KnownScopingSystem (..), ScopingSystem (..))
 import Diagnostic (Message (..), MessageDetail (..), Severity (..), filterDiagnostics)
 import Range
 
@@ -78,7 +78,7 @@ treeDoesNotContainNameTest = do
         ]
       , mgFallbackMsgs =
         [ Message
-          (FromLanguageServer "Expected to find a type name, but got `(ERROR \"Unrecognized: \" [])`")
+          (FromLanguageServer "Expected to find a type name, but got `(* Unrecognized:  *)`")
           SeverityError
           (mkRange (2, 7) (2, 7) dtFile)
         ]
@@ -98,14 +98,13 @@ mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)
 -- | Try to parse a file, and check that the proper error messages are generated.
 parseDiagnosticsDriver
   :: forall impl
-   . (HasCallStack, ScopeTester impl)
-  => ScopingSystem impl
-  -> DiagnosticTest
+   . (HasCallStack, ScopeTester impl, KnownScopingSystem impl)
+  => DiagnosticTest
   -> Assertion
-parseDiagnosticsDriver source (DiagnosticTest file expectedAllMsgs expectedFilteredMsgs) = do
+parseDiagnosticsDriver (DiagnosticTest file expectedAllMsgs expectedFilteredMsgs) = do
   contract <- parseWithScopes @impl file
   let
-    catMsgs (MessageGroup parser fromCompiler fallback) = parser <> case source of
+    catMsgs (MessageGroup parser fromCompiler fallback) = parser <> case knownScopingSystem @impl of
       CompilerScopes -> fromCompiler
       FallbackScopes -> fallback
       StandardScopes -> fallback <> fromCompiler

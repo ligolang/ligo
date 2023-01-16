@@ -153,8 +153,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "toplevel_binding"    -> BConst       <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
-        "const_binding"       -> BConst       <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
+        "toplevel_binding"    -> BConst False <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
+        "const_binding"       -> BConst False <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
         "let_binding"         -> BVar         <$> field "binding_pattern" <*> fields "param" <*> fieldOpt "type_annot" <*> fieldOpt "value"
         "type_decl"           -> BTypeDecl    <$> field "type_name"       <*> fieldOpt "params"     <*> field    "type_value"
         "p_include"           -> BInclude     <$> field "filename"

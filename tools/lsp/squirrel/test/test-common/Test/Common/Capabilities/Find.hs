@@ -352,10 +352,8 @@ invariants =
     , driDesc = "Modules, A.titi can be referenced within A.C"
     , driDef = Just (interval 6 17 21)
     , driRefs =
-      -- FIXME (LIGO-754): Handle references in lambdas to uncomment these two
-      -- intervals.
-      [ interval 8 26 30, interval 10 26 30, interval 10 35 39 -- interval 10 43 47
-      , interval 17 14 18, interval 20 17 21, interval 20 28 32 -- interval 20 38 42
+      [ interval 8 26 30, interval 10 26 30, interval 10 35 39, interval 10 43 47
+      , interval 17 14 18, interval 20 17 21, interval 20 28 32, interval 20 38 42
       ]
     }
   , DefinitionReferenceInvariant
@@ -440,10 +438,7 @@ invariants =
     { driFile = contractsDir </> "parametric.jsligo"
     , driDesc = "Parametric types, can find references of a type variable (a) with the same name as a term"
     , driDef = Just (interval 1 12 13)
-    -- FIXME (#1547): Some references are missing. Uncomment the following line
-    -- when it will be fixed:
-    --, driRefs = [interval 1 19 20, interval 1 25 26, interval 1 34 35, interval 1 46 47]
-    , driRefs = [interval 1 34 35, interval 1 46 47]
+    , driRefs = [interval 1 19 20, interval 1 25 26, interval 1 34 35, interval 1 46 47]
     }
   ]
 

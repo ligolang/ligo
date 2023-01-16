@@ -371,12 +371,19 @@ parseValue :: FromJSON a => Value -> Either String a
 parseValue = parseEither parseJSON
 
 -- | Abstracts boilerplate present in many of our LIGO handlers.
+--
+-- This function will write the file to the temporary directory in the disk
+-- given the provided 'TempSettings' and call LIGO with its written contents.
+-- But if the file is not dirty, it will simply ignore the contents of the
+-- 'Source' and call LIGO with the file that is directly on the disk. It's up to
+-- the caller of this function to ensure that the dirty field of the 'Source' is
+-- accurate.
 withLigo
   :: (HasLigoClient m, Log m)
-  => Source
-  -> TempSettings
-  -> (FilePath -> [LigoCliArg])
-  -> (Source -> Value -> m a)
+  => Source  -- ^ The source file that will be given to LIGO.
+  -> TempSettings  -- ^ The temporary directory that should be used in case the file is dirty.
+  -> (FilePath -> [LigoCliArg])  -- ^ A function that should return the command line arguments for the provided file which will be used to call LIGO.
+  -> (Source -> Value -> m a)  -- ^ Given the source file after calling LIGO and its decoded JSON value, what to do to return the final value.
   -> m a
 withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) getArgs decode =
   withTempDirTemplate \tempDir ->
@@ -458,9 +465,6 @@ getLigoVersionSafe = Log.addNamespace "getLigoVersion" do
 -- ```
 -- ligo print pretty ${temp_file_name} --format json
 -- ```
---
--- FIXME: LIGO expands preprocessor directives before pretty printing.
--- See: https://gitlab.com/ligolang/ligo/-/issues/1374
 callForFormat
   :: (HasLigoClient m, Log m)
   => TempSettings

@@ -12,6 +12,7 @@ module AST.Pretty
   , TotalLPP
   , lppDialect
   , sexpr
+  , blockComment
   ) where
 
 import Prelude hiding (Alt, Sum)
@@ -19,8 +20,8 @@ import Prelude hiding (Alt, Sum)
 import Data.Sum
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as DPretty
-  (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
-  parens, ppToText, punctuate, ($+$), (<+>), (<.>))
+  (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, hsep,
+  indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
 import Language.LSP.Types qualified as J
 
@@ -98,26 +99,9 @@ instance
   where
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
-instance LPP1 d Error where
-  lpp1 (Error msg _) = pp msg
-
--- class LPPProd (dialect :: Lang) xs where
---   lppProd :: Product xs -> Doc
-
--- instance {-# OVERLAPS #-} LPP d x => LPPProd d '[x] where
---   lppProd (x :> Nil) = lpp @d x
-
--- instance (LPP d x, LPPProd d xs) => LPPProd d (x : xs) where
---   lppProd (x :> xs) = "testprod"
-
--- instance LPP d (Product '[]) where
---   lpp Nil = "emptyprod"
-
--- instance (LPPProd d xs, PrettyProd xs) => LPP d (Product xs) where
---   lpp _ = "lpprodi"
-
--- instance LPP d Range where
--- instance LPP d ShowRange where
+instance LPP1 'Pascal Error where lpp1 (Error msg _) = blockComment Pascal $ pp msg
+instance LPP1 'Caml   Error where lpp1 (Error msg _) = blockComment Caml   $ pp msg
+instance LPP1 'Js     Error where lpp1 (Error msg _) = blockComment Js     $ pp msg
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -141,7 +125,7 @@ list :: forall dialect p . LPP dialect p => [p] -> Doc
 list = brackets . train @dialect @p ";"
 
 train :: forall dialect p . LPP dialect p => Doc -> [p] -> Doc
-train sep' = fsep . punctuate sep' . map (lpp @dialect)
+train sep' = hsep . punctuate sep' . map (lpp @dialect)
 
 tuple :: forall dialect p . LPP dialect p => [p] -> Doc
 tuple = parens . train @dialect @p ","
@@ -163,8 +147,14 @@ instance Pretty1 Binding where
     BParameter    n    ty       -> sexpr "parameter"  [n, pp ty]
     BVar          name tys ty value ->
       sexpr "var"   $ concat [[name], [sexpr "type" tys | not (null tys)], [pp ty], [pp value]]
-    BConst        name tys ty value ->
-      sexpr "const" $ concat [[name], [sexpr "type" tys | not (null tys)], [pp ty], [pp value]]
+    BConst        isRec name tys ty value ->
+      sexpr "const" $ concat
+        [ ["rec" | isRec]
+        , [name]
+        , [sexpr "type" tys | not (null tys)]
+        , [pp ty]
+        , [pp value]
+        ]
     BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
     BImport       fname alias   -> sexpr "#import" [fname, alias]
@@ -470,7 +460,7 @@ instance LPP1 'Pascal Binding where
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> lpp n <+> "is" <+> lpp ty
     BVar          name tys ty value ->
       "var" <+> name <+> prettyTyVarsPascal tys <+> ":" <+> lpp ty <+> ":=" <+> lpp value
-    BConst        name tys ty body  ->
+    BConst _isRec name tys ty body  ->
       "const" <+> name <+> prettyTyVarsPascal tys <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
@@ -635,7 +625,7 @@ instance LPP1 'Js TypeVariableName where
 instance LPP1 'Js Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name tys ty body -> foldr (<+>) DPretty.empty
+    BConst _isRec name tys ty body -> foldr (<+>) DPretty.empty
       [ "let", name
       , maybe DPretty.empty (((":" <+> prettyTyVarsJs tys) <+>) . lpp) ty
       , "=", lpp body, ";"
@@ -781,8 +771,8 @@ instance LPP1 'Caml TypeVariableName where
 instance LPP1 'Caml Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
-    BConst        name tys ty body ->
-      "let" <+> name <+> prettyTyVarsCaml tys <+> ":" <+> lpp ty <+> lpp body
+    BConst isRec name tys ty body ->
+      "let" <+> bool DPretty.empty "rec" isRec <+> name <+> prettyTyVarsCaml tys <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
 
@@ -891,6 +881,10 @@ instance LPP1 'Caml CaseOrDefaultStm where
     CaseStm _ _  -> error "unexpected `CaseStm` node"
     DefaultStm _ -> error "unexpected `DefaultStm` node"
 
+----------------------------------------------------------------------------
+-- General utilities
+----------------------------------------------------------------------------
+
 type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc
@@ -903,3 +897,9 @@ type PPableLIGO info =
   ( Contains [Text] info
   , Contains Range info
   )
+
+blockComment :: Lang -> Doc -> Doc
+blockComment dialect contents = case dialect of
+  Pascal -> "(*" <+> contents <+> "*)"
+  Caml   -> "(*" <+> contents <+> "*)"
+  Js     -> "/*" <+> contents <+> "*/"

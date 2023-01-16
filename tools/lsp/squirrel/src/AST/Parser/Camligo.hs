@@ -27,7 +27,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "fun_decl"  -> BFunction <$> flag "recursive" <*> field "name" <*> fields "type_name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
-        "let_decl"  -> BConst    <$>                      field "name" <*> fields "type_name" <*> fieldOpt "type" <*> fieldOpt "body"
+        "let_decl"  -> BConst    <$> flag "recursive" <*> field "name" <*> fields "type_name" <*> fieldOpt "type" <*> fieldOpt "body"
         "p_include" -> BInclude  <$>                      field "filename"
         "p_import"  -> BImport   <$>                      field "filename" <*> field "alias"
         "type_decl" -> BTypeDecl <$> field "name"     <*> fieldOpt "params" <*> field "type"

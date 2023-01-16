@@ -104,7 +104,7 @@ extractInScopeTypeVariablesFrom r =
     extractInScopeTypeVariables (layer -> Just node) = case node of
       BFunction _ _ tys _ _ _ -> getTypes tys
       BVar _ tys _ _ -> getTypes tys
-      BConst _ tys _ _ -> getTypes tys
+      BConst _ _ tys _ _ -> getTypes tys
       BTypeDecl _ tys _ -> getTypes (maybeToList tys)
       _ -> mempty
     extractInScopeTypeVariables (layer -> Just node) = case node of

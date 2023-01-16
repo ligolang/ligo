@@ -11,6 +11,10 @@ module Test.Integrational.Capabilities.Hover
   , unit_hover_sum_type_mligo
   , unit_hover_sum_type_pascaligo
   , unit_hover_parametric_type_ligo
+  , unit_hover_parameter_type_jsligo
+  , unit_hover_parameter_type_mligo
+  , unit_hover_parameter_type_pligo
+  , unit_hover_module_type_access_mligo
   ) where
 
 import Test.HUnit (Assertion)
@@ -80,3 +84,23 @@ unit_hover_parametric_type_ligo = do
   -- TODO: We don't decode the origin of a type variable and LIGO doesn't provide enough information
   -- about them.
   --Hover.unit_hover_parametric_type_ligo @FromCompiler
+
+unit_hover_parameter_type_jsligo :: Assertion
+unit_hover_parameter_type_jsligo = do
+  Hover.unit_hover_parameter_type_jsligo @Standard
+  Hover.unit_hover_parameter_type_jsligo @FromCompiler
+
+unit_hover_parameter_type_mligo :: Assertion
+unit_hover_parameter_type_mligo = do
+  Hover.unit_hover_parameter_type_mligo @Standard
+  Hover.unit_hover_parameter_type_mligo @FromCompiler
+
+unit_hover_parameter_type_pligo :: Assertion
+unit_hover_parameter_type_pligo = do
+  Hover.unit_hover_parameter_type_pligo @Standard
+  Hover.unit_hover_parameter_type_pligo @FromCompiler
+
+unit_hover_module_type_access_mligo :: Assertion
+unit_hover_module_type_access_mligo = do
+  Hover.unit_hover_module_type_access_mligo @Standard
+  Hover.unit_hover_module_type_access_mligo @FromCompiler

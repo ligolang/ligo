@@ -125,10 +125,10 @@ newtype RawContract it
   deriving Eq1 via DefaultEq1DeriveFor1List
 
 data Binding it
-  = BFunction     IsRec it [it] [it] (Maybe it) it -- ^ (Name) (TypeVariableName) (Parameters) (Type) (Expr)
+  = BFunction     IsRec it [it] [it] (Maybe it) it -- ^ (IsRec) (Name) (TypeVariableName) (Parameters) (Type) (Expr)
   | BParameter    it (Maybe it) -- ^ (Pattern) (Type)
   | BVar          it [it] (Maybe it) (Maybe it) -- ^ (Pattern) (TypeVariableName) (Type) (Expr)
-  | BConst        it [it] (Maybe it) (Maybe it) -- ^ (Pattern) (TypeVariableName) (Type) (Expr)
+  | BConst        IsRec it [it] (Maybe it) (Maybe it) -- ^ (IsRec) (Pattern) (TypeVariableName) (Type) (Expr)
   | BTypeDecl     it (Maybe it) it -- ^ (Name) (Maybe (QuotedTypeParams)) (Type)
   | BAttribute    it -- ^ (Name)
   | BInclude      it
@@ -142,6 +142,11 @@ data QuotedTypeParams it
   | QuotedTypeParams [it]  -- ^ [TypeVariableName]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | Whether a binding is recursive ('True') or not ('False'). Some dialects such
+-- as PascaLIGO and CameLIGO allow the user to specify whether a function should
+-- be recursive or not using the @recursive@ or @rec@ keywords, respectively.
+--
+-- In JsLIGO, functions are always recursive.
 type IsRec = Bool
 
 data Type it
@@ -279,7 +284,7 @@ data RecordFieldPattern it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data ModuleAccess it = ModuleAccess
-  { maPath  :: [it] -- [Name]
+  { maPath  :: [it] -- [ModuleName]
   , maField :: it -- Accessor
   }
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)

@@ -14,6 +14,10 @@ module Test.Common.Capabilities.Hover
   , unit_hover_sum_type_mligo
   , unit_hover_sum_type_pascaligo
   , unit_hover_parametric_type_ligo
+  , unit_hover_parameter_type_jsligo
+  , unit_hover_parameter_type_mligo
+  , unit_hover_parameter_type_pligo
+  , unit_hover_module_type_access_mligo
   ) where
 
 import Prelude hiding (Type)
@@ -57,9 +61,9 @@ checkHover fp reference HoverTest{..} = do
   contract <- readContractWithScopes @parser fp
   case hoverDecl reference contract of
     Nothing -> expectationFailure "Expected a hover definition, but got Nothing"
-    Just (Hover (HoverContents (MarkupContent _ (lines -> (ty : _ : def : doc)))) _) -> do
+    Just (Hover (HoverContents (MarkupContent _ (lines -> (_dialect : ty : "```" : _ : def : doc)))) _) -> do
       ty `shouldBe` case htKind of
-        Type   -> "type " <> htName
+        Type   -> "type " <> htName <> " " <> equal <> " " <> show (lppLigoLike htDialect htType)
         Module -> "module " <> htName
         Value  -> htName <> " : " <> show (lppLigoLike htDialect htType)
       def `shouldBe` ("*defined at* " <> ppToText htDefinition)
@@ -67,6 +71,11 @@ checkHover fp reference HoverTest{..} = do
         [] -> unless (null htDoc) $ expectationFailure "Expected no documentation, but got some"
         _  -> Just (ppToText htDoc) `shouldBe` find (/= "") doc
     _ -> expectationFailure "Hover definition is not of the expected type"
+  where
+    equal = case htDialect of
+      Pascal -> "is"
+      Caml   -> "="
+      Js     -> "="
 
 unit_hover_arrow_type :: forall parser. ScopeTester parser => Assertion
 unit_hover_arrow_type = do
@@ -128,3 +137,31 @@ unit_hover_parametric_type_ligo = do
   fp <- makeAbsolute $ contractsDir </> "parametric.ligo"
   let type' = AliasType "a"
   checkHover @parser fp (point 1 56){_rFile = fp} (hover' (interval 1 12 13){_rFile = fp} "a" type' Pascal Type)
+
+unit_hover_parameter_type_jsligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_parameter_type_jsligo = do
+  fp <- makeAbsolute $ contractsDir </> "types.jsligo"
+  checkHover @parser fp
+    (interval 7 35 36){_rFile = fp}
+    (hover' (interval 6 14 15){_rFile = fp} "p" (AliasType "unit") Js Value)
+
+unit_hover_parameter_type_mligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_parameter_type_mligo = do
+  fp <- makeAbsolute $ contractsDir </> "types.mligo"
+  checkHover @parser fp
+    (interval 7 26 27){_rFile = fp}
+    (hover' (interval 6 11 12){_rFile = fp} "p" (AliasType "unit") Caml Value)
+
+unit_hover_parameter_type_pligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_parameter_type_pligo = do
+  fp <- makeAbsolute $ contractsDir </> "types.pligo"
+  checkHover @parser fp
+    (interval 11 34 35){_rFile = fp}
+    (hover' (interval 10 22 23){_rFile = fp} "p" (AliasType "unit") Pascal Value)
+
+unit_hover_module_type_access_mligo :: forall parser. ScopeTester parser => Assertion
+unit_hover_module_type_access_mligo = do
+  fp <- makeAbsolute $ contractsDir </> "module.mligo"
+  checkHover @parser fp
+    (interval 5 5 9){_rFile = fp}
+    (hover' (interval 5 5 9){_rFile = fp} "test" (AliasType "Test.issue") Caml Value)

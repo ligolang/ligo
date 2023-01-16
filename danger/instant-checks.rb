@@ -6,6 +6,14 @@
 require_relative 'helpers'
 require_relative 'trailing-whitespaces'
 
+if mr_merging_branches?
+  message(
+    "This merge request looks like plain merge of one branch into another.\n"\
+    "Checks won't be performed."
+  )
+else
+
+
 check_trailing_whitespaces()
 
 # Clean commits history
@@ -72,7 +80,7 @@ git.commits.each { |commit|
     if !commit.chore?
       description_patterns = [
         /^Problem:[ \n].*^Solution:[ \n]/m,
-        /^Motivation: [ \n].*/,
+        /^Motivation:[ \n].*/m,
         /And yes, I don't care about templates/
       ]
       unless description_patterns.any? { |pattern| pattern.match?(commit.description) }
@@ -105,3 +113,5 @@ end.join(', ')
 unless all_YT_tickets.empty?
   message("Mentioned YT tickets: #{all_YT_tickets}.")
 end
+
+end  # check on plain branches merge

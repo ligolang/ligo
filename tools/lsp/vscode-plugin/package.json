@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.4.27",
+    "version": "0.4.28",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -96,6 +96,16 @@
                     "default": 100,
                     "description": "Controls the maximum number of problems produced by the server."
                 },
+                "ligoLanguageServer.scopingSystem": {
+                    "scope": "resource",
+                    "type": "string",
+                    "enum": [
+                        "Fallback",
+                        "Standard"
+                    ],
+                    "default": "Fallback",
+                    "markdownDescription": "Scoping system. `Standard` means scopes from ligo compiler are used."
+                },
                 "ligoLanguageServer.ligoBinaryPath": {
                     "scope": "resource",
                     "type": "string",
@@ -106,7 +116,7 @@
                     "scope": "resource",
                     "type": "array",
                     "default": [],
-                    "description": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/tools/lsp/vscode-plugin/README.md)."
+                    "markdownDescription": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/tools/lsp/vscode-plugin/README.md)."
                 },
                 "ligoLanguageServer.tezos_source_account": {
                     "scope": "resource",

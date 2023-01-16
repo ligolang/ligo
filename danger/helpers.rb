@@ -22,6 +22,14 @@ class Danger::Dangerfile
       .sub(/^\[Draft\] /, "")
   end
   alias_method :mr_title_payload, :pr_title_payload
+
+  # Tries to recognize whether this PR serves for simply merging one branch
+  # to another.
+  def pr_merging_branches?
+    pure_pr_title = mr_title_payload.sub(issue_tags_pattern, "")
+    /^Merg\w+ .+ in(to)? ./.match?(pure_pr_title)
+  end
+  alias_method :mr_merging_branches?, :pr_merging_branches?
 end
 
 class Git::Diff::DiffFile
@@ -96,7 +104,7 @@ end
 
 # Example: `[Chore][#123] My commit`
 def issue_tags_pattern
-  /^(\[([A-Z]+-\d+|Chore)\])+ (?=\w)/
+  /^(\[([A-Z]+-\d+|#\d+|Chore)\])+ (?=\w)/
 end
 
 # Whether a string starts with an appropriate ticket tag.

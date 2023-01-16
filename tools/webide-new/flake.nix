@@ -106,9 +106,11 @@
         hostname = "tejat-prior.gemini.serokell.team";
         user = "deploy";
         profiles = {
+          # restart backend service and check that front page returns 200
           webide.path = deploy-rs.lib.x86_64-linux.activate.custom
-            webide-profile
-            "sudo /run/current-system/sw/bin/systemctl restart container@ligo-webide-thing.service";
+            webide-profile ''sudo /run/current-system/sw/bin/nixos-container run ligo-webide-thing -- bash -c \
+              'systemctl restart ligo-webide.service; curl --silent --show-error --fail http://127.0.0.1:80 > /dev/null'
+            '';
         };
       };
     };
@@ -124,7 +126,7 @@
       };
       ligo-syntaxes = pkgs.callPackage ../lsp/vscode-plugin/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
-      frontend = pkgs.callPackage ./ligo-webide-frontend/ligo-ide { inherit ligo-syntaxes; };
+      frontend = (pkgs.callPackage ./ligo-webide-frontend/ligo-ide { inherit ligo-syntaxes; }) { git-proxy = "https://ligo-webide-cors-proxy.serokell.team"; };
       backend = pkgs.callPackage ./ligo-webide-backend { };
       swagger-file = backend.swagger-file // {
         meta.artifacts = [ "/swagger.json" ];

@@ -65,13 +65,13 @@ extractDocumentSymbols uri tree =
               J.SkTypeParameter
               (const Nothing)
 
-          (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
+          (BConst _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          (BConst p _ _ _) -> collectDecl p
+          (BConst _ p _ _ _) -> collectDecl p
 
           (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _) ->
             tellScopedDecl
