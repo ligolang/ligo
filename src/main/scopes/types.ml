@@ -156,12 +156,12 @@ let make_m_alias_def
   Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
 
 
-let rec filter_local_defs : def list -> def list =
+let filter_local_defs : def list -> [ `Global of def list ] * [ `Local of def list ] =
  fun defs ->
-  match defs with
-  | [] -> []
-  | def :: defs when Caml.(get_def_type def = Local) -> filter_local_defs defs
-  | def :: defs -> def :: filter_local_defs defs
+  let gdefs, ldefs =
+    List.partition_tf ~f:(fun def -> Caml.(get_def_type def = Global)) defs
+  in
+  `Global gdefs, `Local ldefs
 
 
 type scope = Location.t * def list

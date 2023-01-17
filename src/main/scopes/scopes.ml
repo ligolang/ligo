@@ -637,18 +637,19 @@ and declarations
     -> AST.declaration list -> def list * reference list * typing_env * scopes
   =
  fun ~with_types ~options tenv decls ->
-  let defs, refs, tenv, scopes =
+  let `Global gdefs, `Local ldefs, refs, tenv, scopes =
     List.fold_left
       decls
-      ~init:([], [], tenv, [])
-      ~f:(fun (defs, refs, tenv, scopes) decl ->
+      ~init:(`Global [], `Local [], [], tenv, [])
+      ~f:(fun (`Global gdefs, `Local ldefs, refs, tenv, scopes) decl ->
         let defs', refs', tenv, scopes' = declaration ~with_types ~options tenv decl in
-        let scopes' = add_defs_to_scopes (filter_local_defs defs) scopes' in
-        let defs, refs = update_references (refs' @ refs) defs in
-        defs' @ defs, refs, tenv, scopes @ scopes')
+        let `Global gdefs', `Local ldefs' = filter_local_defs defs' in
+        let scopes' = add_defs_to_scopes gdefs scopes' in
+        let gdefs, refs = update_references (refs' @ refs) gdefs in
+        `Global (gdefs' @ gdefs), `Local (ldefs' @ ldefs), refs, tenv, scopes @ scopes')
   in
-  let defs, refs = update_references refs defs in
-  defs, refs, tenv, scopes
+  let gdefs, refs = update_references refs gdefs in
+  ldefs @ gdefs, refs, tenv, scopes
 
 
 let resolve_module_aliases_to_module_ids : def list -> def list =
