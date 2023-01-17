@@ -1440,16 +1440,16 @@ let%expect_test _ =
       [ bar#5 foo#4 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 22-29
       [ g#6 bar#5 foo#4 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 37-44
       [ h#7 g#6 bar#5 foo#4 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 15, characters 8-10
-      [ B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
-      [ hmm#12 c#11 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
-      [ d#13 hmm#12 c#11 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
-      [ idk#15 c#14 d#13 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
-      [ q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
-      [ e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
-      [ qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
-      [ boo#23 i#22 qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
-      [ j#24 boo#23 i#22 qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
-      [ x#26 exp2#25 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 exp1#8 foo#4 bar#5 h#7 g#6 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
+      [ B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
+      [ hmm#12 c#11 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
+      [ d#13 hmm#12 c#11 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
+      [ idk#15 c#14 d#13 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
+      [ q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
+      [ e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
+      [ qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
+      [ boo#23 i#22 qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
+      [ j#24 boo#23 i#22 qux#21 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
+      [ x#26 exp2#25 f#20 e#19 q#18 s#17 d#16 idk#15 c#14 hmm#12 B#10 A#9 foo#4 bar#5 h#7 g#6 exp1#8 b#3 a#2 x#1 t#0  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
 
       Variable definitions:
       (c#11 -> c)

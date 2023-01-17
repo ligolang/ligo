@@ -122,3 +122,43 @@ let%expect_test _ =
      13 | let alice_admin : bool = alice.i
 
     Toplevel let declaration are silently change to const declaration. |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "wrong_reference1.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ];
+  [%expect {|
+    Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 8-10
+    [ x#1  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
+    [ f#2 x#0  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+
+    Variable definitions:
+    (f#2 -> f)
+    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
+    Content: |resolved: ∀ gen#6 : * . gen#6 -> int|
+    references: []
+    (g#3 -> g)
+    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+    Content: |resolved: int|
+    references: []
+    (x#0 -> x)
+    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 8-10
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+    (x#1 -> x)
+    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
+    Content: |resolved: gen#6|
+    references: []
+    Type definitions:
+    Module definitions: |}]
