@@ -336,7 +336,9 @@ let%expect_test _ =
       2 |
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
-    Constructor "None" not found. |}]
+    Invalid type(s)
+    Cannot unify "option (^a)" with "int".
+    Hint: "^a" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad
