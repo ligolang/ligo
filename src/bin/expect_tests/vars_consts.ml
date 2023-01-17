@@ -183,4 +183,4 @@ let%expect_test _ =
       5 |     x := 6;
       6 |   } with unit;
 
-    Mutable variable "x" not found. |}]
+    Invalid capture of mutable variable "x" |}]

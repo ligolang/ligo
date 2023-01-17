@@ -279,6 +279,23 @@ module Fold_helpers (M : Monad) = struct
       let* body = self body in
       let value = { value with binding; body } in
       return @@ ELetIn { value; region }
+    | ELetMutIn { value; region } ->
+      let { kwd_let = _; kwd_mut = _; binding; kwd_in = _; body; attributes = _ } =
+        value
+      in
+      let { binders; type_params; rhs_type; eq; let_rhs } = binding in
+      let* let_rhs = self let_rhs in
+      let* rhs_type =
+        bind_map_option
+          (fun (a, b) ->
+            let* b = self_type b in
+            ok (a, b))
+          rhs_type
+      in
+      let binding = { binders; type_params; rhs_type; eq; let_rhs } in
+      let* body = self body in
+      let value = { value with binding; body } in
+      return @@ ELetMutIn { value; region }
     | ETypeIn { value; region } ->
       let { type_decl; kwd_in; body } = value in
       let { kwd_type = _; name = _; eq = _; type_expr; params = _ } = type_decl in
@@ -333,6 +350,32 @@ module Fold_helpers (M : Monad) = struct
       let* code = self value.code in
       let value = { value with code } in
       return @@ ECodeInj { value; region }
+    | EAssign { value; region } ->
+      let* expr = self value.expr in
+      let value = { value with expr } in
+      return @@ EAssign { value; region }
+    | EWhile { value; region } ->
+      let { kwd_while; cond; body } = value in
+      let* cond = self cond in
+      let* body = map_loop_body ~f body in
+      let value = { kwd_while; cond; body } in
+      return @@ EWhile { value; region }
+    | EFor { value; region } ->
+      let* bound1 = self value.bound1 in
+      let* bound2 = self value.bound2 in
+      let* body = map_loop_body ~f value.body in
+      let value = { value with bound1; bound2; body } in
+      return @@ EFor { value; region }
+    | EForIn { value; region } ->
+      let* collection = self value.collection in
+      let* body = map_loop_body ~f value.body in
+      let value = { value with collection; body } in
+      return @@ EForIn { value; region }
+
+
+  and map_loop_body (loop_body : loop_body) ~f =
+    let* seq_expr = bind_map_pseq (map_expression f) loop_body.seq_expr in
+    return { loop_body with seq_expr }
 
 
   and matching_cases self (cases : _ Utils.nsepseq reg) =

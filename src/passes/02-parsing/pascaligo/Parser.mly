@@ -534,7 +534,7 @@ core_type:
 | type_ctor_app   { T_App    $1 }
 | record_type     { T_Record $1 }
 | par(type_expr)  { T_Par    $1 }
-| qualified_type  { $1          }
+| qualified_type
 | attr_type       { $1 }
 
 (* Attributed core types *)
@@ -575,7 +575,7 @@ type_tuple:
    reverses that path. We could have chosen to leave the associativity
    unspecified, like so:
 
-     type_in_module(type_expr:
+     type_in_module(type_expr):
        nsepseq(module_name,".") "." type_expr { ... }
 
    Unfortunately, this creates a shift/reduce conflict (on "."),

@@ -5,6 +5,20 @@ let%expect_test _ =
     [ "compile"
     ; "contract"
     ; "--no-color"
+    ; "../../test/contracts/negative/let_mut.mligo"
+    ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/let_mut.mligo", line 4, characters 13-14:
+      3 |   let f = fun _ ->
+      4 |     let () = i := i + 1 in
+      5 |     i
+
+    Invalid capture of mutable variable "i" |}];
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-color"
     ; "../../test/contracts/negative/error_function_annotation_1.mligo"
     ];
   [%expect

@@ -672,7 +672,9 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind type_ =
       let var = Binder.get_var binder in
       set_loc (Value_var.get_location var)
-      @@ Context.get_mut_exn var ~error:(unbound_mut_variable var)
+      @@ Context.get_mut_exn var ~error:(function
+             | `Not_found -> unbound_mut_variable var
+             | `Mut_var_captured -> mut_var_captured var)
     in
     let%bind type_ = Context.tapply type_ in
     let%bind expression = check expression type_ in
