@@ -69,13 +69,11 @@ let star = Kind.Type
   Make sure all the type value laoded in the environment have a `Ast_core` value attached to them (`type_meta` field of `type_expression`)
 *)
 let basic_types : (Type_var.t * type_expression) list =
-  [ v_bool ~loc, t_bool ~loc ()
-  ; v_string ~loc, t_string ~loc ()
+  [ v_string ~loc, t_string ~loc ()
   ; v_bytes ~loc, t_bytes ~loc ()
   ; v_int ~loc, t_int ~loc ()
   ; v_nat ~loc, t_nat ~loc ()
   ; v_unit ~loc, t_unit ~loc ()
-  ; v_option ~loc, t_option_abst ~loc ()
   ]
 
 

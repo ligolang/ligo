@@ -5,7 +5,7 @@ open Errors
 open Simple_utils.Trace
 open Ligo_prim
 
-let predefined_data_constructor = [ "Some"; "None"; "Unit" ]
+let predefined_data_constructor = [ "Unit" ]
 
 let linearity_type_parameters
     :  raise:([< Errors.self_ast_imperative_error ], _) Trace.raise -> type_expression

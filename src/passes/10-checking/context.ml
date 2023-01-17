@@ -1014,6 +1014,14 @@ module Hashes = struct
     else (
       let rec hash_types : type a. (a, path:Module_var.t list -> unit) contextual =
        fun t ~to_type_map ~to_module_map ~path ->
+        let path =
+          match path with
+          | [] -> []
+          | mv :: _
+            when Module_var.is_name mv "Curry_lib" || Module_var.is_name mv "Uncurry_lib"
+            -> []
+          | _ -> path
+        in
         let types = Map.to_alist @@ to_type_map t in
         let modules = Map.to_alist @@ to_module_map t in
         List.iter (List.rev types) ~f:(fun (v, t) ->
