@@ -1,10 +1,16 @@
 {
-  "name": "ligo",
-  "version": "0.57.0-dev",
+  "name": "ligolang",
+  "version": "0.59.0-dev",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/ligolang/ligo.git"
+  },
   "esy": {
     "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
     "release": {
-      "bin": ["ligo"],
+      "bin": [
+        "ligo"
+      ],
       "includePackages": [
         "root",
         "esy-libev",
@@ -18,9 +24,11 @@
   },
   "source": "./ligo.opam",
   "override": {
-    "build": ["dune build -p ligo"],
+    "build": [
+      "dune build -p ligo"
+    ],
     "buildEnv": {
-      "LIGO_VERSION": "0.56.0-dev",
+      "LIGO_VERSION": "0.59.0",
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
     "exportedEnv": {
@@ -93,7 +101,6 @@
           }
         }
       },
-
       "@opam/tezos-error-monad": {
         "source": "./vendors/tezos-ligo",
         "override": {
@@ -102,7 +109,6 @@
           }
         }
       },
-
       "@opam/tezos-event-logging": {
         "source": "./vendors/tezos-ligo",
         "override": {
@@ -163,7 +169,14 @@
               "#{@opam/octez-protocol-compiler.lib}/tezos-protocol-compiler/final_protocol_versions",
               "015-PtLimaPt"
             ],
-            ["dune", "build", "-p", "tezos-protocol-015-PtLimaPt", "-j", "4"]
+            [
+              "dune",
+              "build",
+              "-p",
+              "tezos-protocol-015-PtLimaPt",
+              "-j",
+              "4"
+            ]
           ]
         }
       },
@@ -177,7 +190,6 @@
           ]
         }
       },
-
       "@opam/tezos-protocol-environment": "./vendors/tezos-ligo",
       "@opam/tezos-protocol-plugin-015-PtLimaPt": "./vendors/tezos-ligo",
       "@opam/tezos-proxy": "./vendors/tezos-ligo",
@@ -200,7 +212,6 @@
           }
         }
       },
-
       "@opam/tezos-shell-services": "./vendors/tezos-ligo",
       "@opam/tezos-signer-backends": "./vendors/tezos-ligo",
       "@opam/tezos-signer-services": "./vendors/tezos-ligo",
@@ -211,12 +222,10 @@
           "dependencies": {}
         }
       },
-
       "@opam/tezos-test-helpers": "./vendors/tezos-ligo",
       "@opam/tezos-version": "./vendors/tezos-ligo",
       "@opam/tezos-workers": "./vendors/tezos-ligo",
       "@opam/ocaml-recovery-parser": "git+https://github.com/serokell/ocaml-recovery-parser.git:ocaml-recovery-parser.opam#e05c872d1a0e8074940d995b57556121eddbf0f2",
-
       "@opam/ctypes": {
         "version": "opam:0.20.1",
         "override": {
@@ -274,34 +283,57 @@
           },
           "buildsInSource": true,
           "build": [
-            ["sh", "-exc", "cd raw && ./configure"],
-            ["make", "-C", "raw"]
+            [
+              "sh",
+              "-exc",
+              "cd raw && ./configure"
+            ],
+            [
+              "make",
+              "-C",
+              "raw"
+            ]
           ],
-          "install": [["make", "-C", "raw", "install-hacl-star-raw"]]
+          "install": [
+            [
+              "make",
+              "-C",
+              "raw",
+              "install-hacl-star-raw"
+            ]
+          ]
         }
       },
       "@opam/expect_test_helpers_core": {
         "version": "opam:v0.15.0",
         "override": {
-          "build": ["true"]
+          "build": [
+            "true"
+          ]
         }
       },
       "@opam/ocamlformat-rpc": {
         "source": "no-source:",
         "override": {
-          "build": ["true"]
+          "build": [
+            "true"
+          ]
         }
       },
       "@opam/ocaml-lsp-server": {
         "source": "no-source:",
         "override": {
-          "build": ["true"]
+          "build": [
+            "true"
+          ]
         }
       },
       "@opam/conf-rust": {
         "source": "no-source:",
         "override": {
-          "build": ["true"],
+          "build": [
+            "true"
+          ],
           "dependencies": {
             "esy-rustup": "*"
           }
@@ -310,7 +342,9 @@
       "@opam/conf-rust-2021": {
         "source": "no-source:",
         "override": {
-          "build": ["true"],
+          "build": [
+            "true"
+          ],
           "dependencies": {
             "esy-rustup": "*"
           }
