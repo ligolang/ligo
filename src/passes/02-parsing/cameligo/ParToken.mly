@@ -90,12 +90,17 @@
 %token <string Wrap.t> BOOL_AND "&&" [@recover.expr Token.wrap_bool_and  $loc]
 %token <string Wrap.t> QUOTE    "'"  [@recover.expr Token.wrap_quote     $loc]
 %token <string Wrap.t> REV_APP  "|>" [@recover.expr Token.wrap_rev_app   $loc]
+%token <string Wrap.t> ASS      ":=" [@recover.expr Token.wrap_ass       $loc]
 
 (* Keywords *)
 
 %token <string Wrap.t> Begin  "begin"  [@recover.expr Token.wrap_begin   $loc]
 %token <string Wrap.t> Else   "else"   [@recover.expr Token.wrap_else    $loc]
+%token <string Wrap.t> Do     "do"     [@recover.expr Token.wrap_do      $loc]
+%token <string Wrap.t> Done   "done"   [@recover.expr Token.wrap_done    $loc]
+%token <string Wrap.t> Downto "downto" [@recover.expr Token.wrap_downto  $loc]
 %token <string Wrap.t> End    "end"    [@recover.expr Token.wrap_end     $loc]
+%token <string Wrap.t> For    "for"    [@recover.expr Token.wrap_for     $loc]
 %token <string Wrap.t> Fun    "fun"    [@recover.expr Token.wrap_fun     $loc]
 %token <string Wrap.t> If     "if"     [@recover.expr Token.wrap_if      $loc]
 %token <string Wrap.t> In     "in"     [@recover.expr Token.wrap_in      $loc]
@@ -114,8 +119,11 @@
 %token <string Wrap.t> Rec    "rec"    [@recover.expr Token.wrap_rec     $loc]
 %token <string Wrap.t> Struct "struct" [@recover.expr Token.wrap_struct  $loc]
 %token <string Wrap.t> Then   "then"   [@recover.expr Token.wrap_then    $loc]
+%token <string Wrap.t> To     "to"     [@recover.expr Token.wrap_to      $loc]
 %token <string Wrap.t> Type   "type"   [@recover.expr Token.wrap_type    $loc]
+%token <string Wrap.t> While  "while"  [@recover.expr Token.wrap_while   $loc]
 %token <string Wrap.t> With   "with"   [@recover.expr Token.wrap_with    $loc]
+%token <string Wrap.t> Mut    "mut"    [@recover.expr Token.wrap_mut     $loc]
 
 (* Virtual tokens *)
 

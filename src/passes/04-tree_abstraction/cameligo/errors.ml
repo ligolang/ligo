@@ -20,6 +20,7 @@ type abs_error =
     Region.t * Raw.pattern * Raw.type_expr
   | `Concrete_cameligo_type_params_not_annotated of Region.t
   | `Concrete_cameligo_expected_access_to_variable of Region.t
+  | `Concrete_cameligo_downto_for_loop_is_unsupported of Region.t
   ]
 [@@deriving poly_constructor { prefix = "concrete_cameligo_" }]
 
@@ -103,6 +104,12 @@ let error_ppformat
         f
         "@[<hv>%a@.Functions with type parameters need to be annotated. @]"
         snippet_pp_lift
+        reg
+    | `Concrete_cameligo_downto_for_loop_is_unsupported reg ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Descending for loops using \"downto\" are unsupported.@]"
+        snippet_pp_lift
         reg)
 
 
@@ -184,6 +191,11 @@ let error_json : abs_error -> Simple_utils.Error.t =
     make ~stage ~content
   | `Concrete_cameligo_type_params_not_annotated reg ->
     let message = "Functions with type parameters need to be annotated." in
+    let location = Location.lift reg in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Concrete_cameligo_downto_for_loop_is_unsupported reg ->
+    let message = "Descending for loops using \"downto\" are unsupported." in
     let location = Location.lift reg in
     let content = make_content ~message ~location () in
     make ~stage ~content

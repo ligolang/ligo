@@ -51,13 +51,16 @@ let%expect_test _ =
     {
       "source_file": "../../test/contracts/loop.mligo",
       "declarations": [
-        "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
+        "entries", "testmap", "counter_nest", "aux_nest", "counter",
+        "counter_simple", "aux_simple"
       ]
     } |}];
   run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.mligo" ];
   [%expect
     {|
     ../../test/contracts/loop.mligo declarations:
+    entries
+    testmap
     counter_nest
     aux_nest
     counter
