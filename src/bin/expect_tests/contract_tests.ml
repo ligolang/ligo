@@ -1926,7 +1926,7 @@ let%expect_test _ =
      17 |  | Reset         -> 0)
      18 | let _test () =
 
-    Invalid usage of a Test primitive or type in object ligo. |}]
+    Invalid usage of a Test primitive: cannot be translated to Michelson. |}]
 
 (* remove unused declarations *)
 let%expect_test _ =

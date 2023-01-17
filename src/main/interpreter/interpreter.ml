@@ -170,12 +170,17 @@ let replace_loc_if_blank e location =
   | None -> { e with location }
 
 
-let check_value value =
+let rec check_value value =
   let open Monad in
   match value with
   | V_Func_val
-      { orig_lambda; rec_name = _; arg_binder = _; arg_mut_flag = _; body = _; env = _ }
-    -> call @@ Check_obj_ligo orig_lambda
+      { orig_lambda; rec_name = _; arg_binder = _; arg_mut_flag = _; body = _; env } ->
+    let f v c =
+      let* () = check_value v in
+      c
+    in
+    let* () = List.fold_right ~f ~init:(return ()) (Env.values env) in
+    call @@ Check_obj_ligo orig_lambda
   | _ -> return ()
 
 

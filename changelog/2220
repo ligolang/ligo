@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n#### Example file\\n\\n\\n```\\n$ cat test_capture_meta_type.mligo\\ntype t = { x : int ; y : (unit, unit) typed_address }\\n\\nlet main ((_, _) : unit * unit) : operation list * unit = [], ()\\n\\nlet ta, _, _ =\\n  Test.originate main () 0tez\\n\\nlet v = { x = 42 ; y = ta }\\n\\nlet w = v.x\\n\\nlet f = fun (_ : unit) -> v.x\\n\\nlet g = fun (_ : unit) -> f ()\\n\\nlet test = Test.eval g\\n\\n```\\n\\n#### Before fix\\n\\n\\n```\\n$ ligo run test test_capture_meta_type.mligo \\nFile \"test_capture_meta_type.mligo\", line 16, characters 11-22:\\n 15 | \\n 16 | let test = Test.eval g\\n\\nCannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,\\nunit)\\n\\n```\\n\\n#### After fix\\n\\n\\n```\\n$ ligo run test test_capture_meta_type.mligo\\nFile \"test_capture_meta_type.mligo\", line 12, characters 26-27:\\n 11 | \\n 12 | let f = fun (_ : unit) -> v.x\\n 13 | \\n\\nInvalid usage of a Test type: typed_address (unit ,\\nunit) in record[x -> int , y -> typed_address (unit , unit)] cannot be translated to Michelson.\\n\\n```\\n\\n"
+merge_request: '2220'
+title: "Improve error message when compiling functions which capture meta-LIGO types"
+type: fixed
+            
