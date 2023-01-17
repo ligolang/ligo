@@ -15,4 +15,8 @@ let lookup : env -> Value_var.t -> (value_expr * bool * bool) option =
   @@ List.Assoc.find env ~equal:Value_var.equal var
 
 
+let values : env -> value list =
+ fun env -> List.map ~f:(fun (_, it) -> it.item.eval_term) env
+
+
 let empty_env : env = []

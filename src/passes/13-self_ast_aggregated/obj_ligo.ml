@@ -68,16 +68,16 @@ let check_obj_ligo ~raise ?(blacklist = []) (t : AST.expression) : unit =
       raise.Trace.error @@ Errors.expected_obj_ligo expr.location
     | _ -> ()
   in
-  let traverser_types loc expr =
+  let traverser_types ~t loc expr =
     match expr.AST.type_content with
-    | T_constant { injection = Literal_types.Michelson_program; _ }
-    | T_constant { injection = Literal_types.Typed_address; _ }
-    | T_constant { injection = Literal_types.Mutation; _ } ->
-      raise.error @@ Errors.expected_obj_ligo loc
+    | T_constant { injection; _ } when Literal_types.is_only_interpreter injection ->
+      raise.error @@ Errors.expected_obj_ligo_type loc expr t
     | _ -> ()
   in
   let folder_types () (expr : AST.expression) =
-    traverse_type_expression (traverser_types expr.location) expr.type_expression
+    traverse_type_expression
+      (traverser_types ~t:expr.type_expression expr.location)
+      expr.type_expression
   in
   let () = Helpers.fold_expression folder_constant () t in
   let () = Helpers.fold_expression folder_types () t in

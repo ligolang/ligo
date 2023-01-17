@@ -32,19 +32,19 @@ type t =
   | Bls12_381_fr
   | Never
   | Ticket
-  | Michelson_program
-  | Michelson_contract
-  | Ast_contract
-  | Typed_address
-  | Mutation
+  | Michelson_program [@only_interpreter]
+  | Michelson_contract [@only_interpreter]
+  | Ast_contract [@only_interpreter]
+  | Typed_address [@only_interpreter]
+  | Mutation [@only_interpreter]
   | Chest
   | Chest_key
   | Chest_opening_result
   | Tx_rollup_l2_address
   | External of string
-  | Gen
-  | Int64
-[@@deriving ord, eq, yojson, hash, sexp]
+  | Gen [@only_interpreter]
+  | Int64 [@only_interpreter]
+[@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
 
 let to_string = function
   | String -> "string"

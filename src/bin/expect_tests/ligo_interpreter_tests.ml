@@ -921,6 +921,18 @@ let () = Caml.Sys.chdir pwd
 let bad_test n = bad_test ("/interpreter_tests/" ^ n)
 
 let%expect_test _ =
+  run_ligo_bad [ "run"; "test"; bad_test "test_capture_meta_type.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative//interpreter_tests/test_capture_meta_type.mligo", line 12, characters 26-27:
+     11 |
+     12 | let f = fun (_ : unit) -> v.x
+     13 |
+
+    Invalid usage of a Test type: typed_address (unit ,
+    unit) in record[x -> int , y -> typed_address (unit , unit)] cannot be translated to Michelson. |}]
+
+let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];
   [%expect
     {|

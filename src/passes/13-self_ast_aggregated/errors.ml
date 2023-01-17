@@ -5,6 +5,8 @@ let stage = "self_ast_aggregated"
 
 type self_ast_aggregated_error =
   [ `Self_ast_aggregated_expected_obj_ligo of Location.t
+  | `Self_ast_aggregated_expected_obj_ligo_type of
+    Location.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression
   | `Self_ast_aggregated_polymorphism_unresolved of Location.t
   | `Self_ast_aggregated_monomorphisation_non_var of Ast_aggregated.expression
   | `Self_ast_aggregated_monomorphisation_non_for_all of Ast_aggregated.expression
@@ -42,9 +44,21 @@ let error_ppformat
     | `Self_ast_aggregated_expected_obj_ligo loc ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid usage of a Test primitive or type in object ligo.@]"
+        "@[<hv>%a@.Invalid usage of a Test primitive: cannot be translated to \
+         Michelson.@]"
         snippet_pp
         loc
+    | `Self_ast_aggregated_expected_obj_ligo_type (loc, local, global) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid usage of a Test type: %a in %a cannot be translated to \
+         Michelson.@]"
+        snippet_pp
+        loc
+        Ast_aggregated.PP.type_expression
+        local
+        Ast_aggregated.PP.type_expression
+        global
     | `Self_ast_aggregated_polymorphism_unresolved loc ->
       Format.fprintf
         f
@@ -167,7 +181,18 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
   let open Simple_utils.Error in
   match e with
   | `Self_ast_aggregated_expected_obj_ligo location ->
-    let message = "Invalid usage of a Test primitive or type in object ligo." in
+    let message = "Invalid usage of a Test primitive." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_expected_obj_ligo_type (location, local, global) ->
+    let message =
+      Format.asprintf
+        "Invalid usage of a Test type: %a in %a cannot be translated to Michelson."
+        Ast_aggregated.PP.type_expression
+        local
+        Ast_aggregated.PP.type_expression
+        global
+    in
     let content = make_content ~message ~location () in
     make ~stage ~content
   | `Self_ast_aggregated_polymorphism_unresolved location ->
