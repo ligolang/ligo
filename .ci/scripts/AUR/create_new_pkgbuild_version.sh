@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 cd "$(dirname "${BASH_SOURCE[0]}")"
-ROOT_PATH="../"
+ROOT_PATH=".."
 
 DEB_PKG_URL=$1
 CURRENT_VERSION=$2
