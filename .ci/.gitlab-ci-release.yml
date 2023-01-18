@@ -1,6 +1,3 @@
-variables:
-  GIT_STRATEGY: clone
-  
 #######################################################################
 # Process to build new release
 # Triggered when a branch prefixed by release/ will be pushed
