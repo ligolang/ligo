@@ -333,7 +333,7 @@ create-AUR-package:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
 
-update-versionned-doc:
+update-repository-status:
   stage: tooling
   tags:
     - docker
@@ -360,7 +360,8 @@ update-versionned-doc:
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
-    - git add vendors/tezos-ligo HomebrewFormula/ nix/get_ligo_light.nix gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
+    - ./.ci/scripts/versioning/update_esy_version.sh esy.json $(./.ci/scripts/versioning/determine_esy_version.sh esy.json not-applicable true)
+    - git add esy.json vendors/tezos-ligo HomebrewFormula/ nix/get_ligo_light.nix gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
   needs:
