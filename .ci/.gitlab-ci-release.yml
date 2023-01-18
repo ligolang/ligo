@@ -297,7 +297,7 @@ update-ligo-bin-PKGBUILD:
   stage: pretooling
   script:
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
-    - ./.ci/scripts/create_new_pkgbuild_version.sh https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo.deb $RELEASE_VERSION
+    - ./.ci/scripts/AUR/create_new_pkgbuild_version.sh https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo.deb $RELEASE_VERSION
     - cp ./PKGBUILD/ligo.PKGBUILD ./ligo-bin/PKGBUILD
   needs:
     - job: initialize-aur-repo
