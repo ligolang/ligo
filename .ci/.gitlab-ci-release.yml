@@ -208,7 +208,6 @@ initialize-aur-repo:
   stage: pretooling
   script:
     - git clone "ssh://aur@aur.archlinux.org/ligo-bin.git"
-    - git branch
   needs:
     - job: initialize-ssh
     - job: initialize-git
@@ -298,7 +297,7 @@ update-ligo-bin-PKGBUILD:
   script:
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/AUR/create_new_pkgbuild_version.sh https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo.deb $RELEASE_VERSION
-    - cp ./PKGBUILD/ligo.PKGBUILD ./ligo-bin/PKGBUILD
+    - cp ./.ci/scripts/AUR/ligo.PKGBUILD ./ligo-bin/PKGBUILD
   needs:
     - job: initialize-aur-repo
       artifacts: true
