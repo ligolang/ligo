@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#!nix-shell -p jq -i bash
 ESY_FILEPATH=$1
 SYSTEM_ARCH=$2
 GENERATE_NEW_DEV_VERSION=$3
