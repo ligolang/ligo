@@ -46,5 +46,5 @@ cp $LIGO_BINARY_PATH $pkgName/usr/local/bin/ligo
 mv ./control $pkgName/DEBIAN/control
 
 # Generate .deb
-dpkg-deb --build $pkgName
+dpkg-deb -Zxz --build $pkgName
 ln $pkgName.deb ligo.deb
