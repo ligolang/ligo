@@ -4,7 +4,6 @@ variables:
   WEBIDE_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${CI_COMMIT_SHORT_SHA}"
   WEBIDE_FRONTEND_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
-  GIT_STRATEGY: clone
   
 stages:
   - pretooling                      # changelog
