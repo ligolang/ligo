@@ -1,6 +1,6 @@
 {
   "name": "ligolang",
-  "version": "0.59.0-dev",
+  "version": "0.60.0-dev",
   "repository": {
     "type": "git",
     "url": "https://gitlab.com/ligolang/ligo.git"
@@ -28,7 +28,7 @@
       "dune build -p ligo"
     ],
     "buildEnv": {
-      "LIGO_VERSION": "0.59.0",
+      "LIGO_VERSION": "0.60.0",
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
     "exportedEnv": {
