@@ -24,9 +24,12 @@ esy-windows:
     - cp ./windows-installer/WindowsInstaller.nsi _release
     - cd _release; makensis .\WindowsInstaller.nsi
     - cd .. ; mv _release platform-windows-x64
+    # ligo_installer is not useful inside package and if ligo_installer.exe is inside package, the package can't be uploaded.
+    - mv platform-windows-x64/ligo_installer.exe ligo_installer.exe 
   artifacts:
     paths:
       - platform-windows-x64
+      - ligo_installer.exe 
 
 publish_npm_windows_x86:
   stage: push
@@ -39,7 +42,6 @@ publish_npm_windows_x86:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
-    - npm config set max_body_size 500mb
     - cd platform-windows-x64
     - chmod 664 package.json
     - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json windows)

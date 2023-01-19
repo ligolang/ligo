@@ -121,18 +121,20 @@ release:
     - docker_extract
     - changelog
     - initialize-git
+    - esy-windows
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
     paths:
       - ligo
       - ligo.deb
+      - ligo_installer.exe
     reports:
       dotenv: releaseCiJobId.env
   script:
     - |
       if [[ $DRY_RUN_RELEASE == "" ]]; then
-        release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
+        release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb" --assets-links-name "Ligo Windows installer" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo_installer.exe"
       fi
     - echo "RELEASE_CI_JOB_ID=${CI_JOB_ID}" >> releaseCiJobId.env
 
