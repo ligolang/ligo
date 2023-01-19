@@ -4,7 +4,7 @@ variables:
   WEBIDE_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${CI_COMMIT_SHORT_SHA}"
   WEBIDE_FRONTEND_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
-
+  
 stages:
   - pretooling                      # changelog
   - build                           # build, test, produces binaries/.deb/doc within docker
@@ -38,9 +38,11 @@ changelog:
   script:
     - ./scripts/changelog-generation.sh
   rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -67,9 +69,11 @@ docker_build:
   extends: .submodule-clone
   stage: build
   rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -93,9 +97,11 @@ docker_build:
 docker_extract:
   stage: docker-extract
   rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -146,17 +152,18 @@ check-generated-highlighting:
   services:
     - docker:19.03.5-dind
 
-docker-push:
+docker_push:
   stage: push
   extends: .docker-image
   dependencies:
     - docker_build
   needs:
     - docker_build
-  only:
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
   script:
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
     - docker load -i=./ligo.tar.gz
@@ -195,25 +202,26 @@ xrefcheck:
       when: always
   allow_failure: true
   
-webide-backend-build-and-push-backend:
-  extends: .docker-image
-  stage: deploy
-  rules:
-    # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      changes:
-        - tools/webide/**/*
-        - src/test/examples/**/*
-      when: always
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-  script:
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
-    - cp -r src/test/examples tools/webide/packages/client/examples
-    - docker build tools/webide --build-arg EXAMPLES_DIR_SRC=packages/client/examples -t ${WEBIDE_IMAGE_TAG}
-    - docker push "${WEBIDE_IMAGE_TAG}"
-  after_script:
-    - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
+  #.deb is ko for now so this job can t work.
+# webide-backend-build-and-push-backend:
+#   extends: .docker-image
+#   stage: deploy
+#   rules:
+#     # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+#       changes:
+#         - tools/webide/**/*
+#         - src/test/examples/**/*
+#       when: always
+#     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+#       when: always
+#   script:
+#     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+#     - cp -r src/test/examples tools/webide/packages/client/examples
+#     - docker build tools/webide --build-arg EXAMPLES_DIR_SRC=packages/client/examples -t ${WEBIDE_IMAGE_TAG}
+#     - docker push "${WEBIDE_IMAGE_TAG}"
+#   after_script:
+#     - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
 
 webide-new-backend-build-and-push-backend:
   extends: .docker-image

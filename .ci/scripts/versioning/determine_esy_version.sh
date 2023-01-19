@@ -20,9 +20,9 @@ else
   # Starting by check if gitlab CI corresponding to the current tag is defined.
   if [ -n "$CI_COMMIT_TAG"  ]; then
     # If yes the next version is the one provided by gitlab to generate a release version to publish
-    echo "$CI_COMMIT_TAG.$SYSTEM_ARCH.$(git rev-parse HEAD)"
+    echo "$CI_COMMIT_TAG-$SYSTEM_ARCH.$(git rev-parse HEAD)"
     exit 0
   fi
   # Here we want to generate a dev version to publish
-  echo "$CURRENT_VERSION.$SYSTEM_ARCH.$(git rev-parse HEAD)"
+  echo "$CURRENT_VERSION-$SYSTEM_ARCH.$(git rev-parse HEAD)"
 fi
