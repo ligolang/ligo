@@ -3846,3 +3846,20 @@ let%expect_test _ =
 
     Invalid type for entrypoint "main".
     The parameter type "funtype 'a : * . list ('a)" of the entrypoint function must not contain polymorphic variables. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "disc_union_vbar.jsligo" ];
+  [%expect {|
+    { parameter
+        (pair (pair (option %lord address) (string %name))
+              (or %planetType (or (unit %gaseous) (unit %other)) (unit %tellurian))) ;
+      storage int ;
+      code { CAR ;
+             PUSH int 0 ;
+             SWAP ;
+             CDR ;
+             IF_LEFT
+               { IF_LEFT { DROP ; PUSH int 2 ; SWAP ; SUB } { DROP 2 ; PUSH int 0 } }
+               { DROP ; PUSH int 1 ; ADD } ;
+             NIL operation ;
+             PAIR } } |}]

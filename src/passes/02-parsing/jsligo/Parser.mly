@@ -687,14 +687,17 @@ var_pattern:
 object_pattern:
   braces(property_patterns) { PObject $1 }
 
+object_sep:
+  ";" | "," { $1 }
+
 property_patterns:
   property_pattern {
     $1, []
   }
-| property_patterns "," property_pattern {
+| property_patterns object_sep property_pattern {
     Utils.(nsepseq_rev $1 |> nsepseq_cons $3 ($2) |> nsepseq_rev)
   }
-| property_patterns "," object_rest_pattern {
+| property_patterns object_sep object_rest_pattern {
     Utils.(nsepseq_rev $1 |> nsepseq_cons $3 ($2) |> nsepseq_rev) }
 
 property_pattern:
@@ -797,14 +800,18 @@ core_type:
 | "_"                   { TVar    {value="_"; region=$1#region} }
 | type_name             { TVar    $1 }
 | module_access_t       { TModA   $1 }
-| nsepseq(object_type, "|") {
-    match $1 with
-      (obj, []) -> TObject obj
-    | _ as u    -> TDisc u
-  }
+| union_type            {         $1 }
 | type_ctor_app         { TApp    $1 }
 | attributes type_tuple { TProd   {inside=$2; attributes=$1} }
 | par(type_expr)        { TPar    $1 }
+
+(* Union type (see sum type) *)
+
+union_type:
+  ioption("|" { $1 }) nsepseq(object_type, "|") {
+    match $2 with
+      obj, [] -> TObject obj
+    | _       -> TDisc $2 }
 
 (* Tuples of types *)
 
@@ -850,7 +857,7 @@ module_var_t:
 (* Record types (a.k.a. "object types" in JS) *)
 
 object_type:
-  attributes "{" sep_or_term_list(field_decl,",") "}" {
+  attributes "{" sep_or_term_list(field_decl,object_sep) "}" {
     let lbrace = $2 in
     let rbrace = $4 in
     let fields, terminator = $3 in
@@ -999,7 +1006,7 @@ array_literal:
 (* Records (a.k.a. "objects" in JS) *)
 
 object_literal: (* TODO: keep the terminator *)
-  braces(sep_or_term_list(property,",") { fst $1 }) { EObject $1 }
+  braces(sep_or_term_list(property,object_sep) { fst $1 }) { EObject $1 }
 
 property:
   field_name {
