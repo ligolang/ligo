@@ -84,11 +84,11 @@ import Text.Show qualified
 
 import Morley.Debugger.Core.Breakpoint
   (BreakpointSelector (NextBreak), continueUntilBreakpoint, reverseContinue)
+import Morley.Debugger.Core.Common (SrcLoc (..))
 import Morley.Debugger.Core.Navigate
   (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
-  HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition),
-  SourceLocation (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+  HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition), SourceLocation,
+  SourceLocation' (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
@@ -209,19 +209,19 @@ compareWithCurLocation oldSrcLoc = FrozenPredicate $
 
 goesAfter
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcPos -> FrozenPredicate (DebuggerState is) m
+  => SrcLoc -> FrozenPredicate (DebuggerState is) m
 goesAfter loc = FrozenPredicate $ fromMaybe False <$>
   ((\(SourceLocation _ startPos _) -> startPos >= loc) <<$>> getExecutedPosition)
 
 goesBefore
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcPos -> FrozenPredicate (DebuggerState is) m
+  => SrcLoc -> FrozenPredicate (DebuggerState is) m
 goesBefore loc = FrozenPredicate $ fromMaybe False <$>
   ((\(SourceLocation _ _ endPos) -> endPos <= loc) <<$>> getExecutedPosition)
 
 goesBetween
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcPos -> SrcPos -> FrozenPredicate (DebuggerState is) m
+  => SrcLoc -> SrcLoc -> FrozenPredicate (DebuggerState is) m
 goesBetween left right = goesAfter left && goesBefore right
 
 isAtLine
@@ -229,8 +229,8 @@ isAtLine
   => Word -> FrozenPredicate (DebuggerState is) m
 isAtLine line =
   goesBetween
-    (SrcPos (Pos line) (Pos 0))
-    (SrcPos (Pos $ line + 1) (Pos 0))
+    (SrcLoc line 0)
+    (SrcLoc (line + 1) 0)
 
 goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToNextBreakpoint = do

@@ -10,9 +10,9 @@ import Data.Default (Default (..))
 import Data.Set qualified as Set
 import Fmt (Buildable (..))
 
+import Morley.Debugger.Core.Common
 import Morley.Debugger.Core.Navigate hiding (isAtBreakpoint)
 import Morley.Debugger.DAP.Types (StepCommand, StepCommand' (..))
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 
 import Language.LIGO.Debugger.Snapshots
 
@@ -27,12 +27,12 @@ isAtBreakpoint = FrozenPredicate $ fmap isJust . runMaybeT $ do
   Just curLoc <- getExecutedPosition
   sources <- view dsSources
   Just sourceInfo <- pure $ sources ^? ix (_slPath curLoc)
-  let curLine = srcLine (_slStart curLoc)
+  let curLine = slLine (_slStart curLoc)
 
   -- Find if any breakpoint is at the same line as we are
   Just nextPosAfterBreakpoint <-
-        pure $ Set.lookupGT (SrcPos curLine (Pos 0)) (_dsBreakpoints sourceInfo)
-  guard (srcLine nextPosAfterBreakpoint == curLine)
+        pure $ Set.lookupGT (SrcLoc curLine 0) (_dsBreakpoints sourceInfo)
+  guard (slLine nextPosAfterBreakpoint == curLine)
 
 -- | Stepping granularity allowed in our debugger.
 data LigoStepGranularity

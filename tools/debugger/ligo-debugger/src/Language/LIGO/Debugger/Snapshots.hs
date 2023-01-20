@@ -57,17 +57,18 @@ import Data.List.NonEmpty (cons)
 import Data.Vinyl (Rec (..))
 import Duplo (layer)
 import Fmt (Buildable (..), genericF, pretty)
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos))
 import Parser (ParsedInfo)
 import Range (HasRange (getRange), Range (..))
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, throwIO)
 
+import Morley.Debugger.Core.Common (fromCanonicalLoc)
 import Morley.Debugger.Core.Navigate
-  (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
+  (Direction (Backward), MovementResult (HitBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots (DebuggerFailure, InterpretHistory (..))
-import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos, mfwsFailed),
@@ -202,7 +203,7 @@ instance NavigableSnapshot (InterpretSnapshot u) where
     return . Just $ ligoRangeToSourceLocation locRange
   getLastExecutedPosition = unfreezeLocally do
     moveRaw Backward >>= \case
-      ReachedBoundary -> return Nothing
+      HitBoundary -> return Nothing
       _ -> frozen getExecutedPosition
 
   pickSnapshotEdgeStatus is = case isStatus is of
@@ -329,8 +330,8 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     michFailureHandler :: MichelsonFailureWithStack DebuggerFailure -> CollectingEvalOp m a
     michFailureHandler err = use csLastRangeMbL >>= \case
       Nothing -> throwError err
-      Just (ligoPositionToSrcPos . lrStart -> lastSrcPos)
-        -> throwError err { mfwsErrorSrcPos = ErrorSrcPos lastSrcPos }
+      Just (ligoPositionToSrcLoc . lrStart -> lastSrcLoc)
+        -> throwError err { mfwsErrorSrcPos = ErrorSrcPos $ fromCanonicalLoc lastSrcLoc }
 
     -- What is done upon executing instruction.
     preExecutedStage

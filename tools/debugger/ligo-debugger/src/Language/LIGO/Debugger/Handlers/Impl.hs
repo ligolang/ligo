@@ -30,7 +30,8 @@ import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
-  SourceLocation, curSnapshot, frozen, groupSourceLocations, playInterpretHistory, slEnd)
+  SourceLocation, SrcLoc (..), curSnapshot, frozen, groupSourceLocations, playInterpretHistory,
+  slEnd)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
@@ -93,7 +94,8 @@ instance HasSpecificMessages LIGO where
   reportErrorAndStoppedEvent = \case
     ExceptionMet exception -> writeException exception
     Paused reason -> writeStoppedEvent reason
-    Terminated -> writeTerminatedEvent
+    TerminatedOkMet -> writeTerminatedEvent
+    PastFinish -> writeTerminatedEvent
     ReachedStart -> writeStoppedEvent "Reached start"
     where
       writeTerminatedEvent = do
@@ -194,7 +196,7 @@ instance HasSpecificMessages LIGO where
 
           withSrcPos mSrcPos event = case mSrcPos of
             Nothing -> event
-            Just (SrcPos (Pos row) (Pos col)) -> event
+            Just (SrcLoc row col) -> event
               { DAP.lineOutputEventBody   = Unsafe.fromIntegral $ row + 1
               , DAP.columnOutputEventBody = Unsafe.fromIntegral $ col + 1
               }

@@ -16,10 +16,9 @@ import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
   (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition),
-  SourceLocation (..), curSnapshot, frozen, getCurMethodBlockLevel,
+  SourceLocation' (..), SrcLoc (..), curSnapshot, frozen, getCurMethodBlockLevel,
   getFutureSnapshotsNum, moveTill, switchBreakpoint)
 import Morley.Debugger.DAP.Types (StepCommand' (..))
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (..))
 
 import Language.LIGO.Debugger.Navigate
@@ -118,7 +117,7 @@ test_Next_golden = testGroup "Next" do
         do
           dumpAllSnapshotsWithStep $
             doStep <* do
-              Just (SourceLocation _ (SrcPos (Pos line) _) _) <-
+              Just (SourceLocation _ (SrcLoc line _) _) <-
                 lift $ frozen getExecutedPosition
               when (gran == GStmt && line < 10) do
                 liftIO $ assertFailure [int||
@@ -146,7 +145,7 @@ test_Next_golden = testGroup "Next" do
           do
             switchBreakpoint
               (MSFile $ crdProgram $ basicCaseRun Caml)
-              (SrcPos (Pos 1) (Pos 0))
+              (SrcLoc 1 0)
             [int||Enabled breakpoint within `f`, but not within `g`|]
             dumpAllSnapshotsWithStep doStep
 
@@ -189,10 +188,10 @@ test_StepOut_golden = testGroup "StepOut" do
         do
           switchBreakpoint
             (MSFile $ crdProgram $ basicCaseRun Caml)
-            (SrcPos (Pos 1) (Pos 0))
+            (SrcLoc 1 0)
           switchBreakpoint
             (MSFile $ crdProgram $ basicCaseRun Caml)
-            (SrcPos (Pos 2) (Pos 0))
+            (SrcLoc 2 0)
           processLigoStep (CContinue Forward)
           [int||Should be within `f` now:|]
           dumpCurSnapshot
@@ -215,7 +214,7 @@ test_Continue_golden = testGroup "Continue"
       do
         switchBreakpoint
           (MSFile $ crdProgram $ basicCaseRun Caml)
-          (SrcPos (Pos 11) (Pos 0))
+          (SrcLoc 11 0)
         [int||Breakpoint is set at `f` & `g` call|]
         dumpAllSnapshotsWithStep doStep
   ]
