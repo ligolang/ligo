@@ -15,7 +15,7 @@ our_branch="$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
 git config --local user.email "hi@serokell.io"
 git config --local user.name "$bot_name"
 git remote remove auth-origin 2> /dev/null || :
-git remote add auth-origin "https://oath2:$GITLAB_PUSH_TOKEN@gitlab.com/serokell/ligo/ligo.git"
+git remote add auth-origin "https://oath2:$TOKEN_API@gitlab.com/ligolang/ligo.git"
 git fetch
 git checkout -B "$our_branch" --track "origin/$our_branch"
 
