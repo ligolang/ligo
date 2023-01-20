@@ -29,10 +29,10 @@ packages:
     pantry-tree:
       size: 10613
       sha256: 2421cfcdc9dd979eafbe4b540ef6bbe1fdde3cdc7ae9cff2b21cd9cccaeecbc4
-    commit: 5dc7d296fb0966266c8258b6a7fd6649c1ed95dd
+    commit: dfc4208dedfca16584d92b4248873903b4e58112
   original:
     git: https://gitlab.com/morley-framework/morley-debugger.git
-    commit: 5dc7d296fb0966266c8258b6a7fd6649c1ed95dd
+    commit: dfc4208dedfca16584d92b4248873903b4e58112
 - completed:
     hackage: base58-bytestring-0.1.0@sha256:a1da72ee89d5450bac1c792d9fcbe95ed7154ab7246f2172b57bd4fd9b5eab79,1913
     pantry-tree:
