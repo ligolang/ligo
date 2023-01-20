@@ -95,7 +95,7 @@ instance HasSpecificMessages LIGO where
     ExceptionMet exception -> writeException exception
     Paused reason -> writeStoppedEvent reason
     TerminatedOkMet -> writeTerminatedEvent
-    PastFinish -> writeTerminatedEvent
+    PastFinish -> pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
     ReachedStart -> writeStoppedEvent "Reached start"
     where
       writeTerminatedEvent = do
