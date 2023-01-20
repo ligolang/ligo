@@ -10,6 +10,7 @@ let%expect_test _ =
     ; "--format"
     ; "dev"
     ; "--with-types"
+    ; "--no-stdlib"
     ];
   [%expect
     {|
@@ -53,7 +54,14 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "info"; "get-scope"; gs "missing_stdlib.ligo"; "--format"; "dev"; "--with-types" ];
+    [ "info"
+    ; "get-scope"
+    ; gs "missing_stdlib.ligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
   [%expect
     {|
     Scopes:
@@ -89,6 +97,7 @@ let%expect_test _ =
     ; "--format"
     ; "dev"
     ; "--with-types"
+    ; "--no-stdlib"
     ];
   [%expect
     {|
@@ -131,8 +140,10 @@ let%expect_test _ =
     ; "--format"
     ; "dev"
     ; "--with-types"
+    ; "--no-stdlib"
     ];
-  [%expect {|
+  [%expect
+    {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 8-10
     [ x#1  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11

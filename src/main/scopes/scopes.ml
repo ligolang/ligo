@@ -9,6 +9,13 @@ module Api_helper = Api_helper
 module LSet = Types.LSet
 module Location = Simple_utils.Location
 
+[@@@landmark "auto"]
+
+(* To profile
+   Build: dune build --instrument-with landarks ./src/bin/runligo.exe
+   Run:   OCAML_LANDMARKS=auto _build/default/src/bin/runligo.exe info get-scope x.mligo --format dev --with-types
+*)
+
 type def = Types.def
 type scopes = Types.scopes
 
@@ -592,11 +599,6 @@ and declaration
  fun ~with_types ~options tenv decl ->
   let tenv = update_typing_env ~with_types ~options tenv decl in
   match decl.wrap_content with
-  | D_value { attr = { hidden; _ }; _ }
-  | D_module { module_attr = { hidden; _ }; _ }
-  | D_type { type_attr = { hidden; _ }; _ }
-  | D_irrefutable_match { attr = { hidden; _ }; _ }
-    when hidden -> [], [], tenv, []
   | D_value { binder; expr = { expression_content = E_recursive _; _ } as expr; attr = _ }
     ->
     let t_refs = find_binder_type_references binder in
@@ -605,7 +607,7 @@ and declaration
         out of the [defs_expr] *)
     let defs_expr, refs_rhs, tenv, scopes = expression ~with_types ~options tenv expr in
     let def, defs_expr = drop_last defs_expr in
-    defs_expr @ [ def ], refs_rhs @ t_refs, tenv, scopes
+    [ def ] @ defs_expr, refs_rhs @ t_refs, tenv, scopes
   | D_irrefutable_match { pattern; expr; _ } ->
     let binders = AST.Pattern.binders pattern in
     let binders, expr = set_core_type_if_possible binders expr in
@@ -633,14 +635,15 @@ and declaration
 
 
 and declarations
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> AST.declaration list -> def list * reference list * typing_env * scopes
+    :  with_types:bool -> options:Compiler_options.middle_end -> ?stdlib_defs:def list
+    -> typing_env -> AST.declaration list
+    -> def list * reference list * typing_env * scopes
   =
- fun ~with_types ~options tenv decls ->
+ fun ~with_types ~options ?(stdlib_defs = []) tenv decls ->
   let `Global gdefs, `Local ldefs, refs, tenv, scopes =
     List.fold_left
       decls
-      ~init:(`Global [], `Local [], [], tenv, [])
+      ~init:(`Global stdlib_defs, `Local [], [], tenv, [])
       ~f:(fun (`Global gdefs, `Local ldefs, refs, tenv, scopes) decl ->
         let defs', refs', tenv, scopes' = declaration ~with_types ~options tenv decl in
         let `Global gdefs', `Local ldefs' = filter_local_defs defs' in
@@ -683,16 +686,28 @@ let resolve_module_aliases_to_module_ids : def list -> def list =
   List.rev defs
 
 
+let stdlib_defs : options:Compiler_options.middle_end -> Ast_core.program -> def list =
+ fun ~options stdlib_core ->
+  let no_stdlib = options.no_stdlib in
+  if no_stdlib
+  then []
+  else (
+    let tenv = { type_env = options.init_env; bindings = Misc.Bindings_map.empty } in
+    let stdlib_defs, _, _, _ = declarations ~with_types:false ~options tenv stdlib_core in
+    ignore_local_defs stdlib_defs)
+
+
 let scopes
-    :  with_types:bool -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program
-    -> AST.module_ -> def list * scopes
+    :  with_types:bool -> options:Compiler_options.middle_end
+    -> stdlib:Ast_typed.program * Ast_core.program -> AST.module_ -> def list * scopes
   =
  fun ~with_types ~options ~stdlib prg ->
   let () = reset_counter () in
-  let tenv = { type_env = options.init_env; bindings = Misc.Bindings_map.empty } in
+  let stdlib, stdlib_core = stdlib in
+  let stdlib_defs = stdlib_defs ~options stdlib_core in
   let type_env = Environment.append options.init_env stdlib in
-  let tenv = { tenv with type_env } in
-  let defs, _, _, scopes = declarations ~with_types ~options tenv prg in
+  let tenv = { type_env; bindings = Misc.Bindings_map.empty } in
+  let defs, _, _, scopes = declarations ~with_types ~options ~stdlib_defs tenv prg in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
   defs, scopes

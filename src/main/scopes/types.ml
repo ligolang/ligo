@@ -164,6 +164,18 @@ let filter_local_defs : def list -> [ `Global of def list ] * [ `Local of def li
   `Global gdefs, `Local ldefs
 
 
+let rec ignore_local_defs : def list -> def list =
+ fun defs ->
+  match defs with
+  | [] -> []
+  | Variable def :: defs when Caml.(def.def_type = Local) -> ignore_local_defs defs
+  | Type def :: defs when Caml.(def.def_type = Local) -> ignore_local_defs defs
+  | Module def :: defs when Caml.(def.def_type = Local) -> ignore_local_defs defs
+  | Module ({ mod_case = Def def; _ } as mdef) :: defs ->
+    Module { mdef with mod_case = Def (ignore_local_defs def) } :: ignore_local_defs defs
+  | def :: defs -> def :: ignore_local_defs defs
+
+
 type scope = Location.t * def list
 type scopes = scope list
 

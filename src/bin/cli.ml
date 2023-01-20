@@ -1460,10 +1460,17 @@ let get_scope =
       no_colour
       with_types
       project_root
+      no_stdlib
       ()
     =
     let raw_options =
-      Raw_options.make ~protocol_version ~libraries ~with_types ~project_root ()
+      Raw_options.make
+        ~protocol_version
+        ~libraries
+        ~with_types
+        ~project_root
+        ~no_stdlib
+        ()
     in
     return_result ~return
     @@ Api.Info.get_scope raw_options source_file display_format no_colour
@@ -1483,7 +1490,8 @@ let get_scope =
     <*> display_format
     <*> no_colour
     <*> with_types
-    <*> project_root)
+    <*> project_root
+    <*> no_stdlib)
 
 
 let info_group =
