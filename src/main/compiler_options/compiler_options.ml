@@ -134,3 +134,6 @@ let set_entry_point opts entry_point =
 
 let set_syntax opts syntax = { opts with frontend = { opts.frontend with syntax } }
 let set_views opts views = { opts with backend = { opts.backend with views } }
+
+let set_no_stdlib opts no_stdlib =
+  { opts with middle_end = { opts.middle_end with no_stdlib } }

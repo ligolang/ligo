@@ -64,7 +64,20 @@ let get_scope (raw_options : Raw_options.t) source_file display_format no_colour
   in
   let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
   let Compiler_options.{ with_types; _ } = options.tools in
-  let core_prg = Build.unqualified_core ~raise ~options source_file in
-  let lib = Build.Stdlib.get ~options in
-  let stdlib = Build.Stdlib.select_lib_typed syntax lib in
+  let core_prg =
+    (* While building [Build.qualified_core] we need a smaller AST (without stdlib)
+       that is the reason for no_stdlib as true *)
+    let options = Compiler_options.set_no_stdlib options true in
+    Build.qualified_core ~raise ~options source_file
+  in
+  let lib =
+    (* We need stdlib for [Build.Stdlib.get], 
+       because if [no_stdlib] we get [Build.Stdlib.empty] *)
+    let options = Compiler_options.set_no_stdlib options false in
+    Build.Stdlib.get ~options
+  in
+  let stdlib =
+    Build.Stdlib.select_lib_typed syntax lib, Build.Stdlib.select_lib_core syntax lib
+  in
+  (* let () = assert (List.length (fst stdlib) = List.length (snd stdlib)) in *)
   Scopes.scopes ~options:options.middle_end ~with_types ~stdlib core_prg

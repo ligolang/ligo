@@ -5,4 +5,7 @@
   (backend bisect_ppx))
  (preprocess
   (pps ppx_here))
+ ; For profiling
+ ; (preprocess
+ ;  (pps ppx_here landmarks-ppx --auto))
  (libraries main_errors ligo_compile simple-utils ast_typed compiler_options))

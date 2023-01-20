@@ -8,6 +8,6 @@ type scopes = Types.scopes
 val scopes
   :  with_types:bool
   -> options:Compiler_options.middle_end
-  -> stdlib:Ast_typed.program
+  -> stdlib:Ast_typed.program * Ast_core.program
   -> AST.module_
   -> def list * scopes

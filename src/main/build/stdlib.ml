@@ -23,10 +23,13 @@ and lib =
   ; prelude_typed : Ast_typed.program
         (* typed version of std_lib.mligo . Usage: repl (where the syntax is fixed) *)
   ; content_typed : Ast_typed.program
+  ; content_core : Ast_core.program
   }
 
 let empty =
-  let e = { prelude_core = []; prelude_typed = []; content_typed = [] } in
+  let e =
+    { prelude_core = []; prelude_typed = []; content_typed = []; content_core = [] }
+  in
   { curry = e; uncurry = e; typed_mod_def = []; core_mod_def = [] }
 
 
@@ -148,7 +151,11 @@ let get : options:Compiler_options.t -> unit -> t =
         (Environment.append options.middle_end.init_env typed_mod_def)
     in
     let prelude_typed = type_ ~options prelude_core in
-    { prelude_core; prelude_typed; content_typed = uncurry_content_typed }
+    { prelude_core
+    ; prelude_typed
+    ; content_typed = uncurry_content_typed
+    ; content_core = uncurry_content_core
+    }
   in
   let curry =
     let prelude_core = Helpers.get_aliases_prelude binder_curry curry_content_typed in
@@ -158,7 +165,11 @@ let get : options:Compiler_options.t -> unit -> t =
         (Environment.append options.middle_end.init_env typed_mod_def)
     in
     let prelude_typed = type_ ~options prelude_core in
-    { prelude_core; prelude_typed; content_typed = curry_content_typed }
+    { prelude_core
+    ; prelude_typed
+    ; content_typed = curry_content_typed
+    ; content_core = curry_content_core
+    }
   in
   { curry; uncurry; typed_mod_def; core_mod_def }
 
@@ -187,6 +198,12 @@ let select_prelude_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
   match stx with
   | CameLIGO -> lib.curry.prelude_typed
   | PascaLIGO | JsLIGO -> lib.uncurry.prelude_typed
+
+
+let select_lib_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
+  match stx with
+  | CameLIGO -> lib.curry.content_core
+  | PascaLIGO | JsLIGO -> lib.uncurry.content_core
 
 
 let select_lib_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
