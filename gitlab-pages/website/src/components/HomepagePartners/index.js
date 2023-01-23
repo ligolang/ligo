@@ -5,7 +5,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 const PARTNERS = [
   {
     name: 'Serokell',
-    image: 'img/partners/serokell-dark-logo.svg',
+    image: 'img/partners/serokell-white-logo.svg',
     link: 'https://serokell.io/',
     pinned: true
   },{
