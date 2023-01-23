@@ -108,8 +108,13 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
   * On MacOsX, the software is distributed through a [brew](https://brew.sh/) formula with `brew install tezos`.
 
-# Building a smart-contract.
+## Building a smart-contract.
 
+### From a template
+
+Rather you're curious to see how to make NFT or randomness in LIGO, or you want to have an example for a more complex architecture, you can have a look in [this collection of templates](https://packages.ligolang.org/contracts) made by the LIGO team.
+
+### From scratch
 In this section and the following one we will use a simple smart-contract that is present as example on our webide. We will cover the ligo language and smart-contract development in the following tutorials.
 
 First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is available in [Pascaligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.ligo), [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
@@ -206,7 +211,7 @@ const main = ([action, store] : [parameter, storage]) : [list <operation>, stora
 
 </Syntax>
 
-Now we are going to compile the contract, open a terminal in the folder. (or the vs-code built-in terminal with  Ctrl+shift+²) and run the following command:
+Now we are going to compile the contract, open a terminal in the folder. (or the vs-code built-in terminal with Ctrl+shift+²) and run the following command:
 
 <Syntax syntax="pascaligo">
 

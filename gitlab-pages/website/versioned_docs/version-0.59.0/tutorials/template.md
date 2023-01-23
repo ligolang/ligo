@@ -11,4 +11,4 @@ ligo init contract --template [TEMPLATE_NAME] [PROJECT_NAME]
 
 <br/>
 
-You can check the list of all the templates made by the LIGO team on the [LIGO registry](https://packages.ligolang.org/templates).
+You can check the list of all the templates made by the LIGO team on the [LIGO registry](https://packages.ligolang.org/contracts).
