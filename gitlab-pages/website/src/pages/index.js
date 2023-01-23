@@ -95,7 +95,7 @@ export default function Home() {
                 </li>
                 <li className="primary">
                   <a
-                    href="https://ide-v2-beta.ligolang.org/"
+                    href="https://ligo-ide.gcp.marigold.dev"
                     target="_blank"
                   >
                     WebIde V2 beta
