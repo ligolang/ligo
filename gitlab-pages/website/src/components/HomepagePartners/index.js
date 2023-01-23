@@ -4,6 +4,11 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 const PARTNERS = [
   {
+    name: 'Serokell',
+    image: 'img/partners/serokell-dark-logo.svg',
+    link: 'https://serokell.io/',
+    pinned: true
+  },{
     name: 'Nomadic Labs',
     image: 'img/partners/nomadic-logo.png',
     link: 'https://www.nomadic-labs.com/',
