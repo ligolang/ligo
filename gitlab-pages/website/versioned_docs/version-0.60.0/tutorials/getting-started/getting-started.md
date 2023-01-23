@@ -108,7 +108,13 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
   * On MacOsX, the software is distributed through a [brew](https://brew.sh/) formula with `brew install tezos`.
 
-# Building a smart-contract.
+## Building a smart-contract.
+
+### From a template
+
+Rather you're curious to see how to make NFT or randomness in LIGO, or you want to have an example for a more complex architecture, you can have a look in [this collection of templates](https://packages.ligolang.org/contracts) made by the LIGO team.
+
+### From scratch
 
 In this section and the following one we will use a simple smart-contract that is present as example on our webide. We will cover the ligo language and smart-contract development in the following tutorials.
 

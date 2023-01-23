@@ -120,7 +120,7 @@ To deploy your smart-contract on the network and to test it, you will need to us
 
 ### From a template
 
-Rather you're curious to see how to make NFT or randomness in LIGO, or you want to have an example for a more complex architecture, you can have a look in [this collection of templates](https://packages.ligolang.org/templates) made by the LIGO team.
+Rather you're curious to see how to make NFT or randomness in LIGO, or you want to have an example for a more complex architecture, you can have a look in [this collection of templates](https://packages.ligolang.org/contracts) made by the LIGO team.
 
 ### From scratch
 
