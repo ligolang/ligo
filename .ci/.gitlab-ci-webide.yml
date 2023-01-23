@@ -44,26 +44,6 @@ webide-new-frontend-build:
 # dev branch integration
 #######################################################################
 
-webide-backend-build-and-push-backend:
-  extends: .docker-image
-  stage: deploy
-  rules:
-    # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      changes:
-        - tools/webide/**/*
-        - src/test/examples/**/*
-      when: always
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-  script:
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
-    - cp -r src/test/examples tools/webide/packages/client/examples
-    - docker build tools/webide --build-arg EXAMPLES_DIR_SRC=packages/client/examples -t ${WEBIDE_IMAGE_TAG}
-    - docker push "${WEBIDE_IMAGE_TAG}"
-  after_script:
-    - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
-
 webide-new-backend-build-and-push-backend:
   extends: .docker-image
   stage: deploy
