@@ -522,13 +522,13 @@ Once you are sure that the contract work correctly for all the use cases, you ca
 
 For deploying the contract on Tezos, we will use the `tezos-client` interface like we did on the previous section.
 
-First, you will need an account address. You can get one for testing at the [faucet](https://teztnets.xyz/ghostnet-faucet).
+First, you will need an account address. You can get one for testing at the [faucet](https://faucet.marigold.dev/).
 Download the json file and place it in the `ligo_tutorial` folder. $!$ The account that you get from the faucet are only temporary
 
 Then we are going to point the client on a Tezos node
 
 ```zsh
-tezos-client --endpoint https://rpc.ghostnet.teztnets.xyz config update
+tezos-client --endpoint https://ghostnet.tezos.marigold.dev/ config update
 ```
 
 This is the testnet, which is a separate network from Tezos, use for testing.
