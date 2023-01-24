@@ -25,7 +25,7 @@ webide-new-backend-build:
 
 webide-new-frontend-build:
   extends: .docker-image
-  stage: deploy
+  stage: build
   needs:
     - job: changelog
       artifacts: false
