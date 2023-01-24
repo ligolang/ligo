@@ -8,6 +8,7 @@ module Formatter = Formatter
 module Api_helper = Api_helper
 module LSet = Types.LSet
 module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 
 [@@@landmark "auto"]
 
@@ -47,23 +48,27 @@ let set_core_type_if_possible
 
 
 let update_typing_env
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> AST.declaration -> typing_env
+    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise -> with_types:bool
+    -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> typing_env
   =
- fun ~with_types ~options tenv decl ->
+ fun ~raise ~with_types ~options tenv decl ->
   match with_types with
   | true ->
     let typed_prg =
-      Simple_utils.Trace.to_option
+      Simple_utils.Trace.to_stdlib_result
       @@ Checking.type_declaration ~options ~env:tenv.type_env decl
     in
     (match typed_prg with
-    | Some decl ->
+    | Ok (decl, ws) ->
       let module AST = Ast_typed in
       let bindings = Misc.extract_variable_types tenv.bindings decl.wrap_content in
       let type_env = Environment.add_declaration decl tenv.type_env in
+      let () = List.iter ws ~f:raise.warning in
       { type_env; bindings }
-    | None -> tenv)
+    | Error (e, ws) ->
+      let () = List.iter ws ~f:raise.warning in
+      let () = raise.log_error (Main_errors.checking_tracer e) in
+      tenv)
   | false -> tenv
 
 
@@ -246,12 +251,12 @@ let find_param_type_references : AST.type_expression option Param.t -> reference
   | None -> []
 
 
-let rec expression
+let rec expression ~raise
     :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
     -> AST.expression -> def list * reference list * typing_env * scopes
   =
  fun ~with_types ~options tenv e ->
-  let expression = expression ~with_types ~options in
+  let expression = expression ~raise ~with_types ~options in
   match e.expression_content with
   | E_literal _ -> [], [], tenv, [ e.location, [] ]
   | E_raw_code _ -> [], [], tenv, [ e.location, [] ]
@@ -516,7 +521,7 @@ let rec expression
     defs_matchee @ defs_cases, refs_matchee @ refs_cases, tenv, scopes @ scopes'
   | E_mod_in { module_binder; rhs; let_result } ->
     let defs_module, refs_module, tenv, scopes =
-      module_expression ~with_types ~options tenv Local module_binder rhs
+      module_expression ~raise ~with_types ~options tenv Local module_binder rhs
     in
     let defs_result, refs_result, tenv, scopes' = expression tenv let_result in
     let scopes' = merge_same_scopes scopes' in
@@ -536,14 +541,18 @@ and type_expression : TVar.t -> def_type -> AST.type_expression -> def =
   def
 
 
-and module_expression
+and module_expression ~raise
     :  with_types:bool -> options:Compiler_options.middle_end -> typing_env -> def_type
     -> MVar.t -> AST.module_expr -> def list * reference list * typing_env * scopes
   =
  fun ~with_types ~options tenv def_type top m ->
   match m.wrap_content with
   | M_struct decls ->
-    let defs, refs, tenv, scopes = declarations ~with_types ~options tenv decls in
+    let defs, refs, tenv, scopes =
+      (* [update_tenv] is [false] because [update_typing_env] already types 
+         nested modules, so we only need to call it at toplevel declarations. *)
+      declarations ~raise ~update_tenv:false ~with_types ~options tenv decls
+    in
     let range = MVar.get_location top in
     let body_range = m.location in
     let name = get_mod_binder_name top in
@@ -574,13 +583,13 @@ and module_expression
     [ def ], [ reference ], tenv, []
 
 
-and declaration_expression
+and declaration_expression ~raise
     :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
     -> AST.type_expression option Binder.t list -> AST.expression
     -> def list * reference list * typing_env * scopes
   =
  fun ~with_types ~options tenv binders e ->
-  let defs, refs, tenv, scopes = expression ~with_types ~options tenv e in
+  let defs, refs, tenv, scopes = expression ~raise ~with_types ~options tenv e in
   let defs' =
     List.map binders ~f:(fun binder ->
         let core_type = Binder.get_ascr binder in
@@ -592,12 +601,17 @@ and declaration_expression
   defs' @ defs, refs, tenv, scopes
 
 
-and declaration
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> AST.declaration -> def list * reference list * typing_env * scopes
+and declaration ~raise
+    :  with_types:bool -> options:Compiler_options.middle_end -> update_tenv:bool
+    -> typing_env -> AST.declaration -> def list * reference list * typing_env * scopes
   =
- fun ~with_types ~options tenv decl ->
-  let tenv = update_typing_env ~with_types ~options tenv decl in
+ fun ~with_types ~options ~update_tenv tenv decl ->
+  let tenv =
+    if update_tenv
+    then (* only at top-level *)
+      update_typing_env ~raise ~with_types ~options tenv decl
+    else tenv
+  in
   match decl.wrap_content with
   | D_value { binder; expr = { expression_content = E_recursive _; _ } as expr; attr = _ }
     ->
@@ -605,7 +619,9 @@ and declaration
     (* For recursive functions we don't need to add a def for [binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_expr] *)
-    let defs_expr, refs_rhs, tenv, scopes = expression ~with_types ~options tenv expr in
+    let defs_expr, refs_rhs, tenv, scopes =
+      expression ~raise ~with_types ~options tenv expr
+    in
     let def, defs_expr = drop_last defs_expr in
     [ def ] @ defs_expr, refs_rhs @ t_refs, tenv, scopes
   | D_irrefutable_match { pattern; expr; _ } ->
@@ -613,13 +629,13 @@ and declaration
     let binders, expr = set_core_type_if_possible binders expr in
     let t_refs = List.concat (List.map ~f:find_binder_type_references binders) in
     let defs, refs, env, scopes =
-      declaration_expression ~with_types ~options tenv binders expr
+      declaration_expression ~raise ~with_types ~options tenv binders expr
     in
     defs, refs @ t_refs, env, scopes
   | D_value { binder; expr; attr = _ } ->
     let t_refs = find_binder_type_references binder in
     let defs, refs, env, scopes =
-      declaration_expression ~with_types ~options tenv [ binder ] expr
+      declaration_expression ~raise ~with_types ~options tenv [ binder ] expr
     in
     defs, refs @ t_refs, env, scopes
   | D_type { type_binder; type_expr; type_attr = _ } ->
@@ -628,24 +644,26 @@ and declaration
     [ def ], t_refs, tenv, []
   | D_module { module_binder; module_; module_attr = _ } ->
     let defs, refs, env, scopes =
-      module_expression ~with_types ~options tenv Global module_binder module_
+      module_expression ~raise ~with_types ~options tenv Global module_binder module_
     in
     let defs, refs = update_references refs defs in
     defs, refs, env, scopes
 
 
-and declarations
-    :  with_types:bool -> options:Compiler_options.middle_end -> ?stdlib_defs:def list
-    -> typing_env -> AST.declaration list
+and declarations ~raise
+    :  with_types:bool -> options:Compiler_options.middle_end -> ?update_tenv:bool
+    -> ?stdlib_defs:def list -> typing_env -> AST.declaration list
     -> def list * reference list * typing_env * scopes
   =
- fun ~with_types ~options ?(stdlib_defs = []) tenv decls ->
+ fun ~with_types ~options ?(update_tenv = true) ?(stdlib_defs = []) tenv decls ->
   let `Global gdefs, `Local ldefs, refs, tenv, scopes =
     List.fold_left
       decls
       ~init:(`Global stdlib_defs, `Local [], [], tenv, [])
       ~f:(fun (`Global gdefs, `Local ldefs, refs, tenv, scopes) decl ->
-        let defs', refs', tenv, scopes' = declaration ~with_types ~options tenv decl in
+        let defs', refs', tenv, scopes' =
+          declaration ~raise ~with_types ~options ~update_tenv tenv decl
+        in
         let `Global gdefs', `Local ldefs' = filter_local_defs defs' in
         let scopes' = add_defs_to_scopes gdefs scopes' in
         let gdefs, refs = update_references (refs' @ refs) gdefs in
@@ -686,28 +704,38 @@ let resolve_module_aliases_to_module_ids : def list -> def list =
   List.rev defs
 
 
-let stdlib_defs : options:Compiler_options.middle_end -> Ast_core.program -> def list =
+let stdlib_defs ~raise
+    : options:Compiler_options.middle_end -> Ast_core.program -> def list
+  =
  fun ~options stdlib_core ->
   let no_stdlib = options.no_stdlib in
   if no_stdlib
   then []
   else (
     let tenv = { type_env = options.init_env; bindings = Misc.Bindings_map.empty } in
-    let stdlib_defs, _, _, _ = declarations ~with_types:false ~options tenv stdlib_core in
+    let stdlib_defs, _, _, _ =
+      declarations ~raise ~with_types:false ~options tenv stdlib_core
+    in
     ignore_local_defs stdlib_defs)
 
 
 let scopes
-    :  with_types:bool -> options:Compiler_options.middle_end
-    -> stdlib:Ast_typed.program * Ast_core.program -> AST.module_ -> def list * scopes
+    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise -> with_types:bool
+    -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
+    -> AST.module_ -> def list * scopes
   =
- fun ~with_types ~options ~stdlib prg ->
+ fun ~raise ~with_types ~options ~stdlib prg ->
   let () = reset_counter () in
   let stdlib, stdlib_core = stdlib in
-  let stdlib_defs = stdlib_defs ~options stdlib_core in
   let type_env = Environment.append options.init_env stdlib in
   let tenv = { type_env; bindings = Misc.Bindings_map.empty } in
-  let defs, _, _, scopes = declarations ~with_types ~options ~stdlib_defs tenv prg in
+  let defs, scopes =
+    let stdlib_defs = stdlib_defs ~raise ~options stdlib_core in
+    let defs, _, _, scopes =
+      declarations ~raise ~with_types ~options ~stdlib_defs tenv prg
+    in
+    defs, scopes
+  in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
   defs, scopes

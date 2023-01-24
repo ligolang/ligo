@@ -196,6 +196,3 @@ let scopes_json (scopes : scopes) : Yojson.Safe.t =
            ; "module_environment", `List ms
            ])
        scopes)
-
-
-let to_json (d, s) = `Assoc [ "definitions", defs_json d; "scopes", scopes_json s ]
