@@ -78,20 +78,16 @@ treeDoesNotContainNameTest = do
           (FromLIGO "Ill-formed type declaration.\nAt this point, one of the following is expected:\n  * the name of the type being defined;\n  * a quoted type parameter, like 'a;\n  * a tuple of quoted type parameters, like ('a, 'b).\n")
           SeverityError
           (mkRange (2, 9) (2, 10) dtFile)
-        , Message
-          (FromLIGO "Type \"storage\" not found. ")
+        , Message (FromLIGO "Type \"storage\" not found. ")
           SeverityError
           (mkRange (14, 34) (14, 41) dtFile)
-        , Message
-          (FromLIGO "Module \"EURO\" not found.")
+        , Message (FromLIGO "Module \"EURO\" not found.")
           SeverityError
           (mkRange (12, 16) (12, 22) dtFile)
-        , Message
-          (FromLIGO "Module \"EURO\" not found.")
+        , Message (FromLIGO "Module \"EURO\" not found.")
           SeverityError
           (mkRange (10, 1) (10, 24) dtFile)
-        , Message
-          (FromLIGO "Type \"t\" not found. ")
+        , Message (FromLIGO "Type \"t\" not found. ")
           SeverityError
           (mkRange (3, 19) (3, 20) dtFile)
         ]
