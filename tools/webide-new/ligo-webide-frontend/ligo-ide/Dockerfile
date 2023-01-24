@@ -7,7 +7,6 @@
 ARG BUILDER_IMAGE="node:16"
 ARG RUNNER_IMAGE="joseluisq/static-web-server:2.9-alpine"
 
-
 FROM ${BUILDER_IMAGE} as builder
 
 WORKDIR /app
