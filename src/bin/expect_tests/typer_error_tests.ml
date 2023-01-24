@@ -2,11 +2,7 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "--no-color"
-    ; "../../test/contracts/negative/let_mut.mligo"
-    ];
+    [ "compile"; "contract"; "--no-color"; "../../test/contracts/negative/let_mut.mligo" ];
   [%expect
     {|
     File "../../test/contracts/negative/let_mut.mligo", line 4, characters 13-14:

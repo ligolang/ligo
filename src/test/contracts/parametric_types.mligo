@@ -22,3 +22,9 @@ let t3 : nat bar = (1n,1)
 
 type 'a foo = int list
 let t4 : string foo = [ 1 ; 2 ; 3]
+
+let t5 =
+  type 'a foo = { bar : 'a } in
+  let x : int foo = { bar = 1 } in
+  let y : int = x.bar in
+  y

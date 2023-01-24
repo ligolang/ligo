@@ -3849,7 +3849,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "disc_union_vbar.jsligo" ];
-  [%expect {|
+  [%expect
+    {|
     { parameter
         (pair (pair (option %lord address) (string %name))
               (or %planetType (or (unit %gaseous) (unit %other)) (unit %tellurian))) ;
