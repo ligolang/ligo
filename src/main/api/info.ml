@@ -80,4 +80,4 @@ let get_scope (raw_options : Raw_options.t) source_file display_format no_colour
     Build.Stdlib.select_lib_typed syntax lib, Build.Stdlib.select_lib_core syntax lib
   in
   (* let () = assert (List.length (fst stdlib) = List.length (snd stdlib)) in *)
-  Scopes.scopes ~options:options.middle_end ~with_types ~stdlib core_prg
+  Scopes.scopes ~raise ~options:options.middle_end ~with_types ~stdlib core_prg
