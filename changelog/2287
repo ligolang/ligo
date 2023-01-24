@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nThe output given by `run test --display-format json` is an array containing the name of the test entrypoint, followed by its value as a JSON (same format as `Test.to_json`, see API reference for further documentation on it). E.g.\\n\\n\\n```\\n$ cat display_format_json.mligo \\nlet test_x =\\n  let x = 42 in\\n  x + 23\\n\\nlet test_y =\\n  \"hello\"\\n$ ligo run test display_format_json.mligo --display-format json\\n[                                           \\n  [ \"test_x\", [ \"constant\", [ \"int\", \"65\" ] ] ],\\n  [ \"test_y\", [ \"constant\", [ \"string\", \"hello\" ] ] ]\\n]\\n\\n```\\n\\n"
+merge_request: '2287'
+title: "Testing framework: make `run test --display-format json` output the same JSON as `Test.to_json`"
+type: fixed
+            

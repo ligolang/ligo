@@ -184,3 +184,4 @@ type bigmap_data =
 
 type bigmap = int * bigmap_data
 type bigmaps = bigmap list
+type toplevel_env = (string * value) list [@@deriving yojson]

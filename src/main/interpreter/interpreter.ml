@@ -1998,7 +1998,7 @@ let eval_expression ~raise ~steps ~options
   st.print_values, value
 
 
-let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * (string * value) list =
+let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * toplevel_env =
  fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
