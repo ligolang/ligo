@@ -1,0 +1,3 @@
+let main = ([_, s] : [int, int]) : [list<operation>, int] => {
+  return [(list([]) as list<operation>), s]
+};

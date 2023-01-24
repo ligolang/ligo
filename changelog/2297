@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nFixing `ligo info list-declarations` for JsLIGO entrypoints \\n\\n"
+merge_request: '2297'
+title: "fixing `ligo info list-declarations`"
+type: fixed
+            
