@@ -66,6 +66,11 @@ let%expect_test _ =
     counter
     counter_simple
     aux_simple |}];
+  run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/list_declaration.jsligo" ];
+  [%expect
+    {|
+    ../../test/contracts/list_declaration.jsligo declarations:
+    main |}];
   run_ligo_bad
     [ "run"; "interpret"; "1"; "--syntax"; "cameligo"; "--protocol"; "do_not_exist" ];
   [%expect

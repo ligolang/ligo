@@ -161,7 +161,7 @@ let list_declarations (only_ep : bool) (m : Ast_typed.program) : Value_var.t lis
       match el.wrap_content with
       | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; attr; expr }
       | D_value { binder; attr; expr }
-        when attr.public && not attr.hidden ->
+        when not attr.hidden ->
         if only_ep
         then
           if is_some
