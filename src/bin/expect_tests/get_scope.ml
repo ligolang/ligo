@@ -1602,7 +1602,7 @@ let%expect_test _ =
       (exp2#25 -> exp2)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 40, characters 4-8
       Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 41, character 4 to line 47, character 6
-      Content: |unresolved|
+      Content: |resolved: unit|
       references: []
       (f#20 -> f)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 4-5
@@ -1612,7 +1612,7 @@ let%expect_test _ =
       (fn#27 -> fn)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 4-6
       Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 9-35
-      Content: |unresolved|
+      Content: |resolved: int -> nat|
       references: []
       (i#22 -> i)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 8-9
@@ -1633,8 +1633,8 @@ let%expect_test _ =
       Type definitions:
       (boo#23 -> boo)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 44, characters 12-15
-      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 44, characters 18-27
-      Content: : |option ('a)|
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 44, characters 9-11
+      Content: : |funtype 'a : * . option ('a)|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 12-19
       (hmm#12 -> hmm)
@@ -1686,7 +1686,7 @@ let%expect_test _ =
                         (exp1#8 -> exp1)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 8, characters 8-12
                         Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, character 8 to line 15, character 10
-                        Content: |unresolved|
+                        Content: |resolved: unit|
                         references: []
                         (g#6 -> g)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 12-13
@@ -1701,8 +1701,8 @@ let%expect_test _ =
                         Type definitions:
                         (bar#5 -> bar)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 16-19
-                        Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 22-34
-                        Content: : |record[bar -> 'a]|
+                        Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 13-15
+                        Content: : |funtype 'a : * . record[bar -> 'a]|
                         references:
                           File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 16-26
                         (foo#4 -> foo)

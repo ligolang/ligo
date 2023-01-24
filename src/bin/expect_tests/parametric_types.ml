@@ -20,6 +20,11 @@ let%expect_test _ =
   [%expect {|
     CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY()))) |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "interpret"; "t5"; "--init-file"; test "parametric_types.mligo" ];
+  [%expect {|
+    1 |}]
+
 (* let%expect_test _ =
   run_ligo_good [ "interpret" ; "--init-file="^(test "parametric_types.jsligo") ; "t1" ] ;
   [%expect{|

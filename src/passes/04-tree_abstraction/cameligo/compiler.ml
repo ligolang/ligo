@@ -628,9 +628,24 @@ let rec compile_expression ~raise : CST.expr -> AST.expr =
       return @@ e_let_in ~loc pattern let_attr let_rhs @@ fun_ body)
   | ETypeIn ti ->
     let ti, loc = r_split ti in
-    let ({ type_decl = { name; type_expr; _ }; kwd_in = _; body } : CST.type_in) = ti in
+    let ({ type_decl = { name; type_expr; params; _ }; kwd_in = _; body } : CST.type_in) =
+      ti
+    in
+    let rhs =
+      let rhs = compile_type_expression ~raise type_expr in
+      match params with
+      | None -> rhs
+      | Some x ->
+        let lst = type_vars_to_list x in
+        let aux : CST.type_var Region.reg -> AST.type_expression -> AST.type_expression =
+         fun param type_ ->
+          let param, ploc = r_split param in
+          let ty_binder = Type_var.of_input_var ~loc:ploc (quote_var param.name.value) in
+          t_abstraction ~loc:ploc ty_binder Type type_
+        in
+        List.fold_right ~f:aux ~init:rhs lst
+    in
     let type_binder = compile_type_var name in
-    let rhs = compile_type_expression ~raise type_expr in
     let body = self body in
     return @@ e_type_in ~loc type_binder rhs body
   | EModIn mi ->

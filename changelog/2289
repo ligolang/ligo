@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2289'
+title: "CameLIGO: use `params` field when abstracting local types"
+type: fixed
+            
