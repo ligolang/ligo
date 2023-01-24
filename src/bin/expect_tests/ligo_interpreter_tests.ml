@@ -875,6 +875,16 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - eval exited with value [1n -> {num = 1 ; num_nat = 1n ; str = "q"}]. |xxx}]
 
+let%expect_test _ =
+  run_ligo_good
+    [ "run"; "test"; test "display_format_json.mligo"; "--display-format"; "json" ];
+  [%expect
+    {xxx|
+    [
+      [ "test_x", [ "constant", [ "int", "65" ] ] ],
+      [ "test_y", [ "constant", [ "string", "hello" ] ] ]
+    ] |xxx}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 

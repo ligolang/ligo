@@ -13,4 +13,4 @@ val eval_test
   -> steps:int
   -> options:Compiler_options.t
   -> Ast_typed.program
-  -> bool * (string * Ligo_interpreter.Types.value) list
+  -> bool * Ligo_interpreter.Types.toplevel_env

@@ -74,9 +74,5 @@ let tests_ppformat ~display_format ~no_colour f (print_values, toplevel_env) =
   | _ -> ()
 
 
-let tests_jsonformat b : json =
-  ignore b;
-  `Null
-
-
+let tests_jsonformat (_, toplevel_env) : json = Types.toplevel_env_to_yojson toplevel_env
 let tests_format : 'a format = { pp = tests_ppformat; to_json = tests_jsonformat }
