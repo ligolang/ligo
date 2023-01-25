@@ -126,8 +126,7 @@ let compile_file_ f =
 let typed_prod =
   Test_helpers.test_suite
     "Ast-typed productions"
-    [ type_file "type-alias.ligo"
-    ; type_file "build/D.mligo"
+    [ type_file "build/D.mligo"
     ; type_file "build/instance/main.mligo"
     ; type_file "infer_fun_application.mligo"
     ; type_file "protocol_dalphanet.mligo"
@@ -141,7 +140,7 @@ let typed_prod =
     ; type_file "modules_and_free_vars/module_with_free_vars.mligo"
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
     ; type_tfile "pattern_match4.jsligo"
-    ; type_file "layout.pligo"
+    (*    ; type_file "layout.pligo" *)
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
     ; type_file "type_shadowing.mligo"
     ]
@@ -150,17 +149,9 @@ let typed_prod =
 let core_prod =
   Test_helpers.test_suite
     "Ast-core productions"
-    [ comp_file "vars_consts/shadowing.ligo"
-    ; comp_file "vars_consts/func_const_var.ligo"
-    ; comp_file "vars_consts/func_same_const_var.ligo"
-    ; comp_file "vars_consts/func_var_const.ligo"
-    ; comp_file "vars_consts/var_loop.ligo"
-    ; comp_file "vars_consts/multiple_vars.ligo"
-    ; comp_file "vars_consts/multiple_vars.jsligo"
+    [ comp_file "vars_consts/multiple_vars.jsligo"
     ; comp_file "letin.mligo"
-    ; comp_file "type_puning.ligo"
     ; comp_file "polymorphism/annotate.mligo"
-    ; comp_file "deep_pattern_matching/list_pattern.ligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
     ]
 
@@ -218,12 +209,4 @@ let contract_prod =
     ; compile_file_ "top_level_patterns/contracts/jsligo/ticket_tuple.jsligo"
       (* ; compile_file_ "top_level_patterns/contracts/jsligo/tuple_record.jsligo" *)
     ; compile_file_ "top_level_patterns/contracts/jsligo/tuple.jsligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/nested_record.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/nested_tuple.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/record_tuple.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/record.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/ticket_record.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/ticket_tuple.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple_record.ligo"
-    ; compile_file_ "top_level_patterns/contracts/pascaligo/tuple.ligo"
     ]

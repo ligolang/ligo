@@ -3,25 +3,6 @@ open Cli_expect
 let contract basename = "../../test/contracts/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good
-    [ "run"; "evaluate-call"; contract "failwith.ligo"; "1"; "-e"; "failer"; "--no-warn" ];
-  [%expect {| failed with: 42 |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "run"
-    ; "evaluate-call"
-    ; contract "failwith.ligo"
-    ; "1"
-    ; "-e"
-    ; "failer"
-    ; "--format"
-    ; "json"
-    ; "--no-warn"
-    ];
-  [%expect {| { "value": null, "failure": "42" } |}]
-
-let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; contract "subtle_nontail_fail.mligo"; "()"; "()" ];
   [%expect
     {|
@@ -33,16 +14,6 @@ let%expect_test _ =
     Hint: replace it by "_ps" to prevent this warning.
 
     failed with: "This contract always fails" |}]
-
-let%expect_test _ =
-  run_ligo_good [ "run"; "interpret"; "assert(1=1)"; "--syntax"; "pascaligo" ];
-  [%expect {|
-    unit |}]
-
-let%expect_test _ =
-  run_ligo_good [ "run"; "interpret"; "assert(1=2)"; "--syntax"; "pascaligo" ];
-  [%expect {|
-    failed with: "failed assertion" |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret"; "assert(1=1)"; "--syntax"; "cameligo" ];

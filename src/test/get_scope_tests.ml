@@ -123,24 +123,14 @@ let main =
           (files_in_all_dirs
              [ "error-recovery/simple/cameligo/original"
              ; "error-recovery/simple/jsligo/original"
-             ; "error-recovery/simple/pascaligo/original"
              ; "contracts"
              ]
              ~except:
                [ "contracts/tuples_no_annotation.jsligo"
                ; (* syntax error: wrong brackets + untyped recursion *)
                  "contracts/parametric_types.jsligo"
-               ; (* TODO: syntax error *)
-                 "contracts/heap.ligo"
-               ; (* TODO: syntax error in case *)
-                 "contracts/k.ligo"
                ; (* TODO: syntax error in case *)
                  "contracts/existential.mligo"
-               ; (* TODO: syntax error: missing type annotation *)
-                 "contracts/heap-instance.ligo"
-               ; (* TODO: syntax error in case *)
-                 "contracts/bad_timestamp.ligo"
-                 (* TODO: self ast imperative: bad timestamp *)
                ])
           ~f:(fun file -> schema_test_positive ~with_types:true ~speed:`Slow file) )
     ; ( "all_negative"
@@ -148,15 +138,9 @@ let main =
           (files_in_all_dirs
              [ "error-recovery/simple/cameligo"
              ; "error-recovery/simple/jsligo"
-             ; "error-recovery/simple/pascaligo"
              ]
              ~except:
                [ "error-recovery/simple/jsligo/missing_semicolon_in_top_level.jsligo"
-               ; (* not negative *)
-                 (* TODO: 04-tree_abstraction/pascaligo/errors.ml:error_format *)
-                 "error-recovery/simple/pascaligo/match_kw_instead_of_case_kw.ligo"
-               ; "error-recovery/simple/pascaligo/typo_in_function_kw.ligo"
-               ; "error-recovery/simple/jsligo/missing_semicolon_before_return_on_same_line.jsligo"
                ; (* was fixed by changes to jsligo ASI recently *)
                  "error-recovery/simple/jsligo/missing_type_annotation_in_lambda_in_match.jsligo"
                  (* was fixed by recent change to jsligo parser *)

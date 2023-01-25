@@ -1,7 +1,9 @@
+(*
 module Var = Simple_utils.Var
 module Trace = Simple_utils.Trace
 open Main_errors
 open Test_helpers
+
 
 let get_program = get_program "./contracts/time-lock.ligo"
 
@@ -76,3 +78,4 @@ let main =
     ; test_w "early call" early_call
     ; test_w "call on time" call_on_time
     ]
+*)

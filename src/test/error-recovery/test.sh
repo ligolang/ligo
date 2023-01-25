@@ -15,7 +15,7 @@ LC_ALL=C
 if [[ $# -eq 0 ]] || [[ $# -eq 1 ]] ; then
     echo "Examples of usage:"
     echo "  ./test.sh '*.mligo' ParserMain.exe                        # calculate results.csv for all files"
-    echo "  ./test.sh test.ligo ../../pascaligo/ParserMain.exe -v     # run calculation on the given file and print diff"
+    echo "  ./test.sh test.jsligo ../../jsligo/ParserMain.exe -v      # run calculation on the given file and print diff"
     echo "  ./test.sh 'test1.mligo test2.mligo' ParserMain.exe        # calculate results.csv only for two files"
     exit 1
 fi
@@ -69,10 +69,7 @@ for f in $1; do
 
     # compare list of tokens
     $PARSER --tokens -- original_generated/formatted_"$f" | sed 's/^[^\ ]*://' > original_generated/"$f".tokens
-    $PARSER --tokens --\
-            `#workaround: suppress spliting "<invalid-*>" into several tokens`\
-            <(sed 's/<invalid-\([^<>]*\)>/_invalid_\1/' recovered/"$f") \
-            2> /dev/null  | sed 's/^[^\ ]*://' > recovered/"$f".tokens
+    $PARSER --tokens -- recovered/"$f"                    | sed 's/^[^\ ]*://' > recovered/"$f".tokens
 
     # disable trap because diff utilities return nonzero code if files aren't the same
     trap - ERR

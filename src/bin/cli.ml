@@ -99,8 +99,8 @@ let syntax =
   let open Command.Param in
   let doc =
     "SYNTAX the syntax that will be used. Currently supported syntaxes are \
-     \"pascaligo\", \"cameligo\" and \"jsligo\". By default, the syntax is guessed from \
-     the extension (.ligo, .mligo, and .jsligo respectively)."
+     \"cameligo\" and \"jsligo\". By default, the syntax is guessed from \
+     the extension (.mligo and .jsligo respectively)."
   in
   let spec = optional_with_default Default_options.syntax string in
   flag ~doc ~aliases:[ "s" ] "--syntax" spec
@@ -183,9 +183,9 @@ let req_syntax =
   let open Command.Param in
   let name = "SYNTAX" in
   let _desc =
-    "the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \
+    "the syntax that will be used. Currently supported syntaxes are \
      \"cameligo\" and \"jsligo\". By default, the syntax is guessed from the extension \
-     (.ligo, .mligo, .jsligo respectively)."
+     (.mligo and .jsligo respectively)."
   in
   anon (name %: string)
 

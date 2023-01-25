@@ -1,13 +1,14 @@
 ---
 id: tezos-now-advance-time
-title: Is there a way to advance time in Ligo tests ?
+title: Is there a way to advance time in LIGO tests ?
 ---
 
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-The `Tezos.get_now` function can be used to get the current time, but in the tests,
-we may want to setup a situation where the contracts thinks `Tezos.get_now()` is in the future.
+The `Tezos.get_now` function can be used to get the current time, but
+in the tests, we may want to setup a situation where the contracts
+thinks `Tezos.get_now()` is in the future.
 
 Time advances by baking (protocol checks and enforces the timestamp makes sense)
 
@@ -21,16 +22,11 @@ Ideally, we want an mechanism to include code snippets from other parts of the d
 but without this, we'll do the following hack below.
 
 Below are some assignment that trigger a warning if a signature is outdated.
-If you want to refer to `Test.foo`, you add a check like :
+If you want to refer to `Test.foo`, you add a check like:
   let _dummy : expected_signature_of_foo = Test.foo
 And you can mention `foo : expected_signature_of_foo` in the Markdown.
 If the function is updated, the typer will fail, triggering a warning,
 and you'll have to change the expected signature everywhere it's mentioned in the file.
-
-```pascaligo test-ligo group=log
-const _dummy : nat -> unit = Test.bake_until_n_cycle_end
-const _dummy : timestamp * nat * list (tez) -> unit = Test.reset_state_at
-```
 
 ```cameligo test-ligo group=log
 let _dummy : nat -> unit = Test.bake_until_n_cycle_end
@@ -45,31 +41,21 @@ let _dummy_2 : (initial_timestamp : timestamp, no_of_accounts: nat, amount: list
 
 -->
 
-So, to bake and advance time, you can use :
-<SyntaxTitle syntax="pascaligo">
-val Test.bake_until_n_cycle_end : nat -> unit
-</SyntaxTitle>
+So, to bake and advance time, you can use:
 
 <SyntaxTitle syntax="cameligo">
 val Test.bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
-
 
 <SyntaxTitle syntax="jsligo">
 let Test.bake_until_n_cycle_end = (cycles : nat) => unit
 </SyntaxTitle>
 
-
-Depending on the situation, the following can be useful as well :
-<SyntaxTitle syntax="pascaligo">
-val Test.reset_state_at : timestamp * nat * list (tez) -> unit
-</SyntaxTitle>
+Depending on the situation, the following can be useful as well:
 
 <SyntaxTitle syntax="cameligo">
 val Test.reset_state_at : timestamp -> nat -> tez list -> unit
 </SyntaxTitle>
-
-
 
 <SyntaxTitle syntax="jsligo">
 let Test.reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list&lt;tez&gt;) => unit

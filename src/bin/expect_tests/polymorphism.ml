@@ -8,28 +8,6 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"
-    ; "pascaligo"
-    ; "zip(list [1;2;3], list [4n;5n;6n])"
-    ; "--init-file"
-    ; test "comb.ligo"
-    ];
-  [%expect {| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "compile"
-    ; "expression"
-    ; "pascaligo"
-    ; "zip (zip(list [1;2;3], list [4n;5n;6n]), list [\"a\";\"b\";\"c\"])"
-    ; "--init-file"
-    ; test "comb.ligo"
-    ];
-  [%expect {| { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "compile"
-    ; "expression"
     ; "cameligo"
     ; "zip [1;2;3] [4n;5n;6n]"
     ; "--init-file"

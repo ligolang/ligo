@@ -52,39 +52,6 @@ The storage of a deployed contract can be queried using the
 'storage) typed_address`, returns the `'storage` value.
 
 As a concrete example, suppose we have the following contract:
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-// This is testnew.ligo
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-| Reset
-
-type return is list (operation) * storage
-
-// Two entrypoints
-function add (const store : storage; const delta : int) : storage is
-  store + delta
-
-function sub (const store : storage; const delta : int) : storage is
-  store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-
-function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),    // No operations
-  case action of [
-    Increment (n) -> add (store, n)
-  | Decrement (n) -> sub (store, n)
-  | Reset         -> 0
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -151,20 +118,6 @@ const main = (action: parameter, store: storage) : @return => {
 We can deploy it and query the storage right after, to check that the
 storage is in fact the one which we started with:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-// This continues testnew.ligo
-
-const test = {
-  const initial_storage = 42;
-  const (taddr, _, _) = Test.originate (main, initial_storage, 0tez);
-  const storage = Test.get_storage (taddr);
-} with storage = initial_storage;
-
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -200,16 +153,6 @@ definitions evaluate to. If any of the definitions are found to have
 failed, a message will be issued with the line number where the problem
 occurred.
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo run test gitlab-pages/docs/advanced/src/testnew.ligo
-// Outputs:
-// Everything at the top-level was executed.
-// - test exited with value true.
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -239,30 +182,14 @@ performs the transaction, and returns a `test_exec_result` which
 can be matched on to know whether the transaction was successful or not.
 In case of success you will get access to the gas consumed by the execution
 of the contract and in case of failure you will get access to a `test_exec_error`
-describing the error.  
+describing the error.
 There is an alternative version, called `Test.transfer_to_contract_exn`
 which performs the transaction and will only return the gas consumption,
 failing in case that there was an error.
 
 We can extend the previous example by executing a transaction that
 increments the storage after deployment, we also print the gas consumption:
-<Syntax syntax="pascaligo">
 
-```pascaligo test-ligo group=frontpage
-// This continues testnew.ligo
-
-const test2 =
-  {
-    const initial_storage = 42;
-    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
-    const contr = Test.to_contract(taddr);
-    const gas_cons = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
-    Test.log (("gas consumption",gas_cons)) ;
-    const storage = Test.get_storage(taddr);
-  } with (storage = initial_storage + 1);
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -308,11 +235,11 @@ and then show you how to handle it.
 
 #### The problem with tickets
 
-There is two kind of operations in the protocol : external and internal.  
+There is two kind of operations in the protocol : external and internal.
 `internal operations` are those created by smart contracts and `external operations` are those created from outside the chain
 (e.g. using `Test.originate` or `tezos-client` for instance) [more information here](https://tezos.gitlab.io/active/michelson.html#semantics-of-smart-contracts-and-transactions)
 
-In the protocol, both external and internal `transfer`/`origination` operations contains a piece of michelson code representing the `parameter`/`initial storage`.  
+In the protocol, both external and internal `transfer`/`origination` operations contains a piece of michelson code representing the `parameter`/`initial storage`.
 Now imagine you have a value of type `parameter_ty`/`storage_ty` containing a ticket, that you want to transfer or originate,
 in the operation data, tickets will be represented in Michelson as pairs:
 
@@ -323,10 +250,10 @@ in the operation data, tickets will be represented in Michelson as pairs:
 
 > ticketer address , ticket value , ticket amount
 
-If we try to apply such an operation, the type wouldn't match: ticket of bytes VS some pair.  
+If we try to apply such an operation, the type wouldn't match: ticket of bytes VS some pair.
 The protocol would not let you do that since you could be creating a ticket out of nowhere unless the operation happens to be forged from within a contract (i.e. "internally")!
 
-In the testing framework - for now - it means using "proxy-contracts" forging the operations using provided a ticket value and a ticket amount.  
+In the testing framework - for now - it means using "proxy-contracts" forging the operations using provided a ticket value and a ticket amount.
 
 #### Proxy ticket contracts
 
@@ -371,7 +298,7 @@ let init_transfer (type vt whole_p) (mk_param: vt ticket -> whole_p) : vt proxy_
 
 let transfer (type vt)
     (taddr_proxy : vt proxy_address)
-    (info        : (vt * nat) * address) : test_exec_result = 
+    (info        : (vt * nat) * address) : test_exec_result =
   let ticket_info, dst_addr = info in
   Test.transfer_to_contract (Test.to_contract taddr_proxy) (ticket_info , dst_addr) 1mutez
 
@@ -536,7 +463,7 @@ let main ( (p,_) : param * (string * address)) : operation list * (string * addr
 let test_transfer_to_contract =
   let (main_taddr, _ , _) = Test.originate main ("bye",Test.nth_bootstrap_account 1) 1mutez in
   let main_addr = Tezos.address (Test.to_contract main_taddr) in
-  
+
   (* Use this address everytime you want to send tickets from the same proxy-contract *)
   let proxy_taddr =
     (* mk_param is executed __by the proxy contract__ *)
@@ -593,7 +520,7 @@ const test_transfer_to_contract_ = () : unit => {
   /* we send ticket to main through the proxy-contract */
   let _ = Proxy_ticket.transfer (proxy_taddr, [ticket_info1,main_addr]) ;
   let _ = Test.log (Test.get_storage (main_taddr)) ;
-  
+
   let ticket_info2 = ["world",5 as nat] ;
   let _ = Proxy_ticket.transfer (proxy_taddr, [ticket_info2,main_addr]) ;
   Test.log (Test.get_storage (main_taddr));
@@ -607,7 +534,7 @@ const test_transfer_to_contract = test_transfer_to_contract_ ();
 result:
 
 ```bash
-> ligo run test transfer_ticket.mligo 
+> ligo run test transfer_ticket.mligo
 ("poxy addr:" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
 ("hello" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
 ("world" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
@@ -748,23 +675,6 @@ let balances_under (b:balances) (threshold:tez) : balances =
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=rmv_bal
-(* This is remove-balance.ligo *)
-
-type balances is map (address, tez)
-
-function balances_under (const b : balances ; const threshold : tez) is {
-  const f =
-    function (const x : balances * (address * tez)) is {
-      const (acc, (k, v)) = x;
-    } with if v < threshold then Map.remove (k, acc) else acc;
-} with Map.fold (f, b, b)
-```
-
-</Syntax>
-
 <Syntax syntax="jsligo">
 
 ```jsligo group=rmv_bal
@@ -797,14 +707,6 @@ let _u = Test.reset_state 5n ([] : tez list)
 ```
 
 </Syntax>
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=rmv_bal_test
-#include "./gitlab-pages/docs/advanced/src/remove-balance.ligo"
-const _u = Test.reset_state (5n, (list [] : list (tez)))
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -823,17 +725,6 @@ Now build the `balances` map that will serve as the input of our test.
 let balances : balances =
   let a1, a2, a3 = Test.nth_bootstrap_account 1, Test.nth_bootstrap_account 2, Test.nth_bootstrap_account 3
   in Map.literal [(a1, 10tz); (a2, 100tz); (a3, 1000tz)]
-```
-
-</Syntax>
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=rmv_bal_test
-const balances : balances = {
-  const a1 = Test.nth_bootstrap_account (1);
-  const a2 = Test.nth_bootstrap_account (2);
-  const a3 = Test.nth_bootstrap_account (3);
-} with map [a1 -> 10tz; a2 -> 100tz; a3 -> 1000tz]
 ```
 
 </Syntax>
@@ -883,23 +774,6 @@ let test =
 ```
 
 </Syntax>
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=rmv_bal_test
-const test =
-  List.iter (
-    (function (const threshold : tez; const expected_size : nat) is {
-        function tester (const input : balances * tez) is
-          Map.size(balances_under (input.0, input.1));
-        const size_ = Test.run (tester, (balances, threshold));
-        const expected_size = Test.eval (expected_size);
-        Test.log (("expected", expected_size));
-        Test.log (("actual", size_));
-      } with assert (Test.michelson_equal (size_, expected_size))),
-    list [(15tez, 2n); (130tez, 1n); (1200tez, 0n)])
-```
-
-</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -938,25 +812,6 @@ You can now execute the test:
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-```shell
-> ligo run test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.ligo
-// Outputs:
-// ("expected" , 2)
-// ("actual" , 2)
-// ("expected" , 1)
-// ("actual" , 1)
-// ("expected" , 0)
-// ("actual" , 0)
-// Everything at the top-level was executed.
-// - test exited with value ().
-```
-
-</Syntax>
-
-
-
 <Syntax syntax="jsligo">
 
 ```shell
@@ -983,41 +838,6 @@ Michelson's interpreter.
 We can see how it works on an example. Suppose we want to test the following
 contract.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-// This is testme.ligo
-
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-| Reset
-
-type return is list (operation) * storage
-
-// Two entrypoints
-
-function add (const store : storage; const delta : int) : storage is
-  store + delta
-
-function sub (const store : storage; const delta : int) : storage is
-  store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-
-function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),    // No operations
-  case action of [
-    Increment (n) -> add (store, n)
-  | Decrement (n) -> sub (store, n)
-  | Reset         -> 0
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -1094,15 +914,6 @@ As a simple property, we check whether starting with a storage of
 a resulting storage of `42`. For checking it, we can interpret the
 `main` function:
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo run interpret "main (Increment (32), 10)" --init-file gitlab-pages/docs/advanced/src/testing/testme.ligo
-// Outputs:
-// ( LIST_EMPTY() , 42 )
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -1153,21 +964,6 @@ arguments:
 
 Here is how you emit events and fetch them from your tests:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=test_ex
-function main ( const x : (int*int) * unit ) is
-  (list [Tezos.emit ("%foo", x.0) ; Tezos.emit ("%foo", x.0.0)], Unit)
-
-const test_foo = {
-  const (ta, _, _) = Test.originate (main, Unit, 0tez) ;
-  const _ = Test.transfer_to_contract_exn (Test.to_contract (ta), (1,2), 0tez) ;
-  const x = (Test.get_last_events_from (ta, "foo") : list (int*int)) ;
-  const y = (Test.get_last_events_from (ta, "foo") : list (int)) ;
-} with (x,y)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex

@@ -7,7 +7,7 @@ Emacs tip: markdown-mode binds C-c C-o (also middle mouse button) to
 markdown-follow-thing-at-point which will follow these links to dired
 buffers.
 
-- Text (CameLIGO, PascaLIGO)
+- Text (CameLIGO, JsLIGO)
   - [Preprocessing](./passes/00-preprocessing)
   - [Lexing](./passes/01-lexing)
   - [Parsing](./passes/02-parsing)

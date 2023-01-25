@@ -16,25 +16,17 @@ framework, we will have a look at a basic function that we would like
 to test. Suppose we want to construct a function that takes an integer
 argument and doubles it, tentatively the following one:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-function twice (const x : int) : int is x + x
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
 let twice (x : int) = x + x
 ```
-
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
-const twice = (x: int): int => x + x;
+const twice = (x: int) => x + x;
 ```
 
 </Syntax>
@@ -43,20 +35,6 @@ Assume that we want to make sure that this function works as expected,
 because it will be used as part of a major development. We could write
 the following tests:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-function simple_tests (const f : int -> int) is {
-  (* Test 1 *)
-  assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
-  (* Test 2 *)
-  assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
-} with unit;
-
-const test = simple_tests (twice);
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -94,16 +72,6 @@ These tests check that `twice`:
 
 The function implemented (`twice`) above passes the tests:
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
-// Outputs:
-// Everything at the top-level was executed.
-// - test exited with value ().
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -129,13 +97,6 @@ ligo run test gitlab-pages/docs/advanced/src/mutation.jsligo
 The implementation is, in fact, correct. However, it is easy to
 make a mistake and write the following implementation instead:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-function twice (const x : int) : int is x * x
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -171,13 +132,6 @@ We can see now how to do mutation testing in LIGO for the original
 implementation for `twice` (`x + x`). The primitive from the testing
 framework that we will use is
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-function Test.mutation_test<a,b> : a -> (a -> b) -> option (b * mutation)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -209,19 +163,6 @@ a function type), and these functions' return type (i.e. `'b`) will be
 For the example above, the function that will be applied is `simple_tests`,
 and the value to mutate is `twice`:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-const test_mutation =
-  case Test.mutation_test (twice, simple_tests) of [
-    None -> Unit
-  | Some (_, mutation) ->
-      { Test.log (mutation) }
-      with failwith ("Some mutation also passes the tests! ^^")
-  ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -250,27 +191,6 @@ const test_mutation =
 
 Running the tests again, the following output is obtained:
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
-// Outputs:
-// Mutation at: File "gitlab-pages/docs/advanced/src/mutation.ligo", line 2, characters 2-7:
-//   1 | function twice (const x : int) : int is
-//   2 |   x + x
-//   3 |
-//
-// Replacing by: MUL(x ,
-// x).
-// File "gitlab-pages/docs/advanced/src/mutation.ligo", line 20, characters 31-82:
-//  19 |   | Some (_, mutation) -> { Test.log(mutation) }
-//  20 |                           with failwith("Some mutation also passes the tests! ^^")
-//  21 |   end
-//
-// Test failed with "Some mutation also passes the tests! ^^"
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -321,20 +241,6 @@ implementation `x * x` would not be detected by the tests. We need to
 update the test suite. In this case, we could propose to add a new
 test:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-function simple_tests (const f : int -> int) is {
-  (* Test 1 *)
-  assert (Test.michelson_equal (Test.run (f, 0), Test.eval (0)));
-  (* Test 2 *)
-  assert (Test.michelson_equal (Test.run (f, 2), Test.eval (4)));
-  (* Test 3 *)
-  assert (Test.michelson_equal (Test.run (f, 1), Test.eval (2)));
-} with Unit;
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -370,17 +276,6 @@ Running the mutation testing again after this adjustment, no mutation
 (among those tried) will pass the tests, giving extra confidence in
 the tests proposed:
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
-// Outputs:
-// Everything at the top-level was executed.
-// - test exited with value ().
-// - test_mutation exited with value ().
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -411,36 +306,6 @@ The following is an example on how to mutate a contract. For that, we
 will use a variation of the canonical LIGO contract with only two
 entrypoints `Increment` and `Decrement`:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-// This is testnew.ligo
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-
-type return is list (operation) * storage
-
-// Two entrypoints
-function add (const store : storage; const delta : int) : storage is
-  store + delta
-function sub (const store : storage; const delta : int) : storage is
-  store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-
-function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),    // No operations
-  case action of [
-    Increment (n) -> add (store, n)
-  | Decrement (n) -> sub (store, n)
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -506,24 +371,6 @@ an argument (of the same type as `main` above), and then tests that
 the entrypoint `Increment(7)` works as intended on an initial storage
 `5`:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=frontpage
-// This continues mutation-contract.ligo
-
-function originate_and_test (const mainf : parameter * storage -> return) is {
-  const initial_storage = 5;
-  const (taddr, _, _) = Test.originate (mainf, initial_storage, 0tez);
-  const contr = Test.to_contract (taddr);
-  const _ = Test.transfer_to_contract_exn (contr, Increment (7), 1mutez);
-  const storage = Test.get_storage (taddr);
-  assert (storage = initial_storage + 7);
-} with unit;
-
-const test = originate_and_test (main);
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=frontpage
@@ -561,19 +408,6 @@ const test = originate_and_test(main);
 
 For performing mutation testing as before, we write the following test:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-const test_mutation =
-  case Test.mutation_test (main, originate_and_test) of [
-    None -> unit
-  | Some (_, mutation) ->
-      { Test.log(mutation) }
-      with failwith ("Some mutation also passes the tests! ^^")
-  ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -601,27 +435,6 @@ const test_mutation =
 
 Running this test, the following output is obtained:
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo run test gitlab-pages/docs/advanced/src/mutation-contract.ligo
-// Outputs:
-// Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.ligo", line 14, characters 2-15:
-//  13 | function sub (const store : storage; const delta : int) : storage is
-//  14 |   store - delta
-//  15 |
-
-// Replacing by: ADD(store ,
-// delta).
-// File "gitlab-pages/docs/advanced/src/mutation-contract.ligo", line 42, characters 31-82:
-//  41 |   | Some (_, mutation) -> { Test.log(mutation) }
-//  42 |                           with failwith("Some mutation also passes the tests! ^^")
-//  43 |   end
-
-// Test failed with "Some mutation also passes the tests! ^^"
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -672,21 +485,6 @@ test: we take this as a warning signalling that the test above does not
 cover the `Decrement` entrypoint. We can fix this by adding a new call
 to the `Decrement` entrypoint in the test above:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-function originate_and_test(const mainf : parameter * storage -> return) is{
-  const initial_storage = 5;
-  const (taddr, _, _) = Test.originate(mainf, initial_storage, 0tez);
-  const contr = Test.to_contract(taddr);
-  const _ = Test.transfer_to_contract_exn(contr, Increment(7), 1mutez);
-  const _ = Test.transfer_to_contract_exn(contr, Decrement(3), 1mutez);
-  const storage = Test.get_storage(taddr);
-  assert (storage = initial_storage + 4);
-} with unit;
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -726,13 +524,6 @@ collect all mutants that make the passed function correctly terminate.
 Its type is similar to that of `Test.mutation_test`, but instead of
 returning an optional type, it returns a list:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-Test.mutation_test_all : 'a -> ('a -> 'b) -> list ('b * mutation)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -752,24 +543,6 @@ Test.mutation_test_all : (value: 'a, tester: ('a -> 'b)) => list <['b, mutation]
 The example above can be modified to collect first all mutants, and
 then process the list:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-const test_mutation =
-  case Test.mutation_test_all (main, originate_and_test) of [
-    nil -> unit
-  | ms -> {
-      for m in list ms {
-        const (_, mutation) = m;
-        const path = Test.save_mutation(".", mutation);
-        Test.log("saved at:");
-        Test.log(path)
-      }
-    } with failwith ("Some mutation also passes the tests! ^^")
-  ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -808,13 +581,6 @@ const test_mutation =
 In this case, the list of mutants is processed by saving each mutation
 to a file with the help of:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-Test.save_mutation : string -> mutation -> option (string)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -843,37 +609,6 @@ places. A good example of this can be an assertion that is checking
 some invariant. To prevent such mutations, the attribute
 `@no_mutation` can be used:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-// This is testnew.ligo
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-
-type return is list (operation) * storage
-
-// Two entrypoints
-function add (const store : storage; const delta : int) : storage is
-  store + delta
-[@no_mutation] function sub (const store : storage; const delta : int) : storage is
-  store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-function main (const action : parameter; const store : storage) : return is {
-  [@no_mutation] const _ = assert (0 = 0);
-} with
- ((nil : list (operation)),    // No operations
-  case action of [
-    Increment (n) -> add (store, n)
-  | Decrement (n) -> sub (store, n)
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip

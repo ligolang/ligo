@@ -27,7 +27,6 @@ function SyntaxSwitch(props) {
         props.onSyntaxChange(e.target.value);
       }}
     >
-      <option value="pascaligo">PascaLIGO</option>
       <option value="cameligo">CameLIGO</option>
       <option value="jsligo">JsLIGO</option>
     </select>

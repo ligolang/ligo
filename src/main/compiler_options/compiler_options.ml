@@ -63,7 +63,7 @@ type t =
 let warn_unused_rec ~syntax should_warn =
   match syntax with
   | Some Syntax_types.JsLIGO -> false
-  | Some CameLIGO | Some PascaLIGO | None -> should_warn
+  | Some CameLIGO | None -> should_warn
 
 
 let make

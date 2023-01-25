@@ -129,6 +129,7 @@ let%expect_test _ =
     - (_, ({c = _; b = Three; a = _}, _))
     - (_, ({c = _; b = Two; a = _}, _)) |}]
 
+(*
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "t_r_c.ligo" ];
   [%expect
@@ -144,6 +145,7 @@ let%expect_test _ =
     Here are examples of cases that are not matched:
     - (_, (record [c = _; b = Three; a = _], _))
     - (_, (record [c = _; b = Two; a = _], _)) |}]
+*)
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "r_t_c.mligo" ];
@@ -159,22 +161,6 @@ let%expect_test _ =
     Here are examples of cases that are not matched:
     - {c = _; b = ((_, _), (Four, _)); a = _}
     - {c = _; b = ((_, _), (Three, _)); a = _} |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "r_t_c.ligo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/r_t_c.ligo", line 7, character 2 to line 10, character 3:
-      6 | function s (const x : t) is
-      7 |   case x of [
-      8 |   | record [ a = _ ; c = _ ; b = ((x, y), (One, z)) ] -> Unit
-      9 |   | record [ a = _; b = ((x, y), (Two, z)) ; c = _ ] -> Unit
-     10 |   ]
-
-    Error : this pattern-matching is not exhaustive.
-    Here are examples of cases that are not matched:
-    - record [c = _; b = ((_, _), (Four, _)); a = _]
-    - record [c = _; b = ((_, _), (Three, _)); a = _] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "r_r_c.mligo" ];

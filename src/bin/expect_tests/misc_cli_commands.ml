@@ -1,6 +1,8 @@
+(*
 open Cli_expect
 
 (* evaluate-expr *)
+
 let%expect_test _ =
   run_ligo_good
     [ "run"
@@ -20,8 +22,9 @@ let%expect_test _ =
     ];
   [%expect {|
     2 |}]
-
+*)
 (* list-declarations *)
+(*
 let%expect_test _ =
   run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.ligo" ];
   [%expect
@@ -81,3 +84,4 @@ let%expect_test _ =
   [%expect {| Please check protocol name. |}];
   run_ligo_bad [ "repl"; "cameligo"; "--sender"; "foo" ];
   [%expect {| Please check run options. |}]
+*)

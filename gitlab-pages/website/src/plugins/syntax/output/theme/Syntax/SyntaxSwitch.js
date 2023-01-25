@@ -20,12 +20,8 @@ function SyntaxSwitch(props) {
       localStorage.setItem("syntax", e.target.value);
       props.onSyntaxChange(e.target.value);
     }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "pascaligo"
-  }, "PascaLIGO"), /*#__PURE__*/React.createElement("option", {
-    value: "cameligo"
-  }, "CameLIGO"), /*#__PURE__*/React.createElement("option", {
-    value: "jsligo"
-  }, "JsLIGO"));
+  },
+  /*#__PURE__*/React.createElement("option", {value: "cameligo"}, "CameLIGO"),
+  /*#__PURE__*/ React.createElement("option", {value: "jsligo"}, "JsLIGO"));
 }
 export default SyntaxSwitch;

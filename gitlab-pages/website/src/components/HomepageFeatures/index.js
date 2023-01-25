@@ -11,7 +11,7 @@ const FEATURES = [
     image: 'img/ligo_features/syntax-agnostic.svg',
     title: 'Polyglot',
     content:
-      'Code in your language. Write PascaLIGO, CameLIGO, JsLIGO or add your own syntax.'
+      'Code in your language. Write in CameLIGO, JsLIGO or add your own syntax.'
   },
   {
     image: 'img/ligo_features/easy-integration.svg',

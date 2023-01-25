@@ -9,7 +9,7 @@ In this guide, we will look into contract interactions on Tezos. We will provide
 
 ## Internal operations
 
-When you make a transaction to a contract, this contract may, in turn, emit other operations. These operations are called "internal". There are three kinds of internal operations:
+When you make a transaction to a contract, this contract may, in turn, emit other operations. Those operations are called "internal". There are three kinds of internal operations:
 1. Transaction – an operation that transfers value and, if the callee is an originated contract, executes the code of the callee.
 2. Origination – creates a new smart contract.
 3. Delegation – sets a delegate for the current contract.
@@ -29,27 +29,9 @@ However, there are legit reasons for using internal operations, including the fo
 3. You implement a standard that explicitly forbids you to extend the functionality.
 
 ## Internal transactions in LIGO
+
 The simplest example of an internal transaction is sending Tez to a contract. Note that in Tezos, implicit accounts owned by people holding private keys are contracts as well. Implicit accounts have no code and accept _unit_ as the parameter. Consider the following code snippet:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type parameter is address
-
-type storage is unit
-
-function main (const destination_addr : parameter; const _ : storage) is {
-  const maybe_contract = Tezos.get_contract_opt (destination_addr);
-  const destination_contract
-  = case maybe_contract of [
-      Some (contract) -> contract
-    | None -> failwith ("Contract does not exist")
-    ];
-  const op = Tezos.transaction (Unit, (Tezos.get_amount ()), destination_contract)
-} with (list[op], Unit)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -72,34 +54,10 @@ let main (destination_addr, _ : parameter * storage) =
 
 It accepts a destination address as the parameter. Then we need to check whether the address points to a contract that accepts a unit. We do this with `Tezos.get_contract_opt`. This function returns `Some (value)` if the contract exists and the parameter type is correct. Otherwise, it returns `None`. In case it is `None`, we fail with an error, otherwise we use `Tezos.transaction` to forge the internal transaction to the destination contract.
 
-> Note: since `Tezos.transaction` is called with unit as its first argument, LIGO infer that `destination_addr` has to point to a contract that accepts unit 
+> Note: since `Tezos.transaction` is called with unit as its first argument, LIGO infer that `destination_addr` has to point to a contract that accepts unit
 
 Let us also examine a contract that stores the address of another contract and passes an argument to it. Here is how this "proxy" can look like:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-(* examples/contracts/ligo/Proxy.ligo *)
-
-type parameter is int
-
-type storage is address
-
-function get_add_entrypoint (const addr : address) is {
-  const maybe_contract = Tezos.get_contract_opt (addr)
-} with
-    case maybe_contract of [
-      Some (contract) -> contract
-    | None -> failwith ("Callee does not exist")
-    ]
-
-function main (const param : parameter; const callee_addr : storage) is {
-  const callee = Tezos.get_contract (callee_addr);
-  const op = Tezos.transaction (param, 0mutez, callee)
-} with (list [op], callee_addr)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -122,19 +80,13 @@ let main (param, callee_addr : parameter * storage) =
 
 </Syntax>
 
+To call a contract, we need to add a type annotation `: int contract
+option` for `Tezos.get_contract_opt`. LIGO knows that
+`Tezos.get_contract_opt` returns a `contract option` but at the time
+of type inference it does not know that the callee accepts an
+`int`. In this case, we expect the callee to accept an `int`. Such a
+callee can be implemented like this:
 
-To call a contract, we need to add a type annotation `: int contract option` for `Tezos.get_contract_opt`. LIGO knows that `Tezos.get_contract_opt` returns a `contract option` but at the time of type inference it does not know that the callee accepts an `int`. In this case, we expect the callee to accept an `int`. Such a callee can be implemented like this:
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-(* examples/contracts/ligo/SimpleCounter.ligo *)
-
-function main (const param : int; const storage : int) is
-  (list [], param + storage)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -145,28 +97,8 @@ let main (param, storage : int * int) = [], param + storage
 
 </Syntax>
 
-
 But what if we want to make a transaction to a contract but do not know the full type of its parameter? For example, we may know that some contract accepts `Add 5` as its parameter, but we do not know what other entrypoints are there.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type parameter is
-    Set of int | Add of int | Subtract of int | Multiply of int | Reset
-
-function main (const param : parameter; const storage : int) is {
-  const nop = list []
-} with
-    case param of [
-      Set (n) -> (nop, n)
-    | Add (n) -> (nop, storage + n)
-    | Subtract (n) -> (nop, storage - n)
-    | Multiply (n) -> (nop, storage * n)
-    | Reset -> (nop, 0)
-    ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -204,30 +136,6 @@ In Tezos, we are not required to provide the _full_ type of the contract paramet
 
 To specify an entrypoint, we can use `Tezos.get_entrypoint_opt` instead of `Tezos.get_contract_opt`. It accepts an extra argument with an entrypoint name:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-(* contracts/examples/ligo/EntrypointProxy.ligo *)
-
-type parameter is int
-
-type storage is address
-
-function get_add_entrypoint (const addr : address) is {
-  const entrypoint = Tezos.get_entrypoint_opt ("%add", addr)
-} with
-    case entrypoint of [
-      Some (contract) -> contract
-    | None -> failwith ("The entrypoint does not exist")
-    ]
-
-function main (const param : parameter; const callee_addr : storage) is {
-  const add = get_add_entrypoint (callee_addr);
-  const op = Tezos.transaction (param, 0mutez, add)
-} with (list [op], callee_addr)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -261,17 +169,9 @@ There are several high-level languages for Tezos, and you should not expect that
 
 Internally, Tezos stores and operates on contracts in Michelson. Currently, Michelson does not support record and variant types of arbitrary length natively. It only has `pair a b` and `or a b`, each containing just _two_ type parameters.
 
-<Syntax syntax="pascaligo">
-
-LIGO automatically converts a complex type `type t is Hello | L | I | G | O` into an annotated left-balanced tree with items sorted alphabetically: `(or (or (or (unit %g) (unit %hello)) (or (unit %i) (unit %l))) (unit %o))`. LIGO applies the same transformation to record types:
-```pascaligo
-type t is record [hello : int; l : nat; i : bytes; g : string; o : address]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
-LIGO automatically converts a complex type `type t = Hello | L | I | G | O` into an annotated left-balanced tree with items sorted alphabetically: `(or (or (or (unit %g) (unit %hello)) (or (unit %i) (unit %l))) (unit %o))`. LIGO applies the same transformation to record types: 
+LIGO automatically converts a complex type `type t = Hello | L | I | G | O` into an annotated left-balanced tree with items sorted alphabetically: `(or (or (or (unit %g) (unit %hello)) (or (unit %i) (unit %l))) (unit %o))`. LIGO applies the same transformation to record types:
 ```cameligo
 type t = {hello : int; l : nat; i : bytes; g : string; o : address}
 ```
@@ -353,33 +253,7 @@ In theory, one can use a callback – the callee could emit an operation back to
 * Some contracts use `Tezos.get_sender` value for authorisation. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorised_ by the sender.
 
 Let us look at a simple access control contract with a "view" entrypoint:
-<Syntax syntax="pascaligo">
 
-```pascaligo
-(* examples/contracts/ligo/AccessController.ligo *)
-
-type parameter is
-    Call of (unit -> operation) | IsWhitelisted of (address * contract (bool))
-
-type storage is record [senders_whitelist : set (address)]
-
-function main (const p : parameter; const s : storage) is {
-  const op
-  = case p of [
-      Call (op) ->
-        if Set.mem ((Tezos.get_sender ()), s.senders_whitelist)
-        then op (Unit)
-        else failwith ("Sender is not whitelisted")
-    | IsWhitelisted (addr_and_callback) -> {
-          const addr = addr_and_callback.0;
-          const callback_contract = addr_and_callback.1;
-          const whitelisted = Set.mem (addr, s.senders_whitelist)
-        } with Tezos.transaction (whitelisted, 0mutez, callback_contract)
-    ]
-} with (list [op], s)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -409,42 +283,6 @@ let main (p, s : parameter * storage) =
 
 Now imagine we want to control a contract with the following interface (we omit the full code of the contract for clarity; you can find it in the [examples folder](https://gitlab.com/ligolang/ligo/-/tree/dev/gitlab-pages/docs/tutorials/inter-contract-calls/examples)):
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-(* examples/contracts/ligo/PausableToken.ligo *)
-
-type parameter is SetPaused of bool | Transfer of address * address * nat
-
-type storage is
-  record [ledger : big_map (address, nat); owner : address; paused : bool]
-
-function transfer
-  (const src : address;
-   const dst : address;
-   const amount_ : nat;
-   const storage : storage) is (* ... *)
-
-function main (const p : parameter; const s : storage) is {
-  const nop = list []
-} with
-    case p of [
-      Transfer (arg) ->
-        if s.paused
-        then
-          failwith ("The contract is paused")
-        else {
-            const src = arg.0;
-            const dst = arg.1;
-            const amount_ = arg.2
-          } with (nop, transfer (src, dst, amount_, s))
-    | SetPaused (paused) ->
-        if ((Tezos.get_sender ()) =/= s.owner)
-        then failwith ("Access denied")
-        else (nop, s with record [paused = paused])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -489,17 +327,6 @@ So far, we have covered only one type of operation – transaction. But we can _
 
 For example, we can create a new counter contract with
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=solo_create_contract
-const op = Tezos.create_contract(
-    function (const p : int; const s : int) is (list [], p + s),
-    None,
-    0mutez,
-    1)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=solo_create_contract
@@ -517,32 +344,6 @@ let op = Tezos.create_contract
 
 `CreateAndCall` contract in the examples folder shows how we can call the created contract with a callback mechanism:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-(* examples/contracts/ligo/CreateAndCall.ligo *)
-
-// Here we create two operations: the one that will originate
-// the contract, and an operation to self, that will continue
-// the execution after the contract is originated.
-
-function create_and_call (const st : list (address)) is {
-  const create_contract_result =
-      Tezos.create_contract(
-          (function (const p : int; const s : int) is
-            (list [], p + s)),
-          None,
-          0mutez,
-          1
-      );
-  const create_op = create_contract_result.0;
-  const addr = create_contract_result.1;
-  const call_op =
-      Tezos.transaction((addr, 41), 0mutez,Tezos.self ("%callback"))
-} with (list [create_op; call_op], (addr # st))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo

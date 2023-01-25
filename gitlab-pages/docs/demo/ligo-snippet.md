@@ -12,62 +12,17 @@ The user will see Ligo code with syntax highlighting, and an action button allow
 
 Each code snippet can have preset Ligo Web IDE configurations (e.g. entrypoint, parameters or storage). These configurations are optional and will be passed onto the Ligo Web IDE when present. This will allow examples to provide the proper configurations for the reader to experiment with.
 
-The “ligo-snippets” React component uses the CodeJar editor (https://github.com/antonmedv/codejar), which is extremely lightweight (only 2kB).  It currently supports syntax highlighting for PascaLigo and CameLigo.. Additionally, it has both a light and dark theme mode.
-
-
+The “ligo-snippets” React component uses the CodeJar editor
+(https://github.com/antonmedv/codejar), which is extremely lightweight
+(only 2kB).  It currently supports syntax highlighting for
+CameLigo. Additionally, it has both a light and dark theme mode.
 
 <Tabs
-  defaultValue="pascaligo"
+  defaultValue="cameligo"
   values={[
-    { label: 'PascaLIGO', value: 'pascaligo', },
     { label: 'CameLIGO', value: 'cameligo', },
   ]
 }>
-<TabItem value="pascaligo">
-
-```pascaligo {"name": "Ligo Introduction Example", "editor": true}
-(*_*
-  name: PascaLIGO Contract
-  language: pascaligo
-  compile:
-    entrypoint: main
-  dryRun:
-    entrypoint: main
-    parameters: Increment (1)
-    storage: 999
-  deploy:
-    entrypoint: main
-    storage: 999
-  evaluateValue:
-    entrypoint: ""
-  evaluateFunction:
-    entrypoint: add
-    parameters: (5, 6)
-  generateDeployScript:
-    entrypoint: main
-    storage: 999
-*_*)
-// variant defining pseudo multi-entrypoint actions
-type action is
-| Increment of int
-| Decrement of int
-
-function add (const a : int; const b : int) : int is a + b
-
-function subtract (const a : int; const b : int) : int is a - b
-
-// real entrypoint that re-routes the flow based
-// on the action provided
-
-function main (const p : action; const s : int) : list (operation) * int is
-  ((nil : list (operation)),
-   case p of [
-     Increment (n) -> add (s, n)
-   | Decrement (n) -> subtract (s, n)
-   ])
-```
-
-</TabItem>
 <TabItem value="cameligo">
 
 ```cameligo {"name": "Ligo Introduction Example", "editor": true}

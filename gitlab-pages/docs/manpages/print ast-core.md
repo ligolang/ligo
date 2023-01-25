@@ -21,9 +21,7 @@ The path to root of the project.
 apply the self pass
 
 **--syntax SYNTAX**
-the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, and .jsligo respectively). (alias: -s)
+the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo, and .jsligo respectively). (alias: -s)
 
 **-help**
 print this help text and exit (alias: -?)
-
-

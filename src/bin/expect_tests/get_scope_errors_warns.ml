@@ -68,6 +68,7 @@ let%expect_test _ =
     Invalid record field "boo" in record.
 
 |}];
+(*
   run_ligo_good
     [ "info"
     ; "get-scope"
@@ -134,6 +135,7 @@ let%expect_test _ =
 
     Variable "titi" not found.
  |}];
+*)
   run_ligo_good
     [ "info"
     ; "get-scope"

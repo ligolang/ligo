@@ -1,6 +1,6 @@
 import React from "react";
 
-const valid = ["jsligo", "cameligo", "pascaligo"];
+const valid = ["jsligo", "cameligo"];
 
 const ctx = {
   syntax: (() => {

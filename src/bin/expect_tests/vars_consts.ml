@@ -6,17 +6,6 @@ let good_test s = test "" ^ "vars_consts/" ^ s
 (* Negatives *)
 
 let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_test "match.ligo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/vars_consts/match.ligo", line 9, characters 8-9:
-      8 |     | Some (s) -> {
-      9 |         s := 3;
-     10 |         result := s; }
-
-    Mutable variable "s" not found. |}]
-
-let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "match.jsligo" ];
   [%expect
     {|
@@ -27,6 +16,7 @@ let%expect_test _ =
 
     Mutable variable "n" not found. |}]
 
+(*
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "assign_const_param.ligo" ];
   [%expect
@@ -48,6 +38,7 @@ let%expect_test _ =
       5 |   } with x + y + z
 
     Mutable variable "x" not found. |}]
+*)
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "assign_consts.jsligo" ];
@@ -60,6 +51,7 @@ let%expect_test _ =
 
     Mutable variable "x" not found. |}]
 
+(*
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "assign_const_params.ligo" ];
   [%expect
@@ -95,6 +87,7 @@ let%expect_test _ =
       4 |   } with bar
 
     Invalid capture of mutable variable "x" |}]
+*)
 
 (* Dead test -- Alistair. Since [@var] is no-longer permitted in CameLIGO *)
 (* let%expect_test _ =
@@ -152,6 +145,7 @@ let%expect_test _ =
 
     Invalid capture of mutable variable "x" |}]
 
+(*
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "multiple_vars_1.ligo" ];
   [%expect
@@ -184,3 +178,4 @@ let%expect_test _ =
       6 |   } with unit;
 
     Invalid capture of mutable variable "x" |}]
+*)

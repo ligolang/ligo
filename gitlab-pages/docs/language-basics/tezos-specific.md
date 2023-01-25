@@ -24,16 +24,6 @@ return type of `Byte.unpack` is an option that needs to be annotated.
 > the corresponding LIGO functions without doing your homework first.
 
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=a
-function id_string (const p : string) : option (string) is {
-  const packed : bytes = Bytes.pack (p)
-} with Bytes.unpack (packed)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
@@ -64,19 +54,6 @@ if this were not the case, hashes are much smaller than keys, and
 storage on blockchains comes at a cost premium. You can hash keys with
 a predefined functions returning a value of type `key_hash`.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is {
-  var ret : bool := False;
-  var kh2 : key_hash := Crypto.hash_key (k2);
-  if kh1 = kh2 then ret := True
-} with (ret, kh2)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -111,19 +88,6 @@ asynchronously. You can do this in LIGO using the `key` and
 > because that would require storing a private key on chain, at which
 > point it is not... private anymore.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-function check_signature
-    (const pk     : key;
-     const signed : signature;
-     const msg    : bytes) : bool
-  is Crypto.check (pk, signed, msg)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -153,15 +117,6 @@ can do it with `Tezos.get_self_address`.
 > contract is only allowed at the top-level. Using it in an embedded
 > function will cause an error.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=d
-const current_addr : address = Tezos.get_self_address()
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
@@ -186,17 +141,6 @@ The return value is a pair of type `(operation * address)`.
 > ⚠️ Due to limitations in Michelson, `Tezos.create_contract` first argument
 > must be inlined and must not contain references to free variables
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=e
-const origination : operation * address = Tezos.create_contract (
-  function (const p : nat; const s : string): list(operation) * string is (nil, s),
-  None,
-  3tz,
-  "initial_storage")
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
@@ -212,7 +156,7 @@ let origination : operation * address = Tezos.create_contract
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let origination = Tezos.create_contract ((p: nat, s: string) => 
+let origination = Tezos.create_contract ((p: nat, s: string) =>
 [list([]), s],
   None(),
   3 as tez,

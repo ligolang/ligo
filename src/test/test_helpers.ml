@@ -63,7 +63,7 @@ let test_w_all name test =
       let name = Format.asprintf "%s (%s)" name s in
       let f ~raise () = test ~raise file in
       test_w name f)
-    [ "ligo"; "mligo"; "jsligo" ]
+    [ "mligo"; "jsligo" ]
 
 
 let wrap_test ~no_colour name f =

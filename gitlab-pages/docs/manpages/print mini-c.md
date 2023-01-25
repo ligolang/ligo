@@ -21,7 +21,7 @@ Apply Mini-C optimizations as if compiling ENTRY_POINT
 The path to root of the project.
 
 **--syntax SYNTAX**
-the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, and .jsligo respectively). (alias: -s)
+the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo, and .jsligo respectively). (alias: -s)
 
 **--warn-unused-rec**
 warn about unused recursion in a recursive function
@@ -31,5 +31,3 @@ choose protocol's types/values pre-loaded into the LIGO environment (kathmandu ,
 
 **-help**
 print this help text and exit (alias: -?)
-
-

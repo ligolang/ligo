@@ -20,16 +20,6 @@ string literal containing the Michelson code to be injected in the
 generated Michelson and the type (as a function) of the Michelson
 code.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-  function michelson_add (var n : nat * nat ) : nat is {
-    const f : nat * nat -> nat =
-      [%Michelson ({| { UNPAIR ; ADD } |} : nat * nat -> nat)];
-  } with f (n)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -69,15 +59,6 @@ example, let's see what happens when we compile an embedded Michelson
 expression that pushes some value on the stack, then drops it
 immediately, and then continues as a regular increment function.
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo compile expression pascaligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)]"
-// Outputs:
-// { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -88,7 +69,6 @@ ligo compile expression cameligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat
 
 </Syntax>
 
-
 As we can see, the embedded Michelson code was not modified. However,
 if the resulting function is applied, then the embedded Michelson code
 could be modified/optimised by the compiler. To exemplify this
@@ -96,15 +76,6 @@ behaviour, an application can be introduced in the example above by
 eta-expanding. In this case, the first two instructions will be
 removed by LIGO because they have no effect on the final result.
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo compile expression pascaligo "function (const n : nat) : nat is ([%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)])(n)"
-// Outputs:
-// { PUSH nat 1 ; ADD }
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -127,26 +98,6 @@ read more about it
 We will use the Michelson instruction `NEVER` to resolve a forbidden
 branch when matching on the parameter of our contract:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-type parameter is
-  Increment of int
-| Extend of never
-
-type storage is int
-
-function main (const action : parameter; const store : storage) : list (operation) * storage is
-  ((nil : list (operation)),
-   case action of [
-     Increment (n) -> store + n
-   | Extend (k) -> {
-       const f : never -> int = [%Michelson ({| { NEVER } |} : never -> int)];
-     } with f (k)
-   ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -189,13 +140,6 @@ const main = (action: parameter, store: storage) : [list<operation>, storage] =>
 Assuming we have saved those contents in a file with name `never`, we
 can compile it using the following command:
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.ligo --entry-point main
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell

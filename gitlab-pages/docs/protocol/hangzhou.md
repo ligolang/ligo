@@ -12,9 +12,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 ### New types
 
-<SyntaxTitle syntax="pascaligo">
-type chest
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type chest
 </SyntaxTitle>
@@ -24,9 +21,6 @@ type chest
 </SyntaxTitle>
 A type for chests
 
-<SyntaxTitle syntax="pascaligo">
-type chest_key
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type chest_key
 </SyntaxTitle>
@@ -36,12 +30,6 @@ type chest_key
 </SyntaxTitle>
 A type for chest keys
 
-<SyntaxTitle syntax="pascaligo">
-type chest_opening_result is
-    Ok_opening of bytes
-  | Fail_decrypt
-  | Fail_timelock
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type chest_opening_result =
     Ok_opening of bytes
@@ -62,9 +50,6 @@ A type for the result of chest opening, see `Tezos.open_chest`
 
 #### Tezos
 
-<SyntaxTitle syntax="pascaligo">
-val open_chest : chest_key -> chest -> nat -> chest_opening_result
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val open_chest : chest_key -> chest -> nat -> chest_opening_result
 </SyntaxTitle>
@@ -73,9 +58,6 @@ val open_chest : chest_key -> chest -> nat -> chest_opening_result
 let open_chest : chest_key => chest => nat => chest_opening_result
 </SyntaxTitle>
 
-<SyntaxTitle syntax="pascaligo">
-val call_view&lt;arg,reg&gt; : string -> arg -> address -> option (ret)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val call_view : string -> 'arg -> address -> 'ret option
 </SyntaxTitle>
@@ -84,10 +66,6 @@ val call_view : string -> 'arg -> address -> 'ret option
 let call_view : string => 'arg => address => option &lt;&apos;ret&gt;
 </SyntaxTitle>
 
-
-<SyntaxTitle syntax="pascaligo">
-function constant: string -> 'a
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val constant : string -> 'a
 </SyntaxTitle>
@@ -98,11 +76,8 @@ let constant : string => 'a
 
 #### Test
 
-new signature for originate_from_file:
+New signature for originate_from_file:
 
-<SyntaxTitle syntax="pascaligo">
-val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> (address * michelson_program * int)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_from_file : string -> string -> string list -> michelson_program -> tez -> (address * michelson_program * int)
 </SyntaxTitle>
@@ -113,9 +88,6 @@ let originate_from_file = (filepath: string, entrypoint: string , views : list &
 
 Originate a contract with a path to the contract file, an entrypoint, a list of views, an initial storage and an initial balance.
 
-<SyntaxTitle syntax="pascaligo">
-val create_chest : bytes -> nat -> chest * chest_key
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_chest : bytes -> nat -> chest * chest_key
 </SyntaxTitle>
@@ -127,9 +99,6 @@ let create_chest : bytes => nat => [chest , chest_key]
 Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key
 Exposes tezos timelock library function [create_chest_and_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L197)
 
-<SyntaxTitle syntax="pascaligo">
-val create_chest_key : chest -> nat -> chest_key
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_chest_key : chest -> nat -> chest_key
 </SyntaxTitle>
@@ -210,19 +179,6 @@ let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-function open_or_fail (const ck : chest_key; const c : chest; const @time : nat) : bytes is
-  case Tezos.open_chest (ck, c, @time) of [
-    Ok_opening (b) -> b
-  | Fail_decrypt -> (failwith("decrypt"))
-  | Fail_timelock -> (failwith("timelock"))
-  ]
-```
-
-</Syntax>
-
 
 ### On-chain views
 
@@ -287,24 +243,6 @@ let view3 = ([_ , _s]: [unit , storage]) : int => 42;
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=views
-type storage is string
-function main (const _ : unit ; const s : storage) : list (operation) * storage is (nil, s)
-
-(* view 'view1', simply returns the storage *)
-[@view] function view1 (const _ : unit; const s: storage) : storage is s
-
-(* view 'v2', returns true if the storage has a given length *)
-[@view] function v2 (const expected_length : nat; const s: storage) : bool is (String.length (s) = expected_length)
-
-(* view 'v3' returns a constant int *)
-[@view] function v3 (const _ : unit; const _ : storage) is 42
-```
-
-</Syntax>
-
 > Note: `[@view]` attribute is only supported for top-level functions.
 >
 > The use of `[@view]` attribute anywhere other than top-level will be ignored.
@@ -334,15 +272,8 @@ let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> 
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=views
-function view_call (const name : string; const parameter : int; const addr: address) : option (int) is Tezos.call_view ("sto_plus_n", 1, addr)
-```
-
-</Syntax>
-
 ### Global constant
 
-The new primitive `Tezos.constant` allows you to use a predefined constant already registered on chain.
-It accepts a hash in the form of a string and will require a type annotation.
+The new primitive `Tezos.constant` allows you to use a predefined
+constant already registered on chain.  It accepts a hash in the form
+of a string and will require a type annotation.
