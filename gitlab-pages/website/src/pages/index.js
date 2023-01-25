@@ -44,7 +44,7 @@ export default function Home() {
                 </li>
                 <li className="primary">
                   <a
-                    href="https://ligo-ide.gcp.marigold.dev"
+                    href="https://ligo-webide-v2.gcp.marigold.dev"
                     target="_blank"
                   >
                     WebIde V2 beta
