@@ -9,14 +9,6 @@
  (deps all_the_things.mligo))
 
 (rule
- (targets all_the_things.ligo_output)
- (action
-  (with-stdout-to
-   all_the_things.ligo_output
-   (run ligo "print" "pretty" "all_the_things.ligo")))
- (deps all_the_things.ligo))
-
-(rule
  (targets all_the_things.jsligo_output)
  (action
   (with-stdout-to
@@ -30,11 +22,6 @@
  (alias runtest)
  (action
   (diff expected/all_the_things.mligo.expected all_the_things.mligo_output)))
-
-(rule
- (alias runtest)
- (action
-  (diff expected/all_the_things.ligo.expected all_the_things.ligo_output)))
 
 (rule
  (alias runtest)
@@ -54,13 +41,6 @@
  (alias runtest)
  (action
   (ignore-stdout
-   (run ligo print cst all_the_things.ligo_output -s pascaligo)))
- (deps all_the_things.ligo_output))
-
-(rule
- (alias runtest)
- (action
-  (ignore-stdout
    (run ligo print cst all_the_things.jsligo_output -s jsligo)))
  (deps all_the_things.jsligo_output))
 
@@ -73,14 +53,6 @@
    all_the_things.mligo_output2
    (run ligo print pretty all_the_things.mligo_output -s cameligo)))
  (deps all_the_things.mligo_output))
-
-(rule
- (targets all_the_things.ligo_output2)
- (action
-  (with-stdout-to
-   all_the_things.ligo_output2
-   (run ligo print pretty all_the_things.ligo_output -s pascaligo)))
- (deps all_the_things.ligo_output))
 
 (rule
  (targets all_the_things.jsligo_output2)
@@ -101,12 +73,6 @@
 (rule
  (alias runtest)
  (action
-  (diff all_the_things.ligo_output all_the_things.ligo_output2))
- (deps all_the_things.ligo_output all_the_things.ligo_output2))
-
-(rule
- (alias runtest)
- (action
   (diff all_the_things.jsligo_output all_the_things.jsligo_output2))
  (deps all_the_things.jsligo_output all_the_things.jsligo_output2))
 
@@ -119,14 +85,6 @@
    all_the_things.mligo_ast
    (run ligo print ast-imperative all_the_things.mligo)))
  (deps all_the_things.mligo))
-
-(rule
- (targets all_the_things.ligo_ast)
- (action
-  (with-stdout-to
-   all_the_things.ligo_ast
-   (run ligo print ast-imperative all_the_things.ligo)))
- (deps all_the_things.ligo))
 
 (rule
  (targets all_the_things.jsligo_ast)
@@ -145,14 +103,6 @@
  (deps all_the_things.mligo_output))
 
 (rule
- (targets all_the_things.ligo_ast_pretty)
- (action
-  (with-stdout-to
-   all_the_things.ligo_ast_pretty
-   (run ligo print ast-imperative all_the_things.ligo_output -s pascaligo)))
- (deps all_the_things.ligo_output))
-
-(rule
  (targets all_the_things.jsligo_ast_pretty)
  (action
   (with-stdout-to
@@ -165,12 +115,6 @@
  (action
   (diff all_the_things.mligo_ast all_the_things.mligo_ast_pretty))
  (deps all_the_things.mligo_ast all_the_things.mligo_ast_pretty))
-
-(rule
- (alias runtest)
- (action
-  (diff all_the_things.ligo_ast all_the_things.ligo_ast_pretty))
- (deps all_the_things.ligo_ast all_the_things.ligo_ast_pretty))
 
 (rule
  (alias runtest)

@@ -2,8 +2,6 @@
  (name recovery-test)
  (deps
   (alias simple/cameligo/runtest)
-  (alias simple/pascaligo/runtest)
   (alias simple/jsligo/runtest)
   (alias fuzzing/cameligo/runtest)
-  (alias fuzzing/pascaligo/runtest)
   (alias fuzzing/jsligo/runtest)))

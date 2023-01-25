@@ -6,7 +6,6 @@ import { useColorMode } from "@docusaurus/theme-common";
 import defaultTheme from "prism-react-renderer/themes/palenight";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
-import PASCALIGO_EXAMPLE from '!!raw-loader!./pascaligo.ligo';
 import CAMELIGO_EXAMPLE from '!!raw-loader!./cameligo.mligo';
 import JSLIGO_EXAMPLE from '!!raw-loader!./jsligo.jsligo';
 
@@ -26,8 +25,7 @@ function CodeExamples(props) {
       defaultValue="jsligo"
       values={[
         { label: "JsLIGO", value: "jsligo" },
-        { label: "CameLIGO", value: "cameligo" },
-        { label: "PascaLIGO", value: "pascaligo" },
+        { label: "CameLIGO", value: "cameligo" }
       ]}
     >
       <TabItem value="jsligo">
@@ -56,27 +54,6 @@ function CodeExamples(props) {
           {...defaultProps}
           language="cameligo"
           code={CAMELIGO_EXAMPLE}
-          theme={prismTheme}
-        >
-          {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <pre className={className} style={style}>
-              {tokens.map((line, i) => (
-                <div {...getLineProps({ line, key: i })}>
-                  {line.map((token, key) => (
-                    <span {...getTokenProps({ token, key })} />
-                  ))}
-                </div>
-              ))}
-            </pre>
-          )}
-        </Highlight>
-      </TabItem>
-
-      <TabItem value="pascaligo">
-        <Highlight
-          {...defaultProps}
-          language="pascaligo"
-          code={PASCALIGO_EXAMPLE}
           theme={prismTheme}
         >
           {({ className, style, tokens, getLineProps, getTokenProps }) => (

@@ -11,7 +11,6 @@
   simple-utils
   ;; LIGO
   preprocessing_shared
-  preprocessing_pascaligo
   preprocessing_cameligo
   preprocessing_jsligo)
- (modules Preprocessing Errors Pascaligo Cameligo Jsligo))
+ (modules Preprocessing Errors Cameligo Jsligo))

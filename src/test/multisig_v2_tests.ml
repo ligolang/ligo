@@ -1,3 +1,4 @@
+(*
 module Var = Simple_utils.Var
 open Test_helpers
 
@@ -441,3 +442,4 @@ let main =
     ; test_w "withdraw_already_accounted_two" withdraw_already_accounted_two
     ; test_w "counters_reset" counters_reset
     ]
+*)

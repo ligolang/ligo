@@ -10,10 +10,8 @@
   simple-utils
   ;; LIGO
   lexing_shared
-  preprocessing_pascaligo
-  lexing_pascaligo
   preprocessing_cameligo
   lexing_cameligo
   preprocessing_jsligo
   lexing_jsligo)
- (modules Lexing Errors Pascaligo Cameligo jsligo))
+ (modules Lexing Errors Cameligo jsligo))

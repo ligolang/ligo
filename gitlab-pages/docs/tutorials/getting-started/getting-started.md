@@ -5,12 +5,13 @@ title: Getting started
 
 This section is aimed at newcomers to Ligo and Tezos smart-contracts.
 In this tutorial, we will go through the following step :
--	Setting up the development environment,
--	Writing a simple contract in Cameligo
--	Testing the contract
--	Deploying the contract to Tezos
+- Setting up the development environment,
+- Writing a simple contract in Cameligo
+- Testing the contract
+- Deploying the contract to Tezos
 
 # Setting up the development environment.
+
 At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
 More on [installation](../../intro/installation.md) and [editor support](../../intro/editor-support.md)
 
@@ -30,7 +31,7 @@ wget https://gitlab.com/ligolang/ligo/-/jobs/3625997367/artifacts/raw/ligo
 chmod +x ./ligo
 ```
 
-For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).  
+For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).
 Optionally, you can put it somewhere in your `PATH` for easy access:
 
 ```zsh
@@ -49,7 +50,8 @@ brew install ligolang/ligo/ligo
 ### Debian Linux package installation
 
 A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3625997367/artifacts/raw/ligo.deb), and then install using: 
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3625997367/artifacts/raw/ligo.deb), and then install using:
+
 
 ```zsh
 sudo apt install ./ligo.deb
@@ -66,7 +68,7 @@ Linux or OSX:
 > ```sh
 > alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.60.0"
 > ```
-> To make this `alias` persistent across terminal sessions you need to configure your shell.     
+> To make this `alias` persistent across terminal sessions you need to configure your shell.
 > Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.
 
 Windows:
@@ -77,7 +79,7 @@ Windows:
 > ```dos
 > doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.60.0 $*
 > ```
-> To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.  
+> To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.
 > Follow [this stackoverflow answer](https://stackoverflow.com/a/21040825) for the steps on how to do that.
 
 Or if you want the development version, replace the version above with `next`.
@@ -117,40 +119,8 @@ Rather you're curious to see how to make NFT or randomness in LIGO, or you want 
 ### From scratch
 In this section and the following one we will use a simple smart-contract that is present as example on our webide. We will cover the ligo language and smart-contract development in the following tutorials.
 
-First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is available in [Pascaligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.ligo), [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
+First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is available in  [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
 
-<Syntax syntax="pascaligo">
-
-Open your editor in the folder and the file `increment.ligo` in the editor. You should have this code
-
-```pascaligo test-ligo group=a
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-| Reset
-
-// Two entrypoints
-
-function add (const store : storage; const delta : int) is
-  store + delta
-
-function sub (const store : storage; const delta : int) is
-  store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-function main (const action : parameter; const store : storage) : list(operation) * storage is
- (nil,    // No operations
-  case action of [
-    Increment (n) -> add (store, n)
-  | Decrement (n) -> sub (store, n)
-  | Reset         -> 0
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 Open your editor in the folder and the file `increment.mligo` in the editor. You should have this code
@@ -213,13 +183,6 @@ const main = ([action, store] : [parameter, storage]) : [list <operation>, stora
 
 Now we are going to compile the contract, open a terminal in the folder. (or the vs-code built-in terminal with Ctrl+shift+²) and run the following command:
 
-<Syntax syntax="pascaligo">
-
-```zsh
-ligo compile contract increment.ligo -o increment.tz
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```zsh
@@ -248,13 +211,6 @@ As we can never underline enough the importance of tests in the context of smart
 
   Using the `interpret` command, one can run ligo code in the context of an init file. For instance
 
-<Syntax syntax="pascaligo">
-
-  ```zsh
-  ligo run interpret "<code>" --init-file increment.ligo
-  ```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh
@@ -274,13 +230,7 @@ As we can never underline enough the importance of tests in the context of smart
   will run `<code>` after evaluating everything in the contract file. This is useful to test arbitrary functions and variables in your code.
 
   For instance, to test the `add` function you can run
-<Syntax syntax="pascaligo">
 
-  ```zsh
-  ligo run interpret "add(10,32)" --init-file increment.ligo
-  ```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh
@@ -301,13 +251,7 @@ As we can never underline enough the importance of tests in the context of smart
   Running several of this command will cover the complete code.
 
   To run the contract as called on the blockchain, you will prefer the command `dry-run` which take the contract, the entrypoint, the initial parameter and the initial storage, like so
-<Syntax syntax="pascaligo">
 
-  ```zsh
-  ligo run dry-run increment.ligo "Increment(32)" "10"
-  ```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh
@@ -333,21 +277,6 @@ As we can never underline enough the importance of tests in the context of smart
 
   In LIGO, you are able to write tests directly in the source file, using the `Test` module.
 
-<Syntax syntax="pascaligo">
-
-  Add the following line at the end of `increment.ligo`
-
-```pascaligo test-ligo group=a
-const test_increment = {
-    const initial_storage = 10;
-    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
-    const contr = Test.to_contract(taddr);
-    const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
-    const storage = Test.get_storage(taddr);
-  } with assert (storage = initial_storage + 1);
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   Add the following line at the end of `increment.mligo`
@@ -381,13 +310,7 @@ const test_increment = (() : unit => {
   which execute the same test as the previous section.
 
   Now simply run the command
-<Syntax syntax="pascaligo">
 
-  ```zsh
-  ligo run test increment.ligo
-  ```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh
@@ -462,13 +385,6 @@ const test_increment = (() : unit => {
   We are now ready to send a transaction to our contract. We want to send a transaction with parameter "Increment (32)" but the parameter is written is ligo.
   For that, it must first be converted to a Michelson parameter. Which is done by running :
 
-<Syntax syntax="pascaligo">
-
-  ```zsh
-  ligo compile parameter increment.ligo "Increment (32)"
-  ```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh

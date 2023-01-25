@@ -8,9 +8,6 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-<SyntaxTitle syntax="pascaligo">
-val get_balance : unit -> tez
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_balance : unit -> tez
 </SyntaxTitle>
@@ -21,14 +18,6 @@ let get_balance: (_u: unit) => tez
 
 Get the balance for the contract.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : unit; const s : tez) : list (operation) * tez is
-  (nil, Tezos.get_balance ())
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -46,10 +35,6 @@ let main = (p: unit, s: tez):[list<operation>, tez] =>
 
 </Syntax>
 
-
-<SyntaxTitle syntax="pascaligo">
-val get_now : unit -> timestamp
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_now : unit -> timestamp
 </SyntaxTitle>
@@ -68,17 +53,6 @@ smart contracts like this:
 
 #### 24 hours from now
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-const today         = Tezos.get_now();
-const one_day       = 86_400;
-const in_24_hrs     = today + one_day;
-const some_date     = ("2000-01-01T10:10:10Z" : timestamp);
-const one_day_later = some_date + one_day;
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -106,16 +80,6 @@ let one_day_later = some_date + one_day;
 
 #### 24 hours ago
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-const today     = Tezos.get_now()
-const one_day   = 86_400
-const in_24_hrs = today - one_day
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -142,14 +106,6 @@ let in_24_hrs = today - one_day;
 You can also compare timestamps using the same comparison operators as
 for numbers
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-const not_tommorow = (Tezos.get_now() = in_24_hrs)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -166,10 +122,6 @@ let not_tomorrow = (Tezos.get_now() == in_24_hrs);
 
 </Syntax>
 
-
-<SyntaxTitle syntax="pascaligo">
-val get_amount : unit -> tez
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_amount : unit -> tez
 </SyntaxTitle>
@@ -181,16 +133,6 @@ let get_amount: (_u : unit) => tez
 Get the amount of tez provided by the sender to complete this
 transaction.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function threshold (const p : unit) is
-  if Tezos.get_amount() = 100tz then 42 else 0
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -209,9 +151,6 @@ let threshold = (p : unit) => {
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val get_sender : unit -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_sender : unit -> address
 </SyntaxTitle>
@@ -222,15 +161,6 @@ let get_sender: (_u : unit) => address
 
 Get the address that initiated the current transaction.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : unit) is Tezos.get_sender()
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -247,9 +177,6 @@ let main = (p : unit) => Tezos.get_sender ();
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val address&lt;a&gt; : contract (a) -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val address : 'a contract -> address
 </SyntaxTitle>
@@ -262,15 +189,6 @@ Get the address associated with a value of type `contract`.
 
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : key_hash) is {
-  const c = Tezos.implicit_account (p)
-} with Tezos.address (c)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -293,9 +211,6 @@ let main = (p : key_hash) => {
 </Syntax>
 
 
-<SyntaxTitle syntax="pascaligo">
-val get_self_address : unit -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_self_address : unit -> address
 </SyntaxTitle>
@@ -306,15 +221,6 @@ let get_self_address: (_u : unit) => address
 
 Get the address of the currently running contract.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : unit) is Tezos.get_self_address()
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -330,9 +236,7 @@ let main = (p : unit) => Tezos.get_self_address();
 ```
 
 </Syntax>
-<SyntaxTitle syntax="pascaligo">
-val self&lt;a&gt; : string -> contract (a)
-</SyntaxTitle>
+
 <SyntaxTitle syntax="cameligo">
 val self : string -> 'a contract
 </SyntaxTitle>
@@ -342,18 +246,9 @@ let self: (entrypoint: string) => contract&lt;&apos;a&gt;
 </SyntaxTitle>
 
 Typecast the currently running contract with an entrypoint annotation.
-If your are using entrypoints: use "%bar" for constructor Bar
-If you are not using entrypoints: use "%default"
+If you are using entrypoints, use "%bar" for a constructor "Bar". If
+you are not using entrypoints: use "%default"
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : unit) is {
-  const c = Tezos.self ("%default");
-} with c
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -370,9 +265,6 @@ let main = (p: unit) => Tezos.self("%default");
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val implicit_account&lt;a&gt; : key_hash -> contract (a)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val implicit_account : key_hash -> 'a contract
 </SyntaxTitle>
@@ -383,14 +275,6 @@ behalf of a key's owner.
 
 See also: http://tezos.gitlab.io/user/glossary.html#implicit-account
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const kh : key_hash) is
-  Tezos.implicit_account (kh)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -407,10 +291,6 @@ let main = (kh: key_hash) => Tezos.implicit_account(kh);
 
 </Syntax>
 
-
-<SyntaxTitle syntax="pascaligo">
-val get_source : unit -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_source : unit -> address
 </SyntaxTitle>
@@ -445,13 +325,6 @@ current transaction.
 
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : unit) is Tezos.get_source()
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -468,10 +341,6 @@ let main = (p : unit) => Tezos.get_source();
 
 </Syntax>
 
-
-<SyntaxTitle syntax="pascaligo">
-val failwith&lt;a&gt; : a -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val failwith : 'a -> unit
 </SyntaxTitle>
@@ -482,10 +351,6 @@ let failwith: (message: &apos;a) => unit
 
 [See `failwith`](toplevel.md#failwith)
 
-
-<SyntaxTitle syntax="pascaligo">
-val get_chain_id : unit chain_id
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_chain_id : unit -> chain_id
 </SyntaxTitle>
@@ -499,18 +364,6 @@ Get the identifier of the chain to distinguish between main and test chains.
 This is mainly intended to avoid replay attacks between the chains, and can currently
 only be used together with `Bytes.pack` and `Bytes.unpack`.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type storage is bytes
-
-function main (const ignore : unit; const storage: storage) : list (operation) * storage is {
-  const packed = Bytes.pack (Tezos.get_chain_id());
-  if storage =/= packed then failwith ("wrong chain");
-} with (nil, packed)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -543,9 +396,6 @@ let main = (ignore: unit, storage: storage):[list<operation>, storage] => {
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val transaction&lt;param&gt; : param -> mutez -> contract (param) -> operation
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val transaction : 'param -> mutez -> 'param contract -> operation
 </SyntaxTitle>
@@ -558,9 +408,6 @@ Transfer `tez` to an account, or run code of another smart contract.
 
 To indicate an account, use `unit` as `param`.
 
-<SyntaxTitle syntax="pascaligo">
-val create_contract &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> key_hash option -> tez -> storage -> (operation * address)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_contract : ('param * 'storage -> operation list * 'storage) -> key_hash option -> tez -> 'storage -> (operation * address)
 </SyntaxTitle>
@@ -572,9 +419,6 @@ let create_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, 
 Construct an operation that originates a contract from a function. The
 optional argument of type `key_hash` represents a delegate.
 
-<SyntaxTitle syntax="pascaligo">
-val set_delegate : option (key_hash) -> operation
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_delegate : key_hash option -> operation
 </SyntaxTitle>
@@ -593,9 +437,6 @@ The operation fails when:
 
 Use `None` to withdraw the current delegate.
 
-<SyntaxTitle syntax="pascaligo">
-val get_contract_opt&lt;param&gt; : address -> option (contract (param))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_contract_opt : address -> 'param contract option
 </SyntaxTitle>
@@ -609,9 +450,6 @@ Get a contract from an address.
 When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
-<SyntaxTitle syntax="pascaligo">
-val get_contract_with_error&lt;param&gt; : address -> string -> contract (param)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_contract_with_error : address -> string -> 'param contract
 </SyntaxTitle>
@@ -624,9 +462,6 @@ Get a contract from an address.
 
 When no contract is found, fail with the provided string
 
-<SyntaxTitle syntax="pascaligo">
-val get_entrypoint_opt&lt;param&gt; : string -> address -> option (contract (param))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_entrypoint_opt : string -> address -> 'param contract option
 </SyntaxTitle>
@@ -642,9 +477,6 @@ Entrypoints are written in the form of: `%entrypoint`.
 When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
-<SyntaxTitle syntax="pascaligo">
-val get_level : unit -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_level : unit -> nat
 </SyntaxTitle>
@@ -655,9 +487,6 @@ let get_level : (_u : unit) => nat
 
 Get the current block level.
 
-<SyntaxTitle syntax="pascaligo">
-val min_block_time : unit -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val min_block_time : unit -> nat
 </SyntaxTitle>
@@ -668,9 +497,6 @@ let min_block_time: unit => nat;
 
 Returns the current minimal time between blocks, the value is obtained from the protocol’s minimal_block_delay constant.
 
-<SyntaxTitle syntax="pascaligo">
-val pairing_check : list (bls12_381_g1 * bls12_381_g2) -> bool
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val pairing_check : (bls12_381_g1 * bls12_381_g2) list -> bool
 </SyntaxTitle>
@@ -683,9 +509,6 @@ Verify that the product of pairings of the given list of points is equal to 1 in
 Can be used to verify if two pairings P1 and P2 are equal by verifying `P1 * P2^(-1) = 1`.
 (extracted from Tezos documentation)
 
-<SyntaxTitle syntax="pascaligo">
-val never&lt;a&gt; : never -> a
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val never : never -> 'a
 </SyntaxTitle>
@@ -697,9 +520,6 @@ let never: (never: never) => &apos;a
 Eliminate a value of the type `never` using the instruction `NEVER`
 from Michelson.
 
-<SyntaxTitle syntax="pascaligo">
-function get_total_voting_power : unit -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_total_voting_power : unit -> nat
 </SyntaxTitle>
@@ -710,10 +530,6 @@ let get_total_voting_power: (_u : unit) => nat
 
 Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
 
-
-<SyntaxTitle syntax="pascaligo">
-function voting_power : key_hash -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val voting_power : key_hash -> nat
 </SyntaxTitle>
@@ -722,20 +538,12 @@ val voting_power : key_hash -> nat
 let voting_power: (key_hash:key_hash) => nat
 </SyntaxTitle>
 
-Return the voting power of a given contract. The voting power value is the full staking power of the delegate, currently expressed in mutez. Though, developers should not rely on `Tezos.voting_power` to query the staking power of a contract in mutez: the value returned by `Tezos.voting_power` is still of type` nat and it should only be considered relative to `Tezos.total_voting_power`.  
+Return the voting power of a given contract. The voting power value is the full staking power of the delegate, currently expressed in mutez. Though, developers should not rely on `Tezos.voting_power` to query the staking power of a contract in mutez: the value returned by `Tezos.voting_power` is still of type` nat and it should only be considered relative to `Tezos.total_voting_power`.
 
 ## Sapling
 
 Delphi protocol introduced the following sapling types (state and transaction) with N being an int singleton
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=sap_t
-type st is sapling_state (8)
-type tr is sapling_transaction (8)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=sap_t
@@ -754,9 +562,6 @@ type tr = sapling_transaction<8>;
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val sapling_empty_state&lt;n&gt; : sapling_state (n)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sapling_empty_state : 'n sapling_state
 </SyntaxTitle>
@@ -765,13 +570,6 @@ val sapling_empty_state : 'n sapling_state
 let sapling_empty_state: sapling_state&lt;n&gt;
 </SyntaxTitle>
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=sap_t
-const x = Tezos.sapling_empty_state
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=sap_t
@@ -790,9 +588,6 @@ let x = Tezos.sapling_empty_state ;
 
 Sapling empty state
 
-<SyntaxTitle syntax="pascaligo">
-val sapling_verify_update&lt;a&gt; : sapling_transaction (a) -> sapling_state (a) -> option (bytes * (int * sapling_state (a)))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sapling_verify_update : 'a sapling_transaction -> 'a sapling_state -> (bytes * (int * 'a sapling_state)) option
 </SyntaxTitle>
@@ -804,17 +599,6 @@ let sapling_verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&
 
 Verify sapling update
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=sap_t
-function f (const tr : tr) is
-  case Tezos.sapling_verify_update (tr, x) of [
-    Some (_, x) -> x
-  | None -> failwith ("failed")
-  ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=sap_t
@@ -840,9 +624,6 @@ let f = (tr : tr) =>
 
 ## Tickets
 
-<SyntaxTitle syntax="pascaligo">
-val create_ticket&lt;value&gt; : value -> nat -> option (ticket (value))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_ticket : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>
@@ -855,15 +636,6 @@ let create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 To create a ticket, the value and the amount of tickets to be created needs to be provided.
 The ticket will also contain the contract address it originated from (which corresponds to `Tezos.self`).
 The resulting value is `None` if the amount is zero.
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=manip_ticket
-const my_ticket1 = Option.unopt (Tezos.create_ticket (1, 10n))
-const my_ticket2 = Option.unopt (Tezos.create_ticket ("one", 10n))
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -883,10 +655,6 @@ let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10 as nat));
 
 </Syntax>
 
-
-<SyntaxTitle syntax="pascaligo">
-val read_ticket&lt;value&gt; : ticket (value) -> (address * (value * nat)) * ticket (value)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
 </SyntaxTitle>
@@ -898,19 +666,6 @@ let read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&g
 
 Reading a ticket will return a tuple with the ticket address, the value and the same ticket for later use.
 A ticket is only consumed when it is dropped (e.g. `DROP`-ed from the Michelson stack) so if the returned ticket isn't stored in some form by your contract, it will be fully consumed.
-
-<Syntax syntax="pascaligo">
-
-To read the content of a ticket, you need to use pattern matching
-
-```pascaligo group=manip_ticket
-const v =
-  case Tezos.read_ticket (my_ticket1) of [
-    ((_addr, (payload, _amt)), _ticket) -> payload
-  ]
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -938,10 +693,6 @@ let v2 = (_: unit) => {
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val split_ticket&lt;value&gt; : ticket (value) -> nat * nat -> option (ticket (value) * ticket (value))
-</SyntaxTitle>
-
 <SyntaxTitle syntax="cameligo">
 val split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
 </SyntaxTitle>
@@ -954,18 +705,6 @@ let split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ti
 
 To partially use/consume a ticket, you have to split it.
 Provided a ticket and two amounts, two new tickets will be returned to you if, and only if, the sum equals to the amount of the original ticket.
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=manip_ticket
-const x =
-  case Tezos.split_ticket (my_ticket1, (6n, 4n)) of [
-    None -> failwith ("amt_a + amt_v =/= amt")
-  | Some (split_tickets) -> split_tickets
-  ]
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -991,14 +730,9 @@ let [ta, tb] =
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val join_tickets&lt;value&gt; : ticket (value) * ticket (value) -> option (ticket (value))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val join_tickets : 'value ticket * 'value ticket -> ('value ticket) option
 </SyntaxTitle>
-
-
 
 <SyntaxTitle syntax="jsligo">
 let join_tickets = &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&lt;'value&gt;&gt;
@@ -1008,17 +742,6 @@ To add two tickets, you have to join them. This works as the inverse
 of `Tezos.split_ticket`.  Provided two tickets with the same ticketer
 and content, they are deleted and a new ticket will be returned with
 an amount equal to the sum of the amounts of the input tickets.
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=manip_ticket
-const tc = {
-  const ta = Option.unopt (Tezos.create_ticket (1, 10n));
-  const tb = Option.unopt (Tezos.create_ticket (1, 5n))
-} with Tezos.join_tickets ((ta, tb))
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -1045,23 +768,6 @@ let tc = Tezos.join_tickets([ta, tb]);
 
 If a contract storage type contains a ticket, you must destructure the parameter-storage pair within the body to preserve storage linearity (e.g. avoid `DUP`-ing storage).
 For the same reasons, if tickets are stored in a `map`/`big_map` you must use the new operator `get_and_update` to update your bindings.
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=contract_ticket
-type storage is big_map (string, ticket (int))
-type parameter is int
-type return is list (operation) * storage
-
-function main (const i : parameter ; const store : storage) : return is {
-  const my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
-  const res = Big_map.get_and_update ("hello", (Some (my_ticket1)), store);
-  var res := (nil, store);
-  case res of [(t,x) -> res := (nil, x)]
-} with res
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -1101,9 +807,6 @@ let main = (x: [parameter, storage]): return_ => {
 
 ## On Chain Views
 
-<SyntaxTitle syntax="pascaligo">
-val call_view&lt;arg,reg&gt; : string -> arg -> address -> option (ret)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val call_view : string -> 'arg -> address -> 'ret option
 </SyntaxTitle>
@@ -1117,9 +820,6 @@ view or the parameter type do not match, `Tezos.call_view` will return `None`.
 
 ## Global Constants
 
-<SyntaxTitle syntax="pascaligo">
-function constant: string -> 'a
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val constant : string -> 'a
 </SyntaxTitle>
@@ -1133,9 +833,6 @@ It accepts a hash in the form of a string and will require a type annotation.
 
 ## Events
 
-<SyntaxTitle syntax="pascaligo">
-val emit&lt;a&gt; :  string -> a -> operation
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val emit : string -> 'a -> operation
 </SyntaxTitle>

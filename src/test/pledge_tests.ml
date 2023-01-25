@@ -3,7 +3,6 @@ open Test_helpers
 open Ligo_prim
 open Ast_imperative
 
-let file = "./contracts/pledge.ligo"
 let mfile = "./contracts/pledge.mligo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
@@ -90,10 +89,7 @@ let distribute_unauthorized ~raise f () =
 let main =
   test_suite
     "Pledge & Distribute"
-    [ test_w "donate" (pledge file)
-    ; test_w "distribute" (distribute file)
-    ; test_w "distribute (unauthorized)" (distribute_unauthorized file)
-    ; test_w "donate" (pledge mfile)
+    [ test_w "donate" (pledge mfile)
     ; test_w "distribute" (distribute mfile)
     ; test_w "distribute (unauthorized)" (distribute_unauthorized mfile)
     ]

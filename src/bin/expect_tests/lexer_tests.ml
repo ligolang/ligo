@@ -9,15 +9,6 @@ let%expect_test _ =
 
   (* Unterminated comment *)
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_comment.ligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/unterminated_comment.ligo", line 1, characters 0-2:
-  1 | (* not closed
-The comment starting here is not closed.
-Hint: Close it with "*)".
-|test}];
-  run_ligo_bad
     [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_comment.mligo" ];
   [%expect
     {test|
@@ -37,15 +28,6 @@ Hint: Close it with "*/".
 |test}];
   (* Unterminated string *)
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_string.ligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/unterminated_string.ligo", line 1, characters 0-1:
-  1 | "open
-A string cannot be interrupted by a line break.
-Hint: Remove it or close the string before.
-|test}];
-  run_ligo_bad
     [ "compile"; "contract"; "../../test/lexer/LexerLib/unterminated_string.mligo" ];
   [%expect
     {test|
@@ -64,15 +46,6 @@ A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
 |test}];
   (* Broken string *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/LexerLib/broken_string.ligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/broken_string.ligo", line 1, characters 19-20:
-  1 | const a : string = "broken
-  2 | over
-A string cannot be interrupted by a line break.
-Hint: Remove it or close the string before.
-|test}];
   run_ligo_bad [ "compile"; "contract"; "../../test/lexer/LexerLib/broken_string.mligo" ];
   [%expect
     {test|
@@ -92,18 +65,6 @@ A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
 |test}];
   (* Invalid character in string *)
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "../../test/lexer/LexerLib/invalid_character_in_string.ligo"
-    ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/invalid_character_in_string.ligo", line 1, characters 20-21:
-  1 | const z : string = "\t";
-Invalid character "\\t" in string.
-Hint: Use non-control characters 7-bit ASCII.
-|test}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -130,15 +91,6 @@ Hint: Use non-control characters 7-bit ASCII.
 |test}];
   (* Undefined escape sequence *)
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/LexerLib/undefined_escape_sequence.ligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/undefined_escape_sequence.ligo", line 1, characters 1-3:
-  1 | "\\z"
-Undefined escape sequence.
-Hint: Remove or replace the sequence.
-|test}];
-  run_ligo_bad
     [ "compile"; "contract"; "../../test/lexer/LexerLib/undefined_escape_sequence.mligo" ];
   [%expect
     {test|
@@ -163,36 +115,12 @@ Hint: Remove or replace the sequence.
   run_ligo_bad
     [ "compile"
     ; "contract"
-    ; "../../test/lexer/LexerLib/undefined_linemarker_argument.ligo"
-    ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/undefined_linemarker_argument.ligo", line 1, characters 41-42:
-  1 | # 1 "undefined_linemarker_argument.ligo" WRONG
-Invalid flag.
-Hint: 1 or 2 are allowed.
-|test}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
     ; "../../test/lexer/LexerLib/undefined_linemarker_argument.mligo"
     ];
   [%expect
     {test|
-File "../../test/lexer/LexerLib/undefined_linemarker_argument.mligo", line 1, characters 41-42:
-  1 | # 1 "undefined_linemarker_argument.ligo" WRONG
-Invalid flag.
-Hint: 1 or 2 are allowed.
-|test}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "../../test/lexer/LexerLib/undefined_linemarker_argument.jsligo"
-    ];
-  [%expect
-    {test|
-File "../../test/lexer/LexerLib/undefined_linemarker_argument.jsligo", line 1, characters 41-42:
-  1 | # 1 "undefined_linemarker_argument.ligo" WRONG
+File "../../test/lexer/LexerLib/undefined_linemarker_argument.mligo", line 1, characters 42-43:
+  1 | # 1 "undefined_linemarker_argument.mligo" WRONG
 Invalid flag.
 Hint: 1 or 2 are allowed.
 |test}];
@@ -204,32 +132,24 @@ Hint: 1 or 2 are allowed.
 
   (* Unexpected character *)
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/Lexing/unexpected_character.ligo" ];
+    [ "compile"; "contract"; "../../test/lexer/Lexing/unexpected_character.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Lexing/unexpected_character.ligo", line 1, characters 19-20:
-  1 | const x : string = \239\191\189\239\191\189\239\191\189;
+File "../../test/lexer/Lexing/unexpected_character.mligo", line 1, characters 17-18:
+  1 | let x : string = \239\191\189\239\191\189\239\191\189;
 Unexpected character '\239'.
 |test}];
   (* Non-canonical zero *)
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/Lexing/non_canonical_zero.ligo" ];
+    [ "compile"; "contract"; "../../test/lexer/Lexing/non_canonical_zero.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Lexing/non_canonical_zero.ligo", line 1, characters 16-19:
-  1 | const n : nat = 000
+File "../../test/lexer/Lexing/non_canonical_zero.mligo", line 1, characters 14-17:
+  1 | let n : nat = 000
 Non-canonical zero.
 Hint: Use 0.
 |test}];
   (* Invalid symbol *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/invalid_symbol.ligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/Lexing/invalid_symbol.ligo", line 1, characters 18-21:
-  1 | const b : int = 1 ... 10;
-Invalid symbol: "...".
-Hint: Check the LIGO syntax you use.
-|test}];
   run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/invalid_symbol.mligo" ];
   [%expect
     {test|
@@ -279,55 +199,50 @@ Example: "(Michelson `{UNPAIR; ADD}` as ((n: [nat, nat]) => nat))".
 |test}];
   (* Unterminated verbatim *)
   run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/Lexing/unterminated_verbatim.ligo" ];
+    [ "compile"; "contract"; "../../test/lexer/Lexing/unterminated_verbatim.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Lexing/unterminated_verbatim.ligo", line 1, characters 19-21:
-  1 | const s : string = {|
+File "../../test/lexer/Lexing/unterminated_verbatim.mligo", line 1, characters 17-19:
+  1 | let s : string = {|
 Unterminated verbatim.
 Hint: Close with "|}".
 |test}];
-  (* Invalid linemarker argument: This error should not happen if
-       we assume the preprocessor is correct. Since there is currently
-       no way to disable the preprocessor when calling the compiler,
-       it is not possible to generate a test for this case (the preprocessor
-       would fail on a linemarker). *)
 
   (* Overflow mutez *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/overflow_mutez.ligo" ];
+  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/overflow_mutez.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Lexing/overflow_mutez.ligo", line 1, characters 16-40:
-  1 | const m : tez = 9223372036854775808mutez (* 2^63 *)
+File "../../test/lexer/Lexing/overflow_mutez.mligo", line 1, characters 14-38:
+  1 | let m : tez = 9223372036854775808mutez (* 2^63 *)
 Mutez amount too large.
 Note: From 0 to 2^63-1=9_223_372_036_854_775_807.
 |test}];
   (* Underflow mutez *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/underflow_mutez.ligo" ];
+  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/underflow_mutez.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Lexing/underflow_mutez.ligo", line 1, characters 16-34:
-  1 | const x : tez = 0.000_000_000_1tez
+File "../../test/lexer/Lexing/underflow_mutez.mligo", line 1, characters 14-32:
+  1 | let x : tez = 0.000_000_000_1tez
 Mutez amount not an integer.
 |test}];
   (* 3. Errors from Style.ml: They can be specific to a given
        concrete syntax or not. *)
 
   (* Odd-lengthed bytes *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Style/odd_lengthed_bytes.ligo" ];
+  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Style/odd_lengthed_bytes.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Style/odd_lengthed_bytes.ligo", line 1, character 22:
-  1 | const x : bytes = 0xABC
+File "../../test/lexer/Style/odd_lengthed_bytes.mligo", line 1, character 20:
+  1 | let x : bytes = 0xABC
 The length of the byte sequence is an odd number.
 Hint: Add or remove a digit.
 |test}];
   (* Missing break *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Style/missing_break.ligo" ];
+  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Style/missing_break.mligo" ];
   [%expect
     {test|
-File "../../test/lexer/Style/missing_break.ligo", line 1, character 19:
-  1 | const a : int = 300zennies;
+File "../../test/lexer/Style/missing_break.mligo", line 1, character 17:
+  1 | let a : int = 300zennies
 Missing break.
 Hint: Insert some space.
 |test}]

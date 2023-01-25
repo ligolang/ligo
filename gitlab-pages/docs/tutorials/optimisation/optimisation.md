@@ -6,17 +6,26 @@ title: Optimisation guide
 import Syntax from '@theme/Syntax';
 
 
-Imagine you develop a contract and try to adhere to all the business requirements while doing it in a secure fashion. If you do not optimise your contract, chances are, it will either fail to fit into the hard limits or be too expensive to execute.
+Imagine you develop a contract and try to adhere to all the business
+requirements while doing it in a secure fashion. If you do not
+optimise your contract, chances are, it will either fail to fit into
+the hard limits or be too expensive to execute.
 
-It would be hard to add ad-hoc optimisations after the contract is ready. To avoid such situations, you need to understand what the limits are, how gas is consumed, and how storage and execution fees are computed.
+It would be hard to add ad-hoc optimisations after the contract is
+ready. To avoid such situations, you need to understand what the
+limits are, how gas is consumed, and how storage and execution fees
+are computed.
 
-In this article, we will cover Tezos limits, fee model, and the basics of measuring and optimising your contracts.
+In this article, we will cover Tezos limits, fee model, and the basics
+of measuring and optimising your contracts.
 
 ## Tezos gas model
 
 ### What limits and fees are there?
 
-Bounding the contracts' complexity is crucial for public blockchains like Tezos. These bounds ensure liveness – the chain's ability to progress and produce new blocks in a reasonable time.
+Bounding the contracts' complexity is crucial for public blockchains
+like Tezos. These bounds ensure liveness – the chain's ability to
+progress and produce new blocks in a reasonable time.
 
 Limits:
 * A limit on the **operation size** is imposed because the nodes transfer operations across the network. If an operation is too large, nodes may fail to broadcast it in time.
@@ -160,16 +169,6 @@ This is cheaper than pushing the same string to stack every time it is needed. T
 
 Consider the following contract:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function sum (const x : int; const y : int) is x + y
-
-function main (const parameter : int; const storage : int) is
-  (list [], sum (parameter, storage))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -208,16 +207,6 @@ You may notice that in this case, inlining reduced the size of the contract.
 
 Other declarations can be inlined as well. In this contract, the compiler may generate the code that does `PUSH int 4` twice (in case there is an `[@inline]` annotation), or `PUSH int 4; DUP` (if there is no instruction to inline this binding):
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const n = 4
-
-function main (const _ : int ; const _ : int) is
-  (list [], n * n)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -248,40 +237,6 @@ This peculiar technique can be used to lower the average gas consumption of your
 
 Imagine you have a contract with a number of small frequently-used entrypoints and several large entrypoints that are called rarely. During each transaction to the contract, the bakers would read **the whole code** of your contract, deserialise and type-check it, and only after that, execute the requested entrypoint.
 
-<Syntax syntax="pascaligo">
-
-It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
-
-Here is how it looks like:
-
-```pascaligo
-type parameter is LargeEntrypoint of int (* | ... *)
-
-type storage is
-  record [large_entrypoint : big_map (bool, int -> int); result : int]
-
-function load_large_ep (const storage : storage) is {
-  const maybe_large_entrypoint : option (int -> int)
-  = Big_map.find_opt (True, storage.large_entrypoint)
-} with
-    case maybe_large_entrypoint of [
-      Some (ep) -> ep
-    | None -> failwith ("Internal error")
-    ]
-
-function main (const parameter : parameter; const storage : storage) : list (operation) * storage is
-  (nil,
-  case parameter of [
-    LargeEntrypoint (n) ->
-      (storage with record [result = (load_large_ep (storage)) (n)])
-  (* Other entrypoints
-  | ... -> ...
-  | ... -> ...
-  *)
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `(bool, entrypoint_lambda) big_map` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `(unit, entrypoint_lambda) big_map`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
@@ -311,22 +266,33 @@ let main (parameter, storage : parameter * storage) : operation list * storage =
 
 </Syntax>
 
-We can now put the code of this large entrypoint to storage upon the contract origination. If we do not provide any means to change the stored lambda, the immutability of the contract will not be affected.
+We can now put the code of this large entrypoint to storage upon the
+contract origination. If we do not provide any means to change the
+stored lambda, the immutability of the contract will not be affected.
 
-<Syntax syntax="pascaligo">
-
-This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params -> bool)` to the storage and call it upon transfer.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
-This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params -> bool)` to the storage and call it upon transfer.
+This pattern is also useful if you have long code blocks that repeat
+across some subset of entrypoints. For example, if you develop a
+custom token, you may need different flavors of transfers with a
+common pre-transfer check. In this case, you can add a lambda
+`preTransferCheck : (transfer_params -> bool)` to the storage and call
+it upon transfer.
 
 </Syntax>
 
 
-However, you always need to measure the gas consumption and the occupied storage. It may be the case that the wrapper code that extracts the lambda from storage and calls it is costlier than the piece of code you are trying to optimise.
+However, you always need to measure the gas consumption and the
+occupied storage. It may be the case that the wrapper code that
+extracts the lambda from storage and calls it is costlier than the
+piece of code you are trying to optimise.
 
 ## Conclusion
 
-We have discussed the Tezos fee and gas model and identified the following optimisation targets: contract and storage size, gas consumption, and excess bytes written to storage. We also discussed inlining, constants optimisation, lazy storage, and lazy entrypoint loading. We hope these techniques can help you develop contracts that require fewer resources to execute. And, we cannot stress this enough: **always measure your contracts.**
+We have discussed the Tezos fee and gas model and identified the
+following optimisation targets: contract and storage size, gas
+consumption, and excess bytes written to storage. We also discussed
+inlining, constants optimisation, lazy storage, and lazy entrypoint
+loading. We hope these techniques can help you develop contracts that
+require fewer resources to execute. And, we cannot stress this enough:
+**always measure your contracts.**

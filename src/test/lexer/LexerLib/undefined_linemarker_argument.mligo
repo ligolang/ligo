@@ -1,1 +1,1 @@
-# 1 "undefined_linemarker_argument.ligo" WRONG
+# 1 "undefined_linemarker_argument.mligo" WRONG

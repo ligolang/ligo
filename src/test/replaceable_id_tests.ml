@@ -1,5 +1,7 @@
+(*
 module Var = Simple_utils.Var
 open Test_helpers
+
 
 let get_program = get_program "./contracts/replaceable_id.ligo"
 
@@ -112,3 +114,4 @@ let main =
     ; test_w "pass_message_success" pass_message_success
     ; test_w "pass_message_fail" pass_message_fail
     ]
+*)

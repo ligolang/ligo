@@ -26,43 +26,6 @@ people have spent at his shop when buying tacos.
 
 ### **`taco-shop.ligo`**
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=a
-type taco_supply is
-  record [
-    current_stock : nat;
-    max_price     : tez
-  ]
-
-type taco_shop_storage is map (nat, taco_supply)
-
-type return is list (operation) * taco_shop_storage
-
-function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is {
-  // Retrieve the taco_kind from the contract's storage or fail
-  var taco_kind : taco_supply :=
-    case taco_shop_storage[taco_kind_index] of [
-      Some (kind) -> kind
-    | None -> (failwith ("Unknown kind of taco.") : taco_supply)
-    ];
-
-   const current_purchase_price : tez =
-     taco_kind.max_price / taco_kind.current_stock;
-
-  if (Tezos.get_amount ()) =/= current_purchase_price then
-    // We won't sell tacos if the amount is not correct
-    failwith ("Sorry, the taco you are trying to purchase has a different price");
-
-  // Decrease the stock by 1n, because we have just sold one
-  taco_kind.current_stock := abs (taco_kind.current_stock - 1n);
-
-  // Update the storage with the refreshed taco_kind
-  taco_shop_storage[taco_kind_index] := taco_kind
-} with ((nil : list (operation)), taco_shop_storage)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
@@ -71,11 +34,11 @@ type taco_supply = {
     max_price     : tez
 }
 
-type taco_shop_storage = (nat, taco_supply) map 
+type taco_shop_storage = (nat, taco_supply) map
 
 type return = operation list * taco_shop_storage
 
-let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return = 
+let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return =
   // Retrieve the taco_kind from the contract's storage or fail
   let taco_kind : taco_supply =
     match Map.find_opt taco_kind_index taco_shop_storage with
@@ -87,8 +50,8 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
     taco_kind.max_price / taco_kind.current_stock in
 
   // We won't sell tacos if the amount is not correct
-  let () = 
-    assert_with_error ((Tezos.get_amount ()) <> current_purchase_price) 
+  let () =
+    assert_with_error ((Tezos.get_amount ()) <> current_purchase_price)
       "Sorry, the taco you are trying to purchase has a different price" in
 
   // Decrease the stock by 1n, because we have just sold one
@@ -125,7 +88,7 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
     taco_kind.max_price / taco_kind.current_stock;
 
   // We won't sell tacos if the amount is not correct
-  let _ = 
+  let _ =
     assert_with_error (((Tezos.get_amount ()) != current_purchase_price),
       "Sorry, the taco you are trying to purchase has a different price");
 
@@ -145,14 +108,6 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
 Pedro's Taco Shop contract currently enables customers to buy tacos,
 at a price based on a simple formula.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-const current_purchase_price : tez =
-  taco_kind.max_price / taco_kind.current_stock
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -205,18 +160,6 @@ our case, will be Pedro's personal account. Additionally we will wrap
 the given address as a *`contract (unit)`*, which represents either a
 contract with no parameters, or an implicit account.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=ex1
-const ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address);
-const receiver : contract (unit) =
-  case (Tezos.get_contract_opt (ownerAddress): option(contract(unit))) of [
-    Some (contract) -> contract
-  | None -> (failwith ("Not a contract") : (contract(unit)))
-  ];
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=ex1
@@ -253,14 +196,6 @@ Now we can transfer the amount received by `buy_taco` to Pedro's
 receiver)` within a list of operations returned at the end of our
 contract.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=ex1
-const payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver) ;
-const operations : list (operation) = list [payoutOperation];
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=ex1
@@ -285,55 +220,6 @@ const operations : list <operation> = list([payoutOperation]);
 
 ### **`taco-shop.ligo`**
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-type taco_supply is
-  record [
-    current_stock : nat;
-    max_price     : tez
-  ]
-
-type taco_shop_storage is map (nat, taco_supply)
-
-type return is list (operation) * taco_shop_storage
-
-const ownerAddress : address =
-  ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
-
-function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is {
-  // Retrieve the taco_kind from the contract's storage or fail
-  var taco_kind : taco_supply :=
-    case taco_shop_storage[taco_kind_index] of [
-      Some (kind) -> kind
-    | None -> (failwith ("Unknown kind of taco.") : taco_supply)
-    ];
-
-   const current_purchase_price : tez =
-     taco_kind.max_price / taco_kind.current_stock;
-
-  if (Tezos.get_amount ()) =/= current_purchase_price then
-    // We won't sell tacos if the amount is not correct
-    failwith ("Sorry, the taco you are trying to purchase has a different price");
-
-  // Decrease the stock by 1n, because we have just sold one
-  taco_kind.current_stock := abs (taco_kind.current_stock - 1n);
-
-  // Update the storage with the refreshed taco_kind
-  taco_shop_storage[taco_kind_index] := taco_kind;
-
-  const receiver : contract (unit) =
-    case (Tezos.get_contract_opt (ownerAddress): option(contract(unit))) of [
-      Some (contract) -> contract
-    | None -> (failwith ("Not a contract") : (contract(unit)))
-    ];
-
-  const payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver);
-  const operations : list(operation) = list [payoutOperation]
-} with ((operations : list (operation)), taco_shop_storage)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -342,14 +228,14 @@ type taco_supply = {
     max_price     : tez
 }
 
-type taco_shop_storage = (nat, taco_supply) map 
+type taco_shop_storage = (nat, taco_supply) map
 
 type return = operation list * taco_shop_storage
 
 let ownerAddress : address =
   ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
 
-let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return = 
+let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : return =
   // Retrieve the taco_kind from the contract's storage or fail
   let taco_kind : taco_supply =
     match Map.find_opt taco_kind_index taco_shop_storage with
@@ -361,8 +247,8 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
     taco_kind.max_price / taco_kind.current_stock in
 
   // We won't sell tacos if the amount is not correct
-  let () = 
-    assert_with_error ((Tezos.get_amount ()) <> current_purchase_price) 
+  let () =
+    assert_with_error ((Tezos.get_amount ()) <> current_purchase_price)
       "Sorry, the taco you are trying to purchase has a different price" in
 
   // Decrease the stock by 1n, because we have just sold one
@@ -412,7 +298,7 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
     taco_kind.max_price / taco_kind.current_stock;
 
   // We won't sell tacos if the amount is not correct
-  let _ = 
+  let _ =
     assert_with_error (((Tezos.get_amount ()) != current_purchase_price),
       "Sorry, the taco you are trying to purchase has a different price");
 
@@ -443,22 +329,6 @@ To confirm that our contract is valid, we can dry-run it. As a result,
 we see a *new operation* in the list of returned operations to be
 executed subsequently.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-ligo run dry-run taco-shop.ligo --syntax pascaligo --amount 1 --entry-point buy_taco 1n "map [
-   1n -> record [
-           current_stock = 50n;
-           max_price = 50tez
-         ];
-   2n -> record [
-           current_stock = 20n;
-           max_price = 75tez
-         ];
-]"
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -500,36 +370,6 @@ has decided to donate **10%** of the earnings to the STA. We will just
 add a `donationAddress` to the contract, and compute a 10% donation
 sum from each taco purchase.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=bonus
-const ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address);
-const donationAddress : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-
-const receiver : contract (unit) =
-  case (Tezos.get_contract_opt (ownerAddress) : option(contract(unit))) of [
-    Some (contract) -> contract
-  | None -> (failwith ("Not a contract") : contract (unit))
-  ];
-
-const donationReceiver : contract (unit) =
-  case (Tezos.get_contract_opt (donationAddress) : option(contract(unit))) of [
-    Some (contract) -> contract
-  | None  -> (failwith ("Not a contract") : contract (unit))
-  ];
-
-const donationAmount : tez = (Tezos.get_amount ()) / 10n;
-
-const operations : list (operation) = {
-    // Pedro will get 90% of the amount
-    const op = case ((Tezos.get_amount ()) - donationAmount) of [
-      | Some (x) -> Tezos.transaction (unit, x, receiver)
-      | None -> (failwith ("Insufficient balance") )
-    ] ;
-  } with list [ op; Tezos.transaction (unit, donationAmount, donationReceiver) ];
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=bonus

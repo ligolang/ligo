@@ -1,0 +1,212 @@
+<Syntax syntax="pascaligo">
+
+General iteration in PascaLIGO takes the shape of general loops, which
+should be familiar to programmers of imperative languages as "while
+loops". Those loops are of the form `while <condition> <block>`. Their
+associated block is repeatedly evaluated until the condition becomes
+true, or never evaluated if the condition is false at the start. The
+loop never terminates if the condition never becomes true. Because we
+are writing smart contracts on Tezos, when the condition of a "while"
+loops fails to become true, the execution will run out of gas and stop
+with a failure anyway.
+
+Here is how to compute the greatest common divisors of two natural
+numbers by means of Euclid's algorithm:
+
+```pascaligo group=a
+function gcd (var x : nat; var y : nat) is {
+  if x < y then {
+    const z : nat = x;
+    x := y; y := z
+  };
+  var r : nat := 0n;
+  while y =/= 0n {
+    r := x mod y;
+    x := y;
+    y := r
+  }
+} with x
+```
+
+You can call the function `gcd` defined above using the LIGO compiler
+like so:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/loops/gcd.ligo '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)' --entry-point gcd
+# Outputs: +12
+```
+
+</Syntax>
+
+<Syntax syntax="pascaligo">
+
+## Bounded Loops
+
+In addition to general loops, PascaLIGO features a specialised kind of
+*loop to iterate over bounded intervals*. These loops are familiarly
+known as "for loops" and they have the form `for <variable assignment>
+to <upper bound> <block>`, as found in imperative languages.
+
+Consider how to sum the natural numbers up to `n`:
+
+```pascaligo group=c
+function sum (var n : nat) is {
+  var acc : int := 0;
+  for i := 1 to int (n) {
+    acc := acc + i
+  }
+} with acc
+```
+
+(Please do not use that function: there exists a closed form formula.)
+
+You can call the function `sum` defined above using the LIGO compiler
+like so:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/loops/sum.ligo 7n --entry-point sum
+# Outputs: 28
+```
+
+PascaLIGO "for" loops can also iterate through the contents of a
+collection, that is, a list, a set or a map. For iterating over lists
+or sets, this is done with a loop of the form `for <element var> in
+list/set <collection> <block>`, where `<collection>` is an expression
+denoting a list or a set, respectively. For iterating over maps, it is
+of the form: `for <key> -> <value> in map <collection> <block>`, where
+`<collection>` is an expression denoting a map.
+
+Here is an example where the integers in a list are summed up.
+
+```pascaligo group=d
+function sum_list (var l : list (int)) is {
+  var total : int := 0;
+  for i in list l { total := total + i }
+} with total
+```
+
+You can call the function `sum_list` defined above using the LIGO compiler
+like so:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/loops/collection.ligo --entry-point sum_list
+'list [1;2;3]'
+# Outputs: 6
+```
+
+Here is an example where the integers in a set are summed up.
+
+```pascaligo group=d
+function sum_set (var s : set (int)) is {
+  var total : int := 0;
+  for i in set s { total := total + i }
+} with total
+```
+
+You can call the function `sum_set` defined above using the LIGO compiler
+like so:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/loops/collection.ligo --entry-point sum_set
+'set [1;2;3]'
+# Outputs: 6
+```
+
+Loops over maps are actually loops over the bindings of the map, that
+is, a pair key-value noted `key -> value` (or any other
+variables). Given a map from strings to integers, here is how to sum
+all the integers and concatenate all the strings.
+
+Here is an example where the keys are concatenated and the values are
+summed up.
+
+```pascaligo group=d
+function sum_map (var m : map (string, int)) is {
+  var string_total := "";
+  var int_total := 0;
+  for key -> value in map m {
+    string_total := string_total ^ key;
+    int_total := int_total + value
+  }
+} with (string_total, int_total)
+```
+
+You can call the function `sum_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/loops/collection.ligo --entry-point sum_map
+'map ["1"->1; "2"->2; "3"->3]'
+# Outputs: ( "123", 6 )
+```
+
+</Syntax>
+
+
+
+<Syntax syntax="pascaligo">
+
+In PascaLIGO, the shape of that expression is
+`<record variable> with <record expression>`.
+The record variable is the record to update, and the
+record expression is the update itself.
+
+```pascaligo group=records2
+type point is record [x : int; y : int; z : int]
+type vector is record [dx : int; dy : int]
+
+const origin : point = record [x = 0; y = 0; z = 0]
+
+function xy_translate (var p : point; const vec : vector) : point is
+  p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+```
+
+You can call the function `xy_translate` defined above by running the
+following command of the shell:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_update.ligo
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+> You have to understand that `p` has not been changed by the functional
+> update: a nameless new version of it has been created and returned by
+> the block-less function.
+
+The previous example features a frequent design pattern when updating
+records:
+
+```pascaligo skip
+  p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+```
+
+To shorten those functional updates, PascaLIGO features **lenses**:
+
+```pascaligo skip
+  p with record [x += vec.dx; y += vec.dy]
+```
+
+The available arithmetic lenses are `+=`, `-=`, `*=`, `/=`. There is a
+general lens, when a field is updated by a function call that takes
+the old field value and produces the new, like so:
+
+```pascaligo skip
+function lens (const old_field : int) : int (* new field *) is ...
+
+function update (var p : point; const vec : vector) : point is
+  p with record [x |= lens; y |= lens]
+```
+
+Of course, in general, you can use a different lens for different
+fields. Also a lens may need arguments beyond the old field:
+
+```pascaligo skip
+function lens (const extra : int) : int -> int is
+  function (const old_field : int) : int is old_field + extra
+
+function update (var p : point; const vec : vector) : point is
+  p with record [x |= lens (1); y |= lens (2)]
+```
+
+</Syntax>

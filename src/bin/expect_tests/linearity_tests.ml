@@ -10,14 +10,6 @@ let%expect_test _ =
 
     Duplicated field or variant name.
     Hint: Change the name. |}];
-  run_ligo_bad [ "run"; "interpret"; "foo"; "--init-file"; bad_test "linearity.ligo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/linearity.ligo", line 1, characters 15-49:
-      1 | type foofoo is record [ foo : string; foo : int ]
-
-    Duplicated field or variant name.
-    Hint: Change the name. |}];
   (* Checking binders linearity *)
   run_ligo_bad
     [ "run"
@@ -57,22 +49,6 @@ let%expect_test _ =
     File "../../test/contracts/negative/linearity_pattern_matching.mligo", line 4, characters 4-30:
       3 | let yy : string = match { a = 1 ; b = 2n ; c = "33" } with
       4 |   | { a = a ;  b = b ; c = a } -> a
-
-    Repeated variable in pattern.
-    Hint: Change the name. |}];
-  run_ligo_bad
-    [ "run"
-    ; "interpret"
-    ; "yy"
-    ; "--init-file"
-    ; bad_test "linearity_pattern_matching.ligo"
-    ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/linearity_pattern_matching.ligo", line 4, characters 4-37:
-      3 | const yy : string = case (record [ a = 1 ; b = 2n ; c = "33" ]) of [
-      4 |   | record [ a = a ;  b = b ; c = a ] -> a
-      5 | ]
 
     Repeated variable in pattern.
     Hint: Change the name. |}];

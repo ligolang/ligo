@@ -754,12 +754,14 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+(*
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_transfer_entrypoint.ligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
+*)
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_print.mligo" ];
@@ -826,32 +828,34 @@ let%expect_test _ =
     ["typed_address","KT1Eip4VjDintiWphUf9fAM7cCikw3NajBAG"]
     ["record",{"foo":["constant",["int","42"]],"bar":["list",[["constant",["string","hello"]],["constant",["string","world"]]]]}] |}]
 
+(*
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_imm.ligo" ];
   [%expect
-    {xxx|
+    {test|
     Everything at the top-level was executed.
-    - test_orig exited with value (). |xxx}]
+    - test_orig exited with value (). |test}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_record.ligo" ];
   [%expect
-    {xxx|
+    {test|
     0
     Everything at the top-level was executed.
-    - test_reproducing exited with value "OK". |xxx}]
+    - test_reproducing exited with value "OK". |test}]
+*)
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "tuple_long.mligo" ];
   [%expect
-    {xxx|
+    {test|
     Everything at the top-level was executed.
-    - test exited with value (). |xxx}]
+    - test exited with value (). |test}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_compare_setmap.mligo" ];
   [%expect
-    {xxx|
+    {test|
     Everything at the top-level was executed.
     - test_address_set exited with value { "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" ;
       "tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ" }.
@@ -859,7 +863,7 @@ let%expect_test _ =
     - test_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
       Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }.
     - test_big_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
-      Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |xxx}]
+      Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |test}]
 
 let%expect_test _ =
   run_ligo_good
@@ -871,9 +875,9 @@ let%expect_test _ =
        (nat, t) big_map))"
     ];
   [%expect
-    {xxx|
+    {test|
     Everything at the top-level was executed.
-    - eval exited with value [1n -> {num = 1 ; num_nat = 1n ; str = "q"}]. |xxx}]
+    - eval exited with value [1n -> {num = 1 ; num_nat = 1n ; str = "q"}]. |test}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1186,13 +1190,13 @@ let () = Caml.Sys.chdir pwd
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_michelson_non_func.mligo" ];
   [%expect
-    {xxx|
+    {test|
     File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
       1 | let test =
       2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
       3 |   begin
 
-    Embedded raw code can only have a functional type |xxx}]
+    Embedded raw code can only have a functional type |test}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "get_contract.mligo" ];

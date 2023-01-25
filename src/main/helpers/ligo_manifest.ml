@@ -82,7 +82,7 @@ let validate_main_file ~main =
     let ext_opt = snd @@ Filename.split_extension main in
     let ligo_syntax_opt = Syntax.of_ext_opt ext_opt in
     (match ligo_syntax_opt with
-    | Some Syntax_types.PascaLIGO | Some Syntax_types.CameLIGO | Some Syntax_types.JsLIGO
+    | Some Syntax_types.CameLIGO | Some Syntax_types.JsLIGO
       -> Ok ()
     | None ->
       Error

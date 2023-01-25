@@ -52,6 +52,7 @@ let%expect_test _ =
     Type definitions:
     Module definitions: |}]
 
+(*
 let%expect_test _ =
   run_ligo_good
     [ "info"
@@ -88,6 +89,7 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 2, characters 54-55
     Type definitions:
     Module definitions: |}]
+*)
 
 let%expect_test _ =
   run_ligo_good

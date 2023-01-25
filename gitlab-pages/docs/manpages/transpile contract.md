@@ -18,9 +18,7 @@ disable coloring in CLI output
 if used, prints the output into the specified file instead of stdout (alias: -o)
 
 **--syntax SYNTAX**
-the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, and .jsligo respectively). (alias: -s)
+the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo, and .jsligo respectively). (alias: -s)
 
 **-help**
 print this help text and exit (alias: -?)
-
-

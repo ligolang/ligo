@@ -17,7 +17,7 @@ ligo compile contract SOURCE_FILE --entry-point ENTRY_POINT
 #### Example
 
 ```zsh
-ligo compile contract examples/counter.ligo --entry-point main
+ligo compile contract examples/counter.mligo --entry-point main
 ```
 
 ## Defining the initial storage
@@ -30,7 +30,7 @@ ligo compile storage SOURCE_FILE EXPRESSION --entry-point ENTRY_POINT
 
 #### Example
 ```zsh
-ligo compile storage examples/counter.ligo 5 --entry-point main
+ligo compile storage examples/counter.mligo 5 --entry-point main
 # Outputs: 5
 ```
 
@@ -42,6 +42,6 @@ ligo compile parameter SOURCE_FILE EXPRESSION --entry-point ENTRY_POINT
 
 #### Example
 ```zsh
-ligo compile parameter examples/counter.ligo "Increment(5)" --entry-point main
+ligo compile parameter examples/counter.mligo "Increment(5)" --entry-point main
 # Outputs: (Right 5)
 ```

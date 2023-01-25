@@ -27,12 +27,10 @@ The path to root of the project.
 a bound in the number of steps to be done by the interpreter. (alias: -n)
 
 **--syntax SYNTAX**
-the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, and .jsligo respectively). (alias: -s)
+the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo, and .jsligo respectively). (alias: -s)
 
 **--warn-unused-rec**
 warn about unused recursion in a recursive function
 
 **-help**
 print this help text and exit (alias: -?)
-
-

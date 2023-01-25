@@ -1,6 +1,5 @@
 open Test_helpers
 
-let file = "./contracts/basic_multisig/multisig.ligo"
 let mfile = "./contracts/basic_multisig/multisig.mligo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
@@ -247,15 +246,7 @@ let not_enough_2_of_3 ~raise f () =
 let main =
   test_suite
     "Basic Multisig"
-    [ test_w "compile" (compile_main file)
-    ; test_w "unmatching_counter" (unmatching_counter file)
-    ; test_w "valid_1_of_1" (valid_1_of_1 file)
-    ; test_w "invalid_1_of_1" (invalid_1_of_1 file)
-    ; test_w "not_enough_signature" (not_enough_1_of_2 file)
-    ; test_w "valid_2_of_3" (valid_2_of_3 file)
-    ; test_w "invalid_3_of_3" (invalid_3_of_3 file)
-    ; test_w "not_enough_2_of_3" (not_enough_2_of_3 file)
-    ; test_w "compile (mligo)" (compile_main mfile)
+    [ test_w "compile (mligo)" (compile_main mfile)
     ; test_w "unmatching_counter (mligo)" (unmatching_counter mfile)
     ; test_w "valid_1_of_1 (mligo)" (valid_1_of_1 mfile)
     ; test_w "invalid_1_of_1 (mligo)" (invalid_1_of_1 mfile)

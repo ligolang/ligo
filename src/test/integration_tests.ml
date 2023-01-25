@@ -6,34 +6,25 @@ open Ast_imperative.Combinators
 let init_env = Environment.default Environment.Protocols.current
 let type_file f = type_file f Env options
 
+(*
 let type_alias ~raise () : unit =
   let program = type_file ~raise "./contracts/type-alias.ligo" in
   expect_eq_evaluate ~raise program "foo" (e_int ~loc 23)
-
 
 let function_ ~raise () : unit =
   let program = type_file ~raise "./contracts/function.ligo" in
   let make_expect n = n in
   expect_eq_n_int ~raise program "main" make_expect
 
-
 let blockless ~raise () : unit =
   let program = type_file ~raise "./contracts/blockless.ligo" in
   let make_expect n = n + 10 in
   expect_eq_n_int ~raise program "blockless" make_expect
 
-
-(* Procedures are not supported yet
-  let procedure () : unit result =
-  let program = type_file "./contracts/procedure.ligo" in
-  let make_expect = fun n -> n + 1 in
-  expect_eq_n_int program "main" make_expect *)
-
 let assign ~raise () : unit =
   let program = type_file ~raise "./contracts/assign.ligo" in
   let make_expect n = n + 1 in
   expect_eq_n_int ~raise program "main" make_expect
-
 
 let annotation ~raise () : unit =
   let program = type_file ~raise "./contracts/annotation.ligo" in
@@ -47,18 +38,15 @@ let annotation ~raise () : unit =
   in
   ()
 
-
 let complex_function ~raise () : unit =
   let program = type_file ~raise "./contracts/function-complex.ligo" in
   let make_expect n = (3 * n) + 2 in
   expect_eq_n_int ~raise program "main" make_expect
 
-
 let anon_function ~raise () : unit =
   let program = type_file ~raise "./contracts/function-anon.ligo" in
   let () = expect_eq_evaluate ~raise program "x" (e_int ~loc 42) in
   ()
-
 
 let application ~raise () : unit =
   let program = type_file ~raise "./contracts/application.ligo" in
@@ -75,7 +63,7 @@ let application ~raise () : unit =
     expect_eq_evaluate ~raise program "z" expected
   in
   ()
-
+*)
 
 let variant ~raise f : unit =
   let program = type_file ~raise f in
@@ -93,7 +81,7 @@ let variant ~raise f : unit =
   in
   ()
 
-
+(*
 let variant_matching ~raise () : unit =
   let program = type_file ~raise "./contracts/variant-matching.ligo" in
   let () =
@@ -117,7 +105,6 @@ let variant_matching ~raise () : unit =
   in
   ()
 
-
 let closure ~raise () : unit =
   let program = type_file ~raise "./contracts/closure.ligo" in
   let program_1 = type_file ~raise "./contracts/closure-1.ligo" in
@@ -140,7 +127,7 @@ let closure ~raise () : unit =
     expect_eq_n_int ~raise program "toto" make_expect
   in
   ()
-
+*)
 
 let closure_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/closure.mligo" in
@@ -161,12 +148,12 @@ let closure_jsligo ~raise () : unit =
   in
   ()
 
-
+(*
 let shadow ~raise () : unit =
   let program = type_file ~raise "./contracts/shadow.ligo" in
   let make_expect _ = 0 in
   expect_eq_n_int ~raise program "foo" make_expect
-
+*)
 
 let shadowing ~raise () : unit =
   let program = type_file ~raise "./contracts/shadowing.mligo" in
@@ -564,17 +551,16 @@ let set_arithmetic ~raise f : unit =
   in
   ()
 
-
+(*
 let unit_expression ~raise () : unit =
   let program = type_file ~raise "./contracts/unit.ligo" in
   expect_eq_evaluate ~raise program "u" (e_unit ~loc ())
-
 
 let string_expression ~raise () : unit =
   let program = type_file ~raise "./contracts/string.ligo" in
   let _ = expect_eq_evaluate ~raise program "s" (e_string ~loc "toto") in
   expect_eq_evaluate ~raise program "y" (e_string ~loc "foototobar")
-
+*)
 
 let include_ ~raise f : unit =
   let program = type_file ~raise f in
@@ -600,11 +586,11 @@ let modules ~raise program : unit =
     (e_pair ~loc (e_int ~loc 1) (e_int ~loc 2))
     (e_int ~loc 3)
 
-
+(* Not called? -- Christian
 let modules_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/modules.ligo" in
   modules ~raise program
-
+*)
 
 let modules_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/modules.mligo" in
@@ -913,7 +899,7 @@ let big_map ~raise f : unit =
   in
   ()
 
-
+(*
 let list ~raise () : unit =
   Format.printf "Pre_type \n%!";
   let program = type_file ~raise "./contracts/list.ligo" in
@@ -979,7 +965,7 @@ let list ~raise () : unit =
   let () = expect_eq_evaluate ~raise program "find_y6" (e_none ~loc ()) in
   let () = expect_eq_evaluate ~raise program "find_z2" (e_some ~loc (e_int ~loc 2)) in
   ()
-
+*)
 
 let condition ~raise f : unit =
   let program = type_file ~raise f in
@@ -1025,11 +1011,10 @@ let eq_bool_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/eq_bool.jsligo" in
   eq_bool_common ~raise program
 
-
+(*
 let loop1 ~raise () : unit =
   let _program = type_file ~raise "./contracts/loop1.ligo" in
   ()
-
 
 let loop2 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop2.ligo" in
@@ -1040,7 +1025,6 @@ let loop2 ~raise () : unit =
   in
   ()
 
-
 let loop3 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop3.ligo" in
   let () =
@@ -1049,7 +1033,6 @@ let loop3 ~raise () : unit =
     expect_eq_n_pos_mid ~raise program "counter" make_input make_expected
   in
   ()
-
 
 let loop4 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop4.ligo" in
@@ -1065,7 +1048,6 @@ let loop4 ~raise () : unit =
   in
   ()
 
-
 let loop5 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop5.ligo" in
   let () =
@@ -1074,7 +1056,6 @@ let loop5 ~raise () : unit =
     expect_eq_n_pos_mid ~raise program "for_sum" make_input make_expected
   in
   ()
-
 
 let loop6 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop6.ligo" in
@@ -1085,7 +1066,6 @@ let loop6 ~raise () : unit =
   in
   ()
 
-
 let loop7 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop7.ligo" in
   let input = e_unit ~loc () in
@@ -1094,7 +1074,6 @@ let loop7 ~raise () : unit =
     expect_eq ~raise program "for_collection_list" input expected
   in
   ()
-
 
 let loop8 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop8.ligo" in
@@ -1105,7 +1084,6 @@ let loop8 ~raise () : unit =
   in
   ()
 
-
 let loop9 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop9.ligo" in
   let input = e_unit ~loc () in
@@ -1114,7 +1092,6 @@ let loop9 ~raise () : unit =
     expect_eq ~raise program "for_collection_map_kv" input expected
   in
   ()
-
 
 let loop10 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop10.ligo" in
@@ -1125,7 +1102,6 @@ let loop10 ~raise () : unit =
   in
   ()
 
-
 let loop11 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop11.ligo" in
   let input = e_unit ~loc () in
@@ -1134,7 +1110,6 @@ let loop11 ~raise () : unit =
     expect_eq ~raise program "for_collection_if_and_local_var" input expected
   in
   ()
-
 
 let loop12 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop12.ligo" in
@@ -1145,7 +1120,6 @@ let loop12 ~raise () : unit =
   in
   ()
 
-
 let loop13 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop13.ligo" in
   let input = e_unit ~loc () in
@@ -1155,7 +1129,6 @@ let loop13 ~raise () : unit =
   in
   ()
 
-
 let loop14 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop14.ligo" in
   let input = e_unit ~loc () in
@@ -1164,7 +1137,6 @@ let loop14 ~raise () : unit =
     expect_eq ~raise program "for_collection_comp_with_acc" input expected
   in
   ()
-
 
 let loop15 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop15.ligo" in
@@ -1183,7 +1155,6 @@ let loop15 ~raise () : unit =
   in
   ()
 
-
 let loop16 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop16.ligo" in
   let input = e_unit ~loc () in
@@ -1193,7 +1164,6 @@ let loop16 ~raise () : unit =
   in
   ()
 
-
 let loop17 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop.ligo" in
   let input = e_unit ~loc () in
@@ -1202,7 +1172,6 @@ let loop17 ~raise () : unit =
     expect_eq ~raise program "inner_capture_in_conditional_block" input expected
   in
   ()
-
 
 let loop18 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop.ligo" in
@@ -1217,7 +1186,6 @@ let loop18 ~raise () : unit =
   in
   ()
 
-
 let loop19 ~raise () : unit =
   let program = type_file ~raise "./contracts/loop19.ligo" in
   let () =
@@ -1227,7 +1195,6 @@ let loop19 ~raise () : unit =
   in
   ()
 
-
 let nested_for_loop ~raise () : unit =
   let program = type_file ~raise "./contracts/nested_for_loop.ligo" in
   let () =
@@ -1236,7 +1203,6 @@ let nested_for_loop ~raise () : unit =
     expect_eq_n_pos_mid ~raise program "main" make_input make_expected
   in
   ()
-
 
 let loop ~raise () : unit =
   let program = type_file ~raise "./contracts/loop.ligo" in
@@ -1327,9 +1293,10 @@ let loop ~raise () : unit =
     expect_eq ~raise program "for_collection_with_patches" input expected
   in
   ()
+*)
 
+(* Don't know how to assert that a parse error happens in this test framework
 
-(* Don't know how to assert parse error happens in this test framework
 let for_fail ~raise () : unit =
   let program = type_file "./contracts/for_fail.ligo" in
   let () = expect_fail program "main" (e_nat ~loc 0)
@@ -1504,7 +1471,7 @@ let loop2_mligo ~raise () : unit =
   in
   ()
 
-
+(*
 let matching ~raise () : unit =
   let program = type_file ~raise "./contracts/match.ligo" in
   let () =
@@ -1571,7 +1538,6 @@ let matching ~raise () : unit =
   in
   ()
 
-
 let declarations ~raise () : unit =
   let program = type_file ~raise "./contracts/declarations.ligo" in
   let make_input = e_int ~loc in
@@ -1579,13 +1545,11 @@ let declarations ~raise () : unit =
   expect_eq ~raise program "main" (make_input 0) (make_expected 0);
   expect_eq_n ~raise program "main" make_input make_expected
 
-
 let declaration_local ~raise () : unit =
   let program = type_file ~raise "./contracts/declaration-local.ligo" in
   let make_input = e_int ~loc in
   let make_expected _ = e_int ~loc 42 in
   expect_eq_n ~raise program "main" make_input make_expected
-
 
 let quote_declaration ~raise () : unit =
   let program = type_file ~raise "./contracts/quote-declaration.ligo" in
@@ -1593,13 +1557,12 @@ let quote_declaration ~raise () : unit =
   let make_expected n = e_int ~loc (42 + (2 * n)) in
   expect_eq_n ~raise program "main" make_input make_expected
 
-
 let quote_declarations ~raise () : unit =
   let program = type_file ~raise "./contracts/quote-declarations.ligo" in
   let make_input = e_int ~loc in
   let make_expected n = e_int ~loc (74 + (2 * n)) in
   expect_eq_n ~raise program "main" make_input make_expected
-
+*)
 
 let counter_contract ~raise f : unit =
   let program = type_file ~raise f in
@@ -1622,7 +1585,7 @@ let super_counter_contract ~raise f : unit =
   in
   expect_eq_n ~raise program "main" make_input make_expected
 
-
+(*
 let dispatch_counter_contract ~raise () : unit =
   let program = type_file ~raise "./contracts/dispatch-counter.ligo" in
   let make_input n =
@@ -1634,7 +1597,6 @@ let dispatch_counter_contract ~raise () : unit =
     e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_int ~loc (op 42 n))
   in
   expect_eq_n ~raise program "main" make_input make_expected
-
 
 let failwith_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/failwith.ligo" in
@@ -1667,7 +1629,7 @@ let failwith_ligo ~raise () : unit =
   let () = should_fail @@ -10 in
   let () = should_work 5 6 in
   ()
-
+*)
 
 let failwith_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/failwith.mligo" in
@@ -1791,11 +1753,11 @@ let local_type_decl ~raise program : unit =
   let () = expect_eq ~raise program "local_type" (e_unit ~loc ()) (e_int ~loc 3) in
   ()
 
-
+(*
 let local_type_decl ~raise () : unit =
   let program = type_file ~raise "./contracts/local_type_decl.ligo" in
   local_type_decl ~raise program
-
+*)
 
 let match_variant ~raise () : unit =
   let program = type_file ~raise "./contracts/match.mligo" in
@@ -1986,13 +1948,14 @@ let lambda2 ~raise f : unit =
   let make_expected = e_unit ~loc () in
   expect_eq ~raise program "main" make_input make_expected
 
+(* Why was this test not used below? -- Christian
 
 let fibo_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/fibo.mligo" in
   let make_input = e_pair ~loc (e_unit ~loc ()) (e_unit ~loc ()) in
   let make_expected = e_int ~loc 42 in
   expect_eq ~raise program "main" make_input make_expected
-
+*)
 
 let michelson_insertion ~raise program : unit =
   let program = program in
@@ -2003,6 +1966,7 @@ let michelson_insertion ~raise program : unit =
 
 let michelson_insertion ~raise f : unit = michelson_insertion ~raise @@ type_file ~raise f
 
+(*
 let website1_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/website1.ligo" in
   let make_input n = e_pair ~loc (e_int ~loc n) (e_int ~loc 42) in
@@ -2010,7 +1974,7 @@ let website1_ligo ~raise () : unit =
     e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_int ~loc (42 + 1))
   in
   expect_eq_n ~raise program "main" make_input make_expected
-
+*)
 
 let website2_ligo ~raise f : unit =
   let program = type_file ~raise f in
@@ -2024,7 +1988,7 @@ let website2_ligo ~raise f : unit =
   in
   expect_eq_n ~raise program "main" make_input make_expected
 
-
+(*
 let tez_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/tez.ligo" in
   let _ = expect_eq_evaluate ~raise program "add_tez" (e_mutez ~loc 42) in
@@ -2042,7 +2006,7 @@ let tez_ligo ~raise () : unit =
   let _ = expect_eq_evaluate ~raise program "tez_mod_tez2" (e_mutez ~loc 10) in
   let _ = expect_eq_evaluate ~raise program "tez_mod_tez3" (e_mutez ~loc 100) in
   ()
-
+*)
 
 let tez_mligo ~raise () : unit =
   let program = type_file ~raise "./contracts/tez.mligo" in
@@ -2196,13 +2160,12 @@ let is_nat ~raise f : unit =
   in
   ()
 
-
+(*
 let simple_access_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/simple_access.ligo" in
   let make_input = e_tuple ~loc [ e_int ~loc 0; e_int ~loc 1 ] in
   let make_expected = e_int ~loc 2 in
   expect_eq ~raise program "main" make_input make_expected
-
 
 let deep_access_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/deep_access.ligo" in
@@ -2230,7 +2193,7 @@ let deep_access_ligo ~raise () : unit =
     expect_eq ~raise program "nested_record" make_input make_expected
   in
   ()
-
+*)
 
 let attributes ~raise f : unit =
   let program = type_file ~raise f in
@@ -2241,7 +2204,7 @@ let attributes ~raise f : unit =
   in
   ()
 
-
+(*
 let get_contract_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/get_contract.ligo" in
   let () =
@@ -2278,13 +2241,6 @@ let get_contract_ligo ~raise () : unit =
   in
   ()
 
-
-let entrypoints_ligo ~raise () : unit =
-  let _program = type_file ~raise "./contracts/entrypoints.ligo" in
-  (* hmm... *)
-  ()
-
-
 let chain_id ~raise () : unit =
   let program = type_file ~raise "./contracts/chain_id.ligo" in
   let pouet =
@@ -2296,7 +2252,7 @@ let chain_id ~raise () : unit =
   let make_expected = e_chain_id ~loc pouet in
   let () = expect_eq ~raise program "chain_id" make_input make_expected in
   ()
-
+*)
 
 let key_hash ~raise f : unit =
   let open Tezos_crypto in
@@ -2524,7 +2480,7 @@ let tuple_list_jsligo ~raise () : unit =
   let _ = type_file ~raise "./contracts/tuple_list.jsligo" in
   ()
 
-
+(*
 let loop_bugs_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/loop_bugs.ligo" in
   let input = e_unit ~loc () in
@@ -2537,7 +2493,7 @@ let loop_bugs_ligo ~raise () : unit =
     expect_eq ~raise program "shadowing_assigned_in_body" input expected
   in
   ()
-
+*)
 
 let loop_bugs_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/loop_bugs.jsligo" in
@@ -3489,7 +3445,7 @@ let return_handling ~raise () : unit =
 
 let main =
   test_suite "Integration (End to End)"
-  @@ [ (* Tezos stuff *) test_w "chain id" chain_id ]
+  @@ [ (* Tezos stuff *) (* test_w "chain id" chain_id *) ]
   @ test_w_all "bytes unpack" bytes_unpack
   @ test_w_all "key hash" key_hash
   @ test_w_all "check signature" check_signature
@@ -3499,10 +3455,9 @@ let main =
   @ test_w_all "address" address
   @ test_w_all "self address" self_address
   @ test_w_all "implicit account" implicit_account
-  @ [ test_w "get_contract (ligo)" get_contract_ligo
-    ; test_w "entrypoints (ligo)" entrypoints_ligo
-    ; test_w "tez (ligo)" tez_ligo
-    ; test_w "tez (mligo)" tez_mligo
+  @ [ (* test_w "get_contract (ligo)" get_contract_ligo *)
+      (*    ; test_w "tez (ligo)" tez_ligo *)
+      test_w "tez (mligo)" tez_mligo
     ]
   (* Ligo stuff *)
   @ test_w_all "lambda" lambda
@@ -3521,41 +3476,39 @@ let main =
   @ test_w_all "big_map" big_map
   @ test_w_all "condition" condition
   @ [ test_w "sequence (mligo)" sequence_mligo
-    ; test_w "type alias" type_alias
-    ; test_w "function" function_
-    ; (* tests don't typecheck the test case's application *)
-      test_w "blockless function" blockless
-    ; (* t_west "procedure"  procedure ; *)
-      test_w "assign" assign
-    ; test_w "declaration local" declaration_local
-    ; test_w "complex function" complex_function
-    ; test_w "anon function" anon_function
-    ; test_w "various applications" application
-    ; test_w "closure" closure
+    (*    ; test_w "type alias" type_alias *)
+    (*    ; test_w "function" function_ *)
+    (*    ; test_w "blockless function" blockless *)
+    (*    ; test_w "assign" assign *)
+    (*    ; test_w "declaration local" declaration_local *)
+    (*    ; test_w "complex function" complex_function *)
+    (*    ; test_w "anon function" anon_function *)
+    (*    ; test_w "various applications" application *)
+    (*    ; test_w "closure" closure *)
     ; test_w "closure (mligo)" closure_mligo
     ; test_w "closure (jsligo)" closure_jsligo
     ]
   @ test_w_all "shared-function" shared_function
   @ test_w_all "high-order" higher_order
   @ test_w_all "variant" variant
-  @ [ test_w "matching" matching
-    ; test_w "variant matching" variant_matching
-    ; test_w "match variant (mligo)" match_variant
+  @ [ (* test_w "matching" matching *)
+    (*    ; test_w "variant matching" variant_matching *)
+      test_w "match variant (mligo)" match_variant
     ; test_w "match variant (jsligo)" match_variant_js
     ; test_w "match variant 2 (mligo)" match_matej
     ; test_w "match variant 2 (jsligo)" match_matej_js
     ; test_w "list matching (mligo)" mligo_list
     ; test_w "list matching (jsligo)" jsligo_list
-    ; test_w "failwith ligo" failwith_ligo
+    (* ; test_w "failwith ligo" failwith_ligo *)
     ; test_w "failwith jsligo" failwith_jsligo
     ; test_w "failwith mligo" failwith_mligo
     ; test_w "assert mligo" assert_mligo
     ; test_w "assert jsligo" assert_jsligo
     ]
   @ test_w_all "eq_bool" eq_bool
-  @ [ test_w "shadow" shadow
-    ; test_w "shadowing (mligo)" shadowing
-    ; test_w "annotation" annotation
+  @ [ (*      test_w "shadow" shadow *)
+      test_w "shadowing (mligo)" shadowing
+      (*    ; test_w "annotation" annotation *)
     ]
   @ test_w_all "multiple-parameters" multiple_parameters
   @ test_w_all "boolean_operators" bool_expression
@@ -3565,59 +3518,59 @@ let main =
   @ test_w_all "bytes_arithmetic" bytes_arithmetic
   @ test_w_all "set_arithmetic" set_arithmetic
   @ [ test_w "comparable (mligo)" comparable_mligo
-    ; test_w "unit" unit_expression
-    ; test_w "string" string_expression
-    ; test_w "list" list
-    ; test_w "loop1" loop1
-    ; test_w "loop2" loop2
-    ; test_w "loop3" loop3
-    ; test_w "loop4" loop4
-    ; test_w "loop5" loop5
-    ; test_w "loop6" loop6
-    ; test_w "loop7" loop7
-    ; test_w "loop8" loop8
-    ; test_w "loop9" loop9
-    ; test_w "loop10" loop10
-    ; test_w "loop11" loop11
-    ; test_w "loop12" loop12
-    ; test_w "loop13" loop13
-    ; test_w "loop14" loop14
-    ; test_w "loop15" loop15
-    ; test_w "loop16" loop16
-    ; test_w "loop17" loop17
-    ; test_w "loop18" loop18
-    ; test_w "loop19" loop19
-    ; test_w "nested_for_loop" nested_for_loop
-    ; test_w "loop" loop
+    (* ; test_w "unit" unit_expression *)
+    (* ; test_w "string" string_expression *)
+    (* ; test_w "list" list *)
+    (* ; test_w "loop1" loop1 *)
+    (* ; test_w "loop2" loop2 *)
+    (* ; test_w "loop3" loop3 *)
+    (* ; test_w "loop4" loop4 *)
+    (* ; test_w "loop5" loop5 *)
+    (* ; test_w "loop6" loop6 *)
+    (* ; test_w "loop7" loop7 *)
+    (* ; test_w "loop8" loop8 *)
+    (* ; test_w "loop9" loop9 *)
+    (* ; test_w "loop10" loop10 *)
+    (* ; test_w "loop11" loop11 *)
+    (* ; test_w "loop12" loop12 *)
+    (* ; test_w "loop13" loop13 *)
+    (* ; test_w "loop14" loop14 *)
+    (* ; test_w "loop15" loop15 *)
+    (* ; test_w "loop16" loop16 *)
+    (* ; test_w "loop17" loop17 *)
+    (* ; test_w "loop18" loop18 *)
+    (* ; test_w "loop19" loop19 *)
+    (* ; test_w "nested_for_loop" nested_for_loop *)
+    (* ; test_w "loop" loop *)
     ; test_w "loop (mligo)" loop_mligo
     ; test_w "loop (jsligo)" loop_jsligo
     ; test_w "loop2 (jsligo)" loop2_jsligo
     ; test_w "loop2 (mligo)" loop2_mligo
-    ; test_w "declarations" declarations
-    ; test_w "quote declaration" quote_declaration
-    ; test_w "quote declarations" quote_declarations
+    (* ; test_w "declarations" declarations *)
+    (* ; test_w "quote declaration" quote_declaration *)
+    (* ; test_w "quote declarations" quote_declarations *)
     ]
   @ test_w_all "includer" include_
   @ test_w_all "counter" counter_contract
   @ test_w_all "super-counter" super_counter_contract
-  @ [ test_w "dispatch counter contract" dispatch_counter_contract
-    ; test_w "basic (mligo)" basic_mligo
+  @ [ (* test_w "dispatch counter contract" dispatch_counter_contract *)
+      test_w "basic (mligo)" basic_mligo
     ; test_w "let-in (mligo)" let_in_mligo
     ; test_w "let-in (jsligo)" let_in_jsligo
     ; test_w "let multiple (mligo)" mligo_let_multiple
     ; test_w "let multiple (jsligo)" jsligo_let_multiple
-    ; test_w "local_type_decl" local_type_decl
+    (* ; test_w "local_type_decl" local_type_decl *)
     ]
   @ test_w_all "recursion" recursion_ligo
   (* t_west "guess string mligo" guess_string_mligo ; WIP? *)
   @ test_w_all "michelson_insertion" michelson_insertion
-  @ [ test_w "website1 ligo" website1_ligo ]
+  (*  @ [ test_w "website1 ligo" website1_ligo ] *)
   @ test_w_all "website2" website2_ligo
   @ test_w_all "set delegate" set_delegate
   @ test_w_all "is_nat" is_nat
   @ [ test_w "tuples_sequences_functions (jsligo)" tuples_sequences_functions_jsligo
-    ; test_w "simple_access (ligo)" simple_access_ligo
-    ; test_w "deep_access (ligo)" deep_access_ligo
+    (* ; test_w "simple_access (ligo)" simple_access_ligo *)
+    (* ; test_w "deep_access (ligo)" deep_access_ligo *)
     ; test_w "curry (mligo)" curry
     ; test_w "type tuple destruct (mligo)" type_tuple_destruct
     ]
@@ -3625,7 +3578,7 @@ let main =
   @ test_w_all "empty case" empty_case
   @ [ test_w "let in multi-bind (mligo)" let_in_multi_bind
     ; test_w "tuple param destruct (mligo)" tuple_param_destruct
-    ; test_w "loop_bugs (ligo)" loop_bugs_ligo
+    (* ; test_w "loop_bugs (ligo)" loop_bugs_ligo *)
     ; test_w "loop_bugs (jsligo)" loop_bugs_jsligo
     ; test_w "if no else (jsligo)" if_no_else_jsligo
     ; test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo

@@ -14,23 +14,6 @@ values of type `tez` are units of measure of Tezos tokens.
     languages, for example, `10`, `-6` and `0`, but there is only one
     canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
 
-<Syntax syntax="pascaligo">
-
-  * Natural numbers are written as digits followed by the suffix `n`,
-    like so: `12n`, `0n`, and the same restriction on zero as integers
-    applies: `0n` is the only way to specify the natural zero.
-
-  * Tezos tokens can be specified using literals of three kinds:
-      * units of millionth of `tez`, using the suffix `mutez` after a
-        natural literal, like `10000mutez` or `0mutez`;
-      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
-        `3tez`;
-      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
-
-Note that large integral values can be expressed using underscores to
-separate groups of digits, like `1_000mutez` or `0.000_004tez`.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
   * Natural numbers are written as digits followed by the suffix `n`,
@@ -79,39 +62,6 @@ remain in comments as they would otherwise not compile, for example,
 adding a value of type `int` to a value of type `tez` is invalid. Note
 that adding an integer to a natural number produces an integer.
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=a
-// int + int yields int
-const a : int = 5 + 10
-
-// nat + int yields int
-const b : int = 5n + 10
-
-// tez + tez yields tez
-const c : tez = 5mutez + 0.000_010tez
-
-//tez + int or tez + nat is invalid
-// const d : tez = 5mutez + 10n
-
-// two nats yield a nat
-const e : nat = 5n + 10n
-
-// nat + int yields an int: invalid
-// const f : nat = 5n + 10;
-
-const g : int = 1_000_000
-```
-
-> Pro tip: you can use underscores for readability when defining large
-> numbers:
->
->```pascaligo
-> const sum : tez = 100_000mutez
->```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
@@ -136,7 +86,7 @@ let e : nat = 5n + 10n
 let g : int = 1_000_000
 ```
 
-> Pro tip: you can use underscores for readability when defining large
+> Tip: you can use underscores for readability when defining large
 > numbers:
 >
 >```cameligo
@@ -169,7 +119,7 @@ let e: nat = (5 as nat) + (10 as nat);
 let g = 1_000_000;
 ```
 
-> Pro tip: you can use underscores for readability when defining large
+> Tip: you can use underscores for readability when defining large
 > numbers:
 >```jsligo
 >let sum : tez = 100_000 as mutez;
@@ -181,22 +131,8 @@ let g = 1_000_000;
 
 Subtraction looks as follows.
 
-> ⚠️ Even when subtracting two `nats`, the result is an `int`
+> ⚠️ Even when subtracting two `nats`, the result is an `int`.
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-const a : int = 5 - 10
-
-// Subtraction of two nats yields an int
-const b : int = 5n - 2n
-
-// Therefore the following is invalid
-// const c : nat = 5n - 2n
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -225,26 +161,14 @@ let b: int = (5 as nat) - (2 as nat);
 
 </Syntax>
 
-From protocol *`Ithaca`* onwards subtracting values of type `tez` yeilds on optional value (due to the michelson instruction `SUB_MUTEZ`)
+From protocol *`Ithaca`* onwards subtracting values of type `tez`
+yeilds an optional value (due to the Michelson instruction
+`SUB_MUTEZ`)
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-
-const d : option (tez) = 5mutez - 1mutez (* Some (4mutez) *)
-
-const e : option (tez) = 1mutez - 5mutez (* None *)
-
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
-
 let d : tez option = 5mutez - 1mutez (* Some (4mutez) *)
-
 let e : tez option = 1mutez - 5mutez (* None *)
 
 ```
@@ -254,9 +178,7 @@ let e : tez option = 1mutez - 5mutez (* None *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-
 let d : option<tez> = (5 as mutez) - (1 as mutez); /* Some (4mutez) */
-
 let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */
 
 ```
@@ -267,17 +189,6 @@ let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */
 
 You can multiply values of the same type, such as:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-const a : int = 5 * 5
-const b : nat = 5n * 5n
-
-// You can also multiply `nat` and `tez`
-const c : tez = 5n * 5mutez
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -307,18 +218,8 @@ let c: tez = (5 as nat) * (5 as mutez);
 
 In LIGO you can divide `int`, `nat`, and `tez`. Here is how:
 
-> ⚠️ Division of two `tez` values results into a `nat`
+> ⚠️ Division of two `tez` values results into a `nat`.
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=d
-const a : int = 10 / 3
-const b : nat = 10n / 3n
-const c : nat = 10mutez / 3mutez
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
@@ -343,21 +244,6 @@ let c: nat = (10 as mutez) / (3 as mutez);
 LIGO also allows you to compute the remainder of the Euclidean
 division. In LIGO, it is a natural number.
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=d
-const a : int = 120
-const b : int = 9
-const rem1 : nat = a mod b  // 3
-const c : nat = 120n
-const rem2 : nat = c mod b  // 3
-const d : nat = 9n
-const rem3 : nat = c mod d  // 3
-const rem4 : nat = a mod d  // 3
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
@@ -398,21 +284,6 @@ For cases when you need both the quotient and the remainder, LIGO provides the
 `ediv` operation. `ediv x y` returns `Some (quotient, remainder)`, unless `y`
 is zero, in which case it returns `None`
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=f
-const a : int = 37
-const b : int = 5
-const ediv1 : option (int * nat) = ediv (a, b)  // Some (7, 2)
-const c : nat = 37n
-const ediv2 : option (int * nat) = ediv (c, b)  // Some (7, 2)
-const d : nat = 5n
-const ediv3 : option (nat * nat) = ediv (c, d)  // Some (7, 2)
-const ediv4 : option (int * nat) = ediv (a, d)  // Some (7, 2)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=f
@@ -448,15 +319,6 @@ let ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
 
 You can *cast* an `int` to a `nat` and vice versa. Here is how:
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=e
-const a : int = int (1n)
-const b : nat = abs (1)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
@@ -483,14 +345,6 @@ function which accepts an `int` and returns an optional `nat`: if the
 result is not `None`, then the provided integer was indeed a natural
 number, and not otherwise.
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=e
-const is_a_nat : option (nat) = is_nat (1)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
@@ -531,5 +385,3 @@ let seven_ : nat = 14n land 1n // 7
 ```
 
 </Syntax>
-
-

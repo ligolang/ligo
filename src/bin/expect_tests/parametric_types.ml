@@ -35,6 +35,7 @@ let%expect_test _ =
   [%expect{|
     CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))) |}] *)
 
+(*
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret"; "t1"; "--init-file"; test "parametric_types.ligo" ];
   [%expect {|
@@ -54,6 +55,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "interpret"; "t4"; "--init-file"; test "parametric_types.ligo" ];
   [%expect {|
     CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY()))) |}]
+*)
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types1.mligo" ];
@@ -104,6 +106,7 @@ let%expect_test _ =
     Repeated type variable in type.
     Hint: Change the name. |}]
 
+(*
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types1.ligo" ];
   [%expect
@@ -152,3 +155,4 @@ let%expect_test _ =
 
     Repeated type variable in type.
     Hint: Change the name. |}]
+*)
