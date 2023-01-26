@@ -36,14 +36,14 @@ let peephole_expression ~raise : expression -> expression =
 
 let peephole_program ~raise : program -> program =
  fun m ->
-  let rec aux vars types mods = function
+  let rec aux vars types mods contracts = function
     | Location.{ wrap_content = D_value t; location } :: remaining ->
       let var = Binder.get_var t.binder in
       let () =
         if List.mem ~equal:Value_var.equal vars var
         then raise.error (no_shadowing location)
       in
-      aux (var :: vars) types mods remaining
+      aux (var :: vars) types mods contracts remaining
     | Location.{ wrap_content = D_irrefutable_match t; location } :: remaining ->
       let pattern_vars = List.map ~f:Binder.get_var (Pattern.binders t.pattern) in
       let () =
@@ -51,17 +51,22 @@ let peephole_program ~raise : program -> program =
             if List.mem ~equal:Value_var.equal vars var
             then raise.error (no_shadowing location))
       in
-      aux (pattern_vars @ vars) types mods remaining
+      aux (pattern_vars @ vars) types mods contracts remaining
     | { wrap_content = D_type t; location } :: remaining ->
       if List.mem ~equal:Type_var.equal types t.type_binder
       then raise.error @@ no_shadowing location
-      else aux vars (t.type_binder :: types) mods remaining
+      else aux vars (t.type_binder :: types) mods contracts remaining
     | { wrap_content = D_module t; location } :: remaining ->
       let mod_ = t.module_binder in
       if List.mem ~equal:Module_var.equal mods mod_
       then raise.error @@ no_shadowing location
-      else aux vars types (mod_ :: mods) remaining
+      else aux vars types (mod_ :: mods) contracts remaining
+    | { wrap_content = D_contract contract; location } :: remaining ->
+      let contract = contract.contract_binder in
+      if List.mem ~equal:Contract_var.equal contracts contract
+      then raise.error @@ no_shadowing location
+      else aux vars types mods (contract :: contracts) remaining
     | [] -> ()
   in
-  aux [] [] [] m;
+  aux [] [] [] [] m;
   m

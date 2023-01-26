@@ -76,12 +76,25 @@ end = struct
       unions
         [ self collection; VarSet.remove binder @@ VarSet.remove binder' @@ self fe_body ]
     | E_while { cond; body } -> unions [ self cond; self body ]
+    | E_originate { contract = _; storage; key_hash; tez } ->
+      unions [ self storage; self key_hash; self tez ]
+    | E_contract_call { contract = _; address; method_ = _; params; on_none } ->
+      let on_none = Option.value_map on_none ~default:VarSet.empty ~f:self in
+      unions ([ self address; on_none ] @ List.map params ~f:self)
 
 
   and get_fv_module_expr : module_expr_content -> VarSet.t = function
     | M_struct prg -> get_fv_module prg
     | M_variable _ -> VarSet.empty
     | M_module_path _ -> VarSet.empty
+
+
+  and get_fv_contract_expr : contract_expr -> VarSet.t =
+   fun contract_expr ->
+    match Location.unwrap contract_expr with
+    | C_struct decls -> get_fv_contract decls
+    | C_variable _ -> VarSet.empty
+    | C_module_path _ -> VarSet.empty
 
 
   and get_fv_module : module_ -> VarSet.t =
@@ -93,8 +106,28 @@ end = struct
       | D_type _t -> VarSet.empty
       | D_module { module_binder = _; module_; module_attr = _ } ->
         get_fv_module_expr module_.wrap_content
+      | D_contract { contract_binder = _; contract; contract_attr = _ } ->
+        get_fv_contract_expr contract
     in
     unions @@ List.map ~f:aux p
+
+
+  and get_fv_contract_decl : contract_declaration -> VarSet.t =
+   fun decl ->
+    match Location.unwrap decl with
+    | C_entry { binder = _; expr; attr = _ }
+    | C_view { binder = _; expr; attr = _ }
+    | C_value { binder = _; expr; attr = _ } -> get_fv_expr expr
+    | C_irrefutable_match { pattern = _; expr; attr = _ } -> get_fv_expr expr
+    | C_type _t -> VarSet.empty
+    | C_module { module_binder = _; module_; module_attr = _ } ->
+      get_fv_module_expr module_.wrap_content
+    | C_contract { contract_binder = _; contract; contract_attr = _ } ->
+      get_fv_contract_expr contract
+
+
+  and get_fv_contract : contract_declaration list -> VarSet.t =
+   fun contract -> unions @@ List.map ~f:get_fv_contract_decl contract
 
 
   let expression e = VarSet.fold (fun v r -> v :: r) (get_fv_expr e) []

@@ -55,15 +55,22 @@ module List_expr = List_expr
 module Module_var = Var.Module_var
 module Module_access = Module_access
 module Module_expr = Module_expr
+module Contract_expr = Contract_expr
 module Mod_in = Mod_in
 
 (* Declarations *)
 module Value_decl (Attr : Declaration.Attr) = Declaration.Value_decl (Attr)
 module Type_decl (Attr : Declaration.Attr) = Declaration.Type_decl (Attr)
 module Module_decl (Attr : Declaration.Attr) = Declaration.Module_decl (Attr)
+module Contract_decl (Attr : Declaration.Attr) = Declaration.Contract_decl (Attr)
 
 module Pattern_decl (Pattern : Pattern.S) (Attr : Declaration.Attr) =
   Declaration.Pattern_decl (Pattern) (Attr)
+
+(* Contracts *)
+module Contract_var = Var.Contract_var
+module Originate = Originate
+module Contract_call = Contract_call
 
 (* Misc *)
 module Error = Error

@@ -40,6 +40,8 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   | E_for_each fe -> For_each_loop.fold self init fe
   | E_while w -> While_loop.fold self init w
   | E_let_mut_in li -> Let_in.fold self self_type init li
+  | E_originate originate -> Originate.fold self init originate
+  | E_contract_call contract_call -> Contract_call.fold self init contract_call
 
 
 type exp_mapper = expression -> expression
@@ -138,6 +140,12 @@ let rec map_expression : exp_mapper -> expression -> expression =
   | E_let_mut_in li ->
     let li = Let_in.map self Fn.id li in
     return @@ E_let_mut_in li
+  | E_originate originate ->
+    let originate = Originate.map self originate in
+    return @@ E_originate originate
+  | E_contract_call contract_call ->
+    let contract_call = Contract_call.map self contract_call in
+    return @@ E_contract_call contract_call
   | (E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _) as e' ->
     return e'
 
@@ -339,6 +347,12 @@ let rec fold_map_expression
     | E_let_mut_in li ->
       let res, li = Let_in.fold_map self idle init li in
       res, return @@ E_let_mut_in li
+    | E_originate originate ->
+      let res, originate = Originate.fold_map self init originate in
+      res, return @@ E_originate originate
+    | E_contract_call contract_call ->
+      let res, contract_call = Contract_call.fold_map self init contract_call in
+      res, return @@ E_contract_call contract_call
     | (E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _) as e'
       -> init, return e')
 

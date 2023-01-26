@@ -7,6 +7,23 @@ module Fold_helpers (M : Monad) = struct
 
   type 'a monad = 'a t
 
+  let rec all ts =
+    match ts with
+    | [] -> return []
+    | t :: ts ->
+      let* x = t in
+      let* xs = all ts in
+      return (x :: xs)
+
+
+  let all_opt t =
+    match t with
+    | None -> return None
+    | Some t ->
+      let* x = t in
+      return (Some x)
+
+
   let ok x = return x
 
   let constructor : ('a -> 'b monad) -> 'a Constructor.t -> 'b Constructor.t monad =
@@ -158,6 +175,23 @@ module Fold_helpers (M : Monad) = struct
     let* expr1 = f expr1 in
     let* expr2 = f expr2 in
     ok @@ Sequence.{ expr1; expr2 }
+
+
+  let originate : ('a -> 'b monad) -> 'a Originate.t -> 'b Originate.t monad =
+   fun f { contract; storage; key_hash; tez } ->
+    let* storage = f storage in
+    let* key_hash = f key_hash in
+    let* tez = f tez in
+    ok @@ Originate.{ contract; storage; key_hash; tez }
+
+
+  let contract_call =
+    let open Contract_call in
+    fun f { contract; address; method_; params; on_none } ->
+      let* address = f address in
+      let* params = List.map ~f params |> all in
+      let* on_none = Option.map ~f on_none |> all_opt in
+      ok @@ { contract; address; method_; params; on_none }
 
 
   let ascription
@@ -357,6 +391,12 @@ module Fold_helpers (M : Monad) = struct
     | E_let_mut_in li ->
       let* li = let_in self ok li in
       return @@ E_let_in li
+    | E_originate orig ->
+      let* orig = originate self orig in
+      return @@ E_originate orig
+    | E_contract_call call ->
+      let* call = contract_call self call in
+      return @@ E_contract_call call
     | (E_literal _ | E_variable _ | E_raw_code _ | E_skip _ | E_module_accessor _) as e'
       -> return e'
 
