@@ -263,13 +263,19 @@ module Option = struct
 #if CURRY
   let unopt_with_error (type a) (v : a option) (s : string) : a = match v with | Some v -> v | None -> failwith s
   [@thunk] let map (type a b) (f : a -> b) (v : a option) : b option = [%external ("OPTION_MAP", f, v)]
+  let value (type a) (default : a) (v : a option) : a = match v with | None -> default | Some v -> v
+  let value_exn (type err a) (err : err) (x : a option) : a = match x with None -> failwith err | Some v -> v
 #endif
 
 #if UNCURRY
   let unopt_with_error (type a) ((v, s) : (a option) * string) : a = match v with | Some v -> v | None -> failwith s
   [@thunk] let map (type a b) ((f, v) : (a -> b) * (a option)) : b option = [%external ("OPTION_MAP", f, v)]
+  let value (type a) (p : a * a option) : a = match p.1 with | None -> p.0 | Some v -> v
+  let value_exn (type err a) (p : err * a option) : a = match p.1 with None -> failwith p.0 | Some v -> v
 #endif
 
+  let is_none (type a) (v : a option) : bool = match v with | None -> True | Some _ -> False
+  let is_some (type a) (v : a option) : bool = match v with | None -> False | Some _ -> True
 end
 
 module Bytes = struct
