@@ -38,27 +38,60 @@ let at_prefix (b : Ast_core.type_expression option Binder.t) =
 
 let internalize_core (ds : Ast_core.program) : Ast_core.program =
   let open Ast_core in
-  let rec f (d : declaration_content) : declaration_content =
-    match d with
-    | D_module { module_binder; module_; module_attr } ->
-      let module_ =
-        match module_ with
-        | { wrap_content = M_struct x; _ } ->
-          { module_ with wrap_content = Module_expr.M_struct (module' x) }
-        | _ -> module_
-      in
-      D_module { module_binder; module_; module_attr }
-    | D_type { type_binder; type_expr; type_attr } ->
-      D_type { type_binder; type_expr; type_attr }
-    | D_irrefutable_match x -> D_irrefutable_match x
-    | D_value x ->
-      let binder = sap_for_all x.binder in
-      let binder = at_prefix binder in
-      let attr : ValueAttr.t = { x.attr with inline = true; hidden = true } in
-      D_value { x with attr; binder }
-  and declaration (d : declaration) = Simple_utils.Location.map f d
-  and decl d = declaration d
-  and module' = List.map ~f:decl in
+  let rec module_decl
+      ({ module_binder; module_; module_attr } : module_expr Module_decl.t)
+    =
+    let module_ =
+      match module_ with
+      | { wrap_content = M_struct x; _ } ->
+        { module_ with wrap_content = Module_expr.M_struct (module' x) }
+      | _ -> module_
+    in
+    Module_decl.{ module_binder; module_; module_attr }
+  and value_decl (value_decl : _ Value_decl.t) =
+    let binder = sap_for_all value_decl.binder in
+    let binder = at_prefix binder in
+    let attr : ValueAttr.t = { value_decl.attr with inline = true; hidden = true } in
+    Value_decl.{ value_decl with binder; attr }
+  and declaration : declaration -> declaration =
+   fun decl ->
+    Location.map
+      (function
+        | D_module module_decl' ->
+          let module_decl' = module_decl module_decl' in
+          D_module module_decl'
+        | D_contract contract_decl ->
+          let contract_decl = Contract_decl.map contract_expr contract_decl in
+          D_contract contract_decl
+        | D_value value_decl' ->
+          let value_decl' = value_decl value_decl' in
+          D_value value_decl'
+        | (D_irrefutable_match _ | D_type _) as decl -> decl)
+      decl
+  and contract_declaration : contract_declaration -> contract_declaration =
+   fun decl ->
+    Location.map
+      (function
+        | C_value value_decl' ->
+          let value_decl' = value_decl value_decl' in
+          C_value value_decl'
+        | C_module module_decl' ->
+          let module_decl' = module_decl module_decl' in
+          C_module module_decl'
+        | C_contract contract_decl' ->
+          let contract_decl' = contract_decl contract_decl' in
+          C_contract contract_decl'
+        | C_entry value_decl' ->
+          let value_decl' = value_decl value_decl' in
+          C_entry value_decl'
+        | C_view value_decl' ->
+          let value_decl' = value_decl value_decl' in
+          C_view value_decl'
+        | _ as decl -> decl)
+      decl
+  and contract_decl decl = Contract_decl.map contract_expr decl
+  and module' module_ = List.map ~f:declaration module_
+  and contract_expr expr = Location.map (Contract_expr.map contract_declaration) expr in
   List.map ~f:declaration ds
 
 

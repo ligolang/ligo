@@ -71,4 +71,6 @@ let rec assert_value_eq ((a, b) : expression * expression) : unit option =
   | E_constant _, _
   | E_constructor _, E_constructor _
   | E_record _, _
-  | E_constructor _, _ -> None
+  | E_constructor _, _
+  | E_originate _, _
+  | E_contract_call _, _ -> None

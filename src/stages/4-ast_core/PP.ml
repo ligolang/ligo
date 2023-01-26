@@ -133,6 +133,8 @@ and expression_content ppf (ec : expression_content) =
   | E_for for_loop -> For_loop.pp expression ppf for_loop
   | E_for_each for_each -> For_each_loop.pp expression ppf for_each
   | E_while while_loop -> While_loop.pp expression ppf while_loop
+  | E_originate originate -> Originate.pp expression ppf originate
+  | E_contract_call contract_call -> Contract_call.pp expression ppf contract_call
 
 
 and declaration ppf (d : declaration) =
@@ -142,12 +144,29 @@ and declaration ppf (d : declaration) =
     Types.Pattern_decl.pp expression type_expression_option ppf pd
   | D_type td -> Types.Type_decl.pp type_expression ppf td
   | D_module md -> Types.Module_decl.pp module_expr ppf md
+  | D_contract contract_decl -> Contract_decl.pp contract_expr ppf contract_decl
+
+
+and contract_declaration ppf (contract_decl : contract_declaration) =
+  match Location.unwrap contract_decl with
+  | C_value vd -> Types.Value_decl.pp expression type_expression_option ppf vd
+  | C_irrefutable_match pd ->
+    Types.Pattern_decl.pp expression type_expression_option ppf pd
+  | C_type td -> Types.Type_decl.pp type_expression ppf td
+  | C_module md -> Types.Module_decl.pp module_expr ppf md
+  | C_contract contract_decl -> Contract_decl.pp contract_expr ppf contract_decl
+  | C_entry vd -> Value_decl.pp_entry expression type_expression_option ppf vd
+  | C_view vd -> Value_decl.pp_view expression type_expression_option ppf vd
 
 
 and decl ppf d = declaration ppf d
 
 and module_expr ppf (me : module_expr) : unit =
   Location.pp_wrap (Module_expr.pp decl) ppf me
+
+
+and contract_expr ppf (ce : contract_expr) =
+  Location.pp_wrap (Contract_expr.pp contract_declaration) ppf ce
 
 
 let program ppf (p : program) = list_sep declaration (tag "@,") ppf p

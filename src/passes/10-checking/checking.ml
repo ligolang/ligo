@@ -772,6 +772,9 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         and body = body in
         return @@ O.E_while { cond; body })
       t_unit
+  | E_originate _ | E_contract_call _ ->
+    (* TODO: Contracts *)
+    assert false
 
 
 and check_lambda
@@ -1373,6 +1376,9 @@ and infer_declaration (decl : I.declaration)
         let%bind module_ = module_ in
         return @@ O.D_module { module_binder; module_; module_attr = { public; hidden } })
       [ S_module (module_binder, sig_) ]
+  | D_contract _ ->
+    (* TODO: Contracts *)
+    assert false
 
 
 and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =

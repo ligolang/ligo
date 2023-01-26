@@ -32,6 +32,7 @@ let decompile_type_attributes : O.TypeOrModuleAttr.t -> I.Attr.t =
 
 
 let decompile_module_attributes = decompile_type_attributes
+let decompile_contract_attributes = decompile_type_attributes
 
 let rec decompile_type_expression (type_ : O.type_expression) : I.type_expression =
   let self = decompile_type_expression in
@@ -176,7 +177,13 @@ let rec decompile_expression (expr : O.expression) : I.expression =
       let rhs = decompile_expression rhs in
       let let_result = decompile_expression let_result in
       let attributes = decompile_value_attributes attributes in
-      return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result })
+      return @@ I.E_let_mut_in { let_binder; attributes; rhs; let_result }
+    | O.E_originate originate ->
+      let originate = Originate.map decompile_expression originate in
+      return @@ I.E_originate originate
+    | O.E_contract_call contract_call ->
+      let contract_call = Contract_call.map decompile_expression contract_call in
+      return @@ I.E_contract_call contract_call)
 
 
 and decompile_match_expr
@@ -221,29 +228,85 @@ and decompile_pattern : _ O.Pattern.t -> _ I.Pattern.t =
     Location.wrap ~loc (I.Pattern.P_record lps)
 
 
+and decompile_value_decl O.Value_decl.{ binder; expr; attr } =
+  let binder = Binder.map (Option.map ~f:decompile_type_expression) binder in
+  let expr = decompile_expression expr in
+  let attr = decompile_value_attributes attr in
+  I.Value_decl.{ binder; expr; attr }
+
+
+and decompile_patten_decl O.Pattern_decl.{ pattern; expr; attr } =
+  let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
+  let pattern = decompile_pattern pattern in
+  let expr = decompile_expression expr in
+  let attr = decompile_value_attributes attr in
+  I.Pattern_decl.{ pattern; expr; attr }
+
+
+and decompile_type_decl O.Type_decl.{ type_binder; type_expr; type_attr } =
+  let type_expr = decompile_type_expression type_expr in
+  let type_attr = decompile_type_attributes type_attr in
+  I.Type_decl.{ type_binder; type_expr; type_attr }
+
+
+and decompile_module_decl O.Module_decl.{ module_binder; module_; module_attr } =
+  let module_ = decompile_module_expr module_ in
+  let module_attr = decompile_module_attributes module_attr in
+  I.Module_decl.{ module_binder; module_; module_attr }
+
+
+and decompile_contract_decl O.Contract_decl.{ contract_binder; contract; contract_attr } =
+  let contract = decompile_contract_expr contract in
+  let contract_attr = decompile_contract_attributes contract_attr in
+  I.Contract_decl.{ contract_binder; contract; contract_attr }
+
+
 and decompile_declaration : O.declaration -> I.declaration =
  fun d ->
   let return wrap_content : I.declaration = { d with wrap_content } in
   match Location.unwrap d with
-  | D_value { binder; expr; attr } ->
-    let binder = Binder.map (Option.map ~f:decompile_type_expression) binder in
-    let expr = decompile_expression expr in
-    let attr = decompile_value_attributes attr in
-    return @@ D_value { binder; expr; attr }
-  | D_irrefutable_match { pattern; expr; attr } ->
-    let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
-    let pattern = decompile_pattern pattern in
-    let expr = decompile_expression expr in
-    let attr = decompile_value_attributes attr in
-    return @@ D_irrefutable_match { pattern; expr; attr }
-  | D_type { type_binder; type_expr; type_attr } ->
-    let type_expr = decompile_type_expression type_expr in
-    let type_attr = decompile_type_attributes type_attr in
-    return @@ D_type { type_binder; type_expr; type_attr }
-  | D_module { module_binder; module_; module_attr } ->
-    let module_ = decompile_module_expr module_ in
-    let module_attr = decompile_module_attributes module_attr in
-    return @@ D_module { module_binder; module_; module_attr }
+  | D_value value_decl ->
+    let value_decl = decompile_value_decl value_decl in
+    return @@ D_value value_decl
+  | D_irrefutable_match pattern_decl ->
+    let pattern_decl = decompile_patten_decl pattern_decl in
+    return @@ D_irrefutable_match pattern_decl
+  | D_type type_decl ->
+    let type_decl = decompile_type_decl type_decl in
+    return @@ D_type type_decl
+  | D_module module_decl ->
+    let module_decl = decompile_module_decl module_decl in
+    return @@ D_module module_decl
+  | D_contract contract_decl ->
+    let contract_decl = decompile_contract_decl contract_decl in
+    return @@ D_contract contract_decl
+
+
+and decompile_contract_declaration : O.contract_declaration -> I.contract_declaration =
+ fun d ->
+  let return wrap_content : I.contract_declaration = { d with wrap_content } in
+  match Location.unwrap d with
+  | C_value value_decl ->
+    let value_decl = decompile_value_decl value_decl in
+    return @@ C_value value_decl
+  | C_irrefutable_match pattern_decl ->
+    let pattern_decl = decompile_patten_decl pattern_decl in
+    return @@ C_irrefutable_match pattern_decl
+  | C_type type_decl ->
+    let type_decl = decompile_type_decl type_decl in
+    return @@ C_type type_decl
+  | C_module module_decl ->
+    let module_decl = decompile_module_decl module_decl in
+    return @@ C_module module_decl
+  | C_contract contract_decl ->
+    let contract_decl = decompile_contract_decl contract_decl in
+    return @@ C_contract contract_decl
+  | C_entry value_decl ->
+    let value_decl = decompile_value_decl value_decl in
+    return @@ C_entry value_decl
+  | C_view value_decl ->
+    let value_decl = decompile_value_decl value_decl in
+    return @@ C_view value_decl
 
 
 and decompile_module_expr : O.module_expr -> I.module_expr =
@@ -257,8 +320,20 @@ and decompile_module_expr : O.module_expr -> I.module_expr =
   | M_module_path mp -> return @@ M_module_path mp
 
 
+and decompile_contract_expr : O.contract_expr -> I.contract_expr =
+ fun contract_expr ->
+  let return wrap_content : I.contract_expr = { contract_expr with wrap_content } in
+  match Location.unwrap contract_expr with
+  | C_struct decls ->
+    let decls = decompile_contract decls in
+    return @@ C_struct decls
+  | C_variable contract_var -> return @@ C_variable contract_var
+  | C_module_path contract_path -> return @@ C_module_path contract_path
+
+
 and decompile_decl : O.decl -> I.decl = fun d -> decompile_declaration d
 and decompile_module : O.module_ -> I.module_ = fun m -> List.map ~f:decompile_decl m
+and decompile_contract contract = List.map ~f:decompile_contract_declaration contract
 
 let decompile_program = List.map ~f:decompile_declaration
 
