@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew functions available in module `Option`:\\n`val is_none : 'a option -> bool`: returns a boolean signaling if the value is `None`.`val is_some : 'a option -> bool`: returns a boolean signaling if the value is a `Some`.`val value : 'a -> 'a option -> 'a`: returns the value if the second argument is wrapped in the `Some` constructor, or returns the first argument if it is `None`.`val value_exn : 'e -> 'a option -> 'a`: returns the value if the second argument is wrapped in the `Some` constructor, or fails with the first value if it is `None`.\\n#### Example\\n\\n\\n```\\ntype foobar = option <int>;\\n\\nconst s : foobar = Some (42);\\nconst n : foobar = None ();\\n\\nconst f = (m : foobar) : int => {\\n  if (Option.is_none(m)) {\\n    return Option.value(1, m);\\n  } else {\\n    if (Option.is_some(m)) {\\n      return Option.value_exn(\"won't happen\", m);\\n    } else {\\n      return -1;\\n    }\\n  }\\n}\\n\\nconst j = f(s);\\nconst k = f(n);\\n\\n```\\n\\n`j` evaluates to `42`, while `k` evaluates to `1`.\\n\\n"
+merge_request: '2300'
+title: "Stdlib: add `is_none`, `is_some`, `value` and `value_exn` in module `Option`"
+type: added
+            
