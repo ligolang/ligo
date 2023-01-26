@@ -69,7 +69,10 @@ for f in $1; do
 
     # compare list of tokens
     $PARSER --tokens -- original_generated/formatted_"$f" | sed 's/^[^\ ]*://' > original_generated/"$f".tokens
-    $PARSER --tokens -- recovered/"$f"                    | sed 's/^[^\ ]*://' > recovered/"$f".tokens
+    $PARSER --tokens --\
+            `#workaround: suppress spliting "<invalid-*>" into several tokens`\
+            <(sed 's/<invalid-\([^<>]*\)>/_invalid_\1/' recovered/"$f") \
+            2> /dev/null  | sed 's/^[^\ ]*://' > recovered/"$f".tokens
 
     # disable trap because diff utilities return nonzero code if files aren't the same
     trap - ERR
