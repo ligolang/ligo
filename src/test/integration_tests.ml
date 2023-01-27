@@ -81,6 +81,7 @@ let variant ~raise f : unit =
   in
   ()
 
+
 (*
 let variant_matching ~raise () : unit =
   let program = type_file ~raise "./contracts/variant-matching.ligo" in
@@ -147,6 +148,7 @@ let closure_jsligo ~raise () : unit =
     expect_eq ~raise program "test" input expected
   in
   ()
+
 
 (*
 let shadow ~raise () : unit =
@@ -551,6 +553,7 @@ let set_arithmetic ~raise f : unit =
   in
   ()
 
+
 (*
 let unit_expression ~raise () : unit =
   let program = type_file ~raise "./contracts/unit.ligo" in
@@ -585,6 +588,7 @@ let modules ~raise program : unit =
     "add"
     (e_pair ~loc (e_int ~loc 1) (e_int ~loc 2))
     (e_int ~loc 3)
+
 
 (* Not called? -- Christian
 let modules_ligo ~raise () : unit =
@@ -899,6 +903,7 @@ let big_map ~raise f : unit =
   in
   ()
 
+
 (*
 let list ~raise () : unit =
   Format.printf "Pre_type \n%!";
@@ -1010,6 +1015,7 @@ let eq_bool_mligo ~raise () : unit =
 let eq_bool_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/eq_bool.jsligo" in
   eq_bool_common ~raise program
+
 
 (*
 let loop1 ~raise () : unit =
@@ -1471,6 +1477,7 @@ let loop2_mligo ~raise () : unit =
   in
   ()
 
+
 (*
 let matching ~raise () : unit =
   let program = type_file ~raise "./contracts/match.ligo" in
@@ -1584,6 +1591,7 @@ let super_counter_contract ~raise f : unit =
     e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_int ~loc (op 42 n))
   in
   expect_eq_n ~raise program "main" make_input make_expected
+
 
 (*
 let dispatch_counter_contract ~raise () : unit =
@@ -1752,6 +1760,7 @@ let let_in_jsligo ~raise () : unit =
 let local_type_decl ~raise program : unit =
   let () = expect_eq ~raise program "local_type" (e_unit ~loc ()) (e_int ~loc 3) in
   ()
+
 
 (*
 let local_type_decl ~raise () : unit =
@@ -1948,6 +1957,7 @@ let lambda2 ~raise f : unit =
   let make_expected = e_unit ~loc () in
   expect_eq ~raise program "main" make_input make_expected
 
+
 (* Why was this test not used below? -- Christian
 
 let fibo_mligo ~raise () : unit =
@@ -1987,6 +1997,7 @@ let website2_ligo ~raise f : unit =
     e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) (e_int ~loc (op 42 n))
   in
   expect_eq_n ~raise program "main" make_input make_expected
+
 
 (*
 let tez_ligo ~raise () : unit =
@@ -2160,6 +2171,7 @@ let is_nat ~raise f : unit =
   in
   ()
 
+
 (*
 let simple_access_ligo ~raise () : unit =
   let program = type_file ~raise "./contracts/simple_access.ligo" in
@@ -2203,6 +2215,7 @@ let attributes ~raise f : unit =
     expect_eq ~raise program "foo" input expected
   in
   ()
+
 
 (*
 let get_contract_ligo ~raise () : unit =
@@ -2479,6 +2492,7 @@ let no_semicolon_jsligo ~raise () : unit =
 let tuple_list_jsligo ~raise () : unit =
   let _ = type_file ~raise "./contracts/tuple_list.jsligo" in
   ()
+
 
 (*
 let loop_bugs_ligo ~raise () : unit =
@@ -3445,7 +3459,8 @@ let return_handling ~raise () : unit =
 
 let main =
   test_suite "Integration (End to End)"
-  @@ [ (* Tezos stuff *) (* test_w "chain id" chain_id *) ]
+  @@ [ (* Tezos stuff *)
+       (* test_w "chain id" chain_id *) ]
   @ test_w_all "bytes unpack" bytes_unpack
   @ test_w_all "key hash" key_hash
   @ test_w_all "check signature" check_signature
@@ -3476,15 +3491,15 @@ let main =
   @ test_w_all "big_map" big_map
   @ test_w_all "condition" condition
   @ [ test_w "sequence (mligo)" sequence_mligo
-    (*    ; test_w "type alias" type_alias *)
-    (*    ; test_w "function" function_ *)
-    (*    ; test_w "blockless function" blockless *)
-    (*    ; test_w "assign" assign *)
-    (*    ; test_w "declaration local" declaration_local *)
-    (*    ; test_w "complex function" complex_function *)
-    (*    ; test_w "anon function" anon_function *)
-    (*    ; test_w "various applications" application *)
-    (*    ; test_w "closure" closure *)
+      (*    ; test_w "type alias" type_alias *)
+      (*    ; test_w "function" function_ *)
+      (*    ; test_w "blockless function" blockless *)
+      (*    ; test_w "assign" assign *)
+      (*    ; test_w "declaration local" declaration_local *)
+      (*    ; test_w "complex function" complex_function *)
+      (*    ; test_w "anon function" anon_function *)
+      (*    ; test_w "various applications" application *)
+      (*    ; test_w "closure" closure *)
     ; test_w "closure (mligo)" closure_mligo
     ; test_w "closure (jsligo)" closure_jsligo
     ]
@@ -3492,14 +3507,14 @@ let main =
   @ test_w_all "high-order" higher_order
   @ test_w_all "variant" variant
   @ [ (* test_w "matching" matching *)
-    (*    ; test_w "variant matching" variant_matching *)
+      (*    ; test_w "variant matching" variant_matching *)
       test_w "match variant (mligo)" match_variant
     ; test_w "match variant (jsligo)" match_variant_js
     ; test_w "match variant 2 (mligo)" match_matej
     ; test_w "match variant 2 (jsligo)" match_matej_js
     ; test_w "list matching (mligo)" mligo_list
     ; test_w "list matching (jsligo)" jsligo_list
-    (* ; test_w "failwith ligo" failwith_ligo *)
+      (* ; test_w "failwith ligo" failwith_ligo *)
     ; test_w "failwith jsligo" failwith_jsligo
     ; test_w "failwith mligo" failwith_mligo
     ; test_w "assert mligo" assert_mligo
@@ -3507,8 +3522,7 @@ let main =
     ]
   @ test_w_all "eq_bool" eq_bool
   @ [ (*      test_w "shadow" shadow *)
-      test_w "shadowing (mligo)" shadowing
-      (*    ; test_w "annotation" annotation *)
+      test_w "shadowing (mligo)" shadowing (*    ; test_w "annotation" annotation *)
     ]
   @ test_w_all "multiple-parameters" multiple_parameters
   @ test_w_all "boolean_operators" bool_expression
@@ -3518,37 +3532,37 @@ let main =
   @ test_w_all "bytes_arithmetic" bytes_arithmetic
   @ test_w_all "set_arithmetic" set_arithmetic
   @ [ test_w "comparable (mligo)" comparable_mligo
-    (* ; test_w "unit" unit_expression *)
-    (* ; test_w "string" string_expression *)
-    (* ; test_w "list" list *)
-    (* ; test_w "loop1" loop1 *)
-    (* ; test_w "loop2" loop2 *)
-    (* ; test_w "loop3" loop3 *)
-    (* ; test_w "loop4" loop4 *)
-    (* ; test_w "loop5" loop5 *)
-    (* ; test_w "loop6" loop6 *)
-    (* ; test_w "loop7" loop7 *)
-    (* ; test_w "loop8" loop8 *)
-    (* ; test_w "loop9" loop9 *)
-    (* ; test_w "loop10" loop10 *)
-    (* ; test_w "loop11" loop11 *)
-    (* ; test_w "loop12" loop12 *)
-    (* ; test_w "loop13" loop13 *)
-    (* ; test_w "loop14" loop14 *)
-    (* ; test_w "loop15" loop15 *)
-    (* ; test_w "loop16" loop16 *)
-    (* ; test_w "loop17" loop17 *)
-    (* ; test_w "loop18" loop18 *)
-    (* ; test_w "loop19" loop19 *)
-    (* ; test_w "nested_for_loop" nested_for_loop *)
-    (* ; test_w "loop" loop *)
+      (* ; test_w "unit" unit_expression *)
+      (* ; test_w "string" string_expression *)
+      (* ; test_w "list" list *)
+      (* ; test_w "loop1" loop1 *)
+      (* ; test_w "loop2" loop2 *)
+      (* ; test_w "loop3" loop3 *)
+      (* ; test_w "loop4" loop4 *)
+      (* ; test_w "loop5" loop5 *)
+      (* ; test_w "loop6" loop6 *)
+      (* ; test_w "loop7" loop7 *)
+      (* ; test_w "loop8" loop8 *)
+      (* ; test_w "loop9" loop9 *)
+      (* ; test_w "loop10" loop10 *)
+      (* ; test_w "loop11" loop11 *)
+      (* ; test_w "loop12" loop12 *)
+      (* ; test_w "loop13" loop13 *)
+      (* ; test_w "loop14" loop14 *)
+      (* ; test_w "loop15" loop15 *)
+      (* ; test_w "loop16" loop16 *)
+      (* ; test_w "loop17" loop17 *)
+      (* ; test_w "loop18" loop18 *)
+      (* ; test_w "loop19" loop19 *)
+      (* ; test_w "nested_for_loop" nested_for_loop *)
+      (* ; test_w "loop" loop *)
     ; test_w "loop (mligo)" loop_mligo
     ; test_w "loop (jsligo)" loop_jsligo
     ; test_w "loop2 (jsligo)" loop2_jsligo
     ; test_w "loop2 (mligo)" loop2_mligo
-    (* ; test_w "declarations" declarations *)
-    (* ; test_w "quote declaration" quote_declaration *)
-    (* ; test_w "quote declarations" quote_declarations *)
+      (* ; test_w "declarations" declarations *)
+      (* ; test_w "quote declaration" quote_declaration *)
+      (* ; test_w "quote declarations" quote_declarations *)
     ]
   @ test_w_all "includer" include_
   @ test_w_all "counter" counter_contract
@@ -3559,7 +3573,7 @@ let main =
     ; test_w "let-in (jsligo)" let_in_jsligo
     ; test_w "let multiple (mligo)" mligo_let_multiple
     ; test_w "let multiple (jsligo)" jsligo_let_multiple
-    (* ; test_w "local_type_decl" local_type_decl *)
+      (* ; test_w "local_type_decl" local_type_decl *)
     ]
   @ test_w_all "recursion" recursion_ligo
   (* t_west "guess string mligo" guess_string_mligo ; WIP? *)
@@ -3569,8 +3583,8 @@ let main =
   @ test_w_all "set delegate" set_delegate
   @ test_w_all "is_nat" is_nat
   @ [ test_w "tuples_sequences_functions (jsligo)" tuples_sequences_functions_jsligo
-    (* ; test_w "simple_access (ligo)" simple_access_ligo *)
-    (* ; test_w "deep_access (ligo)" deep_access_ligo *)
+      (* ; test_w "simple_access (ligo)" simple_access_ligo *)
+      (* ; test_w "deep_access (ligo)" deep_access_ligo *)
     ; test_w "curry (mligo)" curry
     ; test_w "type tuple destruct (mligo)" type_tuple_destruct
     ]
@@ -3578,7 +3592,7 @@ let main =
   @ test_w_all "empty case" empty_case
   @ [ test_w "let in multi-bind (mligo)" let_in_multi_bind
     ; test_w "tuple param destruct (mligo)" tuple_param_destruct
-    (* ; test_w "loop_bugs (ligo)" loop_bugs_ligo *)
+      (* ; test_w "loop_bugs (ligo)" loop_bugs_ligo *)
     ; test_w "loop_bugs (jsligo)" loop_bugs_jsligo
     ; test_w "if no else (jsligo)" if_no_else_jsligo
     ; test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo

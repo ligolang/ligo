@@ -139,8 +139,7 @@ let typed_prod =
     ; type_file "modules_and_free_vars/nested_modules.mligo"
     ; type_file "modules_and_free_vars/module_with_free_vars.mligo"
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
-    ; type_tfile "pattern_match4.jsligo"
-    (*    ; type_file "layout.pligo" *)
+    ; type_tfile "pattern_match4.jsligo" (*    ; type_file "layout.pligo" *)
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
     ; type_file "type_shadowing.mligo"
     ]

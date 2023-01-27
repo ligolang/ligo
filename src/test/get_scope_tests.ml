@@ -136,9 +136,7 @@ let main =
     ; ( "all_negative"
       , List.map
           (files_in_all_dirs
-             [ "error-recovery/simple/cameligo"
-             ; "error-recovery/simple/jsligo"
-             ]
+             [ "error-recovery/simple/cameligo"; "error-recovery/simple/jsligo" ]
              ~except:
                [ "error-recovery/simple/jsligo/missing_semicolon_in_top_level.jsligo"
                ; (* was fixed by changes to jsligo ASI recently *)

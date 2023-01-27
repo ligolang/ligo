@@ -68,7 +68,7 @@ let%expect_test _ =
     Invalid record field "boo" in record.
 
 |}];
-(*
+  (*
   run_ligo_good
     [ "info"
     ; "get-scope"
@@ -145,7 +145,8 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
-  [%expect{|
+  [%expect
+    {|
     Scopes:
 
     Variable definitions:
@@ -168,7 +169,8 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
-  [%expect{|
+  [%expect
+    {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/errors/type_error.mligo", line 1, characters 14-21
 

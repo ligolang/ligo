@@ -207,7 +207,6 @@ File "../../test/lexer/Lexing/unterminated_verbatim.mligo", line 1, characters 1
 Unterminated verbatim.
 Hint: Close with "|}".
 |test}];
-
   (* Overflow mutez *)
   run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Lexing/overflow_mutez.mligo" ];
   [%expect
@@ -229,7 +228,8 @@ Mutez amount not an integer.
        concrete syntax or not. *)
 
   (* Odd-lengthed bytes *)
-  run_ligo_bad [ "compile"; "contract"; "../../test/lexer/Style/odd_lengthed_bytes.mligo" ];
+  run_ligo_bad
+    [ "compile"; "contract"; "../../test/lexer/Style/odd_lengthed_bytes.mligo" ];
   [%expect
     {test|
 File "../../test/lexer/Style/odd_lengthed_bytes.mligo", line 1, character 20:

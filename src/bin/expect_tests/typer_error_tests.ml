@@ -110,7 +110,7 @@ let%expect_test _ =
 
     Recursive call not in tail position.
     The value of a recursive call must be immediately returned by the defined function. |}];
-(*
+  (*
   run_ligo_bad
     [ "compile"
     ; "contract"
