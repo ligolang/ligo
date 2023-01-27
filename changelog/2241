@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nPreviously, multiparameter functions in JsLIGO were compiled to a function taking a tuple of parameters.\\n\\nAfter this MR, multiparameter functions in JsLIGO are compiled to curried functions.\\n\\nContracts do still require taking a tuple `(parameter, storage)` (as in Michelson). However, LIGO will transform curried contracts to its uncurried form when using `compile contract`. The same is true for views, taking still tuples `(argument, storage)`, but curried views will be uncurried automatically as well.\\n\\nNew functions are introduced at top-level:\\n\\n`val curry : ('a -> 'b -> 'c) -> ('a * 'b -> 'c)``val uncurry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c`\\nFor testing, `Test.originate` will take an curried contract of the form `parameter -> storage -> operation list * storage`. The old (uncurried) alternative is still available as `Test.originate_uncurried`.\\n\\n"
+merge_request: '2241'
+title: "JsLIGO: abstractor generate curried definitions"
+type: breaking
+            

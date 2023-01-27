@@ -1,4 +1,4 @@
-let main ((a, n), s : (address * nat) * ((address * nat), nat) big_map) : operation list * ((address * nat), nat) big_map =
+let main ((a, n) : address * nat) (s : ((address * nat), nat) big_map) : operation list * ((address * nat), nat) big_map =
   ([] : operation list), Big_map.add (a, 1n) n s
 
 let test =

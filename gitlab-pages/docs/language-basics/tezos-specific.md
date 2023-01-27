@@ -145,7 +145,7 @@ The return value is a pair of type `(operation * address)`.
 
 ```cameligo group=e
 let origination : operation * address = Tezos.create_contract
-  (fun (p, s : nat * string) -> ([], s))
+  (fun (p : nat) (s : string) -> ([], s))
   None
   3tz
   "initial_storage"

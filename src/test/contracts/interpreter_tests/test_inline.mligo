@@ -6,7 +6,7 @@ type storage = {
 type parameter = unit
 type return = operation list * storage
 
-let main ((), s : parameter * storage) : operation list * storage =
+let main (() : parameter) (s : storage) : operation list * storage =
     let committed = fun (acc, elt : bool * address) : bool -> match Map.find_opt elt s.secrets with
       | None -> acc && false
       | Some _x -> acc && true

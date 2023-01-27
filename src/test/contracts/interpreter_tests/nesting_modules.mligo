@@ -23,7 +23,7 @@ module Foo = struct
   let x () = x + Foo.Bar.x
 end
 
-let main (_, s : unit * int) : operation list * int =
+let main (_ : unit) (s : int) : operation list * int =
   let v = foo () + Foo.x () + y () in
   ([] : operation list), (s + v)
 

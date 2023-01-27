@@ -268,7 +268,7 @@ let main (p, s : parameter * storage) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=a2
-let main = ([parameter, storage]: [bytes, int]): [list<operation>, int] => {
+let main = (parameter: bytes, storage: int): [list<operation>, int] => {
   if (parameter == 0xbc1ecb8e) {
     return [list([]), storage + 1]
   } else {
@@ -288,7 +288,7 @@ type parameter = ["Increment"] | ["Decrement"];
 
 type storage = int;
 
-let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
+let main = (p: parameter, s: storage): [list<operation>, int] => {
   return match(p, {
     Increment: () => [list([]), s + 1],
     Decrement: () => [list([]), s - 1]
@@ -367,7 +367,7 @@ let multiplyBy4 = (storage: int) : int => multiplyBy2(multiplyBy2(storage));
 
 type parameter = | ["MultiplyBy4"] | ["MultiplyBy16"];
 
-let main = (param : parameter, storage : int) => {
+let main = (param: parameter, storage: int) : [list<operation>, int] => {
   const op = list ([]) ;
   return match(param, {
     MultiplyBy4: () => [op, multiplyBy4(storage)],
@@ -415,7 +415,7 @@ type parameter = | ["Compute", (c : int) => int];
 
 type storage = int;
 
-let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
+let main = (p: parameter, s: storage): [list<operation>, int] => {
   return match(p, {
     Compute: (func : (c : int) => int) => [list([]), func(s)]
   });
@@ -464,14 +464,14 @@ type storage = { fn : option<((x : int) => int)>, value : int };
 
 type parameter = ["CallFunction"] | ["SetFunction", ((x : int) => int)];
 
-let call = ([fn, value]: [option<((x : int) => int)>, int]) : int => {
+let call = (fn: option<((x : int) => int)>, value: int) : int => {
   return match(fn, {
     Some: f => f(value),
     None: () => failwith("Lambda is not set")
   })
 };
 
-let main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => {
+let main = (p : parameter, s: storage) : [list<operation>, storage] => {
   let newStorage =
     match(p, {
       SetFunction: fn => ({...s, fn: Some (fn)}),

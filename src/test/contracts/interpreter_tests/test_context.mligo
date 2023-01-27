@@ -1,4 +1,4 @@
-let main ((k, i) : int * int) : operation list * int =
+let main (k : int) (i : int) : operation list * int =
   ([] : operation list), k + i
 
 

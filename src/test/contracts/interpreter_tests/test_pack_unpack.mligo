@@ -1,4 +1,4 @@
-let main ((b, _) : bytes * bytes) : operation list * bytes =
+let main (b : bytes) (_ : bytes) : operation list * bytes =
   ([] : operation list), b
 
 let test =

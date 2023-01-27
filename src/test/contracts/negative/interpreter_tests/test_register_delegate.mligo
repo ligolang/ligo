@@ -16,7 +16,7 @@ let test =
   let () = Test.log(Test.get_balance a) in
   let () = Test.log(Test.get_voting_power pkh) in
   let () = Test.set_baker a in
-  let (ta, _, _) = Test.originate main 41 5tez in
+  let (ta, _, _) = Test.originate_uncurried main 41 5tez in
 
   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
   let () = Test.log(Test.get_balance a) in

@@ -1,5 +1,5 @@
-let main_factory ((i, s) : int * address list) : operation list * address list =
-  let main ((d, k) : int * int) : operation list * int = ([], d + k) in
+let main_factory (i : int) (s : address list) : operation list * address list =
+  let main (d : int) (k : int) : operation list * int = ([], d + k) in
   let (op, addr) = Tezos.create_contract main (None : key_hash option) 1tz i in
   [op], addr :: s
 

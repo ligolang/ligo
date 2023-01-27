@@ -1,7 +1,7 @@
 
 type storage = (int, nat) big_map
 
-let main ((k,v), s : (int * nat) * storage) : operation list * storage =
+let main ((k, v) : int * nat) (s : storage) : operation list * storage =
   ([] : operation list), Big_map.add k v s
 
 let test =

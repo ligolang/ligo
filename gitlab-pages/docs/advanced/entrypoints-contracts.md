@@ -57,7 +57,7 @@ type parameter = nat
 type storage = nat
 type return = operation list * storage
 
-let save (action, store: parameter * storage) : return =
+let main (action : parameter) (store : storage) : return =
   ([], store)
 ```
 
@@ -111,16 +111,16 @@ type storage = {
 
 type return = operation list * storage
 
-let entry_A (n, store : nat * storage) : return =
+let entry_A (n : nat) (store : storage) : return =
   [], {store with counter = n}
 
-let entry_B (s, store : string * storage) : return =
+let entry_B (s : string) (store : storage) : return =
   [], {store with name = s}
 
-let main (action, store: parameter * storage) : return =
+let main (action : parameter) (store: storage) : return =
   match action with
-    Action_A n -> entry_A (n, store)
-  | Action_B s -> entry_B (s, store)
+    Action_A n -> entry_A n store
+  | Action_B s -> entry_B s store
 ```
 
 </Syntax>
@@ -173,7 +173,7 @@ type parameter = unit
 type storage = unit
 type return = operation list * storage
 
-let deny (action, store : parameter * storage) : return =
+let deny (action : parameter) (store : storage) : return =
   if Tezos.get_amount () > 0tez then
     failwith "This contract does not accept tokens."
   else ([], store)
@@ -209,7 +209,7 @@ entrypoint.
 ```cameligo group=c
 let owner = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
-let main (action, store: parameter * storage) : return =
+let main (action : parameter) (store: storage) : return =
   if Tezos.get_sender () <> owner then failwith "Access denied."
   else ([], store)
 ```

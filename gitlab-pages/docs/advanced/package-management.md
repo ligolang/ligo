@@ -382,12 +382,12 @@ let reverse (type a) (xs : a list) : a list =
 /* LIGO library for working with lists */
 
 const concat : <T>(xs : list<T>, ys : list<T>) => list<T> = (xs : list<T>, ys : list<T>) : list<T> => {
-    let f = (x : T, ys : list<T>) : list<T> => list([x, ...ys]);
+    let f = ([x, ys] : [T, list<T>]) : list<T> => list([x, ...ys]);
     return List.fold_right(f, xs, ys)
 }
 
 const reverse : <T>(xs : list<T>) => list<T> = (xs : list<T>) : list<T> => {
-    let f = (ys : list<T>, x : T) : list<T> => list([x, ...ys]);
+    let f = ([ys, x] : [list<T>, T]) : list<T> => list([x, ...ys]);
     return List.fold_left(f, (list([]) as list<T>), xs)
 }
 

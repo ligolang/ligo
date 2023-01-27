@@ -5,7 +5,7 @@ type mystruct = {
 
 type storage = unit
 
-let main (p,s: mystruct * storage ) : operation list * storage = [ Tezos.emit "%foo" p; ], s
+let main (p : mystruct) (s : storage) : operation list * storage = [ Tezos.emit "%foo" p; ], s
 
 let test_foo =
   let (ta, _, _) = Test.originate main () 0tez in

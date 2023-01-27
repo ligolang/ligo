@@ -1,6 +1,6 @@
 type parameter = Foo of int | Bar of nat
 
-let main ((p, s) : parameter * int) : operation list * int =
+let main (p : parameter) (s : int) : operation list * int =
   let k = match p with | Foo i -> i | Bar n -> n * 1 in
   [], s + k
 

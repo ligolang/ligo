@@ -1,5 +1,5 @@
 
-let main ((p, s) : int * int) : operation list * int = ([] : operation list), p + s
+let main (p : int) (s : int) : operation list * int = ([] : operation list), p + s
 
 let test =
 

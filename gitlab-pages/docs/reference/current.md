@@ -409,7 +409,7 @@ Transfer `tez` to an account, or run code of another smart contract.
 To indicate an account, use `unit` as `param`.
 
 <SyntaxTitle syntax="cameligo">
-val create_contract : ('param * 'storage -> operation list * 'storage) -> key_hash option -> tez -> 'storage -> (operation * address)
+val create_contract : ('param -> 'storage -> operation list * 'storage) -> key_hash option -> tez -> 'storage -> (operation * address)
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
@@ -417,6 +417,17 @@ let create_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, 
 </SyntaxTitle>
 
 Construct an operation that originates a contract from a function. The
+optional argument of type `key_hash` represents a delegate.
+
+<SyntaxTitle syntax="cameligo">
+val create_contract : ('param * 'storage -> operation list * 'storage) -> key_hash option -> tez -> 'storage -> (operation * address)
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let create_contract = (contract: ['param, 'storage] => (list &lt;operation&gt;, &apos;storage), delegate: option&lt;key_hash&gt;, balance: tez, init: 'storage) => [operation, address]
+</SyntaxTitle>
+
+Construct an operation that originates a contract from an uncurried function. The
 optional argument of type `key_hash` represents a delegate.
 
 <SyntaxTitle syntax="cameligo">

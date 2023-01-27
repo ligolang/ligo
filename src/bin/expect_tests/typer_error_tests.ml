@@ -283,13 +283,13 @@ let%expect_test _ =
 
     Toplevel let declaration are silently change to const declaration.
 
-    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 38-60:
+    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 31-60:
       9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
      10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
      11 |     return [list([]) as list<operation>, newStorage];
 
-    Invalid type(s)
-    Cannot unify "( nat * nat )" with "nat". |}];
+    Invalid type.
+    Expected a function type, but got "nat". |}];
   run_ligo_bad
     [ "compile"; "contract"; "--no-color"; "../../test/contracts/negative/id.mligo" ];
   [%expect

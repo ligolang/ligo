@@ -92,7 +92,7 @@ let test_approve_unsafe =
   | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_get_allowance =
-  let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
+  let dummy_contract (v : nat) (s : nat) : operation list * nat = ([] : operation list), v + s in
   let () = Test.reset_state 10n ([] : tez list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
@@ -117,7 +117,7 @@ let test_get_allowance =
   assert (dummy_new_storage = 100n)
 
 let test_get_balance =
-  let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
+  let dummy_contract (v : nat) (s : nat) : operation list * nat = ([] : operation list), v + s in
   let () = Test.reset_state 10n ([] : tez list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
@@ -142,7 +142,7 @@ let test_get_balance =
   assert (dummy_new_storage = 100n)
 
 let test_get_total_supply =
-  let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
+  let dummy_contract (v : nat) (s : nat) : operation list * nat = ([] : operation list), v + s in
   let () = Test.reset_state 10n ([] : tez list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in

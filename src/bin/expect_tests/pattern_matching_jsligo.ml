@@ -87,7 +87,7 @@ let%expect_test _ =
   run_ligo_good
     [ "run"
     ; "interpret"
-    ; "t2([Nil(), Nil()])"
+    ; "t2(Nil(), Nil())"
     ; "--init-file"
     ; test "/deep_pattern_matching/pm_test.jsligo"
     ];
@@ -98,7 +98,7 @@ let%expect_test _ =
   run_ligo_good
     [ "run"
     ; "interpret"
-    ; "t2([Nil(), Cons([1,2])])"
+    ; "t2(Nil(), Cons([1,2]))"
     ; "--init-file"
     ; test "/deep_pattern_matching/pm_test.jsligo"
     ];
@@ -109,7 +109,7 @@ let%expect_test _ =
   run_ligo_good
     [ "run"
     ; "interpret"
-    ; "t2([Cons([1,2]), Cons([1,2])])"
+    ; "t2(Cons([1,2]), Cons([1,2]))"
     ; "--init-file"
     ; test "/deep_pattern_matching/pm_test.jsligo"
     ];
@@ -120,7 +120,7 @@ let%expect_test _ =
   run_ligo_good
     [ "run"
     ; "interpret"
-    ; "t2([Cons([1,2]), Nil()])"
+    ; "t2(Cons([1,2]), Nil())"
     ; "--init-file"
     ; test "/deep_pattern_matching/pm_test.jsligo"
     ];

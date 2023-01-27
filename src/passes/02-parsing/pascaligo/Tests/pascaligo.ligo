@@ -28,12 +28,12 @@ function main (const action : parameter; const store : storage) : list(operation
 
 const test_initial_storage = {
     const initial_storage = 42;
-    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const (taddr, _, _) = Test.originate_uncurried(main, initial_storage, 0tez);
   } with assert (Test.get_storage(taddr) = initial_storage);
 
 const test_increment = {
     const initial_storage = 42;
-    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const (taddr, _, _) = Test.originate_uncurried(main, initial_storage, 0tez);
     const contr = Test.to_contract(taddr);
     const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
   } with assert (Test.get_storage(taddr) = initial_storage + 1);

@@ -17,7 +17,7 @@
   let (v,amt) = p in
   let ticket = Option.unopt (Tezos.create_ticket v amt) in
   let init_storage : whole_s = mk_storage ticket in
-  let op,addr = Tezos.create_contract main (None: key_hash option) 0mutez init_storage in
+  let op,addr = Tezos.create_contract_uncurried main (None: key_hash option) 0mutez init_storage in
   [op], Some addr
 
 
@@ -28,7 +28,7 @@ let init_transfer (type vt whole_p) (mk_param: vt ticket -> whole_p) : vt proxy_
   let proxy_transfer : ((vt * nat) * address) * unit -> operation list * unit =
     proxy_transfer_contract mk_param
   in
-  let (taddr_proxy, _, _) = Test.originate proxy_transfer () 1tez in
+  let (taddr_proxy, _, _) = Test.originate_uncurried proxy_transfer () 1tez in
   taddr_proxy
 
 let transfer (type vt)
@@ -44,7 +44,7 @@ let originate (type vt whole_s vp)
   let proxy_origination : (vt * nat) * address option -> operation list * address option =
     proxy_originate_contract mk_storage contract
   in
-  let (taddr_proxy, _, _) = Test.originate proxy_origination (None : address option) 1tez in
+  let (taddr_proxy, _, _) = Test.originate_uncurried proxy_origination (None : address option) 1tez in
   let _ = Test.transfer_to_contract_exn (Test.to_contract taddr_proxy) ticket_info 0tez in
   match Test.get_storage taddr_proxy with
   | Some addr ->

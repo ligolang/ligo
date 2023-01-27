@@ -3,7 +3,7 @@ module F = struct
   let f (x : int) = x + 1
 end
 
-let main(_, i : unit * int) : operation list * int =
+let main (_ : unit) (i : int) : operation list * int =
   ([] : operation list), F.f i
 
 let test =

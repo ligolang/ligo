@@ -5,8 +5,8 @@ type parameter =
 | ["Decrement", int]
 | ["Reset"];
 
-let add = ([store, delta]: [storage, int]): storage => store + delta;
-let sub = ([store, delta]: [storage, int]): storage => store - delta;
+let add = (store: storage, delta: int): storage => store + delta;
+let sub = (store: storage, delta: int): storage => store - delta;
 
 
 const main = (action: parameter, store: storage) : [ list<operation> , storage ] => {

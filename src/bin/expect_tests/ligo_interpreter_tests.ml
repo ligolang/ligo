@@ -800,7 +800,7 @@ let%expect_test _ =
     {|
     edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
     Everything at the top-level was executed.
-    - test exited with value Success (2797n). |}]
+    - test exited with value Success (2799n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
@@ -1008,9 +1008,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_failure3.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 17-18:
+    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 27-28:
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
-      3 |   Test.originate f () 0tez
+      3 |   Test.originate_uncurried f () 0tez
 
     Invalid type(s)
     Cannot unify "unit" with "( list (operation) * unit )". |}]
@@ -1087,9 +1087,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-55:
       9 |   let () = Test.set_source addr in
-     10 |   let (_, _, _) = Test.originate main () 0tez in
+     10 |   let (_, _, _) = Test.originate_uncurried main () 0tez in
      11 |   ()
 
     The source address is not an implicit account
@@ -1116,8 +1116,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {property: "toto"});
       3 |
 
-    Invalid type(s)
-    Cannot unify "record[property -> string]" with "record[field -> int]". |}]
+    Mismatching record labels. Expected record of type "record[field -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types2.jsligo" ];
@@ -1155,9 +1154,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-56:
      18 |   let () = Test.set_baker a in
-     19 |   let (ta, _, _) = Test.originate main 41 5tez in
+     19 |   let (ta, _, _) = Test.originate_uncurried main 41 5tez in
      20 |
 
     Baker cannot bake. Enough rolls? Enough cycles passed?

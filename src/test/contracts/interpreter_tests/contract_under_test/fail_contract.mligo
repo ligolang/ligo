@@ -4,5 +4,5 @@ type parameter = unit
 
 let fail_data = "my contract always fail"
 
-let main (_action, _store : parameter * storage) : return =
+let main (_action : parameter) (_store : storage) : return =
   (([] : operation list), failwith fail_data)

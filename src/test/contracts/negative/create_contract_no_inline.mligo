@@ -2,7 +2,7 @@ let foo : int = 42
 
 type return = operation list * int
 
-let dummy_contract (p, s : nat * int) : return =
+let dummy_contract (p : nat) (s : int) : return =
  (([] : operation list), foo)
 
 let main (action, store : int * int) : return =
