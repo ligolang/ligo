@@ -112,7 +112,7 @@ type type_name    = string reg
 type type_var     = string reg
 type type_constr  = string reg
 type constr       = string reg
-type attribute    = string reg
+type attribute    = Attr.attribute reg
 type field_name   = string reg
 type module_name  = string reg
 

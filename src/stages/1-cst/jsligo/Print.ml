@@ -36,6 +36,28 @@ let sprintf  = Printf.sprintf
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
+let print_attribute state (node : Attr.t reg) =
+  let key, val_opt = node.value in
+  match val_opt with
+    None ->
+      Tree.print_unary state "<attribute>" Tree.print_node key
+  | Some (String value | Ident value) ->
+      let children = [
+        Tree.mk_child Tree.print_node key;
+        Tree.mk_child Tree.print_node value]
+      in Tree.print state "<attributes>" children
+
+type label = Tree.label
+
+let print_list :
+  state -> ?region:Region.t -> label -> 'a Tree.printer -> 'a list -> unit =
+  fun state ?region label print list ->
+    let children = List.map ~f:(Tree.mk_child print) list
+    in Tree.print ?region state label children
+
+let print_attributes state (node : Attr.attribute reg list) =
+  print_list state "<attributes>" print_attribute node
+
 (** {1 Pretty-printing the AST} *)
 
 let print_ident state {value=name; region} =
@@ -645,13 +667,7 @@ and print_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in
   let apply len rank = print_type_expr (state#pad len rank)
   in List.iteri ~f:(List.length components |> apply) components
-
-and print_attributes state attributes =
-  print_node state "<attributes>";
-  let length         = List.length attributes in
-  let apply len rank = print_ident (state#pad len rank)
-  in List.iteri ~f:(apply length) attributes
-
+  
 and print_field_decl state {value; _} =
   let arity = if List.is_empty value.attributes then 1 else 2 in
   print_ident      state value.field_name;

@@ -28,13 +28,16 @@ let compile_mod_var var =
   Module_var.of_input_var ~loc var
 
 
-let compile_attributes attributes : string list =
-  let lst = List.map ~f:(fst <@ r_split) attributes in
-  List.map lst ~f:(fun attr ->
-      (* this shouldnt be necessary *)
-      match String.chop_prefix attr ~prefix:"@" with
-      | Some s -> s
-      | None -> attr)
+let compile_attributes : CST.attribute list -> string list =
+ fun attr ->
+  let f : CST.attribute -> string =
+   fun x ->
+    let (k, v_opt), _loc = r_split x in
+    match v_opt with
+    | Some (String v | Ident v) -> String.concat ~sep:":" [ k; v ]
+    | None -> k
+  in
+  List.map ~f attr
 
 
 module Compile_type = struct
@@ -1162,7 +1165,7 @@ and merge_statement_results ~raise
 
 
 and filter_private (attributes : CST.attributes) =
-  List.filter ~f:(fun v -> not @@ String.equal v.value "private") attributes
+  List.filter ~f:(fun v -> not @@ String.equal (fst v.value) "private") attributes
 
 
 (* can probably be cleaned up *)
