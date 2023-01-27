@@ -38,7 +38,7 @@ let%expect_test _ =
       5 |   (a,b)
 
     Pattern not of the expected type "foo". |}];
-(*
+  (*
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret"; "t1"; "--init-file"; test "let_destructuring.ligo" ];
   [%expect {| 1 |}];

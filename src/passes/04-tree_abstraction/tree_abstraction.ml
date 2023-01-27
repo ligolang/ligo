@@ -1,2 +1,2 @@
 module Cameligo = Cameligo
-module Jsligo   = Jsligo
+module Jsligo = Jsligo

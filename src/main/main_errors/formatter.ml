@@ -90,8 +90,7 @@ let rec error_ppformat
     | `Main_invalid_syntax_name syntax ->
       Format.fprintf
         f
-        "@[<hv>Invalid syntax option: '%s'. @.Use 'cameligo', or 'jsligo'. \
-         @]"
+        "@[<hv>Invalid syntax option: '%s'. @.Use 'cameligo', or 'jsligo'. @]"
         syntax
     | `Main_invalid_dialect_name syntax ->
       Format.fprintf
@@ -108,8 +107,8 @@ let rec error_ppformat
     | `Main_invalid_extension extension ->
       Format.fprintf
         f
-        "@[<hv>Invalid file extension '%s'. @.Use '.mligo' for \
-         CameLIGO, '.jsligo' for JsLIGO, or the --syntax option.@]"
+        "@[<hv>Invalid file extension '%s'. @.Use '.mligo' for CameLIGO, '.jsligo' for \
+         JsLIGO, or the --syntax option.@]"
         extension
     | `Main_unparse_tracer errs ->
       let errs =

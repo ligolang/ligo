@@ -191,13 +191,13 @@ let get ~options : t =
 let select_prelude_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
   match stx with
   | CameLIGO -> lib.curry.prelude_core
-  | JsLIGO   -> lib.uncurry.prelude_core
+  | JsLIGO -> lib.uncurry.prelude_core
 
 
 let select_prelude_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
   match stx with
   | CameLIGO -> lib.curry.prelude_typed
-  | JsLIGO   -> lib.uncurry.prelude_typed
+  | JsLIGO -> lib.uncurry.prelude_typed
 
 
 let select_lib_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
@@ -209,4 +209,4 @@ let select_lib_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
 let select_lib_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
   match stx with
   | CameLIGO -> lib.curry.content_typed
-  | JsLIGO   -> lib.uncurry.content_typed
+  | JsLIGO -> lib.uncurry.content_typed
