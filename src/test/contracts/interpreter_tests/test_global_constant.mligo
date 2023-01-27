@@ -6,7 +6,7 @@ let f (x : int) = x * 3 + 2
 
 let ct : string = Test.register_constant (Test.eval f)
 
-let main ((), store : parameter * storage) : return =
+let main (() : parameter) (store : storage) : return =
  ([] : operation list), ((Tezos.constant ct : int -> int) store)
 
 let test =

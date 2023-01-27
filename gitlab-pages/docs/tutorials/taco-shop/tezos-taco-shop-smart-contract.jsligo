@@ -3,7 +3,7 @@ type taco_supply = { current_stock : nat , max_price : tez } ;
 type taco_shop_storage = map <nat, taco_supply> ;
 type return_ = [list <operation>, taco_shop_storage];
 
-let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
+let buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {

@@ -3,7 +3,7 @@ type t = { x : int ; y : (unit, unit) typed_address }
 let main ((_, _) : unit * unit) : operation list * unit = [], ()
 
 let ta, _, _ =
-  Test.originate main () 0tez
+  Test.originate_uncurried main () 0tez
 
 let v = { x = 42 ; y = ta }
 

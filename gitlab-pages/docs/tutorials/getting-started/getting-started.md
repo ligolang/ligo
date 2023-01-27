@@ -140,7 +140,7 @@ let sub (store, delta : storage * int) = store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
-let main (action, store : parameter * storage) : operation list * storage =
+let main (action : parameter) (store : storage) : operation list * storage =
  [],    // No operations
  (match action with
    Increment (n) -> add (store, n)
@@ -168,7 +168,7 @@ const sub = ([store, delta] : [storage, int]) => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-const main = ([action, store] : [parameter, storage]) : [list <operation>, storage] => {
+const main = (action: parameter, store: storage) : [list <operation>, storage] => {
  return [
    list([]),    // No operations
    (match (action, {

@@ -378,7 +378,7 @@ the entrypoint `Increment(7)` works as intended on an initial storage
 
 let originate_and_test (mainf : parameter * storage -> return) =
   let initial_storage = 7 in
-  let (taddr, _, _) = Test.originate mainf initial_storage 0tez in
+  let (taddr, _, _) = Test.originate_uncurried mainf initial_storage 0tez in
   let contr = Test.to_contract taddr in
   let _ = Test.transfer_to_contract_exn contr (Increment 7) 1mutez in
   assert (Test.get_storage taddr = initial_storage + 7)
@@ -393,7 +393,7 @@ let test = originate_and_test main
 ```jsligo test-ligo group=frontpage3
 // This continues mutation-contract.jsligo
 
-const originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
+const originate_and_test = (mainf : (p: parameter) => (s: storage) => return_) : unit => {
   let initial_storage = 5 as int;
   let [taddr, _, _] = Test.originate(mainf, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
@@ -490,7 +490,7 @@ to the `Decrement` entrypoint in the test above:
 ```cameligo skip
 let originate_and_test (mainf : parameter * storage -> return) =
   let initial_storage = 7 in
-  let (taddr, _, _) = Test.originate mainf initial_storage 0tez in
+  let (taddr, _, _) = Test.originate_uncurried mainf initial_storage 0tez in
   let contr = Test.to_contract taddr in
   let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
   let _ = Test.transfer_to_contract_exn contr (Decrement (3)) 1mutez in
@@ -504,7 +504,7 @@ let originate_and_test (mainf : parameter * storage -> return) =
 ```jsligo skip
 const originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
   let initial_storage = 5 as int;
-  let [taddr, _, _] = Test.originate(mainf, initial_storage, 0 as tez);
+  let [taddr, _, _] = Test.originate_uncurried(mainf, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
   let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1 as mutez);
   let _ = Test.transfer_to_contract_exn(contr, (Decrement (3)), 1 as mutez);

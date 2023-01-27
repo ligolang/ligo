@@ -361,7 +361,7 @@ let sum_of_elements : int = List.fold_left sum 0 my_list
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let sum = (result: int, i: int) => result + i;
+let sum = ([result, i]: [int, int]) => result + i;
 let sum_of_elements: int = List.fold (sum, my_list, 0);
 ```
 
@@ -617,7 +617,7 @@ signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
 'acc`.
 
 ```jsligo group=sets
-let sum = (acc: int, i: int) => acc + i;
+let sum = ([acc, i]: [int, int]) => acc + i;
 let sum_of_elements = Set.fold (sum, my_set, 0);
 ```
 

@@ -2,7 +2,7 @@ type storage = address option
 type return = operation list * storage
 type parameter = One | Two
 
-let main (action, store : parameter * storage) : return =
+let main (action : parameter) (store : storage) : return =
   match action with
     | One ->
       let a = match store with
@@ -17,7 +17,7 @@ let main (action, store : parameter * storage) : return =
       (ops, (None: storage))
     | Two ->
       let x : operation * address = Tezos.create_contract
-        (fun (_p, _s : nat * string) -> (failwith 111: operation list * string))
+        (fun (_p : nat) (_s : string) -> (failwith 111: operation list * string))
         (None: key_hash option) 
         1tz
         "un"

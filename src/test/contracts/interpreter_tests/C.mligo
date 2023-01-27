@@ -1,4 +1,4 @@
 #import "A.mligo" "A"
 
-let main (p, s : unit * unit) : (operation list) * unit =
-  A.main (p, s)
+let main (p : unit) (s : unit) : (operation list) * unit =
+  A.main p s

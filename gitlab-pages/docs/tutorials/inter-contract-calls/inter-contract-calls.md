@@ -331,7 +331,7 @@ For example, we can create a new counter contract with
 
 ```cameligo group=solo_create_contract
 let op = Tezos.create_contract
-  (fun (p, s : int * int) -> [], p + s)
+  (fun (p : int) (s : int) -> [], p + s)
   None
   0mutez
   1
@@ -356,7 +356,7 @@ let op = Tezos.create_contract
 let create_and_call (storage : address list) =
   let create_op, addr =
     Tezos.create_contract
-      (fun (p, s : int * int) -> [], p + s)
+      (fun (p : int) (s : int) -> [], p + s)
       None
       0tez
       1 in

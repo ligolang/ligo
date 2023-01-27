@@ -6,7 +6,7 @@ let create (pub_key, s : key * storage) : storage =
     next_id = s.next_id + 1n;
     registry = Big_map.add s.next_id pub_key s.registry}
 
-let main (p, store : key * storage) : operation list * storage =
+let main (p : key) (store : storage) : operation list * storage =
   [], create (p, store)
 
 let test =

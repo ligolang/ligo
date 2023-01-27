@@ -30,7 +30,7 @@ let buy_ticket ({data; tickets} : storage) : operation list * storage =
     Big_map.get_and_update owner (Some join_tickets) tickets in
   [], {data = data; tickets = tickets}
 
-let main (_, store : unit * storage) =
+let main (_ : unit) (store : storage) =
   buy_ticket(store)
 
 

@@ -125,7 +125,7 @@ storage is in fact the one which we started with:
 
 let test =
   let initial_storage = 42 in
-  let taddr, _, _ = Test.originate main initial_storage 0tez in
+  let taddr, _, _ = Test.originate_uncurried main initial_storage 0tez in
   assert (Test.get_storage taddr = initial_storage)
 ```
 
@@ -197,7 +197,7 @@ increments the storage after deployment, we also print the gas consumption:
 
 let test2 =
   let initial_storage = 42 in
-  let taddr, _, _ = Test.originate main initial_storage 0tez in
+  let taddr, _, _ = Test.originate_uncurried main initial_storage 0tez in
   let contr = Test.to_contract taddr in
   let gas_cons = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
   let () = Test.log ("gas consumption",gas_cons) in
@@ -282,7 +282,7 @@ Here is the proposed interface for creating proxy-contracts:
   let (v,amt) = p in
   let ticket = Option.unopt (Tezos.create_ticket v amt) in
   let init_storage : whole_s = mk_storage ticket in
-  let op,addr = Tezos.create_contract main (None: key_hash option) 0mutez init_storage in
+  let op,addr = Tezos.create_contract_uncurried main (None: key_hash option) 0mutez init_storage in
   [op], Some addr
 
 
@@ -293,7 +293,7 @@ let init_transfer (type vt whole_p) (mk_param: vt ticket -> whole_p) : vt proxy_
   let proxy_transfer : ((vt * nat) * address) * unit -> operation list * unit =
     proxy_transfer_contract mk_param
   in
-  let (taddr_proxy, _, _) = Test.originate proxy_transfer () 1tez in
+  let (taddr_proxy, _, _) = Test.originate_uncurried proxy_transfer () 1tez in
   taddr_proxy
 
 let transfer (type vt)
@@ -309,7 +309,7 @@ let originate (type vt whole_s vp)
   let proxy_origination : (vt * nat) * address option -> operation list * address option =
     proxy_originate_contract mk_storage contract
   in
-  let (taddr_proxy, _, _) = Test.originate proxy_origination (None : address option) 1tez in
+  let (taddr_proxy, _, _) = Test.originate_uncurried proxy_origination (None : address option) 1tez in
   let _ = Test.transfer_to_contract_exn (Test.to_contract taddr_proxy) ticket_info 0tez in
   match Test.get_storage taddr_proxy with
   | Some addr ->
@@ -328,10 +328,9 @@ let originate (type vt whole_s vp)
 /* @private */
 const proxy_transfer_contract :
   <vt , whole_p>
-    (x : (ticket:ticket<vt>) => whole_p) => ((x : [[[vt , nat] , address] , unit] ) => [list<operation> , unit]) =
+    (x : (ticket:ticket<vt>) => whole_p) => (p : [[vt , nat] , address]) => (s : unit) => [list<operation> , unit] =
   ( mk_param :  ((ticket:ticket<vt>) => whole_p)) => {
-    return (p : [[[vt , nat] , address] , unit] ) => {
-    const [p,_] = p ;
+    return (p : [[vt , nat] , address]) => (s : unit) => {
     const [[v,amt],dst_addr] = p ;
     const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
     const tx_param = mk_param (ticket) ;
@@ -345,15 +344,11 @@ const proxy_transfer_contract :
 /* @private */
 const proxy_originate_contract :
   <vt, whole_s, vp>
-    ( x : [
-            ((ticket:ticket<vt>) => whole_s),
-            ((x : [ vp , whole_s]) => [list<operation> , whole_s])
-          ]
-    ) => ( (ps:[[vt , nat] , option<address>]) => [list<operation>, option<address>]) =
-  ([mk_storage , main] : [
-            ((ticket:ticket<vt>) => whole_s),
-            ((x : [ vp , whole_s]) => [list<operation> , whole_s])
-          ]) => {
+    (mk_storage : (ticket:ticket<vt>) => whole_s) =>
+    (main: (p : vp) => (s : whole_s) => [list<operation> , whole_s]) =>
+    (ps :[[vt , nat] , option<address>]) => [list<operation>, option<address>] =
+  (mk_storage: (ticket:ticket<vt>) => whole_s) =>
+  (main: ((p : vp) => (s : whole_s) => [list<operation> , whole_s])) => {
       return (p : [[vt , nat] , option<address>]) => {
         const [p,_] = p;
         const [v,amt] = p ;
@@ -367,9 +362,9 @@ const proxy_originate_contract :
 type proxy_address<v> =  typed_address<[[v,nat] , address] , unit> ;
 
 const init_transfer :
-  <vt, whole_p> ( mk_param : ((t:ticket<vt>) => whole_p)) => proxy_address<vt> =
-  ( mk_param :  ((t:ticket<vt>) => whole_p)) => {
-    const proxy_transfer : ((x : ([[[vt , nat] , address] , unit])) => [list<operation> , unit]) =
+  <vt, whole_p> ( mk_param : (t:ticket<vt>) => whole_p) => proxy_address<vt> =
+  ( mk_param :  (t:ticket<vt>) => whole_p) => {
+    const proxy_transfer : (p : [[vt , nat] , address]) => (s : unit) => [list<operation> , unit] =
       proxy_transfer_contract (mk_param)
     ;
     const [taddr_proxy, _, _] = Test.originate (proxy_transfer, unit, 1 as tez) ;
@@ -386,10 +381,10 @@ const transfer :
   };
 
 const originate : <vt, whole_s, vp>
-    (x : [ [vt , nat] , (t:ticket<vt>) => whole_s, (ps:[vp , whole_s]) => [list<operation> , whole_s] ]) => address =
-  ([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (ps:[vp , whole_s]) => [list<operation> , whole_s] ] ) => {
-      const proxy_origination : (x : ([[vt , nat] , option<address>])) => [list<operation> , option<address>] =
-        proxy_originate_contract (mk_storage, contract) ;
+    (x : [ [vt , nat] , (t:ticket<vt>) => whole_s, (p: vp) => (s: whole_s) => [list<operation> , whole_s] ]) => address =
+  ([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (p: vp) => (s: whole_s) => [list<operation> , whole_s] ]) => {
+      const proxy_origination : (_p : [vt , nat]) => (_s : option<address>) => [list<operation> , option<address>] =
+        curry(proxy_originate_contract (mk_storage, contract)) ;
       const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;
       const _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0 as tez) ;
       return match (Test.get_storage (taddr_proxy), {
@@ -461,7 +456,7 @@ let main ( (p,_) : param * (string * address)) : operation list * (string * addr
   [] , (v, Tezos.get_sender ())
 
 let test_transfer_to_contract =
-  let (main_taddr, _ , _) = Test.originate main ("bye",Test.nth_bootstrap_account 1) 1mutez in
+  let (main_taddr, _ , _) = Test.originate_uncurried main ("bye",Test.nth_bootstrap_account 1) 1mutez in
   let main_addr = Tezos.address (Test.to_contract main_taddr) in
 
   (* Use this address everytime you want to send tickets from the same proxy-contract *)
@@ -518,11 +513,11 @@ const test_transfer_to_contract_ = () : unit => {
   /* ticket_info lets you control the amount and the value of the tickets you send */
   let ticket_info1 = ["hello",10 as nat] ;
   /* we send ticket to main through the proxy-contract */
-  let _ = Proxy_ticket.transfer (proxy_taddr, [ticket_info1,main_addr]) ;
+  let _ = Proxy_ticket.transfer ([proxy_taddr, [ticket_info1,main_addr]]) ;
   let _ = Test.log (Test.get_storage (main_taddr)) ;
 
   let ticket_info2 = ["world",5 as nat] ;
-  let _ = Proxy_ticket.transfer (proxy_taddr, [ticket_info2,main_addr]) ;
+  let _ = Proxy_ticket.transfer ([proxy_taddr, [ticket_info2,main_addr]]) ;
   Test.log (Test.get_storage (main_taddr));
 };
 
@@ -622,7 +617,7 @@ const main = (_: unit, s: storage) : [ list<operation> , storage] => {
 const test_originate_contract_ = () : unit => {
   const mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
   let ticket_info = [0x0202, 15 as nat] ;
-  let addr = Proxy_ticket.originate (ticket_info, mk_storage, main) ;
+  let addr = Proxy_ticket.originate ([ticket_info, mk_storage, main]) ;
   let storage : michelson_program = Test.get_storage_of_address (addr) ;
   let unforged_storage = (Test.decompile (storage) as unforged_storage) ;
 
@@ -630,7 +625,7 @@ const test_originate_contract_ = () : unit => {
 
   match (unforged_storage, {
   Some: (x: unforged_ticket<bytes>) => {
-    let _ = Test.log ("unforged_ticket", x) ;
+    let _ = Test.log (["unforged_ticket", x]) ;
     let { ticketer , value , amount } = x ;
     let _ = assert (value == ticket_info[0]) ;
     let _ = assert (amount == ticket_info[1]) ;
@@ -683,7 +678,7 @@ let balances_under (b:balances) (threshold:tez) : balances =
 type balances = map <address, tez>
 
 const balances_under = (b : balances, threshold:tez) : balances => {
-  let f = (acc : balances, kv :[address , tez] ) : balances => {
+  let f = ([acc, kv] : [balances, [address , tez]] ) : balances => {
     let [k,v] = kv ;
     if (v < threshold) { return Map.remove (k,acc) } else {return acc}
   };
@@ -971,7 +966,7 @@ let main (p,_ : (int*int) * unit ) =
   [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
 
 let test_foo =
-  let (ta, _, _) = Test.originate main () 0tez in
+  let (ta, _, _) = Test.originate_uncurried main () 0tez in
   let _ = Test.transfer_to_contract_exn (Test.to_contract ta) (1,2) 0tez in
   (Test.get_last_events_from ta "foo" : (int*int) list),(Test.get_last_events_from ta "foo" : int list)
 ```
@@ -980,7 +975,7 @@ let test_foo =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
-let main = ([p, _] : [[int, int], unit]) => {
+let main = (p: [int, int], _: unit) => {
   let op1 = Tezos.emit("%foo", p);
   let op2 = Tezos.emit("%foo", p[0]);
   return [list([op1, op2]), unit];

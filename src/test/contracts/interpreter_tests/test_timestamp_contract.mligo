@@ -2,7 +2,7 @@ let no_operation = ([] : operation list)
 type storage = timestamp
 type result = operation list * storage
 
-let main (ts, _ : timestamp * storage) : result =
+let main (ts : timestamp) (_ : storage) : result =
   no_operation, ts 
 
 

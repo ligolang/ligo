@@ -31,7 +31,7 @@ let all_expression ~raise ~warn_unused_rec init =
 
 
 let all_contract ~raise main_name (prg : Ast_typed.program) =
-  let contract_type = Helpers.fetch_contract_type ~raise main_name prg in
+  let prg, main_name, contract_type = Helpers.fetch_contract_type ~raise main_name prg in
   let data : Contract_passes.contract_pass_data = { contract_type; main_name } in
   let all_p =
     List.map ~f:(fun pass -> Ast_typed.Helpers.fold_map_program pass data)
@@ -68,7 +68,7 @@ let all_view ~raise command_line_views main_name prg =
       Helpers.strip_view_annotations prg
       |> Helpers.annotate_with_view ~raise command_line_views
   in
-  let contract_type = Helpers.fetch_contract_type ~raise main_name prg in
+  let prg, main_name, contract_type = Helpers.fetch_contract_type ~raise main_name prg in
   let f decl =
     match Ast_typed.Helpers.fetch_view_type decl with
     | None -> ()

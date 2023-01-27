@@ -56,7 +56,10 @@ module Tezos = struct
     [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (s : string), (() : b))] (x, a)
   let split_ticket (type a) (t : a ticket) (p : nat * nat) : (a ticket * a ticket) option =
     [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
-  [@inline] [@thunk] let create_contract (type p s) (f : p * s -> operation list * s) (kh : key_hash option) (t : tez) (s : s) : (operation * address) =
+  [@inline] [@thunk] let create_contract (type p s) (f : p -> s -> operation list * s) (kh : key_hash option) (t : tez) (s : s) : (operation * address) =
+      let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1 in
+      [%external ("CREATE_CONTRACT", uncurry f, kh, t, s)]
+  [@inline] [@thunk] let create_contract_uncurried (type p s) (f : p * s -> operation list * s) (kh : key_hash option) (t : tez) (s : s) : (operation * address) =
       [%external ("CREATE_CONTRACT", f, kh, t, s)]
   [@inline] [@thunk] let get_entrypoint_opt (type p) (e : string) (a : address) : p contract option =
     let _ : unit = [%external ("CHECK_ENTRYPOINT", e)] in
@@ -90,7 +93,10 @@ module Tezos = struct
     [%Michelson (({| { UNPAIR ; VIEW (litstr $0) (type $1) } |} : a * address -> b option), (p.0 : string), (() : b))] (p.1, p.2)
   let split_ticket (type a) ((t, p) : (a ticket) * (nat * nat)) : (a ticket * a ticket) option =
     [%Michelson ({| { UNPAIR ; SPLIT_TICKET } |} : a ticket * (nat * nat) -> (a ticket * a ticket) option)] (t, p)
-  [@inline] [@thunk] let create_contract (type p s) ((f, kh, t, s) : (p * s -> operation list * s) * key_hash option * tez * s) : (operation * address) =
+  [@inline] [@thunk] let create_contract (type p s) ((f, kh, t, s) : (p -> s -> operation list * s) * key_hash option * tez * s) : (operation * address) =
+      let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1 in
+      [%external ("CREATE_CONTRACT", uncurry f, kh, t, s)]
+  [@inline] [@thunk] let create_contract_uncurried (type p s) ((f, kh, t, s) : (p * s -> operation list * s) * key_hash option * tez * s) : (operation * address) =
       [%external ("CREATE_CONTRACT", f, kh, t, s)]
   [@inline] [@thunk] let get_entrypoint_opt (type p) (p : string * address) : p contract option =
     let _ : unit = [%external ("CHECK_ENTRYPOINT", p.0)] in
@@ -324,6 +330,8 @@ let false : bool = False
 let unit : unit = [%external ("UNIT")]
 let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
 let ignore (type a) (_ : a) : unit = ()
+let curry (type a b c) (f : a * b -> c) (x : a) (y : b) : c = f (x, y)
+let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1
 
 #if CURRY
 let assert_with_error (b : bool) (s : string) = if b then () else failwith s
@@ -520,7 +528,14 @@ module Test = struct
 	    else s in
     [%external ("TEST_TO_ENTRYPOINT", s, t)]
   let originate_contract (c : michelson_contract) (s : michelson_program) (t : tez) : address = [%external ("TEST_ORIGINATE", c, s, t)]
-  let originate (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
+  let originate (type p s) (f : p -> s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
+    let f = compile_contract (uncurry f) in
+    let s = eval s in
+    let a = originate_contract f s t in
+    let c = size f in
+    let a : (p, s) typed_address = cast_address a in
+    (a, f, c)
+  let originate_uncurried (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
     let f = compile_contract f in
     let s = eval s in
     let a = originate_contract f s t in
@@ -647,7 +662,14 @@ module Test = struct
 	    else s in
     [%external ("TEST_TO_ENTRYPOINT", s, t)]
   let originate_contract ((c, s, t) : michelson_contract * michelson_program * tez) : address = [%external ("TEST_ORIGINATE", c, s, t)]
-  let originate (type p s) ((f, s, t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_contract * int) =
+  let originate (type p s) ((f, s, t) : (p -> s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_contract * int) =
+    let f = compile_contract (uncurry f) in
+    let s = eval s in
+    let a = originate_contract (f, s, t) in
+    let c = size f in
+    let a : (p, s) typed_address = cast_address a in
+    (a, f, c)
+  let originate_uncurried (type p s) ((f, s, t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_contract * int) =
     let f = compile_contract f in
     let s = eval s in
     let a = originate_contract (f, s, t) in

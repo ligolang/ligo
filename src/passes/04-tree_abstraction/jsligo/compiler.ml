@@ -99,7 +99,7 @@ module Compile_type = struct
     | None -> other ()
 
 
-  and compile_type_function_args ~loc ~raise : CST.fun_type_args -> type_expression =
+  and compile_type_function_args ~raise : CST.fun_type_args -> type_expression list =
    fun args ->
     let unpar = args.inside in
     let hd, tl_sep = unpar in
@@ -108,9 +108,7 @@ module Compile_type = struct
      fun x -> compile_type_expression ~raise x.type_expr
     in
     let lst = List.map ~f:aux (hd :: tl) in
-    match lst with
-    | [ a ] -> a
-    | lst -> t_tuple ~loc lst
+    lst
 
 
   and compile_sapling ~raise : type_compiler_opt =
@@ -275,9 +273,15 @@ module Compile_type = struct
       return @@ t_app ~loc operator lst
     | TFun func ->
       let (input_type, _, output_type), loc = r_split func in
-      let input_type = compile_type_function_args ~loc ~raise input_type in
+      let input_types = compile_type_function_args ~raise input_type in
       let output_type = self output_type in
-      return @@ t_arrow ~loc input_type output_type
+      let result_type =
+        List.fold_right
+          ~f:(fun input_type output_type -> t_arrow ~loc input_type output_type)
+          ~init:output_type
+          input_types
+      in
+      return @@ result_type
     | TPar par ->
       let par, _ = r_split par in
       let type_expr = par.inside in
@@ -425,9 +429,13 @@ let rec compile_tuple_expression ~raise ~loc tuple_expr =
   | lst -> e_tuple ~loc lst
 
 
+and compile_tuple_expression_list ~raise ~loc:_ tuple_expr =
+  List.map ~f:(fun e -> compile_expression ~raise e) @@ nseq_to_list tuple_expr
+
+
 and compile_arguments ~raise (args : CST.arguments) =
   let args, loc = arguments_to_expr_nseq args in
-  compile_tuple_expression ~raise ~loc args
+  compile_tuple_expression_list ~raise ~loc args
 
 
 and compile_bin_op ~raise (op_type : Constant.constant') (op : _ CST.bin_op CST.reg) =
@@ -754,7 +762,8 @@ and compile_expression ~raise : CST.expr -> AST.expr =
     let var, loc_var = r_split var in
     let func = e_variable_ez ~loc:loc_var var in
     let args = compile_arguments ~raise args in
-    return @@ e_application ~loc func args
+    let f arg e = e_application ~loc e arg in
+    return @@ List.fold_right ~f ~init:func (List.rev args)
   | EConstr constr ->
     let (constr, args_o), loc = r_split constr in
     let args_o =
@@ -768,7 +777,9 @@ and compile_expression ~raise : CST.expr -> AST.expr =
     let (func, args), loc = r_split call in
     let func = self func in
     let args = compile_arguments ~raise args in
-    return @@ e_application ~loc func args
+    let f arg e = e_application ~loc e arg in
+    let e = List.fold_right ~f ~init:func (List.rev args) in
+    return @@ e
   | EArray items ->
     let items, loc = r_split items in
     let items =
@@ -863,11 +874,25 @@ and compile_expression ~raise : CST.expr -> AST.expr =
   | EFun func ->
     let func, loc = r_split func in
     let ({ parameters; lhs_type; body; arrow = _ } : CST.fun_expr) = func in
-    let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
-    let binder, exprs = compile_parameter ~const:true ~raise parameters in
+    let output_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
+    let binders, exprs = compile_parameter_curried ~const:true ~raise parameters in
     let body = compile_function_body_to_expression ~loc ~raise body in
     let expr = exprs body in
-    return @@ e_lambda ~loc binder lhs_type expr
+    let rec aux binders expr =
+      match binders with
+      | [] -> output_type, expr
+      | binder :: binders ->
+        let output_type, expr = aux binders expr in
+        let outer_type =
+          let open Simple_utils.Option in
+          let* input_type = Param.get_ascr binder in
+          let* output_type in
+          return (t_arrow ~loc input_type output_type)
+        in
+        outer_type, e_lambda ~loc binder output_type expr
+    in
+    let _, expr = aux binders expr in
+    return @@ expr
   | EAnnot { value = EArith (Int i), _, TVar { value = "nat"; _ }; region = _ } ->
     let (_, i), loc = r_split i in
     return @@ e_nat_z ~loc i
@@ -1102,6 +1127,26 @@ and compile_parameter ~raise
     let ascr = Option.map ~f:(t_tuple ~loc) ascr in
     return ?ascr expr var
   | _ -> raise.error @@ not_a_valid_parameter expr
+
+
+and compile_parameter_curried ~raise
+    : const:bool -> CST.expr -> _ Param.t list * (expression -> expression)
+  =
+ fun ~const expr ->
+  let self = compile_parameter ~raise ~const in
+  match expr with
+  | EPar { value = { inside = ESeq { value = arguments; _ }; _ }; region = _ } ->
+    let aux b (binder_lst, fun_) =
+      let binder, fun_' = self b in
+      binder :: binder_lst, fun_' <@ fun_
+    in
+    let binder_lst, fun_ =
+      List.fold_right ~f:aux ~init:([], fun e -> e) @@ npseq_to_list arguments
+    in
+    binder_lst, fun_
+  | _ ->
+    let binder, fun_ = compile_parameter ~raise ~const expr in
+    [ binder ], fun_
 
 
 and compile_function_body_to_expression ~loc ~raise : CST.body -> AST.expression =

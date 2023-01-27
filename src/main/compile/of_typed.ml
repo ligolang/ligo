@@ -65,7 +65,7 @@ let apply_to_entrypoint_contract ~raise ~options ?(contract_pass = false)
   =
  fun prg entrypoint ->
   let loc = Location.dummy in
-  let Self_ast_typed.Helpers.{ parameter = p_ty; storage = s_ty } =
+  let prg, entrypoint, Self_ast_typed.Helpers.{ parameter = p_ty; storage = s_ty } =
     trace ~raise self_ast_typed_tracer
     @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
@@ -133,7 +133,7 @@ let apply_to_entrypoint_view ~raise ~options
   =
  fun prg ->
   let loc = Location.dummy in
-  let views_info = Ast_typed.Helpers.fetch_views_in_program prg in
+  let prg, views_info = Ast_typed.Helpers.fetch_views_in_program prg in
   let aux : int -> _ -> Label.t * expression =
    fun i (view_ty, view_binder) ->
     let a_ty, s_ty, r_ty =

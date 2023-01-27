@@ -3,7 +3,7 @@ const recursion : <T>( xs : list<T>) => option<T> =
         return recursion(xs);
    };
 
-export const main = ([parameter, storage] : [list<string>, int]) : [list<operation>, int] => {
+export const main = (parameter: list<string>, storage: int) : [list<operation>, int] => {
    let _ = recursion(parameter);
    return [list([]) as list<operation>, storage]
 }

@@ -565,7 +565,7 @@ let iter_op (m : register) : unit =
 
 ```jsligo group=maps
 let iter_op = (m: register) => {
-  let predicate = (i: address, j: move) => assert(j[0] > 3);
+  let predicate = ([i, j]: [address, move]) => assert(j[0] > 3);
   Map.iter(predicate, m);
 };
 ```
@@ -596,7 +596,7 @@ let map_op (m : register) : register =
 
 ```jsligo group=maps
 let map_op = (m: register) => {
-  let increment = (_: address, j: move) => [j[0], j[1] + 1];
+  let increment = ([_, j]: [address, move]) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
 ```
@@ -629,7 +629,7 @@ let fold_op (m : register) : int =
 
 ```jsligo group=maps
 let fold_op = (m: register): int => {
-  let folded = (i: int, j: [address, move]) => i + j[1][1];
+  let folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
   return Map.fold(folded, m, 5);
 };
 ```

@@ -4,6 +4,6 @@ module D = struct
   let default : p = { initial = true; final = false }
 end
 
-let main (p, _ : D.t * D.t) : operation list * D.t =
+let main (p : D.t) (_ : D.t) : operation list * D.t =
   ([] : operation list), p
 

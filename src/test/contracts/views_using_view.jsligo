@@ -11,7 +11,7 @@ type return_ = [list <operation>, storage];
 const basic = ([_a,s]:[address, storage]): storage => x + s;
 
 // @view
-const not_funny = ([_,s]:[unit, storage]): storage => basic(Tezos.get_sender(),x + s);
+const not_funny = ([_,s]:[unit, storage]): storage => basic([Tezos.get_sender(),x + s]);
 
 // @view
 const get_storage = ([_,s]:[unit, storage]): storage => x + s;
@@ -20,7 +20,7 @@ const get_storage = ([_,s]:[unit, storage]): storage => x + s;
 const get_address = ([_,_s]:[unit, storage]): address => Tezos.get_sender();
 
 // @view
-const super_not_funny = ([_,s]:[unit, storage]): storage => not_funny(unit, s) + get_storage(unit,s);
+const super_not_funny = ([_,s]:[unit, storage]): storage => not_funny([unit, s]) + get_storage([unit,s]);
 
 
 const main = ([action, _store] : [parameter, storage]) : return_ => {

@@ -7,9 +7,9 @@ let map1 : foobar =
 
 let map2 : foobar = Map.literal (list([[23, 0], [42, 0]]));
 
-let set_ = (n: int, m: foobar) : foobar => Map.update (23, Some (n), m);
+let set_ = ([n, m]: [int, foobar]) : foobar => Map.update (23, Some (n), m);
 
-let add = (n: int, m: foobar) : foobar => Map.add (23, n, m);
+let add = ([n, m]: [int, foobar]) : foobar => Map.add (23, n, m);
 
 let rm = (m: foobar) : foobar => Map.remove (42, m);
 
@@ -36,18 +36,18 @@ let get_ = (m: foobar): option<int> => Map.find_opt(42, m);
 let mem = (km: [int, foobar]): bool => Map.mem (km[0], km[1]);
 
 let iter_op = (m: foobar): unit => {
-  let assert_eq = (i: int, j: int):unit => assert (i == j);
+  let assert_eq = ([i, j]: [int, int]):unit => assert (i == j);
   Map.iter (assert_eq, m);
   return unit;
 };
 
 let map_op = (m: foobar) : foobar => {
-  let increment = (_z: int, j: int):int => j + 1;
+  let increment = ([_z, j]: [int, int]):int => j + 1;
   return Map.map (increment, m);
 };
 
 let fold_op = (m: foobar): int => {
-  let aggregate = (i: int, j: [int, int]):int => i + j[0] + j[1];
+  let aggregate = ([i, j]: [int, [int, int]]):int => i + j[0] + j[1];
   return Map.fold (aggregate, m, 10);
 };
 

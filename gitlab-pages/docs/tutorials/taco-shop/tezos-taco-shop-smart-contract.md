@@ -321,7 +321,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
+let buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : return_ => {
   return [list([]), taco_shop_storage]
 };
 ```
@@ -365,7 +365,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let buy_taco2 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) => {
+let buy_taco2 = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage): return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {
@@ -428,7 +428,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let buy_taco3 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
+let buy_taco3 = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {
@@ -473,7 +473,7 @@ let test =
       (1n, { current_stock = 50n ; max_price = 50tez }) ;
       (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
   in
-  let (pedro_taco_shop_ta, _code, _size) = Test.originate buy_taco init_storage 0tez in
+  let (pedro_taco_shop_ta, _code, _size) = Test.originate_uncurried buy_taco init_storage 0tez in
   (* Convert typed_address to contract *)
   let pedro_taco_shop_ctr = Test.to_contract pedro_taco_shop_ta in
   (* Convert contract to address *)
@@ -516,7 +516,7 @@ let test =
 ```jsligo test-ligo group=test
 #include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo"
 
-let assert_string_failure = ([res,expected] : [test_exec_result, string]) => {
+let assert_string_failure = (res: test_exec_result, expected: string) => {
   let expected_bis = Test.eval (expected) ;
   match (res, {
     Fail: (x: test_exec_error) => (
@@ -545,7 +545,7 @@ let test = ((_: unit): unit => {
   let unknown_kind = (3 as nat) ;
 
   /* Auxiliary function for testing equality in maps */
-  let eq_in_map = ([r, m, k] : [taco_supply, taco_shop_storage, nat]) =>
+  let eq_in_map = (r: taco_supply, m: taco_shop_storage, k: nat) =>
     match(Map.find_opt(k, m), {
      None: () => false,
      Some: (v : taco_supply) => v.current_stock == r.current_stock && v.max_price == r.max_price }) ;

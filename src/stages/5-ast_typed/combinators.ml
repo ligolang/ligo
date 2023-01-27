@@ -654,6 +654,7 @@ let e_a_let_in ~loc let_binder rhs let_result attributes =
   e_let_in ~loc { let_binder; rhs; let_result; attributes } (get_type let_result)
 
 
+let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
 let e_a_raw_code ~loc language code t = e_raw_code ~loc { language; code } t
 let e_a_type_inst ~loc forall type_ u = e_type_inst ~loc { forall; type_ } u
 

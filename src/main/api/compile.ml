@@ -218,7 +218,10 @@ let parameter
   let constants = constants @ file_constants in
   let entry_point = Value_var.of_input_var ~loc entry_point in
   let app_typed_prg = Build.qualified_typed ~raise ~options Env source_file in
-  let Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } =
+  let ( app_typed_prg
+      , entry_point
+      , Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } )
+    =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
     @@ Self_ast_typed.Helpers.fetch_contract_type entry_point app_typed_prg
   in
@@ -352,7 +355,10 @@ let storage
   let app_typed_prg =
     Build.qualified_typed ~raise ~options Ligo_compile.Of_core.Env source_file
   in
-  let Self_ast_typed.Helpers.{ parameter = _; storage = storage_ty } =
+  let ( app_typed_prg
+      , entry_point
+      , Self_ast_typed.Helpers.{ parameter = _; storage = storage_ty } )
+    =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
     @@ Self_ast_typed.Helpers.fetch_contract_type entry_point app_typed_prg
   in

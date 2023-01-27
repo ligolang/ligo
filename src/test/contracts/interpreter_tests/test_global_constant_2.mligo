@@ -5,7 +5,7 @@ type return = operation list * storage
 let ct : michelson_program = Test.constant_to_michelson_program "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 let ct : string = Test.register_constant ct
 
-let main ((), store : parameter * storage) : return =
+let main (() : parameter)  (store : storage) : return =
  ([] : operation list), ((Tezos.constant ct : int -> int) store)
 
 let test =

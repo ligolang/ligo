@@ -1,6 +1,6 @@
 type 'a return = operation list * 'a
 
-let main (((),s): unit * int) : int return = ([]:operation list) , s
+let main (() : unit) (s : int) : int return = ([]:operation list) , s
 
 (* Tezos.create_contract can't be used in top-level of a view *)
 let bad_view1 (n,s: int * int) : int =

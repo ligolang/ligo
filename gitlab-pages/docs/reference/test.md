@@ -184,14 +184,27 @@ let compile_contract_from_file = (filepath: string, entrypoint: string, views: l
 Compiles a contract with a path to the contract file, an entrypoint, and a list of views.
 
 <SyntaxTitle syntax="cameligo">
-val originate : ('param * 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
+val originate : ('param -> 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let originate = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage), init: 'storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
+let originate = (contract: (p: 'param, s: 'storage) => [list &lt;operation&gt;, &apos;storage], init: 'storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
 </SyntaxTitle>
 
-Originate a contract with an entrypoint function, initial storage and initial balance.
+Originate a contract with an entrypoint function in curried form, initial storage and initial balance.
+
+<SyntaxTitle syntax="pascaligo">
+val originate_uncurried &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> storage -> tez -> typed_address (param, storage) * michelson_contract * int
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_uncurried : ('param * 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let originate_uncurried = (contract: (ps: ['param, 'storage]) => [list &lt;operation&gt;, &apos;storage], init: 'storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
+</SyntaxTitle>
+
+Originate a contract with an entrypoint function in uncurried form, initial storage and initial balance.
 
 <SyntaxTitle syntax="cameligo">
 val compile_contract : ('param * 'storage -> operation list * 'storage) -> michelson_contract

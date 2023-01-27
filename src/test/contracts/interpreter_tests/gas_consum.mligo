@@ -1,7 +1,7 @@
 type storage = int list
 type parameter = bool
 
-let main (p, store : parameter * storage) : operation list * storage =
+let main (p : parameter) (store : storage) : operation list * storage =
   let aux (i:int) : int = i + 1 in
   (([]: operation list) , (if p then List.map aux store else store))
 

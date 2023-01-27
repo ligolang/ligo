@@ -29,11 +29,8 @@ The call to failwith should be annotated with a type as the type-checker cannot 
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-let main = (p: unit, s: unit) => {
-  if (true) {
-    failwith("This contract always fails");
-  };
-}
+let main = (p: unit, s: unit) : [list<operation>, unit] =>
+  failwith("This contract always fails");
 ```
 
 The call to failwith should be annotated with a type as the type-checker cannot infer the correct type yet.
@@ -66,7 +63,7 @@ let some (o : unit option) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith_alt
-let main = (p: bool, s: unit) => {
+let main = (p: bool, s: unit) : [list<operation>, unit] => {
   let u: unit = assert(p);
   return [list([]), s];
 };
@@ -93,7 +90,7 @@ let main (p, s : bool * unit) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-let main2 = (p: bool, s: unit) => {
+let main2 = (p: bool, s: unit) : [list<operation>, unit] => {
   assert_with_error (p, "My custom error message.");
   return [list([]), s];
 };

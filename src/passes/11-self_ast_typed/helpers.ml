@@ -271,17 +271,57 @@ type contract_type =
   ; storage : Ast_typed.type_expression
   }
 
-let fetch_contract_type ~raise : Value_var.t -> program -> contract_type =
+let fetch_contract_type ~raise
+    : Value_var.t -> program -> program * expression_variable * contract_type
+  =
  fun main_fname m ->
-  let aux declt =
+  let aux declt (prog, contract_type_opt) =
+    let return () = declt :: prog, contract_type_opt in
+    let loc = Location.get_location declt in
     match Location.unwrap declt with
-    | D_value { binder = { var; _ }; expr; attr = _ }
+    | D_value ({ binder; expr; attr = _ } as dvalue) when Option.is_none contract_type_opt
+      ->
+      let var = Binder.get_var binder in
+      if Value_var.equal var main_fname
+      then (
+        match uncurry_wrap ~loc ~type_:expr.type_expression var with
+        | Some expr ->
+          let binder = Binder.set_var binder (Value_var.fresh_like var) in
+          let binder = Binder.set_ascr binder expr.type_expression in
+          (* Add both `main` and the new `main#FRESH` version that calls `main` but it's curried *)
+          ( (Location.wrap ~loc:declt.location @@ D_value dvalue)
+            :: (Location.wrap ~loc:declt.location @@ D_value { dvalue with binder; expr })
+            :: prog
+          , Some (Binder.get_var binder, expr) )
+        | None ->
+          ( (Location.wrap ~loc:declt.location @@ D_value dvalue) :: prog
+          , Some (Binder.get_var binder, expr) ))
+      else return ()
     | D_irrefutable_match
-        { pattern = { wrap_content = P_var { var; _ }; _ }; expr; attr = _ } ->
-      if Value_var.equal var main_fname then Some (var, expr) else None
-    | D_irrefutable_match _ | D_type _ | D_module _ -> None
+        ({ pattern = { wrap_content = P_var binder; _ } as pattern; expr; attr = _ } as
+        dirref)
+      when Option.is_none contract_type_opt ->
+      let var = Binder.get_var binder in
+      if Value_var.equal var main_fname
+      then (
+        match uncurry_wrap ~loc ~type_:expr.type_expression var with
+        | Some expr ->
+          let binder = Binder.set_var binder (Value_var.fresh_like var) in
+          let binder = Binder.set_ascr binder expr.type_expression in
+          let pattern = Pattern.{ pattern with wrap_content = P_var binder } in
+          (* Add both `main` and the new `main#FRESH` version that calls `main` but it's curried *)
+          ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref)
+            :: (Location.wrap ~loc:declt.location
+               @@ D_irrefutable_match { dirref with expr; pattern })
+            :: prog
+          , Some (Binder.get_var binder, expr) )
+        | None ->
+          ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref) :: prog
+          , Some (Binder.get_var binder, expr) ))
+      else return ()
+    | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ -> return ()
   in
-  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
+  let m, main_decl_opt = List.fold_right ~f:aux ~init:([], None) m in
   let main_decl =
     trace_option
       ~raise
@@ -311,7 +351,7 @@ let fetch_contract_type ~raise : Value_var.t -> program -> contract_type =
         @@ Ast_typed.assert_no_type_vars parameter
       in
       (* TODO: on storage/parameter : assert_storable, assert_passable? *)
-      { parameter; storage }
+      m, var, { parameter; storage }
     | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location var))
   | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location var)
 

@@ -494,31 +494,31 @@ let%expect_test _ =
 File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:
   3 | let main (_, store : string * string) : return =
   4 |   let toto : operation * address = Tezos.create_contract
-  5 |     (fun (_p, _s : nat * string) -> (([] : operation list), store))
+  5 |     (fun (_p : nat) (_s : string) -> (([] : operation list), store))
   6 |     (None: key_hash option)
   7 |     300tz
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#177. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#195. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/create_contract_var.mligo", line 7, characters 10-11:
+    File "../../test/contracts/create_contract_var.mligo", line 7, characters 20-21:
       6 |   let toto : operation * address = Tezos.create_contract
-      7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
-      8 |     (None: key_hash option)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/create_contract_var.mligo", line 7, characters 13-14:
-      6 |   let toto : operation * address = Tezos.create_contract
-      7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
+      7 |     (fun (p : nat) (s : int) -> (([] : operation list), a))
       8 |     (None: key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
+
+    File "../../test/contracts/create_contract_var.mligo", line 7, characters 10-11:
+      6 |   let toto : operation * address = Tezos.create_contract
+      7 |     (fun (p : nat) (s : int) -> (([] : operation list), a))
+      8 |     (None: key_hash option)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
     File "../../test/contracts/create_contract_var.mligo", line 5, characters 10-16:
       4 |
@@ -548,21 +548,21 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#177.
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_modfv.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 10-11:
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 20-21:
       7 |   let toto : operation * address = Tezos.create_contract
-      8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
-      9 |     (None: key_hash option)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 13-14:
-      7 |   let toto : operation * address = Tezos.create_contract
-      8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+      8 |     (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
       9 |     (None: key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 10-11:
+      7 |   let toto : operation * address = Tezos.create_contract
+      8 |     (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+      9 |     (None: key_hash option)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 3, characters 10-16:
       2 |
@@ -575,31 +575,31 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#177.
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 7, character 35 to line 11, character 8:
       6 |   end in
       7 |   let toto : operation * address = Tezos.create_contract
-      8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+      8 |     (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
       9 |     (None: key_hash option)
      10 |     300tz
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#178. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#196. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 30-31:
       4 |
-      5 | let dummy_contract (p, s : nat * int) : return =
-      6 |  (([] : operation list), foo)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 23-24:
-      4 |
-      5 | let dummy_contract (p, s : nat * int) : return =
+      5 | let dummy_contract (p : nat) (s : int) : return =
       6 |  (([] : operation list), foo)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
+      4 |
+      5 | let dummy_contract (p : nat) (s : int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
       8 | let main (action, store : int * int) : return =
@@ -630,25 +630,25 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#177.
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
      10 |   let toto : operation list = [ op ] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#188. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#208. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/create_contract.mligo", line 5, characters 10-11:
+    File "../../test/contracts/create_contract.mligo", line 5, characters 20-21:
       4 |   let toto : operation * address = Tezos.create_contract
-      5 |     (fun (p, s : nat * string) -> (([] : operation list), "one"))
-      6 |     (None: key_hash option)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/create_contract.mligo", line 5, characters 13-14:
-      4 |   let toto : operation * address = Tezos.create_contract
-      5 |     (fun (p, s : nat * string) -> (([] : operation list), "one"))
+      5 |     (fun (p : nat) (s : string) -> (([] : operation list), "one"))
       6 |     (None: key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
+
+    File "../../test/contracts/create_contract.mligo", line 5, characters 10-11:
+      4 |   let toto : operation * address = Tezos.create_contract
+      5 |     (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+      6 |     (None: key_hash option)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
     File "../../test/contracts/create_contract.mligo", line 3, characters 10-16:
       2 |
@@ -1251,30 +1251,30 @@ let%expect_test _ =
                    LAMBDA
                      unit
                      unit
-                     { { /* x#153 */ } ;
+                     { { /* x#172 */ } ;
                        { /* File "../../test/contracts/noop.mligo", line 2, characters 9-10 */ } } } ;
-                 { /* f#152, _ */ } ;
+                 { /* f#171, _ */ } ;
                  { /* File "../../test/contracts/noop.mligo", line 3, character 2 to line 6, character 28 */
                    { /* File "../../test/contracts/noop.mligo", line 3, characters 18-21 */
                      SWAP ;
                      { /* File "../../test/contracts/noop.mligo", line 3, characters 18-19 */ DUP 2 } ;
                      SWAP ;
                      EXEC } ;
-                   { /* s2#154, f#152 */ } ;
+                   { /* s2#173, f#171 */ } ;
                    { /* File "../../test/contracts/noop.mligo", line 4, character 2 to line 6, character 28 */
                      { /* File "../../test/contracts/noop.mligo", line 4, characters 18-22 */
                        { /* File "../../test/contracts/noop.mligo", line 4, characters 20-22 */ } ;
                        { /* File "../../test/contracts/noop.mligo", line 4, characters 18-19 */ DUP 2 } ;
                        SWAP ;
                        EXEC } ;
-                     { /* s3#155, f#152 */ } ;
+                     { /* s3#174, f#171 */ } ;
                      { /* File "../../test/contracts/noop.mligo", line 5, character 2 to line 6, character 28 */
                        { /* File "../../test/contracts/noop.mligo", line 5, characters 10-14 */
                          { /* File "../../test/contracts/noop.mligo", line 5, characters 12-14 */ } ;
                          { /* File "../../test/contracts/noop.mligo", line 5, characters 10-11 */ SWAP } ;
                          SWAP ;
                          EXEC } ;
-                       { /* s#156 */ } ;
+                       { /* s#175 */ } ;
                        { /* File "../../test/contracts/noop.mligo", line 6, characters 3-27 */
                          { /* File "../../test/contracts/noop.mligo", line 6, characters 26-27 */ } ;
                          { /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */
@@ -2059,7 +2059,7 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "10" } }, "source_type": "7" }, {}, {}, {}, {},
-              { "environment": [ { "name": "x#153", "source_type": "1" } ] },
+              { "environment": [ { "name": "x#172", "source_type": "1" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
@@ -2068,7 +2068,7 @@ let%expect_test _ =
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "10" } }, "source_type": "2" },
               { "environment":
-                  [ { "name": "f#152", "source_type": "7" },
+                  [ { "name": "f#171", "source_type": "7" },
                     { "source_type": "0" } ] },
               { "location":
                   { "start":
@@ -2092,8 +2092,8 @@ let%expect_test _ =
                       { "file": "../../test/contracts/noop.mligo", "line": "3",
                         "col": "19" } }, "source_type": "7" }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2#154", "source_type": "3" },
-                    { "name": "f#152", "source_type": "7" } ] },
+                  [ { "name": "s2#173", "source_type": "3" },
+                    { "name": "f#171", "source_type": "7" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "4",
@@ -2123,8 +2123,8 @@ let%expect_test _ =
                       { "file": "../../test/contracts/noop.mligo", "line": "4",
                         "col": "19" } }, "source_type": "7" }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3#155", "source_type": "4" },
-                    { "name": "f#152", "source_type": "7" } ] },
+                  [ { "name": "s3#174", "source_type": "4" },
+                    { "name": "f#171", "source_type": "7" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "5",
@@ -2153,7 +2153,7 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "5",
                         "col": "11" } }, "source_type": "7" }, {}, {}, {},
-              { "environment": [ { "name": "s#156", "source_type": "2" } ] },
+              { "environment": [ { "name": "s#175", "source_type": "2" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",

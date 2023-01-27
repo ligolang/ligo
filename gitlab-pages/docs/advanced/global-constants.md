@@ -113,7 +113,7 @@ Given the following contract `global_call`:
 let helper ((s, x) : string * int) =
   String.length s + x * 3 + 2
 
-let main ((p, s) : string * int) : operation list * int =
+let main (p : string) (s : int) : operation list * int =
   ([], helper (p, s))
 ```
 
@@ -122,11 +122,11 @@ let main ((p, s) : string * int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=pre_global
-const helper = (s: string, x: int) =>
+const helper = ([s, x]: [string, int]) =>
   String.length(s) + x * 3 + 2;
 
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [list([]), helper (p, s)];
+  [list([]), helper ([p, s])];
 ```
 
 </Syntax>
@@ -229,7 +229,7 @@ The new version of `global_call` looks as follows:
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-let main ((p, s) : string * int) : operation list * int =
+let main (p : string) (s : int) : operation list * int =
   ([], (Tezos.constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")(p, s))
 ```
 
@@ -325,7 +325,7 @@ let f (x : int) = x * 3 + 2
 
 let ct = Test.register_constant (Test.eval f)
 
-let main ((), store : parameter * storage) : return =
+let main (() : parameter) (store : storage) : return =
  [], (Tezos.constant ct store)
 
 let test =

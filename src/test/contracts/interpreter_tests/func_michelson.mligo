@@ -1,7 +1,7 @@
 let michelson_add : int * int -> int =
   [%Michelson ({| { UNPAIR ; ADD } |} : int * int -> int) ]
 
-let main (x, s : int * int) : operation list * int =
+let main (x : int) (s : int) : operation list * int =
   ([] : operation list), michelson_add (x, s)
 
 let test =

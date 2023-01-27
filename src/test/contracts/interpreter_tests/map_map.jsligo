@@ -1,7 +1,7 @@
 const map 
-    : <A,B,C>((p : [(p : B) => C, map<A,B>]) => map<A,C>) 
-    = ([f, m] : [(p : B) => C, map<A,B>]) : map<A,C> => {
-    let fn = (_ : A, v : B) => f(v);
+    : <A,B,C>((f : (p : B) => C, m: map<A,B>) => map<A,C>)
+    = (f: (p : B) => C, m: map<A,B>) : map<A,C> => {
+    let fn = ([_, v] : [A, B]) => f(v);
     return Map.map(fn, m)
 }
 

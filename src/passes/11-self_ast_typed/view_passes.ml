@@ -14,12 +14,9 @@ let check_view_type ~raise
  fun ~err_data:(main_name, view_binder) { storage = c_storage; _ } view_ty ->
   let view_loc = Value_var.get_location @@ Binder.get_var view_binder in
   let arg, v_storage, return =
-    match Ast_typed.get_t_arrow view_ty with
-    | Some { type1 = tin; type2 = return } ->
-      (match Ast_typed.get_t_tuple tin with
-      | Some [ arg; storage ] -> arg, storage, return
-      | _ -> raise.error (expected_pair_in_view view_loc))
-    | None -> raise.error @@ bad_view_io main_name view_loc
+    match Ast_typed.Helpers.should_curry_view view_ty with
+    | `Yes v | `No v -> v
+    | `Bad -> raise.error @@ bad_view_io main_name view_loc
   in
   let () =
     trace_option
