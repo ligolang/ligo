@@ -2837,3 +2837,19 @@ let%expect_test _ =
                { DROP ; PUSH int 1 ; ADD } ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "layout_comb.jsligo" ];
+  [%expect
+    {|
+               { parameter (or (unit %a) (or (int %b) (pair %c int int))) ;
+                 storage (pair (int %x) (int %y) (int %z)) ;
+                 code { CAR ;
+                        IF_LEFT
+                          { DROP ; PUSH int 10 ; PUSH int 10 ; PUSH int 10 }
+                          { IF_LEFT
+                              { DROP ; PUSH int 20 ; PUSH int 20 ; PUSH int 20 }
+                              { DROP ; PUSH int 20 ; PUSH int 20 ; PUSH int 20 } } ;
+                        PAIR 3 ;
+                        NIL operation ;
+                        PAIR } } |}]

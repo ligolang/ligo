@@ -31,7 +31,7 @@ let list_of_option = function
 | Some list -> list
 
 let private_attribute = {
-  value="private";
+  value=("private", None);
   region=Region.ghost
 }
 
@@ -220,9 +220,7 @@ stmt_or_namespace:
 
 %inline attributes:
   ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) {
-    let l = list_of_option $1 in
-    let filter (attr: Attr.t reg) = {attr with value = fst attr.value}
-    in List.map filter l }
+    list_of_option $1 }
 
 (* Namespace Statement *)
 

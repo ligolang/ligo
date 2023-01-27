@@ -5,6 +5,7 @@
 module AST = Ast_imperative
 module CST = Cst.Jsligo
 module Predefined = Predefined.Tree_abstraction
+module Shared_helpers = Tree_abstraction_shared.Helpers
 module Region = Simple_utils.Region
 module Location = Simple_utils.Location
 module List = Simple_utils.List
@@ -17,9 +18,7 @@ open Ligo_prim
 (* Utils *)
 
 let decompile_attributes : string list -> CST.attribute list =
- fun kvl ->
-  let f : string -> CST.attribute = fun str -> Region.wrap_ghost str in
-  List.map ~f kvl
+  Shared_helpers.decompile_attributes
 
 
 let list_to_sepseq ~sep lst =
@@ -66,7 +65,7 @@ let braced d =
 
 
 let filter_private (attributes : CST.attributes) =
-  List.filter ~f:(fun v -> not (String.equal v.value "private")) attributes
+  List.filter ~f:(fun v -> not (String.equal (fst v.value) "private")) attributes
 
 
 (* Decompiler *)
@@ -154,7 +153,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr =
     in
     let record = List.map ~f:aux fields in
     let record = list_to_nsepseq ~sep:Token.ghost_semi record in
-    let attributes = List.map ~f:(fun el -> Region.wrap_ghost el) attributes in
+    let attributes = decompile_attributes attributes in
     return @@ CST.TObject (Region.wrap_ghost @@ ne_inject braces record ~attr:attributes)
   | T_tuple tuple ->
     let tuple = List.map ~f:decompile_type_expr tuple in
