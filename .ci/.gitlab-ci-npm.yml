@@ -38,14 +38,20 @@ publish_npm_windows_x86:
       artifacts: true
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - src/**/*
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
+    - |      
+      if [[ $CI_COMMIT_REF_NAME == "dev" ]]; then
+        SUFFIX=-dev
+      fi
     - cd platform-windows-x64
     - chmod 664 package.json
     - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json windows)
-    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag windows || status=1
+    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag windows$SUFFIX || status=1
     - echo "ligo_npm_build_status $status" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG/arch/windows-x86
 
 esy-macos-darwin:
@@ -81,14 +87,20 @@ publish_npm_darwin:
       artifacts: true
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - src/**/*
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
+    - |      
+      if [[ $CI_COMMIT_REF_NAME == "dev" ]]; then
+        SUFFIX=-dev
+      fi
     - cd platform-darwin
     - chmod 664 package.json
     - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json macos-intel)
-    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-intel || status=1
+    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-intel$SUFFIX || status=1
     - echo "ligo_npm_build_status $status" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG/arch/darwin
 
 esy-macos-m1:
@@ -125,13 +137,19 @@ publish_npm_darwin_arm64:
       artifacts: true
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - src/**/*
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
+    - |      
+      if [[ $CI_COMMIT_REF_NAME == "dev" ]]; then
+        SUFFIX=-dev
+      fi
     - cd platform-darwin-arm64
     - chmod 664 package.json
     - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json macos-m1)
-    - status=0  ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-m1 || status=1
+    - status=0  ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-m1$SUFFIX || status=1
     - echo "ligo_npm_build_status $status" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG/arch/darwin-arm64
 
