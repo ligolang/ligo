@@ -102,6 +102,8 @@ export class WorkspaceLoader extends PureComponent {
     const { projectRoot, ProjectToolbar, signer, CompilerTerminal } = this.props;
     const { loading, invalid, initial, terminal, context } = this.state;
 
+    actions.projectManager = context.projectManager;
+
     if (loading) {
       return <ProjectLoading projectRoot={projectRoot} />;
     }

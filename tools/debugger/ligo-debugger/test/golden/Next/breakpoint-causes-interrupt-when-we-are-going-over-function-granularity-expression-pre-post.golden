@@ -11,10 +11,10 @@ InterpretSnapshot:
           siValue: 0
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -30,10 +30,10 @@ InterpretSnapshot:
           siValue: 0
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -49,10 +49,29 @@ InterpretSnapshot:
           siValue: 0
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s2 of int
+          siValue: 1
+        , StackItem:
+          siLigoDesc: elem g of unit -> int
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+        , StackItem:
+          siLigoDesc: elem f of int -> int
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -69,17 +88,17 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:11:11-11:16
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -96,17 +115,17 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:11:11-11:16
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -123,17 +142,17 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:11:11-11:16
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -150,17 +169,17 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:11:11-11:16
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -177,17 +196,17 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:11:11-11:16
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -204,17 +223,17 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:11:11-11:16
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -222,6 +241,10 @@ InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
     [StackFrame:
+      sfName: g
+      sfLoc: test/contracts/functions-visiting.mligo:7:4-7:19
+      sfStack: []
+    , StackFrame:
       sfName: main
       sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
@@ -230,10 +253,10 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -241,37 +264,45 @@ InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
     [StackFrame:
+      sfName: g
+      sfLoc: test/contracts/functions-visiting.mligo:7:12-7:19
+      sfStack: []
+    , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:12:12-12:14
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Unit)
+  isStatus: running / expression evaluated (20)
   isStackFrames:
     [StackFrame:
+      sfName: g
+      sfLoc: test/contracts/functions-visiting.mligo:7:12-7:19
+      sfStack: []
+    , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:12:12-12:14
+      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -287,10 +318,10 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 
@@ -306,10 +337,10 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem g of unit -> int
-          siValue: { DROP; PUSH int 10; PUSH int 10; ADD; {  } }
+          siValue: { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
         , StackItem:
           siLigoDesc: elem f of int -> int
-          siValue: { {  }; PUSH int 100; ADD; {  }; PUSH int 100; ADD; {  } }
+          siValue: { {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
         ]
     ]
 

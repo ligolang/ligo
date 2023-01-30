@@ -66,7 +66,6 @@ deriving via PP (Variant it) instance Pretty it => Show (Variant it)
 deriving via PP (TField it) instance Pretty it => Show (TField it)
 deriving via PP (Expr it) instance Pretty it => Show (Expr it)
 deriving via PP (Alt it) instance Pretty it => Show (Alt it)
-deriving via PP (MapBinding it) instance Pretty it => Show (MapBinding it)
 deriving via PP (FieldAssignment it) instance Pretty it => Show (FieldAssignment it)
 deriving via PP (Constant it) instance Pretty it => Show (Constant it)
 deriving via PP (Pattern it) instance Pretty it => Show (Pattern it)
@@ -99,7 +98,6 @@ instance
   where
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
-instance LPP1 'Pascal Error where lpp1 (Error msg _) = blockComment Pascal $ pp msg
 instance LPP1 'Caml   Error where lpp1 (Error msg _) = blockComment Caml   $ pp msg
 instance LPP1 'Js     Error where lpp1 (Error msg _) = blockComment Js     $ pp msg
 
@@ -155,7 +153,6 @@ instance Pretty1 Binding where
         , [pp ty]
         , [pp value]
         ]
-    BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
     BImport       fname alias   -> sexpr "#import" [fname, alias]
     BModuleDecl   mname body    -> sexpr "module" [mname, pp body]
@@ -197,51 +194,28 @@ instance Pretty1 Expr where
     Let       decl body  -> "(let" `indent` decl `above` body <.> ")"
     Apply     f xs       -> sexpr "apply" (f : xs)
     Constant  constant   -> sexpr "constant" [constant]
-    Ident     qname      -> sexpr "qname" [qname]
     BinOp     l o r      -> sop l (ppToText o) [r]
     UnOp        o r      -> sexpr (ppToText o) [r]
     Op          o        -> pp o
     Record    az         -> sexpr "record" az
     If        b t e      -> sexpr "if" [b, t, pp e]
     Ternary   b t e      -> "(" <> pp b <> "?" <> pp t <> ":" <> pp e <> ")"
-    Assign    l r        -> sop l ":=" [r]
     List      l          -> sexpr "list" l
     ListAccess l ids     -> sexpr "get" (l : ids)
-    Set       l          -> sexpr "set" l
     Tuple     l          -> sexpr "tuple" l
     Annot     n t        -> sop n ":" [t]
-    Attrs     ts         -> sexpr "attrs" ts
-    BigMap    bs         -> sexpr "big_map" bs
-    Map       bs         -> sexpr "map" bs
-    Remove    k c m      -> sexpr "remove" [k, c, m]
-    -- Indexing  a j        -> sexpr "index" [a, j]
     Case      s az       -> sexpr "case" (s : az)
-    Skip                 -> "skip"
     Return    e          -> sexpr "return" [pp e]
     Break                -> "break"
-    ForLoop   j s f d b  -> sexpr "for" [j, s, f, pp d, b]
-    ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
     ForOfLoop v c b      -> sexpr "for_of" [v, c, b]
     WhileLoop f b        -> sexpr "while" [f, b]
     Seq       es         -> sexpr "seq" es
-    Block     es         -> sexpr "block" es
     Lambda    ps tys ty b -> sexpr "lam" $ concat [ps, [sexpr "type" tys | not (null tys)], [":", pp ty], ["=>", b]]
-    Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
     CodeInj   l e        -> sexpr "%" [l, e]
     Paren     e          -> "(" <> pp e <> ")"
     SwitchStm s cs       -> sexpr "switch" (s : cs)
     AssignOp  l o r      -> sop l (ppToText o) [r]
-
-instance Pretty1 PatchableExpr where
-  pp1 = \case
-    PatchableExpr c e -> sexpr "patchable" [c, e]
-
-instance Pretty1 Collection where
-  pp1 = \case
-    CList -> "list"
-    CMap  -> "map"
-    CSet  -> "set"
 
 instance Pretty1 Verbatim where
   pp1 = \case
@@ -250,10 +224,6 @@ instance Pretty1 Verbatim where
 instance Pretty1 Alt where
   pp1 = \case
     Alt p b -> sexpr "alt" [p, b]
-
-instance Pretty1 MapBinding where
-  pp1 = \case
-    MapBinding k v -> sexpr "bind" [k, v]
 
 instance Pretty1 FieldAssignment where
   pp1 = \case
@@ -421,179 +391,6 @@ instance LPP1 d Attr where
 
 -- instances needed to pass instance resolution during compilation
 
-instance LPP1 d Collection where
-  lpp1 = \case
-    CList -> "list"
-    CMap  -> "map"
-    CSet  -> "set"
-
-instance LPP1 'Caml MapBinding where
-  lpp1 = error "unexpected `MapBinding` node"
-
-----------------------------------------------------------------------------
--- Pascal
-----------------------------------------------------------------------------
-
-prettyTyVarsPascal :: [Doc] -> Doc
-prettyTyVarsPascal []  = DPretty.empty
-prettyTyVarsPascal tys = "<" <.> train ", " tys <.> ">"
-
-instance LPP1 'Pascal AST.Type where
-  lpp1 = \case
-    TArrow    dom codom -> dom <+> "->" <+> codom
-    TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
-    TProduct  [element] -> element
-    TProduct  elements  -> parens $ train " *" elements
-    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
-    TApply    f xs      -> f <+> tuple xs
-    TString   t         -> "\"" <.> lpp t <.> "\""
-    TWildcard           -> "_"
-    TVariable v         -> v
-    TParen    t         -> "(" <+> lpp t <+> ")"
-
-instance LPP1 'Pascal TypeVariableName where
-  lpp1 = \case
-    TypeVariableName raw -> lpp raw
-
-instance LPP1 'Pascal Binding where
-  lpp1 = \case
-    BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> lpp n <+> "is" <+> lpp ty
-    BVar          name tys ty value ->
-      "var" <+> name <+> prettyTyVarsPascal tys <+> ":" <+> lpp ty <+> ":=" <+> lpp value
-    BConst _isRec name tys ty body  ->
-      "const" <+> name <+> prettyTyVarsPascal tys <+> ":" <+> lpp ty <+> "=" <+> lpp body
-    BAttribute    name          -> brackets ("@" <.> name)
-    BInclude      fname         -> "#include" <+> pp fname
-    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
-    BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
-    BModuleDecl   mname body    -> "module" <+> lpp mname <+> "is" <+> lpp body
-    BModuleAlias  mname alias    -> "module" <+> lpp mname <+> lpp alias
-
-    BFunction isRec name tys params ty body ->
-      foldr (<+>) DPretty.empty $ concat
-        [ ["recursive" | isRec]
-        , ["function"]
-        , [name]
-        , ["<" <.> train ", " tys <.> ">" | not (null tys)]
-        , params
-        , [":", lpp ty]
-        , ["is", body]
-        ]
-
-instance LPP1 'Pascal QuotedTypeParams where
-  lpp1 = \case
-    QuotedTypeParam  t  -> parens t
-    QuotedTypeParams ts -> tuple ts
-
-instance LPP1 'Pascal Variant where
-  lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor mTy -> case mTy of
-      Just ty -> ctor <+> "of" <+> pp ty
-      Nothing -> ctor
-
-instance LPP1 'Pascal Expr where
-  lpp1 = \case
-    Let       decl body  -> "block {" `above` decl `above` "}" <+> "with" <+> body
-    Apply     f xs       -> f <+> tuple xs
-    Constant  constant   -> constant
-    Ident     qname      -> qname
-    BinOp     l o r      -> l <+> o <+> r
-    UnOp        o r      -> o <+> r
-    Op          o        -> lpp o
-    Record    az         -> "record [" `indent` blockWith (<.> ";") az `above` "]"
-    -- TODO: context-dependent block expressions
-    If        b t e      -> "if" <+> parens b <+> "then {" <+> lpp t <+> "} else {" <+> lpp e <+> "}"
-    Assign    l r        -> l <+> ":=" <+> r
-    List      []         -> "nil"
-    List      l          -> lpp l
-    ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
-    Set       l          -> "set [" <+> lpp l <+> "]"
-    Tuple     l          -> tuple l
-    Annot     n t        -> parens $ n <+> ":" <+> t
-    BigMap    bs         -> "big_map [" `indent` train ";" bs `above` "]"
-    Map       bs         -> "map [" `indent` train ";" bs `above` "]"
-    Remove    k c s      -> "remove" <+> k <+> "from" <+> c <+> s
-    Skip                 -> "skip"
-    ForLoop   j s f d b  -> foldr (<+>) DPretty.empty
-      [ "for", j, ":=", lpp s
-      , "to", lpp f, "block' {", lpp d, "} with", lpp b
-      ]
-    ForBox    k mv t z b -> foldr (<+>) DPretty.empty
-      [ "for", k
-      , maybe DPretty.empty ("->" <+>) mv
-      , "in", lpp t
-      , z, lpp b
-      ]
-    WhileLoop f b        -> "while" <+> lpp f <+> "block' {" `indent` lpp b `above` "}"
-    Seq       es         -> block' $ map (<.>";") es
-    Attrs     ts         -> mconcat $ brackets . ("@"<+>) <$> ts
-    Lambda    ps tys ty b ->
-      "function" <+> prettyTyVarsPascal tys <+> lpp ps <+> ":" <+> lpp ty <+> "is" <+> lpp b
-    Patch     z bs       -> "patch" <+> z <+> "with" <+> lpp bs
-    RecordUpd r up       -> r <+> "with record" <+> lpp up
-    Case      s az       -> foldr (<+>) DPretty.empty
-      [ "case"
-      , lpp s
-      , "of\n"
-      , foldr above DPretty.empty $ lpp <$> az
-      , "end"
-      ]
-    Paren     e          -> "(" <+> lpp e <+> ")"
-    node                 -> error "unexpected `Expr` node failed with: " <+> pp node
-
-instance LPP1 'Pascal PatchableExpr where
-  lpp1 = \case
-    PatchableExpr c e -> c <+> e
-
-instance LPP1 'Pascal Alt where
-  lpp1 = \case
-    Alt p b -> "|" <+> lpp p <+> "->" <+> lpp b
-
-instance LPP1 'Pascal FieldAssignment where
-  lpp1 = \case
-    FieldAssignment n e -> lpp n <+> "=" <+> lpp e
-    Spread n -> "..." <+> n
-    Capture n -> lpp n
-
-instance LPP1 'Pascal Constant where
-  lpp1 = \case
-    CInt           z   -> lpp z
-    CNat           z   -> lpp z
-    CString        z   -> lpp z
-    CFloat         z   -> lpp z
-    CBytes         z   -> lpp z
-    CTez           z   -> lpp z
-
-instance LPP1 'Pascal Pattern where
-  lpp1 = \case
-    IsConstr     ctor arg  -> ctor <+> lpp arg
-    IsVar        name      -> name
-    IsCons       h t       -> h <+> "::" <+> t
-    IsAnnot      s t       -> parens (lpp s <+> ":" <+> lpp t)
-    IsList       []        -> "nil"
-    IsList       l         -> list l
-    IsTuple      t         -> tuple t
-    IsParen      x         -> parens x
-    pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
-
-instance LPP1 'Pascal RecordFieldPattern where
-  lpp1 = \case
-    IsRecordField name body -> name <+> "=" <+> body
-    IsRecordCapture name -> name
-
-instance LPP1 'Pascal TField where
-  lpp1 = \case
-    TField      n t -> n <.> maybe "" (":" `indent`) t
-
-instance LPP1 'Pascal MapBinding where
-  lpp1 = \case
-    MapBinding k v -> lpp k <+> "->" <+> lpp v
-
-instance LPP1 'Pascal CaseOrDefaultStm where
-  lpp1 = \case
-    CaseStm _ _  -> error "unexpected `CaseStm` node"
-    DefaultStm _ -> error "unexpected `DefaultStm` node"
-
 ----------------------------------------------------------------------------
 -- Js
 ----------------------------------------------------------------------------
@@ -630,7 +427,6 @@ instance LPP1 'Js Binding where
       , maybe DPretty.empty (((":" <+> prettyTyVarsJs tys) <+>) . lpp) ty
       , "=", lpp body, ";"
       ]
-    BAttribute    name          -> "/* @" <.> name <.> " */"
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
@@ -688,9 +484,6 @@ instance LPP1 'Js Expr where
     CodeInj   l e        -> "(" <+> l <+> " `" <+> e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
-instance LPP1 'Js PatchableExpr where
-  lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
-
 instance LPP1 'Js Alt where
   lpp1 = \case
     Alt p b -> "(" <+> lpp p <+> ")" <+> "=>" <+> lpp b <+> ","
@@ -730,9 +523,6 @@ instance LPP1 'Js RecordFieldPattern where
 instance LPP1 'Js TField where
   lpp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
-
-instance LPP1 'Js MapBinding where
-  lpp1 = error "unexpected `MapBinding` node"
 
 instance LPP1 'Js CaseOrDefaultStm where
   lpp1 = \case
@@ -803,7 +593,6 @@ instance LPP1 'Caml Expr where
   lpp1 = \case
     Let       decl body  -> "let" `indent` decl `above` "in" <+> body
     Apply     f xs       -> f <+> train " " xs
-    Ident     qname      -> qname
     BinOp     l o r      -> l <+> o <+> r
     UnOp        o r      -> lpp o <+> lpp r
     Op          o        -> lpp o
@@ -830,9 +619,6 @@ instance LPP1 'Caml Expr where
     RecordUpd r with     -> r <+> "with" <+> train ";" with
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
-
-instance LPP1 'Caml PatchableExpr where
-  lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
 
 instance LPP1 'Caml Alt where
   lpp1 = \case
@@ -885,13 +671,12 @@ instance LPP1 'Caml CaseOrDefaultStm where
 -- General utilities
 ----------------------------------------------------------------------------
 
-type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Js expr)
+type TotalLPP expr = (LPP 'Caml expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc
 lppDialect dialect = case dialect of
-  Pascal -> lpp @'Pascal
-  Caml   -> lpp @'Caml
-  Js     -> lpp @'Js
+  Caml -> lpp @'Caml
+  Js   -> lpp @'Js
 
 type PPableLIGO info =
   ( Contains [Text] info
@@ -900,6 +685,5 @@ type PPableLIGO info =
 
 blockComment :: Lang -> Doc -> Doc
 blockComment dialect contents = case dialect of
-  Pascal -> "(*" <+> contents <+> "*)"
-  Caml   -> "(*" <+> contents <+> "*)"
-  Js     -> "/*" <+> contents <+> "*/"
+  Caml -> "(*" <+> contents <+> "*)"
+  Js   -> "/*" <+> contents <+> "*/"

@@ -76,14 +76,14 @@ testRenameFail fp pos = do
 
 renameFail :: forall impl. ScopeTester impl => Assertion
 renameFail = do
-  fp <- makeAbsolute (contractsDir </> "id.ligo")
+  fp <- makeAbsolute (contractsDir </> "id.mligo")
   testRenameFail @impl fp (1, 16)
 
 renameId :: forall impl. ScopeTester impl => Assertion
 renameId = do
-  fp <- makeAbsolute (contractsDir </> "id.ligo")
-  testRenameOk @impl (point 1 11){_rFile = fp} "id" (point 1 10){_rFile = fp} "very_id"
-    [(fp, [(interval 1 10 12){_rFile = fp}])]
+  fp <- makeAbsolute (contractsDir </> "id.mligo")
+  testRenameOk @impl (point 1 6){_rFile = fp} "id" (point 1 5){_rFile = fp} "very_id"
+    [(fp, [(interval 1 5 7){_rFile = fp}])]
 
 renameParam :: forall impl. ScopeTester impl => Assertion
 renameParam = do
@@ -121,12 +121,12 @@ renameTypeVariable = do
 
 renameConflictingModuleName :: forall impl. ScopeTester impl => Assertion
 renameConflictingModuleName = do
-  fp <- makeAbsolute (contractsDir </> "module-name-colision.pligo")
+  fp <- makeAbsolute (contractsDir </> "module-name-colision.mligo")
   -- Rename the module field name:
-  testRenameOk @impl (point 10 13){_rFile = fp} "some_name" (point 6 9){_rFile = fp} "renamed"
-    [ (fp, [(interval 10 13 22){_rFile = fp}, (interval 6 9 18){_rFile = fp}])
+  testRenameOk @impl (point 10 13){_rFile = fp} "some_name" (point 6 7){_rFile = fp} "renamed"
+    [ (fp, [(interval 10 11 20){_rFile = fp}, (interval 6 7 16){_rFile = fp}])
     ]
   -- Rename the module as well:
   testRenameOk @impl (point 10 9){_rFile = fp} "Top" (point 5 8){_rFile = fp} "Module"
-    [ (fp, [(interval 10 9 12){_rFile = fp}, (interval 5 8 11){_rFile = fp}])
+    [ (fp, [(interval 10 7 10){_rFile = fp}, (interval 5 8 11){_rFile = fp}])
     ]

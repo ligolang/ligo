@@ -51,13 +51,13 @@ testPrepareRenameFail fp pos = do
 
 unit_prepare_rename_example_fail :: Assertion
 unit_prepare_rename_example_fail = do
-  fp <- makeAbsolute (contractsDir </> "id.ligo")
-  testPrepareRenameFail fp (Position 0 15)
+  fp <- makeAbsolute (contractsDir </> "id.mligo")
+  testPrepareRenameFail fp (Position 0 1)
 
 unit_prepare_rename_example_id :: Assertion
 unit_prepare_rename_example_id = do
-  fp <- makeAbsolute (contractsDir </> "id.ligo")
-  testPrepareRename fp (Position 0 10) (LSP.Range (Position 0 9) (Position 0 11))
+  fp <- makeAbsolute (contractsDir </> "id.mligo")
+  testPrepareRename fp (Position 0 4) (LSP.Range (Position 0 4) (Position 0 6))
 
 unit_prepare_rename_example_param :: Assertion
 unit_prepare_rename_example_param = do

@@ -15,7 +15,7 @@ type Template = {
   existingSyntaxes: string[];
 };
 
-const synIds = ["mligo", "ligo", "jsligo", "religo"];
+const synIds = ["mligo", "jsligo"];
 const hardcodedTemplates = [
   { id: "empty", gitLink: undefined, display: "Empty Project", existingSyntaxes: synIds },
   { id: "increment", gitLink: undefined, display: "Increment", existingSyntaxes: synIds },
@@ -24,9 +24,7 @@ const hardcodedTemplates = [
 ];
 const pSyntaxes = [
   { id: "mligo", display: "Camel Ligo" },
-  { id: "ligo", display: "Pascal Ligo" },
   { id: "jsligo", display: "JS Ligo" },
-  { id: "religo", display: "Reason Ligo" },
 ];
 
 const mapSyntaxes = (s: string) => {
@@ -36,17 +34,11 @@ const mapSyntaxes = (s: string) => {
   if (s === "jsligo") {
     return "jsligo";
   }
-  if (s === "reasonligo") {
-    return "religo";
-  }
-  if (s === "pascaligo") {
-    return "ligo";
-  }
   return s;
 };
 
 const convertLigoTemplates = (templates: string[]) => {
-  const syntaxPrefixes = ["cameligo", "jsligo", "reasonligo", "pascaligo"];
+  const syntaxPrefixes = ["cameligo", "jsligo"];
   const splittedTemplates = templates.map((t) => t.split("-"));
 
   const s = new Set();
@@ -82,7 +74,7 @@ const NewProjectModal = forwardRef((_, ref) => {
   const [template, setTemplate] = useState("empty");
   const [templates, setTemplates] = useState<Template[]>(hardcodedTemplates);
   const [creating, setCreating] = useState(false);
-  const [syntax, setSyntax] = useState("ligo");
+  const [syntax, setSyntax] = useState("mligo");
   const [syntaxes, setSyntaxes] = useState(pSyntaxes);
 
   actions.newProjectModal = ref;
@@ -105,7 +97,7 @@ const NewProjectModal = forwardRef((_, ref) => {
       setName("");
       setTemplate("empty");
       setCreating(false);
-      setSyntax("ligo");
+      setSyntax("mligo");
       setSyntaxes(pSyntaxes);
       await modalRef.current?.openModal();
       return new Promise((resolve) => {
@@ -129,7 +121,7 @@ const NewProjectModal = forwardRef((_, ref) => {
         resolverRef.current(created);
         setName("");
         setTemplate("empty");
-        setSyntax("ligo");
+        setSyntax("mligo");
         setSyntaxes(pSyntaxes);
         setCreating(false);
         setTemplates(hardcodedTemplates);
@@ -178,7 +170,7 @@ const NewProjectModal = forwardRef((_, ref) => {
               templateInfo.existingSyntaxes.includes(s.id)
             );
             if (newSyntaxes.length === 0) {
-              newSyntaxes.push({ id: "ligo", display: "Pascal Ligo" });
+              newSyntaxes.push({ id: "mligo", display: "Camel Ligo" });
             }
             setTemplate(tmp);
             setSyntaxes(newSyntaxes);

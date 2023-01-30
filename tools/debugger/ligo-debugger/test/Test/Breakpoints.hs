@@ -31,14 +31,21 @@ test_test = minor <$>
         N.switchBreakpoint (MSFile file) (SrcPos (Pos 5) (Pos 0))
 
         liftIO $ step "Visiting 1st breakpoint"
-        N.continueUntilBreakpoint N.NextBreak
+        goToNextBreakpoint
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
           -- here and further we don't expect any concrete column number
           view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 2))
 
         liftIO $ step "Visiting 2nd breakpoint"
-        N.continueUntilBreakpoint N.NextBreak
+        goToNextBreakpoint
+        N.frozen do
+          isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
+          -- here and further we don't expect any concrete column number
+          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
+
+        liftIO $ step "Visiting 3rd breakpoint"
+        goToNextBreakpoint
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
           view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 5) (Pos 3))
@@ -83,7 +90,7 @@ test_test = minor <$>
             }
 
       let nestedFile = modulePath </> "imported.mligo"
-      let nestedFile2 = modulePath </> "imported2.ligo"
+      let nestedFile2 = modulePath </> "imported2.jsligo"
 
       testWithSnapshots runData do
         N.switchBreakpoint (MSFile file) (SrcPos (Pos 5) (Pos 0))
@@ -95,7 +102,7 @@ test_test = minor <$>
         N.switchBreakpoint (MSFile nestedFile) (SrcPos (Pos 13) (Pos 0))
         N.switchBreakpoint (MSFile nestedFile) (SrcPos (Pos 18) (Pos 0))
 
-        N.switchBreakpoint (MSFile nestedFile2) (SrcPos (Pos 0) (Pos 0))
+        N.switchBreakpoint (MSFile nestedFile2) (SrcPos (Pos 1) (Pos 0))
 
         liftIO $ step "Go to first breakpoint"
         goToNextBreakpoint
@@ -227,25 +234,14 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (more nested file)"
-        liftIO $ step "Rotate in a loop"
-        replicateM_ 7 do
-          goToNextBreakpoint
-          N.frozen do
-            N.getExecutedPosition @@?= Just
-              (N.SourceLocation
-                (MSFile nestedFile2)
-                (SrcPos (Pos 4) (Pos 4))
-                (SrcPos (Pos 4) (Pos 18))
-              )
-
-          goToNextBreakpoint
-          N.frozen do
-            N.getExecutedPosition @@?= Just
-              (N.SourceLocation
-                (MSFile nestedFile2)
-                (SrcPos (Pos 4) (Pos 11))
-                (SrcPos (Pos 4) (Pos 18))
-              )
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (MSFile nestedFile2)
+              (SrcPos (Pos 1) (Pos 2))
+              (SrcPos (Pos 1) (Pos 19))
+            )
 
         liftIO $ step "Go to next breakpoint (go back)"
         goToNextBreakpoint
@@ -263,7 +259,7 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile nestedFile2)
-              (SrcPos (Pos 4) (Pos 11))
-              (SrcPos (Pos 4) (Pos 18))
+              (SrcPos (Pos 1) (Pos 2))
+              (SrcPos (Pos 1) (Pos 19))
             )
   ]

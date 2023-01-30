@@ -1,0 +1,12 @@
+const strange = ([a, b, c] : [int, int, int]) : int => {
+  let acc : int = 0;
+
+  let i : int = 1;
+  while (i <= a) {
+    acc = acc + a;
+    i = i + 1;
+  }
+
+  let res : int = acc * (b + c);
+  return res;
+}

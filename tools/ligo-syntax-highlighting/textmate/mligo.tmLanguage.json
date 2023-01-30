@@ -78,7 +78,7 @@
     },
     "numericliterals": {
       "name": "constant.numeric.mligo",
-      "match": "(\\+|\\-)?[0-9]+(n|tz|tez|mutez|)\\b",
+      "match": "\\b(\\+|\\-)?[0-9]+(n|tz|tez|mutez|)\\b",
       "captures": {}
     },
     "operators": {

@@ -61,6 +61,7 @@ import UnliftIO.Temporary (withTempDirectory, withTempFile)
 import AST.Includes (extractIncludes)
 import Cli.Json
 import Cli.Types
+import Debug.TimeStats qualified as TimeStats
 import Log (Log, i)
 import Log qualified
 import Parser (LineMarker (lmFile))
@@ -78,6 +79,7 @@ data LigoClientFailureException = LigoClientFailureException
   { cfeStdout :: Text -- ^ stdout
   , cfeStderr :: Text -- ^ stderr
   , cfeFile   :: Maybe FilePath  -- ^ File that caused the error
+  , cfeExit   :: Maybe ExitCode  -- ^ The exit code that caused the error
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
@@ -247,7 +249,7 @@ strArg = LigoCliArg . protect . toString
       _ -> arg
 
 callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m LByteString
-callLigoBS _rootDir args conM = do
+callLigoBS _rootDir args conM = TimeStats.measureM "callLigoBS" do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
     let raw = maybe "" (BSL.fromStrict . encodeUtf8 . srcText) conM
@@ -262,7 +264,7 @@ callLigoBS _rootDir args conM = do
     (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process raw
       & rewrapIOError
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
-      UnliftIO.throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM
+      UnliftIO.throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM (Just ec)
     pure lo
   where
     rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
@@ -318,7 +320,7 @@ cleanupLigoDaemonImpl = Pool.destroyAllResources
 -- to LIGO, otherwise it will use an unused process handle from the process
 -- pool.
 callLigo :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m Text
-callLigo _rootDir args conM = do
+callLigo rootDir args conM = TimeStats.measureM "callLigo" $ do
   LigoClientEnv{..} <- getLigoClientEnv
   let fpM = srcPath <$> conM
   -- FIXME (LIGO-545): We should set the cwd to `rootDir`, but it seems there is
@@ -329,10 +331,10 @@ callLigo _rootDir args conM = do
   case _lceLigoProcesses of
     Nothing -> do
       let raw = maybe "" (toString . srcText) conM
-      let process = proc _lceClientPath (coerce args)
+      let process = (proc _lceClientPath $ coerce args){cwd = rootDir}
       (ec, lo, le) <- readCreateProcessWithExitCode process raw
       unless (ec == ExitSuccess && null le) $ -- TODO: separate JSON errors and other ones
-        UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM
+        UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM (Just ec)
       pure $ toText lo
     Just ligoProcesses ->
       Pool.withResource ligoProcesses \LigoProcess{..} -> liftIO do
@@ -344,7 +346,7 @@ callLigo _rootDir args conM = do
           Nothing | Text.null le -> pure lo
           -- We assume a failure even in the case of 'ExitSuccess' because LIGO
           -- should not quit.
-          _ -> UnliftIO.throwIO $ LigoClientFailureException lo le fpM
+          ec -> UnliftIO.throwIO $ LigoClientFailureException lo le fpM ec
   where
     readLoop :: Handle -> IO String
     readLoop h =
@@ -386,7 +388,7 @@ withLigo
   -> (Source -> Value -> m a)  -- ^ Given the source file after calling LIGO and its decoded JSON value, what to do to return the final value.
   -> m a
 withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) getArgs decode =
-  withTempDirTemplate \tempDir ->
+  TimeStats.measureM "withLigo" $ withTempDirTemplate \tempDir ->
     withTempFile tempDir (takeFileName fp) \tempFp hnd -> do
       -- Create temporary file and call LIGO with it.
       $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
@@ -406,7 +408,7 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
     withTempDirTemplate = case tempDirTemplate of
       GenerateDir template -> withTempDirectory rootDir template
       UseDir path -> ($ path)
-withLigo src@(Source fp False _) _ getArgs decode =
+withLigo src@(Source fp False _) _ getArgs decode = TimeStats.measureM "withLigo" $
   UnliftIO.try (callLigoBS Nothing (getArgs fp) (Just src)) >>= \case
     Left LigoClientFailureException{cfeStderr} ->
       handleLigoMessages fp cfeStderr

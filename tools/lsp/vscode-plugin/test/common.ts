@@ -1,16 +1,14 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
+import { execSync } from 'child_process';
 
 export enum Dialect {
-  PASCALIGO,
   CAMELIGO,
   JSLIGO
 }
 
 export function getExt(lang: Dialect): string {
   switch (lang) {
-    case Dialect.PASCALIGO:
-      return 'ligo'
     case Dialect.CAMELIGO:
       return 'mligo'
     case Dialect.JSLIGO:
@@ -22,8 +20,6 @@ export function getExt(lang: Dialect): string {
 
 export function getLang(lang: Dialect): string {
   switch (lang) {
-    case Dialect.PASCALIGO:
-      return 'PascaLIGO'
     case Dialect.CAMELIGO:
       return 'CameLIGO'
     case Dialect.JSLIGO:
@@ -35,3 +31,7 @@ export function getLang(lang: Dialect): string {
 
 // TIHI
 export const contractsDir: string = process.env.CONTRACTS_DIR || path.join(__dirname, '..', '..', '..', '..', 'squirrel', 'test', 'contracts')
+
+export function installLigoLibrary(path: string) {
+  execSync("ligo install", { cwd: path, timeout: 50000 });
+}

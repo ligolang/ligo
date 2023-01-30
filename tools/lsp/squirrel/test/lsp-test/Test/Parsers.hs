@@ -18,7 +18,7 @@ import Test.Common.Util.Parsers (checkFile)
 okayIgnoreContracts :: [FilePath]
 okayIgnoreContracts = map ("test/contracts/bugs" </>) ignore
   where
-    ignore = ["LIGO-185.ligo", "LIGO-185.mligo"]
+    ignore = ["LIGO-185.mligo"]
 
 okayContractsDirs :: [FilePath]
 okayContractsDirs = ["test/contracts/bugs"]
@@ -28,7 +28,7 @@ okayContractsDirs = ["test/contracts/bugs"]
 badIgnoreContracts :: [FilePath]
 badIgnoreContracts = map ("test/contracts/bad" </>) ignore
   where
-    ignore = ["extra-line-marker.mligo", "LIGO-105.ligo", "LIGO-105.mligo"]
+    ignore = ["extra-line-marker.mligo", "LIGO-105.mligo"]
 
 badContractsDirs :: [FilePath]
 badContractsDirs = ["test/contracts/bad"]

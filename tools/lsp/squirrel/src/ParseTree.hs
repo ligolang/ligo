@@ -43,7 +43,6 @@ import Log (Log)
 import Log qualified
 import Range
 
-foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
 foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
@@ -114,9 +113,8 @@ toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
 toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
   $Log.debug [Log.i|Reading #{fp}|]
   let language = case dialect of
-        Pascal -> tree_sitter_PascaLigo
-        Caml   -> tree_sitter_CameLigo
-        Js     -> tree_sitter_JsLigo
+        Caml -> tree_sitter_CameLigo
+        Js   -> tree_sitter_JsLigo
 
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     let src = Text.encodeUtf8 input

@@ -59,6 +59,7 @@ okayTests =
       , "negative" </> "regression_import_scope_B.mligo"
       , "view_import.mligo"
       , "view_import_and_alias.mligo"
+      , "get_scope_tests" </> "import_x.mligo"
 
         -- LIGO-808
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "a" </> "b" </> "test.mligo"
@@ -69,21 +70,23 @@ okayTests =
       , "ticket_wallet.mligo", "ticket_builder.mligo", "negative" </> "layout.mligo"
       , "michelson_typed_opt.mligo", "annotated_michelson_record_tree.mligo"
       , "annotation_cases.mligo", "annotated_michelson_record_comb.mligo"
-      , "build" </> "F.mligo", "edo_combs.mligo", "layout.pligo"
+      , "build" </> "F.mligo", "edo_combs.mligo"
       , "interpreter_tests" </> "compile_expr.mligo", "interpreter_tests" </> "test_compare.mligo"
       , "interpreter_tests" </> "compile_expr_from_file.mligo"
-      , "interpreter_tests" </> "test_record.ligo", "warning_layout.mligo"
+      , "warning_layout.mligo"
       , "self_annotations.mligo", "annotated_michelson_variant_tree.mligo"
       , "annotated_michelson_variant_comb.mligo", "FA1.2.mligo"
 
+        -- https://gitlab.com/ligolang/ligo/-/issues/1625
+      , "loop.mligo", "loop2.mligo", "negative" </> "let_mut.mligo", "let_mut.mligo"
+
+        -- https://gitlab.com/ligolang/ligo/-/issues/1626
+      , "disc_union_vbar.jsligo"
+
         -- LIGO fails to parse these:
-      , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
-      , "negative" </> "error_syntax.ligo"
-      , "negative" </> "modules_access_not_open1.ligo"
       , "negative" </> "modules_access_not_open1.mligo"
       , "negative" </> "modules_access_not_open1.jsligo"
-      , "negative" </> "modules_access_not_open2.ligo"
       , "negative" </> "modules_access_not_open2.mligo"
       , "negative" </> "modules_access_not_open2.jsligo"
       , "negative" </> "switch_jsligo" </> "break_outside_case2.jsligo"
@@ -96,22 +99,12 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = testDir </> "error-recovery" </> "simple" </> "pascaligo" </> "original"
-    , tdIgnoreFiles = []
-    , tdIgnoreDirs = []
-    }
-  , TestDir
     { tdRoot = testDir </> "error-recovery" </> "simple" </> "cameligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
   , TestDir
     { tdRoot = testDir </> "error-recovery" </> "simple" </> "jsligo" </> "original"
-    , tdIgnoreFiles = []
-    , tdIgnoreDirs = []
-    }
-  , TestDir
-    { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "pascaligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
@@ -151,10 +144,8 @@ badTests =
       , "fuzzing" </> "cameligo" </> "2address.mligo"
 
         -- Accepted by LIGO's parser:
-      , "simple" </> "pascaligo" </> "unfinished_code00.ligo"
-      , "simple" </> "pascaligo" </> "unfinished_code04.ligo"
-      , "simple" </> "jsligo"    </> "missing_semicolon_in_top_level.jsligo"
-      , "simple" </> "jsligo"    </> "missing_type_annotation_in_lambda_in_match.jsligo"
+      , "simple" </> "jsligo" </> "missing_semicolon_in_top_level.jsligo"
+      , "simple" </> "jsligo" </> "missing_type_annotation_in_lambda_in_match.jsligo"
 
         -- Will be fixed when (MISSING) nodes will be handled
       , "simple" </> "jsligo" </> "missing_curly_bracket_in_record_decl.jsligo"
@@ -173,10 +164,8 @@ badTests =
       ]
     , tdIgnoreDirs =
       [ "fuzzing" </> "cameligo" </> "original"
-      , "fuzzing" </> "pascaligo" </> "original"
       , "fuzzing" </> "jsligo" </> "original"
       , "simple" </> "cameligo" </> "original"
-      , "simple" </> "pascaligo" </> "original"
       , "simple" </> "jsligo" </> "original"
       ]
     }
@@ -184,14 +173,12 @@ badTests =
     { tdRoot = testDir </> "lexer"
     , tdIgnoreFiles =
       [ --LIGO-475
-        "negative_byte_sequence.ligo"
-      , "negative_byte_sequence.mligo"
+        "negative_byte_sequence.mligo"
        -- Lexer cases
-      , "LexerLib" </> "invalid_character_in_string.ligo"
       , "LexerLib" </> "invalid_character_in_string.jsligo"
-      , "Style"    </> "odd_lengthed_bytes.ligo"
-      , "Lexing"   </> "underflow_mutez.ligo"
-      , "Lexing"   </> "overflow_mutez.ligo"
+      , "Lexing" </> "non_canonical_zero.mligo", "Lexing" </> "underflow_mutez.mligo"
+      , "Lexing" </> "overflow_mutez.mligo", "Style" </> "odd_lengthed_bytes.mligo"
+      , "Style" </> "missing_break.mligo"
       ]
     , tdIgnoreDirs = []
     }

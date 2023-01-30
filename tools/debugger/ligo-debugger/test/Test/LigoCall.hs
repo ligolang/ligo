@@ -28,11 +28,12 @@ test_Compilation = testGroup "Getting debug info"
       take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
-        , [ LigoMereEnvInfo [LigoHiddenStackEntry]          ]
+        , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
-        , [ LigoMereLocInfo ((1, 10) <-> (1, 14)) ]
+        , [ LigoMereLocInfo ((1, 0) <-> (4, 29)) ]
+        , [ LigoMereLocInfo ((1, 0) <-> (4, 29)) ]
 
-        , replicate 6 LigoEmptyLocationInfo
+        , replicate 5 LigoEmptyLocationInfo
         ]
 
   ]

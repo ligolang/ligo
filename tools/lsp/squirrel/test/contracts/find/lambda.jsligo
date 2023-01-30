@@ -1,0 +1,4 @@
+type a_type = int
+
+const increment = (b : int) : int =>
+   ((a : a_type) : int => a + 1) (b)

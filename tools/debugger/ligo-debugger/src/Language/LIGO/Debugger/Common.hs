@@ -5,6 +5,7 @@ module Language.LIGO.Debugger.Common
   , ligoRangeToSourceLocation
   , spineAtPoint
   , getStatementLocs
+  , isRedundantIndexedInfo
   , isLigoStdLib
   , errorValueType
   , errorAddress
@@ -13,6 +14,7 @@ module Language.LIGO.Debugger.Common
   , refineStack
   , ligoRangeToRange
   , rangeToLigoRange
+  , getMetaMbAndUnwrap
   , shouldIgnoreMeta
   , buildType
   ) where
@@ -38,8 +40,9 @@ import Morley.Michelson.Interpret (StkEl (seValue))
 import Morley.Michelson.Parser (MichelsonSource (MSFile), utypeQ)
 import Morley.Michelson.Text (MText)
 import Morley.Michelson.Typed
-  (Constrained (SomeValue), EpAddress (..), Instr (LAMBDA, PUSH), SomeValue, Value, Value' (..),
-  withValueTypeSanity)
+  (Constrained (SomeValue), EpAddress (..),
+  Instr (DIG, DUP, DUPN, LAMBDA, Nested, Nop, PUSH, SWAP, UNIT), SomeValue, Value, Value' (..),
+  pattern (:#), pattern ConcreteMeta, withValueTypeSanity)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (KindedAddress (ImplicitAddress), ta)
 import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
@@ -121,7 +124,7 @@ getStatementLocs locs parsedContracts =
         filterStatements = fmap (getRange . Unsafe.head) . filter worthPicking . tails
           where
             worthPicking = \case
-              (layer -> Just AST.Assign{}) : _ -> True
+              (layer -> Just AST.AssignOp{}) : _ -> True
               (layer -> Just AST.BConst{}) : _ -> True
               (layer -> Just AST.BVar{}) : _ -> True
               (layer -> Just AST.Apply{}) : (layer @Expr -> Just ctor) : _ -> isApplyExpr ctor
@@ -133,6 +136,17 @@ getStatementLocs locs parsedContracts =
               AST.Let{} -> True
               AST.Seq{} -> True
               _ -> False
+
+-- | Sometimes source mapper produces metas that is not really interesting for us.
+-- For example: empty metas or metas with locations from stdlib.
+isRedundantIndexedInfo :: LigoIndexedInfo u -> Bool
+isRedundantIndexedInfo LigoIndexedInfo{..} = isNothing $ asum
+  [ do
+    loc <- liiLocation
+    guard $ (not . isLigoStdLib . lrFile) loc
+
+  , void liiEnvironment
+  ]
 
 -- | LIGO debug output, when optimizations are disabled, may mention locations
 -- referring to LIGO's standard library that defines bindings to every single
@@ -207,12 +221,21 @@ rangeToLigoRange Range{..} = LigoRange
   where
     toLigoPosition (line, col, _) = LigoPosition (Unsafe.fromIntegral line) (Unsafe.fromIntegral $ col - 1)
 
+-- | Tries to unwrap @EmbeddedLigoMeta@ from instr.
+-- If successful, then it returns meta and inner instr.
+-- Otherwise, no meta and the passed instr.
+getMetaMbAndUnwrap :: Instr i o -> (Maybe EmbeddedLigoMeta, Instr i o)
+getMetaMbAndUnwrap = \case
+  ConcreteMeta embeddedMeta inner -> (Just embeddedMeta, inner)
+  instr -> (Nothing, instr)
+
 -- | Sometimes we want to ignore metas for some instructions.
 shouldIgnoreMeta :: Instr i o -> Bool
 shouldIgnoreMeta = \case
   -- We're ignoring @LAMBDA@ instruction here in order
   -- not to stop on function assignment.
-  LAMBDA{} -> True
+  Nested LAMBDA{} -> True
+  Nested (LAMBDA{} :# _) -> True
 
   -- @PUSH@es have location metas that point to constants.
   -- E.g. @PUSH int 42@ may have a location of @42@.
@@ -220,5 +243,40 @@ shouldIgnoreMeta = \case
   -- So, stopping at them and showing an evaluation
   -- seems useless. I see that @42@ evaluates to @42@
   -- without any debug info.
-  PUSH{} -> True
+  Nested PUSH{} -> True
+  Nested (PUSH{} :# _) -> True
+
+  -- Same as for @PUSH@ but for standalone variables.
+  -- Locations for them may be associated with the next
+  -- instructions:
+  -- 1. @SWAP@
+  -- 2. @Nop@
+  -- 3. @DUP@, @DUPN@
+  -- 4. @DIG@
+  Nested SWAP{} -> True
+  Nested (SWAP{} :# _) -> True
+
+  Nested Nop{} -> True
+  Nested (Nop{} :# _) -> True
+
+  Nested DUP{} -> True
+  Nested (DUP{} :# _) -> True
+
+  Nested DUPN{} -> True
+  Nested (DUPN{} :# _) -> True
+
+  Nested DIG{} -> True
+  Nested (DIG{} :# _) -> True
+
+  -- Motivation is the same as with @PUSH@es
+  -- (@UNIT@ is actually equivalent to @PUSH unit ()@)
+  Nested UNIT{} -> True
+  Nested (UNIT{} :# _) -> True
+
+  -- These locations are associated with whole @let-in@s and function arguments.
+  -- We need to strip meta for the inner @Nested@ because it
+  -- also can have it and we need to pattern-match on it somehow.
+  Nested (snd . getMetaMbAndUnwrap -> Nested{}) -> True
+  Nested ((snd . getMetaMbAndUnwrap -> Nested{}) :# _) -> True
+
   _ -> False

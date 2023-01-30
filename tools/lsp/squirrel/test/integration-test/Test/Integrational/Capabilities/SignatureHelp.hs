@@ -12,10 +12,7 @@ import Test.Tasty (TestTree, testGroup)
 validInfos :: [TestInfo]
 validInfos = filter (not . (`elem` ignore) . tiContract) caseInfos
   where
-    ignore =
-      [ "no-params.ligo"
-      , "no-semicolon-in-block-after-const-decl.ligo"
-      ]
+    ignore = []
 -}
 
 test_simpleFunctionCall :: IO TestTree

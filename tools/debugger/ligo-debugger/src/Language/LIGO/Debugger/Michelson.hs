@@ -81,14 +81,18 @@ instance (meta ~ meta') => FromExp (WithMeta meta) (OpWithMeta meta') where
 
 typeCheckOpWithMeta
   :: (Show meta, NFData meta, Data meta)
-  => Tc.TcInstrBase (OpWithMeta meta)
-typeCheckOpWithMeta instr hst = case instr of
+  => (meta -> Bool) -> Tc.TcInstrBase (OpWithMeta meta)
+typeCheckOpWithMeta isRedundantMeta instr hst = case instr of
   MMetaEx m i ->
-    typeCheckOpWithMeta i hst <&> Tc.mapSeq (Tc.mapSomeInstr $ T.Meta (T.SomeMeta m))
+    typeCheckOpWithMeta isRedundantMeta i hst
+      <&> Tc.mapSeq
+            if isRedundantMeta m
+            then id
+            else Tc.mapSomeInstr $ T.Meta (T.SomeMeta m)
   MPrimEx i ->
-    Tc.typeCheckInstr typeCheckOpWithMeta i hst
+    Tc.typeCheckInstr (typeCheckOpWithMeta isRedundantMeta) i hst
   MSeqEx is ->
-    Tc.typeCheckImpl typeCheckOpWithMeta is hst <&> Tc.mapSeq (Tc.mapSomeInstr T.Nested)
+    Tc.typeCheckImpl (typeCheckOpWithMeta isRedundantMeta) is hst <&> Tc.mapSeq (Tc.mapSomeInstr T.Nested)
 
 instance Data meta => Tc.IsInstrOp (OpWithMeta meta) where
   liftInstr = MPrimEx
@@ -207,12 +211,15 @@ wrapTypeCheckFailed = \case
 fromUntypedToTyped
   :: (Default meta, Data meta, Show meta, NFData meta)
   => ContractWithMeta meta
+  -> (meta -> Bool)
   -> (U.T -> U.T)
   -> (InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
   -> Either (DecodeError meta) SomeContract
-fromUntypedToTyped uContract typeRules instrRules = do
+fromUntypedToTyped uContract isRedundantMeta typeRules instrRules = do
   processedUContract <- first PreprocessError $ preprocessContract uContract typeRules instrRules
-  first wrapTypeCheckFailed $ typeCheckingWith debuggerTcOptions $ Tc.typeCheckContract' typeCheckOpWithMeta processedUContract
+  first wrapTypeCheckFailed
+    $ typeCheckingWith debuggerTcOptions
+    $ Tc.typeCheckContract' (typeCheckOpWithMeta isRedundantMeta) processedUContract
 
 data PreprocessError
   = EntrypointTypeNotFound U.EpName
@@ -340,7 +347,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
       <&> stripDuplicateLocations
 
   extendedContract@(SomeContract extContract) <-
-    fromUntypedToTyped uContract typeRules instrRules
+    fromUntypedToTyped uContract isRedundantIndexedInfo typeRules instrRules
 
   let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . lrFileL
         -- We want to remove duplicates

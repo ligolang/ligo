@@ -1,2 +1,0 @@
-function main(const n: never; const s: int): list(operation) * int is
-  ((nil: list(operation)), (Tezos.never(n): int) + s)

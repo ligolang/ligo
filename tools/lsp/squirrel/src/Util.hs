@@ -10,6 +10,8 @@ module Util
   , lazyBytesToText
   , textToLazyBytes
   , (<<&>>)
+  , enableTimestats
+  , timestatsEnvFlag
 
   -- * Debugging utilities
   , validate
@@ -22,10 +24,12 @@ import Data.Bitraversable (bitraverse)
 import Data.Map.Internal qualified as MI
 import Data.Text.Lazy.Encoding qualified as TL
 import Language.LSP.Types qualified as J
+import UnliftIO.Environment (lookupEnv, setEnv)
 
 import Duplo.Lattice
 import Duplo.Tree
 
+import Language.Haskell.TH.Syntax qualified as TH
 import Range
 
 foldMapM :: (Foldable t, Monad m, Monoid b) => (a -> m b) -> t a -> m b
@@ -102,3 +106,14 @@ lazyBytesToText = toText . TL.decodeUtf8
 -- | Encodes strict @Text@ to lazy @ByteString@.
 textToLazyBytes :: Text -> LByteString
 textToLazyBytes = TL.encodeUtf8 . fromStrict
+
+-- Timestats are collected only when DEBUG_TIMESTATS_ENABLE is set.
+-- There is no easy way to set an env var for LSP server, since there is no
+-- global env in bash, so LSP server sets this var itself if during compilation
+-- LIGO_LSP_TIMESTATS was set. We can also manually enable timestats, e.g.
+-- for benchmarks
+enableTimestats :: MonadIO m => m ()
+enableTimestats = setEnv "DEBUG_TIMESTATS_ENABLE" "1"
+
+timestatsEnvFlag :: Bool
+timestatsEnvFlag = isJust $( TH.lift =<< liftIO (lookupEnv "LIGO_LSP_TIMESTATS") )

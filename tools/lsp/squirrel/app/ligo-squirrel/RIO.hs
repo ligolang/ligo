@@ -11,9 +11,11 @@ module RIO
 
 import Algebra.Graph.Class qualified as G (empty)
 import Data.Aeson (Result (Error, Success), Value, fromJSON)
+import Debug.TimeStats qualified as TimeStats
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
+import Util (timestatsEnvFlag)
 
 import AST (Fallback, FromCompiler, ScopingSystem (..), Standard)
 import ASTMap qualified
@@ -56,7 +58,9 @@ shutdownRio :: RIO ()
 shutdownRio = do
   $Log.info "Shutting down"
   Cli.cleanupLigoDaemon
-
+  liftIO $ do
+    when timestatsEnvFlag $
+      withFile "./ligo-squirrel-timestats" WriteMode TimeStats.hPrintTimeStats
   -- A note on configuration initialization: If the client decides to send the
   -- configuration on initialization, then the lsp library will call
   -- onChangeConfiguration to set the config on the server side. However, the

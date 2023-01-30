@@ -182,9 +182,8 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
   where
     keywords :: HashSet Text
     keywords = case dialect of
-      Caml   -> cameLIGOKeywords
-      Pascal -> pascaLIGOKeywords
-      Js     -> jsLIGOKeywords
+      Caml -> cameLIGOKeywords
+      Js   -> jsLIGOKeywords
 
 completeFieldTypeAware
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]

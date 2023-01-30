@@ -50,10 +50,7 @@ basicCaseRun dialect = ContractRunData
   , crdStorage = 0 :: Integer
   }
 
-{- TODO: This test is yet broken due to:
-
-* Functions calls having no locations
-* [LIGO-950]: some statements snapshots are not there
+{-
 
 [LIGO-951]: finalize the tests.
 

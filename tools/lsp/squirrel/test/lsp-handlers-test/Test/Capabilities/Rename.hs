@@ -63,13 +63,13 @@ testRenameFail fp pos newName = do
 
 unit_rename_example_fail :: Assertion
 unit_rename_example_fail = do
-  fp <- makeAbsolute (contractsDir </> "id.ligo")
+  fp <- makeAbsolute (contractsDir </> "id.mligo")
   testRenameFail fp (Position 0 15) "new_const" `shouldThrow` anyException
 
 unit_rename_example_id :: Assertion
 unit_rename_example_id = do
-  fp <- makeAbsolute (contractsDir </> "id.ligo")
-  testRename fp (Position 0 10) "new_id" [(fp, [LSP.Range (Position 0 9) (Position 0 11)])]
+  fp <- makeAbsolute (contractsDir </> "id.mligo")
+  testRename fp (Position 0 4) "new_id" [(fp, [LSP.Range (Position 0 4) (Position 0 6)])]
 
 unit_rename_example_param :: Assertion
 unit_rename_example_param = do

@@ -21,7 +21,7 @@ toCodeAction (InR action) = action
 
 unit_code_action :: Assertion
 unit_code_action = do
-  let filename = "simple.ligo"
+  let filename = "simple.jsligo"
   let testInfo = Unsafe.fromJust $ find ((== filename) . tiContract) testInfos
 
   codeActions <- runHandlersTest contractsDir $ do

@@ -357,9 +357,6 @@ instance HasGo FieldAssignment where
     Spread name -> walk name
     Capture name -> walk name
 
-instance HasGo MapBinding where
-  walk' _ (MapBinding expr1 expr2) = walk expr1 >> walk expr2 >> pure Nothing
-
 instance HasGo Alt where
   walk' _ (Alt pat expr) = do
     void (walk pat)
@@ -382,7 +379,6 @@ instance HasGo Expr where
       paramTrees <- map getTree <$> wither walk params
       pure $ Just ((Set.empty, getRange r) :< funcTree ++ paramTrees, [])
     Constant _ -> pure Nothing
-    Ident _ -> pure Nothing
     BinOp left _ right -> do
       walk left
       walk right
@@ -391,7 +387,7 @@ instance HasGo Expr where
     Op _ -> pure Nothing
     Record assignments  -> do
       for_ assignments $ \case
-        (layer -> Just (Assign _ expr')) -> void (walk expr')
+        (layer -> Just (AssignOp _ _ expr')) -> void (walk expr')
         _ -> pass
       pure Nothing
     If clause true false -> do
@@ -403,9 +399,6 @@ instance HasGo Expr where
       walk clause
       walk true
       walk false
-    Assign name expr' -> do
-      void (walk name)
-      walk expr'
     AssignOp name _ expr -> do
       walk name
       walk expr
@@ -415,34 +408,21 @@ instance HasGo Expr where
       walk name
       mapM_ walk indices
       pure Nothing
-    Set exprs -> mapM_ walk exprs >> pure Nothing
     Tuple xs -> mapM_ walk xs >> pure Nothing
     Annot expr' typ -> do
       walk expr'
       walk typ
       pure Nothing
-    Attrs {} -> pure Nothing
-    BigMap bindings -> mapM_ walk bindings >> pure Nothing
-    Map bindings -> mapM_ walk bindings >> pure Nothing
-    Remove expr1 _ expr2 -> walk expr1 >> walk expr2 >> pure Nothing
     Case expr' alts -> do
       void (walk expr')
       scopeTrees <- map getTree <$> wither walk alts
       pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
-    Skip -> pure Nothing
     Break -> pure Nothing
     Return line -> maybe (pure Nothing) walk line
     SwitchStm expr' cases -> do
       void (walk expr')
       scopeTrees <- map getTree <$> wither walk cases
       pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
-    ForLoop name begin end step body -> do
-      void (walk name)
-      void (walk begin)
-      void (walk end)
-      whenJust step $ void . walk
-      st <- fmap getTree <$> walk body
-      pure $ fmap (, []) st
     WhileLoop clause body -> do
       walk clause
       st <- fmap getTree <$> walk body
@@ -455,7 +435,6 @@ instance HasGo Expr where
     Seq decls -> do
       (sts, refs) <- processSequence decls
       pure $ Just ((Set.empty, getRange r) :< sts, Set.toList refs)
-    Block {} -> pure Nothing
     Lambda params tys typ body -> do
       tyRefs <- referencesForTypeParams tys
       withScopes tyRefs do
@@ -470,30 +449,12 @@ instance HasGo Expr where
           ( (Set.fromList paramRefs <> Set.fromList tyRefs, getRange r) :< maybeToList subforest
           , []
           )
-    ForBox name mname2 coll expr1 expr2 -> do
-      declRefs <- referencesForParams (catMaybes [Just name, mname2]) Nothing
-      withScopes declRefs $ do
-        void (walk name)
-        whenJust mname2 $ void . walk
-      walk coll
-      walk expr1
-      subforest <- fmap (fmap getTree) $ withScopes declRefs $ walk expr2
-      pure $ Just ((Set.fromList declRefs, getRange r) :< maybeToList subforest, [])
-    Patch expr1 expr2 -> do
-      void (walk expr1)
-      walk expr2
     RecordUpd name assignments -> do
       walk name
       mapM_ walk assignments
       pure Nothing
     CodeInj {} -> pure Nothing
     Paren expr' -> walk expr'
-
-instance HasGo Collection where
-  walk' _ = \case
-    CList -> pure Nothing
-    CMap  -> pure Nothing
-    CSet  -> pure Nothing
 
 walkTwoFields
   :: LIGO ParsedInfo
@@ -716,7 +677,6 @@ instance HasGo Binding where
             ( (Set.fromList (declRef : paramRefs), getRange r) :< maybeToList subforest
             , declRef : paramRefs ++ subRefs
             )
-    BAttribute    {} -> pure Nothing
     BInclude      {} -> pure Nothing
     BImport       {} -> pure Nothing
     BModuleDecl name decls ->
@@ -801,9 +761,6 @@ instance HasGo Preprocessor where
 
 instance HasGo PreprocessorCommand where
   walk' _ _ = pure Nothing
-
-instance HasGo PatchableExpr where
-  walk' _ (PatchableExpr _ expr) = Nothing <$ walk expr
 
 instance HasGo ModuleName where
   walk' r (ModuleName name) = walkName ModuleLevel r name

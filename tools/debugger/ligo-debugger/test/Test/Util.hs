@@ -52,10 +52,13 @@ module Test.Util
   -- * LIGO types construct helpers
   , mkConstantType
   , mkArrowType
+  , (~>)
   , mkRecordType
+  , mkSumType
     -- * Common snippets
   , mkSimpleConstantType
   , mkPairType
+  , mkOptionType
   , intType'
   , unitType'
   , intType
@@ -94,7 +97,7 @@ import Morley.Util.Typeable
 import AST.Skeleton qualified as LSP
 import Cli.Json
   (LigoRange (LRVirtual), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
-  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord), LigoTypeExpression (..),
+  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord, LTCSum), LigoTypeExpression (..),
   LigoTypeTable (LigoTypeTable), _ltcInjection, _ltcParameters)
 
 import Language.LIGO.Debugger.CLI.Call
@@ -112,9 +115,7 @@ contractsDir = "test" </> "contracts"
 hasLigoExtension :: FilePath -> Bool
 hasLigoExtension file =
   takeExtension file `elem`
-    [ ".ligo"
-    , ".pligo"
-    , ".mligo"
+    [ ".mligo"
     , ".jsligo"
     ]
 
@@ -249,7 +250,6 @@ data ContractRunData =
   forall param st.
   ( T.IsoValue param, T.IsoValue st
   , SingI (T.ToT param), SingI (T.ToT st)
-  , T.ForbidOr (T.ToT param)
   )
   => ContractRunData
   { crdProgram :: FilePath
@@ -303,7 +303,7 @@ mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st
       file
       (fromString entrypoint)
       contract
-      T.epcPrimitive
+      T.unsafeEpcCallRoot
       (T.toVal param)
       (T.toVal st)
       dummyContractEnv
@@ -424,12 +424,15 @@ mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
     , _ltaType1 = domain
     }
 
-mkRecordType :: [(Text, LigoTypeExpression)] -> LigoTypeExpression
-mkRecordType record = map (second mkTableField) record
+(~>) :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
+(~>) = mkArrowType
+
+infixr 2 ~>
+
+mkTypeTable :: [(Text, LigoTypeExpression)] -> LigoTypeTable
+mkTypeTable keyValues = map (second mkTableField) keyValues
   & HM.fromList
   & flip LigoTypeTable Null
-  & LTCRecord
-  & mkTypeExpression
   where
     mkTableField :: LigoTypeExpression -> LigoTableField
     mkTableField expr = LigoTableField
@@ -438,6 +441,16 @@ mkRecordType record = map (second mkTableField) record
       , _ltfAssociatedType = expr
       }
 
+mkRecordType :: [(Text, LigoTypeExpression)] -> LigoTypeExpression
+mkRecordType keyValues = mkTypeTable keyValues
+  & LTCRecord
+  & mkTypeExpression
+
+mkSumType :: [(Text, LigoTypeExpression)] -> LigoTypeExpression
+mkSumType keyValues = mkTypeTable keyValues
+  & LTCSum
+  & mkTypeExpression
+
 mkSimpleConstantType :: Text -> LigoTypeExpression
 mkSimpleConstantType typ = mkConstantType typ []
 
@@ -445,6 +458,12 @@ mkPairType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
 mkPairType fstElem sndElem = mkRecordType
   [ ("0", fstElem)
   , ("1", sndElem)
+  ]
+
+mkOptionType :: LigoTypeExpression -> LigoTypeExpression
+mkOptionType typ = mkSumType
+  [ ("Some", typ)
+  , ("None", unitType')
   ]
 
 intType' :: LigoTypeExpression

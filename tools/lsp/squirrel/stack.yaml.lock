@@ -129,6 +129,13 @@ packages:
   original:
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
     git: https://github.com/serokell/duplo.git
+- completed:
+    hackage: timestats-0.1.0@sha256:86677d16269df53fb44d1aa8e90bfd6503461d637ff3d914f30b1d4ce98da5d2,1284
+    pantry-tree:
+      sha256: ae05a6e3b2fdb99eaae6b465c00a5bfbb525d6b7cb5839e685eb38c4c0ed1394
+      size: 277
+  original:
+    hackage: timestats-0.1.0
 snapshots:
 - completed:
     sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0

@@ -508,11 +508,11 @@ fromLigoErrorToMsg LigoError
 -- >>> :{
 -- mbFromLigoRange
 --   (LigoRange
---     (LigoRangeInner (LigoByte "contracts/test.ligo" 2 undefined undefined) 3 6)
---     (LigoRangeInner (LigoByte "contracts/test.ligo" 5 undefined undefined) 11 12)
+--     (LigoRangeInner (LigoByte "test.jsligo" 2 undefined undefined) 3 6)
+--     (LigoRangeInner (LigoByte "test.jsligo" 5 undefined undefined) 11 12)
 --   )
 -- :}
--- contracts/test.ligo:2:4-5:2
+-- test.jsligo:2:4-5:2
 mbFromLigoRange :: LigoRange -> Maybe Range
 mbFromLigoRange (LRVirtual _) = Nothing
 mbFromLigoRange

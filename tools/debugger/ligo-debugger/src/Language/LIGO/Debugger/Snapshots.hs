@@ -66,11 +66,13 @@ import Morley.Debugger.Core.Navigate
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots (DebuggerFailure, InterpretHistory (..))
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsFailed), MorleyLogsBuilder,
-  StkEl (StkEl), initInterpreterState, mkInitStack, runInstrImpl)
+  MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos, mfwsFailed),
+  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, mkInitStack, runInstrImpl)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
+import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
 
@@ -230,6 +232,10 @@ data CollectorState m = CollectorState
   , csMainFunctionName :: Name 'Unique
     -- ^ Name of main entrypoint.
     -- We need to store it in order not to create an extra stack frame.
+  , csLastRangeMb :: Maybe LigoRange
+    -- ^ Last range. We can use it to get
+    -- the latest position where some
+    -- failure occurred.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -283,99 +289,99 @@ logMessage str = do
 
 -- | Executes the code and collects snapshots of execution.
 runInstrCollect :: forall m. (Monad m) => InstrRunner (CollectingEvalOp m)
-runInstrCollect = \case
-  instr@(T.ConcreteMeta (embeddedMeta :: EmbeddedLigoMeta) inner) -> \oldStack -> do
+runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
+  let (embeddedMetaMb, inner) = getMetaMbAndUnwrap instr
+
+  whenJust embeddedMetaMb \embeddedMeta -> do
     logMessage
       [int||
         Got meta: #{embeddedMeta}
         for instruction: #{instr}
       |]
 
-    let stack = maybe oldStack (embedFunctionNames oldStack) (liiEnvironment embeddedMeta)
+    logMessage
+      [int||
+        Would be ignored: #{shouldIgnoreMeta inner}
+      |]
 
-    preExecutedStage embeddedMeta inner stack
-    newStack <- surroundExecutionInner embeddedMeta (runInstrImpl runInstrCollect) inner stack
-    postExecutedStage embeddedMeta inner stack newStack
-  other -> runInstrImpl runInstrCollect other
+  let stack = maybe oldStack (embedFunctionNames oldStack) (liiEnvironment =<< embeddedMetaMb)
+
+  preExecutedStage embeddedMetaMb inner stack
+  newStack <- surroundExecutionInner embeddedMetaMb (runInstrImpl runInstrCollect) inner stack
+  postExecutedStage embeddedMetaMb inner newStack
   where
+    michFailureHandler :: MichelsonFailureWithStack DebuggerFailure -> CollectingEvalOp m a
+    michFailureHandler err = use csLastRangeMbL >>= \case
+      Nothing -> throwError err
+      Just (ligoPositionToSrcPos . lrStart -> lastSrcPos)
+        -> throwError err { mfwsErrorSrcPos = ErrorSrcPos lastSrcPos }
+
     -- What is done upon executing instruction.
     preExecutedStage
-      :: EmbeddedLigoMeta
+      :: Maybe EmbeddedLigoMeta
       -> Instr i o
       -> Rec StkEl i
       -> CollectingEvalOp m ()
-    preExecutedStage LigoIndexedInfo{..} instr stack = do
-      whenJust liiLocation \loc -> do
-        statements <- getStatements loc
+    preExecutedStage embeddedMetaMb instr stack = case embeddedMetaMb of
+      Just LigoIndexedInfo{..} -> do
+        whenJust liiLocation \loc -> do
+          statements <- getStatements loc
 
-        forM_ statements \statement -> do
-          recordSnapshot statement EventFacedStatement
-          csRecordedRangesL %= HS.insert statement
+          forM_ statements \statement -> do
+            recordSnapshot statement EventFacedStatement
+            csRecordedRangesL %= HS.insert statement
 
-        unless (shouldIgnoreMeta instr) do
-          recordSnapshot loc EventExpressionPreview
+          unless (shouldIgnoreMeta instr) do
+            recordSnapshot loc EventExpressionPreview
 
-      whenJust liiEnvironment \env -> do
-        -- Here stripping occurs, as the second list keeps the entire stack,
-        -- while the first list (@env@) - only stack related to the current
-        -- stack frame. And this is good.
-        let stackHere = zipWith StackItem env (refineStack stack)
-        logMessage
-          [int||
-            Stack at preExecutedStage: #{stackHere}
-          |]
+        whenJust liiEnvironment \env -> do
+          -- Here stripping occurs, as the second list keeps the entire stack,
+          -- while the first list (@env@) - only stack related to the current
+          -- stack frame. And this is good.
+          let stackHere = zipWith StackItem env (refineStack stack)
+          logMessage
+            [int||
+              Stack at preExecutedStage: #{stackHere}
+            |]
 
-        csActiveStackFrameL . sfStackL .= stackHere
+          csActiveStackFrameL . sfStackL .= stackHere
+      Nothing -> pass
 
     -- What is done right after the instruction is executed.
     postExecutedStage
-      :: EmbeddedLigoMeta
+      :: Maybe EmbeddedLigoMeta
       -> Instr i o
-      -> Rec StkEl i
       -> Rec StkEl o
       -> CollectingEvalOp m (Rec StkEl o)
-    postExecutedStage LigoIndexedInfo{..} instr oldStack newStack = do
-      returnStack <-
-        case (instr, oldStack, newStack) of
-          (EXEC{}, _ :& StkEl oldLam :& _, StkEl lam@VLam{} :& stkEls) -> do
-            -- There might be a case when after executing function
-            -- we'll get another function. In order not to lose stack frames
-            -- we need to embed all future stack frame names into resulting
-            -- function.
-            let embeddedLam = lam & lambdaMetaL .~ view lambdaMetaL oldLam
-            logMessage [int|n|
-              Embedding old meta
-              #{view lambdaMetaL oldLam}
-              into lambda #{embeddedLam}
-              |]
+    postExecutedStage embeddedMetaMb instr newStack = case embeddedMetaMb of
+      Just LigoIndexedInfo{..} -> do
+        whenJust liiLocation \loc -> do
+          -- `location` point to instructions that end expression evaluation,
+          -- we can record the computed value
+          let evaluatedVal = safeHead (refineStack newStack)
 
-            pure $ StkEl embeddedLam :& stkEls
-          _ -> pure newStack
+          logMessage
+            [int||
+              Just evaluated: #{evaluatedVal}
+            |]
 
-      whenJust liiLocation \loc -> do
-        -- `location` point to instructions that end expression evaluation,
-        -- we can record the computed value
-        let evaluatedVal = safeHead (refineStack newStack)
+          csLastRangeMbL ?= loc
 
-        logMessage
-          [int||
-            Just evaluated: #{evaluatedVal}
-          |]
+          unless (shouldIgnoreMeta instr) do
+            recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
 
-        unless (shouldIgnoreMeta instr) do
-          recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
-
-      pure returnStack
+        pure newStack
+      Nothing -> pure newStack
 
     -- What is done both before and after the instruction is executed.
     -- This function is executed after 'preExecutedStage' and before 'postExecutedStage'.
     surroundExecutionInner
-      :: LigoIndexedInfo 'Unique
+      :: Maybe EmbeddedLigoMeta
       -> (Instr i o -> Rec StkEl i -> CollectingEvalOp m (Rec StkEl o))
       -> Instr i o
       -> Rec StkEl i
       -> CollectingEvalOp m (Rec StkEl o)
-    surroundExecutionInner LigoIndexedInfo{} runInstr instr stack =
+    surroundExecutionInner _embeddedMetaMb runInstr instr stack =
       case (instr, stack) of
 
         -- We're on a way to execute a function.
@@ -422,7 +428,21 @@ runInstrCollect = \case
             Restored stack frames, new active frame: #{sfName <$> use csActiveStackFrameL}
             |]
 
-          return newStack
+          case newStack of
+            StkEl newLam@VLam{} :& stkEls -> do
+              -- There might be a case when after executing function
+              -- we'll get another function. In order not to lose stack frames
+              -- we need to embed all future stack frame names into resulting
+              -- function.
+              let embeddedLam = newLam & lambdaMetaL .~ view lambdaMetaL lam
+              logMessage [int|n|
+                Embedding old meta
+                #{view lambdaMetaL lam}
+                into lambda #{embeddedLam}
+                |]
+
+              return $ StkEl embeddedLam :& stkEls
+            _ -> return newStack
 
         _ -> runInstr instr stack
 
@@ -435,7 +455,7 @@ runInstrCollect = \case
       :: LigoRange
       -> InterpretEvent
       -> CollectingEvalOp m ()
-    recordSnapshot loc event = unless (isLigoStdLib $ lrFile loc) do
+    recordSnapshot loc event = do
       logMessage
         [int||
           Recording location #{loc}
@@ -460,25 +480,23 @@ runInstrCollect = \case
       lift $ C.yield newSnap
 
     getStatements :: LigoRange -> CollectingEvalOp m [LigoRange]
-    getStatements ligoRange
-      | isLigoStdLib $ lrFile ligoRange = pure []
-      | otherwise = do
-          let range@Range{..} = ligoRangeToRange ligoRange
+    getStatements ligoRange = do
+      let range@Range{..} = ligoRangeToRange ligoRange
 
-          parsedLigo <-
-            fromMaybe
-              (error [int||File #{_rFile} is not parsed for some reason|])
-              <$> use (csParsedFilesL . at _rFile)
+      parsedLigo <-
+        fromMaybe
+          (error [int||File #{_rFile} is not parsed for some reason|])
+          <$> use (csParsedFilesL . at _rFile)
 
-          statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
-          pure $ rangeToLigoRange . getRange <$> statements
+      statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
+      pure $ rangeToLigoRange . getRange <$> statements
       where
         filterAndReverseStatements :: [LIGO Info] -> CollectingEvalOp m [LIGO Info]
         filterAndReverseStatements = go []
           where
             go :: [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
             go acc [] = pure acc
-            go acc (x@(layer -> Just AST.Assign{}) : xs) = decide x acc xs
+            go acc (x@(layer -> Just AST.AssignOp{}) : xs) = decide x acc xs
             go acc (x@(layer -> Just AST.BConst{}) : xs) = decide x acc xs
             go acc (x@(layer -> Just AST.BVar{}) : xs) = decide x acc xs
             go acc (x@(layer -> Just AST.Apply{}) : xs@((layer @Expr -> Just ctor) : _)) =
@@ -496,10 +514,8 @@ runInstrCollect = \case
               let cycleNode = xs
                     & find \el ->
                       case layer @Expr el of
-                        Just AST.ForLoop{} -> containsNode el x
                         Just AST.WhileLoop{} -> containsNode el x
                         Just AST.ForOfLoop{} -> containsNode el x
-                        Just AST.ForBox{} -> containsNode el x
                         _ -> False
 
               let recNode = xs
@@ -582,9 +598,13 @@ runCollectInterpretSnapshots act env initSt initStorage =
               throwIO exc
           _ -> pass
 
+        let stackFrames = case csLastRangeMb endState of
+              Nothing -> csStackFrames endState
+              Just range -> csStackFrames endState & ix 0 . sfLocL .~ range
+
         C.yield InterpretSnapshot
           { isStatus = InterpretFailed stack
-          , isStackFrames = csStackFrames endState
+          , isStackFrames = stackFrames
           }
 
       Right _ -> do
@@ -660,4 +680,5 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       , csRecursiveOrCycleEntries = mempty
       , csLoggingFunction = logger
       , csMainFunctionName = Name entrypoint
+      , csLastRangeMb = Nothing
       }
