@@ -57,12 +57,12 @@ let transfer ~raise f s () =
       ; "total_supply", e_nat ~loc 300
       ]
   in
-  let input = e_pair ~loc parameter storage in
+  let input1, input2 = parameter, storage in
   let expected = e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) new_storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
-  expect_eq ~raise program ~options "transfer" input expected
+  expect_eq_twice ~raise program ~options "transfer" input1 input2 expected
 
 
 let transfer_not_e_allowance ~raise f s () =
@@ -84,11 +84,18 @@ let transfer_not_e_allowance ~raise f s () =
   let parameter =
     e_record_ez ~loc [ "address_from", from_; "address_to", to_; "value", e_nat ~loc 10 ]
   in
-  let input = e_pair ~loc parameter storage in
+  let input1, input2 = parameter, storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
-  expect_string_failwith ~raise ~options program "transfer" input "NotEnoughAllowance"
+  expect_string_failwith_twice
+    ~raise
+    ~options
+    program
+    "transfer"
+    input1
+    input2
+    "NotEnoughAllowance"
 
 
 let transfer_not_e_balance ~raise f s () =
@@ -110,11 +117,18 @@ let transfer_not_e_balance ~raise f s () =
   let parameter =
     e_record_ez ~loc [ "address_from", from_; "address_to", to_; "value", e_nat ~loc 10 ]
   in
-  let input = e_pair ~loc parameter storage in
+  let input1, input2 = parameter, storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
-  expect_string_failwith ~raise ~options program "transfer" input "NotEnoughBalance"
+  expect_string_failwith_twice
+    ~raise
+    ~options
+    program
+    "transfer"
+    input1
+    input2
+    "NotEnoughBalance"
 
 
 let approve ~raise f s () =
@@ -148,12 +162,12 @@ let approve ~raise f s () =
       ; "total_supply", e_nat ~loc 300
       ]
   in
-  let input = e_pair ~loc parameter storage in
+  let input1, input2 = parameter, storage in
   let expected = e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) new_storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
-  expect_eq ~raise program ~options "approve" input expected
+  expect_eq_twice ~raise program ~options "approve" input1 input2 expected
 
 
 let approve_unsafe ~raise f s () =
@@ -173,11 +187,18 @@ let approve_unsafe ~raise f s () =
       ]
   in
   let parameter = e_record_ez ~loc [ "spender", from_; "value", e_nat ~loc 100 ] in
-  let input = e_pair ~loc parameter storage in
+  let input1, input2 = parameter, storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
-  expect_string_failwith ~raise ~options program "approve" input "UnsafeAllowanceChange"
+  expect_string_failwith_twice
+    ~raise
+    ~options
+    program
+    "approve"
+    input1
+    input2
+    "UnsafeAllowanceChange"
 
 
 (* let get_allowance ~raise f s () =

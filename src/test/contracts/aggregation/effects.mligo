@@ -1,6 +1,6 @@
 let a = 42
 
-let main (_p,s:int*int) : operation list * int =
+let main (_p : int) (s : int) : operation list * int =
   let xx =
     let _w = (
       let () = failwith "foo" in

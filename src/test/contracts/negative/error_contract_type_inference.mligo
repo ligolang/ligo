@@ -7,7 +7,7 @@ let get_add_entrypoint (addr : address) =
     Some contract -> contract
   | None -> (failwith "The entrypoint does not exist" : int contract)
 
-let main (param, callee_addr : parameter * storage) =
+let main (param : parameter) (callee_addr : storage) =
   let add : int contract = get_add_entrypoint (callee_addr) in
   let op = Tezos.transaction param 0mutez add in
   [op], callee_addr

@@ -51,12 +51,13 @@ let early_call ~raise () =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~now ())
   in
   let exp_failwith = "You have to wait before you can execute this contract again." in
-  expect_string_failwith
+  expect_string_failwith_twice
     ~raise
     ~options
     program
     "main"
-    (e_pair ~loc (e_unit ~loc ()) init_storage)
+    (e_unit ~loc ())
+    init_storage
     exp_failwith
 
 
@@ -81,12 +82,13 @@ let interval_advance ~raise () =
       Script_timestamp.add_delta now (Script_int.of_int 86_400))
   in
   let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
-  expect_eq
+  expect_eq_twice
     ~raise
     ~options
     program
     "main"
-    (e_pair ~loc (e_unit ~loc ()) init_storage)
+    (e_unit ~loc ())
+    init_storage
     (e_pair ~loc empty_op_list new_storage_fake)
 
 

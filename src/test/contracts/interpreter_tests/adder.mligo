@@ -1,1 +1,1 @@
-let main ((p, k) : int * int) : operation list * int = [], p + k
+let main (p : int) (k : int) : operation list * int = [], p + k

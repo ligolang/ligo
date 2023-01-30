@@ -1,6 +1,6 @@
 type storage = int
 type action = | Increment of nat | Decrement of nat
-let main (p,s: action * storage) =
+let main (p : action) (s : storage) =
  let stor =
    match p with 
    | Increment n -> s +1

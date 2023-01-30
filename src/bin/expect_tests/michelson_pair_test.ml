@@ -6,21 +6,21 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/michelson_pair_tree.mligo", line 6, characters 10-16:
+    File "../../test/contracts/michelson_pair_tree.mligo", line 6, characters 26-31:
       5 |
-      6 | let main (action, store : unit * storage) : return =
-      7 |   let foo = (3,(1,2n)) in
-    :
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-
-    File "../../test/contracts/michelson_pair_tree.mligo", line 6, characters 18-23:
-      5 |
-      6 | let main (action, store : unit * storage) : return =
+      6 | let main (action : unit) (store : storage) : return =
       7 |   let foo = (3,(1,2n)) in
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
+
+    File "../../test/contracts/michelson_pair_tree.mligo", line 6, characters 10-16:
+      5 |
+      6 | let main (action : unit) (store : storage) : return =
+      7 |   let foo = (3,(1,2n)) in
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
     { parameter unit ;
       storage (pair (int %three) (pair %four (int %one) (nat %two))) ;
@@ -39,28 +39,28 @@ let%expect_test _ =
     {|
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, character 0 to line 11, character 1:
       7 |
-      8 | let main = ([action, store] : [unit, storage]) : return_ => {
+      8 | let main = (action : unit, store : storage) : return_ => {
       9 |   let foo = [3, [1, 2 as nat]];
      10 |   return [list([]) as list<operation>, foo as storage]
      11 | };
 
     Toplevel let declaration are silently change to const declaration.
 
-    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 13-19:
+    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 27-32:
       7 |
-      8 | let main = ([action, store] : [unit, storage]) : return_ => {
-      9 |   let foo = [3, [1, 2 as nat]];
-    :
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-
-    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 21-26:
-      7 |
-      8 | let main = ([action, store] : [unit, storage]) : return_ => {
+      8 | let main = (action : unit, store : storage) : return_ => {
       9 |   let foo = [3, [1, 2 as nat]];
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
+
+    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 12-18:
+      7 |
+      8 | let main = (action : unit, store : storage) : return_ => {
+      9 |   let foo = [3, [1, 2 as nat]];
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
     { parameter unit ;
       storage (pair (int %three) (pair %four (int %one) (nat %two))) ;

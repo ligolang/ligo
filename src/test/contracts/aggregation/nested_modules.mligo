@@ -56,5 +56,5 @@ module M = Mangled
 
 
 
-let main (action, store : int * int) : operation list * int =
+let main (action : int) (store : int) : operation list * int =
   [], A.Bx.nested + A.toto + A2.Cx.toto + A3.toto + A4.toto + End.Top.toto + M.titi

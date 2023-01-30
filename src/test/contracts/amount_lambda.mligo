@@ -7,5 +7,5 @@ let f1 (x : unit) : unit -> tez =
 let f2 (x : unit) : unit -> tez =
   fun (x : unit) -> Tezos.get_amount ()
 
-let main (b,s : bool * (unit -> tez)) : operation list * (unit -> tez) =
+let main (b : bool) (s : (unit -> tez)) : operation list * (unit -> tez) =
   (([] : operation list), (if b then f1 () else f2 ()))

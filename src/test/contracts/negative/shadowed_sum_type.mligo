@@ -12,5 +12,5 @@ end
 
 let x = A 42
 
-let main (_: int * int) : operation list * int = ([] : operation list), 42
+let main (_: int) (_ : int) : operation list * int = ([] : operation list), 42
 

@@ -1,4 +1,4 @@
 type storage = unit;
 
-let main = ([_unit,_storage] : [unit, storage]) : unit =>
+let main = (_unit : unit,_storage : storage) : unit =>
   ((_useless : unit):unit => unit) (unit);

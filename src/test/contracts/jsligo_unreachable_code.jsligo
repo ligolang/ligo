@@ -47,7 +47,7 @@ const unreach_4 = (_n : int) : string => {
 }
 
 
-const main = ([_, s] : [int, int]) : [list <operation>, int] => {
+const main = (_ : int, s : int) : [list <operation>, int] => {
   return [
    (list([]) as list <operation>),    // No operations
    s

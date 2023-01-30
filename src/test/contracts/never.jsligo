@@ -5,7 +5,7 @@ type parameter =
 
 type storage = int;
 
-let main = ([action, store] : [parameter, storage]) : [list<operation>, storage] => {
+let main = (action : parameter, store : storage) : [list<operation>, storage] => {
   return [
    (list([]) as list <operation>),
    (match (action, {

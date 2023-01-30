@@ -12,7 +12,7 @@ let (b1, b2, b3)
 
 type storage = int ticket * string ticket * nat ticket
 
-let main (_,_ : unit * storage) : operation list * storage
+let main (_ : unit) (_ : storage) : operation list * storage
   = [],
     (let a = Option.unopt (Tezos.join_tickets (a1, b1)) in
     let b  = Option.unopt (Tezos.join_tickets (a2, b2)) in

@@ -1,3 +1,3 @@
-let main ((_u, s) : (int set) set * unit) : operation list * unit = ([] : operation list), s
+let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
 
-let main2 ((_u, s) : (int set) ticket * unit) : operation list * unit = ([] : operation list), s
+let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s

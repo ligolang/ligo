@@ -1,2 +1,2 @@
-let main (p,_ : (int*int) * unit ) : operation list * unit =
+let main (p : int * int) (_ : unit) : operation list * unit =
   [Tezos.emit "%foo" p ; Tezos.emit "%bar" p.0],()

@@ -32,4 +32,4 @@ let dont_warn_me = AS 42
 let dont_warn_me = TopN 42
 let dont_warn_me = AN 42
 
-let main (_: int * int) : operation list * int = ([] : operation list), 42
+let main (_ : int) (_ : int) : operation list * int = ([] : operation list), 42

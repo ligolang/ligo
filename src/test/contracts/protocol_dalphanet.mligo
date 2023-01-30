@@ -9,5 +9,5 @@ let b = [%Michelson ({|
   |} : bls12_381_g2)]
 
 
-let main (p, s : bls_l * bool) : operation list * bool =
+let main (p : bls_l) (s : bool) : operation list * bool =
  (([] : operation list), Tezos.pairing_check p)

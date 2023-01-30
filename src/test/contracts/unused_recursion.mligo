@@ -21,5 +21,5 @@ let coucou = fun (storage : t) : t ->
   
   bar n 
 
-let main ((_, storage) : (unit * t)) : (operation list * t) =
+let main (_ : unit) (storage : t) : (operation list * t) =
  ([] : operation list), coucou storage

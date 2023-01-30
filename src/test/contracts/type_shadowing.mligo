@@ -10,7 +10,7 @@ let f (type a) (x : a option) : a option =
   // [D_type, T_for_all] shadowing
   x
 
-let main_f (_, st : unit * nat option) : ((operation) list * nat option) =
+let main_f (_ : unit) (st : nat option) : ((operation) list * nat option) =
   match (f st) with
   | Some x -> ([], Some x)
   | None   -> ([], None)

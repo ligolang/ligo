@@ -5,7 +5,7 @@ type parameter = 8 sapling_transaction
 
 type return = operation list * storage
 
-let main (tr, store : parameter * storage) : return =
+let main (tr : parameter) (store : storage) : return =
  ([] : operation list),
  (
     let es : ss = Tezos.sapling_empty_state in

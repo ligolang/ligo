@@ -56,7 +56,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 11-14:
-      1 | let main (_ : unit * unit) : operation list * unit =
+      1 | let main (_ : unit) (_ : unit) : operation list * unit =
       2 |   let () = 42n in
       3 |   (([] : operation list), ())
 
@@ -537,7 +537,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts//deep_pattern_matching/edge_case_V.mligo", line 6, character 7 to line 10, character 20:
-      5 | let main (p, _ : p * int) : operation list * int =
+      5 | let main (p : p) (_ : int) : operation list * int =
       6 |   [], (match p with
       7 |     A,A,A,_,_,_ -> 1
       8 |   | B,_,_,A,A,_ -> 2
@@ -553,7 +553,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts//deep_pattern_matching/edge_case_S.mligo", line 6, character 7 to line 11, character 31:
-      5 | let main (p, _ : p * int) : operation list * int =
+      5 | let main (p : p) (_ : int) : operation list * int =
       6 |   [], (match p with
       7 |     A, A, _, _, _, _, _, _ -> 1
       8 |   | _, _, A, A, _, _, _, _ -> 2
@@ -591,9 +591,9 @@ let%expect_test _ =
     Warning: unused variable "myt".
     Hint: replace it by "_myt" to prevent this warning.
 
-    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 18-19:
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 32-33:
       4 |
-      5 | let main = fun (p,s: parameter * storage) ->
+      5 | let main = fun (p : parameter) (s: storage) ->
       6 |   match p with
     :
     Warning: unused variable "s".

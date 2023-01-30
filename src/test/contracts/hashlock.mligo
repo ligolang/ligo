@@ -24,7 +24,7 @@ type return = operation list * storage
 
 (* We use hash-commit so that a baker can not steal *)
 
-let commit (p, s : bytes * storage) : return =
+let commit (p : bytes) (s : storage) : return =
   let commit : commit =
     {date = Tezos.get_now () + 86_400; salted_hash = p} in
   let updated_map: commit_set =
@@ -32,7 +32,7 @@ let commit (p, s : bytes * storage) : return =
   let s = {s with commits = updated_map}
   in ([] : operation list), s
 
-let reveal (p, s : reveal * storage) : return =
+let reveal (p : reveal) (s : storage) : return =
   if not s.unused
   then
     (failwith "This contract has already been used." : return)
@@ -61,7 +61,7 @@ let reveal (p, s : reveal * storage) : return =
         else (failwith "Your commitment did not match the storage hash."
               : return)
 
-let main (p, s : parameter * storage) : return =
+let main (p : parameter) (s : storage) : return =
   match p with
-  | Commit c -> commit (c,s)
-  | Reveal r -> reveal (r,s)
+  | Commit c -> commit c s
+  | Reveal r -> reveal r s

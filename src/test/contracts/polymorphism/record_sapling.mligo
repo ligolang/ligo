@@ -7,10 +7,10 @@ type storage = {
   name: string;
 }
 
-let set_name (name, storage : string * storage) : operation list * storage = 
+let set_name (name : string) (storage : storage) : operation list * storage = 
     let storage : storage = { state = storage.state; name = name } in
     ([] : operation list), storage
 
-let main (action, storage: action * storage) : operation list * storage =
+let main (action : action) (storage : storage) : operation list * storage =
     match action with
-    | SetName name -> set_name (name, storage)
+    | SetName name -> set_name name storage

@@ -10,7 +10,7 @@ module Math = struct
     let zero = 0
 end
 
-let main (action, storage: action * storage) : operation list * storage =
+let main (action : action) (storage : storage) : operation list * storage =
   match action with
   | Add x -> ([] : operation list), Math.add storage x
   | Sub x -> ([] : operation list), Math.sub storage x

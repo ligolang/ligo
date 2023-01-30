@@ -7,6 +7,6 @@ type param =
     z : int;
     w : int }
 
-let main (p, s : param * int) : operation list * int =
+let main (p : param) (s : int) : operation list * int =
   let { x = x; y = y; z = z; w = w } = p in
   (([] : operation list), x + y + z + w)

@@ -12,7 +12,7 @@ type p =
 | One of r1
 | Two of r2
 
-let main2 (p, _ : p * nat) : operation list * nat =
+let main2 (p : p) (_ : nat) : operation list * nat =
   (([] : operation list),
    (match p with
     | One r -> r.x
@@ -27,7 +27,7 @@ type p =
 | Onee of r1
 | Three of r3
 
-let main3 (p, _ : p * nat) : operation list * nat =
+let main3 (p : p) (_ : nat) : operation list * nat =
   (([] : operation list),
    (match p with
     | Onee r -> r.x
@@ -42,7 +42,7 @@ type p =
 | Oneee of r1
 | Four of r4
 
-let main4 (p, _ : p * nat) : operation list * nat =
+let main4 (p : p) (_ : nat) : operation list * nat =
   (([] : operation list),
    (match p with
     | Oneee r -> r.x

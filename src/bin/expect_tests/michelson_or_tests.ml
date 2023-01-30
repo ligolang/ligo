@@ -24,20 +24,20 @@ let%expect_test _ =
     Warning: unused variable "bar".
     Hint: replace it by "_bar" to prevent this warning.
 
-    File "../../test/contracts/double_michelson_or.mligo", line 6, characters 10-16:
+    File "../../test/contracts/double_michelson_or.mligo", line 6, characters 26-31:
       5 |
-      6 | let main (action, store : unit * storage) : return =
-      7 |   let foo = (M_right ("one") : storage) in
-    :
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-
-    File "../../test/contracts/double_michelson_or.mligo", line 6, characters 18-23:
-      5 |
-      6 | let main (action, store : unit * storage) : return =
+      6 | let main (action : unit) (store : storage) : return =
       7 |   let foo = (M_right ("one") : storage) in
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
+
+    File "../../test/contracts/double_michelson_or.mligo", line 6, characters 10-16:
+      5 |
+      6 | let main (action : unit) (store : storage) : return =
+      7 |   let foo = (M_right ("one") : storage) in
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
     ( LIST_EMPTY() , M_right("one") ) |}]

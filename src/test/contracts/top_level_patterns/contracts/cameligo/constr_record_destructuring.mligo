@@ -3,5 +3,5 @@ type r = { a : int ; b : t ; c : string }
 
 let { a ; b = (Foo x) ; c} = { a = 1 ; b = Foo 2 ; c = "hey" }
 
-let main (_,_ : unit * int) : operation list * int
+let main (_ : unit) (_ : int) : operation list * int
   = [], a + x + String.length c

@@ -1,9 +1,9 @@
 type t = { x : int ; y : (unit, unit) typed_address }
 
-let main ((_, _) : unit * unit) : operation list * unit = [], ()
+let main (_ : unit) (_ : unit) : operation list * unit = [], ()
 
 let ta, _, _ =
-  Test.originate_uncurried main () 0tez
+  Test.originate main () 0tez
 
 let v = { x = 42 ; y = ta }
 

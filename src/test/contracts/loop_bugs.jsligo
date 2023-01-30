@@ -1,4 +1,4 @@
-const main = ([_parameter, _storage] : [unit, int]) : [list<operation>, int] => {
+const main = (_parameter : unit, _storage : int) : [list<operation>, int] => {
   let z = 0;
   let x = 42;
   while (z < 10) {

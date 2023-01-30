@@ -6,5 +6,5 @@ let { a = a1 ; b = b1 ; c = c1 } = { a = 2n ; b = 2 ; c = "World" }
 
 type storage = nat * int * string
 
-let main (_,_ : unit * storage) : operation list * storage
+let main (_ : unit) (_ : storage) : operation list * storage
   = [], (a + a1, b + b1, c ^ c1)

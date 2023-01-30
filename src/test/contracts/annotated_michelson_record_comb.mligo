@@ -30,15 +30,15 @@ type comb_five = [@layout comb] {
 type parameter = unit
 type op_list = operation list
 
-let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
   let o = store.foo in
   let oo = { store with foo = o } in
   ([] : operation list), oo
 
-let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
 
-let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
   ([] : operation list), store
 
 let r : comb_five = { one = 1 ; two = "" ; three = true ; four = 1n ; five = 2 }

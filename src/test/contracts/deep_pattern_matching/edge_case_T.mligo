@@ -2,7 +2,7 @@ type t = A | B
 
 type p = (t * t * t * t)
 
-let main (p, _ : p * int) : operation list * int = 
+let main (p : p) (_ : int) : operation list * int = 
   [], (match p with
     A,A,A,A -> 1
   | B,B,B,B -> 1

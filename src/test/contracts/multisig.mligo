@@ -28,7 +28,7 @@ type return = operation list * storage
 
 type parameter = CheckMessage of check_message_pt
 
-let check_message (param, s : check_message_pt * storage) : return =
+let check_message (param : check_message_pt) (s : storage) : return =
   let message : message = param.message in
   let s =
     if param.counter <> s.counter then
@@ -59,6 +59,6 @@ let check_message (param, s : check_message_pt * storage) : return =
       else {s with counter = s.counter + 1n}
     in message unit, s
 
-let main (action, store : parameter * storage) : return =
+let main (action : parameter) (store : storage) : return =
   match action with
-    CheckMessage (p) -> check_message (p, store)
+    CheckMessage (p) -> check_message p store
