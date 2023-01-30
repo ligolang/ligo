@@ -4,7 +4,7 @@ type parameter1 = {
   [@annot cCC] fooC : nat;
 }
 
-let main1 (_ : parameter1 * unit) : operation list * unit =
+let main1 (_ : parameter1) (_ : unit) : operation list * unit =
   (([] : operation list), ())
 
 type parameter2 =
@@ -12,5 +12,5 @@ type parameter2 =
   | FooB of nat
   | [@annot cCC] FooC of nat
 
-let main2 (_ : parameter2 * unit) : operation list * unit =
+let main2 (_ : parameter2) (_ : unit) : operation list * unit =
   (([] : operation list), ())

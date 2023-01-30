@@ -18,6 +18,6 @@ module Foo = struct
   let f (x : int) = let () = Test.log "hello" in x
 end
 
-let main(_ : unit * unit) : operation list * unit =
+let main (_ : unit) (_ : unit) : operation list * unit =
   let _ = Bah.g 42 in
   ([] : operation list), ()

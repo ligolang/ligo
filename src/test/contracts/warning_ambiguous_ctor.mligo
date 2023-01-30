@@ -6,4 +6,4 @@ type union_b =
 | A of int
 | B of nat
 (* here we expect a warning because both A constructor have the same parameter type *)
-let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
+let main = fun (() : unit) (_: union_b) -> ([]: operation list) , A 1

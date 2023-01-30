@@ -57,7 +57,7 @@ a lot that could be eaten up.  Should probably do some napkin
 calculations for how expensive skipping needs to be to deter people
 from doing it just to chew up address space.  *)
 
-let buy (parameter, storage: buy * storage) =
+let buy (parameter : buy) (storage: storage) =
   let () : unit =
     if Tezos.get_amount () = storage.name_price
     then ()
@@ -82,7 +82,7 @@ let buy (parameter, storage: buy * storage) =
                          next_id = new_id + 1;
                         }
 
-let update_owner (parameter, storage: update_owner * storage) =
+let update_owner (parameter : update_owner) (storage : storage) =
   if (Tezos.get_amount () <> 0mutez)
   then (failwith "Updating owner doesn't cost anything.": (operation list) * storage)
   else
@@ -108,7 +108,7 @@ let update_owner (parameter, storage: update_owner * storage) =
   let updated_identities = Big_map.update id (Some updated_id_details) identities in
   ([]: operation list), {storage with identities = updated_identities}
 
-let update_details (parameter, storage: update_details * storage) =
+let update_details (parameter : update_details) (storage : storage) =
   if (Tezos.get_amount () <> 0mutez)
   then (failwith "Updating details doesn't cost anything.": (operation list) * storage)
   else
@@ -148,7 +148,7 @@ let update_details (parameter, storage: update_details * storage) =
   ([]: operation list), {storage with identities = updated_identities}
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
-let skip (_,storage: unit * storage) =
+let skip (_ : unit) (storage: storage) =
   let () : unit =
     if Tezos.get_amount () = storage.skip_price
     then ()
@@ -156,9 +156,9 @@ let skip (_,storage: unit * storage) =
   in
   ([]: operation list), {storage with next_id = storage.next_id + 1}
 
-let main (action, storage : action * storage) : return =
+let main (action : action) (storage : storage) : return =
   match action with
-  | Buy b -> buy (b, storage)
-  | Update_owner uo -> update_owner (uo, storage)
-  | Update_details ud -> update_details (ud, storage)
-  | Skip -> skip ((), storage)
+  | Buy b -> buy b storage
+  | Update_owner uo -> update_owner uo storage
+  | Update_details ud -> update_details ud storage
+  | Skip -> skip () storage

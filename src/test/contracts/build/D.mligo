@@ -10,6 +10,6 @@ let fb : E.F.foobar = {
 	tete = 3;
 }
 
-let main ((p,s) : int * int) =
+let main (p : int) (s : int) =
 	let s = p + s + toto in
 	([]: operation list),s

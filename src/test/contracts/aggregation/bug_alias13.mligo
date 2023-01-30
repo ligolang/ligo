@@ -5,5 +5,5 @@ module A = struct
     assert (n = current_turn)
 end
 
-let main (_p,_s:unit * unit) : operation list * unit =
+let main (_p : unit) (_s : unit) : operation list * unit =
   ([]:operation list) , A.other 2n

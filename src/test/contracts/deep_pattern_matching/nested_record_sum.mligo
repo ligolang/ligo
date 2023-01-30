@@ -9,6 +9,6 @@ let f (a : r) =
   | { b = D    ; a = _        } -> 4
   | { a = _    ; b = E        } -> 5
 
-let main (_:unit*int):(operation list * int) = 
+let main (_ : unit) (_ : int) : (operation list * int) = 
     let x = f { a=1 ; b=A } in
     ([], x)

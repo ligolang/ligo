@@ -1,3 +1,3 @@
 let test =
-  let f = (fun (_ : (unit * unit)) -> ()) in
-  Test.originate_uncurried f () 0tez
+  let f = (fun (_ : unit) (_ : unit) -> ()) in
+  Test.originate f () 0tez

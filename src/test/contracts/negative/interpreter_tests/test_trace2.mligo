@@ -1,4 +1,4 @@
-let main (_, _ : unit * unit) : operation list * unit =
+let main (_ : unit) (_ : unit) : operation list * unit =
   let _v = (failwith "foo" : unit) in
   ([] : operation list), ()
 
@@ -8,5 +8,5 @@ let make_call (contr : unit contract) =
 
 
 let test =
-  let (ta, _, _) = Test.originate_uncurried main () 1tez in
+  let (ta, _, _) = Test.originate main () 1tez in
   make_call (Test.to_contract ta)

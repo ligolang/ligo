@@ -1,4 +1,4 @@
-let main (p, s : nat list * (unit -> unit)) : operation list * (unit -> unit) =
+let main (p : nat list) (s : unit -> unit) : operation list * (unit -> unit) =
   match p with
   | [] -> (([] : operation list), s)
   | x :: xs ->

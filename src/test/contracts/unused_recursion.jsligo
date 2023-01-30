@@ -28,7 +28,7 @@ let coucou = (storage : t) : t => {
   return bar(n); 
 }
 
-let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+let main = (_ : unit, storage : t) : [list<operation>, t] => {
   return [
     (list([]) as list<operation>), 
     coucou(storage)

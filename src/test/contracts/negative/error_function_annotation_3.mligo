@@ -3,7 +3,7 @@ type op =
   | Sub of int
 
 
-let main (p,s : int  * op) : (operation list) * op =
+let main (p : int) (s : op) : (operation list) * op =
   match s with
   | Add si -> Add si
   | Sub si -> Sub si

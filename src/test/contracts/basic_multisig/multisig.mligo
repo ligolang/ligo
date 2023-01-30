@@ -27,7 +27,7 @@ type parameter = {
 type return = operation list * storage
 
 
-let main (p, s : parameter * storage) : return =
+let main (p : parameter) (s : storage) : return =
   let payload : payload = p.payload in
   let s =
     if p.counter <> s.counter then

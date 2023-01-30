@@ -1,4 +1,4 @@
-let sub (store, delta : tez * tez) : tez option = store - delta
+let sub (store : tez) (delta : tez) : tez option = store - delta
 
-let main (_, store : unit * tez) : operation list * tez =
-  ([] : operation list), Option.unopt (sub (store, 1tez))
+let main (_ : unit) (store : tez) : operation list * tez =
+  ([] : operation list), Option.unopt (sub store 1tez)

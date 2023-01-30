@@ -105,7 +105,6 @@ let params ~raise counter payload keys is_validl f =
 
 (* Provide one valid signature when the threshold is two of two keys *)
 let not_enough_1_of_2 ~raise f () =
-  let open Ast_imperative in
   let program = get_program ~raise f () in
   let exp_failwith = "Not enough signatures passed the check" in
   let keys = gen_keys () in
@@ -115,29 +114,30 @@ let not_enough_1_of_2 ~raise f () =
       make_options ~env:(test_environment ()) ~sender:first_contract ())
   in
   let () =
-    expect_string_failwith
+    expect_string_failwith_twice
       ~raise
       program
       ~options
       "main"
-      (e_pair ~loc test_params (init_storage 2 0 [ keys; gen_keys () ]))
+      test_params
+      (init_storage 2 0 [ keys; gen_keys () ])
       exp_failwith
   in
   ()
 
 
 let unmatching_counter ~raise f () =
-  let open Ast_imperative in
   let program = get_program ~raise f () in
   let exp_failwith = "Counters does not match" in
   let keys = gen_keys () in
   let test_params = params ~raise 1 empty_payload [ keys ] [ true ] f in
   let () =
-    expect_string_failwith
+    expect_string_failwith_twice
       ~raise
       program
       "main"
-      (e_pair ~loc test_params (init_storage 1 0 [ keys ]))
+      test_params
+      (init_storage 1 0 [ keys ])
       exp_failwith
   in
   ()
@@ -146,17 +146,17 @@ let unmatching_counter ~raise f () =
 (* Provide one invalid signature (correct key but incorrect signature)
    when the threshold is one of one key *)
 let invalid_1_of_1 ~raise f () =
-  let open Ast_imperative in
   let program = get_program ~raise f () in
   let exp_failwith = "Invalid signature" in
   let keys = [ gen_keys () ] in
   let test_params = params ~raise 0 empty_payload keys [ false ] f in
   let () =
-    expect_string_failwith
+    expect_string_failwith_twice
       ~raise
       program
       "main"
-      (e_pair ~loc test_params (init_storage 1 0 keys))
+      test_params
+      (init_storage 1 0 keys)
       exp_failwith
   in
   ()
@@ -169,14 +169,14 @@ let valid_1_of_1 ~raise f () =
   let op_list = op_list ~raise in
   let keys = gen_keys () in
   let () =
-    expect_eq_n_trace_aux
+    expect_eq_n_trace_aux_twice
       ~raise
       [ 0; 1; 2 ]
       program
       "main"
       (fun n ->
         let params = params ~raise n empty_payload [ keys ] [ true ] f in
-        e_pair ~loc params (init_storage 1 n [ keys ]))
+        params, init_storage 1 n [ keys ])
       (fun n -> e_pair ~loc op_list (init_storage 1 (n + 1) [ keys ]))
   in
   ()
@@ -190,14 +190,14 @@ let valid_2_of_3 ~raise f () =
   let param_keys = [ gen_keys (); gen_keys () ] in
   let st_keys = param_keys @ [ gen_keys () ] in
   let () =
-    expect_eq_n_trace_aux
+    expect_eq_n_trace_aux_twice
       ~raise
       [ 0; 1; 2 ]
       program
       "main"
       (fun n ->
         let params = params ~raise n empty_payload param_keys [ true; true ] f in
-        e_pair ~loc params (init_storage 2 n st_keys))
+        params, init_storage 2 n st_keys)
       (fun n -> e_pair ~loc op_list (init_storage 2 (n + 1) st_keys))
   in
   ()
@@ -205,7 +205,6 @@ let valid_2_of_3 ~raise f () =
 
 (* Provide one invalid signature and two valid signatures when the threshold is two of three keys *)
 let invalid_3_of_3 ~raise f () =
-  let open Ast_imperative in
   let program = get_program ~raise f () in
   let valid_keys = [ gen_keys (); gen_keys () ] in
   let invalid_key = gen_keys () in
@@ -214,11 +213,12 @@ let invalid_3_of_3 ~raise f () =
   let test_params = params ~raise 0 empty_payload param_keys [ false; true; true ] f in
   let exp_failwith = "Invalid signature" in
   let () =
-    expect_string_failwith
+    expect_string_failwith_twice
       ~raise
       program
       "main"
-      (e_pair ~loc test_params (init_storage 2 0 st_keys))
+      test_params
+      (init_storage 2 0 st_keys)
       exp_failwith
   in
   ()
@@ -226,18 +226,18 @@ let invalid_3_of_3 ~raise f () =
 
 (* Provide two valid signatures when the threshold is three of three keys *)
 let not_enough_2_of_3 ~raise f () =
-  let open Ast_imperative in
   let program = get_program ~raise f () in
   let valid_keys = [ gen_keys (); gen_keys () ] in
   let st_keys = gen_keys () :: valid_keys in
   let test_params = params ~raise 0 empty_payload valid_keys [ true; true ] f in
   let exp_failwith = "Not enough signatures passed the check" in
   let () =
-    expect_string_failwith
+    expect_string_failwith_twice
       ~raise
       program
       "main"
-      (e_pair ~loc test_params (init_storage 3 0 st_keys))
+      test_params
+      (init_storage 3 0 st_keys)
       exp_failwith
   in
   ()

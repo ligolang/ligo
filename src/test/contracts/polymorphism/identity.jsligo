@@ -31,7 +31,7 @@ const x : int = id(1) + ident(1);
 
 type return_ = [list <operation>, storage];
 
-const main = ([_, _] : [parameter, storage]) : return_ => {
+const main = (_ : parameter, _ : storage) : return_ => {
  return [
    (list([]) as list <operation>), x
   ]

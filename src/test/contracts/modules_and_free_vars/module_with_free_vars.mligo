@@ -18,7 +18,7 @@ type storage = tez
 
 type return = (operation) list * storage
 
-let main (action, _ : parameter * storage) : operation list * storage =
+let main (action : parameter) (_ : storage) : operation list * storage =
   (([]: operation list),
    (match action with
       Increment -> bal

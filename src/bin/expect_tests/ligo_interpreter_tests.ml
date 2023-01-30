@@ -4,6 +4,20 @@ let test basename = "./" ^ basename
 let pwd = Caml.Sys.getcwd ()
 let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
 
+(* tests replacing Hashlock tests *)
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_hashlock.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test_commit exited with value ().
+    - test_reveal_no_commit exited with value ().
+    - test_reveal_young_commit exited with value ().
+    - test_reveal_breaks_commit exited with value ().
+    - test_reveal_wrong_commit exited with value ().
+    - test_reveal_no_reuse exited with value ().
+    - test_reveal exited with value (). |}]
+
 (* test comparison on sum/record types *)
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_compare.mligo" ];
@@ -338,8 +352,8 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - tester exited with value <fun>.
-    - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 59-64:
-      1 | let main ((p, k) : int * int) : operation list * int = [], p + k
+    - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 58-63:
+      1 | let main (p : int) (k : int) : operation list * int = [], p + k
 
     Replacing by: (p - k).
     )]. |}]
@@ -1008,9 +1022,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_failure3.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 27-28:
-      2 |   let f = (fun (_ : (unit * unit)) -> ()) in
-      3 |   Test.originate_uncurried f () 0tez
+    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 17-18:
+      2 |   let f = (fun (_ : unit) (_ : unit) -> ()) in
+      3 |   Test.originate f () 0tez
 
     Invalid type(s)
     Cannot unify "unit" with "( list (operation) * unit )". |}]
@@ -1087,9 +1101,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-55:
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
       9 |   let () = Test.set_source addr in
-     10 |   let (_, _, _) = Test.originate_uncurried main () 0tez in
+     10 |   let (_, _, _) = Test.originate main () 0tez in
      11 |   ()
 
     The source address is not an implicit account
@@ -1154,9 +1168,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-56:
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
      18 |   let () = Test.set_baker a in
-     19 |   let (ta, _, _) = Test.originate_uncurried main 41 5tez in
+     19 |   let (ta, _, _) = Test.originate main 41 5tez in
      20 |
 
     Baker cannot bake. Enough rolls? Enough cycles passed?

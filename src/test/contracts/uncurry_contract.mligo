@@ -10,7 +10,7 @@ let mul (x : nat) (y : nat) = x * y
 let mul_test (x : nat) (y : nat) (z : nat) : nat =
   mul x (mul y z)
 
-let main (p, s : unit * unit) : operation list * unit =
+let main (p : unit) (s : unit) : operation list * unit =
   if mul_test 0n 1n 2n <> 0n
   then
     (failwith "impossible" : operation list * unit)

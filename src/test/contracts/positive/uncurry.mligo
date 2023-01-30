@@ -17,7 +17,7 @@ let diff (x : int) (y : int) (z : int) =
   x + y + z
 
 (* thwarting inlining optimisation below, we should add [@inline never] *)
-let main (p, s : int * int) : operation list * int =
+let main (p : int) (s : int) : operation list * int =
   let f1 = add3 p p in
   let s = f1 s + f1 s in
   let f2 = add3 p p in

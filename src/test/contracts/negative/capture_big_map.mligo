@@ -18,7 +18,7 @@ module Impl = struct
 end
 
 
-let main (_, storage: unit * Impl.l) : operation list * Impl.l = 
+let main (_ : unit) (storage: Impl.l) : operation list * Impl.l = 
   let ledger_module = Impl.ledger_module storage in
   let _ = ledger_module.supply ledger_module.data 0n in
   [], storage

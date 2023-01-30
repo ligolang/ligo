@@ -78,4 +78,4 @@ let warn_me = TopS1 42
 let warn_me = TopS2 42
 let dont_warn_me = TopS3 42
 
-let main (_: int * int) : operation list * int = ([] : operation list), 42
+let main (_ : int) (_ : int) : operation list * int = ([] : operation list), 42

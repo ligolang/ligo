@@ -1,6 +1,6 @@
 type return = operation list * string
 
-let main (action, store : string * string) : return =
+let main (action : string) (store : string) : return =
   module Foo = struct
     let store = store
   end in

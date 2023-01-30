@@ -71,7 +71,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
-     31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+     31 | let main = (_ : unit, storage : t) : [list<operation>, t] => {
      32 |   return [
      33 |     (list([]) as list<operation>),
      34 |     coucou(storage)
@@ -135,7 +135,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
-     31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+     31 | let main = (_ : unit, storage : t) : [list<operation>, t] => {
      32 |   return [
      33 |     (list([]) as list<operation>),
      34 |     coucou(storage)

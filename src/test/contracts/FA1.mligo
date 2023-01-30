@@ -80,7 +80,7 @@ let getTotalSupply ((),callback : getTotalSupply) (s:storage) =
 
 
 type parameter = Transfer of transfer | GetBalance of getBalance | GetTotalSupply of getTotalSupply
-let main ((p,s):(parameter * storage)) = match p with
+let main (p : parameter) (s : storage) = match p with
    Transfer       p -> transfer       p s
 |  GetBalance     p -> getBalance     p s
 |  GetTotalSupply p -> getTotalSupply p s

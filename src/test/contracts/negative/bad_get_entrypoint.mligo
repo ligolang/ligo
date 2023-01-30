@@ -1,4 +1,4 @@
-let main ((_, _) : (unit * unit)) : operation list * unit =
+let main (_ : unit) (_ : unit) : operation list * unit =
   let v = (Tezos.get_entrypoint_opt
            "foo"
            ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit contract option) in

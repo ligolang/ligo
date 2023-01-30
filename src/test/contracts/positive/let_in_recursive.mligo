@@ -10,6 +10,6 @@ let rec ref_join
         if left > 0 then 0 else left+1)
     )
 
-let main (_: unit * unit): operation list * unit =
+let main (_ : unit) (_ : unit): operation list * unit =
   let _ = ref_join (1, (fun (_m: int) (_r: int) -> 0)) in
   ([] : operation list), ()

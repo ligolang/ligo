@@ -2,7 +2,7 @@ type storage = {
   owner: address;
 }
 
-let main (amoun, s: tez * storage): operation list * storage =
+let main (amoun : tez) (s: storage): operation list * storage =
      let receiver : contract =
       match (Tezos.get_contract_opt(s.owner) : contract option) with
         Some (contract) -> contract

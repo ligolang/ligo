@@ -7,5 +7,5 @@ let nested (type a) =
     in y
   in x
 
-let main (_ : unit * unit) : operation list * unit =
+let main (_ : unit) (_ : unit) : operation list * unit =
   [], (nested 0 "test" 12 : unit)

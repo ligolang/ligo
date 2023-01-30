@@ -25,7 +25,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/colour.mligo", line 6, characters 16-25:
-      5 | let main ((p,s) : unit * storage) : return =
+      5 | let main (p : unit) (s : storage) : return =
       6 |   let x : nat = [1m[31m1 + 2 + 3[0m (* int *) in
       7 |   [],s
 
@@ -44,7 +44,7 @@ let%expect_test _ =
   [%expect
     {|
       File "../../test/contracts/negative/colour.mligo", line 6, characters 16-25:
-        5 | let main ((p,s) : unit * storage) : return =
+        5 | let main (p : unit) (s : storage) : return =
         6 |   let x : nat = 1 + 2 + 3 (* int *) in
         7 |   [],s
 
@@ -102,7 +102,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/colour.mligo", line 6, characters 16-25:
-      5 | let main ((p,s) : unit * storage) : return =
+      5 | let main (p : unit) (s : storage) : return =
       6 |   let x : nat = [1m[31m1 + 2 + 3[0m (* int *) in
       7 |   [],s
 
@@ -122,7 +122,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/colour.mligo", line 6, characters 16-25:
-      5 | let main ((p,s) : unit * storage) : return =
+      5 | let main (p : unit) (s : storage) : return =
       6 |   let x : nat = 1 + 2 + 3 (* int *) in
       7 |   [],s
 

@@ -11,7 +11,7 @@ let%expect_test _ =
   [%expect
     {test|
 File "../../test/contracts/negative/bad_michelson_insertion_1.mligo", line 4, characters 29-72:
-  3 | let main (p, s : nat * nat ) : operation list * nat =
+  3 | let main (p : nat) (s : nat) : operation list * nat =
   4 |   let f : nat * nat -> nat = [%Michelson ({| ADD |} : nat * nat -> nat)]
   5 |   in [], f (p, s)
 

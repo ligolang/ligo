@@ -20,7 +20,7 @@ let { a = { c = c4 ; d = d4 ; e = e4 }
 
 type storage = nat * int * string
 
-let main (_,_ : unit * storage) : operation list * storage
+let main (_ : unit) (_ : storage) : operation list * storage
   = [], ( c1 + c2 + c3 + c4 + c5 + c6
         , d1 + d2 + d3 + d4 + d5 + d6
         , e1 ^ e2 ^ e3 ^ e4 ^ e5 ^ e6 )

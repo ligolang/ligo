@@ -13,7 +13,7 @@ type storage1 = [@layout tree] {
 }
 type return = operation list * storage
 
-let main ((p,s) : unit * storage) : return =
+let main (p : unit) (s : storage) : return =
   let s : storage1 = {
     tata = 0;
     toto = 1;

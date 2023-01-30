@@ -40,7 +40,7 @@ type storage = chest_opening_result
 type return = operation list * storage
 type parameter = | Ok_o of bytes | Fail_d | Fail_t
 
-let main ((p,_):parameter * storage) : return =
+let main (p : parameter) (_ : storage) : return =
   let s =
     match p with
     | Ok_o b -> create_ok_open b 

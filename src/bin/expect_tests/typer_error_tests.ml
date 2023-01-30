@@ -267,7 +267,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/error_typer_1.jsligo", line 9, character 0 to line 12, character 1:
       8 |
-      9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
+      9 | let main = (param : action, oldStorage : storage) : [list<operation>, storage] => {
      10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
      11 |     return [list([]) as list<operation>, newStorage];
      12 | }
@@ -284,7 +284,7 @@ let%expect_test _ =
     Toplevel let declaration are silently change to const declaration.
 
     File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 31-60:
-      9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
+      9 | let main = (param : action, oldStorage : storage) : [list<operation>, storage] => {
      10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
      11 |     return [list([]) as list<operation>, newStorage];
 
@@ -344,9 +344,9 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/negative/override_option.mligo", line 3, characters 53-57:
+    File "../../test/contracts/negative/override_option.mligo", line 3, characters 57-61:
       2 |
-      3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
+      3 | let main (x : bool) (y : bool) = ([] : operation list), (None : option)
 
     Invalid type(s)
     Cannot unify "option (^a)" with "int".

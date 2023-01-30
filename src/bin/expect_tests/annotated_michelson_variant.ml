@@ -654,27 +654,27 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
               20 |
-              21 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+              21 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
               22 |   let o = match store with
              :
              Warning: unused variable "action".
              Hint: replace it by "_action" to prevent this warning.
 
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 42-47:
               27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-              29 |   let o = (C 1n) in
-             :
-             Warning: unused variable "action".
-             Hint: replace it by "_action" to prevent this warning.
-
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
-              27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
               29 |   let o = (C 1n) in
              :
              Warning: unused variable "store".
              Hint: replace it by "_store" to prevent this warning.
+
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+              27 |
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+              29 |   let o = (C 1n) in
+             :
+             Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
               37 |     | Four a -> Two ("lol")
@@ -718,7 +718,7 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
               31 |
-              32 | let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+              32 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
               33 |   let o = match store with
              :
              Warning: unused variable "action".
@@ -759,27 +759,27 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
               20 |
-              21 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+              21 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
               22 |   let o = match store with
              :
              Warning: unused variable "action".
              Hint: replace it by "_action" to prevent this warning.
 
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 42-47:
               27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-              29 |   let o = (C 1n) in
-             :
-             Warning: unused variable "action".
-             Hint: replace it by "_action" to prevent this warning.
-
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
-              27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
               29 |   let o = (C 1n) in
              :
              Warning: unused variable "store".
              Hint: replace it by "_store" to prevent this warning.
+
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+              27 |
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+              29 |   let o = (C 1n) in
+             :
+             Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
               37 |     | Four a -> Two ("lol")
@@ -823,7 +823,7 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
               31 |
-              32 | let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+              32 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
               33 |   let o = match store with
              :
              Warning: unused variable "action".
@@ -859,27 +859,27 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
               20 |
-              21 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+              21 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
               22 |   let o = match store with
              :
              Warning: unused variable "action".
              Hint: replace it by "_action" to prevent this warning.
 
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 42-47:
               27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-              29 |   let o = (C 1n) in
-             :
-             Warning: unused variable "action".
-             Hint: replace it by "_action" to prevent this warning.
-
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
-              27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
               29 |   let o = (C 1n) in
              :
              Warning: unused variable "store".
              Hint: replace it by "_store" to prevent this warning.
+
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+              27 |
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+              29 |   let o = (C 1n) in
+             :
+             Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
               37 |     | Four a -> Two ("lol")
@@ -923,7 +923,7 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
               31 |
-              32 | let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+              32 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
               33 |   let o = match store with
              :
              Warning: unused variable "action".
@@ -977,27 +977,27 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
               20 |
-              21 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+              21 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
               22 |   let o = match store with
              :
              Warning: unused variable "action".
              Hint: replace it by "_action" to prevent this warning.
 
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 42-47:
               27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-              29 |   let o = (C 1n) in
-             :
-             Warning: unused variable "action".
-             Hint: replace it by "_action" to prevent this warning.
-
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
-              27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
               29 |   let o = (C 1n) in
              :
              Warning: unused variable "store".
              Hint: replace it by "_store" to prevent this warning.
+
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+              27 |
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+              29 |   let o = (C 1n) in
+             :
+             Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
               37 |     | Four a -> Two ("lol")
@@ -1041,7 +1041,7 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
               31 |
-              32 | let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+              32 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
               33 |   let o = match store with
              :
              Warning: unused variable "action".
@@ -1077,27 +1077,27 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
               20 |
-              21 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+              21 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
               22 |   let o = match store with
              :
              Warning: unused variable "action".
              Hint: replace it by "_action" to prevent this warning.
 
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 42-47:
               27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-              29 |   let o = (C 1n) in
-             :
-             Warning: unused variable "action".
-             Hint: replace it by "_action" to prevent this warning.
-
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
-              27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
               29 |   let o = (C 1n) in
              :
              Warning: unused variable "store".
              Hint: replace it by "_store" to prevent this warning.
+
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+              27 |
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+              29 |   let o = (C 1n) in
+             :
+             Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
               37 |     | Four a -> Two ("lol")
@@ -1141,7 +1141,7 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
               31 |
-              32 | let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+              32 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
               33 |   let o = match store with
              :
              Warning: unused variable "action".
@@ -1177,27 +1177,27 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
               20 |
-              21 | let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
+              21 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
               22 |   let o = match store with
              :
              Warning: unused variable "action".
              Hint: replace it by "_action" to prevent this warning.
 
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 42-47:
               27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-              29 |   let o = (C 1n) in
-             :
-             Warning: unused variable "action".
-             Hint: replace it by "_action" to prevent this warning.
-
-             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
-              27 |
-              28 | let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
               29 |   let o = (C 1n) in
              :
              Warning: unused variable "store".
              Hint: replace it by "_store" to prevent this warning.
+
+             File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
+              27 |
+              28 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+              29 |   let o = (C 1n) in
+             :
+             Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
               37 |     | Four a -> Two ("lol")
@@ -1241,7 +1241,7 @@ let%expect_test _ =
 
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
               31 |
-              32 | let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
+              32 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
               33 |   let o = match store with
              :
              Warning: unused variable "action".

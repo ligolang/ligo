@@ -6,5 +6,5 @@ let escaping xs =
   in
   List.iter f xs
 
-let main ((), storage : unit * int) : operation list * storage = 
+let main (() : unit) (storage : int) : operation list * storage = 
   [], storage

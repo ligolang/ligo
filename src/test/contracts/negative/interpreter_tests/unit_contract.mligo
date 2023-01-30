@@ -1,2 +1,2 @@
-let main (_ : unit * unit) : operation list * unit =
+let main (_ : unit) (_ : unit) : operation list * unit =
     ([] : operation list), ()

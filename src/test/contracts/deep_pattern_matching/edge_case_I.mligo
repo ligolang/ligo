@@ -1,6 +1,6 @@
 type t = A0 | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | A9 | A10
 
-let main (p, _ : t * int) : operation list * int =
+let main (p : t) (_ : int) : operation list * int =
   [], (match p with
     A0  -> 0
   | A1  -> 1

@@ -87,9 +87,9 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "warning_ambiguous_ctor.mligo" ];
   [%expect
     {|
-  File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-64:
+  File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 66-69:
     8 | (* here we expect a warning because both A constructor have the same parameter type *)
-    9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
+    9 | let main = fun (() : unit) (_: union_b) -> ([]: operation list) , A 1
 
   Warning: The type of "A(1)" is ambiguous: Inferred type is "union_b" but could be of type "union_a".
   Hint: You might want to add a type annotation.

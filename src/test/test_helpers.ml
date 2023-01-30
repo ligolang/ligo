@@ -270,6 +270,35 @@ let typed_program_with_imperative_input_to_michelson
   , aggregated.type_expression )
 
 
+let typed_program_with_imperative_input_to_michelson_twice
+    ~raise
+    (program : Ast_typed.program)
+    (entry_point : string)
+    (input1 : Ast_imperative.expression)
+    (input2 : Ast_imperative.expression)
+    : Stacking.compiled_expression * Ast_aggregated.type_expression
+  =
+  Printexc.record_backtrace true;
+  let core1 = Ligo_compile.Of_imperative.compile_expression ~raise input1 in
+  let core2 = Ligo_compile.Of_imperative.compile_expression ~raise input2 in
+  let app = Ligo_compile.Of_core.apply_twice entry_point core1 core2 in
+  let typed_app =
+    Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program app
+  in
+  (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
+  let aggregated =
+    Ligo_compile.Of_typed.compile_expression_in_context
+      ~raise
+      ~options:options.middle_end
+      program
+      typed_app
+  in
+  let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+  let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
+  ( Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c
+  , aggregated.type_expression )
+
+
 let run_typed_program_with_imperative_input
     ~raise
     ?options
@@ -299,10 +328,58 @@ let run_typed_program_with_imperative_input
   | Runned_result.Fail _ -> raise.error test_not_expected_to_fail
 
 
+let run_typed_program_with_imperative_input_twice
+    ~raise
+    ?options
+    (program : Ast_typed.program)
+    (entry_point : string)
+    (input1 : Ast_imperative.expression)
+    (input2 : Ast_imperative.expression)
+    : Ast_core.expression
+  =
+  let michelson_program, ty =
+    typed_program_with_imperative_input_to_michelson_twice
+      ~raise
+      program
+      entry_point
+      input1
+      input2
+  in
+  let michelson_output =
+    Ligo_run.Of_michelson.run_no_failwith
+      ~raise
+      ?options
+      michelson_program.expr
+      michelson_program.expr_ty
+  in
+  let res =
+    Decompile.Of_michelson.decompile_expression
+      ~raise
+      ty
+      (Runned_result.Success michelson_output)
+  in
+  match res with
+  | Runned_result.Success exp -> exp
+  | Runned_result.Fail _ -> raise.error test_not_expected_to_fail
+
+
 let expect ~raise ?options program entry_point input expecter =
   let result =
     trace ~raise (test_run_tracer entry_point)
     @@ run_typed_program_with_imperative_input ?options program entry_point input
+  in
+  expecter result
+
+
+let expect_twice ~raise ?options program entry_point input1 input2 expecter =
+  let result =
+    trace ~raise (test_run_tracer entry_point)
+    @@ run_typed_program_with_imperative_input_twice
+         ?options
+         program
+         entry_point
+         input1
+         input2
   in
   expecter result
 
@@ -314,9 +391,50 @@ let expect_fail ~raise ?options program entry_point input =
   @@ run_typed_program_with_imperative_input ?options program entry_point input
 
 
+let expect_fail_twice ~raise ?options program entry_point input1 input2 =
+  trace ~raise (test_run_tracer entry_point)
+  @@ fun ~raise ->
+  Assert.assert_fail ~raise test_expected_to_fail
+  @@ run_typed_program_with_imperative_input_twice
+       ?options
+       program
+       entry_point
+       input1
+       input2
+
+
 let expect_string_failwith ~raise ?options program entry_point input expected_failwith =
   let michelson_program, _ =
     typed_program_with_imperative_input_to_michelson ~raise program entry_point input
+  in
+  let err =
+    Ligo_run.Of_michelson.run_failwith
+      ~raise
+      ?options
+      michelson_program.expr
+      michelson_program.expr_ty
+  in
+  match err with
+  | String (_, str) when String.equal str expected_failwith -> ()
+  | _ -> raise.error test_expected_to_fail
+
+
+let expect_string_failwith_twice
+    ~raise
+    ?options
+    program
+    entry_point
+    input1
+    input2
+    expected_failwith
+  =
+  let michelson_program, _ =
+    typed_program_with_imperative_input_to_michelson_twice
+      ~raise
+      program
+      entry_point
+      input1
+      input2
   in
   let err =
     Ligo_run.Of_michelson.run_failwith
@@ -337,6 +455,15 @@ let expect_eq ~raise ?options program entry_point input expected =
     @@ Ast_core.Misc.assert_value_eq (expected, result)
   in
   expect ~raise ?options program entry_point input expecter
+
+
+let expect_eq_twice ~raise ?options program entry_point input1 input2 expected =
+  let expected = expression_to_core ~raise expected in
+  let expecter result =
+    trace_option ~raise (test_expect_tracer expected result)
+    @@ Ast_core.Misc.assert_value_eq (expected, result)
+  in
+  expect_twice ~raise ?options program entry_point input1 input2 expecter
 
 
 let expect_eq_core ~raise ?options program entry_point input expected =
@@ -404,6 +531,19 @@ let expect_n_aux ~raise ?options lst program entry_point make_input make_expecte
   ()
 
 
+let expect_n_aux_twice ~raise ?options lst program entry_point make_input make_expecter =
+  let aux n =
+    let input1, input2 = make_input n in
+    let expecter = make_expecter n in
+    trace ~raise (test_expect_n_tracer n)
+    @@
+    let result = expect_twice ?options program entry_point input1 input2 expecter in
+    result
+  in
+  let _ = List.map ~f:aux lst in
+  ()
+
+
 let expect_eq_n_trace_aux ~raise ?options lst program entry_point make_input make_expected
   =
   let aux n =
@@ -411,6 +551,25 @@ let expect_eq_n_trace_aux ~raise ?options lst program entry_point make_input mak
     let expected = make_expected n in
     trace ~raise (test_expect_n_tracer n)
     @@ expect_eq ?options program entry_point input expected
+  in
+  let _ = List.map ~f:aux lst in
+  ()
+
+
+let expect_eq_n_trace_aux_twice
+    ~raise
+    ?options
+    lst
+    program
+    entry_point
+    make_input
+    make_expected
+  =
+  let aux n =
+    let input1, input2 = make_input n in
+    let expected = make_expected n in
+    trace ~raise (test_expect_n_tracer n)
+    @@ expect_eq_twice ?options program entry_point input1 input2 expected
   in
   let _ = List.map ~f:aux lst in
   ()
@@ -465,7 +624,20 @@ let expect_eq_n_aux ~raise ?options lst program entry_point make_input make_expe
   ()
 
 
+let expect_eq_n_aux_twice ~raise ?options lst program entry_point make_input make_expected
+  =
+  let aux n =
+    let input1, input2 = make_input n in
+    let expected = make_expected n in
+    trace ~raise (test_expect_eq_n_tracer n)
+    @@ expect_eq_twice ?options program entry_point input1 input2 expected
+  in
+  let () = List.iter ~f:aux lst in
+  ()
+
+
 let expect_eq_n ?options = expect_eq_n_aux ?options [ 0; 1; 2; 42; 163; -1 ]
+let expect_eq_n_twice ?options = expect_eq_n_aux_twice ?options [ 0; 1; 2; 42; 163; -1 ]
 let expect_eq_n_pos ?options = expect_eq_n_aux ?options [ 0; 1; 2; 42; 163 ]
 let expect_eq_n_strict_pos ?options = expect_eq_n_aux ?options [ 2; 42; 163 ]
 let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [ 0; 1; 2; 10 ]
