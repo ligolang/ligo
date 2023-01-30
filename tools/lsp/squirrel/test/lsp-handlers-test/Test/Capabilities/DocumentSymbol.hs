@@ -1,7 +1,5 @@
 module Test.Capabilities.DocumentSymbol
-  ( unit_document_symbols_example_heap
-  , unit_document_symbols_example_access
-  , unit_document_symbols_example_let_camligo
+  ( unit_document_symbols_example_let_camligo
   , unit_document_symbols_example_let_jsligo
   ) where
 
@@ -39,24 +37,6 @@ mkUnitTest fp expectedSymbols = do
   case eitherDocSyms of
     Left _   -> error "Expected a list of SymbolInformation"
     Right symbols -> fmap simplify symbols `shouldBe` expectedSymbols
-
-unit_document_symbols_example_heap :: Assertion
-unit_document_symbols_example_heap = mkUnitTest "heap.ligo"
-    [ ("heap", SkTypeParameter, (3, 5), (3, 9))
-    , ("is_empty", SkFunction, (5,9), (5,17))
-    , ("get_top", SkFunction, (7, 9), (7, 16))
-    , ("pop_switch", SkFunction, (9, 9), (9, 19))
-    , ("pop_", SkFunction, (22, 9), (22, 13))
-    , ("insert", SkFunction, (46, 9), (46, 15))
-    , ("pop", SkFunction, (66, 9), (66, 12))
-    , ("const empty",SkConstant,(105,6),(105,11))
-    ]
-
-unit_document_symbols_example_access :: Assertion
-unit_document_symbols_example_access = mkUnitTest "access.ligo"
-    [ ("const owner", SkConstant , (2, 6), (2, 11))
-    , ("main", SkFunction, (4,9), (4,13))
-    ]
 
 unit_document_symbols_example_let_camligo :: Assertion
 unit_document_symbols_example_let_camligo = mkUnitTest "let.mligo"

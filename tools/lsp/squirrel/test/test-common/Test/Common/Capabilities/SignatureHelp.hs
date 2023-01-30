@@ -34,57 +34,13 @@ data TestInfo = TestInfo
 caseInfos :: [TestInfo]
 caseInfos =
   [ TestInfo
-    { tiContract = "all-okay.ligo"
-    , tiCursor = point 3 44
+    { tiContract = "unclosed-paren.mligo"
+    , tiCursor = point 3 32
     , tiFunction = "bar"
-    , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
+    , tiLabel = "let bar (i : int)"
+    , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
     , tiActiveParamNo = 0
     }
-  , TestInfo
-    { tiContract = "no-params.ligo"
-    , tiCursor = point 3 44
-    , tiFunction = "bar"
-    , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
-    , tiActiveParamNo = 0
-    }
-  , TestInfo
-    { tiContract = "unclosed-paren.ligo"
-    , tiCursor = point 3 44
-    , tiFunction = "bar"
-    , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
-    , tiActiveParamNo = 0
-    }
-  , TestInfo
-    { tiContract = "no-semicolon-in-block-after-var-decl.ligo"
-    , tiCursor = point 4 24
-    , tiFunction = "bar"
-    , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
-    , tiActiveParamNo = 0
-    }
-  , TestInfo
-    { tiContract = "no-semicolon-in-block-after-const-decl.ligo"
-    , tiCursor = point 4 24
-    , tiFunction = "bar"
-    , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
-    , tiActiveParamNo = 0
-    }
-  , TestInfo
-    { tiContract = "active-parameter-is-2nd.ligo"
-    , tiCursor = point 3 47
-    , tiFunction = "bar"
-    , tiLabel = "function bar (const a : int; const b : int)"
-    , tiParameters =
-      [ ParameterBinding (IsVar "a") (Just $ AliasType "int")
-      , ParameterBinding (IsVar "b") (Just $ AliasType "int")
-      ]
-    , tiActiveParamNo = 1
-    }
-
   , TestInfo
     { tiContract = "all-okay.mligo"
     , tiCursor = point 3 32

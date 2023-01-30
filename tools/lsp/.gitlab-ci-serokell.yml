@@ -109,7 +109,9 @@ vscode-extension-integration-tests:
   only: [merge_requests, tooling]
   script:
     - git add ./ligo # Ligo binary is needed for this tests
-    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.integration-test
+    - cd tools/lsp
+    - nix build $FLAKE_FLAGS .#tests.x86_64-linux.integration-test
+    - nix develop .#integration-test -c bash -c 'cd ./squirrel && ../result/bin/integration-test'
 
 vscode-extension-sexp-tests:
   stage: lsp
@@ -139,6 +141,17 @@ vscode-extension-ligo-contracts-test:
   only: [merge_requests, tooling]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.ligo-contracts-test
+
+vscode-extension-docker-test:
+  stage: lsp
+  needs: [ligo-build]
+  only: [merge_requests]
+  tags: [nix-with-docker]
+  script:
+    - git add ./ligo # Ligo binary is needed for these tests
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#tests.x86_64-linux.vscode-extenstion-test-docker-image
+    - docker load -i result
+    - docker run --rm vscode-extension-test
 
 vscode-extension-linux:
   stage: nix

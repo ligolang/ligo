@@ -70,14 +70,14 @@ unit_two_projects = do
         actual <- getBuildGraph
         liftIO $ actual `shouldBe` expectedAbsolute
   runHandlersTest projectPathAbsolute $ do
-    aDoc <- openLigoDoc $ "a" </> "a.ligo"
-    checkGraph $ G.vertex $ "a" </> "a.ligo"
-    bDoc <- openLigoDoc $ "b" </> "b.ligo"
-    checkGraph $ G.vertex $ "b" </> "b.ligo"
+    aDoc <- openLigoDoc $ "a" </> "a.jsligo"
+    checkGraph $ G.vertex $ "a" </> "a.jsligo"
+    bDoc <- openLigoDoc $ "b" </> "b.jsligo"
+    checkGraph $ G.vertex $ "b" </> "b.jsligo"
     _ <- getHover aDoc (Position 0 7)
-    checkGraph $ G.vertex $ "a" </> "a.ligo"
+    checkGraph $ G.vertex $ "a" </> "a.jsligo"
     _ <- getHover bDoc (Position 0 7)
-    checkGraph $ G.vertex $ "b" </> "b.ligo"
+    checkGraph $ G.vertex $ "b" </> "b.jsligo"
 
 unit_backward_include :: Assertion
 unit_backward_include = do
@@ -95,4 +95,4 @@ unit_ignore_paths =
 
 unit_ignore_included :: Assertion
 unit_ignore_included =
-  checkBuildGraph "ignore_included" "include_me.pligo" $ G.vertex "include_me.pligo"
+  checkBuildGraph "ignore_included" "include_me.jsligo" $ G.vertex "include_me.jsligo"

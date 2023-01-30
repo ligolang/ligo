@@ -25,8 +25,8 @@ unit_can't_hover_when_disabled :: Assertion
 unit_can't_hover_when_disabled = do
   let config = def {_cDisabledFeatures = fromList [SomeClientMethod STextDocumentHover]}
   hover <- runHandlersTestWithConfig config contractsDir do
-    doc <- openLigoDoc "eq_bool.ligo"
-    getHover doc (Position 3 11)
+    doc <- openLigoDoc "eq_bool.jsligo"
+    getHover doc (Position 3 12)
   seq hover pass `shouldThrow` expectedError
 
 -- Ensure that we can disable hover by updating the configuration, even after startup.
@@ -34,9 +34,9 @@ unit_can't_hover_after_disabling :: Assertion
 unit_can't_hover_after_disabling = do
   let config = def {_cDisabledFeatures = fromList [SomeClientMethod STextDocumentHover]}
   hover <- runHandlersTest contractsDir $ do
-    doc <- openLigoDoc "eq_bool.ligo"
+    doc <- openLigoDoc "eq_bool.jsligo"
     sendNotification SWorkspaceDidChangeConfiguration (DidChangeConfigurationParams (toJSON config))
-    getHover doc (Position 3 11)
+    getHover doc (Position 3 12)
   seq hover pass `shouldThrow` expectedError
 
 expectedError :: SessionException -> Bool

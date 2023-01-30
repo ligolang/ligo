@@ -40,39 +40,16 @@ data TestInfo = TestInfo
 caseInfos :: forall parser. ScopeTester parser => [TestInfo]
 caseInfos =
   [ TestInfo
-    { tiContract = "no-prefix.ligo"
-    , tiPosition = (1, 46)
+    { tiContract = "no-prefix.mligo"
+    , tiPosition = (1, 33)
     , tiExpected = []
     , tiGraph = Includes G.empty
     }
   , TestInfo
-    { tiContract = "yes-prefix.ligo"
-    , tiPosition = (1, 48)
+    { tiContract = "yes-prefix.mligo"
+    , tiPosition = (1, 36)
     , tiExpected =
       [ Completion (Just CiVariable) (NameCompletion "parameter") (Just $ TypeCompletion "int") (DocCompletion "")
-      , CompletionKeyword (NameCompletion "patch")
-      ]
-    , tiGraph = Includes G.empty
-    }
-
-  , TestInfo
-    { tiContract = "type-attribute.ligo"
-    , tiPosition = (15, 35)
-    , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
-      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
-      , CompletionKeyword (NameCompletion "big_map")
-      , CompletionKeyword (NameCompletion "if")
-      , CompletionKeyword (NameCompletion "begin")
-      , CompletionKeyword (NameCompletion "list")
-      , CompletionKeyword (NameCompletion "skip")
-      , CompletionKeyword (NameCompletion "in")
-      , CompletionKeyword (NameCompletion "while")
-      , CompletionKeyword (NameCompletion "is")
-      , CompletionKeyword (NameCompletion "nil")
-      , CompletionKeyword (NameCompletion "recursive")
-      , CompletionKeyword (NameCompletion "contains")
-      , CompletionKeyword (NameCompletion "function")
       ]
     , tiGraph = Includes G.empty
     }
@@ -102,15 +79,6 @@ caseInfos =
       ]
     , tiGraph = Includes G.empty
     }
-
-  , TestInfo
-    { tiContract = "type-constructor.ligo"
-    , tiPosition = (5, 21)
-    , tiExpected =
-      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
-      ]
-    , tiGraph = Includes G.empty
-    }
   , TestInfo
     { tiContract = "type-constructor.mligo"
     , tiPosition = (5, 19)
@@ -134,25 +102,6 @@ caseInfos =
     , tiExpected =
       [ Completion (Just CiField) (NameCompletion "sum") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "struct")
-      ]
-    , tiGraph = Includes G.empty
-    }
-
-  , TestInfo
-    { tiContract = "nested-fields.ligo"
-    , tiPosition = (21, 37)
-    , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
-      , CompletionKeyword (NameCompletion "set")
-      , CompletionKeyword (NameCompletion "list")
-      , CompletionKeyword (NameCompletion "skip")
-      , CompletionKeyword (NameCompletion "case")
-      , CompletionKeyword (NameCompletion "else")
-      , CompletionKeyword (NameCompletion "step")
-      , CompletionKeyword (NameCompletion "is")
-      , CompletionKeyword (NameCompletion "recursive")
-      , CompletionKeyword (NameCompletion "const")
-      , CompletionKeyword (NameCompletion "contains")
       ]
     , tiGraph = Includes G.empty
     }
@@ -196,29 +145,29 @@ caseInfos =
     , tiGraph = Includes G.empty
     }
   , TestInfo
-    { tiContract = "import/outer-includer.ligo"
+    { tiContract = "import/outer-includer.jsligo"
     , tiPosition = (1, 11)
     , tiExpected =
-        [ ImportCompletion (NameCompletion "outer-includer2.ligo")
-        , ImportCompletion (NameCompletion "innerFolder/inner-includer.ligo")
+        [ ImportCompletion (NameCompletion "outer-includer2.jsligo")
+        , ImportCompletion (NameCompletion "innerFolder/inner-includer.jsligo")
         ]
     , tiGraph = Includes $ G.vertices
-        [ "./test/contracts/completion/import/outer-includer.ligo"
-        , "./test/contracts/completion/import/outer-includer2.ligo"
-        , "./test/contracts/completion/import/innerFolder/inner-includer.ligo"
+        [ "./test/contracts/completion/import/outer-includer.jsligo"
+        , "./test/contracts/completion/import/outer-includer2.jsligo"
+        , "./test/contracts/completion/import/innerFolder/inner-includer.jsligo"
         ]
     }
   , TestInfo
-    { tiContract = "import/innerFolder/inner-includer.ligo"
+    { tiContract = "import/innerFolder/inner-includer.jsligo"
     , tiPosition = (1, 11)
     , tiExpected =
-        [ ImportCompletion (NameCompletion "../outer-includer2.ligo")
-        , ImportCompletion (NameCompletion "../outer-includer.ligo")
+        [ ImportCompletion (NameCompletion "../outer-includer2.jsligo")
+        , ImportCompletion (NameCompletion "../outer-includer.jsligo")
         ]
     , tiGraph = Includes $ G.vertices
-        [ "./test/contracts/completion/import/outer-includer.ligo"
-        , "./test/contracts/completion/import/outer-includer2.ligo"
-        , "./test/contracts/completion/import/innerFolder/inner-includer.ligo"
+        [ "./test/contracts/completion/import/outer-includer.jsligo"
+        , "./test/contracts/completion/import/outer-includer2.jsligo"
+        , "./test/contracts/completion/import/innerFolder/inner-includer.jsligo"
         ]
     }
   , TestInfo

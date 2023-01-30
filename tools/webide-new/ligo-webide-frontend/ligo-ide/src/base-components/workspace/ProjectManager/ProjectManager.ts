@@ -23,6 +23,36 @@ import { RefreshData } from "~/base-components/filetree/types";
 import { GistContent } from "~/base-components/file-ops/GistFs";
 import MonacoEditor from "~/base-components/code-editor/MonacoEditor/MonacoEditor";
 
+export type RawGistProjectType = {
+  type: "rawgist";
+  obj: GistContent;
+  gistId: string;
+  name?: string;
+};
+
+export type ProcessGistProject = {
+  type: "gist";
+  name: string;
+  obj: GistContent;
+};
+
+export type ProcessGitProject = {
+  type: "git";
+  name: string;
+  gitLink: string;
+  branch?: string;
+  token?: string;
+};
+
+export type ProcessTemplateProject = {
+  type: "template";
+  name: string;
+  template: string;
+  syntax: string;
+};
+
+export type ProcessProjectType = ProcessGistProject | ProcessGitProject | ProcessTemplateProject;
+
 export default class ProjectManager {
   static ProjectSettings = ProjectSettings;
 
@@ -68,19 +98,30 @@ export default class ProjectManager {
   }
 
   static async createProject(name: string, template: string, syntax: string, gitLink?: string) {
-    return this.processProject(name, undefined, template, syntax, gitLink);
+    if (gitLink) {
+      return this.processProject({
+        type: "git",
+        name,
+        gitLink: `https://github.com/ligolang/${gitLink}`,
+      });
+    }
+    return this.processProject({ type: "template", name, template, syntax });
   }
 
-  static async openProject(obj: GistContent, gistId: string, name?: string) {
-    const projectData = obj;
+  static async openProject(projectInfo: RawGistProjectType | ProcessGitProject) {
+    if (projectInfo.type === "git") {
+      return this.processProject(projectInfo);
+    }
+
+    const projectData = projectInfo.obj;
 
     const projectsNames = await fileOps.getProjectNames();
 
     /* eslint-disable */
     const config = JSON.parse(projectData["/config.json"].content || "{}");
-    config.gistId = gistId;
+    config.gistId = projectInfo.gistId;
 
-    const projectNameFromParams = name || (config.projectName ? config.projectName : gistId);
+    const projectNameFromParams = projectInfo.name || (config.projectName ? config.projectName : projectInfo.gistId);
     let projectName: string = projectNameFromParams;
 
     if (!projectsNames.includes(projectNameFromParams)) {
@@ -106,16 +147,12 @@ export default class ProjectManager {
     projectData["/config.json"].content = JSON.stringify(config);
     /* eslint-enable */
 
-    return this.processProject(projectName, projectData, undefined, undefined, undefined);
+    return this.processProject({ type: "gist", name: projectName, obj: projectData });
   }
 
-  static async processProject(
-    name: string,
-    obj?: GistContent,
-    template?: string,
-    syntax?: string,
-    gitLink?: string
-  ) {
+  static async processProject(projectData: ProcessProjectType) {
+    const { name } = projectData;
+
     const data = {
       id: name,
       author: "local",
@@ -129,33 +166,36 @@ export default class ProjectManager {
       await fileOps.writeDirectory(data.path);
     }
 
-    if (obj) {
-      for (const key of Object.keys(obj)) {
+    if (projectData.type === "gist") {
+      for (const key of Object.keys(projectData.obj)) {
         try {
-          await fileOps.writeFile(`${data.path}/${key}`, obj[key].content);
+          await fileOps.writeFile(`${data.path}/${key}`, projectData.obj[key].content);
         } catch (error) {
           console.error(error);
         }
       }
-    } else if (template && syntax) {
-      if (gitLink) {
+    }
+
+    if (projectData.type === "git") {
+      await fileOps.cloneGitRepo(
+        data.name,
+        projectData.gitLink,
+        projectData.branch,
+        projectData.token
+      );
+    }
+
+    if (projectData.type === "template") {
+      const examples = getExamples(data.name, projectData.template, data.name, projectData.syntax);
+
+      for (const file of Object.keys(examples)) {
+        const fileObject = examples[file];
         try {
-          await fileOps.cloneGitRepo(data.name, `https://github.com/ligolang/${gitLink}`);
+          if (fileObject) {
+            await fileOps.writeFile(fileObject.name, fileObject.content);
+          }
         } catch (error) {
           console.error(error);
-        }
-      } else {
-        const examples = getExamples(data.name, template, data.name, syntax);
-
-        for (const file of Object.keys(examples)) {
-          const fileObject = examples[file];
-          try {
-            if (fileObject) {
-              await fileOps.writeFile(fileObject.name, fileObject.content);
-            }
-          } catch (error) {
-            console.error(error);
-          }
         }
       }
     }

@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 module Test.Common.Diagnostics
-  ( simpleTest
+  ( MessageGroup (..), DiagnosticTest (..), mkRange, contractsDir
+  , simpleTest
   , treeDoesNotContainNameTest
   , parseDiagnosticsDriver
   ) where
@@ -19,7 +20,6 @@ import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.Util (ScopeTester)
 import Test.Tasty.HUnit (Assertion)
 
-
 data MessageGroup = MessageGroup
   { mgParserMsgs   :: [Message]
   , mgCompilerMsgs :: [Message]
@@ -32,14 +32,17 @@ data DiagnosticTest = DiagnosticTest
   , dtFilteredMsgs :: MessageGroup
   }
 
+contractsDir :: FilePath
+contractsDir = Util.contractsDir </> "diagnostic"
+
 simpleTest :: IO DiagnosticTest
 simpleTest = do
-  dtFile <- makeAbsolute $ inputDir </> "a.mligo"
+  dtFile <- makeAbsolute $ contractsDir </> "a.mligo"
   let
     unexpectedMsg = Message (Unexpected ":: int") SeverityError (mkRange (3, 17) (3, 23) dtFile)
     compilerMsgs =
       [ Message
-        (FromLIGO "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n")
+        (FromLIGO "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * an arrow '->' followed by the function body;\n  * the assignment symbol '=' followed by an expression.\n")
         SeverityError
         (mkRange (3, 17) (3, 19) dtFile)
       ]
@@ -64,7 +67,7 @@ simpleTest = do
 -- LIGO-474 regression test
 treeDoesNotContainNameTest :: IO DiagnosticTest
 treeDoesNotContainNameTest = do
-  dtFile <- makeAbsolute $ inputDir </> "LIGO-474.mligo"
+  dtFile <- makeAbsolute $ contractsDir </> "LIGO-474.mligo"
   let
     msgGroup = MessageGroup
       { mgParserMsgs =
@@ -75,6 +78,22 @@ treeDoesNotContainNameTest = do
           (FromLIGO "Ill-formed type declaration.\nAt this point, one of the following is expected:\n  * the name of the type being defined;\n  * a quoted type parameter, like 'a;\n  * a tuple of quoted type parameters, like ('a, 'b).\n")
           SeverityError
           (mkRange (2, 9) (2, 10) dtFile)
+        , Message
+          (FromLIGO "Type \"storage\" not found. ")
+          SeverityError
+          (mkRange (14, 34) (14, 41) dtFile)
+        , Message
+          (FromLIGO "Module \"EURO\" not found.")
+          SeverityError
+          (mkRange (12, 16) (12, 22) dtFile)
+        , Message
+          (FromLIGO "Module \"EURO\" not found.")
+          SeverityError
+          (mkRange (10, 1) (10, 24) dtFile)
+        , Message
+          (FromLIGO "Type \"t\" not found. ")
+          SeverityError
+          (mkRange (3, 19) (3, 20) dtFile)
         ]
       , mgFallbackMsgs =
         [ Message
@@ -88,9 +107,6 @@ treeDoesNotContainNameTest = do
     , dtAllMsgs = msgGroup
     , dtFilteredMsgs = msgGroup
     }
-
-inputDir :: FilePath
-inputDir = Util.contractsDir </> "diagnostic"
 
 mkRange :: (J.UInt, J.UInt) -> (J.UInt, J.UInt) -> FilePath -> Range
 mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)

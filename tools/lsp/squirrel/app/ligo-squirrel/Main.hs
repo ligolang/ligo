@@ -8,11 +8,13 @@ import Control.Lens (folded, to)
 import Data.Aeson qualified as Aeson
 import Data.Default (def)
 import Data.Set qualified as Set
+import Debug.TimeStats qualified as TimeStats
 import Focus qualified
 import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Prettyprinter qualified as PP
 import StmContainers.Map qualified as StmMap
 import System.Exit (ExitCode (ExitFailure))
@@ -26,7 +28,6 @@ import Cli (TempSettings, getLigoVersionSafe)
 import Config (Config (..))
 import Debug qualified (show)
 import Extension (isLigoFile)
-import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Log (i)
 import Log qualified
 import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
@@ -36,11 +37,14 @@ import RIO.Document qualified as Document
 import RIO.Indexing (getIndexDirectory)
 import RIO.Indexing qualified as Indexing
 import RIO.Types (RIO, RioEnv (..))
-import Util (foldMapM, toLocation)
+import Util (enableTimestats, foldMapM, timestatsEnvFlag, toLocation)
 import Util.Graph (traverseAM)
 
 main :: IO ()
-main = exit =<< mainLoop
+main = do
+  -- if LIGO_LSP_TIMESTATS is nonempty during compilation, we globally enable timestats
+  when timestatsEnvFlag enableTimestats
+  exit =<< mainLoop
 
 mainLoop :: IO Int
 mainLoop =
@@ -134,21 +138,35 @@ mainLoop =
       Colog.filterBySeverity Colog.Error Colog.getSeverity
       $ Colog.cmap (fmap (Debug.show . PP.pretty)) L.logToLogMessage
 
+handleN
+  :: forall (a :: J.Method 'J.FromClient 'J.Notification) .
+  J.SMethod a -> S.Handler RIO a -> S.Handlers RIO
+handleN method handler = S.notificationHandler method $
+  \notif -> TimeStats.measureM ("N: " <> show method) $ do
+    handler notif
+
 handleWithActiveFileUpdateN
   :: forall (a :: J.Method 'J.FromClient 'J.Notification) doc.
   (J.HasTextDocument (J.MessageParams a) doc, J.HasUri doc J.Uri)
   => J.SMethod a -> S.Handler RIO a -> S.Handlers RIO
 handleWithActiveFileUpdateN method handler = S.notificationHandler method $
-  \notif -> do
+  \notif -> TimeStats.measureM ("N: " <> show method) $ do
     handleNewActiveFile notif
     handler notif
+
+handleR
+  :: forall (a :: J.Method 'J.FromClient 'J.Request) .
+  J.SMethod a -> S.Handler RIO a -> S.Handlers RIO
+handleR method handler = S.requestHandler method $
+  \resp req -> TimeStats.measureM ("R: " <> show method) $ do
+    handler resp req
 
 handleWithActiveFileUpdateR
   :: forall (a :: J.Method 'J.FromClient 'J.Request) doc.
   ( J.HasTextDocument (J.MessageParams a) doc, J.HasUri doc J.Uri)
   => J.SMethod a -> S.Handler RIO a -> S.Handlers RIO
 handleWithActiveFileUpdateR method handler = S.requestHandler method $
-  \resp req -> do
+  \resp req -> TimeStats.measureM ("R: " <> show method) $ do
     handleNewActiveFile resp
     handler resp req
 
@@ -173,15 +191,15 @@ handleNewActiveFile message = do
 
 handlers :: S.Handlers RIO
 handlers = mconcat
-  [ S.notificationHandler J.SInitialized handleInitialized
+  [ handleN J.SInitialized handleInitialized
 
-  , S.requestHandler J.SShutdown handleShutdown
+  , handleR J.SShutdown handleShutdown
 
   , handleWithActiveFileUpdateN J.STextDocumentDidOpen handleDidOpenTextDocument
   , handleWithActiveFileUpdateN J.STextDocumentDidChange handleDidChangeTextDocument
   , handleWithActiveFileUpdateN J.STextDocumentDidSave handleDidSaveTextDocument
 
-  , S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
+  , handleN J.STextDocumentDidClose handleDidCloseTextDocument
 
   , handleWithActiveFileUpdateR J.STextDocumentDefinition  handleDefinitionRequest
   , handleWithActiveFileUpdateR J.STextDocumentTypeDefinition  handleTypeDefinitionRequest
@@ -200,13 +218,13 @@ handlers = mconcat
   , handleWithActiveFileUpdateR J.STextDocumentCodeAction  handleTextDocumentCodeAction
   , handleWithActiveFileUpdateR J.STextDocumentSignatureHelp  handleSignatureHelpRequest
 
-  , S.notificationHandler J.SCancelRequest (\_msg -> pass)
-  , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
-  , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
+  , handleN J.SCancelRequest (\_msg -> pass)
+  , handleN J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
+  , handleN J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
 
-  , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
-  , S.requestHandler (J.SCustomMethod "indexDirectory") handleCustomMethod'IndexDirectory
-  , S.requestHandler (J.SCustomMethod "isDirty") handleCustomMethod'IsDirty
+  , handleR (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
+  , handleR (J.SCustomMethod "indexDirectory") handleCustomMethod'IndexDirectory
+  , handleR (J.SCustomMethod "isDirty") handleCustomMethod'IsDirty
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized

@@ -33,6 +33,8 @@ extra-deps:
 - git: https://github.com/serokell/duplo.git
   commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
 
+- timestats-0.1.0
+
 nix:
   packages: [zlib]
 

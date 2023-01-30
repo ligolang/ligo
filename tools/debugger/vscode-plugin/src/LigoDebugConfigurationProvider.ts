@@ -142,7 +142,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 	): Promise<vscode.DebugConfiguration> {
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor
-			if (editor && (editor.document.languageId === 'ligo' || editor.document.languageId === 'mligo' || editor.document.languageId === 'jsligo')) {
+			if (editor && (editor.document.languageId === 'mligo' || editor.document.languageId === 'jsligo')) {
 				config.type = 'ligo'
 				config.name = 'Launch LIGO'
 				config.request = 'launch'

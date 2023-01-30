@@ -20,7 +20,6 @@ import UnliftIO.Exception (Handler (..), catches, fromEither)
 import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Jsligo qualified as Js
-import AST.Parser.Pascaligo qualified as Pascal
 import AST.Scope
   (ContractInfo, ContractInfo', HasScopeForest, Includes (..), addLigoErrsToMsg, addScopes,
   contractNotFoundException, lookupContract, pattern FindContract)
@@ -42,9 +41,8 @@ type ParserCallback m contract = Source -> m contract
 parse :: Log m => ParserCallback m ContractInfo
 parse src = do
   (recogniser, dialect) <- fromEither $ onExt ElimExt
-    { eePascal = (Pascal.recognise, Pascal)
-    , eeCaml   = (Caml.recognise,   Caml)
-    , eeJs     = (Js.recognise,     Js)
+    { eeCaml = (Caml.recognise,   Caml)
+    , eeJs   = (Js.recognise,     Js)
     } (srcPath src)
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)

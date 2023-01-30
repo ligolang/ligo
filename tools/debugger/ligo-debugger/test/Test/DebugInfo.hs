@@ -5,7 +5,6 @@ module Test.DebugInfo
 
 import Control.Lens (_Empty, hasn't)
 import Data.Default (def)
-import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
@@ -18,8 +17,11 @@ import Morley.Michelson.Typed.Util (dsGoToValues)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Michelson
-import Language.LIGO.Debugger.Snapshots
+import qualified Data.Set as Set
+import Morley.Michelson.Parser.Types (MichelsonSource(MSFile))
+import Test.HUnit (Assertion)
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 
@@ -33,9 +35,10 @@ instance Buildable SomeInstr where
 -- | Get instructions with associated 'InstrNo' metas.
 collectCodeMetas :: T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
 collectCodeMetas = T.dfsFoldInstr def { dsGoToValues = True } \case
-  T.Meta (T.SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) i -> case i of
-    T.LAMBDA _ -> mempty
-    _ -> one (meta, SomeInstr i)
+  T.ConcreteMeta meta i ->
+    if shouldIgnoreMeta i && isJust (liiLocation meta)
+    then mempty
+    else one (meta, SomeInstr i)
   _ -> mempty
 
 collectContractMetas :: T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
@@ -71,6 +74,12 @@ test_SourceMapper = testGroup "Reading source mapper"
             filter (hasn't (_1 . _Empty)) $
             collectContractMetas contract
 
+      let unitIntTuple = LigoTypeResolved
+            ( mkPairType
+                (mkSimpleConstantType "Unit")
+                (mkSimpleConstantType "Int")
+            )
+
       let mainType = LigoTypeResolved
             ( mkPairType
                 (mkSimpleConstantType "Unit")
@@ -88,7 +97,11 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [LigoHiddenStackEntry]
+            [LigoStackEntryNoVar unitIntTuple]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [LigoStackEntryNoVar unitIntTuple]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
@@ -104,20 +117,12 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 2 15) (LigoPosition 2 17))
-            ?- SomeInstr (T.PUSH $ T.VInt 42)
-
-        , LigoMereLocInfo
             (LigoRange file (LigoPosition 2 11) (LigoPosition 2 17))
             ?- SomeInstr (T.ADD @'T.TInt @'T.TInt)
 
         , LigoMereEnvInfo
             [LigoStackEntryVar "s2" intType]
             ?- SomeInstr dummyInstr
-
-        , LigoMereLocInfo
-            (LigoRange file (LigoPosition 3 21) (LigoPosition 3 22))
-            ?- SomeInstr (T.PUSH $ T.VInt 2)
 
         , LigoMereLocInfo
             (LigoRange file (LigoPosition 3 11) (LigoPosition 3 18))
@@ -191,4 +196,42 @@ test_Errors = testGroup "Errors"
       case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
         Left (PreprocessError UnsupportedTicketDup) -> pass
         _ -> assertFailure [int||Expected "UnsupportedTicketDup" error.|]
+  ]
+
+test_Function_call_locations :: TestTree
+test_Function_call_locations = testGroup "Function call locations"
+  let
+    makeSourceLocation :: FilePath -> (Word, Word) -> (Word, Word) -> SourceLocation
+    makeSourceLocation filepath (startLine, startCol) (endLine, endCol) =
+      SourceLocation
+        (MSFile filepath)
+        (SrcPos (Pos $ startLine - 1) (Pos startCol))
+        (SrcPos (Pos $ endLine - 1) (Pos endCol))
+
+    checkLocations :: FilePath -> [((Word, Word), (Word, Word))] -> Assertion
+    checkLocations contractName expectedLocs = do
+      let file = contractsDir </> contractName
+      (Set.map eslSourceLocation -> locs, _, _) <- buildSourceMapper file "main"
+
+      forM_ (uncurry (makeSourceLocation file) <$> expectedLocs) \loc -> do
+        if Set.member loc locs
+        then pass
+        else assertFailure [int||Expected #{loc} to be a part of #{toList locs}|]
+  in
+  [ testCase "Locations for built-ins" do
+      let expectedLocs =
+            [ ((2, 12), (2, 18)) -- "is_nat" location
+            , ((3, 11), (3, 17)) -- "assert" location
+            , ((9, 12), (9, 21)) -- "List.fold" location
+            ]
+
+      checkLocations "builtins-locations.mligo" expectedLocs
+
+  , testCase "Locations for user-defined functions" do
+      let expectedLocs =
+            [ ((3, 32), (3, 35)) -- "add" location
+            , ((7, 12), (7, 16)) -- "add5" location
+            ]
+
+      checkLocations "apply.mligo" expectedLocs
   ]

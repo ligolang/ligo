@@ -23,61 +23,6 @@ let main (action, store : parameter * storage) : return =
  | Reset         -> 0)
 `;
 
-const incrementL = `type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-| Reset
-
-type return is list (operation) * storage
-
-// Two entrypoints
-
-function add (const store : storage; const delta : int) : storage is 
-  store + delta
-
-function sub (const store : storage; const delta : int) : storage is 
-  store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-   
-function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),    // No operations
-  case action of [
-    Increment (n) -> add (store, n)
-  | Decrement (n) -> sub (store, n)
-  | Reset         -> 0
-  ])
-`;
-
-const incrementR = `type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int)
-| Reset;
-
-type return = (list (operation), storage);
-
-// Two entrypoints
-
-let add = ((store, delta) : (storage, int)) : storage => store + delta;
-let sub = ((store, delta) : (storage, int)) : storage => store - delta;
-
-/* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. */
-   
-let main = ((action, store) : (parameter, storage)) : return => {
- (([] : list (operation)),    // No operations
- (switch (action) {
-  | Increment (n) => add ((store, n))
-  | Decrement (n) => sub ((store, n))
-  | Reset         => 0}))
-};
-`;
-
 const incrementJ = `type storage = int;
 
 type parameter =
@@ -281,370 +226,6 @@ let main (action, storage: action * storage) : operation list * storage =
   | Update_owner uo -> update_owner (uo, storage)
   | Update_details ud -> update_details (ud, storage)
   | Skip s -> skip ((), storage)
-`;
-
-const idL = `type id is int
-
-type id_details is
-  record [
-    owner: address;
-    controller: address;
-    profile: bytes;
-  ]
-
-type buy is
-  record [
-    profile: bytes;
-    initial_controller: option(address);
-  ]
-
-type update_owner is
-  record [
-    id: id;
-    new_owner: address;
-  ]
-
-type update_details is
-  record [
-    id: id;
-    new_profile: option(bytes);
-    new_controller: option(address);
-  ]
-
-type action is
-  | Buy of buy
-  | Update_owner of update_owner
-  | Update_details of update_details
-  | Skip of unit
-
-(* The prices kept in storage can be changed by bakers, though they should only be
-   adjusted down over time, not up. *)
-type storage is
-  record [
-    identities: big_map (id, id_details);
-    next_id: int;
-    name_price: tez;
-    skip_price: tez;
-  ]
-
-(** Preliminary thoughts on ids:
-
-I very much like the simplicity of http://gurno.com/adam/mne/.
-5 three letter words means you have a 15 character identity, not actually more
-annoying than an IP address and a lot more memorable than the raw digits. This
-can be stored as a single integer which is then translated into the corresponding
-series of 5 words.
-
-I in general like the idea of having a 'skip' mechanism, but it does need to cost
-something so people don't eat up the address space. 256 ^ 5 means you have a lot
-of address space, but if people troll by skipping a lot that could be eaten up.
-Should probably do some napkin calculations for how expensive skipping needs to
-be to deter people from doing it just to chew up address space.
-*)
-
-function buy (const parameter : buy; const storage : storage) : list(operation) * storage is
-  begin
-    if (Tezos.get_amount() =/= storage.name_price)
-    then failwith("Incorrect amount paid.");
-    const profile : bytes = parameter.profile;
-    const initial_controller : option(address) = parameter.initial_controller;
-    var identities : big_map (id, id_details) := storage.identities;
-    const new_id : int = storage.next_id;
-    const controller : address =
-      case initial_controller of [
-        Some(addr) -> addr
-      | None -> Tezos.get_sender()
-      ];
-    const new_id_details: id_details =
-      record [
-              owner = Tezos.get_sender() ;
-              controller = controller ;
-              profile = profile ;
-      ];
-    identities[new_id] := new_id_details;
-  end with ((nil : list(operation)), record [
-                              identities = identities;
-                              next_id = new_id + 1;
-                              name_price = storage.name_price;
-                              skip_price = storage.skip_price;
-                              ])
-
-function update_owner (const parameter : update_owner; const storage : storage) :
-         list(operation) * storage is
-  begin
-    if (Tezos.get_amount() =/= 0mutez)
-    then
-      begin
-        failwith("Updating owner doesn't cost anything.");
-      end;
-    const id : int = parameter.id;
-    const new_owner : address = parameter.new_owner;
-    var identities : big_map (id, id_details) := storage.identities;
-    var id_details : id_details :=
-      case identities[id] of [
-        Some(id_details) -> id_details
-      | None -> (failwith("This ID does not exist."): id_details)
-      ];
-    var is_allowed : bool := False;
-    if Tezos.get_sender() = id_details.owner
-    then is_allowed := True
-    else failwith("You are not the owner of this ID.");
-    id_details.owner := new_owner;
-    identities[id] := id_details;
-  end with ((nil: list(operation)), record [
-                                     identities = identities;
-                                     next_id = storage.next_id;
-                                     name_price = storage.name_price;
-                                     skip_price = storage.skip_price;
-                                   ])
-
-function update_details (const parameter : update_details; const storage : storage ) :
-         list(operation) * storage is
-  begin
-    if (Tezos.get_amount() =/= 0mutez)
-    then failwith("Updating details doesn't cost anything.");
-    const id : int = parameter.id;
-    const new_profile : option(bytes) = parameter.new_profile;
-    const new_controller : option(address) = parameter.new_controller;
-    var identities : big_map (id, id_details) := storage.identities;
-    var id_details: id_details :=
-      case identities[id] of [
-        Some(id_details) -> id_details
-      | None -> (failwith("This ID does not exist."): id_details)
-      ];
-    var is_allowed : bool := False;
-    if (Tezos.get_sender() = id_details.controller) or (Tezos.get_sender() = id_details.owner)
-    then is_allowed := True
-    else failwith("You are not the owner or controller of this ID.");
-    const owner: address = id_details.owner;
-    const profile: bytes =
-      case new_profile of [
-        None -> (* Default *) id_details.profile
-      | Some(new_profile) -> new_profile
-      ];
-    const controller: address =
-    case new_controller of [
-      None -> (* Default *) id_details.controller
-    | Some(new_controller) -> new_controller
-    ];
-    id_details.owner := owner;
-    id_details.controller := controller;
-    id_details.profile := profile;
-    identities[id] := id_details;
-  end with ((nil: list(operation)), record [
-                                     identities = identities;
-                                     next_id = storage.next_id;
-                                     name_price = storage.name_price;
-                                     skip_price = storage.skip_price;
-                                    ])
-
-(* Let someone skip the next identity so nobody has to take one that's undesirable *)
-function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
-  begin
-    if Tezos.get_amount() =/= storage.skip_price
-    then failwith("Incorrect amount paid.");
-  end with ((nil: list(operation)), record [
-                                     identities = storage.identities;
-                                     next_id = storage.next_id + 1;
-                                     name_price = storage.name_price;
-                                     skip_price = storage.skip_price;
-                                   ])
-
-function main (const action : action; const storage : storage) : list(operation) * storage is
-  case action of [
-  | Buy(b) -> buy (b, storage)
-  | Update_owner(uo) -> update_owner (uo, storage)
-  | Update_details(ud) -> update_details (ud, storage)
-  | Skip(s) -> skip_ (unit, storage)
-  ];
-`;
-
-const idR = `/* */
-
-type id = int
-
-type id_details = {
-  owner: address,
-  controller: address,
-  profile: bytes,
-}
-
-type buy = {
-  profile: bytes,
-  initial_controller: option(address),
-}
-
-type update_owner = {
-  id: id,
-  new_owner: address,
-}
-
-type update_details = {
-  id: id,
-  new_profile: option(bytes),
-  new_controller: option(address),
-}
-
-type action =
-| Buy(buy)
-| Update_owner(update_owner)
-| Update_details(update_details)
-| Skip(unit)
-
-/* The prices kept in storage can be changed by bakers, though they should only be
-   adjusted down over time, not up. */
-type storage = {
-  identities: big_map (id, id_details),
-  next_id: int,
-  name_price: tez,
-  skip_price: tez,
-}
-
-/** Preliminary thoughts on ids:
-
-I very much like the simplicity of http://gurno.com/adam/mne/.
-5 three letter words means you have a 15 character identity, not actually more
-annoying than an IP address and a lot more memorable than the raw digits. This
-can be stored as a single integer which is then translated into the corresponding
-series of 5 words.
-
-I in general like the idea of having a 'skip' mechanism, but it does need to cost
-something so people don't eat up the address space. 256 ^ 5 means you have a lot
-of address space, but if people troll by skipping a lot that could be eaten up.
-Should probably do some napkin calculations for how expensive skipping needs to
-be to deter people from doing it just to chew up address space.
-*/
-
-let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) => {
-  let void: unit =
-    if (Tezos.get_amount () == storage.name_price) { (); }
-    else { failwith("Incorrect amount paid."); };
-  let profile = parameter.profile;
-  let initial_controller = parameter.initial_controller;
-  let identities = storage.identities;
-  let new_id = storage.next_id;
-  let controller: address =
-    switch (initial_controller) {
-      | Some(addr) => addr
-      | None => Tezos.get_sender ()
-    };
-  let new_id_details: id_details = {
-    owner : Tezos.get_sender (),
-    controller : controller,
-    profile : profile,
-  };
-  let updated_identities: big_map (id, id_details) =
-    Big_map.update(new_id, Some(new_id_details), identities);
-  (([]: list(operation)), {
-                           identities : updated_identities,
-                           next_id : new_id + 1,
-                           name_price : storage.name_price,
-                           skip_price : storage.skip_price,
-                        });
-  };
-
-let update_owner = ((parameter, storage): (update_owner, storage)) : (list(operation), storage) => {
-  let void: unit =
-    if (Tezos.get_amount () != 0mutez) {
-      failwith("Updating owner doesn't cost anything.");
-    }
-    else { (); };
-  let id : int = parameter.id;
-  let new_owner = parameter.new_owner;
-  let identities = storage.identities;
-  let current_id_details: id_details =
-    switch (Big_map.find_opt(id, identities)) {
-      | Some(id_details) => id_details
-      | None => (failwith("This ID does not exist."): id_details)
-    };
-  let is_allowed: bool =
-    if (Tezos.get_sender () == current_id_details.owner) { true; }
-    else { (failwith("You are not the owner of this ID."): bool); };
-  let updated_id_details: id_details = {
-    owner : new_owner,
-    controller : current_id_details.controller,
-    profile : current_id_details.profile,
-  };
-  let updated_identities = Big_map.update(id, (Some updated_id_details), identities);
-  (([]: list(operation)), {
-                           identities : updated_identities,
-                           next_id : storage.next_id,
-                           name_price : storage.name_price,
-                           skip_price : storage.skip_price,
-                        });
-  };
-
-let update_details = ((parameter, storage): (update_details, storage)) :
-                   (list(operation), storage) => {
-  let void : unit =
-    if (Tezos.get_amount () != 0mutez) {
-      failwith("Updating details doesn't cost anything.");
-    }
-    else { (); };
-  let id = parameter.id;
-  let new_profile = parameter.new_profile;
-  let new_controller = parameter.new_controller;
-  let identities = storage.identities;
-  let current_id_details: id_details =
-    switch (Big_map.find_opt(id, identities)) {
-      | Some(id_details) => id_details
-      | None => (failwith("This ID does not exist."): id_details)
-    };
-  let is_allowed: bool =
-    if ((Tezos.get_sender () != current_id_details.controller) &&
-        (Tezos.get_sender () != current_id_details.owner)) {
-      (failwith ("You are not the owner or controller of this ID."): bool)
-    }
-    else { true; };
-  let owner: address = current_id_details.owner;
-  let profile: bytes =
-    switch (new_profile) {
-      | None => /* Default */ current_id_details.profile
-      | Some(new_profile) => new_profile
-    };
-  let controller: address =
-    switch (new_controller) {
-      | None => /* Default */ current_id_details.controller
-      | Some new_controller => new_controller
-    };
-  let updated_id_details: id_details = {
-    owner : owner,
-    controller : controller,
-    profile : profile,
-  };
-  let updated_identities: big_map (id, id_details) =
-    Big_map.update(id, (Some updated_id_details), identities);
-  (([]: list(operation)), {
-                            identities : updated_identities,
-                            next_id : storage.next_id,
-                            name_price : storage.name_price,
-                            skip_price : storage.skip_price,
-                          });
-  };
-
-/* Let someone skip the next identity so nobody has to take one that's undesirable */
-let skip = ((p,storage): (unit, storage)) => {
-  let void : unit =
-    if (Tezos.get_amount () != storage.skip_price) {
-      failwith("Incorrect amount paid.");
-    }
-    else { (); };
-  (([]: list(operation)), {
-                            identities : storage.identities,
-                            next_id : storage.next_id + 1,
-                            name_price : storage.name_price,
-                            skip_price : storage.skip_price,
-                          });
-  };
-
-let main = ((action, storage): (action, storage)) : (list(operation), storage) => {
-  switch (action) {
-    | Buy(b) => buy((b, storage))
-    | Update_owner(uo) => update_owner((uo, storage))
-    | Update_details ud => update_details((ud, storage))
-    | Skip s => skip(((), storage))
-  };
-};
 `;
 
 const idJ = `/* */
@@ -899,143 +480,6 @@ let main (p, s : parameter * storage) : return =
   | Reveal r -> reveal (r,s)
 `;
 
-const hashlockL = `type commit is record [
-  date        : timestamp;
-  salted_hash : bytes;
-]
-
-type commit_set is big_map(address, commit)
-
-type storage is record [
-  hashed  : bytes;
-  unused  : bool;
-  commits : commit_set
-]
-
-type reveal is record [
-  hashable : bytes;
-  message  : unit -> list(operation)
-]
-
-type parameter is
-  Commit of bytes
-| Reveal of reveal
-
-type return is list(operation) * storage
-
-(* We use hash-commit so that a baker can not steal *)
-
-function commit (const p : bytes; var s: storage) : return is
-  begin
-    const commit : commit = record [date = Tezos.get_now() + 86_400; salted_hash = p];
-    const updated_map: commit_set = Big_map.update(Tezos.get_sender(), Some(commit), s.commits);
-    s := s with record [commits = updated_map];    
-  end with ((nil : list(operation)), s)
-
-function reveal (const p: reveal; var s: storage) : return is
-  begin
-    if not s.unused
-    then failwith("This contract has already been used.");
-    var commit : commit := record [date = (0: timestamp); salted_hash = ("": bytes)];
-    case Big_map.find_opt(Tezos.get_sender(), s.commits) of [
-    | Some (c) -> commit := c
-    | None -> failwith("You have not made a commitment to hash against yet.")
-    ];
-    if Tezos.get_now() < commit.date
-    then failwith("It has not been 24 hours since your commit yet.");
-    const salted : bytes =
-      Crypto.sha256(
-        Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender()))
-      );
-    if salted =/= commit.salted_hash
-    then failwith("This reveal does not match your commitment.");
-    if s.hashed = Crypto.sha256(p.hashable)
-    then s := s with record [unused = False]
-    else failwith("Your commitment did not match the storage hash.");
-  end with (p.message(unit), s)
-
-function main (const p: parameter; const s: storage) : return is
-  case p of [
-  | Commit (c) -> commit (c,s)
-  | Reveal (r) -> reveal (r,s)
-  ]
-`;
-
-const hashlockR = `/*
-*/
-type commit = {
-  date:        timestamp,
-  salted_hash: bytes,
-}
-
-type commit_set = big_map(address, commit)
-
-type storage = {
-  hashed: bytes,
-  unused: bool,
-  commits: commit_set
-}
-
-type reveal = {
-  hashable: bytes,
-  message: (unit => list(operation))
-}
-
-type parameter =
-  Commit (bytes)
-| Reveal (reveal);
-
-type return = (list(operation), storage)
-
-/* We use hash-commit so that a baker can not steal */
-
-let commit = ((p, s) : (bytes, storage)) : return => {
-  let commit : commit = {date: Tezos.get_now () + 86_400, salted_hash: p};
-  let updated_map: commit_set = Big_map.update(Tezos.get_sender (), Some(commit), s.commits);
-  let s = {...s, commits: updated_map};
-  (([] : list(operation)), s);
-};
-
-let reveal = ((p, s): (reveal, storage)) : return => {
-  if (!s.unused) {
-    failwith("This contract has already been used.");
-  }
-  else { (); };
-  let commit_ : commit =
-    switch (Big_map.find_opt(Tezos.get_sender (), s.commits)) {
-    | Some (c) => c
-    | None =>
-       (failwith("You have not made a commitment to hash against yet."): commit)
-    };
-  if (Tezos.get_now () < commit_.date) {
-    failwith("It has not been 24 hours since your commit yet.");
-  }
-  else { (); };
-  let salted : bytes =
-    Crypto.sha256(
-      Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender ()))
-    );
-  if (salted != commit_.salted_hash) {
-    failwith("This reveal does not match your commitment.");
-  }
-  else { (); };
-  if (s.hashed == Crypto.sha256(p.hashable)) {
-    let s : storage = {...s, unused: false};
-    (p.message(), s)
-  }
-  else {
-    (failwith("Your commitment did not match the storage hash.") : return);
-  };
-};
-
-let main = ((p, s): (parameter, storage)) : return => {
-  switch (p) {
-  | Commit (c) => commit((c,s))
-  | Reveal (r) => reveal((r,s))
-  };
-};
-`;
-
 const hashlockJ = `/*
 */
 type commit = {
@@ -1112,10 +556,6 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
 
 const incrementMStorage = "0";
 
-const incrementLStorage = "0";
-
-const incrementRStorage = "0";
-
 const incrementJStorage = "0";
 
 const idMStorage = `{
@@ -1129,33 +569,6 @@ const idMStorage = `{
   next_id=2; 
   name_price=10tez; 
   skip_price=333mutez
-}
-`;
-
-const idLStorage = `record [
-  identities=big_map[
-    1->record
-    [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-     controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
-     profile=0x0501000000026869]
-  ];
-  next_id=2;
-  name_price=0tez;
-  skip_price=50mutez;
-]
-`;
-
-const idRStorage = `{
-  identities:Big_map.literal([
-    (1,
-     {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
-     controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address),
-     profile:0x0501000000026869}
-    )
-  ]),
-  next_id:2,
-  name_price:10tez,
-  skip_price:333mutez
 }
 `;
 
@@ -1181,27 +594,6 @@ const hashlockMStorage = `{ hashed=0x0e2ab5866b0ec701a0204881645dc50e1d60668f143
      salted_hash=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce}
     );]
   )}
-`;
-
-const hashlockLStorage = `record [ 
-  hashed=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce; 
-  unused=False; 
-  commits=big_map [
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record [
-      date=("2020-05-29T11:22:33Z" : timestamp); 
-      salted_hash=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce
-      ]
-  ]
-]
-`;
-
-const hashlockRStorage = `{
-  hashed:0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce, 
-  unused:false, 
-  commits:Big_map.literal([(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
-  {date:("2020-06-02T10:23:41Z":timestamp),
-  salted_hash:0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce})])
-}
 `;
 
 const hashlockJStorage = `{
@@ -1236,20 +628,6 @@ export const getExamples = (
               content: incrementM,
             }
           : undefined,
-      contractL:
-        syntax === "ligo"
-          ? {
-              name: `.workspaces/${name}/contracts/Increment.ligo`,
-              content: incrementL,
-            }
-          : undefined,
-      contractR:
-        syntax === "religo"
-          ? {
-              name: `.workspaces/${name}/contracts/Increment.religo`,
-              content: incrementR,
-            }
-          : undefined,
       contractJ:
         syntax === "jsligo"
           ? {
@@ -1263,20 +641,6 @@ export const getExamples = (
           ? {
               name: `.workspaces/${name}/storages/Storage.mligo`,
               content: incrementMStorage,
-            }
-          : undefined,
-      storageL:
-        syntax === "ligo"
-          ? {
-              name: `.workspaces/${name}/storages/Storage.ligo`,
-              content: incrementLStorage,
-            }
-          : undefined,
-      storageR:
-        syntax === "religo"
-          ? {
-              name: `.workspaces/${name}/storages/Storage.religo`,
-              content: incrementRStorage,
             }
           : undefined,
       storageJ:
@@ -1303,17 +667,6 @@ export const getExamples = (
               content: idM,
             }
           : undefined,
-      contractL:
-        syntax === "ligo"
-          ? { name: `.workspaces/${name}/contracts/ID.ligo`, content: idL }
-          : undefined,
-      contractR:
-        syntax === "religo"
-          ? {
-              name: `.workspaces/${name}/contracts/ID.religo`,
-              content: idR,
-            }
-          : undefined,
       contractJ:
         syntax === "jsligo"
           ? {
@@ -1327,20 +680,6 @@ export const getExamples = (
           ? {
               name: `.workspaces/${name}/storages/Storage.mligo`,
               content: idMStorage,
-            }
-          : undefined,
-      storageL:
-        syntax === "ligo"
-          ? {
-              name: `.workspaces/${name}/storages/Storage.ligo`,
-              content: idLStorage,
-            }
-          : undefined,
-      storageR:
-        syntax === "religo"
-          ? {
-              name: `.workspaces/${name}/storages/Storage.religo`,
-              content: idRStorage,
             }
           : undefined,
       storageJ:
@@ -1367,20 +706,6 @@ export const getExamples = (
               content: hashlockM,
             }
           : undefined,
-      contractL:
-        syntax === "ligo"
-          ? {
-              name: `.workspaces/${name}/contracts/Hashlock.ligo`,
-              content: hashlockL,
-            }
-          : undefined,
-      contractR:
-        syntax === "religo"
-          ? {
-              name: `.workspaces/${name}/contracts/Hashlock.religo`,
-              content: hashlockR,
-            }
-          : undefined,
       contractJ:
         syntax === "jsligo"
           ? {
@@ -1394,20 +719,6 @@ export const getExamples = (
           ? {
               name: `.workspaces/${name}/storages/Storage.mligo`,
               content: hashlockMStorage,
-            }
-          : undefined,
-      storageL:
-        syntax === "ligo"
-          ? {
-              name: `.workspaces/${name}/storages/Storage.ligo`,
-              content: hashlockLStorage,
-            }
-          : undefined,
-      storageR:
-        syntax === "religo"
-          ? {
-              name: `.workspaces/${name}/storages/Storage.religo`,
-              content: hashlockRStorage,
             }
           : undefined,
       storageJ:

@@ -1,5 +1,6 @@
 import * as assert from 'assert'
 import * as fs from 'fs'
+import * as fse from 'fs-extra'
 import * as path from 'path'
 import * as vscode from 'vscode'
 
@@ -18,7 +19,7 @@ suite('LIGO: Rename directory', () => {
       await vscode.window.showTextDocument(doc)
 
       const oldDef = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', uri, position)
-      fs.renameSync(oldContractsDir, newContractsDir)
+      fse.moveSync(oldContractsDir, newContractsDir)
       const newDef = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', uri, position)
 
       assert.ok(oldDef)
@@ -39,7 +40,7 @@ suite('LIGO: Rename directory', () => {
       } else if (newDirExists) {
         // OK: New directory will be leftover once the test has finished,
         // revert it
-        fs.renameSync(newContractsDir, oldContractsDir)
+        fse.moveSync(newContractsDir, oldContractsDir)
       } else {
         // Something went wrong: both directories ceased to exist somehow
         assert.fail("Directory for test doesn't exist")

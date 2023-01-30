@@ -5,17 +5,13 @@ module Test.Common.Capabilities.Find
 
   , findDefinitionAndGoToReferencesCorrespondence
   , definitionOfId
-  , definitionOfLeft
   , referenceOfId
-  , referenceOfLeft
   , definitionOfXInWildcard
   , referenceOfXInWildcard
 
-  , typeOfHeapArg
-  , typeOfHeapConst
   , typeOfLet
-  , typeOfPascaligoLambdaArg
-  , pascaligoLocalType
+  , typeOfJsligoLambdaArg
+  , cameligoLocalType
 
   , contractsDir
   , invariants
@@ -28,7 +24,7 @@ import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
 import AST.Capabilities.Find (definitionOf, findScopedDecl, referencesOf, typeDefinitionAt)
-import AST.Scope (KnownScopingSystem (..), ScopingSystem (..), contractTree, lookupContract)
+import AST.Scope (contractTree, lookupContract)
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
 import Cli (TempDir (..), TempSettings (..))
 import Range (Range (..), interval, point)
@@ -128,39 +124,16 @@ checkIfReference filepath expectedRef mention = test
 invariants :: [DefinitionReferenceInvariant]
 invariants =
   [ DefinitionReferenceInvariant
-    { driFile = contractsDir </> "id.ligo"
+    { driFile = contractsDir </> "id.jsligo"
     , driDesc = "i, parameter"
-    , driDef = Just (interval 1 20 21)
-    , driRefs = [interval 1 38 39]
+    , driDef = Just (interval 1 13 14)
+    , driRefs = [interval 1 31 32]
     }
   , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "id.ligo"
+    { driFile = contractsDir </> "id.jsligo"
     , driDesc = "id"
-    , driDef = Just (interval 1 10 12)
+    , driDef = Just (interval 1 7 9)
     , driRefs = []
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "heap.ligo"
-    , driDesc = "get_top"
-    , driDef = Just (interval 8 10 17)
-    , driRefs = [ interval 65 31 38
-                , interval 23 31 38
-                , interval 11 30 37
-                ]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "heap.ligo"
-    , driDesc = "left, local"
-    , driDef = Just (interval 73 9 13)
-    , driRefs = [ interval 95 15 19
-                , interval 86 13 17
-                , interval 85 30 34
-                , interval 83 22 26
-                , interval 82 36 40
-                , interval 81 10 14
-                , interval 80 16 20
-                , interval 79 7 11
-                ]
     }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "params.mligo"
@@ -174,32 +147,6 @@ invariants =
     , driDef = Just (interval 3 11 12)
     , driRefs = [ interval 3 36 37 ]
     }
-
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-attributes.ligo"
-    , driDesc = "counter, type attribute"
-    , driDef = Nothing -- type attributes don't have a declaration
-    , driRefs = [interval 9 47 54, interval 13 34 41]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-attributes.ligo"
-    , driDesc = "counter, function"
-    , driDef = Just (interval 7 10 17)
-    , driRefs = []
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-attributes-in-rec.ligo"
-    , driDesc = "counter, type attribute"
-    , driDef = Nothing -- type attributes don't have a declaration
-    , driRefs = [interval 9 47 54, interval 13 34 41]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-attributes-in-rec.ligo"
-    , driDesc = "counter, function"
-    , driDef = Just (interval 7 20 27)
-    , driRefs = []
-    }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-attributes.mligo"
     , driDesc = "counter, type attribute"
@@ -261,12 +208,6 @@ invariants =
     , driRefs = []
     }
   , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "recursion.ligo"
-    , driDesc = "sum"
-    , driDef = Just (interval 1 20 23)
-    , driRefs = [interval 2 26 29]
-    }
-  , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.mligo"
     , driDesc = "sum"
     , driDef = Just (interval 1 9 12)
@@ -303,12 +244,6 @@ invariants =
     , driDesc = "second local variable"
     , driDef  = Just (interval 5 7 13)
     , driRefs = [interval 6 3 9]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-constructor.ligo"
-    , driDesc = "Increment, type constructor"
-    , driDef = Just (interval 2 3 12)
-    , driRefs = [interval 5 20 29]
     }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-constructor.mligo"
@@ -354,39 +289,6 @@ invariants =
     , driRefs =
       [ interval 8 26 30, interval 10 26 30, interval 10 35 39, interval 10 43 47
       , interval 17 14 18, interval 20 17 21, interval 20 28 32, interval 20 38 42
-      ]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "modules.ligo"
-    , driDesc = "Modules, B.titi"
-    , driDef = Just (interval 2 10 14)
-    , driRefs = [interval 6 20 24]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "modules.ligo"
-    , driDesc = "Modules, A.add"
-    , driDef = Just (interval 10 14 17)
-    , driRefs = [interval 19 65 68]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "modules.ligo"
-    , driDesc = "Modules, E.toto resolves in A.C.toto"
-    , driDef = Just (interval 8 15 19)
-    , driRefs = [interval 17 10 14]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "modules.ligo"
-    , driDesc = "Modules, D.C resolves in A.C"
-    , driDef = Just (interval 7 12 13)
-    , driRefs = [interval 16 19 20]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "modules.ligo"
-    , driDesc = "Modules, A.titi can be referenced within A.C"
-    , driDef = Just (interval 6 10 14)
-    , driRefs =
-      [ interval 8 22 26, interval 10 29 33, interval 10 45 49, interval 10 53 57
-      , interval 15 16 20, interval 19 27 31, interval 19 45 49, interval 19 55 59
       ]
     }
   , DefinitionReferenceInvariant
@@ -453,27 +355,15 @@ findDefinitionAndGoToReferencesCorrespondence =
 
 definitionOfId :: forall impl. ScopeTester impl => Assertion
 definitionOfId = checkIfDefinition @impl
-                        (contractsDir </> "id.ligo")
-                        (interval 1 20 21)
-                        (interval 1 38 39)
+                        (contractsDir </> "id.jsligo")
+                        (interval 1 13 14)
+                        (interval 1 31 32)
 
 referenceOfId :: forall impl. ScopeTester impl => Assertion
 referenceOfId = checkIfReference @impl
-                       (contractsDir </> "id.ligo")
-                       (interval 1 38 39)
-                       (interval 1 20 21)
-
-definitionOfLeft :: forall impl. ScopeTester impl => Assertion
-definitionOfLeft = checkIfDefinition @impl
-                          (contractsDir </> "heap.ligo")
-                          (interval 73 9 13)
-                          (interval 82 36 40)
-
-referenceOfLeft :: forall impl. ScopeTester impl => Assertion
-referenceOfLeft = checkIfReference @impl
-                         (contractsDir </> "heap.ligo")
-                         (interval 85 30 34)
-                         (interval 73 9 13)
+                       (contractsDir </> "id.jsligo")
+                       (interval 1 31 32)
+                       (interval 1 13 14)
 
 definitionOfXInWildcard :: forall impl. ScopeTester impl => Assertion
 definitionOfXInWildcard = checkIfDefinition @impl
@@ -521,23 +411,14 @@ typeOf filepath mention definition = do
     Nothing -> expectationFailure "Should find type definition"
     Just range -> range{_rFile=_rFile mention'} `shouldBe` definition'
 
-typeOfHeapConst :: forall impl. ScopeTester impl => Assertion
-typeOfHeapConst = typeOf @impl (contractsDir </> "heap.ligo") (point 102 8) expected where
-  expected = case knownScopingSystem @impl of
-    CompilerScopes -> interval 102 15 19 -- FIXME LIGO-593
-    _ -> interval 4 6 10
-
-typeOfHeapArg :: forall impl. ScopeTester impl => Assertion
-typeOfHeapArg = typeOf @impl (contractsDir </> "heap.ligo") (point 8 25) (interval 4 6 10)
-
 typeOfLet :: forall impl. ScopeTester impl => Assertion
 typeOfLet = typeOf @impl (contractsDir </> "type-attributes.mligo") (point 7 10) (interval 1 6 20)
 
-typeOfPascaligoLambdaArg :: forall impl. ScopeTester impl => Assertion
-typeOfPascaligoLambdaArg = typeOf @impl (contractsDir </> "lambda.ligo") (point 4 21) (interval 1 6 12)
+typeOfJsligoLambdaArg :: forall impl. ScopeTester impl => Assertion
+typeOfJsligoLambdaArg = typeOf @impl (contractsDir </> "lambda.jsligo") (point 4 6) (interval 1 6 12)
 
-pascaligoLocalType :: forall impl. ScopeTester impl => Assertion
-pascaligoLocalType = typeOf @impl (contractsDir </> "local_type.ligo") (point 3 23) (interval 2 8 12)
+cameligoLocalType :: forall impl. ScopeTester impl => Assertion
+cameligoLocalType = typeOf @impl (contractsDir </> "local_type.mligo") (point 3 12) (interval 2 8 12)
 
 -- See LIGO-110
 -- typeOfCamligoLambdaArg :: Assertion

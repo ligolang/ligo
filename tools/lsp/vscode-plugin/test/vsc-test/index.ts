@@ -2,8 +2,29 @@
 import * as glob from 'glob'
 import * as Mocha from 'mocha'
 import * as path from 'path'
+import * as vscode from 'vscode'
+
+export async function activateExtension() {
+  const extension = vscode.extensions.getExtension<any>('ligolang-publish.ligo-vscode')!;
+  const api = await extension.activate();
+  // Wait until its ready to use.
+  await api.ready;
+  return api;
+}
 
 export function run(): Promise<void> {
+
+  function initializationScript() {
+    const ex = new Error('Failed to initialize the LIGO extension for tests after 3 minutes');
+    let timer: NodeJS.Timer | undefined;
+    const failed = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(ex), 180_000);
+    });
+    const promise = Promise.race([activateExtension(), failed]);
+    promise.then(() => clearTimeout(timer!)).catch(() => clearTimeout(timer!));
+    return promise;
+  }
+
   // Create the mocha test
   const mocha = new Mocha({
     ui: 'tdd',

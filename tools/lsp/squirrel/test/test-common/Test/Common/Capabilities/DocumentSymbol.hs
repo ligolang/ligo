@@ -1,7 +1,5 @@
 module Test.Common.Capabilities.DocumentSymbol
-  ( documentSymbolsExampleHeapDriver
-  , documentSymbolsExampleAccessDriver
-  , documentSymbolsExampleLetCamligoDriver
+  ( documentSymbolsExampleLetCamligoDriver
   , documentSymbolsExampleLetJsligoDriver
   , documentSymbolsCameligoModules
   ) where
@@ -33,32 +31,6 @@ simplify SymbolInformation{_name, _kind, _location = Location{_range}} =
   , (_range ^. start . line, _range ^. start . character)
   , (_range ^. end . line, _range ^. end . character)
   )
-
-documentSymbolsExampleHeapDriver :: forall impl. ScopeTester impl => Assertion
-documentSymbolsExampleHeapDriver = do
-  fp <- makeAbsolute $ contractsDir </> "heap.ligo"
-  tree <- readContractWithScopes @impl fp
-  let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldMatchList`
-    [ ("heap", SkTypeParameter, (3, 5), (3, 9))
-    , ("is_empty", SkFunction, (5,9), (5,17))
-    , ("get_top", SkFunction, (7, 9), (7, 16))
-    , ("pop_switch", SkFunction, (9, 9), (9, 19))
-    , ("pop_", SkFunction, (22, 9), (22, 13))
-    , ("insert", SkFunction, (46, 9), (46, 15))
-    , ("pop", SkFunction, (66, 9), (66, 12))
-    , ("const empty",SkConstant,(105,6),(105,11))
-    ]
-
-documentSymbolsExampleAccessDriver :: forall impl. ScopeTester impl => Assertion
-documentSymbolsExampleAccessDriver = do
-  fp <- makeAbsolute $ contractsDir </> "access.ligo"
-  tree <- readContractWithScopes @impl fp
-  let symbols = extractDocumentSymbols (Uri "<test>") tree
-  map simplify symbols `shouldMatchList`
-    [ ("const owner", SkConstant , (2, 6), (2, 11))
-    , ("main", SkFunction, (4,9), (4,13))
-    ]
 
 documentSymbolsExampleLetCamligoDriver :: forall impl. ScopeTester impl => Assertion
 documentSymbolsExampleLetCamligoDriver = do

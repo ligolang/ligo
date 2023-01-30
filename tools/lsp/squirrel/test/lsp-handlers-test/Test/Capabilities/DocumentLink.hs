@@ -21,7 +21,7 @@ getDocumentLinks doc =
 
 unit_document_link_b :: Assertion
 unit_document_link_b = do
-  let filename = "B1.ligo"
+  let filename = "B1.jsligo"
   contractsDir <- getContractsDir
   documentLinks <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename

@@ -60,7 +60,6 @@ mkContents ScopedDecl{..} = LSP.HoverContents LSP.MarkupContent
     dialectName :: Doc
     dialectName =
       case _sdDialect of
-        Pascal -> "pascaligo"
         Caml   -> "cameligo"
         Js     -> "jsligo"
 
@@ -69,29 +68,22 @@ mkContents ScopedDecl{..} = LSP.HoverContents LSP.MarkupContent
       where
         typeParams = maybe mempty (lppLigoLike _sdDialect) tparams
         typeHeader = "type" <+> case _sdDialect of
-          Pascal -> name <.> typeParams <+> "is"
-          Caml   -> typeParams <+> name <+> "="
-          Js     -> name <.> typeParams <+> "="
+          Caml -> typeParams <+> name <+> "="
+          Js   -> name <.> typeParams <+> "="
         typeBody = lppLigoLike _sdDialect tspec
 
     moduleDoc :: ModuleDeclSpecifics -> Doc
     moduleDoc mspec = moduleHeader <+> moduleBody
       where
-        moduleEqual = case _sdDialect of
-          Pascal -> "is"
-          Caml   -> "="
-          Js     -> "="
         moduleHeader = case _sdDialect of
-          Pascal -> "module"    <+> name
-          Caml   -> "module"    <+> name
-          Js     -> "namespace" <+> name
+          Caml -> "module"    <+> name
+          Js   -> "namespace" <+> name
         moduleBody = case _mdsInit mspec of
           ModuleDecl -> case _sdDialect of
-            Pascal -> moduleEqual <+> "{" <+> blockComment Pascal "..." <+> "}"
-            Caml   -> moduleEqual <+> "struct" <+> blockComment Caml "..." <+> "end"
-            Js     -> "{" <+> blockComment Js "..." <+> "};"
+            Caml -> "=" <+> "struct" <+> blockComment Caml "..." <+> "end"
+            Js   -> "{" <+> blockComment Js "..." <+> "};"
           ModuleAlias (Namespace ns) ->
-            moduleEqual <+> hcat (punctuate "." $ map pp $ toList ns)
+            "=" <+> hcat (punctuate "." $ map pp $ toList ns)
 
     valueDoc :: ValueDeclSpecifics -> Doc
     valueDoc vspec = name <+> ":" <+> valueType

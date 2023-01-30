@@ -43,8 +43,6 @@ tempTemplate :: String
 tempTemplate = ".ligo-test"
 
 testDir, contractsDir :: FilePath
-{-# NOINLINE testDir #-}
-{-# NOINLINE contractsDir #-}
 testDir = unsafePerformIO $ canonicalizePath
   $(
     let
@@ -56,6 +54,8 @@ testDir = unsafePerformIO $ canonicalizePath
     in liftIO getDir >>= liftString
   )
 contractsDir = testDir </> "contracts"
+{-# NOINLINE testDir #-}
+{-# NOINLINE contractsDir #-}
 
 getContractsWithExtension :: String -> [FilePath] -> FilePath -> IO [FilePath]
 getContractsWithExtension ext ignore dir = listDirectory dir

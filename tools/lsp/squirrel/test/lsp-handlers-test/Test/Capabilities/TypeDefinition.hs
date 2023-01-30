@@ -16,12 +16,12 @@ contractsDir = Common.contractsDir </> "find"
 
 unit_type_definition :: Assertion
 unit_type_definition = do
-  let filename = "heap.ligo"
+  let filename = "lambda.jsligo"
 
   eitherDefs <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
-    getTypeDefinitions doc (Position 101 7)
+    getTypeDefinitions doc (Position 3 5)
 
   filepath <- makeAbsolute (contractsDir </> filename)
   let uri = filePathToUri filepath
-  eitherDefs `shouldBe` InL [Location uri (Range (Position 3 5) (Position 3 9))]
+  eitherDefs `shouldBe` InL [Location uri (Range (Position 0 5) (Position 0 11))]

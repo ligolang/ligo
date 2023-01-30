@@ -34,14 +34,15 @@ mkr sl sc rl rc = Range (sl, sc, 0) (rl, rc, 0) ""
 testInfos :: [TestInfo]
 testInfos =
   [ TestInfo
-    { tiContract = "simple.ligo"
+    { tiContract = "simple.jsligo"
     , tiCursor = point 2 24
     , tiExpectedEdits =
-        [ (mkr 1 29 1 32 , extractedTypeNameAlias)
-        , (mkr 2 23 2 26 , extractedTypeNameAlias)
-        , (mkr 2 29 2 32 , extractedTypeNameAlias)
-        , (mkr 3 13 3 16 , extractedTypeNameAlias)
-        , (mkr 1  1 1  1 , "type " <> extractedTypeNameAlias <> " is nat\n")
+        [ (mkr 1 22 1 25, extractedTypeNameAlias)
+        , (mkr 1 30 1 33, extractedTypeNameAlias)
+        , (mkr 2 17 2 20, extractedTypeNameAlias)
+        , (mkr 2 22 2 25, extractedTypeNameAlias)
+        , (mkr 3 13 3 16, extractedTypeNameAlias)
+        , (mkr 1  1 1  1, "type " <> extractedTypeNameAlias <> " = nat\n")
         ]
     }
   , TestInfo
@@ -61,11 +62,11 @@ testInfos =
         ]
     }
   , TestInfo
-    { tiContract = "unbound.ligo"
-    , tiCursor = interval 1 25 36
+    { tiContract = "unbound.mligo"
+    , tiCursor = interval 1 23 34
     , tiExpectedEdits =
-        [ (mkr 1 25 1 36, extractedTypeNameAlias)
-        , (mkr 1  1 1  1, "type (a, b) " <> extractedTypeNameAlias <> " is a -> b -> c\n")
+        [ (mkr 1 23 1 34, extractedTypeNameAlias)
+        , (mkr 1  1 1  1, "type ('a, 'b) " <> extractedTypeNameAlias <> " = 'a -> 'b -> c\n")
         ]
     }
   , TestInfo

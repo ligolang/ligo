@@ -6,12 +6,12 @@
 -- For instance, having:
 
 -- ```
--- #include "a.ligo"
--- #include "b.ligo"
+-- #include "a.mligo"
+-- #include "b.mligo"
 --
--- function id (const i : int) : int * int is (i, i)
+-- let id (i : int) : int * int = i, i
 --
--- function f (const r : int * int) : int is 2
+-- let f (r : int * int) : int = 2
 -- ```
 --
 -- with cursor pointing at `*` in `int * int` and selecting `extract type alias`
@@ -19,13 +19,13 @@
 -- contract tree to
 --
 -- ```
--- #include "a.ligo"
--- #include "b.ligo"
--- type x is int * int
+-- #include "a.mligo"
+-- #include "b.mligo"
+-- type x = int * int
 --
--- function id (const i : int) : x is (i, i)
+-- let id (i : int) : x = i, i
 --
--- function f (const r : x) : int is 2
+-- let f (r : x) : int = 2
 -- ```
 --
 -- note that type alias is added *after* the block with includes. I (awkure) decided

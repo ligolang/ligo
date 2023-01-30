@@ -7,7 +7,7 @@ require_relative 'helpers'
 def report_trailing_whitespaces_violation
   # This can be safely called multiple times
   # because Danger deduplicates messages.
-  fail("Trailing whitespaces and/or incorrect end-of-file newlines detected.")
+  warn("Trailing whitespaces and/or incorrect end-of-file newlines detected.")
 end
 
 def check_trailing_whitespaces

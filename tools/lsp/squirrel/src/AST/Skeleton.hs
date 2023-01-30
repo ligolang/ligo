@@ -13,14 +13,13 @@ module AST.Skeleton
   , Lang (..)
   , allLangs
   , langExtension
-  , cameLIGOKeywords, pascaLIGOKeywords, jsLIGOKeywords
+  , cameLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
-  , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
-  , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
-  , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
-  , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
-  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..), Attr (..)
-  , QuotedTypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
+  , Constant (..), FieldAssignment (..), Alt (..), Expr (..), TField (..)
+  , Variant (..), Type (..), Binding (..), RawContract (..), TypeName (..)
+  , TypeVariableName (..), FieldName (..), Verbatim (..), Error (..), Ctor (..)
+  , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
+  , ModuleAccess (..), Attr (..), QuotedTypeParams (..), CaseOrDefaultStm (..)
   , pattern ErrorTypeUnresolved
   , getLIGO
   , setLIGO
@@ -62,23 +61,20 @@ instance Pretty (LIGO xs) => Show (SomeLIGO xs) where
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
 
--- | The AST for Pascali... wait. It is, em, universal one.
---
---   TODO: Rename; add stuff if CamelLIGO needs something.
+-- | The universal AST for CameLIGO and JsLIGO.
 type LIGO xs = Tree' RawLigoList xs
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
-  , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim, Error, Ctor
-  , NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr, ModuleName
-  , ModuleAccess, Attr, QuotedTypeParams, CaseOrDefaultStm
+  , Alt, Expr, TField, Variant, Type, Binding, RawContract, TypeName
+  , TypeVariableName, FieldName, Verbatim, Error, Ctor, NameDecl, Preprocessor
+  , PreprocessorCommand, ModuleName, ModuleAccess, Attr, QuotedTypeParams
+  , CaseOrDefaultStm
   ]
 
 data Lang
-  = Pascal
-  | Caml
+  = Caml
   | Js
   deriving stock (Show, Eq, Enum, Bounded)
 
@@ -91,17 +87,8 @@ allLangs = [minBound .. maxBound]
 -- will be returned.
 langExtension :: Lang -> FilePath
 langExtension = \case
-  Pascal -> ".pligo"
   Caml -> ".mligo"
-  Js -> ".jsligo"
-
-pascaLIGOKeywords :: HashSet Text
-pascaLIGOKeywords = HashSet.fromList
-  [ "is", "begin", "end", "function", "var", "const", "recursive", "type", "set"
-  , "map", "list", "big_map", "module", "type", "case", "of", "block", "from"
-  , "step", "skip", "if", "then", "else", "record", "remove", "patch", "while"
-  , "for", "to", "in", "or", "and", "contains", "mod", "not", "nil"
-  ]
+  Js   -> ".jsligo"
 
 cameLIGOKeywords :: HashSet Text
 cameLIGOKeywords = HashSet.fromList
@@ -130,7 +117,6 @@ data Binding it
   | BVar          it [it] (Maybe it) (Maybe it) -- ^ (Pattern) (TypeVariableName) (Type) (Expr)
   | BConst        IsRec it [it] (Maybe it) (Maybe it) -- ^ (IsRec) (Pattern) (TypeVariableName) (Type) (Expr)
   | BTypeDecl     it (Maybe it) it -- ^ (Name) (Maybe (QuotedTypeParams)) (Type)
-  | BAttribute    it -- ^ (Name)
   | BInclude      it
   | BImport       it it
   | BModuleDecl   it [it] -- ^ (Name) (Expr)
@@ -142,11 +128,9 @@ data QuotedTypeParams it
   | QuotedTypeParams [it]  -- ^ [TypeVariableName]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
--- | Whether a binding is recursive ('True') or not ('False'). Some dialects such
--- as PascaLIGO and CameLIGO allow the user to specify whether a function should
--- be recursive or not using the @recursive@ or @rec@ keywords, respectively.
---
--- In JsLIGO, functions are always recursive.
+-- | Whether a binding is recursive ('True') or not ('False'). CameLIGO allows
+-- the user to specify whether a function should be recursive or not using the
+-- @rec@ keywords. In JsLIGO, functions are always recursive.
 type IsRec = Bool
 
 data Type it
@@ -174,55 +158,28 @@ data Expr it
   = Let       it it   -- Declaration Expr
   | Apply     it [it] -- (Expr) [Expr]
   | Constant  it -- (Constant)
-  | Ident     it -- (QualifiedName)
   | BinOp     it it it -- (Expr) Text (Expr)
   | UnOp      it it -- (Expr)
   | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
   | Ternary   it it it -- (Expr) (Expr) (Expr)
-  | Assign    it it    -- (Name) (Expr)
   | AssignOp  it it it -- (Name) Text (Expr)
   | List      [it] -- [Expr]
   | ListAccess it [it] -- (Name) [Indexes]
-  | Set       [it] -- [Expr]
   | Tuple     [it] -- [Expr]
   | Annot     it it -- (Expr) (Type)
-  | Attrs     [it]
-  | BigMap    [it] -- [MapBinding]
-  | Map       [it] -- [MapBinding]
-  | Remove    it it it -- (Expr) (Collection) (Expr)
   | Case      it [it]                  -- (Expr) [Alt]
-  | Skip
   | Break
   | Return    (Maybe it) -- (Expr)
   | SwitchStm it [it]    -- (Expr) [CaseOrDefaultStm]
-  | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | ForOfLoop it it it                 -- (Expr) (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
-  | Block     [it]                     -- [Declaration]
   | Lambda    [it] [it] (Maybe it) it -- [VarDecl] [TypeVariableName] (Maybe (Type)) (Expr)
-  | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
-  | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   | CodeInj   it it -- (Attr) (Expr)
   | Paren     it -- (Expr)
-  deriving stock (Generic, Functor, Foldable, Traversable)
-
-data PatchableExpr it
-  = PatchableExpr it it  -- (Collection) (Expr)
-  deriving stock (Generic, Functor, Foldable, Traversable)
-
--- Different productions only allow different collections, for example:
--- Remove: CMap | CSet
--- Patch: CList | CMap | CSet
--- ForBox: CList | CSet
--- But we chose to reuse them here to make it simpler.
-data Collection it
-  = CList
-  | CMap
-  | CSet
   deriving stock (Generic, Functor, Foldable, Traversable)
 
 newtype Verbatim it
@@ -242,10 +199,6 @@ data Alt it
 data CaseOrDefaultStm it
   = CaseStm it [it] -- (Expr) [Expr]
   | DefaultStm [it] -- [Expr]
-  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
-
-data MapBinding it
-  = MapBinding it it -- (Expr) (Expr)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data FieldAssignment it
@@ -408,9 +361,6 @@ instance Eq1 DefaultEq1DeriveFor1List where
 instance Eq1 Alt where
   liftEq f (Alt pa ea) (Alt pb eb) = f pa pb && f ea eb
 
-instance Eq1 MapBinding where
-  liftEq f (MapBinding a b) (MapBinding c d) = f a c && f b d
-
 instance Eq1 RecordFieldPattern where
   liftEq f (IsRecordField la ba) (IsRecordField lb bb) = f la lb && f ba bb
   liftEq f (IsRecordCapture la) (IsRecordCapture lb) = f la lb
@@ -434,23 +384,10 @@ instance Eq1 Constant where
 -- FIXME: Missing a lot of comparisons!
 instance Eq1 Expr where
   liftEq f (Constant a) (Constant b) = f a b
-  liftEq f (Ident a) (Ident b) = f a b
   liftEq f (List as) (List bs) = liftEqList f as bs
   liftEq f (Tuple as) (Tuple bs) = liftEqList f as bs
   liftEq f (Annot ea ta) (Annot eb tb) = f ea eb && f ta tb
-  liftEq f (Set xs) (Set ys) = liftEqList f xs ys
-  liftEq f (Map xs) (Map ys) = liftEqList f xs ys
-  liftEq f (BigMap xs) (BigMap ys) = liftEqList f xs ys
   liftEq _ _ _ = False
-
-instance Eq1 PatchableExpr where
-  liftEq f (PatchableExpr c1 a) (PatchableExpr c2 b) = f c1 c2 && f a b
-
-instance Eq1 Collection where
-  liftEq _ CList    CList   = True
-  liftEq _ CMap     CMap    = True
-  liftEq _ CSet     CSet    = True
-  liftEq _ _        _       = False
 
 instance Eq1 Error where
   -- liftEq _ _ _ = error "Cannot compare `Error` nodes"

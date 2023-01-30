@@ -28,8 +28,8 @@ defaultFormattingOptions = FormattingOptions
 
 unit_document_formatting :: Assertion
 unit_document_formatting = do
-  let filename = "trailing_space.ligo"
-  let expectedFilename = "trailing_space_expected.ligo"
+  let filename = "trailing_space.mligo"
+  let expectedFilename = "trailing_space_expected.mligo"
 
   (formattedDoc, expectedDoc) <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename

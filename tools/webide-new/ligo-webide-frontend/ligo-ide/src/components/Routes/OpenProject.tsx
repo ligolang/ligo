@@ -32,7 +32,12 @@ const OpenProject = ({ projectLink }: OpenProjectProps) => {
       // /* eslint-enable */
 
       const Manager = ProjectManager;
-      const created = await Manager.openProject(projectData, projectLink, undefined);
+      const created = await Manager.openProject({
+        type: "rawgist",
+        obj: projectData,
+        gistId: projectLink,
+        name: undefined,
+      });
 
       redux.dispatch("ADD_PROJECT", {
         type: "local",

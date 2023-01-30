@@ -13,6 +13,7 @@ export class ProjectActions {
     this.workspace = null;
     this.bottomBarRef = null;
     this.headerRef = null;
+    this.projectManager = null;
   }
 
   get codeEditor() {

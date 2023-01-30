@@ -2,17 +2,13 @@ module Test.Integrational.Capabilities.Find
   ( test_findDefinitionAndGoToReferencesCorrespondence
   , test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback
   , unit_definitionOfId
-  , unit_definitionOfLeft
   , unit_referenceOfId
-  , unit_referenceOfLeft
   , unit_definitionOfXInWildcard
   , unit_referenceOfXInWildcard
 
-  , unit_type_of_heap_arg
-  , unit_type_of_heap_const
   , unit_type_of_let
-  , unit_type_of_pascaligo_lambda_arg
-  , unit_pascaligo_local_type
+  , unit_type_of_jsligo_lambda_arg
+  , unit_cameligo_local_type
   , unit_local_type_of_good
   ) where
 
@@ -38,12 +34,12 @@ includeInvariants =
       ]
     }
   , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "B3.ligo"
+    { driFile = contractsDir </> "includes" </> "B3.jsligo"
     , driDesc = "b3, relative directories"
     , driDef = Just (interval 1 7 9)
     , driRefs =
-      [ (interval 3 21 23){_rFile = contractsDir </> "includes" </> "B1.ligo"}
-      , (interval 3 12 14){_rFile = contractsDir </> "includes" </> "B2" </> "B2.ligo"}
+      [ (interval 3 21 23){_rFile = contractsDir </> "includes" </> "B1.jsligo"}
+      , (interval 3 12 14){_rFile = contractsDir </> "includes" </> "B2" </> "B2.jsligo"}
       ]
     }
   , DefinitionReferenceInvariant
@@ -63,13 +59,13 @@ includeInvariants =
       ]
     }
   , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "D1.ligo"
+    { driFile = contractsDir </> "includes" </> "D1.jsligo"
     , driDesc = "d, no references"
     , driDef = Just (interval 1 7 8)
     , driRefs = []
     }
   , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "D2.ligo"
+    { driFile = contractsDir </> "includes" </> "D2.jsligo"
     , driDesc = "d, no references"
     , driDef = Just (interval 1 7 8)
     , driRefs = []
@@ -119,16 +115,6 @@ unit_referenceOfId = do
   referenceOfId @Standard
   referenceOfId @FromCompiler
 
-unit_definitionOfLeft :: Assertion
-unit_definitionOfLeft = do
-  definitionOfLeft @Standard
-  definitionOfLeft @FromCompiler
-
-unit_referenceOfLeft :: Assertion
-unit_referenceOfLeft = do
-  referenceOfLeft @Standard
-  referenceOfLeft @FromCompiler
-
 unit_definitionOfXInWildcard :: Assertion
 unit_definitionOfXInWildcard = do
   definitionOfXInWildcard @Standard
@@ -139,30 +125,20 @@ unit_referenceOfXInWildcard = do
   referenceOfXInWildcard @Standard
   referenceOfXInWildcard @FromCompiler
 
-unit_type_of_heap_const :: Assertion
-unit_type_of_heap_const = do
-  typeOfHeapConst @Standard
-  typeOfHeapConst @FromCompiler
-
-unit_type_of_heap_arg :: Assertion
-unit_type_of_heap_arg = do
-  typeOfHeapArg @Standard
-  --typeOfHeapArg @FromCompiler  -- FIXME (LIGO-593)
-
 unit_type_of_let :: Assertion
 unit_type_of_let = do
   typeOfLet @Standard
   --typeOfLet @FromCompiler  -- FIXME (LIGO-593)
 
-unit_type_of_pascaligo_lambda_arg :: Assertion
-unit_type_of_pascaligo_lambda_arg = do
-  typeOfPascaligoLambdaArg @Standard
-  --typeOfPascaligoLambdaArg @FromCompiler  -- FIXME (LIGO-593)
+unit_type_of_jsligo_lambda_arg :: Assertion
+unit_type_of_jsligo_lambda_arg = do
+  typeOfJsligoLambdaArg @Standard
+  --typeOfJsligoLambdaArg @FromCompiler  -- FIXME (LIGO-593)
 
-unit_pascaligo_local_type :: Assertion
-unit_pascaligo_local_type = do
-  pascaligoLocalType @Standard
-  --pascaligoLocalType @FromCompiler  -- FIXME (LIGO-593)
+unit_cameligo_local_type :: Assertion
+unit_cameligo_local_type = do
+  cameligoLocalType @Standard
+  --cameligoLocalType @FromCompiler  -- FIXME (LIGO-593)
 
 -- See LIGO-110
 -- unit_type_of_camligo_lambda_arg :: Assertion

@@ -67,13 +67,10 @@ library:
     - src/
 
   include-dirs:
-    - grammar/pascaligo/src
     - grammar/camligo/src
     - grammar/jsligo/src
 
   c-sources:
-    - grammar/pascaligo/src/parser.c
-    - grammar/pascaligo/src/scanner.c
     - grammar/camligo/src/parser.c
     - grammar/camligo/src/scanner.c
     - grammar/jsligo/src/parser.c
@@ -101,8 +98,9 @@ library:
     - regex-tdfa
     - template-haskell
     - temporary
-    - th-compat
     - text
+    - th-compat
+    - timestats
     - transformers
     - tree-sitter
     - unliftio
@@ -135,6 +133,7 @@ executables:
       - prettyprinter
       - stm
       - stm-containers
+      - timestats
       - unliftio
       - unliftio-core
       - unliftio-pool
@@ -178,6 +177,7 @@ tests:
 
     source-dirs:
       - test/lsp-handlers-test/
+      - test/lsp-handlers-test-common/
       - test/test-common/
 
     dependencies:
@@ -314,3 +314,27 @@ tests:
 
     build-tools:
       - tasty-discover:tasty-discover
+
+benchmarks:
+  lsp-handlers-bench:
+    main: Main.hs
+
+    source-dirs:
+      - bench/lsp-handlers-bench/
+      - test/lsp-handlers-test-common
+
+    dependencies:
+      - aeson
+      - criterion
+      - directory
+      - data-default
+      - ligo-squirrel
+      - lsp-test
+      - lsp-types
+      - text
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+      - -threaded
+      - -eventlog
+      - -rtsopts
+      - '"-with-rtsopts=-N -A64m -AL256m"'

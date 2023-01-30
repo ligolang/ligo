@@ -22,8 +22,6 @@
     },
     "activationEvents": [
         "onDebugResolve:ligo",
-        "onDebugResolve:mligo",
-        "onDebugResolve:jsligo",
         "onCommand:extension.ligo-debugger.switchSteppingGranularity"
     ],
 
@@ -44,9 +42,6 @@
         },
         "breakpoints": [
             {
-                "language": "ligo"
-            },
-            {
                 "language": "mligo"
             },
             {
@@ -54,16 +49,6 @@
             }
         ],
         "languages": [
-            {
-                "id": "ligo",
-                "aliases": [
-                    "PascaLIGO"
-                ],
-                "extensions": [
-                    ".ligo",
-                    ".pligo"
-                ]
-            },
             {
                 "id": "mligo",
                 "aliases": [
@@ -88,7 +73,6 @@
                 "type": "ligo",
                 "label": "LIGO Debugger",
                 "languages": [
-                    "ligo",
                     "mligo",
                     "jsligo"
                 ],

@@ -40,8 +40,10 @@ import Morley.Debugger.DAP.Types
   StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
-import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
-import Morley.Michelson.Interpret (ceContracts)
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Interpret
+  (MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos), ceContracts,
+  mfwsFailed)
 import Morley.Michelson.Parser.Types (MichelsonSource)
 import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
 import Morley.Michelson.Runtime (ContractState (..))
@@ -156,7 +158,16 @@ instance HasSpecificMessages LIGO where
 
       writeException exception = do
         st <- get
-        let msg = pretty exception
+        let msg = case mfwsFailed exception of
+              -- [LIGO-862] display this value as LIGO one
+              MichelsonFailedWith val ->
+                let
+                  ErrorSrcPos (SrcPos (Pos l) (Pos c)) = mfwsErrorSrcPos exception
+                in
+                  [int||Contract failed with value: #{val}
+                  On line #{l + 1} char #{c + 1}|]
+              _ -> pretty exception
+
         mSrcLoc <- view slEnd <<$>> uses dsDebuggerState getLastExecutedPosition
         pushMessage $ DAPEvent $ StoppedEvent $ DAP.defaultStoppedEvent
           { DAP.bodyStoppedEvent = DAP.defaultStoppedEventBody

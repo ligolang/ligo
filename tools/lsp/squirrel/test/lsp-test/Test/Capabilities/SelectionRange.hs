@@ -1,5 +1,5 @@
 module Test.Capabilities.SelectionRange
-  ( unit_selectionRangeInsideCase
+  ( unit_selectionRange
   ) where
 
 import Language.LSP.Types qualified as J
@@ -23,21 +23,16 @@ data SimpleRange = SimpleRange (J.UInt, J.UInt) (J.UInt, J.UInt) FilePath
 simplify :: Range -> SimpleRange
 simplify (Range (l1, c1, _) (l2, c2, _) f) = SimpleRange (l1, c1) (l2, c2) f
 
-unit_selectionRangeInsideCase :: Assertion
-unit_selectionRangeInsideCase = do
-  let filepath = contractsDir </> "heap.ligo"
+unit_selectionRange :: Assertion
+unit_selectionRange = do
+  let filepath = contractsDir </> "simple.mligo"
   tree <- readContract filepath
-  let position = (point 15 8){_rFile = filepath}
+  let position = (point 2 3){_rFile = filepath}
       results = findCoveringRanges (tree ^. nestedLIGO) position
               & map simplify
   results `shouldMatchList`
-    [ SimpleRange (15,  8) ( 15, 12) filepath
-    , SimpleRange (15,  8) ( 15, 16) filepath
-    , SimpleRange (15,  8) ( 15, 21) filepath
-    , SimpleRange (14,  6) ( 17,  7) filepath
-    , SimpleRange (13,  4) ( 17,  7) filepath
-    , SimpleRange (10, 46) ( 20,  4) filepath
-    , SimpleRange (10, 46) ( 20, 11) filepath
-    , SimpleRange (10,  1) ( 20, 11) filepath
-    , SimpleRange ( 1,  1) (101,  1) filepath
+    [ SimpleRange (2, 3) (2, 4) filepath
+    , SimpleRange (2, 3) (2, 9) filepath
+    , SimpleRange (1, 1) (2, 9) filepath
+    , SimpleRange (1, 1) (3, 1) filepath
     ]

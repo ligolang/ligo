@@ -7,7 +7,7 @@ Bugs are to be expected!
 
 In the future, this package will be deprecated and joined with the LIGO Language Server (`ligo-vscode`).
 
-To use this package, you need to have LIGO version 0.47.0 or greater.
+To use this package, you need to have LIGO version 0.58.0 or greater.
 You can specify a path to the `ligo` executable in `settings.json`. The debugger will look for it in the following order:
 1. The debugger will use this path if this field is filled.
 2. If this field is blank, the debugger will try to find the `ligo` executable in the `$PATH` variable.

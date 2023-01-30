@@ -57,7 +57,7 @@ newtype LambdaMeta = LambdaMeta
     -- The order of these names is reversed (e.g. if it is @["addImpl", "add"]@
     -- the next stack frames would be created: @["add", "addImpl"]@).
     --
-    -- Sometimes the name remains unknown, this is represented by @Nothing@.
+    -- Sometimes the name remains unknown, this is represented by @LNameUnknown@.
   } deriving stock (Show, Generic)
     deriving anyclass (NFData)
 
@@ -74,7 +74,7 @@ instance Default LambdaMeta where
 
 instance AsEmpty LambdaMeta where
   _Empty = prism
-    (def)
+    def
     \case{ LambdaMeta (LNameUnknown :| []) -> Right (); other -> Left other }
 
 -- | A lens for accessing the meta of a lambda.
@@ -90,6 +90,7 @@ lambdaMetaL = lens
                 T.ConcreteMeta (_ :: LambdaMeta) i -> i
                 i -> i
           in maybe id (T.Meta . T.SomeMeta) mMeta pureInstr
+
      \(T.VLam lam) mMeta -> T.VLam $ T.rfMapAnyInstr (replaceMeta mMeta) lam
 
 -- | Variation of 'lambdaMetaL' that can look into arbitrary value,

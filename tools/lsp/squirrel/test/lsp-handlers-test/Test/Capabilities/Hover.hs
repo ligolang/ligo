@@ -1,6 +1,5 @@
 module Test.Capabilities.Hover
-  ( unit_hover
-  , unit_hover_jsligo
+  ( unit_hover_jsligo
   , unit_hover_type_inference_fallback
   , unit_hover_type_inference_standard
   ) where
@@ -23,16 +22,6 @@ matchesHover :: Text -> Text -> Bool
 matchesHover expected actual =
   let withoutDialect = Text.tail $ Text.dropWhile (/= '\n') actual in
   expected `Text.isPrefixOf` withoutDialect
-
-unit_hover :: Assertion
-unit_hover = do
-  maybeHover <- runHandlersTest contractsDir $ do
-    doc <- openLigoDoc "eq_bool.ligo"
-    getHover doc (Position 3 11)
-  shouldSatisfy maybeHover $ \case
-    Just (Hover (HoverContents (MarkupContent _ hoverText)) _) ->
-      "b : bool" `matchesHover` hoverText
-    _ -> error "expected a hover"
 
 unit_hover_jsligo :: Assertion
 unit_hover_jsligo = do
