@@ -106,7 +106,7 @@ instance HasSpecificMessages LIGO where
             -- but let's handle this condition gracefully anyway.
             writeTerminatedEvent
         _ -> error "Unexpected status"
-    ReachedStart -> writeStoppedEvent "Reached start"
+    ReachedStart -> writeStoppedEvent "entry"
     where
       writeTerminatedEvent = do
         InterpretSnapshot{..} <- zoom dsDebuggerState $ frozen curSnapshot
