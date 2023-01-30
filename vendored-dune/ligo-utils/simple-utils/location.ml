@@ -7,7 +7,7 @@
 (* } *)
 
 type virtual_location = string
-  [@@deriving hash]
+  [@@deriving hash, sexp]
 
 type t =
   | File of Region.t (* file_location *)

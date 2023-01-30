@@ -17,6 +17,8 @@ module Trace = Simple_utils.Trace
    Run:   OCAML_LANDMARKS=auto _build/default/src/bin/runligo.exe info get-scope x.mligo --format dev --with-types
 *)
 
+module PP = PP
+
 type def = Types.def
 type scopes = Types.scopes
 

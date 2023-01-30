@@ -31,6 +31,7 @@ let%expect_test _ =
                                    registry
       login                      . [BETA] login to the LIGO package registry
       daemon                     . launch a long running LIGO process
+      lsp                        . [BETA] launch a LIGO lsp server
       version                    . print version information
       help                       . explain a given subcommand (perhaps recursively)
 
