@@ -53,11 +53,19 @@ let list_declarations
   source_file, declarations
 
 
-let get_scope (raw_options : Raw_options.t) source_file display_format no_colour () =
-  Scopes.Api_helper.format_result ~display_format ~no_colour
-  @@ fun ~raise ->
+let get_scope_raw
+    (raw_options : Raw_options.t)
+    (source_file : BuildSystem.Source_input.code_input)
+    ~raise
+    ()
+  =
+  let file_name =
+    match source_file with
+    | From_file file_name -> file_name
+    | Raw { id; _ } -> id
+  in
   let syntax =
-    Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
+    Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some file_name)
   in
   let protocol_version =
     Helpers.protocol_to_variant ~raise raw_options.protocol_version
@@ -68,7 +76,9 @@ let get_scope (raw_options : Raw_options.t) source_file display_format no_colour
     (* While building [Build.qualified_core] we need a smaller AST (without stdlib)
        that is the reason for no_stdlib as true *)
     let options = Compiler_options.set_no_stdlib options true in
-    Build.qualified_core ~raise ~options source_file
+    match source_file with
+    | From_file file_name -> Build.qualified_core ~raise ~options file_name
+    | Raw file -> Build.qualified_core_raw_input ~raise ~options file
   in
   let lib =
     (* We need stdlib for [Build.Stdlib.get], 
@@ -81,3 +91,21 @@ let get_scope (raw_options : Raw_options.t) source_file display_format no_colour
   in
   (* let () = assert (List.length (fst stdlib) = List.length (snd stdlib)) in *)
   Scopes.scopes ~raise ~options:options.middle_end ~with_types ~stdlib core_prg
+
+
+let get_scope (raw_options : Raw_options.t) source_file display_format no_colour () =
+  Scopes.Api_helper.format_result ~display_format ~no_colour
+  @@ get_scope_raw raw_options (From_file source_file) ()
+
+
+let get_scope_trace
+    (raw_options : Raw_options.t)
+    (source_file : BuildSystem.Source_input.code_input)
+    ()
+  =
+  Trace.try_with
+    ~fast_fail:false
+    (fun ~raise ~catch ->
+      let v = get_scope_raw raw_options source_file () ~raise in
+      catch.errors (), catch.warnings (), Some v)
+    (fun ~catch e -> e :: catch.errors (), catch.warnings (), None)

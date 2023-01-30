@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "outDir": "../client/out/test/",
+        "rootDir": ".",
+        "sourceMap": true
+    },
+    "exclude": ["node_modules", ".vscode-test"]
+}

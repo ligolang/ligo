@@ -1,0 +1,6 @@
+(library
+ (name ligo_lsp)
+ (public_name ligo.ligo_lsp)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries linol linol-lwt lsp utils requests simple-utils))

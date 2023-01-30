@@ -3,6 +3,8 @@ module Formatter = Formatter
 module Api_helper = Api_helper
 module Trace = Simple_utils.Trace
 
+module PP = PP
+
 type def = Types.def
 type scopes = Types.scopes
 

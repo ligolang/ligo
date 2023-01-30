@@ -2032,6 +2032,13 @@ let daemon =
   Command.basic ~summary ~readme (f <$> ligo_bin_path)
 
 
+let lsp =
+  let summary = "[BETA] launch a LIGO lsp server" in
+  let readme () = "[BETA] Run the lsp server which is used by editor extensions" in
+  let f () = return_result ~return @@ fun () -> Ligo_api.Lsp_server.run () in
+  Command.basic ~summary ~readme (Command.Param.return f)
+
+
 let main =
   Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler"
   @@ [ "compile", compile_group
@@ -2048,6 +2055,7 @@ let main =
      ; "add-user", add_user
      ; "login", login
      ; "daemon", daemon
+     ; "lsp", lsp
      ]
 
 
