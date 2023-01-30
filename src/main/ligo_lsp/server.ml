@@ -75,7 +75,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
     *)
       method private _on_doc : DocumentUri.t -> string -> unit Handler.t =
         fun uri contents ->
-          let ((errors, warnings, data) as new_state) = get_scope uri contents in
+          let ((errors, warnings, data) as new_state) = Ligo_interface.unfold_get_scope @@ get_scope uri contents in
           Hashtbl.replace get_scope_buffers uri new_state;
           let@ () = send_debug_msg ("Updating DOC :" ^ DocumentUri.to_string uri) in
           let@ () =

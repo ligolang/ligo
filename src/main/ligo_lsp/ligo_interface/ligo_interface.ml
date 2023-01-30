@@ -49,11 +49,50 @@ module Make (Ligo_api : LIGO_API) = struct
     Ligo_api.Print.pretty_print compiler_options file_path display_format ()
 end
 
-(* 
-let all_variables (_, _, defs_scopes_opt : get_scope_info ) : Scopes.Types.vdef list =
-  let current_module_defs = 
-    begin match defs_scopes_opt with
-    | Some (defs, _) -> List.filterMap () defs
-    | None -> []
-    end
-  in current_module_defs @ [] *)
+let (extract_variables, extract_types, extract_modules) :
+      (Scopes.Types.def list -> Scopes.Types.vdef list)
+      * (Scopes.Types.def list -> Scopes.Types.tdef list)
+      * (Scopes.Types.def list -> Scopes.Types.mdef list)
+  =
+  let extract_with f =
+    let rec from_module (m : Scopes.Types.mdef) =
+      match m.mod_case with
+      | Alias _ -> []
+      | Def defs -> from_defs defs
+    and from_defs defs =
+      let current_extracted_defs = List.filter_map ~f defs
+      and current_module_defs : Scopes.Types.mdef list =
+        List.filter_map
+          ~f:(function
+            | Scopes.Types.Module m -> Some m
+            | _ -> None)
+          defs
+      in
+      current_extracted_defs @ List.concat_map ~f:from_module current_module_defs
+    in
+    from_defs
+  in
+  ( extract_with (function
+        | Scopes.Types.Variable v -> Some v
+        | _ -> None)
+  , extract_with (function
+        | Scopes.Types.Type t -> Some t
+        | _ -> None)
+  , extract_with (function
+        | Scopes.Types.Module m -> Some m
+        | _ -> None) )
+
+
+let unfold_get_scope ((errs, warnings, plain_data_opt) : get_scope_info) : get_scope_info =
+  let data =
+    match plain_data_opt with
+    | None -> None
+    | Some (plain_decls, scopes) ->
+      let decls =
+        List.map ~f:(fun x -> Scopes.Types.Variable x) (extract_variables plain_decls)
+        @ List.map ~f:(fun x -> Scopes.Types.Type x) (extract_types plain_decls)
+        @ List.map ~f:(fun x -> Scopes.Types.Module x) (extract_modules plain_decls)
+      in
+      Some (decls, scopes)
+  in
+  errs, warnings, data

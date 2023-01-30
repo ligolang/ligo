@@ -592,7 +592,7 @@ and module_expression ~raise
   match m.wrap_content with
   | M_struct decls ->
     let defs, refs, tenv, scopes =
-      (* [update_tenv] is [false] because [update_typing_env] already types 
+      (* [update_tenv] is [false] because [update_typing_env] already types
          nested modules, so we only need to call it at toplevel declarations. *)
       declarations ~raise ~update_tenv:false ~with_types ~options tenv decls
     in
