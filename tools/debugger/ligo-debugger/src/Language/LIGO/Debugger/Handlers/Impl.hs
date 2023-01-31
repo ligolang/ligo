@@ -345,7 +345,8 @@ instance HasSpecificMessages LIGO where
       let
         shortDesc = case event of
           EventFacedStatement -> Just $ StopEventDesc "at statement"
-          EventExpressionPreview -> Just $ StopEventDesc "upon exp"
+          EventExpressionPreview GeneralExpression -> Just $ StopEventDesc "upon exp"
+          EventExpressionPreview FunctionCall -> Just $ StopEventDesc "upon func call"
           EventExpressionEvaluated{} -> Just $ StopEventDesc "computed exp"
       in (shortDesc, Just event)
     _ -> (Nothing, Nothing)

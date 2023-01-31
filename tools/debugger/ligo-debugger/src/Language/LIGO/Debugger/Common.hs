@@ -17,6 +17,7 @@ module Language.LIGO.Debugger.Common
   , ligoRangeToRange
   , rangeToLigoRange
   , getMetaMbAndUnwrap
+  , isLocationForFunctionCall
   , shouldIgnoreMeta
   , buildType
   , ExpressionSourceLocation (..)
@@ -26,20 +27,24 @@ module Language.LIGO.Debugger.Common
 
 import Unsafe qualified
 
-import AST (Binding, CaseOrDefaultStm, Ctor, Expr, LIGO, Pattern, QualifiedName)
-import AST qualified
 import Data.HashMap.Strict ((!?))
 import Data.HashMap.Strict qualified as HM
 import Data.List.NonEmpty (groupBy)
 import Data.Set qualified as S
 import Data.Set qualified as Set
 import Data.Vinyl (Rec (RNil, (:&)))
-import Duplo (layer, leq, spineTo)
 import Fmt (Buildable (..), pretty)
+import Text.Interpolation.Nyan
+
+import AST
+  (Binding, CaseOrDefaultStm, Ctor, Expr, LIGO, Pattern, QualifiedName, SomeLIGO (SomeLIGO),
+  findNodeAtPoint)
+import AST qualified
+import Duplo (layer, leq, spineTo)
+import Extension (getExt)
 import Parser (ParsedInfo)
 import Product (Contains)
 import Range (Range (..), getRange)
-import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Debugger.Core.Snapshots ()
@@ -358,6 +363,15 @@ getMetaMbAndUnwrap :: Instr i o -> (Maybe EmbeddedLigoMeta, Instr i o)
 getMetaMbAndUnwrap = \case
   ConcreteMeta embeddedMeta inner -> (Just embeddedMeta, inner)
   instr -> (Nothing, instr)
+
+isLocationForFunctionCall :: LigoRange -> HashMap FilePath (LIGO ParsedInfo) -> Bool
+isLocationForFunctionCall ligoRange parsedContracts = isJust do
+  contract <- parsedContracts !? lrFile ligoRange
+  lang <- rightToMaybe $ getExt (lrFile ligoRange)
+  node <- findNodeAtPoint (ligoRangeToRange ligoRange) (SomeLIGO lang contract)
+
+  AST.Apply{} <- layer node
+  pass
 
 -- | Sometimes we want to ignore metas for some instructions.
 shouldIgnoreMeta :: LigoRange -> Instr i o -> HashMap FilePath (LIGO ParsedInfo) -> Bool
