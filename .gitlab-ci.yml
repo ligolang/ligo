@@ -1,12 +1,15 @@
 variables:
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
-  
+
 stages:
   - pretooling                      # changelog
   - build                           # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
+  - tools-precheck                  # preliminary checks done for projects from 'tools'
+  - tools-build                     # build projects from 'tools'
+  - tools-check                     # run tests for projects from 'tools'
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
   - push                            # deploy docker images, pages, releases (tag)
   - deploy                          # deploy web IDE, website preview
@@ -21,6 +24,10 @@ include:
   - '/.ci/.gitlab-ci-npm.yml'
   # Manage pipeline related to webide
   - '/.ci/.gitlab-ci-webide.yml'
+  # CI jobs for projects from 'tools'
+  - '/.ci/.gitlab-ci-lsp.yml'
+  - '/.ci/.gitlab-ci-debugger.yml'
+  - '/.ci/.gitlab-ci-webide-new.yml'
 .submodule-clone:
   before_script:
     - git submodule sync --recursive
@@ -62,7 +69,7 @@ to_dos:
   artifacts:
     paths:
       - to-dos.html
-  
+
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
   extends: .submodule-clone
@@ -76,8 +83,9 @@ docker_build:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-  dependencies:
-    - changelog
+  needs:
+    - job: changelog
+      artifacts: true
   script:
     - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
@@ -104,8 +112,9 @@ docker_extract:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-  dependencies :
-    - docker_build
+  needs:
+    - job: docker_build
+      artifacts: true
   script:
     - docker load -i ligo.tar.gz
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
@@ -251,7 +260,7 @@ algolia-crawl:
   script:
     # We want to trigger the job after page:deploy to reindex the website but job can't depends on page:deploy. So we put a artificial sleep of 10 seconds before triggering algolia crawler to be sure that it'll works
     - |
-      sleep 10 
+      sleep 10
       curl -X post  -H "Content-Type: application/json" --user ${ALGOLIA_CRAWLER_ID}:${ALGOLIA_CRAWLER_TOKEN} https://crawler.algolia.com/api/1/crawlers/bb0597ba-5abc-45ba-bdf9-99f8152e87b0/reindex
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
@@ -267,16 +276,16 @@ deploy_website_preview:
   needs:
     - job: pages-attempt
       artifacts: true
-  script: 
+  script:
     - apt-get update
     - apt-get install -y --no-install-recommends jq
     - npm install netlify-cli
-    - npx netlify deploy --site $NETLIFY_SITE_ID_LIGOLANG --dir=./public --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json  
+    - npx netlify deploy --site $NETLIFY_SITE_ID_LIGOLANG --dir=./public --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json
     - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
     - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
     - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
-    - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'  
+    - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:

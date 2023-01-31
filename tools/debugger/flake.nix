@@ -14,21 +14,31 @@
     haskell-nix.inputs.hackage.follows = "hackage";
   };
 
-  outputs = { self, utils, haskell-nix, hackage }:
+  outputs = { self, utils, haskell-nix, hackage, nixpkgs }:
     let haskellSystems = (builtins.attrNames haskell-nix.legacyPackages);
     in utils.lib.eachSystem haskellSystems (system:
       let
-        pkgs = haskell-nix.legacyPackages.${system};
+        haskellPkgs = haskell-nix.legacyPackages."${system}";
+        nixpkgsArgs = {
+          overlays = [(self: super: {
+            # Hash for one of headers is broken in nixpkgs at the moment :(
+            musl = super.musl.override (_: { useBSDCompatHeaders = false; });
+          })];
+          config = { allowUnfree = true; };
+          localSystem = system;
+        };
 
-        grammars = import ./../lsp/squirrel/grammar { inherit pkgs; };
+        pkgs = import nixpkgs nixpkgsArgs;
+
+        grammars = import ./../lsp/squirrel/grammar { pkgs = haskellPkgs; };
 
         ligo-debugger-package = pkgs:
-          (pkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; }).ligo-debugger;
+          (haskellPkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; }).ligo-debugger;
 
         ligo-debugger-exec = pkgs:
           (ligo-debugger-package pkgs).components.exes.ligo-debugger;
-        ligo-debugger-components = ligo-debugger-package (pkgs);
-        ligo-debugger-test = (ligo-debugger-package pkgs).components.tests.ligo-debugger-test;
+        ligo-debugger-components = ligo-debugger-package (haskellPkgs);
+        ligo-debugger-test = (ligo-debugger-package haskellPkgs).components.tests.ligo-debugger-test;
         archOut = {
           devShells = {
             default = pkgs.mkShell rec {
@@ -41,8 +51,8 @@
 
           packages = {
 
-            ligo-debugger = ligo-debugger-exec (pkgs);
-            ligo-debugger-static = ligo-debugger-exec (pkgs.pkgsCross.musl64);
+            ligo-debugger = ligo-debugger-exec (haskellPkgs);
+            ligo-debugger-static = ligo-debugger-exec (haskellPkgs.pkgsCross.musl64);
 
             ligo-debugger-extension = pkgs.callPackage ./vscode-plugin {
               # Since we are shipping it, we want to have a portable binary

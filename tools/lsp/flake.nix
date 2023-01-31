@@ -185,6 +185,9 @@
         vscode-extension = (pkgs.callPackage ./vscode-plugin {
           ligo-squirrel = ligo-squirrel-combined;
         }).extension;
+
+        stack2cabal = pkgs.haskell.lib.overrideCabal pkgs.haskellPackages.stack2cabal
+          (drv: { jailbreak = true; broken = false; });
       in {
         packages = exes // {
           inherit vscode-extension-native vscode-extension;
@@ -220,7 +223,7 @@
             buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
           };
           ci = pkgs.mkShell {
-            buildInputs = [ pkgs.stylish-haskell pkgs.gnumake ];
+            buildInputs = [ pkgs.stylish-haskell pkgs.gnumake stack2cabal ];
           };
           integration-test = pkgs.mkShell {
             buildInputs = [ ligo-bin pkgs.nodePackages.esy ];

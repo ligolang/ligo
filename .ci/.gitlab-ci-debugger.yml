@@ -1,3 +1,8 @@
+## Debugger
+
+include:
+  - '/.ci/.gitlab-ci-tools-common.yml'
+
 # Reads ligo version from 'LIGO_VERSION_FILE' env variable,
 # gets ligo binary from the corresponding release, and does
 # 'git add ligo' to make binary available for flake.
@@ -19,7 +24,7 @@
   - git add ./ligo
 
 # This one runs 'ligo-debugger-test' with flags in 'LIGO_TEST_FLAGS' env variable.
-.run_ligo_tests: &run_ligo_tests
+.run_ligo_debugger_tests: &run_ligo_debugger_tests
   # Gitlab CI terminal has 'TERM=dumb' environment variable.
   # Guys from LIGO are using pretty-printing from 'ligo-utils' library.
   # As you can see here (https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/vendors/ligo-utils/simple-utils/snippet.ml#L15)
@@ -31,61 +36,34 @@
   - nix build $FLAKE_FLAGS .#tests.x86_64-linux.ligo-debugger-test
   - cd ligo-debugger && ../result/bin/ligo-debugger-test $LIGO_TEST_FLAGS
 
-ligo-debugger-extension:
-  stage: debugger
-  only: [merge_requests, tooling, vscode-production]
-  needs: [ print-nix-version ]
-  script:
-    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/debugger'#ligo-debugger-extension
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-debugger-extension.vsix
-  artifacts:
-    paths:
-      - ligo-debugger-extension.vsix
-
-ligo-debugger-test-ligo-recommended:
-  stage: debugger
-  only: [merge_requests, tooling]
-  needs: [ print-nix-version ]
-  variables:
-    LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/recommended"
-    LIGO_TEST_FLAGS: "-r"
-  before_script: *get_release_ligo_binary
-  script: *run_ligo_tests
-
-danger-instant-checks:
-  stage: validate
-  only:
-    refs: [merge_requests]
-    changes:
-      - tools/debugger/**/*
-      - danger/**/*
+debugger-danger-instant-checks:
+  stage: tools-precheck
+  rules: &debugger_danger_checks
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - tools/debugger/**/*
+        - danger/**/*
+  needs: []
   interruptible: true
   script:
     - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
         --dangerfile=./danger/instant-checks.rb
         --danger_id=instant
 
-danger-hlint:
-  stage: validate
-  only:
-    refs: [merge_requests]
-    changes:
-      - tools/debugger/**/*
-      - danger/**/*
+debugger-danger-hlint:
+  stage: tools-precheck
+  rules: *debugger_danger_checks
+  needs: []
   interruptible: true
   script:
     - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
         --dangerfile=./danger/hlint.rb
         --danger_id=hlint
 
-danger-premerge-checks:
-  stage: validate-final
-  only:
-    refs: [merge_requests]
-    changes:
-      - tools/debugger/**/*
-      - danger/**/*
-  needs: ["danger-instant-checks"]  # To get messages in MRs ordered right
+debugger-danger-premerge-checks:
+  stage: tools-check
+  rules: *debugger_danger_checks
+  needs: ["debugger-danger-instant-checks"]  # To get messages in MRs ordered right
   when: always
   interruptible: true
   script:
@@ -94,25 +72,58 @@ danger-premerge-checks:
         --danger_id=premerge
   allow_failure: true
 
-# publish vscode extension to the extension marketplace
-# copied over from tools/lsp and slightly modified
-ligo-debugger-extension-publish:
-  stage: push
-  needs: [ligo-debugger-extension]
-  only: [vscode-production]
-  when: manual
+debugger-build:
+  stage: tools-build
+  rules: &debugger_mr_dev
+    - !reference [.debugger_mr_changes]
+    - !reference [.dev]
+  needs: []
   script:
-    - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # uses VSCE_PAT env variable as personal access token
-    - nix develop ./tools/vsce --command ovsx publish *.vsix # uses OVSX_PAT env variable as personal access token
+    - nix build $FLAKE_FLAGS ./tools/debugger#packages.x86_64-linux.ligo-debugger
 
-ligo-debugger-test-ligo-minimal-supported:
+debugger-test-ligo-recommended:
+  stage: tools-check
+  rules: *debugger_mr_dev
+  needs: [debugger-build]
+  variables:
+    LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/recommended"
+    LIGO_TEST_FLAGS: "-r"
+  before_script: *get_release_ligo_binary
+  script: *run_ligo_debugger_tests
+
+debugger-test-ligo-minimal-supported:
   stage: push
-  only: [vscode-production]
-  needs: [ print-nix-version ]
+  rules:
+    - !reference [.vscode_production]
+  needs: []
   when: manual
   variables:
     LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/minimal-supported"
     LIGO_TEST_FLAGS: "-r -m"
   before_script: *get_release_ligo_binary
-  script: *run_ligo_tests
+  script: *run_ligo_debugger_tests
   allow_failure: true
+
+vscode-debugger-extension:
+  stage: tooling
+  rules:
+    - !reference [.debugger_mr_changes]
+    - !reference [.dev]
+    - !reference [.vscode_production]
+  needs: []
+  script:
+    - nix build $FLAKE_FLAGS ./tools/debugger#ligo-debugger-extension
+    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-debugger-extension.vsix
+  artifacts:
+    paths:
+      - ligo-debugger-extension.vsix
+
+vscode-debugger-extension-publish:
+  stage: push
+  rules:
+    - !reference [.vscode_production]
+  needs: [vscode-debugger-extension]
+  when: manual
+  script:
+    - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix develop ./tools/vsce --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token

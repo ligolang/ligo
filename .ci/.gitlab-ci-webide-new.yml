@@ -1,24 +1,28 @@
+## Webide
+
+include:
+  - '/.ci/.gitlab-ci-tools-common.yml'
+
 webide-backend:
-  stage: webide
-  only: [ merge_requests ]
-  needs: [ print-nix-version ]
+  stage: tools-build
+  rules: &webide_mr_dev
+    - !reference [.webide_mr_changes]
+    - !reference [.dev]
+  needs: []
   script:
     - nix build ./tools/webide-new#packages.x86_64-linux.backend
 
 webide-frontend:
-  stage: webide
-  only: [ merge_requests ]
-  needs: [ print-nix-version ]
+  stage: tools-build
+  rules: *webide_mr_dev
+  needs: []
   script:
     - nix build ./tools/webide-new#packages.x86_64-linux.frontend
 
-
 webide-backend-checks:
-  stage: webide
-  only: [ merge_requests ]
-  needs: [ print-nix-version ]
-  # webide backend tests need docker
-  tags: [nix-with-docker]
+  stage: tools-check
+  rules: *webide_mr_dev
+  needs: [webide-backend]
   script:
     - cd ./tools/webide-new
     - nix build .#packages.x86_64-linux.ligo-bin --out-link ligo
@@ -31,23 +35,10 @@ webide-backend-checks:
     - cd ligo-webide-backend && ../result/bin/ligo-webide-backend-test
 
 webide-frontend-checks:
-  stage: webide
-  only: [ merge_requests ]
-  needs: [ print-nix-version ]
+  stage: tools-check
+  rules: *webide_mr_dev
+  needs: [webide-frontend]
   script:
     - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-tscompile
     - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-tslint
     - nix build -L ./tools/webide-new#checks.x86_64-linux.frontend-openapi
-
-
-webide-deploy:
-  stage: webide
-  only: [ tooling ]
-  needs: [ print-nix-version ]
-  # Should we make this automatical? Or perhaps deploy on some other branch changes
-  when: manual
-  script:
-    - eval "$(ssh-agent -s)"
-    - echo "$WEBIDE_DEPLOYMENT_KEY" | base64 --decode | env SSH_ASKPASS="$(command -v false)" ssh-add -
-    - nix develop ./tools/webide-new -c deploy ./tools/webide-new#webide --ssh-user deploy --skip-checks
-    - kill "$SSH_AGENT_PID"

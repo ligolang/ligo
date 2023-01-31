@@ -60,6 +60,7 @@ okayTests =
       , "view_import.mligo"
       , "view_import_and_alias.mligo"
       , "get_scope_tests" </> "import_x.mligo"
+      , "interpreter_tests" </> "test_hashlock.mligo"
 
         -- LIGO-808
       , "interpreter_tests" </> "originate_from_relative_path" </> "test" </> "a" </> "b" </> "test.mligo"
@@ -82,6 +83,9 @@ okayTests =
 
         -- https://gitlab.com/ligolang/ligo/-/issues/1626
       , "disc_union_vbar.jsligo"
+
+        -- No issue:
+      , "layout_comb.jsligo"
 
         -- LIGO fails to parse these:
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
