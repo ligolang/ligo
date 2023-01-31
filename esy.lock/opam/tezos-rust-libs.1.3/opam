@@ -21,17 +21,17 @@ build:[
     "--release"
     "--package" "wasmer-c-api"
     "--no-default-features"
-    "--features" "singlepass,wat,compiler,middlewares,universal"
+    "--features" "singlepass,cranelift,wat,middlewares,universal"
   ]
 ]
 dev-repo: "git+https://gitlab.com/tezos/tezos-rust-libs.git"
 url {
   src:
-    "https://gitlab.com/tezos/tezos-rust-libs/-/archive/v1.2/tezos-rust-libs-v1.2.zip"
+    "https://gitlab.com/tezos/tezos-rust-libs/-/archive/v1.3/tezos-rust-libs-v1.3.zip"
   checksum: [
-    "md5=553eb77eb10248af63201476c8c54bf3"
-    "sha512=e9b3c64804974fd254c6e61b45e8898b445a204c70619b65d2d24c11b8357fed6709ebf925e92ff8eb04605e382eb2ada5435ccca301c8bfd843c58d44045c53"
-    "sha256=682127c81681d93acf472e9e1999a79c5178984bc1ea122512ecc6cc6df71763"
+    "md5=75587a206019ff50c773f7fbb96f65ba"
+    "sha512=4d307ff8b48627801c5b6e9b4173dd2ba8edeb3da353d29ad3e949d99ee045a01829d5640d6bd08d445cb9f5da69f51c044735e5b647b6213df70f7b9a4c0ec4"
+    "sha256=56197ac9c6db1418ed3e0fa38bff4f1c56b385b87533025be5706c26e889a846"
   ]
 }
 x-ci-accept-failures: [

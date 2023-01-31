@@ -402,7 +402,11 @@
         "override": {
           "build": "true"
         }
-      }
+      },
+      "@opam/linol": "c-cube/linol:linol.opam#5a29a9e1456a431122c51f44bc10c51f46f8d592",
+      "@opam/linol-lwt": "c-cube/linol:linol-lwt.opam#5a29a9e1456a431122c51f44bc10c51f46f8d592",
+      "@opam/ordering": "opam:3.5.0",
+      "@opam/dyn": "opam:3.5.0"
     }
   }
 }

@@ -29,13 +29,15 @@ depends: [
   "base64"      {>= "3.0.0" & with-test}
   "crowbar"     {with-test & >= "0.2"}
   "rresult"     {with-test}
+  "bos"         {with-test}
+  "astring"     {with-test}
 ]
 url {
   src:
-    "https://github.com/mirage/decompress/releases/download/v1.5.1/decompress-1.5.1.tbz"
+    "https://github.com/mirage/decompress/releases/download/v1.5.2/decompress-1.5.2.tbz"
   checksum: [
-    "sha256=cbf395a23171864b09410befb52dfc485ed99cc110840b700decb4212c32a4fe"
-    "sha512=a96b74d3f8f4d7b110bea94988ba897dab8c63f50751bffa498ad5fc2a7fc806b7fc20b90926394b9780f5c2ac93e9a6c7447c7b38366e43b3f5afff3dc4dcc8"
+    "sha256=a8c9a6ba132514d56ad3626fbd5e79124844836010350ee161d43bb29bf5762e"
+    "sha512=1a5a935ff55ebad83682cffb9792b1b5e3a189d2df483f77856ea683706219f7c50ff14b7ab1de0c5ce90e0d779bd06ab86afb29d39461192fbbf4b3fbaf600c"
   ]
 }
-x-commit-hash: "fbc17adb4290cbe12ce2fbefb63834b004c43053"
+x-commit-hash: "6d0c542923328b1fade4a0d3d4ff6a90923f1c2b"
