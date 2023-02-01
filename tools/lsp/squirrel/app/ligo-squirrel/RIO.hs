@@ -30,14 +30,13 @@ import RIO.Types (OpenDocument (..), RIO (..), RioEnv (..))
 
 newRioEnv :: IO RioEnv
 newRioEnv = do
-  reCache <- ASTMap.empty $ \doc -> do
+  reCache <- ASTMap.empty $ \doc loadEffort -> do
     scopes <- _cScopingSystem <$> S.getConfig
     case scopes of
-      FallbackScopes -> RIO.Document.load @Fallback doc
-      StandardScopes -> RIO.Document.load @Standard doc
-      CompilerScopes -> RIO.Document.load @FromCompiler doc
+      FallbackScopes -> RIO.Document.load @Fallback doc loadEffort
+      StandardScopes -> RIO.Document.load @Standard doc loadEffort
+      CompilerScopes -> RIO.Document.load @FromCompiler doc loadEffort
   reOpenDocs <- newIO
-  reIncludes <- newTVarIO G.empty
   reTempFiles <- newIO
   reIndexOpts <- newTVarIO IndexOptionsNotSetYet
   reBuildGraph <- newTVarIO G.empty

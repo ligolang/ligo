@@ -7,10 +7,11 @@ module RIO.Document
   , fetch
   , forceFetchAndNotify
 
-  , delete
   , invalidate
   , preload
   , load
+
+  , initializeBuildGraph
 
   , tempDirTemplate
   , getTempPath
@@ -18,52 +19,39 @@ module RIO.Document
   , handleLigoFileChanged
 
   , wccForFilePath
+  , invalidateWccFiles
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G hiding (empty, overlays)
-import Algebra.Graph.Class qualified as G hiding (overlay, vertex)
+import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Lens ((??))
 import Data.DList qualified as DList (toList)
 import Data.HashSet qualified as HashSet
-import Data.Map qualified as Map
-import Data.Semigroup (Arg (..))
-import Data.Set qualified as Set
-import Duplo.Tree (fastMake)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.VFS qualified as V
 import StmContainers.Map qualified as StmMap
 import System.FilePath (splitDirectories, takeDirectory, (</>))
+import UnliftIO.Async (pooledForConcurrently_)
 import UnliftIO.Directory
   (Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist,
   getPermissions, setPermissions)
-import UnliftIO.Exception (tryIO)
-import UnliftIO.MVar (modifyMVar_, withMVar)
-import Witherable (iwither)
 
-import AST
-  (ContractInfo, ContractInfo', FindFilepath (..), HasScopeForest, Includes (..),
-  ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes, addShallowScopes,
-  contractFile, lookupContract, pattern FindContract)
-import AST.Includes
-  (ExtractionDepth (DirectInclusions), extractIncludedFiles, includesGraph',
-  insertPreprocessorRanges)
-import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
-import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
+import AST (ExtractionDepth (..), addShallowScopes, extractIncludedFiles, scanContracts)
+import AST.Includes (insertPreprocessorRanges)
+import AST.Parser (parsePreprocessed)
+import AST.Scope.Common
 import ASTMap qualified
 import Cli (LigoClientEnv (..), TempDir (..), TempSettings (..), getLigoClientEnv)
-import Diagnostic (Message (..), MessageDetail (FromLanguageServer))
 import Language.LSP.Util (filePathToNormalizedUri, reverseUriMap, sendWarning)
 import Log qualified
-import Parser (emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
 import RIO.Indexing (getIndexDirectory, indexOptionsPath, tryGetIgnoredPaths)
-import RIO.Types (IndexOptions (..), OpenDocument (..), RIO, RioEnv (..))
-import Util.Graph (forAMConcurrently, traverseAM, traverseAMConcurrently, wcc, wccFor)
+import RIO.Types (IndexOptions (..), LoadEffort (..), OpenDocument (..), RIO, RioEnv (..))
+import Util.Graph (traverseAM, traverseAMConcurrently, wccFor)
 
--- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
--- to load a contract.
+-- | Represents how much effort a 'fetch' or 'forceFetch' operation should spend
+-- trying to load a contract.
 data FetchEffort
   = LeastEffort
   -- ^ Return whatever is available even if it's invalid. Fast but may be
@@ -75,30 +63,33 @@ data FetchEffort
   -- ^ Fetch the latest possible document, avoiding invalid documents as much as
   -- possible. Slow but accurate.
 
-fetch, forceFetch :: FetchEffort -> J.NormalizedUri -> RIO ContractInfo'
-fetch effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
+fetch, forceFetch :: FetchEffort -> LoadEffort -> J.NormalizedUri -> RIO ContractInfo'
+fetch effort loadEffort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
   tmap <- asks reCache
-  case effort of
-    LeastEffort  -> ASTMap.fetchFast uri tmap
-    NormalEffort -> ASTMap.fetchCurrent uri tmap
-    BestEffort   -> ASTMap.fetchLatest uri tmap
+  let
+    fetchImpl = case effort of
+      LeastEffort  -> ASTMap.fetchFast
+      NormalEffort -> ASTMap.fetchCurrent
+      BestEffort   -> ASTMap.fetchLatest
+  fetchImpl uri loadEffort tmap
 forceFetch = forceFetchAndNotify (const pass)
 
 forceFetchAndNotify
   :: (ContractInfo' -> RIO ())
   -> FetchEffort
+  -> LoadEffort
   -> J.NormalizedUri
   -> RIO ContractInfo'
-forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
+forceFetchAndNotify notify effort loadEffort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
   tmap <- asks reCache
   ASTMap.invalidate uri tmap
   case effort of
-    LeastEffort  -> ASTMap.fetchFastAndNotify notify uri tmap
+    LeastEffort  -> ASTMap.fetchFastAndNotify notify uri loadEffort tmap
     NormalEffort -> do
-      v <- ASTMap.fetchCurrent uri tmap
+      v <- ASTMap.fetchCurrent uri loadEffort tmap
       v <$ notify v
     BestEffort   -> do
-      v <- ASTMap.fetchLatest uri tmap
+      v <- ASTMap.fetchLatest uri loadEffort tmap
       v <$ notify v
 
 wccForFilePath :: FilePath -> RIO (G.AdjacencyMap FilePath)
@@ -108,31 +99,96 @@ wccForFilePath fp = do
   -- only this file.
   pure $ fromMaybe (G.vertex fp) $ wccFor fp . getIncludes $ buildGraph
 
-delete :: J.NormalizedUri -> RIO ()
-delete uri = do
-  imap <- asks reIncludes
-  let fpM = J.uriToFilePath $ J.fromNormalizedUri uri
-  whenJust fpM $ \fp -> do
-      let
-        -- Dummy
-        c = FindContract
-          (Source fp True "")
-          (SomeLIGO Caml $ fastMake emptyParsedInfo (Error (FromLanguageServer "Impossible") []))
-          []
-      buildGraphVar <- asks reBuildGraph
-
-      atomically $ do
-        modifyTVar' imap $ Includes . G.removeVertex c . getIncludes
-        modifyTVar' buildGraphVar $ Includes . G.removeVertex fp . getIncludes
-
+invalidateWccFiles :: FilePath -> RIO ()
+invalidateWccFiles fp = do
   tmap <- asks reCache
-  deleted <- ASTMap.delete uri tmap
-
   -- Invalidate contracts that are in the same group as the deleted one, as
   -- references might have changed.
-  whenJust deleted \(FindContract (Source fp _ _) _ _) -> void $
-    wccForFilePath fp >>= traverseAM \fp' ->
-      ASTMap.invalidate (filePathToNormalizedUri fp') tmap
+  void $ wccForFilePath fp >>= traverseAM \fp' ->
+    ASTMap.invalidate (filePathToNormalizedUri fp') tmap
+
+delete :: J.NormalizedFilePath -> RIO ()
+delete nFp = do
+  let fp = J.fromNormalizedFilePath nFp
+
+  invalidateWccFiles fp
+
+  buildGraphVar <- asks reBuildGraph
+  atomically $ modifyTVar' buildGraphVar $ Includes . G.removeVertex fp . getIncludes
+
+  tmap <- asks reCache
+  void $ ASTMap.delete (J.normalizedFilePathToUri nFp) tmap
+
+getInclusionGraph :: FilePath -> LoadEffort -> RIO (Includes ParsedContractInfo)
+getInclusionGraph fp loadEffort = Log.addNamespace "getInclusionGraph" do
+  currentComponent <-
+    case loadEffort of
+      NoLoading -> pure $ G.vertex fp
+      DirectLoading -> do
+        {- XXX: Since @#include@s get inlined into the file, we can optimize
+        -- here and use just the current vertex, like in the case of
+        -- 'NoIndexing'. This is also good for @ligo info get-scope@, as it also
+        -- considers included files. When we deal with @#import@s, however,
+        -- we'll need to think of a better way to handle this.
+        --   The code commented below may be used if it's desirable to get all
+        -- reachable components instead.
+        Includes buildGraph <- readTVarIO =<< asks reBuildGraph
+        pure $ reachableComponents fp buildGraph
+        -}
+        pure $ G.vertex fp
+      FullLoading -> wccForFilePath fp
+  Includes <$> traverseAMConcurrently parseContract currentComponent
+  where
+    parseContract :: FilePath -> RIO ParsedContractInfo
+    parseContract contract = do
+      let toParsedContractInfo = insertPreprocessorRanges <=< loadWithoutScopes
+      $Log.debug [Log.i|Processing file: #{contract}|]
+      toParsedContractInfo $ J.toNormalizedFilePath contract
+
+updateBuildGraph :: J.NormalizedFilePath -> RIO ()
+updateBuildGraph nFp = Log.addNamespace "updateBuildGraph" do
+  rootWithoutScopes <- loadWithoutScopes nFp
+  (_, DList.toList -> includeEdges) <- extractIncludedFiles DirectInclusions rootWithoutScopes
+  let
+    addVertexAndAdjacentEdges :: Ord a => a -> [(a, a)] -> G.AdjacencyMap a -> G.AdjacencyMap a
+    addVertexAndAdjacentEdges v edgesV graph =
+      let
+        -- Add the current vertex as well as its inclusions. Calling
+        -- `G.vertex v` is needed because `edgesV` will be empty if there are no
+        -- inclusions.
+        toInsert = G.vertex v `G.overlay` G.edges edgesV
+        -- Deal with "back includes": re-insert edges that will be deleted by
+        -- `G.removeVertex v graph` that should remain.
+        backIncludes = G.edges $ map (, v) $ toList $ G.preSet v graph
+      in
+      G.removeVertex v graph `G.overlay` toInsert `G.overlay` backIncludes
+
+  filePredicate <- getFilePredicate
+  buildGraphVar <- asks reBuildGraph
+  atomically $
+    modifyTVar' buildGraphVar \(Includes buildGraph) ->
+      let
+        newBuildGraph =
+          addVertexAndAdjacentEdges (J.fromNormalizedFilePath nFp) includeEdges buildGraph
+      in
+      -- Remove anything that should be ignored.
+      Includes $ G.induce filePredicate newBuildGraph
+
+initializeBuildGraph :: FilePath -> RIO ()
+initializeBuildGraph root = Log.addNamespace "initializeBuildGraph" do
+  S.withProgress "Indexing LIGO project" S.NotCancellable \reportProgress -> do
+    filePredicate <- getFilePredicate
+    dirContracts <- scanContracts filePredicate root
+
+    let numContracts = length dirContracts
+    progressRef <- newMVar 0
+    pooledForConcurrently_ dirContracts \contract -> do
+      updateBuildGraph $ J.toNormalizedFilePath contract
+      progress <- takeMVar progressRef
+      reportProgress $ S.ProgressAmount
+        (Just (progress % numContracts))
+        (Just [Log.i|Scanned #{contract}|])
+      putMVar progressRef (progress + 1)
 
 invalidate :: J.NormalizedUri -> RIO ()
 invalidate uri = ASTMap.invalidate uri =<< asks reCache
@@ -202,12 +258,6 @@ loadWithoutScopes normFp = Log.addNamespace "loadWithoutScopes" do
   temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath normFp
   parsePreprocessed temp src
 
--- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
--- return 'Nothing'.
-tryLoadWithoutScopes :: J.NormalizedFilePath -> RIO (Maybe ParsedContractInfo)
-tryLoadWithoutScopes =
-  fmap rightToMaybe . tryIO . (insertPreprocessorRanges <=< loadWithoutScopes)
-
 getFilePredicate :: RIO (FilePath -> Bool)
 getFilePredicate = do
   ignoredPathsM <- tryGetIgnoredPaths
@@ -219,148 +269,15 @@ getFilePredicate = do
       _ -> const True
   pure $ (&&) <$> notTemporary <*> notIgnored
 
--- | Loads the contracts of the directory, without parsing anything.
---
--- The pipeline will cause the preprocessor to run on each contract (if
--- directives are present), and each 'Source' will then be scanned for line
--- markers, which will be used to build the 'Includes' graph.
---
--- The downside is that momentarily, various files will be present in memory. In
--- the future, we can consider only keeping the line markers and building the
--- graph from this.
-loadDirectory
-  :: FilePath
-  -> FilePath
-  -> Includes ParsedContractInfo
-  -> RIO (Includes (Arg FilePath Source), Map FilePath [Message])
-loadDirectory root rootFileName includes = do
-  temp <- getTempPath root
-  let
-    lookupOrLoad src = maybe
-      (loadPreprocessed temp src)
-      (pure . (_cFile &&& _cMsgs) . _getContract)
-      (lookupContract (srcPath src) includes)
-
-  shouldIndexFile <- getFilePredicate
-
-  Includes buildGraph <- readTVarIO =<< asks reBuildGraph
-  S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
-    case wccFor rootFileName buildGraph of
-      Just grp -> do
-        let
-          grp' = G.induce shouldIndexFile grp
-          total = G.vertexCount grp'
-        progressVar <- newMVar 0
-
-        msgsVar <- newMVar Map.empty
-        loaded <- forAMConcurrently grp' \fp -> do
-          progress <- withMVar progressVar $ pure . succ
-          reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
-          (src, msg) <- lookupOrLoad =<< pathToSrc fp
-          modifyMVar_ msgsVar $ pure . Map.insert fp msg
-          pure $ Arg fp src
-        (Includes loaded, ) <$> readMVar msgsVar
-      Nothing -> do
-        loaded <- parseContracts
-          lookupOrLoad
-          (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-          shouldIndexFile
-          root
-        Includes graph <- includesGraph' (map fst loaded)
-        let filtered = G.induce (\(Arg fp _) -> shouldIndexFile fp) graph
-        pure (Includes filtered, Map.fromListWith (<>) (map (first srcPath) loaded))
-
-getInclusionsGraph
-  :: FilePath  -- ^ Directory to look for contracts
-  -> J.NormalizedFilePath  -- ^ Open contract to be loaded
-  -> RIO (Includes ParsedContractInfo)
-getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
-  rootContract <- loadWithoutScopes normFp
-  includesVar <- asks reIncludes
-  shouldIndexFile <- getFilePredicate
-  newIncludes <- do
-    includes'@(Includes includes) <- readTVarIO includesVar
-    let rootFileName = contractFile rootContract
-    let groups = Includes <$> wcc includes
-    case find (isJust . lookupContract rootFileName) groups of
-      -- Possibly the graph hasn't been initialized yet or a new file was created.
-      Nothing -> do
-        let fp = J.fromNormalizedFilePath normFp
-        $Log.debug [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
-        (Includes paths, msgs) <- loadDirectory root rootFileName includes'
-
-        let buildGraph = Includes $ G.gmap (\(Arg f _) -> f) paths
-        buildGraphVar <- asks reBuildGraph
-        atomically $ writeTVar buildGraphVar buildGraph
-
-        temp <- getTempPath root
-        connectedContractsE <-
-          maybe
-            -- User may have opened a file that's outside the indexing directory.
-            -- Load it.
-            (fmap Left . loadPreprocessed temp =<< pathToSrc fp)
-            (pure . Right)
-          -- The second element of the argument is not used for comparisons, and
-          -- this operation is safe.
-          $ find (Map.member (Arg rootFileName (error "impossible comparison")) . G.adjacencyMap)
-          $ wcc paths
-        case connectedContractsE of
-          Left (src, msgs') -> do
-            parsed <- parse src
-            Includes . G.vertex <$> insertPreprocessorRanges (addLigoErrsToMsg msgs' parsed)
-          Right connectedContracts -> do
-            let
-              parseCached (Arg fp' src) = do
-                let srcMsgs = Map.lookup fp' msgs
-                parsed <- parse src
-                insertPreprocessorRanges $ addLigoErrsToMsg (join $ maybeToList srcMsgs) parsed
-            Includes <$> traverseAMConcurrently parseCached connectedContracts
-      -- We've cached this contract, incrementally update the inclusions graph.
-      Just (Includes oldIncludes) -> do
-        (rootContract', DList.toList -> includeEdges) <- extractIncludedFiles DirectInclusions rootContract
-        let
-          numNewContracts = length includeEdges
-          lookupOrLoad fp = maybe
-            (tryLoadWithoutScopes $ J.toNormalizedFilePath fp)
-            (pure . Just)
-            (lookupContract fp (Includes oldIncludes))
-
-        newIncludes <- S.withProgress "Indexing new files" S.NotCancellable \reportProgress ->
-          iwither
-            (\n (_, fp) -> do
-              reportProgress $ S.ProgressAmount (Just $ n % numNewContracts) (Just [Log.i|Loading #{fp}|])
-              bool (pure Nothing) (lookupOrLoad fp) (shouldIndexFile fp))
-            includeEdges
-        let
-          newSet = Set.fromList newIncludes
-          oldSet = Map.keysSet $ G.adjacencyMap oldIncludes
-          newVertices = Set.difference newSet oldSet
-          removedVertices = Set.difference oldSet newSet
-          groups' = filter (isNothing . lookupContract rootFileName) groups
-          -- Replacing a contract with itself looks unintuitive but it works
-          -- because ordering is decided purely on the file name.
-          newGroup =
-            G.overlay (G.fromAdjacencySets [(rootContract', newVertices)])
-            $ G.replaceVertex rootContract' rootContract'
-            $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
-        pure $ G.overlays (Includes newGroup : groups')
-  atomically $ writeTVar includesVar newIncludes
-  return newIncludes
-
--- | Loads a file with the given scoping system. This function will use
--- 'preload' to handle dirty files and deleted files if possible, but it also
--- loads all relevant files needed for scoping and calls the preprocessor on
--- each of them. In order words, this function does the entire pipeline needed
--- in order to convert the given source file to the final AST that was
--- preprocessed and scoped.
 load
   :: forall parser
    . HasScopeForest parser RIO
   => J.NormalizedUri
+  -> LoadEffort
   -> RIO ContractInfo'
-load uri = Log.addNamespace "load" do
+load uri indexEffort = Log.addNamespace "load" do
   let Just normFp = J.uriToNormalizedFilePath uri  -- FIXME: non-exhaustive
-  rootIndex <- getIndexDirectory (takeDirectory $ J.fromNormalizedFilePath normFp)
+  rootIndex <- getIndexDirectory initializeBuildGraph (takeDirectory $ J.fromNormalizedFilePath normFp)
   let rootM = indexOptionsPath rootIndex
   dirExists <- maybe (pure False) doesDirectoryExist rootM
 
@@ -376,7 +293,7 @@ load uri = Log.addNamespace "load" do
     revFp = J.fromNormalizedFilePath revNormFp
     loadDefault temp = addShallowScopes @parser temp noProgress =<< loadWithoutScopes revNormFp
     loadWithoutIndexing = do
-      temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath revNormFp
+      temp <- getTempPath $ takeDirectory revFp
       loadDefault temp
 
   -- If we're trying to load an ignored file, then load it, but don't index
@@ -389,31 +306,23 @@ load uri = Log.addNamespace "load" do
     | Just root <- rootM, dirExists -> do
       time <- ASTMap.getTimestamp
 
-      revRoot <- if revUri == uri
-        then pure root
-        else V._vfsTempDir <$> S.getVirtualFiles
-
-      rawGraph <- getInclusionsGraph revRoot revNormFp
+      rawGraph <- getInclusionGraph revFp indexEffort
 
       temp <- getTempPath root
-      (Includes graph, result) <- S.withProgress "Scoping project" S.NotCancellable \reportProgress -> do
-        let
-          addScopesWithProgress (Includes graph) =
-            addScopes @parser temp
-              (\Progress{..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-              (Includes graph)
-        case J.uriToFilePath $ J.fromNormalizedUri revUri of
-          Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault temp
-          Just fp -> do
-            scoped <- addScopesWithProgress rawGraph
-            (scoped, ) <$> maybe (loadDefault temp) pure (lookupContract fp scoped)
+      graph <- S.withProgress "Scoping project" S.NotCancellable \reportProgress ->
+        addScopes @parser temp
+          (\Progress{..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+          rawGraph
 
-      let contracts = (id &&& filePathToNormalizedUri . contractFile) <$> G.vertexList graph
+      let contracts = (id &&& filePathToNormalizedUri . contractFile) <$> G.vertexList (getIncludes graph)
       tmap <- asks reCache
       for_ contracts \(contract, nuri) ->
         ASTMap.insert nuri contract time tmap
 
-      pure result
+      maybe
+        (loadDefault temp)
+        pure
+        (flip lookupContract graph =<< J.uriToFilePath (J.fromNormalizedUri revUri))
     | otherwise -> do
       case rootIndex of
         IndexChoicePending -> $Log.debug [Log.i|Indexing directory has not been specified yet.|]
@@ -421,21 +330,23 @@ load uri = Log.addNamespace "load" do
       loadWithoutIndexing
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
-handleLigoFileChanged nfp = \case
+handleLigoFileChanged nFp = \case
   J.FcCreated -> do
+    updateBuildGraph nFp
+    invalidateWccFiles fp
+    void $ forceFetch BestEffort NoLoading uri
     $Log.debug [Log.i|Created #{fp}|]
-    void $ forceFetch BestEffort uri
   J.FcChanged -> do
     openDocs <- asks reOpenDocs
     mOpenDoc <- atomically $ StmMap.lookup uri openDocs
-    case mOpenDoc of
-      Nothing -> do
-        $Log.debug [Log.i|Changed #{fp}|]
-        void $ forceFetch BestEffort uri
-      _ -> pass
+    updateBuildGraph nFp
+    invalidateWccFiles fp
+    whenNothing_ mOpenDoc do
+      void $ forceFetch BestEffort NoLoading uri
+      $Log.debug [Log.i|Changed #{fp}|]
   J.FcDeleted -> do
+    delete nFp
     $Log.debug [Log.i|Deleted #{fp}|]
-    delete uri
   where
-    uri = J.normalizedFilePathToUri nfp
-    fp = J.fromNormalizedFilePath nfp
+    uri = J.normalizedFilePathToUri nFp
+    fp = J.fromNormalizedFilePath nFp

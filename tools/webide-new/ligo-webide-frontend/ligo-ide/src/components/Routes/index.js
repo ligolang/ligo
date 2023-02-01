@@ -67,7 +67,7 @@ export default function (props) {
                   return <Redirect to="/local}" />;
                 }
               }
-              return <OpenProject projectLink={projectLink} />;
+              return <OpenProject gistId={projectLink} />;
             }}
           />
           <CacheRoute

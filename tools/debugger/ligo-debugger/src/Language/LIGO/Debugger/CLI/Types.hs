@@ -21,7 +21,6 @@ import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
-import Data.Set qualified as S
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
@@ -35,7 +34,6 @@ import System.Console.ANSI
 import Text.Interpolation.Nyan (int, rmode')
 import Util
 
-import Morley.Debugger.Core (SourceLocation)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
@@ -95,7 +93,7 @@ data LigoRange = LigoRange
   { lrFile  :: FilePath
   , lrStart :: LigoPosition
   , lrEnd   :: LigoPosition
-  } deriving stock (Show, Eq, Generic, Data)
+  } deriving stock (Show, Eq, Ord, Generic, Data)
     deriving anyclass (NFData, Hashable)
 
 makeLensesWith postfixLFields ''LigoRange
@@ -553,19 +551,3 @@ instance DebuggerException PluginCommunicationException where
   type ExceptionTag PluginCommunicationException = "PluginComminication"
   debuggerExceptionType _ = MidPluginLayerException
   shouldInterruptDebuggingSession = True
-
--- | An expression source location with boolean indicator
--- that tells us whether it is interesting or not.
--- /Interesting/ means that we want to use this location
--- in switching breakpoints.
-data ExpressionSourceLocation = ExpressionSourceLocation
-  { eslSourceLocation :: SourceLocation
-  , eslShouldKeep :: Bool
-  } deriving stock (Show, Eq, Ord, Generic)
-    deriving anyclass (NFData)
-
-getAllSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
-getAllSourceLocations = S.map eslSourceLocation
-
-getInterestingSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
-getInterestingSourceLocations = getAllSourceLocations . S.filter eslShouldKeep

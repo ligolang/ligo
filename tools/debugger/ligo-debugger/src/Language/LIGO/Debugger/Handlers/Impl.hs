@@ -505,7 +505,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
         parsedContracts <- parseContracts allFiles
 
         let statementLocs = getStatementLocs (getAllSourceLocations exprLocs) parsedContracts
-        let allLocs = getInterestingSourceLocations exprLocs <> statementLocs
+        let allLocs = getInterestingSourceLocations parsedContracts exprLocs <> statementLocs
 
         let
           paramNotes = cParamNotes contract

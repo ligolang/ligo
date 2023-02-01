@@ -299,10 +299,13 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
         for instruction: #{instr}
       |]
 
-    logMessage
-      [int||
-        Would be ignored: #{shouldIgnoreMeta inner}
-      |]
+    whenJust (liiLocation embeddedMeta) \loc -> do
+      contracts <- use csParsedFilesL
+
+      logMessage
+        [int||
+          Would be ignored: #{shouldIgnoreMeta loc inner contracts}
+        |]
 
   let stack = maybe oldStack (embedFunctionNames oldStack) (liiEnvironment =<< embeddedMetaMb)
 
@@ -331,7 +334,9 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             recordSnapshot statement EventFacedStatement
             csRecordedRangesL %= HS.insert statement
 
-          unless (shouldIgnoreMeta instr) do
+          contracts <- use csParsedFilesL
+
+          unless (shouldIgnoreMeta loc instr contracts) do
             recordSnapshot loc EventExpressionPreview
 
         whenJust liiEnvironment \env -> do
@@ -367,7 +372,9 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
           csLastRangeMbL ?= loc
 
-          unless (shouldIgnoreMeta instr) do
+          contracts <- use csParsedFilesL
+
+          unless (shouldIgnoreMeta loc instr contracts) do
             recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
 
         pure newStack
@@ -495,16 +502,12 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
         filterAndReverseStatements = go []
           where
             go :: [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
-            go acc [] = pure acc
-            go acc (x@(layer -> Just AST.AssignOp{}) : xs) = decide x acc xs
-            go acc (x@(layer -> Just AST.BConst{}) : xs) = decide x acc xs
-            go acc (x@(layer -> Just AST.BVar{}) : xs) = decide x acc xs
-            go acc (x@(layer -> Just AST.Apply{}) : xs@((layer @Expr -> Just ctor) : _)) =
-              case ctor of
-                AST.Let{} -> decide x acc xs
-                AST.Seq{} -> decide x acc xs
-                _ -> go acc xs
-            go acc (_ : xs) = go acc xs
+            go acc nodes =
+              tryToProcessLigoStatement
+                (`decide` acc)
+                (\xs -> go acc xs)
+                (pure acc)
+                nodes
 
             decide :: LIGO Info -> [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
             decide x acc xs = do
@@ -570,13 +573,6 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                   if not $ range `HS.member` ranges
                   then accept
                   else deny
-              where
-                -- Comparing by ranges because @Eq@ instance behaves
-                -- weird with @LIGO Info@.
-                containsNode :: LIGO Info -> LIGO Info -> Bool
-                containsNode tree node = getRange node `elem` nodes
-                  where
-                    nodes = getRange <$> spineAtPoint (getRange node) tree
 
 runCollectInterpretSnapshots
   :: (MonadUnliftIO m, MonadActive m)
