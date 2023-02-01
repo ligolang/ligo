@@ -903,6 +903,24 @@ let%expect_test _ =
       [ "test_y", [ "constant", [ "string", "hello" ] ] ]
     ] |xxx}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "record_field_assign.jsligo" ];
+  [%expect
+    {|
+      Everything at the top-level was executed.
+      - test_simple_record_assign exited with value ().
+      - test_nested_record_assign_level1 exited with value ().
+      - test_nested_record_assign_level2 exited with value ().
+      - test_record_assign_var exited with value ().
+      - test_nested_record_assign_var_level1 exited with value ().
+      - test_nested_record_assign_var_level2 exited with value ().
+      - test_nested_record_assign_var_level2_expr exited with value ().
+      - test_nested_record_assign_var_level2_record_access exited with value ().
+      - test_nested_record_assign_var_level2_module_member exited with value ().
+      - test_nested_record_assign_var_level2_module_record_member exited with value ().
+      - test_nested_record_assign_var_level2_lambda exited with value ().
+      - test_nested_record_assign_var_level2_lambda_app exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 
@@ -1197,6 +1215,28 @@ let%expect_test _ =
 
   Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
   unit) |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run"; "test"; "bad_record_field_assign1.jsligo" ];
+  [%expect
+    {|
+    File "bad_record_field_assign1.jsligo", line 9, characters 2-12:
+      8 |   let p = { x : [1, 2, 3, 4] };
+      9 |   p.x[3] = 5;
+     10 |   assert(p.x[3] == 5)
+
+    Not supported assignment. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run"; "test"; "bad_record_field_assign2.jsligo" ];
+  [%expect
+    {|
+    File "bad_record_field_assign2.jsligo", line 9, characters 2-15:
+      8 |   let p = { x : { z : 1 } };
+      9 |   p.x["z"] = 10;
+     10 |   assert(p.x["z"] == 10);
+
+    Not supported assignment. |}]
 
 let () = Caml.Sys.chdir pwd
 

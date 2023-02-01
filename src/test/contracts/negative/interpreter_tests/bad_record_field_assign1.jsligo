@@ -1,0 +1,11 @@
+// p.x[3] = 1
+
+type p = {
+    x : [int, int, int, int]
+}
+
+const test = ((() => {
+  let p = { x : [1, 2, 3, 4] };
+  p.x[3] = 5;
+  assert(p.x[3] == 5)
+})())

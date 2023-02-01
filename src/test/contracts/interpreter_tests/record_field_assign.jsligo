@@ -1,0 +1,212 @@
+type r = {
+    x : { 
+        y : { 
+            z : int, 
+            z1 : int
+        },
+        y1 : int
+    },
+    x1 : int,
+};
+
+
+type kk = {
+    x : { 
+        y : { 
+            z : (k : int) => int, 
+        }
+    }
+};
+
+type s = {
+    a : { b : { c : int } }
+};
+
+namespace M {
+    export const pi = 314159;
+    export const pi2 = 2 * pi;
+    export type d = {
+        p : { 
+            q : { 
+                r : int, 
+                r1 : int
+            },
+            q1 : int
+        },
+        p1 : int,
+    };
+    export const val_d = {
+        p1 : 1,
+        p  : {
+            q1 : 2,
+            q  : {
+                r1 : 3,
+                r  : 4
+            }
+        }
+    };
+}
+
+const make_r = () => ({
+        x1 : 5,
+        x  : {
+            y1 : 6,
+            y  : {
+                z  : 7,
+                z1 : 8
+            }
+        }
+    });
+
+const make_s = () => ({ a : { b : { c : 9 } } });
+
+const test_simple_record_assign = ((() => {
+    let r = make_r();
+    
+    r.x1 = 6;
+    assert(r.x1 == 6);
+
+})());
+
+const test_nested_record_assign_level1 = ((() => {
+    let r = make_r();
+    
+    r.x.y1 = 11;
+    assert(r.x.y1 == 11);
+
+})());
+
+const test_nested_record_assign_level2 = ((() => {
+    let r = make_r();
+
+    r.x.y.z = 11;
+    assert(r.x.y.z == 11);
+
+    r.x.y.z1 = 11;
+    assert(r.x.y.z1 == 11);
+
+})());
+
+const test_record_assign_var = ((() => {
+    let r = make_r();
+
+    const a = 6;
+
+    r.x1 = a;
+    assert(r.x1 == a);
+
+})());
+
+const test_nested_record_assign_var_level1 = ((() => {
+    let r = make_r();
+
+    const a = 11;
+    
+    r.x.y1 = a;
+    assert(r.x.y1 == a);
+
+})());
+
+const test_nested_record_assign_var_level2 = ((() => {
+    let r = make_r();
+
+    const a = 11;
+
+    r.x.y.z = a;
+    assert(r.x.y.z == a);
+
+    r.x.y.z1 = a;
+    assert(r.x.y.z1 == a);
+
+})());
+
+const test_nested_record_assign_var_level2_expr = ((() => {
+    let r = make_r();
+
+    const a = 11;
+
+    r.x.y.z = a + 1;
+    assert(r.x.y.z == 12);
+
+    r.x.y.z1 = a + 1;
+    assert(r.x.y.z1 == (13 - 1));
+
+})());
+
+const test_nested_record_assign_var_level2_record_access = ((() => {
+    let r = make_r();
+
+    const s = make_s();
+
+    r.x.y.z = s.a.b.c;
+    assert(r.x.y.z == 9);
+
+    r.x.y.z1 = s.a.b.c + r.x.y.z;
+    assert(r.x.y.z1 == 18);
+
+})());
+
+const test_nested_record_assign_var_level2_module_member = ((() => {
+    let r = make_r();
+
+    r.x.y.z = M.pi;
+    assert(r.x.y.z == M.pi);
+
+    r.x.y.z1 = M.pi + r.x.y.z;
+    assert(r.x.y.z1 == M.pi2);
+
+})());
+
+const test_nested_record_assign_var_level2_module_record_member = ((() => {
+    let r = make_r();
+
+    r.x.y.z = M.val_d.p.q.r;
+    assert(r.x.y.z == 4);
+
+    r.x.y.z1 = M.val_d.p.q.r + r.x.y.z;
+    assert(r.x.y.z1 == 8);
+
+})());
+
+const test_nested_record_assign_var_level2_lambda = ((() => {
+    let kk = { x : { y : { z : x => x + 1 } } };
+
+    const lambda = x => x + 11;
+    kk.x.y.z = lambda;
+    assert(kk.x.y.z(9) == 20);
+
+})());
+
+const test_nested_record_assign_var_level2_lambda_app = ((() => {
+    let r = make_r();
+
+    const sq = x => x * x;
+
+    r.x.y.z = sq(2);
+    assert(r.x.y.z == 4);
+
+    r.x.y.z1 = sq(r.x.y.z);
+    assert(r.x.y.z1 == 16);
+
+})());
+
+
+
+
+/*
+This is already supported, but AST_I pp is confusing
+    p[3] = 1
+Support this in follow-up work
+    M.x.y = 1
+    p.x["z"] = a |> p.x.z = a
+    p["x"] = y   |> p.x = y
+    p.x += 42; (+=, -= etc.)
+*/
+
+/*
+    Make a note this and maybe post on ligo-typesystem??
+    const r = { a : { b : 1 } }
+    r.a.b = 2  // valid in js
+
+    r = { a : { b : 2 } } // not valid in js :()
+*/
