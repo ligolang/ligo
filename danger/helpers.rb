@@ -27,7 +27,7 @@ class Danger::Dangerfile
   # to another.
   def pr_merging_branches?
     pure_pr_title = mr_title_payload.sub(issue_tags_pattern, "")
-    /^Merg\w+ .+ in(to)? ./.match?(pure_pr_title)
+    /^Merg\w+ .+ (in(to)|with)? ./.match?(pure_pr_title)
   end
   alias_method :mr_merging_branches?, :pr_merging_branches?
 end

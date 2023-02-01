@@ -1,5 +1,6 @@
 module RIO.Types
   ( IndexOptions (..)
+  , LoadEffort (..)
   , OpenDocument (..)
   , ProjectSettings (..)
   , RioEnv (..)
@@ -19,7 +20,7 @@ import Language.LSP.Types qualified as J
 import StmContainers.Map qualified as StmMap
 import UnliftIO.Pool (Pool)
 
-import AST (ContractInfo', Includes, ParsedContractInfo)
+import AST (ContractInfo', Includes)
 import ASTMap (ASTMap)
 import Cli (HasLigoClient (..), LigoClientEnv (..), LigoProcess)
 import Config (Config (..))
@@ -35,7 +36,7 @@ newtype OpenDocument = OpenDocument
 -- | Represents the user's choice on how to index the project.
 data IndexOptions
   = IndexOptionsNotSetYet
-  -- ^ Waiting for `getIndexDirectory` to set correct `IndexOptions`.
+  -- ^ Waiting for 'getIndexDirectory' to set correct 'IndexOptions'.
   | IndexChoicePending
   -- ^ The choice was not yet processed and is pending. Only the currently
   -- opened contract is indexed.
@@ -46,27 +47,41 @@ data IndexOptions
   -- ^ Index the project starting from the root directory. That is, the
   -- directory that is currently open in Visual Studio Code, if any.
   | FromGitProject FilePath
-  -- ^ Index the project from the output of `git rev-parse --show-toplevel`, if
+  -- ^ Index the project from the output of @git rev-parse --show-toplevel@, if
   -- Git is set.
   | FromLigoProject FilePath ProjectSettings
-  -- ^ Index from the directory where the first `.ligoproject` file is found, if
+  -- ^ Index from the directory where the first @.ligoproject@ file is found, if
   -- it exists. This option has precedence over all others, and if this file is
   -- present, all other options will be ignored.
   deriving stock (Eq, Show)
 
+-- | Indicates the depth of loading that should be done. This affects how many
+-- files in the current WCC should be re-parsed and re-scoped.
+data LoadEffort
+  = NoLoading
+  -- ^ Only load the current document. Doesn't try to fetch the files that were
+  -- @#include@d, but because of the LIGO preprocessor, might load them anyway.
+  | DirectLoading
+  -- ^ Load the current document, as well as its transitive inclusions. This
+  -- means that the directly included files, as well as all indirect inclusions,
+  -- will be loaded. Note that, due to an optimization, we currently treat this
+  -- option just like 'NoLoading' by loading only the current document.
+  | FullLoading
+  -- ^ Load all LIGO files in the given WCC. This operation is very costly, so
+  -- use it only when needed.
+  deriving stock (Eq, Ord)
+
 -- | Stores information about the current language server environment, such as
 -- loaded files, files in the project, etc. This is meant to be used inside a
--- `ReaderT`, and its internal `MVar`s updated as needed.
+-- `ReaderT`, and its internal `TVar`s updated as needed.
 data RioEnv = RioEnv
-  { reCache :: ASTMap J.NormalizedUri ContractInfo' RIO
+  { reCache :: ASTMap J.NormalizedUri ContractInfo' LoadEffort RIO
   -- ^ Caches parsed and scoped contracts, as well as their include dependencies.
   -- Also contains metadata about contracts, such as when they were loaded, when
   -- they were invalidated, etc.
   , reOpenDocs :: StmMap.Map J.NormalizedUri OpenDocument
   -- ^ Records which files are current open in the editor, and keeps track of
   -- extra information, such as whether that file is dirty.
-  , reIncludes :: TVar (Includes ParsedContractInfo)
-  -- ^ Stores the inclusion graph with respect to the currently open file.
   , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
   -- ^ Provides a way to look which temporary files correspond to which open files.
   , reIndexOpts :: TVar IndexOptions

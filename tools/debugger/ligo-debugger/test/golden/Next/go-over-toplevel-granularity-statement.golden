@@ -37,6 +37,19 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/functions-visiting.mligo:13:2-13:29
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s3 of int
+          siValue: 221
+        ]
+    ]
+
+InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
     [StackFrame:

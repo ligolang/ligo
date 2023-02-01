@@ -12,7 +12,7 @@ InterpretSnapshot:
         ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:12:2-12:22
+      sfLoc: test/contracts/functions-visiting.mligo:12:17-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int
@@ -28,11 +28,11 @@ InterpretSnapshot:
 
 Stepping out, now should appear outside of the method despite the breakpoint
 InterpretSnapshot:
-  isStatus: running / upon expression
+  isStatus: running / expression evaluated (201)
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:12:11-12:22
+      sfLoc: test/contracts/functions-visiting.mligo:12:17-12:22
       sfStack:
         [StackItem:
           siLigoDesc: elem s2 of int

@@ -357,7 +357,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   let exprLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
-        foldMap mentionedSourceLocs $ getSourceLocations (unContractCode $ cCode extContract)
+        getSourceLocations (unContractCode $ cCode extContract)
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
@@ -365,17 +365,10 @@ readLigoMapper ligoMapper typeRules instrRules = do
   return $! force (exprLocs, extendedContract, allFiles)
 
   where
-    mentionedSourceLocs :: (EmbeddedLigoMeta, Bool) -> [ExpressionSourceLocation]
-    mentionedSourceLocs (LigoIndexedInfo{..}, shouldKeep) = (shouldKeep, liiLocation)
-      & second (fmap ligoRangeToSourceLocation)
-      & sequenceA
-      <&> uncurry ExpressionSourceLocation . swap
-      & maybeToList
-
-    getSourceLocations :: Instr i o -> [(EmbeddedLigoMeta, Bool)]
+    getSourceLocations :: Instr i o -> [ExpressionSourceLocation]
     getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
-      ConcreteMeta (meta :: EmbeddedLigoMeta) instr
-        -> DL.singleton (meta, not $ shouldIgnoreMeta instr)
+      ConcreteMeta (liiLocation @'Unique -> Just loc) instr
+        -> DL.singleton (ExpressionSourceLocation loc $ not . shouldIgnoreMeta loc instr)
       _ -> mempty
 
     -- Strip duplicate locations.

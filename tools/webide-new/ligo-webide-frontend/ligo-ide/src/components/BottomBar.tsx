@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 
 import { actions, TerminalButton } from "~/base-components/workspace";
 import ProtocolSelector from "~/ligo-components/eth-compiler/bottombar/ProtocolSelector";
+import LigoVersion from "~/ligo-components/eth-compiler/bottombar/LigoVersion";
 
 // import { NetworkStatus } from '~/ligo-components/eth-network'
 // import { QueueButton } from '~/ligo-components/eth-queue'
@@ -52,6 +53,7 @@ const BottomBar = forwardRef((_, ref) => {
             >{`Ln ${position[0]}, Col ${position[1]}`}</div>
           )}
         />
+        <CacheRoute path={["/local/:project"]} component={LigoVersion} />
         <CacheRoute path={["/local/:project"]} component={ProtocolSelector} />
         <CacheRoute path={["/local/:project"]} component={TerminalButton} />
       </>

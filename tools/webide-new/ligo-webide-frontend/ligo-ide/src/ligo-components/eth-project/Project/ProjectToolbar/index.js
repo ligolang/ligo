@@ -66,7 +66,7 @@ export default class ProjectToolbar extends PureComponent {
   };
 
   render() {
-    const { signer, noBuild, noDeploy, ExtraButtons = () => null } = this.props;
+    const { signer, noBuild, noDeploy, ExtraButtons = () => null, isExpanded } = this.props;
     const { projectSettings, projectManager } = this.context;
     const compilers = projectSettings?.get("compilers") || {};
     const readOnly = !projectManager.userOwnProject && projectManager.remote;
@@ -79,6 +79,7 @@ export default class ProjectToolbar extends PureComponent {
           tooltip="Compile"
           readOnly={readOnly}
           onClick={() => this.compileModalOpen()}
+          isExpanded={isExpanded}
         />
         <ToolbarButton
           id="deploy"
@@ -86,6 +87,7 @@ export default class ProjectToolbar extends PureComponent {
           tooltip="Deploy"
           readOnly={readOnly}
           onClick={() => this.deployModal()}
+          isExpanded={isExpanded}
         />
         <ToolbarButton
           id="deploy-script"
@@ -93,6 +95,7 @@ export default class ProjectToolbar extends PureComponent {
           tooltip="Deploy Script"
           readOnly={readOnly}
           onClick={() => this.deployScriptModal()}
+          isExpanded={isExpanded}
         />
         <ToolbarButton
           id="dry-run"
@@ -100,6 +103,7 @@ export default class ProjectToolbar extends PureComponent {
           tooltip="Dry Run"
           readOnly={readOnly}
           onClick={() => this.expressionExecutionModal("dryRun")}
+          isExpanded={isExpanded}
         />
         <ToolbarButton
           id="compile-expr"
@@ -107,6 +111,7 @@ export default class ProjectToolbar extends PureComponent {
           tooltip="Compile Expression"
           readOnly={readOnly}
           onClick={() => this.expressionExecutionModal("compile")}
+          isExpanded={isExpanded}
         />
         <ExtraButtons projectManager={projectManager} signer={signer} />
         <div className="flex-1" />
@@ -115,6 +120,7 @@ export default class ProjectToolbar extends PureComponent {
           icon="fas fa-cog"
           tooltip="Project Settings"
           onClick={() => projectManager.openProjectSettings()}
+          isExpanded={isExpanded}
         />
         <SignRequestModal ref={keypairManager.signReqModal} />
         <CompileModal

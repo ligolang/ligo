@@ -7,7 +7,8 @@ Bugs are to be expected!
 
 In the future, this package will be deprecated and joined with the LIGO Language Server (`ligo-vscode`).
 
-To use this package, you need to have LIGO version 0.58.0 or greater.
+## Connecting the `ligo` executable
+
 You can specify a path to the `ligo` executable in `settings.json`. The debugger will look for it in the following order:
 1. The debugger will use this path if this field is filled.
 2. If this field is blank, the debugger will try to find the `ligo` executable in the `$PATH` variable.
@@ -22,13 +23,33 @@ where `{ligo-version}` is your preferred `ligo` version (e.g. `0.50.0`).
 
 At this moment running `ligo` from docker is slow, so, it's better to use static binary.
 
-Currently, simple contracts are supported, with support for more complex contracts on the way.
+## Functionality support
 
-Due to some limitations on `ligo` executable's side and on our side an invalid `Michelson` code may be produced. If you encounter this problem, please contact us.
+What is supported as part of MVP:
+* Contracts using the common functionality;
+* Convenient supply of endpoint / parameter / storage with last value remembering and two input modes;
+* All stepping commands (including `Step Back`) with statement and expression granularities;
+* Basic variables display;
+* Stack frames display;
+* Breakpoints (but not guaranteed to work properly in all the cases at the moment).
 
-We slightly change the `Michelson` code, which may result in minor differences (e.g. `PACK`ed code may result in a different bytestring).
+Bits of functionality that will be added very soon:
+* Contracts related functionality:
+  - [ ] Running contract with embedded Michelson.
+  - [ ] Running contract with other contracts origination.
+  - [ ] Providing custom environment (`NOW`, `BALANCE`, e.t.c).
+  - [ ] Running contracts with global constants.
+  - [ ] Running corner cases of contracts with tickets (the current support is partial).
+* Others:
+  - [ ] Work with the downloaded packages.
+  - [ ] Speed up debug session start (currently it takes long for relatively large contracts).
 
-At this moment contracts with tickets have very limited support.
+Next we will work on extending the core functionality step by step: add full breakpoints support, viewing inner parts of variables' values, simpler ways of starting a debug session, logpoints support, and many other improvements.
+
+Also some notes:
+
+* Due to some limitations on `ligo` executable's side and on our side, an invalid `Michelson` code may be produced. If you encounter this problem, please contact us.
+* We slightly change the `Michelson` code, this may result in minor differences (e.g. `PACK`ed code may result in a different bytestring).
 
 ## Running the debugger
 
@@ -117,3 +138,13 @@ Make sure that your function is a valid entrypoint.
 ### I've set `"michelsonEntrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for a Michelson entrypoint when starting a debug session.
 
 We automatically detect the list of entrypoints in the contract, and in case it contains only one entrypoint, we skip the selection stage.
+
+### Debugger stepping order is weird
+
+Before being executed, LIGO contracts are converted to Michelson language (which all Tezos smart contracts are eventually written in), and generally some things get reordered to get a more optimal contract.
+
+For example, when executing binary operations, the right operand is computed first.
+
+In debugger we try to preserve the execution order, otherwise runs in production and in debugger could have different outcomes. As example of this change in result imagine a binary operation, both sides of which result in a failure.
+
+However, some reorderings can be safely illiminated. We try to handle such cases accordingly, but if you think this is your case, we would appreciate if you reported this issue.

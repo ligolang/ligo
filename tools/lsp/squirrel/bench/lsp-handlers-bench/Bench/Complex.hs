@@ -11,7 +11,6 @@ import Test.Common.LSP (openLigoDoc)
 import Bench.Hovers
 import Bench.References
 import Bench.Util
-import Language.LSP.Test (documentContents)
 
 bench_complex :: [Benchmark]
 bench_complex =

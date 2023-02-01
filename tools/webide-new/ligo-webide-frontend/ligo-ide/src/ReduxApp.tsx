@@ -13,6 +13,7 @@ import Routes from "./components/Routes";
 import fileOps, { indexedDBFileSystem, fileSystems, fileSystem } from "~/base-components/file-ops";
 import icon from "./components/icon.png";
 import { ProjectManager } from "~/base-components/workspace";
+import LigoHeader from "~/components/LigoHeader";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -54,7 +55,8 @@ const ReduxApp = (props: { history: any }) => {
 
   return (
     <Provider store={redux.store}>
-      <div className="body" style={{ paddingTop: "49px" }}>
+      <div className="body">
+        <LigoHeader />
         <Header history={props.history} />
         <NotificationSystem />
         <GlobalModals icon={icon} />

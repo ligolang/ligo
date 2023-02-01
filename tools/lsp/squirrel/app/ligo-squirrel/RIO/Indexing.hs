@@ -99,24 +99,30 @@ upgradeProjectSettingsFormat projectPath = do
 
 -- FIXME: The user choice is not updated right away due to a limitation in LSP.
 -- Check the comment in `askForIndexDirectory` for more information.
-getIndexDirectory :: FilePath -> RIO IndexOptions
-getIndexDirectory contractDir = do
+getIndexDirectory :: (FilePath -> RIO ()) -> FilePath -> RIO IndexOptions
+getIndexDirectory directorySpecifyCallback contractDir = do
   indexOptsVar <- asks reIndexOpts
   readTVarIO indexOptsVar >>= \case
-    IndexOptionsNotSetYet -> do
-      newOpts <- checkForLigoProjectFile contractDir >>= \case
-        Nothing -> askForIndexDirectory contractDir
-        Just ligoProjectDir -> useNewLigoProjectDir ligoProjectDir
-      restartStateDependingOnIndexOpts
-      return newOpts
-
+    IndexOptionsNotSetYet ->
+      checkForLigoProjectFile contractDir >>= \case
+        Nothing ->
+          askForIndexDirectory
+            (\dir -> restartStateDependingOnIndexOpts *> directorySpecifyCallback dir)
+            contractDir
+        Just ligoProjectDir -> do
+          indexOpts <- useNewLigoProjectDir ligoProjectDir
+          restartStateDependingOnIndexOpts
+          directorySpecifyCallback ligoProjectDir
+          pure indexOpts
     oldOpts -> checkForLigoProjectFile contractDir >>= \case
+      -- FIXME: if .ligoproject is deleted, we may still use it as an old option
+      Nothing -> pure oldOpts
       Just dirWithLigoProject -> do
         newOpts <- useNewLigoProjectDir dirWithLigoProject
-        when (newOpts /= oldOpts) restartStateDependingOnIndexOpts
+        when (newOpts /= oldOpts) do
+          restartStateDependingOnIndexOpts
+          directorySpecifyCallback dirWithLigoProject
         return newOpts
-      _ -> pure oldOpts
-
     where
       useNewLigoProjectDir ligoProjectDir = do
         indexOptsVar <- asks reIndexOpts
@@ -133,15 +139,12 @@ getIndexDirectory contractDir = do
         ASTMap.reset astMap
         tempFilesMap <- asks reTempFiles
         buildGraphVar <- asks reBuildGraph
-        includesVar <- asks reIncludes
         atomically $ do
           StmMap.reset tempFilesMap
           writeTVar buildGraphVar G.empty
-          writeTVar includesVar G.empty
 
-
-askForIndexDirectory :: FilePath -> RIO IndexOptions
-askForIndexDirectory contractDir = do
+askForIndexDirectory :: (FilePath -> RIO ()) -> FilePath -> RIO IndexOptions
+askForIndexDirectory directorySpecifyCallback contractDir = do
   rootDirectoryM <- S.getRootPath
   gitDirectoryM <- mkGitDirectory
   let
@@ -163,6 +166,7 @@ askForIndexDirectory contractDir = do
         (\response -> do
           let choice = handleParams gitDirectoryM rootDirectoryM response
           atomically $ writeTVar indexVar choice
+          whenJust (indexOptionsPath choice) directorySpecifyCallback
           handleChosenOption choice)
       -- FIXME (LIGO-490): lsp provides no easy way to get the callback of a
       -- request and MVars will block indefinitely. We don't index for now with
@@ -227,12 +231,12 @@ askForIndexDirectory contractDir = do
           , chosen == path = FromRoot path
           | otherwise = DoNotIndex
 
-handleProjectFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
-handleProjectFileChanged nfp change = do
-
+handleProjectFileChanged :: (FilePath -> RIO ()) -> J.NormalizedFilePath -> J.FileChangeType -> RIO ()
+handleProjectFileChanged directorySpecifyCallback nfp change = do
   -- We update indexing settings variable each time some project file was changed.
   lastActiveFile <- readTVarIO =<< asks reActiveFile
-  whenJust lastActiveFile $ void . getIndexDirectory . J.fromNormalizedFilePath
+  whenJust lastActiveFile $
+    void . getIndexDirectory directorySpecifyCallback . J.fromNormalizedFilePath
 
   let fp = J.fromNormalizedFilePath nfp
   $Log.debug case change of

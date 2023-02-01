@@ -5,10 +5,11 @@ module Util.Graph
   , forAMConcurrently
   , wcc
   , wccFor
+  , reachableComponents
   ) where
 
 import Algebra.Graph.AdjacencyMap as G
-import Algebra.Graph.AdjacencyMap.Algorithm (scc)
+import Algebra.Graph.AdjacencyMap.Algorithm (reachable, scc)
 import Algebra.Graph.NonEmpty.AdjacencyMap qualified as NEG
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Map qualified as Map
@@ -52,5 +53,10 @@ wcc graph =
 -- | Tries to find the WCC such that the given vertex is present.
 wccFor :: Ord a => a -> AdjacencyMap a -> Maybe (AdjacencyMap a)
 wccFor x = find (G.hasVertex x) . wcc
+
+-- | Calculates the subgraph of the input graph such that all vertices are
+-- reachable from the given vertex.
+reachableComponents :: Ord a => a -> AdjacencyMap a -> AdjacencyMap a
+reachableComponents v g = induce (`Set.member` Set.fromList (reachable v g)) g
 
 type instance PrettyShow (AdjacencyMap a) = PrettyShow a

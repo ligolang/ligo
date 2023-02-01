@@ -22,6 +22,7 @@ library
       Method.CreateGist
       Method.DryRun
       Method.GenerateDeployScript
+      Method.LigoVersion
       Method.ListDeclarations
       Method.ListTemplates
       Schema.CompileExpressionRequest

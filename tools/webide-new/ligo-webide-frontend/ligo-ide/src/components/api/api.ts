@@ -84,4 +84,5 @@ export const WebIdeApi = {
   listDeclarations: DefaultApiFactory(undefined, baseUrl, mkAxios()).listDeclarationsPost,
   createUpdateGist: DefaultApiFactory(undefined, baseUrl, mkAxios()).createUpdateGistPost,
   listTemplates: DefaultApiFactory(undefined, baseUrl, mkAxios()).listTemplatesPost,
+  ligoVersion: DefaultApiFactory(undefined, baseUrl, mkAxios()).ligoVersionPost,
 };

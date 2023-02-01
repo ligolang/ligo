@@ -1,0 +1,13 @@
+let main = ([p, s] : [string, int]) : [list<operation>, int] => {
+  let s2 = 0;
+  switch(p) {
+    case "Variant1":
+      s2 = s + 42;
+      break
+    case "Variant2":
+      s2 = s + 44;
+      break
+  }
+
+  return [(list([]) as list<operation>), s2 + s]
+};

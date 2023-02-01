@@ -459,6 +459,35 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        ligoVersionPost: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/ligo-version`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {ListDeclarationsRequest} [listDeclarationsRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -581,6 +610,15 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async ligoVersionPost(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.ligoVersionPost(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @param {ListDeclarationsRequest} [listDeclarationsRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -652,6 +690,14 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         generateDeployScriptPost(generateDeployScriptRequest?: GenerateDeployScriptRequest, options?: any): AxiosPromise<DeployScript> {
             return localVarFp.generateDeployScriptPost(generateDeployScriptRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        ligoVersionPost(options?: any): AxiosPromise<string> {
+            return localVarFp.ligoVersionPost(options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -733,6 +779,16 @@ export class DefaultApi extends BaseAPI {
      */
     public generateDeployScriptPost(generateDeployScriptRequest?: GenerateDeployScriptRequest, options?: AxiosRequestConfig) {
         return DefaultApiFp(this.configuration).generateDeployScriptPost(generateDeployScriptRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public ligoVersionPost(options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).ligoVersionPost(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

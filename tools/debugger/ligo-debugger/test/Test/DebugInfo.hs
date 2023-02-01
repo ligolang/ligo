@@ -3,25 +3,28 @@ module Test.DebugInfo
   ( module Test.DebugInfo
   ) where
 
+import AST (LIGO)
 import Control.Lens (_Empty, hasn't)
 import Data.Default (def)
+import Data.Set qualified as Set
 import Fmt (Buildable (..), pretty)
+import Parser (Info)
+import Test.HUnit (Assertion)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core (SourceLocation (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Michelson
-import qualified Data.Set as Set
-import Morley.Michelson.Parser.Types (MichelsonSource(MSFile))
-import Test.HUnit (Assertion)
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 
@@ -33,16 +36,17 @@ instance Buildable SomeInstr where
   build (SomeInstr i) = build i
 
 -- | Get instructions with associated 'InstrNo' metas.
-collectCodeMetas :: T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
-collectCodeMetas = T.dfsFoldInstr def { dsGoToValues = True } \case
+collectCodeMetas :: HashMap FilePath (LIGO Info) -> T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
+collectCodeMetas parsedContracts = T.dfsFoldInstr def { dsGoToValues = True } \case
   T.ConcreteMeta meta i ->
-    if shouldIgnoreMeta i && isJust (liiLocation meta)
-    then mempty
-    else one (meta, SomeInstr i)
+    case liiLocation meta of
+      Just loc
+        | shouldIgnoreMeta loc i parsedContracts -> mempty
+      _ -> one (meta, SomeInstr i)
   _ -> mempty
 
-collectContractMetas :: T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
-collectContractMetas = collectCodeMetas . T.unContractCode . T.cCode
+collectContractMetas :: HashMap FilePath (LIGO Info) -> T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
+collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unContractCode . T.cCode
 
 -- | Run the given contract + entrypoint, build code with embedded ligo metadata,
 buildSourceMapper
@@ -68,11 +72,14 @@ test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
 
-      (exprLocs, T.SomeContract contract, _) <- buildSourceMapper file "main"
+      (exprLocs, T.SomeContract contract, allFiles) <- buildSourceMapper file "main"
+
+      parsedContracts <- parseContracts allFiles
+
       let nonEmptyMetasAndInstrs =
             map (first stripSuffixHashFromLigoIndexedInfo) $
             filter (hasn't (_1 . _Empty)) $
-            collectContractMetas contract
+            collectContractMetas parsedContracts contract
 
       let unitIntTuple = LigoTypeResolved
             ( mkPairType
@@ -152,7 +159,7 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         ]
 
-      ((_slStart &&& _slEnd) <$> toList (getInterestingSourceLocations exprLocs))
+      ((_slStart &&& _slEnd) <$> toList (getInterestingSourceLocations parsedContracts exprLocs))
         @?=
         -- Note: the order of entries below is not the interpretation order
         -- because we extracted these pairs from Set with its lexicographical order
@@ -175,9 +182,11 @@ test_SourceMapper = testGroup "Reading source mapper"
 
   , testCase "metas are not shifted in `if` blocks" do
       let file = contractsDir </> "if.mligo"
-      (_, T.SomeContract contract, _) <- buildSourceMapper file "main"
+      (_, T.SomeContract contract, allFiles) <- buildSourceMapper file "main"
 
-      forM_ @_ @_ @() (collectContractMetas contract)
+      parsedContracts <- parseContracts allFiles
+
+      forM_ @_ @_ @() (collectContractMetas parsedContracts contract)
         \(LigoIndexedInfo{..}, SomeInstr instr) -> case instr of
           T.MUL -> liiLocation @?= Just
             do LigoRange file (LigoPosition 2 26) (LigoPosition 2 31)
@@ -211,7 +220,7 @@ test_Function_call_locations = testGroup "Function call locations"
     checkLocations :: FilePath -> [((Word, Word), (Word, Word))] -> Assertion
     checkLocations contractName expectedLocs = do
       let file = contractsDir </> contractName
-      (Set.map eslSourceLocation -> locs, _, _) <- buildSourceMapper file "main"
+      (Set.map (ligoRangeToSourceLocation . eslLigoRange) -> locs, _, _) <- buildSourceMapper file "main"
 
       forM_ (uncurry (makeSourceLocation file) <$> expectedLocs) \loc -> do
         if Set.member loc locs

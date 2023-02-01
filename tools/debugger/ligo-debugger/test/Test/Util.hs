@@ -296,7 +296,7 @@ mkSnapshotsForImpl logger (ContractRunData file mEntrypoint (param :: param) (st
   parsedContracts <- parseContracts allFiles
 
   let statementLocs = getStatementLocs (getAllSourceLocations exprLocs) parsedContracts
-  let allLocs = getInterestingSourceLocations exprLocs <> statementLocs
+  let allLocs = getInterestingSourceLocations parsedContracts exprLocs <> statementLocs
 
   his <-
     collectInterpretSnapshots
