@@ -75,9 +75,7 @@ module M (Params : Params) = struct
 
     let init_env : environment =
       let type_env = options.middle_end.init_env in
-      Environment.append
-        (Environment.append type_env std_lib.typed_mod_def)
-        (Stdlib.select_prelude_typed top_level_syntax std_lib)
+      Environment.append type_env std_lib.content_typed
 
 
     let make_module_declaration : module_name -> t -> declaration =
@@ -92,7 +90,7 @@ module M (Params : Params) = struct
   end
 
   let lib_ast : unit -> AST.t =
-   fun () -> std_lib.typed_mod_def @ Stdlib.select_prelude_typed top_level_syntax std_lib
+   fun () -> std_lib.content_typed
 
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -102,15 +100,6 @@ module M (Params : Params) = struct
     let ast_core =
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
       Helpers.inject_declaration ~options ~raise syntax core_c_unit
-    in
-    let is_syntax_switch = not (Syntax_types.equal top_level_syntax meta.syntax) in
-    let ast_core =
-      if is_syntax_switch
-      then (
-        let prelude = Stdlib.select_prelude_core meta.syntax std_lib in
-        (* Correct *)
-        prelude @ ast_core)
-      else ast_core
     in
     Ligo_compile.Of_core.typecheck ~raise ~options Ligo_compile.Of_core.Env ast_core
 end
@@ -143,7 +132,7 @@ module Infer (Params : Params) = struct
   end
 
   let lib_ast : unit -> AST.t =
-   fun () -> std_lib.core_mod_def @ Stdlib.select_prelude_core top_level_syntax std_lib
+   fun () -> std_lib.content_core
 
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -153,12 +142,7 @@ module Infer (Params : Params) = struct
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
       Helpers.inject_declaration ~options ~raise syntax module_
     in
-    let is_syntax_switch = not (Syntax_types.equal top_level_syntax meta.syntax) in
-    if is_syntax_switch
-    then (
-      let prelude = Stdlib.select_prelude_core meta.syntax std_lib in
-      prelude @ module_)
-    else module_
+    module_
 end
 
 (*  unfortunately slow:

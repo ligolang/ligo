@@ -1,27 +1,12 @@
 module Location = Simple_utils.Location
 
 type t =
-  { curry : lib
-  ; typed_mod_def : Ast_typed.program
-  ; core_mod_def : Ast_core.program
-  }
-
-and lib =
-  { (* preludes to be prepended X_mod_def's at top-level and within imported modules *)
-    prelude_core : Ast_core.program
-  ; prelude_typed : Ast_typed.program
-        (* typed version of std_lib.mligo . Usage: repl (where the syntax is fixed) *)
-  ; content_typed : Ast_typed.program
+  { (* typed version of std_lib.mligo . Usage: repl (where the syntax is fixed) *)
+    content_typed : Ast_typed.program
   ; content_core : Ast_core.program
   }
 
-let empty =
-  let e =
-    { prelude_core = []; prelude_typed = []; content_typed = []; content_core = [] }
-  in
-  { curry = e; typed_mod_def = []; core_mod_def = [] }
-
-
+let empty = { content_typed = []; content_core = [] }
 let loc = Location.env
 
 module Cache = struct
@@ -82,55 +67,16 @@ let type_ ~options x =
 
 let get : options:Compiler_options.t -> unit -> t =
  fun ~options () ->
-  let def str = "#define " ^ str ^ "\n" in
   let std =
+    let def str = "#define " ^ str ^ "\n" in
     match options.middle_end.protocol_version with
     | Environment.Protocols.Lima -> def "LIMA"
     | Environment.Protocols.Kathmandu -> def "KATHMANDU"
   in
   let lib = Ligo_lib.get () in
-  let binder_curry = Ligo_prim.Module_var.fresh ~loc ~name:"Curry_lib" () in
   let curry_content_core = compile ~options (std ^ lib) in
   let curry_content_typed = type_ ~options curry_content_core in
-  let typed_mod_def =
-    let open Ligo_prim.Module_expr in
-    let open Ast_typed in
-    let module_attr = Ast_typed.TypeOrModuleAttr.{ public = true; hidden = true } in
-    [ Location.wrap ~loc
-      @@ D_module
-           { module_binder = binder_curry
-           ; module_attr
-           ; module_ = Location.wrap ~loc @@ M_struct curry_content_typed
-           }
-    ]
-  in
-  let core_mod_def =
-    let open Ligo_prim.Module_expr in
-    let open Ast_core in
-    let module_attr = Ast_core.TypeOrModuleAttr.{ public = true; hidden = true } in
-    [ Location.wrap ~loc
-      @@ D_module
-           { module_binder = binder_curry
-           ; module_attr
-           ; module_ = Location.wrap ~loc @@ M_struct curry_content_core
-           }
-    ]
-  in
-  let curry =
-    let prelude_core = Helpers.get_aliases_prelude binder_curry curry_content_typed in
-    let options =
-      Compiler_options.set_init_env
-        options
-        (Environment.append options.middle_end.init_env typed_mod_def)
-    in
-    let prelude_typed = type_ ~options prelude_core in
-    { prelude_core
-    ; prelude_typed
-    ; content_typed = curry_content_typed
-    ; content_core = curry_content_core
-    }
-  in
-  { curry; typed_mod_def; core_mod_def }
+  { content_typed = curry_content_typed; content_core = curry_content_core }
 
 
 let get ~options : t =
@@ -147,21 +93,11 @@ let get ~options : t =
     | Some typed -> typed
 
 
-let select_prelude_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
-  match stx with
-  | CameLIGO | JsLIGO -> lib.curry.prelude_core
-
-
-let select_prelude_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
-  match stx with
-  | CameLIGO | JsLIGO -> lib.curry.prelude_typed
-
-
 let select_lib_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
   match stx with
-  | CameLIGO | JsLIGO -> lib.curry.content_core
+  | CameLIGO | JsLIGO -> lib.content_core
 
 
 let select_lib_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
   match stx with
-  | CameLIGO | JsLIGO -> lib.curry.content_typed
+  | CameLIGO | JsLIGO -> lib.content_typed

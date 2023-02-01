@@ -331,8 +331,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_no_mutation.mligo" ];
-  [%expect
-    {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value ().
     - test_mutation exited with value ().
@@ -682,34 +681,36 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT19hFZZxPTue1oBw7cc46L1p6pJ3xTo3vRF , { parameter unit ;
+    - test_x exited with value (KT1WxkuJtr9rxYaziDJY7gHA83H3BUbEn1G1 , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address bool)) ;
       code { CDR ;
              PUSH bool True ;
+             PUSH bool False ;
              DUP 2 ;
+             DUP 4 ;
              CAR ;
              CDR ;
              ITER { SWAP ;
-                    DUP 3 ;
+                    DUP 5 ;
                     CDR ;
                     DIG 2 ;
                     GET ;
-                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+                    IF_NONE { DUP 2 ; AND } { DROP ; DUP 3 ; AND } } ;
              DROP ;
-             PUSH bool True ;
              DUP 2 ;
+             DUP 4 ;
              CAR ;
              CDR ;
              ITER { SWAP ;
                     EMPTY_MAP address bool ;
                     DIG 2 ;
                     GET ;
-                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
-             DROP ;
+                    IF_NONE { DUP 2 ; AND } { DROP ; DUP 3 ; AND } } ;
+             DROP 3 ;
              NIL operation ;
-             PAIR } } , 222). |}]
+             PAIR } } , 224). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
