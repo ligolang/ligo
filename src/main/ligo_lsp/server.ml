@@ -1,3 +1,5 @@
+module Requests = Requests
+
 module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   (* TODO: use String, Option, Set, List & Hashtbl from Core *)
   module LSet = Caml.Set.Make (Simple_utils.Location)
@@ -148,33 +150,29 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             -> DocumentUri.t
             -> get_scope_info
             -> Hover.t option IO.t =
-        fun notify_back pos uri (_, _, defs) ->
+        fun _notify_back pos uri (_, _, defs) ->
           let open Maybe in
           let< defs, _ = defs in
-          let> definition = Requests.get_definition notify_back pos uri defs in
+          let< definition = Requests.get_definition pos uri defs in
           let> str =
             match definition with
             | Variable vdef ->
-              return (match vdef.t with
-              | Core ty -> Format.asprintf "%a" Ast_core.PP.type_content ty.type_content
-              | Resolved ty ->
-                Format.asprintf "%a" Ast_typed.PP.type_content ty.type_content
-              | Unresolved -> "(* Unresolved Type *)")
+              return
+                (match vdef.t with
+                | Core ty -> Format.asprintf "%a" Ast_core.PP.type_content ty.type_content
+                | Resolved ty ->
+                  Format.asprintf "%a" Ast_typed.PP.type_content ty.type_content
+                | Unresolved -> "(* Unresolved Type *)")
             | Type tdef ->
               let< region = Utils.position_of_location tdef.range in
-              let> type_definition = Requests.get_definition notify_back region uri defs in
+              let< type_definition = Requests.get_definition region uri defs in
               (match type_definition with
               | Type tdef ->
                 return @@ Format.asprintf "%a" Ast_core.PP.type_expression tdef.content
               | _ -> failwith "Got a non-type as a type definition.")
-            | Module _mdef ->
-              return "Hover for modules is not implemented yet."
+            | Module _mdef -> return "Hover for modules is not implemented yet."
           in
-          let marked_string : MarkedString.t =
-            { value = str
-            ; language = None
-            }
-          in
+          let marked_string : MarkedString.t = { value = str; language = None } in
           let contents = `MarkedString marked_string in
           let hover = Hover.create ~contents () in
           IO.return (Some hover)
@@ -202,10 +200,10 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             -> DocumentUri.t
             -> get_scope_info
             -> Locations.t option IO.t =
-        fun notify_back pos uri (_, _, defs) ->
+        fun _notify_back pos uri (_, _, defs) ->
           let open Maybe in
           let< defs, _ = defs in
-          let> definition = Requests.get_definition notify_back pos uri defs in
+          let< definition = Requests.get_definition pos uri defs in
           let region = get_location definition in
           match region with
           | File region -> return (`Location [ region_to_location region ])
@@ -217,10 +215,10 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             -> DocumentUri.t
             -> get_scope_info
             -> Locations.t option IO.t =
-        fun notify_back pos uri (_, _, defs) ->
+        fun _notify_back pos uri (_, _, defs) ->
           let open Maybe in
           let< defs, _ = defs in
-          let> definition = Requests.get_definition notify_back pos uri defs in
+          let< definition = Requests.get_definition pos uri defs in
           let> location =
             match definition with
             (* It's a term: find its type now. *)
@@ -237,7 +235,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             | Module _mdef -> IO.return None
           in
           let< region = Utils.position_of_location location in
-          let> type_definition = Requests.get_definition notify_back region uri defs in
+          let< type_definition = Requests.get_definition region uri defs in
           let< location =
             match type_definition with
             | Variable _vdef -> None
@@ -259,7 +257,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           let* value =
             let open Maybe in
             let< defs, _ = defs in
-            let> definition = Requests.get_definition notify_back pos uri defs in
+            let< definition = Requests.get_definition pos uri defs in
             let* references =
               Requests.get_all_references
                 notify_back
@@ -285,7 +283,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         fun notify_back pos uri (_, _, defs) ->
           let open Maybe in
           let< defs, _ = defs in
-          let> definition = Requests.get_definition notify_back pos uri defs in
+          let< definition = Requests.get_definition pos uri defs in
           let* references =
             Requests.get_all_references
               notify_back

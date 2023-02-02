@@ -2,7 +2,7 @@ module AST = Ast_core
 module Formatter = Formatter
 module Api_helper = Api_helper
 module Trace = Simple_utils.Trace
-
+module Types = Types
 module PP = PP
 
 type def = Types.def

@@ -1,9 +1,10 @@
 (ocamllex md)
 
 (executables
- (names test doc_test repl_test vendors_test contract_test get_scope_tests)
+ (names test doc_test repl_test vendors_test contract_test get_scope_tests
+   lsp_test)
  (libraries simple-utils tezos-memory-proto-alpha ligo ligo.unix bos repl
-   interpreter alcotest tezos-utils tezos-crypto ligo_api))
+   interpreter alcotest tezos-utils tezos-crypto ligo_api lsp_test_requests))
 
 (rule
  (alias doc-test)
@@ -93,7 +94,8 @@
   (alias repl-test)
   (alias contract_test)
   (alias error-recovery/recovery-test)
-  (alias get_scope_tests)))
+  (alias get_scope_tests)
+  (alias lsp-test)))
 
 (rule
  (alias manual-test)
@@ -101,3 +103,8 @@
   (run ./manual_test.exe))
  (deps
   (glob_files contracts/*)))
+
+(rule
+ (alias lsp-test)
+ (action
+  (run ./lsp_test.exe)))

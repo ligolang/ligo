@@ -9,6 +9,7 @@ module Api_helper = Api_helper
 module LSet = Types.LSet
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
+module Types = Types
 
 [@@@landmark "auto"]
 
