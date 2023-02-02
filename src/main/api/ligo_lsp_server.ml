@@ -2,6 +2,8 @@
   This is the code that creates an instance of the lsp server class
   and runs it as a task. *)
 
+module Requests = Ligo_lsp.Server.Requests
+
 module Server = Ligo_lsp.Server.Make (struct
   module Info = Info
   module Print = Print

@@ -35,6 +35,10 @@ let position_of_location (l : Loc.t) : Position.t option =
   | File region -> Some (pos_to_position region#start)
 
 
+let position_equal : Position.t -> Position.t -> bool =
+ fun p1 p2 -> p1.line = p2.line && p1.character = p2.character
+
+
 let location_to_range (l : Loc.t) : Range.t option =
   match l with
   | Virtual _ -> None
