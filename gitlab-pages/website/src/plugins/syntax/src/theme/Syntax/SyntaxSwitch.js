@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from 'react-router-dom';
+
 
 import styles from "./styles.module.css";
 
 function SyntaxSwitch(props) {
   const [_, setState] = useState(0);
+  const [isNext, setIsNext] = useState(false);
+  const location = useLocation();
 
   // All this thing is a trick to force rerender
   // because it looks like there's a bug with static generation
@@ -11,6 +15,11 @@ function SyntaxSwitch(props) {
   useEffect(() => {
     setState(1);
   }, []);
+
+  useEffect(() => {
+    let hidePascaligo = !!location.pathname?.startsWith("/docs/next");
+    setIsNext(hidePascaligo);
+  }, [location]);
 
   return (
     <select
@@ -29,6 +38,7 @@ function SyntaxSwitch(props) {
     >
       <option value="cameligo">CameLIGO</option>
       <option value="jsligo">JsLIGO</option>
+      {!isNext && <option value="pascaligo">PascaLIGO</option>}
     </select>
   );
 }

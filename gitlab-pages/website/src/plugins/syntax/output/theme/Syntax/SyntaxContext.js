@@ -1,5 +1,5 @@
 import React from "react";
-const valid = ["jsligo", "cameligo"];
+const valid = ["jsligo", "cameligo", "pascaligo"];
 const ctx = {
   syntax: (() => {
     if (typeof window === "undefined") return "jsligo";
@@ -11,7 +11,7 @@ const ctx = {
     if (valid.includes(lang)) return lang;
     return syntax ?? "jsligo";
   })(),
-  setSyntax: () => { }
+  setSyntax: () => {}
 };
 const SyntaxContext = /*#__PURE__*/React.createContext(ctx);
 export default SyntaxContext;
