@@ -16,3 +16,9 @@ let decompile_pattern_to_string p =
     let p = Parsing.Jsligo.pretty_print_pattern ~cols:80 p in
     Buffer.contents p
   | Error e -> e
+
+
+let decompile_type_expression_to_string t =
+  let t = Decompiler.decompile_type_expr t in
+  let t = Parsing.Jsligo.pretty_print_type_expr t in
+  Buffer.contents t
