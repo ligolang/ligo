@@ -9,13 +9,12 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   module String = Caml.String
   open Ligo_interface.Make (Ligo_api)
   open Utils
-  open Utils.Maybe
 
   (* open Types *)
   open Linol_lwt
   open Linol_lwt.Jsonrpc2
   open Lsp
-
+  open Requests.Handler
   (* This file is free software, part of linol. See file "LICENSE" for more information *)
 
   (* Some user code
@@ -62,6 +61,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
     object (self)
       inherit server as super
 
+      (* FIXME we should read this from VSCode config *)
+      val debug_handlers = false
+
       (* one env per document *)
       val get_scope_buffers : (DocumentUri.t, get_scope_info) Hashtbl.t =
         Hashtbl.create 32
@@ -71,24 +73,19 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
        - store the state resulting from the processing
        - return the diagnostics from the new state
     *)
-      method private _on_doc : notify_back -> DocumentUri.t -> string -> unit IO.t =
-        fun notify_back uri contents ->
+      method private _on_doc : DocumentUri.t -> string -> unit Handler.t =
+        fun uri contents ->
           let ((errors, warnings, data) as new_state) = get_scope uri contents in
           Hashtbl.replace get_scope_buffers uri new_state;
-          let* () =
-            notify_back#send_log_msg
-              ~type_:Info
-              ("Updating DOC :" ^ DocumentUri.to_string uri)
-          in
-          let* () =
+          let@ () = send_debug_msg ("Updating DOC :" ^ DocumentUri.to_string uri) in
+          let@ () =
             match errors with
-            | [] -> notify_back#send_log_msg ~type_:Info "No erorrs"
+            | [] -> send_debug_msg "No erorrs"
             | _ ->
               let value =
                 List.map Main_errors.Formatter.error_json errors |> List.concat
               in
-              notify_back#send_log_msg
-                ~type_:Info
+              send_debug_msg
                 ("There are errors:\n *"
                 ^ String.concat "\n *"
                 @@ List.map (fun (x : Simple_utils.Error.t) -> x.content.message) value)
@@ -108,82 +105,98 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                 | None -> Utils.dummy_range, message)
               errs
           in
-          let res =
+          let error_diagnostic_messages =
             errors
             |> List.map extract_error_information
             |> List.concat
             |> List.map (fun (range, message) -> Diagnostic.create ~message ~range ())
           in
-          let* () = notify_back#send_diagnostic res in
-          let* () =
+          let@ () =
             match warnings with
-            | [] -> notify_back#send_log_msg ~type_:Info "No warnings"
-            | _ -> notify_back#send_log_msg ~type_:Info "There are warnings"
+            | [] -> send_debug_msg "No warnings"
+            | _ -> send_debug_msg "There are warnings"
           in
+          let@ () = send_diagnostic error_diagnostic_messages in
           match data with
-          | None -> notify_back#send_log_msg ~type_:Info "No result"
-          | _ -> notify_back#send_log_msg ~type_:Info "There is result"
+          | None -> send_debug_msg "No result"
+          | _ -> send_debug_msg "There is result"
 
       (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
-      method on_notif_doc_did_open ~notify_back d ~content : unit Linol_lwt.t =
-        let message =
-          ShowMessageParams.create ~message:"WELCOME NOT NOTIFICATION!!!" ~type_:Info
-        in
-        let* () = notify_back#send_notification (ShowMessage message) in
-        self#_on_doc notify_back d.uri content
+      method on_notif_doc_did_open ~notify_back d ~content : unit IO.t =
+        run_handler
+          { notify_back = Normal notify_back
+          ; debug = debug_handlers
+          ; docs_cache = get_scope_buffers
+          }
+        @@ self#_on_doc d.uri content
 
       (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a new document is opened. *)
-      method on_notif_doc_did_change ~notify_back d _c ~old_content:_old ~new_content =
-        self#_on_doc notify_back d.uri new_content
+      method on_notif_doc_did_change
+          ~notify_back
+          d
+          _c
+          ~old_content:_old
+          ~new_content
+          : unit IO.t =
+        run_handler
+          { notify_back = Normal notify_back
+          ; debug = debug_handlers
+          ; docs_cache = get_scope_buffers
+          }
+        @@ self#_on_doc d.uri new_content
 
       (* On document closes, we remove the state associated to the file from the global
        hashtable state, to avoid leaking memory. *)
-      method on_notif_doc_did_close ~notify_back _ : unit Linol_lwt.t =
+      method on_notif_doc_did_close ~notify_back _ : unit IO.t =
         let* () = notify_back#send_log_msg ~type_:Info "Closed!!!" in
         Linol_lwt.return ()
 
-      method on_req_hover_
-          : notify_back
-            -> Position.t
-            -> DocumentUri.t
-            -> get_scope_info
-            -> Hover.t option IO.t =
-        fun _notify_back pos uri (_, _, defs) ->
-          let open Maybe in
-          let< defs, _ = defs in
-          let< definition = Requests.get_definition pos uri defs in
-          let> str =
-            match definition with
-            | Variable vdef ->
-              return
-                (match vdef.t with
-                | Core ty -> Format.asprintf "%a" Ast_core.PP.type_content ty.type_content
-                | Resolved ty ->
-                  Format.asprintf "%a" Ast_typed.PP.type_content ty.type_content
-                | Unresolved -> "(* Unresolved Type *)")
-            | Type tdef ->
-              let< region = Utils.position_of_location tdef.range in
-              let< type_definition = Requests.get_definition region uri defs in
-              (match type_definition with
+      method on_req_hover_ : Position.t -> DocumentUri.t -> Hover.t option Handler.t =
+        fun pos uri ->
+          with_cached_doc uri None
+          @@ fun (_, _, defs_opt) ->
+          when_some' defs_opt
+          @@ function
+          | defs, _ ->
+            when_some' (Requests.get_definition pos uri defs)
+            @@ fun definition ->
+            let@ str_opt =
+              match definition with
+              | Variable vdef ->
+                return
+                @@ Some
+                     (match vdef.t with
+                     | Core ty ->
+                       Format.asprintf "%a" Ast_core.PP.type_content ty.type_content
+                     | Resolved ty ->
+                       Format.asprintf "%a" Ast_typed.PP.type_content ty.type_content
+                     | Unresolved -> "(* Unresolved Type *)")
               | Type tdef ->
-                return @@ Format.asprintf "%a" Ast_core.PP.type_expression tdef.content
-              | _ -> failwith "Got a non-type as a type definition.")
-            | Module _mdef -> return "Hover for modules is not implemented yet."
-          in
-          let marked_string : MarkedString.t = { value = str; language = None } in
-          let contents = `MarkedString marked_string in
-          let hover = Hover.create ~contents () in
-          IO.return (Some hover)
+                when_some' (Utils.position_of_location tdef.range)
+                @@ fun region ->
+                when_some' (Requests.get_definition region uri defs)
+                @@ fun type_definition ->
+                (match type_definition with
+                | Type tdef ->
+                  return
+                  @@ Option.some
+                  @@ Format.asprintf "%a" Ast_core.PP.type_expression tdef.content
+                | _ -> lift_IO @@ failwith "Got a non-type as a type definition.")
+              | Module _mdef -> return @@ Some "Hover for modules is not implemented yet."
+            in
+            when_some' str_opt
+            @@ fun str ->
+            let marked_string : MarkedString.t = { value = str; language = None } in
+            let contents = `MarkedString marked_string in
+            let hover = Hover.create ~contents () in
+            return (Some hover)
 
-      method on_req_formatting_
-          : notify_back -> DocumentUri.t -> TextEdit.t list option IO.t =
-        fun notify_back uri ->
-          let* () =
-            notify_back#send_log_msg ~type_:MessageType.Info
-            @@ "Formatting request on "
-            ^ DocumentUri.to_path uri
+      method on_req_formatting_ : DocumentUri.t -> TextEdit.t list option Handler.t =
+        fun uri ->
+          let@ () =
+            send_debug_msg @@ "Formatting request on " ^ DocumentUri.to_path uri
           in
           let formatted_text = formatting uri in
           match formatted_text with
@@ -191,78 +204,74 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             let formatted_text =
               TextEdit.create ~newText:result ~range:whole_file_range
             in
-            IO.return (Some [ formatted_text ])
-          | Error _ -> IO.return None
+            return (Some [ formatted_text ])
+          | Error _ -> return None
 
       method on_req_definition_
-          : notify_back
-            -> Position.t
-            -> DocumentUri.t
-            -> get_scope_info
-            -> Locations.t option IO.t =
-        fun _notify_back pos uri (_, _, defs) ->
-          let open Maybe in
-          let< defs, _ = defs in
-          let< definition = Requests.get_definition pos uri defs in
+          : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
+        fun pos uri ->
+          with_cached_doc uri None
+          @@ fun (_, _, defs_opt) ->
+          when_some' defs_opt
+          @@ fun (defs, _) ->
+          when_some' (Requests.get_definition pos uri defs)
+          @@ fun definition ->
           let region = get_location definition in
           match region with
-          | File region -> return (`Location [ region_to_location region ])
-          | Virtual _ -> IO.return None
+          | File region -> return @@ Some (`Location [ region_to_location region ])
+          | Virtual _ -> return None
 
       method on_req_type_definition_
-          : notify_back
-            -> Position.t
-            -> DocumentUri.t
-            -> get_scope_info
-            -> Locations.t option IO.t =
-        fun _notify_back pos uri (_, _, defs) ->
-          let open Maybe in
-          let< defs, _ = defs in
-          let< definition = Requests.get_definition pos uri defs in
-          let> location =
+          : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
+        fun pos uri ->
+          with_cached_doc uri None
+          @@ fun (_, _, defs_opt) ->
+          when_some' defs_opt
+          @@ fun (defs, _) ->
+          when_some' (Requests.get_definition pos uri defs)
+          @@ fun definition ->
+          let location_opt =
             match definition with
             (* It's a term: find its type now. *)
             | Variable vdef ->
               (match vdef.t with
-              | Core ty -> return ty.location
+              | Core ty -> Some ty.location
               | Resolved ty ->
-                IO.return
-                @@ Option.map (fun v -> Ligo_prim.Type_var.get_location v) ty.orig_var
-              | Unresolved -> IO.return None)
+                Option.map (fun v -> Ligo_prim.Type_var.get_location v) ty.orig_var
+              | Unresolved -> None)
             (* Just replicate the behavior of definition if it's already a type. *)
-            | Type tdef -> return tdef.range
-            (* Modules have no type definition. *)
-            | Module _mdef -> IO.return None
-          in
-          let< region = Utils.position_of_location location in
-          let< type_definition = Requests.get_definition region uri defs in
-          let< location =
-            match type_definition with
-            | Variable _vdef -> None
             | Type tdef -> Some tdef.range
+            (* Modules have no type definition. *)
             | Module _mdef -> None
           in
-          match location with
-          | File region -> return (`Location [ region_to_location region ])
-          | Virtual _ -> IO.return None
+          when_some' location_opt
+          @@ fun location ->
+          when_some' (Utils.position_of_location location)
+          @@ fun region ->
+          when_some' (Requests.get_definition region uri defs)
+          @@ fun type_definition ->
+          return
+          @@
+          match type_definition with
+          | Variable _vdef -> None
+          | Module _mdef -> None
+          | Type tdef ->
+            (match tdef.range with
+            | File region -> Some (`Location [ region_to_location region ])
+            | Virtual _ -> None)
 
       method on_req_rename_
-          : notify_back
-            -> string
-            -> Position.t
-            -> DocumentUri.t
-            -> get_scope_info
-            -> WorkspaceEdit.t IO.t =
-        fun notify_back new_name pos uri (_, _, defs) ->
-          let* value =
-            let open Maybe in
-            let< defs, _ = defs in
-            let< definition = Requests.get_definition pos uri defs in
-            let* references =
-              Requests.get_all_references
-                notify_back
-                (get_location definition)
-                get_scope_buffers
+          : string -> Position.t -> DocumentUri.t -> WorkspaceEdit.t Handler.t =
+        fun new_name pos uri ->
+          with_cached_doc uri (WorkspaceEdit.create ())
+          @@ fun (_, _, defs_opt) ->
+          let value =
+            Option.bind defs_opt
+            @@ fun (defs, _) ->
+            Option.bind (Requests.get_definition pos uri defs)
+            @@ fun definition ->
+            let references =
+              Requests.get_all_references (get_location definition) get_scope_buffers
             in
             let changes =
               List.map
@@ -270,30 +279,24 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                   file, List.map (Requests.rename_reference new_name) ranges)
                 references
             in
-            return (WorkspaceEdit.create ~changes ())
+            Some (WorkspaceEdit.create ~changes ())
           in
-          IO.return @@ Option.value value ~default:(WorkspaceEdit.create ())
+          return @@ Option.value value ~default:(WorkspaceEdit.create ())
 
       method on_req_references_
-          : notify_back
-            -> Position.t
-            -> DocumentUri.t
-            -> get_scope_info
-            -> Location.t list option IO.t =
-        fun notify_back pos uri (_, _, defs) ->
-          let open Maybe in
-          let< defs, _ = defs in
-          let< definition = Requests.get_definition pos uri defs in
-          let* references =
-            Requests.get_all_references
-              notify_back
-              (get_location definition)
-              get_scope_buffers
+          : Position.t -> DocumentUri.t -> Location.t list option Handler.t =
+        fun pos uri ->
+          with_cached_doc uri None
+          @@ fun (_, _, defs_opt) ->
+          when_some' defs_opt
+          @@ fun (defs, _) ->
+          when_some' (Requests.get_definition pos uri defs)
+          @@ fun definition ->
+          let references =
+            Requests.get_all_references (get_location definition) get_scope_buffers
           in
-          let* _ =
-            notify_back#send_log_msg ~type_:MessageType.Info
-            @@ "On references request on "
-            ^ DocumentUri.to_path uri
+          let@ () =
+            send_debug_msg @@ "On references request on " ^ DocumentUri.to_path uri
           in
           let show_reference (uri, ranges) =
             DocumentUri.to_path uri
@@ -301,10 +304,8 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             ^ String.concat "\n"
             @@ List.map Utils.range_to_string ranges
           in
-          let* _ =
-            notify_back#send_log_msg ~type_:MessageType.Info
-            @@ String.concat "\n"
-            @@ List.map show_reference references
+          let@ () =
+            send_debug_msg @@ String.concat "\n" @@ List.map show_reference references
           in
           let locations =
             List.flatten
@@ -313,7 +314,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                    List.map (fun range -> Location.create ~uri:file ~range) ranges)
                  references
           in
-          return locations
+          return @@ Some locations
 
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)
@@ -339,51 +340,32 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                     -> r Client_request.t
                     -> r IO.t =
         fun ~notify_back ~id (r : _ Client_request.t) ->
+          let run ~uri =
+            run_handler
+              { notify_back = Normal (new notify_back ~uri ~notify_back ())
+              ; debug = debug_handlers
+              ; docs_cache = get_scope_buffers
+              }
+          in
           match r with
           | Client_request.TextDocumentFormatting { textDocument; _ } ->
             let uri = textDocument.uri in
-            let notify_back = new notify_back ~uri ~notify_back () in
-            self#on_req_formatting_ notify_back uri
+            run ~uri @@ self#on_req_formatting_ uri
           | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
             let uri = textDocument.uri in
-            let notify_back = new notify_back ~uri ~notify_back () in
-            with_get_scope_info
-              get_scope_buffers
-              uri
-              None
-              (self#on_req_definition_ notify_back position uri)
+            run ~uri @@ self#on_req_definition_ position uri
           | Client_request.TextDocumentHover { textDocument; position; _ } ->
             let uri = textDocument.uri in
-            let notify_back = new notify_back ~uri ~notify_back () in
-            with_get_scope_info
-              get_scope_buffers
-              uri
-              None
-              (self#on_req_hover_ notify_back position uri)
+            run ~uri @@ self#on_req_hover_ position uri
           | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
             let uri = textDocument.uri in
-            let notify_back = new notify_back ~uri ~notify_back () in
-            with_get_scope_info
-              get_scope_buffers
-              uri
-              (WorkspaceEdit.create ())
-              (self#on_req_rename_ notify_back newName position uri)
+            run ~uri @@ self#on_req_rename_ newName position uri
           | Client_request.TextDocumentReferences { position; textDocument; _ } ->
             let uri = textDocument.uri in
-            let notify_back = new notify_back ~uri ~notify_back () in
-            with_get_scope_info
-              get_scope_buffers
-              uri
-              None
-              (self#on_req_references_ notify_back position uri)
+            run ~uri @@ self#on_req_references_ position uri
           | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
             let uri = textDocument.uri in
-            let notify_back = new notify_back ~uri ~notify_back () in
-            with_get_scope_info
-              get_scope_buffers
-              uri
-              None
-              (self#on_req_type_definition_ notify_back position uri)
+            run ~uri @@ self#on_req_type_definition_ position uri
           | _ -> super#on_request ~notify_back ~id r
     end
 end
