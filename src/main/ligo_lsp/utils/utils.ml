@@ -2,7 +2,6 @@ open Lsp.Types
 module Loc = Simple_utils.Location
 module Region = Simple_utils.Region
 module Pos = Simple_utils.Pos
-module Maybe = Maybe
 module LSet = Caml.Set.Make (Loc)
 module Hashtbl = Caml.Hashtbl
 

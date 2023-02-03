@@ -1,4 +1,5 @@
 (library
  (name lsp_test_requests)
  (public_name ligo.lsp_test.requests)
- (libraries lsp linol ligo_api ligo_interface utils compiler_options syntax_types))
+ (libraries lsp linol ligo_api ligo_interface utils compiler_options
+   syntax_types))
