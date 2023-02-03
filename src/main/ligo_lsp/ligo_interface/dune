@@ -3,4 +3,4 @@
  (public_name ligo.ligo_lsp.interface)
  (instrumentation
   (backend bisect_ppx))
- (libraries lsp compiler_options build scopes))
+ (libraries lsp compiler_options build scopes checking))

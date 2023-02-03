@@ -3,4 +3,4 @@
  (public_name ligo.ligo_lsp.requests)
  (instrumentation
   (backend bisect_ppx))
- (libraries lsp linol ligo_interface utils compiler_options))
+ (libraries lsp linol ligo_interface utils compiler_options checking))

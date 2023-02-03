@@ -32,20 +32,6 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
      of a document are expected to be able to return.
 *)
 
-  let with_get_scope_info
-      : type r.
-        (DocumentUri.t, get_scope_info) Hashtbl.t
-        -> DocumentUri.t
-        -> r
-        -> (get_scope_info -> r IO.t)
-        -> r IO.t
-    =
-   fun get_scope_buffers uri default f ->
-    Hashtbl.find_opt get_scope_buffers uri
-    |> Option.map f
-    |> Option.value ~default:(IO.return default)
-
-
   (* Lsp server class
 
    This is the main point of interaction beetween the code checking documents
@@ -75,13 +61,15 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
     *)
       method private _on_doc : DocumentUri.t -> string -> unit Handler.t =
         fun uri contents ->
-          let ((errors, warnings, data) as new_state) = Ligo_interface.unfold_get_scope @@ get_scope uri contents in
+          let new_state = Ligo_interface.unfold_get_scope @@ get_scope uri contents in
           Hashtbl.replace get_scope_buffers uri new_state;
-          let@ () = send_debug_msg ("Updating DOC :" ^ DocumentUri.to_string uri) in
           let@ () =
-            match errors with
-            | [] -> send_debug_msg "No erorrs"
-            | _ ->
+            send_debug_msg ("Updating DOC :" ^ DocumentUri.to_string uri)
+          in
+          let@ () =
+            match new_state.errors with
+            | [] -> send_debug_msg "No errors"
+            | errors ->
               let value =
                 List.map Main_errors.Formatter.error_json errors |> List.concat
               in
@@ -95,7 +83,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
            fun e ->
             let errs = Main_errors.Formatter.error_json e in
             List.map
-              (fun Simple_utils.Error.{ content = { message; location; _ }; _ } ->
+              (fun ({ content = { message; location; _ }; _ } : Simple_utils.Error.t) ->
                 match location with
                 | Some location ->
                   ( Option.value
@@ -105,21 +93,21 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                 | None -> Utils.dummy_range, message)
               errs
           in
-          let error_diagnostic_messages =
-            errors
+          let diagnostics =
+            new_state.errors
             |> List.map extract_error_information
             |> List.concat
             |> List.map (fun (range, message) -> Diagnostic.create ~message ~range ())
           in
+          let@ () = send_diagnostic diagnostics in
           let@ () =
-            match warnings with
+            match new_state.warnings with
             | [] -> send_debug_msg "No warnings"
             | _ -> send_debug_msg "There are warnings"
           in
-          let@ () = send_diagnostic error_diagnostic_messages in
-          match data with
-          | None -> send_debug_msg "No result"
-          | _ -> send_debug_msg "There is result"
+          if new_state.has_info
+          then send_debug_msg "There is result"
+          else send_debug_msg "No result"
 
       (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
@@ -156,42 +144,21 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       method on_req_hover_ : Position.t -> DocumentUri.t -> Hover.t option Handler.t =
         fun pos uri ->
           with_cached_doc uri None
-          @@ fun (_, _, defs_opt) ->
-          when_some' defs_opt
-          @@ function
-          | defs, _ ->
-            when_some' (Requests.get_definition pos uri defs)
-            @@ fun definition ->
-            let@ str_opt =
-              match definition with
-              | Variable vdef ->
-                return
-                @@ Some
-                     (match vdef.t with
-                     | Core ty ->
-                       Format.asprintf "%a" Ast_core.PP.type_content ty.type_content
-                     | Resolved ty ->
-                       Format.asprintf "%a" Ast_typed.PP.type_content ty.type_content
-                     | Unresolved -> "(* Unresolved Type *)")
-              | Type tdef ->
-                when_some' (Utils.position_of_location tdef.range)
-                @@ fun region ->
-                when_some' (Requests.get_definition region uri defs)
-                @@ fun type_definition ->
-                (match type_definition with
-                | Type tdef ->
-                  return
-                  @@ Option.some
-                  @@ Format.asprintf "%a" Ast_core.PP.type_expression tdef.content
-                | _ -> lift_IO @@ failwith "Got a non-type as a type definition.")
-              | Module _mdef -> return @@ Some "Hover for modules is not implemented yet."
-            in
-            when_some' str_opt
-            @@ fun str ->
-            let marked_string : MarkedString.t = { value = str; language = None } in
-            let contents = `MarkedString marked_string in
-            let hover = Hover.create ~contents () in
-            return (Some hover)
+          @@ fun get_scope_info ->
+          when_some' (Requests.get_definition pos uri get_scope_info.definitions)
+          @@ fun definition ->
+          when_some' (get_syntax uri)
+          @@ fun syntax ->
+          let syntax_highlight = Syntax.to_string syntax in
+          let hover_string = Requests.hover_string syntax definition in
+          let marked_string : MarkedString.t =
+            { value = Format.sprintf "```%s\n" syntax_highlight ^ hover_string ^ "\n```"
+            ; language = None
+            }
+          in
+          let contents = `MarkedString marked_string in
+          let hover = Hover.create ~contents () in
+          return (Some hover)
 
       method on_req_formatting_ : DocumentUri.t -> TextEdit.t list option Handler.t =
         fun uri ->
@@ -211,10 +178,8 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
         fun pos uri ->
           with_cached_doc uri None
-          @@ fun (_, _, defs_opt) ->
-          when_some' defs_opt
-          @@ fun (defs, _) ->
-          when_some' (Requests.get_definition pos uri defs)
+          @@ fun get_scope_info ->
+          when_some' (Requests.get_definition pos uri get_scope_info.definitions)
           @@ fun definition ->
           let region = get_location definition in
           match region with
@@ -225,57 +190,46 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
         fun pos uri ->
           with_cached_doc uri None
-          @@ fun (_, _, defs_opt) ->
-          when_some' defs_opt
-          @@ fun (defs, _) ->
-          when_some' (Requests.get_definition pos uri defs)
+          @@ fun get_scope_info ->
+          when_some' (Requests.get_definition pos uri get_scope_info.definitions)
           @@ fun definition ->
-          let location_opt =
-            match definition with
-            (* It's a term: find its type now. *)
+          when_some'
+            (match definition with
             | Variable vdef ->
-              (match vdef.t with
-              | Core ty -> Some ty.location
-              | Resolved ty ->
-                Option.map (fun v -> Ligo_prim.Type_var.get_location v) ty.orig_var
-              | Unresolved -> None)
-            (* Just replicate the behavior of definition if it's already a type. *)
+              Option.bind (Requests.get_type vdef)
+              @@ fun type_expression ->
+              Option.some
+              @@
+              let location = type_expression.location in
+              Option.value ~default:location
+              @@ Option.bind (Utils.position_of_location location)
+              @@ fun region ->
+              Option.bind
+                (Requests.get_definition region uri get_scope_info.definitions)
+                (function
+                  | Variable _vdef -> None
+                  | Module _mdef -> None
+                  | Type tdef -> Some tdef.range)
             | Type tdef -> Some tdef.range
-            (* Modules have no type definition. *)
-            | Module _mdef -> None
-          in
-          when_some' location_opt
-          @@ fun location ->
-          when_some' (Utils.position_of_location location)
-          @@ fun region ->
-          when_some' (Requests.get_definition region uri defs)
-          @@ fun type_definition ->
-          return
-          @@
-          match type_definition with
-          | Variable _vdef -> None
-          | Module _mdef -> None
-          | Type tdef ->
-            (match tdef.range with
-            | File region -> Some (`Location [ region_to_location region ])
-            | Virtual _ -> None)
+            | Module _mdef -> None)
+          @@ function
+          | File region -> return @@ Some (`Location [ region_to_location region ])
+          | Virtual _ -> return None
 
       method on_req_prepare_rename_
           : Position.t -> DocumentUri.t -> Range.t option Handler.t =
         fun pos uri ->
           with_cached_doc uri None
           @@ fun get_scope_info ->
-          return @@ Requests.prepare_rename pos uri get_scope_info
+          return @@ Requests.prepare_rename pos uri get_scope_info.definitions
 
       method on_req_rename_
           : string -> Position.t -> DocumentUri.t -> WorkspaceEdit.t Handler.t =
         fun new_name pos uri ->
           with_cached_doc uri (WorkspaceEdit.create ())
-          @@ fun (_, _, defs_opt) ->
-          let value =
-            Option.bind defs_opt
-            @@ fun (defs, _) ->
-            Option.bind (Requests.get_definition pos uri defs)
+          @@ fun get_scope_info ->
+          let@ value =
+            when_some' (Requests.get_definition pos uri get_scope_info.definitions)
             @@ fun definition ->
             let references =
               Requests.get_all_references (get_location definition) get_scope_buffers
@@ -286,7 +240,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                   file, List.map (Requests.rename_reference new_name) ranges)
                 references
             in
-            Some (WorkspaceEdit.create ~changes ())
+            return @@ Some (WorkspaceEdit.create ~changes ())
           in
           return @@ Option.value value ~default:(WorkspaceEdit.create ())
 
@@ -294,10 +248,8 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           : Position.t -> DocumentUri.t -> Location.t list option Handler.t =
         fun pos uri ->
           with_cached_doc uri None
-          @@ fun (_, _, defs_opt) ->
-          when_some' defs_opt
-          @@ fun (defs, _) ->
-          when_some' (Requests.get_definition pos uri defs)
+          @@ fun get_scope_info ->
+          when_some (Requests.get_definition pos uri get_scope_info.definitions)
           @@ fun definition ->
           let references =
             Requests.get_all_references (get_location definition) get_scope_buffers
@@ -314,14 +266,12 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           let@ () =
             send_debug_msg @@ String.concat "\n" @@ List.map show_reference references
           in
-          let locations =
-            List.flatten
-            @@ List.map
-                 (fun (file, ranges) ->
-                   List.map (fun range -> Location.create ~uri:file ~range) ranges)
-                 references
-          in
-          return @@ Some locations
+          return
+          @@ List.flatten
+          @@ List.map
+               (fun (file, ranges) ->
+                 List.map (fun range -> Location.create ~uri:file ~range) ranges)
+               references
 
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)

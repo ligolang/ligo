@@ -3,4 +3,5 @@
  (public_name ligo.ligo_lsp.utils)
  (instrumentation
   (backend bisect_ppx))
- (libraries linol linol-lwt lsp compiler_options simple-utils scopes))
+ (libraries linol linol-lwt lsp compiler_options simple-utils scopes
+   syntax_types checking desugaring ligo.preprocessing))

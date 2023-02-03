@@ -345,9 +345,8 @@ let decompile_pattern_to_string ~(syntax : Syntax_types.t option) pattern =
   | Some CameLIGO | None -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
 
 
-let decompile_type_expression_to_string ~(syntax : Syntax_types.t option) te =
+let decompile_type_expression_to_string ~(syntax : Syntax_types.t) te =
   let te = decompile_type_expression te in
   match syntax with
-  | Some JsLIGO -> Tree_abstraction.Jsligo.decompile_type_expression_to_string te
-  | Some CameLIGO | None ->
-    Tree_abstraction.Cameligo.decompile_type_expression_to_string te
+  | JsLIGO -> Tree_abstraction.Jsligo.decompile_type_expression_to_string te
+  | CameLIGO -> Tree_abstraction.Cameligo.decompile_type_expression_to_string te
