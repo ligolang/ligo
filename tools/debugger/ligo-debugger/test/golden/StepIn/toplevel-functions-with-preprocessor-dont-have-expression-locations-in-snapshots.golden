@@ -1,0 +1,272 @@
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:2-9:41
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:26-9:40
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:33-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / expression evaluated (42)
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:33-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:30-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / expression evaluated (Pair 0 42)
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:30-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: foo
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:5:2-5:7
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem b of int
+          siValue: 42
+        , StackItem:
+          siLigoDesc: elem a of int
+          siValue: 0
+        ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:30-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [StackFrame:
+      sfName: foo
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:5:2-5:7
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem b of int
+          siValue: 42
+        , StackItem:
+          siLigoDesc: elem a of int
+          siValue: 0
+        ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:30-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / expression evaluated (42)
+  isStackFrames:
+    [StackFrame:
+      sfName: foo
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:5:2-5:7
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem b of int
+          siValue: 42
+        , StackItem:
+          siLigoDesc: elem a of int
+          siValue: 0
+        ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:30-9:39
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / expression evaluated (42)
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:26-9:40
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:3-9:24
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / expression evaluated ({ })
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:3-9:24
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:3-9:40
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / expression evaluated (Pair { } 42)
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:3-9:40
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: terminated ok
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo:9:3-9:40
+      sfStack:
+        [StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: Pair { } 42
+        , StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: 0
+        ]
+    ]

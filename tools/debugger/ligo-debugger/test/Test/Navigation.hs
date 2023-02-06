@@ -89,6 +89,23 @@ test_Seq_node_doesn't_have_location =
       runData
       (dumpAllSnapshotsWithStep doStep)
 
+test_top_level_function_with_preprocessor_don't_have_locations :: TestTree
+test_top_level_function_with_preprocessor_don't_have_locations =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "contract-with-preprocessor.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    doStep = processLigoStep (CStepIn GExpExt)
+  in goldenTestWithSnapshots
+      "top-level functions with preprocessor don't have expression locations in snapshots"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
 test_Next_golden :: TestTree
 test_Next_golden = testGroup "Next" do
   gran <- allLigoStepGranularities
