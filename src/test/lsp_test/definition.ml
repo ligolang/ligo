@@ -49,3 +49,6 @@ let test_cases =
     ; reference = Position.create ~line:1 ~character:8
     }
   ]
+
+
+let tests = "definition", List.map ~f:get_definition_test test_cases

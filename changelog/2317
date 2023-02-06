@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nImplements the *prepare rename* request from the LSP specification. It checks the validity of a rename so that users won't get a prompt for renaming lexemes such as a keyword (like `let`) or a built-in identifier (like `int`).\\n\\n"
+merge_request: '2317'
+title: "[#1652] Implement prepare rename request"
+type: added
+            
