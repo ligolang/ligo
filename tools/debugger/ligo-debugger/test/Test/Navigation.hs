@@ -72,6 +72,23 @@ test_StepIn_golden = testGroup "StepIn" do
 
       ]
 
+test_Seq_node_doesn't_have_location :: TestTree
+test_Seq_node_doesn't_have_location =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "seq-nodes-without-locations.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    doStep = processLigoStep (CStepIn GExpExt)
+  in goldenTestWithSnapshots
+      "seq nodes dont have expression locations in snapshots"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
 test_Next_golden :: TestTree
 test_Next_golden = testGroup "Next" do
   gran <- allLigoStepGranularities

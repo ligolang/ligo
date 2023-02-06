@@ -411,6 +411,20 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
         -- Locations for top-level functions
         (layer @Binding -> Just AST.BFunction{}) : node : _
           | isTopLevel node -> pass
+
+        -- Locations for @Seq@ nodes. An example in CameLIGO:
+        --
+        -- @
+        -- let foo (a, b) = begin
+        --   let res = a + b in
+        --   some_check();
+        --   some_check();
+        --   ..
+        --   end
+        -- @
+        -- After evaluating first @some_check@ we'll see a location for the whole
+        -- @begin..end@ block. This location corresponds to the @Seq@ node.
+        (layer @Expr -> Just AST.Seq{}) : _ -> pass
         _ -> empty
 
     shouldIgnoreMetaByInstruction = case instr of
