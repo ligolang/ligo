@@ -50,11 +50,12 @@ coverage:
 install:
 	cp _build/install/default/bin/ligo /usr/local/bin/ligo
 
-install-lsp:
-	cd tools/lsp/vscode-plugin/ && \
+install-vscode:
+	cd tools/vscode/ && \
+	yarn install && \
 	rm -f ./*.vsix && \
 	yarn package && \
 	code --install-extension *.vsix --force
 
-run-lsp: install-lsp
+run-vscode: install-vscode
 	code

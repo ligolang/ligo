@@ -260,6 +260,13 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
             | File region -> Some (`Location [ region_to_location region ])
             | Virtual _ -> None)
 
+      method on_req_prepare_rename_
+          : Position.t -> DocumentUri.t -> Range.t option Handler.t =
+        fun pos uri ->
+          with_cached_doc uri None
+          @@ fun get_scope_info ->
+          return @@ Requests.prepare_rename pos uri get_scope_info
+
       method on_req_rename_
           : string -> Position.t -> DocumentUri.t -> WorkspaceEdit.t Handler.t =
         fun new_name pos uri ->
@@ -319,7 +326,11 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)
       method! config_definition = Some (`Bool true)
-      method config_rename = Some (`Bool true)
+
+      method config_rename =
+        let rename_options = RenameOptions.create ?prepareProvider:(Some true) () in
+        Some (`RenameOptions rename_options)
+
       method config_references = Some (`Bool true)
       method config_type_definition = Some (`Bool true)
 
@@ -357,6 +368,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           | Client_request.TextDocumentHover { textDocument; position; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ self#on_req_hover_ position uri
+          | Client_request.TextDocumentPrepareRename { position; textDocument; _ } ->
+            let uri = textDocument.uri in
+            run ~uri @@ self#on_req_prepare_rename_ position uri
           | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ self#on_req_rename_ newName position uri
