@@ -285,7 +285,7 @@ deploy_website_preview:
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
     - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
     - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
-    - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'
+    - ./.ci/scripts/publish_preview_as_MR_comment.sh $CI_PROJECT_ID $CI_MERGE_REQUEST_IID $GITLAB_PERSONAL_API_PRIVATE_TOKEN "A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS" "ligolang-bot" "ligolang.netlify"
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
