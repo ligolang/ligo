@@ -266,12 +266,11 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           let@ () =
             send_debug_msg @@ String.concat "\n" @@ List.map show_reference references
           in
-          return
-          @@ List.flatten
-          @@ List.map
-               (fun (file, ranges) ->
+          references
+          |> List.map (fun (file, ranges) ->
                  List.map (fun range -> Location.create ~uri:file ~range) ranges)
-               references
+          |> List.flatten
+          |> return
 
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)

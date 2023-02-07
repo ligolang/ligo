@@ -112,7 +112,5 @@ let with_cached_doc
   let@ docs = ask_docs_cache in
   match Hashtbl.find_opt docs uri with
   | Some get_scope_info ->
-    if get_scope_info.has_info
-    then f get_scope_info
-    else return default
+    if get_scope_info.has_info then f get_scope_info else return default
   | None -> return default

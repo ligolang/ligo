@@ -61,7 +61,8 @@ end
 
 let unfold_get_scope ((errors, warnings, plain_data_opt) : get_scope_api_result)
     : get_scope_info
-  = let extract_defs : def list -> def list =
+  =
+  let extract_defs : def list -> def list =
     let rec from_module (m : mdef) =
       match m.mod_case with
       | Alias _ -> []

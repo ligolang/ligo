@@ -1,9 +1,7 @@
 module Loc = Simple_utils.Location
 open Lsp.Types
 
-let prepare_rename
-    : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t option
-  =
+let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t option =
  fun pos uri defs ->
   let open Option in
   Definition.get_definition pos uri defs
