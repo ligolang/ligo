@@ -130,6 +130,7 @@ executables:
     - monad-control
     - optparse-applicative
     - process
+    - regex-compat
     - unliftio
     - text
     - transformers

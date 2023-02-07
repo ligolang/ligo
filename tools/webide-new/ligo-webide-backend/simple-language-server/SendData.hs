@@ -6,6 +6,7 @@ import FilePath (filterConnectionPrefix)
 import Data.Text qualified as Text
 import Katip (Severity (DebugS), logFM)
 import Data.Text.IO (hGetChunk)
+import Text.Regex (subRegex, mkRegex)
 
 sendData :: WS.Connection -> Handle -> ConnectionM ()
 sendData conn stdoutConsumer = forever $ do
@@ -16,4 +17,6 @@ sendData conn stdoutConsumer = forever $ do
     liftIO $ WS.sendTextData conn filtered
 
 stripContentLength :: Text -> Text
-stripContentLength = Text.drop 4 . Text.dropWhile (/= '\r')
+stripContentLength txt =
+  let str = Text.unpack txt
+   in Text.pack (subRegex (mkRegex "Content-Length: [0-9]*\\s*") str "")
