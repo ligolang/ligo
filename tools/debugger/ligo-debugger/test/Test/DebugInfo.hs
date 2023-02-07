@@ -14,8 +14,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Util
 import Text.Interpolation.Nyan
 
-import Morley.Debugger.Core (SourceLocation (..))
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
+import Morley.Debugger.Core (SourceLocation, SourceLocation' (..), SrcLoc (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
@@ -163,20 +162,20 @@ test_SourceMapper = testGroup "Reading source mapper"
         @?=
         -- Note: the order of entries below is not the interpretation order
         -- because we extracted these pairs from Set with its lexicographical order
-        [ ( SrcPos (Pos 1) (Pos 11)
-          , SrcPos (Pos 1) (Pos 17)
+        [ ( SrcLoc 1 11
+          , SrcLoc 1 17
           )
-        , ( SrcPos (Pos 2) (Pos 11)
-          , SrcPos (Pos 2) (Pos 18)
+        , ( SrcLoc 2 11
+          , SrcLoc 2 18
           )
-        , ( SrcPos (Pos 2) (Pos 11)
-          , SrcPos (Pos 2) (Pos 22)
+        , ( SrcLoc 2 11
+          , SrcLoc 2 22
           )
-        , ( SrcPos (Pos 3) (Pos 3)
-          , SrcPos (Pos 3) (Pos 24)
+        , ( SrcLoc 3 3
+          , SrcLoc 3 24
           )
-        , ( SrcPos (Pos 3) (Pos 3)
-          , SrcPos (Pos 3) (Pos 28)
+        , ( SrcLoc 3 3
+          , SrcLoc 3 28
           )
         ]
 
@@ -214,8 +213,8 @@ test_Function_call_locations = testGroup "Function call locations"
     makeSourceLocation filepath (startLine, startCol) (endLine, endCol) =
       SourceLocation
         (MSFile filepath)
-        (SrcPos (Pos $ startLine - 1) (Pos startCol))
-        (SrcPos (Pos $ endLine - 1) (Pos endCol))
+        (SrcLoc (startLine - 1) startCol)
+        (SrcLoc (endLine - 1) endCol)
 
     checkLocations :: FilePath -> [((Word, Word), (Word, Word))] -> Assertion
     checkLocations contractName expectedLocs = do

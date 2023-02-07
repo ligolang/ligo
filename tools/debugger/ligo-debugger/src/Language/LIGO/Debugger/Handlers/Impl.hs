@@ -30,7 +30,8 @@ import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
-  SourceLocation, curSnapshot, frozen, groupSourceLocations, playInterpretHistory, slEnd)
+  SnapshotEdgeStatus (SnapshotAtEnd), SourceLocation, SrcLoc (..), curSnapshot, frozen,
+  groupSourceLocations, pickSnapshotEdgeStatus, playInterpretHistory, slEnd)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
@@ -91,10 +92,21 @@ instance HasSpecificMessages LIGO where
   type StepGranularityExt LIGO = LigoStepGranularity
 
   reportErrorAndStoppedEvent = \case
-    ExceptionMet exception -> writeException exception
+    ExceptionMet exception -> writeException True exception
     Paused reason -> writeStoppedEvent reason
-    Terminated -> writeTerminatedEvent
-    ReachedStart -> writeStoppedEvent "Reached start"
+    TerminatedOkMet -> writeTerminatedEvent
+    PastFinish -> do
+      snap <- zoom dsDebuggerState $ frozen curSnapshot
+      case pickSnapshotEdgeStatus snap of
+        SnapshotAtEnd outcome -> case outcome of
+          Left exception -> writeException False exception
+          Right () ->
+            -- At the moment we never expect this, as in case of ok termination
+            -- we should have already existed when stepping on last snapshot;
+            -- but let's handle this condition gracefully anyway.
+            writeTerminatedEvent
+        _ -> error "Unexpected status"
+    ReachedStart -> writeStoppedEvent "entry"
     where
       writeTerminatedEvent = do
         InterpretSnapshot{..} <- zoom dsDebuggerState $ frozen curSnapshot
@@ -156,7 +168,7 @@ instance HasSpecificMessages LIGO where
             }
           }
 
-      writeException exception = do
+      writeException writeLog exception = do
         st <- get
         let msg = case mfwsFailed exception of
               -- [LIGO-862] display this value as LIGO one
@@ -178,12 +190,13 @@ instance HasSpecificMessages LIGO where
             , DAP.textStoppedEventBody = msg
             }
           }
-        pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
-          { DAP.bodyOutputEvent = withSrc st $ withSrcPos mSrcLoc DAP.defaultOutputEventBody
-            { DAP.categoryOutputEventBody = "stderr"
-            , DAP.outputOutputEventBody = msg <> "\n"
+        when writeLog do
+          pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
+            { DAP.bodyOutputEvent = withSrc st $ withSrcPos mSrcLoc DAP.defaultOutputEventBody
+              { DAP.categoryOutputEventBody = "stderr"
+              , DAP.outputOutputEventBody = msg <> "\n"
+              }
             }
-          }
         where
           withSrc st event = event { DAP.sourceOutputEventBody = mkSource st }
 
@@ -194,7 +207,7 @@ instance HasSpecificMessages LIGO where
 
           withSrcPos mSrcPos event = case mSrcPos of
             Nothing -> event
-            Just (SrcPos (Pos row) (Pos col)) -> event
+            Just (SrcLoc row col) -> event
               { DAP.lineOutputEventBody   = Unsafe.fromIntegral $ row + 1
               , DAP.columnOutputEventBody = Unsafe.fromIntegral $ col + 1
               }

@@ -1,7 +1,7 @@
 -- | Common stuff for debugger.
 module Language.LIGO.Debugger.Common
   ( EmbeddedLigoMeta
-  , ligoPositionToSrcPos
+  , ligoPositionToSrcLoc
   , ligoRangeToSourceLocation
   , spineAtPoint
   , containsNode
@@ -46,9 +46,9 @@ import Parser (ParsedInfo)
 import Product (Contains)
 import Range (Range (..), getRange)
 
-import Morley.Debugger.Core.Navigate (SourceLocation (..))
+import Morley.Debugger.Core.Common (SrcLoc (..))
+import Morley.Debugger.Core.Navigate (SourceLocation, SourceLocation' (..))
 import Morley.Debugger.Core.Snapshots ()
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.Interpret (StkEl (seValue))
 import Morley.Michelson.Parser (MichelsonSource (MSFile), utypeQ)
 import Morley.Michelson.Text (MText)
@@ -66,15 +66,15 @@ import Language.LIGO.Debugger.Error
 -- in debugging.
 type EmbeddedLigoMeta = LigoIndexedInfo 'Unique
 
-ligoPositionToSrcPos :: HasCallStack => LigoPosition -> SrcPos
-ligoPositionToSrcPos (LigoPosition l c) =
-  SrcPos
-    (Pos $ Unsafe.fromIntegral (toInteger l - 1))
-    (Pos $ Unsafe.fromIntegral c)
+ligoPositionToSrcLoc :: HasCallStack => LigoPosition -> SrcLoc
+ligoPositionToSrcLoc (LigoPosition l c) =
+  SrcLoc
+    (Unsafe.fromIntegral (toInteger l - 1))
+    (Unsafe.fromIntegral c)
 
 ligoRangeToSourceLocation :: HasCallStack => LigoRange -> SourceLocation
 ligoRangeToSourceLocation LigoRange{..} =
-  SourceLocation (MSFile lrFile) (ligoPositionToSrcPos lrStart) (ligoPositionToSrcPos lrEnd)
+  SourceLocation (MSFile lrFile) (ligoPositionToSrcLoc lrStart) (ligoPositionToSrcLoc lrEnd)
 
 -- | Returns all nodes which cover given range
 -- ordered from the most local to the least local.
@@ -98,8 +98,8 @@ getStatementLocs locs parsedContracts =
       , _rFile = file
       }
       where
-        posToTuple :: Integral i => SrcPos -> (i, i, i)
-        posToTuple (SrcPos (Pos l) (Pos c)) =
+        posToTuple :: Integral i => SrcLoc -> (i, i, i)
+        posToTuple (SrcLoc l c) =
           (Unsafe.fromIntegral (l + 1), Unsafe.fromIntegral (c + 1), 0)
 
     sourceLocationToRange loc = error [int||Got source location with Lorentz source #{loc}|]
@@ -111,10 +111,10 @@ getStatementLocs locs parsedContracts =
         (tupleToPos _rStart)
         (tupleToPos _rFinish)
       where
-        tupleToPos :: Integral i => (i, i, i) -> SrcPos
-        tupleToPos (l, c, _) = SrcPos
-          (Pos $ Unsafe.fromIntegral $ l - 1)
-          (Pos $ Unsafe.fromIntegral $ c - 1)
+        tupleToPos :: Integral i => (i, i, i) -> SrcLoc
+        tupleToPos (l, c, _) = SrcLoc
+          (Unsafe.fromIntegral $ l - 1)
+          (Unsafe.fromIntegral $ c - 1)
 
     ranges = toList locs
       <&> sourceLocationToRange

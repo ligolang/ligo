@@ -14,7 +14,7 @@ extra-deps:
   commit: 540990acfd2d4aaffa17a8337cbfa9a38cb3f2aa  # master with quasi-quoter
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
-  commit: 11febb820b6e692ecc16733c28fe26fba9676b4d  # master
+  commit: dfc4208dedfca16584d92b4248873903b4e58112  # #92 MR
 - base58-bytestring-0.1.0
 - monad-stm-0.1.0.2
 - git: https://github.com/serokell/base-noprelude.git
@@ -23,14 +23,14 @@ extra-deps:
 - elliptic-curve-0.3.0
 - hex-text-0.1.0.0
 - show-type-0.1.1
-- git: https://gitlab.com/morley-framework/morley.git
-  commit: 940442fc138975f49a8a702481231bed0f908296 # master
-  subdirs:
-    - code/morley-prelude
-    - code/morley
-    - code/lorentz
-    - code/morley-client
-    - code/cleveland
+
+# Stable morley-framework versions available on Hackage
+- morley-prelude-0.5.1
+- morley-1.19.0
+- lorentz-0.15.0
+- morley-client-0.3.0
+- cleveland-0.3.0
+
 - git: https://github.com/int-index/caps.git
   commit: c5d61837eb358989b581ed82b1e79158c4823b1b
 - named-0.3.0.1@sha256:418543272f0c844a77639b05276ee3906d5f305cd4cab46fafcb4f15b7f1e60d,2312

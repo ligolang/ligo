@@ -209,4 +209,4 @@ dumpAllSnapshotsWithStep step = go (1000 :: Int)
   go 0 = error "Looks like stepping fell into infinite loop"
   go n = do
     dumpCurSnapshot
-    step >>= \case{ ReachedBoundary -> pass; _ -> go (n - 1) }
+    step >>= \case{ HitBoundary -> pass; _ -> go (n - 1) }
