@@ -14,7 +14,7 @@ if mr_merging_branches?
 else
 
 
-# check_trailing_whitespaces()
+check_trailing_whitespaces()
 
 # Clean commits history
 if git.commits.any? { |c| c.subject =~ /^Merge branch/ }
