@@ -187,4 +187,183 @@ let%expect_test _ =
       1 | let x : int = "Hello"
 
     Invalid type(s).
-    Expected "int", but got: "string". |}]
+    Expected "int", but got: "string". |}];
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; test "warning_unused.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect {|
+    Scopes:
+    [ x#1 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
+    [ x#3 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
+    [ bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
+    [ s#6 #?generated#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
+    [ x#7 s#6 #?generated#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
+    [ x#8 s#6 #?generated#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-15
+    [ x#9 s#6 #?generated#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-38
+
+    Variable definitions:
+    (#?generated#5 -> #?generated)
+    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 10-11
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 10, character 2 to line 13, character 39
+    Content: |resolved: int|
+    references: []
+    (bar#4 -> bar)
+    Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 4-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 9-10
+    Content: |resolved: int -> int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 12, characters 10-13
+    (foo#2 -> foo)
+    Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 4-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 9-10
+    Content: |resolved: int -> int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 11, characters 10-13
+    (main#10 -> main)
+    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-8
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
+    Content: |resolved: ( int * record[x -> int , y -> int] ) -> ( list (operation) * record[x -> int , y -> int] )|
+    references: []
+    (s#6 -> s)
+    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 12-13
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 10, character 2 to line 13, character 39
+    Content: |resolved: storage|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 10, characters 10-11 ,
+      File "../../test/contracts/warning_unused.mligo", line 12, characters 14-15 ,
+      File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
+    (x#1 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 9-10
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
+    Content: |core: int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
+    (x#3 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 9-10
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
+    Content: |core: int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
+    (x#7 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 10, characters 6-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 11, characters 14-15
+    (x#8 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
+    Content: |resolved: int|
+    references: []
+    (x#9 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 6-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
+    Type definitions:
+    (storage#0 -> storage)
+    Range: File "../../test/contracts/warning_unused.mligo", line 1, characters 5-12
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 1, character 15 to line 4, character 1
+    Content: : |record[x -> int , y -> int]|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 9, characters 22-29
+    Module definitions:
+    Warnings:
+    File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
+     10 |   let x = s.x + 3 in
+     11 |   let x = foo x in
+     12 |   let x = bar s.x in
+    :
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning. |}];
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; test "warning_duplicate2.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect {|
+    Scopes:
+    [  ] File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 8-35
+    [ x#0  ] File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-10
+    [ x#0  ] File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 12-13
+
+    Variable definitions:
+    (x#0 -> x)
+    Range: File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 8-35
+    Content: |resolved: option (ticket (nat))|
+    references:
+      File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-10 ,
+      File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 12-13
+    (x#1 -> x)
+    Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5
+    Body Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-13
+    Content: |resolved: option (ticket (nat))|
+    references: []
+    Type definitions:
+    Module definitions:
+    Warnings:
+    File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
+      1 | let x = Tezos.create_ticket 42n 42n
+      2 | let x = (x, x)
+    :
+    Warning: variable "x" cannot be used more than once. |}];
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; test "warning_duplicate.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect {|
+    Scopes:
+    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-64
+    [ Foo#1 x#0  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-14
+    [ Foo#1 x#0  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-21
+
+    Variable definitions:
+    (x#2 -> x)
+    Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 4-5
+    Body Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-21
+    Content: |resolved: ticket (nat)|
+    references: []
+    Type definitions:
+    Module definitions:
+    (Foo#1 -> Foo)
+    Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-10
+    Body Range: File "../../test/contracts/warning_duplicate.mligo", line 1, character 0 to line 3, character 3
+    Content: Members: Variable definitions:
+                      (x#0 -> x)
+                      Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7
+                      Body Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-65
+                      Content: |core: ticket (nat)|
+                      references:
+                        File "../../test/contracts/warning_duplicate.mligo", line 5, characters 13-14 ,
+                        File "../../test/contracts/warning_duplicate.mligo", line 5, characters 20-21
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-12 ,
+      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-19
+
+    Warnings:
+    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65:
+      1 | module Foo = struct
+      2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
+      3 | end
+    :
+    Warning: variable "Foo.x" cannot be used more than once. |}]
