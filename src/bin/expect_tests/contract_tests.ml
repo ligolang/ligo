@@ -3685,3 +3685,20 @@ let%expect_test _ =
                         PAIR 3 ;
                         NIL operation ;
                         PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "contract_type_vars_let_fun.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage (list int) ;
+      code { DROP ;
+             NIL int ;
+             PUSH int 3 ;
+             CONS ;
+             PUSH int 2 ;
+             CONS ;
+             PUSH int 1 ;
+             CONS ;
+             NIL operation ;
+             PAIR } } |}]
