@@ -1,7 +1,8 @@
 (library
  (name ligo_lsp)
  (public_name ligo.ligo_lsp)
- (flags (:standard -w +A-4-40-42))
+ (flags
+  (:standard -w +A-4-40-42))
  (instrumentation
   (backend bisect_ppx))
  (libraries linol linol-lwt lsp utils requests simple-utils syntax))
