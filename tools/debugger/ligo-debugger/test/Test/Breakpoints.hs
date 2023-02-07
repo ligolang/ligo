@@ -40,7 +40,7 @@ test_test = minor <$>
         liftIO $ step "Visiting 2nd breakpoint"
         goToNextBreakpoint
         N.frozen do
-          isStatus <$> N.curSnapshot @@?= InterpretRunning EventExpressionPreview
+          isStatus <$> N.curSnapshot @@?= InterpretRunning (EventExpressionPreview GeneralExpression)
           -- here and further we don't expect any concrete column number
           view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
 

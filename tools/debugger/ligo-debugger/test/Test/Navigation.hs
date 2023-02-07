@@ -16,13 +16,14 @@ import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
   (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition),
-  SourceLocation (..), frozen, getCurMethodBlockLevel, getFutureSnapshotsNum, moveTill,
-  switchBreakpoint)
+  SourceLocation (..), curSnapshot, frozen, getCurMethodBlockLevel,
+  getFutureSnapshotsNum, moveTill, switchBreakpoint)
 import Morley.Debugger.DAP.Types (StepCommand' (..))
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (..))
 
 import Language.LIGO.Debugger.Navigate
+import Language.LIGO.Debugger.Snapshots
 
 import Test.Util
 import Test.Util.Golden
@@ -219,6 +220,8 @@ test_Continue_golden = testGroup "Continue"
         dumpAllSnapshotsWithStep doStep
   ]
 
+{-# ANN test_StepBackReversed ("HLint: ignore Redundant <$>" :: Text) #-}
+
 test_StepBackReversed :: IO TestTree
 test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
   [ ContractRunData
@@ -255,6 +258,13 @@ test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
           stepsNum <- liftProp . forAll $
             Gen.integral (Range.constant 0 futureSnapshotsNum)
           replicateM_ stepsNum $ processLigoStep (CStepIn granularity)
+
+        isStatus <$> frozen curSnapshot >>= \case
+          -- This property doesn't hold for @GStmt@ granularity
+          -- in case of stopping at function call.
+          InterpretRunning (EventExpressionPreview FunctionCall)
+            | granularity == GStmt -> liftProp discard
+          _ -> pass
 
         startPos <- frozen getExecutedPosition
         annotateShow startPos

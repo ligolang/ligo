@@ -76,7 +76,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / upon expression
+  isStatus: running / upon function call
   isStackFrames:
     [StackFrame:
       sfName: main
@@ -303,7 +303,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / upon expression
+  isStatus: running / upon function call
   isStackFrames:
     [StackFrame:
       sfName: main

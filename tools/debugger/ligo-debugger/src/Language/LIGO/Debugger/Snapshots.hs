@@ -3,6 +3,7 @@ module Language.LIGO.Debugger.Snapshots
   ( StackItem (..)
   , StackFrame (..)
   , InterpretStatus (..)
+  , EventExpressionReason (..)
   , InterpretEvent (..)
   , statusExpressionEvaluatedP
   , InterpretSnapshot (..)
@@ -135,6 +136,16 @@ instance Buildable InterpretStatus where
     InterpretTerminatedOk -> "terminated ok"
     InterpretFailed err -> "failed with " <> build err
 
+-- | Type of the expression that we met.
+data EventExpressionReason
+  -- | Just a regular expression. We'll stop at it
+  -- only with at least @GExp@ granularity
+  = GeneralExpression
+  -- | Function call. We stop at it always while
+  -- using @StepIn@ action.
+  | FunctionCall
+  deriving stock (Show, Eq)
+
 -- | An interesting event in interpreter that is worth a snapshot.
 data InterpretEvent
     -- | Start of the new statement.
@@ -147,7 +158,7 @@ data InterpretEvent
     -- 2. There are failing expressions.
     --
     -- If stopping at such events is undesired, they can be easily skipped later.
-  | EventExpressionPreview
+  | EventExpressionPreview EventExpressionReason
 
     -- | We have evaluated expression, with the given result.
     --
@@ -164,8 +175,10 @@ instance Buildable InterpretEvent where
   build = \case
     EventFacedStatement ->
       "faced statement"
-    EventExpressionPreview ->
+    EventExpressionPreview GeneralExpression ->
       "upon expression"
+    EventExpressionPreview FunctionCall ->
+      "upon function call"
     EventExpressionEvaluated mval ->
       "expression evaluated (" <> maybe "-" build mval <> ")"
 
@@ -337,7 +350,12 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           contracts <- use csParsedFilesL
 
           unless (shouldIgnoreMeta loc instr contracts) do
-            recordSnapshot loc EventExpressionPreview
+            let eventExpressionReason =
+                  if isLocationForFunctionCall loc contracts
+                  then FunctionCall
+                  else GeneralExpression
+
+            recordSnapshot loc (EventExpressionPreview eventExpressionReason)
 
         whenJust liiEnvironment \env -> do
           -- Here stripping occurs, as the second list keeps the entire stack,

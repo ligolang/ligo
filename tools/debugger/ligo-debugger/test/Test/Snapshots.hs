@@ -137,7 +137,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-          , ( InterpretRunning EventExpressionPreview
+          , ( InterpretRunning (EventExpressionPreview GeneralExpression)
             , one
               ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 24)
               , stackWithS2
@@ -152,7 +152,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-          , ( InterpretRunning EventExpressionPreview
+          , ( InterpretRunning (EventExpressionPreview GeneralExpression)
             , one
               ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 28)
               , stackWithS2
@@ -1248,7 +1248,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step "Check location for \"is_nat\""
         checkSnapshot \case
           InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview
+              { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
                   { sfLoc = LigoRange _ (LigoPosition 2 12) (LigoPosition 2 20)
                   } :| _
@@ -1264,7 +1264,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step "Check location for \"assert\""
         checkSnapshot \case
           InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview
+              { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
                   { sfLoc = LigoRange _ (LigoPosition 3 11) (LigoPosition 3 22)
                   } :| _
@@ -1280,7 +1280,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step "Check location for \"List.fold\""
         checkSnapshot \case
           InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview
+              { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
                   { sfLoc = LigoRange _ (LigoPosition 9 12) (LigoPosition 9 63)
                   } :| _
@@ -1294,7 +1294,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step "Check location for lambda inside \"List.fold\""
         checkSnapshot \case
           InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview
+              { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
                   { sfLoc = LigoRange _ (LigoPosition 9 23) (LigoPosition 9 50)
                   } :| _
@@ -1322,7 +1322,7 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "Aux function in \"fold\" is calculated"
           checkSnapshot \case
             InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview
+              { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
                   { sfLoc = loc'
                   } :| _
@@ -1367,7 +1367,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step [int||Check that we skipped unit evaluation|]
         checkSnapshot \case
           InterpretSnapshot
-            { isStatus = InterpretRunning EventExpressionPreview
+            { isStatus = InterpretRunning EventExpressionPreview{}
             , isStackFrames = StackFrame
                 { sfLoc = LigoRange file' (LigoPosition 2 15) (LigoPosition 2 17)
                 } :| _

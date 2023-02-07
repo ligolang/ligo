@@ -41,6 +41,7 @@ data LigoStepGranularity
   | GExp
     -- ^ Expression granularity.
     -- This is 'GStmt' + stop after every sub-expression evaluation.
+    -- Stops before expression if and only if it's a function call.
   | GExpExt
     -- ^ Expression-extended granularity.
     -- This is 'GStmt' + stop before & after every sub-expression evaluation.
@@ -69,7 +70,8 @@ granularityMatchesEvent = \case
 
   GExp -> \case
     EventFacedStatement{} -> True
-    EventExpressionPreview{} -> False
+    EventExpressionPreview FunctionCall -> True
+    EventExpressionPreview GeneralExpression -> False
     EventExpressionEvaluated{} -> True
 
   GExpExt -> const True
@@ -88,6 +90,15 @@ matchesGranularityP gran = FrozenPredicate do
       InterpretRunning event -> granularityMatchesEvent gran event
       -- key status are interesting in either way
       _ -> True
+
+{-# ANN isFunctionCallP ("HLint: ignore Redundant <$>" :: Text) #-}
+
+-- | Like @matchesGranularityP@ but discards the current granularity.
+isFunctionCallP :: Monad m => FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
+isFunctionCallP = FrozenPredicate do
+  isStatus <$> curSnapshot >>= \case
+    InterpretRunning (EventExpressionPreview FunctionCall) -> pure True
+    _ -> pure False
 
 -- Necessary due to https://gitlab.com/morley-framework/morley/-/issues/912
 {-# ANN processLigoStep ("HLint: ignore Use or" :: Text) #-}
@@ -135,6 +146,21 @@ This is subjective, but `StepOver` is a big hammer and the user should be sure
 that it works with one click. If the user is forced to invoke it over and over,
 there is a great chance of overstepping.
 
+IV. `StepIn` always stops at function calls.
+
+Motivation:
+
+Suppose we're using a `statement` granularity. We're stepping with `Next` button and
+went to `let v = f() + g()` statement. I'm interested in `g` function call and it would
+be really convenient if we can step to it with one button.
+
+V. `Expression` granularity stops at `ExpressionPreview` if and only if it's a function call.
+
+Motivation:
+
+Suppose we have `let v = f() + g() + h()` and we're interested in `f` function call.
+We can step with `Next` till it and use `StepIn` to go inside.
+
 -}
 processLigoStep
   :: (HistoryReplay (InterpretSnapshot u) m)
@@ -145,8 +171,11 @@ processLigoStep = \case
     moveTill dir isAtBreakpoint
 
   CStepIn gran ->
-    moveTill Forward $
-      matchesGranularityP gran || isAtBreakpoint
+    moveTill Forward $ foldr1 (||) $ fromList
+      [ matchesGranularityP gran
+      , isAtBreakpoint
+      , isFunctionCallP
+      ]
 
   CNext dir gran -> do
     methodNestingLevelBeforeStep <- frozen getCurMethodBlockLevel
