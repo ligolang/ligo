@@ -32,4 +32,7 @@ let x =
     let e2 = E.a2 in
     let e3 = E.a3 in
 
-    42
+    42 + 
+    b1 + b2 + b3 + b4 + b5 +
+    c1 + c2 + c3 + c4 + c5 +
+    e1 + e2 + e3

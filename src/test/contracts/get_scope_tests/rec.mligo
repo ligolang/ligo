@@ -9,7 +9,7 @@ let b =
     if n = 0 then m else z (n - 1) m
   in
   let v = z 10 999 in
-  let b = 2 in
+  let b = 2 + v in
   c (a, b)
 
 let rec x (y : int) : unit =

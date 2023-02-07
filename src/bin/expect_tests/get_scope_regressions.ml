@@ -181,4 +181,20 @@ let%expect_test _ =
     Content: |resolved: gen#6|
     references: []
     Type definitions:
-    Module definitions: |}]
+    Module definitions:
+    Warnings:
+    File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7:
+      1 | let x = 42
+      2 | let f x = 0
+      3 | let g = x
+    :
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning.
+
+    File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7:
+      1 | let x = 42
+      2 | let f x = 0
+      3 | let g = x
+    :
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning. |}]
