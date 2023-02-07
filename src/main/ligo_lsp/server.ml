@@ -82,6 +82,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
 
       method config_references = Some (`Bool true)
       method config_type_definition = Some (`Bool true)
+      method config_folding_range = Some (`Bool true)
 
       method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t
           =
@@ -93,6 +94,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         ; referencesProvider = self#config_references
         ; typeDefinitionProvider = self#config_type_definition
         ; documentLinkProvider = self#config_document_link_provider
+        ; foldingRangeProvider = self#config_folding_range
         }
 
       method! on_request
@@ -133,6 +135,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           | Client_request.TextDocumentLink { textDocument; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ Requests.on_req_document_link uri
+          | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
+            let uri = textDocument.uri in
+            run ~uri @@ Requests.on_req_folding_range uri
           | _ -> super#on_request ~notify_back ~id r
     end
 end
