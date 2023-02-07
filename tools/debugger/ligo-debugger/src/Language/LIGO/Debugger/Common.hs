@@ -36,7 +36,7 @@ import Data.Set qualified as Set
 import Data.Vinyl (Rec (RNil, (:&)))
 import Duplo (layer, leq, spineTo)
 import Fmt (Buildable (..), pretty)
-import Parser (Info)
+import Parser (ParsedInfo)
 import Product (Contains)
 import Range (Range (..), getRange)
 import Text.Interpolation.Nyan
@@ -78,7 +78,7 @@ spineAtPoint
   => Range -> LIGO xs -> [LIGO xs]
 spineAtPoint pos = spineTo (\i -> pos `leq` getRange i)
 
-getStatementLocs :: HasCallStack => Set SourceLocation -> HashMap FilePath (LIGO Info) -> Set SourceLocation
+getStatementLocs :: HasCallStack => Set SourceLocation -> HashMap FilePath (LIGO ParsedInfo) -> Set SourceLocation
 getStatementLocs locs parsedContracts =
   ranges
     <&> getStatementRanges
@@ -125,7 +125,7 @@ getStatementLocs locs parsedContracts =
 
         -- We can use here @Unsafe.head@ because this filtering won't
         -- accept empty list.
-        filterStatements :: [LIGO Info] -> [Range]
+        filterStatements :: [LIGO ParsedInfo] -> [Range]
         filterStatements = fmap (getRange . Unsafe.head) . filter worthPicking . tails
           where
             worthPicking =
@@ -136,7 +136,7 @@ getStatementLocs locs parsedContracts =
 
 -- | Here we decide whether the node is at the top-level
 -- by its parent node.
-isTopLevel :: LIGO Info -> Bool
+isTopLevel :: LIGO ParsedInfo -> Bool
 isTopLevel parent
     -- This is a true top-level declaration.
   | Just AST.RawContract{} <- layer parent = True
@@ -148,7 +148,7 @@ isTopLevel parent
   | otherwise = False
 
 -- | Checks whether a node is a transitive child of a given tree.
-containsNode :: LIGO Info -> LIGO Info -> Bool
+containsNode :: LIGO ParsedInfo -> LIGO ParsedInfo -> Bool
 -- Comparing by ranges because @Eq@ instance behaves
 -- weird with @LIGO Info@.
 containsNode tree node = getRange node `elem` nodes
@@ -161,10 +161,10 @@ containsNode tree node = getRange node `elem` nodes
 -- If so, then it performs @onSuccess@ action, otherwise @onFail@.
 -- In empty case if will return @onEmpty@ value.
 tryToProcessLigoStatement
-  :: (LIGO Info -> [LIGO Info] -> res) -- ^ @onSuccess@
-  -> ([LIGO Info] -> res) -- ^ @onFail@
+  :: (LIGO ParsedInfo -> [LIGO ParsedInfo] -> res) -- ^ @onSuccess@
+  -> ([LIGO ParsedInfo] -> res) -- ^ @onFail@
   -> res -- ^ @onEmpty@
-  -> [LIGO Info]
+  -> [LIGO ParsedInfo]
   -> res
 tryToProcessLigoStatement onSuccess onFail onEmpty = \case
   [] -> onEmpty
@@ -212,7 +212,7 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
     , isNewScope y x -> onSuccess x xs
   _ : xs -> onFail xs
   where
-    couldBeLastInSomeScope :: LIGO Info -> Bool
+    couldBeLastInSomeScope :: LIGO ParsedInfo -> Bool
     couldBeLastInSomeScope (layer -> Just expr) = case expr of
       -- Let's match on all @Expr@ constructors just in case
       -- this type may be extended one day.
@@ -251,7 +251,7 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       | Just{} <- layer @QualifiedName node = True
       | otherwise = False
 
-    isNewScope :: LIGO Info -> LIGO Info -> Bool
+    isNewScope :: LIGO ParsedInfo -> LIGO ParsedInfo -> Bool
     isNewScope info child
       | Just AST.If{} <- layer info = True
       | Just AST.Ternary{} <- layer info = True
@@ -360,7 +360,7 @@ getMetaMbAndUnwrap = \case
   instr -> (Nothing, instr)
 
 -- | Sometimes we want to ignore metas for some instructions.
-shouldIgnoreMeta :: LigoRange -> Instr i o -> HashMap FilePath (LIGO Info) -> Bool
+shouldIgnoreMeta :: LigoRange -> Instr i o -> HashMap FilePath (LIGO ParsedInfo) -> Bool
 shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction || shouldIgnoreMetaByLocation
   where
     -- Sometimes it's not enough to ignore locations judging only by
@@ -411,6 +411,20 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
         -- Locations for top-level functions
         (layer @Binding -> Just AST.BFunction{}) : node : _
           | isTopLevel node -> pass
+
+        -- Locations for @Seq@ nodes. An example in CameLIGO:
+        --
+        -- @
+        -- let foo (a, b) = begin
+        --   let res = a + b in
+        --   some_check();
+        --   some_check();
+        --   ..
+        --   end
+        -- @
+        -- After evaluating first @some_check@ we'll see a location for the whole
+        -- @begin..end@ block. This location corresponds to the @Seq@ node.
+        (layer @Expr -> Just AST.Seq{}) : _ -> pass
         _ -> empty
 
     shouldIgnoreMetaByInstruction = case instr of
@@ -458,7 +472,7 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
 -- in switching breakpoints.
 data ExpressionSourceLocation = ExpressionSourceLocation
   { eslLigoRange :: LigoRange
-  , eslShouldKeep :: HashMap FilePath (LIGO Info) -> Bool
+  , eslShouldKeep :: HashMap FilePath (LIGO ParsedInfo) -> Bool
   } deriving stock (Generic)
     deriving anyclass (NFData)
 
@@ -471,5 +485,5 @@ instance Ord ExpressionSourceLocation where
 getAllSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
 getAllSourceLocations = S.map (ligoRangeToSourceLocation . eslLigoRange)
 
-getInterestingSourceLocations :: HashMap FilePath (LIGO Info) -> Set ExpressionSourceLocation -> Set SourceLocation
+getInterestingSourceLocations :: HashMap FilePath (LIGO ParsedInfo) -> Set ExpressionSourceLocation -> Set SourceLocation
 getInterestingSourceLocations parsedContracts = getAllSourceLocations . S.filter (`eslShouldKeep` parsedContracts)

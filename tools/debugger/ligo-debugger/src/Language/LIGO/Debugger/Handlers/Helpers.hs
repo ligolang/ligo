@@ -5,10 +5,11 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import AST (LIGO, nestedLIGO, parse)
+import AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
 import AST.Scope.Common qualified as AST.Common
 import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (writeTChan)
+import Control.Exception (throw)
 import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError)
 import Data.Char qualified as C
@@ -29,7 +30,7 @@ import Morley.Michelson.Typed (Contract' (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import ParseTree (pathToSrc)
-import Parser (Info)
+import Parser (ParsedInfo)
 import Text.Interpolation.Nyan
 import UnliftIO.Exception (fromEither, throwIO, try)
 
@@ -77,7 +78,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
-  , lsParsedContracts :: Maybe (HashMap FilePath (LIGO Info))
+  , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
   }
 
 instance Buildable LigoLanguageServerState where
@@ -189,14 +190,20 @@ getAllLocs = "All locs are not initialized" `expectInitialized` (lsAllLocs <$> g
 
 getParsedContracts
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (HashMap FilePath (LIGO Info))
+  => RIO ext (HashMap FilePath (LIGO ParsedInfo))
 getParsedContracts =
   "Parsed contracts are not initialized" `expectInitialized` (lsParsedContracts <$> getServerState)
 
-parseContracts :: (MonadIO m) => [FilePath] -> m (HashMap FilePath (LIGO Info))
+parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do
   parsedInfos <- runNoLoggingT do
-    forM allFiles $ pathToSrc >=> parse
+    forM allFiles
+      $   pathToSrc
+          -- This shouldn't happen because vscode saves all files before debugging.
+          -- Also, @pathToSrc@ reads file from a disk and sets @isDirty = false@.
+          -- So, we have another layer of safety.
+      >=> parsePreprocessed (throw $ ImpossibleHappened "Debugging started on dirty file")
+      >=> insertPreprocessorRanges
 
   let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
 

@@ -8,7 +8,7 @@ import Control.Lens (_Empty, hasn't)
 import Data.Default (def)
 import Data.Set qualified as Set
 import Fmt (Buildable (..), pretty)
-import Parser (Info)
+import Parser (ParsedInfo)
 import Test.HUnit (Assertion)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
@@ -36,7 +36,7 @@ instance Buildable SomeInstr where
   build (SomeInstr i) = build i
 
 -- | Get instructions with associated 'InstrNo' metas.
-collectCodeMetas :: HashMap FilePath (LIGO Info) -> T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
+collectCodeMetas :: HashMap FilePath (LIGO ParsedInfo) -> T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
 collectCodeMetas parsedContracts = T.dfsFoldInstr def { dsGoToValues = True } \case
   T.ConcreteMeta meta i ->
     case liiLocation meta of
@@ -45,7 +45,7 @@ collectCodeMetas parsedContracts = T.dfsFoldInstr def { dsGoToValues = True } \c
       _ -> one (meta, SomeInstr i)
   _ -> mempty
 
-collectContractMetas :: HashMap FilePath (LIGO Info) -> T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
+collectContractMetas :: HashMap FilePath (LIGO ParsedInfo) -> T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
 collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unContractCode . T.cCode
 
 -- | Run the given contract + entrypoint, build code with embedded ligo metadata,

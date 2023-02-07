@@ -56,7 +56,7 @@ import Data.List.NonEmpty (cons)
 import Data.Vinyl (Rec (..))
 import Duplo (layer)
 import Fmt (Buildable (..), genericF, pretty)
-import Parser (Info)
+import Parser (ParsedInfo)
 import Range (HasRange (getRange), Range (..))
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, throwIO)
@@ -220,7 +220,7 @@ data CollectorState m = CollectorState
   , csLastRecordedSnapshot :: Maybe (InterpretSnapshot 'Unique)
     -- ^ Last recorded snapshot.
     -- We can pick @[operation] * storage@ value from it.
-  , csParsedFiles :: HashMap FilePath (LIGO Info)
+  , csParsedFiles :: HashMap FilePath (LIGO ParsedInfo)
     -- ^ Parsed contracts.
   , csRecordedRanges :: HashSet LigoRange
     -- ^ Ranges of recorded statement snapshots.
@@ -498,10 +498,10 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
       pure $ rangeToLigoRange . getRange <$> statements
       where
-        filterAndReverseStatements :: [LIGO Info] -> CollectingEvalOp m [LIGO Info]
+        filterAndReverseStatements :: [LIGO ParsedInfo] -> CollectingEvalOp m [LIGO ParsedInfo]
         filterAndReverseStatements = go []
           where
-            go :: [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
+            go :: [LIGO ParsedInfo] -> [LIGO ParsedInfo] -> CollectingEvalOp m [LIGO ParsedInfo]
             go acc nodes =
               tryToProcessLigoStatement
                 (`decide` acc)
@@ -509,7 +509,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                 (pure acc)
                 nodes
 
-            decide :: LIGO Info -> [LIGO Info] -> [LIGO Info] -> CollectingEvalOp m [LIGO Info]
+            decide :: LIGO ParsedInfo -> [LIGO ParsedInfo] -> [LIGO ParsedInfo] -> CollectingEvalOp m [LIGO ParsedInfo]
             decide x acc xs = do
               let accept = go (x : acc) xs
               let deny = go acc xs
@@ -647,7 +647,7 @@ collectInterpretSnapshots
   -> Value arg
   -> Value st
   -> ContractEnv
-  -> HashMap FilePath (LIGO Info)
+  -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger =
