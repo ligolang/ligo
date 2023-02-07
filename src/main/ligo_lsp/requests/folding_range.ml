@@ -16,6 +16,7 @@ let mk_folding_range : FoldingRangeKind.t -> Region.t -> FoldingRange.t =
 
 
 let mk_region : Region.t -> FoldingRange.t = mk_folding_range FoldingRangeKind.Region
+let mk_imports : Region.t -> FoldingRange.t = mk_folding_range FoldingRangeKind.Imports
 let nseq_concat_map nseq ~f = List.concat_map (nseq_to_list nseq) ~f
 let nsepseq_concat_map nsepseq ~f = List.concat_map (nsepseq_to_list nsepseq) ~f
 let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
@@ -187,7 +188,165 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   Some (declaration_list cst)
 
 
-let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option = fun cst -> None
+let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
+ fun cst ->
+  let open Cst.Jsligo in
+  (* General *)
+  let rec statement_list value = nseq_concat_map value.statements ~f:toplevel_statement
+  and arguments = function
+    | Multiple { value; region } ->
+      mk_region region :: nsepseq_concat_map value.inside ~f:expr
+    | Unit _ -> []
+  (* Statement *)
+  and toplevel_statement = function
+    | TopLevel (statement', _) -> statement statement'
+    | Directive _ -> []
+  and statement = function
+    | SBlock { value; region } ->
+      mk_region region :: nsepseq_concat_map value.inside ~f:statement
+    | SExpr value -> expr value
+    | SCond { value; region } -> mk_region region :: cond_statement value
+    | SReturn { value; region } ->
+      mk_region region :: value_map ~f:expr ~default:[] value.expr
+    | SLet { value; region } -> mk_region region :: let_decl value
+    | SConst { value; region } -> mk_region region :: const_decl value
+    | SType { value; region } -> mk_region region :: type_decl value
+    | SSwitch { region; value } -> mk_region region :: switch value
+    | SBreak _ -> []
+    | SNamespace { region; value } ->
+      let _namespace, _name, statements', _attrs = value in
+      mk_region region :: statements statements'.value.inside
+    | SExport { region; value } -> mk_region region :: statement (snd value)
+    | SImport { region; value } -> mk_imports region :: import value
+    | SWhile { region; value } -> mk_region region :: while_statement value
+    | SForOf { region; value } -> mk_region region :: for_of value
+  and statements value = nsepseq_concat_map value ~f:statement
+  and cond_statement value =
+    expr value.test.inside
+    @ statement value.ifso
+    @ value_map ~f:(fun (_, value) -> statement value) ~default:[] value.ifnot
+  and while_statement value = expr value.expr @ statement value.statement
+  and switch value = expr value.expr @ nseq_concat_map value.cases ~f:switch_case
+  (* FIXME: LIGO doesn't provide range for switch case *)
+  and switch_case = function
+    | Switch_case value ->
+      expr value.expr @ value_map ~f:statements ~default:[] value.statements
+    | Switch_default_case value -> value_map ~f:statements ~default:[] value.statements
+  and import = function
+    | Import_rename _ | Import_all_as _ | Import_selected _ -> []
+  and for_of value = expr value.expr @ statement value.statement
+  (* Pattern *)
+  and pattern = function
+    | PAssign { value; region } -> expr value.value
+    | PDestruct { value; region } -> val_binding value.target
+    | PObject { value; region } ->
+      mk_region region :: nsepseq_concat_map value.inside ~f:pattern
+    | PArray { value; region } ->
+      mk_region region :: nsepseq_concat_map value.inside ~f:pattern
+    | PRest _ | PVar _ | PConstr _ -> []
+  and val_binding { value; region } =
+    mk_region region
+    :: (pattern value.binders
+       @ value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
+       @ expr value.expr)
+  (* Type expression *)
+  and type_expr = function
+    | TProd value ->
+      let inside = value.inside in
+      mk_region inside.region :: nsepseq_concat_map inside.value.inside ~f:type_expr
+    | TSum { value; region } ->
+      mk_region region
+      :: nsepseq_concat_map value.variants.value ~f:(fun value -> variant value.value)
+    | TObject value -> obj_type value
+    | TApp { value; region } -> nsepseq_concat_map ~f:type_expr (snd value).value.inside
+    | TFun { value; region } ->
+      let left, _arrow, right = value in
+      let args = nsepseq_concat_map ~f:(fun arg -> type_expr arg.type_expr) left.inside in
+      args @ type_expr right
+    | TPar { value; region } -> mk_region region :: type_expr value.inside
+    | TVar _ | TString _ | TInt _ -> []
+    | TModA { value; region } -> type_expr value.field
+    | TDisc value -> nsepseq_concat_map value ~f:obj_type
+  and variant value =
+    let tuple = value.tuple in
+    mk_region tuple.region :: variant_comp tuple.value.inside
+  and variant_comp value =
+    value_map
+      ~f:(fun (_, texp) -> nsepseq_concat_map ~f:type_expr texp)
+      ~default:[]
+      value.params
+  and field_decl value = type_expr value.field_type
+  and obj_type { value; region } =
+    mk_region region
+    :: nsepseq_concat_map value.ne_elements ~f:(fun value -> field_decl value.value)
+  (* Expression *)
+  and expr = function
+    | EFun { value; region } -> mk_region region :: fun_expr value
+    | EPar { value; region } -> mk_region region :: expr value.inside
+    | ESeq { value; region } -> mk_region region :: nsepseq_concat_map value ~f:expr
+    | EModA { value; region } -> expr value.field
+    | ELogic value -> logic_expr value
+    | EArith value -> arith_expr value
+    | ECall { value; region } -> expr (fst value) @ arguments (snd value)
+    | EArray { value; region } -> sepseq_concat_map value.inside ~f:array_item
+    | EObject { value; region } ->
+      mk_region region :: nsepseq_concat_map value.inside ~f:property
+    | EString value -> string_expr value
+    | EProj { value; region } -> expr value.expr
+    | EAssign (left, _op, right) -> expr left @ expr right
+    | EConstr { value; region } -> value_map ~f:expr ~default:[] (snd value)
+    | EAnnot { value; region } -> annot_expr value
+    | ECodeInj { value; region } -> mk_region region :: expr value.code
+    | ETernary { value; region } ->
+      mk_region region :: (expr value.condition @ expr value.truthy @ expr value.falsy)
+    | EVar _ | EBytes _ | EUnit _ -> []
+  and fun_expr value =
+    expr value.parameters
+    @ value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
+    @ body value.body
+  and bin_op value = expr value.arg1 @ expr value.arg2
+  and logic_expr = function
+    | BoolExpr value -> bool_expr value
+    | CompExpr value -> comp_expr value
+  and bool_expr = function
+    | Or { value; region } -> bin_op value
+    | And { value; region } -> bin_op value
+    | Not { value; region } -> expr value.arg
+  and comp_expr = function
+    | Lt { value; region } -> bin_op value
+    | Leq { value; region } -> bin_op value
+    | Gt { value; region } -> bin_op value
+    | Geq { value; region } -> bin_op value
+    | Equal { value; region } -> bin_op value
+    | Neq { value; region } -> bin_op value
+  and arith_expr = function
+    | Add { value; region } -> bin_op value
+    | Sub { value; region } -> bin_op value
+    | Mult { value; region } -> bin_op value
+    | Div { value; region } -> bin_op value
+    | Mod { value; region } -> bin_op value
+    | Neg { value; region } -> expr value.arg
+    | Int _ -> []
+  and string_expr = function
+    | String _ | Verbatim _ -> []
+  and annot_expr (exp, _as, texp) = expr exp @ type_expr texp
+  and body = function
+    | FunctionBody { value; region } -> mk_region region :: statements value.inside
+    | ExpressionBody value -> expr value
+  and array_item = function
+    | Expr_entry value -> expr value
+    | Rest_entry { value; region } -> expr value.expr
+  and property = function
+    | Punned_property { value; region } -> expr value
+    | Property { value; region } -> expr value.name @ expr value.value
+    | Property_rest { value; region } -> expr value.expr
+  (* Declaration *)
+  and let_decl value =
+    nsepseq_concat_map value.bindings ~f:(fun value -> val_binding value)
+  and const_decl value =
+    nsepseq_concat_map value.bindings ~f:(fun value -> val_binding value)
+  and type_decl value = type_expr value.type_expr in
+  Some (statement_list cst)
 
 let on_req_folding_range : DocumentUri.t -> FoldingRange.t list option Handler.t =
  fun uri ->
