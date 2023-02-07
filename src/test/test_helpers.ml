@@ -143,6 +143,7 @@ let type_file ~raise ?(st = "auto") f entry options =
 
 
 let core_file ~raise f options = Build.qualified_core ~raise ~options f
+let core_file_unqualified ~raise f options = Build.unqualified_core ~raise ~options f
 
 let get_program ~raise ?(st = "auto") f entry =
   wrap_ref f (fun s ->

@@ -27,6 +27,17 @@ let test_case name test =
   Test (Alcotest.test_case name `Quick @@ fun () -> wrap_test_w ~no_colour name test)
 
 
+let comp_file_assert ~raise f test syntax expected () =
+  let options =
+    let options = Test_helpers.options in
+    let options = Compiler_options.set_syntax options syntax in
+    Compiler_options.set_test_flag options test
+  in
+  let (core : Ast_core.program) = Test_helpers.core_file_unqualified ~raise f options in
+  let got = Format.asprintf "%a" Ast_core.PP.program core in
+  if not (String.equal got expected) then Stdlib.raise Alcotest.Test_error
+
+
 let comp_file_ ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
@@ -108,6 +119,11 @@ let comp_file f =
   test_case f (comp_file_ f false None)
 
 
+let comp_file_assert f expected =
+  let f = "./contracts/" ^ f in
+  test_case f (comp_file_assert f false None expected)
+
+
 let aggregate_file f =
   let f = "./contracts/" ^ f in
   test_case f (agg_file_ f false None)
@@ -142,6 +158,7 @@ let typed_prod =
     ; type_tfile "pattern_match4.jsligo" (*    ; type_file "layout.pligo" *)
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
     ; type_file "type_shadowing.mligo"
+    ; type_file "type_vars_let_fun.mligo"
     ]
 
 
@@ -152,6 +169,10 @@ let core_prod =
     ; comp_file "letin.mligo"
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
+    ; comp_file_assert
+        "core_abstraction/fun_type_var.mligo"
+        "const foo : ∀ a : * . list (a) -> list (a) =\n\
+        \  Λ a ->  Λ b ->  fun ( xs : list (b)) : list (b) -> xs"
     ]
 
 

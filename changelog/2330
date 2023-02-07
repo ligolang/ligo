@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n#### For a cameligo file like\\n\\n\\n```ocaml\\nlet foo (type a) : a list -> a list = \\n   let id = fun (type b) (xs : b list) : b list -> xs in\\n   fun (xs : a list) : a list -> id xs \\n\\nlet main (_ : unit * int list) : operation list * int list =\\n  [], foo [1 ; 2 ; 3]\\n\\n```\\n\\n#### Before\\n\\n\\n```bash\\n$ ligo.60 compile contract x.mligo \\nFile \"x.mligo\", line 2, characters 31-32:\\n  1 | let foo (type a) : a list -> a list = \\n  2 |    let id = fun (type b) (xs : b list) : b list -> xs in\\n  3 |    fun (xs : a list) : a list -> id xs \\n\\nType \"b\" not found. \\n\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo compile contract x.mligo \\n{ parameter unit ;\\n  storage (list int) ;\\n  code { DROP ;\\n         NIL int ;\\n         PUSH int 3 ;\\n         CONS ;\\n         PUSH int 2 ;\\n         CONS ;\\n         PUSH int 1 ;\\n         CONS ;\\n         NIL operation ;\\n         PAIR } }\\n\\n```\\n\\n"
+merge_request: '2330'
+title: "[CameLIGO] Fix type variable binding in expressions"
+type: fixed
+            

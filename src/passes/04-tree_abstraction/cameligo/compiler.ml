@@ -416,14 +416,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr =
   | EFun func ->
     (* todo : make it in common with let function *)
     let func, loc = r_split func in
-    let ({ binders
-         ; rhs_type
-         ; body
-         ; kwd_fun = _
-         ; type_params = _
-         ; arrow = _
-         ; attributes = _
-         }
+    let ({ binders; rhs_type; body; kwd_fun = _; type_params; arrow = _; attributes = _ }
           : CST.fun_expr)
       =
       func
@@ -442,8 +435,18 @@ let rec compile_expression ~raise : CST.expr -> AST.expr =
           @@ Option.bind_pair (Param.get_ascr binder, rhs_type) )
     in
     let expr, rhs_type = aux lst in
-    let expr = fun_ expr in
-    return @@ e_lambda ~loc binder rhs_type expr
+    let expr = e_lambda ~loc binder rhs_type (fun_ expr) in
+    let expr =
+      Option.value_map
+        ~default:expr
+        ~f:(fun tp ->
+          let tp, loc = r_split tp in
+          let tp : CST.type_params = tp.inside in
+          let type_vars = List.Ne.map compile_type_var tp.type_vars in
+          List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:expr type_vars)
+        type_params
+    in
+    return @@ expr
   | EConstr constr ->
     let (constr, args_o), loc = r_split constr in
     let args_o =
@@ -1064,10 +1067,7 @@ and compile_declaration ~raise : CST.declaration -> AST.declaration option =
     let type_params =
       match type_params with
       | Some _ -> type_params
-      | None ->
-        (match let_rhs with
-        | EFun { value = { type_params; _ }; _ } -> type_params
-        | _ -> None)
+      | None -> None
     in
     let pattern, args = binders in
     let let_rhs = compile_expression ~raise let_rhs in
