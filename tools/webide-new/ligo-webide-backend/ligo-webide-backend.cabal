@@ -286,6 +286,7 @@ executable simple-language-server
       aeson
     , aeson-pretty
     , async
+    , attoparsec
     , base-noprelude >=4.9 && <5
     , bytestring
     , directory
@@ -296,7 +297,6 @@ executable simple-language-server
     , monad-control
     , optparse-applicative
     , process
-    , regex-compat
     , text
     , transformers
     , unliftio

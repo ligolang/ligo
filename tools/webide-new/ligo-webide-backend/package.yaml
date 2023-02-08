@@ -122,6 +122,7 @@ executables:
     - aeson
     - aeson-pretty
     - async
+    - attoparsec
     - bytestring
     - directory
     - katip
@@ -130,7 +131,6 @@ executables:
     - monad-control
     - optparse-applicative
     - process
-    - regex-compat
     - unliftio
     - text
     - transformers

@@ -1,22 +1,42 @@
 module SendData (sendData) where
 
 import Common (ConnectionM)
-import Network.WebSockets qualified as WS
+import Data.Aeson (Value)
+import Data.Aeson qualified as Aeson
+import Data.Aeson.Encode.Pretty qualified as Aeson (encodePretty)
+import Data.Aeson.Parser (json)
+import Data.Attoparsec.ByteString qualified as AP
+import Data.Attoparsec.ByteString.Char8 qualified as AP
+import Data.Attoparsec.ByteString.Lazy (Result(Done, Fail), parse)
+import Data.ByteString.Lazy qualified as LBS
+import Data.Text.Encoding qualified as Text
+import Data.Text.Lazy.Builder qualified as Text (fromText)
 import FilePath (filterConnectionPrefix)
-import Data.Text qualified as Text
-import Katip (Severity (DebugS), logFM)
-import Data.Text.IO (hGetChunk)
-import Text.Regex (subRegex, mkRegex)
+import Katip (LogStr(..), Severity(DebugS, ErrorS), logFM)
+import Network.WebSockets qualified as WS
 
 sendData :: WS.Connection -> Handle -> ConnectionM ()
-sendData conn stdoutConsumer = forever $ do
-  txt <- liftIO (stripContentLength <$> hGetChunk stdoutConsumer)
-  unless (Text.null txt) $ do
-    filtered <- filterConnectionPrefix txt
-    logFM DebugS ("Sending: " <> show filtered)
-    liftIO $ WS.sendTextData conn filtered
+sendData conn stdoutConsumer = do
+  bsl :: LBS.ByteString <- liftIO $ LBS.hGetContents stdoutConsumer
+  parseAllInput conn bsl
 
-stripContentLength :: Text -> Text
-stripContentLength txt =
-  let str = Text.unpack txt
-   in Text.pack (subRegex (mkRegex "Content-Length: [0-9]*\\s*") str "")
+parseAllInput :: WS.Connection -> LBS.ByteString -> ConnectionM ()
+parseAllInput conn bsl =
+  case parse contentLengthJson bsl of
+    Fail _ _ err -> do
+      logFM ErrorS $ "Couldn't parse message from language server: " <> show err
+    Done cont val -> do
+      let prettyVal = Text.decodeUtf8 $ LBS.toStrict $ Aeson.encodePretty val
+      logFM DebugS $ "Sending: " <> LogStr (Text.fromText prettyVal)
+
+      let output = Text.decodeUtf8 . LBS.toStrict . Aeson.encode $ val
+      filtered <- filterConnectionPrefix output
+      liftIO $ WS.sendTextData conn filtered
+      parseAllInput conn cont
+
+contentLengthJson :: AP.Parser Value
+contentLengthJson = do
+  void (AP.string "Content-Length: ")
+  void (AP.manyTill AP.digit (AP.char '\r'))
+  void (AP.string "\n\r\n")
+  json
