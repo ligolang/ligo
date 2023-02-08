@@ -348,32 +348,10 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   and type_decl value = type_expr value.type_expr in
   Some (statement_list cst)
 
+
 let on_req_folding_range : DocumentUri.t -> FoldingRange.t list option Handler.t =
  fun uri ->
-  let file_path = DocumentUri.to_path uri in
-  let syntax = Syntax.of_ext_opt @@ Some (Caml.Filename.extension file_path) in
-  let buffer = Ligo_compile.Utils.buffer_from_path file_path in
-  let trace = Simple_utils.Trace.to_option in
-  let ranges =
-    match syntax with
-    | None -> None
-    | Some CameLIGO ->
-      let cst = trace @@ Parsing.Cameligo.parse_file buffer file_path in
-      Option.bind cst folding_range_cameligo
-    | Some JsLIGO ->
-      let cst = trace @@ Parsing.Jsligo.parse_file buffer file_path in
-      Option.bind cst folding_range_jsligo
-  in
-  (*
-  let format_hover ppf h =
-    Format.fprintf ppf "%s" (Yojson.Safe.to_string @@ FoldingRange.yojson_of_t h)
-  in
-  let@ () =
-    send_debug_msg
-      (Format.asprintf
-         "Ranges: %a"
-         (Simple_utils.PP_helpers.option (Simple_utils.PP_helpers.list format_hover))
-         ranges)
-  in
-  *)
-  Handler.return ranges
+  Handler.with_cst uri None
+  @@ function
+  | Utils.CameLIGO_cst cst -> Handler.return @@ folding_range_cameligo cst
+  | Utils.JsLIGO_cst cst -> Handler.return @@ folding_range_jsligo cst
