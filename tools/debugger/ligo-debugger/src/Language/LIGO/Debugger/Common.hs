@@ -240,7 +240,7 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       AST.Tuple{} -> True
       AST.Annot{} -> True
       AST.Case{} -> False
-      AST.Break{} -> False
+      AST.Break{} -> True
       AST.Return{} -> True
       AST.SwitchStm{} -> False
       AST.WhileLoop{} -> False
@@ -263,6 +263,8 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       -- Case branch
       | Just AST.Alt{} <- layer info = True
       -- Branch in @SwitchStm@ in JsLIGO
+      | Just AST.Case{} <- layer info = True
+      | Just AST.SwitchStm{} <- layer info = True
       | Just{} <- layer @CaseOrDefaultStm info = True
       | Just (AST.WhileLoop _ body) <- layer info = containsNode body child
       | Just (AST.ForOfLoop _ _ body) <- layer info = containsNode body child
