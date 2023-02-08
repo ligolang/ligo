@@ -4,6 +4,7 @@ import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import ProjectManager from "../ProjectManager/ProjectManager";
+import { validFileFolderName } from "~/components/validators";
 
 export default class RenameModal extends PureComponent {
   constructor(props) {
@@ -46,7 +47,9 @@ export default class RenameModal extends PureComponent {
         title={this.state.type === "file" ? "Rename File" : "Rename Folder"}
         textConfirm="Rename"
         pending={this.state.loading && "Renaming..."}
-        confirmDisabled={!this.state.name}
+        confirmDisabled={
+          !this.state.name || !!(this.state.name && !!validFileFolderName(this.state.name))
+        }
         onConfirm={this.onRename}
       >
         <DebouncedFormGroup
@@ -60,6 +63,7 @@ export default class RenameModal extends PureComponent {
           maxLength="50"
           value={this.state.name}
           onChange={(name) => this.setState({ name })}
+          validator={validFileFolderName}
         />
       </Modal>
     );

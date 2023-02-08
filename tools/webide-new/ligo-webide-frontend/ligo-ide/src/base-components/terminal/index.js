@@ -106,7 +106,8 @@ export default class Terminal extends PureComponent {
         foreground: color,
         background: bgColor,
         cursor: this.props.interactive ? getColor("--color-text-muted") : bgColor,
-        selection: "#d0e3ff",
+        selectionBackground: "#add6ff80",
+        selectionInactiveBackground: "#e5ebf1",
       },
     });
 

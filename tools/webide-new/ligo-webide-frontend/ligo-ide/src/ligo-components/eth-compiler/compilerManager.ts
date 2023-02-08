@@ -135,8 +135,10 @@ export class CompilerManager {
         }
       })
       .catch((e) => {
-        if (e instanceof Error) {
-          notification.error("Compilation error", e.message);
+        if (e instanceof Error && CompilerManager.terminal) {
+          const reg = /(\r\n?|\n|\t)/g;
+          const ntext = e.message.replace(reg, "\r\n");
+          CompilerManager.terminal.writeToTerminal(`\n${ntext}\n\r\n\r`);
         } else {
           console.error(JSON.stringify(e));
         }
@@ -185,9 +187,9 @@ export class CompilerManager {
 
     if (!(await fileOps.exists(amendedBuildPath))) {
       await ProjectManager.createNewFile(fileFolder, fileName);
-      await fileOps.writeFile(amendedBuildPath, data);
+      await ProjectManager.writeFileWithEditorUpdate(amendedBuildPath, data);
     } else {
-      await fileOps.writeFile(amendedBuildPath, data);
+      await ProjectManager.writeFileWithEditorUpdate(amendedBuildPath, data);
     }
 
     return { type: "success", message: amendedBuildPath };

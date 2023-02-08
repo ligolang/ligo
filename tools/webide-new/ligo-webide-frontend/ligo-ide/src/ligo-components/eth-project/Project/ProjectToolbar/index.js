@@ -45,16 +45,28 @@ export default class ProjectToolbar extends PureComponent {
     const deployPath = this.context.projectSettings?.get("deploy") || "";
     if (!(await fileOps.exists(this.context.projectManager.pathForProjectFile(deployPath)))) {
       this.setState({ isPreDeploy: true });
-      this.compileModalOpen();
+      this.compileModalOpen(true);
     } else {
       this.deployModalRef.current.openModal();
     }
   };
 
-  compileModalOpen = () => {
+  compileModalOpen = (isDeploy) => {
+    if (!isDeploy && this.context.projectSettings?.get("doNotShowCompilationMessage")) {
+      this.compileContract(this.context.projectManager);
+      return;
+    }
     const tzFilePath = this.context.projectSettings?.get("main") || "";
     this.setState({ tzFilePath });
     this.compileModalRef.current.openModal();
+  };
+
+  compileContract = async (projectManager, doNotShow) => {
+    if (!this.state.isPreDeploy && doNotShow) {
+      await projectManager.projectSettings?.set("doNotShowCompilationMessage", true);
+    }
+    projectManager.compile(null, this.props.finalCall);
+    this.setState({ isPreDeploy: false });
   };
 
   expressionExecutionModal = (type) => {
@@ -78,7 +90,7 @@ export default class ProjectToolbar extends PureComponent {
           icon="fas fa-play"
           tooltip="Compile"
           readOnly={readOnly}
-          onClick={() => this.compileModalOpen()}
+          onClick={() => this.compileModalOpen(false)}
           isExpanded={isExpanded}
         />
         <ToolbarButton
@@ -126,10 +138,7 @@ export default class ProjectToolbar extends PureComponent {
         <CompileModal
           modalRef={this.compileModalRef}
           tzFilePath={this.state.tzFilePath}
-          onCompile={() => {
-            projectManager.compile(null, this.props.finalCall);
-            this.setState({ isPreDeploy: false });
-          }}
+          onCompile={(doNotShow) => this.compileContract(projectManager, doNotShow)}
           isPreDeploy={this.state.isPreDeploy}
         />
         <DeployScriptModal

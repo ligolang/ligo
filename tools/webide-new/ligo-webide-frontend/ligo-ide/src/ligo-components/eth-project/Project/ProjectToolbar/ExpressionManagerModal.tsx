@@ -145,14 +145,14 @@ const ExpressionManagerModal = ({
       {managerType === "dryRun" && (
         <>
           <DebouncedFormGroup
-            label={<div>Input parameters</div>}
+            label={<div>Input parameters (ligo expression)</div>}
             value={params}
             onChange={(n: string) => setParams(n)}
             placeholder="Parameters"
             type="textarea"
           />
           <DebouncedFormGroup
-            label={<div>Storage</div>}
+            label={<div>Storage (ligo expression)</div>}
             value={storage}
             onChange={(st: string) => setStorage(st)}
             placeholder="Storage"

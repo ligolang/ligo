@@ -19,4 +19,8 @@ window.addEventListener("auxclick", (event) => {
   if (event.button === 1) event.preventDefault();
 });
 
-window.addEventListener("contextmenu", (e) => e.preventDefault());
+window.addEventListener("contextmenu", (e) => {
+  if (e.target.tagName !== "A") {
+    e.preventDefault();
+  }
+});

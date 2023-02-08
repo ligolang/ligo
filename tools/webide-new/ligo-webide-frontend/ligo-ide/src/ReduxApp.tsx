@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable new-cap */
 import { lazy, useEffect, useRef, useState } from "react";
+import { GlobalHotKeys } from "react-hotkeys";
 import { GlobalModals, autoUpdater } from "~/base-components/global";
 import { config, updateStore } from "~/lib/redux";
 import redux, { Provider } from "~/base-components/redux";
@@ -12,7 +13,7 @@ import { NotificationSystem } from "~/base-components/notification";
 import Routes from "./components/Routes";
 import fileOps, { indexedDBFileSystem, fileSystems, fileSystem } from "~/base-components/file-ops";
 import icon from "./components/icon.png";
-import { ProjectManager } from "~/base-components/workspace";
+import { ProjectManager, actions } from "~/base-components/workspace";
 import LigoHeader from "~/components/LigoHeader";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -60,6 +61,16 @@ const ReduxApp = (props: { history: any }) => {
         <Header history={props.history} />
         <NotificationSystem />
         <GlobalModals icon={icon} />
+        <GlobalHotKeys
+          keyMap={{ CtrlCmdB: ["command+b", "control+b"] }}
+          handlers={{
+            CtrlCmdB: () => {
+              if (actions.projectManager !== null) {
+                actions.projectManager.compile(null, undefined);
+              }
+            },
+          }}
+        />
         <Routes />
         <BottomBar ref={bottomBarRef} />
       </div>

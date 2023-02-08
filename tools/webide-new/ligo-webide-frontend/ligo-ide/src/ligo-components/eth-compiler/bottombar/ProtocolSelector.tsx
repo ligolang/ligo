@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useSelector, useDispatch } from "react-redux";
+// @ts-ignore
+import Config from "Config";
 import {
   UncontrolledButtonDropdown,
   DropdownToggle,
@@ -16,10 +18,14 @@ const ProtocolSelector = () => {
 
   const dispatch = useDispatch();
 
-  const protocols = [
-    { showName: "Kathmandu (mainnet)", name: "kathmandu" },
-    { showName: "Lima (testnet)", name: "lima" },
-  ];
+  const {
+    protocols,
+  }: {
+    protocols: {
+      showName: string;
+      name: string;
+    }[];
+  } = Config;
 
   const menuHeader = (
     <>

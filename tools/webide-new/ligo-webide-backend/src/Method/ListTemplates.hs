@@ -13,7 +13,7 @@ listTemplates :: WebIDEM [Text]
 listTemplates = do
   pwd <- liftIO getCurrentDirectory
   withTempDirectory pwd "" $ \dirPath -> do
-    (ec, out, err) <- runLigo dirPath [ "init", "contract", "--template-list"]
+    (ec, out, err) <- runLigo dirPath [ "init", "contract", "--no-color", "--template-list"]
     case ec of
       ExitSuccess -> do
         case Text.lines . Text.strip . Text.pack $ out of

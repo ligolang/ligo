@@ -14,6 +14,7 @@ import notification from "~/base-components/notification";
 import { ProjectManager } from "../ProjectManager";
 import actions from "../actions";
 import { RawGistProjectType, ProcessGitProject } from "../ProjectManager/ProjectManager";
+import { validGistId, validGit, validName } from "~/components/validators";
 
 const OpenProjectModal = forwardRef((_, ref) => {
   actions.openProjectModal = ref;
@@ -153,8 +154,9 @@ const OpenProjectModal = forwardRef((_, ref) => {
       onConfirm={onOpenProject}
       pending={loading && "Loading..."}
       confirmDisabled={
-        (projectType === "gist" && gistId === "") ||
-        (projectType === "git" && (name === "" || gitUrl === ""))
+        (projectType === "gist" && (gistId === "" || !!validGistId(gistId))) ||
+        (projectType === "git" && (name === "" || gitUrl === "" || !!validGit(gitUrl))) ||
+        !!(name && validName(name))
       }
     >
       <DebouncedFormGroup
@@ -162,6 +164,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
         placeholder="Name"
         value={name}
         onChange={(n: string) => setName(n)}
+        validator={validName}
       />
       <br />
       <ButtonOptions
@@ -183,6 +186,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
           placeholder="Id"
           value={gistId}
           onChange={(l: string) => setGistId(l)}
+          validator={validGistId}
         />
       )}
       {projectType === "git" && (
@@ -191,13 +195,10 @@ const OpenProjectModal = forwardRef((_, ref) => {
           placeholder="Url"
           value={gitUrl}
           onChange={(l: string) => setGitUrl(l)}
-          validator={(v: string) =>
-            !/^(http(s)?:\/\/)\w+[^\s]+(\.[^\s]+){1,}.git$/.test(v) &&
-            "Git url has to be an url with .git on the end"
-          }
+          validator={validGit}
         />
       )}
-      {projectType === "git" && gitUrl && (
+      {projectType === "git" && gitUrl && !validGit(gitUrl) && (
         <>
           <DebouncedFormGroup
             label={

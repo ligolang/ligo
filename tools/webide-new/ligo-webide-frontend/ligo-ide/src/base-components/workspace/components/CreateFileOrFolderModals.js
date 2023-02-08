@@ -5,6 +5,7 @@ import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
 import actions from "../actions";
 import ProjectManager from "../ProjectManager/ProjectManager";
+import { validFileFolderName } from "~/components/validators";
 
 export default class CreateFileOrFolderModals extends PureComponent {
   constructor(props) {
@@ -76,7 +77,7 @@ export default class CreateFileOrFolderModals extends PureComponent {
         title={this.state.type === "file" ? "New File" : "New Folder"}
         textConfirm="Create"
         pending={this.state.loading && "Creating..."}
-        confirmDisabled={!this.state.name}
+        confirmDisabled={!this.state.name || !!validFileFolderName(this.state.name)}
         onConfirm={this.onCreate}
       >
         <DebouncedFormGroup
@@ -90,6 +91,7 @@ export default class CreateFileOrFolderModals extends PureComponent {
           maxLength="50"
           value={this.state.name}
           onChange={(name) => this.setState({ name })}
+          validator={validFileFolderName}
         />
       </Modal>
     );

@@ -13,9 +13,9 @@ import Servant.Client (BaseUrl(..), Scheme(Https))
 import Text.Megaparsec (errorBundlePretty)
 
 import Morley.Client
-  (MorleyClientConfig(..), MorleyClientEnv, MorleyClientM, OperationInfo(OpOriginate),
-  OriginationData(..), dryRunOperationsNonEmpty, getProtocolParameters, mkMorleyClientEnv,
-  revealKeyUnlessRevealed, runMorleyClientM)
+  (AliasBehavior(..), MorleyClientConfig(..), MorleyClientEnv, MorleyClientM,
+  OperationInfo(OpOriginate), OriginationData(..), dryRunOperationsNonEmpty, getProtocolParameters,
+  mkMorleyClientEnv, revealKeyUnlessRevealed, runMorleyClientM)
 import Morley.Client.Action.Common (computeStorageLimit)
 import Morley.Client.RPC (AppliedResult, ProtocolParameters(ppCostPerByte))
 import Morley.Client.TezosClient.Impl as TezosClient (importKey)
@@ -113,7 +113,7 @@ generateDeployScript request = do
 
   let morleyConfig :: MorleyClientConfig
       morleyConfig = MorleyClientConfig
-        { mccEndpointUrl = Just (BaseUrl Https "kathmandu.testnet.tezos.serokell.team" 443 "")
+        { mccEndpointUrl = Just (BaseUrl Https "lima.testnet.tezos.serokell.team" 443 "")
         , mccTezosClientPath = octezClientPath
         , mccMbTezosClientDataDir = Nothing
         , mccVerbosity = 0
@@ -158,11 +158,12 @@ decodeTextCode text =
 mkOriginationData :: SomeContractAndStorage -> OriginationData
 mkOriginationData (SomeContractAndStorage con val) =
   OriginationData
-    { odReplaceExisting = True
+    { odAliasBehavior = DontSaveAlias
     , odName = ContractAlias "contract"
     , odBalance = UnsafeMutez 0
     , odContract = con
     , odStorage = val
+    , odDelegate = Nothing
     , odMbFee = Nothing
     }
 

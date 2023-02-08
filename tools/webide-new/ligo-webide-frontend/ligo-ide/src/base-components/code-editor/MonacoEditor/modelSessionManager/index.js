@@ -50,6 +50,11 @@ class ModelSessionManager {
   updateEditorAfterMovedFile(oldPath, newPath) {
     if (!this.sessions[oldPath]) return;
 
+    if (oldPath === newPath.path) {
+      this.refreshFile(newPath, true);
+      return;
+    }
+
     const tabsState = this.tabsRef.current.state;
 
     const sessionsIds = tabsState.tabs.map((v, i) => [v.key, i]);
@@ -304,12 +309,12 @@ class ModelSessionManager {
     this._editor?.setSelection(model.getFullModelRange());
   }
 
-  refreshFile(data) {
+  refreshFile(data, forceRefresh) {
     const modelSession = this.sessions[data.path];
     if (!modelSession || modelSession.saving) {
       return;
     }
-    if (!modelSession.saved) {
+    if (!modelSession.saved || forceRefresh) {
       modelSession.refreshValue(data.content);
       this._editorContainer.fileSaved(data.path);
       modelSession.saved = true;

@@ -62,6 +62,7 @@
     "react-dom": "^17.0.1",
     "react-ga4": "^1.4.1",
     "react-highlight": "^0.13.0",
+    "react-hotkeys": "^2.0.0",
     "react-hotkeys-hook": "^3.4.4",
     "react-json-view": "ObsidianLabs/react-json-view#obsidians",
     "react-markdown": "^6.0.2",

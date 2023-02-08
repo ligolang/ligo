@@ -1,91 +1,30 @@
+import Config from "Config";
 import NetworkAllLogoImg from "./NetworkIcon";
 
-const networks = [
-  {
-    id: "tezosmain",
-    group: "Tezos",
-    name: "Mainnet",
-    fullName: "Tezos Mainnet",
+const rawNetworks = Config.networks;
+
+const networks = rawNetworks.map((v) => {
+  const newV = {
+    id: v.id,
+    group: v.group,
+    name: v.name,
+    fullName: v.fullName,
     icon: "fas fa-globe",
-    notification: "Switched to <b>Tezos Mainnet</b>.",
-    url: "https://uoi3x99n7c.tezosrpc.midl.dev",
-    explorerUrl: "https://tzkt.io/",
-    type: "mainnet",
-    chainId: "Mainnet+https://uoi3x99n7c.tezosrpc.midl.dev",
-    symbol: "XTZ",
-    logoIcon: NetworkAllLogoImg.tezosmain,
-  },
-  {
-    id: "tezostest",
-    group: "Tezos",
-    name: "Kathmandu",
-    fullName: "Kathmandu Testnet",
-    icon: "fas fa-globe",
-    notification: "Switched to <b>Kathmandu Testnet</b>.",
-    url: "https://rpc.kathmandunet.teztnets.xyz/",
-    explorerUrl: "https://kathmandunet.tzkt.io/",
-    type: "kathmandunet",
-    chainId: "Testnet+https://rpc.kathmandunet.teztnets.xyz/",
-    symbol: "XTZ",
-    logoIcon: NetworkAllLogoImg.tezosmain,
-  },
-  {
-    id: "tezostestlima",
-    group: "Tezos",
-    name: "Limanet",
-    fullName: "Limanet Testnet",
-    icon: "fas fa-globe",
-    notification: "Switched to <b>Limanet Testnet</b>.",
-    url: "https://rpc.limanet.teztnets.xyz/",
-    explorerUrl: "https://tzkt.io/",
-    type: "custom",
-    chainId: "Testnet+https://rpc.limanet.teztnets.xyz/",
-    symbol: "XTZ",
-    logoIcon: NetworkAllLogoImg.tezosmain,
-  },
-  {
-    id: "tezostestgostnet",
-    group: "Tezos",
-    name: "Ghostnet",
-    fullName: "Ghostnet Testnet",
-    icon: "fas fa-globe",
-    notification: "Switched to <b>Ghostnet Testnet</b>.",
-    url: "https://uoi3x99n7c.ghostnet.tezosrpc.midl.dev",
-    explorerUrl: "https://ghostnet.tzkt.io/",
-    type: "ghostnet",
-    chainId: "Testnet+https://uoi3x99n7c.ghostnet.tezosrpc.midl.dev",
-    symbol: "XTZ",
-    logoIcon: NetworkAllLogoImg.tezosmain,
-  },
-  {
-    id: "t4l3ntmain",
-    group: "T4L3NT",
-    name: "Mainnet",
-    fullName: "T4L3NT Mainnet",
-    icon: "fas fa-globe",
-    notification: "Switched to <b>T4L3NT Mainnet</b>.",
-    url: "https://rpc.decentralized.pictures",
-    explorerUrl: "https://explorer.tlnt.net/",
-    type: "custom",
-    chainId: "Mainnet+https://rpc.decentralized.pictures",
-    symbol: "FILM",
-    logoIcon: NetworkAllLogoImg.dpfmain,
-  },
-  {
-    id: "t4l3nttest",
-    group: "T4L3NT",
-    name: "Testnet",
-    fullName: "T4L3NT Testnet",
-    icon: "fas fa-globe",
-    notification: "Switched to <b>T4L3NT Testnet</b>.",
-    url: "https://staging-rpc.decentralized.pictures",
-    explorerUrl: "https://explorer.tlnt.net:444/",
-    type: "custom",
-    chainId: "Testnet+https://staging-rpc.decentralized.pictures",
-    symbol: "FILM",
-    logoIcon: NetworkAllLogoImg.dpfmain,
-  },
-];
+    notification: `Switched to <b>${v.fullName}</b>.`,
+    url: v.url,
+    explorerUrl: v.explorerUrl,
+    type: v.id,
+    chainId: `${v.name}+${v.url}`,
+    symbol: v.symbol,
+    logoIcon:
+      v.icon === "tezosmain"
+        ? NetworkAllLogoImg.tezosmain
+        : v.icon === "dpfmain"
+        ? NetworkAllLogoImg.dpfmain
+        : undefined,
+  };
+  return newV;
+});
 
 export default networks;
 

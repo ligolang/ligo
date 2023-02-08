@@ -110,7 +110,7 @@ class TabHeaderItem extends PureComponent {
           onCloseTab(tab);
         }}
       >
-        <span
+        {/* <span
           key="nav-item-dot"
           className={classnames("nav-item-close-dot", {
             active: unsaved && !saving,
@@ -128,6 +128,14 @@ class TabHeaderItem extends PureComponent {
           key="nav-item-close"
           className={classnames("nav-item-close-times", {
             active: !unsaved && !saving,
+          })}
+        >
+          <i className="fas fa-times" />
+        </span> */}
+        <span
+          key="nav-item-close"
+          className={classnames("nav-item-close-times", {
+            active: true,
           })}
         >
           <i className="fas fa-times" />

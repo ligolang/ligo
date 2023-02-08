@@ -1,5 +1,5 @@
-import React from "react";
-import { Modal } from "~/base-components/ui-components";
+import React, { useState } from "react";
+import { Input, Label, Modal } from "~/base-components/ui-components";
 
 interface CompileModalProps {
   modalRef: React.RefObject<Modal>;
@@ -14,9 +14,11 @@ const CompileModal: React.FC<CompileModalProps> = ({
   onCompile,
   isPreDeploy,
 }) => {
+  const [doNotShow, setDoNotShow] = useState(false);
   const onCreate = async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    onCompile();
+    onCompile(doNotShow);
+    setDoNotShow(false);
     await modalRef.current?.closeModal();
   };
 
@@ -33,10 +35,24 @@ const CompileModal: React.FC<CompileModalProps> = ({
           compile it before deploying.
         </div>
       ) : (
-        <div>
-          You are going to compile <kbd>{tzFilePath}</kbd> contract. If you want to use another
-          contract, please change it in config.
-        </div>
+        <>
+          <div>
+            You are going to compile <kbd>{tzFilePath}</kbd> contract. If you want to use another
+            contract, please change it in config.
+          </div>
+          <br />
+          <div className="ml-4">
+            <Input
+              type="checkbox"
+              disabled={false}
+              onChange={() => setDoNotShow(!doNotShow)}
+              checked={doNotShow}
+            />
+            <Label>
+              Do not show this again. You can use <kbd>ctrl/cmb+b</kbd> shortcut to compile.
+            </Label>
+          </div>
+        </>
       )}
     </Modal>
   );

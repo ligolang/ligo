@@ -81,12 +81,19 @@ export default class MonacoEditor extends Component {
       glyphMargin: true,
       readOnly,
       domReadOnly: readOnly,
+      minimap: {
+        enabled: true,
+        autohide: true,
+        showSlider: "mouseover",
+      },
     });
+
     modelSessionManager.editor = monacoEditor;
     monacoEditor.onDidChangeModelContent(() => {
-      this.props.onChange();
+      // this.props.onChange();
       this.props.modelSession.saved = false;
-      modelSessionManager.projectManager.onFileChanged();
+      // modelSessionManager.projectManager.onFileChanged();
+      modelSessionManager.saveCurrentFile();
     });
     monacoEditor.onDidChangeCursorPosition(({ position }) => {
       actions.updatePosition([position.lineNumber, position.column]);
@@ -120,6 +127,9 @@ export default class MonacoEditor extends Component {
 
     monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () =>
       this.props.onCommand("save")
+    );
+    monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () =>
+      this.props.onCommand("compile")
     );
     monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_W, () =>
       this.props.onCommand("close-current-tab")

@@ -1,0 +1,78 @@
+{
+    "defaultProtocol":{
+       "showName":"Lima (mainnet)",
+       "name":"lima"
+    },
+    "protocols":[
+       {
+          "showName":"Lima (mainnet)",
+          "name":"lima"
+       }
+    ],
+    "networks":[
+       {
+          "id":"tezosmain",
+          "group":"Tezos",
+          "name":"Mainnet",
+          "fullName":"Tezos Mainnet",
+          "url":"https://mainnet.tezos.marigold.dev",
+          "explorerUrl":"https://tzkt.io/",
+          "symbol":"XTZ",
+          "icon":"tezosmain"
+       },
+       {
+          "id":"tezostest",
+          "group":"Tezos",
+          "name":"Mumbai",
+          "fullName":"Mumbai Testnet",
+          "url":"https://mumbainet.tezos.marigold.dev",
+          "explorerUrl":"https://tzkt.io/",
+          "symbol":"XTZ",
+          "icon":"tezosmain",
+          "faucetUrl": "https://faucet.mumbainet.teztnets.xyz/"
+       },
+       {
+          "id":"tezostestlima",
+          "group":"Tezos",
+          "name":"Limanet",
+          "fullName":"Limanet Testnet",
+          "url":"https://limanet.tezos.marigold.dev",
+          "explorerUrl":"https://limanet.tzkt.io/",
+          "symbol":"XTZ",
+          "icon":"tezosmain",
+          "faucetUrl": "https://faucet.limanet.teztnets.xyz/"
+       },
+       {
+          "id":"tezostestghostnet",
+          "group":"Tezos",
+          "name":"Ghostnet",
+          "fullName":"Ghostnet Testnet",
+          "url":"https://ghostnet.tezos.marigold.dev",
+          "explorerUrl":"https://ghostnet.tzkt.io/",
+          "symbol":"XTZ",
+          "icon":"tezosmain",
+          "faucetUrl": "https://faucet.ghostnet.teztnets.xyz/"
+       },
+       {
+          "id":"t4l3ntmain",
+          "group":"T4L3NT",
+          "name":"Mainnet",
+          "fullName":"T4L3NT Mainnet",
+          "url":"https://rpc.decentralized.pictures",
+          "explorerUrl":"https://explorer.tlnt.net/",
+          "symbol":"FILM",
+          "icon":"dpfmain"
+       },
+       {
+          "id":"t4l3nttest",
+          "group":"T4L3NT",
+          "name":"Testnet",
+          "fullName":"T4L3NT Testnet",
+          "url":"https://staging-rpc.decentralized.pictures",
+          "explorerUrl":"https://explorer.tlnt.net:444/",
+          "symbol":"FILM",
+          "icon":"dpfmain",
+          "faucetUrl": "https://github.com/Decentralized-Pictures/T4L3NT"
+       }
+    ]
+ }

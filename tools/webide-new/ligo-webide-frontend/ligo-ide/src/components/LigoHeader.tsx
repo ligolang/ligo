@@ -3,6 +3,12 @@ import ligologo from "./logo.svg";
 
 const links = [
   {
+    link: `${window.location.host}`,
+    name: "Try Online",
+    isBlank: false,
+    isCurrent: true,
+  },
+  {
     link: "ligolang.org/docs/intro/installation",
     name: "Install",
     isBlank: false,
@@ -17,7 +23,6 @@ const links = [
   },
   { link: "packages.ligolang.org/packages", name: "Packages", isBlank: true, isCurrent: false },
   { link: "academy.ligolang.org", name: "Academy", isBlank: true, isCurrent: false },
-  { link: "ligo-webide-v2.gcp.marigold.dev", name: "IdeV2 beta", isBlank: true, isCurrent: true },
   { link: "ligolang.org/contact", name: "Ask Questions", isBlank: false, isCurrent: false },
   { link: "ligolang.org/docs/faq/intro", name: "FAQ", isBlank: false, isCurrent: false },
   {

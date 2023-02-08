@@ -290,17 +290,16 @@
     "hackage": {
       "flake": false,
       "locked": {
-        "lastModified": 1667438257,
-        "narHash": "sha256-CeiOpAForXQpBZQAr+jcZqjTTJ2mS7vS58wJ2tUD4Ps=",
+        "lastModified": 1675815912,
+        "narHash": "sha256-P9TRpDch3ZwR1YDlcvKeRI01xnh2UmnOK366uGhdoeE=",
         "owner": "input-output-hk",
         "repo": "hackage.nix",
-        "rev": "db9e2f4270dd16e20e0bd2b1aada926bcc97042e",
+        "rev": "f67d9a05a5697602e9de2ff020478841e5599c69",
         "type": "github"
       },
       "original": {
-        "owner": "input-output-hk",
-        "repo": "hackage.nix",
-        "type": "github"
+        "id": "hackage",
+        "type": "indirect"
       }
     },
     "haskell-nix": {
@@ -313,7 +312,9 @@
         "flake-compat": "flake-compat_2",
         "flake-utils": "flake-utils_2",
         "ghc-8.6.5-iohk": "ghc-8.6.5-iohk",
-        "hackage": "hackage",
+        "hackage": [
+          "hackage"
+        ],
         "hpc-coveralls": "hpc-coveralls",
         "hydra": "hydra",
         "nixpkgs": [
@@ -326,7 +327,9 @@
         "nixpkgs-2205": "nixpkgs-2205",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "old-ghc-nix": "old-ghc-nix",
-        "stackage": "stackage"
+        "stackage": [
+          "stackage"
+        ]
       },
       "locked": {
         "lastModified": 1667438430,
@@ -916,9 +919,11 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "flake-utils": "flake-utils",
+        "hackage": "hackage",
         "haskell-nix": "haskell-nix",
         "nix-npm-buildpackage": "nix-npm-buildpackage",
         "nixpkgs": "nixpkgs_4",
+        "stackage": "stackage",
         "tezos-packaging": "tezos-packaging"
       }
     },
@@ -946,17 +951,16 @@
     "stackage": {
       "flake": false,
       "locked": {
-        "lastModified": 1667438369,
-        "narHash": "sha256-5eB7phEMU/4+srICVQELeE1iiS2+PH0TQB+1TzKYmVo=",
+        "lastModified": 1675815021,
+        "narHash": "sha256-vGIq0rccUUgwLj8kHgSfQdhChYfzmC8cnHPgB9+Rr98=",
         "owner": "input-output-hk",
         "repo": "stackage.nix",
-        "rev": "57d55a87a6711fe8f55c72891be757096dac7232",
+        "rev": "3c81c38bd2a7a6659f2b2ffaa45074fa417935b3",
         "type": "github"
       },
       "original": {
-        "owner": "input-output-hk",
-        "repo": "stackage.nix",
-        "type": "github"
+        "id": "stackage",
+        "type": "indirect"
       }
     },
     "tezos": {

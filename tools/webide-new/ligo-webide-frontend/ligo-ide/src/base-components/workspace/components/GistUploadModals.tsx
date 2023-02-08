@@ -2,7 +2,12 @@ import React, { forwardRef, useState, useRef, useImperativeHandle } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import fileOps from "~/base-components/file-ops";
 
-import { Modal, DebouncedFormGroup, Button } from "~/base-components/ui-components";
+import {
+  Modal,
+  DebouncedFormGroup,
+  Button,
+  UncontrolledTooltip,
+} from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import FileTree from "~/base-components/filetree";
@@ -141,33 +146,118 @@ const GistUploadModals = forwardRef(
         {(gistLink !== "" || gistId !== "") && (
           <>
             {getGistId(gistId, gistLink) !== null && (
-              <p>
-                Your Gist id <kbd>{getGistId(gistId, gistLink)}</kbd>
-              </p>
+              <div className="d-flex">
+                <Button
+                  size="sm"
+                  color="default"
+                  id="btn-gistId"
+                  key="btn-gistId"
+                  className="flex-none w-5 flex-column align-items-center mr-1"
+                  /* eslint-disable */
+                  // @ts-ignore
+                  onClick={() => navigator.clipboard.writeText(getGistId(gistId, gistLink))}
+                  /* eslint-enable */
+                  disabled={false}
+                >
+                  <span key="clipboard">
+                    <i className="fas fa-clipboard" />
+                  </span>
+                </Button>
+                <UncontrolledTooltip
+                  trigger="hover"
+                  delay={0}
+                  placement="bottom"
+                  target="btn-gistId"
+                >
+                  Copy to clipboard
+                </UncontrolledTooltip>
+                <p className="mt-1">
+                  Your Gist id <kbd>{getGistId(gistId, gistLink)}</kbd>
+                </p>
+              </div>
             )}
-            <p>
-              Gist link{" "}
-              <a
-                href={`//gist.github.com/${getGistId(gistId, gistLink) || ""}`}
-                target="_blank"
-                rel="noreferrer"
+
+            <div className="d-flex">
+              <Button
+                size="sm"
+                color="default"
+                id="btn-gistLink"
+                key="btn-gistLink"
+                className="flex-none w-5 flex-column align-items-center mr-1"
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    `https://gist.github.com/${getGistId(gistId, gistLink) || ""}`
+                  )
+                }
+                disabled={false}
               >
-                {`https://gist.github.com/${getGistId(gistId, gistLink) || ""}`}
-              </a>
-            </p>
-            {getGistId(gistId, gistLink) !== null && (
+                <span key="clipboard">
+                  <i className="fas fa-clipboard" />
+                </span>
+              </Button>
+              <UncontrolledTooltip
+                trigger="hover"
+                delay={0}
+                placement="bottom"
+                target="btn-gistLink"
+              >
+                Copy to clipboard
+              </UncontrolledTooltip>
               <p>
-                LIGO Web IDE link{" "}
+                Gist link{" "}
                 <a
-                  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                  href={`//${window.location.host}/share/${getGistId(gistId, gistLink)}`}
+                  href={`//gist.github.com/${getGistId(gistId, gistLink) || ""}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                  {`https://${window.location.host}/share/${getGistId(gistId, gistLink)}`}
+                  {`https://gist.github.com/${getGistId(gistId, gistLink) || ""}`}
                 </a>
               </p>
+            </div>
+
+            {getGistId(gistId, gistLink) !== null && (
+              <div className="d-flex">
+                <Button
+                  size="sm"
+                  color="default"
+                  id="btn-gistIdeLink"
+                  key="btn-gistIdeLink"
+                  className="flex-none w-5 flex-column align-items-center mr-1"
+                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                      `https://${window.location.host}/share/${getGistId(gistId, gistLink)}`
+                    )
+                  }
+                  disabled={false}
+                >
+                  <span key="clipboard">
+                    <i className="fas fa-clipboard" />
+                  </span>
+                </Button>
+                <UncontrolledTooltip
+                  trigger="hover"
+                  delay={0}
+                  placement="bottom"
+                  target="btn-gistIdeLink"
+                >
+                  Copy to clipboard
+                </UncontrolledTooltip>
+                <p>
+                  Web IDE link{" "}
+                  <a
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                    href={`//${window.location.host}/share/${getGistId(gistId, gistLink)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`https://${window.location.host}/share/${getGistId(gistId, gistLink)}`}
+                  </a>
+                </p>
+              </div>
             )}
             {gistLink !== "" && (
               <p>

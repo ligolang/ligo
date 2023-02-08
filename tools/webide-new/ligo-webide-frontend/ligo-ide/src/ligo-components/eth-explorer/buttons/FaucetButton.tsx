@@ -1,4 +1,7 @@
 import { memo } from "react";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import Config from "Config";
 import { ToolbarButton, IconButton } from "~/base-components/ui-components";
 
 import fileOps from "~/base-components/file-ops";
@@ -12,18 +15,18 @@ type FaucetButtonProps = {
 
 const FaucetButton: React.FC<FaucetButtonProps> = memo(
   ({ network, isIconButton, kid, children }) => {
-    const availablenetworks = ["tezostest", "tezostestlima", "t4l3nttest", "tezostestgostnet"];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    const availablenetworks: { id: string; faucetUrl: string }[] = Config.networks
+      .filter((v: { id: string; faucetUrl: string | undefined }) => !!v.faucetUrl)
+      .map((v: { id: string; faucetUrl: string | undefined }) => {
+        return { id: v.id, faucetUrl: v.faucetUrl };
+      });
 
     const claim = () => {
       let faucetUrl;
-      if (network === "tezostest") {
-        faucetUrl = "https://faucet.kathmandunet.teztnets.xyz/";
-      } else if (network === "t4l3nttest") {
-        faucetUrl = "https://github.com/Decentralized-Pictures/T4L3NT";
-      } else if (network === "tezostestgostnet") {
-        faucetUrl = "https://faucet.ghostnet.teztnets.xyz/";
-      } else if (network === "tezostestlima") {
-        faucetUrl = "https://faucet.limanet.teztnets.xyz/";
+      const isAvailable = availablenetworks.find((v) => v.id === network);
+      if (isAvailable) {
+        faucetUrl = isAvailable.faucetUrl;
       } else {
         return;
       }
@@ -31,7 +34,7 @@ const FaucetButton: React.FC<FaucetButtonProps> = memo(
       fileOps.openLink(faucetUrl);
     };
 
-    return availablenetworks.indexOf(network) === -1 ? null : isIconButton ? (
+    return !availablenetworks.find((v) => v.id === network) ? null : isIconButton ? (
       <IconButton
         color="transparent"
         id={`kp-faucet-${kid}`}

@@ -1,7 +1,13 @@
 import React from "react";
 
 import { connect } from "react-redux";
-import { DebouncedFormGroup, FormGroup, Label, CustomInput } from "~/base-components/ui-components";
+import {
+  DebouncedFormGroup,
+  FormGroup,
+  Label,
+  CustomInput,
+  Input,
+} from "~/base-components/ui-components";
 
 import {
   WorkspaceContext,
@@ -102,6 +108,25 @@ class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 placeholder="Gist id"
                 readOnly={readOnly}
               />
+              <h4 className="mt-4">Project workflow</h4>
+              <FormGroup className="actionConfirm__checkbox">
+                <div className="ml-4">
+                  <Input
+                    type="checkbox"
+                    id="compilation-info-check-box"
+                    disabled={readOnly}
+                    onChange={() =>
+                      this.onChange("doNotShowCompilationMessage")(
+                        !projectSettings?.get("doNotShowCompilationMessage")
+                      )
+                    }
+                    checked={projectSettings?.get("doNotShowCompilationMessage")}
+                  />
+                  <Label check htmlFor="compilation-info-check-box">
+                    Do not show compilation warning message
+                  </Label>
+                </div>
+              </FormGroup>
               {/* {
               !projectManager.remote &&
               <FormGroup>
