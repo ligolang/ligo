@@ -19,57 +19,33 @@ packages:
   original:
     hackage: hspec-wai-json-0.11.0@sha256:1fdd66a61c84a9ba6f2e1673ed49b2da1f57f025cd3fb9a46d62620ff9259d63,1629
 - completed:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    name: lorentz
+    hackage: lorentz-0.15.0@sha256:5b2b52a8b7a6de7bf4bbf8dca4f9cd2ff2f138ce852099e7a4446a809e29463d,4571
     pantry-tree:
-      sha256: f9ad176951f227c4b4101e3f22f8e45302fc5feca1adc3251cf5766ec00cc215
-      size: 4457
-    subdir: code/lorentz
-    version: 0.14.1
+      sha256: a93642b46d22739245ae46807ff03b87e9c261f79abf1a41d230e2edc5918027
+      size: 4123
   original:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    subdir: code/lorentz
+    hackage: lorentz-0.15.0
 - completed:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    name: morley
+    hackage: morley-1.19.0@sha256:42e84f6950c03943f0d7664e9b0bcb5ac9c176cf3316a4efa77a0e24b2a08bc9,10973
     pantry-tree:
-      sha256: 411f379140411ae9f8b64cf54d8fb735893afb74d97761f7c752e16282851596
-      size: 11111
-    subdir: code/morley
-    version: 1.18.0
+      sha256: 403a33d053cf0e3f6c3aca93ee1c4942c935da4d86ab9a969c3144fffd602e00
+      size: 12075
   original:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    subdir: code/morley
+    hackage: morley-1.19.0
 - completed:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    name: morley-client
+    hackage: morley-client-0.3.0@sha256:cca46092e141216cad1fdbdc3dee5766c7aa4a4071927e1c4836559d2d7df37c,8503
     pantry-tree:
-      sha256: 25f4203e0f9b541370de62903548784c06bdea271baf9f677ee8eac4bf6d7a2e
-      size: 3926
-    subdir: code/morley-client
-    version: 0.2.1
+      sha256: 68052cc9d2d27029cbd3199d82a09fbbb757aa6a2d858bd22675abc1a64d6aad
+      size: 3796
   original:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    subdir: code/morley-client
+    hackage: morley-client-0.3.0
 - completed:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    name: morley-prelude
+    hackage: morley-prelude-0.5.1@sha256:d7e26ed0c15b291899e1871f751079e8e0cdc03546d31dad9bfeb06946e733ab,2784
     pantry-tree:
-      sha256: 78fcaf1516cc89995eee0fc53112cb5ceed9415b55c1604f92ac36c9fc9e4bc9
-      size: 778
-    subdir: code/morley-prelude
-    version: 0.5.1
+      sha256: 42c2dc761c33f57a76158b14a046b159e96d9c8f4079ede61c499e6a24e112bf
+      size: 602
   original:
-    commit: c6ee30f6741a09bfdde8b6efc5795be22c9b0577
-    git: https://gitlab.com/morley-framework/morley.git
-    subdir: code/morley-prelude
+    hackage: morley-prelude-0.5.1
 - completed:
     commit: c8b06c4c8a271fce0c2f41ab18e88d58e64bac52
     git: https://github.com/serokell/base-noprelude.git

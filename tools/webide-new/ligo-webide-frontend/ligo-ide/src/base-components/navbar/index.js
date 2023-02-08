@@ -6,7 +6,6 @@ import { KeypairButton } from "~/base-components/keypair";
 
 import NavLinkLeft from "./NavLinkLeft";
 import NavLinkRight from "./NavLinkRight";
-import User from "./User";
 import "./styles.scss";
 
 export default class Header extends PureComponent {
@@ -94,14 +93,6 @@ export default class Header extends PureComponent {
               Keypair Manager
             </UncontrolledTooltip>
           </KeypairButton>
-          <NavLink
-            to={`/${username}`}
-            exact
-            className="nav-link d-flex p-0"
-            activeClassName="active"
-          >
-            <User profile={profile} extraLoggedInOptions={extraLoggedInOptions} />
-          </NavLink>
         </Nav>
       </Navbar>
     );

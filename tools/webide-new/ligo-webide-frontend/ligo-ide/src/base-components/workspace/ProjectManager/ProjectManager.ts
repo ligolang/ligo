@@ -454,6 +454,19 @@ export default class ProjectManager {
     return filePath;
   }
 
+  static async writeFileWithEditorUpdate(filePath: string, content: string) {
+    if (!(await fileOps.exists(filePath))) {
+      throw new Error(`File <b>${filePath}</b> is not exists exists.`);
+    }
+
+    try {
+      await fileOps.writeFile(filePath, content);
+      modelSessionManager.updateEditorAfterMovedFile(filePath, { path: filePath, content });
+    } catch (e) {
+      throw new Error(`Fail to write to the file: <b>${JSON.stringify(e)}</b>.`);
+    }
+  }
+
   static async renameProject(name: string, newName: string) {
     try {
       const config = await fileOps.readFile(`.workspaces/${name}/config.json`);

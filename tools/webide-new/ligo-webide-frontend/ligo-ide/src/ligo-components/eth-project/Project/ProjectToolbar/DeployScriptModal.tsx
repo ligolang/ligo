@@ -3,6 +3,7 @@ import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
 import { WebIdeApi } from "~/components/api/api";
 import { CompilerManager } from "~/ligo-components/eth-compiler";
+import { validName } from "~/components/validators";
 
 interface DeployScriptModalProps {
   modalRef: React.RefObject<Modal>;
@@ -71,7 +72,7 @@ const DeployScriptModal = ({
       title="Deploy Script"
       textConfirm="Generate"
       pending={loading && "Generating"}
-      confirmDisabled={storage === "" || name === ""}
+      confirmDisabled={storage === "" || name === "" || (name !== "" && !!validName(name))}
       onConfirm={onCreate}
       onCancel={() => {
         setLoading(false);
@@ -84,7 +85,7 @@ const DeployScriptModal = ({
       <DebouncedFormGroup
         label={
           <div>
-            Generate deploy script for <kbd>{tzFilePath}</kbd> with init storage
+            Generate deploy script for <kbd>{tzFilePath}</kbd> with init storage (ligo expression)
           </div>
         }
         value={storage}
@@ -97,6 +98,7 @@ const DeployScriptModal = ({
         value={name}
         onChange={(n: string) => setName(n)}
         placeholder="Name"
+        validator={validName}
       />
       {result && (
         <>

@@ -7,6 +7,7 @@ import notification from "~/base-components/notification";
 import { WebIdeApi } from "~/components/api/api";
 import { ActionParamFormGroup } from "~/ligo-components/eth-contract";
 import { actions } from "~/base-components/workspace";
+import { validAddress, validInt } from "~/components/validators";
 
 interface DeployModalProps {
   modalRef: React.RefObject<Modal>;
@@ -152,7 +153,7 @@ const DeployModal: React.FC<DeployModalProps> = ({
     if (needEstimate) {
       const estimated: boolean = await estimate().catch((e: any) => {
         if (e instanceof Error) {
-          notification.error("Estimation error", e.message);
+          notification.error("Estimation error (Most likely your balance is zero)", e.message);
         } else {
           console.error(e);
         }
@@ -181,7 +182,12 @@ const DeployModal: React.FC<DeployModalProps> = ({
       title="Deploy contract"
       textConfirm={needEstimate ? "Estimate" : "Deploy"}
       pending={loading && (needEstimate ? "Estimating" : "Deploying")}
-      confirmDisabled={storage === "" || selectedSigner === ""}
+      confirmDisabled={
+        storage === "" ||
+        selectedSigner === "" ||
+        !!(delegateAddress !== "" && validAddress(delegateAddress)) ||
+        !!(balance !== "" && validInt(balance))
+      }
       onConfirm={confirmDeployment}
       onCancel={() => {
         if (result !== "") {
@@ -217,7 +223,7 @@ const DeployModal: React.FC<DeployModalProps> = ({
       <ActionParamFormGroup
         key="deploy-param-storage"
         className="mb-2"
-        label={<div>Init storage</div>}
+        label={<div>Init storage (ligo expression)</div>}
         value={storage}
         onChange={(st: string) => setStorage(st)}
         placeholder="Storage"
@@ -284,6 +290,8 @@ const DeployModal: React.FC<DeployModalProps> = ({
         icon="fas fa-map-marker-alt"
         size=""
         type=""
+        feedback={delegateAddress !== "" && validAddress(delegateAddress)}
+        invalid={delegateAddress !== "" && !!validAddress(delegateAddress)}
       />
       <div className="row">
         {/* eslint-disable */}
@@ -298,6 +306,8 @@ const DeployModal: React.FC<DeployModalProps> = ({
             placeholder={option.placeholder}
             size=""
             type=""
+            feedback={(txOptions && txOptions[option.name]) && validInt(txOptions[option.name]) && "Invalid integer"}
+            invalid={(txOptions && txOptions[option.name]) && !!validInt(txOptions[option.name])}
           />
         ))}
         {/* eslint-enable */}

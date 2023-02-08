@@ -64,6 +64,12 @@ export default function navbarItem(projects, selected, username = "local") {
     icon: "fas fa-plus",
     onClick: () => actions.newProject(false),
   });
+  projectDropdown.unshift({
+    id: "my-projects",
+    name: "My Projects",
+    icon: "fas fa-th-list",
+    onClick: () => actions.history.push("/local"),
+  });
 
   return {
     route: selected.author || username,

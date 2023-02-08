@@ -175,6 +175,9 @@ if (process.env.CDN) {
       new BundleStatsWebpackPlugin()
     )
   );
+  overrides.push(addWebpackExternals({
+    'Config': JSON.stringify(require('./config.json')),
+  }))
 }
 module.exports = {
   webpack: override(...overrides),

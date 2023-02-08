@@ -6,6 +6,7 @@ import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";
 
 import networkManager from "../networkManager";
+import { validUrl, validName } from "~/components/validators";
 
 export default class CustomNetworkModal extends PureComponent {
   constructor(props) {
@@ -147,11 +148,7 @@ export default class CustomNetworkModal extends PureComponent {
         pending={pending && "try"}
         textConfirm={status ? (modify ? "Update Network" : "Add Network") : "Check Network"}
         onConfirm={this.onConfirm}
-        confirmDisabled={
-          !option.name ||
-          !/^[0-9a-zA-Z\-_]*$/.test(option.name) ||
-          !/^(http(s)?:\/\/)\w+[^\s]+(\.[^\s]+){1,}$/.test(option.url)
-        }
+        confirmDisabled={!option.name || !!validName(option.name) || !!validUrl(option.url)}
       >
         <DebouncedFormGroup
           ref={this.input}
@@ -159,10 +156,7 @@ export default class CustomNetworkModal extends PureComponent {
           maxLength="50"
           value={option.name}
           onChange={(name) => this.setState({ option: { ...option, name } })}
-          // validator={(v) =>
-          //   !/^[0-9a-zA-Z\-_]*$/.test(v) &&
-          //   "Network name can only contain letters, digits, dash or underscore."
-          // }
+          validator={validName}
         />
         <DebouncedFormGroup
           label="URL of node rpc"
@@ -170,9 +164,7 @@ export default class CustomNetworkModal extends PureComponent {
           maxLength="300"
           value={option.url}
           onChange={(url) => this.setState({ status: null, option: { ...option, url } })}
-          // validator={(v) =>
-          //   !/^(http(s)?:\/\/)\w+[^\s]+(\.[^\s]+){1,}$/.test(v) && "RPC url has to be a network url"
-          // }
+          validator={validUrl}
         />
         {this.renderNetworkInfo()}
       </Modal>

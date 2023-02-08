@@ -199,6 +199,8 @@ export default class CodeEditorCollection extends PureComponent {
         return;
       case "prev-tab":
         this.tabs.current.prevTab();
+      case "compile":
+        this.props.projectManager.compile(null, undefined);
     }
   };
 

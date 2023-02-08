@@ -17,7 +17,7 @@ compile request =
     let initial = case rStorage request of
           Nothing -> ["compile", "contract", fullMainPath]
           Just storage ->
-            ["compile", "storage", fullMainPath, Text.unpack storage]
+            ["compile", "storage", "--no-color", fullMainPath, Text.unpack storage]
 
     (ec, out, err) <- runLigo dirPath $
       initial

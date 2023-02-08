@@ -7,6 +7,7 @@ import notification from "~/base-components/notification";
 import { ProjectManager } from "../ProjectManager";
 import actions from "../actions";
 import { WebIdeApi } from "~/components/api/api";
+import { validName } from "~/components/validators";
 
 type Template = {
   id: string;
@@ -189,9 +190,14 @@ const NewProjectModal = forwardRef((_, ref) => {
       textConfirm="Create Project"
       onConfirm={onCreateProject}
       pending={creating && "Creating..."}
-      confirmDisabled={!name}
+      confirmDisabled={!name || !!validName(name)}
     >
-      <DebouncedFormGroup label="Project name" value={name} onChange={(n: string) => setName(n)} />
+      <DebouncedFormGroup
+        label="Project name"
+        value={name}
+        onChange={(n: string) => setName(n)}
+        validator={validName}
+      />
       {renderTemplate()}
       <DropdownInput
         label="Syntax"
