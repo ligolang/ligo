@@ -185,13 +185,20 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
 
     data = execFileSync(ligoPath, ['--version']).toString().trim()
   } catch (err) {
+    const isLikelyNotFoundError = /ENOENT/.test(err.message)
     const isLikelyPermissionDeniedError = /EACCES/.test(err.message)
-    const errorMessage = `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}${
-      isLikelyPermissionDeniedError
-        ? '. Hint: Check the file permissions for LIGO.'
-        : ''}`
 
-    const answer = await vscode.window.showInformationMessage(
+    let hint = ''
+    if (isLikelyNotFoundError) {
+      hint = `\nHint: Ensure that you've specified the path to LIGO in your Visual Studio Code settings and you have LIGO with support for \`ligo lsp\`, starting from version 0.61.0.`
+    }
+    if (isLikelyPermissionDeniedError) {
+      hint = '\nHint: Check the file permissions for LIGO.'
+    }
+
+    const errorMessage = `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}. ${hint}`
+
+    const answer = await vscode.window.showErrorMessage(
       errorMessage,
       'Choose path',
       'Download',
@@ -211,8 +218,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
           vscode.ConfigurationTarget.Global,
           true,
         )
-        updateLigo()
-        return
+        return await updateLigoImpl(config)
       }
       case 'Download':
         openLigoReleases()
@@ -223,9 +229,24 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
     }
   }
 
+  if (data === '') {
+    await vscode.window.showWarningMessage(
+      '`ligo --version` returned the empty string. Assuming it was built locally. Ensure this LIGO build supports `ligo lsp`.'
+    )
+    return
+  }
+
   const semverTest = semver.valid(semver.coerce(data))
   if (semverTest) {
     promptLigoUpdate(ligoPath, semverTest)
+
+    if (semver.lt(semverTest, semver.coerce('0.61.0'))) {
+      vscode.window.showErrorMessage(
+        'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.'
+      )
+      throw new Error("Unsupported version")
+    }
+
     return
   }
 
