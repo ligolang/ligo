@@ -11,7 +11,7 @@ data ServerConfig = ServerConfig
   { scSquirrelPath :: FilePath
   , scPort :: Int
   , scHostname :: Text
-  , scVerbose :: Bool
+  , scVerbosity :: Int
   , scWorkspacePrefix :: Text
   , scClientCounter :: IORef Int
   }
@@ -60,10 +60,12 @@ mkParserInfo clientCounter =
             <> value "localhost"
             <> help "server hostname"
           )
-      <*> switch
-          ( long "verbose"
+      <*> option auto
+          ( long "verbosity"
             <> short 'v'
-            <> help "print received requests and the responses"
+            <> showDefault
+            <> value 0
+            <> help "verbosity level (max 2)"
           )
       <*> strOption
           ( long "workspace-prefix"

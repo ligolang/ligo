@@ -21,7 +21,12 @@ main = do
   config <- readConfig
 
   -- set up logging
-  handleScribe <- mkHandleScribe ColorIfTerminal stdout (permitItem DebugS) V2
+  let logLevel = case scVerbosity config of
+        0 -> WarningS
+        1 -> InfoS
+        _ -> DebugS
+
+  handleScribe <- mkHandleScribe ColorIfTerminal stdout (permitItem logLevel) V2
   let makeLogEnv =
         registerScribe "stdout" handleScribe defaultScribeSettings
           =<< initLogEnv "webide-language-server" ""
