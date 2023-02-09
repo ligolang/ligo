@@ -110,7 +110,7 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
   | E_raw_code _ -> Unused
   | E_constructor { constructor = _; element } -> self element
   | E_matching { matchee; cases } -> usages (self matchee :: self_cases cases)
-  | E_record fields -> usages (List.map ~f:self (Record.LMap.to_list fields))
+  | E_record fields -> usages (List.map ~f:self (Record.values fields))
   | E_accessor { struct_; path = _ } -> self struct_
   | E_update { struct_; path = _; update } -> usages [ self struct_; self update ]
   | E_type_inst { forall; type_ = _ } -> self forall
@@ -130,25 +130,9 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
 
 let uncurried_labels (depth : int) = Label.range 0 depth
 
-let uncurried_rows (depth : int) (args : type_expression list) : rows =
-  let labels = uncurried_labels depth in
-  let fields =
-    Record.of_list
-      (List.mapi
-         ~f:(fun i (label, ty) ->
-           ( label
-           , ({ associated_type = ty; michelson_annotation = None; decl_pos = i }
-               : row_element) ))
-         (match List.zip labels args with
-         | Ok x -> x
-         | _ ->
-           failwith
-           @@ Format.asprintf
-                "uncurried_rows: args length : %i expected %i\n%!"
-                (List.length args)
-                depth))
-  in
-  { fields; layout = L_comb }
+let uncurried_rows (depth : int) (args : type_expression list) : row =
+  assert (List.length args = depth);
+  Row.create_tuple args
 
 
 let uncurried_record_type ~loc depth args =

@@ -264,7 +264,7 @@ module Mutator = struct
       let+ struct_, mutation = self struct_ in
       return @@ E_accessor { struct_; path }, mutation
     | E_record m ->
-      let ml = Record.LMap.to_kv_list m in
+      let ml = Record.to_list m in
       let mls =
         List.map
           ~f:(fun (l, v) ->
@@ -273,7 +273,7 @@ module Mutator = struct
           ml
       in
       let+ m', mutation = combine_list ml mls in
-      return @@ E_record (Record.LMap.of_list m'), mutation
+      return @@ E_record (Record.of_list m'), mutation
     | E_update { struct_; path; update } ->
       let+ struct_, update, mutation =
         combine struct_ (self struct_) update (self update)

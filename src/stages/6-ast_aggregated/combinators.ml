@@ -1,6 +1,8 @@
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
+open Ligo_prim
+open Literal_types
 open Types
 
 (* Helpers for accessing and constructing elements are derived using
@@ -37,9 +39,6 @@ type type_content = [%import: Types.type_content]
     ; wrap_get = "type_content", get
     ; default_get = `Option
     }]
-
-open Ligo_prim
-open Literal_types
 
 let t_constant ~loc injection parameters : type_expression =
   t_constant ~loc { language = Backend.Michelson.name; injection; parameters } ()
@@ -82,12 +81,22 @@ let t__type_ ~loc t t' : type_expression = t_constant ~loc _type_ [ t; t' ]
 
 
 let t_mutez = t_tez
+let default_layout = Layout.default
 
-let t_record ~loc ~layout fields : type_expression =
-  make_t ~loc (T_record { fields; layout })
+let fields_with_no_annot fields =
+  List.map ~f:(fun (name, _) -> Layout.{ name; annot = None }) fields
 
 
-let default_layout : Layout.t = Layout.L_tree
+let ez_t_record ~loc ?(layout = default_layout) lst : type_expression =
+  let layout = layout @@ fields_with_no_annot lst in
+  let row = Row.of_alist_exn ~layout lst in
+  make_t ~loc (T_record row)
+
+(* hmm *)
+let ez_t_record_hmm ~loc ~layout lst : type_expression =
+  let row = Row.of_alist_exn ~layout lst in
+  make_t ~loc (T_record row)
+
 
 let make_t_ez_record
     ~loc
@@ -95,67 +104,34 @@ let make_t_ez_record
     (lst : (string * type_expression) list)
     : type_expression
   =
-  let lst =
-    List.mapi
-      ~f:(fun i (x, y) ->
-        ( Label.of_string x
-        , ({ associated_type = y; michelson_annotation = None; decl_pos = i }
-            : row_element) ))
-      lst
-  in
-  let map = Record.of_list lst in
-  t_record ~loc ~layout map
-
-
-let ez_t_record ~loc ?(layout = default_layout) lst : type_expression =
-  let m = Record.of_list lst in
-  t_record ~loc ~layout m
+  let lst = List.map ~f:(fun (name, t) -> Label.of_string name, t) lst in
+  ez_t_record ~loc ~layout lst
 
 
 let t_pair ~loc a b : type_expression =
-  ez_t_record
-    ~loc
-    [ Label.of_int 0, { associated_type = a; michelson_annotation = None; decl_pos = 0 }
-    ; Label.of_int 1, { associated_type = b; michelson_annotation = None; decl_pos = 1 }
-    ]
+  ez_t_record ~loc [ Label.of_int 0, a; Label.of_int 1, b ]
 
 
 let t_triplet ~loc a b c : type_expression =
-  ez_t_record
-    ~loc
-    [ Label "0", { associated_type = a; michelson_annotation = None; decl_pos = 0 }
-    ; Label "1", { associated_type = b; michelson_annotation = None; decl_pos = 1 }
-    ; Label "2", { associated_type = c; michelson_annotation = None; decl_pos = 2 }
-    ]
+  ez_t_record ~loc [ Label "0", a; Label "1", b; Label "2", c ]
 
 
 let t_unforged_ticket ~loc ty : type_expression =
   ez_t_record
     ~loc
-    [ ( Label "ticketer"
-      , { associated_type = t_address ~loc (); michelson_annotation = None; decl_pos = 0 }
-      )
-    ; Label "value", { associated_type = ty; michelson_annotation = None; decl_pos = 1 }
-    ; ( Label "amount"
-      , { associated_type = t_nat ~loc (); michelson_annotation = None; decl_pos = 2 } )
+    [ Label "ticketer", t_address ~loc ()
+    ; Label "value", ty
+    ; Label "amount", t_nat ~loc ()
     ]
 
-
-let t_sum ~loc ~layout fields : type_expression = make_t ~loc (T_sum { fields; layout })
 
 let t_sum_ez ~loc ?(layout = default_layout) (lst : (string * type_expression) list)
     : type_expression
   =
-  let lst =
-    List.mapi
-      ~f:(fun i (x, y) ->
-        ( Label.of_string x
-        , ({ associated_type = y; michelson_annotation = None; decl_pos = i }
-            : row_element) ))
-      lst
-  in
-  let map = Record.of_list lst in
-  t_sum ~loc ~layout map
+  let lst = List.map ~f:(fun (name, t) -> Label.of_string name, t) lst in
+  let layout = layout @@ fields_with_no_annot lst in
+  let map = Row.of_alist_exn ~layout lst in
+  make_t ~loc (T_sum map)
 
 
 let t_bool ~loc () : type_expression =
@@ -219,13 +195,12 @@ let get_t_option (t : type_expression) : type_expression option =
   let l_some = Label.of_string "Some" in
   match t.type_content with
   | T_sum { fields; _ } ->
-    let keys = Record.LMap.keys fields in
+    let keys = Record.labels fields in
     (match keys with
     | [ a; b ]
       when (Label.equal a l_none && Label.equal b l_some)
            || (Label.equal a l_some && Label.equal b l_none) ->
-      let some = Record.LMap.find l_some fields in
-      Some some.Rows.associated_type
+      Record.find_opt fields l_some
     | _ -> None)
   | _ -> None
 
@@ -303,12 +278,13 @@ let get_t_michelson_code (t : type_expression) : unit option = get_t_michelson_p
 
 let tuple_of_record (m : _ Record.t) =
   let aux i =
-    let opt = Record.LMap.find_opt (Label.of_int i) m in
+    let opt = Record.find_opt m (Label.of_int i) in
     Option.bind ~f:(fun opt -> Some (opt, i + 1)) opt
   in
-  let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
-  List.map ~f:(fun ({ associated_type; _ } : row_element) -> associated_type) l
+  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
+let t_tuple ~loc xs : type_expression =
+  ez_t_record ~loc @@ List.mapi ~f:(fun i t -> Label.of_int i, t) xs
 
 let get_t_tuple (t : type_expression) : type_expression list option =
   match t.type_content with
@@ -398,7 +374,7 @@ let is_t_mutez t = is_t_tez t
 let is_t_bool t =
   match t.type_content with
   | T_sum { fields; _ } ->
-    (match Record.LMap.keys fields with
+    (match Record.labels fields with
     | [ Label "True"; Label "False" ] -> true
     | _ -> false)
   | _ -> false
@@ -431,9 +407,7 @@ let assert_t__type_ : type_expression -> unit option =
 
 
 let ez_e_record (lst : (Label.t * expression) list) : expression_content =
-  let aux prev (k, v) = Record.LMap.add k v prev in
-  let map = List.fold_left ~f:aux ~init:Record.LMap.empty lst in
-  E_record map
+  E_record (Record.of_list lst)
 
 
 let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments = [] }
@@ -526,32 +500,24 @@ let e_a_record ~loc ?(layout = default_layout) r =
   e_record
     ~loc
     r
-    (t_record
+    (ez_t_record
        ~loc
        ~layout
-       (Record.LMap.map
-          (fun t ->
-            let associated_type = get_type t in
-            ({ associated_type; michelson_annotation = None; decl_pos = 0 } : row_element))
-          r))
+       (List.map ~f:(fun (label, expr) -> label, expr.type_expression) (Record.to_list r)))
 
 
 let ez_e_a_record ~loc ?layout r =
   make_e
     ~loc
     (ez_e_record r)
-    (ez_t_record
-       ~loc
-       ?layout
-       (List.mapi
-          ~f:(fun i (x, y) ->
-            ( x
-            , ({ associated_type = y.type_expression
-               ; michelson_annotation = None
-               ; decl_pos = i
-               }
-                : row_element) ))
-          r))
+    (ez_t_record ~loc ?layout (List.map ~f:(fun (x, y) -> x, y.type_expression) r))
+
+(* hmm *)
+let ez_e_a_record_hmm ~loc ~layout r =
+  make_e
+    ~loc
+    (ez_e_record r)
+    (ez_t_record_hmm ~loc ~layout (List.map ~f:(fun (x, y) -> x, y.type_expression) r))
 
 
 let e_a_variable ~loc v ty = e_variable ~loc v ty
@@ -651,10 +617,7 @@ let get_record_field_type (t : type_expression) (label : Label.t) : type_express
   =
   match get_t_record_opt t with
   | None -> None
-  | Some struct_ ->
-    (match Record.LMap.find_opt label struct_.fields with
-    | None -> None
-    | Some row_element -> Some row_element.associated_type)
+  | Some struct_ -> Record.find_opt struct_.fields label
 
 
 let get_variant_field_type (t : type_expression) (label : Label.t)
@@ -662,10 +625,7 @@ let get_variant_field_type (t : type_expression) (label : Label.t)
   =
   match get_t_sum_opt t with
   | None -> None
-  | Some struct_ ->
-    (match Record.LMap.find_opt label struct_.fields with
-    | None -> None
-    | Some row_element -> Some row_element.associated_type)
+  | Some struct_ -> Record.find_opt struct_.fields label
 
 
 let get_type_abstractions (e : expression) =

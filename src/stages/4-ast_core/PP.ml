@@ -8,36 +8,6 @@ open Simple_utils.PP_helpers
 
 type 'a pretty_printer = Format.formatter -> 'a -> unit
 
-let lmap_sep value sep ppf m =
-  let lst = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) m in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-
-let record_sep value sep ppf (m : 'a Record.t) =
-  let lst = Record.LMap.to_kv_list m in
-  fprintf ppf "%a" (lmap_sep value sep) lst
-
-
-let tuple_sep value sep ppf m =
-  assert (Record.is_tuple m);
-  let lst = Record.tuple_of_record m in
-  let new_pp ppf (_, v) = fprintf ppf "%a" value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-
-let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
-  if Record.is_tuple m
-  then fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
-  else fprintf ppf format_record (record_sep value (tag sep_record)) m
-
-
-let tuple_or_record_sep_type value =
-  tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
-
-
-let lmap_sep_d x = lmap_sep x (tag " ,@ ")
-
 let rec type_expression ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
   if Option.is_some (Combinators.get_t_bool te)
@@ -49,6 +19,7 @@ let rec type_expression ppf (te : type_expression) : unit =
 
 and bool ppf = fprintf ppf "bool"
 
+and layout = (Simple_utils.PP_helpers.if_present Layout.pp)
 and option ppf (te : type_expression) =
   let t = Combinators.get_t_option te in
   match t with
@@ -60,20 +31,14 @@ and type_content : formatter -> type_content -> unit =
  fun ppf te ->
   match te with
   | T_variable tv -> Type_var.pp ppf tv
-  | T_sum m ->
-    fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (Record.LMap.to_kv_list_rev m.fields)
-  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
+  | T_sum row -> Row.PP.sum_type type_expression layout ppf row
+  | T_record row -> Row.PP.record_type type_expression layout ppf row
   | T_arrow a -> Arrow.pp type_expression ppf a
   | T_app app -> Type_app.pp (Module_access.pp Type_var.pp) type_expression ppf app
   | T_module_accessor ma -> Module_access.pp Type_var.pp ppf ma
   | T_singleton x -> Literal_value.pp ppf x
   | T_abstraction x -> Abstraction.pp_type_abs type_expression ppf x
   | T_for_all x -> Abstraction.pp_forall type_expression ppf x
-
-
-and row : formatter -> row_element -> unit =
- fun ppf { associated_type; michelson_annotation = _; decl_pos = _ } ->
-  fprintf ppf "%a" type_expression associated_type
 
 
 let type_expression_option ppf (te : type_expression option) : unit =

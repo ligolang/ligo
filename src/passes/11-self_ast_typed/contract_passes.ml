@@ -94,7 +94,7 @@ and get_fv expr =
     return (merge_env env env_c) @@ E_matching { matchee; cases }
   | E_record m ->
     let res = Record.map ~f:self m in
-    let keys, env_exp = List.unzip @@ Record.LMap.to_kv_list res in
+    let keys, env_exp = List.unzip @@ Record.to_list res in
     let env, exp = List.unzip env_exp in
     let m = Record.of_list @@ List.zip_exn keys exp in
     return (unions env) @@ E_record m

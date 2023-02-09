@@ -52,13 +52,37 @@ let compile_type_attributes : I.Attr.t -> O.TypeOrModuleAttr.t =
 let compile_module_attributes = compile_type_attributes
 let compile_contract_attributes = compile_type_attributes
 
-let compile_row_attributes : string list -> Layout.t option =
- fun attributes ->
-  List.find_map attributes ~f:(fun attr ->
-      match is_layout attr with
-      | Some "tree" -> Some (Layout.L_tree : Layout.t)
-      | Some "comb" -> Some Layout.L_comb
-      | _ -> None)
+let compile_fields_to_layout_fields fields =
+  List.map fields ~f:(fun (label, I.{ row_elem_attributes; _ }) ->
+      let annot = compile_row_elem_attributes row_elem_attributes in
+      { Layout.name = label; annot })
+
+
+let compile_layout_tree fields = Layout.tree (compile_fields_to_layout_fields fields)
+let compile_layout_comb fields = Layout.comb (compile_fields_to_layout_fields fields)
+
+let compile_layout_default fields =
+  Layout.default (compile_fields_to_layout_fields fields)
+
+
+let compile_row_attributes
+    : (Label.t * I.type_expression I.row_element) list -> string list -> Layout.t option
+  =
+ fun fields attributes ->
+  (* if at least one annotation is present, we will build the default layout *)
+  match attributes with
+  | [] ->
+    let has_michelson_annot =
+      List.exists fields ~f:(fun (_, I.{ row_elem_attributes; _ }) ->
+          Option.is_some (compile_row_elem_attributes row_elem_attributes))
+    in
+    if has_michelson_annot then Some (compile_layout_default fields) else None
+  | _ ->
+    List.find_map attributes ~f:(fun attr ->
+        match is_layout attr with
+        | Some "tree" -> Some (compile_layout_tree fields)
+        | Some "comb" -> Some (compile_layout_comb fields)
+        | _ -> None)
 
 
 let rec compile_type_expression ~raise (type_ : I.type_expression) : O.type_expression =
@@ -122,32 +146,24 @@ let rec compile_type_expression ~raise (type_ : I.type_expression) : O.type_expr
     return @@ O.T_for_all for_all
 
 
-and compile_row ~raise ({ fields; attributes } : _ I.non_linear_rows) : O.rows =
+and compile_row ~raise ({ fields; attributes } : _ I.non_linear_rows) : O.row =
+  let layout = compile_row_attributes fields attributes in
   let fields =
-    List.Assoc.map
-      fields
-      ~f:(fun
-           ({ associated_type; decl_pos; attributes } : _ Rows.row_element)
-           : _ Rows.row_element_mini_c
-         ->
+    List.Assoc.map fields ~f:(fun ({ associated_type; _ } : _ I.row_element) ->
         let associated_type = compile_type_expression ~raise associated_type in
-        let michelson_annotation = compile_row_elem_attributes attributes in
-        { associated_type; decl_pos; michelson_annotation })
-    |> Record.of_list
+        associated_type)
+    |> Label.Map.of_alist_exn
   in
-  let layout = compile_row_attributes attributes in
   { fields; layout }
 
 
-and desugar_tuple_to_row ~raise (tuple : I.type_expression list) : O.rows =
+and desugar_tuple_to_row ~raise (tuple : I.type_expression list) : O.row =
   let fields =
     tuple
     |> List.mapi ~f:(fun i type_ ->
            let type_ = compile_type_expression ~raise type_ in
-           ( Label.of_int i
-           , ({ associated_type = type_; michelson_annotation = None; decl_pos = i }
-               : _ Rows.row_element_mini_c) ))
-    |> Record.of_list
+           Label.of_int i, type_)
+    |> Label.Map.of_alist_exn
   in
   { fields; layout = None }
 

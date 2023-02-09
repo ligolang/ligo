@@ -32,8 +32,8 @@ and item =
   | C_module of Module_var.t * Signature.t
   | C_texists_var of Type_var.t * Kind.t
   | C_texists_eq of Type_var.t * Kind.t * Type.t
-  | C_lexists_var of Layout_var.t
-  | C_lexists_eq of Layout_var.t * Type.layout
+  | C_lexists_var of Layout_var.t * fields
+  | C_lexists_eq of Layout_var.t * fields * Type.layout
   | C_pos of pos
       (** A mutable lock is a "fitch-style lock". A lock is used to 
           "lock" mutable variables in the context from being used. 
@@ -42,6 +42,8 @@ and item =
           mutable variables. 
       *)
   | C_mut_lock of mut_lock
+
+and fields = Label.Set.t
 
 val empty : t
 val add : t -> item -> t
@@ -58,8 +60,8 @@ val add_type : t -> Type_var.t -> Type.t -> t
 val add_type_var : t -> Type_var.t -> Kind.t -> t
 val add_texists_var : t -> Type_var.t -> Kind.t -> t
 val add_texists_eq : t -> Type_var.t -> Kind.t -> Type.t -> t
-val add_lexists_var : t -> Layout_var.t -> t
-val add_lexists_eq : t -> Layout_var.t -> Type.layout -> t
+val add_lexists_var : t -> Layout_var.t -> fields -> t
+val add_lexists_eq : t -> Layout_var.t -> fields -> Type.layout -> t
 val add_module : t -> Module_var.t -> Signature.t -> t
 
 val get_value
@@ -77,7 +79,8 @@ val get_lexists_vars : t -> Layout_var.Set.t
 val get_type_var : t -> Type_var.t -> Kind.t option
 val get_texists_var : t -> Type_var.t -> Kind.t option
 val get_texists_eq : t -> Type_var.t -> Type.t option
-val get_lexists_eq : t -> Layout_var.t -> Type.layout option
+val get_lexists_var : t -> Layout_var.t -> fields option
+val get_lexists_eq : t -> Layout_var.t -> (fields * Type.layout) option
 val get_signature : t -> Module_var.t List.Ne.t -> Signature.t option
 
 val get_type_or_type_var
@@ -107,7 +110,7 @@ type _ exit =
 
 val drop_until : 'a -> on_exit:'a exit -> pos:pos -> 'a * Substitution.t
 val unlock : 'a -> on_exit:'a exit -> lock:mut_lock -> 'a * Substitution.t
-val get_record : t -> Type.row_element Record.t -> (Type_var.t option * Type.row) option
+val get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) option
 val get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
 
 module Well_formed : sig
@@ -119,7 +122,7 @@ end
 module Apply : sig
   val type_ : t -> Type.t -> Type.t
   val row : t -> Type.row -> Type.row
-  val row_elem : t -> Type.row_element -> Type.row_element
+  val layout : t -> Type.layout -> Type.layout
   val sig_item : t -> Signature.item -> Signature.item
   val sig_ : t -> Signature.t -> Signature.t
 end

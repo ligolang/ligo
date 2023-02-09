@@ -120,56 +120,42 @@ let t_abstraction2 ~loc ?sugar name kind_l kind_r : type_expression =
 
 
 let t_record ~loc ?sugar ?layout fields : type_expression =
-  make_t ~loc ?sugar @@ T_record { fields; layout }
+  make_t ~loc ?sugar @@ T_record (Row.create ~layout fields)
 
 
-let default_layout : Layout.t = Layout.L_tree
+let default_layout fields : Layout.t = Layout.comb fields
+
+let ez_t_record ~loc ?sugar ?layout lst : type_expression =
+  let row = Row.of_alist_exn ~layout lst in
+  make_t ~loc ?sugar @@ T_record row
+
 
 let make_t_ez_record ~loc ?sugar ?layout (lst : (string * type_expression) list)
     : type_expression
   =
-  let lst =
-    List.mapi
-      ~f:(fun i (x, y) ->
-        ( Label.of_string x
-        , ({ associated_type = y; michelson_annotation = None; decl_pos = i }
-            : row_element) ))
-      lst
-  in
-  let map = Record.of_list lst in
-  t_record ~loc ?sugar ?layout map
-
-
-let ez_t_record ~loc ?sugar ?(layout = default_layout) lst : type_expression =
-  let m = Record.of_list lst in
-  t_record ~loc ?sugar ~layout m
+  let lst = List.map ~f:(fun (x, y) -> Label.of_string x, y) lst in
+  ez_t_record ~loc ?sugar ?layout lst
 
 
 let t_pair ~loc ?sugar a b : type_expression =
-  ez_t_record
-    ~loc
-    ?sugar
-    [ Label.of_int 0, { associated_type = a; michelson_annotation = None; decl_pos = 0 }
-    ; Label.of_int 1, { associated_type = b; michelson_annotation = None; decl_pos = 1 }
-    ]
+  ez_t_record ~loc ?sugar [ Label.of_int 0, a; Label.of_int 1, b ]
 
 
 let t_sum ~loc ?sugar ?layout fields : type_expression =
-  make_t ~loc ?sugar @@ T_sum { fields; layout }
+  make_t ~loc ?sugar @@ T_sum (Row.create ~layout fields)
+
+
+let ez_t_sum ~loc ?sugar ?layout lst =
+  (* inconsistent naming conventions, but [t_sum_ez] is already taken *)
+  let row = Row.of_alist_exn ~layout lst in
+  make_t ~loc ?sugar @@ T_sum row
 
 
 let t_sum_ez ~loc ?sugar ?layout (lst : (string * type_expression) list) : type_expression
   =
-  let lst =
-    List.mapi
-      ~f:(fun i (x, y) ->
-        ( Label.of_string x
-        , ({ associated_type = y; michelson_annotation = None; decl_pos = i }
-            : row_element) ))
-      lst
-  in
-  let map = Record.of_list lst in
-  t_sum ~loc ?sugar ?layout map
+  (* this should be [make_t_ez_sum] if we want to be consistent *)
+  let lst = List.map ~f:(fun (x, y) -> Label.of_string x, y) lst in
+  ez_t_sum ~loc ?sugar ?layout lst
 
 
 let t_bool ~loc ?sugar () : type_expression =
@@ -194,43 +180,33 @@ let get_t_bool (t : type_expression) : unit option =
 let get_t_option (t : type_expression) : type_expression option =
   match t.type_content with
   | T_sum { fields; _ } ->
-    let keys = Record.LMap.keys fields in
-    (match keys with
-    | [ Label "Some"; Label "None" ] | [ Label "None"; Label "Some" ] ->
-      let some = Record.LMap.find (Label "Some") fields in
-      Some some.associated_type
-    | _ -> None)
+    let keys = Map.key_set fields in
+    if Set.length keys = 2 && Set.mem keys (Label "Some") && Set.mem keys (Label "None")
+    then Map.find fields (Label "Some")
+    else None
   | _ -> None
 
 
-let tuple_of_record (m : _ Rows.row_element_mini_c Record.t) =
-  let aux i =
-    let opt = Record.LMap.find_opt (Label.of_int i) m in
-    Option.bind ~f:(fun opt -> Some (opt, i + 1)) opt
-  in
-  let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
-  List.map ~f:(fun Rows.{ associated_type; _ } -> associated_type) l
-
+(* wtf why is this 'record'? should be 'row' *)
+let tuple_of_record row = Row.to_tuple row
 
 let get_t_tuple (t : type_expression) : type_expression list option =
   match t.type_content with
-  | T_record struct_ -> Some (tuple_of_record struct_.fields)
+  | T_record row -> Some (tuple_of_record row)
   | _ -> None
 
 
 let get_t_pair (t : type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_record m ->
-    let lst = tuple_of_record m.fields in
-    (match List.(length lst = 2) with
-    | true -> Some List.(nth_exn lst 0, nth_exn lst 1)
-    | false -> None)
+    (match tuple_of_record m with
+    | [ t1; t2 ] -> Some (t1, t2)
+    | _ -> None)
   | _ -> None
 
 
 let ez_e_record ~loc (lst : (Label.t * expression) list) : expression =
-  let aux prev (k, v) = Record.LMap.add k v prev in
-  let map = List.fold_left ~f:aux ~init:Record.LMap.empty lst in
+  let map = Record.of_list lst in
   e_record ~loc map ()
 
 
@@ -403,9 +379,9 @@ let get_e_unit (t : expression) =
 let get_e_pair t =
   match t with
   | E_record r ->
-    let lst = Record.LMap.to_kv_list_rev r in
+    let lst = Record.to_list r in
     (match lst with
-    | [ (Label "O", a); (Label "1", b) ] | [ (Label "1", b); (Label "0", a) ] ->
+    | [ (Label "0", a); (Label "1", b) ] | [ (Label "1", b); (Label "0", a) ] ->
       Some (a, b)
     | _ -> None)
   | _ -> None
@@ -433,10 +409,10 @@ let get_record_field_type (t : type_expression) (label : Label.t) : type_express
   =
   match get_t_record t with
   | None -> None
-  | Some struct_ ->
-    (match Record.LMap.find_opt label struct_.fields with
+  | Some row ->
+    (match Map.find row.fields label with
     | None -> None
-    | Some row_element -> Some row_element.associated_type)
+    | Some elem_type -> Some elem_type)
 
 
 let get_e_ascription a =
@@ -458,10 +434,9 @@ let get_type_abstractions (e : expression) =
 let extract_pair : expression -> (expression * expression) option =
  fun e ->
   match e.expression_content with
-  | E_record r ->
-    let lst = Record.LMap.to_kv_list_rev r in
-    (match lst with
-    | [ (Label "O", a); (Label "1", b) ] | [ (Label "1", b); (Label "0", a) ] ->
+  | E_record record ->
+    (match Record.to_list record with
+    | [ (Label "0", a); (Label "1", b) ] | [ (Label "1", b); (Label "0", a) ] ->
       Some (a, b)
     | _ -> None)
   | _ -> None
@@ -470,7 +445,7 @@ let extract_pair : expression -> (expression * expression) option =
 let extract_record : expression -> (Label.t * expression) list option =
  fun e ->
   match e.expression_content with
-  | E_record lst -> Some (Record.LMap.to_kv_list lst)
+  | E_record lst -> Some (Record.to_list lst)
   | _ -> None
 
 
@@ -488,16 +463,24 @@ let extract_map : expression -> (expression * expression) list option =
 
 
 let t_michelson_sum ~loc l l_ann r r_ann =
-  let row decl_pos associated_type michelson_annotation : _ Rows.row_element_mini_c =
-    { associated_type; decl_pos; michelson_annotation = Some michelson_annotation }
+  let l_label = Label.Label "M_left" in
+  let r_label = Label.Label "M_right" in
+  let layout =
+    Layout.Inner
+      [ Field Layout.{ name = l_label; annot = Some l_ann }
+      ; Field { name = r_label; annot = Some r_ann }
+      ]
   in
-  t_sum
-    ~loc
-    (Record.of_list [ Label "M_left", row 0 l l_ann; Label "M_right", row 1 r r_ann ])
+  ez_t_sum ~loc ~layout [ l_label, l; r_label, r ]
 
 
 let t_michelson_pair ~loc l l_ann r r_ann =
-  let row decl_pos associated_type michelson_annotation : _ Rows.row_element_mini_c =
-    { associated_type; decl_pos; michelson_annotation = Some michelson_annotation }
+  let l_label = Label.Label "0" in
+  let r_label = Label.Label "1" in
+  let layout =
+    Layout.Inner
+      [ Field Layout.{ name = l_label; annot = Some l_ann }
+      ; Field { name = r_label; annot = Some r_ann }
+      ]
   in
-  t_record ~loc (Record.of_list [ Label "0", row 0 l l_ann; Label "1", row 1 r r_ann ])
+  ez_t_record ~loc ~layout [ l_label, l; r_label, r ]

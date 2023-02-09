@@ -2,7 +2,7 @@ open Ligo_prim
 
 type t =
   { type_subst : (Kind.t * Type.t) Type_var.Map.t
-  ; layout_subst : Type.layout Layout_var.Map.t
+  ; layout_subst : (Label.Set.t * Type.layout) Layout_var.Map.t
   }
 [@@deriving sexp, compare]
 
@@ -12,8 +12,8 @@ let add_texists_eq t tvar kind type_ =
   { t with type_subst = Map.set t.type_subst ~key:tvar ~data:(kind, type_) }
 
 
-let add_lexists_eq t lvar layout =
-  { t with layout_subst = Map.set t.layout_subst ~key:lvar ~data:layout }
+let add_lexists_eq t lvar fields layout =
+  { t with layout_subst = Map.set t.layout_subst ~key:lvar ~data:(fields, layout) }
 
 
 let find_texists_eq t tvar = Map.find t.type_subst tvar
@@ -60,20 +60,17 @@ module Apply = struct
 
 
   and row subst (t : Type.row) : Type.row =
-    let fields = Record.map ~f:(row_elem subst) t.fields in
+    let module Row = Type.Row in
+    let fields = Map.map ~f:(type_ subst) t.fields in
     let layout = layout subst t.layout in
-    { fields; layout }
-
-
-  and row_elem subst (t : Type.row_element) : Type.row_element =
-    Rows.map_row_element_mini_c (type_ subst) t
+    Row.create ~layout fields
 
 
   and layout subst (t : Type.layout) : Type.layout =
     match t with
-    | L_tree | L_comb -> t
+    | L_concrete _ -> t
     | L_exists lvar ->
       (match find_lexists_eq subst lvar with
-      | Some t -> layout subst t
+      | Some (_fields, t) -> layout subst t
       | None -> t)
 end

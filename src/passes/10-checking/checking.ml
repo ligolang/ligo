@@ -168,45 +168,31 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     const @@ T_for_all { ty_binder; kind; type_ }
 
 
-and evaluate_row ~default_layout ({ fields; layout } : I.rows)
-    : (Type.row, 'err, 'wrn) C.t
+and evaluate_row ~default_layout ({ fields; layout } : I.row) : (Type.row, 'err, 'wrn) C.t
   =
   let open C in
   let open Let_syntax in
   let%bind layout =
     match layout with
     | Some layout -> return @@ evaluate_layout layout
-    | None -> default_layout ()
+    | None -> default_layout (Map.key_set fields)
   in
-  let%bind fields =
-    fields |> Record.map ~f:(evaluate_row_elem ~default_layout) |> all_lmap
-  in
-  return { Type.fields; layout }
+  let%bind fields = fields |> Map.map ~f:(evaluate_type ~default_layout) |> all_lmap in
+  return { Type.Row.fields; layout }
 
 
-and evaluate_layout (layout : Layout.t) : Type.layout =
-  match layout with
-  | L_tree -> L_tree
-  | L_comb -> L_comb
+and evaluate_layout (layout : Layout.t) : Type.layout = L_concrete layout
 
-
-and evaluate_row_elem ~default_layout (row_elem : I.row_element)
-    : (Type.row_element, 'err, 'wrn) C.t
-  =
-  let open C in
-  let open Let_syntax in
-  let%map associated_type = evaluate_type ~default_layout row_elem.associated_type in
-  { row_elem with associated_type }
-
-
-let evaluate_type_with_lexists type_ =
-  let open C in
-  evaluate_type ~default_layout:lexists type_
+(* let evaluate_type_with_lexists type_ = *)
+(*   let open C in *)
+(*   evaluate_type ~default_layout:lexists type_ *)
 
 
 let evaluate_type_with_default_layout type_ =
   let open C in
-  evaluate_type ~default_layout:(fun () -> return Type.default_layout) type_
+  evaluate_type
+    ~default_layout:(fun fields -> return @@ Type.default_layout_from_field_set fields)
+    type_
 
 
 let infer_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
@@ -247,12 +233,6 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
     raise
       (corner_case
          "chest / chest_key are not allowed in the syntax (only tests need this type)")
-
-
-let equal_lmap_doms lmap1 lmap2 =
-  let open Record in
-  let dom lmap = LSet.of_list (LMap.keys lmap) in
-  LSet.equal (dom lmap1) (dom lmap2)
 
 
 let rec check_expression (expr : I.expression) (type_ : Type.t)
@@ -320,13 +300,16 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         return @@ O.E_lambda lambda)
   | E_record record, T_record row ->
     let%bind () =
-      assert_ (equal_lmap_doms record row.fields) ~error:(record_mismatch expr type_)
+      assert_
+        (Set.equal (Map.key_set record) (Map.key_set row.fields))
+        ~error:(record_mismatch expr type_)
     in
     let%bind record =
       record
-      |> Record.LMap.mapi (fun label expr ->
-             let type_ = Record.LMap.find label row.fields in
-             check expr type_.associated_type)
+      |> Map.mapi ~f:(fun ~key:label ~data:expr ->
+             (* Invariant: [Map.key_set record = Map.key_set row.fields]  *)
+             let type_ = Map.find_exn row.fields label in
+             check expr type_)
       |> all_lmap
     in
     const
@@ -336,9 +319,9 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   | E_update { struct_; path; update }, T_record row ->
     let%bind struct_ = check struct_ type_ in
     let%bind field_row_elem =
-      raise_opt ~error:(bad_record_access path) @@ Record.LMap.find_opt path row.fields
+      raise_opt ~error:(bad_record_access path) @@ Map.find row.fields path
     in
-    let%bind update = check update field_row_elem.associated_type in
+    let%bind update = check update field_row_elem in
     const
       E.(
         let%bind struct_ = struct_
@@ -347,9 +330,9 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   | E_constructor { constructor; element }, T_sum row ->
     let%bind constr_row_elem =
       raise_opt ~error:(bad_constructor constructor type_)
-      @@ Record.LMap.find_opt constructor row.fields
+      @@ Map.find row.fields constructor
     in
-    let%bind element = check element constr_row_elem.associated_type in
+    let%bind element = check element constr_row_elem in
     const
       E.(
         let%bind element = element in
@@ -477,7 +460,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind code, code_type =
       raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
     in
-    let%bind code_type = evaluate_type_with_lexists code_type in
+    let%bind code_type = evaluate_type_with_default_layout code_type in
     (* TODO: Shouldn't [code] have the type of [string]? *)
     let%bind _, code = infer code in
     let%bind args =
@@ -488,7 +471,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
                @@ I.get_e_ascription arg.I.expression_content
              in
              let%bind _, arg = infer arg in
-             let%bind arg_type = evaluate_type_with_lexists arg_type in
+             let%bind arg_type = evaluate_type_with_default_layout arg_type in
              lift arg arg_type)
       |> all
     in
@@ -505,7 +488,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind code, code_type =
       raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
     in
-    let%bind code_type = evaluate_type_with_lexists code_type in
+    let%bind code_type = evaluate_type_with_default_layout code_type in
     let%bind _, code = infer code in
     const
       E.(
@@ -515,12 +498,12 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         @@ O.E_raw_code { language; code = { code with type_expression = code_type } })
       code_type
   | E_ascription { anno_expr; type_annotation } ->
-    let%bind ascr = evaluate_type_with_lexists type_annotation in
+    let%bind ascr = evaluate_type_with_default_layout type_annotation in
     let%bind expr = check anno_expr ascr in
     let%bind expr = lift expr ascr in
     return (ascr, expr)
   | E_recursive { fun_name; fun_type; lambda } ->
-    let%bind fun_type = evaluate_type_with_lexists fun_type in
+    let%bind fun_type = evaluate_type_with_default_layout fun_type in
     let%bind Arrow.{ type1 = arg_type; type2 = ret_type } =
       raise_opt
         ~error:(corner_case "Expected function type annotation for recursive function")
@@ -539,32 +522,21 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         return @@ O.E_recursive { fun_name; fun_type; lambda })
       fun_type
   | E_record record ->
-    let%bind field_types, record =
-      Record.LMap.fold
-        (fun label expr result ->
+    let%bind fields, record =
+      Label.Map.fold
+        ~f:(fun ~key:label ~data:expr result ->
           let%bind fields, record = result in
           let%bind expr_type, expr = infer expr in
-          let fields = Record.LMap.add label expr_type fields in
-          let record = Record.LMap.add label expr record in
+          let fields = Map.set fields ~key:label ~data:expr_type in
+          let record = Map.set record ~key:label ~data:expr in
           return (fields, record))
         record
-        (return (Record.LMap.empty, Record.LMap.empty))
-    in
-    let _, fields =
-      (* No fold_mapi in utils :cry *)
-      Record.LMap.fold_map field_types ~init:0 ~f:(fun label associated_type i ->
-          let decl_pos =
-            let (Label str) = label in
-            match Int.of_string str with
-            | i -> i
-            | exception _ -> i
-          in
-          i + 1, { Rows.associated_type; michelson_annotation = None; decl_pos })
+        ~init:(return Label.Map.(empty, empty))
     in
     let%bind record_type =
       match%bind Context.get_record fields with
       | None ->
-        let%bind layout = lexists () in
+        let%bind layout = lexists (Map.key_set fields) in
         create_type @@ Type.t_record { fields; layout }
       | Some (orig_var, row) -> create_type @@ Type.t_record_with_orig_var row ~orig_var
     in
@@ -580,13 +552,13 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
       raise_opt ~error:(expected_record record_type) @@ Type.get_t_record record_type
     in
     let%bind field_row_elem =
-      raise_opt ~error:(bad_record_access field) @@ Record.LMap.find_opt field row.fields
+      raise_opt ~error:(bad_record_access field) @@ Map.find row.fields field
     in
     const
       E.(
         let%bind struct_ = struct_ in
         return @@ O.E_accessor { struct_; path = field })
-      field_row_elem.associated_type
+      field_row_elem
   | E_update { struct_; path; update } ->
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
@@ -594,9 +566,9 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
       raise_opt ~error:(expected_record record_type) @@ Type.get_t_record record_type
     in
     let%bind field_row_elem =
-      raise_opt ~error:(bad_record_access path) @@ Record.LMap.find_opt path row.fields
+      raise_opt ~error:(bad_record_access path) @@ Map.find row.fields path
     in
-    let%bind update = check update field_row_elem.associated_type in
+    let%bind update = check update field_row_elem in
     const
       E.(
         let%bind struct_ = struct_
@@ -855,7 +827,7 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
        ~in_:
          (let%bind arg_type =
             match Param.get_ascr binder with
-            | Some arg_ascr -> evaluate_type_with_lexists arg_ascr
+            | Some arg_ascr -> evaluate_type_with_default_layout arg_ascr
             | None -> exists Type
           in
           let%bind ret_type, result =
@@ -999,7 +971,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     let%bind () =
       match Binder.get_ascr binder with
       | Some ascr ->
-        let%bind ascr = lift @@ evaluate_type_with_lexists ascr in
+        let%bind ascr = lift @@ evaluate_type_with_default_layout ascr in
         unify ascr type_
       | None -> return ()
     in
@@ -1027,24 +999,20 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
         let%bind list_pat = all list_pat in
         return @@ P.P_list (List list_pat))
   | P_variant (label, arg_pat), T_sum row ->
-    let%bind label_row_elem =
-      raise_opt ~error:err @@ Record.LMap.find_opt label row.fields
-    in
-    let%bind arg_pat = check arg_pat label_row_elem.associated_type in
+    let%bind label_row_elem = raise_opt ~error:err @@ Map.find row.fields label in
+    let%bind arg_pat = check arg_pat label_row_elem in
     const
       E.(
         let%bind arg_pat = arg_pat in
         return @@ P.P_variant (label, arg_pat))
-  | P_tuple tuple_pat, T_record row
-    when Record.LMap.cardinal row.fields = List.length tuple_pat ->
+  | P_tuple tuple_pat, T_record row when Map.length row.fields = List.length tuple_pat ->
     let%bind tuple_pat =
       tuple_pat
       |> List.mapi ~f:(fun i pat ->
              let%bind pat_row_elem =
-               raise_opt ~error:err
-               @@ Record.LMap.find_opt (Label (Int.to_string i)) row.fields
+               raise_opt ~error:err @@ Map.find row.fields (Label (Int.to_string i))
              in
-             let%bind pat_type = Context.tapply pat_row_elem.associated_type in
+             let%bind pat_type = Context.tapply pat_row_elem in
              check pat pat_type)
       |> all
     in
@@ -1052,15 +1020,15 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       E.(
         let%bind tuple_pat = all tuple_pat in
         return @@ P.P_tuple tuple_pat)
-  | P_record record_pat, T_record row
-    when Record.LMap.cardinal row.fields = Record.LMap.cardinal record_pat ->
+  | P_record record_pat, T_record row when Map.length row.fields = Map.length record_pat
+    ->
     let%bind record_pat =
       record_pat
-      |> Record.LMap.mapi (fun label pat ->
+      |> Map.mapi ~f:(fun ~key:label ~data:pat ->
              let%bind label_row_elem =
-               raise_opt ~error:err @@ Record.LMap.find_opt label row.fields
+               raise_opt ~error:err @@ Map.find row.fields label
              in
-             let%bind pat_type = Context.tapply label_row_elem.associated_type in
+             let%bind pat_type = Context.tapply label_row_elem in
              check pat pat_type)
       |> all_lmap
     in
@@ -1104,7 +1072,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let var = Binder.get_var binder in
     let%bind type_ =
       match Binder.get_ascr binder with
-      | Some ascr -> lift @@ evaluate_type_with_lexists ascr
+      | Some ascr -> lift @@ evaluate_type_with_default_layout ascr
       | None -> exists Type
     in
     let%bind () = extend [ var, (if mut then Mutable else Immutable), type_ ] in
@@ -1146,20 +1114,19 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
       tuple_pat
       |> List.mapi ~f:(fun i pat ->
              let%bind pat_type, pat = infer pat in
-             let row_elem =
-               { Rows.associated_type = pat_type
-               ; decl_pos = i
-               ; michelson_annotation = None
-               }
-             in
-             return ((Label.Label (Int.to_string i), row_elem), pat))
+             return ((Label.Label (Int.to_string i), pat_type), pat))
       |> all
       >>| List.unzip
     in
     let%bind tuple_type =
       create_type
       @@ Type.t_record
-           { fields = Record.of_list tuple_types; layout = Type.default_layout }
+           { fields = Record.of_list tuple_types
+           ; layout =
+               Type.default_layout
+                 (tuple_types
+                 |> List.map ~f:(fun (i, _type) -> { Layout.name = i; annot = None }))
+           }
     in
     const
       E.(
@@ -1194,32 +1161,21 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
         return @@ P.P_variant (constructor, arg_pat))
       sum_type
   | P_record record_pat ->
-    let%bind field_types, record_pat =
-      Record.LMap.fold
-        (fun label expr result ->
+    let%bind fields, record_pat =
+      Map.fold
+        ~f:(fun ~key:label ~data:expr result ->
           let%bind fields, record = result in
           let%bind expr_type, expr = infer expr in
-          let fields = Record.LMap.add label expr_type fields in
-          let record = Record.LMap.add label expr record in
+          let fields = Map.set fields ~key:label ~data:expr_type in
+          let record = Map.set record ~key:label ~data:expr in
           return (fields, record))
         record_pat
-        (return (Record.LMap.empty, Record.LMap.empty))
-    in
-    let _, fields =
-      (* No fold_mapi in utils :cry *)
-      Record.LMap.fold_map field_types ~init:0 ~f:(fun label associated_type i ->
-          let decl_pos =
-            let (Label str) = label in
-            match Int.of_string str with
-            | i -> i
-            | exception _ -> i
-          in
-          i + 1, { Rows.associated_type; michelson_annotation = None; decl_pos })
+        ~init:(return Label.Map.(empty, empty))
     in
     let%bind record_type =
       match%bind Context.get_record fields with
       | None ->
-        let%bind layout = lexists () in
+        let%bind layout = lexists (Map.key_set fields) in
         create_type @@ Type.t_record { fields; layout }
       | Some (orig_var, row) -> create_type @@ Type.t_record_with_orig_var row ~orig_var
     in

@@ -20,8 +20,8 @@ let%expect_test _ =
      24 |
 
     Invalid type(s)
-    Cannot unify "storage1" with "storage" due to differing layouts (tree and comb). |}]
-
+    Cannot unify "storage1" with "storage" due to differing layouts "(({ name: tata }, { name: titi }), ({ name: toto }, { name: tutu }))" and "({ name: tata }, { name: toto }, { name: titi }, { name: tutu })". |}]
+    
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; layout1 ];
   [%expect
@@ -31,4 +31,4 @@ let%expect_test _ =
       5 |   ([], ({bar = "bar"; foo = "foo"} : r2))
 
     Invalid type(s)
-    Cannot unify "r2" with "r1" due to differing layouts (tree and comb). |}]
+    Cannot unify "r2" with "r1" due to differing layouts "({ name: bar }, { name: foo })" and "({ name: foo }, { name: bar })". |}]

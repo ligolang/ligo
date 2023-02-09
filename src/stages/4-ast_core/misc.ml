@@ -29,14 +29,7 @@ let rec assert_value_eq ((a, b) : expression * expression) : unit option =
     let* _ = if Value_var.equal a b then Some () else None in
     assert_list_eq (fun a b -> if Module_var.equal a b then Some () else None) maa mab
   | E_record sma, E_record smb ->
-    let aux _ a b =
-      match a, b with
-      | Some a, Some b -> assert_value_eq (a, b)
-      | _ -> None
-    in
-    let all = Record.LMap.merge aux sma smb in
-    if Record.LMap.cardinal all = Record.LMap.cardinal sma
-       || Record.LMap.cardinal all = Record.LMap.cardinal smb
+    if Record.equal (fun t1 t2 -> Option.is_some @@ assert_value_eq (t1, t2)) sma smb
     then Some ()
     else None
   | E_update ura, E_update urb ->

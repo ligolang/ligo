@@ -8,9 +8,9 @@ type contract_type =
   ; storage : Ast_aggregated.type_expression
   }
 
-let annotation_or_label annot label =
+let annotation_or_label layout label =
   Option.value ~default:(String.uncapitalize @@ Label.to_string label)
-  @@ Ast_typed.Helpers.remove_empty_annotation annot
+  @@ Ast_typed.Helpers.remove_empty_annotation (Layout.annot layout label)
 
 
 let check_entrypoint_annotation_format ~raise ep (exp : expression) =
@@ -53,11 +53,11 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
       | T_sum _ as t when String.equal "default" (String.uncapitalize entrypoint) ->
         { dat.parameter with type_content = t }
       | T_sum cmap ->
-        let content = Record.LMap.to_kv_list cmap.fields in
+        let content = Record.to_list cmap.fields in
         let content =
           List.map
-            ~f:(fun (entrypoint, { michelson_annotation; associated_type; _ }) ->
-              annotation_or_label michelson_annotation entrypoint, associated_type)
+            ~f:(fun (entrypoint, associated_type) ->
+              annotation_or_label cmap.layout entrypoint, associated_type)
             content
         in
         let associated_type =

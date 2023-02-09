@@ -807,7 +807,7 @@ let%expect_test _ =
     {|
     edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
     Everything at the top-level was executed.
-    - test exited with value Success (2799n). |}]
+    - test exited with value Success (2797n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
@@ -833,7 +833,7 @@ let%expect_test _ =
   [%expect
     {|
     ["typed_address","KT1Eip4VjDintiWphUf9fAM7cCikw3NajBAG"]
-    ["record",{"foo":["constant",["int","42"]],"bar":["list",[["constant",["string","hello"]],["constant",["string","world"]]]]}] |}]
+    ["record",[[["Label","bar"],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo"],["constant",["int","42"]]]]] |}]
 
 (*
 let%expect_test _ =

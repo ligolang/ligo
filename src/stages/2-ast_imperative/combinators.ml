@@ -90,10 +90,10 @@ let t__type_ ~loc t t' : type_expression =
 let t_record ~loc struct_ : type_expression = make_t ~loc @@ T_record struct_
 
 let t_record_ez_attr ~loc ?(attr = []) fields =
-  let aux i (name, t_expr, attributes) =
-    Label.of_string name, Rows.{ associated_type = t_expr; decl_pos = i; attributes }
+  let aux (name, t_expr, row_elem_attributes) =
+    Label.of_string name, { associated_type = t_expr; row_elem_attributes }
   in
-  let fields = List.mapi ~f:aux fields in
+  let fields = List.map ~f:aux fields in
   t_record ~loc { fields; attributes = attr }
 
 
@@ -108,10 +108,10 @@ let t_pair ~loc (a, b) : type_expression = t_tuple ~loc [ a; b ]
 let t_sum ~loc sum : type_expression = make_t ~loc @@ T_sum sum
 
 let t_sum_ez_attr ~loc ?(attr = []) fields =
-  let aux i (name, t_expr, attributes) =
-    Label.of_string name, Rows.{ associated_type = t_expr; decl_pos = i; attributes }
+  let aux (name, t_expr, row_elem_attributes) =
+    Label.of_string name, { associated_type = t_expr; row_elem_attributes }
   in
-  let fields = List.mapi ~f:aux fields in
+  let fields = List.map ~f:aux fields in
   t_sum ~loc { fields; attributes = attr }
 
 

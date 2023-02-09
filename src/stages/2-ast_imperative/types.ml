@@ -15,9 +15,19 @@ type type_content =
   | T_abstraction of ty_expr Abstraction.t
   | T_for_all of ty_expr Abstraction.t
 
+(* This is the only duplicated place for row types. 
+   The rest will use Row.With_*/Row.Make
+   
+   Alistair: Eventually we can remove this duplication by parameterizing Row with a 'container'. 
+   But this is effort (like Melwyn did for patterns) *)
 and 'ty_exp non_linear_rows =
-  { fields : (Label.t * 'ty_exp Rows.row_element) list
+  { fields : (Label.t * 'ty_exp row_element) list
   ; attributes : string list
+  }
+
+and 'ty_exp row_element =
+  { associated_type : 'ty_exp
+  ; row_elem_attributes : string list
   }
 
 and type_expression =

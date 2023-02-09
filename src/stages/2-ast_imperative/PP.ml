@@ -3,23 +3,25 @@ open Types
 open Format
 open Simple_utils.PP_helpers
 
+
+let attributes_2 (attr : string list) : string =
+  List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat
+
 let sum_set_t value sep ppf m =
   let lst = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) m in
-  let new_pp ppf (k, Rows.{ associated_type; _ }) =
-    fprintf ppf "@[<h>%a -> %a@]" Label.pp k value associated_type
+  let new_pp ppf (k, { associated_type; row_elem_attributes; _ }) =
+    let attr = attributes_2 row_elem_attributes in
+    fprintf ppf "@[<h>%a -> %a %s@]" Label.pp k value associated_type attr
   in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 
 let sum_set_t x = sum_set_t x (tag " ,@ ")
 
-let record_sep_t value sep ppf (m : (Label.t * type_expression Rows.row_element) list) =
-  let attributes_2 (attr : string list) : string =
-    List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat
-  in
+let record_sep_t value sep ppf (m : (Label.t * type_expression row_element) list) =
   let lst = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) m in
-  let new_pp ppf (k, Rows.{ associated_type; attributes; _ }) =
-    let attr = attributes_2 attributes in
+  let new_pp ppf (k, { associated_type; row_elem_attributes; _ }) =
+    let attr = attributes_2 row_elem_attributes in
     fprintf ppf "@[<h>%a -> %a %s@]" Label.pp k value associated_type attr
   in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -34,20 +36,14 @@ let rec type_content : formatter -> type_content -> unit =
   match te with
   | T_sum m ->
     let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (sum_set_t type_expression) in
-    (match m.attributes with
-    | [] -> fprintf ppf "%a" s m.fields
-    | _ ->
-      let attr = attributes_1 m.attributes in
-      fprintf ppf "(%a %s)" s m.fields attr)
+    let attr = attributes_1 m.attributes in
+    fprintf ppf "(%a %s)" s m.fields attr
   | T_record m ->
     let r = record_sep_t type_expression (const ";") in
-    (match m.attributes with
-    | [] -> fprintf ppf "{%a}" r m.fields
-    | _ ->
-      let attr : string = attributes_1 m.attributes in
-      fprintf ppf "({%a} %s)" r m.fields attr)
+    let attr : string = attributes_1 m.attributes in
+    fprintf ppf "({%a} %s)" r m.fields attr
   | T_variable tv -> Type_var.pp ppf tv
-  | T_tuple t -> Rows.PP.type_tuple type_expression ppf t
+  | T_tuple t -> Tuple.pp type_expression ppf t
   | T_arrow a -> Arrow.pp type_expression ppf a
   | T_annoted (ty, str) -> fprintf ppf "(%a%%%s)" type_expression ty str
   | T_app app -> Type_app.pp (Module_access.pp Type_var.pp) type_expression ppf app

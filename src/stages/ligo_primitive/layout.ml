@@ -1,12 +1,87 @@
-type t =
-  | L_comb
-  | L_tree
-[@@deriving eq, compare, yojson, hash]
+type 'field f =
+  | Inner of 'field f list
+  | Field of 'field
+[@@deriving map, equal, compare, yojson, hash, sexp]
 
-let pp ppf (t : t) =
+type t = field f
+
+and field =
+  { name : Label.t
+  ; annot : string option
+  }
+[@@deriving equal, compare, yojson, hash, sexp]
+
+let comb fields = Inner (List.map fields ~f:(fun field -> Field field))
+
+let rec of_append_tree' : field Simple_utils.Tree.Append.t' -> t = function
+  | Leaf field -> Field field
+  | Node { a; b; size = _; full = _ } -> Inner [ of_append_tree' a; of_append_tree' b ]
+
+
+let of_append_tree : field Simple_utils.Tree.Append.t -> t = function
+  | Empty -> Inner []
+  | Full node -> of_append_tree' node
+
+
+let tree fields =
+  let fields =
+    List.sort
+      ~compare:(fun field1 field2 -> Label.compare field1.name field2.name)
+      fields
+  in
+  of_append_tree (Simple_utils.Tree.Append.of_list fields)
+
+
+let default = tree
+
+let rec fields t =
   match t with
-  | L_tree -> Format.fprintf ppf "tree"
-  | L_comb -> Format.fprintf ppf "comb"
+  | Inner ts -> ts |> List.map ~f:fields |> Label.Set.union_list
+  | Field { name; _ } -> Label.Set.singleton name
 
+let rec to_list (t : t) =
+  match t with
+  | Inner ts -> List.concat_map ~f:to_list ts
+  | Field {name; _} -> [name]
 
-let default_layout : t = L_tree
+let rec annot (t:t) (label:Label.t) =
+  let aux { name; annot } = if Label.equal label name then annot else None in
+  match t with
+  | Inner ts -> List.find_map ~f:(fun t -> annot t label) ts
+  | Field x -> aux x
+
+(* For Michelson [or] there is no special "comb" support; we must
+   ultimately pick a binary tree layout. So it will be convenient to
+   expand out to binary trees: *)
+
+type binary =
+  | Empty (* should not need this? but might as well have it? *)
+  | Node of binary * binary
+  | Leaf of field
+
+let rec to_binary : t -> binary = function
+  | Field f -> Leaf f
+  | Inner ts ->
+     let ts = List.map ~f:to_binary ts in
+     List.fold_right
+       ts
+       ~f:(fun t acc ->
+             match acc with
+             | Empty -> t
+             | _ -> Node (t, acc))
+       ~init:Empty
+
+let rec pp ppf (t : t) =
+  match t with
+  | Inner ts ->
+    Format.fprintf ppf "(%a)" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf ", ") pp) ts
+  | Field { name; annot } ->
+    Format.fprintf
+      ppf
+      "{ name: %a%a }"
+      Label.pp
+      name
+      (Format.pp_print_option
+         ~none:(fun ppf () -> Format.fprintf ppf "")
+         (fun ppf annot -> Format.fprintf ppf " annot: %s" annot))
+      annot

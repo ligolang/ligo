@@ -14,10 +14,7 @@ let%expect_test _ =
              PUSH int 2 ;
              ADD ;
              ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
+             UPDATE 1 ;
              NIL operation ;
              PAIR } } |}]
 
@@ -58,10 +55,7 @@ let%expect_test _ =
              PUSH int 2 ;
              ADD ;
              ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
+             UPDATE 1 ;
              NIL operation ;
              PAIR } } |}]
 
@@ -121,10 +115,7 @@ let%expect_test _ =
              PUSH int 2 ;
              ADD ;
              ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
+             UPDATE 1 ;
              NIL operation ;
              PAIR } } |}]
 
@@ -185,9 +176,6 @@ let%expect_test _ =
              PUSH int 2 ;
              ADD ;
              ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
+             UPDATE 1 ;
              NIL operation ;
              PAIR } } |}]

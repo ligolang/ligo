@@ -2,12 +2,13 @@
 
 open Ligo_prim
 module Location = Simple_utils.Location
+module Row = Row.With_layout
 
 type type_content =
   | T_variable of Type_var.t
   | T_constant of type_injection
-  | T_sum of rows
-  | T_record of rows
+  | T_sum of row
+  | T_record of row
   | T_arrow of ty_expr Arrow.t
   | T_singleton of Literal_value.t
   | T_for_all of ty_expr Abstraction.t
@@ -18,14 +19,7 @@ and type_injection =
   ; parameters : ty_expr list
   }
 
-and rows =
-  { fields : row_element Record.t
-  ; layout : Layout.t
-  }
-
-and te_list = type_expression list
-and annot_option = string option
-and row_element = type_expression Rows.row_element_mini_c
+and row = type_expression Row.t
 
 and type_expression =
   { type_content : type_content
@@ -35,7 +29,6 @@ and type_expression =
   ; orig_var : Type_var.t option [@equal.ignore] [@compare.ignore] [@hash.ignore]
   }
 
-and type_expression_list = type_expression list
 and ty_expr = type_expression [@@deriving equal, compare, yojson, hash]
 
 module ValueAttr = Ast_typed.ValueAttr

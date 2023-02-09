@@ -1,62 +1,50 @@
-module LMap = struct
-  include Simple_utils.Map.MakeHashable (Label)
+type 'a t = 'a Label.Map.t [@@deriving equal, compare, yojson, sexp]
 
-  let to_yojson f lmap =
-    let lst =
-      List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) (bindings lmap)
-    in
-    let lst' = List.fold_left ~f:(fun acc (Label k, v) -> (k, f v) :: acc) ~init:[] lst in
-    `Assoc lst'
-
-
-  let of_yojson _f _lmap = failwith "TODO"
-  let sexp_of_t _ _ = failwith "todo"
-  let t_of_sexp _ _ = failwith "todo"
-end
-
-module LSet = Caml.Set.Make (struct
-  type t = Label.t [@@deriving compare]
-end)
-
-type 'a t = 'a LMap.t [@@deriving eq, yojson, hash, sexp]
-
-let cmp2 f a1 b1 g a2 b2 =
-  match f a1 b1 with
-  | 0 -> g a2 b2
-  | c -> c
-
-
-let compare compare lma lmb =
-  let ra = LMap.to_kv_list_rev lma in
-  let rb = LMap.to_kv_list_rev lmb in
-  let aux (la, a) (lb, b) = cmp2 Label.compare la lb compare a b in
-  List.compare aux ra rb
-
+let hash_fold_t f state t = Map.hash_fold_m__t (module Label) f state t
+let empty = Label.Map.empty
 
 let fold : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc) -> 'acc =
- fun record ~init ~f -> LMap.fold (fun _ a acc -> f acc a) record init
+ fun record ~init ~f -> Map.fold ~f:(fun ~key:_ ~data:a acc -> f acc a) record ~init
 
 
 let fold_map : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc * 'b) -> 'acc * 'b t =
- fun record ~init ~f -> LMap.fold_map ~f:(fun _ a acc -> f acc a) ~init record
+ fun record ~init ~f ->
+  Label.Map.fold_map ~f:(fun ~key:_ ~data:a acc -> f acc a) ~init record
 
 
 let iter : 'a t -> f:('a -> unit) -> unit =
- fun record ~f -> LMap.iter (fun _ a -> f a) record
+ fun record ~f -> Label.Map.iter ~f:(fun a -> f a) record
 
 
-let map : 'a t -> f:('a -> 'b) -> 'b t = fun record ~f -> LMap.map f record
-let of_list = LMap.of_list
-let find_opt = LMap.find_opt
+let map : 'a t -> f:('a -> 'b) -> 'b t = fun record ~f -> Map.map ~f record
+let mapi t ~f = Map.mapi t ~f:(fun ~key ~data -> f ~label:key ~value:data)
+let exists = Label.Map.exists
+let of_list = Label.Map.of_alist_exn
+let to_list t = Map.to_alist t
+let to_list_rev t = Map.to_alist ~key_order:`Decreasing t
+let labels t = Map.keys t
+let values t = Map.data t
+let find = Label.Map.find_exn
+let find_opt = Label.Map.find
+let update = Map.update
+let cardinal m = Map.count m ~f:(fun _ -> true) (* ?? *)
+let mem = Map.mem
+let set = Map.set (* ?? *)
+
+let update_opt t label ~f =
+  match f (find_opt t label) with
+  | Some value -> Map.set t ~key:label ~data:value
+  | None -> t
+
 
 let is_tuple m =
-  List.for_all ~f:(fun i -> LMap.mem i m) @@ Label.range 0 (LMap.cardinal m)
+  List.for_all ~f:(fun i -> Label.Map.mem m i) @@ Label.range 0 (Label.Map.length m)
 
 
 let tuple_of_record (m : _ t) =
   let aux i =
     let label = Label.of_int i in
-    let opt = LMap.find_opt label m in
+    let opt = Label.Map.find m label in
     Option.bind ~f:(fun opt -> Some ((label, opt), i + 1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
@@ -66,14 +54,12 @@ let record_of_tuple (l : _ list) =
   of_list @@ List.mapi ~f:(fun i v -> Label.of_int i, v) l
 
 
-let to_list = LMap.to_kv_list
-
 module PP = struct
   open Format
   open Simple_utils.PP_helpers
 
   let record_sep_expr value sep ppf (m : 'a t) =
-    let lst = LMap.to_kv_list m in
+    let lst = to_list m in
     let lst = List.dedup_and_sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lst in
     let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v in
     fprintf ppf "%a" Simple_utils.PP_helpers.(list_sep new_pp sep) lst

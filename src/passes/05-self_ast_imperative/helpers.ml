@@ -158,12 +158,16 @@ and map_type_expression : ty_exp_mapper -> type_expression -> type_expression =
   match te'.type_content with
   | T_sum temap ->
     let fields =
-      List.map ~f:(fun (k, v) -> k, Rows.map_row_element self v) temap.fields
+      List.map
+        ~f:(fun (k, v) -> k, { v with associated_type = self v.associated_type })
+        temap.fields
     in
     return @@ T_sum { temap with fields }
   | T_record temap ->
     let fields =
-      List.map ~f:(fun (k, v) -> k, Rows.map_row_element self v) temap.fields
+      List.map
+        ~f:(fun (k, v) -> k, { v with associated_type = self v.associated_type })
+        temap.fields
     in
     return @@ T_record { temap with fields }
   | T_tuple telst ->

@@ -102,10 +102,10 @@ module Comparable = struct
       in
       let%bind _ =
         List.map2_exn
-          (Record.LMap.to_list row1.fields)
-          (Record.LMap.to_list row2.fields)
-          ~f:(fun (row_elem1 : Type.row_element) (row_elem2 : Type.row_element) ->
-            comparator row_elem1.associated_type row_elem2.associated_type)
+          (Map.data row1.fields)
+          (Map.data row2.fields)
+          ~f:(fun row_elem1 row_elem2 ->
+            comparator row_elem1 row_elem2)
         |> all
       in
       create_type @@ Type.t_bool
@@ -124,10 +124,10 @@ module Comparable = struct
       in
       let%bind _ =
         List.map2_exn
-          (Record.LMap.to_list row1.fields)
-          (Record.LMap.to_list row2.fields)
-          ~f:(fun (row_elem1 : Type.row_element) (row_elem2 : Type.row_element) ->
-            comparator row_elem1.associated_type row_elem2.associated_type)
+          (Map.data row1.fields)
+          (Map.data row2.fields)
+          ~f:(fun row_elem1 row_elem2 ->
+            comparator row_elem1 row_elem2)
         |> all
       in
       create_type @@ Type.t_bool

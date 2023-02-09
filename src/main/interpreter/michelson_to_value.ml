@@ -1,4 +1,3 @@
-module L = Layout
 open Simple_utils.Trace
 open Ligo_interpreter.Types
 open Tezos_micheline.Micheline
@@ -427,23 +426,18 @@ let rec decompile_value
       let o = Option.value_exn (Ast_aggregated.get_t_option t) in
       let s' = self s o in
       v_some s')
-  | T_sum { layout; fields } ->
-    let lst =
-      List.map ~f:(fun (k, ({ associated_type; _ } : _ Rows.row_element_mini_c)) ->
-          k, associated_type)
-      @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout fields
-    in
-    let Label constructor, v, tv = L.extract_constructor ~raise ~layout v lst in
+  | T_sum row ->
+    let Label constructor, v, tv =
+      Row.extract_constructor row v
+        Ligo_interpreter.Combinators.get_left
+        Ligo_interpreter.Combinators.get_right in
     let sub = self v tv in
     V_Construct (constructor, sub)
-  | T_record { layout; fields } ->
+  | T_record row ->
     let lst =
-      List.map ~f:(fun (k, ({ associated_type; _ } : _ Rows.row_element_mini_c)) ->
-          k, associated_type)
-      @@ Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout fields
-    in
-    let lst = L.extract_record ~raise ~layout v lst in
-    let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
+      Row.extract_record row v
+        Ligo_interpreter.Combinators.get_pair in
+    let lst = List.map ~f:(fun (x, y, z) -> (x, self y z)) lst in
     let m' = Record.of_list lst in
     V_Record m'
   | T_arrow { type1; type2 } ->

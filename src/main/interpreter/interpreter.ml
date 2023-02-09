@@ -282,19 +282,19 @@ let rec apply_comparison ~no_colour ~raise
     let m' = List.sort ~compare:compare_kv m' in
     List.compare compare_kv m m'
   | V_Record r, V_Record r' ->
-    let { fields : row_element Record.t; layout } =
+    let (row : _ Ligo_prim.Row.With_layout.t) =
       trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected a record type")
         (AST.get_t_record type_)
     in
-    let row_kv = AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
-    let rec aux (row_kv : (Label.t * row_element) list) =
+    let row_kv = Row.to_alist row in
+    let rec aux (row_kv : (Label.t * AST.type_expression) list) =
       match row_kv with
       | [] -> 0
-      | (label, ({ associated_type; _ } : row_element)) :: row_kv ->
-        let value_a = Record.LMap.find label r in
-        let value_b = Record.LMap.find label r' in
+      | (label, associated_type) :: row_kv ->
+        let value_a = Record.find r label in
+        let value_b = Record.find r' label in
         (match
            apply_comparison
              ~no_colour
@@ -310,20 +310,18 @@ let rec apply_comparison ~no_colour ~raise
     in
     aux row_kv
   | V_Construct (ctor_a, args_a), V_Construct (ctor_b, args_b) ->
-    let { fields : row_element Record.t; layout } =
+    let ({ fields; layout } : _ Ligo_prim.Row.With_layout.t) =
       trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected a sum type")
         (AST.get_t_sum type_)
     in
-    let order = AST.Helpers.kv_list_of_t_sum ~layout fields |> List.map ~f:fst in
-    let ith_a, _ = List.findi_exn order ~f:(fun _i (Label l) -> String.equal l ctor_a) in
-    let ith_b, _ = List.findi_exn order ~f:(fun _i (Label l) -> String.equal l ctor_b) in
+    let order = Layout.to_list layout in
+    let ith_a, _ = List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_a) in
+    let ith_b, _ = List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_b) in
     (match Int.compare ith_a ith_b with
     | 0 ->
-      let ({ associated_type; _ } : row_element) =
-        Record.LMap.find (Label ctor_a) fields
-      in
+      let associated_type = Record.find fields (Label ctor_a) in
       apply_comparison ~no_colour ~raise loc calltrace associated_type args_a args_b
     | c -> c)
   | V_Func_val _, V_Func_val _
@@ -1242,7 +1240,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       return
       @@ v_some
            (V_Record
-              (Record.LMap.of_list
+              (Record.of_list
                  [ Label "0", V_Ast_contract { main; views }; Label "1", V_Mutation m ])))
   | C_TEST_MUTATE_CONTRACT, _ -> fail @@ error_type ()
   | C_TEST_MUTATE_VALUE, [ V_Ct (C_nat n); v ] ->
@@ -1255,7 +1253,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     | Some (e, m) ->
       let* v = eval_ligo e calltrace env in
       return
-      @@ v_some (V_Record (Record.LMap.of_list [ Label "0", v; Label "1", V_Mutation m ])))
+      @@ v_some (V_Record (Record.of_list [ Label "0", v; Label "1", V_Mutation m ])))
   | C_TEST_MUTATE_VALUE, _ -> fail @@ error_type ()
   | C_TEST_SAVE_MUTATION, [ V_Ct (C_string dir); V_Mutation ((loc, _, _) as mutation) ] ->
     let* reg =
@@ -1646,24 +1644,24 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         (fun (label, (v : AST.expression)) ->
           let* v' = eval_ligo v calltrace env in
           return (label, v'))
-        (Record.LMap.to_kv_list_rev recmap)
+        (Record.to_list_rev recmap)
     in
     return @@ V_Record (Record.of_list lv')
   | E_accessor { struct_; path } ->
     let* record' = eval_ligo struct_ calltrace env in
     (match record' with
     | V_Record recmap ->
-      let a = Record.LMap.find path recmap in
+      let a = Record.find recmap path in
       return a
     | _ -> failwith "trying to access a non-record")
   | E_update { struct_; path; update } ->
     let* record' = eval_ligo struct_ calltrace env in
     (match record' with
     | V_Record recmap ->
-      if Record.LMap.mem path recmap
+      if Record.mem recmap path
       then
         let* field' = eval_ligo update calltrace env in
-        return @@ V_Record (Record.LMap.add path field' recmap)
+        return @@ V_Record (Record.set recmap ~key:path ~data:field')
       else failwith "field l does not exist in record"
     | _ -> failwith "this expression isn't a record")
   | E_constant { cons_name; arguments } ->
@@ -2026,15 +2024,15 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * toplevel_env 
     let var = Binder.get_var n in
     let loc = Value_var.get_location var in
     let s, _ = Value_var.internal_get_name_and_counter var in
-    Record.LMap.add (Label s) (Ast_typed.e_a_variable ~loc var t) r
+    Record.set r ~key:(Ligo_prim.Label.Label s) ~data:(Ast_typed.e_a_variable ~loc var t)
   in
-  let map = List.fold_right lst ~f ~init:Record.LMap.empty in
+  let map = List.fold_right lst ~f ~init:Record.empty in
   let expr = Ast_typed.e_a_record ~loc:Location.dummy map in
   match eval_expression ~raise ~steps ~options decl_lst expr with
   | b, V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
-      match Record.LMap.find_opt (Label s) m with
+      match Record.find_opt m (Label s) with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r
     in

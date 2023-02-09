@@ -32,7 +32,7 @@ let accessor_reduce : Ast_aggregated.expression -> Ast_aggregated.expression =
   let f (e : Ast_aggregated.expression) =
     match e.expression_content with
     | E_accessor { struct_ = { expression_content = E_record m; _ }; path } ->
-      Record.LMap.find path m
+      Record.find m path
     | _ -> e
   in
   Helpers.map_expression f

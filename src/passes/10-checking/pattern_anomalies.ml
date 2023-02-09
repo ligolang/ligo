@@ -6,7 +6,7 @@ module C = AST.Combinators
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 open Ligo_prim
-module LMap = Record.LMap
+module LMap = Label.Map
 module XList = Simple_utils.List
 module LSet = Caml.Set.Make (Label)
 
@@ -45,21 +45,18 @@ let pp_simple_pattern_list ppf sps =
   List.iter sps ~f:(fun sp -> Format.fprintf ppf "%a, " pp_simple_pattern sp)
 
 
-let get_variant_nested_type label (tsum : AST.rows) =
+let get_variant_nested_type label (tsum : AST.row) =
   let label_map = tsum.fields in
-  let c = LMap.find label label_map in
-  c.associated_type
+  LMap.find_exn label_map label
 
 
 let rec destructure_type (t : AST.type_expression) =
   match t.type_content with
   | AST.T_record { fields; _ } ->
     LMap.fold
-      (fun _ (row_elt : AST.row_element) ts ->
-        let elt_typ = row_elt.associated_type in
-        ts @ destructure_type elt_typ)
+      ~f:(fun ~key:_ ~data:elt_typ ts -> ts @ destructure_type elt_typ)
       fields
-      []
+      ~init:[]
   | _ -> [ t ]
 
 
@@ -101,19 +98,17 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
           let row_elem =
             Option.value_exn
               ~here:[%here]
-              (LMap.find_opt (Label (Int.to_string i)) row.fields)
+              (LMap.find row.fields (Label (Int.to_string i)))
           in
-          to_simple_pattern (p, row_elem.associated_type))
+          to_simple_pattern (p, row_elem))
     in
     List.concat ps
   | P_record lps ->
     let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
     let ps =
       List.map (Record.to_list lps) ~f:(fun (label, p) ->
-          let row_elem =
-            Option.value_exn ~here:[%here] (LMap.find_opt label row.fields)
-          in
-          to_simple_pattern (p, row_elem.associated_type))
+          let row_elem = Option.value_exn ~here:[%here] (LMap.find row.fields label) in
+          to_simple_pattern (p, row_elem))
     in
     List.concat ps
 
@@ -156,9 +151,9 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
   | _ ->
     (match ty.type_content with
     | AST.T_record { fields; _ } ->
-      let kvs = LMap.to_kv_list fields in
+      let kvs = LMap.to_alist fields in
       let labels, tys = List.unzip kvs in
-      let tys = List.map tys ~f:(fun ty -> ty.associated_type) in
+      let tys = List.map tys ~f:(fun ty -> ty) in
       let _, ps =
         List.fold_left tys ~init:(simple_patterns, []) ~f:(fun (sps, ps) t ->
             let n = List.length @@ destructure_type t in

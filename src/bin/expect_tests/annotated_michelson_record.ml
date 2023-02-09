@@ -324,7 +324,7 @@ let%expect_test _ =
 
              { parameter unit ;
                storage (pair (string %anbar) (int %anfoo)) ;
-               code { CDR ; NIL operation ; PAIR } } |}];
+               code { CDR ; DUP ; CDR ; UPDATE 2 ; NIL operation ; PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"

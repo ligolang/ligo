@@ -33,19 +33,8 @@ module Free_type_variables = struct
    fun type_env te ->
     let self = map_type_expression type_env in
     match te.type_content with
-    | T_sum { fields; _ } ->
-      let fields =
-        Record.LMap.to_list fields
-        |> List.map ~f:(fun ({ associated_type; _ } : _ Rows.row_element_mini_c) ->
-               self associated_type)
-      in
-      unions fields
-    | T_record { fields; _ } ->
-      let fields =
-        Record.LMap.to_list fields
-        |> List.map ~f:(fun ({ associated_type; _ } : _ Rows.row_element_mini_c) ->
-               self associated_type)
-      in
+    | T_sum { fields; _ } | T_record { fields; _ } ->
+      let fields = Map.data fields |> List.map ~f:self in
       unions fields
     | T_arrow { type1; type2 } -> VarSet.union (self type1) (self type2)
     | T_app { arguments; _ } ->

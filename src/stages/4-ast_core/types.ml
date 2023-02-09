@@ -3,6 +3,8 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 
+module Row = Row.With_optional_layout
+
 type sugar_type_expression_option = Ast_imperative.type_expression option
 [@@deriving eq, compare, yojson, hash]
 
@@ -13,8 +15,8 @@ type string_option = string option
 
 type type_content =
   | T_variable of Type_var.t
-  | T_sum of rows
-  | T_record of rows
+  | T_sum of row
+  | T_record of row
   | T_arrow of ty_expr Arrow.t
   | T_app of (Type_var.t Module_access.t, ty_expr) Type_app.t
   | T_module_accessor of Type_var.t Module_access.t
@@ -22,12 +24,7 @@ type type_content =
   | T_abstraction of ty_expr Abstraction.t
   | T_for_all of ty_expr Abstraction.t
 
-and rows =
-  { fields : row_element Record.t
-  ; layout : Layout.t option
-  }
-
-and row_element = ty_expr Rows.row_element_mini_c
+and row = type_expression Row.t
 
 and type_expression =
   { type_content : type_content

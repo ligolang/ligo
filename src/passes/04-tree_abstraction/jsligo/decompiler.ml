@@ -113,7 +113,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr =
   let return te = te in
   match te.type_content with
   | T_sum { attributes; fields } ->
-    let aux (Label.Label c, Rows.{ associated_type; attributes = row_attr; _ }) =
+    let aux (Label.Label c, AST.{ associated_type; row_elem_attributes = row_attr; _ }) =
       let constr = Region.wrap_ghost c in
       let arg = decompile_type_expr associated_type in
       let arg =
@@ -143,7 +143,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr =
     in
     return @@ CST.TSum (Region.wrap_ghost sum)
   | T_record { fields; attributes } ->
-    let aux (Label.Label c, Rows.{ associated_type; attributes; _ }) =
+    let aux (Label.Label c, AST.{ associated_type; row_elem_attributes; _ }) =
       let field_name = Region.wrap_ghost c in
       let colon = Token.ghost_colon in
       let field_type : CST.type_expr = decompile_type_expr associated_type in
@@ -1046,7 +1046,7 @@ and decompile_pattern p =
         ~f:(fun (Label x) ->
           CST.PVar
             (Region.wrap_ghost { CST.variable = Region.wrap_ghost x; attributes = [] }))
-        (Record.LMap.keys lps)
+        (Record.labels lps)
     in
     let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
     let inj = Region.wrap_ghost @@ braced inj in

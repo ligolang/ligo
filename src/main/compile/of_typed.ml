@@ -106,13 +106,9 @@ let assert_equal_contract_type ~raise
       match entry_point.type_expression.type_content with
       | T_arrow { type1 = args; type2 = _ } ->
         (match args.type_content with
-        | T_record m when Record.LMap.cardinal m.fields = 2 ->
-          let ({ associated_type = param_exp; _ } : row_element) =
-            Record.LMap.find (Label "0") m.fields
-          in
-          let ({ associated_type = storage_exp; _ } : row_element) =
-            Record.LMap.find (Label "1") m.fields
-          in
+        | T_record m when Record.cardinal m.fields = 2 ->
+          let param_exp = Record.find m.fields (Label "0") in
+          let storage_exp = Record.find m.fields (Label "1") in
           (match c with
           | Check_parameter ->
             trace ~raise checking_tracer
@@ -144,7 +140,7 @@ let apply_to_entrypoint_view ~raise ~options
     Label.of_int i, Ast_typed.(e_a_variable ~loc (Binder.get_var view_binder) ty)
   in
   let tuple_view =
-    Ast_typed.ez_e_a_record ~loc ~layout:L_comb (List.mapi ~f:aux views_info)
+    Ast_typed.ez_e_a_record ~loc ~layout:Layout.comb (List.mapi ~f:aux views_info)
   in
   let e = compile_expression_in_context ~raise ~options prg tuple_view in
   Self_ast_aggregated.remove_check_self e

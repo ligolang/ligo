@@ -31,10 +31,7 @@ let%expect_test _ =
              CAR ;
              MUL ;
              ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
+             UPDATE 1 ;
              NIL operation ;
              PAIR } } |}]
 

@@ -1,6 +1,7 @@
 module PP_helpers = Simple_utils.PP_helpers
 module AST = Ast_aggregated
 open Ligo_prim
+module Row = AST.Row
 
 let fold_map_expression = AST.Helpers.fold_map_expression
 let poly_name ~loc v = Value_var.fresh_like ~loc v
@@ -185,32 +186,12 @@ let rec subst_external_type et t (u : AST.type_expression) =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(self et t) parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum { fields; layout } ->
-    let fields =
-      AST.(
-        Record.map
-          ~f:
-            (fun Rows.{ associated_type; michelson_annotation; decl_pos } : row_element ->
-            { associated_type = self et t associated_type
-            ; michelson_annotation
-            ; decl_pos
-            })
-          fields)
-    in
-    { u with type_content = T_sum { fields; layout } }
-  | T_record { fields; layout } ->
-    let fields =
-      AST.(
-        Record.map
-          ~f:
-            (fun Rows.{ associated_type; michelson_annotation; decl_pos } : row_element ->
-            { associated_type = self et t associated_type
-            ; michelson_annotation
-            ; decl_pos
-            })
-          fields)
-    in
-    { u with type_content = T_record { fields; layout } }
+  | T_sum row ->
+    let row = Row.map (self et t) row in
+    { u with type_content = T_sum row }
+  | T_record row ->
+    let row = Row.map (self et t) row in
+    { u with type_content = T_record row }
   | _ -> u
 
 
@@ -450,10 +431,7 @@ let check_if_polymorphism_present ~raise e =
     | T_constant { parameters; _ } ->
       List.fold_left parameters ~init:() ~f:(fun () te ->
           ignore @@ check_type_expression ~loc te)
-    | T_record { fields; _ } | T_sum { fields; _ } ->
-      Record.LMap.iter
-        (fun _ (re : AST.row_element) -> check_type_expression ~loc re.associated_type)
-        fields
+    | T_record row | T_sum row -> Row.iter (check_type_expression ~loc) row
     | T_arrow _ -> ()
     | T_singleton _ -> ()
     | T_for_all _ -> show_error loc
