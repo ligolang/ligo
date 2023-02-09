@@ -125,6 +125,7 @@ executables:
     - attoparsec
     - bytestring
     - directory
+    - filepath
     - katip
     - lens
     - lsp-types

@@ -1,6 +1,5 @@
 module SendData (sendData) where
 
-import Common (ConnectionM)
 import Data.Aeson (Value)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Aeson (encodePretty)
@@ -11,9 +10,11 @@ import Data.Attoparsec.ByteString.Lazy (Result(Done, Fail), parse)
 import Data.ByteString.Lazy qualified as LBS
 import Data.Text.Encoding qualified as Text
 import Data.Text.Lazy.Builder qualified as Text (fromText)
-import FilePath (filterConnectionPrefix)
 import Katip (LogStr(..), Severity(DebugS, ErrorS), logFM)
 import Network.WebSockets qualified as WS
+
+import Common (ConnectionM)
+import FilePath (filterConnectionPrefix, normalizeUri, modifyUri)
 
 sendData :: WS.Connection -> Handle -> ConnectionM ()
 sendData conn stdoutConsumer = do
@@ -26,10 +27,12 @@ parseAllInput conn bsl =
     Fail _ _ err -> do
       logFM ErrorS $ "Couldn't parse message from language server: " <> show err
     Done cont val -> do
-      let prettyVal = Text.decodeUtf8 $ LBS.toStrict $ Aeson.encodePretty val
+      let normalizedVal = modifyUri normalizeUri val
+      let prettyVal =
+            Text.decodeUtf8 $ LBS.toStrict $ Aeson.encodePretty normalizedVal
       logFM DebugS $ "Sending: " <> LogStr (Text.fromText prettyVal)
 
-      let output = Text.decodeUtf8 . LBS.toStrict . Aeson.encode $ val
+      let output = Text.decodeUtf8 . LBS.toStrict . Aeson.encode $ normalizedVal
       filtered <- filterConnectionPrefix output
       liftIO $ WS.sendTextData conn filtered
       parseAllInput conn cont

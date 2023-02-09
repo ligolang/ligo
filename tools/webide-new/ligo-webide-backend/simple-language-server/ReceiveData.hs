@@ -4,8 +4,6 @@ import Control.Arrow ((>>>))
 import Control.Lens (to)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Aeson (encodePretty)
-import Data.Aeson.Key (Key)
-import Data.Aeson.KeyMap as KeyMap
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as Text
@@ -22,6 +20,7 @@ import System.IO (hFlush)
 
 import Common (ConnectionM)
 import Config (ConnectionConfig(..), ServerConfig(..))
+import FilePath (modifyUri)
 
 receiveData :: Int -> Connection -> Handle -> ConnectionM ()
 receiveData clientId conn stdinProducer = forever $ do
@@ -56,27 +55,11 @@ addPrefix clientPrefix bs =
       BSL.toStrict . Aeson.encode . modifyUri (addPrefixText clientPrefix) $ val
     Nothing -> bs
 
-modifyUri :: (Text -> Text) -> Aeson.Value -> Aeson.Value
-modifyUri f = \case
-  Aeson.Object keyMap ->
-    keyMap
-    & fmap (modifyUri f)
-    & updateKeyMap "uri" (\case
-       Aeson.String u -> Aeson.String (f u)
-       x -> x
-      )
-    & Aeson.Object
-  Aeson.Array arr -> Aeson.Array (fmap (modifyUri f) arr)
-  x -> x
-
 addPrefixText :: Text -> Text -> Text
 addPrefixText prefix txt =
   if Text.take 7 txt == "file://"
   then "file://" <> prefix <> Text.drop 7 txt
   else error $ "couldn't parse " <> txt
-
-updateKeyMap :: forall a. Key -> (a -> a) -> KeyMap a -> KeyMap a
-updateKeyMap k f km = runIdentity (KeyMap.alterF (Identity . fmap f) k km)
 
 createMissingFiles :: BS.ByteString -> ConnectionM BS.ByteString
 createMissingFiles bs =
