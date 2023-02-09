@@ -1,0 +1,7 @@
+
+author: XJIE6
+description: "\\nImproves behavior of LSP requests in case of modules. Adds syntax highlighting to `hover` request. Adds support for `hover` over modules\\n\\n"
+merge_request: '2326'
+title: "[#1645]Hover upgrade"
+type: added
+            
