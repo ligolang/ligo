@@ -1347,16 +1347,7 @@ let%expect_test _ =
                       Module definitions:
 
     references:
-      File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 4-5
-
-    Warnings:
-    File "../../test/contracts/get_scope_tests/module4.mligo", line 2, characters 8-9:
-      1 | let x =
-      2 |     let a = 1 in
-      3 |     module B = struct
-    :
-    Warning: unused variable "a".
-    Hint: replace it by "_a" to prevent this warning. |}];
+      File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 4-5 |}];
   run_ligo_good
     [ "info"
     ; "get-scope"
