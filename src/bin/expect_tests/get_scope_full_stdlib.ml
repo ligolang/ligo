@@ -260,17 +260,23 @@ let%expect_test _ =
     (test_baker_policy#363 -> test_baker_policy)
     Range: File "", line 217, characters 5-22
     Body Range: File "", line 218, character 4 to line 220, character 29
-    Content: : |sum[By_account -> address , By_round -> int , Excluding -> list (address)]|
+    Content: : |sum[By_account -> address ,
+                    By_round -> int ,
+                    Excluding -> list (address)]|
     references: File "", line 272, characters 29-46
     (test_exec_error#361 -> test_exec_error)
     Range: File "", line 210, characters 5-20
     Body Range: File "", line 211, character 4 to line 213, character 19
-    Content: : |sum[Balance_too_low -> test_exec_error_balance_too_low , Other -> string , Rejected -> ( michelson_program * address )]|
+    Content: : |sum[Balance_too_low -> test_exec_error_balance_too_low ,
+                    Other -> string ,
+                    Rejected -> ( michelson_program * address )]|
     references: File "", line 215, characters 49-64
     (test_exec_error_balance_too_low#360 -> test_exec_error_balance_too_low)
     Range: File "", line 207, characters 5-36
     Body Range: File "", line 208, characters 2-79
-    Content: : |record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez]|
+    Content: : |record[contract_balance -> tez ,
+                       contract_too_low -> address ,
+                       spend_request -> tez]|
     references: File "", line 212, characters 23-54
     (test_exec_result#362 -> test_exec_result)
     Range: File "", line 215, characters 5-21
@@ -282,7 +288,9 @@ let%expect_test _ =
     (unforged_ticket#366 -> unforged_ticket)
     Range: File "", line 225, characters 8-23
     Body Range: File "", line 225, characters 0-91
-    Content: : |funtype 's : * . record[amount -> nat , ticketer -> address , value -> 's]|
+    Content: : |funtype 's : * . record[amount -> nat ,
+                                        ticketer -> address ,
+                                        value -> 's({ name: ticketer }, { name: value }, { name: amount })]|
     references: []
     Module definitions:
     (Big_map#140 -> Big_map)
@@ -569,7 +577,8 @@ let%expect_test _ =
                       Range: File "", line 113, characters 6-10
                       Body Range: File "", line 113, characters 11-23
                       Content: |core: ∀ k : * . ∀ v : * . ∀ c : * .
-                      ( c * ( k * v ) ) -> c -> map (k ,
+                      ( c *
+                        ( k * v ) ) -> c -> map (k ,
                       v) -> c -> c|
                       references: []
                       (get_and_update#163 -> get_and_update)
@@ -594,7 +603,8 @@ let%expect_test _ =
                       Range: File "", line 112, characters 6-9
                       Body Range: File "", line 112, characters 10-22
                       Content: |core: ∀ k : * . ∀ v : * . ∀ w : * .
-                      ( k * v ) -> w -> map (k ,
+                      ( k *
+                        v ) -> w -> map (k ,
                       v) -> map (k ,
                       w)|
                       references: []
@@ -827,7 +837,8 @@ let%expect_test _ =
                       Range: File "", line 330, characters 6-24
                       Body Range: File "", line 330, characters 25-35
                       Content: |core: ∀ p : * . ∀ s : * . ( p * s ) ->
-                      ( list (operation) * s ) -> s -> tez -> unit|
+                      ( list (operation) *
+                        s ) -> s -> tez -> unit|
                       references: []
                       (cast_address#416 -> cast_address)
                       Range: File "", line 256, characters 6-18
@@ -846,7 +857,8 @@ let%expect_test _ =
                       Range: File "", line 275, characters 6-22
                       Body Range: File "", line 275, characters 23-33
                       Content: |core: ∀ p : * . ∀ s : * . ( p * s ) ->
-                      ( list (operation) * s ) -> michelson_contract|
+                      ( list (operation) *
+                        s ) -> michelson_contract|
                       references:
                         File "", line 360, characters 12-28 ,
                         File "", line 367, characters 12-28
@@ -972,7 +984,8 @@ let%expect_test _ =
                       (mutate_value#511 -> mutate_value)
                       Range: File "", line 331, characters 6-18
                       Body Range: File "", line 331, characters 19-27
-                      Content: |core: ∀ a : * . nat -> a -> option (( a * mutation ))|
+                      Content: |core: ∀ a : * . nat -> a -> option (( a *
+                                                                        mutation ))|
                       references:
                         File "", line 385, characters 23-35 ,
                         File "", line 397, characters 23-35
@@ -980,13 +993,15 @@ let%expect_test _ =
                       Range: File "", line 381, characters 6-19
                       Body Range: File "", line 381, characters 20-30
                       Content: |core: ∀ a : * . ∀ b : * . a -> a -> b -> option (
-                      ( b * mutation ))|
+                      ( b *
+                        mutation ))|
                       references: []
                       (mutation_test_all#620 -> mutation_test_all)
                       Range: File "", line 393, characters 6-23
                       Body Range: File "", line 393, characters 24-34
                       Content: |core: ∀ a : * . ∀ b : * . a -> a -> b -> list (
-                      ( b * mutation ))|
+                      ( b *
+                        mutation ))|
                       references: []
                       (new_account#408 -> new_account)
                       Range: File "", line 252, characters 6-17
@@ -1017,8 +1032,12 @@ let%expect_test _ =
                       (originate#566 -> originate)
                       Range: File "", line 359, characters 6-15
                       Body Range: File "", line 359, characters 16-26
-                      Content: |core: ∀ p : * . ∀ s : * . p -> s -> ( list (operation) * s ) -> s -> tez ->
-                      ( typed_address (p , s) * michelson_contract * int )|
+                      Content: |core: ∀ p : * . ∀ s : * . p -> s -> ( list (operation) *
+                                                                        s ) -> s -> tez ->
+                      ( typed_address (p ,
+                        s) *
+                        michelson_contract *
+                        int )|
                       references: []
                       (originate_contract#557 -> originate_contract)
                       Range: File "", line 358, characters 6-24
@@ -1034,27 +1053,35 @@ let%expect_test _ =
                       Range: File "", line 376, characters 6-25
                       Body Range: File "", line 376, characters 27-29
                       Content: |core: string -> string -> list (string) -> michelson_program -> tez ->
-                      ( address * michelson_contract * int )|
+                      ( address *
+                        michelson_contract *
+                        int )|
                       references: []
                       (originate_from_file_and_mutate#646 -> originate_from_file_and_mutate)
                       Range: File "", line 405, characters 6-36
                       Body Range: File "", line 405, characters 37-45
                       Content: |core: ∀ b : * . string -> string -> list (string) -> michelson_program -> tez ->
-                      ( address * michelson_contract * int ) -> b -> option (
-                      ( b * mutation ))|
+                      ( address *
+                        michelson_contract *
+                        int ) -> b -> option (( b * mutation ))|
                       references: []
                       (originate_from_file_and_mutate_all#673 -> originate_from_file_and_mutate_all)
                       Range: File "", line 425, characters 6-40
                       Body Range: File "", line 425, characters 41-49
                       Content: |core: ∀ b : * . string -> string -> list (string) -> michelson_program -> tez ->
-                      ( address * michelson_contract * int ) -> b -> list (
-                      ( b * mutation ))|
+                      ( address *
+                        michelson_contract *
+                        int ) -> b -> list (( b * mutation ))|
                       references: []
                       (originate_uncurried#575 -> originate_uncurried)
                       Range: File "", line 366, characters 6-25
                       Body Range: File "", line 366, characters 26-36
                       Content: |core: ∀ p : * . ∀ s : * . ( p * s ) ->
-                      ( list (operation) * s ) -> s -> tez -> ( typed_address (p , s) * michelson_contract * int )|
+                      ( list (operation) *
+                        s ) -> s -> tez -> ( typed_address (p ,
+                                             s) *
+                                             michelson_contract *
+                                             int )|
                       references: []
                       (parse_michelson#426 -> parse_michelson)
                       Range: File "", line 261, characters 6-21
@@ -1281,15 +1308,18 @@ let%expect_test _ =
                       (create_contract#76 -> create_contract)
                       Range: File "", line 59, characters 25-40
                       Body Range: File "", line 59, characters 41-51
-                      Content: |core: ∀ p : * . ∀ s : * . p -> s -> ( list (operation) * s ) -> option (key_hash) -> tez -> s ->
-                      ( operation * address )|
+                      Content: |core: ∀ p : * . ∀ s : * . p -> s -> ( list (operation) *
+                                                                        s ) -> option (key_hash) -> tez -> s ->
+                      ( operation *
+                        address )|
                       references: []
                       (create_contract_uncurried#81 -> create_contract_uncurried)
                       Range: File "", line 62, characters 25-50
                       Body Range: File "", line 62, characters 51-61
                       Content: |core: ∀ p : * . ∀ s : * . ( p * s ) ->
-                      ( list (operation) * s ) -> option (key_hash) -> tez -> s ->
-                      ( operation * address )|
+                      ( list (operation) *
+                        s ) -> option (key_hash) -> tez -> s -> ( operation *
+                                                                  address )|
                       references: []
                       (create_ticket#57 -> create_ticket)
                       Range: File "", line 47, characters 6-19
@@ -1401,7 +1431,9 @@ let%expect_test _ =
                       (read_ticket#32 -> read_ticket)
                       Range: File "", line 23, characters 6-17
                       Body Range: File "", line 23, characters 18-26
-                      Content: |core: ∀ a : * . ticket (a) -> ( ( address * ( a * nat ) ) * ticket (a) )|
+                      Content: |core: ∀ a : * . ticket (a) -> ( ( address *
+                                                                    ( a * nat ) ) *
+                                                                  ticket (a) )|
                       references: []
                       (sapling_empty_state#43 -> sapling_empty_state)
                       Range: File "", line 32, characters 25-44
@@ -1412,7 +1444,8 @@ let%expect_test _ =
                       Range: File "", line 73, characters 25-46
                       Body Range: File "", line 73, characters 47-59
                       Content: |core: ∀ sap_a : + . sapling_transaction (sap_a) -> sapling_state (sap_a) -> option (
-                      ( bytes * ( int * sapling_state (sap_a) ) ))|
+                      ( bytes *
+                        ( int * sapling_state (sap_a) ) ))|
                       references: []
                       (self#40 -> self)
                       Range: File "", line 28, characters 25-29
@@ -1428,7 +1461,8 @@ let%expect_test _ =
                       Range: File "", line 57, characters 6-18
                       Body Range: File "", line 57, characters 19-27
                       Content: |core: ∀ a : * . ticket (a) -> ( nat * nat ) -> option (
-                      ( ticket (a) * ticket (a) ))|
+                      ( ticket (a) *
+                        ticket (a) ))|
                       references: []
                       (transaction#61 -> transaction)
                       Range: File "", line 49, characters 6-17

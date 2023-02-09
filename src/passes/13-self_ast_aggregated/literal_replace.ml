@@ -1,3 +1,4 @@
+open Ligo_prim
 open Ast_aggregated
 open Ligo_prim.Constant
 open Trace
@@ -22,7 +23,7 @@ let pair_expression ~raise : expression -> expression * expression =
   | E_record p ->
     trace_option ~raise (Errors.corner_case "Not a pair?")
     @@ List.to_pair
-    @@ Ligo_prim.Record.LMap.to_list p
+    @@ Record.values p
   | _ ->
     raise.error
       (Errors.corner_case

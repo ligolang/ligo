@@ -228,7 +228,10 @@ let%expect_test _ =
     (main#10 -> main)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-8
     Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
-    Content: |resolved: ( int * record[x -> int , y -> int] ) -> ( list (operation) * record[x -> int , y -> int] )|
+    Content: |resolved: ( int *
+                          record[x -> int , y -> int({ name: x }, { name: y })] ) ->
+    ( list (operation) *
+      record[x -> int , y -> int({ name: x }, { name: y })] )|
     references: []
     (s#6 -> s)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 12-13

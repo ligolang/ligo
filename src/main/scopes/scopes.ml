@@ -249,7 +249,7 @@ let rec find_type_references : AST.type_expression -> reference list =
     [ Type t ]
   | T_sum { fields; layout = _ } | T_record { fields; layout = _ } ->
     Record.fold fields ~init:[] ~f:(fun refs row ->
-        let t_refs = find_type_references row.associated_type in
+        let t_refs = find_type_references row in
         refs @ t_refs)
   | T_arrow { type1; type2 } -> find_type_references type1 @ find_type_references type2
   | T_app { type_operator; arguments } ->
@@ -413,13 +413,13 @@ let rec expression ~raise
     defs_body @ defs_coll @ defs, refs_body @ refs_coll, tenv, scopes
   | E_record e_lable_map ->
     let defs, refs, tenv, scopes =
-      Record.LMap.fold
-        (fun _ e (defs, refs, tenv, scopes) ->
+      Record.fold
+        e_lable_map
+        ~init:([], [], tenv, [])
+        ~f:(fun (defs, refs, tenv, scopes) e ->
           let defs', refs', tenv, scopes' = expression tenv e in
           let scopes' = merge_same_scopes scopes' in
           defs' @ defs, refs' @ refs, tenv, merge_same_scopes scopes @ scopes')
-        e_lable_map
-        ([], [], tenv, [])
     in
     defs, refs, tenv, scopes
   | E_assign { binder; expression = e } ->

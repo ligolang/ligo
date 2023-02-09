@@ -1,22 +1,20 @@
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
-open Types
+module Pair = Simple_utils.Pair
 open Ligo_prim
+open Types
 
 let get_pair m =
-  match
-    Record.LMap.find_opt (Label.of_int 0) m, Record.LMap.find_opt (Label.of_int 1) m
-  with
-  | ( Some ({ associated_type = e1; _ } : row_element)
-    , Some ({ associated_type = e2; _ } : row_element) ) -> Some (e1, e2)
+  match Map.find m (Label.of_int 0), Map.find m (Label.of_int 1) with
+  | Some e1, Some e2 -> Some (e1, e2)
   | _ -> None
 
 
 let tuple_of_record (m : _ Record.t) =
   let aux i =
     let label = Label.of_int i in
-    let opt = Record.LMap.find_opt label m in
+    let opt = Record.find_opt m label in
     Option.bind ~f:(fun opt -> Some ((label, opt), i + 1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
@@ -74,11 +72,7 @@ let destruct_arrows (t : type_expression) =
 
 let destruct_tuple (t : type_expression) =
   match t.type_content with
-  | T_record { fields; _ } ->
-    let f ({ associated_type; _ } : row_element) = associated_type in
-    let fields = Record.LMap.values fields in
-    let fields = List.map ~f fields in
-    fields
+  | T_record row -> Row.to_tuple row
   | _ -> [ t ]
 
 
@@ -139,18 +133,8 @@ let rec get_fv_type_expression : type_expression -> VarSet.t =
   | T_constant { language = _; injection = _; parameters } ->
     let parameters = List.map ~f:self parameters in
     List.fold_right ~f:VarSet.union ~init:VarSet.empty parameters
-  | T_sum { fields; layout = _ } ->
-    let content =
-      List.map ~f:(fun ({ associated_type; _ } : row_element) -> self associated_type)
-      @@ Record.LMap.values fields
-    in
-    List.fold_right ~f:VarSet.union ~init:VarSet.empty content
-  | T_record { fields; layout = _ } ->
-    let content =
-      List.map ~f:(fun ({ associated_type; _ } : row_element) -> self associated_type)
-      @@ Record.LMap.values fields
-    in
-    List.fold_right ~f:VarSet.union ~init:VarSet.empty content
+  | T_sum row | T_record row ->
+    Row.fold (fun var_set type_ -> VarSet.union var_set (self type_)) VarSet.empty row
   | _ -> VarSet.empty
 
 
@@ -186,24 +170,12 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(self v t) parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum { fields; layout } ->
-    let fields =
-      Record.LMap.map
-        (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-             : row_element ->
-          { associated_type = self v t associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    { u with type_content = T_sum { fields; layout } }
-  | T_record { fields; layout } ->
-    let fields =
-      Record.LMap.map
-        (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-             : row_element ->
-          { associated_type = self v t associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    { u with type_content = T_record { fields; layout } }
+  | T_sum row ->
+    let row = Row.map (self v t) row in
+    { u with type_content = T_sum row }
+  | T_record row ->
+    let row = Row.map (self v t) row in
+    { u with type_content = T_record row }
   | _ -> u
 
 
@@ -236,29 +208,14 @@ let rec psubst_type t (u : type_expression) =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:self parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum { fields; layout } ->
-    let fields =
-      Record.LMap.map
-        (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-             : row_element ->
-          { associated_type = self associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    { u with type_content = T_sum { fields; layout } }
-  | T_record { fields; layout } ->
-    let fields =
-      Record.LMap.map
-        (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-             : row_element ->
-          { associated_type = self associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    { u with type_content = T_record { fields; layout } }
+  | T_sum row ->
+    let row = Row.map self row in
+    { u with type_content = T_sum row }
+  | T_record row ->
+    let row = Row.map self row in
+    { u with type_content = T_record row }
   | _ -> u
 
-
-open Ligo_prim
-module Pair = Simple_utils.Pair
 
 type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
 
@@ -280,7 +237,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let res, struct_ = self init struct_ in
       res, return @@ E_accessor { struct_; path }
     | E_record m ->
-      let res, m' = Record.LMap.fold_map ~f:(fun _ e res -> self res e) ~init m in
+      let res, m' = Record.fold_map ~f:(fun res e -> self res e) ~init m in
       res, return @@ E_record m'
     | E_update { struct_; path; update } ->
       let res, struct_ = self init struct_ in
@@ -407,11 +364,7 @@ let rec fold_type_expression
   match te.type_content with
   | T_variable _ -> init
   | T_constant { parameters; _ } -> List.fold parameters ~init ~f
-  | T_sum { fields; _ } | T_record { fields; _ } ->
-    Record.LMap.fold
-      (fun _ (row : row_element) acc -> self ~init:acc row.associated_type)
-      fields
-      init
+  | T_sum row | T_record row -> Row.fold f init row
   | T_arrow { type1; type2 } -> self type2 ~init:(self type1 ~init)
   | T_singleton _ -> init
   | T_abstraction { type_; _ } | T_for_all { type_; _ } -> self type_ ~init

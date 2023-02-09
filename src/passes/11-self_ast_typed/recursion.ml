@@ -34,8 +34,7 @@ let rec check_recursive_call ~raise : Value_var.t -> bool -> expression -> unit 
   | E_matching { matchee; cases } ->
     check_recursive_call ~raise n false matchee;
     check_recursive_call_in_matching ~raise n final_path cases
-  | E_record elm ->
-    List.iter ~f:(check_recursive_call ~raise n false) @@ Record.LMap.to_list elm
+  | E_record record -> Record.iter record ~f:(check_recursive_call ~raise n false)
   | E_accessor { struct_; _ } -> check_recursive_call ~raise n false struct_
   | E_update { struct_; update; _ } ->
     check_recursive_call ~raise n false struct_;

@@ -34,6 +34,7 @@ end = struct
     |> fun (v, m) -> m, Module_var.(set_location @@ get_location var) v
 end
 
+(* this is doing nothing ? *)
 let rec type_expression : Scope.t -> AST.type_expression -> AST.type_expression =
  fun scope te ->
   let self ?(scope = scope) = type_expression scope in
@@ -41,26 +42,10 @@ let rec type_expression : Scope.t -> AST.type_expression -> AST.type_expression 
   match te.type_content with
   | T_variable type_variable -> return @@ T_variable type_variable
   | T_sum { fields; layout } ->
-    let fields =
-      Record.map
-        ~f:
-          (fun ({ associated_type; michelson_annotation; decl_pos } : AST.row_element)
-               : AST.row_element ->
-          let associated_type = self associated_type in
-          { associated_type; michelson_annotation; decl_pos })
-        fields
-    in
+    let fields = Record.map ~f:self fields in
     return @@ T_sum { fields; layout }
   | T_record { fields; layout } ->
-    let fields =
-      Record.map
-        ~f:
-          (fun ({ associated_type; michelson_annotation; decl_pos } : AST.row_element)
-               : AST.row_element ->
-          let associated_type = self associated_type in
-          { associated_type; michelson_annotation; decl_pos })
-        fields
-    in
+    let fields = Record.map ~f:self fields in
     return @@ T_record { fields; layout }
   | T_arrow { type1; type2 } ->
     let type1 = self type1 in

@@ -12,11 +12,12 @@ module Layout_var = Var.Layout_var
 module Type_var = Var.Type_var
 module Literal_types = Literal_types
 module Kind = Kind
-module Rows = Rows
+module Row = Row
 module Arrow = Arrow
 module Abstraction = Abstraction
 module Type_app = Type_app
 module Type_abs = Type_abs
+module Tuple = Tuple
 
 (* Value level constructs *)
 module Value_var = Var.Value_var

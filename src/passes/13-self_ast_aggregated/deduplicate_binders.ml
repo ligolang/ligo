@@ -114,28 +114,12 @@ let rec swap_type_expression : Scope.swapper -> type_expression -> type_expressi
   | T_variable ty_var ->
     let ty_var = swaper.type_ ty_var in
     return @@ T_variable ty_var
-  | T_sum { fields; layout } ->
-    let fields =
-      Record.map
-        ~f:
-          (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-               : row_element ->
-          let associated_type = self associated_type in
-          { associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    return @@ T_sum { fields; layout }
-  | T_record { fields; layout } ->
-    let fields =
-      Record.map
-        ~f:
-          (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-               : row_element ->
-          let associated_type = self associated_type in
-          { associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    return @@ T_record { fields; layout }
+  | T_sum row ->
+    let row = Row.map self row in
+    return @@ T_sum row
+  | T_record row ->
+    let row = Row.map self row in
+    return @@ T_record row
   | T_arrow { type1; type2 } ->
     let type1 = self type1 in
     let type2 = self type2 in
@@ -323,28 +307,12 @@ let rec type_expression : Scope.t -> type_expression -> type_expression =
   | T_variable ty_var ->
     let ty_var = Scope.get_type_var scope ty_var in
     return @@ T_variable ty_var
-  | T_sum { fields; layout } ->
-    let fields =
-      Record.map
-        ~f:
-          (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-               : row_element ->
-          let associated_type = self associated_type in
-          { associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    return @@ T_sum { fields; layout }
-  | T_record { fields; layout } ->
-    let fields =
-      Record.map
-        ~f:
-          (fun ({ associated_type; michelson_annotation; decl_pos } : row_element)
-               : row_element ->
-          let associated_type = self associated_type in
-          { associated_type; michelson_annotation; decl_pos })
-        fields
-    in
-    return @@ T_record { fields; layout }
+  | T_sum row ->
+    let row = Row.map self row in
+    return @@ T_sum row
+  | T_record row ->
+    let row = Row.map self row in
+    return @@ T_record row
   | T_arrow { type1; type2 } ->
     let type1 = self type1 in
     let type2 = self type2 in
@@ -498,7 +466,7 @@ let rec expression : Scope.t -> expression -> Scope.t * expression =
     let cases = matching_cases scope cases in
     return @@ E_matching { matchee; cases }
   | E_record record ->
-    let _, record = Record.LMap.unzip @@ Record.LMap.map self record in
+    let record = Record.map ~f:(fun elem -> snd @@ self elem) record in
     return @@ E_record record
   | E_accessor { struct_; path } ->
     let _, struct_ = self struct_ in

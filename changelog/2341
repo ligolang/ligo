@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nFix problem regarding unification of layout in record/sum types.\\n"
+merge_request: '2341'
+title: "Refactor `Layout` and `Row` to use rose trees"
+type: fixed
+            

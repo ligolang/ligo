@@ -124,10 +124,7 @@ let rec iter_type_expression : ty_mapper -> type_expression -> unit =
   match t.type_content with
   | T_variable _ -> ()
   | T_constant x -> List.iter ~f:self x.parameters
-  | T_sum x ->
-    List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
-  | T_record x ->
-    List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
+  | T_sum row | T_record row -> Row.iter self row
   | T_arrow x ->
     let () = self x.type1 in
     self x.type2
@@ -547,7 +544,7 @@ end = struct
     | E_matching { matchee; cases } -> merge (self matchee) (get_fv_cases cases)
     | E_record m ->
       let res = Record.map ~f:self m in
-      let res = Record.LMap.to_list res in
+      let res = Record.values res in
       unions res
     | E_update { struct_; update; path = _ } -> merge (self struct_) (self update)
     | E_accessor { struct_; path = _ } -> self struct_

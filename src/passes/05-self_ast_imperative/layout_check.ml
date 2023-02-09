@@ -1,4 +1,3 @@
-open Ligo_prim
 open Ast_imperative
 
 let is_layout attr = String.chop_prefix ~prefix:"layout:" attr
@@ -10,8 +9,8 @@ let layout_type_expression ~raise : type_expression -> type_expression =
   | T_sum cmap ->
     let (_ : unit list) =
       List.map
-        ~f:(fun (label, ({ attributes; _ } : _ Rows.row_element)) ->
-          if attributes |> List.map ~f:is_layout |> List.exists ~f:Option.is_some
+        ~f:(fun (label, { row_elem_attributes; _ }) ->
+          if row_elem_attributes |> List.map ~f:is_layout |> List.exists ~f:Option.is_some
           then (
             let () =
               raise.Simple_utils.Trace.warning

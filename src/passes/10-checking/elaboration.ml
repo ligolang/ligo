@@ -18,12 +18,12 @@ include Monad.Make (struct
   let map = `Define_using_bind
 end)
 
-let all_lmap (lmap : 'a t Record.LMap.t) : 'a Record.LMap.t t =
- fun ~raise subst -> Record.LMap.map (fun t -> t ~raise subst) lmap
+let all_lmap (lmap : 'a t Label.Map.t) : 'a Label.Map.t t =
+ fun ~raise subst -> Map.map ~f:(fun t -> t ~raise subst) lmap
 
 
-let all_lmap_unit (lmap : unit t Record.LMap.t) : unit t =
- fun ~raise subst -> Record.LMap.iter (fun _label t -> t ~raise subst) lmap
+let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
+ fun ~raise subst -> Label.Map.iter ~f:(fun t -> t ~raise subst) lmap
 
 
 include Let_syntax
@@ -65,27 +65,29 @@ let rec decode (type_ : Type.t) ~raise subst =
     return @@ O.T_record row
 
 
-and decode_layout (layout : Type.layout) ~raise subst =
-  let open Layout in
+and decode_layout
+    (fields : O.type_expression Label.Map.t)
+    (layout : Type.layout)
+    ~raise
+    subst
+  =
   match layout with
-  | L_tree -> L_tree
-  | L_comb -> L_comb
+  | L_concrete layout -> layout
   | L_exists lvar ->
     (match Substitution.find_lexists_eq subst lvar with
-    | Some layout -> decode_layout layout ~raise subst
-    | None -> O.default_layout)
-
-
-and decode_row_elem (row_elem : Type.row_element) ~raise subst =
-  Rows.map_row_element_mini_c (fun type_ -> decode type_ ~raise subst) row_elem
+    | Some (_, layout) -> decode_layout fields layout ~raise subst
+    | None ->
+      let default_layout_from_field_set fields =
+        O.default_layout
+          (fields |> Set.to_list |> List.map ~f:(fun name -> { Layout.name; annot = None }))
+      in
+      default_layout_from_field_set (Map.key_set fields))
 
 
 and decode_row ({ fields; layout } : Type.row) ~raise subst =
-  let fields =
-    Record.map ~f:(fun row_elem -> decode_row_elem row_elem ~raise subst) fields
-  in
-  let layout = decode_layout layout ~raise subst in
-  O.{ fields; layout }
+  let fields = Map.map ~f:(fun row_elem -> decode row_elem ~raise subst) fields in
+  let layout = decode_layout fields layout ~raise subst in
+  { fields; layout }
 
 
 let decode type_ ~raise subst =

@@ -15,7 +15,7 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test exited with value KT1DgZV34oZABXSaXiRm5nDxR7pGtMnsvtDd(None). |}]
+    - test exited with value KT1QkWPtJibiG3npjQ1xUJRnsVn2YBp2DzAR(None). |}]
 
 let%expect_test _ =
   run_ligo_good

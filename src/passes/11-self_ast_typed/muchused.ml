@@ -64,12 +64,8 @@ let rec is_dup (t : type_expression) =
   | T_constant { injection = Contract; _ } -> true
   | T_constant { injection = Big_map | Map; parameters = [ t1; t2 ]; _ } ->
     is_dup t1 && is_dup t2
-  | T_record rows | T_sum rows ->
-    let row_types =
-      Record.LMap.to_list rows.fields
-      |> List.map ~f:(fun (v : row_element) -> v.associated_type)
-      |> List.filter ~f:(fun v -> not (is_dup v))
-    in
+  | T_record row | T_sum row ->
+    let row_types = row.fields |> Map.data |> List.filter ~f:(fun v -> not (is_dup v)) in
     List.is_empty row_types
   | T_arrow _ -> true
   | T_variable _ -> true

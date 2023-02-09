@@ -1,4 +1,5 @@
 open Ligo_prim
+module Row = Ast_typed.Row
 open Simple_utils
 open Trace
 open Helpers
@@ -38,10 +39,7 @@ let check_view_type ~raise
     | T_constant { injection = Operation; _ }
     | T_constant { injection = Ticket; _ } -> raise.error err
     | T_constant x -> List.iter ~f:self x.parameters
-    | T_sum x ->
-      List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
-    | T_record x ->
-      List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
+    | T_sum row | T_record row -> Row.iter self row
     | T_arrow _ ->
       (* lambdas are always OK *)
       ()

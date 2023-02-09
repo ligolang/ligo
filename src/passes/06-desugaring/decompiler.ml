@@ -68,21 +68,15 @@ let rec decompile_type_expression (type_ : O.type_expression) : I.type_expressio
       return @@ I.T_for_all for_all)
 
 
-and decompile_row ({ fields; layout } : O.rows) : _ I.non_linear_rows =
+and decompile_row ({ fields; layout = _ } : O.row) : _ I.non_linear_rows =
   let fields =
     fields
-    |> Record.map
-         ~f:(fun
-              ({ associated_type; decl_pos; michelson_annotation } :
-                _ Rows.row_element_mini_c)
-            ->
-           let associated_type = decompile_type_expression associated_type in
-           let attributes = decompile_row_elem_attributes michelson_annotation in
-           ({ associated_type; attributes; decl_pos } : _ Rows.row_element))
+    |> Record.map ~f:(fun ty ->
+           Ast_imperative.
+             { associated_type = decompile_type_expression ty; row_elem_attributes = [] })
     |> Record.to_list
   in
-  let attributes = decompile_row_attributes layout in
-  { fields; attributes }
+  { fields; attributes = [] }
 
 
 let rec decompile_expression (expr : O.expression) : I.expression =

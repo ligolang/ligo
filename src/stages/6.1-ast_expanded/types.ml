@@ -1,16 +1,17 @@
 [@@@warning "-30"]
 
-open Ligo_prim
 module Location = Simple_utils.Location
+open Ligo_prim
+module Row = Row.With_layout
 
 type type_expression = [%import: Ast_aggregated.type_expression]
 
 and type_content = [%import: Ast_aggregated.type_content]
 [@@deriving equal, compare, yojson, hash]
 
-and row_element = [%import: Ast_aggregated.row_element]
-and rows = [%import: Ast_aggregated.rows]
 and ty_expr = type_expression
+
+type row = [%import: Ast_aggregated.row]
 
 module ValueAttr = struct
   include Ast_aggregated.ValueAttr
@@ -73,7 +74,7 @@ and 'e matching_content_variant =
 [@@deriving eq, compare, yojson, hash]
 
 and 'e matching_content_record =
-  { fields : type_expression Binder.t Record.LMap.t
+  { fields : type_expression Binder.t Record.t
   ; body : 'e
   ; tv : type_expression
   }

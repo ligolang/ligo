@@ -2,8 +2,8 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Simple_utils
-open Types
 open Ligo_prim
+open Types
 
 (* TODO: does that need to be cleaned-up ? *)
 module Free_variables = struct
@@ -28,7 +28,7 @@ module Free_variables = struct
       | false -> singleton name)
     | E_application { lamb; args } -> unions @@ List.map ~f:self [ lamb; args ]
     | E_constructor { element; _ } -> self element
-    | E_record m -> unions @@ List.map ~f:self @@ Record.LMap.to_list m
+    | E_record m -> unions @@ List.map ~f:self @@ Record.values m
     | E_accessor { struct_; _ } -> self struct_
     | E_update { struct_; update; _ } -> union (self struct_) @@ self update
     | E_matching { matchee; cases; _ } ->
@@ -139,50 +139,15 @@ let rec assert_type_expression_eq ((a, b) : type_expression * type_expression)
         (List.zip_exn lsta lstb)
     else None
   | T_constant _, _ -> None
-  | T_sum sa, T_sum sb ->
-    let sa' = Record.LMap.to_kv_list_rev sa.fields in
-    let sb' = Record.LMap.to_kv_list_rev sb.fields in
-    let aux
-        ( (ka, ({ associated_type = va; _ } : row_element))
-        , (kb, ({ associated_type = vb; _ } : row_element)) )
-      =
-      let* _ = assert_eq ka kb in
-      assert_type_expression_eq (va, vb)
-    in
-    let* _ = assert_same_size sa' sb' in
-    let* _ = assert_eq sa.layout sb.layout in
-    List.fold_left
-      ~f:(fun acc p ->
-        match acc with
-        | None -> None
-        | Some () -> aux p)
-      ~init:(Some ())
-      (List.zip_exn sa' sb')
-  | T_sum _, _ -> None
-  | T_record ra, T_record rb
-    when Bool.( <> ) (Record.is_tuple ra.fields) (Record.is_tuple rb.fields) -> None
-  | T_record ra, T_record rb ->
-    let sort_lmap r' = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) r' in
-    let ra' = sort_lmap @@ Record.LMap.to_kv_list_rev ra.fields in
-    let rb' = sort_lmap @@ Record.LMap.to_kv_list_rev rb.fields in
-    let aux
-        ( (ka, ({ associated_type = va; _ } : row_element))
-        , (kb, ({ associated_type = vb; _ } : row_element)) )
-      =
-      let* _ = assert_eq ka kb in
-      assert_type_expression_eq (va, vb)
-    in
-    let* _ = assert_eq ra.layout rb.layout in
-    let* _ = assert_same_size ra' rb' in
-    let* _ = assert_eq ra.layout rb.layout in
-    List.fold_left
-      ~f:(fun acc p ->
-        match acc with
-        | None -> None
-        | Some () -> aux p)
-      ~init:(Some ())
-      (List.zip_exn ra' rb')
+  | T_sum row1, T_sum row2 | T_record row1, T_record row2 ->
+    Option.some_if
+      (Row.equal
+         (fun t1 t2 -> Option.is_some @@ assert_type_expression_eq (t1, t2))
+         row1
+         row2)
+      ()
   | T_record _, _ -> None
+  | T_sum _, _ -> None
   | T_arrow { type1; type2 }, T_arrow { type1 = type1'; type2 = type2' } ->
     let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')

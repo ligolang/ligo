@@ -6,4 +6,4 @@
  (libraries simple-utils tezos-utils ast_expanded mini_c self_mini_c
    predefined)
  (preprocess
-  (pps ppx_poly_constructor)))
+  (pps ppx_let ppx_poly_constructor)))

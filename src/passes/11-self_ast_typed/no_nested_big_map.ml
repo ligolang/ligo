@@ -1,5 +1,4 @@
 open Errors
-open Ligo_prim
 open Ast_typed
 open Simple_utils.Trace
 
@@ -16,22 +15,8 @@ let rec check_no_nested_bigmap ~raise is_in_bigmap e =
   | T_constant { parameters; _ } ->
     let _ = List.map ~f:(check_no_nested_bigmap ~raise is_in_bigmap) parameters in
     ()
-  | T_sum s ->
-    let es =
-      List.map
-        ~f:(fun { associated_type; _ } -> associated_type)
-        (Record.LMap.to_list s.fields)
-    in
-    let _ = List.map ~f:(fun l -> check_no_nested_bigmap ~raise is_in_bigmap l) es in
-    ()
-  | T_record { fields = elm; _ } ->
-    let _ =
-      Record.map
-        ~f:(fun ({ associated_type; _ } : row_element) ->
-          check_no_nested_bigmap ~raise is_in_bigmap associated_type)
-        elm
-    in
-    ()
+  | T_sum row | T_record row ->
+    Row.iter (fun l -> check_no_nested_bigmap ~raise is_in_bigmap l) row
   | T_arrow { type1; type2 } ->
     let _ = check_no_nested_bigmap ~raise false type1 in
     let _ = check_no_nested_bigmap ~raise false type2 in

@@ -11,9 +11,10 @@ Option patterns are treated as the variant type `Some a | None` would be
 
 **)
 
+module Location = Simple_utils.Location
+module Ligo_string = Simple_utils.Ligo_string
 module I = Ast_aggregated
 module O = Ast_expanded
-module Ligo_string = Simple_utils.Ligo_string
 open Ligo_prim
 
 type matchees = Value_var.t list
@@ -109,8 +110,8 @@ let extract_variant_type : pattern -> Label.t -> O.type_expression -> O.type_exp
   let loc = t.location in
   match t.type_content with
   | T_sum rows ->
-    (match Record.LMap.find_opt label rows.fields with
-    | Some t -> t.associated_type
+    (match Map.find rows.fields label with
+    | Some t -> t
     | None -> corner_case __LOC__)
   | O.T_constant { injection = Literal_types.List; parameters = [ proj_t ]; language = _ }
     ->
@@ -125,8 +126,8 @@ let extract_record_type : pattern -> Label.t -> O.type_expression -> O.type_expr
  fun _ label t ->
   match t.type_content with
   | T_record rows ->
-    (match Record.LMap.find_opt label rows.fields with
-    | Some t -> t.associated_type
+    (match Map.find rows.fields label with
+    | Some t -> t
     | None -> corner_case __LOC__)
   | _ -> corner_case __LOC__
 
@@ -157,8 +158,8 @@ let rec substitute_var_in_body
       let cases =
         match m.cases with
         | Match_record { fields; body; tv } ->
-          if Record.LMap.exists
-               (fun _ (b : O.type_expression Binder.t) ->
+          if Record.exists
+               ~f:(fun (b : O.type_expression Binder.t) ->
                  Binder.apply (Value_var.equal to_subst) b)
                fields
           then m.cases
@@ -246,19 +247,19 @@ let group_equations : equations -> equations Record.t =
     match phd.wrap_content with
     | P_variant (label, p_opt) ->
       let proj_t = extract_variant_type phd label t in
-      Record.LMap.update label (upd proj_t p_opt) m
+      Record.update_opt m label ~f:(upd proj_t p_opt)
     | P_list (List []) ->
       let label = Label.of_string "Nil" in
       let proj_t = extract_variant_type phd label t in
-      Record.LMap.update label (upd proj_t (Location.wrap ~loc I.Pattern.P_unit)) m
+      Record.update_opt m label ~f:(upd proj_t (Location.wrap ~loc I.Pattern.P_unit))
     | P_list (Cons (p_hd, p_tl)) ->
       let label = Label.of_string "Cons" in
       let pattern = Location.wrap ~loc:phd.location @@ I.Pattern.P_tuple [ p_hd; p_tl ] in
       let proj_t = extract_variant_type phd label t in
-      Record.LMap.update label (upd proj_t pattern) m
+      Record.update_opt m label ~f:(upd proj_t pattern)
     | _ -> corner_case __LOC__
   in
-  List.fold_right ~f:aux ~init:Record.LMap.empty eqs
+  List.fold_right ~f:aux ~init:Record.empty eqs
 
 
 let rec match_ : matchees -> equations -> rest -> O.expression =
@@ -354,19 +355,19 @@ and ctor_rule : matchees -> equations -> rest -> O.expression =
       match O.get_t_sum matchee_t with
       | Some _ when Option.is_some (O.get_t_option matchee_t) ->
         List.map
-          ~f:(fun label -> label, Record.LMap.find_opt label eq_map)
+          ~f:(fun label -> label, Record.find_opt eq_map label)
           [ Label.of_string "Some"; Label.of_string "None" ]
       | Some rows ->
         let eq_opt_map =
-          Record.LMap.mapi (fun label _ -> Record.LMap.find_opt label eq_map) rows.fields
+          Record.mapi ~f:(fun ~label ~value:_ -> Record.find_opt eq_map label) rows.fields
         in
-        Record.LMap.to_kv_list @@ eq_opt_map
+        Record.to_list @@ eq_opt_map
       | None ->
         (* REMITODO: parametric types in env ? *)
         (match O.get_t_list matchee_t with
         | Some _ ->
           List.map
-            ~f:(fun label -> label, Record.LMap.find_opt label eq_map)
+            ~f:(fun label -> label, Record.find_opt eq_map label)
             [ Label.of_string "Cons"; Label.of_string "Nil" ]
         | None -> corner_case __LOC__ (* should be caught when typing the matchee *))
     in
@@ -432,7 +433,7 @@ and product_rule : typed_pattern -> matchees -> equations -> rest -> O.expressio
           in
           l, b
         in
-        List.map ~f:aux (Record.LMap.to_kv_list lps)
+        List.map ~f:aux (Record.to_list lps)
       | _ -> corner_case __LOC__
     in
     let aux : typed_pattern list * O.expression -> typed_pattern list * O.expression =
@@ -454,7 +455,7 @@ and product_rule : typed_pattern -> matchees -> equations -> rest -> O.expressio
             let field_t = extract_record_type p label t in
             p, field_t
           in
-          let tps = List.map ~f:aux (Record.LMap.to_kv_list lps) in
+          let tps = List.map ~f:aux (Record.to_list lps) in
           tps @ (var_filler :: ptl), body
         | P_var _ ->
           let filler =
@@ -487,7 +488,7 @@ and product_rule : typed_pattern -> matchees -> equations -> rest -> O.expressio
                 in
                 v, field_t
               in
-              List.map ~f:aux (Record.LMap.to_kv_list lps)
+              List.map ~f:aux (Record.to_list lps)
             | _ -> corner_case __LOC__
           in
           filler @ pl, body
@@ -496,7 +497,7 @@ and product_rule : typed_pattern -> matchees -> equations -> rest -> O.expressio
     in
     let matchee_t = get_pattern_type eqs in
     let eqs' = List.map ~f:aux eqs in
-    let fields = Record.LMap.of_list lb in
+    let fields = Record.of_list lb in
     let new_matchees = List.map ~f:(Fn.compose Binder.get_var snd) lb in
     let body = match_ (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body; tv = snd product_shape } in

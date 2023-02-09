@@ -172,7 +172,7 @@ end = struct
     | E_matching { matchee; cases } -> VarSet.union (self matchee) (get_fv_cases cases)
     | E_record m ->
       let res = Record.map ~f:self m in
-      let res = Record.LMap.to_list res in
+      let res = Record.values res in
       unions res
     | E_accessor { struct_ } -> self struct_
     | E_update { struct_; update } -> VarSet.union (self struct_) (self update)

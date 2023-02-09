@@ -129,12 +129,12 @@ let rec value_gen
   then (
     match get_t_sum_opt type_expr with
     | Some rows ->
-      let l = Record.LMap.to_kv_list rows.fields in
+      let l = Record.to_list rows.fields in
       let gens =
         List.map
           ~f:(fun (Label label, row_el) ->
             QCheck.Gen.(
-              value_gen ~raise ~small row_el.associated_type
+              value_gen ~raise ~small row_el
               >>= fun v -> return (v_ctor label v)))
           l
       in
@@ -144,11 +144,11 @@ let rec value_gen
   then (
     match get_t_record_opt type_expr with
     | Some rows ->
-      let l = Record.LMap.to_kv_list rows.fields in
+      let l = Record.to_list rows.fields in
       let gens =
         List.map
           ~f:(fun (Label label, row_el) ->
-            label, value_gen ~raise ~small row_el.associated_type)
+            label, value_gen ~raise ~small row_el)
           l
       in
       let rec gen l : (string * LT.value) list QCheck.Gen.t =

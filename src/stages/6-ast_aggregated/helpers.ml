@@ -1,70 +1,5 @@
-open Types
 open Ligo_prim
-
-let kv_list_of_t_sum ?(layout : Layout.t = Layout.L_tree) (m : row_element Record.t) =
-  let lst = Record.LMap.to_kv_list m in
-  match layout with
-  | L_tree -> lst
-  | L_comb ->
-    let aux
-        (_, ({ associated_type = _; decl_pos = a; _ } : row_element))
-        (_, ({ associated_type = _; decl_pos = b; _ } : row_element))
-      =
-      Int.compare a b
-    in
-    List.sort ~compare:aux lst
-
-
-let kv_list_of_t_record_or_tuple
-    ?(layout : Layout.t = Layout.L_tree)
-    (m : row_element Record.t)
-  =
-  let lst =
-    if Record.is_tuple m then Record.tuple_of_record m else Record.LMap.to_kv_list m
-  in
-  match layout with
-  | L_tree -> lst
-  | L_comb ->
-    let aux
-        (_, ({ associated_type = _; decl_pos = a; _ } : row_element))
-        (_, ({ associated_type = _; decl_pos = b; _ } : row_element))
-      =
-      Int.compare a b
-    in
-    List.sort ~compare:aux lst
-
-
-let kv_list_of_record_or_tuple ~(layout : Layout.t) record_t_content record =
-  let exps =
-    if Record.is_tuple record
-    then Record.tuple_of_record record
-    else Record.LMap.to_kv_list record
-  in
-  match layout with
-  | L_tree -> List.map ~f:snd exps
-  | L_comb ->
-    let types =
-      if Record.is_tuple record
-      then Record.tuple_of_record record_t_content
-      else Record.LMap.to_kv_list record_t_content
-    in
-    let te =
-      List.map
-        ~f:(fun ((label_t, t), (label_e, e)) ->
-          assert (Label.equal label_t label_e);
-          (*TODO TEST*)
-          t, e)
-        (List.zip_exn types exps)
-    in
-    let s =
-      List.sort
-        ~compare:
-          (fun (({ associated_type = _; decl_pos = a; _ } : row_element), _)
-               ({ associated_type = _; decl_pos = b; _ }, _) -> Int.compare a b)
-        te
-    in
-    List.map ~f:snd s
-
+open Types
 
 (* This function parse te and replace all occurence of binder by value *)
 let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_expression) =
@@ -81,18 +16,8 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
     let type1 = self type1 in
     let type2 = self type2 in
     return @@ T_arrow { type1; type2 }
-  | T_sum m ->
-    let aux ({ associated_type; michelson_annotation; decl_pos } : row_element) =
-      let associated_type = self associated_type in
-      ({ associated_type; michelson_annotation; decl_pos } : row_element)
-    in
-    return @@ T_sum { m with fields = Record.map ~f:aux m.fields }
-  | T_record m ->
-    let aux ({ associated_type; michelson_annotation; decl_pos } : row_element) =
-      let associated_type = self associated_type in
-      ({ associated_type; michelson_annotation; decl_pos } : row_element)
-    in
-    return @@ T_record { m with fields = Record.map ~f:aux m.fields }
+  | T_sum m -> return @@ T_sum (Row.map self m)
+  | T_record m -> return @@ T_record (Row.map self m)
   | T_for_all { ty_binder; kind; type_ } ->
     let type_ = self type_ in
     return @@ T_for_all { ty_binder; kind; type_ }
@@ -164,12 +89,9 @@ let rec assert_type_expression_eq
     else None
   | T_constant _, _ -> None
   | T_sum sa, T_sum sb ->
-    let sa' = Record.LMap.to_kv_list_rev sa.fields in
-    let sb' = Record.LMap.to_kv_list_rev sb.fields in
-    let aux
-        ( (ka, ({ associated_type = va; _ } : row_element))
-        , (kb, ({ associated_type = vb; _ } : row_element)) )
-      =
+    let sa' = Record.to_list sa.fields in
+    let sb' = Record.to_list sb.fields in
+    let aux ((ka, va), (kb, vb)) =
       let* _ = assert_eq ka kb in
       assert_type_expression_eq ~unforged_tickets (va, vb)
     in
@@ -186,12 +108,9 @@ let rec assert_type_expression_eq
     when Bool.( <> ) (Record.is_tuple ra.fields) (Record.is_tuple rb.fields) -> None
   | T_record ra, T_record rb ->
     let sort_lmap r' = List.sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) r' in
-    let ra' = sort_lmap @@ Record.LMap.to_kv_list_rev ra.fields in
-    let rb' = sort_lmap @@ Record.LMap.to_kv_list_rev rb.fields in
-    let aux
-        ( (ka, ({ associated_type = va; _ } : row_element))
-        , (kb, ({ associated_type = vb; _ } : row_element)) )
-      =
+    let ra' = sort_lmap @@ Record.to_list ra.fields in
+    let rb' = sort_lmap @@ Record.to_list rb.fields in
+    let aux ((ka, va), (kb, vb)) =
       let* _ = assert_eq ka kb in
       assert_type_expression_eq ~unforged_tickets (va, vb)
     in

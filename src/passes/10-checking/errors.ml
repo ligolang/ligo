@@ -3,6 +3,7 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 open Simple_utils.Display
 open Ligo_prim
+open Type
 
 type 'err with_loc = Location.t -> 'err
 
@@ -56,10 +57,7 @@ let rec type_mapper ~f (t : Type.t) =
   | _ -> t
 
 
-and row_mapper ~f ({ fields; layout } : Type.row) : Type.row =
-  let fields = Record.map ~f:(Rows.map_row_element_mini_c (type_mapper ~f)) fields in
-  { fields; layout }
-
+and row_mapper ~f (row : Type.row) : Type.row = Row.map (type_mapper ~f) row
 
 let pp_texists_hint ?(requires_annotations = false) ()
     : Format.formatter -> Type.t list -> unit
@@ -250,7 +248,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\" due to differing \
-         layouts (%a and %a).%a@]"
+         layouts \"%a\" and \"%a\".%a@]"
         snippet_pp
         loc
         pp_type

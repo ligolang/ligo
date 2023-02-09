@@ -1,8 +1,8 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
 module List = Simple_utils.List
-open Type
 open Ligo_prim
+open Type
 
 type 'a hashable = (module Caml.Hashtbl.HashedType with type t = 'a)
 
@@ -180,11 +180,13 @@ module T = struct
     | C_module of Module_var.t * Signature.t
     | C_texists_var of Type_var.t * Kind.t
     | C_texists_eq of Type_var.t * Kind.t * Type.t
-    | C_lexists_var of Layout_var.t
-    | C_lexists_eq of Layout_var.t * Type.layout
+    | C_lexists_var of Layout_var.t * fields
+    | C_lexists_eq of Layout_var.t * fields * Type.layout
     | C_pos of pos
     | C_mut_lock of mut_lock
   [@@deriving compare, hash]
+
+  and fields = Label.Set.t
 end
 
 include T
@@ -199,6 +201,8 @@ module PP = struct
     in
     Format.fprintf ppf "@[<hv>%a@]" loop xs
 
+
+  let pp_fields ppf t = list ~pp:Label.pp ppf (Set.to_list t)
 
   let item ppf item =
     match item with
@@ -220,9 +224,18 @@ module PP = struct
       Format.fprintf ppf "^%a :: %a" Type_var.pp evar Kind.pp kind
     | C_texists_eq (evar, kind, type_) ->
       Format.fprintf ppf "^%a :: %a = %a" Type_var.pp evar Kind.pp kind Type.pp type_
-    | C_lexists_var lvar -> Format.fprintf ppf "layout ^%a" Layout_var.pp lvar
-    | C_lexists_eq (lvar, layout) ->
-      Format.fprintf ppf "layout ^%a = %a" Layout_var.pp lvar Type.pp_layout layout
+    | C_lexists_var (lvar, fields) ->
+      Format.fprintf ppf "layout ^%a :: %a" Layout_var.pp lvar pp_fields fields
+    | C_lexists_eq (lvar, fields, layout) ->
+      Format.fprintf
+        ppf
+        "layout ^%a :: %a = %a"
+        Layout_var.pp
+        lvar
+        pp_fields
+        fields
+        Type.pp_layout
+        layout
     | C_module (mvar, sig_) ->
       Format.fprintf ppf "module %a = %a" Module_var.pp mvar Signature.pp sig_
     | C_pos _ | C_mut_lock _ -> ()
@@ -247,7 +260,7 @@ let add_type t tvar type_ = t |:: C_type (tvar, type_)
 let add_type_var t tvar kind = t |:: C_type_var (tvar, kind)
 let add_texists_var t tvar kind = t |:: C_texists_var (tvar, kind)
 let add_module t mvar mctx = t |:: C_module (mvar, mctx)
-let add_lexists_var t lvar = t |:: C_lexists_var lvar
+let add_lexists_var t lvar fields = t |:: C_lexists_var (lvar, fields)
 
 let item_of_signature_item (sig_item : Signature.item) : item =
   match sig_item with
@@ -346,7 +359,7 @@ let get_texists_vars =
 let get_lexists_vars =
   memoize hashable (fun t ->
       (List.filter_map t ~f:(function
-          | C_lexists_var lvar | C_lexists_eq (lvar, _) -> Some lvar
+          | C_lexists_var (lvar, _) | C_lexists_eq (lvar, _, _) -> Some lvar
           | _ -> None) [@landmark "get_lexists_vars"])
       |> Layout_var.Set.of_list)
 
@@ -370,6 +383,16 @@ let get_texists_eq =
           | C_texists_eq (tvar', _kind, type_) when Type_var.equal tvar tvar' ->
             Some type_
           | _ -> None) [@landmark "get_exists_eq"]))
+
+
+let get_lexists_var =
+  memoize2
+    hashable
+    (module Layout_var)
+    (fun t lvar ->
+      (List.find_map t ~f:(function
+          | C_lexists_var (lvar', fields) when Layout_var.equal lvar lvar' -> Some fields
+          | _ -> None) [@landmark "get_lexists_var"]))
 
 
 let get_type_var =
@@ -400,7 +423,8 @@ let get_lexists_eq =
     (module Layout_var)
     (fun t lvar ->
       (List.find_map t ~f:(function
-          | C_lexists_eq (lvar', layout) when Layout_var.equal lvar lvar' -> Some layout
+          | C_lexists_eq (lvar', fields, layout) when Layout_var.equal lvar lvar' ->
+            Some (fields, layout)
           | _ -> None) [@landmark "get_layout_exists_eq"]))
 
 
@@ -436,21 +460,17 @@ module Apply = struct
 
 
   and row ctx (t : Type.row) : Type.row =
-    let fields = Record.map ~f:(row_elem ctx) t.fields in
+    let fields = Map.map ~f:(type_ ctx) t.fields in
     let layout = layout ctx t.layout in
-    { fields; layout }
-
-
-  and row_elem ctx (t : Type.row_element) : Type.row_element =
-    Rows.map_row_element_mini_c (type_ ctx) t
+    Row.create ~layout fields
 
 
   and layout ctx (t : Type.layout) : Type.layout =
     match t with
-    | L_tree | L_comb -> t
+    | L_concrete _ -> t
     | L_exists lvar ->
       (match get_lexists_eq ctx lvar with
-      | Some t -> layout ctx t
+      | Some (_fields, t) -> layout ctx t
       | None -> t)
 
 
@@ -483,9 +503,12 @@ let equal_item : item -> item -> bool =
     Module_var.equal mvar1 mvar2 && Signature.equal sig1 sig2
   | C_pos pos1, C_pos pos2 -> pos1 = pos2
   | C_mut_lock lock1, C_mut_lock lock2 -> lock1 = lock2
-  | C_lexists_var lvar1, C_lexists_var lvar2 -> Layout_var.equal lvar1 lvar2
-  | C_lexists_eq (lvar1, layout1), C_lexists_eq (lvar2, layout2) ->
-    Layout_var.equal lvar1 lvar2 && Type.equal_layout layout1 layout2
+  | C_lexists_var (lvar1, fields1), C_lexists_var (lvar2, fields2) ->
+    Layout_var.equal lvar1 lvar2 && Set.equal fields1 fields2
+  | C_lexists_eq (lvar1, fields1, layout1), C_lexists_eq (lvar2, fields2, layout2) ->
+    Layout_var.equal lvar1 lvar2
+    && Set.equal fields1 fields2
+    && Type.equal_layout layout1 layout2
   | _, _ -> false
 
 
@@ -500,7 +523,8 @@ let drop_until t ~f =
         match item with
         | C_texists_eq (tvar, kind, type_) ->
           Substitution.add_texists_eq subst tvar kind type_
-        | C_lexists_eq (lvar, layout) -> Substitution.add_lexists_eq subst lvar layout
+        | C_lexists_eq (lvar, fields, layout) ->
+          Substitution.add_lexists_eq subst lvar fields layout
         | _ -> subst
       in
       t, subst
@@ -537,7 +561,8 @@ let unsolved t =
         match item with
         | C_texists_eq (tvar, kind, type_) ->
           Substitution.add_texists_eq subst tvar kind type_
-        | C_lexists_eq (lvar, layout) -> Substitution.add_lexists_eq subst lvar layout
+        | C_lexists_eq (lvar, fields, layout) ->
+          Substitution.add_lexists_eq subst lvar fields layout
         | _ -> subst
       in
       t, subst
@@ -606,9 +631,9 @@ let add_texists_eq t evar kind type_ =
   t1 |@ of_list [ C_texists_eq (evar, kind, type_) ] |@ t2
 
 
-let add_lexists_eq t lvar layout =
-  let t1, t2 = split_at t ~at:(C_lexists_var lvar) in
-  t1 |@ of_list [ C_lexists_eq (lvar, layout) ] |@ t2
+let add_lexists_eq t lvar fields layout =
+  let t1, t2 = split_at t ~at:(C_lexists_var (lvar, fields)) in
+  t1 |@ of_list [ C_lexists_eq (lvar, fields, layout) ] |@ t2
 
 
 let to_type_map =
@@ -788,8 +813,8 @@ let get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) l
          let t_params, type_ = Type.destruct_type_abstraction type_ in
          match type_.content with
          | T_sum m ->
-           (match Record.LMap.find_opt constr m.fields with
-           | Some { associated_type; _ } -> Some (var, t_params, associated_type, type_)
+           (match Map.find m.fields constr with
+           | Some associated_type -> Some (var, t_params, associated_type, type_)
            | None -> None)
          | _ -> None
        in
@@ -812,31 +837,30 @@ let get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) l
        | None -> matching_t_sum) [@landmark "get_sum"])
 
 
-let get_record : t -> Type.row_element Record.t -> (Type_var.t option * Type.row) option =
-  let record_hashable : Type.row_element Record.t hashable =
+let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) option =
+  let record_hashable : Type.t Label.Map.t hashable =
     (module struct
-      type t = Type.t Rows.row_element_mini_c Record.t [@@deriving equal, hash]
+      (* Use Record here since [hash_fold_t] is provided there *)
+      type t = Type.t Record.t [@@deriving equal, hash]
     end)
   in
   memoize2 hashable record_hashable (fun ctx record_type ->
-      (let record_type_kv : (Label.t * _ Rows.row_element_mini_c) list =
-         Record.LMap.to_kv_list_rev record_type
+      (let record_type_kv : (Label.t * Type.t) list =
+         Map.to_alist ~key_order:`Decreasing record_type
        in
        (* [is_record_type type_] returns true if [type_] corresponds to [record_type] *)
        let is_record_type type_ =
          match type_.content with
          | T_record record_type' ->
-           let record_type_kv' : (Label.t * _ Rows.row_element_mini_c) list =
-             Record.LMap.to_kv_list_rev record_type'.fields
+           let record_type_kv' : (Label.t * Type.t) list =
+             Map.to_alist ~key_order:`Decreasing record_type'.fields
            in
            (match
               List.for_all2
                 record_type_kv
                 record_type_kv'
                 ~f:(fun (Label ka, va) (Label kb, vb) ->
-                  (* Cannot use [%equal: Label.t * Type.row_element] bcs we don't check equality
-                     of michelson annotation *)
-                  String.equal ka kb && Type.equal va.associated_type vb.associated_type)
+                  String.equal ka kb && Type.equal va vb)
             with
            | Ok result -> Option.some_if result (type_.orig_var, record_type')
            | Unequal_lengths -> None)
@@ -912,13 +936,13 @@ end = struct
               kind; *)
             true)
         | C_pos _ | C_mut_lock _ -> true
-        | C_lexists_var lvar ->
+        | C_lexists_var (lvar, _) ->
           if Set.mem (get_lexists_vars t) lvar
           then (
             Format.printf "Existential layout variable ^%a is shadowed" Layout_var.pp lvar;
             false)
           else true
-        | C_lexists_eq (lvar, layout_) ->
+        | C_lexists_eq (lvar, _, layout_) ->
           (not (Set.mem (get_lexists_vars t) lvar)) && layout layout_ ~ctx
         | C_module (_mvar, sig_) ->
           (* Shadowing permitted *)
@@ -929,7 +953,7 @@ end = struct
 
   and layout ~ctx (layout : Type.layout) : bool =
     match layout with
-    | L_tree | L_comb -> true
+    | L_concrete _ -> true
     | L_exists lvar -> Set.mem (get_lexists_vars ctx) lvar
 
 
@@ -967,8 +991,8 @@ end = struct
         | Type -> return Type
         | _ -> None)
       | T_sum rows | T_record rows ->
-        if Record.LMap.for_all
-             (fun _label ({ associated_type; _ } : _ Rows.row_element_mini_c) ->
+        if Map.for_all
+             ~f:(fun associated_type ->
                match loop associated_type with
                | Some Type -> true
                | _ -> false)
@@ -1045,12 +1069,12 @@ let unsolved t =
     ~init:(Substitution.empty, [], [])
     ~f:(fun (subst, tvars, lvars) item ->
       match item with
-      | C_lexists_eq (lvar, layout) ->
-        Substitution.add_lexists_eq subst lvar layout, tvars, lvars
+      | C_lexists_eq (lvar, fields, layout) ->
+        Substitution.add_lexists_eq subst lvar fields layout, tvars, lvars
       | C_texists_eq (tvar, kind, type_) ->
         Substitution.add_texists_eq subst tvar kind type_, tvars, lvars
       | C_texists_var (tvar, kind) -> subst, (tvar, kind) :: tvars, lvars
-      | C_lexists_var lvar -> subst, tvars, lvar :: lvars
+      | C_lexists_var (lvar, fields) -> subst, tvars, (lvar, fields) :: lvars
       | _ -> subst, tvars, lvars)
 
 
@@ -1074,8 +1098,9 @@ let generalize t type_ ~pos ~loc =
   in
   (* Add layout substs *)
   let subst =
-    List.fold_left lvars ~init:subst ~f:(fun subst lvar ->
-        Substitution.add_lexists_eq subst lvar Type.default_layout)
+    List.fold_left lvars ~init:subst ~f:(fun subst (lvar, fields) ->
+        let layout = Type.default_layout_from_field_set fields in
+        Substitution.add_lexists_eq subst lvar fields layout)
   in
   (* Add universal tvars *)
   let subst =

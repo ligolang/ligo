@@ -1,3 +1,4 @@
+module Location = Simple_utils.Location
 module I = Ast_aggregated
 module O = Ast_expanded
 open Ligo_prim
@@ -160,7 +161,7 @@ and destruct_mut_let_in : O.expression -> O.expression =
   let loc = match_expr.location in
   match match_expr.expression_content with
   | O.E_matching ({ cases = O.Match_record case; _ } as prod_case) ->
-    let binders = List.map ~f:snd (Record.LMap.to_kv_list case.fields) in
+    let binders = List.map ~f:snd (Record.to_list case.fields) in
     let body =
       List.fold
         binders

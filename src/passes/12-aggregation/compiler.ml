@@ -282,7 +282,7 @@ let compile_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
  fun { inline; no_mutation; view; public; hidden; thunk } ->
   { inline; no_mutation; view; public; hidden; thunk }
 
-
+(* this is doing nothing *)
 let rec compile_type_expression ~raise path scope (type_expression : I.type_expression)
     : O.type_expression
   =
@@ -303,10 +303,10 @@ let rec compile_type_expression ~raise path scope (type_expression : I.type_expr
     let parameters = List.map ~f:self parameters in
     return @@ T_constant { language; injection; parameters }
   | T_sum { fields; layout } ->
-    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:self fields in
     return @@ T_sum { fields; layout }
   | T_record { fields; layout } ->
-    let fields = Record.map ~f:(Rows.map_row_element_mini_c self) fields in
+    let fields = Record.map ~f:self fields in
     return @@ T_record { fields; layout }
   | T_arrow { type1; type2 } ->
     let type1 = self type1 in

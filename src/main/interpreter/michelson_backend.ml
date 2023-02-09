@@ -648,8 +648,8 @@ let rec val_to_ast ~raise ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ({ associated_type = ty'; michelson_annotation = _; decl_pos = _ } : row_element) =
-      Ligo_prim.Record.LMap.find (Label ctor) map_ty.fields
+    let ty' =
+      Ligo_prim.Record.find map_ty.fields (Label ctor)
     in
     let arg = val_to_ast ~raise ~loc arg ty' in
     e_a_constructor ~loc ctor arg ty
@@ -674,8 +674,8 @@ let rec val_to_ast ~raise ~loc
     let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
     let s = Ligo_string.verbatim s in
     e_a_raw_code ~loc Backend.Michelson.name (make_e ~loc (e_string s) ast_ty) ast_ty
-  | V_Record map when is_t_record ty ->
-    let map_ty =
+  | V_Record record when is_t_record ty ->
+    let row =
       trace_option
         ~raise
         (Errors.generic_error
@@ -686,12 +686,12 @@ let rec val_to_ast ~raise ~loc
               ty))
       @@ get_t_record_opt ty
     in
-    make_ast_record ~raise ~loc map_ty map
+    make_ast_record ~raise ~loc row record
   | V_Record map when Option.is_some @@ get_t_ticket ty ->
     let ty =
       trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_ticket ty
     in
-    let rows =
+    let row =
       trace_option ~raise (Errors.generic_error loc "impossible")
       @@ get_t_record (Ast_aggregated.t_unforged_ticket ~loc ty)
     in
@@ -700,7 +700,7 @@ let rec val_to_ast ~raise ~loc
         trace_option
           ~raise
           (Errors.generic_error loc "bad unforged ticket")
-          (Ligo_prim.Record.LMap.find_opt l map)
+          (Ligo_prim.Record.find_opt map l)
       in
       (*  at this point the record value is a nested pair (extracted from michelson), e.g. (KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL , (0x05010000000474657374 , 10n)) *)
       let ticketer = get (Label "0") map in
@@ -714,7 +714,7 @@ let rec val_to_ast ~raise ~loc
       Ligo_prim.Record.of_list
         [ Label "ticketer", ticketer; Label "value", value; Label "amount", amt ]
     in
-    make_ast_record ~raise ~loc rows map
+    make_ast_record ~raise ~loc row map
   | V_Record _ ->
     raise.error
     @@ Errors.generic_error
@@ -826,24 +826,19 @@ and make_ast_func ~raise ?name env mut_flag arg body orig =
   in
   typed_exp'
 
-
-and make_ast_record ~raise ~loc (map_ty : Ast_aggregated.rows) map =
+and make_ast_record ~raise ~loc (row : _ Ligo_prim.Row.With_layout.t) map =
   let open Ligo_interpreter.Types in
-  let kv_list =
-    Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple
-      ~layout:map_ty.layout
-      map_ty.fields
-  in
+  let kv_list = Row.to_alist row in
   let kv_list =
     List.map
       ~f:(fun (l, ty) ->
-        let value = Ligo_prim.Record.LMap.find l map in
-        let ast = val_to_ast ~raise ~loc value ty.associated_type in
+        let value = Ligo_prim.Record.find map l in
+        let ast = val_to_ast ~raise ~loc value ty in
         l, ast)
       kv_list
   in
-  Ast_aggregated.ez_e_a_record ~loc ~layout:map_ty.layout kv_list
-
+  (* hmm *)
+  Ast_aggregated.ez_e_a_record_hmm ~loc ~layout:row.layout kv_list
 
 and make_ast_list ~raise ~loc ty l =
   let l = List.map ~f:(fun v -> val_to_ast ~raise ~loc v ty) l in
@@ -1225,8 +1220,8 @@ let rec compile_value ~raise ~options ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ({ associated_type = ty'; michelson_annotation = _; decl_pos = _ } : row_element) =
-      Ligo_prim.Record.LMap.find (Label ctor) map_ty.fields
+    let ty' =
+      Ligo_prim.Record.find map_ty.fields (Label ctor)
     in
     let arg = self arg ty' in
     let ty' = Ligo_compile.Of_expanded.compile_type ~raise ty in
@@ -1235,12 +1230,10 @@ let rec compile_value ~raise ~options ~loc
       @@ get_t_sum_opt ty
     in
     let path =
-      Layout.constructor_to_lr
-        ~raise
+      Spilling.Layout.constructor_to_lr
         ~layout:ty_variant.layout
         ty'
-        ty_variant.fields
-        (Ligo_prim.Label.Label ctor)
+        (Label ctor)
     in
     let aux pred (_ty, lr) =
       match lr with
@@ -1269,25 +1262,22 @@ let rec compile_value ~raise ~options ~loc
       @@ get_t_record_opt ty
     in
     let map_kv =
-      Ligo_prim.Record.LMap.mapi
-        (fun l v ->
-          let ({ associated_type; _ } : row_element) =
-            Ligo_prim.Record.LMap.find l map_ty.fields
-          in
-          associated_type, v)
+      Ligo_prim.Record.mapi
         map
+        ~f:(fun ~label:l ~value:v ->
+          let ty = Ligo_prim.Record.find map_ty.fields l in
+          self v ty)
     in
-    Layout.record_to_pairs
-      ~raise
-      (fun (t, v) -> self v t)
-      (fun e1 e2 -> Tezos_micheline.Micheline.Prim ((), "Pair", [ e1; e2 ], []))
-      (fun es ->
-        match es with
-        | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
-        | [ e ] -> e
-        | es -> Tezos_micheline.Micheline.Prim ((), "Pair", es, []))
-      map_ty
+    trace ~raise Main_errors.spilling_tracer @@ 
+    Spilling.Layout.from_layout
+      (fun types ->
+         let types = List.map ~f:snd types in
+         match types with
+         | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
+         | [type_] -> type_
+         | types -> Tezos_micheline.Micheline.Prim ((), "Pair", types, []))
       map_kv
+      map_ty.layout
   | V_List lst ->
     let lst_ty =
       trace_option

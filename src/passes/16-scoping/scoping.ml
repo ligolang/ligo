@@ -370,7 +370,12 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
       let* a = Mini_c.get_t_list ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_LOOP_CONTINUE | C_LEFT ->
-      let* (_, b) = Mini_c.get_t_or ty in
+      let b =
+        match ty.type_content with
+        | T_or (_, (_, b)) -> b
+        | _ ->
+          failwith (Format.asprintf "WRONG TYPE %a\n%!" Mini_c.PP.type_expression ty) in
+      (* let* (_, b) = Mini_c.get_t_or ty in *)
       return (Type_args (None, [translate_type b]), expr.arguments)
     | C_LOOP_STOP | C_RIGHT ->
       let* (a, _) = Mini_c.get_t_or ty in
