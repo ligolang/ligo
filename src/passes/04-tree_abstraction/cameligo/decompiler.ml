@@ -129,7 +129,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr =
     let var = decompile_type_var variable in
     return @@ CST.TVar var
   | T_app { type_operator; arguments } ->
-    let type_constant = decompile_type_var type_operator in
+    let type_constant = decompile_type_var (Module_access.get_el @@ type_operator) in
     let arguments = List.map ~f:decompile_type_expr arguments in
     let arguments = list_to_nsepseq ~sep:Token.ghost_comma arguments in
     let par : _ CST.par = par arguments in

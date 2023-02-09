@@ -172,11 +172,27 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr =
     let var = decompile_type_var variable in
     return @@ CST.TVar var
   | T_app { type_operator; arguments } ->
-    let type_operator = decompile_type_var type_operator in
-    let lst = List.map ~f:decompile_type_expr arguments in
-    let lst = list_to_nsepseq ~sep:Token.ghost_comma lst in
-    let lst = Region.wrap_ghost @@ chevrons lst in
-    return @@ CST.TApp (Region.wrap_ghost (type_operator, lst))
+    let module_path = Module_access.get_path type_operator in
+    let element = Module_access.get_el type_operator in
+    let rec aux : Module_var.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr =
+     fun lst f_acc ->
+      match lst with
+      | module_name :: tl ->
+        let module_name = decompile_mod_var module_name in
+        let f field =
+          f_acc
+            (CST.TModA
+               (Region.wrap_ghost CST.{ module_name; selector = Token.ghost_dot; field }))
+        in
+        aux tl f
+      | [] ->
+        let type_operator = decompile_type_var element in
+        let lst = List.map ~f:decompile_type_expr arguments in
+        let lst = list_to_nsepseq ~sep:Token.ghost_comma lst in
+        let lst = Region.wrap_ghost @@ chevrons lst in
+        f_acc @@ CST.TApp (Region.wrap_ghost (type_operator, lst))
+    in
+    return @@ aux module_path (fun x -> x)
   | T_annoted _annot -> failwith "let's work on it later"
   | T_module_accessor { module_path; element } ->
     let rec aux : Module_var.t list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr =

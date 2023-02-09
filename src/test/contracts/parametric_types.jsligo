@@ -22,3 +22,15 @@ let t1 : [int , string] = [x,y];
 //   in
 //   let z : bar = [ 1 ; 2 ; 3 ] in
 //   f z
+
+namespace Foo {
+   export type t<a> =
+   | ["Bar", a]
+   export type s<a, b> =
+   t<a>
+}
+
+type baz<a, b> = Foo.s<a, b>;
+
+const t2 : Foo.t<int> = Bar(42);
+const t3 : baz<int, string> = t2;

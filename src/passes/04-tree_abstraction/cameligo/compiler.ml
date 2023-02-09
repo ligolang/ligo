@@ -174,7 +174,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
     | _ ->
       let operator = Type_var.of_input_var ~loc operator.value in
       let lst = List.map ~f:self args in
-      return @@ t_app ~loc operator lst)
+      return @@ t_app ~loc (Module_access.make_el @@ operator) lst)
   | TFun func ->
     let (input_type, _, output_type), loc = r_split func in
     let input_type = self input_type in

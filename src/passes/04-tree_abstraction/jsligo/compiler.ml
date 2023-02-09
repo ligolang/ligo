@@ -270,7 +270,7 @@ module Compile_type = struct
       let operator = compile_type_var operator in
       let lst = npseq_to_list args.value.inside in
       let lst = List.map ~f:self lst in
-      return @@ t_app ~loc operator lst
+      return @@ t_app ~loc (Module_access.make_el @@ operator) lst
     | TFun func ->
       let (input_type, _, output_type), loc = r_split func in
       let input_types = compile_type_function_args ~raise input_type in
@@ -301,6 +301,12 @@ module Compile_type = struct
         | TVar v ->
           let accessed_el = compile_type_var v in
           t_module_accessor ~loc acc accessed_el
+        | TApp app ->
+          let (operator, args), loc = r_split app in
+          let operator = compile_type_var operator in
+          let lst = npseq_to_list args.value.inside in
+          let lst = List.map ~f:self lst in
+          return @@ t_app ~loc (Module_access.make acc operator) lst
         | TModA ma ->
           aux
             (acc @ [ Module_var.of_input_var ~loc ma.value.module_name.value ])

@@ -64,7 +64,7 @@ and type_content : formatter -> type_content -> unit =
     fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (Record.LMap.to_kv_list_rev m.fields)
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
   | T_arrow a -> Arrow.pp type_expression ppf a
-  | T_app app -> Type_app.pp type_expression ppf app
+  | T_app app -> Type_app.pp (Module_access.pp Type_var.pp) type_expression ppf app
   | T_module_accessor ma -> Module_access.pp Type_var.pp ppf ma
   | T_singleton x -> Literal_value.pp ppf x
   | T_abstraction x -> Abstraction.pp_type_abs type_expression ppf x

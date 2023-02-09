@@ -97,11 +97,22 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
      with
     | `Type type_ -> lift type_
     | `Type_var _kind -> const @@ T_variable tvar)
-  | T_app { type_operator; arguments } ->
+  | T_app { type_operator = { module_path; element = type_operator }; arguments } ->
     (* TODO: Remove strong normalization (GA) *)
     (* 1. Find the type of the operator *)
     let%bind operator =
-      Context.get_type_exn type_operator ~error:(unbound_type_variable type_operator)
+      (* Depending on whether there is a path or not, look up in current context or module sig. *)
+      match module_path with
+      | [] ->
+        Context.get_type_exn type_operator ~error:(unbound_type_variable type_operator)
+      | _ ->
+        let%bind sig_ =
+          Context.get_signature_exn
+            (List.Ne.of_list module_path)
+            ~error:(unbound_module module_path)
+        in
+        raise_opt ~error:(unbound_type_variable type_operator)
+        @@ Signature.get_type sig_ type_operator
     in
     (* 2. Evaluate arguments *)
     let%bind arguments =
