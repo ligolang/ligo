@@ -1,5 +1,15 @@
-type get_scope_info =
+open Scopes.Types
+
+type get_scope_api_result =
   Main_errors.all list * Main_warnings.all list * (Scopes.def list * Scopes.scopes) option
+
+type get_scope_info =
+  { errors : Main_errors.all list
+  ; warnings : Main_warnings.all list
+  ; has_info : bool
+  ; definitions : Scopes.def list
+  ; scopes : Scopes.scopes option
+  }
 
 module type LIGO_API = sig
   module Info : sig
@@ -7,7 +17,7 @@ module type LIGO_API = sig
       :  Compiler_options.Raw_options.t
       -> BuildSystem.Source_input.code_input
       -> unit
-      -> get_scope_info
+      -> get_scope_api_result
   end
 
   module Print : sig
@@ -26,7 +36,7 @@ module Make (Ligo_api : LIGO_API) = struct
 
   type nonrec get_scope_info = get_scope_info
 
-  let get_scope : DocumentUri.t -> string -> get_scope_info =
+  let get_scope : DocumentUri.t -> string -> get_scope_api_result =
    fun uri source ->
     (* packages - project_root [later] *)
     let file_path = DocumentUri.to_path uri in
@@ -49,11 +59,29 @@ module Make (Ligo_api : LIGO_API) = struct
     Ligo_api.Print.pretty_print compiler_options file_path display_format ()
 end
 
-(* 
-let all_variables (_, _, defs_scopes_opt : get_scope_info ) : Scopes.Types.vdef list =
-  let current_module_defs = 
-    begin match defs_scopes_opt with
-    | Some (defs, _) -> List.filterMap () defs
-    | None -> []
-    end
-  in current_module_defs @ [] *)
+let unfold_get_scope ((errors, warnings, plain_data_opt) : get_scope_api_result)
+    : get_scope_info
+  =
+  let extract_defs : def list -> def list =
+    let rec from_module (m : mdef) =
+      match m.mod_case with
+      | Alias _ -> []
+      | Def defs -> from_defs defs
+    and from_defs defs =
+      let current_module_defs : mdef list =
+        List.filter_map
+          ~f:(function
+            | Module m -> Some m
+            | Variable _ | Type _ -> None)
+          defs
+      in
+      defs @ List.concat_map ~f:from_module current_module_defs
+    in
+    from_defs
+  in
+  let has_info, definitions, scopes =
+    match plain_data_opt with
+    | None -> false, [], None
+    | Some (plain_decls, scopes) -> true, extract_defs plain_decls, Some scopes
+  in
+  { errors; warnings; has_info; definitions; scopes }

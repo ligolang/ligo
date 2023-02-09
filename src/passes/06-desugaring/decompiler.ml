@@ -337,14 +337,16 @@ and decompile_contract contract = List.map ~f:decompile_contract_declaration con
 
 let decompile_program = List.map ~f:decompile_declaration
 
-let decompile_pattern_to_string ~syntax pattern =
+let decompile_pattern_to_string ~(syntax : Syntax_types.t option) pattern =
   let pattern = O.Pattern.map (Option.map ~f:decompile_type_expression) pattern in
   let pattern = decompile_pattern pattern in
-  let s =
-    match syntax with
-    | Some Syntax_types.JsLIGO ->
-      Tree_abstraction.Jsligo.decompile_pattern_to_string pattern
-    | Some CameLIGO -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
-    | None -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
-  in
-  s
+  match syntax with
+  | Some JsLIGO -> Tree_abstraction.Jsligo.decompile_pattern_to_string pattern
+  | Some CameLIGO | None -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
+
+
+let decompile_type_expression_to_string ~(syntax : Syntax_types.t) te =
+  let te = decompile_type_expression te in
+  match syntax with
+  | JsLIGO -> Tree_abstraction.Jsligo.decompile_type_expression_to_string te
+  | CameLIGO -> Tree_abstraction.Cameligo.decompile_type_expression_to_string te

@@ -1,3 +1,5 @@
+module Ligo_interface_tools = Ligo_interface
+
 module Ligo_interface = Ligo_interface.Make (struct
   module Info = Ligo_api.Info
   module Print = Ligo_api.Print
@@ -28,8 +30,9 @@ let get_prepare_rename_test
   in
   let uri = DocumentUri.of_path file in
   let get_scope_info = Ligo_interface.get_scope uri source in
+  let get_scope_info = Ligo_interface_tools.unfold_get_scope get_scope_info in
   (* TODO: Improve error messages. *)
-  match Requests.prepare_rename reference uri get_scope_info with
+  match Requests.prepare_rename reference uri get_scope_info.definitions with
   | None ->
     if can_rename then Alcotest.fail "Cannot prepare rename for this reference." else ()
   | Some actual_range ->

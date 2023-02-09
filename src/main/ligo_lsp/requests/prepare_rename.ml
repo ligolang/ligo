@@ -1,13 +1,9 @@
 module Loc = Simple_utils.Location
 open Lsp.Types
 
-let prepare_rename
-    : Position.t -> DocumentUri.t -> Ligo_interface.get_scope_info -> Range.t option
-  =
- fun pos uri (_, _, scope_info) ->
+let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t option =
+ fun pos uri defs ->
   let open Option in
-  scope_info
-  >>= fun (defs, _) ->
   Definition.get_definition pos uri defs
   >>= fun def ->
   let loc = Utils.get_location def in

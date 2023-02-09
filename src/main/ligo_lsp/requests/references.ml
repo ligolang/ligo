@@ -26,10 +26,8 @@ let get_all_references
     -> (DocumentUri.t * Range.t list) list
   =
  fun location get_scope_buffers ->
-  let go (file, (_, _, defs_opt)) =
-    let open Option in
-    defs_opt
-    >>= fun (defs, _) ->
+  let go (file, get_scope_info) =
+    let defs = get_scope_info.definitions in
     match get_references file location defs with
     | [] -> None
     | l -> Some (file, l)
