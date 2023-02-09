@@ -56,10 +56,9 @@ let generate_impl
   let tags = List.map ~f params in
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   let f tag =
-    List.map type_declarations ~f:(fun (td : type_declaration) ->
+    List.filter_map type_declarations ~f:(fun (td : type_declaration) ->
         match td with
-        | { ptype_kind = Ptype_abstract | Ptype_record _ | Ptype_open; _ } ->
-          Location.raise_errorf ~loc "Cannot derive accessors for non variant types"
+        | { ptype_kind = Ptype_abstract | Ptype_record _ | Ptype_open; _ } -> None
         | { ptype_kind = Ptype_variant constructors; ptype_name; _ } ->
           let prefix =
             match name with
@@ -67,7 +66,7 @@ let generate_impl
             | Some { pexp_desc = Pexp_constant (Pconst_string (s, _, _)); _ } -> s ^ "_"
             | _ -> Location.raise_errorf "Need string in name"
           in
-          prefix, List.map constructors ~f:(constructor_impl ~tag))
+          Some (prefix, List.map constructors ~f:(constructor_impl ~tag)))
     |> List.map ~f:(fun (prefix, cases) -> func_of_cases ~prefix ~loc ~tag cases)
   in
   List.map ~f tags |> List.concat
