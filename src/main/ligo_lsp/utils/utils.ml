@@ -1,10 +1,12 @@
 open Lsp.Types
+open Linol_lwt.Jsonrpc2
 module Loc = Simple_utils.Location
 module Region = Simple_utils.Region
 module Pos = Simple_utils.Pos
 module LSet = Caml.Set.Make (Loc)
 module Hashtbl = Caml.Hashtbl
 
+let ( @. ) f g x = f (g x)
 let file_start_position = Position.create ~character:0 ~line:0
 let file_end_position = Position.create ~character:0 (* FIXME *) ~line:1000000000
 let whole_file_range = Range.create ~end_:file_end_position ~start:file_start_position
@@ -65,7 +67,7 @@ let uri_location_cmp : DocumentUri.t -> Loc.t -> bool =
   | Virtual _ -> false
 
 
-let get_references : Scopes.def -> LSet.t =
+let references_getter : Scopes.def -> LSet.t =
  fun def ->
   match def with
   | Variable vdef -> LSet.add vdef.range vdef.references
@@ -74,7 +76,7 @@ let get_references : Scopes.def -> LSet.t =
 
 
 let get_references_of_file : DocumentUri.t -> Scopes.def -> LSet.t =
- fun uri def -> LSet.filter (uri_location_cmp uri) @@ get_references def
+ fun uri def -> LSet.filter (uri_location_cmp uri) @@ references_getter def
 
 
 let name_getter : Scopes.def -> string = function
@@ -133,3 +135,103 @@ let error_to_string (error : Checking.Errors.typer_error) =
     "%a"
     (Checking.Errors.error_ppformat ~display_format ~no_colour:false)
     error
+
+
+let pp_type_expression
+    :  syntax:Syntax_types.t
+    -> [ `Core of Ast_core.type_expression | `Typed of Ast_typed.type_expression ]
+    -> string
+  =
+ fun ~syntax te ->
+  let cte =
+    match te with
+    | `Core cte -> cte
+    | `Typed tte -> Checking.untype_type_expression tte
+  in
+  try Desugaring.Decompiler.decompile_type_expression_to_string ~syntax cte with
+  | _ ->
+    (match te with
+    | `Core cte -> Format.asprintf "%a" Ast_core.PP.type_expression cte
+    | `Typed tte -> Format.asprintf "%a" Ast_typed.PP.type_expression tte)
+
+
+let uri_extension : DocumentUri.t -> string option =
+  snd @. Filename.split_extension @. DocumentUri.to_path
+
+
+let get_syntax = Syntax.of_ext_opt @. uri_extension
+
+let get_comment syntax =
+  let block =
+    match syntax with
+    | Syntax_types.CameLIGO -> Preprocessing_cameligo.Config.block
+    | Syntax_types.JsLIGO -> Preprocessing_jsligo.Config.block
+  in
+  match block with
+  | Some x -> x#opening, x#closing
+  | _ -> "", ""
+
+
+type module_pp_mode =
+  { module_keyword : string
+  ; import_keyword : string
+  ; equal_sign_on_definition : bool
+  ; equal_sign_on_import : bool
+  ; open_ : string
+  ; close : string
+  ; semicolon_at_the_end : bool
+  }
+
+let cameligo_module =
+  { module_keyword = "module"
+  ; import_keyword = "module"
+  ; equal_sign_on_definition = true
+  ; equal_sign_on_import = true
+  ; open_ = "struct"
+  ; close = "end"
+  ; semicolon_at_the_end = false
+  }
+
+
+let jsligo_module =
+  { module_keyword = "namespace"
+  ; import_keyword = "import"
+  ; equal_sign_on_definition = false
+  ; equal_sign_on_import = true
+  ; open_ = "{"
+  ; close = "}"
+  ; semicolon_at_the_end = true
+  }
+
+
+let print_module_with_description
+    : module_pp_mode -> string * string -> Scopes.Types.mdef -> string
+  =
+ fun description (opening_comment, closing_comment) mdef ->
+  match mdef.mod_case with
+  | Def _ ->
+    description.module_keyword
+    ^ " "
+    ^ mdef.name
+    ^ (if description.equal_sign_on_definition then " = " else " ")
+    ^ description.open_
+    ^ " "
+    ^ opening_comment
+    ^ " ... " (* TODO: print module*)
+    ^ closing_comment
+    ^ " "
+    ^ description.close
+  | Alias module_path_list ->
+    description.import_keyword
+    ^ " "
+    ^ mdef.name
+    ^ (if description.equal_sign_on_import then " = " else " ")
+    ^ (module_path_list
+      |> List.map ~f:(String.split ~on:'#')
+      |> List.map ~f:(Fun.flip List.nth_exn 0)
+      |> String.concat ~sep:".")
+
+
+let print_module : Syntax_types.t -> Scopes.Types.mdef -> string = function
+  | CameLIGO -> print_module_with_description cameligo_module (get_comment CameLIGO)
+  | JsLIGO -> print_module_with_description jsligo_module (get_comment JsLIGO)

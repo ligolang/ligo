@@ -18,3 +18,4 @@ val compile_program
 val decompile_expression : AST.expr -> CST.expr
 val decompile_program : AST.program -> CST.ast
 val decompile_pattern_to_string : AST.type_expression option AST.Pattern.t -> string
+val decompile_type_expression_to_string : AST.type_expression -> string
