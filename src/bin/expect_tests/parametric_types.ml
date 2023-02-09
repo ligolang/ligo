@@ -25,15 +25,17 @@ let%expect_test _ =
   [%expect {|
     1 |}]
 
-(* let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(test "parametric_types.jsligo") ; "t1" ] ;
-  [%expect{|
-    ( 1 , "one" ) |}]
+let%expect_test _ =
+  run_ligo_good
+    [ "run"; "interpret"; "t2"; "--init-file"; test "parametric_types.jsligo" ];
+  [%expect {|
+    Bar(42) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(test "parametric_types.jsligo") ; "t2" ] ;
-  [%expect{|
-    CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))) |}] *)
+  run_ligo_good
+    [ "run"; "interpret"; "t3"; "--init-file"; test "parametric_types.jsligo" ];
+  [%expect {|
+    Bar(42) |}]
 
 (*
 let%expect_test _ =

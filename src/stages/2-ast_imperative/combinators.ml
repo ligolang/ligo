@@ -77,11 +77,13 @@ let t__type_ ~loc () : type_expression = t_variable ~loc (v__type_ ~loc)
       , "chain_id" )]
 
 
-let t__type_ ~loc t : type_expression = t_app ~loc (v__type_ ~loc) [ t ]
+let t__type_ ~loc t : type_expression =
+  t_app ~loc (Module_access.make_el @@ v__type_ ~loc) [ t ]
   [@@map _type_, ("list", "set", "contract")]
 
 
-let t__type_ ~loc t t' : type_expression = t_app ~loc (v__type_ ~loc) [ t; t' ]
+let t__type_ ~loc t t' : type_expression =
+  t_app ~loc (Module_access.make_el @@ v__type_ ~loc) [ t; t' ]
   [@@map _type_, ("map", "big_map")]
 
 
@@ -134,17 +136,25 @@ let t_for_all ~loc ty_binder kind type_ : type_expression =
 
 
 let t_michelson_or ~loc l l_ann r r_ann : type_expression =
-  t_app ~loc (v_michelson_or ~loc) [ t_annoted ~loc l l_ann; t_annoted ~loc r r_ann ]
+  t_app
+    ~loc
+    (Module_access.make_el @@ v_michelson_or ~loc)
+    [ t_annoted ~loc l l_ann; t_annoted ~loc r r_ann ]
 
 
 let t_michelson_pair ~loc l l_ann r r_ann : type_expression =
-  t_app ~loc (v_michelson_pair ~loc) [ t_annoted ~loc l l_ann; t_annoted ~loc r r_ann ]
+  t_app
+    ~loc
+    (Module_access.make_el @@ v_michelson_pair ~loc)
+    [ t_annoted ~loc l l_ann; t_annoted ~loc r r_ann ]
 
 
-let t_sapling_state ~loc a : type_expression = t_app ~loc (v_sapling_state ~loc) [ a ]
+let t_sapling_state ~loc a : type_expression =
+  t_app ~loc (Module_access.make_el @@ v_sapling_state ~loc) [ a ]
+
 
 let t_sapling_transaction ~loc a : type_expression =
-  t_app ~loc (v_sapling_trasaction ~loc) [ a ]
+  t_app ~loc (Module_access.make_el @@ v_sapling_trasaction ~loc) [ a ]
 
 
 let get_t_annoted te =

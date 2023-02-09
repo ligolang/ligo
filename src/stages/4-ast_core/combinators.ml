@@ -44,7 +44,8 @@ let t_constant ~loc ?sugar type_operator arguments : type_expression =
     ?sugar
     (T_app
        { type_operator =
-           Type_var.of_input_var ~loc (Literal_types.to_string type_operator)
+           Module_access.make_el
+           @@ Type_var.of_input_var ~loc (Literal_types.to_string type_operator)
        ; arguments
        })
 

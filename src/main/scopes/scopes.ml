@@ -253,7 +253,10 @@ let rec find_type_references : AST.type_expression -> reference list =
         refs @ t_refs)
   | T_arrow { type1; type2 } -> find_type_references type1 @ find_type_references type2
   | T_app { type_operator; arguments } ->
-    let type_operator = TVar.set_location te.location type_operator in
+    (* TODO: unignore the path on `type_operator`, update `ModuleAccessType`? *)
+    let type_operator =
+      TVar.set_location te.location (Module_access.get_el @@ type_operator)
+    in
     let t_refs = List.concat @@ List.map arguments ~f:find_type_references in
     Type type_operator :: t_refs
   | T_module_accessor { module_path; element } ->

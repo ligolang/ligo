@@ -16,7 +16,7 @@ type type_content =
   | T_sum of rows
   | T_record of rows
   | T_arrow of ty_expr Arrow.t
-  | T_app of ty_expr Type_app.t
+  | T_app of (Type_var.t Module_access.t, ty_expr) Type_app.t
   | T_module_accessor of Type_var.t Module_access.t
   | T_singleton of Literal_value.t
   | T_abstraction of ty_expr Abstraction.t

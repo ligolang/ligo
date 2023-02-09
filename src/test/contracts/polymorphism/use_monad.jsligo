@@ -6,7 +6,7 @@
 #import "list_monad.mligo" "M"
 #endif
 
-type t = M.monad;
+type t<a> = M.monad<a>;
 
 let interval = ([x,y] : [int, int]) : t<int> => {
   let aux = ([x, c, acc] : [int, int, t<int>]) : t<int> => {

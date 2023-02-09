@@ -44,7 +44,7 @@ let rec decompile_type_expression (type_ : O.type_expression) : I.type_expressio
     (match type_.type_content with
     | O.T_variable type_variable -> return @@ T_variable type_variable
     | O.T_app tc ->
-      let tc = Type_app.map self tc in
+      let tc = Type_app.map (fun path -> path) self tc in
       return @@ I.T_app tc
     | O.T_sum row ->
       (* Bug: this type sum could be a michelson_or, we should use is_michelson_or *)
