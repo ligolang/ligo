@@ -69,17 +69,17 @@ handleConnection conn = do
         stderrFile = "/dev/null"
 
     stderrProducer :: Handle <- openFile stderrFile AppendMode
-    spath <- asks (scSquirrelPath . ccServerConfig)
+    ligoPath <- asks (scLigoPath . ccServerConfig)
 
     let cmd :: CreateProcess
-        cmd = (proc spath [])
+        cmd = (proc ligoPath ["lsp"])
           { std_in = UseHandle stdinConsumer
           , std_out = UseHandle stdoutProducer
           , std_err = UseHandle stderrProducer
           }
 
-    logFM InfoS "Forking squirrel"
-    (_, _, _, squirrelProcessHandle) <- liftIO (createProcess cmd)
+    logFM InfoS "Forking 'ligo lsp'"
+    (_, _, _, ligoProcessHandle) <- liftIO (createProcess cmd)
 
     withAsync' (sendData conn stdoutConsumer) $ \sendAsync ->
       withAsync' (receiveData connectionId conn stdinProducer)$ \receiveAsync ->
@@ -87,9 +87,9 @@ handleConnection conn = do
         `catch` (\(_ :: WS.ConnectionException) -> do
            logFM InfoS "Client closed connection!"
 
-           logFM InfoS "Waiting for squirrel to end..."
-           liftIO (terminateProcess squirrelProcessHandle)
-           liftIO (waitForProcess squirrelProcessHandle)
+           logFM InfoS "Waiting for 'ligo lsp' to end..."
+           liftIO (terminateProcess ligoProcessHandle)
+           liftIO (waitForProcess ligoProcessHandle)
 
            logFM InfoS "Canceling sendData"
            liftIO (cancel sendAsync)

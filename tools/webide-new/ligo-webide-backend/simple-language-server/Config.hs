@@ -8,7 +8,7 @@ module Config
 import Options.Applicative
 
 data ServerConfig = ServerConfig
-  { scSquirrelPath :: FilePath
+  { scLigoPath :: FilePath
   , scPort :: Int
   , scHostname :: Text
   , scVerbosity :: Int
@@ -34,15 +34,15 @@ mkParserInfo clientCounter =
     (helper <*> parser)
     (fullDesc
      <> header "LIGO WebIDE LSP Shim"
-     <> progDesc "Provide an interface to ligo-squirrel for the WebIDE frontend"
+     <> progDesc "Provide an interface to the LIGO LSP for the WebIDE frontend"
     )
   where
     parser = ServerConfig
       <$> strOption
-          ( long "squirrel-path"
-            <> short 's'
+          ( long "ligo-path"
+            <> short 'l'
             <> metavar "STRING"
-            <> help "path to ligo-squirrel binary"
+            <> help "path to ligo binary"
           )
       <*> option auto
           ( long "port"
