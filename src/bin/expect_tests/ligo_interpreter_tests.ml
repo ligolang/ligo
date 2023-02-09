@@ -224,14 +224,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "nesting_modules.mligo" ];
   [%expect
     {|
-    File "./nesting_modules.mligo", line 15, characters 6-7:
-     14 | let foo () =
-     15 |   let x = 1 in
-     16 |   module Foo = struct
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
     111
     Everything at the top-level was executed.
     - test exited with value (). |}]

@@ -149,7 +149,9 @@ let rec muchuse_of_expr expr : muchuse =
   | E_accessor { struct_; _ } -> muchuse_of_expr struct_
   | E_update { struct_; update; _ } ->
     muchuse_union (muchuse_of_expr struct_) (muchuse_of_expr update)
-  | E_mod_in { let_result; _ } -> muchuse_of_expr let_result
+  | E_mod_in { module_binder; rhs; let_result } ->
+    let muchuse = muchuse_of_expr let_result in
+    muchuse_module_expr muchuse module_binder rhs
   | E_type_inst { forall; _ } -> muchuse_of_expr forall
   | E_module_accessor { module_path; element } ->
     let pref =
@@ -229,7 +231,7 @@ and muchuse_of_cases cases =
          muchuse)
 
 
-let rec get_all_declarations (module_name : Module_var.t)
+and get_all_declarations (module_name : Module_var.t)
     : module_ -> (Value_var.t * type_expression) list
   = function
   | m ->
@@ -276,11 +278,19 @@ let rec get_all_declarations (module_name : Module_var.t)
     m |> List.map ~f:aux |> List.concat
 
 
-let rec muchused_helper (muchuse : muchuse) = function
-  | m ->
-    let map, muchused = List.fold_right ~f:muchuse_decl m ~init:muchuse in
-    (*Put the variable in order : *)
-    map, List.rev muchused
+and muchuse_module_expr
+    (muchuse : muchuse)
+    (module_binder : Module_var.t)
+    (module_ : module_expr)
+  =
+  match Location.unwrap module_ with
+  | M_struct module_ ->
+    let decls = get_all_declarations module_binder module_ in
+    List.fold_right
+      ~f:(fun (v, t) (c, m) -> muchuse_of_binder v t (c, m))
+      decls
+      ~init:(muchused_declarations muchuse module_)
+  | M_variable _ | M_module_path _ -> muchuse
 
 
 and muchuse_declaration (x : declaration) s =
@@ -297,33 +307,12 @@ and muchuse_declaration (x : declaration) s =
           muchuse_of_binder (Binder.get_var b) expr.type_expression s)
     in
     muchuse_union muchuse_expr (muchuse_maxs muchuse_pattern)
-  | D_module
-      { module_ = { wrap_content = M_struct module_; _ }; module_binder; module_attr = _ }
-    ->
-    let decls = get_all_declarations module_binder module_ in
-    List.fold_right
-      ~f:(fun (v, t) (c, m) -> muchuse_of_binder v t (c, m))
-      decls
-      ~init:(muchused_helper s module_)
-  | D_module _ | D_type _ -> s
+  | D_module { module_; module_binder; module_attr = _ } ->
+    muchuse_module_expr s module_binder module_
+  | D_type _ -> s
 
 
-and muchuse_decl x s = muchuse_declaration x s
-
-let muchused_map_module ~raise : module_ -> module_ = function
-  | module_ ->
-    let update_annotations annots =
-      List.iter ~f:raise.Simple_utils.Trace.warning annots
-    in
-    let _, muchused = muchused_helper muchuse_neutral module_ in
-    let warn_var v =
-      `Self_ast_typed_warning_muchused (V.get_location v, Format.asprintf "%a" V.pp v)
-    in
-    let () = update_annotations @@ List.map ~f:warn_var muchused in
-    module_
-
-
-let muchused_helper (muchuse : muchuse) = function
+and muchused_declarations (muchuse : muchuse) = function
   | m ->
     let map, muchused = List.fold_right ~f:muchuse_declaration m ~init:muchuse in
     (*Put the variable in order : *)
@@ -335,7 +324,7 @@ let muchused_map_program ~raise : program -> program = function
     let update_annotations annots =
       List.iter ~f:raise.Simple_utils.Trace.warning annots
     in
-    let _, muchused = muchused_helper muchuse_neutral p in
+    let _, muchused = muchused_declarations muchuse_neutral p in
     let warn_var v =
       `Self_ast_typed_warning_muchused (V.get_location v, Format.asprintf "%a" V.pp v)
     in

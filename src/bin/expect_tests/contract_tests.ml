@@ -3702,3 +3702,11 @@ let%expect_test _ =
              CONS ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "used_var_in_local_module.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage int ;
+      code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
