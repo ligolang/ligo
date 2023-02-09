@@ -4,6 +4,7 @@ import Control.Concurrent.Async (Async, cancel, wait, withAsync)
 import Data.Text qualified as Text
 import Katip
 import Network.WebSockets qualified as WS
+import System.Directory (removeDirectoryRecursive)
 import System.Process
   (CreateProcess(std_err, std_in, std_out), StdStream(UseHandle), createPipe, createProcess, proc,
   terminateProcess, waitForProcess)
@@ -11,6 +12,7 @@ import UnliftIO (withRunInIO)
 
 import Config (ServerConfig(..), ConnectionConfig (..), readConfig)
 import Common (ServerM, ConnectionM, withConnectionId)
+import FilePath (getConnectionPrefix)
 import ReceiveData (receiveData)
 import SendData (sendData)
 
@@ -89,6 +91,10 @@ handleConnection conn = do
 
            logFM InfoS "Canceling receiveData"
            liftIO (cancel receiveAsync)
+
+           connectionPrefix <- getConnectionPrefix
+           logFM InfoS $ "Flushing " <> show connectionPrefix
+           liftIO $ removeDirectoryRecursive connectionPrefix
          )
 
     logFM InfoS ("Ending connection " <> show connectionId)
