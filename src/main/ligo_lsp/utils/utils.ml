@@ -236,3 +236,24 @@ let print_module_with_description
 let print_module : Syntax_types.t -> Scopes.Types.mdef -> string = function
   | CameLIGO -> print_module_with_description cameligo_module (get_comment CameLIGO)
   | JsLIGO -> print_module_with_description jsligo_module (get_comment JsLIGO)
+
+
+let range
+    ((line_start, character_start) : int * int)
+    ((line_end, character_end) : int * int)
+    : Range.t
+  =
+  Range.create
+    ~start:(Position.create ~line:line_start ~character:character_start)
+    ~end_:(Position.create ~line:line_end ~character:character_end)
+
+
+let interval (line : int) (character_start : int) (character_end : int) : Range.t =
+  Range.create
+    ~start:(Position.create ~line ~character:character_start)
+    ~end_:(Position.create ~line ~character:character_end)
+
+
+let point (line : int) (character : int) : Range.t =
+  let position = Position.create ~line ~character in
+  Range.create ~start:position ~end_:position
