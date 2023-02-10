@@ -180,6 +180,56 @@ export default async function updateLigo(): Promise<void> {
   /* eslint-enable no-use-before-define */
 }
 
+async function showUpdateError(
+  errorMessage: string,
+  suggestUpdate : boolean,
+  ligoPath : string,
+  config: vscode.WorkspaceConfiguration
+): Promise<boolean> {
+  const answer = await
+    (suggestUpdate
+      ? vscode.window.showErrorMessage(
+        errorMessage,
+        'Download static Linux binary',
+        'Choose path',
+        'Download',
+        'Cancel',
+      )
+      : vscode.window.showErrorMessage(
+        errorMessage,
+        'Choose path',
+        'Download',
+        'Cancel',
+      ))
+
+  switch (answer) {
+    case 'Download static Linux binary':
+      const latestRelease = await getLatestLigoRelease()
+      return await installLigo(ligoPath, latestRelease)
+    case 'Choose path': {
+      const uris = await vscode.window.showOpenDialog({ canSelectMany: false })
+      if (!uris || uris.length === 0) {
+        return false
+      }
+
+      await config.update(
+        'ligoLanguageServer.ligoBinaryPath',
+        uris[0].fsPath,
+        vscode.ConfigurationTarget.Global,
+        true,
+      )
+      await updateLigoImpl(config)
+      return true
+    }
+    case 'Download':
+      openLigoReleases()
+      return false
+    case 'Cancel':
+    default:
+      return false
+  }
+}
+
 async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<void> {
   const ligoPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, config)
 
@@ -202,36 +252,15 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
       hint = '\nHint: Check the file permissions for LIGO.'
     }
 
-    const errorMessage = `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}. ${hint}`
-
-    const answer = await vscode.window.showErrorMessage(
-      errorMessage,
-      'Choose path',
-      'Download',
-      'Cancel',
+    const shouldContinue = await showUpdateError(
+      `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}. ${hint}`,
+      false,
+      ligoPath,
+      config,
     )
 
-    switch (answer) {
-      case 'Choose path': {
-        const uris = await vscode.window.showOpenDialog({ canSelectMany: false })
-        if (!uris || uris.length === 0) {
-          return
-        }
-
-        await config.update(
-          'ligoLanguageServer.ligoBinaryPath',
-          uris[0].fsPath,
-          vscode.ConfigurationTarget.Global,
-          true,
-        )
-        return await updateLigoImpl(config)
-      }
-      case 'Download':
-        openLigoReleases()
-        return
-      case 'Cancel':
-      default:
-        return
+    if (!shouldContinue) {
+      return
     }
   }
 
@@ -243,8 +272,11 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
   }
 
   async function unsupportedVersion<T>(): Promise<T> {
-    await vscode.window.showErrorMessage(
-      'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.'
+    await showUpdateError(
+      'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.',
+      true,
+      ligoPath,
+      config,
     )
     throw new Error("Unsupported version")
   }
