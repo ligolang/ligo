@@ -1,8 +1,10 @@
+## Motivation and Context
+<!--- Why is this change required? What problem does it solve? -->
+<!--- If it fixes an open issue, please link to the issue here using **Related Issue(s)**: #issue_num(s). -->
 
+**Related Issue(s)**: <!-- insert the related issue here, or none if not appliable -->
 
-### :white_check_mark: Checklist for your Merge Request
-
-#### Related changes (conditional)
+### :white_check_mark: Checklist for the LIGO Debugger
 
 - Tests
   - [ ] Bug fixes and new features have corresponding tests added
@@ -19,3 +21,28 @@
 
 - Breaking changes (if applied)
   - [ ] If I introduced changes that are not compatible with the older versions of `ligo`, I updated our version restrictions according to [the respective document](/tools/debugger/docs/ligo-versions.md).
+
+## Description
+
+<!--- Describe your changes in detail -->
+
+## Types of changes
+
+* [ ] Bug fix (non-breaking change which fixes an issue)
+* [ ] New feature (non-breaking change which adds functionality)
+* [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+* [ ] Performance improvement (non-breaking change that improves performance)
+* [ ] None (change with no changelog)
+
+## Changelog
+<!--- Section under ## Changelog will be added to your changelog description. -->
+
+## Checklist:
+
+* [ ] Changes follow the existing coding style (use `dune @fmt` to check).
+* [ ] Tests for the changes have been added (for bug fixes / feature).
+* [ ] Documentation has been updated.
+* [ ] Changelog description has been added (if appropriate).
+* [ ] Start titles under `## Changelog` section with #### (if appropriate).
+* [ ] There is no image or uploaded file in changelog
+* [ ] Examples in changed behaviour have been added to the changelog (for breaking change / feature).
