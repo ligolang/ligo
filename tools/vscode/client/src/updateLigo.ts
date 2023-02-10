@@ -15,7 +15,7 @@ import { getBinaryPath } from './commands/common'
 type Release = {
   name: string
   tag_name: string
-  released_at: Date
+  released_at: string
   assets: {
     links: [
       {
@@ -141,7 +141,7 @@ async function promptLigoUpdate(
       break
     // Date of some rolling release
     case 'number':
-      if (new Date(installedVersionIdentifier) >= latestRelease.released_at) {
+      if (new Date(installedVersionIdentifier) >= new Date(latestRelease.released_at)) {
         return installedVersionIdentifier
       }
       break
@@ -182,8 +182,8 @@ export default async function updateLigo(): Promise<void> {
 
 async function showUpdateError(
   errorMessage: string,
-  suggestUpdate : boolean,
-  ligoPath : string,
+  suggestUpdate: boolean,
+  ligoPath: string,
   config: vscode.WorkspaceConfiguration
 ): Promise<boolean> {
   const answer = await
@@ -266,7 +266,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
 
   if (data === '') {
     await vscode.window.showWarningMessage(
-      '`ligo --version` returned the empty string. Assuming it was built locally. Ensure this LIGO build supports `ligo lsp`.'
+      '`ligo --version` returned the empty string. Assuming it was built locally. Ensure this LIGO build supports `ligo lsp`.',
     )
     return
   }
@@ -300,10 +300,11 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
   }
 
   async function validateRollingRelease(version: string) {
-    const commitTest = /Rolling release\nCommit SHA: [0-9a-f]{40}\nCommit Date: (.+)/
+    const commitTest =
+      /Rolling release\nCommit SHA: [0-9a-f]{40}\nCommit Date: ([^\n]+)|[0-9a-f]{40}\n([^\n]+)/
     const commitDate = commitTest.exec(version)
-    if (commitDate && commitDate.length === 2) {
-      const date: number = Date.parse(commitDate[1])
+    if (commitDate && commitDate.length === 3) {
+      const date: number = Date.parse(commitDate[1] || commitDate[2])
       if (Number.isNaN(date)) {
         // Parse failed; not a date.
         return
@@ -323,7 +324,9 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
           break
       }
     } else {
-      vscode.window.showErrorMessage(`Could not identify the installed LIGO version: ${version}`)
+      vscode.window.showErrorMessage(
+        `Could not identify the installed LIGO version: ${version}. Ensure this LIGO build supports \`ligo lsp\`.`,
+      )
     }
   }
 
