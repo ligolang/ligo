@@ -1,11 +1,27 @@
 variables:
-  WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
-  WEBIDE_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}"
-  WEBIDE_FRONTEND_NEW_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}"
 
 #######################################################################
 # MR integration
 #######################################################################
+
+webide-define-image-tag:
+  extends: .docker-image
+  stage: pretooling
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide-new/ligo-webide-backend/**/*
+        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
+      when: always
+  script:
+    - FORMATED_CI_JOB_STARTED_AT="${CI_JOB_STARTED_AT//:/-}"
+    - WEBIDE_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}"
+    - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}"
+    - echo "WEBIDE_NEW_IMAGE_TAG=${WEBIDE_NEW_IMAGE_TAG}" >> webide-img-tag.env
+    - echo "WEBIDE_FRONTEND_NEW_IMAGE_TAG=${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >> webide-img-tag.env
+  artifacts:
+    reports:
+      dotenv: webide-img-tag.env
 
 webide-new-backend-build:
   extends: .docker-image
@@ -48,8 +64,8 @@ webide-new-backend-build-and-push-backend:
   extends: .docker-image
   stage: deploy
   needs:
-    - job: changelog
-      artifacts: false
+    - job: webide-define-image-tag
+      artifacts: true 
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
@@ -66,8 +82,8 @@ webide-new-frontend-build-and-push:
   extends: .docker-image
   stage: deploy
   needs:
-    - job: changelog
-      artifacts: false
+    - job: webide-define-image-tag
+      artifacts: true
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
