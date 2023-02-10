@@ -31,6 +31,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
         "  -c, --copy         Print lexemes and markup";
         "      --bytes        Bytes for source locations";
         "      --preprocess   Run the preprocessor";
+        "      --string=<str> Use a string as input. Discard any other input.";
         "      --post=<pass>  Run postprocessing up to pass <pass> \n\
         \                     (0/1/2/etc.). None: 0. Default: all.";
         "      --print-passes Print the self-passes's names when applied."
@@ -48,6 +49,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
     and units        = ref false
     and bytes        = ref false
     and preprocess   = ref false
+    and string       = ref (None : string option)
     and post         = ref (None : int option)
     and print_passes = ref false
 
@@ -71,6 +73,17 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
               raise (Getopt.Error "Invalid pass number.")
           | passes -> post := passes
 
+    (* --string *)
+
+    let print_string = function
+      None -> "None"
+    | Some s -> Printf.sprintf "Some %S" s
+
+    let set_string str =
+      if Caml.(!string = None)
+      then string := Some str
+      else raise (Getopt.Error "Only one --string option allowed.")
+
     (* Specifying the command-line options a la GNU
 
        See [GetoptLib.Getopt] for the layout of the command line and
@@ -83,6 +96,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
         noshort, "units",        set units true, None;
         noshort, "bytes",        set bytes true, None;
         noshort, "preprocess",   set preprocess true, None;
+        noshort, "string",       None, Some set_string;
         noshort, "post",         None, Some post_arg;
         noshort, "print-passes", set print_passes true, None;
         noshort, "cli",          set cli true, None;
@@ -134,6 +148,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
       let open SSet in
       empty
       |> add "--post"
+      |> add "--string"
 
     let argv_copy = Array.copy Sys.argv
 
@@ -165,6 +180,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
     and preprocess   = !preprocess
     and postprocess  = !post
     and print_passes = !print_passes
+    and string       = !string
 
     (* Re-exporting and printing on stdout the CLI options *)
 
@@ -177,7 +193,8 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
         sprintf "bytes        = %b" !bytes;
         sprintf "preprocess   = %b" preprocess;
         sprintf "post         = %s" (print_post postprocess);
-        sprintf "print_passes = %b" print_passes] in
+        sprintf "print_passes = %b" print_passes;
+        sprintf "string       = %S" (print_string string)] in
     begin
       Buffer.add_string buffer (Base.String.concat ~sep:"\n" options);
       Buffer.add_char buffer '\n';
@@ -217,6 +234,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
         let preprocess   = preprocess
         let mode         = mode
         let command      = command
+        let string       = string
         let print_passes = print_passes
       end
 

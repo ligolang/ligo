@@ -27,14 +27,22 @@ module API =
 
 let () =
   let open! API in
+  let no_colour = Parameters.Options.no_colour in
   match check_cli () with
     Ok ->
-      let file = Option.value Parameters.Options.input ~default:"" in
-      let no_colour = Parameters.Options.no_colour in
-      let std, _tokens = scan_all_tokens ~no_colour (Lexbuf.File file) in
+      let std =
+        match Parameters.Options.string with
+          Some s ->
+            let input = Lexbuf.String ("", s) in
+            fst (scan_all_tokens ~no_colour input)
+        | None ->
+            let file = Option.value Parameters.Options.input ~default:"" in
+            fst (scan_all_tokens ~no_colour (Lexbuf.File file))
+      in
       let () = Std.(add_nl std.out) in
       let () = Std.(add_nl std.err) in
       Printf.printf  "%s%!" (Std.string_of std.out);
       Printf.eprintf "%s%!" (Std.string_of std.err)
+
   | Error msg -> Printf.eprintf "%s\n%!" msg
   | Info  msg -> Printf.printf "%s%!" msg (* Note the absence of "\n" *)
