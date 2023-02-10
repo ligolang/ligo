@@ -7,6 +7,7 @@ module LSet = Caml.Set.Make (Loc)
 module Hashtbl = Caml.Hashtbl
 
 let ( @. ) f g x = f (g x)
+let bind_option x f = Option.bind x ~f
 let file_start_position = Position.create ~character:0 ~line:0
 let file_end_position = Position.create ~character:0 (* FIXME *) ~line:1000000000
 let whole_file_range = Range.create ~end_:file_end_position ~start:file_start_position

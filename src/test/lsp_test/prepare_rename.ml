@@ -6,7 +6,11 @@ module Ligo_interface = Ligo_interface.Make (struct
 end)
 
 open Lsp.Types
-module Requests = Ligo_api.Lsp_server.Requests
+
+module Requests = Ligo_api.Lsp_server.Requests.Make (struct
+  module Info = Ligo_api.Info
+  module Print = Ligo_api.Print
+end)
 
 (* TODO: Allow reading from a file. *)
 type prepare_rename_test =
