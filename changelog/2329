@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFor the LIGO LSP, only errors were being displayed and warnings were skipped. Users will now be able to see warnings as well as errors.\\n\\n"
+merge_request: '2329'
+title: "[#1666] Extract warnings from scopes"
+type: fixed
+            
