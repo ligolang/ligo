@@ -1,0 +1,7 @@
+
+author: nicolas.van.phan
+description: "Using flag --no-color in CI can be ignored if variable TERM is not set. Here a fix to make --no-color flag valid even if TERM is not defined.\\n\\n"
+merge_request: '2361'
+title: "Fix condition for disabling colors in CLI output"
+type: fixed
+            
