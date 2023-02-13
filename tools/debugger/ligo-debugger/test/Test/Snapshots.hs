@@ -898,8 +898,9 @@ test_Snapshots = testGroup "Snapshots collection"
           goesBetween (SrcLoc 8 0) (SrcLoc 12 0)
           && matchesSrcType (MSFile nestedFile)
 
-        -- Skip sum(...) statement
-        void $ move Forward
+        -- Skip "lst" and "sum(...)"" statements
+        replicateM_ 2 do
+          void $ move Forward
 
         liftIO $ step [int||Check variables for "sum" snapshot|]
         checkSnapshot \case

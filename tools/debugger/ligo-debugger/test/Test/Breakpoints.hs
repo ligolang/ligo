@@ -180,8 +180,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile nestedFile)
-              (SrcLoc 10 10)
-              (SrcLoc 10 13)
+              (SrcLoc 9 8)
+              (SrcLoc 9 11)
             )
 
         liftIO $ step "Go to next breakpoint (go to start file)"

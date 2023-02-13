@@ -20,6 +20,7 @@ import Morley.Debugger.Core
   getFutureSnapshotsNum, moveTill, switchBreakpoint)
 import Morley.Debugger.DAP.Types (StepCommand' (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (..))
+import Morley.Michelson.Text (mt)
 
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
@@ -105,6 +106,30 @@ test_top_level_function_with_preprocessor_don't_have_locations =
       "StepIn"
       runData
       (dumpAllSnapshotsWithStep doStep)
+
+test_values_inside_switch_and_match_with_are_statements :: TestTree
+test_values_inside_switch_and_match_with_are_statements =
+  testGroup "Values inside \"switch\" and \"match ... with\" are statements" $
+    [ ContractRunData
+      { crdProgram = contractsDir </> "statement-in-match-branch.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    , ContractRunData
+      { crdProgram = contractsDir </> "statements-in-case-branch.jsligo"
+      , crdEntrypoint = Nothing
+      , crdParam = [mt|Variant1|]
+      , crdStorage = 0 :: Integer
+      }
+    ] <&> \runData -> do
+      let doStep = processLigoStep (CStepIn GStmt)
+      goldenTestWithSnapshots
+        [int||checking for #{crdProgram runData} contract|]
+        "StepIn"
+        runData
+        (dumpAllSnapshotsWithStep doStep)
 
 test_Next_golden :: TestTree
 test_Next_golden = testGroup "Next" do
