@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nAdded support for `document link` request to `ligo lsp`\\n"
+merge_request: '2358'
+title: "[#1653] Implement document link request, add `get_cst` function"
+type: added
+            
