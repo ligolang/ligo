@@ -260,7 +260,7 @@ let point (line : int) (character : int) : Range.t =
 
 
 let parsing_error_to_string (err : Parsing.Errors.t) : string =
-  let { content = { message; _ }; _ } : Simple_utils.Error.t =
+  let ({ content = { message; _ }; _ } : Simple_utils.Error.t) =
     Parsing.Errors.error_json err
   in
   message

@@ -74,6 +74,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)
       method! config_definition = Some (`Bool true)
+      method config_document_link_provider = Some (DocumentLinkOptions.create ())
 
       method config_rename =
         let rename_options = RenameOptions.create ?prepareProvider:(Some true) () in
@@ -91,6 +92,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         ; renameProvider = self#config_rename
         ; referencesProvider = self#config_references
         ; typeDefinitionProvider = self#config_type_definition
+        ; documentLinkProvider = self#config_document_link_provider
         }
 
       method! on_request
@@ -128,6 +130,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ Requests.on_req_type_definition position uri
+          | Client_request.TextDocumentLink { textDocument; _ } ->
+            let uri = textDocument.uri in
+            run ~uri @@ Requests.on_req_document_link uri
           | _ -> super#on_request ~notify_back ~id r
     end
 end

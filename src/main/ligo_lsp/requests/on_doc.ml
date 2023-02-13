@@ -20,7 +20,10 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
     let@ syntax =
       match Utils.get_syntax uri with
       | None ->
-        lift_IO @@ failwith @@ "Expected file with LIGO code, got: " ^ DocumentUri.to_path uri
+        lift_IO
+        @@ failwith
+        @@ "Expected file with LIGO code, got: "
+        ^ DocumentUri.to_path uri
       | Some s -> return s
     in
     let new_state = unfold_get_scope @@ get_scope uri contents in

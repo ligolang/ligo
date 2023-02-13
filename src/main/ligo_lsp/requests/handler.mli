@@ -9,7 +9,7 @@ type notify_back_mockable =
 type handler_env =
   { notify_back : notify_back_mockable
   ; debug : bool
-  ; docs_cache : (Lsp.Uri.t, Ligo_interface.file_data) Hashtbl.t
+  ; docs_cache : (Linol_lwt.DocumentUri.t, Ligo_interface.file_data) Hashtbl.t
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
@@ -42,7 +42,7 @@ val ask : handler_env Handler.t
 
 val ask_notify_back : notify_back_mockable Handler.t
 val ask_debug : bool Handler.t
-val ask_docs_cache : (Lsp.Uri.t, Ligo_interface.file_data) Hashtbl.t Handler.t
+val ask_docs_cache : (Linol_lwt.DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t
 
 (** Conditional computations *)
 val when_ : bool -> unit Handler.t -> unit Handler.t
@@ -70,17 +70,17 @@ Also returns default value if `get_scope` for this file fails, unless
 *)
 val with_cached_doc
   :  ?return_default_if_no_info:bool
-  -> Lsp.Uri.t
+  -> Linol_lwt.DocumentUri.t
   -> 'a
   -> (Ligo_interface.file_data -> 'a Handler.t)
   -> 'a Handler.t
 
 val with_cached_doc_pure
   :  ?return_default_if_no_info:bool
-  -> Lsp.Uri.t
+  -> Linol_lwt.DocumentUri.t
   -> 'a
   -> (Ligo_interface.file_data -> 'a)
   -> 'a Handler.t
 
 (** Like with_cached_doc, but parses a CST from code *)
-val with_cst : Lsp.Uri.t -> 'a -> (Utils.dialect_cst -> 'a Handler.t) -> 'a Handler.t
+val with_cst : Linol_lwt.DocumentUri.t -> 'a -> (Utils.dialect_cst -> 'a Handler.t) -> 'a Handler.t

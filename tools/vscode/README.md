@@ -25,7 +25,7 @@ Code navigation
 - [ ] Selection range
 - [x] Jump to type definition
 - [ ] Document symbols
-- [ ] Document links
+- [x] Document links
 - [ ] Workspace symbols
 
 Diagnostics
