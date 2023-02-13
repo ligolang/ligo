@@ -1,0 +1,5 @@
+author: arguil & melwyn95
+description: "\\n#### For a contract like\\n\\n\\n```ts\\nexport const example = (x : int) : int => {\\n  if (x == 42) { return x; } // foo\\n  else {\\n    return x;\\n  }\\n}\\n```\\n#### Before\\n\\n\\n```bash\\n$ ligo.60 compile expression jsligo "example" --init-file x.jsligo \\nFile "x.jsligo", line 3, characters 2-6:\\n  2 |   if (x == 42) { return x; } // foo\\n  3 |   else {\\n  4 |     return x;\\nIll-formed block of statements.\\nAt this point, one of the following is expected:\\n  * another statement;\\n  * a closing brace '}' if the block is complete.\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo compile expression jsligo "example" --init-file x.jsligo\\n{ PUSH int 42 ; DUP 2 ; COMPARE ; EQ ; IF {} {} }\\n```\\n\\n"
+merge_request: '2356'
+title: "Fix[#1681]: semi-colons insertion breaks when a comment"
+type: fixed

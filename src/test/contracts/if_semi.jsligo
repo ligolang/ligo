@@ -5,12 +5,12 @@ type parameter =
 | ["Decrement", int]
 | ["Reset"];
 
-let add = (store: storage, delta: int): storage => store + delta;
-let sub = (store: storage, delta: int): storage => store - delta;
+const add = (store: storage, delta: int): storage => store + delta;
+const sub = (store: storage, delta: int): storage => store - delta;
 
 
 const main = (action: parameter, store: storage) : [ list<operation> , storage ] => {
-  if (true) { 
+  if (true) {
     return [
       list([]),    // No operations
       (match (action, {
@@ -24,7 +24,7 @@ const main = (action: parameter, store: storage) : [ list<operation> , storage ]
 
 
 const main2 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
-  if (true) { 
+  if (true) {
 
  return [
    list([]),    // No operations
@@ -36,3 +36,43 @@ const main2 = (action: parameter, store: storage) : [ list<operation> , storage 
   } // comment should also work
   return failwith("Not Allowed");
 };
+
+
+const main3 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+  if (true) {
+
+ return [
+   list([]),    // No operations
+   (match (action, {
+    Increment: n => add (store, n),
+    Decrement: n => sub (store, n),
+    Reset:     ()  => 0}))
+  ]
+  } // Comment then else should be fine too
+  else {
+    return failwith("Not allowed");
+  }
+}
+
+
+const main4 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+  if (true) {
+
+ return [
+   list([]),    // No operations
+   (match (action, {
+    Increment: n => add (store, n),
+    Decrement: n => sub (store, n),
+    Reset:     ()  => 0}))
+  ]
+  } /* Block comments as well */
+  // and even multiple comments
+  return failwith("Not Allowed");
+};
+
+export const example = (x : int) : int => {
+  if (x == 42) { return x; } // foo
+  else {
+    return x;
+  }
+}
