@@ -11,8 +11,8 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   open Linol_lwt
   open Linol_lwt.Jsonrpc2
   open Lsp
-  open Requests.Handler
   module Requests = Requests.Make (Ligo_api)
+  open Requests.Handler
   (* This file is free software, part of linol. See file "LICENSE" for more information *)
 
   (* one env per document *)
