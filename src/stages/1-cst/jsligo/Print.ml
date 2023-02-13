@@ -412,8 +412,14 @@ and print_property state = function
     print_expr state expr
 
 and print_fun_expr state node =
-  let {parameters; lhs_type; body; _} = node in
+  let {parameters; lhs_type; body; type_params; arrow=_} = node in
   let fields = if Option.is_none lhs_type then 2 else 3 in
+  let () =
+    Option.iter ~f:(fun type_params ->
+    let state = state#pad fields 0 in
+    print_node state "<type_params>";
+    print_type_generics (state#pad 1 0) type_params) 
+    type_params in
   let () =
     let state = state#pad fields 0 in
     print_node state "<parameters>";
@@ -612,6 +618,11 @@ and print_type_expr state = function
     let apply len rank (v: field_decl reg ne_injection reg) =
       print_ne_injection print_field_decl (state#pad len rank) v.value    in
     List.iteri ~f:(List.length objects |> apply) objects
+
+and print_type_generics state (tgenerics : CST.type_generics) =
+  let inside = tgenerics.value.inside in
+  let type_params = Utils.nsepseq_to_list inside in
+  List.iter ~f:(print_ident state) type_params
 
 and print_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
 = fun f state ma ->

@@ -547,3 +547,14 @@ let destruct_for_alls (t : type_expression) =
     | _ -> type_vars, t
   in
   destruct_for_alls [] t
+
+
+(* /\ a -> /\ b -> /\ c -> e => [a ; b ; c], e*)
+let destruct_e_type_abstrctions (e : expression) : Type_var.t list * expression =
+  let rec destruct_e_type_abstrctions type_vars (e : expression) =
+    match e.expression_content with
+    | E_type_abstraction { type_binder; result } ->
+      destruct_e_type_abstrctions (type_vars @ [ type_binder ]) result
+    | _ -> type_vars, e
+  in
+  destruct_e_type_abstrctions [] e

@@ -161,7 +161,14 @@ module Fold_helpers (M : Monad) = struct
       in
       let* lhs_type = bind_map_option map_lhs_type value.lhs_type in
       let* body = map_fun_expr_body value.body in
-      let value = { parameters; lhs_type; arrow = value.arrow; body } in
+      let value =
+        { parameters
+        ; lhs_type
+        ; arrow = value.arrow
+        ; body
+        ; type_params = value.type_params
+        }
+      in
       return @@ EFun { value; region }
     | EPar { value; region } ->
       let* inside = self value.inside in

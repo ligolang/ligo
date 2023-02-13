@@ -940,27 +940,34 @@ statements:
 (* Expressions *)
 
 fun_expr:
-  ES6FUN par(parameters) ioption(type_annotation) "=>" body {
-    let region = cover $2.region (body_to_region $5) in
-    let value  = {parameters = EPar $2; lhs_type=$3; arrow=$4; body=$5}
+  ioption(type_generics) ES6FUN par(parameters)
+  ioption(type_annotation) "=>" body {
+    let region = cover $3.region (body_to_region $6) in
+    let value  = {
+      parameters=EPar $3;
+      lhs_type=$4;
+      arrow=$5;
+      body=$6;
+      type_params=$1;
+    }
     in {region; value}
   }
-| ES6FUN "(" ")" ioption(type_annotation) "=>" body {
-    let lpar = $2 in
-    let rpar = $3 in
-    let arrow = $5 in
+| ioption(type_generics) ES6FUN "(" ")" ioption(type_annotation) "=>" body {
+    let lpar  = $3 in
+    let rpar  = $4 in
+    let arrow = $6 in
     let region     = cover lpar#region rpar#region in
     let parameters = EUnit {region; value = (lpar,rpar)} in
-    let region     = cover lpar#region (body_to_region $6) in
-    let value      = {parameters; lhs_type=$4; arrow; body=$6}
+    let region     = cover lpar#region (body_to_region $7) in
+    let value      = {parameters; lhs_type=$5; arrow; body=$7; type_params=$1}
     in {region; value}
-  }
+ }
 | ES6FUN "<ident>" "=>" body
 | ES6FUN "_" "=>" body {
     let params = unwrap $2 in
     let region     = cover params.region (body_to_region $4)
     and parameters = EVar params in
-    let value = {parameters; lhs_type=None; arrow=$3; body=$4}
+    let value = {parameters; lhs_type=None; arrow=$3; body=$4; type_params=None}
     in {region; value} }
 
 parameters:

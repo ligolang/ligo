@@ -1,5 +1,5 @@
-const recursion : <T>( xs : list<T>) => option<T> =
-   (xs : list<T>) : option<T> => {
+const recursion =
+   <T>(xs : list<T>) : option<T> => {
         return recursion(xs);
    };
 

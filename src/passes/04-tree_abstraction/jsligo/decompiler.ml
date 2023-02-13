@@ -422,10 +422,34 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     let ne_args = list_to_nsepseq ~sep:Token.ghost_comma args in
     let arguments = CST.Multiple (Region.wrap_ghost (par ne_args)) in
     return_expr @@ [ Expr (CST.ECall (Region.wrap_ghost (lamb, arguments))) ]
+  | E_type_abstraction { type_binder; result } ->
+    let tvs, expr = AST.Combinators.destruct_e_type_abstrctions result in
+    let tvs = List.map ~f:decompile_type_var (type_binder :: tvs) in
+    let type_params =
+      Option.return
+      @@ Region.wrap_ghost
+      @@ chevrons (list_to_nsepseq ~sep:Token.ghost_comma tvs)
+    in
+    (match expr.expression_content with
+    | E_lambda lambda ->
+      let parameters, lhs_type, body = decompile_lambda lambda in
+      let fun_expr : CST.fun_expr =
+        { parameters; lhs_type; arrow = Token.ghost_arrow; body; type_params }
+      in
+      return_expr @@ [ Expr (CST.EFun (Region.wrap_ghost @@ fun_expr)) ]
+    | E_recursive { lambda; _ } ->
+      let parameters, lhs_type, body =
+        decompile_lambda @@ Lambda.map Fun.id Option.return lambda
+      in
+      let fun_expr : CST.fun_expr =
+        { parameters; lhs_type; arrow = Token.ghost_arrow; body; type_params }
+      in
+      return_expr @@ [ Expr (CST.EFun (Region.wrap_ghost @@ fun_expr)) ]
+    | _ -> failwith "type_abstraction not supported yet")
   | E_lambda lambda ->
     let parameters, lhs_type, body = decompile_lambda lambda in
     let fun_expr : CST.fun_expr =
-      { parameters; lhs_type; arrow = Token.ghost_arrow; body }
+      { parameters; lhs_type; arrow = Token.ghost_arrow; body; type_params = None }
     in
     return_expr @@ [ Expr (CST.EFun (Region.wrap_ghost @@ fun_expr)) ]
   | E_recursive { lambda; _ } ->
@@ -433,7 +457,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
       decompile_lambda @@ Lambda.map Fun.id Option.return lambda
     in
     let fun_expr : CST.fun_expr =
-      { parameters; lhs_type; arrow = Token.ghost_arrow; body }
+      { parameters; lhs_type; arrow = Token.ghost_arrow; body; type_params = None }
     in
     return_expr @@ [ Expr (CST.EFun (Region.wrap_ghost @@ fun_expr)) ]
   | E_let_in { let_binder; rhs; let_result; attributes } ->
@@ -461,7 +485,6 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     in
     let body = decompile_expression_in let_result in
     return_expr @@ (Statement const :: body)
-  | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_type_in { type_binder; rhs; let_result } ->
     let name = decompile_type_var type_binder in
     let type_expr = decompile_type_expr rhs in

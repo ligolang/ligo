@@ -8,7 +8,7 @@
 
 type t<a> = M.monad<a>;
 
-let interval = ([x,y] : [int, int]) : t<int> => {
+const interval = ([x,y] : [int, int]) : t<int> => {
   let aux = ([x, c, acc] : [int, int, t<int>]) : t<int> => {
     if (c < x) {
       return acc;
@@ -19,7 +19,7 @@ let interval = ([x,y] : [int, int]) : t<int> => {
   return aux([x, y, (M.mzero as t<int>)]);
 };
 
-let triples = (n : int) : t<[int, int, int]> =>
+const triples = (n : int) : t<[int, int, int]> =>
   (M.bind(interval([1, n])))((x : int) : t<[int, int, int]> =>
   (M.bind(interval([1, n])))((y : int) : t<[int, int, int]> => {
     if (x <= y) {
@@ -29,7 +29,7 @@ let triples = (n : int) : t<[int, int, int]> =>
     }
    }))
 
-let solve = (n : int) : t<[int, int, int]> =>
+const solve = (n : int) : t<[int, int, int]> =>
   (M.bind(triples(n)))(([x, y, z] : [int, int, int]) : t<[int, int, int]> => {
   if (x * x + y * y == z * z) {
     return M.ret([x, y, z]);

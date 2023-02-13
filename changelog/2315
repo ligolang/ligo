@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nIn JsLIGO, the syntax for defining generic functions was misleading.\\n\\nThis MR fixes this issue by adding the syntatic contruct to bind type variables in function expressions.\\n\\n#### Before\\n\\n\\n```ts\\nconst concat : <T>(xs : list<T>, ys : list<T>) => list<T> = (xs : list<T>, ys : list<T>) : list<T> => {\\n    let f = ([x, ys] : [T, list<T>]) : list<T> => list([x, ...ys]);\\n    return List.fold_right(f, xs, ys)\\n}\\n\\n```\\n\\nBefore the type variables were bound in the LHS type annotation in the type expression.\\n\\n#### After\\n\\n\\n```ts\\nconst concat = <T>(xs : list<T>, ys : list<T>) : list<T> => {\\n    let f = ([x, ys] : [T, list<T>]) : list<T> => list([x, ...ys]);\\n    return List.fold_right(f, xs, ys)\\n}\\n\\n```\\n\\nAfter this change type variables can be bound in function expression like above.\\n\\n"
+merge_request: '2315'
+title: "[JsLIGO] Update syntax for generic functions"
+type: breaking
+            

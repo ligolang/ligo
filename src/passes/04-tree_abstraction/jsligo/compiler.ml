@@ -879,7 +879,7 @@ and compile_expression ~raise : CST.expr -> AST.expr =
     aux [ Module_var.of_input_var ~loc ma.module_name.value ] ma.field
   | EFun func ->
     let func, loc = r_split func in
-    let ({ parameters; lhs_type; body; arrow = _ } : CST.fun_expr) = func in
+    let ({ parameters; lhs_type; body; arrow = _; type_params } : CST.fun_expr) = func in
     let output_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
     let binders, exprs = compile_parameter_curried ~const:true ~raise parameters in
     let body = compile_function_body_to_expression ~loc ~raise body in
@@ -898,6 +898,15 @@ and compile_expression ~raise : CST.expr -> AST.expr =
         outer_type, e_lambda ~loc binder output_type expr
     in
     let _, expr = aux binders expr in
+    let expr =
+      Option.value_map
+        ~default:expr
+        ~f:(fun tps ->
+          let tps, loc = r_split tps in
+          let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tps.inside in
+          List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:expr type_vars)
+        type_params
+    in
     return @@ expr
   | EAnnot { value = EArith (Int i), _, TVar { value = "nat"; _ }; region = _ } ->
     let (_, i), loc = r_split i in
@@ -1378,21 +1387,30 @@ and compile_val_binding ~raise
   match binders, let_rhs with
   | CST.PVar name, EFun _ ->
     (* function *)
+    let type_abstr_vars, let_rhs' = destruct_e_type_abstrctions let_rhs' in
     let fun_binder : Value_var.t = compile_variable name.value.variable in
     let expr =
       let lambda =
         trace_option ~raise (recursion_on_non_function let_rhs'.location)
         @@ get_e_lambda let_rhs'.expression_content
       in
-      let lhs_type =
-        match lhs_type with
-        | Some lhs_type -> Some lhs_type
-        | None ->
-          Option.map ~f:(Utils.uncurry (t_arrow ~loc))
-          @@ Option.bind_pair (Param.get_ascr lambda.binder, lambda.output_type)
-      in
       if is_recursive_lambda fun_binder lambda
       then (
+        let lhs_type =
+          match
+            type_abstr_vars, Param.get_ascr lambda.binder, lambda.output_type, lhs_type
+          with
+          | [], _, _, Some lhs_type -> Some lhs_type
+          (* In the case when both lhs type and binder type + body type are given
+             e.g. const x : <A>(_ : A) => A = <T>(x : T) : T => x
+             for the rhs function we need to create a [T_arrow] using the
+             binder typer & body type. *)
+          | _ :: _, Some binder_type, Some body_type, _ ->
+            Some (t_arrow ~loc binder_type body_type)
+          | _, _, _, _ ->
+            Option.map ~f:(Utils.uncurry (t_arrow ~loc))
+            @@ Option.bind_pair (Param.get_ascr lambda.binder, lambda.output_type)
+        in
         let fun_type =
           trace_option ~raise (untyped_recursive_fun name.region) @@ lhs_type
         in
@@ -1419,13 +1437,10 @@ and compile_val_binding ~raise
                 type_vars))
     in
     let expr =
-      Option.value_map
-        ~default:expr
-        ~f:(fun tp ->
-          let tp, loc = r_split tp in
-          let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
-          List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:expr type_vars)
-        type_params
+      List.fold_right
+        ~init:expr
+        ~f:(fun tv expr -> e_type_abs ~loc tv expr)
+        type_abstr_vars
     in
     let binder = Binder.make fun_binder lhs_type in
     let binder = Binder.map map_ascr binder in
