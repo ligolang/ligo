@@ -28,10 +28,17 @@ let rec there_is_a_decl_next tokens =
   | Type _ :: _-> true
   | _ -> false
 
-let is_comment =
-  let open! Token in function
-    | LineCom _ | BlockCom _ -> true
-    | _ -> false
+let rec there_is_else_case_default tokens =
+  let open! Token in
+  match tokens with
+  | [] -> false
+  | LineCom _  :: tokens
+  | BlockCom _ :: tokens ->
+    there_is_else_case_default tokens
+  | Else _    :: _
+  | Case _    :: _
+  | Default _ :: _ -> true
+  | _ -> false
 
 let semicolon_insertion tokens =
   let open! Token in
@@ -42,8 +49,13 @@ let semicolon_insertion tokens =
     inner (t :: result) rest
   | (BlockCom _ as t) :: rest ->
     inner (t :: result) rest
-  | (RBRACE _ as rbrace) :: t :: rest when is_comment t ->
-    inner result (t :: rbrace :: rest)
+  | (RBRACE _ as rbrace) :: (LineCom _ as t)  :: rest
+  | (RBRACE _ as rbrace) :: (BlockCom _ as t) :: rest ->
+    if there_is_else_case_default rest then
+      inner (t :: rbrace :: result) rest
+    else
+      let (s, _) = Token.proj_token rbrace in
+      inner (t:: mk_semi s :: rbrace :: result) rest
   | (SEMI _ as semi) :: (LineCom _ as t) :: rest
   | (SEMI _ as semi) :: (BlockCom _ as t) :: rest
   | (SEMI _ as semi) :: (Directive _ as t)  :: rest
@@ -64,14 +76,14 @@ let semicolon_insertion tokens =
   | (LBRACE _ as semi) :: (Return _ as t)  :: rest
   | (COLON _ as semi) :: (LineCom _ as t) :: rest
   | (COLON _ as semi) :: (BlockCom _ as t) :: rest
-  | (COLON _ as semi) :: (Directive _ as t)  :: rest
+  | (COLON _ as semi) :: (Directive _ as t)  :: rest  
   | (COLON _ as semi) :: (Namespace _ as t)  :: rest
   | (COLON _ as semi) :: (Export _ as t)  :: rest
   | (COLON _ as semi) :: (Let _ as t)  :: rest
   | (COLON _ as semi) :: (Const _ as t)  :: rest
   | (COLON _ as semi) :: (Type _ as t)  :: rest
   | (COLON _ as semi) :: (Return _ as t)  :: rest ->
-    inner (t :: semi :: result) rest
+    inner (t:: semi :: result) rest
   | token :: (LineCom _ as t) :: rest
   | token :: (BlockCom _ as t) :: rest ->
     if there_is_a_decl_next rest then

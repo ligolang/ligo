@@ -69,3 +69,10 @@ const main4 = (action: parameter, store: storage) : [ list<operation> , storage 
   // and even multiple comments
   return failwith("Not Allowed");
 };
+
+export const example = (x : int) : int => {
+  if (x == 42) { return x; } // foo
+  else {
+    return x;
+  }
+}
