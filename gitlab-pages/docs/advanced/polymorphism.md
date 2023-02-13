@@ -73,7 +73,7 @@ Here we introduce a type variable `a` which can be generalised using
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-const id : <T>((x : T) => T) = x => x;
+const id = <T>(x : T) : T => x;
 ```
 
 Here `T` is a type variable which can be generalised. In general,
@@ -137,8 +137,8 @@ let rev (type a) (xs : a list) : a list =
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-const rev : <T>((xs : list<T>) => list<T>) = xs => {
-  const rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
+const rev = <T>(xs : list<T>) : list<T> => {
+  const rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs, list([
     ([] : list<T>) => acc,
     ([x,... xs] : list<T>) => rev([xs, list([x,...acc])])

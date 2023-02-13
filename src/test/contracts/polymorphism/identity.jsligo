@@ -2,9 +2,9 @@ type storage = int;
 
 type parameter = unit;
 
-const id : <P>(x : P) => P = (x : P) => {
-    const id_1 : <Q>(y : Q) => Q = (y : Q) => {
-        const id_2 : <R>(z : R) => R = (z : R) => {
+const id = <P>(x : P) => {
+    const id_1 = <Q>(y : Q) => {
+        const id_2 = <R>(z : R) => {
             let z = z;
             return z;
         };
@@ -14,9 +14,9 @@ const id : <P>(x : P) => P = (x : P) => {
     return id_1(x);
 };
 
-const ident : <P>(x : P) => P = (x : P) => {
-    const ident_1 : <P>(y : P) => P = (y : P) => {
-        const ident_2 : <P>(z : P) => P = (z : P) => {
+const ident = <P>(x : P) => {
+    const ident_1 = <P>(y : P) => {
+        const ident_2 = <P>(z : P) => {
             let z = z;
             return z;
         };
@@ -26,8 +26,9 @@ const ident : <P>(x : P) => P = (x : P) => {
     return ident_1(x);
 };
 
+const snd : <T, U>(x : T, y : U) => U = <T, U>(_ : T, y : U) : U => y
 
-const x : int = id(1) + ident(1);
+const x : int = snd("Hello", id(1) + ident(1));
 
 type return_ = [list <operation>, storage];
 

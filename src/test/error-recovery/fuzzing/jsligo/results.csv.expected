@@ -7,7 +7,7 @@ PASS,2amount.jsligo,7,90,32,40,3
 PASS,2bytes_unpack.jsligo,13,175,51,140,11
 PASS,2counter.jsligo,10,91,29,53,4
 PASS,2if_if_return.jsligo,5,48,12,57,2
-PASS,2key_hash.jsligo,14,144,24,56,4
+PASS,2key_hash.jsligo,15,145,45,56,7
 PASS,2local_type_decl.jsligo,5,112,8,38,2
 PASS,2match_bis.jsligo,26,265,67,152,13
 PASS,2super-counter.jsligo,9,188,36,111,9

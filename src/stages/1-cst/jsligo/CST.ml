@@ -538,6 +538,7 @@ and body =
 | ExpressionBody of expr
 
 and fun_expr = {
+  type_params : type_generics option;
   parameters : expr;
   lhs_type   : (colon * type_expr) option;
   arrow      : arrow;

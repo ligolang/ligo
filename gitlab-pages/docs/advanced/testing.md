@@ -326,10 +326,8 @@ let originate (type vt whole_s vp)
 /* proxy_ticket.jsligo */
 
 /* @private */
-const proxy_transfer_contract :
-  <vt , whole_p>
-    (x : (ticket:ticket<vt>) => whole_p) => (p : [[vt , nat] , address]) => (s : unit) => [list<operation> , unit] =
-  ( mk_param :  ((ticket:ticket<vt>) => whole_p)) => {
+const proxy_transfer_contract =
+  <vt , whole_p>(mk_param :  ((ticket:ticket<vt>) => whole_p)) => {
     return (p : [[vt , nat] , address]) => (s : unit) => {
     const [[v,amt],dst_addr] = p ;
     const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
@@ -342,12 +340,8 @@ const proxy_transfer_contract :
 };
 
 /* @private */
-const proxy_originate_contract :
-  <vt, whole_s, vp>
-    (mk_storage : (ticket:ticket<vt>) => whole_s) =>
-    (main: (p : vp) => (s : whole_s) => [list<operation> , whole_s]) =>
-    (ps :[[vt , nat] , option<address>]) => [list<operation>, option<address>] =
-  (mk_storage: (ticket:ticket<vt>) => whole_s) =>
+const proxy_originate_contract =
+  <vt, whole_s, vp>(mk_storage: (ticket:ticket<vt>) => whole_s) =>
   (main: ((p : vp) => (s : whole_s) => [list<operation> , whole_s])) => {
       return (p : [[vt , nat] , option<address>]) => {
         const [p,_] = p;
@@ -361,9 +355,8 @@ const proxy_originate_contract :
 
 type proxy_address<v> =  typed_address<[[v,nat] , address] , unit> ;
 
-const init_transfer :
-  <vt, whole_p> ( mk_param : (t:ticket<vt>) => whole_p) => proxy_address<vt> =
-  ( mk_param :  (t:ticket<vt>) => whole_p) => {
+const init_transfer =
+  <vt, whole_p>(mk_param :  (t:ticket<vt>) => whole_p) => {
     const proxy_transfer : (p : [[vt , nat] , address]) => (s : unit) => [list<operation> , unit] =
       proxy_transfer_contract (mk_param)
     ;
@@ -373,16 +366,15 @@ const init_transfer :
 
 const transfer :
   <vt>( x : [proxy_address<vt> , [[vt , nat] , address]]) => test_exec_result =
-  ( [taddr_proxy, info] : [proxy_address<vt> , [[vt , nat] , address]]) => {
+  <vt>([taddr_proxy, info] : [proxy_address<vt> , [[vt , nat] , address]]) => {
     const [ticket_info, dst_addr] = info ;
     return (
       Test.transfer_to_contract(Test.to_contract (taddr_proxy), [ticket_info , dst_addr], 1 as mutez)
     )
   };
 
-const originate : <vt, whole_s, vp>
-    (x : [ [vt , nat] , (t:ticket<vt>) => whole_s, (p: vp) => (s: whole_s) => [list<operation> , whole_s] ]) => address =
-  ([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (p: vp) => (s: whole_s) => [list<operation> , whole_s] ]) => {
+const originate =
+  <vt, whole_s, vp>([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (p: vp) => (s: whole_s) => [list<operation> , whole_s] ]) => {
       const proxy_origination : (_p : [vt , nat]) => (_s : option<address>) => [list<operation> , option<address>] =
         curry(proxy_originate_contract (mk_storage, contract)) ;
       const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;

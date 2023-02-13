@@ -66,7 +66,7 @@ let solve = function
 let cons a b =
   let s = match a, b with
     (* let foo = a:int => a *)
-  | (EQ _ as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
+  | ((EQ _ | GT _) as s), Suggestion f  -> Solved (s :: es6fun_token :: (f None))
   | (COLON _  as s), Suggestion f  ->
     Suggestion (fun c ->
       match c with
@@ -78,7 +78,7 @@ let cons a b =
     (* | Foo, y =>  *)
   | (VBAR _ as v),          Suggestion f  -> Solved (v :: (f None))
     (* let foo = () => 2 *)
-  | (EQ _ as s),            Inject tokens -> Solved (s :: es6fun_token :: tokens)
+  | ((EQ _ | GT _) as s),            Inject tokens -> Solved (s :: es6fun_token :: tokens)
     (* Bar => *)
 
     (* let x = (x: int, b: int => int) => b(x) *)

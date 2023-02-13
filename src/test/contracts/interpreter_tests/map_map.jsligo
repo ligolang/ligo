@@ -1,6 +1,4 @@
-const map 
-    : <A,B,C>((f : (p : B) => C, m: map<A,B>) => map<A,C>)
-    = (f: (p : B) => C, m: map<A,B>) : map<A,C> => {
+const map = <A,B,C>(f: (p : B) => C, m: map<A,B>) : map<A,C> => {
     let fn = ([_, v] : [A, B]) => f(v);
     return Map.map(fn, m)
 }
