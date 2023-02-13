@@ -130,7 +130,7 @@ let defintion_to_string (def : Scopes.def) =
 
 let location_to_string (location : Loc.t) = Format.asprintf "%a" Loc.pp location
 
-let error_to_string (error : Checking.Errors.typer_error) =
+let checking_error_to_string (error : Checking.Errors.typer_error) : string =
   let display_format = Simple_utils.Display.Human_readable in
   Format.asprintf
     "%a"
@@ -257,3 +257,38 @@ let interval (line : int) (character_start : int) (character_end : int) : Range.
 let point (line : int) (character : int) : Range.t =
   let position = Position.create ~line ~character in
   Range.create ~start:position ~end_:position
+
+
+let parsing_error_to_string (err : Parsing.Errors.t) : string =
+  let { content = { message; _ }; _ } : Simple_utils.Error.t =
+    Parsing.Errors.error_json err
+  in
+  message
+
+
+type dialect_cst =
+  | CameLIGO_cst of Parsing.Cameligo.CST.t
+  | JsLIGO_cst of Parsing.Jsligo.CST.t
+
+type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+
+exception Fatal_cst_error of string
+
+let get_cst (syntax : Syntax_types.t) (code : string) : (dialect_cst, string) result =
+  let buffer = Caml.Buffer.of_seq (Caml.String.to_seq code) in
+  (* Warnings and errors will be reported to the user via diagnostics, so we ignore them here. *)
+  let raise : parsing_raise =
+    { error = (fun err -> raise @@ Fatal_cst_error (parsing_error_to_string err))
+    ; warning = (fun _ -> ())
+    ; log_error = (fun _ -> ())
+    ; fast_fail = false
+    }
+  in
+  try
+    match syntax with
+    | CameLIGO ->
+      Ok (CameLIGO_cst (Parsing.Cameligo.parse_string ~preprocess:false ~raise buffer))
+    | JsLIGO ->
+      Ok (JsLIGO_cst (Parsing.Jsligo.parse_string ~preprocess:false ~raise buffer))
+  with
+  | Fatal_cst_error err -> Error err

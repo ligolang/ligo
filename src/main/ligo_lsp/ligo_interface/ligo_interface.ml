@@ -11,6 +11,13 @@ type get_scope_info =
   ; scopes : Scopes.scopes option
   }
 
+(** To support dirty files, we store some data about files in memory *)
+type file_data =
+  { syntax : Syntax_types.t
+  ; code : string
+  ; get_scope_info : get_scope_info
+  }
+
 module type LIGO_API = sig
   module Info : sig
     val get_scope_trace

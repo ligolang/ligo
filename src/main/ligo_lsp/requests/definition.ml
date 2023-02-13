@@ -13,7 +13,7 @@ let get_definition : Position.t -> DocumentUri.t -> Scopes.def list -> Scopes.de
 let on_req_definition : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
  fun pos uri ->
   with_cached_doc uri None
-  @@ fun get_scope_info ->
+  @@ fun { get_scope_info; _ } ->
   when_some' (get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   let region = get_location definition in

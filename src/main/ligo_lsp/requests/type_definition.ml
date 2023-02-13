@@ -16,7 +16,7 @@ let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
 let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
  fun pos uri ->
   with_cached_doc uri None
-  @@ fun get_scope_info ->
+  @@ fun { get_scope_info; _ } ->
   when_some' (Definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   when_some'

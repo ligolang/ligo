@@ -4,7 +4,6 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   (* TODO: use String, Option, Set, List & Hashtbl from Core *)
   module LSet = Caml.Set.Make (Simple_utils.Location)
   module List = Caml.List
-  module Hashtbl = Caml.Hashtbl
   module Option = Caml.Option
   open Ligo_interface.Make (Ligo_api)
 
@@ -17,7 +16,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   (* This file is free software, part of linol. See file "LICENSE" for more information *)
 
   (* one env per document *)
-  let get_scope_buffers : (DocumentUri.t, get_scope_info) Hashtbl.t = Hashtbl.create 32
+  let get_scope_buffers : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t =
+    Hashtbl.create 32
+
 
   (* Lsp server class
 

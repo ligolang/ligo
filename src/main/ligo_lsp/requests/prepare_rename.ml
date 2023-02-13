@@ -15,4 +15,5 @@ let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t o
 let on_req_prepare_rename : Position.t -> DocumentUri.t -> Range.t option Handler.t =
  fun pos uri ->
   with_cached_doc uri None
-  @@ fun get_scope_info -> return @@ prepare_rename pos uri get_scope_info.definitions
+  @@ fun { get_scope_info; _ } ->
+  return @@ prepare_rename pos uri get_scope_info.definitions

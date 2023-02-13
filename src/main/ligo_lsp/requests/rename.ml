@@ -10,7 +10,7 @@ let on_req_rename : string -> Position.t -> DocumentUri.t -> WorkspaceEdit.t Han
  fun new_name pos uri ->
   let@ get_scope_buffers = ask_docs_cache in
   with_cached_doc uri (WorkspaceEdit.create ())
-  @@ fun get_scope_info ->
+  @@ fun { get_scope_info; _ } ->
   let@ value =
     when_some' (Definition.get_definition pos uri get_scope_info.definitions)
     @@ fun definition ->
