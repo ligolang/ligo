@@ -76,7 +76,6 @@
                   --octez-client-path ${webide-cfg.tezos-client-package}/bin/octez-client \
                   --gist-token "$(cat ${webide-cfg.gist-token})"
               '';
-
           };
 
           services.nginx = {
