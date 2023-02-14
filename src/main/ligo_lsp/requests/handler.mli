@@ -42,7 +42,9 @@ val ask : handler_env Handler.t
 
 val ask_notify_back : notify_back_mockable Handler.t
 val ask_debug : bool Handler.t
-val ask_docs_cache : (Linol_lwt.DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t
+
+val ask_docs_cache
+  : (Linol_lwt.DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t
 
 (** Conditional computations *)
 val when_ : bool -> unit Handler.t -> unit Handler.t
@@ -83,4 +85,8 @@ val with_cached_doc_pure
   -> 'a Handler.t
 
 (** Like with_cached_doc, but parses a CST from code *)
-val with_cst : Linol_lwt.DocumentUri.t -> 'a -> (Utils.dialect_cst -> 'a Handler.t) -> 'a Handler.t
+val with_cst
+  :  Linol_lwt.DocumentUri.t
+  -> 'a
+  -> (Utils.dialect_cst -> 'a Handler.t)
+  -> 'a Handler.t
