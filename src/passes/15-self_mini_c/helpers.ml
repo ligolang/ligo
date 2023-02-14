@@ -64,6 +64,10 @@ let rec map_expression : mapper -> expression -> expression = fun f e ->
       let body = self af.body in
       return @@ E_closure { af with body } 
   )
+  | E_rec { func = af ; rec_binder } -> (
+      let body = self af.body in
+      return @@ E_rec { func = { af with body } ; rec_binder } 
+  )
   | E_application farg -> (
       let farg' = Pair.map ~f:self farg in 
       return @@ E_application farg'

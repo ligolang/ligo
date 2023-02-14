@@ -25,9 +25,7 @@ let of_append_tree : field Simple_utils.Tree.Append.t -> t = function
 
 let tree fields =
   let fields =
-    List.sort
-      ~compare:(fun field1 field2 -> Label.compare field1.name field2.name)
-      fields
+    List.sort ~compare:(fun field1 field2 -> Label.compare field1.name field2.name) fields
   in
   of_append_tree (Simple_utils.Tree.Append.of_list fields)
 
@@ -39,16 +37,19 @@ let rec fields t =
   | Inner ts -> ts |> List.map ~f:fields |> Label.Set.union_list
   | Field { name; _ } -> Label.Set.singleton name
 
+
 let rec to_list (t : t) =
   match t with
   | Inner ts -> List.concat_map ~f:to_list ts
-  | Field {name; _} -> [name]
+  | Field { name; _ } -> [ name ]
 
-let rec annot (t:t) (label:Label.t) =
+
+let rec annot (t : t) (label : Label.t) =
   let aux { name; annot } = if Label.equal label name then annot else None in
   match t with
   | Inner ts -> List.find_map ~f:(fun t -> annot t label) ts
   | Field x -> aux x
+
 
 (* For Michelson [or] there is no special "comb" support; we must
    ultimately pick a binary tree layout. So it will be convenient to
@@ -62,19 +63,24 @@ type binary =
 let rec to_binary : t -> binary = function
   | Field f -> Leaf f
   | Inner ts ->
-     let ts = List.map ~f:to_binary ts in
-     List.fold_right
-       ts
-       ~f:(fun t acc ->
-             match acc with
-             | Empty -> t
-             | _ -> Node (t, acc))
-       ~init:Empty
+    let ts = List.map ~f:to_binary ts in
+    List.fold_right
+      ts
+      ~f:(fun t acc ->
+        match acc with
+        | Empty -> t
+        | _ -> Node (t, acc))
+      ~init:Empty
+
 
 let rec pp ppf (t : t) =
   match t with
   | Inner ts ->
-    Format.fprintf ppf "(%a)" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf ", ") pp) ts
+    Format.fprintf
+      ppf
+      "(%a)"
+      (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf ", ") pp)
+      ts
   | Field { name; annot } ->
     Format.fprintf
       ppf

@@ -271,8 +271,8 @@ let e_type_abs ~loc ?sugar type_binder result =
   e_type_abstraction ~loc ?sugar { type_binder; result } ()
 
 
-let e_recursive ~loc ?sugar fun_name fun_type lambda =
-  e_recursive ~loc ?sugar { fun_name; fun_type; lambda } ()
+let e_recursive ~loc ?sugar ?(force_lambdarec = false) fun_name fun_type lambda =
+  e_recursive ~loc ?sugar { fun_name; fun_type; lambda; force_lambdarec } ()
 
 
 let e_let_in ~loc ?sugar let_binder rhs let_result attributes =

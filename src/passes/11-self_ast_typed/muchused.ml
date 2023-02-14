@@ -132,7 +132,7 @@ let rec muchuse_of_expr expr : muchuse =
           muchuse_of_binder (Binder.get_var b) (Binder.get_ascr b) m)
     in
     muchuse_union (muchuse_of_expr rhs) muchuse_let_binder
-  | E_recursive { fun_name; lambda; fun_type } ->
+  | E_recursive { fun_name; lambda; fun_type; force_lambdarec = _ } ->
     muchuse_of_binder fun_name fun_type (muchuse_of_lambda fun_type lambda)
   | E_matching { matchee; cases } ->
     muchuse_union (muchuse_of_expr matchee) (muchuse_of_cases cases)

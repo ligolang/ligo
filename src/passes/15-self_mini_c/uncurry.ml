@@ -82,6 +82,8 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
     Unused
   | E_closure { binder; body } ->
     self_binder [binder] body
+  | E_rec { func = { binder; body } ; rec_binder } ->
+    self_binder [binder; rec_binder] body
   | E_constant { cons_name = _; arguments } ->
     usages (List.map ~f:self arguments)
   | E_iterator (_, ((v1, _), e1), e2) ->
@@ -213,6 +215,9 @@ let rec uncurry_in_expression
   | E_closure { binder; body } ->
     let body = self_binder [binder] body in
     return (E_closure { binder; body })
+  | E_rec { func = { binder; body } ; rec_binder } ->
+    let body = self_binder [binder; rec_binder] body in
+    return (E_rec { func = { binder; body } ; rec_binder })
   | E_let_in (e1, inline, ((v, t), e2)) ->
     let e1 = self e1 in
     let e2 = self_binder [v] e2 in

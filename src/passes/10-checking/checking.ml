@@ -187,7 +187,6 @@ and evaluate_layout (layout : Layout.t) : Type.layout = L_concrete layout
 (*   let open C in *)
 (*   evaluate_type ~default_layout:lexists type_ *)
 
-
 let evaluate_type_with_default_layout type_ =
   let open C in
   evaluate_type
@@ -502,7 +501,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind expr = check anno_expr ascr in
     let%bind expr = lift expr ascr in
     return (ascr, expr)
-  | E_recursive { fun_name; fun_type; lambda } ->
+  | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
     let%bind fun_type = evaluate_type_with_default_layout fun_type in
     let%bind Arrow.{ type1 = arg_type; type2 = ret_type } =
       raise_opt
@@ -519,7 +518,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
       E.(
         let%bind lambda = lambda
         and fun_type = decode fun_type in
-        return @@ O.E_recursive { fun_name; fun_type; lambda })
+        return @@ O.E_recursive { fun_name; fun_type; lambda; force_lambdarec })
       fun_type
   | E_record record ->
     let%bind fields, record =

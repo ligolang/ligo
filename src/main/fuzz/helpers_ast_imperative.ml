@@ -149,10 +149,10 @@ module Fold_helpers (M : Monad) = struct
       :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a, 'c) Recursive.t
       -> ('b, 'd) Recursive.t monad
     =
-   fun f g { fun_name; fun_type; lambda = l } ->
+   fun f g { fun_name; fun_type; lambda = l; force_lambdarec } ->
     let* fun_type = g fun_type in
     let* lambda = lambda f g l in
-    ok @@ Recursive.{ fun_name; fun_type; lambda }
+    ok @@ Recursive.{ fun_name; fun_type; lambda; force_lambdarec }
 
 
   let accessor : ('a -> 'b monad) -> 'a Accessor.t -> 'b Accessor.t monad =

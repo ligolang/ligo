@@ -211,13 +211,16 @@ let rec swap_expression : Scope.swapper -> expression -> expression =
     let type_binder = swaper.type_ type_binder in
     let result = self result in
     return @@ E_type_abstraction { type_binder; result }
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let fun_name = swaper.value fun_name in
     let fun_type = self_type fun_type in
     let binder = swap_param swaper binder in
     let output_type = self_type output_type in
     let result = self result in
-    return @@ E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }
+    return
+    @@ E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec }
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let let_binder = swap_pattern swaper let_binder in
     let rhs = self rhs in
@@ -429,13 +432,16 @@ let rec expression : Scope.t -> expression -> Scope.t * expression =
     (* let scope,type_binder = Scope.new_type_var scope type_binder in *)
     let _, result = self ~scope result in
     return @@ E_type_abstraction { type_binder; result }
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let fun_name = Scope.get_value_var scope fun_name in
     let fun_type = self_type fun_type in
     let scope, binder = param_new scope binder in
     let output_type = self_type output_type in
     let _, result = self ~scope result in
-    return @@ E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }
+    return
+    @@ E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec }
   | E_let_in
       { let_binder
       ; rhs = { expression_content = E_recursive _ } as rhs

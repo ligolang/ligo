@@ -380,8 +380,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     )
   | E_lambda l ->
     return @@ compile_lambda ~raise l
-  | E_recursive r ->
+  | E_recursive ({ fun_name ; fun_type = _ ; lambda; force_lambdarec } as r) when not force_lambdarec && Recursion.is_tail_recursive fun_name lambda ->
     return @@ compile_recursive ~raise r
+  | E_recursive { fun_name ; fun_type ; lambda; force_lambdarec = _ } ->
+    return @@ compile_rec_lambda ~raise lambda fun_name fun_type
   | E_matching {matchee=expr; cases=m} -> (
       let expr' = self expr in
       match m with
@@ -608,6 +610,14 @@ and compile_lambda ~raise l =
   let (binder, body) = make_lambda ~loc:result.location param result' output_type in
   E_closure { binder; body }
 
+and compile_rec_lambda ~raise l fun_name _fun_type =
+  let { binder ; output_type ; result } : _ Lambda.t = l in
+  let result' = compile_expression ~raise result in
+  let param = Param.map (compile_type ~raise) binder in
+  let output_type = compile_type ~raise output_type in
+  let (binder, body) = make_lambda ~loc:result.location param result' output_type in
+  E_rec { func = { binder; body } ; rec_binder = fun_name }
+
 and compile_binder ~raise binder = 
   let ascr = compile_type ~raise (Binder.get_ascr binder) in
   (Binder.get_var binder, ascr)
@@ -627,7 +637,7 @@ and make_lambda ~loc param body body_type =
     else body in
   (Param.get_var param, body)
 
-and compile_recursive ~raise {fun_name; fun_type; lambda} =
+and compile_recursive ~raise Recursive.{fun_name; fun_type; lambda; force_lambdarec = _} =
   let rec map_lambda : Value_var.t -> type_expression -> AST.expression -> expression = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;output_type;result} ->
@@ -636,7 +646,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
       let body_type = compile_type ~raise output_type in
       let param = Param.map (compile_type ~raise) param in
       let (binder, body) = make_lambda ~loc:e.location param body body_type in
-      Expression.make ~loc:e.location (E_closure {binder;body}) loop_type
+      Expression.make ~loc:e.location (E_closure {binder;body }) loop_type
     | _  ->
       let res = replace_callback ~raise fun_name loop_type false e in
       res

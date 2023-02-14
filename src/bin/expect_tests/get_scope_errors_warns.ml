@@ -197,7 +197,8 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
-  [%expect {|
+  [%expect
+    {|
     Scopes:
     [ x#1 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
     [ x#3 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
@@ -295,7 +296,8 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
-  [%expect {|
+  [%expect
+    {|
     Scopes:
     [  ] File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 8-35
     [ x#0  ] File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-10
@@ -331,7 +333,8 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
-  [%expect {|
+  [%expect
+    {|
     Scopes:
     [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-64
     [ Foo#1 x#0  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-14

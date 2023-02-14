@@ -317,8 +317,12 @@ let rec apply_comparison ~no_colour ~raise
         (AST.get_t_sum type_)
     in
     let order = Layout.to_list layout in
-    let ith_a, _ = List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_a) in
-    let ith_b, _ = List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_b) in
+    let ith_a, _ =
+      List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_a)
+    in
+    let ith_b, _ =
+      List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_b)
+    in
     (match Int.compare ith_a ith_b with
     | 0 ->
       let associated_type = Record.find fields (Label ctor_a) in
@@ -1612,7 +1616,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
            term.location
            "Trying to apply on something that is not a function?")
   | E_lambda { binder; output_type = _; result } ->
-    let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
+    let fv = Ast_aggregated.Helpers.Free_variables.expression term in
     let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
     (* let* env = deref_env env in *)
     return
@@ -1724,8 +1728,8 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       aux cases
     in
     eval_ligo body calltrace env
-  | E_recursive { fun_name; fun_type = _; lambda } ->
-    let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
+  | E_recursive { fun_name; fun_type = _; lambda; force_lambdarec = _ } ->
+    let fv = Ast_aggregated.Helpers.Free_variables.expression term in
     let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:Value_var.equal) env in
     (* let* env = deref_env env in *)
     return

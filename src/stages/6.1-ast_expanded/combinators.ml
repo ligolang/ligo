@@ -293,7 +293,7 @@ let t_pair ~loc a b : type_expression =
   ez_t_record ~loc [ Label.of_int 0, a; Label.of_int 1, b ]
 
 
-let is_michelson_or (fields: _ Record.t) (layout : Ligo_prim.Layout.t) =
+let is_michelson_or (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
   match layout with
   | Inner [ Field { name = _; annot = ann_a }; Field { name = _; annot = ann_b } ] ->
     (match
@@ -304,12 +304,10 @@ let is_michelson_or (fields: _ Record.t) (layout : Ligo_prim.Layout.t) =
   | _ -> None
 
 
-let is_michelson_pair (fields: _ Record.t) (layout : Ligo_prim.Layout.t) =
+let is_michelson_pair (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
   match layout with
   | Inner [ Field { name = _; annot = ann_a }; Field { name = _; annot = ann_b } ] ->
-    (match
-       Record.find_opt fields (Label "0"), Record.find_opt fields (Label "1")
-     with
+    (match Record.find_opt fields (Label "0"), Record.find_opt fields (Label "1") with
     | Some l, Some r -> Some ((l, ann_a), (r, ann_b))
     | _ -> None)
   | _ -> None

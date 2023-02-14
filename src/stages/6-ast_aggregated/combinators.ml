@@ -92,6 +92,7 @@ let ez_t_record ~loc ?(layout = default_layout) lst : type_expression =
   let row = Row.of_alist_exn ~layout lst in
   make_t ~loc (T_record row)
 
+
 (* hmm *)
 let ez_t_record_hmm ~loc ~layout lst : type_expression =
   let row = Row.of_alist_exn ~layout lst in
@@ -283,8 +284,10 @@ let tuple_of_record (m : _ Record.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
+
 let t_tuple ~loc xs : type_expression =
   ez_t_record ~loc @@ List.mapi ~f:(fun i t -> Label.of_int i, t) xs
+
 
 let get_t_tuple (t : type_expression) : type_expression list option =
   match t.type_content with
@@ -511,6 +514,7 @@ let ez_e_a_record ~loc ?layout r =
     ~loc
     (ez_e_record r)
     (ez_t_record ~loc ?layout (List.map ~f:(fun (x, y) -> x, y.type_expression) r))
+
 
 (* hmm *)
 let ez_e_a_record_hmm ~loc ~layout r =

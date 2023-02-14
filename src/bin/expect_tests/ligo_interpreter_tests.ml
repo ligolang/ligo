@@ -323,7 +323,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_no_mutation.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value ().
     - test_mutation exited with value ().

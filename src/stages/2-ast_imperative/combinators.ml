@@ -251,8 +251,8 @@ let e_lambda_ez ~loc var ?ascr ?mut_flag output_type result : expression =
   e_lambda ~loc (Ligo_prim.Param.make ?mut_flag var ascr) output_type result
 
 
-let e_recursive ~loc fun_name fun_type lambda =
-  make_e ~loc @@ E_recursive { fun_name; fun_type; lambda }
+let e_recursive ~loc ?(force_lambdarec = false) fun_name fun_type lambda =
+  make_e ~loc @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
 
 
 let e_let_in ~loc let_binder attributes rhs let_result =

@@ -21,7 +21,7 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify "storage1" with "storage" due to differing layouts "(({ name: tata }, { name: titi }), ({ name: toto }, { name: tutu }))" and "({ name: tata }, { name: toto }, { name: titi }, { name: tutu })". |}]
-    
+
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; layout1 ];
   [%expect

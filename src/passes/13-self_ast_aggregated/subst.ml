@@ -1,6 +1,6 @@
-module Free_variables = Helpers.Free_variables
 open Ligo_prim
 open Ast_aggregated
+module Free_variables = Helpers.Free_variables
 
 (* Reference implementation:
    https://www.cs.cornell.edu/courses/cs3110/2019sp/textbook/interp/lambda-subst/main.ml
@@ -36,13 +36,16 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
       if Param.is_imm binder && Param.get_var binder = x then result else replace result
     in
     return @@ E_lambda { binder; output_type; result }
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let result =
       if (Param.is_imm binder && Param.get_var binder = x) || fun_name = x
       then result
       else replace result
     in
-    return @@ E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }
+    return
+    @@ E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec }
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = replace rhs in
     let let_result =
@@ -247,11 +250,11 @@ let rec subst_expression
   | E_lambda lambda ->
     let lambda = subst_lambda ~x ~expr ~body:lambda in
     return @@ E_lambda lambda
-  | E_recursive { fun_name; fun_type; lambda } ->
+  | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
     let fun_name, lambda =
       subst_binder subst_lambda replace_lambda ~body:(fun_name, lambda) ~x ~expr
     in
-    return @@ E_recursive { fun_name; fun_type; lambda }
+    return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_binder, let_result = subst_pattern (let_binder, let_result) ~x ~expr in

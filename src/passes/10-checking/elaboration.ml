@@ -79,7 +79,9 @@ and decode_layout
     | None ->
       let default_layout_from_field_set fields =
         O.default_layout
-          (fields |> Set.to_list |> List.map ~f:(fun name -> { Layout.name; annot = None }))
+          (fields
+          |> Set.to_list
+          |> List.map ~f:(fun name -> { Layout.name; annot = None }))
       in
       default_layout_from_field_set (Map.key_set fields))
 

@@ -81,10 +81,10 @@ and get_fv expr =
   | E_type_abstraction { type_binder; result } ->
     let env, result = self result in
     return env @@ E_type_abstraction { type_binder; result }
-  | E_recursive { fun_name; lambda; fun_type } ->
+  | E_recursive { fun_name; lambda; fun_type; force_lambdarec } ->
     let env, lambda = get_fv_lambda lambda in
     return { env with used_var = VVarSet.remove fun_name env.used_var }
-    @@ E_recursive { fun_name; lambda; fun_type }
+    @@ E_recursive { fun_name; lambda; fun_type; force_lambdarec }
   | E_constructor { constructor; element } ->
     let env, element = self element in
     return env @@ E_constructor { constructor; element }

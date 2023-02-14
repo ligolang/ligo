@@ -311,10 +311,17 @@ module Mutator = struct
     | E_type_abstraction { type_binder; result } ->
       let+ result, mutation = self result in
       return @@ E_type_abstraction { type_binder; result }, mutation
-    | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+    | E_recursive
+        { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec }
+      ->
       let+ result, mutation = self result in
       ( return
-        @@ E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }
+        @@ E_recursive
+             { fun_name
+             ; fun_type
+             ; lambda = { binder; output_type; result }
+             ; force_lambdarec
+             }
       , mutation )
     | E_constant c ->
       let cb = mutate_constant c e'.type_expression in

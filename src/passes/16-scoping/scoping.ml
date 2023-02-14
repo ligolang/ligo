@@ -147,6 +147,18 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let binder = (binder, binder_type) in
     let binder = translate_binder (binder, body) env in
     O.E_lam (meta, binder, translate_type return_type)
+  | E_rec { rec_binder; func = { binder; body } } ->
+    let (binder_type, return_type) =
+      (* TODO move binder type to the binder, like all other binders? *)
+      (* at the moment, this is the only error here! so I am not
+         bothering with error machinery... *)
+      match Mini_c.get_t_function expr.type_expression with
+      | None -> internal_error __LOC__ "type of lambda is not a function type"
+      | Some t -> t in
+    let binder = (binder, binder_type) in
+    let rec_binder = (rec_binder, expr.type_expression) in
+    let binder = translate_binder2 ((binder, rec_binder), body) env in
+    O.E_rec (meta, binder, translate_type return_type)
   | E_constant constant ->
     let (mich, args) = translate_constant ~raise ~proto meta constant expr.type_expression env in
     O.E_inline_michelson (meta, mich, args)

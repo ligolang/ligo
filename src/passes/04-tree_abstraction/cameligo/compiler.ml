@@ -609,6 +609,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr =
           in
           e_recursive
             ~loc:(Location.lift reg#region)
+            ~force_lambdarec:(List.mem ~equal:String.equal let_attr "lambdarec")
             (Binder.get_var let_binder)
             fun_type
             lambda
@@ -1162,6 +1163,7 @@ and compile_declaration ~raise : CST.declaration -> AST.declaration option =
           in
           e_recursive
             ~loc:(Location.lift reg#region)
+            ~force_lambdarec:(List.mem ~equal:String.equal attr "lambdarec")
             (Binder.get_var binder)
             fun_type
             lambda

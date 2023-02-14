@@ -6,11 +6,11 @@ module T = struct
      indices) *)
   let compare (Label l1 : t) (Label l2 : t) : int =
     (* arbitrary choice: strings come before ints *)
-    match (int_of_string_opt l1, int_of_string_opt l2) with
-    | (None, Some _) -> -1
-    | (Some _, None) -> 1
-    | (None, None) -> String.compare l1 l2
-    | (Some i1, Some i2) -> Int.compare i1 i2
+    match int_of_string_opt l1, int_of_string_opt l2 with
+    | None, Some _ -> -1
+    | Some _, None -> 1
+    | None, None -> String.compare l1 l2
+    | Some i1, Some i2 -> Int.compare i1 i2
 end
 
 include T

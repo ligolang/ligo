@@ -32,13 +32,15 @@ let rec decompile : I.expression -> O.expression =
   | E_type_abstraction { type_binder; result } ->
     let result = decompile result in
     return (O.E_type_abstraction { type_binder; result })
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let fun_type = decompile_type fun_type in
     let result = decompile result in
     let output_type = decompile_type output_type in
     let binder = Param.map decompile_type binder in
     return
-      (O.E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } })
+      (O.E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = decompile rhs in
     let let_result = decompile let_result in

@@ -48,10 +48,13 @@ let rec reduplicate ~raise : expression -> expression =
   | E_type_abstraction { type_binder; result } ->
     let result = self result in
     return (E_type_abstraction { type_binder; result })
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let result = self result in
     let binder = param_remove_counter binder in
-    return (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } })
+    return
+      (E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_result = self let_result in

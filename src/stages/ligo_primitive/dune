@@ -6,20 +6,7 @@
  (libraries simple-utils hex tezos-utils tezos-hacl)
  (inline_tests)
  (preprocess
-  (pps
-   ppx_expect
-   ppx_deriving.eq
-   ppx_deriving.ord
-   ppx_deriving.fold
-   ppx_deriving.map
-   ppx_deriving.iter
-   ppx_deriving.make
-   ppx_hash
-   ppx_print_constant
-   ppx_read_constant
-   ppx_compare
-   ppx_sexp_conv
-   ppx_deriving_yojson
-   ppx_is
-   ppx_let
-   ppx_here)))
+  (pps ppx_expect ppx_deriving.eq ppx_deriving.ord ppx_deriving.fold
+    ppx_deriving.map ppx_deriving.iter ppx_deriving.make ppx_hash
+    ppx_print_constant ppx_read_constant ppx_compare ppx_sexp_conv
+    ppx_deriving_yojson ppx_is ppx_let ppx_here)))

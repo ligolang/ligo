@@ -433,6 +433,11 @@ let%expect_test _ =
     {| "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract"; bad_contract "self_in_lambdarec.mligo" ];
+  [%expect
+    {| "Tezos.self" must be used directly and cannot be used via another function. |}]
+
+let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "not_comparable.mligo" ];
   [%expect
     {|
@@ -3254,6 +3259,131 @@ let%expect_test _ =
                       LEFT string } } ;
              NIL operation ;
              PAIR } } |}]
+
+(* Compiling contract with non-tail recursion *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "lambdarec.mligo" ];
+  [%expect
+    {|
+    { parameter (list int) ;
+      storage (list int) ;
+      code { LAMBDA_REC
+               (pair (list int) (list int))
+               (list int)
+               { UNPAIR ;
+                 IF_CONS
+                   { DUG 2 ; PAIR ; DIG 2 ; SWAP ; EXEC ; SWAP ; CONS }
+                   { SWAP ; DROP } } ;
+             SWAP ;
+             EXEC ;
+             NIL operation ;
+             PAIR } } |}]
+
+(* Compiling CameLIGO expression with non-tail recursion *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "cat [fib 1; fib 2; fib 3] [fib 4; fib 5; fib 6;  fib 7]"
+    ; "--init-file"
+    ; contract "lambdarec.mligo"
+    ];
+  [%expect {|
+    { 1 ; 2 ; 3 ; 5 ; 8 ; 13 ; 21 } |}]
+
+(* Compiling CameLIGO expression with non-tail recursion *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "foo"
+    ; "--init-file"
+    ; contract "lambdarec2.mligo"
+    ];
+  [%expect
+    {|
+    (Lambda_rec
+       { LEFT int ;
+         LOOP_LEFT { DUP ; DUP 3 ; SWAP ; EXEC ; CONS ; LEFT int } ;
+         SWAP ;
+         DROP }) |}]
+
+(* Compiling CameLIGO Ackermann expression with non-tail recursion *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "ackermann (3n, 2n)"
+    ; "--init-file"
+    ; contract "lambdarec.mligo"
+    ];
+  [%expect {|
+    29 |}]
+
+(* Compiling JsLIGO expression with non-tail recursion using env. *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "fib2()(5)"
+    ; "--init-file"
+    ; contract "lambdarec.jsligo"
+    ];
+  [%expect {|
+    8 |}]
+
+(* Compiling JsLIGO expression with non-tail recursion *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "cat(list([1,2,3]), list([4,fib(5)]))"
+    ; "--init-file"
+    ; contract "lambdarec.jsligo"
+    ];
+  [%expect {|
+    { 1 ; 2 ; 3 ; 4 ; 8 } |}]
+
+(* Compiling JsLIGO expression with non-tail recursion *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "wrong"
+    ; "--init-file"
+    ; contract "lambdarec2.jsligo"
+    ];
+  [%expect
+    {|
+    (Lambda_rec
+       { PUSH int 0 ;
+         NIL int ;
+         DUP 3 ;
+         CONS ;
+         DIG 2 ;
+         CONS ;
+         ITER { DUP 3 ; SWAP ; EXEC ; ADD } ;
+         SWAP ;
+         DROP }) |}]
+
+(* Compiling expression with non-tail recursion for rose tree map *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "sum t"
+    ; "--init-file"
+    ; contract "rose_tree.mligo"
+    ];
+  [%expect {|
+    53 |}]
 
 (* voting power *)
 let%expect_test _ =

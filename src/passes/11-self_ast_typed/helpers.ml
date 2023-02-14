@@ -26,7 +26,11 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   | E_lambda { binder = _; output_type = _; result = e }
   | E_type_abstraction { type_binder = _; result = e }
   | E_recursive
-      { lambda = { result = e; output_type = _; binder = _ }; fun_name = _; fun_type = _ }
+      { lambda = { result = e; output_type = _; binder = _ }
+      ; fun_name = _
+      ; fun_type = _
+      ; force_lambdarec = _
+      }
   | E_constructor { element = e; constructor = _ } ->
     let res = self init e in
     res
@@ -179,9 +183,12 @@ let rec map_expression : 'err mapper -> expression -> expression =
   | E_type_inst { forall; type_ } ->
     let forall = self forall in
     return @@ E_type_inst { forall; type_ }
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let result = self result in
-    return @@ E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }
+    return
+    @@ E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec }
   | E_constant c ->
     let args = List.map ~f:self c.arguments in
     return @@ E_constant { c with arguments = args }
@@ -532,8 +539,12 @@ end = struct
       | Mutable ->
         { env with mutSet = VarSet.remove (Param.get_var binder) @@ env.mutSet })
     | E_type_abstraction { type_binder = _; result } -> self result
-    | E_recursive { fun_name; lambda = { binder; output_type = _; result }; fun_type = _ }
-      ->
+    | E_recursive
+        { fun_name
+        ; lambda = { binder; output_type = _; result }
+        ; fun_type = _
+        ; force_lambdarec = _
+        } ->
       let { modVarSet; moduleEnv; varSet = fv; mutSet } = self result in
       { modVarSet
       ; moduleEnv

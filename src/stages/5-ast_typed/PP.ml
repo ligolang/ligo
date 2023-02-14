@@ -10,8 +10,6 @@ open Format
 open Types
 open Simple_utils.PP_helpers
 
-
-
 let rec type_content : formatter -> type_content -> unit =
  fun ppf tc ->
   match tc with
@@ -29,7 +27,6 @@ let rec type_content : formatter -> type_content -> unit =
  fun ppf t ->
   fprintf ppf "%a" type_expression t *)
 
-
 and type_injection ppf { language; injection; parameters } =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
@@ -42,7 +39,6 @@ and type_injection ppf { language; injection; parameters } =
 
 
 and bool ppf : unit = fprintf ppf "bool"
-
 and layout = Layout.pp
 
 and option ppf (te : type_expression) : unit =

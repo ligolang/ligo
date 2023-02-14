@@ -134,8 +134,7 @@ let rec value_gen
         List.map
           ~f:(fun (Label label, row_el) ->
             QCheck.Gen.(
-              value_gen ~raise ~small row_el
-              >>= fun v -> return (v_ctor label v)))
+              value_gen ~raise ~small row_el >>= fun v -> return (v_ctor label v)))
           l
       in
       QCheck.Gen.oneof gens
@@ -146,10 +145,7 @@ let rec value_gen
     | Some rows ->
       let l = Record.to_list rows.fields in
       let gens =
-        List.map
-          ~f:(fun (Label label, row_el) ->
-            label, value_gen ~raise ~small row_el)
-          l
+        List.map ~f:(fun (Label label, row_el) -> label, value_gen ~raise ~small row_el) l
       in
       let rec gen l : (string * LT.value) list QCheck.Gen.t =
         match l with

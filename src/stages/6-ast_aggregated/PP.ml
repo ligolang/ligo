@@ -30,6 +30,7 @@ and type_injection ppf { language; injection; parameters } =
     (list_sep_d_par type_expression)
     parameters
 
+
 and bool ppf : unit = Format.fprintf ppf "bool"
 
 and option ppf (te : type_expression) : unit =
@@ -225,7 +226,7 @@ module With_name_tbl = struct
       | T_singleton lit -> Literal_value.pp ppf lit
       | T_for_all for_all -> pp_forall ~name_of_tvar ppf for_all
       | T_sum row -> Row.PP.sum_type pp (fun _ _ -> ()) ppf row
-      | T_record row -> Row.PP.record_type pp  (fun _ _ -> ()) ppf row)
+      | T_record row -> Row.PP.record_type pp (fun _ _ -> ()) ppf row)
 
 
   and pp_constant ~name_of_tvar ppf { injection; parameters; _ } =

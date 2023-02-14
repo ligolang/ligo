@@ -428,16 +428,17 @@ let rec decompile_value
       v_some s')
   | T_sum row ->
     let Label constructor, v, tv =
-      Row.extract_constructor row v
+      Row.extract_constructor
+        row
+        v
         Ligo_interpreter.Combinators.get_left
-        Ligo_interpreter.Combinators.get_right in
+        Ligo_interpreter.Combinators.get_right
+    in
     let sub = self v tv in
     V_Construct (constructor, sub)
   | T_record row ->
-    let lst =
-      Row.extract_record row v
-        Ligo_interpreter.Combinators.get_pair in
-    let lst = List.map ~f:(fun (x, y, z) -> (x, self y z)) lst in
+    let lst = Row.extract_record row v Ligo_interpreter.Combinators.get_pair in
+    let lst = List.map ~f:(fun (x, y, z) -> x, self y z) lst in
     let m' = Record.of_list lst in
     V_Record m'
   | T_arrow { type1; type2 } ->

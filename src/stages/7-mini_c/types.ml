@@ -86,6 +86,7 @@ and binder = var_name * type_expression
 and expression_content =
   | E_literal of Literal_value.t
   | E_closure of anon_function
+  | E_rec of rec_function
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
@@ -137,6 +138,11 @@ and constant =
 and anon_function =
   { binder : Value_var.t
   ; body : expression
+  }
+
+and rec_function =
+  { func : anon_function
+  ; rec_binder : Value_var.t
   }
 
 (* backend expression metadata *)

@@ -24,17 +24,13 @@ struct
 
 
   let create_tuple types =
-    let fields =
-      List.mapi
-        types
-        ~f:(fun i t -> (Label.of_int i, t)) in
+    let fields = List.mapi types ~f:(fun i t -> Label.of_int i, t) in
     let layout =
-      L.default
-        (List.map ~f:(fun (name, _) -> Layout.{ name; annot = None }) fields) in
-    let fields =
-      Label.Map.of_alist_exn fields in
-    { fields;
-      layout }
+      L.default (List.map ~f:(fun (name, _) -> Layout.{ name; annot = None }) fields)
+    in
+    let fields = Label.Map.of_alist_exn fields in
+    { fields; layout }
+
 
   let of_alist_exn ~layout fields =
     let fields = Label.Map.of_alist_exn fields in
@@ -85,7 +81,8 @@ struct
     let tuple_or_record_type value layout ppf (t : 'a t) =
       if is_tuple t
       then Tuple.pp value ppf (to_tuple t)
-      else Format.fprintf ppf "@[<hv 7>record[%a]@]" (record_sep value layout (tag " ,@ ")) t
+      else
+        Format.fprintf ppf "@[<hv 7>record[%a]@]" (record_sep value layout (tag " ,@ ")) t
 
 
     let sum_type type_expression layout ppf sum =
@@ -111,70 +108,74 @@ end)
 module With_layout = struct
   module L = struct
     include Layout
+
     let fields t = Some (fields t)
     let default fields = Layout.default fields
   end
-  include Make(L)
+
+  include Make (L)
 
   (* below operations are intended for rows with layouts only *)
 
   let to_alist (t : 'a t) : (Label.t * 'a) list =
-    List.map
-      (Layout.to_list t.layout)
-      ~f:(fun label -> (label, Label.Map.find_exn t.fields label))
+    List.map (Layout.to_list t.layout) ~f:(fun label ->
+        label, Label.Map.find_exn t.fields label)
+
 
   (* remaining operations are highly specific to layouts *)
 
   (* extract nice description of variant value expressed with
      left/right constructors (as in Michelson) *)
   let extract_constructor
-        (row : 'a t) (value : 'v)
-        (get_left : 'v -> 'v option)
-        (get_right : 'v -> 'v option)
-      : (Label.t * 'v * 'a) =
+      (row : 'a t)
+      (value : 'v)
+      (get_left : 'v -> 'v option)
+      (get_right : 'v -> 'v option)
+      : Label.t * 'v * 'a
+    =
     let layout = Layout.to_binary row.layout in
     let rec aux (t : Layout.binary) value =
       match t with
-      | Empty -> failwith (Format.asprintf "internal error: constructor not found @ %s" __LOC__)
-      | Leaf {name; _} ->
-         (name, value, Label.Map.find_exn row.fields name)
+      | Empty ->
+        failwith (Format.asprintf "internal error: constructor not found @ %s" __LOC__)
+      | Leaf { name; _ } -> name, value, Label.Map.find_exn row.fields name
       | Node (l, r) ->
-         (match get_left value with
-          | Some value -> aux l value
+        (match get_left value with
+        | Some value -> aux l value
+        | None ->
+          (match get_right value with
+          | Some value -> aux r value
           | None ->
-             match get_right value with
-             | Some value -> aux r value
-             | None -> failwith (Format.asprintf "internal error: constructor not found @ %s" __LOC__)) in
+            failwith
+              (Format.asprintf "internal error: constructor not found @ %s" __LOC__)))
+    in
     aux layout value
+
 
   (* extract nice description of record value expressed as pairs (as
      in Michelson) *)
-  let extract_record
-        (row : 'a t) (value : 'v)
-        (get_pair : 'v -> ('v * 'v) option)
-      : (Label.t * 'v * 'a) list =
+  let extract_record (row : 'a t) (value : 'v) (get_pair : 'v -> ('v * 'v) option)
+      : (Label.t * 'v * 'a) list
+    =
     let get_list len value =
       let rec aux len lst value =
         if len = 1
         then Some (List.rev (value :: lst))
-        else
+        else (
           match get_pair value with
           | None -> None
-          | Some (l, r) ->
-             aux (len - 1) (l :: lst) r in
-      aux len [] value in
+          | Some (l, r) -> aux (len - 1) (l :: lst) r)
+      in
+      aux len [] value
+    in
     let rec aux (t : Layout.t) value =
       match t with
-      | Field {name; _} ->
-         [(name, value, Label.Map.find_exn row.fields name)]
+      | Field { name; _ } -> [ name, value, Label.Map.find_exn row.fields name ]
       | Inner ts ->
-         match get_list (List.length ts) value with
-         | None -> failwith (Format.asprintf "internal error: field not found @ %s" __LOC__)
-         | Some vs ->
-            List.concat_map
-              (List.zip_exn ts vs)
-              ~f:(fun (t, v) -> aux t v)
+        (match get_list (List.length ts) value with
+        | None ->
+          failwith (Format.asprintf "internal error: field not found @ %s" __LOC__)
+        | Some vs -> List.concat_map (List.zip_exn ts vs) ~f:(fun (t, v) -> aux t v))
     in
     aux row.layout value
-
 end

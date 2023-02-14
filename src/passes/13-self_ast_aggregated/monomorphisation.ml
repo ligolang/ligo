@@ -93,10 +93,10 @@ let apply_table_expr table (expr : AST.expression) =
           let binder = Param.map apply_table_type binder in
           let output_type = apply_table_type output_type in
           return @@ E_lambda { binder; output_type; result }
-        | E_recursive { fun_name; fun_type; lambda } ->
+        | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
           let fun_type = apply_table_type fun_type in
           let lambda = Lambda.map Fn.id apply_table_type lambda in
-          return @@ E_recursive { fun_name; fun_type; lambda }
+          return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
         | E_matching { matchee; cases } ->
           let f : _ AST.Match_expr.match_case -> _ AST.Match_expr.match_case =
            fun { pattern; body } ->
@@ -207,9 +207,9 @@ let subst_external_term et t (e : AST.expression) =
         | E_lambda { binder; output_type; result } ->
           let binder = Param.map (subst_external_type et t) binder in
           return @@ E_lambda { binder; output_type; result }
-        | E_recursive { fun_name; fun_type; lambda } ->
+        | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
           let fun_type = subst_external_type et t fun_type in
-          return @@ E_recursive { fun_name; fun_type; lambda }
+          return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
         | E_matching { matchee; cases } ->
           let f : _ AST.Match_expr.match_case -> _ AST.Match_expr.match_case =
            fun { pattern; body } ->
@@ -283,11 +283,17 @@ let rec mono_polymorphic_expression ~raise
   | E_type_abstraction { type_binder = _; result } ->
     raise.Trace.error
       (Errors.monomorphisation_unexpected_type_abs expr.type_expression result)
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let data, result = self data result in
     ( data
     , return
-        (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } }) )
+        (E_recursive
+           { fun_name
+           ; fun_type
+           ; lambda = { binder; output_type; result }
+           ; force_lambdarec
+           }) )
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let () =
       match AST.Combinators.get_t_arrow rhs.type_expression with
@@ -316,8 +322,12 @@ let rec mono_polymorphic_expression ~raise
       let table = List.zip_exn type_vars type_instances in
       let data, rhs =
         match rhs.expression_content with
-        | E_recursive { fun_name; fun_type = _; lambda = { binder; output_type; result } }
-          ->
+        | E_recursive
+            { fun_name
+            ; fun_type = _
+            ; lambda = { binder; output_type; result }
+            ; force_lambdarec
+            } ->
           let lambda =
             Lambda.
               { binder
@@ -329,7 +339,12 @@ let rec mono_polymorphic_expression ~raise
           ( data
           , { rhs with
               expression_content =
-                E_recursive { fun_name = vid; fun_type = rhs.type_expression; lambda }
+                E_recursive
+                  { fun_name = vid
+                  ; fun_type = rhs.type_expression
+                  ; lambda
+                  ; force_lambdarec
+                  }
             } )
         | _ -> data, rhs
       in
