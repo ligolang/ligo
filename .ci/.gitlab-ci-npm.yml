@@ -3,6 +3,8 @@ esy-windows:
   tags:
     - windows
   stage: build
+  variables:
+    GIT_STRATEGY: clone
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -60,6 +62,8 @@ esy-macos-darwin:
     - mac
     - i7
   stage: build
+  variables:
+    GIT_STRATEGY: clone
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -109,6 +113,8 @@ esy-macos-m1:
     - mac
     - m1
   stage: build
+  variables:
+    GIT_STRATEGY: clone
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
