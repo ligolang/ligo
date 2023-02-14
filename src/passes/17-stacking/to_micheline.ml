@@ -216,21 +216,47 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
     let weight p = List.length (List.filter ~f:Fn.id p) in
     let n = List.length cs in
     if n = 0
-    then
+    then (
       [Prim (l, "LAMBDA", [translate_type a;
-                           translate_type b;
-                           Seq (null, translate_prog body)], [])]
+                      translate_type b;
+                      Seq (null, translate_prog body)], [])])
     else
       let capture = translate_tuple cs in
       [Prim (l, "LAMBDA", [Prim (null, "pair", [capture; translate_type a], []);
-                           translate_type b;
-                           Seq (null, [Prim (null, "UNPAIR", [], [])]
-                                      @ unpair_tuple cs
-                                      @ [Prim (null, "DIG", [int_to_mich n], [])]
-                                      @ translate_prog body
-                                      @ (if weight proj2 = 0
-                                         then []
-                                         else [Prim (null, "DIP", [Seq (null, [Prim (null, "DROP", [int_to_mich (weight proj2)], [])])], [])]))], [])]
+                      translate_type b;
+                      Seq (null, [Prim (null, "UNPAIR", [], [])]
+                                 @ unpair_tuple cs
+                                 @ [Prim (null, "DIG", [int_to_mich n], [])]
+                                 @ translate_prog body
+                                 @ (if weight proj2 = 0
+                                    then []
+                                    else [Prim (null, "DIP", [Seq (null, [Prim (null, "DROP", [int_to_mich (weight proj2)], [])])], [])]))], [])]
+      @ compile_dups (false :: proj1)
+      @ pair_tuple cs
+      @ [Prim (null, "APPLY", [], [])]
+  | I_REC_FUNC (l, cs, a, b, proj1, proj2, body) ->
+    let weight p = List.length (List.filter ~f:Fn.id p) in
+    let n = List.length cs in
+    if n = 0
+    then (
+      [Prim (l, "LAMBDA_REC", [translate_type a;
+                      translate_type b;
+                      Seq (null, translate_prog body)], [])])
+    else
+      let capture = translate_tuple cs in
+      [Prim (l, "LAMBDA_REC", [Prim (null, "pair", [capture; translate_type a], []);
+                      translate_type b;
+                      Seq (null, [Prim (null, "UNPAIR", [], [])]
+                                 @ [Prim (null, "DUP", [], [])]
+                                 @ unpair_tuple cs
+                                 @ [Prim (null, "DIG", [int_to_mich (n + 2)], [])]
+                                 @ [Prim (null, "DIG", [int_to_mich (n + 1)], [])]
+                                 @ [Prim (null, "APPLY", [], [])]
+                                 @ [Prim (null, "DIG", [int_to_mich (n + 1)], [])]
+                                 @ translate_prog body
+                                 @ (if weight proj2 = 0
+                                    then []
+                                    else [Prim (null, "DIP", [Seq (null, [Prim (null, "DROP", [int_to_mich (weight proj2)], [])])], [])]))], [])]
       @ compile_dups (false :: proj1)
       @ pair_tuple cs
       @ [Prim (null, "APPLY", [], [])]

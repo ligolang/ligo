@@ -98,10 +98,10 @@ and untype_expression_content ~loc (ec : O.expression_content) : I.expression =
   | E_raw_code { language; code } ->
     let code = self code in
     return (e_raw_code ~loc language code)
-  | E_recursive { fun_name; fun_type; lambda } ->
+  | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
     let fun_type = self_type fun_type in
     let lambda = Lambda.map self self_type lambda in
-    return @@ e_recursive ~loc fun_name fun_type lambda
+    return @@ e_recursive ~loc ~force_lambdarec fun_name fun_type lambda
   | E_module_accessor ma -> return @@ I.make_e ~loc @@ E_module_accessor ma
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in

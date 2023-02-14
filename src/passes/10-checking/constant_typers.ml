@@ -104,8 +104,7 @@ module Comparable = struct
         List.map2_exn
           (Map.data row1.fields)
           (Map.data row2.fields)
-          ~f:(fun row_elem1 row_elem2 ->
-            comparator row_elem1 row_elem2)
+          ~f:(fun row_elem1 row_elem2 -> comparator row_elem1 row_elem2)
         |> all
       in
       create_type @@ Type.t_bool
@@ -126,8 +125,7 @@ module Comparable = struct
         List.map2_exn
           (Map.data row1.fields)
           (Map.data row2.fields)
-          ~f:(fun row_elem1 row_elem2 ->
-            comparator row_elem1 row_elem2)
+          ~f:(fun row_elem1 row_elem2 -> comparator row_elem1 row_elem2)
         |> all
       in
       create_type @@ Type.t_bool

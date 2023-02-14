@@ -1,4 +1,4 @@
-let map_expression = Helpers.map_expression
+let map_expression = Ast_aggregated.Helpers.map_expression
 
 open Ligo_prim
 open Ast_aggregated
@@ -260,9 +260,12 @@ let rec uncurry_in_expression ~raise (f : Value_var.t) (depth : int) (expr : exp
   | E_type_abstraction { type_binder; result } ->
     let result = self result in
     return (E_type_abstraction { type_binder; result })
-  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let result = self_binder [ fun_name ] (self_param binder result) in
-    return (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } })
+    return
+      (E_recursive
+         { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_result =
@@ -331,7 +334,12 @@ let uncurry_expression (expr : expression) : expression =
     (fun expr ->
       let loc = expr.location in
       match expr.expression_content with
-      | E_recursive { fun_name; fun_type; lambda = { binder = _; result } as lambda } ->
+      | E_recursive
+          { fun_name
+          ; fun_type
+          ; lambda = { binder = _; result } as lambda
+          ; force_lambdarec
+          } ->
         let inner_lambda = { expr with expression_content = E_lambda lambda } in
         (match usage_in_expr fun_name result with
         | Unused | Other -> expr
@@ -393,6 +401,7 @@ let uncurry_expression (expr : expression) : expression =
                         ; output_type = ret_type
                         ; result
                         }
+                    ; force_lambdarec
                     }
               ; type_expression =
                   { type_content = T_arrow { type1 = record_type; type2 = ret_type }

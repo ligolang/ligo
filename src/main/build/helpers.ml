@@ -52,7 +52,9 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
   and value_decl (value_decl : _ Value_decl.t) =
     let binder = sap_for_all value_decl.binder in
     let binder = at_prefix binder in
-    let attr : ValueAttr.t = { value_decl.attr with inline = true; hidden = true; no_mutation = true } in
+    let attr : ValueAttr.t =
+      { value_decl.attr with inline = true; hidden = true; no_mutation = true }
+    in
     Value_decl.{ value_decl with binder; attr }
   and type_decl (type_decl : _ Type_decl.t) =
     let type_attr : TypeOrModuleAttr.t = { type_decl.type_attr with hidden = true } in
@@ -78,8 +80,7 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
           D_type type_decl'
         | D_irrefutable_match pattern_decl' ->
           let pattern_decl' = pattern_decl pattern_decl' in
-          D_irrefutable_match pattern_decl'
-      )
+          D_irrefutable_match pattern_decl')
       decl
   and contract_declaration : contract_declaration -> contract_declaration =
    fun decl ->

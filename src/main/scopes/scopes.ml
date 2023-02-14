@@ -474,7 +474,8 @@ let rec expression ~raise
     let scopes = merge_same_scopes scopes @ scopes' in
     let defs, refs_result = update_references (refs_result @ t_refs) defs_binder in
     defs_result @ defs_rhs @ defs, refs_result @ refs_rhs, tenv, scopes
-  | E_recursive { fun_name; fun_type; lambda = { binder; result; _ } } ->
+  | E_recursive
+      { fun_name; fun_type; lambda = { binder; result; _ }; force_lambdarec = _ } ->
     let t_refs = find_type_references fun_type in
     let t_refs = t_refs @ find_type_references (Param.get_ascr binder) in
     let def_fun =

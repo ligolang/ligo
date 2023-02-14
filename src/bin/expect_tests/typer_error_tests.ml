@@ -57,59 +57,6 @@ let%expect_test _ =
 
     Invalid type(s)
     Cannot unify "op" with "( list (operation) * op )". |}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "--no-color"
-    ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"
-    ; "--entry-point"
-    ; "unvalid"
-    ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/error_no_tail_recursive_function.mligo", line 2, characters 14-21:
-      1 | let rec unvalid (n:int):int =
-      2 |     let res = unvalid (n) in
-      3 |     res + 1
-
-    Recursive call not in tail position.
-    The value of a recursive call must be immediately returned by the defined function. |}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "--no-color"
-    ; "../../test/contracts/negative/error_no_tail_recursive_function.jsligo"
-    ; "--entry-point"
-    ; "unvalid"
-    ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/error_no_tail_recursive_function.jsligo", line 5, character 2 to line 7, character 3:
-      4 |   let total = 0;
-      5 |   for (const i of l) {
-      6 |     total = total + wrong(i)
-      7 |   }
-      8 |   return total;
-
-    Recursive call not in tail position.
-    The value of a recursive call must be immediately returned by the defined function. |}];
-  run_ligo_bad
-    [ "compile"
-    ; "contract"
-    ; "--no-color"
-    ; "../../test/contracts/negative/error_no_tail_recursive_function2.mligo"
-    ; "--entry-point"
-    ; "unvalid"
-    ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/error_no_tail_recursive_function2.mligo", line 3, characters 10-13:
-      2 |   let rec loop (xs : int list) : int =
-      3 |     loop (foo xs :: xs)
-      4 |   in
-
-    Recursive call not in tail position.
-    The value of a recursive call must be immediately returned by the defined function. |}];
   (*
   run_ligo_bad
     [ "compile"

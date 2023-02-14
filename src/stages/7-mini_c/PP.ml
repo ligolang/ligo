@@ -130,6 +130,7 @@ and binder ppf (b : binder) = Value_var.pp ppf (fst b)
 and expression_content ppf (e : expression_content) =
   match e with
   | E_closure x -> function_ ppf x
+  | E_rec x -> rec_function ppf x
   | E_variable v -> fprintf ppf "%a" Value_var.pp v
   | E_application (a, b) -> fprintf ppf "@[(%a)@(%a)@]" expression a expression b
   | E_constant c ->
@@ -332,6 +333,10 @@ and expression_with_type : _ -> expression -> _ =
 
 and function_ ppf ({ binder; body } : anon_function) =
   fprintf ppf "@[fun %a ->@ (%a)@]" Value_var.pp binder expression body
+
+
+and rec_function ppf ({ func; rec_binder } : rec_function) =
+  fprintf ppf "@[rec %a . %a@]" Value_var.pp rec_binder function_ func
 
 
 and option_inline ppf inline = if inline then fprintf ppf "[@@inline]" else fprintf ppf ""

@@ -65,6 +65,7 @@ let rec capture_expression ~raise : ?vars:Value_var.t list -> expression -> expr
             { fun_name = _
             ; fun_type = _
             ; lambda = { binder; output_type = _; result = _ }
+            ; force_lambdarec = _
             } ->
           let fv_expr = Free_variables.expression expr in
           let fv_expr = get_of fv_expr vars in

@@ -5,15 +5,12 @@ open Ligo_prim
 let all_program_passes ~raise ~warn_unused_rec =
   [ Unused.unused_map_program ~raise
   ; Muchused.muchused_map_program ~raise
-  ; Helpers.map_program @@ Recursion.check_tail_expression ~raise
   ; Helpers.map_program @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec
   ]
 
 
 let all_expression_passes ~raise ~warn_unused_rec =
-  [ Helpers.map_expression @@ Recursion.check_tail_expression ~raise
-  ; Helpers.map_expression @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec
-  ]
+  [ Helpers.map_expression @@ Recursion.remove_rec_expression ~raise ~warn_unused_rec ]
 
 
 let contract_passes ~raise =
@@ -84,5 +81,5 @@ let all_view ~raise command_line_views main_name prg =
   Contract_passes.remove_unused_for_views prg
 
 
-let all = [ Recursion.check_tail_expression ]
+let all = []
 let remove_unused_expression = Contract_passes.remove_unused_expression

@@ -89,9 +89,7 @@ module M (Params : Params) = struct
             { module_binder; module_; module_attr = { public = true; hidden = true } })
   end
 
-  let lib_ast : unit -> AST.t =
-   fun () -> std_lib.content_typed
-
+  let lib_ast : unit -> AST.t = fun () -> std_lib.content_typed
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
    fun env file_name meta c_unit ->
@@ -131,9 +129,7 @@ module Infer (Params : Params) = struct
             { module_binder; module_; module_attr = { public = true; hidden = true } })
   end
 
-  let lib_ast : unit -> AST.t =
-   fun () -> std_lib.content_core
-
+  let lib_ast : unit -> AST.t = fun () -> std_lib.content_core
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
    fun () file_name meta c_unit ->

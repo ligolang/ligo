@@ -60,7 +60,8 @@ end = struct
     | E_lambda { binder; result; output_type = _ } ->
       VarSet.remove (Param.get_var binder) @@ self result
     | E_type_abstraction { type_binder = _; result } -> self result
-    | E_recursive { fun_name; lambda = { binder; result; _ }; fun_type = _ } ->
+    | E_recursive
+        { fun_name; lambda = { binder; result; _ }; fun_type = _; force_lambdarec = _ } ->
       VarSet.remove fun_name @@ VarSet.remove (Param.get_var binder) @@ self result
     | E_constant { arguments; cons_name = _ } -> unions @@ List.map ~f:self arguments
     | E_cond { condition; then_clause; else_clause } ->

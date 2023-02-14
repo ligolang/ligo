@@ -55,7 +55,7 @@ let rec extract_variable_types
       in
       let in_t = in_t exp.type_expression in
       return [ Param.get_var binder, in_t ]
-    | E_recursive { fun_name; fun_type; lambda = { binder; _ } } ->
+    | E_recursive { fun_name; fun_type; lambda = { binder; _ }; force_lambdarec = _ } ->
       let in_t =
         match fun_type.type_content with
         | T_arrow { type1; _ } -> type1

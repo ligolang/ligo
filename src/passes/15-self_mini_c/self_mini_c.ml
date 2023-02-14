@@ -36,6 +36,7 @@ let rec is_pure : expression -> bool = fun e ->
   match e.content with
   | E_literal _
   | E_closure _
+  | E_rec _
   | E_variable _
   | E_raw_michelson _
     -> true

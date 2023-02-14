@@ -28,7 +28,6 @@ and type_injection =
   }
 
 and row = ty_expr Row.t
-
 and te_list = type_expression list
 and annot_option = string option
 and row_element = ty_expr Row.t

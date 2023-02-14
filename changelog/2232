@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNow non-tail-recursive functions can be compiled. E.g.\\n\\n\\n```\\n$ cat lambdarec.mligo \\nlet rec fib (n : int) : int =\\n  if n <= 1 then\\n    1\\n  else\\n    fib (n - 1) + fib (n - 2)\\n\\nlet rec cat (type a) (xs : a list) (ys : a list) : a list =\\n  match xs with\\n  | [] -> ys\\n  | (x :: xs) -> x :: (cat xs ys)\\n\\n$ ligo compile expression cameligo \"cat [fib 1; fib 2; fib 3] [fib 4; fib 5; fib 6;  fib 7]\" --init-file lambdarec.mligo\\n{ 1 ; 2 ; 3 ; 5 ; 8 ; 13 ; 21 }\\n\\n```\\n\\n"
+merge_request: '2232'
+title: "Support for compiling non-tail recursive functions"
+type: added
+            

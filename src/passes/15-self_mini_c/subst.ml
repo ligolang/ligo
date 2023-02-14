@@ -33,6 +33,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let body = replace body in
     let binder = replace_var binder in
     return @@ E_closure { binder ; body }
+  | E_rec { func = { binder ; body } ; rec_binder } ->
+    let body = replace body in
+    let binder = replace_var binder in
+    let rec_binder = replace_var rec_binder in
+    return @@ E_rec { func = { binder ; body } ; rec_binder }
   | E_constant (c) ->
     let args = List.map ~f:replace c.arguments in
     return @@ E_constant {cons_name = c.cons_name; arguments = args}
@@ -220,6 +225,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_closure { binder; body } -> (
     let (binder, body) = self_binder1 ~body:(binder, body) in
     return @@ E_closure { binder ; body }
+  )
+  | E_rec { func = { binder ; body } ; rec_binder } -> (
+    let (binder, (rec_binder, body)) = self_binder2 ~body:(binder, (rec_binder, body)) in
+    return @@ E_rec { func = { binder ; body } ; rec_binder }
   )
   | E_let_in (expr, inline, ((v , tv), body)) -> (
     let expr = self expr in

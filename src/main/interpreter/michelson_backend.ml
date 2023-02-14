@@ -293,6 +293,7 @@ let build_ast
             ; output_type = out_ty
             ; binder = Ligo_prim.Param.make ~mut_flag arg_binder in_ty
             }
+        ; force_lambdarec = false
         }
   in
   let parameter, storage =
@@ -648,9 +649,7 @@ let rec val_to_ast ~raise ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ty' =
-      Ligo_prim.Record.find map_ty.fields (Label ctor)
-    in
+    let ty' = Ligo_prim.Record.find map_ty.fields (Label ctor) in
     let arg = val_to_ast ~raise ~loc arg ty' in
     e_a_constructor ~loc ctor arg ty
   | V_Construct _ ->
@@ -817,7 +816,9 @@ and make_ast_func ~raise ?name env mut_flag arg body orig =
     match name with
     | None -> e_a_lambda ~loc lambda in_ty out_ty
     | Some fun_name ->
-      e_a_recursive ~loc { fun_name; fun_type = orig.type_expression; lambda }
+      e_a_recursive
+        ~loc
+        { fun_name; fun_type = orig.type_expression; lambda; force_lambdarec = false }
   in
   (* Check that function to be compiled is obj-LIGO *)
   let _ =
@@ -825,6 +826,7 @@ and make_ast_func ~raise ?name env mut_flag arg body orig =
     @@ Self_ast_aggregated.expression_obj typed_exp'
   in
   typed_exp'
+
 
 and make_ast_record ~raise ~loc (row : _ Ligo_prim.Row.With_layout.t) map =
   let open Ligo_interpreter.Types in
@@ -839,6 +841,7 @@ and make_ast_record ~raise ~loc (row : _ Ligo_prim.Row.With_layout.t) map =
   in
   (* hmm *)
   Ast_aggregated.ez_e_a_record_hmm ~loc ~layout:row.layout kv_list
+
 
 and make_ast_list ~raise ~loc ty l =
   let l = List.map ~f:(fun v -> val_to_ast ~raise ~loc v ty) l in
@@ -1220,9 +1223,7 @@ let rec compile_value ~raise ~options ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ty' =
-      Ligo_prim.Record.find map_ty.fields (Label ctor)
-    in
+    let ty' = Ligo_prim.Record.find map_ty.fields (Label ctor) in
     let arg = self arg ty' in
     let ty' = Ligo_compile.Of_expanded.compile_type ~raise ty in
     let ty_variant =
@@ -1230,10 +1231,7 @@ let rec compile_value ~raise ~options ~loc
       @@ get_t_sum_opt ty
     in
     let path =
-      Spilling.Layout.constructor_to_lr
-        ~layout:ty_variant.layout
-        ty'
-        (Label ctor)
+      Spilling.Layout.constructor_to_lr ~layout:ty_variant.layout ty' (Label ctor)
     in
     let aux pred (_ty, lr) =
       match lr with
@@ -1262,22 +1260,20 @@ let rec compile_value ~raise ~options ~loc
       @@ get_t_record_opt ty
     in
     let map_kv =
-      Ligo_prim.Record.mapi
-        map
-        ~f:(fun ~label:l ~value:v ->
+      Ligo_prim.Record.mapi map ~f:(fun ~label:l ~value:v ->
           let ty = Ligo_prim.Record.find map_ty.fields l in
           self v ty)
     in
-    trace ~raise Main_errors.spilling_tracer @@ 
-    Spilling.Layout.from_layout
-      (fun types ->
-         let types = List.map ~f:snd types in
-         match types with
-         | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
-         | [type_] -> type_
-         | types -> Tezos_micheline.Micheline.Prim ((), "Pair", types, []))
-      map_kv
-      map_ty.layout
+    trace ~raise Main_errors.spilling_tracer
+    @@ Spilling.Layout.from_layout
+         (fun types ->
+           let types = List.map ~f:snd types in
+           match types with
+           | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
+           | [ type_ ] -> type_
+           | types -> Tezos_micheline.Micheline.Prim ((), "Pair", types, []))
+         map_kv
+         map_ty.layout
   | V_List lst ->
     let lst_ty =
       trace_option
@@ -1420,7 +1416,9 @@ let rec compile_value ~raise ~options ~loc
         match name with
         | None -> e_a_lambda ~loc lambda in_ty out_ty
         | Some fun_name ->
-          e_a_recursive ~loc { fun_name; fun_type = orig.type_expression; lambda }
+          e_a_recursive
+            ~loc
+            { fun_name; fun_type = orig.type_expression; lambda; force_lambdarec = false }
       in
       (* Check that function to be compiled is obj-LIGO *)
       let _ =

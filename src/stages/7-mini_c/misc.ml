@@ -38,6 +38,8 @@ module Free_variables = struct
     | E_closure f ->
       let src, _ = Option.value_exn @@ Combinators.get_t_function e.type_expression in
       lambda ~count_var_ref ~count_deref ~count_assign b f src
+    | E_rec f ->
+      rec_lambda ~count_var_ref ~count_deref ~count_assign b f e.type_expression
     | E_constant c -> unions @@ List.map ~f:self c.arguments
     | E_application (f, x) -> unions @@ [ self f; self x ]
     | E_iterator (_, ((v, t), body), expr) ->
@@ -101,6 +103,15 @@ module Free_variables = struct
    fun b l t ->
     let b = union (singleton l.binder t) b in
     expression ~count_var_ref ~count_deref ~count_assign b l.body
+
+
+  and rec_lambda ~count_var_ref ~count_deref ~count_assign
+      : bindings -> rec_function -> type_expression -> bindings
+    =
+   fun b l t ->
+    let b = union (singleton l.rec_binder t) b in
+    let src, _ = Option.value_exn @@ Combinators.get_t_function t in
+    lambda ~count_var_ref ~count_deref ~count_assign b l.func src
 end
 
 let get_fv =

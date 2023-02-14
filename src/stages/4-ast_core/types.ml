@@ -2,7 +2,6 @@ open Ligo_prim
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
-
 module Row = Row.With_optional_layout
 
 type sugar_type_expression_option = Ast_imperative.type_expression option
