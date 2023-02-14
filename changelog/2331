@@ -1,0 +1,7 @@
+
+author: nicolas.van.phan
+description: "\\n\\nFor a contract with nested record update using the new syntaxes, like below.\\n\\n\\n```\\ntype storage = int;\\ntype parameter = int;\\n\\nconst main = (_action: parameter, store: storage) : [ list<operation> , storage ] => {\\n  let r = { x : { y : [ 1 , 2 , { z : \"World\" , z1 : 7 } , 3] } };\\n  r[\"x\"].y[2][\"z\"] = \"Hello\";\\n  return [list([]), store]\\n};\\n\\n```\\n\\n#### Before\\n\\n\\n```\\n> ligo compile contract 'test.jsligo'\\nFile \"test.jsligo\", line 6, characters 2-28:\\n  5 |   let r = { x : { y : [ 1 , 2 , { z : \"World\" , z1 : 7 } , 3] } };\\n  6 |   r[\"x\"].y[2][\"z\"] = \"Hello\";\\n  7 |   return [list([]), store]\\n\\nNot supported assignment.\\n\\n```\\n\\n#### After\\n\\n\\n```\\n> ligo compile contract 'test.jsligo'\\n{ parameter int ; storage int ; code { CDR ; NIL operation ; PAIR } }\\n\\n\\n```\\n\\n"
+merge_request: '2331'
+title: "Extend JsLIGO nested update syntax"
+type: added
+            

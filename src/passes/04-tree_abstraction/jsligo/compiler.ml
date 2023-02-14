@@ -385,9 +385,10 @@ let expression_to_variable ~raise : CST.expr -> CST.variable = function
   | _ as e -> raise.error @@ expected_a_variable (CST.expr_to_region e)
 
 
-let compile_expression_to_int ~raise : CST.expr -> Z.t = function
-  | EArith (Int i) -> snd i.value
-  | _ as e -> raise.error @@ expected_an_int e
+let compile_component_to_access ~raise : CST.expr -> _ Access_path.access = function
+  | EArith (Int i) -> Access_tuple (snd i.value)
+  | EString (String s) -> Access_record s.value
+  | _ as e -> raise.error @@ expected_an_int_or_string e
 
 
 let compile_selection ~raise : CST.selection -> _ Access_path.access * Location.t =
@@ -398,8 +399,8 @@ let compile_selection ~raise : CST.selection -> _ Access_path.access * Location.
     Access_record name.value.value, loc
   | Component comp ->
     let index_expr, loc = r_split comp in
-    let index = compile_expression_to_int ~raise index_expr.inside in
-    Access_tuple index, loc
+    let access = compile_component_to_access ~raise index_expr.inside in
+    access, loc
 
 
 let array_item_to_expression ~raise : CST.array_item -> CST.expr = function
@@ -1048,106 +1049,67 @@ and compile_expression ~raise : CST.expr -> AST.expr =
                   update  :
                     E_Literal (Literal_string "Alice")
 
-    This transformation is done below with recursive [update_of_proj],
-    building the nested AST.E_Update out of the nested CST.EProj
-
-    On the way in, it will call itself with the sub-expr (EProj | E_Var),
-    and it will accumulate the record field names along the way, in [path_acc_in].
-    So, on the successive calls, path_acc_in will be :
-      call 1 : []
-      call 2 : ["c"]
-      call 3 : ["b"; "c"]
-      call 4 : ["a"; "b"; "c"]
-
-    At the terminating call, the expression passed is not a EProj but a EVar,
-    containing the name of the toplevel record (here "p").
-    It's added to the accumulated path and returned on the way out
-    to help build the struct_.
-
-    On the way out, the AST struct_ are forged
-    thanks to the record fields accumulated on the way it,
-    they are passed back through [path_acc_out], which will be :
-      call 4 : ["c"; "b"; "a"; "p"]
-      call 2 : ["b"; "a"; "p"]
-      call 3 : ["a"; "p"]
-      call 4 : ["p"]
-    When forging the output,
-      [path_acc_out]'s head is used to build the E_Update.path
-      [path_acc_out]'s tail is used to build the E_Update.struct_
-
   *)
   | EAssign
-      ( (EProj { value = { expr = _; selection = FieldName _ }; region = eproj_reg } as eproj)
+      ( EProj { value = { expr = _; selection = _ } as proj; region = eproj_reg }
       , { value = Eq; region = eassign_reg }
       , final_value ) ->
     let final_value_reg = CST.expr_to_region final_value in
     let final_value = self final_value (* = E_String "Alice" in above example *) in
-    (* Builds the nested AST.E_Update from the nested CST.EProj *)
-    let rec update_of_proj (e_in : CST.expr) (path_acc_in : (string * Location.t) list)
-        : AST.expr * (string * Location.t) List.Ne.t
-      =
-      let rec struct_of_str_list (vl : (string * Location.t) List.Ne.t) : expr =
-        (* Builds the E_Accessor from the list of field names *)
-        match vl with
-        | (v, loc), [] -> e_variable_ez ~loc v
-        | (v, loc), v' :: vl ->
-          let struct_ = struct_of_str_list (v', vl) in
-          let path = [ Ligo_prim.Access_path.Access_record v ] in
-          e_accessor ~loc struct_ path
+    (* 1. Extract the path out of the CST expression, here "p" ["a"; "b"; "c"] *)
+    let path_of_eproj (proj : CST.projection) : CST.variable * CST.selection List.Ne.t =
+      let rec aux (e_in : CST.expr) (path_acc : CST.selection List.Ne.t)
+          : CST.variable * CST.selection List.Ne.t
+        =
+        match e_in with
+        | EProj { value = { expr; selection }; region = _ } ->
+          aux expr @@ List.Ne.cons selection path_acc
+        | EVar (_ as toplevel_record_name) -> toplevel_record_name, path_acc
+        | _ as other -> raise.error @@ not_supported_assignment other
       in
-      match e_in with
-      (* Recursive case *)
-      | EProj proj ->
-        (* 1. Extract input *)
-        let sub_expr, (field_name, field_loc) =
-          let proj : CST.projection = proj.value in
-          match proj.selection with
-          | FieldName fn ->
-            let fn : CST.selection_field_name = fn.value in
-            let fn : CST.variable = fn.value in
-            let fn_val : string = fn.value in
-            let fn_loc : Location.t = Location.lift fn.region in
-            proj.expr, (fn_val, fn_loc)
-          | Component _ -> raise.error @@ expected_a_field_name proj.selection (* TODO : Maybe we could support tuple projections too ? *)
-        in
-        (* 2. Recursive call *)
-        let rec_e_in = sub_expr in
-        let rec_path_acc_in = (field_name, field_loc) :: path_acc_in in
-        let rec_e_out, rec_path_acc_out = update_of_proj rec_e_in rec_path_acc_in in
-        (* 3. Forge output *)
-        let (fname, floc), fpath = rec_path_acc_out in
-        let fpath : (string * Location.t) List.Ne.t =
-          match fpath with
-          | [] -> raise.error unexpected (* fpath should be a NeList, for this, find a way to make rec_path_acc_in a NeList *)
-          | hd :: tl -> hd, tl
-        in
-        (* Building the E_Update *)
-        let struct_ = struct_of_str_list fpath in
-        let path = [ Ligo_prim.Access_path.Access_record fname ] in
-        let update = rec_e_out in
-        let e_out = e_update ~loc:floc struct_ path update in
-        (* Returning the accumlated path *)
-        let path_acc_out = fpath in
-        e_out, path_acc_out
-      (* TODO: Handle EModA for M.x.y = 1 *)
-      (* Terminal case *)
-      | EVar toplevel_record_name ->
-        let rname = toplevel_record_name.value in
-        let rloc = Location.lift toplevel_record_name.region in
-        let e_out = final_value in
-        let path_acc_out = List.Ne.rev ((rname, rloc), path_acc_in) in
-        e_out, path_acc_out
-      (* Module accessor terminal case *)
-      (* Impossible case *)
-      | _ as other -> raise.error @@ not_supported_assignment other (* TODO : Here, we expect EVar or EProj only *)
+      let toplevel_record, path = aux proj.expr @@ List.Ne.singleton proj.selection in
+      toplevel_record, path
     in
-    (* Forge the toplevel E_Assign expression *)
-    let e_update, path_acc_out = update_of_proj eproj [] in
+    let toplevel_record, path = path_of_eproj proj in
+    (* 2. Recursively build the E_Update from the previously extracted path *)
+    let update_of_path (path : CST.selection List.Ne.t) : AST.expr =
+      let rec aux (old_record : AST.expr) (path : CST.selection list) : AST.expr =
+        match path with
+        | [] -> final_value
+        | sel :: path' ->
+          let make_e_update (reg : Region.t) (path : _ Access_path.t) =
+            let loc = Location.lift reg in
+            let struct_ = old_record in
+            let update =
+              let rec_struct_ = e_accessor ~loc struct_ path in
+              aux rec_struct_ path'
+            in
+            e_update ~loc struct_ path update
+          in
+          (match sel with
+          | FieldName
+              { region = _
+              ; value = { dot = _; value = { region = freg; value = fname } }
+              } -> make_e_update freg [ Access_path.Access_record fname ]
+          | Component { value = { inside = expr; _ }; region = reg } ->
+            let access = compile_component_to_access ~raise expr in
+            make_e_update reg [ access ])
+      in
+      let old_record =
+        e_variable_ez ~loc:(Location.lift toplevel_record.region) toplevel_record.value
+      in
+      aux old_record (List.Ne.to_list path)
+    in
+    (* 3. Forge the toplevel E_Assign expression *)
+    let e_update = update_of_path path in
     let binder : _ Binder.t =
-      let (name, loc), _ = path_acc_out in
-      Binder.make (Value_var.of_input_var ~loc name) None
+      let loc = Location.lift toplevel_record.region in
+      let var = Value_var.of_input_var ~loc toplevel_record.value in
+      Binder.make var None
     in
-    let eassign_reg = Region.cover eproj_reg @@ Region.cover eassign_reg @@ final_value_reg in
+    let eassign_reg =
+      Region.cover eproj_reg @@ Region.cover eassign_reg @@ final_value_reg
+    in
     e_assign ~loc:(Location.lift eassign_reg) binder e_update
   | EAssign _ as e -> raise.error @@ not_supported_assignment e
   | ETernary e ->

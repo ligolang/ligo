@@ -33,7 +33,7 @@ type abs_error =
   | `Concrete_jsligo_array_rest_not_supported of Raw.array_item
   | `Concrete_jsligo_expected_a_variable of Region.t
   | `Concrete_jsligo_expected_a_field_name of Raw.selection
-  | `Concrete_jsligo_expected_an_int of Raw.expr
+  | `Concrete_jsligo_expected_an_int_or_string of Raw.expr
   | `Concrete_jsligo_invalid_list_pattern_match of Raw.array_item list
   | `Concrete_jsligo_no_shared_fields of Region.t
   | `Concrete_jsligo_unexpected
@@ -209,10 +209,10 @@ let error_ppformat
         "@[<hv>%a@.Expected a field name.@]"
         snippet_pp_lift
         (Raw.selection_to_region s)
-    | `Concrete_jsligo_expected_an_int e ->
+    | `Concrete_jsligo_expected_an_int_or_string e ->
       Format.fprintf
         f
-        "@[<hv>%a@.Expected an int.@]"
+        "@[<hv>%a@.Expected an int or a string.@]"
         snippet_pp_lift
         (Raw.expr_to_region e)
     | `Concrete_jsligo_invalid_list_pattern_match _l ->
@@ -407,8 +407,8 @@ let error_json : abs_error -> Simple_utils.Error.t =
     let location = Location.lift (Raw.selection_to_region s) in
     let content = make_content ~message ~location () in
     make ~stage ~content
-  | `Concrete_jsligo_expected_an_int e ->
-    let message = Format.sprintf "Expected an int." in
+  | `Concrete_jsligo_expected_an_int_or_string e ->
+    let message = Format.sprintf "Expected an int or a string." in
     let location = Location.lift (Raw.expr_to_region e) in
     let content = make_content ~message ~location () in
     make ~stage ~content

@@ -191,15 +191,64 @@ const test_nested_record_assign_var_level2_lambda_app = ((() => {
 })());
 
 
+type p = {
+    x : [ int , int , int , int ]
+}
 
+const test_simple_tuple_field_assign = ((() => {
+  let p = { x : [1, 2, 3, 4] };
+  p.x[3] = 5;
+  assert(p.x[3] == 5)
+})())
+
+type q = {
+    x : { z : int }
+}
+
+const test_simple_record_field_with_array_notation_assign = ((() => {
+  let p = { x : { z : 1 } };
+  p.x["z"] = 10;
+  assert(p.x["z"] == 10);
+})())
+
+const test_nested_record_assign_array_notation_level1 = ((() => {
+    let r = make_r();
+    
+    r["x"]["y1"] = 11;
+    assert(r["x"]["y1"] == 11);
+
+})());
+
+const test_nested_record_assign_array_notation_level2 = ((() => {
+    let r = make_r();
+
+    r["x"]["y"]["z"] = 11;
+    assert(r["x"]["y"]["z"] == 11);
+
+    r["x"]["y"]["z1"] = 11;
+    assert(r.x.y.z1 == 11);
+
+})());
+
+type q2 = {
+    x : {
+        y : [int, int, { z : string, z1 : int }, int]
+    }
+}
+
+const test_nested_record_assign_tuple_assign_array_notation_level2 = ((() => {
+    let r = { x : { y : [ 1 , 2 , { z : "World" , z1 : 7 } , 3] } };
+
+    r["x"].y[2]["z"] = "Hello";
+    assert(r["x"]["y"][2].z == "Hello");
+
+    r["x"]["y"][2].z1 = 11;
+    assert(r.x.y[2].z1 == 11);
+
+})());
 
 /*
-This is already supported, but AST_I pp is confusing
-    p[3] = 1
 Support this in follow-up work
-    M.x.y = 1
-    p.x["z"] = a |> p.x.z = a
-    p["x"] = y   |> p.x = y
     p.x += 42; (+=, -= etc.)
 */
 
