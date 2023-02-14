@@ -27,6 +27,7 @@ module type S =
 
     val postprocess  : int option         (* --post=0/1/2/etc.       *)
     val preprocess   : bool               (* --pre                   *)
+    val string       : string option      (* --string                *)
     val print_passes : bool               (* --print-passes          *)
     val mode         : [`Byte | `Point]   (* --bytes                 *)
     val command      : [`Copy | `Units | `Tokens] option

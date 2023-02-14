@@ -4,7 +4,6 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   (* TODO: use String, Option, Set, List & Hashtbl from Core *)
   module LSet = Caml.Set.Make (Simple_utils.Location)
   module List = Caml.List
-  module Hashtbl = Caml.Hashtbl
   module Option = Caml.Option
   open Ligo_interface.Make (Ligo_api)
 
@@ -12,12 +11,14 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   open Linol_lwt
   open Linol_lwt.Jsonrpc2
   open Lsp
-  open Requests.Handler
   module Requests = Requests.Make (Ligo_api)
+  open Requests.Handler
   (* This file is free software, part of linol. See file "LICENSE" for more information *)
 
   (* one env per document *)
-  let get_scope_buffers : (DocumentUri.t, get_scope_info) Hashtbl.t = Hashtbl.create 32
+  let get_scope_buffers : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t =
+    Hashtbl.create 32
+
 
   (* Lsp server class
 
@@ -73,6 +74,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)
       method! config_definition = Some (`Bool true)
+      method config_document_link_provider = Some (DocumentLinkOptions.create ())
 
       method config_rename =
         let rename_options = RenameOptions.create ?prepareProvider:(Some true) () in
@@ -90,6 +92,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         ; renameProvider = self#config_rename
         ; referencesProvider = self#config_references
         ; typeDefinitionProvider = self#config_type_definition
+        ; documentLinkProvider = self#config_document_link_provider
         }
 
       method! on_request
@@ -127,6 +130,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ Requests.on_req_type_definition position uri
+          | Client_request.TextDocumentLink { textDocument; _ } ->
+            let uri = textDocument.uri in
+            run ~uri @@ Requests.on_req_document_link uri
           | _ -> super#on_request ~notify_back ~id r
     end
 end

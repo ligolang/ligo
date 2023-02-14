@@ -24,11 +24,10 @@ let get_references : DocumentUri.t -> Loc.t -> Scopes.def list -> Range.t list =
 
 
 let get_all_references
-    :  Loc.t -> (DocumentUri.t, get_scope_info) Hashtbl.t
-    -> (DocumentUri.t * Range.t list) list
+    : Loc.t -> (DocumentUri.t, file_data) Hashtbl.t -> (DocumentUri.t * Range.t list) list
   =
  fun location get_scope_buffers ->
-  let go (file, get_scope_info) =
+  let go (file, { get_scope_info; _ }) =
     let defs = get_scope_info.definitions in
     match get_references file location defs with
     | [] -> None
@@ -47,7 +46,7 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
  fun pos uri ->
   let@ get_scope_buffers = ask_docs_cache in
   with_cached_doc uri None
-  @@ fun get_scope_info ->
+  @@ fun { get_scope_info; _ } ->
   when_some (Definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   let references = get_all_references (get_location definition) get_scope_buffers in

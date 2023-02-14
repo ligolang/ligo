@@ -1,5 +1,6 @@
 open Linol_lwt
 open Linol_lwt.Jsonrpc2
+open Utils
 module Hashtbl = Caml.Hashtbl
 
 type notify_back_mockable =
@@ -9,7 +10,7 @@ type notify_back_mockable =
 type handler_env =
   { notify_back : notify_back_mockable
   ; debug : bool
-  ; docs_cache : (DocumentUri.t, Ligo_interface.get_scope_info) Hashtbl.t
+  ; docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t
   }
 
 type 'a handler = Handler of (handler_env -> 'a IO.t)
@@ -45,7 +46,7 @@ let ask : handler_env Handler.t = Handler IO.return
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
 let ask_debug : bool Handler.t = fmap (fun x -> x.debug) ask
 
-let ask_docs_cache : (DocumentUri.t, Ligo_interface.get_scope_info) Hashtbl.t Handler.t =
+let ask_docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t =
   fmap (fun x -> x.docs_cache) ask
 
 
@@ -105,12 +106,38 @@ let send_debug_msg (s : string) : unit Handler.t =
 
 
 let with_cached_doc
-    :  DocumentUri.t -> 'a (* Default value in case cached doc not found *)
-    -> (Ligo_interface.get_scope_info -> 'a Handler.t) -> 'a Handler.t
+    ?(return_default_if_no_info = true)
+    (uri : DocumentUri.t)
+    (default : 'a) (* Default value in case cached doc not found *)
+    (f : Ligo_interface.file_data -> 'a Handler.t)
+    : 'a Handler.t
   =
- fun uri default f ->
   let@ docs = ask_docs_cache in
   match Hashtbl.find_opt docs uri with
-  | Some get_scope_info ->
-    if get_scope_info.has_info then f get_scope_info else return default
+  | Some file_data ->
+    if (not return_default_if_no_info) || file_data.get_scope_info.has_info
+    then f file_data
+    else return default
   | None -> return default
+
+
+let with_cached_doc_pure
+    ?return_default_if_no_info
+    (uri : DocumentUri.t)
+    (default : 'a)
+    (f : Ligo_interface.file_data -> 'a)
+    : 'a Handler.t
+  =
+  let f' = return @. f in
+  with_cached_doc ?return_default_if_no_info uri default f'
+
+
+let with_cst : DocumentUri.t -> 'a -> (dialect_cst -> 'a Handler.t) -> 'a Handler.t =
+ fun uri default f ->
+  with_cached_doc ~return_default_if_no_info:false uri default
+  @@ fun { syntax; code; _ } ->
+  match get_cst syntax code with
+  | Error err ->
+    let@ () = send_debug_msg @@ "Unable to get CST: " ^ err in
+    return default
+  | Ok cst -> f cst

@@ -13,8 +13,8 @@ let file_extension_to_variant ~raise sf : t option =
 
 let of_ext_opt = function
   | None -> None
-  | Some "mligo" -> Some CameLIGO
-  | Some "jsligo" -> Some JsLIGO
+  | Some ("mligo" | ".mligo") -> Some CameLIGO
+  | Some ("jsligo" | ".jsligo") -> Some JsLIGO
   | Some _ -> None
 
 
