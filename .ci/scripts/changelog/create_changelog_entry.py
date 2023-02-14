@@ -28,6 +28,7 @@ HOSTNAME_REGEX = re.compile("^https?://[^/]+")
 COMMENT_REGEX = re.compile("<!---.*-->")
 
 TYPE_MAP = ["fixed", "added", "breaking", "performance", "none"]
+COMPONENT_MAP = ["compiler", "website", "webide", "vscode-plugin", "debugger"]
 
 
 def is_heading(elem, title):
@@ -74,6 +75,14 @@ def get_changelog(elems):
     
     return changelog_details
 
+def get_checked_element(section_title):
+    # Get concerned component
+    elems = get_prefixed_elem(markdown.children, section_title, block.List)
+    checks = [i for i, par in enumerate(elems.children) if par.children[0].checked]
+    if len(checks) != 1:
+        print(f"Expected exactly 1 '{section_title}', but got {len(checks)}", file=sys.stderr)
+        exit(1)
+    return checks[0]
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -93,17 +102,14 @@ if __name__ == "__main__":
     raw_description = mr.description
 
     markdown = gfm.parse(raw_description)
-
+    
     # Get type details
-    types = get_prefixed_elem(markdown.children, "Types of changes", block.List)
-    checks = [i for i, par in enumerate(types.children) if par.children[0].checked]
-    if len(checks) != 1:
-        print(f"Expected exactly 1 'type', but got {len(checks)}", file=sys.stderr)
-        exit(1)
-    type = TYPE_MAP[checks[0]]
+    type = TYPE_MAP[get_checked_element("Types of changes")]
 
     # Get changelog details
     if type != "none":
+        component = COMPONENT_MAP[get_checked_element("Component")]
+        
         changelog_details = get_changelog(markdown.children)
         # Force \n before ``` to avoid a bug in case of block code in list
         changelog_details = changelog_details.replace('```', '\n```')
@@ -119,7 +125,7 @@ if __name__ == "__main__":
     else:
        quit()
 
-    f = open(f"changelog/{args.mr_id}", "x")
+    f = open(f"changelog/{component}/{args.mr_id}", "x")
     f.write(f'''
 author: {author}
 description: "{changelog_details}"

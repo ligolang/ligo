@@ -8,14 +8,14 @@ add-changelog-entry:
   before_script:
     - *pip-install-ci-requirements
   script:
-    - python3 .ci/scripts/create_changelog_entry.py --hostname "${CI_PROJECT_URL}" --project "${CI_PROJECT_ID}" --mr-id "${CI_MERGE_REQUEST_IID}" --token "${TOKEN_API}"
+    - python3 .ci/scripts/changelog/create_changelog_entry.py --hostname "${CI_PROJECT_URL}" --project "${CI_PROJECT_ID}" --mr-id "${CI_MERGE_REQUEST_IID}" --token "${TOKEN_API}"
       # Check if type is None, if None, skip changelog generation
     - | 
       if [[ ! -f "changelog/${CI_MERGE_REQUEST_IID}" ]]; then
         exit 0
       fi
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
-    - git add changelog/${CI_MERGE_REQUEST_IID}
+    - git add changelog/*
     - git commit -m "[Bot] add changelog entry"
     - git push origin HEAD:$CI_COMMIT_REF_NAME
     - echo "Changelog has been pushed which cause a new pipeline triggering, to preserve resources this one will be exited with code 1."
@@ -25,7 +25,7 @@ add-changelog-entry:
       when: never
     - if: ($CI_PIPELINE_SOURCE == "merge_request_event")
       changes:
-          - changelog/$CI_MERGE_REQUEST_IID
+        - changelog/**/*
       when: never
     - if: ($CI_MERGE_REQUEST_EVENT_TYPE == "merge_train")
       when: always
