@@ -7,6 +7,11 @@ set -euET -o pipefail
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"/..
 
+COMPONENT="compiler"
+# default to the historic value compiler
+if [ $# -ge 1 ]; then
+    COMPONENT=$1
+fi
 
 TEMP_VERSION="{}"
 mapfile -t VERSIONS < <(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -Vr; git log --format=format:%H | tail -n 1)
@@ -19,7 +24,7 @@ for VERSION in "${VERSIONS[@]}"; do
         PREV_VERSION="$VERSION"
         continue
     fi
-    CHANGES="$(git diff --diff-filter=A --name-only "$VERSION" "$PREV_VERSION" -- changelog | sort -r --general-numeric-sort)"
+    CHANGES="$(git diff --diff-filter=A --name-only "$VERSION" "$PREV_VERSION" -- changelog/${COMPONENT} | sort -r --general-numeric-sort)"
     export PREV_VERSION
     export name
     if [[ "$PREV_VERSION" == "HEAD" ]]; then
