@@ -1,4 +1,4 @@
-module SendData (sendData) where
+module LSP.SendData (sendData) where
 
 import Data.Aeson (Value)
 import Data.Aeson qualified as Aeson
@@ -14,7 +14,7 @@ import Katip (LogStr(..), Severity(DebugS, ErrorS), logFM)
 import Network.WebSockets qualified as WS
 
 import Common (ConnectionM)
-import FilePath (filterConnectionPrefix, normalizeUri, modifyUri)
+import LSP.FilePath (filterConnectionPrefix, normalizeUri, modifyUri)
 
 sendData :: WS.Connection -> Handle -> ConnectionM ()
 sendData conn stdoutConsumer = do
@@ -28,7 +28,7 @@ parseAllInput conn bsl =
       logFM ErrorS $ "Couldn't parse message from language server: " <> show err
     Done cont val -> do
       let normalizedVal = modifyUri normalizeUri val
-      let prettyVal =
+      prettyVal <- filterConnectionPrefix $
             Text.decodeUtf8 $ LBS.toStrict $ Aeson.encodePretty normalizedVal
       logFM DebugS $ "Sending: " <> LogStr (Text.fromText prettyVal)
 

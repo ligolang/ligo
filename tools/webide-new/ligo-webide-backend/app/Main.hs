@@ -1,58 +1,31 @@
 module Main (main) where
 
-import Config (Config(..))
-import Options.Applicative
-import Server
+import Config (ServerConfig(..), readConfig)
+import Katip
+  (ColorStrategy(ColorIfTerminal), Severity(DebugS, InfoS, WarningS), Verbosity(V2), closeScribes,
+  defaultScribeSettings, initLogEnv, mkHandleScribe, permitItem, registerScribe)
+import LSP.Server (handlePendingConnection, toServerApp)
+import Network.Wai.Handler.Warp (run)
+import Network.Wai.Handler.WebSockets (websocketsOr)
+import Network.WebSockets.Connection (defaultConnectionOptions)
+import Server (mkApp)
 
 main :: IO ()
-main =
-  join . customExecParser (prefs showHelpOnError) $
-    info
-      (helper <*> parser)
-      ( fullDesc
-          <> header "LIGO WebIDE backend"
-          <> progDesc "provide a server interface to the LIGO compiler"
-      )
-  where
-    parser :: Parser (IO ())
-    parser = fmap startApp $
-      Config
-        <$> optional (strOption
-          ( long "ligo-path"
-            <> short 'l'
-            <> metavar "STRING"
-            <> help "path to LIGO binary"
-          ))
-        <*> optional (strOption
-          ( long "octez-client-path"
-            <> short 't'
-            <> metavar "STRING"
-            <> help "path to octez-client binary"
-          ))
-        <*> option auto
-          ( long "port"
-            <> short 'p'
-            <> metavar "INT"
-            <> showDefault
-            <> value 8080
-            <> help "port the server should use"
-          )
-        <*> switch
-          ( long "verbose"
-            <> short 'v'
-            <> help "print received requests and the responses"
-          )
-        <*> optional (strOption
-          ( long "dockerized-ligo-version"
-          <> short 'd'
-          <> metavar "LIGO_VERSION"
-          <> help "use a LIGO from Docker instead of a \
-                  \LIGO binary. If this is specified, 'ligo-path' \
-                  \will be ignored."
-          ))
-        <*> option str
-          ( long "gist-token"
-            <> short 'g'
-            <> metavar "STRING"
-            <> help "print received requests and the responses"
-          )
+main = do
+  config <- readConfig
+
+  -- set up logging
+  let logLevel = case scVerbosity config of
+        0 -> WarningS
+        1 -> InfoS
+        _ -> DebugS
+
+  handleScribe <- mkHandleScribe ColorIfTerminal stdout (permitItem logLevel) V2
+  let makeLogEnv =
+        registerScribe "stdout" handleScribe defaultScribeSettings
+          =<< initLogEnv "webide-language-server" ""
+
+  bracket makeLogEnv closeScribes $ \logEnv ->
+    let serverApp = toServerApp logEnv config handlePendingConnection
+        app = websocketsOr defaultConnectionOptions serverApp (mkApp config)
+     in run (scPort config) app

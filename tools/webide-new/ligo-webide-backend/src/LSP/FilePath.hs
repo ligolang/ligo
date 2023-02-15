@@ -1,4 +1,4 @@
-module FilePath
+module LSP.FilePath
   ( addConnectionPrefix
   , filterConnectionPrefix
   , getConnectionPrefix
@@ -8,10 +8,11 @@ module FilePath
 
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
+import Data.Text qualified as Text
 import System.FilePath (normalise)
+
 import Common (ConnectionM)
 import Config (ServerConfig (..), ConnectionConfig (..))
-import Data.Text qualified as Text
 
 type Uri = Text
 
@@ -34,7 +35,7 @@ filterConnectionPrefix txt = do
 
 getConnectionPrefix :: ConnectionM FilePath
 getConnectionPrefix = do
-  workspacePrefix <- Text.unpack <$> asks (scWorkspacePrefix . ccServerConfig)
+  workspacePrefix <- Text.unpack <$> asks (scLSPWorkspacePrefix . ccServerConfig)
   connectionId <- asks ccId
   pure $ workspacePrefix <> "/connection" <> show connectionId <> "/"
 

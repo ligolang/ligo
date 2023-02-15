@@ -1,4 +1,4 @@
-module ReceiveData (receiveData) where
+module LSP.ReceiveData (receiveData) where
 
 import Control.Arrow ((>>>))
 import Control.Lens (to)
@@ -20,18 +20,20 @@ import System.IO (hFlush)
 
 import Common (ConnectionM)
 import Config (ConnectionConfig(..), ServerConfig(..))
-import FilePath (modifyUri)
+import LSP.FilePath (modifyUri)
 
 receiveData :: Int -> Connection -> Handle -> ConnectionM ()
 receiveData clientId conn stdinProducer = forever $ do
-  workspacePrefix <- asks (scWorkspacePrefix . ccServerConfig)
+  workspacePrefix <- asks (scLSPWorkspacePrefix . ccServerConfig)
   let prefix = workspacePrefix <> "/connection" <> show clientId <> "/"
   msg <- liftIO (WS.receiveData conn)
   logFM DebugS ("Received: " <> LogStr (Text.fromText (prettyJSON msg)))
   let prefixed = addPrefix prefix msg
   createMissingFiles prefixed
+  logFM DebugS ("created")
   liftIO (hPutStr stdinProducer (Text.decodeUtf8 (addContentLength prefixed)))
   liftIO (hFlush stdinProducer)
+  logFM DebugS ("flushed")
 
 prettyJSON :: BS.ByteString -> Text
 prettyJSON bs =

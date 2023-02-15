@@ -1,7 +1,6 @@
-module Main (main) where
+module LSP.Server (handlePendingConnection, toServerApp) where
 
 import Control.Concurrent.Async (Async, cancel, wait, withAsync)
-import Data.Text qualified as Text
 import Katip
 import Network.WebSockets qualified as WS
 import System.Directory (removeDirectoryRecursive)
@@ -10,52 +9,35 @@ import System.Process
   terminateProcess, waitForProcess)
 import UnliftIO (withRunInIO)
 
-import Config (ServerConfig(..), ConnectionConfig (..), readConfig)
-import Common (ServerM, ConnectionM, withConnectionId)
-import FilePath (getConnectionPrefix)
-import ReceiveData (receiveData)
-import SendData (sendData)
+import Config (ServerConfig(..), ConnectionConfig (..))
+import Common (LSPM, ConnectionM, withConnectionId)
+import LSP.FilePath (getConnectionPrefix)
+import LSP.ReceiveData (receiveData)
+import LSP.SendData (sendData)
 
-main :: IO ()
-main = do
-  config <- readConfig
+toServerApp
+  :: LogEnv
+  -> ServerConfig
+  -> (WS.PendingConnection -> LSPM ())
+  -> WS.ServerApp
+toServerApp logEnv config handlePending =
+  flip runReaderT config
+  . runKatipContextT logEnv () "main"
+  . handlePending
 
-  -- set up logging
-  let logLevel = case scVerbosity config of
-        0 -> WarningS
-        1 -> InfoS
-        _ -> DebugS
-
-  handleScribe <- mkHandleScribe ColorIfTerminal stdout (permitItem logLevel) V2
-  let makeLogEnv =
-        registerScribe "stdout" handleScribe defaultScribeSettings
-          =<< initLogEnv "webide-language-server" ""
-
-  bracket makeLogEnv closeScribes $ \logEnv ->
-    flip runReaderT config $
-      runKatipContextT logEnv () "main" $
-        runServer
-          (Text.unpack (scHostname config))
-          (scPort config)
-          handlePendingConnection
-
-runServer
-  :: String
-  -> Int
-  -> (WS.PendingConnection -> ServerM ())
-  -> ServerM ()
-runServer host port pendingCallback = withRunInIO $ \unlift ->
-  WS.runServer host port (unlift . pendingCallback)
-
-handlePendingConnection :: WS.PendingConnection -> ServerM ()
+handlePendingConnection :: WS.PendingConnection -> LSPM ()
 handlePendingConnection pending = do
   conn <- liftIO $ WS.acceptRequest pending
-  clientCounter <- asks scClientCounter
+  clientCounter <- asks scLSPClientCounter
   connectionId <- atomicModifyIORef' clientCounter (\x -> (x+1,x+1))
   withConnectionId connectionId (handleConnection conn)
 
+pingConnection :: WS.Connection -> ConnectionM () -> ConnectionM ()
+pingConnection conn action = withRunInIO $ \unlift ->
+  WS.withPingThread conn 10 (pure ()) (unlift action)
+
 handleConnection :: WS.Connection -> ConnectionM ()
-handleConnection conn = do
+handleConnection conn = pingConnection conn $ do
     connectionId <- asks ccId
     logFM InfoS ("Handling connection " <> show connectionId)
 

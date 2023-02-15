@@ -35,7 +35,7 @@ import Morley.Tezos.Core (Mutez(UnsafeMutez, unMutez))
 import Morley.Tezos.Crypto (KeyHash, PublicKey, SecretKey, detSecretKey, hashKey, toPublic)
 
 import Common (WebIDEM)
-import Config (Config(..))
+import Config (ServerConfig(..))
 import Error (LigoCompilerError(..), MorleyError(..))
 import Method.Compile (compile)
 import Schema.CompileRequest (CompileRequest(..))
@@ -107,7 +107,7 @@ generateDeployScript request = do
   let originationData :: OriginationData
       originationData = mkOriginationData typeCheckResult
 
-  octezClientPath <- lift (asks cOctezClientPath) >>= \case
+  octezClientPath <- lift (asks scOctezClientPath) >>= \case
     Nothing -> throwM NoLigoBinary
     Just p -> pure p
 
