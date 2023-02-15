@@ -8,14 +8,11 @@ webide-define-image-tag:
   extends: .docker-image
   stage: pretooling
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
-        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
-    - if: '$CI_PIPELINE_SOURCE == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      changes:
-        - tools/webide-new/ligo-webide-backend/**/*
+        - tools/webide-new/ligo-webide-frontend/**/*
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
@@ -36,7 +33,7 @@ webide-new-backend-build:
     - job: changelog
       artifacts: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
@@ -52,7 +49,7 @@ webide-new-frontend-build:
     - job: changelog
       artifacts: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
         - tools/lsp/vscode-plugin/syntaxes
@@ -73,7 +70,7 @@ webide-new-backend-build-and-push-backend:
     - job: webide-define-image-tag
       artifacts: true 
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
@@ -91,9 +88,9 @@ webide-new-frontend-build-and-push:
     - job: webide-define-image-tag
       artifacts: true
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
-        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
+        - tools/webide-new/ligo-webide-frontend/**/*
       when: always
   script:
     - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes tools/webide-new/ligo-webide-frontend/ligo-ide -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
