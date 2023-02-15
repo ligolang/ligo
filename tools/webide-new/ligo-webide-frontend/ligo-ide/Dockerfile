@@ -2,6 +2,7 @@
 # To run the build on this image, you have to change the build context for ../../../ with the following command 
 # docker buildx build --build-context syntaxes=../../../lsp/vscode-plugin/syntaxes .
 # Because this project is using some file from ../../../lsp/vscode-plugin/syntaxes through symlink.
+
 # Here symlink gonna be replaced by the files themself
 
 ARG BUILDER_IMAGE="node:16"
