@@ -7,7 +7,7 @@ Also for working with `git` you need to specify `GIT_PROXY` env variable. This p
 
 ## Deploy
 
-For deployment you need to run `yarn build:react-prod`. It include `NODE_ENV=production` and `PUBLIC_URL=/` env variable. Also you need to specify same `GIT_PROXY` env variable as on the previous point.
+For deployment you need to run `yarn build:react-prod`. It include `NODE_ENV=production` and `PUBLIC_URL=/` env variable. Also you need to specify same `GIT_PROXY` env variable as on the previous point. 
 
 ### Network and protocol change
 

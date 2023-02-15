@@ -8,10 +8,16 @@ webide-define-image-tag:
   extends: .docker-image
   stage: pretooling
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
+    - if: '$CI_PIPELINE_SOURCE == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
-        - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide-new/ligo-webide-backend/**/*
       when: always
   script:
     - FORMATED_CI_JOB_STARTED_AT="${CI_JOB_STARTED_AT//:/-}"
