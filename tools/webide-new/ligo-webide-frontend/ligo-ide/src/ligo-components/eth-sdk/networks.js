@@ -13,7 +13,7 @@ const networks = rawNetworks.map((v) => {
     notification: `Switched to <b>${v.fullName}</b>.`,
     url: v.url,
     explorerUrl: v.explorerUrl,
-    type: v.id,
+    type: v.type,
     chainId: `${v.name}+${v.url}`,
     symbol: v.symbol,
     logoIcon:
