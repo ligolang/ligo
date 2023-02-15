@@ -21,7 +21,7 @@ Code navigation
 
 - [x] Jump to definition
 - [x] Find references (only in open files)
-- [ ] Folding range
+- [x] Folding range
 - [ ] Selection range
 - [x] Jump to type definition
 - [ ] Document symbols
