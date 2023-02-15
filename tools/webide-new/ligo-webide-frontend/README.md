@@ -15,7 +15,11 @@ To specify networks and protocols we provide `config.json` file in `ligo-ide`. \
 Here you have such options:
 - `protocols`: the list of protocols which are allowed. Here you need to specify `name` which is used in ligo compiler and `showName`.
 - `defaultProtocol`: specific element from `protocols`
-- `networks`: list of allowed networks. You need to specify unique `id`, `group` for network groups such as `Tezos` or `T4L3NT`, `name` where `Mainnet` is used for main chain and other names will be joined together as testnets, `fullName` as display name, `url` of the node for specific chain, `explorerUrl`, `symbol` like `XTZ` of the chain coin, and `icon`. `icon` is a map to asset logo in the project. To add it, put logo to `./ligo-ide/src/ligo-components/eth-sdk/assets`, import it in `./ligo-ide/src/ligo-components/eth-sdk/NetworkIcon.ts` and add to the `./ligo-ide/src/ligo-components/eth-sdk/networks.js`.
+- `networks`: list of allowed networks. You need to specify unique `id`, `group` for network groups such as `Tezos` or `T4L3NT`, `name` where `Mainnet` is used for main chain and other names will be joined together as testnets, `fullName` as display name, `url` of the node for specific chain, `explorerUrl`, `symbol` like `XTZ` of the chain coin, and `icon` with `type`. 
+
+__Note__: `icon` is a map to asset logo in the project. To add it, put logo to `./ligo-ide/src/ligo-components/eth-sdk/assets`, import it in `./ligo-ide/src/ligo-components/eth-sdk/NetworkIcon.ts` and add to the `./ligo-ide/src/ligo-components/eth-sdk/networks.js`.
+
+__Note__: `type` is a `NetworkType` for `beacon` wallet. We use `@taquito/beacon-wallet` for it, so you should check what version of `@airgap/beacon-dapp` is currently available and what networks available in this version. You can get network updates info in `@airgap/beacon-dapp` [changelog](https://github.com/airgap-it/beacon-sdk/releases) and `@airgap/beacon-dapp` updates in `taquito` [changelog](https://tezostaquito.io/docs/version/). And in case of any updates upgrade dependencies. If network is not available in current version you should use `custom` type.
 
 ## Licensing
 

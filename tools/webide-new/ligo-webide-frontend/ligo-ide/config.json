@@ -18,7 +18,8 @@
           "url":"https://mainnet.tezos.marigold.dev",
           "explorerUrl":"https://tzkt.io/",
           "symbol":"XTZ",
-          "icon":"tezosmain"
+          "icon":"tezosmain",
+          "type":"mainnet"
        },
        {
           "id":"tezostest",
@@ -29,7 +30,8 @@
           "explorerUrl":"https://tzkt.io/",
           "symbol":"XTZ",
           "icon":"tezosmain",
-          "faucetUrl": "https://faucet.mumbainet.teztnets.xyz/"
+          "faucetUrl": "https://faucet.mumbainet.teztnets.xyz/",
+          "type":"custom"
        },
        {
           "id":"tezostestlima",
@@ -40,7 +42,8 @@
           "explorerUrl":"https://limanet.tzkt.io/",
           "symbol":"XTZ",
           "icon":"tezosmain",
-          "faucetUrl": "https://faucet.limanet.teztnets.xyz/"
+          "faucetUrl": "https://faucet.limanet.teztnets.xyz/",
+          "type":"custom"
        },
        {
           "id":"tezostestghostnet",
@@ -51,7 +54,8 @@
           "explorerUrl":"https://ghostnet.tzkt.io/",
           "symbol":"XTZ",
           "icon":"tezosmain",
-          "faucetUrl": "https://faucet.ghostnet.teztnets.xyz/"
+          "faucetUrl": "https://faucet.ghostnet.teztnets.xyz/",
+          "type":"ghostnet"
        },
        {
           "id":"t4l3ntmain",
@@ -61,7 +65,8 @@
           "url":"https://rpc.decentralized.pictures",
           "explorerUrl":"https://explorer.tlnt.net/",
           "symbol":"FILM",
-          "icon":"dpfmain"
+          "icon":"dpfmain",
+          "type":"custom"
        },
        {
           "id":"t4l3nttest",
@@ -72,7 +77,8 @@
           "explorerUrl":"https://explorer.tlnt.net:444/",
           "symbol":"FILM",
           "icon":"dpfmain",
-          "faucetUrl": "https://github.com/Decentralized-Pictures/T4L3NT"
+          "faucetUrl": "https://github.com/Decentralized-Pictures/T4L3NT",
+          "type":"custom"
        }
     ]
  }
