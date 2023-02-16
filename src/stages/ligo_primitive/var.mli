@@ -51,5 +51,3 @@ end
 module Layout_var : sig
   include VAR
 end
-
-module Contract_var : VAR

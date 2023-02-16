@@ -1,6 +1,5 @@
 module Option = Simple_utils.Option
 module Location = Simple_utils.Location
-open Var
 
 module type Attr = sig
   type t [@@deriving eq, compare, yojson, hash]
@@ -27,18 +26,13 @@ module Value_decl (Attr : Attr) = struct
     acc, { binder; attr; expr }
 
 
-  let pp_ type_ ?(print_type = true) f g ppf { binder; attr; expr } =
+  let pp ?(print_type = true) f g ppf { binder; attr; expr } =
     let cond ppf b =
       if print_type
       then Format.fprintf ppf "%a" (Binder.pp g) b
       else Format.fprintf ppf "%a" (Binder.pp (fun _ _ -> ())) b
     in
-    Format.fprintf ppf "@[<2>%s %a =@ %a%a@]" type_ cond binder f expr Attr.pp attr
-
-
-  let pp ?print_type f g ppf t = pp_ "const" ?print_type f g ppf t
-  let pp_entry ?print_type f g ppf t = pp_ "entry" ?print_type f g ppf t
-  let pp_view ?print_type f g ppf t = pp_ "view" ?print_type f g ppf t
+    Format.fprintf ppf "@[<2>const %a =@ %a%a@]" cond binder f expr Attr.pp attr
 end
 
 module Pattern_decl (Pattern : Pattern.S) (Attr : Attr) = struct
@@ -118,24 +112,4 @@ module Module_decl (Attr : Attr) = struct
       module_
       Attr.pp
       module_attr
-end
-
-module Contract_decl (Attr : Attr) = struct
-  type 'contract_expr t =
-    { contract_binder : Contract_var.t
-    ; contract : 'contract_expr
-    ; contract_attr : Attr.t
-    }
-  [@@deriving equal, compare, yojson, hash, fold, map]
-
-  let pp pp_contract ppf { contract_binder; contract; contract_attr } =
-    Format.fprintf
-      ppf
-      "@[<2>contract %a =@ %a%a@]"
-      Contract_var.pp
-      contract_binder
-      pp_contract
-      contract
-      Attr.pp
-      contract_attr
 end

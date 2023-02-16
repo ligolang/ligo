@@ -43,8 +43,7 @@ let linearity_prg ~raise : program -> program =
    fun x ->
     match x.wrap_content with
     | D_irrefutable_match { pattern; _ } -> check_linearity_pattern ~raise pattern
-    (* Shouldn't we be checking  *)
-    | D_value _ | D_type _ | D_module _ | D_contract _ -> ()
+    | D_value _ | D_type _ | D_module _ -> ()
   in
   List.iter ~f x;
   x

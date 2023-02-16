@@ -870,9 +870,6 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
                           ({ expr; ellipsis = Token.ghost_ellipsis } : CST.property_rest))
                    , [ Token.ghost_comma, p ] )))
        ]
-  | E_originate _ | E_contract_call _ ->
-    (* TODO: Contracts *)
-    assert false
 
 
 and statements_to_block (statements : statement_or_expr list) =
@@ -1217,9 +1214,6 @@ and decompile_declaration : AST.declaration -> CST.statement =
               ; kwd_import = Token.ghost_import
               ; equal = Token.ghost_eq
               })))
-  | D_contract _ ->
-    (* TODO: Contracts *)
-    assert false
 
 
 and decompile_module : AST.module_ -> CST.ast =

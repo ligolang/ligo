@@ -69,9 +69,6 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
         | D_module module_decl' ->
           let module_decl' = module_decl module_decl' in
           D_module module_decl'
-        | D_contract contract_decl ->
-          let contract_decl = Contract_decl.map contract_expr contract_decl in
-          D_contract contract_decl
         | D_value value_decl' ->
           let value_decl' = value_decl value_decl' in
           D_value value_decl'
@@ -82,30 +79,7 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
           let pattern_decl' = pattern_decl pattern_decl' in
           D_irrefutable_match pattern_decl')
       decl
-  and contract_declaration : contract_declaration -> contract_declaration =
-   fun decl ->
-    Location.map
-      (function
-        | C_value value_decl' ->
-          let value_decl' = value_decl value_decl' in
-          C_value value_decl'
-        | C_module module_decl' ->
-          let module_decl' = module_decl module_decl' in
-          C_module module_decl'
-        | C_contract contract_decl' ->
-          let contract_decl' = contract_decl contract_decl' in
-          C_contract contract_decl'
-        | C_entry value_decl' ->
-          let value_decl' = value_decl value_decl' in
-          C_entry value_decl'
-        | C_view value_decl' ->
-          let value_decl' = value_decl value_decl' in
-          C_view value_decl'
-        | _ as decl -> decl)
-      decl
-  and contract_decl decl = Contract_decl.map contract_expr decl
-  and module' module_ = List.map ~f:declaration module_
-  and contract_expr expr = Location.map (Contract_expr.map contract_declaration) expr in
+  and module' module_ = List.map ~f:declaration module_ in
   List.map ~f:declaration ds
 
 
