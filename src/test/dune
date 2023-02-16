@@ -107,4 +107,6 @@
 (rule
  (alias lsp-test)
  (action
-  (run ./lsp_test.exe)))
+  (run ./lsp_test.exe))
+ (deps
+  (source_tree contracts)))

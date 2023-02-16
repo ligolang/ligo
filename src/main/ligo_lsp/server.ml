@@ -41,20 +41,20 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
 
       (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
-      method on_notif_doc_did_open ~notify_back d ~content : unit IO.t =
+      method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
         run_handler
           { notify_back = Normal notify_back
           ; debug = debug_handlers
           ; docs_cache = get_scope_buffers
           }
-        @@ Requests.on_doc d.uri content
+        @@ Requests.on_doc document.uri content
 
       (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a new document is opened. *)
       method on_notif_doc_did_change
           ~notify_back
-          d
-          _c
+          document
+          _changes
           ~old_content:_old
           ~new_content
           : unit IO.t =
@@ -63,14 +63,13 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           ; debug = debug_handlers
           ; docs_cache = get_scope_buffers
           }
-        @@ Requests.on_doc d.uri new_content
+        @@ Requests.on_doc document.uri new_content
 
-      (* On document closes, we remove the state associated to the file from the global
-       hashtable state, to avoid leaking memory. *)
-      method on_notif_doc_did_close ~notify_back _ : unit IO.t =
-        let* () = notify_back#send_log_msg ~type_:Info "Closed!!!" in
-        Linol_lwt.return ()
-
+      (* TODO: When the document closes, we should thinking about removing the
+         state associated to the file from the global hashtable state, to avoid
+         leaking memory. We should also think about clearing diagnostics.
+         Handle me with #1657. *)
+      method on_notif_doc_did_close ~notify_back:_ _ : unit IO.t = Linol_lwt.return ()
       method! config_hover = Some (`Bool true)
       method config_formatting = Some (`Bool true)
       method! config_definition = Some (`Bool true)
@@ -82,6 +81,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
 
       method config_references = Some (`Bool true)
       method config_type_definition = Some (`Bool true)
+      method config_folding_range = Some (`Bool true)
 
       method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t
           =
@@ -93,6 +93,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         ; referencesProvider = self#config_references
         ; typeDefinitionProvider = self#config_type_definition
         ; documentLinkProvider = self#config_document_link_provider
+        ; foldingRangeProvider = self#config_folding_range
         }
 
       method! on_request
@@ -133,6 +134,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           | Client_request.TextDocumentLink { textDocument; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ Requests.on_req_document_link uri
+          | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
+            let uri = textDocument.uri in
+            run ~uri @@ Requests.on_req_folding_range uri
           | _ -> super#on_request ~notify_back ~id r
     end
 end

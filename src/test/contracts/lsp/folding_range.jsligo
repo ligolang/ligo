@@ -1,0 +1,20 @@
+type sum =
+  | { kind: "ChoiceA" }
+  | { kind: "ChoiceB" };
+
+const fold_test = (input: sum) : bool => {
+  switch (input.kind) {
+    case "ChoiceA": return false
+    case "ChoiceB": return true
+  }
+};
+
+type record = {
+  fieldA : int,
+  fieldB : unit,
+};
+
+const value : record = {
+  fieldA: 0,
+  fieldB: unit,
+};
