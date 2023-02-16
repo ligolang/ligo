@@ -26,6 +26,14 @@
 
 <!--- Describe your changes in detail -->
 
+## Component
+
+* [ ] compiler
+* [ ] website
+* [ ] webide
+* [ ] vscode-plugin
+* [X] debugger
+
 ## Types of changes
 
 * [ ] Bug fix (non-breaking change which fixes an issue)
