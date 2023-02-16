@@ -349,8 +349,11 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             csRecordedRangesL %= HS.insert statement
 
           contracts <- use csParsedFilesL
+          lastLoc <- use csLastRangeMbL
 
-          unless (shouldIgnoreMeta loc instr contracts) do
+          -- There is no reason to record a snapshot with @EventExpressionPreview@
+          -- event if we already recorded a @statement@ snapshot with the same location.
+          unless (shouldIgnoreMeta loc instr contracts || lastLoc == Just loc) do
             let eventExpressionReason =
                   if isLocationForFunctionCall loc contracts
                   then FunctionCall
@@ -388,8 +391,6 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             [int||
               Just evaluated: #{evaluatedVal}
             |]
-
-          csLastRangeMbL ?= loc
 
           contracts <- use csParsedFilesL
 
@@ -503,6 +504,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
         |]
 
       csLastRecordedSnapshotL ?= newSnap
+      csLastRangeMbL ?= loc
       lift $ C.yield newSnap
 
     getStatements :: LigoRange -> CollectingEvalOp m [LigoRange]

@@ -182,6 +182,12 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
     | isTopLevel y -> onFail xs
     | otherwise -> onSuccess x xs
 
+  -- It would be convenient to see function assignments
+  -- that not at top level.
+  x@(layer -> Just AST.BFunction{}) : xs@(y : _)
+    | isTopLevel y -> onFail xs
+    | otherwise -> onSuccess x xs
+
   -- Like with @BConst@ but couldn't be encountered at top-level.
   -- For now it seems unused but let's leave it as is.
   x@(layer -> Just AST.BVar{}) : xs -> onSuccess x xs
