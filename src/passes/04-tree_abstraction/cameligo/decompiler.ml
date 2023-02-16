@@ -735,9 +735,6 @@ let rec decompile_expression : AST.expression -> CST.expr =
          "Decompiling a imperative construct to CameLIGO %a"
          AST.PP.expression
          expr
-  | E_originate _ | E_contract_call _ ->
-    (* TODO: Contracts *)
-    assert false
 
 
 and decompile_to_path : Value_var.t -> _ Access_path.t -> CST.path =
@@ -880,9 +877,6 @@ and decompile_declaration : AST.declaration -> CST.declaration =
         { kwd_module = Token.ghost_module; alias; eq = Token.ghost_eq; binders }
       in
       CST.ModuleAlias (wrap mod_alias))
-  | D_contract _ ->
-    (* TODO: Contracts *)
-    assert false
 
 
 and decompile_pattern : AST.type_expression option AST.Pattern.t -> CST.pattern =

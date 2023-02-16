@@ -573,9 +573,6 @@ let rec expression ~raise
     let defs_module, refs_result = update_references refs_result defs_module in
     let defs, refs_result = update_references refs_result (defs_result @ defs_module) in
     defs, refs_result @ refs_module, tenv, merge_same_scopes scopes @ scopes'
-  | E_originate _ | E_contract_call _ ->
-    (* TODO: Contracts *)
-    assert false
 
 
 and type_expression : TVar.t -> def_type -> AST.type_expression -> def =
@@ -695,9 +692,6 @@ and declaration ~raise
     in
     let defs, refs = update_references refs defs in
     defs, refs, env, scopes
-  | D_contract _ ->
-    (* TODO: Contracts *)
-    assert false
 
 
 and declarations ~raise

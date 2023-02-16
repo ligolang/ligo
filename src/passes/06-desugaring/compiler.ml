@@ -50,7 +50,6 @@ let compile_type_attributes : I.Attr.t -> O.TypeOrModuleAttr.t =
 
 
 let compile_module_attributes = compile_type_attributes
-let compile_contract_attributes = compile_type_attributes
 
 let compile_fields_to_layout_fields fields =
   List.map fields ~f:(fun (label, I.{ row_elem_attributes; _ }) ->
@@ -323,12 +322,6 @@ let rec compile_expression ~raise : I.expression -> O.expression =
     let attributes = compile_value_attributes attributes in
     return @@ O.E_let_mut_in { let_binder; attributes; rhs; let_result }
   | I.E_skip () -> O.e_unit ~loc ~sugar:expr ()
-  | I.E_originate originate ->
-    let originate = Originate.map self originate in
-    return @@ O.E_originate originate
-  | I.E_contract_call contract_call ->
-    let contract_call = Contract_call.map self contract_call in
-    return @@ O.E_contract_call contract_call
 
 
 and compile_match_expr ~raise
@@ -424,89 +417,29 @@ and desugar_tuple_to_record exprs =
   exprs |> List.mapi ~f:(fun i elem -> Label.of_int i, elem) |> Record.of_list
 
 
-and compile_value_decl ~raise I.Value_decl.{ binder; expr; attr } =
-  let binder = Binder.map (compile_type_expression_option ~raise) binder in
-  let expr = compile_expression ~raise expr in
-  let attr = compile_value_attributes attr in
-  O.Value_decl.{ binder; expr; attr }
-
-
-and compile_pattern_decl ~raise I.Pattern_decl.{ pattern; expr; attr } =
-  let pattern = I.Pattern.map (compile_type_expression_option ~raise) pattern in
-  let pattern = compile_pattern ~raise pattern in
-  let expr = compile_expression ~raise expr in
-  let attr = compile_value_attributes attr in
-  O.Pattern_decl.{ pattern; expr; attr }
-
-
-and compile_type_decl ~raise I.Type_decl.{ type_binder; type_expr; type_attr } =
-  let type_expr = compile_type_expression ~raise type_expr in
-  let type_attr = compile_type_attributes type_attr in
-  O.Type_decl.{ type_binder; type_expr; type_attr }
-
-
-and compile_module_decl ~raise I.Module_decl.{ module_binder; module_; module_attr } =
-  let module_ = compile_module_expr ~raise module_ in
-  let module_attr = compile_module_attributes module_attr in
-  O.Module_decl.{ module_binder; module_; module_attr }
-
-
-and compile_contract_decl
-    ~raise
-    I.Contract_decl.{ contract_binder; contract; contract_attr }
-  =
-  let contract = compile_contract_expr ~raise contract in
-  let contract_attr = compile_contract_attributes contract_attr in
-  O.Contract_decl.{ contract_binder; contract; contract_attr }
-
-
 and compile_declaration ~raise : I.declaration -> O.declaration =
  fun d ->
   let return wrap_content : O.declaration = { d with wrap_content } in
   match Location.unwrap d with
-  | D_value value_decl ->
-    let value_decl = compile_value_decl ~raise value_decl in
-    return @@ D_value value_decl
-  | D_irrefutable_match pattern_decl ->
-    let pattern_decl = compile_pattern_decl ~raise pattern_decl in
-    return @@ D_irrefutable_match pattern_decl
-  | D_type type_decl ->
-    let type_decl = compile_type_decl ~raise type_decl in
-    return @@ D_type type_decl
-  | D_module module_decl ->
-    let module_decl = compile_module_decl ~raise module_decl in
-    return @@ D_module module_decl
-  | D_contract contract_decl ->
-    let contract_decl = compile_contract_decl ~raise contract_decl in
-    return @@ D_contract contract_decl
-
-
-and compile_contract_declaration ~raise : I.contract_declaration -> O.contract_declaration
-  =
- fun d ->
-  let return wrap_content : O.contract_declaration = { d with wrap_content } in
-  match Location.unwrap d with
-  | C_value value_decl ->
-    let value_decl = compile_value_decl ~raise value_decl in
-    return @@ C_value value_decl
-  | C_irrefutable_match pattern_decl ->
-    let pattern_decl = compile_pattern_decl ~raise pattern_decl in
-    return @@ C_irrefutable_match pattern_decl
-  | C_type type_decl ->
-    let type_decl = compile_type_decl ~raise type_decl in
-    return @@ C_type type_decl
-  | C_module module_decl ->
-    let module_decl = compile_module_decl ~raise module_decl in
-    return @@ C_module module_decl
-  | C_contract contract_decl ->
-    let contract_decl = compile_contract_decl ~raise contract_decl in
-    return @@ C_contract contract_decl
-  | C_entry value_decl ->
-    let value_decl = compile_value_decl ~raise value_decl in
-    return @@ C_entry value_decl
-  | C_view value_decl ->
-    let value_decl = compile_value_decl ~raise value_decl in
-    return @@ C_view value_decl
+  | D_value { binder; expr; attr } ->
+    let binder = Binder.map (compile_type_expression_option ~raise) binder in
+    let expr = compile_expression ~raise expr in
+    let attr = compile_value_attributes attr in
+    return @@ D_value { binder; expr; attr }
+  | D_irrefutable_match { pattern; expr; attr } ->
+    let pattern = I.Pattern.map (compile_type_expression_option ~raise) pattern in
+    let pattern = compile_pattern ~raise pattern in
+    let expr = compile_expression ~raise expr in
+    let attr = compile_value_attributes attr in
+    return @@ D_irrefutable_match { pattern; expr; attr }
+  | D_type { type_binder; type_expr; type_attr } ->
+    let type_expr = compile_type_expression ~raise type_expr in
+    let type_attr = compile_type_attributes type_attr in
+    return @@ D_type { type_binder; type_expr; type_attr }
+  | D_module { module_binder; module_; module_attr } ->
+    let module_ = compile_module_expr ~raise module_ in
+    let module_attr = compile_module_attributes module_attr in
+    return @@ D_module { module_binder; module_; module_attr }
 
 
 and compile_module_expr ~raise : I.module_expr -> O.module_expr =
@@ -520,25 +453,10 @@ and compile_module_expr ~raise : I.module_expr -> O.module_expr =
   | M_module_path mp -> return @@ M_module_path mp
 
 
-and compile_contract_expr ~raise : I.contract_expr -> O.contract_expr =
- fun contract_expr ->
-  let return wrap_content : O.contract_expr = { contract_expr with wrap_content } in
-  match Location.unwrap contract_expr with
-  | C_struct decls ->
-    let decls = compile_contract ~raise decls in
-    return @@ C_struct decls
-  | C_variable contract_var -> return @@ C_variable contract_var
-  | C_module_path contract_path -> return @@ C_module_path contract_path
-
-
 and compile_decl ~raise : I.decl -> O.decl = fun d -> compile_declaration ~raise d
 
 and compile_module ~raise : I.module_ -> O.module_ =
  fun m -> List.map ~f:(compile_decl ~raise) m
-
-
-and compile_contract ~raise contract =
-  List.map ~f:(compile_contract_declaration ~raise) contract
 
 
 let compile_program ~raise : I.program -> O.program =

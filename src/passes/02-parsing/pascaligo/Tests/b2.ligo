@@ -1,3 +1,4 @@
-#include "../B3.ligo"
+#include "../b3.ligo"
 
 const b2 = b3 * 3
+
