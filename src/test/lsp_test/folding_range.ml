@@ -42,12 +42,14 @@ let get_folding_range_test ({ file_path; folding_ranges } : folding_range_test)
   | None -> Alcotest.fail "Expected some list of folding ranges, got None"
 
 
-let mk_region (startLine, startCharacter) (endLine, endCharacter) =
+let mk_folding_range kind (startLine, startCharacter) (endLine, endCharacter) =
   let startCharacter = Some startCharacter in
   let endCharacter = Some endCharacter in
-  let kind = FoldingRangeKind.Region in
   FoldingRange.create ~startLine ?startCharacter ~endLine ?endCharacter ~kind ()
 
+
+let mk_region = mk_folding_range FoldingRangeKind.Region
+let mk_import = mk_folding_range FoldingRangeKind.Imports
 
 let test_cases =
   [ { file_path = "contracts/lsp/folding_range.mligo"
@@ -87,6 +89,9 @@ let test_cases =
         ; mk_region (16, 7) (19, 2)
         ; mk_region (16, 24) (19, 2)
         ]
+    }
+  ; { file_path = "contracts/lsp/import.jsligo"
+    ; folding_ranges = [ mk_import (0, 1) (3, 14) ]
     }
   ]
 
