@@ -35,5 +35,5 @@ let get_diagnostics : Ligo_interface.get_scope_info -> simple_diagnostic list =
     ; severity = DiagnosticSeverity.Warning
     }
   in
-  List.map ~f:extract_warning_information warnings
-  @ List.concat_map ~f:extract_error_information errors
+  List.concat_map ~f:extract_error_information errors
+  @ List.map ~f:extract_warning_information warnings

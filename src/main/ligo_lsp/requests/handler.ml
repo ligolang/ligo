@@ -3,13 +3,18 @@ open Linol_lwt.Jsonrpc2
 open Utils
 module Hashtbl = Caml.Hashtbl
 
+type config =
+  { max_number_of_problems : int
+  ; debug : bool
+  }
+
 type notify_back_mockable =
   | Normal of notify_back
   | Mock of Jsonrpc2.Diagnostic.t list ref
 
 type handler_env =
   { notify_back : notify_back_mockable
-  ; debug : bool
+  ; config : config
   ; docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t
   }
 
@@ -44,7 +49,7 @@ let fmap_to (x : 'a Handler.t) (f : 'a -> 'b) : 'b Handler.t = fmap f x
 let lift_IO (m : 'a IO.t) : 'a Handler.t = Handler (fun _ -> m)
 let ask : handler_env Handler.t = Handler IO.return
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
-let ask_debug : bool Handler.t = fmap (fun x -> x.debug) ask
+let ask_config : config Handler.t = fmap (fun x -> x.config) ask
 
 let ask_docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t =
   fmap (fun x -> x.docs_cache) ask
@@ -101,7 +106,7 @@ let send_diagnostic (s : Jsonrpc2.Diagnostic.t list) : unit Handler.t =
 
 
 let send_debug_msg (s : string) : unit Handler.t =
-  let@ debug = ask_debug in
+  let@ { debug; _ } = ask_config in
   when_ debug @@ send_log_msg ~type_:MessageType.Info s
 
 

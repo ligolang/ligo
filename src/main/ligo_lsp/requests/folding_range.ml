@@ -20,10 +20,10 @@ let mk_imports : Region.t -> FoldingRange.t = mk_folding_range FoldingRangeKind.
 let nseq_concat_map nseq ~f = List.concat_map (nseq_to_list nseq) ~f
 let nsepseq_concat_map nsepseq ~f = List.concat_map (nsepseq_to_list nsepseq) ~f
 let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
-let value_map ~f ~default value = Option.value (Option.map f value) ~default
 
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
  fun cst ->
+  let open Utils in
   let open! Cst.Cameligo in
   (* General *)
   let rec declaration_list value = nseq_concat_map value.decl ~f:declaration
@@ -183,6 +183,7 @@ let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
 
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
  fun cst ->
+  let open Utils in
   let open! Cst.Jsligo in
   (* General *)
   let rec statement_list value = nseq_concat_map value.statements ~f:toplevel_statement

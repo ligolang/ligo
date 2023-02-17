@@ -315,3 +315,15 @@ let get_cst ~(strict : bool) (syntax : Syntax_types.t) (code : string)
       Ok (PascaLIGO_cst (Parsing.Pascaligo.parse_string ~preprocess:false ~raise buffer))
   with
   | Fatal_cst_error err -> Error err
+
+
+let rec take (n : int) (xs : 'a list) : 'a list =
+  if n <= 0
+  then []
+  else (
+    match xs with
+    | [] -> []
+    | x :: xs -> x :: take (n - 1) xs)
+
+
+let value_map ~f ~default value = Option.value (Option.map ~f value) ~default
