@@ -11,7 +11,7 @@ let test_run_session (session : 'a Handler.t) : 'a * Jsonrpc2.Diagnostic.t list 
   let result =
     run_handler
       { notify_back = Mock mocked_notify_back
-      ; config = { max_number_of_problems = Int.max_value; debug = false }
+      ; config = { max_number_of_problems = Int.max_value; logging_verbosity = Log }
       ; docs_cache = Hashtbl.create 32
       }
       session

@@ -2,8 +2,10 @@ module Hashtbl = Caml.Hashtbl
 
 (** Stores the configuration pertaining to the LIGO language server. *)
 type config =
-  { max_number_of_problems : int (** The maximum number of diagnostics to be shown. Defaults to 100. *)
-  ; debug : bool (** Whether to show debug messages. Defaults to false. *)
+  { max_number_of_problems : int
+        (** The maximum number of diagnostics to be shown. Defaults to 100. *)
+  ; logging_verbosity : Lsp.Types.MessageType.t
+        (** The level of verbosity when logging. Defaults to Info. *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)

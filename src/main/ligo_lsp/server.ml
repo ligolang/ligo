@@ -20,7 +20,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
     Hashtbl.create 32
 
 
-  let default_config : config = { max_number_of_problems = 100; debug = false }
+  let default_config : config =
+    { max_number_of_problems = 100; logging_verbosity = MessageType.Info }
+
 
   (* Lsp server class
 
@@ -69,6 +71,16 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
                  |> member "maxNumberOfProblems"
                  |> to_int_option
                  |> Option.value ~default:default_config.max_number_of_problems
+             ; logging_verbosity =
+                 (ligo_language_server
+                 |> member "loggingVerbosity"
+                 |> to_string_option
+                 |> function
+                 | Some "error" -> MessageType.Error
+                 | Some "warning" -> MessageType.Warning
+                 | Some "info" -> MessageType.Info
+                 | Some "log" -> MessageType.Log
+                 | Some _ | None -> default_config.logging_verbosity)
              }
 
       method! on_req_initialize

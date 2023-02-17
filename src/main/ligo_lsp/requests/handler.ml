@@ -5,7 +5,7 @@ module Hashtbl = Caml.Hashtbl
 
 type config =
   { max_number_of_problems : int
-  ; debug : bool
+  ; logging_verbosity : MessageType.t
   }
 
 type notify_back_mockable =
@@ -92,7 +92,11 @@ let when_some_m' (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b option Hand
 let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal nb -> lift_IO (nb#send_log_msg ~type_ s)
+  | Normal nb ->
+    let@ { logging_verbosity; _ } = ask_config in
+    if Caml.(type_ <= logging_verbosity)
+    then lift_IO @@ nb#send_log_msg ~type_ s
+    else return ()
   | Mock _ -> return ()
 
 
@@ -105,10 +109,7 @@ let send_diagnostic (s : Jsonrpc2.Diagnostic.t list) : unit Handler.t =
     return ()
 
 
-let send_debug_msg (s : string) : unit Handler.t =
-  let@ { debug; _ } = ask_config in
-  when_ debug @@ send_log_msg ~type_:MessageType.Info s
-
+let send_debug_msg : string -> unit Handler.t = send_log_msg ~type_:MessageType.Log
 
 let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handler.t =
   let@ nb = ask_notify_back in
