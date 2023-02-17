@@ -47,11 +47,12 @@ module type S =
   sig
     (* Preprocessing from various sources *)
 
-    val from_lexbuf  : Lexing.lexbuf preprocessor
-    val from_channel :    in_channel preprocessor
-    val from_string  :        string preprocessor
-    val from_file    :     file_path preprocessor
-    val from_buffer  :      Buffer.t preprocessor
+    val from_lexbuf    :        Lexing.lexbuf preprocessor
+    val from_channel   :           in_channel preprocessor
+    val from_string    :               string preprocessor
+    val from_raw_input : (file_path * string) preprocessor
+    val from_file      :            file_path preprocessor
+    val from_buffer    :             Buffer.t preprocessor
   end
 
 module Make (Config : Config.S) (Options : Options.S) : S

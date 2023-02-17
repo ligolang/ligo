@@ -37,7 +37,8 @@ module M (Params : Params) = struct
         (Syntax_name "auto")
         (match code_input with
         | From_file file_name -> Some file_name
-        | Raw { id; _ } -> Some id)
+        | Raw { id; _ } -> Some id
+        | Raw_input_lsp { file; _ } -> Some file)
     in
     let meta = Ligo_compile.Of_source.extract_meta syntax in
     let c_unit, deps =
@@ -50,6 +51,13 @@ module M (Params : Params) = struct
           file_name
       | Raw { id = _; code } ->
         Ligo_compile.Helpers.preprocess_string ~raise ~meta ~options:options.frontend code
+      | Raw_input_lsp { file; code } ->
+        Ligo_compile.Helpers.preprocess_raw_input
+          ~raise
+          ~meta
+          ~options:options.frontend
+          file
+          code
     in
     c_unit, meta, deps
 
@@ -216,7 +224,7 @@ let qualified_core ~raise
   @@ from_result (compile_qualified (Source_input.From_file filename))
 
 
-let qualified_core_raw_input ~raise
+let qualified_core_from_stirng ~raise
     : options:Compiler_options.t -> Source_input.raw_input -> Ast_core.program
   =
  fun ~options input ->
@@ -229,6 +237,21 @@ let qualified_core_raw_input ~raise
   end) in
   trace ~raise build_error_tracer
   @@ from_result (compile_qualified (Source_input.Raw input))
+
+
+let qualified_core_from_raw_input ~raise
+    : options:Compiler_options.t -> string -> string -> Ast_core.program
+  =
+ fun ~options file code ->
+  let std_lib = Stdlib.get ~options in
+  let open Build_core (struct
+    let raise = raise
+    let options = options
+    let std_lib = std_lib
+    let top_level_syntax = get_top_level_syntax ~options ~filename:file ()
+  end) in
+  trace ~raise build_error_tracer
+  @@ from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
 
 
 let qualified_typed ~raise

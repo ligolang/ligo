@@ -8,10 +8,15 @@ module List = Simple_utils.List
 module Source_input = struct
   type file_name = string
   type raw_input = { id : file_name ; code : string }
-  type code_input = From_file of file_name | Raw of raw_input
+  type raw_input_lsp = { file : file_name ; code : string }
+  type code_input = 
+    From_file of file_name 
+  | Raw of raw_input 
+  | Raw_input_lsp of raw_input_lsp
   let id_of_code_input : code_input -> file_name = function
-  | From_file file_name -> file_name
+    From_file file_name -> file_name
   | Raw { id ; code = _  } -> id
+  | Raw_input_lsp { file ; code = _ } -> file
 end
 
 module type M =
@@ -178,4 +183,3 @@ module Make (M : M) =
         Ok contract
       | Error e -> Error e
   end
-

@@ -46,15 +46,15 @@ module Make (Ligo_api : LIGO_API) = struct
   let get_scope : DocumentUri.t -> string -> get_scope_api_result =
    fun uri source ->
     (* packages - project_root [later] *)
-    let file_path = DocumentUri.to_path uri in
+    let file = DocumentUri.to_path uri in
     (* #include - Pass lib or dirs *)
-    let dir_name = Filename.dirname file_path in
+    let dir_name = Filename.dirname file in
     let compiler_options =
       Compiler_options.Raw_options.make ~with_types:true ~libraries:[ dir_name ] ()
     in
     Ligo_api.Info.get_scope_trace
       compiler_options
-      (Raw { id = file_path; code = source })
+      (Raw_input_lsp { file ; code = source })
       ()
 
 
