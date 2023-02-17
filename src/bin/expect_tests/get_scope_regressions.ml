@@ -198,3 +198,215 @@ let%expect_test _ =
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning. |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "module_alias_def_reference.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 19-20
+    [ D#3 A#2 B#1 toto#0  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
+
+    Variable definitions:
+    Type definitions:
+    Module definitions:
+    (A#2 -> A)
+    Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 2, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 2, character 0 to line 6, character 3
+    Content: Members: Variable definitions:
+                      Type definitions:
+                      Module definitions:
+                      (B#1 -> B)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 3, characters 11-12
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 3, character 4 to line 5, character 7
+                      Content: Members: Variable definitions:
+                                        (toto#0 -> toto)
+                                        Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 12-16
+                                        Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 19-20
+                                        Content: |resolved: int|
+                                        references:
+                                          File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 17-21
+                                        Type definitions:
+                                        Module definitions:
+
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 17-18
+
+
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-16
+
+    (C#5 -> C)
+    Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 8, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 8, character 0 to line 11, character 3
+    Content: Members: Variable definitions:
+                      (tata#4 -> tata)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 8-12
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
+                      Content: |resolved: int|
+                      references: []
+                      Type definitions:
+                      Module definitions:
+                      (D#3 -> D)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 11-12
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-18
+                      Content: Alias: A#2.B#1
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-16
+
+
+    references: [] |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "local_module_alias_def_reference.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [ titi#0  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 25-27
+    [ E#5 D#4 A#3 C#2 toto#1 titi#0  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
+
+    Variable definitions:
+    (toto#6 -> toto)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 4-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, character 4 to line 12, character 10
+    Content: |core: D.titi|
+    references: []
+    Type definitions:
+    Module definitions:
+    (A#3 -> A)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 1, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 1, character 0 to line 6, character 3
+    Content: Members: Variable definitions:
+                      Type definitions:
+                      (titi#0 -> titi)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 9-13
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 16-19
+                      Content: : |int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22 ,
+                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 13-17
+                      Module definitions:
+                      (C#2 -> C)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 3, characters 11-12
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 3, character 4 to line 5, character 7
+                      Content: Members: Variable definitions:
+                                        (toto#1 -> toto)
+                                        Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 12-16
+                                        Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 25-27
+                                        Content: |core: titi|
+                                        references:
+                                          File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 6-10
+                                        Type definitions:
+                                        Module definitions:
+
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 17-18
+
+
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-16
+
+    (D#4 -> D)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12
+    Content: Alias: A#3
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-12
+
+    (E#5 -> E)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-18
+    Content: Alias: A#3.C#2
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-5 |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "local_module_alias_def_reference2.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 23-24
+    [ F#3 A#2 C#1 toto#0  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
+    [ E#5 toto#4 F#3 A#2 C#1 toto#0  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
+
+    Variable definitions:
+    (toto#6 -> toto)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 1, characters 4-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, character 4 to line 11, character 10
+    Content: |core: int|
+    references: []
+    Type definitions:
+    Module definitions:
+    (A#2 -> A)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, character 4 to line 6, character 7
+    Content: Members: Variable definitions:
+                      Type definitions:
+                      Module definitions:
+                      (C#1 -> C)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 3, characters 15-16
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 3, character 8 to line 5, character 11
+                      Content: Members: Variable definitions:
+                                        (toto#0 -> toto)
+                                        Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 16-20
+                                        Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 23-24
+                                        Content: |resolved: int|
+                                        references:
+                                          File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 21-25
+                                        Type definitions:
+                                        Module definitions:
+
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 21-22
+
+
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-20
+
+    (E#5 -> E)
+    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 7, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 7, character 4 to line 10, character 7
+    Content: Members: Variable definitions:
+                      (toto#4 -> toto)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 12-16
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 6-10
+                      Type definitions:
+                      Module definitions:
+                      (F#3 -> F)
+                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 15-16
+                      Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-22
+                      Content: Alias: A#2.C#1
+                      references:
+                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-20
+
+
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-5 |}]
