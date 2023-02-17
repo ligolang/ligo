@@ -972,7 +972,7 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step [int||Check stack frames after leaving "add5"|]
         checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
-  , testCaseSteps "Paritally applied function inside top level function" \step -> do
+  , testCaseSteps "Partially applied function inside top level function" \step -> do
       let file = contractsDir </> "complex-apply.mligo"
       let runData = ContractRunData
             { crdProgram = file
@@ -982,6 +982,8 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
+        -- Go to function call first.
+        moveTill Forward $ isAtLine 3
         moveTill Forward $ isAtLine 1
 
         liftIO $ step [int||Go into "add5"|]
@@ -1028,6 +1030,8 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
+        -- Go to function call first.
+        moveTill Forward $ isAtLine 6
         moveTill Forward $ isAtLine 5
 
         liftIO $ step [int||Check "sub" stack frames inside "lambdaFun"|]
@@ -1124,7 +1128,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 1 37) (LigoPosition 1 45)
+                { sfLoc = LigoRange _ (LigoPosition 1 37) (LigoPosition 1 52)
                 , sfName = "failwith"
                 } :|
                   StackFrame
@@ -1321,18 +1325,6 @@ test_Snapshots = testGroup "Snapshots collection"
         replicateM_ 3 do
           let loc = LigoRange file (LigoPosition 9 41) (LigoPosition 9 50)
 
-          liftIO $ step "Aux function in \"fold\" is calculated"
-          checkSnapshot \case
-            InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview{}
-              , isStackFrames = StackFrame
-                  { sfLoc = loc'
-                  } :| _
-              } | loc' == loc -> pass
-            snap -> unexpectedSnapshot snap
-
-          void $ move Forward
-
           checkSnapshot \case
             InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionEvaluated{}
@@ -1479,6 +1471,43 @@ test_Snapshots = testGroup "Snapshots collection"
           (  elem (LigoRange file (LigoPosition 8 6) (LigoPosition 8 17))
           )
     ]
+
+  , testCaseSteps "EventExpressionPreview is skipped after EventFacedStatement" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "evaluated-event-after-statement.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        void $ moveTill Forward (isAtLine 3)
+        void $ moveTill Forward (isAtLine 0)
+
+        liftIO $ step "Check \"EventFacedStatement\" event"
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning EventFacedStatement
+            , isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 1 35) (LigoPosition 1 40)
+                } :| _
+            } -> pass
+          snap -> unexpectedSnapshot snap
+
+        void $ move Forward
+
+        liftIO $ step
+          [int||Check that EventExpressionPreview is skipped and \
+          we go to EventExpressionEvaluated immediately|]
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning EventExpressionEvaluated{}
+            , isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 1 35) (LigoPosition 1 40)
+                } :| _
+            } -> pass
+          snap -> unexpectedSnapshot snap
   ]
 
 -- | Special options for checking contract.
