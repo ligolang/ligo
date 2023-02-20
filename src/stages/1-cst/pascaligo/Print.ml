@@ -103,8 +103,8 @@ let print_D_Directive state (node : Directive.t) =
    except for the printers from [Tree], like [Tree.print_unary], which
    are always qualified. *)
 
-let rec print_cst state (node : cst) =
-  print_nseq state "<cst>" print_declaration node.decl
+let rec print_cst state {decl;_} =
+  print_nseq state "<ast>" print_declaration decl
 
 (* DECLARATIONS *)
 

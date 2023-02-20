@@ -34,8 +34,10 @@ let of_string_opt ~raise (Syntax_name syntax) source =
 let to_string = function
   | CameLIGO -> "cameligo"
   | JsLIGO -> "jsligo"
+  | PascaLIGO -> "pascaligo"
 
 
 let to_ext = function
   | CameLIGO -> ".mligo"
   | JsLIGO -> ".jsligo"
+  | PascaLIGO -> ".ligo"

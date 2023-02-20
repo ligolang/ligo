@@ -5,8 +5,8 @@ function assert_string_failure (const res : test_exec_result ; const expected : 
   } with
     case res of [
     | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal (actual, expected))
-    | Fail (Other) -> failwith ("contract failed for an unknown reason")
-    | Success -> failwith ("bad price check")
+    | Fail (_) -> failwith ("contract failed for an unknown reason")
+    | Success (_) -> failwith ("bad price check")
     ]
 
 const test = {
@@ -37,7 +37,7 @@ const test = {
   const ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 1tez) ;
   const _unit =
      case ok_case of [
-    | Success  -> {
+    | Success (_)  -> {
       const storage = Test.get_storage (pedro_taco_shop_ta) ;
     } with (assert (eq_in_map (record [ current_stock = 49n ; max_price = 50tez ], storage, 1n) and
                     eq_in_map (record [ current_stock = 20n ; max_price = 75tez ], storage, 2n)))

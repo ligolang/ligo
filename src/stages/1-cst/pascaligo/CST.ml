@@ -150,7 +150,7 @@ type t = {
   eof  : eof
 }
 
-and cst = t
+and ast = t
 
 (* DECLARATIONS (top-level) *)
 

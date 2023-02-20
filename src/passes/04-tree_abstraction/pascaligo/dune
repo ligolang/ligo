@@ -1,0 +1,9 @@
+(library
+ (name pascaligo)
+ (public_name ligo.pascaligo)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils tezos-utils cst ast_imperative predefined parsing
+   tree_abstraction_shared)
+ (preprocess
+  (pps ppx_poly_constructor)))

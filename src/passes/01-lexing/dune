@@ -13,5 +13,7 @@
   preprocessing_cameligo
   lexing_cameligo
   preprocessing_jsligo
-  lexing_jsligo)
- (modules Lexing Errors Cameligo jsligo))
+  lexing_jsligo
+  preprocessing_pascaligo
+  lexing_pascaligo)
+ (modules Lexing Errors Cameligo jsligo pascaligo))

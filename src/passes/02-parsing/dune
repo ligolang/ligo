@@ -12,6 +12,8 @@
   parsing_shared
   parsing_cameligo
   parsing_jsligo
+  parsing_pascaligo
   preprocessing_cameligo
-  preprocessing_jsligo)
- (modules Parsing Errors Cameligo Jsligo))
+  preprocessing_jsligo
+  preprocessing_pascaligo)
+ (modules Parsing Errors Cameligo Jsligo Pascaligo))

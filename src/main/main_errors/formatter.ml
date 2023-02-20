@@ -341,6 +341,10 @@ let rec error_ppformat
       List.iter
         ~f:(Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format ~no_colour f)
         e
+    | `Cit_pascaligo_tracer e ->
+      List.iter
+        ~f:(Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format ~no_colour f)
+        e
     | `Self_ast_imperative_tracer e ->
       Self_ast_imperative.Errors.error_ppformat ~display_format ~no_colour f e
     | `Desugaring_tracer e -> Desugaring.Errors.error_ppformat ~display_format f e
@@ -677,6 +681,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
     [ make ~stage:"pretty" ~content ]
   | `Cit_cameligo_tracer e -> List.map ~f:Tree_abstraction.Cameligo.Errors.error_json e
   | `Cit_jsligo_tracer e -> List.map ~f:Tree_abstraction.Jsligo.Errors.error_json e
+  | `Cit_pascaligo_tracer e -> List.map ~f:Tree_abstraction.Pascaligo.Errors.error_json e
   | `Self_ast_imperative_tracer e -> [ Self_ast_imperative.Errors.error_json e ]
   | `Desugaring_tracer e -> [ Desugaring.Errors.error_json e ]
   | `Checking_tracer e -> [ Checking.Errors.error_json e ]

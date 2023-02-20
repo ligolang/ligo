@@ -82,7 +82,8 @@ let validate_main_file ~main =
     let ext_opt = snd @@ Filename.split_extension main in
     let ligo_syntax_opt = Syntax.of_ext_opt ext_opt in
     (match ligo_syntax_opt with
-    | Some Syntax_types.CameLIGO | Some Syntax_types.JsLIGO -> Ok ()
+    | Some Syntax_types.CameLIGO | Some Syntax_types.JsLIGO | Some Syntax_types.PascaLIGO
+      -> Ok ()
     | None ->
       Error
         "Error: Invalid LIGO file specifed in main field of package.json\n\
