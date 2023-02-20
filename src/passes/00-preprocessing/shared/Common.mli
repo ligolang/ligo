@@ -34,11 +34,11 @@ module type S =
 
     (* Aliases *)
 
-    val preprocess_file       :            file_path preprocessor
-    val preprocess_string     :               string preprocessor
-    val preprocess_raw_input  : (file_path * string) preprocessor
-    val preprocess_buffer     :             Buffer.t preprocessor
-    val preprocess_channel    :         In_channel.t preprocessor
+    val preprocess_string    :               string preprocessor
+    val preprocess_file      :            file_path preprocessor
+    val preprocess_raw_input : (file_path * string) preprocessor
+    val preprocess_buffer    :             Buffer.t preprocessor
+    val preprocess_channel   :         In_channel.t preprocessor
   end
 
 module Make (Config : Config.S) : S

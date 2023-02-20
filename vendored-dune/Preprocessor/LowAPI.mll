@@ -762,7 +762,7 @@ and linemarker state = parse
 
     let from_string = from_lexbuf <@ Lexing.from_string
 
-    let from_raw_input : (file_path * string) preprocessor =
+    let from_raw_input =
       fun (file, input) ->
         try
           (from_lexbuf <@ Lexing.from_string) input

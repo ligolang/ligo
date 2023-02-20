@@ -224,7 +224,7 @@ let qualified_core ~raise
   @@ from_result (compile_qualified (Source_input.From_file filename))
 
 
-let qualified_core_from_stirng ~raise
+let qualified_core_from_string ~raise
     : options:Compiler_options.t -> Source_input.raw_input -> Ast_core.program
   =
  fun ~options input ->
