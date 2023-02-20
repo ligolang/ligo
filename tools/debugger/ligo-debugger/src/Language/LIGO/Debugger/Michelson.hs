@@ -9,14 +9,13 @@ module Language.LIGO.Debugger.Michelson
   , readLigoMapper
   ) where
 
-import Control.Lens (at, backwards, devoid, forOf, traverseOf, unsafePartsOf)
+import Control.Lens (at, devoid, forOf, unsafePartsOf)
 import Control.Lens.Extras (template)
 import Control.Lens.Prism (_Just)
 import Control.Monad.Except (Except, liftEither, runExcept, throwError)
 import Data.DList qualified as DL
 import Data.Data (Data)
 import Data.Default (Default, def)
-import Data.HashSet qualified as HS
 import Data.Set qualified as Set
 import Fmt (Buildable (..), Builder, indentF, pretty, unlinesF, (+|), (|+))
 import Generics.SYB (everywhere, mkM, mkT)
@@ -344,7 +343,6 @@ readLigoMapper ligoMapper typeRules instrRules = do
 
   uContract <-
     expressionToUntypedContract extendedExpression
-      <&> stripDuplicateLocations
 
   extendedContract@(SomeContract extContract) <-
     fromUntypedToTyped uContract isRedundantIndexedInfo typeRules instrRules
@@ -370,21 +368,3 @@ readLigoMapper ligoMapper typeRules instrRules = do
       ConcreteMeta (liiLocation @'Unique -> Just loc) instr
         -> DL.singleton (ExpressionSourceLocation loc $ not . shouldIgnoreMeta loc instr)
       _ -> mempty
-
-    -- Strip duplicate locations.
-    --
-    -- In practice it happens that LIGO produces snapshots for intermediate
-    -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
-    -- both having the same @location@ meta; we don't want the user to
-    -- see that.
-    stripDuplicateLocations :: ContractWithMeta EmbeddedLigoMeta -> ContractWithMeta EmbeddedLigoMeta
-    stripDuplicateLocations = evaluatingState HS.empty . traverseOf (backwards template) \(el :: EmbeddedLigoMeta) -> do
-      case liiLocation el of
-        Just loc -> do
-          ifM (HS.member loc <$> get)
-            do
-              pure (el & liiLocationL .~ Nothing)
-            do
-              modify $ HS.insert loc
-              pure el
-        Nothing -> pure el
