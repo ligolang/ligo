@@ -31,6 +31,7 @@ let get_prepare_rename_test
     match dialect with
     | CameLIGO -> "test.mligo"
     | JsLIGO -> "test.jsligo"
+    | PascaLIGO -> "test.ligo"
   in
   let uri = DocumentUri.of_path file in
   let get_scope_info = Ligo_interface.get_scope uri source in

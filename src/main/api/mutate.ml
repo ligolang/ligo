@@ -85,3 +85,12 @@ let mutate_cst (raw_options : Raw_options.t) source_file display_format seed no_
     let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
     let buffer = Parsing.Jsligo.pretty_print mutated_prg in
     buffer
+  | { syntax = PascaLIGO } ->
+    let module Fuzzer = Fuzz.Pascaligo.Mutator (Gen) in
+    let raw =
+      trace ~raise Main_errors.parser_tracer
+      @@ Parsing.Pascaligo.parse_file c_unit source_file
+    in
+    let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
+    let buffer = Parsing.Pascaligo.pretty_print mutated_prg in
+    buffer

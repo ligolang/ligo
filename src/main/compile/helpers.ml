@@ -24,6 +24,7 @@ let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta)
     match meta.syntax with
     | CameLIGO -> Cameligo.preprocess_file
     | JsLIGO -> Jsligo.preprocess_file
+    | PascaLIGO -> Pascaligo.preprocess_file
   in
   trace ~raise preproc_tracer
   @@ Simple_utils.Trace.from_result (preprocess_file ?project_root libraries file_path)
@@ -41,6 +42,7 @@ let preprocess_string
     match meta.syntax with
     | CameLIGO -> Cameligo.preprocess_string
     | JsLIGO -> Jsligo.preprocess_string
+    | PascaLIGO -> Pascaligo.preprocess_string
   in
   trace ~raise preproc_tracer
   @@ from_result (preprocess_string ?project_root libraries file_path)
@@ -84,11 +86,29 @@ let parse_and_abstract_expression_jsligo ~raise buffer =
   imperative
 
 
+let parse_and_abstract_pascaligo ~raise buffer file_path =
+  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file buffer file_path in
+  let imperative =
+    trace ~raise cit_pascaligo_tracer @@ Tree_abstraction.Pascaligo.compile_program raw
+  in
+  imperative
+
+
+let parse_and_abstract_expression_pascaligo ~raise buffer =
+  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_expression buffer in
+  let imperative =
+    trace ~raise (Fn.compose cit_pascaligo_tracer List.return)
+    @@ Tree_abstraction.Pascaligo.compile_expression raw
+  in
+  imperative
+
+
 let parse_and_abstract ~raise ~(meta : meta) buffer file_path : Ast_imperative.program =
   let parse_and_abstract =
     match meta.syntax with
     | CameLIGO -> parse_and_abstract_cameligo
     | JsLIGO -> parse_and_abstract_jsligo
+    | PascaLIGO -> parse_and_abstract_pascaligo
   in
   let abstracted = parse_and_abstract ~raise buffer file_path in
   let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in
@@ -104,6 +124,7 @@ let parse_and_abstract_expression ~raise ~(meta : meta) buffer =
     match meta.syntax with
     | CameLIGO -> parse_and_abstract_expression_cameligo
     | JsLIGO -> parse_and_abstract_expression_jsligo
+    | PascaLIGO -> parse_and_abstract_expression_pascaligo
   in
   let abstracted = parse_and_abstract ~raise buffer in
   let js_style_no_shadowing = Caml.( = ) meta.syntax JsLIGO in
@@ -130,11 +151,20 @@ let parse_and_abstract_string_jsligo ~raise buffer =
   imperative
 
 
+let parse_and_abstract_string_pascaligo ~raise buffer =
+  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_string buffer in
+  let imperative =
+    trace ~raise cit_pascaligo_tracer @@ Tree_abstraction.Pascaligo.compile_program raw
+  in
+  imperative
+
+
 let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
   let parse_and_abstract =
     match syntax with
     | CameLIGO -> parse_and_abstract_string_cameligo
     | JsLIGO -> parse_and_abstract_string_jsligo
+    | PascaLIGO -> parse_and_abstract_string_pascaligo
   in
   let abstracted = parse_and_abstract ~raise buffer in
   let js_style_no_shadowing = Caml.( = ) syntax JsLIGO in
@@ -147,23 +177,27 @@ let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
 
 let pretty_print_cameligo_cst = Parsing.Cameligo.pretty_print_cst
 let pretty_print_jsligo_cst = Parsing.Jsligo.pretty_print_cst
+let pretty_print_pascaligo_cst = Parsing.Pascaligo.pretty_print_cst
 
 let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
   let print =
     match meta.syntax with
     | CameLIGO -> pretty_print_cameligo_cst
     | JsLIGO -> pretty_print_jsligo_cst
+    | PascaLIGO -> pretty_print_pascaligo_cst
   in
   trace ~raise parser_tracer @@ print buffer file_path
 
 
 let pretty_print_cameligo = Parsing.Cameligo.pretty_print_file
 let pretty_print_jsligo = Parsing.Jsligo.pretty_print_file
+let pretty_print_pascaligo = Parsing.Pascaligo.pretty_print_file
 
 let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =
   let print =
     match meta.syntax with
     | CameLIGO -> pretty_print_cameligo
     | JsLIGO -> pretty_print_jsligo
+    | PascaLIGO -> pretty_print_pascaligo
   in
   trace ~raise parser_tracer @@ print ?preprocess buffer file_path

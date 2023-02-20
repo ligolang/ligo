@@ -167,6 +167,7 @@ let get_comment syntax =
     match syntax with
     | Syntax_types.CameLIGO -> Preprocessing_cameligo.Config.block
     | Syntax_types.JsLIGO -> Preprocessing_jsligo.Config.block
+    | Syntax_types.PascaLIGO -> Preprocessing_pascaligo.Config.block
   in
   match block with
   | Some x -> x#opening, x#closing
@@ -176,8 +177,8 @@ let get_comment syntax =
 type module_pp_mode =
   { module_keyword : string
   ; import_keyword : string
-  ; equal_sign_on_definition : bool
-  ; equal_sign_on_import : bool
+  ; sign_on_definition : string option
+  ; sign_on_import : string option
   ; open_ : string
   ; close : string
   ; semicolon_at_the_end : bool
@@ -186,8 +187,8 @@ type module_pp_mode =
 let cameligo_module =
   { module_keyword = "module"
   ; import_keyword = "module"
-  ; equal_sign_on_definition = true
-  ; equal_sign_on_import = true
+  ; sign_on_definition = Some "="
+  ; sign_on_import = Some "="
   ; open_ = "struct"
   ; close = "end"
   ; semicolon_at_the_end = false
@@ -197,11 +198,22 @@ let cameligo_module =
 let jsligo_module =
   { module_keyword = "namespace"
   ; import_keyword = "import"
-  ; equal_sign_on_definition = false
-  ; equal_sign_on_import = true
+  ; sign_on_definition = None
+  ; sign_on_import = Some "="
   ; open_ = "{"
   ; close = "}"
   ; semicolon_at_the_end = true
+  }
+
+
+let pascaligo_module =
+  { module_keyword = "module"
+  ; import_keyword = "module"
+  ; sign_on_definition = Some "is"
+  ; sign_on_import = Some "is"
+  ; open_ = "{"
+  ; close = "}"
+  ; semicolon_at_the_end = false
   }
 
 
@@ -214,7 +226,8 @@ let print_module_with_description
     description.module_keyword
     ^ " "
     ^ mdef.name
-    ^ (if description.equal_sign_on_definition then " = " else " ")
+    ^ (Option.value ~default:" "
+      @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_definition)
     ^ description.open_
     ^ " "
     ^ opening_comment
@@ -226,7 +239,8 @@ let print_module_with_description
     description.import_keyword
     ^ " "
     ^ mdef.name
-    ^ (if description.equal_sign_on_import then " = " else " ")
+    ^ (Option.value ~default:" "
+      @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_import)
     ^ (module_path_list
       |> List.map ~f:(String.split ~on:'#')
       |> List.map ~f:(Fun.flip List.nth_exn 0)
@@ -236,6 +250,7 @@ let print_module_with_description
 let print_module : Syntax_types.t -> Scopes.Types.mdef -> string = function
   | CameLIGO -> print_module_with_description cameligo_module (get_comment CameLIGO)
   | JsLIGO -> print_module_with_description jsligo_module (get_comment JsLIGO)
+  | PascaLIGO -> print_module_with_description pascaligo_module (get_comment PascaLIGO)
 
 
 let range
@@ -269,6 +284,7 @@ let parsing_error_to_string (err : Parsing.Errors.t) : string =
 type dialect_cst =
   | CameLIGO_cst of Parsing.Cameligo.CST.t
   | JsLIGO_cst of Parsing.Jsligo.CST.t
+  | PascaLIGO_cst of Parsing.Pascaligo.CST.t
 
 type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
 
@@ -290,5 +306,7 @@ let get_cst (syntax : Syntax_types.t) (code : string) : (dialect_cst, string) re
       Ok (CameLIGO_cst (Parsing.Cameligo.parse_string ~preprocess:false ~raise buffer))
     | JsLIGO ->
       Ok (JsLIGO_cst (Parsing.Jsligo.parse_string ~preprocess:false ~raise buffer))
+    | PascaLIGO ->
+      Ok (PascaLIGO_cst (Parsing.Pascaligo.parse_string ~preprocess:false ~raise buffer))
   with
   | Fatal_cst_error err -> Error err

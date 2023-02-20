@@ -261,6 +261,7 @@ let decompile_pattern_to_string ~(syntax : Syntax_types.t option) pattern =
   let pattern = decompile_pattern pattern in
   match syntax with
   | Some JsLIGO -> Tree_abstraction.Jsligo.decompile_pattern_to_string pattern
+  | Some PascaLIGO -> Tree_abstraction.Pascaligo.decompile_pattern_to_string pattern
   | Some CameLIGO | None -> Tree_abstraction.Cameligo.decompile_pattern_to_string pattern
 
 
@@ -269,3 +270,4 @@ let decompile_type_expression_to_string ~(syntax : Syntax_types.t) te =
   match syntax with
   | JsLIGO -> Tree_abstraction.Jsligo.decompile_type_expression_to_string te
   | CameLIGO -> Tree_abstraction.Cameligo.decompile_type_expression_to_string te
+  | PascaLIGO -> Tree_abstraction.Pascaligo.decompile_type_expression_to_string te

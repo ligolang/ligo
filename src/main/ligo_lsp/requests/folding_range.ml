@@ -24,7 +24,7 @@ let value_map ~f ~default value = Option.value (Option.map f value) ~default
 
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
  fun cst ->
-  let open Cst.Cameligo in
+  let open! Cst.Cameligo in
   (* General *)
   let rec declaration_list value = nseq_concat_map value.decl ~f:declaration
   (* Module *)
@@ -188,9 +188,13 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   Some (declaration_list cst)
 
 
+let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
+ fun _cst -> None (* TODO: #1691 *)
+
+
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
  fun cst ->
-  let open Cst.Jsligo in
+  let open! Cst.Jsligo in
   (* General *)
   let rec statement_list value = nseq_concat_map value.statements ~f:toplevel_statement
   and arguments = function
@@ -355,3 +359,4 @@ let on_req_folding_range : DocumentUri.t -> FoldingRange.t list option Handler.t
   @@ function
   | Utils.CameLIGO_cst cst -> Handler.return @@ folding_range_cameligo cst
   | Utils.JsLIGO_cst cst -> Handler.return @@ folding_range_jsligo cst
+  | Utils.PascaLIGO_cst cst -> Handler.return @@ folding_range_pascaligo cst

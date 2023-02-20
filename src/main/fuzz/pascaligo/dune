@@ -1,0 +1,6 @@
+(library
+ (name fuzz_pascaligo)
+ (public_name ligo.fuzz.pascaligo)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries fuzz_shared ligo_compile))

@@ -30,11 +30,25 @@ let specialise_and_print_expression_jsligo expression =
     cst
 
 
+let specialise_and_print_pascaligo m =
+  let ast = Self_ast_imperative.decompile_imperative m in
+  let cst = Tree_abstraction.Pascaligo.decompile_program ast in
+  let source = Parsing.Pascaligo.pretty_print cst in
+  source
+
+
+let specialise_and_print_expression_pascaligo expression =
+  let cst = Tree_abstraction.Pascaligo.decompile_expression expression in
+  let source = Parsing.Pascaligo.pretty_print_expression cst in
+  source
+
+
 let specialise_and_print (syntax : Syntax_types.t) source : Buffer.t =
   let specialise_and_print =
     match syntax with
     | CameLIGO -> specialise_and_print_cameligo
     | JsLIGO -> specialise_and_print_jsligo
+    | PascaLIGO -> specialise_and_print_pascaligo
   in
   specialise_and_print source
 
@@ -44,5 +58,6 @@ let specialise_and_print_expression (syntax : Syntax_types.t) source =
     match syntax with
     | CameLIGO -> specialise_and_print_expression_cameligo
     | JsLIGO -> specialise_and_print_expression_jsligo
+    | PascaLIGO -> specialise_and_print_expression_pascaligo
   in
   specialise_and_print source
