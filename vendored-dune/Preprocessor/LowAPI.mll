@@ -35,11 +35,12 @@ module type S =
   sig
     (* Preprocessing from various sources *)
 
-    val from_lexbuf  : Lexing.lexbuf preprocessor
-    val from_channel : in_channel    preprocessor
-    val from_string  : string        preprocessor
-    val from_file    : file_path     preprocessor
-    val from_buffer  : Buffer.t      preprocessor
+    val from_lexbuf    :        Lexing.lexbuf preprocessor
+    val from_channel   :        in_channel    preprocessor
+    val from_string    :        string        preprocessor
+    val from_raw_input : (file_path * string) preprocessor
+    val from_file      :        file_path     preprocessor
+    val from_buffer    :        Buffer.t      preprocessor
   end
 
 module Make (Config : Config.S) (Options : Options.S) =
@@ -760,6 +761,16 @@ and linemarker state = parse
     let from_channel = from_lexbuf <@ Lexing.from_channel
 
     let from_string = from_lexbuf <@ Lexing.from_string
+
+    let from_raw_input =
+      fun (file, input) ->
+        try
+          (from_lexbuf <@ Lexing.from_string) input
+        with Sys_error msg ->
+          let error  = Error.Failed_opening (file, msg) in
+          let msg    = Error.to_string error in
+          let region = Region.min ~file in
+          Error (None, Region.{value=msg; region})
 
     let from_buffer = from_string <@ Buffer.contents
 

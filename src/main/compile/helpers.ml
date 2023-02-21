@@ -48,6 +48,25 @@ let preprocess_string
   @@ from_result (preprocess_string ?project_root libraries file_path)
 
 
+let preprocess_raw_input
+    ~raise
+    ~(options : Compiler_options.frontend)
+    ~(meta : meta)
+    file_path
+    input
+  =
+  let open Preprocessing in
+  let Compiler_options.{ project_root; libraries; _ } = options in
+  let preprocess_raw_input =
+    match meta.syntax with
+    | CameLIGO -> Cameligo.preprocess_raw_input
+    | JsLIGO -> Jsligo.preprocess_raw_input
+    | PascaLIGO -> Pascaligo.preprocess_raw_input
+  in
+  trace ~raise preproc_tracer
+  @@ from_result (preprocess_raw_input ?project_root libraries (file_path, input))
+
+
 (* Front-end compilation *)
 
 type file_path = string

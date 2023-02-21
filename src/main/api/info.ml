@@ -63,6 +63,7 @@ let get_scope_raw
     match source_file with
     | From_file file_name -> file_name
     | Raw { id; _ } -> id
+    | Raw_input_lsp { file; _ } -> file
   in
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some file_name)
@@ -78,7 +79,9 @@ let get_scope_raw
     let options = Compiler_options.set_no_stdlib options true in
     match source_file with
     | From_file file_name -> Build.qualified_core ~raise ~options file_name
-    | Raw file -> Build.qualified_core_raw_input ~raise ~options file
+    | Raw file -> Build.qualified_core_from_string ~raise ~options file
+    | Raw_input_lsp { file; code } ->
+      Build.qualified_core_from_raw_input ~raise ~options file code
   in
   let lib =
     (* We need stdlib for [Build.Stdlib.get], 
