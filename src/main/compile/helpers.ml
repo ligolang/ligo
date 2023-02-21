@@ -61,6 +61,7 @@ let preprocess_raw_input
     match meta.syntax with
     | CameLIGO -> Cameligo.preprocess_raw_input
     | JsLIGO -> Jsligo.preprocess_raw_input
+    | PascaLIGO -> Pascaligo.preprocess_raw_input
   in
   trace ~raise preproc_tracer
   @@ from_result (preprocess_raw_input ?project_root libraries (file_path, input))
