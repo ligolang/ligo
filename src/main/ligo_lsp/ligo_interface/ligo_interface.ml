@@ -53,7 +53,7 @@ module Make (Ligo_api : LIGO_API) = struct
     in
     Ligo_api.Info.get_scope_trace
       compiler_options
-      (Raw_input_lsp { file ; code = source })
+      (Raw_input_lsp { file; code = source })
       ()
 
 
