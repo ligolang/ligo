@@ -8,3 +8,7 @@ node_modules/
 # nix build results
 result
 result-*
+
+# LIGO tests with Esy
+.ligo/
+esy.lock/
