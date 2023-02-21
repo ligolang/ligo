@@ -1264,8 +1264,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       monad_option (Errors.generic_error loc "Not a valid mutation")
       @@ Location.get_file loc
     in
-    let file_contents = Fuzz.Ast_aggregated.buffer_of_mutation mutation in
-    let id = Fuzz.Ast_aggregated.get_mutation_id mutation in
+    let file_contents = Mutation.buffer_of_mutation mutation in
+    let id = Mutation.get_mutation_id mutation in
     let file_path = reg#file in
     (try
        let odir = Caml.Sys.getcwd () in

@@ -188,3 +188,9 @@ let rec value_gen
             generated."
            Ast_aggregated.PP.type_expression
            type_expr)
+
+let buffer_of_mutation = Fuzz.Ast_aggregated.buffer_of_mutation
+let buffer_of_mutation = Obj.magic buffer_of_mutation
+
+let get_mutation_id = Fuzz.Ast_aggregated.get_mutation_id
+let get_mutation_id = Obj.magic get_mutation_id
