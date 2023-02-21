@@ -23,7 +23,7 @@
    constants)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils syntax lwt lwt.unix semver uri ligo.unix re)
+ (libraries simple-utils syntax lwt semver uri ligo.unix re)
  (inline_tests)
  (preprocess
   (pps ppx_deriving_yojson ppx_inline_test)))
