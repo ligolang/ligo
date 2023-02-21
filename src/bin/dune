@@ -81,7 +81,7 @@
  (public_name ligo)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils cmdliner ligo ligo.main_interpreter.unix
+ (libraries ligo_lsp simple-utils cmdliner ligo ligo.main_interpreter.unix
    ligo.api.unix cli)
  (flags
   -open

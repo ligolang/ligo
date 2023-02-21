@@ -13,4 +13,3 @@ module Info = Info
 module Print = Print
 module Mutate = Mutate
 module Ligo_init = Ligo_init
-module Lsp_server = Ligo_lsp_server
