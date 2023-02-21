@@ -14,9 +14,11 @@ depends: [
   "core" {>= "v0.15.0" & < "v0.16.0"}
   "core_kernel" { >= "v0.15.0" & < "v0.16.0"}
   # Tooling
+  "js_of_ocaml"
+  "js_of_ocaml-ppx"
   "odoc" { build }
   "ocamlfind" { build }
-  "dune" { build & >= "2.7.1" }
+  "dune" { build & >= "3.6.1" }
   "alcotest" { with-test }
   # Pipelinye
   "ocamlgraph"
@@ -68,7 +70,7 @@ depends: [
   "tezos-rust-libs"
   "crunch"
   "class_group_vdf"
-  "tezos-plonk"
+  "tezos-plonk" {= "0.1.3"}
   # dev dependencies (not labels as { dev } since this feature doesn't work 
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
