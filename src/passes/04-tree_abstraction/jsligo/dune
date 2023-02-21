@@ -3,6 +3,7 @@
  (public_name ligo.jsligo)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils cst ast_imperative predefined parsing tree_abstraction_shared)
+ (libraries simple-utils cst ast_imperative predefined parsing
+   tree_abstraction_shared)
  (preprocess
   (pps ppx_poly_constructor)))
