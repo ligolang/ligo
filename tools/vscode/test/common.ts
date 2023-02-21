@@ -30,7 +30,7 @@ export function getLang(lang: Dialect): string {
 }
 
 // TIHI
-export const contractsDir: string = process.env.CONTRACTS_DIR || path.join(__dirname, '..', '..', '..', '..', 'squirrel', 'test', 'contracts')
+export const contractsDir: string = process.env.CONTRACTS_DIR || path.join(__dirname, '..', '..', '..', 'test', 'contracts')
 
 export function installLigoLibrary(path: string) {
   execSync("ligo install", { cwd: path, timeout: 50000 });
