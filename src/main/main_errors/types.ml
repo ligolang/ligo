@@ -30,6 +30,7 @@ type all =
   | `Pretty_tracer of Parsing.Errors.t
   | `Cit_cameligo_tracer of Tree_abstraction.Cameligo.Errors.abs_error list
   | `Cit_jsligo_tracer of Tree_abstraction.Jsligo.Errors.abs_error list
+  | `Cit_pascaligo_tracer of Tree_abstraction.Pascaligo.Errors.abs_error list
   | `Self_ast_imperative_tracer of Self_ast_imperative.Errors.self_ast_imperative_error
   | `Desugaring_tracer of Desugaring.Errors.desugaring_error
   | `Checking_tracer of Checking.Errors.typer_error

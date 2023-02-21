@@ -42,6 +42,7 @@ let get_diagnostics_test ({ test_name; dialect; source; diagnostics } : diagnost
     match dialect with
     | CameLIGO -> "test.mligo"
     | JsLIGO -> "test.jsligo"
+    | PascaLIGO -> "test.ligo"
   in
   let uri = DocumentUri.of_path file in
   let get_scope_info = Scopes.unfold_get_scope @@ Ligo_interface.get_scope uri source in

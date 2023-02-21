@@ -24,6 +24,15 @@ let extract_directives_jsligo (cst : Parsing.Jsligo.CST.t) : Preprocessor.Direct
   @@ Simple_utils.Utils.nseq_to_list cst.statements
 
 
+let extract_directives_pascaligo (cst : Parsing.Pascaligo.CST.t)
+    : Preprocessor.Directive.t list
+  =
+  List.filter_map ~f:(function
+      | Cst_pascaligo.CST.D_Directive d -> Some d
+      | _ -> None)
+  @@ Simple_utils.Utils.nseq_to_list cst.decl
+
+
 let extract_link_from_directive ~(relative_to_dir : string)
     : Preprocessor.Directive.t -> DocumentLink.t option
   = function
@@ -50,6 +59,7 @@ let on_req_document_link (uri : DocumentUri.t) : DocumentLink.t list option hand
     @@ function
     | CameLIGO_cst cst -> return @@ Some (extract_directives_cameligo cst)
     | JsLIGO_cst cst -> return @@ Some (extract_directives_jsligo cst)
+    | PascaLIGO_cst cst -> return @@ Some (extract_directives_pascaligo cst)
   in
   return
   @@ Option.map ~f:(List.filter_map ~f:(extract_link_from_directive ~relative_to_dir:dir))

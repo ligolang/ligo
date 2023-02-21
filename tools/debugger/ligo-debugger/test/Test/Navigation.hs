@@ -131,6 +131,24 @@ test_values_inside_switch_and_match_with_are_statements =
         runData
         (dumpAllSnapshotsWithStep doStep)
 
+-- TODO: #1684 fix wrong order of local functions statements locations
+test_local_function_assignments_are_statements :: TestTree
+test_local_function_assignments_are_statements =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "local-function-assignments.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    doStep = processLigoStep (CStepIn GStmt)
+  in goldenTestWithSnapshots
+      "local function assignments are statements"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
 test_Next_golden :: TestTree
 test_Next_golden = testGroup "Next" do
   gran <- allLigoStepGranularities

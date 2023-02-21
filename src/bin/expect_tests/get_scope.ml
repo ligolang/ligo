@@ -2094,4 +2094,97 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-90
     Content: Alias: Mangled_module_____________________test__contracts__get_scope_tests__x____mligo#3
     references:
-      File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-9 |}]
+      File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-9 |}];
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "local_module_using_local_binding.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 1, characters 8-9
+    [ a#0  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 4, characters 12-13
+    [ a#1  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 6, characters 16-17
+    [ A#3 x#2 a#1  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 8, characters 4-7
+    [ b#4 a#0  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 10, characters 8-9
+    [ c#5 b#4 a#0  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 13, characters 12-13
+    [ c#6 b#4 a#0  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 15, characters 16-17
+    [ c#7 b#4 a#0  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 16, characters 16-17
+    [ C#9 x#8 c#7 c#6 b#4 a#0  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-7
+
+    Variable definitions:
+    (a#0 -> a)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 1, characters 8-9
+    Content: |resolved: int|
+    references: []
+    (a#1 -> a)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 4, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 4, characters 12-13
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 6, characters 16-17
+    (b#4 -> b)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 4, character 4 to line 8, character 7
+    Content: |resolved: int|
+    references: []
+    (c#5 -> c)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 10, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 10, characters 8-9
+    Content: |resolved: int|
+    references: []
+    (c#6 -> c)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 13, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 13, characters 12-13
+    Content: |resolved: int|
+    references: []
+    (d#10 -> d)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 12, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 13, character 4 to line 18, character 7
+    Content: |resolved: int|
+    references: []
+    Type definitions:
+    Module definitions:
+    (A#3 -> A)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 5, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 5, character 4 to line 7, character 7
+    Content: Members: Variable definitions:
+                      (x#2 -> x)
+                      Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 6, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 6, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 8, characters 6-7
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 8, characters 4-5
+
+    (C#9 -> C)
+    Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 14, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 14, character 4 to line 17, character 7
+    Content: Members: Variable definitions:
+                      (c#7 -> c)
+                      Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 15, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 15, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 16, characters 16-17
+                      (x#8 -> x)
+                      Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 16, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 16, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 6-7
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-5 |}]
