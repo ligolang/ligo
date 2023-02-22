@@ -133,6 +133,16 @@
       ]
     },
     {
+      "type": "category",
+      "label": "LIGO Registry",
+      "collapsible": true,
+      "collapsed": true,
+      "items": [
+        "tutorials/registry/what-is-the-registry",
+        "tutorials/registry/how-to-make-an-audit"
+      ]
+    },
+    {
       "type": "doc",
       "id": "tutorials/start-a-project-from-a-template"
     },
